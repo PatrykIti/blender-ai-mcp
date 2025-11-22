@@ -4,8 +4,8 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 📊 Statystyki
 - **Do zrobienia:** 1
-- **W trakcie:** 1
-- **Zakończone:** 6
+- **W trakcie:** 0
+- **Zakończone:** 7
 
 ---
 
@@ -19,9 +19,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 🚧 In Progress (W trakcie)
 
-| ID | Tytuł | Priorytet | Zależności |
-|----|-------|-----------|------------|
-| [TASK-003_4](./TASK-003_4_Refactor_Addon_Architecture.md) | **Refaktoryzacja Architektury Addona (Clean Architecture)** | 🔴 High | TASK-003_3 |
+*(Brak zadań)*
 
 ---
 
@@ -35,6 +33,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 | [TASK-003_1](./TASK-003_1_Refactor_Architecture.md) | **Refaktoryzacja Architektury Servera (Clean Architecture)** | 🔴 High | 2025-11-22 |
 | [TASK-003_2](./TASK-003_2_Refactor_Main_DI.md) | **Refaktoryzacja Main i DI (Separation of Concerns)** | 🔴 High | 2025-11-22 |
 | [TASK-003_3](./TASK-003_3_Refactor_FastMCP_Dependency_Injection.md) | **Implementacja DI w FastMCP (Depends)** | 🔴 High | 2025-11-22 |
+| [TASK-003_4](./TASK-003_4_Refactor_Addon_Architecture.md) | **Refaktoryzacja Architektury Addona (Clean Architecture)** | 🔴 High | 2025-11-22 |
 
 ---
 

@@ -5,23 +5,32 @@ Dokumentacja modułu Addona (Server Side).
 ## 📚 Indeks Tematyczny
 
 - **[Architektura RPC i Wątkowość](./rpc_architecture.md)**
-  - Wyjaśnienie modelu wielowątkowego.
-  - Mechanizm `bpy.app.timers`.
-  - Protokół JSON.
+  - Wyjaśnienie modelu wielowątkowego i `bpy.app.timers`.
 
-## 🛠 Dostępne Komendy (System)
-- `ping`: Sprawdza połączenie. Zwraca wersję Blendera.
+## 🛠 Struktura (Clean Architecture)
+
+Addon jest podzielony na warstwy, aby odseparować logikę Blendera od mechanizmów sieciowych.
+
+### 1. Entry Point (`__init__.py`)
+Punkt wejścia. Odpowiada za:
+- Rejestrację w Blenderze (`bl_info`).
+- Tworzenie instancji handlerów aplikacji.
+- Rejestrację handlerów w serwerze RPC.
+- Uruchomienie serwera w osobnym wątku.
+
+### 2. Application (`application/handlers/`)
+Logika biznesowa ("Jak to zrobić w Blenderze").
+- `scene.py`: Klasa `SceneHandler`. Metody takie jak `list_objects`, `delete_object`. Używa `bpy` bezpośrednio.
+
+### 3. Infrastructure (`infrastructure/`)
+Szczegóły techniczne.
+- `rpc_server.py`: Implementacja serwera TCP. Nie zna logiki biznesowej, jedynie przyjmuje żądania JSON i przekazuje je do zarejestrowanych funkcji callback.
 
 ## 🛠 Dostępne Komendy API (Scene)
-Implementacja w `blender_addon/api/scene.py`.
+Zdefiniowane w `application/handlers/scene.py`.
 
-| Komenda RPC | Wymagane Argumenty | Opis |
-|-------------|--------------------|------|
-| `scene.list_objects` | *brak* | Pobiera listę obiektów z `bpy.context.scene.objects`. |
-| `scene.delete_object` | `name` | Usuwa obiekt z `bpy.data.objects` używając `do_unlink=True`. |
-| `scene.clean_scene` | `keep_lights_and_cameras` (bool) | Iteruje po obiektach i usuwa je. Opcjonalnie zachowuje kamery/światła. |
-
-## 🛠 Struktura Plików
-- `__init__.py`: Rejestracja Addona i handlerów RPC.
-- `rpc_server.py`: Implementacja serwera socket.
-- `api/`: Moduły z logiką biznesową (wrappery na `bpy`).
+| Komenda RPC | Metoda Handlera | Opis |
+|-------------|-----------------|------|
+| `scene.list_objects` | `list_objects` | Lista obiektów na scenie. |
+| `scene.delete_object` | `delete_object` | Usunięcie obiektu. |
+| `scene.clean_scene` | `clean_scene` | Wyczyszczenie sceny. |

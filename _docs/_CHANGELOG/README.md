@@ -6,6 +6,7 @@ Rejestr zmian projektu.
 
 | Nr | Data | Tytuł | Wersja |
 |----|------|-------|--------|
+| [7](./7-2025-11-22-refactor-addon-architecture.md) | 2025-11-22 | **Refaktoryzacja Architektury Addona** | 0.1.6 |
 | [6](./6-2025-11-22-refactor-fastmcp-di.md) | 2025-11-22 | **Refaktoryzacja FastMCP DI** | 0.1.5 |
 | [5](./5-2025-11-22-refactor-main-di.md) | 2025-11-22 | **Refaktoryzacja Main i DI** | 0.1.4 |
 | [4](./4-2025-11-22-refactor-architecture.md) | 2025-11-22 | **Refaktoryzacja Clean Architecture** | 0.1.3 |
