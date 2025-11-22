@@ -2,7 +2,7 @@
 type: task
 id: TASK-002
 title: Implementacja Mostu Komunikacyjnego (RPC)
-status: todo
+status: done
 priority: high
 assignee: unassigned
 depends_on: TASK-001
