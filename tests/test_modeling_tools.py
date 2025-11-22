@@ -1,20 +1,22 @@
 import unittest
 from unittest.mock import MagicMock
 import sys
-import os
+import importlib
 
-# Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock bpy
-sys.modules["bpy"] = MagicMock()
+# Mock bpy BEFORE importing the module under test
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
 import bpy
 
-# Import handler
-from blender_addon.application.handlers.modeling import ModelingHandler
+# Import module
+import blender_addon.application.handlers.modeling
 
 class TestModelingTools(unittest.TestCase):
     def setUp(self):
+        # Reload module to ensure clean state
+        importlib.reload(blender_addon.application.handlers.modeling)
+        from blender_addon.application.handlers.modeling import ModelingHandler
+        
         self.handler = ModelingHandler()
         
         # Reset mocks

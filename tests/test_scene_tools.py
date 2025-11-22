@@ -1,20 +1,22 @@
 import unittest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 import sys
-import os
+import importlib
 
-# Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock bpy before importing addon code
-sys.modules["bpy"] = MagicMock()
+# Mock bpy BEFORE importing the module under test
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
 import bpy
 
-# Import handler
-from blender_addon.application.handlers.scene import SceneHandler
+# Import the module to be tested
+import blender_addon.application.handlers.scene
 
 class TestSceneTools(unittest.TestCase):
     def setUp(self):
+        # Reload the module to ensure it uses the fresh mock for this test execution
+        importlib.reload(blender_addon.application.handlers.scene)
+        from blender_addon.application.handlers.scene import SceneHandler
+        
         # --- MOCK SETUP ---
         # 1. Objects
         self.cube = MagicMock()
@@ -30,12 +32,14 @@ class TestSceneTools(unittest.TestCase):
         self.light.name = "Light"
         self.light.type = "LIGHT"
 
-        # 2. Scene Objects List (Mocking bpy.context.scene.objects iteration)
-        # Initial state: 3 objects
+        # 2. Scene Objects List
         self.scene_objects = [self.cube, self.camera, self.light]
+        
+        # Setup bpy.context
         bpy.context.scene.objects = self.scene_objects
 
         # 3. bpy.data.objects Dictionary Behavior
+        # Important: Create a new MagicMock for bpy.data.objects for each test
         bpy.data.objects = MagicMock()
         
         def get_object(key):
