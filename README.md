@@ -299,5 +299,3 @@ Odpowiedź:
 
 # 📜 Licencja
 MIT
-
----
