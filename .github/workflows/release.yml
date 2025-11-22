@@ -45,8 +45,16 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
+      - name: Generate Token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # Important for semantic-release
 
       - name: Download Artifact
@@ -59,7 +67,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@master
         with:
           root_options: -vv
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
         # Configuration for semantic release should be in pyproject.toml
 
   docker:
