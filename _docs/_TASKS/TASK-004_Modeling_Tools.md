@@ -2,7 +2,7 @@
 type: task
 id: TASK-004_Modeling_Tools
 title: Narzędzia Modelowania (Mesh Ops) - Clean Architecture
-status: todo
+status: done
 priority: medium
 assignee: unassigned
 depends_on: TASK-003_4_Refactor_Addon_Architecture

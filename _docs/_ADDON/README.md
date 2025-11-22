@@ -20,17 +20,25 @@ Punkt wejścia. Odpowiada za:
 
 ### 2. Application (`application/handlers/`)
 Logika biznesowa ("Jak to zrobić w Blenderze").
-- `scene.py`: Klasa `SceneHandler`. Metody takie jak `list_objects`, `delete_object`. Używa `bpy` bezpośrednio.
+- `scene.py`: `SceneHandler` (Lista obiektów, usuwanie).
+- `modeling.py`: `ModelingHandler` (Tworzenie, transformacje, modyfikatory).
 
 ### 3. Infrastructure (`infrastructure/`)
 Szczegóły techniczne.
-- `rpc_server.py`: Implementacja serwera TCP. Nie zna logiki biznesowej, jedynie przyjmuje żądania JSON i przekazuje je do zarejestrowanych funkcji callback.
+- `rpc_server.py`: Implementacja serwera TCP.
 
-## 🛠 Dostępne Komendy API (Scene)
-Zdefiniowane w `application/handlers/scene.py`.
+## 🛠 Dostępne Komendy API
 
-| Komenda RPC | Metoda Handlera | Opis |
-|-------------|-----------------|------|
+### Scene (`application/handlers/scene.py`)
+| Komenda RPC | Metoda | Opis |
+|-------------|--------|------|
 | `scene.list_objects` | `list_objects` | Lista obiektów na scenie. |
 | `scene.delete_object` | `delete_object` | Usunięcie obiektu. |
 | `scene.clean_scene` | `clean_scene` | Wyczyszczenie sceny. |
+
+### Modeling (`application/handlers/modeling.py`)
+| Komenda RPC | Metoda | Opis |
+|-------------|--------|------|
+| `modeling.create_primitive` | `create_primitive` | Tworzy prymityw (Cube, Sphere, etc.). |
+| `modeling.transform_object` | `transform_object` | Przesuwa, obraca lub skaluje obiekt. |
+| `modeling.add_modifier` | `add_modifier` | Dodaje modyfikator do obiektu. |

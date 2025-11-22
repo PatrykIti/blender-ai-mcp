@@ -3,17 +3,15 @@
 Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 📊 Statystyki
-- **Do zrobienia:** 1
+- **Do zrobienia:** 0
 - **W trakcie:** 0
-- **Zakończone:** 7
+- **Zakończone:** 8
 
 ---
 
 ## 🚨 To Do (Do zrobienia)
 
-| ID | Tytuł | Priorytet | Zależności |
-|----|-------|-----------|------------|
-| [TASK-004](./TASK-004_Modeling_Tools.md) | **Narzędzia Modelowania (Mesh Ops)** | 🟡 Medium | TASK-003 |
+*(Brak zadań)*
 
 ---
 
@@ -34,6 +32,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 | [TASK-003_2](./TASK-003_2_Refactor_Main_DI.md) | **Refaktoryzacja Main i DI (Separation of Concerns)** | 🔴 High | 2025-11-22 |
 | [TASK-003_3](./TASK-003_3_Refactor_FastMCP_Dependency_Injection.md) | **Implementacja DI w FastMCP (Depends)** | 🔴 High | 2025-11-22 |
 | [TASK-003_4](./TASK-003_4_Refactor_Addon_Architecture.md) | **Refaktoryzacja Architektury Addona (Clean Architecture)** | 🔴 High | 2025-11-22 |
+| [TASK-004](./TASK-004_Modeling_Tools.md) | **Narzędzia Modelowania (Mesh Ops)** | 🟡 Medium | 2025-11-22 |
 
 ---
 

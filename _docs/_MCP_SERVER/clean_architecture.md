@@ -8,13 +8,13 @@ Projekt serwera MCP jest zorganizowany według zasad Czystej Architektury, aby o
 **Jądro systemu.** Nie zależy od żadnych zewnętrznych bibliotek (poza standardowymi typami i Pydantic dla modeli). Definiuje **CO** system może robić, ale nie **JAK**.
 
 - **Interfaces (`interfaces/`)**: Kontrakty dla zewnętrznych serwisów (np. `IRpcClient`).
-- **Tools (`tools/`)**: Abstrakcyjne definicje narzędzi (np. `ISceneTool`).
+- **Tools (`tools/`)**: Abstrakcyjne definicje narzędzi (np. `ISceneTool`, `IModelingTool`).
 - **Models (`models/`)**: Struktury danych (DTO), np. `RpcRequest`.
 
 ### 2. Application (`server/application`)
 **Logika aplikacji (Use Cases).** Implementuje interfejsy z warstwy domeny. Zależy wyłącznie od Domeny.
 
-- **Tool Handlers (`tool_handlers/`)**: Konkretne klasy (np. `SceneToolHandler`), które wiedzą jak użyć `IRpcClient` do realizacji zadania zdefiniowanego w `ISceneTool`.
+- **Tool Handlers (`tool_handlers/`)**: Konkretne klasy (np. `SceneToolHandler`, `ModelingToolHandler`), które wiedzą jak użyć `IRpcClient` do realizacji zadania zdefiniowanego w `ISceneTool`.
 
 ### 3. Adapters (`server/adapters`)
 **Adaptery do świata zewnętrznego.** Konwertują dane z formatów zewnętrznych na wewnętrzne i odwrotnie.
@@ -25,7 +25,7 @@ Projekt serwera MCP jest zorganizowany według zasad Czystej Architektury, aby o
 
 ### 4. Infrastructure (`server/infrastructure`)
 **Szczegóły techniczne i konfiguracja.**
-- `di.py`: **Dependency Injection Providers**. Funkcje fabryczne (`get_scene_handler`), które tworzą graf zależności.
+- `di.py`: **Dependency Injection Providers**. Funkcje fabryczne (`get_scene_handler`, `get_modeling_handler`), które tworzą graf zależności.
 - Konfiguracja (zmienne środowiskowe).
 - Logging.
 
