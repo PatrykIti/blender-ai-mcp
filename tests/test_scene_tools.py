@@ -11,7 +11,7 @@ sys.modules["bpy"] = MagicMock()
 import bpy
 
 # Import handler
-from blender_addon.api import scene
+from blender_addon.application.handlers.scene import SceneHandler
 
 class TestSceneTools(unittest.TestCase):
     def setUp(self):
@@ -52,21 +52,24 @@ class TestSceneTools(unittest.TestCase):
 
         # 5. Remove mock
         bpy.data.objects.remove = MagicMock()
+        
+        # 6. Handler Instance
+        self.handler = SceneHandler()
 
     def test_list_objects(self):
-        result = scene.list_objects()
+        result = self.handler.list_objects()
         self.assertEqual(len(result), 3)
         names = [r["name"] for r in result]
         self.assertIn("Cube", names)
         self.assertIn("Camera", names)
 
     def test_delete_object(self):
-        scene.delete_object("Cube")
+        self.handler.delete_object("Cube")
         bpy.data.objects.remove.assert_called_with(self.cube, do_unlink=True)
 
     def test_clean_scene_keep_lights(self):
         # Should only delete Cube (MESH)
-        scene.clean_scene(keep_lights_and_cameras=True)
+        self.handler.clean_scene(keep_lights_and_cameras=True)
         
         # Verify remove called for cube but NOT camera/light
         bpy.data.objects.remove.assert_called_with(self.cube, do_unlink=True)
@@ -80,7 +83,7 @@ class TestSceneTools(unittest.TestCase):
 
     def test_clean_scene_hard_reset(self):
         # Should delete EVERYTHING
-        scene.clean_scene(keep_lights_and_cameras=False)
+        self.handler.clean_scene(keep_lights_and_cameras=False)
         
         removed_objects = [call.args[0] for call in bpy.data.objects.remove.call_args_list]
         self.assertIn(self.cube, removed_objects)

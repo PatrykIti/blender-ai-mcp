@@ -6,7 +6,7 @@ import os
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from blender_addon.rpc_server import rpc_server
+from blender_addon.infrastructure.rpc_server import rpc_server
 from server.adapters.rpc.client import RpcClient
 
 def test_connection():

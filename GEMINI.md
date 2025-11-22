@@ -99,4 +99,4 @@ poetry run python server/main.py
 7.  **Document:**
     *   Update `_docs/_CHANGELOG/`. Create a new file for major changes, update `README.md` index.
     *   Update Semantic Documentation in `_docs/_ADDON/` and `_docs/_MCP_SERVER/`. Treat these directories as a Knowledge Base. Don't just dump everything in README; create specific topic files if needed.
-    *   Update `_docs/_TASKS/` statuses.
+    *   Update `_docs/_TASKS/` statuses in task file and `_docs/_TASKS/README.md`.

@@ -13,23 +13,25 @@ try:
 except ImportError:
     bpy = None
 
-from .rpc_server import rpc_server
-# Import API handlers
+from .infrastructure.rpc_server import rpc_server
+# Import Application Handlers
 try:
-    from .api import scene
+    from .application.handlers.scene import SceneHandler
 except ImportError:
-    scene = None
+    SceneHandler = None
 
 
 def register():
     if bpy:
         print("[Blender AI MCP] Registering addon...")
         
-        # Register RPC Handlers
-        if scene:
-            rpc_server.register_handler("scene.list_objects", scene.list_objects)
-            rpc_server.register_handler("scene.delete_object", scene.delete_object)
-            rpc_server.register_handler("scene.clean_scene", scene.clean_scene)
+        # --- Composition Root (Simple Manual DI) ---
+        scene_handler = SceneHandler()
+
+        # --- Register RPC Handlers ---
+        rpc_server.register_handler("scene.list_objects", scene_handler.list_objects)
+        rpc_server.register_handler("scene.delete_object", scene_handler.delete_object)
+        rpc_server.register_handler("scene.clean_scene", scene_handler.clean_scene)
         
         rpc_server.start()
     else:
