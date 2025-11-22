@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+     "command": "/Users/pciechanski/Library/Caches/pypoetry/virtualenvs/blender-ai-mcp-C560Skhn-py3.13/bin/python",
+     "args": [
+       "-m",
+       "server.main"
+     ],
+     "env": {
+       "PYTHONPATH": "/Users/pciechanski/Documents/private/blender-ai-mcp"
+     },
+     "disabled": false,
+     "autoApprove": []
+   }
+  }
+}
