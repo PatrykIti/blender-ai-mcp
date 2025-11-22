@@ -5,7 +5,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 ## 📊 Statystyki
 - **Do zrobienia:** 0
 - **W trakcie:** 0
-- **Zakończone:** 9
+- **Zakończone:** 10
 
 ---
 
@@ -34,6 +34,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 | [TASK-003_4](./TASK-003_4_Refactor_Addon_Architecture.md) | **Refaktoryzacja Architektury Addona (Clean Architecture)** | 🔴 High | 2025-11-22 |
 | [TASK-004](./TASK-004_Modeling_Tools.md) | **Narzędzia Modelowania (Mesh Ops)** | 🟡 Medium | 2025-11-22 |
 | [TASK-005](./TASK-005_Dockerize_Server.md) | **Konteneryzacja MCP Servera (Docker)** | 🟡 Medium | 2025-11-22 |
+| [TASK-006](./TASK-006_Project_Standardization_and_CICD.md) | **Project Standardization and CI/CD Setup** | 🔴 High | 2025-11-22 |
 
 ---
 

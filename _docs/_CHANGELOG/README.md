@@ -6,6 +6,7 @@ Rejestr zmian projektu.
 
 | Nr | Data | Tytuł | Wersja |
 |----|------|-------|--------|
+| [10](./10-2025-11-22-cicd-standardization.md) | 2025-11-22 | **Standaryzacja i CI/CD** | 0.1.9 |
 | [9](./9-2025-11-22-dockerize-server.md) | 2025-11-22 | **Konteneryzacja Serwera (Docker)** | 0.1.8 |
 | [8](./8-2025-11-22-modeling-tools.md) | 2025-11-22 | **Implementacja Modeling Tools** | 0.1.7 |
 | [7](./7-2025-11-22-refactor-addon-architecture.md) | 2025-11-22 | **Refaktoryzacja Architektury Addona** | 0.1.6 |

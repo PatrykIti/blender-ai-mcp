@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Blender AI MCP",
-    "author": "PC",
+    "author": "Patryk Ciechański",
     "version": (0, 1, 0),
     "blender": (4, 0, 0),  # Min version, tested on 5.0
     "location": "Background Service",
-    "description": "RPC Server for AI MCP Control",
+    "description": "RPC Server for AI MCP Control. GitHub: https://github.com/PatrykIti/blender-ai-mcp",
     "category": "System",
 }
 
