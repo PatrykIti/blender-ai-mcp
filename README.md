@@ -9,8 +9,8 @@
 
 Enable LLMs (Claude, ChatGPT) to control Blender reliably. Built with **Clean Architecture** for stability and scalability.
 
-<video src="demo-mcp-server.mov" controls="controls" style="max-width: 100%;">
-  <a href="demo-mcp-server.mov">Watch demo video</a>
+<video src="demo-mcp-server.mp4" controls="controls" style="max-width: 100%;">
+  <a href="demo-mcp-server.mp4">Watch demo video</a>
 </video>
 
 ---
