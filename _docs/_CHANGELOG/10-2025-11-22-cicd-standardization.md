@@ -1,23 +1,23 @@
-# 10. Standaryzacja Projektu i CI/CD
+# 10. Project Standardization and CI/CD
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.9  
-**Zadania:** TASK-006_Project_Standardization_and_CICD
+**Date:** 2025-11-22  
+**Version:** 0.1.9  
+**Tasks:** TASK-006_Project_Standardization_and_CICD
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
-### Dokumentacja
-- **Język**: Przejście na język angielski w głównych plikach (`README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`).
-- **ARCHITECTURE.md**: Szczegółowy opis techniczny (Clean Architecture, RPC Protocol) przetłumaczony z wcześniejszych notatek.
-- **CONTRIBUTING.md**: Nowy przewodnik dla kontrybutorów z naciskiem na workflow zadaniowy i architekturę.
-- **README.md**: Profesjonalny wygląd, statusy CI, instrukcja Docker.
+### Documentation
+- **Language**: Switched to English in main files (`README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md`).
+- **ARCHITECTURE.md**: Detailed technical description (Clean Architecture, RPC Protocol) translated from previous notes.
+- **CONTRIBUTING.md**: New contributor guide emphasizing task workflow and architecture.
+- **README.md**: Professional look, CI statuses, Docker instructions.
 
-### Automatyzacja (CI/CD)
+### Automation (CI/CD)
 - **GitHub Actions (`.github/workflows/release.yml`)**:
-  - Automatyczne testy (`unittest`).
-  - Budowanie artefaktu Addona (`blender_ai_mcp.zip`).
-  - Semantic Release: Automatyczne wersjonowanie, tagowanie i tworzenie Release'a na GitHubie.
-  - Docker: Budowanie i push obrazu do GHCR (GitHub Container Registry).
-- **Szablony**: Dodano szablony Issue (`Bug`, `Feature`) i Pull Request.
+  - Automatic testing (`unittest`).
+  - Building Addon artifact (`blender_ai_mcp.zip`).
+  - Semantic Release: Automatic versioning, tagging, and GitHub Release creation.
+  - Docker: Build and push image to GHCR (GitHub Container Registry).
+- **Templates**: Added Issue (`Bug`, `Feature`) and Pull Request templates.
 
-Projekt jest teraz w pełni przygotowany do publikacji jako profesjonalne narzędzie Open Source.
+The project is now fully prepared for publication as a professional Open Source tool.

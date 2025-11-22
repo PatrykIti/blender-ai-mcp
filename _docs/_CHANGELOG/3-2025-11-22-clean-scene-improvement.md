@@ -1,11 +1,11 @@
-# 3. Ulepszenie Scene Tools
+# 3. Scene Tools Improvement
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.2  
-**Zadania:** TASK-003 (Improvement)
+**Date:** 2025-11-22  
+**Version:** 0.1.2  
+**Tasks:** TASK-003 (Improvement)
 
-## 🚀 Zmiany
+## 🚀 Changes
 
 ### Scene Tools
-- Zaktualizowano narzędzie `clean_scene` o parametr `keep_lights_and_cameras` (domyślnie `True`).
-- Dodano logikę "Hard Reset": Ustawienie parametru na `False` usuwa wszystkie obiekty (w tym kamery i światła) oraz czyści nieużywane kolekcje. Pozwala to na rozpoczęcie pracy od całkowicie pustego projektu ("Factory Reset" dla sceny).
+- Updated `clean_scene` tool with `keep_lights_and_cameras` parameter (default `True`).
+- Added "Hard Reset" logic: Setting the parameter to `False` deletes all objects (including cameras and lights) and clears unused collections. This allows starting work from a completely empty project ("Factory Reset" for the scene).

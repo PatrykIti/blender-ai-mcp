@@ -1,53 +1,48 @@
 ---
 type: task
 id: TASK-003_4_Refactor_Addon_Architecture
-title: Refaktoryzacja Architektury Addona (Clean Architecture)
+title: Addon Architecture Refactor (Clean Architecture)
 status: done
 priority: high
 assignee: unassigned
 depends_on: TASK-003_3_Refactor_FastMCP_Dependency_Injection
 ---
 
-# 🎯 Cel
-Dostosowanie kodu `blender_addon/` do zasad **Clean Architecture**, analogicznie jak w `server/`.
-Obecny kod miesza infrastrukturę sieciową (`rpc_server.py`) z logiką rejestracji (`__init__.py`) i logiką biznesową (bezpośrednio w `api/`).
+# 🎯 Objective
+Adapt `blender_addon/` code to **Clean Architecture** principles, similar to `server/`.
+Current code mixes network infrastructure (`rpc_server.py`) with registration logic (`__init__.py`) and business logic (`api/`).
 
-# 📋 Analiza Stanu Obecnego
-- `blender_addon/rpc_server.py`: Łączy logikę socketów z zarządzaniem wątkami i kolejkami `bpy`. To jest "Infrastructure".
-- `blender_addon/api/`: Zawiera logikę, ale nie jest ona zorganizowana w warstwy (Domain/Application). To są po prostu funkcje.
-- `blender_addon/__init__.py`: Rejestracja addona i "brzydkie" importy warunkowe.
+# 📋 Current State Analysis
+- `blender_addon/rpc_server.py`: Infrastructure (Sockets).
+- `blender_addon/api/`: Logic (not layered).
+- `blender_addon/__init__.py`: Registration.
 
-# 🛠 Plan Przebudowy (Refactoring Plan)
+# 🛠 Refactoring Plan
 
-## 1. Struktura Katalogów
-Utworzyć nową strukturę wewnątrz `blender_addon/`:
+## 1. Directory Structure
 ```
 blender_addon/
-  domain/          # Interfejsy (jeśli potrzebne w Pythonie Blendera, tutaj raczej zbędne, wystarczy Application)
-  application/     # Use Cases (logika biznesowa)
-    handlers/      # np. scene.py
-  infrastructure/  # RPC Server, Bpy Context Wrapper
-  presentation/    # Rejestracja operatorów (jeśli będą) lub Handlery RPC
+  application/     # Use Cases
+    handlers/      # e.g. scene.py
+  infrastructure/  # RPC Server
   __init__.py      # Entry Point
 ```
 
-## 2. Refaktoryzacja `api/` -> `application/handlers/`
-- Przenieść logikę z `api/scene.py` do `application/handlers/scene.py`.
-- Zamienić wolne funkcje na klasy (np. `SceneHandler`), aby łatwiej zarządzać zależnościami (nawet jeśli `bpy` jest globalne, warto to opakować).
+## 2. Refactor `api/` -> `application/handlers/`
+- Move logic from `api/scene.py` to `application/handlers/scene.py`.
+- Convert functions to classes (e.g. `SceneHandler`).
 
-## 3. Refaktoryzacja `rpc_server.py` -> `infrastructure/rpc_server.py`
-- Przenieść plik.
-- Oddzielić logikę socketów od logiki dyspozytora (`command_registry`).
-- Dyspozytor powinien być wstrzykiwany lub konfigurowany osobno.
+## 3. Refactor `rpc_server.py` -> `infrastructure/rpc_server.py`
+- Move file.
 
 ## 4. Entry Point (`__init__.py`)
-- Oczyścić `__init__.py`. Powinien tylko:
-  1. Inicjalizować infrastrukturę (`RpcServer`).
-  2. Rejestrować Handlery z warstwy Application w serwerze RPC.
-  3. Startować serwer.
+- Clean up `__init__.py`. Should only:
+  1. Initialize infrastructure (`RpcServer`).
+  2. Register Handlers.
+  3. Start server.
 
-# ✅ Kryteria Akceptacji
-1. Kod addona podzielony na warstwy (Infrastructure, Application).
-2. `api/` znika (zastąpione przez `application/`).
-3. `rpc_server.py` jest w `infrastructure/`.
-4. Testy jednostkowe addona (mocki) nadal działają po aktualizacji ścieżek importów.
+# ✅ Acceptance Criteria
+1. Addon code divided into layers (Infrastructure, Application).
+2. `api/` directory removed.
+3. `rpc_server.py` in `infrastructure/`.
+4. Unit tests pass.

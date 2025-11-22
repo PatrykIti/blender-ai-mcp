@@ -1,25 +1,25 @@
-# 7. Refaktoryzacja Architektury Addona
+# 7. Addon Architecture Refactor
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.6  
-**Zadania:** TASK-003_4_Refactor_Addon_Architecture
+**Date:** 2025-11-22  
+**Version:** 0.1.6  
+**Tasks:** TASK-003_4_Refactor_Addon_Architecture
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
 ### Blender Addon Architecture
-Przebudowano strukturę katalogów addona, aby pasowała do Clean Architecture:
+Refactored addon directory structure to match Clean Architecture:
 
 - **Application (`blender_addon/application/handlers/`)**
-  - `scene.py`: Zawiera klasę `SceneHandler` (Application Logic). Przejęła ona kod z dawnego `api/`.
+  - `scene.py`: Contains `SceneHandler` class (Application Logic). It took over code from the former `api/`.
 
 - **Infrastructure (`blender_addon/infrastructure/`)**
-  - `rpc_server.py`: Przeniesiono tutaj kod serwera socketowego (był w głównym katalogu).
+  - `rpc_server.py`: Moved socket server code here (was in the root directory).
 
 - **Entry Point (`blender_addon/__init__.py`)**
-  - Teraz działa jako Composition Root. Tworzy instancję `SceneHandler`, inicjalizuje `rpc_server` i rejestruje handlery.
+  - Now acts as Composition Root. Creates `SceneHandler` instance, initializes `rpc_server`, and registers handlers.
 
-### Struktura Plików
-- Usunięto katalog `blender_addon/api/`.
-- Testy zaktualizowano do nowych ścieżek.
+### File Structure
+- Removed `blender_addon/api/` directory.
+- Updated tests to new paths.
 
-Zmiana ta ujednolica architekturę między Serwerem (Client) a Addonem (Server). Oba komponenty są teraz warstwowe i testowalne.
+This change unifies architecture between Server (Client) and Addon (Server). Both components are now layered and testable.

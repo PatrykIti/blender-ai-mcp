@@ -1,19 +1,19 @@
 ---
 type: task
 id: TASK-001
-title: Inicjalizacja Projektu i Struktury
+title: Project Initialization and Structure
 status: done
 priority: high
 assignee: unassigned
 ---
 
-# 🎯 Cel
-Przygotowanie środowiska pracy, repozytorium oraz podstawowej struktury plików zgodnej z architekturą "Clean Architecture" opisaną w głównym README, wykorzystując **Poetry** do zarządzania zależnościami.
+# 🎯 Objective
+Prepare the work environment, repository, and basic file structure compliant with "Clean Architecture" described in the main README, using **Poetry** for dependency management.
 
-# 📋 Zakres prac
+# 📋 Scope of Work
 
-1. **Struktura Katalogów**
-   - Utworzyć katalogi:
+1. **Directory Structure**
+   - Create directories:
      - `server/domain/models`
      - `server/domain/tools`
      - `server/application/tool_handlers`
@@ -23,21 +23,21 @@ Przygotowanie środowiska pracy, repozytorium oraz podstawowej struktury plików
      - `blender_addon/api`
      - `blender_addon/utils`
 
-2. **Zależności (Poetry)**
-   - Zainicjować projekt `poetry init`.
-   - Dodać zależności:
+2. **Dependencies (Poetry)**
+   - Initialize project `poetry init`.
+   - Add dependencies:
      - `mcp`
      - `pydantic`
      - `uvicorn`
 
-3. **Konfiguracja Git**
-   - `.gitignore` (ignorowanie `__pycache__`, `.venv`, `*.zip`, `.DS_Store`).
+3. **Git Configuration**
+   - `.gitignore` (ignoring `__pycache__`, `.venv`, `*.zip`, `.DS_Store`).
 
-4. **Dokumentacja Deweloperska**
-   - Dodać instrukcję instalacji i uruchamiania (`poetry install`) w `README.md`.
+4. **Developer Documentation**
+   - Add installation and running instructions (`poetry install`) in `README.md`.
 
-# ✅ Kryteria Akceptacji
-- Struktura katalogów istnieje.
-- Plik `pyproject.toml` i `poetry.lock` są obecne.
-- Zależności instalują się poprawnie (`poetry install`).
-- Repozytorium jest czyste.
+# ✅ Acceptance Criteria
+- Directory structure exists.
+- `pyproject.toml` and `poetry.lock` are present.
+- Dependencies install correctly (`poetry install`).
+- Repository is clean.

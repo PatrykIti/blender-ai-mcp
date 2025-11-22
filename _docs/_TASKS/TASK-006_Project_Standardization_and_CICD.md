@@ -14,40 +14,19 @@ Prepare the repository for a professional, public open-source release. This incl
 # 📋 Scope of Work
 
 ## 1. Documentation Standardization (English)
-- **Translate `_docs/MVP_EXTENDED.md`**: Convert content to English and save as `ARCHITECTURE.md` in the root (or `_docs/ARCHITECTURE.md`).
-- **Update `README.md`**:
-  - Professional project description.
-  - Badges (CI status, Python version, License, Stars).
-  - "Star History" chart section.
-  - Clear usage instructions for MCP Clients (Cline, Claude Code) with Docker.
-- **Create `CONTRIBUTING.md`**:
-  - Guidelines based on our current workflow (Clean Architecture, Task-based development).
-  - Code style (Python, Pydantic).
-  - Pull Request process.
+- **Translate `_docs/MVP_EXTENDED.md`**: Convert content to English and save as `ARCHITECTURE.md`.
+- **Update `README.md`**: Professional description, badges, usage instructions.
+- **Create `CONTRIBUTING.md`**: Guidelines on Clean Architecture.
 
 ## 2. GitHub Templates (`.github/`)
-- **Issue Templates**:
-  - `bug_report.md`: Structured bug reporting.
-  - `feature_request.md`: Proposal for new tools/features.
-- **Pull Request Template**:
-  - `PULL_REQUEST_TEMPLATE.md`: Checklist for Clean Architecture compliance, tests, and documentation updates.
+- Issue Templates (`bug_report.md`, `feature_request.md`).
+- Pull Request Template.
 
 ## 3. CI/CD Pipeline (`.github/workflows/`)
 - **Workflow: `release.yml`**:
-  - Trigger: Push to `main` (or manual dispatch).
-  - **Job 1: Test**: Run unit tests.
-  - **Job 2: Build Addon**: Generate `blender_ai_mcp.zip`.
-  - **Job 3: Release**:
-    - Use `semantic-release` (or similar) to tag version.
-    - Create GitHub Release.
-    - Upload `blender_ai_mcp.zip` as a release asset.
-  - **Job 4: Docker Push**:
-    - Build Docker image.
-    - Push to GHCR (`ghcr.io/OWNER/blender-ai-mcp:latest` & `:tag`).
+  - Trigger: Push to `main`.
+  - **Jobs**: Test, Build Addon Zip, Semantic Release, Docker Push.
 
 # ✅ Acceptance Criteria
-- All documentation is in professional English.
-- `README.md` is comprehensive and user-friendly.
-- `CONTRIBUTING.md` clearly explains the architectural rules.
-- GitHub Issue/PR templates are in place.
-- CI/CD pipeline successfully builds, tests, and publishes artifacts (Zip & Docker) on merge to main.
+- All documentation in English.
+- CI/CD pipeline fully functional.

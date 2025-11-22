@@ -1,18 +1,18 @@
-# 9. Konteneryzacja Serwera (Docker)
+# 9. Server Dockerization
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.8  
-**Zadania:** TASK-005_Dockerize_Server
+**Date:** 2025-11-22  
+**Version:** 0.1.8  
+**Tasks:** TASK-005_Dockerize_Server
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
 ### Infrastructure
-- **Dockerfile**: Dodano plik budujący lekki obraz oparty na `python:3.10-slim`. Obraz zawiera wszystkie zależności i kod serwera.
-- **Konfiguracja**: Zaimplementowano `server/infrastructure/config.py`, który wczytuje zmienne środowiskowe (`BLENDER_RPC_HOST`, `BLENDER_RPC_PORT`). Pozwala to na dynamiczną konfigurację połączenia (niezbędne dla Dockera).
-- **DI**: Zaktualizowano `di.py`, aby wstrzykiwał konfigurację do `RpcClient`.
+- **Dockerfile**: Added file to build a lightweight image based on `python:3.10-slim`. The image contains all dependencies and server code.
+- **Configuration**: Implemented `server/infrastructure/config.py`, which loads environment variables (`BLENDER_RPC_HOST`, `BLENDER_RPC_PORT`). This allows dynamic connection configuration (essential for Docker).
+- **DI**: Updated `di.py` to inject configuration into `RpcClient`.
 
 ### Testing
-- Zweryfikowano połączenie z kontenera Docker do Blendera działającego na hoście (macOS) używając `host.docker.internal`.
+- Verified connection from Docker container to Blender running on host (macOS) using `host.docker.internal`.
 
 ### Deployment
-- Serwer jest teraz gotowy do dystrybucji jako obraz Docker, co eliminuje konieczność lokalnej instalacji Pythona i Poetry u użytkownika końcowego (poza środowiskiem developerskim).
+- The server is now ready for distribution as a Docker image, eliminating the need for local Python and Poetry installation by the end user (outside of development environment).

@@ -1,26 +1,26 @@
-# 1. Inicjalizacja Projektu i Core RPC
+# 1. Project Initialization and Core RPC
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.0  
-**Zadania:** TASK-001, TASK-002
+**Date:** 2025-11-22  
+**Version:** 0.1.0  
+**Tasks:** TASK-001, TASK-002
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
-### Core & Struktura
-- Zainicjalizowano projekt przy użyciu **Poetry**.
-- Utworzono strukturę katalogów zgodną z **Clean Architecture** (`domain`, `application`, `adapters`, `infrastructure`).
-- Skonfigurowano `.gitignore` i środowisko developerskie.
+### Core & Structure
+- Initialized project using **Poetry**.
+- Created directory structure compliant with **Clean Architecture** (`domain`, `application`, `adapters`, `infrastructure`).
+- Configured `.gitignore` and development environment.
 
 ### Blender Addon (Server Side)
-- Zaimplementowano **Serwer RPC** (`blender_addon/rpc_server.py`) działający na gniazdach TCP (domyślnie port 8765).
-- Zastosowano model wielowątkowy (`threading`) dla obsługi sieci.
-- Zabezpieczono wywołania API Blendera (`bpy`) przy użyciu `bpy.app.timers`, co gwarantuje bezpieczeństwo wątków (Thread Safety).
-- Dodano obsługę trybu "Mock" (uruchamianie poza Blenderem).
+- Implemented **RPC Server** (`blender_addon/rpc_server.py`) running on TCP sockets (default port 8765).
+- Used multi-threading model (`threading`) for network handling.
+- Secured `bpy` API calls using `bpy.app.timers` to ensure Thread Safety.
+- Added "Mock" mode support (running outside Blender).
 
 ### MCP Server (Client Side)
-- Zaimplementowano **Klienta RPC** (`server/adapters/rpc/client.py`).
-- Zdefiniowano modele komunikacyjne **Pydantic** (`RpcRequest`, `RpcResponse`).
-- Dodano mechanizmy automatycznego wznawiania połączenia (reconnect) i obsługi timeoutów.
+- Implemented **RPC Client** (`server/adapters/rpc/client.py`).
+- Defined **Pydantic** communication models (`RpcRequest`, `RpcResponse`).
+- Added automatic reconnection mechanisms and timeout handling.
 
 ### Testing
-- Utworzono test integracyjny `tests/test_rpc_connection.py` weryfikujący komunikację "Ping-Pong".
+- Created integration test `tests/test_rpc_connection.py` verifying "Ping-Pong" communication.

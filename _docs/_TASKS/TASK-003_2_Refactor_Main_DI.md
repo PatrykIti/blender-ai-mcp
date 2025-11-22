@@ -1,54 +1,52 @@
 ---
 type: task
 id: TASK-003_2_Refactor_Main_DI
-title: Refaktoryzacja Main i DI (Separation of Concerns)
+title: Main and DI Refactor (Separation of Concerns)
 status: done
 priority: high
 assignee: unassigned
 depends_on: TASK-003_1_Refactor_Architecture
 ---
 
-# 🎯 Cel
-Dalsza refaktoryzacja serwera w celu usunięcia logiki konfiguracyjnej i adapterów z `server/main.py`.
-Wydzielenie kontenera Dependency Injection oraz definicji narzędzi MCP do odpowiednich warstw.
+# 🎯 Objective
+Further refactor server to remove configuration logic and adapters from `server/main.py`.
+Extract Dependency Injection container and MCP tool definitions to appropriate layers.
 
-# 📋 Analiza
-Obecnie `server/main.py` robi trzy rzeczy na raz:
-1. Tworzy instancje obiektów (`RpcClient`, `SceneToolHandler`).
-2. Definiuje adaptery wejściowe MCP (`@mcp.tool`).
-3. Uruchamia serwer.
+# 📋 Analysis
+Currently `server/main.py` does three things:
+1. Creates object instances (`RpcClient`, `SceneToolHandler`).
+2. Defines MCP input adapters (`@mcp.tool`).
+3. Starts the server.
 
-# 🛠 Plan Prac
+# 🛠 Work Plan
 
 1. **Infrastructure Layer (`server/infrastructure/`)**
-   - Utworzyć `server/infrastructure/container.py`: Klasa `Container` (lub prosta funkcja), która tworzy i łączy wszystkie zależności (`RpcClient` -> `Handlers`). Zwraca gotowe handlery.
+   - Create `server/infrastructure/container.py`: `Container` class (or simple function) that creates and wires dependencies.
 
 2. **Adapters Layer (`server/adapters/mcp/`)**
-   - Utworzyć `server/adapters/mcp/server.py`:
-     - Tu przeniesiemy instancję `FastMCP`.
-     - Tu zdefiniujemy funkcje `@mcp.tool`.
-     - Funkcje te będą korzystać z handlerów dostarczonych przez kontener DI.
+   - Create `server/adapters/mcp/server.py`:
+     - Move `FastMCP` instance here.
+     - Define `@mcp.tool` functions here.
+     - Functions use handlers provided by DI container.
 
 3. **Entry Point (`server/main.py`)**
-   - Oczyścić plik.
-   - Ma tylko zaimportować `server` z adapterów i wywołać `run()`.
+   - Clean up file.
+   - Should only import `server` from adapters and call `run()`.
 
-# ✅ Struktura Docelowa
+# ✅ Target Structure
 
 ```
 server/
   infrastructure/
-    container.py       # Dependency Injection Container
-  
+    container.py       # DI Container
   adapters/
     mcp/
-      server.py        # FastMCP tools definition (korzysta z containera)
-  
-  main.py              # from server.adapters.mcp.server import run; run()
+      server.py        # FastMCP tools definition
+  main.py              # Entry point
 ```
 
-# ✅ Kryteria Akceptacji
-- `main.py` ma mniej niż 10 linii kodu.
-- Brak logiki budowania obiektów w `main.py`.
-- Narzędzia MCP są zdefiniowane w `adapters/mcp/`.
-- Aplikacja działa tak samo jak wcześniej.
+# ✅ Acceptance Criteria
+- `main.py` has minimal code.
+- No object construction logic in `main.py`.
+- MCP tools defined in `adapters/mcp/`.
+- Application works as before.

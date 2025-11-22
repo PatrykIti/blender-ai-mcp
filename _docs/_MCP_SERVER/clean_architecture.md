@@ -1,38 +1,38 @@
-# Clean Architecture w MCP Server
+# Clean Architecture in MCP Server
 
-Projekt serwera MCP jest zorganizowany według zasad Czystej Architektury, aby odseparować logikę biznesową (narzędzia modelowania) od frameworków (MCP, Sockets).
+The MCP server project is organized according to Clean Architecture principles to separate business logic (modeling tools) from frameworks (MCP, Sockets).
 
-## Warstwy (Layers)
+## Layers
 
 ### 1. Domain (`server/domain`)
-**Jądro systemu.** Nie zależy od żadnych zewnętrznych bibliotek (poza standardowymi typami i Pydantic dla modeli). Definiuje **CO** system może robić, ale nie **JAK**.
+**System Core.** Depends on no external libraries (except standard types and Pydantic for models). Defines **WHAT** the system can do, but not **HOW**.
 
-- **Interfaces (`interfaces/`)**: Kontrakty dla zewnętrznych serwisów (np. `IRpcClient`).
-- **Tools (`tools/`)**: Abstrakcyjne definicje narzędzi (np. `ISceneTool`, `IModelingTool`).
-- **Models (`models/`)**: Struktury danych (DTO), np. `RpcRequest`.
+- **Interfaces (`interfaces/`)**: Contracts for external services (e.g., `IRpcClient`).
+- **Tools (`tools/`)**: Abstract tool definitions (e.g., `ISceneTool`, `IModelingTool`).
+- **Models (`models/`)**: Data structures (DTOs), e.g., `RpcRequest`.
 
 ### 2. Application (`server/application`)
-**Logika aplikacji (Use Cases).** Implementuje interfejsy z warstwy domeny. Zależy wyłącznie od Domeny.
+**Application Logic (Use Cases).** Implements interfaces from the Domain layer. Depends only on Domain.
 
-- **Tool Handlers (`tool_handlers/`)**: Konkretne klasy (np. `SceneToolHandler`, `ModelingToolHandler`), które wiedzą jak użyć `IRpcClient` do realizacji zadania zdefiniowanego w `ISceneTool`.
+- **Tool Handlers (`tool_handlers/`)**: Concrete classes (e.g., `SceneToolHandler`, `ModelingToolHandler`) that know how to use `IRpcClient` to perform a task defined in `ISceneTool`.
 
 ### 3. Adapters (`server/adapters`)
-**Adaptery do świata zewnętrznego.** Konwertują dane z formatów zewnętrznych na wewnętrzne i odwrotnie.
+**Adapters to the outside world.** Convert data from external formats to internal ones and vice versa.
 
-- **RPC (`rpc/`)**: Implementacja klienta socketowego (`RpcClient`), która spełnia interfejs `IRpcClient`.
-- **MCP (`mcp/`)**: Warstwa wejściowa (Driver Adapter).
-  - `server.py`: Definiuje narzędzia `@mcp.tool`. Pobiera handlery z warstwy Infrastructure i przekazuje do nich sterowanie. Wykorzystuje `fastmcp.Context` do logowania.
+- **RPC (`rpc/`)**: Socket client implementation (`RpcClient`) that satisfies `IRpcClient` interface.
+- **MCP (`mcp/`)**: Input Layer (Driver Adapter).
+  - `server.py`: Defines `@mcp.tool`. Retrieves handlers from Infrastructure layer and delegates control to them. Uses `fastmcp.Context` for logging.
 
 ### 4. Infrastructure (`server/infrastructure`)
-**Szczegóły techniczne i konfiguracja.**
-- `di.py`: **Dependency Injection Providers**. Funkcje fabryczne (`get_scene_handler`, `get_modeling_handler`), które tworzą graf zależności.
-- Konfiguracja (zmienne środowiskowe).
+**Technical details and configuration.**
+- `di.py`: **Dependency Injection Providers**. Factory functions (`get_scene_handler`, `get_modeling_handler`) that create the dependency graph.
+- Configuration (environment variables).
 - Logging.
 
-## Przepływ Sterowania (Control Flow)
-1. `main.py` -> woła `adapters.mcp.server.run()`.
-2. `adapters.mcp.server` (Tool Function) -> woła `infrastructure.di.get_scene_handler()`.
-3. `infrastructure.di` -> tworzy (lub zwraca istniejący) `RpcClient` i wstrzykuje go do nowego `SceneToolHandler`.
-4. `adapters.mcp.server` -> woła `SceneToolHandler.list_objects()`.
-5. `SceneToolHandler` -> woła `IRpcClient.send_request()`.
-6. `RpcClient` -> wysyła JSON przez socket.
+## Control Flow
+1. `main.py` -> calls `adapters.mcp.server.run()`.
+2. `adapters.mcp.server` (Tool Function) -> calls `infrastructure.di.get_scene_handler()`.
+3. `infrastructure.di` -> creates (or returns existing) `RpcClient` and injects it into a new `SceneToolHandler`.
+4. `adapters.mcp.server` -> calls `SceneToolHandler.list_objects()`.
+5. `SceneToolHandler` -> calls `IRpcClient.send_request()`.
+6. `RpcClient` -> sends JSON via socket.

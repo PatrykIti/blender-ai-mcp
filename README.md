@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
-[![CI Status](https://github.com/YOU/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/YOU/blender-ai-mcp/actions)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
+[![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
 
 **Modular MCP Server + Blender Addon for AI-Driven 3D Modeling.**
 
@@ -44,7 +44,7 @@ We recommend using Docker to run the MCP Server.
         "-i",
         "--rm",
         "-e", "BLENDER_RPC_HOST=host.docker.internal",
-        "ghcr.io/your-username/blender-ai-mcp:latest"
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
       ],
       "disabled": false,
       "autoApprove": []
@@ -59,7 +59,7 @@ We recommend using Docker to run the MCP Server.
 
 ## 📈 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=YOU/blender-ai-mcp&type=Date)](https://star-history.com/#YOU/blender-ai-mcp&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=PatrykIti/blender-ai-mcp&type=Date)](https://star-history.com/#PatrykIti/blender-ai-mcp&Date)
 
 ---
 

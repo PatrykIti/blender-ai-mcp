@@ -1,18 +1,18 @@
-# 6. Refaktoryzacja FastMCP DI
+# 6. FastMCP DI Refactor
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.5  
-**Zadania:** TASK-003_3_Refactor_FastMCP_Dependency_Injection
+**Date:** 2025-11-22  
+**Version:** 0.1.5  
+**Tasks:** TASK-003_3_Refactor_FastMCP_Dependency_Injection
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
 ### Infrastructure Layer (`server/infrastructure/`)
-- Zastąpiono `container.py` (Global State) przez `di.py` (Providers).
-- Zaimplementowano funkcje fabryczne (`get_rpc_client`, `get_scene_handler`) zgodne ze wzorcem Singleton (cache modułu).
+- Replaced `container.py` (Global State) with `di.py` (Providers).
+- Implemented factory functions (`get_rpc_client`, `get_scene_handler`) compliant with the Singleton pattern (module cache).
 
 ### Adapters Layer (`server/adapters/mcp/`)
-- Usunięto globalny import kontenera w `server.py`.
-- Narzędzia MCP teraz explicite pobierają swoje zależności (handlery) używając providerów z `di.py`.
-- Dodano obsługę wstrzykiwania `Context` (z `fastmcp`) do narzędzi, co umożliwia strukturalne logowanie (`ctx.info`, `ctx.error`).
+- Removed global container import in `server.py`.
+- MCP Tools now explicitly retrieve their dependencies (handlers) using providers from `di.py`.
+- Added `Context` injection (from `fastmcp`) to tools, enabling structured logging (`ctx.info`, `ctx.error`).
 
-Ta zmiana eliminuje "magiczną" globalną zmienną kontenera w warstwie adapterów i przygotowuje grunt pod bardziej zaawansowane DI w przyszłości (np. `Depends` w FastMCP).
+This change eliminates the "magical" global container variable in the adapter layer and paves the way for more advanced DI in the future (e.g., `Depends` in FastMCP).

@@ -1,20 +1,20 @@
-# Komunikacja RPC i Concurrency
+# RPC Communication and Concurrency
 
-## Model Wątkowości
-Blender jest aplikacją jednowątkową w kontekście API Python (`bpy`). Operacje na danych sceny muszą być wykonywane w głównym wątku (Main Thread).
+## Threading Model
+Blender is a single-threaded application regarding the Python API (`bpy`). Operations on scene data must be executed on the **Main Thread**.
 
-### Problem
-Standardowy `socket.accept()` lub `recv()` jest operacją blokującą. Uruchomienie go w głównym wątku zamrozi interfejs użytkownika (UI) Blendera.
+### The Problem
+Standard `socket.accept()` or `recv()` operations are blocking. Running them on the main thread would freeze the Blender UI.
 
-### Rozwiązanie
-1. **Network Thread**: Serwer RPC (`rpc_server.py`) działa w osobnym wątku (`threading.Thread`). Odbiera żądania i parsuje JSON.
-2. **Main Thread Bridge**: Po odebraniu komendy, wątek sieciowy nie wykonuje jej bezpośrednio. Zamiast tego:
-   - Dodaje zadanie do kolejki.
-   - Rejestruje funkcję wykonawczą używając `bpy.app.timers.register(func)`.
-3. **Execution**: Przy następnym odświeżeniu pętli wydarzeń (Event Loop), Blender wykonuje funkcję z timera, która ma bezpieczny dostęp do `bpy`.
+### The Solution
+1. **Network Thread**: The RPC Server (`rpc_server.py`) runs in a separate thread (`threading.Thread`). It accepts requests and parses JSON.
+2. **Main Thread Bridge**: Upon receiving a command, the network thread does not execute it directly. Instead:
+   - It pushes the task to a queue.
+   - It registers an execution function using `bpy.app.timers.register(func)`.
+3. **Execution**: On the next Event Loop tick, Blender executes the function from the timer, which has safe access to `bpy`.
 
-## Protokół
-Komunikacja odbywa się po **TCP Sockets** przy użyciu JSON.
+## Protocol
+Communication occurs via **TCP Sockets** using JSON.
 
 ### Request
 ```json
@@ -33,7 +33,7 @@ Komunikacja odbywa się po **TCP Sockets** przy użyciu JSON.
     "result": { ... }
 }
 ```
-lub
+or
 ```json
 {
     "request_id": "uuid",

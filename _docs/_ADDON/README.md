@@ -1,44 +1,47 @@
 # Blender Addon Documentation
 
-Dokumentacja modułu Addona (Server Side).
+Documentation for the Blender Addon (Server Side).
 
-## 📚 Indeks Tematyczny
+## 📚 Topic Index
 
-- **[Architektura RPC i Wątkowość](./rpc_architecture.md)**
-  - Wyjaśnienie modelu wielowątkowego i `bpy.app.timers`.
+- **[RPC Architecture and Threading](./rpc_architecture.md)**
+  - Explanation of the multi-threaded model.
+  - `bpy.app.timers` mechanism.
+  - JSON Protocol.
 
-## 🛠 Struktura (Clean Architecture)
+## 🛠 Structure (Clean Architecture)
 
-Addon jest podzielony na warstwy, aby odseparować logikę Blendera od mechanizmów sieciowych.
+The Addon is layered to separate Blender logic from networking mechanisms.
 
 ### 1. Entry Point (`__init__.py`)
-Punkt wejścia. Odpowiada za:
-- Rejestrację w Blenderze (`bl_info`).
-- Tworzenie instancji handlerów aplikacji.
-- Rejestrację handlerów w serwerze RPC.
-- Uruchomienie serwera w osobnym wątku.
+The main entry point. Responsible for:
+- Registration in Blender (`bl_info`).
+- Instantiating Application Handlers.
+- Registering Handlers in the RPC Server.
+- Starting the server in a separate thread.
 
 ### 2. Application (`application/handlers/`)
-Logika biznesowa ("Jak to zrobić w Blenderze").
-- `scene.py`: `SceneHandler` (Lista obiektów, usuwanie).
-- `modeling.py`: `ModelingHandler` (Tworzenie, transformacje, modyfikatory).
+Business Logic ("How to do it in Blender").
+- `scene.py`: `SceneHandler` (List objects, delete).
+- `modeling.py`: `ModelingHandler` (Create primitives, transforms, modifiers).
+- Direct usage of `bpy`.
 
 ### 3. Infrastructure (`infrastructure/`)
-Szczegóły techniczne.
-- `rpc_server.py`: Implementacja serwera TCP.
+Technical details.
+- `rpc_server.py`: TCP Server implementation. It knows nothing about business logic, only accepts JSON requests and dispatches them to registered callbacks.
 
-## 🛠 Dostępne Komendy API
+## 🛠 Available API Commands
 
 ### Scene (`application/handlers/scene.py`)
-| Komenda RPC | Metoda | Opis |
-|-------------|--------|------|
-| `scene.list_objects` | `list_objects` | Lista obiektów na scenie. |
-| `scene.delete_object` | `delete_object` | Usunięcie obiektu. |
-| `scene.clean_scene` | `clean_scene` | Wyczyszczenie sceny. |
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `scene.list_objects` | `list_objects` | Lists objects in the scene. |
+| `scene.delete_object` | `delete_object` | Deletes an object. |
+| `scene.clean_scene` | `clean_scene` | Clears the scene. |
 
 ### Modeling (`application/handlers/modeling.py`)
-| Komenda RPC | Metoda | Opis |
-|-------------|--------|------|
-| `modeling.create_primitive` | `create_primitive` | Tworzy prymityw (Cube, Sphere, etc.). |
-| `modeling.transform_object` | `transform_object` | Przesuwa, obraca lub skaluje obiekt. |
-| `modeling.add_modifier` | `add_modifier` | Dodaje modyfikator do obiektu. |
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `modeling.create_primitive` | `create_primitive` | Creates a primitive (Cube, Sphere, etc.). |
+| `modeling.transform_object` | `transform_object` | Moves, rotates, or scales an object. |
+| `modeling.add_modifier` | `add_modifier` | Adds a modifier to an object. |

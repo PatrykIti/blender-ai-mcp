@@ -1,25 +1,25 @@
-# 4. Refaktoryzacja Clean Architecture
+# 4. Clean Architecture Refactor
 
-**Data:** 2025-11-22  
-**Wersja:** 0.1.3  
-**Zadania:** TASK-003_1_Refactor_Architecture
+**Date:** 2025-11-22  
+**Version:** 0.1.3  
+**Tasks:** TASK-003_1_Refactor_Architecture
 
-## 🚀 Główne Zmiany
+## 🚀 Key Changes
 
 ### Server Architecture (Clean Architecture Refactor)
-Przebudowano architekturę serwera MCP, aby ściśle przestrzegać zasad separacji warstw.
+Refactored MCP Server architecture to strictly adhere to layer separation principles.
 
 - **Domain Layer (`server/domain/`)**
-  - Dodano interfejsy: `interfaces/rpc.py` (`IRpcClient`) oraz `tools/scene.py` (`ISceneTool`).
-  - Od teraz warstwa domeny nie zależy od implementacji.
+  - Added interfaces: `interfaces/rpc.py` (`IRpcClient`) and `tools/scene.py` (`ISceneTool`).
+  - The Domain layer no longer depends on implementation details.
 
 - **Application Layer (`server/application/`)**
-  - Dodano `tool_handlers/scene_handler.py`: Implementacja `ISceneTool`.
-  - Handler przejmuje logikę biznesową, która wcześniej znajdowała się w `main.py`.
+  - Added `tool_handlers/scene_handler.py`: Implementation of `ISceneTool`.
+  - The Handler takes over business logic that previously resided in `main.py`.
 
 - **Adapters Layer (`server/adapters/`)**
-  - Zaktualizowano `rpc/client.py`: `RpcClient` implementuje teraz `IRpcClient`.
-  - Oczyszczono `main.py`: Teraz pełni rolę wyłącznie "Composition Root" (Dependency Injection) i Adaptera wejściowego (MCP). Nie zawiera logiki biznesowej.
+  - Updated `rpc/client.py`: `RpcClient` now implements `IRpcClient`.
+  - Cleaned up `main.py`: Now acts solely as "Composition Root" (Dependency Injection) and Input Adapter (MCP). Contains no business logic.
 
 ### Testing
-- Zweryfikowano poprawność refaktoryzacji testami (`test_scene_tools.py`, `test_rpc_connection.py`).
+- Verified refactoring correctness with tests (`test_scene_tools.py`, `test_rpc_connection.py`).
