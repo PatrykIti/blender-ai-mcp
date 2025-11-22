@@ -2,7 +2,7 @@
 type: task
 id: TASK-003_3_Refactor_FastMCP_Dependency_Injection
 title: Implementacja DI w FastMCP (Depends)
-status: todo
+status: done
 priority: high
 assignee: unassigned
 depends_on: TASK-003_2_Refactor_Main_DI
