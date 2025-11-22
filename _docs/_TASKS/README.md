@@ -4,7 +4,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 📊 Statystyki
 - **Do zrobienia:** 1
-- **W trakcie:** 0
+- **W trakcie:** 1
 - **Zakończone:** 3
 
 ---
@@ -19,7 +19,9 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 🚧 In Progress (W trakcie)
 
-*(Brak zadań)*
+| ID | Tytuł | Priorytet | Zależności |
+|----|-------|-----------|------------|
+| [TASK-003_1](./TASK-003_1_Refactor_Architecture.md) | **Refaktoryzacja Architektury Servera (Clean Architecture)** | 🔴 High | TASK-003 |
 
 ---
 
