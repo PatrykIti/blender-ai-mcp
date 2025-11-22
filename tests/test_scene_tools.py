@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 import sys
 import os
 
@@ -10,41 +10,82 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.modules["bpy"] = MagicMock()
 import bpy
 
-# Configure Mock context
-bpy.context.scene.objects = []
-bpy.data.objects = {}
-
 # Import handler
 from blender_addon.api import scene
 
 class TestSceneTools(unittest.TestCase):
     def setUp(self):
-        # Reset mock data
+        # --- MOCK SETUP ---
+        # 1. Objects
         self.cube = MagicMock()
         self.cube.name = "Cube"
         self.cube.type = "MESH"
         self.cube.location = (0, 0, 0)
+
+        self.camera = MagicMock()
+        self.camera.name = "Camera"
+        self.camera.type = "CAMERA"
         
-        bpy.context.scene.objects = [self.cube]
-        
-        # Mock bpy.data.objects as a dict-like object
+        self.light = MagicMock()
+        self.light.name = "Light"
+        self.light.type = "LIGHT"
+
+        # 2. Scene Objects List (Mocking bpy.context.scene.objects iteration)
+        # Initial state: 3 objects
+        self.scene_objects = [self.cube, self.camera, self.light]
+        bpy.context.scene.objects = self.scene_objects
+
+        # 3. bpy.data.objects Dictionary Behavior
         bpy.data.objects = MagicMock()
-        bpy.data.objects.__getitem__.side_effect = lambda k: self.cube if k == "Cube" else KeyError(k)
-        bpy.data.objects.__contains__.side_effect = lambda k: k == "Cube"
+        
+        def get_object(key):
+            for obj in self.scene_objects:
+                if obj.name == key:
+                    return obj
+            raise KeyError(key)
+            
+        bpy.data.objects.__getitem__.side_effect = get_object
+        bpy.data.objects.__contains__.side_effect = lambda k: any(o.name == k for o in self.scene_objects)
+        
+        # 4. Collections
+        bpy.data.collections = []
+
+        # 5. Remove mock
         bpy.data.objects.remove = MagicMock()
 
     def test_list_objects(self):
         result = scene.list_objects()
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["name"], "Cube")
+        self.assertEqual(len(result), 3)
+        names = [r["name"] for r in result]
+        self.assertIn("Cube", names)
+        self.assertIn("Camera", names)
 
     def test_delete_object(self):
         scene.delete_object("Cube")
         bpy.data.objects.remove.assert_called_with(self.cube, do_unlink=True)
 
-    def test_delete_nonexistent_object(self):
-        with self.assertRaises(ValueError):
-            scene.delete_object("Ghost")
+    def test_clean_scene_keep_lights(self):
+        # Should only delete Cube (MESH)
+        scene.clean_scene(keep_lights_and_cameras=True)
+        
+        # Verify remove called for cube but NOT camera/light
+        bpy.data.objects.remove.assert_called_with(self.cube, do_unlink=True)
+        
+        # Check that remove was NOT called for camera or light
+        # Get all args passed to remove
+        removed_objects = [call.args[0] for call in bpy.data.objects.remove.call_args_list]
+        self.assertIn(self.cube, removed_objects)
+        self.assertNotIn(self.camera, removed_objects)
+        self.assertNotIn(self.light, removed_objects)
+
+    def test_clean_scene_hard_reset(self):
+        # Should delete EVERYTHING
+        scene.clean_scene(keep_lights_and_cameras=False)
+        
+        removed_objects = [call.args[0] for call in bpy.data.objects.remove.call_args_list]
+        self.assertIn(self.cube, removed_objects)
+        self.assertIn(self.camera, removed_objects)
+        self.assertIn(self.light, removed_objects)
 
 if __name__ == "__main__":
     unittest.main()

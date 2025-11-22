@@ -24,12 +24,18 @@ def delete_object(name: str) -> str:
     return f"Successfully deleted object: {name}"
 
 @mcp.tool()
-def clean_scene() -> str:
-    """Delete ALL objects from the scene (Mesh, Curve, Surface, Meta, Font, Hair, PointCloud, Volume). Keeps Lights and Cameras by default."""
-    response = rpc.send_request("scene.clean_scene")
+def clean_scene(keep_lights_and_cameras: bool = True) -> str:
+    """
+    Delete objects from the scene.
+    
+    Args:
+        keep_lights_and_cameras: If True (default), keeps Lights and Cameras. 
+                                 If False, deletes EVERYTHING (hard reset).
+    """
+    response = rpc.send_request("scene.clean_scene", {"keep_lights_and_cameras": keep_lights_and_cameras})
     if response.status == "error":
         return f"Error: {response.error}"
-    return "Scene cleaned."
+    return f"Scene cleaned. (Kept lights/cameras: {keep_lights_and_cameras})"
 
 if __name__ == "__main__":
     mcp.run()

@@ -19,7 +19,7 @@ Zarządzanie obiektami na poziomie sceny.
 |-----------------|-----------|------|
 | `list_objects` | *brak* | Zwraca listę wszystkich obiektów na scenie wraz z ich typem i pozycją. |
 | `delete_object` | `name` (str) | Usuwa wskazany obiekt. Zwraca błąd jeśli obiekt nie istnieje. |
-| `clean_scene` | *brak* | Usuwa wszystkie obiekty geometryczne (Mesh, Curve, Text, itp.). Zachowuje kamery i światła. |
+| `clean_scene` | `keep_lights_and_cameras` (bool, domyślnie True) | Usuwa obiekty ze sceny. Jeśli `True`, zachowuje kamery i światła. Jeśli `False`, czyści projekt całkowicie ("hard reset"). |
 
 ## 🛠 Kluczowe Komponenty
 - `server/main.py`: Punkt wejścia serwera. Rejestracja narzędzi.

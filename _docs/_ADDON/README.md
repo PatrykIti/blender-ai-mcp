@@ -19,7 +19,7 @@ Implementacja w `blender_addon/api/scene.py`.
 |-------------|--------------------|------|
 | `scene.list_objects` | *brak* | Pobiera listę obiektów z `bpy.context.scene.objects`. |
 | `scene.delete_object` | `name` | Usuwa obiekt z `bpy.data.objects` używając `do_unlink=True`. |
-| `scene.clean_scene` | *brak* | Iteruje po obiektach i usuwa te, które nie są kamerami ani światłami. |
+| `scene.clean_scene` | `keep_lights_and_cameras` (bool) | Iteruje po obiektach i usuwa je. Opcjonalnie zachowuje kamery/światła. |
 
 ## 🛠 Struktura Plików
 - `__init__.py`: Rejestracja Addona i handlerów RPC.
