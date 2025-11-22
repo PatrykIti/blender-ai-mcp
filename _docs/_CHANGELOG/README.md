@@ -6,6 +6,7 @@ Rejestr zmian projektu.
 
 | Nr | Data | Tytuł | Wersja |
 |----|------|-------|--------|
+| [9](./9-2025-11-22-dockerize-server.md) | 2025-11-22 | **Konteneryzacja Serwera (Docker)** | 0.1.8 |
 | [8](./8-2025-11-22-modeling-tools.md) | 2025-11-22 | **Implementacja Modeling Tools** | 0.1.7 |
 | [7](./7-2025-11-22-refactor-addon-architecture.md) | 2025-11-22 | **Refaktoryzacja Architektury Addona** | 0.1.6 |
 | [6](./6-2025-11-22-refactor-fastmcp-di.md) | 2025-11-22 | **Refaktoryzacja FastMCP DI** | 0.1.5 |

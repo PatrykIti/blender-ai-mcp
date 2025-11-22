@@ -4,6 +4,7 @@ from server.application.tool_handlers.modeling_handler import ModelingToolHandle
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
+from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
 # Wzorzec "Singleton" realizowany przez zmienne modułu (lub lru_cache)
@@ -14,7 +15,8 @@ def get_rpc_client() -> IRpcClient:
     """Provider for IRpcClient. Acts as a Singleton."""
     global _rpc_client_instance
     if _rpc_client_instance is None:
-        _rpc_client_instance = RpcClient()
+        config = get_config()
+        _rpc_client_instance = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
     return _rpc_client_instance
 
 def get_scene_handler() -> ISceneTool:

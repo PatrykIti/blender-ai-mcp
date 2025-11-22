@@ -8,6 +8,30 @@ Dokumentacja serwera MCP (Client Side).
   - Szczegółowy opis warstw i przepływu sterowania (DI).
   - Zasady separacji zależności wdrożone w wersji 0.1.5.
 
+## 🚀 Uruchamianie (Docker)
+
+Serwer można uruchomić w kontenerze Docker, co izoluje środowisko.
+
+### 1. Budowanie obrazu
+```bash
+docker build -t blender-ai-mcp .
+```
+
+### 2. Uruchamianie
+Aby serwer w kontenerze mógł połączyć się z Blenderem na hoście, należy odpowiednio skonfigurować sieć.
+
+**MacOS / Windows:**
+```bash
+docker run -i --rm -e BLENDER_RPC_HOST=host.docker.internal blender-ai-mcp
+```
+
+**Linux:**
+```bash
+docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
+```
+
+*(Flaga `-i` jest kluczowa dla interaktywnej komunikacji stdio używanej przez MCP)*.
+
 ## 🛠 Dostępne Narzędzia (Tools)
 
 ### Scene Tools
@@ -34,7 +58,10 @@ Tworzenie i edycja geometrii.
 Minimalistyczny punkt startowy.
 
 ### Dependency Injection (`server/infrastructure/di.py`)
-Zestaw "Providerów" (funkcji fabrycznych), które dostarczają gotowe obiekty (Handlery) do warstwy Adapterów.
+Zestaw "Providerów" (funkcji fabrycznych). Wstrzykuje konfigurację z `server/infrastructure/config.py`.
+
+### Configuration (`server/infrastructure/config.py`)
+Obsługa zmiennych środowiskowych (np. adres IP Blendera).
 
 ### Application Handlers (`server/application/tool_handlers/`)
 Konkretne implementacje logiki narzędzi.

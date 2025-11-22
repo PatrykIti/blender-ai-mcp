@@ -6,7 +6,7 @@ from server.domain.models.rpc import RpcRequest, RpcResponse
 from server.domain.interfaces.rpc import IRpcClient
 
 class RpcClient(IRpcClient):
-    def __init__(self, host="127.0.0.1", port=8765):
+    def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
         self.socket = None
