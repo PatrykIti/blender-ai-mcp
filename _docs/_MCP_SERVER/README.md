@@ -8,6 +8,19 @@ Dokumentacja serwera MCP (Client Side).
   - Opis warstw: Domain, Application, Adapters, Infrastructure.
   - Zasady separacji zależności.
 
+## 🛠 Dostępne Narzędzia (Tools)
+
+Poniższe narzędzia są wystawiane dla modelu AI przez `FastMCP`.
+
+### Scene Tools
+Zarządzanie obiektami na poziomie sceny.
+
+| Nazwa Narzędzia | Argumenty | Opis |
+|-----------------|-----------|------|
+| `list_objects` | *brak* | Zwraca listę wszystkich obiektów na scenie wraz z ich typem i pozycją. |
+| `delete_object` | `name` (str) | Usuwa wskazany obiekt. Zwraca błąd jeśli obiekt nie istnieje. |
+| `clean_scene` | *brak* | Usuwa wszystkie obiekty geometryczne (Mesh, Curve, Text, itp.). Zachowuje kamery i światła. |
+
 ## 🛠 Kluczowe Komponenty
+- `server/main.py`: Punkt wejścia serwera. Rejestracja narzędzi.
 - `RpcClient` (`server/adapters/rpc/client.py`): Odpowiada za niskopoziomową komunikację z Blenderem.
-- `FastMCP` (planowane w `main.py`): Wystawia narzędzia dla modelu AI.
