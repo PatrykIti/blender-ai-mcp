@@ -20,16 +20,19 @@ Projekt serwera MCP jest zorganizowany według zasad Czystej Architektury, aby o
 **Adaptery do świata zewnętrznego.** Konwertują dane z formatów zewnętrznych na wewnętrzne i odwrotnie.
 
 - **RPC (`rpc/`)**: Implementacja klienta socketowego (`RpcClient`), która spełnia interfejs `IRpcClient`.
-- **MCP (`mcp/` / `main.py`)**: Warstwa wejściowa. Odbiera żądania od LLM (przez FastMCP), przekazuje je do Handlera Aplikacji i zwraca wynik jako string.
+- **MCP (`mcp/`)**: Warstwa wejściowa (Driver Adapter).
+  - `server.py`: Definiuje narzędzia `@mcp.tool` i deleguje wywołania do handlerów aplikacji.
 
 ### 4. Infrastructure (`server/infrastructure`)
-**Szczegóły techniczne.**
+**Szczegóły techniczne i konfiguracja.**
+- `container.py`: **Dependency Injection Container**. Odpowiada za tworzenie obiektów i wstrzykiwanie zależności (łączy Adapters z Application).
 - Konfiguracja (zmienne środowiskowe).
 - Logging.
 
-## Zasada Zależności (Dependency Rule)
-Zależności w kodzie źródłowym mogą wskazywać **tylko do wewnątrz**.
-- `Adapters` -> `Application` -> `Domain`
-- `Infrastructure` -> `Adapters`
-
-Przykład: `SceneToolHandler` (Application) zależy od `IRpcClient` (Domain). `RpcClient` (Adapters) implementuje `IRpcClient`. Dzięki temu logika aplikacji nie zależy od socketów.
+## Przepływ Sterowania (Control Flow)
+1. `main.py` -> woła `adapters.mcp.server.run()`.
+2. `adapters.mcp.server` -> pobiera Handlery z `infrastructure.container`.
+3. `infrastructure.container` -> tworzy `RpcClient` i wstrzykuje go do `SceneToolHandler`.
+4. `adapters.mcp.server` (Tool Function) -> woła `SceneToolHandler.list_objects()`.
+5. `SceneToolHandler` -> woła `IRpcClient.send_request()`.
+6. `RpcClient` -> wysyła JSON przez socket.

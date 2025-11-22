@@ -6,6 +6,7 @@ Rejestr zmian projektu.
 
 | Nr | Data | Tytuł | Wersja |
 |----|------|-------|--------|
+| [5](./5-2025-11-22-refactor-main-di.md) | 2025-11-22 | **Refaktoryzacja Main i DI** | 0.1.4 |
 | [4](./4-2025-11-22-refactor-architecture.md) | 2025-11-22 | **Refaktoryzacja Clean Architecture** | 0.1.3 |
 | [3](./3-2025-11-22-clean-scene-improvement.md) | 2025-11-22 | **Ulepszenie Scene Tools (Hard Reset)** | 0.1.2 |
 | [2](./2-2025-11-22-scene-tools.md) | 2025-11-22 | **Implementacja Scene Tools (MVP)** | 0.1.1 |
