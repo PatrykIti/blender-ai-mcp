@@ -1,4 +1,4 @@
-name: Release
+name: Release & Publish
 
 on:
   push:
@@ -40,7 +40,6 @@ jobs:
   release:
     needs: build-and-test
     runs-on: ubuntu-latest
-    concurrency: release
     steps:
       - name: Generate Token
         uses: actions/create-github-app-token@v1
@@ -61,7 +60,55 @@ jobs:
           path: dist/
 
       - name: Python Semantic Release
+        id: semantic-release
         uses: python-semantic-release/python-semantic-release@master
         with:
           root_options: -vv
           github_token: ${{ steps.app-token.outputs.token }}
+
+  docker:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Checkout Latest Tag
+        run: |
+          git pull origin main
+          latest_tag=$(git describe --tags --abbrev=0)
+          echo "Checking out tag: $latest_tag"
+          git checkout $latest_tag
+      
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ steps.app-token.outputs.token }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
