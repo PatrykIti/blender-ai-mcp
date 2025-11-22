@@ -2,7 +2,7 @@
 type: task
 id: TASK-001
 title: Inicjalizacja Projektu i Struktury
-status: in_progress
+status: done
 priority: high
 assignee: unassigned
 ---

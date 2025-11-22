@@ -82,7 +82,7 @@ Przykład requestu:
 ```
 git clone https://github.com/YOU/blender-ai-mcp.git
 cd blender-ai-mcp
-pip install -r requirements.txt
+poetry install
 ```
 
 ## Blender Addon
