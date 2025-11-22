@@ -9,8 +9,6 @@
 
 Enable LLMs (Claude, ChatGPT) to control Blender reliably. Built with **Clean Architecture** for stability and scalability.
 
-![Blender AI MCP](https://via.placeholder.com/800x400?text=Blender+AI+MCP+Demo+Placeholder)
-
 ---
 
 ## 🌟 Key Features
