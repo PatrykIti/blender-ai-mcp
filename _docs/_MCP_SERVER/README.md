@@ -6,7 +6,7 @@ Dokumentacja serwera MCP (Client Side).
 
 - **[Clean Architecture](./clean_architecture.md)**
   - Szczegółowy opis warstw i przepływu sterowania (DI).
-  - Zasady separacji zależności wdrożone w wersji 0.1.4.
+  - Zasady separacji zależności wdrożone w wersji 0.1.5.
 
 ## 🛠 Dostępne Narzędzia (Tools)
 
@@ -24,10 +24,10 @@ Zarządzanie obiektami na poziomie sceny.
 ## 🛠 Kluczowe Komponenty
 
 ### Entry Point (`server/main.py`)
-Minimalistyczny punkt startowy. Jedynie importuje i uruchamia serwer zdefiniowany w `adapters/mcp`.
+Minimalistyczny punkt startowy.
 
-### Dependency Injection (`server/infrastructure/container.py`)
-Centralne miejsce konfiguracji systemu. Tutaj "spinane" są wszystkie zależności.
+### Dependency Injection (`server/infrastructure/di.py`)
+Zestaw "Providerów" (funkcji fabrycznych), które dostarczają gotowe obiekty (Handlery) do warstwy Adapterów.
 
 ### Application Handlers (`server/application/tool_handlers/`)
 Konkretne implementacje logiki narzędzi.
