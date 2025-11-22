@@ -2,7 +2,7 @@
 type: task
 id: TASK-003
 title: MVP MCP Server i Scene Tools
-status: todo
+status: done
 priority: medium
 assignee: unassigned
 depends_on: TASK-002
