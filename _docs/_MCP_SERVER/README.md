@@ -5,8 +5,8 @@ Dokumentacja serwera MCP (Client Side).
 ## 📚 Indeks Tematyczny
 
 - **[Clean Architecture](./clean_architecture.md)**
-  - Opis warstw: Domain, Application, Adapters, Infrastructure.
-  - Zasady separacji zależności.
+  - Szczegółowy opis warstw: Domain, Application, Adapters, Infrastructure.
+  - Zasady separacji zależności wdrożone w wersji 0.1.3.
 
 ## 🛠 Dostępne Narzędzia (Tools)
 
@@ -22,5 +22,19 @@ Zarządzanie obiektami na poziomie sceny.
 | `clean_scene` | `keep_lights_and_cameras` (bool, domyślnie True) | Usuwa obiekty ze sceny. Jeśli `True`, zachowuje kamery i światła. Jeśli `False`, czyści projekt całkowicie ("hard reset"). |
 
 ## 🛠 Kluczowe Komponenty
-- `server/main.py`: Punkt wejścia serwera. Rejestracja narzędzi.
-- `RpcClient` (`server/adapters/rpc/client.py`): Odpowiada za niskopoziomową komunikację z Blenderem.
+
+### Composition Root (`server/main.py`)
+Punkt wejścia aplikacji. Odpowiada za:
+1. Inicjalizację Adapterów (`RpcClient`).
+2. Inicjalizację Aplikacji (`SceneToolHandler`).
+3. Wstrzyknięcie zależności.
+4. Uruchomienie serwera FastMCP.
+
+### Application Handlers (`server/application/tool_handlers/`)
+Konkretne implementacje logiki narzędzi, niezależne od frameworka MCP.
+- `scene_handler.py`: Obsługa operacji na scenie.
+
+### Interfaces (`server/domain/`)
+Abstrakcje definiujące kontrakty systemowe.
+- `interfaces/rpc.py`: Kontrakt dla klienta RPC.
+- `tools/scene.py`: Kontrakt dla narzędzi sceny.

@@ -2,7 +2,7 @@
 type: task
 id: TASK-003_1_Refactor_Architecture
 title: Refaktoryzacja Architektury Servera (Clean Architecture)
-status: in_progress
+status: done
 priority: high
 assignee: unassigned
 depends_on: TASK-003

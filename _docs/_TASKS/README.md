@@ -4,8 +4,8 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 📊 Statystyki
 - **Do zrobienia:** 1
-- **W trakcie:** 1
-- **Zakończone:** 3
+- **W trakcie:** 0
+- **Zakończone:** 4
 
 ---
 
@@ -19,9 +19,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 
 ## 🚧 In Progress (W trakcie)
 
-| ID | Tytuł | Priorytet | Zależności |
-|----|-------|-----------|------------|
-| [TASK-003_1](./TASK-003_1_Refactor_Architecture.md) | **Refaktoryzacja Architektury Servera (Clean Architecture)** | 🔴 High | TASK-003 |
+*(Brak zadań)*
 
 ---
 
@@ -32,6 +30,7 @@ Tablica zadań dla projektu. Aktualizuj statusy w plikach markdown.
 | [TASK-001](./TASK-001_Project_Setup.md) | **Inicjalizacja Projektu i Struktury** | 🔴 High | 2025-11-22 |
 | [TASK-002](./TASK-002_Communication_Core.md) | **Implementacja Mostu Komunikacyjnego (RPC)** | 🔴 High | 2025-11-22 |
 | [TASK-003](./TASK-003_MCP_Scene_Tools.md) | **MVP MCP Server i Scene Tools** | 🟡 Medium | 2025-11-22 |
+| [TASK-003_1](./TASK-003_1_Refactor_Architecture.md) | **Refaktoryzacja Architektury Servera (Clean Architecture)** | 🔴 High | 2025-11-22 |
 
 ---
 
