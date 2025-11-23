@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [11](./11-2025-11-22-scene-tools-extension.md) | 2025-11-22 | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 0.1.10 |
 | [10](./10-2025-11-22-cicd-standardization.md) | 2025-11-22 | **Standardization and CI/CD** | 0.1.9 |
 | [9](./9-2025-11-22-dockerize-server.md) | 2025-11-22 | **Server Dockerization** | 0.1.8 |
 | [8](./8-2025-11-22-modeling-tools.md) | 2025-11-22 | **Modeling Tools Implementation** | 0.1.7 |

@@ -38,6 +38,9 @@ Technical details.
 | `scene.list_objects` | `list_objects` | Lists objects in the scene. |
 | `scene.delete_object` | `delete_object` | Deletes an object. |
 | `scene.clean_scene` | `clean_scene` | Clears the scene. |
+| `scene.duplicate_object` | `duplicate_object` | Duplicates an object and optionally moves it. |
+| `scene.set_active_object` | `set_active_object` | Sets the active object. |
+| `scene.get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render of the viewport. |
 
 ### Modeling (`application/handlers/modeling.py`)
 | RPC Command | Handler Method | Description |

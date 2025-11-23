@@ -42,6 +42,9 @@ Managing objects at the scene level.
 | `list_objects` | *none* | Returns a list of all objects in the scene with their type and position. |
 | `delete_object` | `name` (str) | Deletes the specified object. Returns error if object does not exist. |
 | `clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
+| `duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. |
+| `set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
+| `get_viewport` | `width` (int), `height` (int) | Returns a rendered image of the scene (OpenGL) for the AI to inspect. |
 
 ### Modeling Tools
 Geometry creation and editing.

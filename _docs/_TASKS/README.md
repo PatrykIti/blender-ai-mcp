@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0
 - **In Progress:** 0
-- **Done:** 10
+- **Done:** 11
 
 ---
 
@@ -35,6 +35,8 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-004](./TASK-004_Modeling_Tools.md) | **Modeling Tools (Mesh Ops)** | 🟡 Medium | 2025-11-22 |
 | [TASK-005](./TASK-005_Dockerize_Server.md) | **MCP Server Containerization (Docker)** | 🟡 Medium | 2025-11-22 |
 | [TASK-006](./TASK-006_Project_Standardization_and_CICD.md) | **Project Standardization and CI/CD Setup** | 🔴 High | 2025-11-22 |
+| [TASK-007](./TASK-007_Scene_Tools_Extension.md) | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 🔴 High | 2025-11-22 |
+| [TASK-007](./TASK-007_Scene_Tools_Extension.md) | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 🔴 High | - |
 
 ---
 
