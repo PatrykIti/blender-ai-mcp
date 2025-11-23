@@ -226,7 +226,7 @@ def separate_object(
     """
     handler = get_modeling_handler()
     try:
-        return handler.separate_object(name, type)["separated_objects"]
+        return handler.separate_object(name, type)
     except RuntimeError as e:
         return str(e)
 

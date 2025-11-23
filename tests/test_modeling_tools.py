@@ -304,15 +304,15 @@ class TestModelingTools(unittest.TestCase):
         bpy.ops.object.origin_set = MagicMock()
 
         # When
-        result = self.handler.set_origin("TestObject", "ORIGIN_GEOMETRY_TO_CURSOR")
+        result = self.handler.set_origin("TestObject", "ORIGIN_GEOMETRY")
         
         # Then
         bpy.ops.object.select_all.assert_called_with(action='DESELECT')
         obj.select_set.assert_called_with(True)
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.origin_set.assert_called_with(type='ORIGIN_GEOMETRY_TO_CURSOR')
+        bpy.ops.object.origin_set.assert_called_with(type='ORIGIN_GEOMETRY')
         self.assertEqual(result['object'], "TestObject")
-        self.assertEqual(result['origin_type'], "ORIGIN_GEOMETRY_TO_CURSOR")
+        self.assertEqual(result['origin_type'], "ORIGIN_GEOMETRY")
         self.assertEqual(result['status'], "success")
 
     def test_set_origin_invalid_type(self):
@@ -321,7 +321,7 @@ class TestModelingTools(unittest.TestCase):
 
     def test_set_origin_object_not_found(self):
         with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
-            self.handler.set_origin("NonExistent", "ORIGIN_GEOMETRY_TO_CURSOR")
+            self.handler.set_origin("NonExistent", "ORIGIN_GEOMETRY")
 
 if __name__ == "__main__":
     unittest.main()

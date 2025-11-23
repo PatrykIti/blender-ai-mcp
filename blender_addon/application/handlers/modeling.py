@@ -209,15 +209,16 @@ class ModelingHandler:
         obj = bpy.data.objects[name]
         
         valid_types = [
-            'ORIGIN_GEOMETRY_TO_CURSOR', 
-            'ORIGIN_CURSOR_TO_GEOMETRY', 
-            'ORIGIN_GEOMETRY_TO_MASS', 
-            'ORIGIN_CENTER_OF_MASS', # For historical reasons, also includes this
-            'ORIGIN_BOUNDS_TO_CURSOR'
+            'GEOMETRY_ORIGIN',        # Geometry to Origin
+            'ORIGIN_GEOMETRY',        # Origin to Geometry
+            'ORIGIN_CURSOR',          # Origin to 3D Cursor
+            'ORIGIN_CENTER_OF_MASS',  # Origin to Center of Mass (Surface)
+            'ORIGIN_CENTER_OF_VOLUME' # Origin to Center of Mass (Volume)
         ]
         
         origin_type_upper = type.upper()
         if origin_type_upper not in valid_types:
+            # Provide a helpful error message with valid options
             raise ValueError(f"Invalid origin type: '{type}'. Must be one of {valid_types}")
 
         # Select the object and make it active
@@ -230,4 +231,4 @@ class ModelingHandler:
         except RuntimeError as e:
             raise ValueError(f"Failed to set origin for object '{name}' with type '{type}': {str(e)}")
             
-        return {"object": name, "origin_type": type, "status": "success"}
+        return {"object": name, "origin_type": origin_type_upper, "status": "success"}
