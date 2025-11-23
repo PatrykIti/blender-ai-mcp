@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch, mock_open
 import sys
 
 # Mock blender modules before import
-sys.modules['bpy'] = MagicMock()
+if 'bpy' not in sys.modules:
+    sys.modules['bpy'] = MagicMock()
 import bpy
 
 # Import after mocking
