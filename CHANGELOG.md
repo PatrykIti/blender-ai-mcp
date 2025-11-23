@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.3.0 (2025-11-23)
+
+### Features
+
+- **modeling**: Complete Object Mode Toolset, Refactor Naming, and UX Improvements
+  ([#6](https://github.com/PatrykIti/blender-ai-mcp/pull/6),
+  [`37d4ff3`](https://github.com/PatrykIti/blender-ai-mcp/commit/37d4ff3c071420059b6bb4c3694e0ee77332aef4))
+
+
 ## v1.2.0 (2025-11-23)
 
 ### Chores
