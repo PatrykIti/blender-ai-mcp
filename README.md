@@ -61,7 +61,7 @@ We recommend using Docker to run the MCP Server.
 
 ## 📈 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=PatrykIti/blender-ai-mcp&type=Date)](https://star-history.com/#PatrykIti/blender-ai-mcp&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=PatrykIti/blender-ai-mcp&type=date&legend=top-left)](https://www.star-history.com/#PatrykIti/blender-ai-mcp&type=date&legend=top-left)
 
 ---
 
