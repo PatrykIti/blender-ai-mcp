@@ -64,7 +64,8 @@ We recommend using Docker to run the MCP Server.
         "convert_to_mesh",
         "join_objects",
         "separate_object",
-        "set_origin"
+        "set_origin",
+        "list_modifiers"
       ]
     }
   }
