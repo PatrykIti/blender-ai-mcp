@@ -4,9 +4,15 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      manual_tag:
+        description: 'Tag to build (e.g. 1.1.0). Leave empty to use latest.'
+        required: true
+        default: 'latest'
 
 jobs:
   build-and-test:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +44,7 @@ jobs:
           path: outputs/blender_ai_mcp.zip
 
   release:
+    if: github.event_name == 'push'
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
@@ -68,33 +75,36 @@ jobs:
 
   docker:
     needs: release
+    if: always() && ((github.event_name == 'push' && needs.release.result == 'success') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Token
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
-      - name: Checkout Latest Tag
+      - name: Checkout Tag
         run: |
-          git pull origin main
-          latest_tag=$(git describe --tags --abbrev=0)
-          echo "Checking out tag: $latest_tag"
-          git checkout $latest_tag
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TAG="${{ inputs.manual_tag }}"
+            echo "Manual mode. Tag: $TAG"
+            if [ "$TAG" != "latest" ]; then
+               git checkout "$TAG"
+            fi
+            echo "DOCKER_TAG=$TAG" >> $GITHUB_ENV
+          else
+            git pull origin main
+            latest_tag=$(git describe --tags --abbrev=0)
+            echo "Automatic mode. Latest tag: $latest_tag"
+            git checkout $latest_tag
+            echo "DOCKER_TAG=$latest_tag" >> $GITHUB_ENV
+          fi
       
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ steps.app-token.outputs.token }}
+          password: ${{ secrets.PAT }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -102,7 +112,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}}
+            type=raw,value=${{ env.DOCKER_TAG }}
             type=raw,value=latest
 
       - name: Build and push Docker image

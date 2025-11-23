@@ -1,6 +1,8 @@
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
+LABEL org.opencontainers.image.source=https://github.com/PatrykIti/blender-ai-mcp
+
 # Set the working directory in the container
 WORKDIR /app
 
