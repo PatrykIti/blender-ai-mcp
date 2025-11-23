@@ -33,36 +33,67 @@ Technical details.
 ## 🛠 Available API Commands
 
 ### Scene (`application/handlers/scene.py`)
+
 | RPC Command | Handler Method | Description |
+
 |-------------|----------------|-------------|
-| `scene.list_objects` | `list_objects` | Lists objects in the scene. |
-| `scene.delete_object` | `delete_object` | Deletes an object. |
-| `scene.clean_scene` | `clean_scene` | Clears the scene. |
-| `scene.duplicate_object` | `duplicate_object` | Duplicates an object and optionally moves it. |
-| `scene.set_active_object` | `set_active_object` | Sets the active object. |
-| `scene.get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render of the viewport. |
+
+| `list_objects` | `list_objects` | Lists objects in the scene. |
+
+| `delete_object` | `delete_object` | Deletes an object. |
+
+| `clean_scene` | `clean_scene` | Clears the scene. |
+
+| `duplicate_object` | `duplicate_object` | Duplicates an object and optionally moves it. |
+
+| `set_active_object` | `set_active_object` | Sets the active object. |
+
+| `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render of the viewport. |
+
+
 
 ### Modeling (`application/handlers/modeling.py`)
 
+
+
 | RPC Command | Handler Method | Description |
+
+
 
 |-------------|----------------|-------------|
 
-| `modeling.create_primitive` | `create_primitive` | Creates a primitive (Cube, Sphere, etc.). |
 
-| `modeling.transform_object` | `transform_object` | Moves, rotates, or scales an object. |
 
-| `modeling.add_modifier` | `add_modifier` | Adds a modifier to an object. |
+| `create_primitive` | `create_primitive` | Creates a primitive (Cube, Sphere, etc.). |
 
-| `modeling.apply_modifier` | `apply_modifier` | Applies (finalizes) a modifier on an object. |
 
-| `modeling.convert_to_mesh` | `convert_to_mesh` | Converts a non-mesh object to a mesh. |
 
-| `modeling.join_objects` | `join_objects` | Joins multiple mesh objects into one. |
+| `transform_object` | `transform_object` | Moves, rotates, or scales an object. |
 
-| `modeling.separate_object` | `separate_object` | Separates a mesh object into new objects. |
 
-| `modeling.set_origin` | `set_origin` | Sets the origin point of an object. |
-| `modeling.get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
+
+| `add_modifier` | `add_modifier` | Adds a modifier to an object. |
+
+
+
+| `apply_modifier` | `apply_modifier` | Applies (finalizes) a modifier on an object. |
+
+
+
+| `convert_to_mesh` | `convert_to_mesh` | Converts a non-mesh object to a mesh. |
+
+
+
+| `join_objects` | `join_objects` | Joins multiple mesh objects into one. |
+
+
+
+| `separate_object` | `separate_object` | Separates a mesh object into new objects. |
+
+
+
+| `set_origin` | `set_origin` | Sets the origin point of an object. |
+
+| `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
 
 
