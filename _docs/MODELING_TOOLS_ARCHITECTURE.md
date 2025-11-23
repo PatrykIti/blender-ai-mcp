@@ -6,7 +6,7 @@ Każda operacja musi mieć osobny tool, aby AI nie mieszało kontekstu ani tryb�
 
 ---
 
-# 1. modeling.add_modifier (GROUPABLE – jedyna grupa w modeling)
+# 1. modeling.add_modifier (GROUPABLE – jedyna grupa w modeling) ✅ Done
 Bezpieczne modyfikatory, które AI może stosować z parametrami.
 
 Dozwolone typy:
@@ -45,7 +45,7 @@ Przykład:
 
 ---
 
-# 2. modeling.apply_modifier
+# 2. modeling.apply_modifier ✅ Done
 Zatwierdzanie modyfikatorów.
 
 Operacje:
@@ -55,7 +55,7 @@ Operacje:
 
 ---
 
-# 3. modeling.convert_to_mesh
+# 3. modeling.convert_to_mesh ✅ Done
 Konwersja z obiektów typu Curve, Text, Surface → Mesh.
 
 Przykład:
@@ -68,7 +68,7 @@ Przykład:
 
 ---
 
-# 4. modeling.join_objects
+# 4. modeling.join_objects ✅ Done
 Łączenie wielu obiektów w jeden Mesh.
 
 Args:
@@ -76,7 +76,7 @@ Args:
 
 ---
 
-# 5. modeling.separate
+# 5. modeling.separate ✅ Done
 Oddzielenie siatki na nowe obiekty.
 
 Typy:
@@ -86,7 +86,7 @@ Typy:
 
 ---
 
-# 6. modeling.set_origin
+# 6. modeling.set_origin ✅ Done
 Ustawienie punktu origin obiektu.
 
 Metody:
@@ -96,12 +96,15 @@ Metody:
 
 ---
 
-# 7. modeling.convert_curve_to_mesh
-Specjalny converter dla detali, logotypów i form organicznych.
+# 7. modeling.list_modifiers ✅ Done (Dodane)
+Listowanie modyfikatorów na obiekcie.
+
+Args:
+- name: nazwa obiektu
 
 ---
 
-# 8. modeling.create_primitive (object-level creation)
+# 8. modeling.create_primitive (object-level creation) ✅ Done
 Tworzenie podstawowych brył (powiązane z modeling, ale oddzielne od mesh tools).
 
 Typy:
