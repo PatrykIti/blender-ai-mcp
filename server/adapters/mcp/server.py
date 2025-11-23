@@ -216,7 +216,7 @@ def separate_object(
     ctx: Context,
     name: str,
     type: str = "LOOSE"
-) -> List[str]:
+) -> str:
     """
     Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
     
@@ -226,7 +226,8 @@ def separate_object(
     """
     handler = get_modeling_handler()
     try:
-        return handler.separate_object(name, type)
+        result = handler.separate_object(name, type)
+        return str(result)
     except RuntimeError as e:
         return str(e)
 
