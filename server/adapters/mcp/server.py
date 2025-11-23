@@ -10,7 +10,7 @@ mcp = FastMCP("blender-ai-mcp", dependencies=["pydantic", "fastmcp"])
 
 # ... Scene Tools ...
 @mcp.tool()
-def list_objects(ctx: Context) -> str:
+def scene_list_objects(ctx: Context) -> str:
     """List all objects in the current Blender scene with their types."""
     handler = get_scene_handler()
     try:
@@ -21,7 +21,7 @@ def list_objects(ctx: Context) -> str:
         return str(e)
 
 @mcp.tool()
-def delete_object(name: str, ctx: Context) -> str:
+def scene_delete_object(name: str, ctx: Context) -> str:
     """Delete an object from the scene by name."""
     handler = get_scene_handler()
     try:
@@ -30,7 +30,7 @@ def delete_object(name: str, ctx: Context) -> str:
         return str(e)
 
 @mcp.tool()
-def clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
+def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
     """
     Delete objects from the scene.
     
@@ -45,7 +45,7 @@ def clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
         return str(e)
 
 @mcp.tool()
-def duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
+def scene_duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
     """
     Duplicate an object and optionally move it.
     
@@ -60,7 +60,7 @@ def duplicate_object(ctx: Context, name: str, translation: List[float] = None) -
         return str(e)
 
 @mcp.tool()
-def set_active_object(ctx: Context, name: str) -> str:
+def scene_set_active_object(ctx: Context, name: str) -> str:
     """
     Set the active object. 
     This is important for operations that work on the "active" object (like adding modifiers).
@@ -72,7 +72,7 @@ def set_active_object(ctx: Context, name: str) -> str:
         return str(e)
 
 @mcp.tool()
-def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
+def scene_get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
     """
     Get a visual preview of the scene (OpenGL Viewport Render).
     Returns an Image resource that the AI can see.
@@ -90,7 +90,7 @@ def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
 # ... Modeling Tools ...
 
 @mcp.tool()
-def create_primitive(
+def modeling_create_primitive(
     ctx: Context,
     primitive_type: str, 
     radius: float = 1.0, 
@@ -115,7 +115,7 @@ def create_primitive(
         return str(e)
 
 @mcp.tool()
-def transform_object(
+def modeling_transform_object(
     ctx: Context,
     name: str, 
     location: Optional[List[float]] = None, 
@@ -138,7 +138,7 @@ def transform_object(
         return str(e)
 
 @mcp.tool()
-def add_modifier(
+def modeling_add_modifier(
     ctx: Context,
     name: str, 
     modifier_type: str, 
@@ -159,7 +159,7 @@ def add_modifier(
         return str(e)
 
 @mcp.tool()
-def apply_modifier(
+def modeling_apply_modifier(
     ctx: Context,
     name: str, 
     modifier_name: str
@@ -178,7 +178,7 @@ def apply_modifier(
         return str(e)
 
 @mcp.tool()
-def convert_to_mesh(
+def modeling_convert_to_mesh(
     ctx: Context,
     name: str
 ) -> str:
@@ -195,7 +195,7 @@ def convert_to_mesh(
         return str(e)
 
 @mcp.tool()
-def join_objects(
+def modeling_join_objects(
     ctx: Context,
     object_names: List[str]
 ) -> str:
@@ -212,7 +212,7 @@ def join_objects(
         return str(e)
 
 @mcp.tool()
-def separate_object(
+def modeling_separate_object(
     ctx: Context,
     name: str,
     type: str = "LOOSE"
@@ -232,7 +232,7 @@ def separate_object(
         return str(e)
 
 @mcp.tool()
-def list_modifiers(
+def modeling_list_modifiers(
     ctx: Context,
     name: str
 ) -> str:
@@ -250,7 +250,7 @@ def list_modifiers(
         return str(e)
 
 @mcp.tool()
-def set_origin(
+def modeling_set_origin(
     ctx: Context,
     name: str,
     type: str

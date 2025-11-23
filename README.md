@@ -51,21 +51,21 @@ We recommend using Docker to run the MCP Server.
       ],
       "disabled": false,
       "autoApprove": [
-        "list_objects",
-        "delete_object",
-        "clean_scene",
-        "duplicate_object",
-        "set_active_object",
-        "get_viewport",
-        "create_primitive",
-        "transform_object",
-        "add_modifier",
-        "apply_modifier",
-        "convert_to_mesh",
-        "join_objects",
-        "separate_object",
-        "set_origin",
-        "list_modifiers"
+        "scene_list_objects",
+        "scene_delete_object",
+        "scene_clean_scene",
+        "scene_duplicate_object",
+        "scene_set_active_object",
+        "scene_get_viewport",
+        "modeling_create_primitive",
+        "modeling_transform_object",
+        "modeling_add_modifier",
+        "modeling_apply_modifier",
+        "modeling_convert_to_mesh",
+        "modeling_join_objects",
+        "modeling_separate_object",
+        "modeling_set_origin",
+        "modeling_list_modifiers"
       ]
     }
   }

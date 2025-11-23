@@ -2,7 +2,7 @@
 type: task
 id: TASK-008_2
 title: Standardize Tool Naming (Prefixing)
-status: todo
+status: done
 priority: medium
 assignee: unassigned
 depends_on: TASK-008_1
