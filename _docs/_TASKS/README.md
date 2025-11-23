@@ -11,7 +11,9 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No tasks)*
+| ID | Title | Priority | Completion Date |
+|----|-------|----------|-----------------|
+| [TASK-008_2](./TASK-008_2_Standardize_Tool_Naming.md) | **Standardize Tool Naming (Prefixing)** | 🟡 Medium | - |
 
 ---
 

@@ -49,6 +49,7 @@ def register():
         rpc_server.register_handler("modeling.join_objects", modeling_handler.join_objects)
         rpc_server.register_handler("modeling.separate_object", modeling_handler.separate_object)
         rpc_server.register_handler("modeling.set_origin", modeling_handler.set_origin)
+        rpc_server.register_handler("modeling.get_modifiers", modeling_handler.get_modifiers)
         
         rpc_server.start()
     else:

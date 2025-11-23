@@ -61,3 +61,8 @@ class IModelingTool(ABC):
         Examples for 'type': 'ORIGIN_GEOMETRY_TO_CURSOR', 'ORIGIN_CURSOR_TO_GEOMETRY', 'ORIGIN_GEOMETRY_TO_MASS'.
         """
         pass
+
+    @abstractmethod
+    def get_modifiers(self, name: str) -> List[Dict[str, Any]]:
+        """Returns a list of modifiers on the specified object."""
+        pass

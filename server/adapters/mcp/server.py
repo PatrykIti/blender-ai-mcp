@@ -250,6 +250,24 @@ def separate_object(
         return str(e)
 
 @mcp.tool()
+def list_modifiers(
+    ctx: Context,
+    name: str
+) -> str:
+    """
+    Lists all modifiers currently on the specified object.
+    
+    Args:
+        name: The name of the object.
+    """
+    handler = get_modeling_handler()
+    try:
+        modifiers = handler.get_modifiers(name)
+        return str(modifiers)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
 def set_origin(
     ctx: Context,
     name: str,

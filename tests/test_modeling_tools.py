@@ -323,5 +323,31 @@ class TestModelingTools(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
             self.handler.set_origin("NonExistent", "ORIGIN_GEOMETRY")
 
+    def test_get_modifiers(self):
+        # Setup
+        mod1 = MagicMock()
+        mod1.name = "Subdiv"
+        mod1.type = "SUBSURF"
+        
+        mod2 = MagicMock()
+        mod2.name = "Mirror"
+        mod2.type = "MIRROR"
+        
+        # Setup object with modifiers list
+        obj = MagicMock()
+        obj.name = "Cube"
+        obj.modifiers = [mod1, mod2]
+        
+        self.objects_mock["Cube"] = obj
+        
+        # When
+        result = self.handler.get_modifiers("Cube")
+        
+        # Then
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["name"], "Subdiv")
+        self.assertEqual(result[0]["type"], "SUBSURF")
+        self.assertEqual(result[1]["name"], "Mirror")
+
 if __name__ == "__main__":
     unittest.main()

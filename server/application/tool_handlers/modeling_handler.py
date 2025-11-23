@@ -89,3 +89,10 @@ class ModelingToolHandler(IModelingTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return f"Origin for object '{name}' set to type '{type}' (Status: {response.result['status']})";
+
+    def get_modifiers(self, name: str) -> List[Dict[str, Any]]:
+        args = {"name": name}
+        response = self.rpc.send_request("modeling.get_modifiers", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

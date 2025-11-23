@@ -232,3 +232,21 @@ class ModelingHandler:
             raise ValueError(f"Failed to set origin for object '{name}' with type '{type}': {str(e)}")
             
         return {"object": name, "origin_type": origin_type_upper, "status": "success"}
+
+    def get_modifiers(self, name):
+        """Returns a list of modifiers on the object."""
+        if name not in bpy.data.objects:
+            raise ValueError(f"Object '{name}' not found")
+        
+        obj = bpy.data.objects[name]
+        modifiers_list = []
+        
+        for mod in obj.modifiers:
+            modifiers_list.append({
+                "name": mod.name,
+                "type": mod.type,
+                "show_viewport": mod.show_viewport,
+                "show_render": mod.show_render
+            })
+            
+        return modifiers_list
