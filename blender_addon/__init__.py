@@ -44,6 +44,7 @@ def register():
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
         rpc_server.register_handler("modeling.transform_object", modeling_handler.transform_object)
         rpc_server.register_handler("modeling.add_modifier", modeling_handler.add_modifier)
+        rpc_server.register_handler("modeling.apply_modifier", modeling_handler.apply_modifier)
         
         rpc_server.start()
     else:

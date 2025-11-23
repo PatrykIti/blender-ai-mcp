@@ -54,3 +54,10 @@ class ModelingToolHandler(IModelingTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return f"Added modifier '{modifier_type}' to '{name}'"
+
+    def apply_modifier(self, name: str, modifier_name: str) -> str:
+        args = {"name": name, "modifier_name": modifier_name}
+        response = self.rpc.send_request("modeling.apply_modifier", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return f"Applied modifier '{modifier_name}' to '{name}'"

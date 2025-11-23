@@ -59,7 +59,8 @@ We recommend using Docker to run the MCP Server.
         "get_viewport",
         "create_primitive",
         "transform_object",
-        "add_modifier"
+        "add_modifier",
+        "apply_modifier"
       ]
     }
   }

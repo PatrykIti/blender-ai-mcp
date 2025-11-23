@@ -43,8 +43,15 @@ Technical details.
 | `scene.get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render of the viewport. |
 
 ### Modeling (`application/handlers/modeling.py`)
+
 | RPC Command | Handler Method | Description |
+
 |-------------|----------------|-------------|
+
 | `modeling.create_primitive` | `create_primitive` | Creates a primitive (Cube, Sphere, etc.). |
+
 | `modeling.transform_object` | `transform_object` | Moves, rotates, or scales an object. |
+
 | `modeling.add_modifier` | `add_modifier` | Adds a modifier to an object. |
+
+| `modeling.apply_modifier` | `apply_modifier` | Applies (finalizes) a modifier on an object. |

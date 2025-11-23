@@ -34,3 +34,8 @@ class IModelingTool(ABC):
     ) -> str:
         """Adds a modifier to an object."""
         pass
+
+    @abstractmethod
+    def apply_modifier(self, name: str, modifier_name: str) -> str:
+        """Applies a modifier to an object, making its changes permanent to the mesh."""
+        pass

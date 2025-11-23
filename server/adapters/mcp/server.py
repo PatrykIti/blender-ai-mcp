@@ -85,9 +85,6 @@ def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
         image_bytes = base64.b64decode(b64_data)
         return Image(data=image_bytes, format="jpeg")
     except RuntimeError as e:
-        # In case of error, we can't return Image, so we raise or return text.
-        # FastMCP tools usually expect a specific return type. 
-        # But exceptions are handled by the framework.
         raise e
 
 # ... Modeling Tools ...
@@ -158,6 +155,25 @@ def add_modifier(
     handler = get_modeling_handler()
     try:
         return handler.add_modifier(name, modifier_type, properties)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def apply_modifier(
+    ctx: Context,
+    name: str, 
+    modifier_name: str
+) -> str:
+    """
+    Applies a modifier to an object, making its changes permanent to the mesh.
+    
+    Args:
+        name: Object name.
+        modifier_name: The name of the modifier to apply.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.apply_modifier(name, modifier_name)
     except RuntimeError as e:
         return str(e)
 
