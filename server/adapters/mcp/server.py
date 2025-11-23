@@ -1,6 +1,7 @@
-from fastmcp import FastMCP, Context
+from fastmcp import FastMCP, Context, Image
 from typing import List, Dict, Any, Optional
 from server.infrastructure.di import get_scene_handler, get_modeling_handler
+import base64
 
 # Initialize MCP Server
 mcp = FastMCP("blender-ai-mcp", dependencies=["pydantic", "fastmcp"])
@@ -42,6 +43,52 @@ def clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
         return handler.clean_scene(keep_lights_and_cameras)
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
+    """
+    Duplicate an object and optionally move it.
+    
+    Args:
+        name: Name of the object to duplicate.
+        translation: Optional [x, y, z] vector to move the copy.
+    """
+    handler = get_scene_handler()
+    try:
+        return str(handler.duplicate_object(name, translation))
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def set_active_object(ctx: Context, name: str) -> str:
+    """
+    Set the active object. 
+    This is important for operations that work on the "active" object (like adding modifiers).
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.set_active_object(name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
+    """
+    Get a visual preview of the scene (OpenGL Viewport Render).
+    Returns an Image resource that the AI can see.
+    """
+    handler = get_scene_handler()
+    try:
+        # Returns base64 string
+        b64_data = handler.get_viewport(width, height)
+        # Convert to bytes for FastMCP Image
+        image_bytes = base64.b64decode(b64_data)
+        return Image(data=image_bytes, format="jpeg")
+    except RuntimeError as e:
+        # In case of error, we can't return Image, so we raise or return text.
+        # FastMCP tools usually expect a specific return type. 
+        # But exceptions are handled by the framework.
+        raise e
 
 # ... Modeling Tools ...
 

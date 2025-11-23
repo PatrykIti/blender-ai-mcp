@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class ISceneTool(ABC):
     @abstractmethod
@@ -15,4 +15,19 @@ class ISceneTool(ABC):
     @abstractmethod
     def clean_scene(self, keep_lights_and_cameras: bool) -> str:
         """Cleans the scene."""
+        pass
+
+    @abstractmethod
+    def duplicate_object(self, name: str, translation: Optional[List[float]] = None) -> Dict[str, Any]:
+        """Duplicates an object and optionally moves it."""
+        pass
+
+    @abstractmethod
+    def set_active_object(self, name: str) -> str:
+        """Sets the active object."""
+        pass
+
+    @abstractmethod
+    def get_viewport(self, width: int = 1024, height: int = 768) -> str:
+        """Returns a base64 encoded image of the viewport."""
         pass
