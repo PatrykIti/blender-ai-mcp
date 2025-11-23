@@ -63,5 +63,6 @@ Technical details.
 | `modeling.separate_object` | `separate_object` | Separates a mesh object into new objects. |
 
 | `modeling.set_origin` | `set_origin` | Sets the origin point of an object. |
+| `modeling.get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
 
 

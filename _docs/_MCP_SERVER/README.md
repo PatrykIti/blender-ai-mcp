@@ -59,6 +59,7 @@ Geometry creation and editing.
 | `join_objects` | `object_names` (list[str]) | Joins multiple mesh objects into a single one. |
 | `separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
 | `set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
+| `list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
 
 ## 🛠 Key Components
 
