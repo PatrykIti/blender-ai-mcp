@@ -50,7 +50,17 @@ class ModelingHandler:
             raise ValueError(f"Object '{name}' not found")
         
         obj = bpy.data.objects[name]
-        mod = obj.modifiers.new(name=modifier_type, type=modifier_type)
+        
+        # Normalize modifier type to uppercase (Blender convention: SUBSURF, BEVEL, etc.)
+        modifier_type_upper = modifier_type.upper()
+        
+        try:
+            mod = obj.modifiers.new(name=modifier_type, type=modifier_type_upper)
+        except TypeError:
+             # Fallback if exact type name provided was correct but not upper (rare) or invalid
+             raise ValueError(f"Invalid modifier type: '{modifier_type}'")
+        except Exception as e:
+             raise ValueError(f"Could not create modifier '{modifier_type}': {str(e)}")
         
         if properties:
             for prop, value in properties.items():
@@ -61,3 +71,35 @@ class ModelingHandler:
                         print(f"Warning: Could not set property {prop}: {e}")
         
         return {"modifier": mod.name}
+
+    def apply_modifier(self, name, modifier_name):
+        """Applies a modifier to an object."""
+        if name not in bpy.data.objects:
+            raise ValueError(f"Object '{name}' not found")
+        
+        obj = bpy.data.objects[name]
+        
+        target_modifier_name = modifier_name
+        
+        if modifier_name not in obj.modifiers:
+            # Case-insensitive fallback lookup
+            # e.g. AI asks for "bevel", but modifier is named "Bevel" or "BEVEL"
+            found = None
+            for m in obj.modifiers:
+                if m.name.upper() == modifier_name.upper():
+                    found = m.name
+                    break
+            
+            if found:
+                target_modifier_name = found
+            else:
+                raise ValueError(f"Modifier '{modifier_name}' not found on object '{name}'")
+            
+        # Select the object and make it active for the operator to work
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+        bpy.ops.object.modifier_apply(modifier=target_modifier_name)
+        
+        return {"applied_modifier": target_modifier_name, "object": name}

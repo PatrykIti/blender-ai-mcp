@@ -71,12 +71,82 @@ class TestModelingTools(unittest.TestCase):
         self.cube.modifiers.new.return_value = mod_mock
         
         # When
-        result = self.handler.add_modifier("Cube", "SUBSURF", {"levels": 2})
+        result = self.handler.add_modifier("Cube", "subsurf", {"levels": 2}) # Lowercase input
         
         # Then
-        self.cube.modifiers.new.assert_called_with(name="SUBSURF", type="SUBSURF")
+        # Expect Uppercase "SUBSURF" passed to new()
+        self.cube.modifiers.new.assert_called_with(name="subsurf", type="SUBSURF")
         self.assertEqual(mod_mock.levels, 2)
         self.assertEqual(result["modifier"], "Subdiv")
+
+    def test_apply_modifier(self):
+        # Setup: Ensure the object has a modifier mock
+        mod_name = "MirrorMod"
+        mock_modifier = MagicMock()
+        mock_modifier.name = mod_name
+        
+        # Update contains logic to support both direct check and iteration
+        def contains_side_effect(key):
+            return key == mod_name
+        
+        self.cube.modifiers.__contains__.side_effect = contains_side_effect
+        self.cube.modifiers.__getitem__.side_effect = lambda k: mock_modifier if k == mod_name else KeyError(k)
+        
+        # Mock iteration for case-insensitive search fallback
+        self.cube.modifiers.__iter__.return_value = [mock_modifier]
+        
+        bpy.ops.object.modifier_apply = MagicMock()
+        
+        # When
+        result = self.handler.apply_modifier("Cube", mod_name)
+        
+        # Then
+        bpy.ops.object.select_all.assert_called_with(action='DESELECT')
+        self.cube.select_set.assert_called_with(True)
+        bpy.ops.object.modifier_apply.assert_called_with(modifier=mod_name)
+        self.assertEqual(result['applied_modifier'], mod_name)
+        self.assertEqual(result['object'], "Cube")
+
+    def test_apply_modifier_case_insensitive(self):
+        # Setup: Modifier is named "BEVEL", request is for "bevel"
+        real_mod_name = "BEVEL"
+        request_mod_name = "bevel"
+        
+        mock_modifier = MagicMock()
+        mock_modifier.name = real_mod_name
+        
+        # Contains returns False for "bevel" to trigger fallback logic
+        self.cube.modifiers.__contains__.side_effect = lambda k: k == real_mod_name
+        
+        # Iterator returns the modifier with Uppercase name
+        self.cube.modifiers.__iter__.return_value = [mock_modifier]
+        
+        bpy.ops.object.modifier_apply = MagicMock()
+        
+        # When
+        result = self.handler.apply_modifier("Cube", request_mod_name)
+        
+        # Then
+        # Should find "BEVEL" and use it
+        bpy.ops.object.modifier_apply.assert_called_with(modifier=real_mod_name)
+        self.assertEqual(result['applied_modifier'], real_mod_name)
+
+    def test_apply_modifier_object_not_found(self):
+        with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
+            self.handler.apply_modifier("NonExistent", "SomeMod")
+
+    def test_apply_modifier_not_found_on_object(self):
+        # Setup: Object exists, but no such modifier
+        mod_name = "NonExistentMod"
+        
+        # We need to mock modifiers collection for the 'Cube'
+        modifiers_mock = MagicMock()
+        modifiers_mock.__contains__.side_effect = lambda k: False # Not found directly
+        modifiers_mock.__iter__.return_value = [] # Empty iteration (fallback fails)
+        self.cube.modifiers = modifiers_mock
+
+        with self.assertRaisesRegex(ValueError, f"Modifier \'{mod_name}\' not found on object 'Cube'"):
+            self.handler.apply_modifier("Cube", mod_name)
 
 if __name__ == "__main__":
     unittest.main()
