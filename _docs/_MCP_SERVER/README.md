@@ -39,21 +39,27 @@ Managing objects at the scene level.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `list_objects` | *none* | Returns a list of all objects in the scene with their type and position. |
-| `delete_object` | `name` (str) | Deletes the specified object. Returns error if object does not exist. |
-| `clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
-| `duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. |
-| `set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
-| `get_viewport` | `width` (int), `height` (int) | Returns a rendered image of the scene (OpenGL) for the AI to inspect. |
+| `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. |
+| `scene_delete_object` | `name` (str) | Deletes the specified object. Returns error if object does not exist. |
+| `scene_clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
+| `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. |
+| `scene_set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
+| `scene_get_viewport` | `width` (int), `height` (int) | Returns a rendered image of the scene (OpenGL) for the AI to inspect. |
 
 ### Modeling Tools
 Geometry creation and editing.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
-| `transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
-| `add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). |
+| `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
+| `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
+| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). |
+| `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |
+| `modeling_convert_to_mesh` | `name` (str) | Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh. |
+| `modeling_join_objects` | `object_names` (list[str]) | Joins multiple mesh objects into a single one. |
+| `modeling_separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
+| `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
+| `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
 
 ## 🛠 Key Components
 

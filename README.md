@@ -17,8 +17,9 @@ Enable LLMs (Claude, ChatGPT) to control Blender reliably. Built with **Clean Ar
 
 ## 🌟 Key Features
 
-- **Scene Management**: List, delete, and clean objects.
-- **Modeling Tools**: Create primitives, transform objects, apply modifiers.
+- **Scene Management**: List, delete, duplicate, set active, and clean objects.
+- **Visual Context**: Get a viewport render (OpenGL) to let the AI "see" the scene.
+- **Modeling Tools**: Create primitives, transform objects, manage modifiers (add, apply), convert to mesh, join/separate objects, and set origin.
 - **Stable API**: Abstracted high-level tools instead of raw `bpy` access.
 - **Dockerized**: Run the MCP server in a container without polluting your environment.
 
@@ -49,7 +50,23 @@ We recommend using Docker to run the MCP Server.
         "ghcr.io/patrykiti/blender-ai-mcp:latest"
       ],
       "disabled": false,
-      "autoApprove": []
+      "autoApprove": [
+        "scene_list_objects",
+        "scene_delete_object",
+        "scene_clean_scene",
+        "scene_duplicate_object",
+        "scene_set_active_object",
+        "scene_get_viewport",
+        "modeling_create_primitive",
+        "modeling_transform_object",
+        "modeling_add_modifier",
+        "modeling_apply_modifier",
+        "modeling_convert_to_mesh",
+        "modeling_join_objects",
+        "modeling_separate_object",
+        "modeling_set_origin",
+        "modeling_list_modifiers"
+      ]
     }
   }
 }

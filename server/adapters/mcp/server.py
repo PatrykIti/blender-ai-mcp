@@ -10,7 +10,7 @@ mcp = FastMCP("blender-ai-mcp", dependencies=["pydantic", "fastmcp"])
 
 # ... Scene Tools ...
 @mcp.tool()
-def list_objects(ctx: Context) -> str:
+def scene_list_objects(ctx: Context) -> str:
     """List all objects in the current Blender scene with their types."""
     handler = get_scene_handler()
     try:
@@ -21,7 +21,7 @@ def list_objects(ctx: Context) -> str:
         return str(e)
 
 @mcp.tool()
-def delete_object(name: str, ctx: Context) -> str:
+def scene_delete_object(name: str, ctx: Context) -> str:
     """Delete an object from the scene by name."""
     handler = get_scene_handler()
     try:
@@ -30,7 +30,7 @@ def delete_object(name: str, ctx: Context) -> str:
         return str(e)
 
 @mcp.tool()
-def clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
+def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
     """
     Delete objects from the scene.
     
@@ -45,7 +45,7 @@ def clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
         return str(e)
 
 @mcp.tool()
-def duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
+def scene_duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
     """
     Duplicate an object and optionally move it.
     
@@ -60,7 +60,7 @@ def duplicate_object(ctx: Context, name: str, translation: List[float] = None) -
         return str(e)
 
 @mcp.tool()
-def set_active_object(ctx: Context, name: str) -> str:
+def scene_set_active_object(ctx: Context, name: str) -> str:
     """
     Set the active object. 
     This is important for operations that work on the "active" object (like adding modifiers).
@@ -72,7 +72,7 @@ def set_active_object(ctx: Context, name: str) -> str:
         return str(e)
 
 @mcp.tool()
-def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
+def scene_get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
     """
     Get a visual preview of the scene (OpenGL Viewport Render).
     Returns an Image resource that the AI can see.
@@ -85,15 +85,12 @@ def get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
         image_bytes = base64.b64decode(b64_data)
         return Image(data=image_bytes, format="jpeg")
     except RuntimeError as e:
-        # In case of error, we can't return Image, so we raise or return text.
-        # FastMCP tools usually expect a specific return type. 
-        # But exceptions are handled by the framework.
         raise e
 
 # ... Modeling Tools ...
 
 @mcp.tool()
-def create_primitive(
+def modeling_create_primitive(
     ctx: Context,
     primitive_type: str, 
     radius: float = 1.0, 
@@ -118,7 +115,7 @@ def create_primitive(
         return str(e)
 
 @mcp.tool()
-def transform_object(
+def modeling_transform_object(
     ctx: Context,
     name: str, 
     location: Optional[List[float]] = None, 
@@ -141,7 +138,7 @@ def transform_object(
         return str(e)
 
 @mcp.tool()
-def add_modifier(
+def modeling_add_modifier(
     ctx: Context,
     name: str, 
     modifier_type: str, 
@@ -158,6 +155,113 @@ def add_modifier(
     handler = get_modeling_handler()
     try:
         return handler.add_modifier(name, modifier_type, properties)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_apply_modifier(
+    ctx: Context,
+    name: str, 
+    modifier_name: str
+) -> str:
+    """
+    Applies a modifier to an object, making its changes permanent to the mesh.
+    
+    Args:
+        name: Object name.
+        modifier_name: The name of the modifier to apply.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.apply_modifier(name, modifier_name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_convert_to_mesh(
+    ctx: Context,
+    name: str
+) -> str:
+    """
+    Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh.
+    
+    Args:
+        name: The name of the object to convert.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.convert_to_mesh(name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_join_objects(
+    ctx: Context,
+    object_names: List[str]
+) -> str:
+    """
+    Joins multiple mesh objects into a single mesh object.
+    
+    Args:
+        object_names: A list of names of the objects to join.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.join_objects(object_names)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_separate_object(
+    ctx: Context,
+    name: str,
+    type: str = "LOOSE"
+) -> str:
+    """
+    Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
+    
+    Args:
+        name: The name of the object to separate.
+        type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
+    """
+    handler = get_modeling_handler()
+    try:
+        result = handler.separate_object(name, type)
+        return str(result)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_list_modifiers(
+    ctx: Context,
+    name: str
+) -> str:
+    """
+    Lists all modifiers currently on the specified object.
+    
+    Args:
+        name: The name of the object.
+    """
+    handler = get_modeling_handler()
+    try:
+        modifiers = handler.get_modifiers(name)
+        return str(modifiers)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def modeling_set_origin(
+    ctx: Context,
+    name: str,
+    type: str
+) -> str:
+    """
+    Sets the origin point of an object using Blender's origin_set operator types.
+    Examples for 'type': 'ORIGIN_GEOMETRY_TO_CURSOR', 'ORIGIN_CURSOR_TO_GEOMETRY', 'ORIGIN_GEOMETRY_TO_MASS'.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.set_origin(name, type)
     except RuntimeError as e:
         return str(e)
 
