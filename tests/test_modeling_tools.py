@@ -28,6 +28,11 @@ class TestModelingTools(unittest.TestCase):
         # 2. Setup Operators
         # Create explicit mock for primitive_cube_add
         bpy.ops.mesh.primitive_cube_add = MagicMock()
+        bpy.ops.object.convert = MagicMock()
+        bpy.ops.object.join = MagicMock()
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.mesh.separate = MagicMock()
+        bpy.ops.object.origin_set = MagicMock()
         
         # 3. Setup Active Object
         self.cube = MagicMock()
@@ -147,6 +152,176 @@ class TestModelingTools(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, f"Modifier \'{mod_name}\' not found on object 'Cube'"):
             self.handler.apply_modifier("Cube", mod_name)
+
+    def test_convert_to_mesh(self):
+        # Setup a non-mesh object (e.g., Curve)
+        curve_obj = MagicMock()
+        curve_obj.name = "BezierCurve"
+        curve_obj.type = 'CURVE'
+        
+        self.objects_mock["BezierCurve"] = curve_obj # Add to bpy.data.objects
+        bpy.context.active_object = curve_obj # Set as active before conversion
+        
+        bpy.ops.object.convert = MagicMock() # Mock the convert operator
+        
+        # When
+        result = self.handler.convert_to_mesh("BezierCurve")
+        
+        # Then
+        bpy.ops.object.select_all.assert_called_with(action='DESELECT')
+        curve_obj.select_set.assert_called_with(True)
+        bpy.ops.object.convert.assert_called_with(target='MESH')
+        self.assertEqual(result['name'], "BezierCurve")
+        self.assertEqual(result['type'], "MESH")
+        self.assertEqual(result['status'], "converted")
+
+    def test_convert_to_mesh_already_mesh(self):
+        # Setup a mesh object
+        mesh_obj = MagicMock()
+        mesh_obj.name = "Cube"
+        mesh_obj.type = 'MESH'
+        
+        self.objects_mock["Cube"] = mesh_obj
+        
+        # When
+        result = self.handler.convert_to_mesh("Cube")
+        
+        # Then
+        bpy.ops.object.convert.assert_not_called()
+        self.assertEqual(result['name'], "Cube")
+        self.assertEqual(result['type'], "MESH")
+        self.assertEqual(result['status'], "already_mesh")
+
+    def test_convert_to_mesh_object_not_found(self):
+        with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
+            self.handler.convert_to_mesh("NonExistent")
+
+    def test_join_objects(self):
+        # Setup two more objects
+        obj1 = MagicMock()
+        obj1.name = "Sphere"
+        obj1.select_set = MagicMock()
+        
+        obj2 = MagicMock()
+        obj2.name = "Cylinder"
+        obj2.select_set = MagicMock()
+
+        # Add them to our mock data
+        self.objects_mock["Sphere"] = obj1
+        self.objects_mock["Cylinder"] = obj2
+        
+        # Mock the active object after join. Blender operator replaces active object
+        joined_obj = MagicMock()
+        joined_obj.name = "Sphere"
+        bpy.context.active_object = joined_obj # This mock will be the result of join
+        
+        bpy.ops.object.join = MagicMock() # Mock the join operator
+        
+        # When
+        result = self.handler.join_objects(["Cube", "Sphere", "Cylinder"])
+        
+        # Then
+        bpy.ops.object.select_all.assert_called_with(action='DESELECT')
+        self.cube.select_set.assert_called_with(True)
+        obj1.select_set.assert_called_with(True)
+        obj2.select_set.assert_called_with(True)
+        bpy.ops.object.join.assert_called_once()
+        self.assertEqual(result['name'], "Sphere")
+        self.assertEqual(result['joined_count'], 3)
+
+    def test_join_objects_no_objects(self):
+        with self.assertRaisesRegex(ValueError, "No objects provided for joining."):
+            self.handler.join_objects([])
+
+    def test_join_objects_non_existent(self):
+        # Setup one existing, one non-existent
+        self.objects_mock["Sphere"] = MagicMock()
+        
+        with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
+            self.handler.join_objects(["Cube", "NonExistent"])
+
+    def test_separate_object_loose(self):
+        # Setup
+        obj_to_separate = MagicMock()
+        obj_to_separate.name = "ComplexMesh"
+        obj_to_separate.type = 'MESH'
+        obj_to_separate.select_set = MagicMock()
+
+        self.objects_mock["ComplexMesh"] = obj_to_separate
+        
+        # Mock initial scene objects and new objects after separation
+        bpy.context.scene.objects = [obj_to_separate] # Initial
+        
+        new_part1 = MagicMock()
+        new_part1.name = "ComplexMesh.001"
+        new_part2 = MagicMock()
+        new_part2.name = "ComplexMesh.002"
+
+        def separate_side_effect(**kwargs):
+            # Simulate new objects appearing in scene after separation
+            bpy.context.scene.objects.extend([new_part1, new_part2])
+            
+        bpy.ops.mesh.separate.side_effect = separate_side_effect
+        
+        # When
+        result = self.handler.separate_object("ComplexMesh", "LOOSE")
+
+        # Then
+        bpy.ops.object.select_all.assert_called_with(action='DESELECT')
+        obj_to_separate.select_set.assert_called_with(True)
+        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
+        bpy.ops.mesh.separate.assert_called_with(type='LOOSE')
+        bpy.ops.object.mode_set.assert_any_call(mode='OBJECT')
+        self.assertIn("ComplexMesh.001", result["separated_objects"])
+        self.assertIn("ComplexMesh.002", result["separated_objects"])
+        self.assertEqual(result["original_object"], "ComplexMesh")
+
+    def test_separate_object_non_mesh(self):
+        # Setup a non-mesh object
+        curve_obj = MagicMock()
+        curve_obj.name = "BezierCurve"
+        curve_obj.type = 'CURVE'
+        self.objects_mock["BezierCurve"] = curve_obj
+
+        with self.assertRaisesRegex(ValueError, "Object 'BezierCurve' is not a mesh"):
+            self.handler.separate_object("BezierCurve", "LOOSE")
+
+    def test_separate_object_invalid_type(self):
+        with self.assertRaisesRegex(ValueError, "Invalid separation type: 'INVALID'. Must be one of \\['LOOSE\', 'SELECTED\', 'MATERIAL'\\]"):
+            self.handler.separate_object("Cube", "INVALID")
+
+    def test_separate_object_not_found(self):
+        with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
+            self.handler.separate_object("NonExistent", "LOOSE")
+
+    def test_set_origin(self):
+        # Setup
+        obj = MagicMock()
+        obj.name = "TestObject"
+        obj.select_set = MagicMock()
+        self.objects_mock["TestObject"] = obj
+        
+        bpy.ops.object.origin_set = MagicMock()
+
+        # When
+        result = self.handler.set_origin("TestObject", "ORIGIN_GEOMETRY_TO_CURSOR")
+        
+        # Then
+        bpy.ops.object.select_all.assert_called_with(action='DESELECT')
+        obj.select_set.assert_called_with(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.origin_set.assert_called_with(type='ORIGIN_GEOMETRY_TO_CURSOR')
+        self.assertEqual(result['object'], "TestObject")
+        self.assertEqual(result['origin_type'], "ORIGIN_GEOMETRY_TO_CURSOR")
+        self.assertEqual(result['status'], "success")
+
+    def test_set_origin_invalid_type(self):
+        with self.assertRaisesRegex(ValueError, "Invalid origin type: 'INVALID_TYPE'. Must be one of"):
+            self.handler.set_origin("Cube", "INVALID_TYPE")
+
+    def test_set_origin_object_not_found(self):
+        with self.assertRaisesRegex(ValueError, "Object 'NonExistent' not found"):
+            self.handler.set_origin("NonExistent", "ORIGIN_GEOMETRY_TO_CURSOR")
 
 if __name__ == "__main__":
     unittest.main()

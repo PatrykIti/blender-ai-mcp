@@ -61,3 +61,31 @@ class ModelingToolHandler(IModelingTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return f"Applied modifier '{modifier_name}' to '{name}'"
+
+    def convert_to_mesh(self, name: str) -> str:
+        args = {"name": name}
+        response = self.rpc.send_request("modeling.convert_to_mesh", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return f"Object '{name}' converted to mesh (or was already mesh). Status: {response.result['status']}"
+
+    def join_objects(self, object_names: List[str]) -> str:
+        args = {"object_names": object_names}
+        response = self.rpc.send_request("modeling.join_objects", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return f"Objects {', '.join(object_names)} joined into '{response.result['name']}'. Joined count: {response.result['joined_count']}"
+
+    def separate_object(self, name: str, type: str = "LOOSE") -> List[str]:
+        args = {"name": name, "type": type}
+        response = self.rpc.send_request("modeling.separate_object", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result["separated_objects"]
+
+    def set_origin(self, name: str, type: str) -> str:
+        args = {"name": name, "type": type}
+        response = self.rpc.send_request("modeling.set_origin", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return f"Origin for object '{name}' set to type '{type}' (Status: {response.result['status']})";

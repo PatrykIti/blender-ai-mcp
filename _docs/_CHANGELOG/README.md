@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [13](./13-2025-11-22-modeling-tools-completion.md) | 2025-11-22 | **Modeling Tools Completion (Object Mode)** | 0.1.12 |
 | [12](./12-2025-11-22-apply-modifier.md) | 2025-11-22 | **Modeling Tool - Apply Modifier** | 0.1.11 |
 | [11](./11-2025-11-22-scene-tools-extension.md) | 2025-11-22 | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 0.1.10 |
 | [10](./10-2025-11-22-cicd-standardization.md) | 2025-11-22 | **Standardization and CI/CD** | 0.1.9 |

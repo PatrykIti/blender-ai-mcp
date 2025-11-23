@@ -1,5 +1,6 @@
 import bpy
 import math
+from typing import List
 
 class ModelingHandler:
     """Application service for modeling operations."""
@@ -103,3 +104,130 @@ class ModelingHandler:
         bpy.ops.object.modifier_apply(modifier=target_modifier_name)
         
         return {"applied_modifier": target_modifier_name, "object": name}
+
+    def convert_to_mesh(self, name):
+        """Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh."""
+        if name not in bpy.data.objects:
+            raise ValueError(f"Object '{name}' not found")
+        
+        obj = bpy.data.objects[name]
+        
+        if obj.type == 'MESH':
+            return {"name": name, "type": "MESH", "status": "already_mesh"}
+
+        # Select the object and make it active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+        # Convert to mesh
+        try:
+            bpy.ops.object.convert(target='MESH')
+        except RuntimeError as e:
+            raise ValueError(f"Failed to convert object '{name}' to mesh: {str(e)}")
+            
+        return {"name": obj.name, "type": "MESH", "status": "converted"}
+
+    def join_objects(self, object_names):
+        """Joins multiple mesh objects into a single mesh object."""
+        if not object_names:
+            raise ValueError("No objects provided for joining.")
+            
+        # Validate all objects exist
+        objects_to_join = []
+        for name in object_names:
+            if name not in bpy.data.objects:
+                raise ValueError(f"Object '{name}' not found")
+            objects_to_join.append(bpy.data.objects[name])
+            
+        # Deselect all first
+        bpy.ops.object.select_all(action='DESELECT')
+        
+        # Select all objects to be joined
+        for obj in objects_to_join:
+            obj.select_set(True)
+            
+        # The last selected object becomes the active one for joining
+        bpy.context.view_layer.objects.active = objects_to_join[-1]
+        
+        try:
+            bpy.ops.object.join()
+        except RuntimeError as e:
+            raise ValueError(f"Failed to join objects: {str(e)}")
+            
+        # The active object after join is the new combined object
+        joined_obj = bpy.context.active_object
+        return {"name": joined_obj.name, "joined_count": len(object_names)}
+
+    def separate_object(self, name, type="LOOSE") -> List[str]:
+        """Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL)."""
+        if name not in bpy.data.objects:
+            raise ValueError(f"Object '{name}' not found")
+        
+        obj = bpy.data.objects[name]
+        
+        valid_types = ['LOOSE', 'SELECTED', 'MATERIAL']
+        separate_type = type.upper()
+        if separate_type not in valid_types:
+            raise ValueError(f"Invalid separation type: '{type}'. Must be one of {valid_types}")
+            
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{name}' is not a mesh. Can only separate mesh objects.")
+
+        # Get current objects in scene to identify new ones later
+        initial_objects = set(bpy.context.scene.objects)
+
+        # Select the object and make it active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+        # Enter Edit Mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        
+        try:
+            bpy.ops.mesh.separate(type=separate_type)
+        except RuntimeError as e:
+            bpy.ops.object.mode_set(mode='OBJECT') # Ensure we exit edit mode on error
+            raise ValueError(f"Failed to separate object '{name}' by type '{type}': {str(e)}")
+            
+        # Exit Edit Mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Identify newly created objects
+        current_objects = set(bpy.context.scene.objects)
+        new_objects = current_objects - initial_objects
+        
+        new_object_names = [o.name for o in new_objects]
+        return {"separated_objects": new_object_names, "original_object": name}
+
+    def set_origin(self, name, type):
+        """Sets the origin point of an object using Blender's origin_set operator types."""
+        if name not in bpy.data.objects:
+            raise ValueError(f"Object '{name}' not found")
+        
+        obj = bpy.data.objects[name]
+        
+        valid_types = [
+            'ORIGIN_GEOMETRY_TO_CURSOR', 
+            'ORIGIN_CURSOR_TO_GEOMETRY', 
+            'ORIGIN_GEOMETRY_TO_MASS', 
+            'ORIGIN_CENTER_OF_MASS', # For historical reasons, also includes this
+            'ORIGIN_BOUNDS_TO_CURSOR'
+        ]
+        
+        origin_type_upper = type.upper()
+        if origin_type_upper not in valid_types:
+            raise ValueError(f"Invalid origin type: '{type}'. Must be one of {valid_types}")
+
+        # Select the object and make it active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        
+        try:
+            bpy.ops.object.origin_set(type=origin_type_upper)
+        except RuntimeError as e:
+            raise ValueError(f"Failed to set origin for object '{name}' with type '{type}': {str(e)}")
+            
+        return {"object": name, "origin_type": type, "status": "success"}

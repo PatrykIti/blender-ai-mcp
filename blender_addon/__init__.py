@@ -45,6 +45,10 @@ def register():
         rpc_server.register_handler("modeling.transform_object", modeling_handler.transform_object)
         rpc_server.register_handler("modeling.add_modifier", modeling_handler.add_modifier)
         rpc_server.register_handler("modeling.apply_modifier", modeling_handler.apply_modifier)
+        rpc_server.register_handler("modeling.convert_to_mesh", modeling_handler.convert_to_mesh)
+        rpc_server.register_handler("modeling.join_objects", modeling_handler.join_objects)
+        rpc_server.register_handler("modeling.separate_object", modeling_handler.separate_object)
+        rpc_server.register_handler("modeling.set_origin", modeling_handler.set_origin)
         
         rpc_server.start()
     else:

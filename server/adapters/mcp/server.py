@@ -177,6 +177,94 @@ def apply_modifier(
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def convert_to_mesh(
+    ctx: Context,
+    name: str
+) -> str:
+    """
+    Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh.
+    
+    Args:
+        name: The name of the object to convert.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.convert_to_mesh(name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def join_objects(
+    ctx: Context,
+    object_names: List[str]
+) -> str:
+    """
+    Joins multiple mesh objects into a single mesh object.
+    
+    Args:
+        object_names: A list of names of the objects to join.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.join_objects(object_names)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def separate_object(
+    ctx: Context,
+    name: str,
+    type: str = "LOOSE"
+) -> List[str]:
+    """
+    Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
+    
+    Args:
+        name: The name of the object to separate.
+        type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.separate_object(name, type)["separated_objects"]
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def separate_object(
+    ctx: Context,
+    name: str,
+    type: str = "LOOSE"
+) -> List[str]:
+    """
+    Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
+    
+    Args:
+        name: The name of the object to separate.
+        type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.separate_object(name, type)["separated_objects"]
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def set_origin(
+    ctx: Context,
+    name: str,
+    type: str
+) -> str:
+    """
+    Sets the origin point of an object using Blender's origin_set operator types.
+    Examples for 'type': 'ORIGIN_GEOMETRY_TO_CURSOR', 'ORIGIN_CURSOR_TO_GEOMETRY', 'ORIGIN_GEOMETRY_TO_MASS'.
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.set_origin(name, type)
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()

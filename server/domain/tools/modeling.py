@@ -39,3 +39,25 @@ class IModelingTool(ABC):
     def apply_modifier(self, name: str, modifier_name: str) -> str:
         """Applies a modifier to an object, making its changes permanent to the mesh."""
         pass
+
+    @abstractmethod
+    def convert_to_mesh(self, name: str) -> str:
+        """Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh."""
+        pass
+
+    @abstractmethod
+    def join_objects(self, object_names: List[str]) -> str:
+        """Joins multiple mesh objects into a single mesh object."""
+        pass
+
+    @abstractmethod
+    def separate_object(self, name: str, type: str = "LOOSE") -> List[str]:
+        """Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL)."""
+        pass
+
+    @abstractmethod
+    def set_origin(self, name: str, type: str) -> str:
+        """Sets the origin point of an object using Blender's origin_set operator types.
+        Examples for 'type': 'ORIGIN_GEOMETRY_TO_CURSOR', 'ORIGIN_CURSOR_TO_GEOMETRY', 'ORIGIN_GEOMETRY_TO_MASS'.
+        """
+        pass

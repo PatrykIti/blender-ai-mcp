@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0
 - **In Progress:** 0
-- **Done:** 12
+- **Done:** 13
 
 ---
 
@@ -37,6 +37,7 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-006](./TASK-006_Project_Standardization_and_CICD.md) | **Project Standardization and CI/CD Setup** | 🔴 High | 2025-11-22 |
 | [TASK-007](./TASK-007_Scene_Tools_Extension.md) | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 🔴 High | 2025-11-22 |
 | [TASK-008](./TASK-008_Implement_Apply_Modifier.md) | **Implement Modeling Tool - Apply Modifier** | 🟡 Medium | 2025-11-22 |
+| [TASK-008_1](./TASK-008_1_Modeling_Tools_Completion.md) | **Modeling Tools Completion (Object Mode)** | 🔴 High | 2025-11-22 |
 | [TASK-007](./TASK-007_Scene_Tools_Extension.md) | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 🔴 High | - |
 
 ---

@@ -55,3 +55,13 @@ Technical details.
 | `modeling.add_modifier` | `add_modifier` | Adds a modifier to an object. |
 
 | `modeling.apply_modifier` | `apply_modifier` | Applies (finalizes) a modifier on an object. |
+
+| `modeling.convert_to_mesh` | `convert_to_mesh` | Converts a non-mesh object to a mesh. |
+
+| `modeling.join_objects` | `join_objects` | Joins multiple mesh objects into one. |
+
+| `modeling.separate_object` | `separate_object` | Separates a mesh object into new objects. |
+
+| `modeling.set_origin` | `set_origin` | Sets the origin point of an object. |
+
+
