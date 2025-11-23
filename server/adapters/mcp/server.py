@@ -232,25 +232,6 @@ def separate_object(
         return str(e)
 
 @mcp.tool()
-def separate_object(
-    ctx: Context,
-    name: str,
-    type: str = "LOOSE"
-) -> List[str]:
-    """
-    Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
-    
-    Args:
-        name: The name of the object to separate.
-        type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
-    """
-    handler = get_modeling_handler()
-    try:
-        return handler.separate_object(name, type)["separated_objects"]
-    except RuntimeError as e:
-        return str(e)
-
-@mcp.tool()
 def list_modifiers(
     ctx: Context,
     name: str
