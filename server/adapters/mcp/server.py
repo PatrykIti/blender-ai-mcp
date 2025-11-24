@@ -354,6 +354,46 @@ def modeling_set_origin(
     except RuntimeError as e:
         return str(e)
 
+# ... Mesh Tools (Edit Mode) ...
+
+from server.infrastructure.di import get_mesh_handler
+
+@mcp.tool()
+def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
+    """
+    Selects or deselects all geometry elements in Edit Mode.
+    Ensures the active object is in Edit Mode.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_all(deselect)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
+    """
+    Deletes selected geometry elements.
+    Type: 'VERT', 'EDGE', 'FACE'.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.delete_selected(type)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', deselect: bool = False) -> str:
+    """
+    Selects specific geometry elements by their index.
+    Useful for AI to target specific parts of the mesh.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_by_index(indices, type, deselect)
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()

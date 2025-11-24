@@ -18,9 +18,11 @@ from .infrastructure.rpc_server import rpc_server
 try:
     from .application.handlers.scene import SceneHandler
     from .application.handlers.modeling import ModelingHandler
+    from .application.handlers.mesh import MeshHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
+    MeshHandler = None
 
 
 def register():
@@ -30,6 +32,7 @@ def register():
         # --- Composition Root (Simple Manual DI) ---
         scene_handler = SceneHandler()
         modeling_handler = ModelingHandler()
+        mesh_handler = MeshHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -53,6 +56,11 @@ def register():
         rpc_server.register_handler("modeling.separate_object", modeling_handler.separate_object)
         rpc_server.register_handler("modeling.set_origin", modeling_handler.set_origin)
         rpc_server.register_handler("modeling.get_modifiers", modeling_handler.get_modifiers)
+
+        # Mesh (Edit Mode)
+        rpc_server.register_handler("mesh.select_all", mesh_handler.select_all)
+        rpc_server.register_handler("mesh.delete_selected", mesh_handler.delete_selected)
+        rpc_server.register_handler("mesh.select_by_index", mesh_handler.select_by_index)
         
         rpc_server.start()
     else:

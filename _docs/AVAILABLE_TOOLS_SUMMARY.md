@@ -39,11 +39,19 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🕸️ Mesh Tools (`mesh_`) - Edit Mode
+*Low-level geometry manipulation (vertices, edges, faces).*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `mesh_select_all` | `deselect` (bool) | Selects/Deselects all geometry. | ✅ Done |
+| `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
+| `mesh_select_by_index` | `indices`, `type`, `deselect` | Selects elements by index. | ✅ Done |
+
+---
+
 ## 🛠 Planned / In Progress
 
-### Mesh Editing (`mesh_`) - Phase 2
+### Mesh Editing (`mesh_`) - Phase 2 Continued
 - [ ] `mesh_extrude`
 - [ ] `mesh_loop_cut`
-- [ ] `mesh_bevel`
-- [ ] `mesh_inset`
-- [ ] `mesh_boolean`

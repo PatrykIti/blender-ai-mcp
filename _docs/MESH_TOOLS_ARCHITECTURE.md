@@ -1,0 +1,67 @@
+# Mesh Tools Architecture (Edit Mode)
+
+Mesh tools operate on the geometry (vertices, edges, faces) of the active mesh object.
+**Context:** These tools automatically switch Blender to **Edit Mode** if necessary.
+
+---
+
+# 1. mesh_select_all ✅ Done
+Selects or deselects all geometry elements.
+
+Example:
+```json
+{
+  "tool": "mesh_select_all",
+  "args": {
+    "deselect": true
+  }
+}
+```
+
+---
+
+# 2. mesh_delete_selected ✅ Done
+Deletes selected geometry elements.
+
+Args:
+- type: str ('VERT', 'EDGE', 'FACE')
+
+Example:
+```json
+{
+  "tool": "mesh_delete_selected",
+  "args": {
+    "type": "FACE"
+  }
+}
+```
+
+---
+
+# 3. mesh_select_by_index ✅ Done
+Selects specific geometry elements by their index using BMesh.
+This allows precise AI targeting (e.g., "select vertex 5 and 12").
+
+Args:
+- indices: List[int]
+- type: str ('VERT', 'EDGE', 'FACE')
+- deselect: bool (default false)
+
+Example:
+```json
+{
+  "tool": "mesh_select_by_index",
+  "args": {
+    "indices": [0, 1, 4, 5],
+    "type": "VERT",
+    "deselect": false
+  }
+}
+```
+
+---
+
+# Rules
+1. **Prefix `mesh_`**: All tools must start with this prefix.
+2. **Edit Mode**: These tools MUST operate in Edit Mode. The handler handles the switch.
+3. **BMesh**: Advanced operations should use `bmesh` for consistent indexing.

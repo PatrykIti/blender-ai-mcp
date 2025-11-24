@@ -97,3 +97,16 @@ Technical details.
 | `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
 
 
+### Mesh (`application/handlers/mesh.py`)
+
+| RPC Command | Handler Method | Description |
+
+|-------------|----------------|-------------|
+
+| `select_all` | `select_all` | Selects or deselects all geometry elements. |
+
+| `delete_selected` | `delete_selected` | Deletes selected elements (VERT, EDGE, FACE). |
+
+| `select_by_index` | `select_by_index` | Selects elements by index using BMesh. |
+
+

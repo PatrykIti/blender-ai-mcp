@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [17](./17-2025-11-24-mesh-foundation.md) | 2025-11-24 | **Edit Mode Foundation (Phase 2 Start)** | 0.2.0 |
 | [16](./16-2025-11-24-scene-construction.md) | 2025-11-24 | **Scene Construction Tools (Lights, Cameras, Empties)** | 0.1.15 |
 | [15](./15-2025-11-24-viewport-control.md) | 2025-11-24 | **Extended Viewport Control** | 0.1.14 |
 | [14](./14-2025-11-22-tool-renaming.md) | 2025-11-22 | **Standardize Tool Naming (Prefixing)** | 0.1.13 |
