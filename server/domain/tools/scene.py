@@ -31,3 +31,18 @@ class ISceneTool(ABC):
     def get_viewport(self, width: int = 1024, height: int = 768, shading: str = "SOLID", camera_name: Optional[str] = None, focus_target: Optional[str] = None) -> str:
         """Returns a base64 encoded image of the viewport."""
         pass
+
+    @abstractmethod
+    def create_light(self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None) -> str:
+        """Creates a light source."""
+        pass
+
+    @abstractmethod
+    def create_camera(self, location: List[float], rotation: List[float], lens: float = 50.0, clip_start: Optional[float] = None, clip_end: Optional[float] = None, name: Optional[str] = None) -> str:
+        """Creates a camera."""
+        pass
+
+    @abstractmethod
+    def create_empty(self, type: str, size: float, location: List[float], name: Optional[str] = None) -> str:
+        """Creates an empty object."""
+        pass

@@ -101,6 +101,81 @@ def scene_get_viewport(
     except RuntimeError as e:
         raise e
 
+@mcp.tool()
+def scene_create_light(
+    ctx: Context,
+    type: str,
+    energy: float = 1000.0,
+    color: List[float] = (1.0, 1.0, 1.0),
+    location: List[float] = (0.0, 0.0, 5.0),
+    name: Optional[str] = None
+) -> str:
+    """
+    Create a light source.
+
+    Args:
+        type: 'POINT', 'SUN', 'SPOT', 'AREA'.
+        energy: Power in Watts.
+        color: [r, g, b] (0.0 to 1.0).
+        location: [x, y, z].
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_light(type, energy, color, location, name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_create_camera(
+    ctx: Context,
+    location: List[float],
+    rotation: List[float],
+    lens: float = 50.0,
+    clip_start: Optional[float] = None,
+    clip_end: Optional[float] = None,
+    name: Optional[str] = None
+) -> str:
+    """
+    Create a camera object.
+
+    Args:
+        location: [x, y, z].
+        rotation: [x, y, z] Euler angles in radians.
+        lens: Focal length in mm.
+        clip_start: Near clipping distance.
+        clip_end: Far clipping distance.
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_camera(location, rotation, lens, clip_start, clip_end, name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_create_empty(
+    ctx: Context,
+    type: str,
+    size: float = 1.0,
+    location: List[float] = (0.0, 0.0, 0.0),
+    name: Optional[str] = None
+) -> str:
+    """
+    Create an Empty object (useful for grouping or tracking).
+
+    Args:
+        type: 'PLAIN_AXES', 'ARROWS', 'SINGLE_ARROW', 'CIRCLE', 'CUBE', 'SPHERE', 'CONE', 'IMAGE'.
+        size: Display size.
+        location: [x, y, z].
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_empty(type, size, location, name)
+    except RuntimeError as e:
+        return str(e)
+
 # ... Modeling Tools ...
 
 @mcp.tool()

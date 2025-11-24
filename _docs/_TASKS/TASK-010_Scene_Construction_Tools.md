@@ -32,11 +32,11 @@ Implement tools for creating non-geometric scene elements essential for renderin
     *   `scene_create_empty`
 
 ## ✅ Checklist
-- [ ] Update `server/domain/tools/scene.py`
-- [ ] Update `blender_addon/application/handlers/scene.py`
-- [ ] Update `server/application/tool_handlers/scene_handler.py`
-- [ ] Update `server/adapters/mcp/server.py`
-- [ ] Add tests in `tests/test_scene_construction.py`
+- [x] Update `server/domain/tools/scene.py`
+- [x] Update `blender_addon/application/handlers/scene.py`
+- [x] Update `server/application/tool_handlers/scene_handler.py`
+- [x] Update `server/adapters/mcp/server.py`
+- [x] Add tests in `tests/test_scene_construction.py`
 
 ## 📝 Tool Interface Examples
 
