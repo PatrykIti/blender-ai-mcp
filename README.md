@@ -115,6 +115,7 @@ We recommend using Docker to run the MCP Server.
         "scene_create_light",
         "scene_create_camera",
         "scene_create_empty",
+        "scene_set_mode",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
