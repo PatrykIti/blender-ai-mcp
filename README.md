@@ -46,6 +46,7 @@ Our goal is to enable AI to model complex 3D assets—from organs and biological
 Basic composition and scene understanding.
 - [x] **Scene**: List, Delete, Duplicate, Set Active, Clean Scene.
 - [x] **Vision**: `get_viewport` (AI sees the scene).
+- [x] **Construction**: Create Lights, Cameras, Empties.
 - [x] **Object Ops**: Create Primitives, Transform (Move/Rotate/Scale), Set Origin.
 - [x] **Modifiers**: Add Modifier, Apply Modifier, List Modifiers.
 - [x] **Structure**: Join Objects, Separate Objects, Convert to Mesh.
@@ -110,6 +111,9 @@ We recommend using Docker to run the MCP Server.
         "scene_duplicate_object",
         "scene_set_active_object",
         "scene_get_viewport",
+        "scene_create_light",
+        "scene_create_camera",
+        "scene_create_empty",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
