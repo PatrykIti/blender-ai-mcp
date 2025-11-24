@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.5.0 (2025-11-24)
+
+### Features
+
+- Edit Mode Foundation & Scene Mode Control (Phase 2 Part 1)
+  ([#8](https://github.com/PatrykIti/blender-ai-mcp/pull/8),
+  [`d7f9e37`](https://github.com/PatrykIti/blender-ai-mcp/commit/d7f9e375143e35686461e6691bf35522772f4c40))
+
+
 ## v1.4.0 (2025-11-24)
 
 ### Features
