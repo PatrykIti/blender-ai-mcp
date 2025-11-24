@@ -6,16 +6,16 @@ For High-Precision AI Modeling (phones, organs, hard-surface, low poly)
 
 # A) GROUPED TOOLS (SAFE / PARAMETRIC / RECOMMENDED)
 
-Te narzędzia mogą być JEDNYM toolem z wieloma operacjami.
+These tools can be a SINGLE tool with multiple operations.
 
 ---
 
 ## 1) system
 
 Tool: `system`  
-Opis: globalne operacje, CRUD na scenie, context, reset, tryby.
+Description: Global operations, CRUD on scene, context, reset, modes.
 
-### Możliwe operacje:
+### Possible Operations:
 - `set_mode` → OBJECT / EDIT / SCULPT  
 - `clear_selection`  
 - `focus` (frame selected)  
@@ -24,7 +24,7 @@ Opis: globalne operacje, CRUD na scenie, context, reset, tryby.
 - `save_file` (path)  
 - `new_file`  
 
-### Przykład:
+### Example:
 ```json
 {
   "tool": "system",
@@ -40,16 +40,16 @@ Opis: globalne operacje, CRUD na scenie, context, reset, tryby.
 ## 2) collection
 
 Tool: `collection`  
-Opis: pełne zarządzanie kolekcjami.
+Description: Full collection management.
 
-### Operacje:
+### Operations:
 - `create`  
 - `delete`  
 - `move_object`  
 - `list_objects`  
 - `set_active`  
 
-### Przykład:
+### Example:
 ```json
 {
   "tool": "collection",
@@ -65,15 +65,15 @@ Opis: pełne zarządzanie kolekcjami.
 ## 3) transform
 
 Tool: `transform`  
-Opis: wszystkie transformacje w jednym toole.
+Description: All transformations in one tool.
 
-### Operacje:
+### Operations:
 - `move`: [x,y,z]  
 - `rotate`: axis + degrees  
 - `scale`: [x,y,z]  
 - `apply`: bool  
 
-### Przykład:
+### Example:
 ```json
 {
   "tool": "transform",
@@ -93,7 +93,7 @@ Opis: wszystkie transformacje w jednym toole.
 
 Tool: `viewport`
 
-### Operacje:
+### Operations:
 - `render_shot` (preview render)
 - `frame_object`
 - `set_shading`: SOLID / WIREFRAME / MATERIAL
@@ -118,7 +118,7 @@ Tool: `export`
 
 Tool: `material`
 
-### Operacje:
+### Operations:
 - `create` (name, color)  
 - `set_param` (roughness, metallic, emission, alpha)  
 - `assign` (object, material)  
@@ -130,7 +130,7 @@ Tool: `material`
 
 Tool: `uv`
 
-### Operacje:
+### Operations:
 - `unwrap_smart`  
 - `unwrap_cube`  
 - `project_from_view`  
@@ -142,7 +142,7 @@ Tool: `uv`
 
 Tool: `model.create`
 
-### Typy:
+### Types:
 - cube (size)
 - sphere (radius)
 - plane (size)
@@ -153,8 +153,8 @@ Tool: `model.create`
 
 # B) SEPARATE (CRITICAL / NOT SAFE TO GROUP)
 
-Te narzędzia MUSZĄ być osobno.  
-AI inaczej rozwali topologię.
+These tools MUST be separate.  
+AI will break topology otherwise.
 
 ---
 
@@ -230,7 +230,7 @@ Args:
 
 # C) MACRO TOOLS (AI HIGH-LEVEL OPERATIONS)
 
-To są skróty, które pozwalają AI tworzyć skomplikowane modele.
+These are shortcuts that allow AI to create complex models.
 
 ---
 
@@ -254,8 +254,8 @@ Args:
 - smooth_passes  
 - organic_noise  
 
-Opis:  
-Tworzy siatkę organiczną → idealne do serca, płuc, mięśni.
+Description:  
+Creates organic mesh → ideal for heart, lungs, muscles.
 
 ---
 
@@ -273,8 +273,8 @@ Args:
 - depth  
 - inset  
 
-Opis:  
-Wycina panele → telefony, laptopy, robotyka.
+Description:  
+Cuts panels → phones, laptops, robotics.
 
 ---
 
@@ -345,8 +345,4 @@ create_phone_base
 create_organ_base  
 human_blockout  
 cleanup_all  
-sculpt_auto  
-
----
-
-# KONIEC PLIKU MARKDOWN
+sculpt_auto

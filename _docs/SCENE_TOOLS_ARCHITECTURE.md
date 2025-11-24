@@ -1,14 +1,14 @@
 # Scene Tools Architecture
 
-Narzędzia sceny służą do zarządzania obiektami, ich selekcją oraz podglądem.
-Zgodnie z przyjętą konwencją (tak jak w Modeling Tools), **każda operacja to osobny tool**.
+Scene tools are used for managing objects, their selection, and preview.
+According to the adopted convention (just like in Modeling Tools), **each operation is a separate tool**.
 
 ---
 
 # 1. scene_list_objects ✅ Done
-Listuje obiekty w scenie.
+Lists objects in the scene.
 
-Przykład:
+Example:
 ```json
 {
   "tool": "scene_list_objects",
@@ -19,9 +19,9 @@ Przykład:
 ---
 
 # 2. scene_delete_object ✅ Done
-Usuwa konkretny obiekt.
+Deletes a specific object.
 
-Przykład:
+Example:
 ```json
 {
   "tool": "scene_delete_object",
@@ -34,9 +34,9 @@ Przykład:
 ---
 
 # 3. scene_clean_scene ✅ Done
-Czyści scenę (domyślnie zostawia światła i kamery).
+Cleans the scene (by default keeps lights and cameras).
 
-Przykład:
+Example:
 ```json
 {
   "tool": "scene_clean_scene",
@@ -49,9 +49,9 @@ Przykład:
 ---
 
 # 4. scene_duplicate_object ✅ Done
-Duplikuje obiekt i opcjonalnie go przesuwa.
+Duplicates an object and optionally moves it.
 
-Przykład:
+Example:
 ```json
 {
   "tool": "scene_duplicate_object",
@@ -65,9 +65,9 @@ Przykład:
 ---
 
 # 5. scene_set_active_object ✅ Done
-Ustawia obiekt jako aktywny (ważne dla modyfikatorów).
+Sets an object as active (important for modifiers).
 
-Przykład:
+Example:
 ```json
 {
   "tool": "scene_set_active_object",
@@ -80,23 +80,31 @@ Przykład:
 ---
 
 # 6. scene_get_viewport ✅ Done
-Pobiera podgląd sceny (obraz base64).
+Gets a scene preview (base64 image).
 
-Przykład:
+Args:
+- width: int
+- height: int
+- shading: str (SOLID, WIREFRAME, MATERIAL, RENDERED)
+- camera_name: str (optional)
+- focus_target: str (optional - object to frame)
+
+Example:
 ```json
 {
   "tool": "scene_get_viewport",
   "args": {
     "width": 1024,
-    "height": 768
+    "height": 768,
+    "shading": "WIREFRAME",
+    "camera_name": "USER_PERSPECTIVE",
+    "focus_target": "Cube"
   }
 }
 ```
 
 ---
 
-# Zasady
-1. **Prefiks `scene_`**: Wszystkie narzędzia muszą zaczynać się od tego prefiksu.
-2. **Atomiczność**: Jeden tool = jedna akcja. Nie grupujemy akcji w jeden tool z parametrem `action`.
-
-
+# Rules
+1. **Prefix `scene_`**: All tools must start with this prefix.
+2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

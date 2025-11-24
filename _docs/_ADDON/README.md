@@ -48,7 +48,7 @@ Technical details.
 
 | `set_active_object` | `set_active_object` | Sets the active object. |
 
-| `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render of the viewport. |
+| `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
 
 
