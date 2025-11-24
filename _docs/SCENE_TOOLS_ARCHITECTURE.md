@@ -105,6 +105,74 @@ Example:
 
 ---
 
+# 7. scene_create_light ✅ Done
+Creates a light source.
+
+Args:
+- type: str (POINT, SUN, SPOT, AREA)
+- energy: float (Watts)
+- color: [r, g, b]
+- location: [x, y, z]
+
+Example:
+```json
+{
+  "tool": "scene_create_light",
+  "args": {
+    "type": "POINT",
+    "energy": 1000.0,
+    "color": [1.0, 0.5, 0.0],
+    "location": [0.0, 0.0, 5.0]
+  }
+}
+```
+
+---
+
+# 8. scene_create_camera ✅ Done
+Creates a camera object.
+
+Args:
+- location: [x, y, z]
+- rotation: [rx, ry, rz] (radians)
+- lens: float (focal length mm)
+
+Example:
+```json
+{
+  "tool": "scene_create_camera",
+  "args": {
+    "location": [0.0, -10.0, 5.0],
+    "rotation": [1.1, 0.0, 0.0],
+    "lens": 85.0
+  }
+}
+```
+
+---
+
+# 9. scene_create_empty ✅ Done
+Creates an Empty object (helper/parent).
+
+Args:
+- type: str (PLAIN_AXES, CUBE, SPHERE, etc.)
+- size: float
+- location: [x, y, z]
+
+Example:
+```json
+{
+  "tool": "scene_create_empty",
+  "args": {
+    "type": "CUBE",
+    "size": 2.0,
+    "location": [0.0, 0.0, 0.0]
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

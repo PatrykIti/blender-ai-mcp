@@ -16,6 +16,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
 | `scene_get_viewport` | `width`, `height`, `shading`, `camera_name`, `focus_target` | Returns a visual preview of the scene (OpenGL Render). | ✅ Done |
+| `scene_create_light` | `type`, `energy`, `color`, `location` | Creates a light source. | ✅ Done |
+| `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera. | ✅ Done |
+| `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object. | ✅ Done |
 
 ---
 
@@ -37,11 +40,6 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 ---
 
 ## 🛠 Planned / In Progress
-
-### Scene Construction (`scene_`) - [TASK-010](./_TASKS/TASK-010_Scene_Construction_Tools.md)
-- [ ] `scene_create_light`
-- [ ] `scene_create_camera`
-- [ ] `scene_create_empty`
 
 ### Mesh Editing (`mesh_`) - Phase 2
 - [ ] `mesh_extrude`
