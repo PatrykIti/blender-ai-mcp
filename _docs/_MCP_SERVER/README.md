@@ -64,6 +64,15 @@ Geometry creation and editing.
 | `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
 | `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
 
+### Mesh Tools (Edit Mode)
+Low-level geometry manipulation.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `mesh_select_all` | `deselect` (bool) | Selects or deselects all geometry. |
+| `mesh_delete_selected` | `type` (str) | Deletes selected elements ('VERT', 'EDGE', 'FACE'). |
+| `mesh_select_by_index` | `indices` (list[int]), `type` (str), `deselect` (bool) | Selects specific vertices/edges/faces by index. |
+
 ## 🛠 Key Components
 
 ### Entry Point (`server/main.py`)

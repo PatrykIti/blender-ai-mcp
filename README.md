@@ -51,8 +51,9 @@ Basic composition and scene understanding.
 - [x] **Modifiers**: Add Modifier, Apply Modifier, List Modifiers.
 - [x] **Structure**: Join Objects, Separate Objects, Convert to Mesh.
 
-#### 🚧 Phase 2: Mesh Editing (Edit Mode) - *Next Up*
+#### 🚧 Phase 2: Mesh Editing (Edit Mode) - *In Progress*
 Critical for shaping geometry. AI needs these to actually "model" details, not just move cubes around.
+- [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`.
 - [ ] `mesh_extrude` (The basis of modeling).
 - [ ] `mesh_loop_cut` (Adding topology).
 - [ ] `mesh_bevel` (Rounding edges).
@@ -114,6 +115,7 @@ We recommend using Docker to run the MCP Server.
         "scene_create_light",
         "scene_create_camera",
         "scene_create_empty",
+        "scene_set_mode",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
@@ -122,7 +124,10 @@ We recommend using Docker to run the MCP Server.
         "modeling_join_objects",
         "modeling_separate_object",
         "modeling_set_origin",
-        "modeling_list_modifiers"
+        "modeling_list_modifiers",
+        "mesh_select_all",
+        "mesh_delete_selected",
+        "mesh_select_by_index"
       ]
     }
   }

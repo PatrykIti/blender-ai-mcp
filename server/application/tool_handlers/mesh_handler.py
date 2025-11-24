@@ -1,0 +1,25 @@
+from typing import List
+from server.domain.interfaces.rpc import IRpcClient
+from server.domain.tools.mesh import IMeshTool
+
+class MeshToolHandler(IMeshTool):
+    def __init__(self, rpc_client: IRpcClient):
+        self.rpc = rpc_client
+
+    def select_all(self, deselect: bool = False) -> str:
+        response = self.rpc.send_request("mesh.select_all", {"deselect": deselect})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def delete_selected(self, type: str = 'VERT') -> str:
+        response = self.rpc.send_request("mesh.delete_selected", {"type": type})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_by_index(self, indices: List[int], type: str = 'VERT', deselect: bool = False) -> str:
+        response = self.rpc.send_request("mesh.select_by_index", {"indices": indices, "type": type, "deselect": deselect})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

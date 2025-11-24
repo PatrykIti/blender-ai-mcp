@@ -88,3 +88,9 @@ class SceneToolHandler(ISceneTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def set_mode(self, mode: str) -> str:
+        response = self.rpc.send_request("scene.set_mode", {"mode": mode})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
