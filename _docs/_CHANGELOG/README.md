@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [15](./15-2025-11-24-viewport-control.md) | 2025-11-24 | **Extended Viewport Control** | 0.1.14 |
 | [14](./14-2025-11-22-tool-renaming.md) | 2025-11-22 | **Standardize Tool Naming (Prefixing)** | 0.1.13 |
 | [13](./13-2025-11-22-modeling-tools-completion.md) | 2025-11-22 | **Modeling Tools Completion (Object Mode)** | 0.1.12 |
 | [12](./12-2025-11-22-apply-modifier.md) | 2025-11-22 | **Modeling Tool - Apply Modifier** | 0.1.11 |

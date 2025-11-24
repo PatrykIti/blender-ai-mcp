@@ -11,9 +11,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-009](./TASK-009_Extend_Viewport_Control.md) | **Extend Viewport Control (Shading & Camera)** | 🟡 Medium | 2025-11-24 |
+*(No tasks)*
 
 ---
 
@@ -27,6 +25,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-009](./TASK-009_Extend_Viewport_Control.md) | **Extend Viewport Control (Shading & Camera)** | 🟡 Medium | 2025-11-24 |
 | [TASK-001](./TASK-001_Project_Setup.md) | **Project Initialization and Structure** | 🔴 High | 2025-11-22 |
 | [TASK-002](./TASK-002_Communication_Core.md) | **Communication Bridge Implementation (RPC)** | 🔴 High | 2025-11-22 |
 | [TASK-003](./TASK-003_MCP_Scene_Tools.md) | **MVP MCP Server and Scene Tools** | 🟡 Medium | 2025-11-22 |

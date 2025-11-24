@@ -93,79 +93,127 @@ class SceneHandler:
         bpy.context.view_layer.objects.active = obj
         return {"active": name}
 
-    def get_viewport(self, width=1024, height=768):
+    def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         """Returns a base64 encoded OpenGL render of the viewport."""
-        # Save current settings
         scene = bpy.context.scene
-        original_res_x = scene.render.resolution_x
-        original_res_y = scene.render.resolution_y
-        original_filepath = scene.render.filepath
         
-        # Setup temp settings
-        scene.render.resolution_x = width
-        scene.render.resolution_y = height
-        
-        # Handle Camera
-        camera_created = False
-        original_camera = scene.camera
-        
-        # Try to find a 3D View area for context override
+        # 1. Locate 3D View for context overrides
         view_area = None
+        view_space = None
+        view_region = None
+        
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
                 view_area = area
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        view_space = space
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        view_region = region
                 break
 
-        if not scene.camera:
-            # Create temp camera
-            bpy.ops.object.camera_add()
-            cam_obj = bpy.context.active_object
-            scene.camera = cam_obj
-            camera_created = True
-            
-            # Position camera to see everything
-            # We select all visible objects to frame them
-            bpy.ops.object.select_all(action='SELECT')
-            
-            if view_area:
-                with bpy.context.temp_override(area=view_area, region=view_area.regions[0]):
-                     bpy.ops.view3d.camera_to_view_selected()
-            else:
-                 # Fallback if no 3D view found (should not happen in standard UI, but possible in some modes)
-                 cam_obj.location = (15, -15, 12)
-                 # Point roughly to center (approximate look_at logic)
-                 cam_obj.rotation_euler = (math.radians(55), 0, math.radians(45))
+        if not view_area or not view_space or not view_region:
+             # Fallback if running headless or strange UI layout, but for OpenGL render we really need a View3D
+             raise RuntimeError("Could not find a valid 3D View area in Blender context.")
+
+        # 2. Save State (Render settings, Camera, Selection, Shading)
+        original_res_x = scene.render.resolution_x
+        original_res_y = scene.render.resolution_y
+        original_filepath = scene.render.filepath
+        original_camera = scene.camera
+        original_shading_type = view_space.shading.type
+        original_active = bpy.context.view_layer.objects.active
+        original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
+
+        # 3. Setup Render Settings
+        scene.render.resolution_x = width
+        scene.render.resolution_y = height
         
-        # Render OpenGL
-        fd, temp_path = tempfile.mkstemp(suffix=".jpg")
-        os.close(fd)
-        
-        scene.render.filepath = temp_path
-        
-        # Render
-        # If we found a view area, use it to get a "nice" viewport render (Solid/Material mode)
-        # Otherwise standard render
-        if view_area:
-             with bpy.context.temp_override(area=view_area):
-                 bpy.ops.render.opengl(write_still=True)
+        # 4. Apply Shading
+        # Validate shading type
+        valid_shading = {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
+        if shading.upper() in valid_shading:
+            view_space.shading.type = shading.upper()
         else:
-             bpy.ops.render.opengl(write_still=True)
-        
-        # Read back
-        b64_data = ""
-        if os.path.exists(temp_path):
-            with open(temp_path, "rb") as f:
-                data = f.read()
-                b64_data = base64.b64encode(data).decode('utf-8')
-            os.remove(temp_path)
-        
-        # Restore settings
-        scene.render.resolution_x = original_res_x
-        scene.render.resolution_y = original_res_y
-        scene.render.filepath = original_filepath
-        
-        if camera_created:
-            bpy.data.objects.remove(scene.camera, do_unlink=True)
-            scene.camera = original_camera
+             # Default fallback or warning? Let's stick to current if invalid
+             pass
+
+        # 5. Handle Camera & Focus
+        temp_camera_obj = None
+
+        try:
+            # Case A: Specific existing camera
+            if camera_name and camera_name != "USER_PERSPECTIVE":
+                if camera_name in bpy.data.objects:
+                    scene.camera = bpy.data.objects[camera_name]
+                else:
+                    raise ValueError(f"Camera '{camera_name}' not found.")
             
-        return b64_data
+            # Case B: Dynamic View (User Perspective)
+            else:
+                # Create temp camera
+                bpy.ops.object.camera_add()
+                temp_camera_obj = bpy.context.active_object
+                scene.camera = temp_camera_obj
+                
+                # Deselect all first
+                bpy.ops.object.select_all(action='DESELECT')
+                
+                # Select target(s) for framing
+                if focus_target:
+                    if focus_target in bpy.data.objects:
+                        target_obj = bpy.data.objects[focus_target]
+                        target_obj.select_set(True)
+                    else:
+                        # Fallback: if target invalid, select all
+                         bpy.ops.object.select_all(action='SELECT')
+                else:
+                    # No target -> Select all visible objects
+                    bpy.ops.object.select_all(action='SELECT')
+                
+                # Frame the camera to selection
+                # We need proper context override for 'view3d.camera_to_view_selected'
+                with bpy.context.temp_override(area=view_area, region=view_region):
+                    bpy.ops.view3d.camera_to_view_selected()
+
+            # 6. Render
+            fd, temp_path = tempfile.mkstemp(suffix=".jpg")
+            os.close(fd)
+            scene.render.filepath = temp_path
+
+            with bpy.context.temp_override(area=view_area, region=view_region):
+                 bpy.ops.render.opengl(write_still=True)
+
+            # 7. Read Result
+            b64_data = ""
+            if os.path.exists(temp_path):
+                with open(temp_path, "rb") as f:
+                    data = f.read()
+                    b64_data = base64.b64encode(data).decode('utf-8')
+                os.remove(temp_path)
+            
+            return b64_data
+
+        finally:
+            # 8. Restore State
+            scene.render.resolution_x = original_res_x
+            scene.render.resolution_y = original_res_y
+            scene.render.filepath = original_filepath
+            scene.camera = original_camera
+            view_space.shading.type = original_shading_type
+            
+            # Restore selection
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in original_selected:
+                try:
+                    obj.select_set(True)
+                except:
+                    pass 
+            
+            if original_active and original_active.name in bpy.data.objects:
+                bpy.context.view_layer.objects.active = original_active
+                
+            # Cleanup temp camera
+            if temp_camera_obj:
+                bpy.data.objects.remove(temp_camera_obj, do_unlink=True)

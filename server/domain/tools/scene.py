@@ -28,6 +28,6 @@ class ISceneTool(ABC):
         pass
 
     @abstractmethod
-    def get_viewport(self, width: int = 1024, height: int = 768) -> str:
+    def get_viewport(self, width: int = 1024, height: int = 768, shading: str = "SOLID", camera_name: Optional[str] = None, focus_target: Optional[str] = None) -> str:
         """Returns a base64 encoded image of the viewport."""
         pass

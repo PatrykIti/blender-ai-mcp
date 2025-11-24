@@ -72,15 +72,29 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
         return str(e)
 
 @mcp.tool()
-def scene_get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
+def scene_get_viewport(
+    ctx: Context, 
+    width: int = 1024, 
+    height: int = 768, 
+    shading: str = "SOLID", 
+    camera_name: str = None, 
+    focus_target: str = None
+) -> Image:
     """
     Get a visual preview of the scene (OpenGL Viewport Render).
     Returns an Image resource that the AI can see.
+
+    Args:
+        width: Image width.
+        height: Image height.
+        shading: Viewport shading mode ('WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED').
+        camera_name: Name of the camera to use. If None or "USER_PERSPECTIVE", uses a temporary camera.
+        focus_target: Name of the object to focus on. Only works if camera_name is None/"USER_PERSPECTIVE".
     """
     handler = get_scene_handler()
     try:
         # Returns base64 string
-        b64_data = handler.get_viewport(width, height)
+        b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
         # Convert to bytes for FastMCP Image
         image_bytes = base64.b64decode(b64_data)
         return Image(data=image_bytes, format="jpeg")

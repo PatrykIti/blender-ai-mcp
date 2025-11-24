@@ -37,11 +37,11 @@ Enhance the `scene_get_viewport` tool to provide the AI with control over the vi
     *   Ensure that after the render, the scene's active camera, selection state, and the viewport's shading mode are restored to their previous state. The tool must be side-effect free regarding the view and selection.
 
 ## ✅ Checklist
-- [ ] Update `server/domain/tools/scene.py` (Interface)
-- [ ] Update `server/application/tool_handlers/scene_handler.py`
-- [ ] Update `server/adapters/mcp/server.py`
-- [ ] Update `blender_addon/application/handlers/scene.py`
-- [ ] Verify state restoration (shading/camera/selection)
+- [x] Update `server/domain/tools/scene.py` (Interface)
+- [x] Update `server/application/tool_handlers/scene_handler.py`
+- [x] Update `server/adapters/mcp/server.py`
+- [x] Update `blender_addon/application/handlers/scene.py`
+- [x] Verify state restoration (shading/camera/selection)
 
 ## 📝 Tool Interface Examples
 

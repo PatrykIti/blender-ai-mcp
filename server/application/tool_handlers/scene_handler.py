@@ -36,9 +36,16 @@ class SceneToolHandler(ISceneTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return f"Successfully set active object to: {name}"
 
-    def get_viewport(self, width: int = 1024, height: int = 768) -> str:
+    def get_viewport(self, width: int = 1024, height: int = 768, shading: str = "SOLID", camera_name: Optional[str] = None, focus_target: Optional[str] = None) -> str:
         # Note: Large base64 strings might be heavy.
-        response = self.rpc.send_request("scene.get_viewport", {"width": width, "height": height})
+        args = {
+            "width": width,
+            "height": height,
+            "shading": shading,
+            "camera_name": camera_name,
+            "focus_target": focus_target
+        }
+        response = self.rpc.send_request("scene.get_viewport", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
