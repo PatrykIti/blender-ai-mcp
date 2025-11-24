@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.6.0 (2025-11-24)
+
+### Features
+
+- Edit Mode Foundation & Stability Fixes ([#9](https://github.com/PatrykIti/blender-ai-mcp/pull/9),
+  [`d68fdd4`](https://github.com/PatrykIti/blender-ai-mcp/commit/d68fdd42888545ce7e926136a480d765d0d3021c))
+
+
 ## v1.5.0 (2025-11-24)
 
 ### Features
