@@ -72,20 +72,109 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
         return str(e)
 
 @mcp.tool()
-def scene_get_viewport(ctx: Context, width: int = 1024, height: int = 768) -> Image:
+def scene_get_viewport(
+    ctx: Context, 
+    width: int = 1024, 
+    height: int = 768, 
+    shading: str = "SOLID", 
+    camera_name: str = None, 
+    focus_target: str = None
+) -> Image:
     """
     Get a visual preview of the scene (OpenGL Viewport Render).
     Returns an Image resource that the AI can see.
+
+    Args:
+        width: Image width.
+        height: Image height.
+        shading: Viewport shading mode ('WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED').
+        camera_name: Name of the camera to use. If None or "USER_PERSPECTIVE", uses a temporary camera.
+        focus_target: Name of the object to focus on. Only works if camera_name is None/"USER_PERSPECTIVE".
     """
     handler = get_scene_handler()
     try:
         # Returns base64 string
-        b64_data = handler.get_viewport(width, height)
+        b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
         # Convert to bytes for FastMCP Image
         image_bytes = base64.b64decode(b64_data)
         return Image(data=image_bytes, format="jpeg")
     except RuntimeError as e:
         raise e
+
+@mcp.tool()
+def scene_create_light(
+    ctx: Context,
+    type: str,
+    energy: float = 1000.0,
+    color: List[float] = (1.0, 1.0, 1.0),
+    location: List[float] = (0.0, 0.0, 5.0),
+    name: Optional[str] = None
+) -> str:
+    """
+    Create a light source.
+
+    Args:
+        type: 'POINT', 'SUN', 'SPOT', 'AREA'.
+        energy: Power in Watts.
+        color: [r, g, b] (0.0 to 1.0).
+        location: [x, y, z].
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_light(type, energy, color, location, name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_create_camera(
+    ctx: Context,
+    location: List[float],
+    rotation: List[float],
+    lens: float = 50.0,
+    clip_start: Optional[float] = None,
+    clip_end: Optional[float] = None,
+    name: Optional[str] = None
+) -> str:
+    """
+    Create a camera object.
+
+    Args:
+        location: [x, y, z].
+        rotation: [x, y, z] Euler angles in radians.
+        lens: Focal length in mm.
+        clip_start: Near clipping distance.
+        clip_end: Far clipping distance.
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_camera(location, rotation, lens, clip_start, clip_end, name)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_create_empty(
+    ctx: Context,
+    type: str,
+    size: float = 1.0,
+    location: List[float] = (0.0, 0.0, 0.0),
+    name: Optional[str] = None
+) -> str:
+    """
+    Create an Empty object (useful for grouping or tracking).
+
+    Args:
+        type: 'PLAIN_AXES', 'ARROWS', 'SINGLE_ARROW', 'CIRCLE', 'CUBE', 'SPHERE', 'CONE', 'IMAGE'.
+        size: Display size.
+        location: [x, y, z].
+        name: Optional custom name.
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.create_empty(type, size, location, name)
+    except RuntimeError as e:
+        return str(e)
 
 # ... Modeling Tools ...
 

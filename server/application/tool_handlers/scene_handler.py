@@ -36,9 +36,55 @@ class SceneToolHandler(ISceneTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return f"Successfully set active object to: {name}"
 
-    def get_viewport(self, width: int = 1024, height: int = 768) -> str:
+    def get_viewport(self, width: int = 1024, height: int = 768, shading: str = "SOLID", camera_name: Optional[str] = None, focus_target: Optional[str] = None) -> str:
         # Note: Large base64 strings might be heavy.
-        response = self.rpc.send_request("scene.get_viewport", {"width": width, "height": height})
+        args = {
+            "width": width,
+            "height": height,
+            "shading": shading,
+            "camera_name": camera_name,
+            "focus_target": focus_target
+        }
+        response = self.rpc.send_request("scene.get_viewport", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def create_light(self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None) -> str:
+        args = {
+            "type": type,
+            "energy": energy,
+            "color": color,
+            "location": location,
+            "name": name
+        }
+        response = self.rpc.send_request("scene.create_light", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def create_camera(self, location: List[float], rotation: List[float], lens: float = 50.0, clip_start: Optional[float] = None, clip_end: Optional[float] = None, name: Optional[str] = None) -> str:
+        args = {
+            "location": location,
+            "rotation": rotation,
+            "lens": lens,
+            "clip_start": clip_start,
+            "clip_end": clip_end,
+            "name": name
+        }
+        response = self.rpc.send_request("scene.create_camera", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def create_empty(self, type: str, size: float, location: List[float], name: Optional[str] = None) -> str:
+        args = {
+            "type": type,
+            "size": size,
+            "location": location,
+            "name": name
+        }
+        response = self.rpc.send_request("scene.create_empty", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result

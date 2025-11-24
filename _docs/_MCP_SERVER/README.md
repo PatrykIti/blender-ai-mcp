@@ -44,7 +44,10 @@ Managing objects at the scene level.
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
-| `scene_get_viewport` | `width` (int), `height` (int) | Returns a rendered image of the scene (OpenGL) for the AI to inspect. |
+| `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. |
+| `scene_create_light` | `type` (str), `energy` (float), `color` (rgb), `location` (xyz) | Creates a light (POINT, SUN, SPOT, AREA). |
+| `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera object. |
+| `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object (useful for helpers/parents). |
 
 ### Modeling Tools
 Geometry creation and editing.

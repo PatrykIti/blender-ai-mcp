@@ -1,5 +1,12 @@
 # Contributing to blender-ai-mcp
 
+> **💡 Support the Project**
+>
+> This project is currently developed after hours as a passion project.
+> If you find this tool useful or want to accelerate the development of advanced features, please consider supporting the project.
+>
+> [**💖 Sponsor on GitHub**](https://github.com/sponsors/PatrykIti) | [**☕ Buy me a coffee**](https://buymeacoffee.com/PatrykIti)
+
 Thank you for your interest in contributing! We are building a professional, robust bridge between AI and Blender. To maintain high quality, we strictly adhere to specific architectural patterns.
 
 ## 🏗️ Architecture Compliance (Mandatory)

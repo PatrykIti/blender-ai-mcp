@@ -1,177 +1,166 @@
-# Modeling Tools (NOT GROUPABLE – high precision topology operations)
+# Modeling Tools Architecture
 
-Narzędzia modelowania są destrukcyjne lub wpływają na topologię, dlatego:
-**NIE WOLNO ich grupować w jeden tool.**
-Każda operacja musi mieć osobny tool, aby AI nie mieszało kontekstu ani trybów.
+Modeling tools manage geometry creation, modification, and object-level manipulation.
+**Each operation is a separate tool** to ensure clarity and avoid context mixing (except for strictly parametric operations like adding modifiers).
 
 ---
 
-# 1. modeling.add_modifier (GROUPABLE – jedyna grupa w modeling) ✅ Done
-Bezpieczne modyfikatory, które AI może stosować z parametrami.
+# 1. modeling_create_primitive ✅ Done
+Creates basic 3D shapes.
 
-Dozwolone typy:
+Types: `Cube`, `Sphere`, `Cylinder`, `Plane`, `Cone`, `Monkey`, `Torus`.
 
-## Hard-Surface Modifiers:
-- BEVEL  
-- SUBSURF  
-- MIRROR  
-- ARRAY  
-- SOLIDIFY  
-- BOOLEAN  
-
-## Organic Modifiers:
-- SMOOTH  
-- REMESH  
-- DISPLACE  
-- SIMPLE_DEFORM  
-- SHRINKWRAP (opcjonalne)
-
-## Utility / Low Poly:
-- DECIMATE  
-- TRIANGULATE  
-
-Przykład:
+Example:
 ```json
 {
-  "tool": "modeling.add_modifier",
+  "tool": "modeling_create_primitive",
   "args": {
-    "name": "PhoneBody",
-    "modifier_type": "BEVEL",
-    "width": 0.02,
-    "segments": 2
+    "primitive_type": "Cube",
+    "size": 2.0,
+    "location": [0.0, 0.0, 0.0],
+    "rotation": [0.0, 0.0, 0.0]
   }
 }
 ```
 
 ---
 
-# 2. modeling.apply_modifier ✅ Done
-Zatwierdzanie modyfikatorów.
+# 2. modeling_transform_object ✅ Done
+Moves, rotates, or scales an existing object.
 
-Operacje:
-- apply (pojedynczy)
-- apply_all (wszystkie)
-- apply_condition (opcjonalnie)
-
----
-
-# 3. modeling.convert_to_mesh ✅ Done
-Konwersja z obiektów typu Curve, Text, Surface → Mesh.
-
-Przykład:
+Example:
 ```json
 {
-  "tool": "modeling.convert_to_mesh",
-  "args": { "name": "BezierCurve" }
+  "tool": "modeling_transform_object",
+  "args": {
+    "name": "Cube",
+    "location": [1.0, 2.0, 3.0],
+    "rotation": [0.0, 1.57, 0.0],
+    "scale": [1.0, 1.0, 2.0]
+  }
 }
 ```
 
 ---
 
-# 4. modeling.join_objects ✅ Done
-Łączenie wielu obiektów w jeden Mesh.
+# 3. modeling_add_modifier ✅ Done
+Adds a non-destructive modifier to an object.
 
-Args:
-- objects: [lista nazw]
-
----
-
-# 5. modeling.separate ✅ Done
-Oddzielenie siatki na nowe obiekty.
-
-Typy:
-- MATERIAL
-- SELECTION
-- LOOSE_PARTS
-
----
-
-# 6. modeling.set_origin ✅ Done
-Ustawienie punktu origin obiektu.
-
-Metody:
-- GEOMETRY
-- CENTER_OF_MASS
-- CURSOR
+Example:
+```json
+{
+  "tool": "modeling_add_modifier",
+  "args": {
+    "name": "Cube",
+    "modifier_type": "BEVEL",
+    "properties": {
+      "width": 0.05,
+      "segments": 3
+    }
+  }
+}
+```
 
 ---
 
-# 7. modeling.list_modifiers ✅ Done (Dodane)
-Listowanie modyfikatorów na obiekcie.
+# 4. modeling_apply_modifier ✅ Done
+Permanently applies a modifier to the mesh geometry.
 
-Args:
-- name: nazwa obiektu
-
----
-
-# 8. modeling.create_primitive (object-level creation) ✅ Done
-Tworzenie podstawowych brył (powiązane z modeling, ale oddzielne od mesh tools).
-
-Typy:
-- cube
-- sphere
-- plane
-- cylinder
-- cone
+Example:
+```json
+{
+  "tool": "modeling_apply_modifier",
+  "args": {
+    "name": "Cube",
+    "modifier_name": "Bevel"
+  }
+}
+```
 
 ---
 
-# SEPARATE MESH-EDIT TOOLS (ABSOLUTELY NOT GROUPABLE)
+# 5. modeling_list_modifiers ✅ Done
+Lists all modifiers currently on an object.
 
-## mesh.extrude
-- distance
-- axis (opcjonalnie)
-
-## mesh.inset
-- thickness
-
-## mesh.bevel
-- amount
-- segments
-
-## mesh.subdivide
-- levels
-- smoothness
-
-## mesh.loop_cut
-- count
-- ratio
-
-## mesh.boolean (destructive mode)
-- operation: DIFFERENCE / UNION / INTERSECT
-- target
-- cutter
-
-## mesh.merge_by_distance
-- distance
-
-## mesh.triangulate
-(no args)
-
-## mesh.remesh_voxel
-- voxel_size
-
-## mesh.smooth
-- iterations
-
-## mesh.delete_selected
-(no args)
+Example:
+```json
+{
+  "tool": "modeling_list_modifiers",
+  "args": {
+    "name": "Cube"
+  }
+}
+```
 
 ---
 
-# RULES FOR MODELING CATEGORY
+# 6. modeling_convert_to_mesh ✅ Done
+Converts objects (Curve, Text, Surface) into a Mesh.
 
-1. **Modeling NIE MOŻE być grupowane.**  
-   Powód: topologia, selekcje, tryby, destrukcja.
+Example:
+```json
+{
+  "tool": "modeling_convert_to_mesh",
+  "args": {
+    "name": "BezierCurve"
+  }
+}
+```
 
-2. **Jedyny wyjątek: modeling.add_modifier**  
-   (bo modifiers są parametryczne i stabilne)
+---
 
-3. **mesh.* ZAWSZE osobnymi toolami**  
-   (extrude, bevel, inset, loop_cut itd.)
+# 7. modeling_join_objects ✅ Done
+Joins multiple mesh objects into a single one.
 
-4. **Wszystkie operacje wpływające na geometrię siatki → MUST BE SEPARATE**
+Example:
+```json
+{
+  "tool": "modeling_join_objects",
+  "args": {
+    "object_names": ["Body", "Arm.L", "Arm.R"]
+  }
+}
+```
 
-5. **modeling.* operuje na obiektach (Object Mode)**  
-   **mesh.* operuje na geometrii (Edit Mode)**
+---
 
+# 8. modeling_separate_object ✅ Done
+Separates a mesh object into multiple objects.
+
+Types: `LOOSE` (loose parts), `SELECTED` (selected faces), `MATERIAL`.
+
+Example:
+```json
+{
+  "tool": "modeling_separate_object",
+  "args": {
+    "name": "Chair",
+    "type": "LOOSE"
+  }
+}
+```
+
+---
+
+# 9. modeling_set_origin ✅ Done
+Sets the object's origin point.
+
+Types: `GEOMETRY`, `ORIGIN_CURSOR`, `ORIGIN_CENTER_OF_MASS`.
+
+Example:
+```json
+{
+  "tool": "modeling_set_origin",
+  "args": {
+    "name": "Cube",
+    "type": "GEOMETRY"
+  }
+}
+```
+
+---
+
+# Rules
+1. **Prefix `modeling_`**: All tools must start with this prefix.
+2. **Object Mode**: These tools primarily operate in Object Mode or manage container-level data.
+3. **Mesh Operations**: Edit Mode operations (like extrude, loop cut) will be handled by `mesh_` tools (Phase 2).

@@ -39,6 +39,9 @@ def register():
         rpc_server.register_handler("scene.duplicate_object", scene_handler.duplicate_object)
         rpc_server.register_handler("scene.set_active_object", scene_handler.set_active_object)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
+        rpc_server.register_handler("scene.create_light", scene_handler.create_light)
+        rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
+        rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
         
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)

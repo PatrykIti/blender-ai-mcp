@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0
+- **To Do:** 1
 - **In Progress:** 0
 - **Done:** 14
 
@@ -11,7 +11,12 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No tasks)*
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-011-1](./TASK-011-1_Edit_Mode_Foundation.md) | **Edit Mode Foundation (Selection & Deletion)** | 🔴 High | 2025-11-24 |
+| [TASK-011-2](./TASK-011-2_Basic_Extrusions.md) | **Basic Extrusions & Face Operations** | 🔴 High | 2025-11-24 |
+| [TASK-011-3](./TASK-011-3_Edge_Operations.md) | **Edge Operations (Bevel, Loop Cut, Inset)** | 🟡 Medium | 2025-11-24 |
+| [TASK-011-4](./TASK-011-4_Advanced_Mesh_Ops.md) | **Advanced Mesh Ops (Boolean, Merge, Subdivide)** | 🟡 Medium | 2025-11-24 |
 
 ---
 
@@ -25,6 +30,8 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-010](./TASK-010_Scene_Construction_Tools.md) | **Scene Construction Tools (Lights, Cameras, Empties)** | 🟡 Medium | 2025-11-24 |
+| [TASK-009](./TASK-009_Extend_Viewport_Control.md) | **Extend Viewport Control (Shading & Camera)** | 🟡 Medium | 2025-11-24 |
 | [TASK-001](./TASK-001_Project_Setup.md) | **Project Initialization and Structure** | 🔴 High | 2025-11-22 |
 | [TASK-002](./TASK-002_Communication_Core.md) | **Communication Bridge Implementation (RPC)** | 🔴 High | 2025-11-22 |
 | [TASK-003](./TASK-003_MCP_Scene_Tools.md) | **MVP MCP Server and Scene Tools** | 🟡 Medium | 2025-11-22 |

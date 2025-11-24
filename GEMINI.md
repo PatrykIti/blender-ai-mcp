@@ -89,6 +89,12 @@ poetry install
 poetry run python server/main.py
 ```
 
+## 🔐 Security & Commit Policy
+*   **GPG Signing:** All commits MUST be signed with a GPG key.
+    *   The agent must **ALWAYS** wait for the user to provide the passphrase when prompted by the system during a commit.
+    *   NEVER use the `--no-gpg-sign` flag unless explicitly instructed by the user as a workaround for a specific error.
+    *   If a commit fails due to signing, inform the user and wait.
+
 ## ✅ Development Workflow
 1.  **Plan:** Read `_docs/_TASKS/`.
 2.  **Design:** Define Interface in `server/domain/tools/`.
