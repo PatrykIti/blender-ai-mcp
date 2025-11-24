@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0
+- **To Do:** 1
 - **In Progress:** 0
 - **Done:** 14
 
@@ -11,7 +11,9 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No tasks)*
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-009](./TASK-009_Extend_Viewport_Control.md) | **Extend Viewport Control (Shading & Camera)** | 🟡 Medium | 2025-11-24 |
 
 ---
 

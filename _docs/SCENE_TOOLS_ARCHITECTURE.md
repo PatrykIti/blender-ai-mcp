@@ -1,79 +1,102 @@
-# Structure proposal
+# Scene Tools Architecture
 
-scene
-│
-├── list_objects
-├── delete_object
-├── clean_scene
-├── duplicate_object
-├── set_active
-│
-├── get_viewport
-│     ├── shading: SOLID / MATERIAL / WIREFRAME / RENDERED
-│     ├── camera: CameraName
-│     ├── background_color
-│     ├── overlays: ON/OFF
-│     ├── xray: ON/OFF
-│     ├── clipping_region
-│     ├── matcap: string
-│     ├── render_type: preview / eevee / cycles
-│
-└── get_viewport_image
-      ├── width
-      ├── height
-      ├── shading
-      ├── camera
+Narzędzia sceny służą do zarządzania obiektami, ich selekcją oraz podglądem.
+Zgodnie z przyjętą konwencją (tak jak w Modeling Tools), **każda operacja to osobny tool**.
 
-# Examples
+---
 
-## Simple view
+# 1. scene_list_objects ✅ Done
+Listuje obiekty w scenie.
 
+Przykład:
+```json
 {
-  "tool": "scene",
+  "tool": "scene_list_objects",
+  "args": {}
+}
+```
+
+---
+
+# 2. scene_delete_object ✅ Done
+Usuwa konkretny obiekt.
+
+Przykład:
+```json
+{
+  "tool": "scene_delete_object",
   "args": {
-    "action": "get_viewport",
+    "name": "Cube.001"
+  }
+}
+```
+
+---
+
+# 3. scene_clean_scene ✅ Done
+Czyści scenę (domyślnie zostawia światła i kamery).
+
+Przykład:
+```json
+{
+  "tool": "scene_clean_scene",
+  "args": {
+    "keep_lights_and_cameras": true
+  }
+}
+```
+
+---
+
+# 4. scene_duplicate_object ✅ Done
+Duplikuje obiekt i opcjonalnie go przesuwa.
+
+Przykład:
+```json
+{
+  "tool": "scene_duplicate_object",
+  "args": {
+    "name": "Cube",
+    "translation": [2.0, 0.0, 0.0]
+  }
+}
+```
+
+---
+
+# 5. scene_set_active_object ✅ Done
+Ustawia obiekt jako aktywny (ważne dla modyfikatorów).
+
+Przykład:
+```json
+{
+  "tool": "scene_set_active_object",
+  "args": {
+    "name": "Cube"
+  }
+}
+```
+
+---
+
+# 6. scene_get_viewport ✅ Done
+Pobiera podgląd sceny (obraz base64).
+
+Przykład:
+```json
+{
+  "tool": "scene_get_viewport",
+  "args": {
     "width": 1024,
-    "height": 1024
+    "height": 768
   }
 }
+```
 
-## View with shading and camera
+---
 
-{
-  "tool": "scene",
-  "args": {
-    "action": "get_viewport",
-    "width": 1024,
-    "height": 1024,
-    "shading": "MATERIAL",
-    "camera": "Cam_1"
-  }
-}
-
-
-## Viewport setup without image generation
-
-{
-  "tool": "scene",
-  "args": {
-    "action": "set_viewport",
-    "shading": "WIREFRAME",
-    "background_color": [0.1, 0.1, 0.1],
-    "xray": true
-  }
-}
-
-## One action - set camera
-
-{
-  "tool": "scene",
-  "args": {
-    "action": "get_viewport_image",
-    "camera": "CameraCloseup",
-    "shading": "RENDERED",
-    "width": 512,
-    "height": 512
-  }
-}
+# Zasady
+1. **Prefiks `scene_`**: Wszystkie narzędzia muszą zaczynać się od tego prefiksu.
+2. **Atomiczność**: Jeden tool = jedna akcja. Nie grupujemy akcji w jeden tool z parametrem `action`.
 
 
