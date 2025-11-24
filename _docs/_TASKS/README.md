@@ -29,6 +29,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-011-X](./TASK-011-X_Mode_Switching.md) | **Scene Mode Switching Tool** | 🔴 High | 2025-11-24 |
 | [TASK-011-1](./TASK-011-1_Edit_Mode_Foundation.md) | **Edit Mode Foundation (Selection & Deletion)** | 🔴 High | 2025-11-24 |
 | [TASK-010](./TASK-010_Scene_Construction_Tools.md) | **Scene Construction Tools (Lights, Cameras, Empties)** | 🟡 Medium | 2025-11-24 |
 

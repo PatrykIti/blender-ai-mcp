@@ -46,3 +46,8 @@ class ISceneTool(ABC):
     def create_empty(self, type: str, size: float, location: List[float], name: Optional[str] = None) -> str:
         """Creates an empty object."""
         pass
+
+    @abstractmethod
+    def set_mode(self, mode: str) -> str:
+        """Sets the interaction mode (OBJECT, EDIT, SCULPT)."""
+        pass

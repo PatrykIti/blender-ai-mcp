@@ -176,6 +176,20 @@ def scene_create_empty(
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def scene_set_mode(ctx: Context, mode: str) -> str:
+    """
+    Set the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
+    
+    Args:
+        mode: The target mode (case-insensitive).
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.set_mode(mode)
+    except RuntimeError as e:
+        return str(e)
+
 # ... Modeling Tools ...
 
 @mcp.tool()

@@ -45,6 +45,7 @@ def register():
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
+        rpc_server.register_handler("scene.set_mode", scene_handler.set_mode)
         
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
