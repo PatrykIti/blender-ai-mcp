@@ -12,14 +12,16 @@ class ModelingToolHandler(IModelingTool):
         radius: float = 1.0, 
         size: float = 2.0, 
         location: List[float] = (0.0, 0.0, 0.0), 
-        rotation: List[float] = (0.0, 0.0, 0.0)
+        rotation: List[float] = (0.0, 0.0, 0.0),
+        name: Optional[str] = None
     ) -> str:
         args = {
             "primitive_type": primitive_type,
             "radius": radius,
             "size": size,
             "location": location,
-            "rotation": rotation
+            "rotation": rotation,
+            "name": name
         }
         response = self.rpc.send_request("modeling.create_primitive", args)
         if response.status == "error":

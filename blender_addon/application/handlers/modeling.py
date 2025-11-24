@@ -5,7 +5,7 @@ from typing import List
 class ModelingHandler:
     """Application service for modeling operations."""
 
-    def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=(0,0,0), rotation=(0,0,0)):
+    def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=(0,0,0), rotation=(0,0,0), name=None):
         if primitive_type == "Cube":
             bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
         elif primitive_type == "Sphere":
@@ -24,6 +24,9 @@ class ModelingHandler:
             raise ValueError(f"Unknown primitive type: {primitive_type}")
         
         obj = bpy.context.active_object
+        if name:
+            obj.name = name
+            
         return {"name": obj.name, "type": "MESH"}
 
     def transform_object(self, name, location=None, rotation=None, scale=None):
