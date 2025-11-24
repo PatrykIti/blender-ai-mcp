@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.4.0 (2025-11-24)
+
+### Features
+
+- Extended Scene Control & Construction Tools (Phase 1 Complete)
+  ([#7](https://github.com/PatrykIti/blender-ai-mcp/pull/7),
+  [`1257a63`](https://github.com/PatrykIti/blender-ai-mcp/commit/1257a637f548bdc49ad5a3f6670f607839f0332b))
+
+
 ## v1.3.0 (2025-11-23)
 
 ### Features
