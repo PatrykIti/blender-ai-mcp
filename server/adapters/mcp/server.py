@@ -199,7 +199,8 @@ def modeling_create_primitive(
     radius: float = 1.0, 
     size: float = 2.0, 
     location: List[float] = (0.0, 0.0, 0.0), 
-    rotation: List[float] = (0.0, 0.0, 0.0)
+    rotation: List[float] = (0.0, 0.0, 0.0),
+    name: str = None
 ) -> str:
     """
     Create a 3D primitive.
@@ -210,10 +211,11 @@ def modeling_create_primitive(
         size: Size for Cube/Plane/Monkey.
         location: [x, y, z] coordinates.
         rotation: [rx, ry, rz] rotation in radians.
+        name: Optional name for the new object.
     """
     handler = get_modeling_handler()
     try:
-        return handler.create_primitive(primitive_type, radius, size, location, rotation)
+        return handler.create_primitive(primitive_type, radius, size, location, rotation, name)
     except RuntimeError as e:
         return str(e)
 
