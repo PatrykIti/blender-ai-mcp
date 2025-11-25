@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.7.0 (2025-11-25)
+
+### Features
+
+- Mesh Extrusion Tools & Selection Fixes (Phase 2 Part 2)
+  ([#10](https://github.com/PatrykIti/blender-ai-mcp/pull/10),
+  [`a5513cb`](https://github.com/PatrykIti/blender-ai-mcp/commit/a5513cb83f740426b2bb2b9ea3fdf43adbd4d026))
+
+
 ## v1.6.0 (2025-11-24)
 
 ### Features
