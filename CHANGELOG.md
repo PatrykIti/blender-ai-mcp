@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.9.0 (2025-11-25)
+
+### Features
+
+- Advanced Mesh Operations & Roadmap Update (Phase 2 Part 4)
+  ([#12](https://github.com/PatrykIti/blender-ai-mcp/pull/12),
+  [`ecbd85b`](https://github.com/PatrykIti/blender-ai-mcp/commit/ecbd85b760361a42e900130eb854490cb6b6ca60))
+
+
 ## v1.8.0 (2025-11-25)
 
 ### Features
