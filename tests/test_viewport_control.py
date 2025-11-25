@@ -70,15 +70,19 @@ class TestViewportControl(unittest.TestCase):
         self._objects_storage[name] = obj
         return obj
         
+    @patch('os.path.getsize')
+    @patch('os.rmdir')
     @patch('os.path.exists')
     @patch('builtins.open', new_callable=mock_open, read_data=b"img_data")
-    @patch('tempfile.mkstemp')
-    @patch('os.close')
+    @patch('tempfile.mkdtemp')
     @patch('os.remove')
-    def test_dynamic_view_with_shading(self, mock_remove, mock_close, mock_mkstemp, mock_open, mock_exists):
+    def test_dynamic_view_with_shading(self, mock_remove, mock_mkdtemp, mock_open, mock_exists, mock_rmdir, mock_getsize):
         # Setup
-        mock_mkstemp.return_value = (123, "/tmp/render.jpg")
-        mock_exists.return_value = True
+        mock_mkdtemp.return_value = "/tmp/render_dir"
+        # Mock file existence logic: 
+        # We need to simulate that the file exists AFTER render.opengl is called.
+        mock_exists.return_value = True 
+        mock_getsize.return_value = 100 # Non-empty file
         
         # Initial Camera
         original_cam = MagicMock()
@@ -106,7 +110,7 @@ class TestViewportControl(unittest.TestCase):
         bpy.context.temp_override.assert_any_call(area=self.mock_area, region=self.mock_region)
         bpy.ops.view3d.camera_to_view_selected.assert_called()
         
-        # 4. Verify Render
+        # 4. Verify Render (OpenGL attempted first)
         bpy.ops.render.opengl.assert_called_with(write_still=True)
         
         # 5. Verify Cleanup/Restore
@@ -115,15 +119,17 @@ class TestViewportControl(unittest.TestCase):
         # Resolution restored
         self.assertEqual(self.render_mock.resolution_x, 1920)
 
+    @patch('os.path.getsize')
+    @patch('os.rmdir')
     @patch('os.path.exists')
     @patch('builtins.open', new_callable=mock_open, read_data=b"img_data")
-    @patch('tempfile.mkstemp')
-    @patch('os.close')
+    @patch('tempfile.mkdtemp')
     @patch('os.remove')
-    def test_specific_camera(self, mock_remove, mock_close, mock_mkstemp, mock_open, mock_exists):
+    def test_specific_camera(self, mock_remove, mock_mkdtemp, mock_open, mock_exists, mock_rmdir, mock_getsize):
         # Setup
-        mock_mkstemp.return_value = (123, "/tmp/render.jpg")
+        mock_mkdtemp.return_value = "/tmp/render_dir"
         mock_exists.return_value = True
+        mock_getsize.return_value = 100
         
         # Mock existing camera in scene
         self.add_object("MyCamera")
