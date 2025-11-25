@@ -112,7 +112,11 @@ class MeshHandler:
         return f"{action_desc} {count} {type}(s) (Mode: {selection_mode})"
 
     def extrude_region(self, move=None):
-        """Extrudes selected region."""
+        """
+        Extrudes selected region.
+        WARNING: If 'move' is None, geometry is created in-place (overlapping).
+        Always provide 'move' or follow up with a transform.
+        """
         self._ensure_edit_mode()
         
         # Use built-in operator which handles context well for simple extrusion
@@ -160,24 +164,9 @@ class MeshHandler:
 
     def loop_cut(self, number_cuts=1, smoothness=0.0):
         """
-        Adds a loop cut. 
-        NOTE: Loop cut via API is tricky because it relies on mouse position context.
-        We will attempt to use 'mesh.subdivide' as a fallback for simple cuts if nothing is selected,
-        OR try to use 'mesh.loop_multi_select' if we can simulate context.
-        
-        For robust automation, 'loopcut_slide' often fails without UI context.
-        
-        Strategy V1: Use Subdivide if we just want more geometry.
-        Strategy V2: If user specifically wants loop cut behavior, we might need bisect or knife_project.
-        
-        Let's stick to SUBDIVIDE for now if 'loop_cut' is requested in a generic context, 
-        or try bpy.ops.mesh.loopcut_slide with generic overrides if possible.
-        
-        ACTUALLY: The most reliable "cut" for AI without mouse context is 'subdivide' or 'bisect'.
-        However, 'loop_cut' implies ring topology.
-        
-        Let's try bpy.ops.mesh.loopcut_slide. It typically requires a 'region' and 'edge' context.
-        If that fails, we'll fallback to subdivide and warn.
+        Adds cuts to the mesh geometry.
+        IMPORTANT: This uses 'subdivide' on SELECTED edges.
+        You MUST select edges perpendicular to the desired cut direction first.
         """
         self._ensure_edit_mode()
         
@@ -203,8 +192,10 @@ class MeshHandler:
     def boolean(self, operation='DIFFERENCE', solver='FAST'):
         """
         Performs boolean operation in Edit Mode (intersect_boolean).
-        Requires selection of target faces.
-        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'
+        Formula: Unselected - Selected (for Difference).
+        1. Select the 'Cutter' geometry.
+        2. Deselect the 'Base' geometry.
+        3. Run tool.
         """
         self._ensure_edit_mode()
         bpy.ops.mesh.intersect_boolean(operation=operation, solver=solver)

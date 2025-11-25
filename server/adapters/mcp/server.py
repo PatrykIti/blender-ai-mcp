@@ -306,6 +306,7 @@ def modeling_join_objects(
 ) -> str:
     """
     Joins multiple mesh objects into a single mesh object.
+    IMPORTANT: The LAST object in the list becomes the Active Object (Base).
     
     Args:
         object_names: A list of names of the objects to join.
@@ -418,7 +419,7 @@ def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', s
 def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
     """
     Extrudes the currently selected region (vertices/edges/faces) and optionally moves it.
-    This is the primary way to add new geometry.
+    WARNING: If 'move' is not provided, geometry is created in-place (overlapping).
     
     Args:
         move: Optional vector [x, y, z] to move the extruded region.
@@ -470,9 +471,9 @@ def mesh_loop_cut(
     smoothness: float = 0.0
 ) -> str:
     """
-    Adds cuts to the mesh geometry (Subdivide equivalent for now).
-    Note: True 'Loop Cut & Slide' is difficult to automate without mouse context.
-    This tool currently uses 'subdivide' on selected edges to add resolution.
+    Adds cuts to the mesh geometry.
+    IMPORTANT: This uses 'subdivide' on SELECTED edges.
+    You MUST select edges perpendicular to the desired cut direction first.
     
     Args:
         number_cuts: Number of cuts to make.
@@ -511,7 +512,8 @@ def mesh_boolean(
 ) -> str:
     """
     Performs a boolean operation on selected geometry in Edit Mode.
-    Requires overlapping geometry or specific selection context.
+    Formula: Unselected - Selected (for Difference).
+    Ensure 'Cutter' is SELECTED and 'Base' is DESELECTED before running.
     
     Args:
         operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.

@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1
+- **To Do:** 3
 - **In Progress:** 0
 - **Done:** 14
 
@@ -13,7 +13,9 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Created |
 |----|-------|----------|---------|
-| [TASK-011-4](./TASK-011-4_Advanced_Mesh_Ops.md) | **Advanced Mesh Ops (Boolean, Merge, Subdivide)** | 🟡 Medium | 2025-11-24 |
+| [TASK-011-5](./TASK-011-5_Mesh_Tool_Docstring_Standardization.md) | **Mesh Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
+| [TASK-011-6](./TASK-011-6_Modeling_Tool_Docstring_Standardization.md) | **Modeling Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
+| [TASK-011-7](./TASK-011-7_Scene_Tool_Docstring_Standardization.md) | **Scene Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
 
 ---
 
@@ -27,6 +29,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-011-4](./TASK-011-4_Advanced_Mesh_Ops.md) | **Advanced Mesh Ops (Boolean, Merge, Subdivide)** | 🟡 Medium | 2025-11-25 |
 | [TASK-011-3](./TASK-011-3_Edge_Operations.md) | **Edge Operations (Bevel, Loop Cut, Inset)** | 🟡 Medium | 2025-11-24 |
 | [TASK-011-2](./TASK-011-2_Basic_Extrusions.md) | **Basic Extrusions & Face Operations** | 🔴 High | 2025-11-24 |
 | [TASK-011-X](./TASK-011-X_Mode_Switching.md) | **Scene Mode Switching Tool** | 🔴 High | 2025-11-24 |

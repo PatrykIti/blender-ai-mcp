@@ -132,7 +132,10 @@ class ModelingHandler:
         return {"name": obj.name, "type": "MESH", "status": "converted"}
 
     def join_objects(self, object_names):
-        """Joins multiple mesh objects into a single mesh object."""
+        """
+        Joins multiple mesh objects into a single mesh object.
+        The LAST object in the list becomes the Active Object (Base) and retains its name/properties.
+        """
         if not object_names:
             raise ValueError("No objects provided for joining.")
             
