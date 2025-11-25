@@ -40,12 +40,12 @@ Example:
 
 # 3. mesh_select_by_index ✅ Done
 Selects specific geometry elements by their index using BMesh.
-This allows precise AI targeting (e.g., "select vertex 5 and 12").
+Supports different selection modes for precise control.
 
 Args:
 - indices: List[int]
 - type: str ('VERT', 'EDGE', 'FACE')
-- deselect: bool (default false)
+- selection_mode: str ('SET', 'ADD', 'SUBTRACT') - Default is 'SET'
 
 Example:
 ```json
@@ -54,8 +54,40 @@ Example:
   "args": {
     "indices": [0, 1, 4, 5],
     "type": "VERT",
-    "deselect": false
+    "selection_mode": "SET"
   }
+}
+```
+
+---
+
+# 4. mesh_extrude_region ✅ Done
+Extrudes the currently selected region (vertices, edges, or faces) and optionally moves it.
+This is the primary tool for "growing" geometry.
+
+Args:
+- move: List[float] (optional [x, y, z] translation vector)
+
+Example:
+```json
+{
+  "tool": "mesh_extrude_region",
+  "args": {
+    "move": [0.0, 0.0, 2.0]
+  }
+}
+```
+
+---
+
+# 5. mesh_fill_holes ✅ Done
+Creates a face from selected edges or vertices (equivalent to pressing 'F').
+
+Example:
+```json
+{
+  "tool": "mesh_fill_holes",
+  "args": {}
 }
 ```
 

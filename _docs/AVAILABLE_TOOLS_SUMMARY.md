@@ -46,12 +46,13 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `mesh_select_all` | `deselect` (bool) | Selects/Deselects all geometry. | ✅ Done |
 | `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
-| `mesh_select_by_index` | `indices`, `type`, `deselect` | Selects elements by index. | ✅ Done |
+| `mesh_select_by_index` | `indices`, `type`, `selection_mode` | Selects elements by index. | ✅ Done |
+| `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
+| `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |
 
 ---
 
 ## 🛠 Planned / In Progress
 
 ### Mesh Editing (`mesh_`) - Phase 2 Continued
-- [ ] `mesh_extrude`
 - [ ] `mesh_loop_cut`

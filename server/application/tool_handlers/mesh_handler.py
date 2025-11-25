@@ -18,8 +18,21 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def select_by_index(self, indices: List[int], type: str = 'VERT', deselect: bool = False) -> str:
-        response = self.rpc.send_request("mesh.select_by_index", {"indices": indices, "type": type, "deselect": deselect})
+    def select_by_index(self, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
+        response = self.rpc.send_request("mesh.select_by_index", {"indices": indices, "type": type, "selection_mode": selection_mode})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def extrude_region(self, move: List[float] = None) -> str:
+        args = {"move": move} if move else {}
+        response = self.rpc.send_request("mesh.extrude_region", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def fill_holes(self) -> str:
+        response = self.rpc.send_request("mesh.fill_holes")
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
