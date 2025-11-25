@@ -1,6 +1,11 @@
-# TASK-011-2: Basic Extrusions & Face Operations
+title: Basic Extrusions & Face Operations
+status: done
+priority: high
+assignee: unassigned
+depends_on: TASK-011-1
+---
 
-## 🎯 Objective
+# 🎯 Objective
 Implement the most fundamental modeling operations: Extruding geometry and filling holes. These tools allow the AI to grow the mesh.
 
 ## 📋 Requirements
@@ -18,7 +23,8 @@ Implement the most fundamental modeling operations: Extruding geometry and filli
     *   Use `bpy.ops.mesh.fill()` or `bpy.ops.mesh.edge_face_add()`.
 
 ## ✅ Checklist
-- [ ] Update `IMeshTool` & `MeshToolHandler`.
-- [ ] Update Addon `MeshHandler`.
-- [ ] Register `mesh_extrude_region`, `mesh_fill_holes`.
-- [ ] Tests.
+- [x] Update `IMeshTool` & `MeshToolHandler`.
+- [x] Update Addon `MeshHandler`.
+- [x] Register `mesh_extrude_region`, `mesh_fill_holes`.
+- [x] Tests.
+
