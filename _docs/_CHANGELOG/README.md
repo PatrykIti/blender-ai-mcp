@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [19](./19-2025-11-24-mesh-edges.md) | 2025-11-24 | **Edge Operations (Bevel, Loop Cut, Inset)** | 0.2.2 |
 | [18](./18-2025-11-24-basic-extrusions.md) | 2025-11-24 | **Basic Extrusions & Face Operations** | 0.2.1 |
 | [17](./17-2025-11-24-mesh-foundation.md) | 2025-11-24 | **Edit Mode Foundation (Phase 2 Start)** | 0.2.0 |
 | [16](./16-2025-11-24-scene-construction.md) | 2025-11-24 | **Scene Construction Tools (Lights, Cameras, Empties)** | 0.1.15 |

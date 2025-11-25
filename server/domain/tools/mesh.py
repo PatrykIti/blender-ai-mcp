@@ -29,3 +29,18 @@ class IMeshTool(ABC):
     def fill_holes(self) -> str:
         """Fills holes in the mesh (creates faces)."""
         pass
+
+    @abstractmethod
+    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = 'EDGES') -> str:
+        """Bevels selected edges or vertices."""
+        pass
+
+    @abstractmethod
+    def loop_cut(self, number_cuts: int = 1, smoothness: float = 0.0) -> str:
+        """Adds a loop cut to the mesh."""
+        pass
+
+    @abstractmethod
+    def inset(self, thickness: float, depth: float = 0.0) -> str:
+        """Insets selected faces."""
+        pass

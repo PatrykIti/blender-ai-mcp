@@ -64,6 +64,9 @@ def register():
         rpc_server.register_handler("mesh.select_by_index", mesh_handler.select_by_index)
         rpc_server.register_handler("mesh.extrude_region", mesh_handler.extrude_region)
         rpc_server.register_handler("mesh.fill_holes", mesh_handler.fill_holes)
+        rpc_server.register_handler("mesh.bevel", mesh_handler.bevel)
+        rpc_server.register_handler("mesh.loop_cut", mesh_handler.loop_cut)
+        rpc_server.register_handler("mesh.inset", mesh_handler.inset)
         
         rpc_server.start()
     else:

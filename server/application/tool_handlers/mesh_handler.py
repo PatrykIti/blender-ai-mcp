@@ -36,3 +36,24 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = 'EDGES') -> str:
+        args = {"offset": offset, "segments": segments, "profile": profile, "affect": affect}
+        response = self.rpc.send_request("mesh.bevel", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def loop_cut(self, number_cuts: int = 1, smoothness: float = 0.0) -> str:
+        args = {"number_cuts": number_cuts, "smoothness": smoothness}
+        response = self.rpc.send_request("mesh.loop_cut", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def inset(self, thickness: float, depth: float = 0.0) -> str:
+        args = {"thickness": thickness, "depth": depth}
+        response = self.rpc.send_request("mesh.inset", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

@@ -74,6 +74,9 @@ Low-level geometry manipulation.
 | `mesh_select_by_index` | `indices` (list[int]), `type` (str), `selection_mode` (str) | Selects specific vertices/edges/faces by index. |
 | `mesh_extrude_region` | `move` (list[float]) | Extrudes selected region and optionally translates it. |
 | `mesh_fill_holes` | *none* | Creates faces from selection (F key). |
+| `mesh_bevel` | `offset`, `segments` | Bevels selected geometry. |
+| `mesh_loop_cut` | `number_cuts` | Adds cuts (subdivides) to selection. |
+| `mesh_inset` | `thickness`, `depth` | Insets selected faces. |
 
 ## 🛠 Key Components
 

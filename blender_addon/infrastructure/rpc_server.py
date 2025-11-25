@@ -4,6 +4,7 @@ import json
 import queue
 import time
 import traceback
+import struct
 from typing import Dict, Any
 
 # Try importing bpy, but allow running outside blender for testing
@@ -12,8 +13,32 @@ try:
 except ImportError:
     bpy = None
 
-HOST = "127.0.0.1"
+HOST = "0.0.0.0" # Listen on all interfaces within container
 PORT = 8765
+
+def send_msg(sock, msg):
+    # Prefix each message with a 4-byte length (network byte order)
+    msg = struct.pack('>I', len(msg)) + msg
+    sock.sendall(msg)
+
+def recv_msg(sock):
+    # Read message length and unpack it into an integer
+    raw_msglen = recvall(sock, 4)
+    if not raw_msglen:
+        return None
+    msglen = struct.unpack('>I', raw_msglen)[0]
+    # Read the message data
+    return recvall(sock, msglen)
+
+def recvall(sock, n):
+    # Helper function to recv n bytes or return None if EOF is hit
+    data = bytearray()
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data.extend(packet)
+    return data
 
 class BlenderRpcServer:
     def __init__(self, host=HOST, port=PORT):
@@ -78,10 +103,7 @@ class BlenderRpcServer:
         with conn:
             while self.running:
                 try:
-                    # Basic length-prefixed or newline-delimited protocol could be used
-                    # For simplicity, let's use a buffer size, but robust parsing is better.
-                    # Here we assume one JSON object per send for the prototype.
-                    data = conn.recv(4096)
+                    data = recv_msg(conn)
                     if not data:
                         break
                     
@@ -90,11 +112,11 @@ class BlenderRpcServer:
                         response = self._process_request(message)
                         
                         response_data = json.dumps(response).encode('utf-8')
-                        conn.sendall(response_data)
+                        send_msg(conn, response_data)
                         
                     except json.JSONDecodeError:
                         err = {"status": "error", "error": "Invalid JSON"}
-                        conn.sendall(json.dumps(err).encode('utf-8'))
+                        send_msg(conn, json.dumps(err).encode('utf-8'))
                         
                 except Exception as e:
                     print(f"[BlenderRpc] Client handler error: {e}")
@@ -142,8 +164,8 @@ class BlenderRpcServer:
 
         # Wait for result (blocking the network thread, not the main thread)
         try:
-            # Timeout after 10 seconds
-            response_payload = result_queue.get(timeout=10.0)
+            # Timeout after 30 seconds (increased for heavy renders)
+            response_payload = result_queue.get(timeout=30.0)
         except queue.Empty:
             response_payload = {"status": "error", "error": "Command timed out"}
         

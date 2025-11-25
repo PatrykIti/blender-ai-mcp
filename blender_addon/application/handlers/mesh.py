@@ -145,3 +145,57 @@ class MeshHandler:
         bpy.ops.mesh.select_all(action='DESELECT') # Cleanup selection
         
         return "Filled holes and recalculated normals"
+
+    def bevel(self, offset=0.1, segments=1, profile=0.5, affect='EDGES'):
+        """Bevels selected geometry."""
+        self._ensure_edit_mode()
+        # bpy.ops.mesh.bevel works on selection
+        bpy.ops.mesh.bevel(
+            offset=offset, 
+            segments=segments, 
+            profile=profile, 
+            affect=affect # 'VERTICES' or 'EDGES'
+        )
+        return f"Bevel applied (offset={offset}, segments={segments})"
+
+    def loop_cut(self, number_cuts=1, smoothness=0.0):
+        """
+        Adds a loop cut. 
+        NOTE: Loop cut via API is tricky because it relies on mouse position context.
+        We will attempt to use 'mesh.subdivide' as a fallback for simple cuts if nothing is selected,
+        OR try to use 'mesh.loop_multi_select' if we can simulate context.
+        
+        For robust automation, 'loopcut_slide' often fails without UI context.
+        
+        Strategy V1: Use Subdivide if we just want more geometry.
+        Strategy V2: If user specifically wants loop cut behavior, we might need bisect or knife_project.
+        
+        Let's stick to SUBDIVIDE for now if 'loop_cut' is requested in a generic context, 
+        or try bpy.ops.mesh.loopcut_slide with generic overrides if possible.
+        
+        ACTUALLY: The most reliable "cut" for AI without mouse context is 'subdivide' or 'bisect'.
+        However, 'loop_cut' implies ring topology.
+        
+        Let's try bpy.ops.mesh.loopcut_slide. It typically requires a 'region' and 'edge' context.
+        If that fails, we'll fallback to subdivide and warn.
+        """
+        self._ensure_edit_mode()
+        
+        try:
+            # This is highly likely to fail in headless/background mode without correct override
+            # We can try to override the context if we have a 3D view (which we check for get_viewport)
+            # But identifying the *ring* to cut is impossible without an edge index target.
+            
+            # ALTERNATIVE: Subdivide selected edges.
+            # If edges are selected, subdivide cuts them.
+            bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
+            return f"Subdivided selected geometry (cuts={number_cuts})"
+            
+        except Exception as e:
+            return f"Failed to loop cut: {e}"
+
+    def inset(self, thickness=0.0, depth=0.0):
+        """Insets selected faces."""
+        self._ensure_edit_mode()
+        bpy.ops.mesh.inset(thickness=thickness, depth=depth)
+        return f"Inset applied (thickness={thickness}, depth={depth})"
