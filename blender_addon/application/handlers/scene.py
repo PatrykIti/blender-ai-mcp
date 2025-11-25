@@ -194,16 +194,40 @@ class SceneHandler:
                 os.close(fd)
                 scene.render.filepath = temp_path
 
-                with bpy.context.temp_override(area=view_area, region=view_region):
-                     bpy.ops.render.opengl(write_still=True)
+                # Try OpenGL render first (fastest)
+                render_success = False
+                try:
+                    with bpy.context.temp_override(area=view_area, region=view_region):
+                         bpy.ops.render.opengl(write_still=True)
+                    
+                    # Verify if file exists and has content
+                    if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                        render_success = True
+                except Exception as e:
+                    print(f"OpenGL render failed: {e}")
+
+                # Fallback: Full Render (slower, but works headless without UI context)
+                if not render_success:
+                    print("Falling back to full render...")
+                    try:
+                        # Optimize settings for speed
+                        scene.render.engine = 'BLENDER_WORKBENCH' # Fast, flat shading
+                        bpy.ops.render.render(write_still=True)
+                        
+                        if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                            render_success = True
+                    except Exception as e:
+                        print(f"Full render failed: {e}")
 
                 # 7. Read Result
+                if not render_success:
+                    raise RuntimeError("Render failed: Output file not created or empty. (Tried OpenGL and Workbench)")
+
                 b64_data = ""
-                if os.path.exists(temp_path):
-                    with open(temp_path, "rb") as f:
-                        data = f.read()
-                        b64_data = base64.b64encode(data).decode('utf-8')
-                    os.remove(temp_path)
+                with open(temp_path, "rb") as f:
+                    data = f.read()
+                    b64_data = base64.b64encode(data).decode('utf-8')
+                os.remove(temp_path)
                 
                 return b64_data
 
