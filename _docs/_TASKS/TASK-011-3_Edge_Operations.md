@@ -1,6 +1,11 @@
-# TASK-011-3: Edge Operations (Bevel, Loop Cut, Inset)
+title: Edge Operations (Bevel, Loop Cut, Inset)
+status: done
+priority: medium
+assignee: unassigned
+depends_on: TASK-011-2
+---
 
-## 🎯 Objective
+# 🎯 Objective
 Implement tools for adding detail and controlling topology.
 
 ## 📋 Requirements
@@ -17,7 +22,7 @@ Implement tools for adding detail and controlling topology.
 *   **Inset:** `bpy.ops.mesh.inset`.
 
 ## ✅ Checklist
-- [ ] Update `IMeshTool` & `MeshToolHandler`.
-- [ ] Update Addon `MeshHandler`.
-- [ ] Register `mesh_bevel`, `mesh_loop_cut`, `mesh_inset`.
-- [ ] Tests.
+- [x] Update `IMeshTool` & `MeshToolHandler`.
+- [x] Update Addon `MeshHandler`.
+- [x] Register `mesh_bevel`, `mesh_loop_cut`, `mesh_inset`.
+- [x] Tests.

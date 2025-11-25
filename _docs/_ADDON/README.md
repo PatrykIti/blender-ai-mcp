@@ -113,4 +113,10 @@ Technical details.
 
 | `fill_holes` | `fill_holes` | Fills holes by creating faces. |
 
+| `bevel` | `bevel` | Bevels selected edges/vertices. |
+
+| `loop_cut` | `loop_cut` | Adds loop cuts (subdivides). |
+
+| `inset` | `inset` | Insets selected faces. |
+
 

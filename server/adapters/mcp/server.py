@@ -440,6 +440,69 @@ def mesh_fill_holes(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def mesh_bevel(
+    ctx: Context,
+    offset: float = 0.1,
+    segments: int = 1,
+    profile: float = 0.5,
+    affect: str = 'EDGES'
+) -> str:
+    """
+    Bevels selected edges or vertices.
+    
+    Args:
+        offset: The size of the bevel (distance/width).
+        segments: Number of segments in the bevel (rounding).
+        profile: Shape of the bevel (0.5 is round).
+        affect: 'EDGES' or 'VERTICES'.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bevel(offset, segments, profile, affect)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_loop_cut(
+    ctx: Context,
+    number_cuts: int = 1,
+    smoothness: float = 0.0
+) -> str:
+    """
+    Adds cuts to the mesh geometry (Subdivide equivalent for now).
+    Note: True 'Loop Cut & Slide' is difficult to automate without mouse context.
+    This tool currently uses 'subdivide' on selected edges to add resolution.
+    
+    Args:
+        number_cuts: Number of cuts to make.
+        smoothness: Smoothness of the subdivision.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.loop_cut(number_cuts, smoothness)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_inset(
+    ctx: Context,
+    thickness: float = 0.0,
+    depth: float = 0.0
+) -> str:
+    """
+    Insets selected faces (creates smaller faces inside).
+    
+    Args:
+        thickness: Amount to inset.
+        depth: Amount to move the inset face in/out.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.inset(thickness, depth)
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()

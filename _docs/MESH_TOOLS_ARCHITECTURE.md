@@ -93,6 +93,66 @@ Example:
 
 ---
 
+# 6. mesh_bevel ✅ Done
+Bevels selected edges or vertices.
+
+Args:
+- offset: float (size of bevel)
+- segments: int (roundness)
+- affect: str ('EDGES' or 'VERTICES')
+
+Example:
+```json
+{
+  "tool": "mesh_bevel",
+  "args": {
+    "offset": 0.1,
+    "segments": 2,
+    "affect": "EDGES"
+  }
+}
+```
+
+---
+
+# 7. mesh_loop_cut ✅ Done
+Adds cuts to the mesh geometry. Currently uses subdivision logic on selected edges.
+
+Args:
+- number_cuts: int
+
+Example:
+```json
+{
+  "tool": "mesh_loop_cut",
+  "args": {
+    "number_cuts": 2
+  }
+}
+```
+
+---
+
+# 8. mesh_inset ✅ Done
+Insets selected faces (creates smaller faces inside).
+
+Args:
+- thickness: float
+- depth: float (optional extrude/inset depth)
+
+Example:
+```json
+{
+  "tool": "mesh_inset",
+  "args": {
+    "thickness": 0.05,
+    "depth": 0.0
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: These tools MUST operate in Edit Mode. The handler handles the switch.

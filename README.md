@@ -55,9 +55,7 @@ Basic composition and scene understanding.
 Critical for shaping geometry. AI needs these to actually "model" details, not just move cubes around.
 - [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`.
 - [x] `mesh_extrude_region`, `mesh_fill_holes`.
-- [ ] `mesh_loop_cut` (Adding topology).
-- [ ] `mesh_bevel` (Rounding edges).
-- [ ] `mesh_inset` (Creating panels/windows).
+- [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset` (Adding topology).
 - [ ] `mesh_boolean` (Destructive cutting).
 - [ ] `mesh_merge_by_distance` (Cleaning topology).
 - [ ] `mesh_smooth` / `mesh_flatten`.
@@ -130,7 +128,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_delete_selected",
         "mesh_select_by_index",
         "mesh_extrude_region",
-        "mesh_fill_holes"
+        "mesh_fill_holes",
+        "mesh_bevel",
+        "mesh_loop_cut",
+        "mesh_inset"
       ]
     }
   }

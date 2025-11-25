@@ -49,10 +49,14 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_select_by_index` | `indices`, `type`, `selection_mode` | Selects elements by index. | ✅ Done |
 | `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
 | `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |
+| `mesh_bevel` | `offset`, `segments` | Bevels selected edges. | ✅ Done |
+| `mesh_loop_cut` | `number_cuts` | Adds topology (subdivide). | ✅ Done |
+| `mesh_inset` | `thickness` | Insets faces. | ✅ Done |
 
 ---
 
 ## 🛠 Planned / In Progress
 
 ### Mesh Editing (`mesh_`) - Phase 2 Continued
-- [ ] `mesh_loop_cut`
+- [ ] `mesh_boolean`
+- [ ] `mesh_merge_by_distance`
