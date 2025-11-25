@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.8.0 (2025-11-25)
+
+### Features
+
+- Edge & Detail Operations (Phase 2 Part 3)
+  ([#11](https://github.com/PatrykIti/blender-ai-mcp/pull/11),
+  [`5390995`](https://github.com/PatrykIti/blender-ai-mcp/commit/5390995c66e9fc0452e945ba946c61cc32604752))
+
+
 ## v1.7.0 (2025-11-25)
 
 ### Features
