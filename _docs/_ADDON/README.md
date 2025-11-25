@@ -119,4 +119,10 @@ Technical details.
 
 | `inset` | `inset` | Insets selected faces. |
 
+| `boolean` | `boolean` | Boolean operation (Edit Mode). |
+
+| `merge_by_distance` | `merge_by_distance` | Merges vertices (Remove Doubles). |
+
+| `subdivide` | `subdivide` | Subdivides selected geometry. |
+
 

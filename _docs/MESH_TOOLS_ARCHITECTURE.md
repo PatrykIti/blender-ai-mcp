@@ -153,6 +153,64 @@ Example:
 
 ---
 
+# 9. mesh_boolean ✅ Done
+Performs a destructive boolean operation in Edit Mode.
+Formula: Unselected - Selected (for DIFFERENCE).
+
+Args:
+- operation: str ('DIFFERENCE', 'UNION', 'INTERSECT')
+- solver: str ('FAST', 'EXACT')
+
+Example:
+```json
+{
+  "tool": "mesh_boolean",
+  "args": {
+    "operation": "DIFFERENCE"
+  }
+}
+```
+
+---
+
+# 10. mesh_merge_by_distance ✅ Done
+Merges vertices that are close to each other (Remove Doubles).
+
+Args:
+- distance: float (threshold)
+
+Example:
+```json
+{
+  "tool": "mesh_merge_by_distance",
+  "args": {
+    "distance": 0.001
+  }
+}
+```
+
+---
+
+# 11. mesh_subdivide ✅ Done
+Subdivides selected geometry (Faces/Edges).
+
+Args:
+- number_cuts: int
+- smoothness: float (0.0 - 1.0)
+
+Example:
+```json
+{
+  "tool": "mesh_subdivide",
+  "args": {
+    "number_cuts": 1,
+    "smoothness": 0.0
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: These tools MUST operate in Edit Mode. The handler handles the switch.
