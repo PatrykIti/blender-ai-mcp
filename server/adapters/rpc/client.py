@@ -1,16 +1,41 @@
 import socket
 import json
 import time
+import struct
 from typing import Optional, Dict, Any
 from server.domain.models.rpc import RpcRequest, RpcResponse
 from server.domain.interfaces.rpc import IRpcClient
+
+def send_msg(sock, msg):
+    # Prefix each message with a 4-byte length (network byte order)
+    msg = struct.pack('>I', len(msg)) + msg
+    sock.sendall(msg)
+
+def recv_msg(sock):
+    # Read message length and unpack it into an integer
+    raw_msglen = recvall(sock, 4)
+    if not raw_msglen:
+        return None
+    msglen = struct.unpack('>I', raw_msglen)[0]
+    # Read the message data
+    return recvall(sock, msglen)
+
+def recvall(sock, n):
+    # Helper function to recv n bytes or return None if EOF is hit
+    data = bytearray()
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data.extend(packet)
+    return data
 
 class RpcClient(IRpcClient):
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
         self.socket = None
-        self.timeout = 10.0
+        self.timeout = 30.0 # Increased timeout for renders
 
     def connect(self):
         try:
@@ -52,12 +77,10 @@ class RpcClient(IRpcClient):
         try:
             # Send
             data = request.model_dump_json().encode('utf-8')
-            self.socket.sendall(data)
+            send_msg(self.socket, data)
 
             # Receive
-            # For prototype, we assume response comes in one chunk or small enough
-            # In production, implement buffering/delimiter
-            response_data = self.socket.recv(16384) 
+            response_data = recv_msg(self.socket)
             if not response_data:
                  raise ConnectionResetError("Connection closed by server")
 

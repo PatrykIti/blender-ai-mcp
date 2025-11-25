@@ -105,11 +105,19 @@ class SceneHandler:
                 try:
                     bpy.ops.object.mode_set(mode='OBJECT')
                 except Exception:
-                    # If switching fails, we might not be able to render correctly, but proceed
                     pass
 
+        # Create a dedicated temp directory for this render to avoid filename collisions
+        temp_dir = tempfile.mkdtemp()
+        # Define the output path. Blender will append extensions based on format.
+        # We force JPEG.
+        render_filename = "viewport_render"
+        render_filepath_base = os.path.join(temp_dir, render_filename)
+        # Expected output file (Blender adds extension)
+        expected_output = render_filepath_base + ".jpg"
+
         try:
-            # 1. Locate 3D View for context overrides
+            # 1. Locate 3D View for context overrides (Used for OpenGL)
             view_area = None
             view_space = None
             view_region = None
@@ -125,31 +133,33 @@ class SceneHandler:
                             view_region = region
                     break
 
-            if not view_area or not view_space or not view_region:
-                 # Fallback if running headless or strange UI layout, but for OpenGL render we really need a View3D
-                 raise RuntimeError("Could not find a valid 3D View area in Blender context.")
-
-            # 2. Save State (Render settings, Camera, Selection, Shading)
+            # 2. Save State
             original_res_x = scene.render.resolution_x
             original_res_y = scene.render.resolution_y
             original_filepath = scene.render.filepath
             original_camera = scene.camera
-            original_shading_type = view_space.shading.type
+            original_engine = scene.render.engine
+            original_file_format = scene.render.image_settings.file_format
+            
+            if view_space:
+                original_shading_type = view_space.shading.type
+            
             original_active = bpy.context.view_layer.objects.active
             original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
 
             # 3. Setup Render Settings
             scene.render.resolution_x = width
             scene.render.resolution_y = height
-            
-            # 4. Apply Shading
+            scene.render.image_settings.file_format = 'JPEG'
+            scene.render.filepath = render_filepath_base
+
+            # 4. Apply Shading (for OpenGL/Workbench)
             # Validate shading type
             valid_shading = {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
-            if shading.upper() in valid_shading:
-                view_space.shading.type = shading.upper()
-            else:
-                 # Default fallback or warning? Let's stick to current if invalid
-                 pass
+            target_shading = shading.upper() if shading.upper() in valid_shading else 'SOLID'
+            
+            if view_space:
+                view_space.shading.type = target_shading
 
             # 5. Handle Camera & Focus
             temp_camera_obj = None
@@ -178,66 +188,104 @@ class SceneHandler:
                             target_obj = bpy.data.objects[focus_target]
                             target_obj.select_set(True)
                         else:
-                            # Fallback: if target invalid, select all
                              bpy.ops.object.select_all(action='SELECT')
                     else:
                         # No target -> Select all visible objects
                         bpy.ops.object.select_all(action='SELECT')
                     
                     # Frame the camera to selection
-                    # We need proper context override for 'view3d.camera_to_view_selected'
-                    with bpy.context.temp_override(area=view_area, region=view_region):
-                        bpy.ops.view3d.camera_to_view_selected()
+                    if view_area and view_region:
+                        with bpy.context.temp_override(area=view_area, region=view_region):
+                            bpy.ops.view3d.camera_to_view_selected()
+                    else:
+                        # Fallback positioning without 3D view context
+                        temp_camera_obj.location = (10, -10, 10)
+                        # Approximate look at center
+                        temp_camera_obj.rotation_euler = (math.radians(60), 0, math.radians(45))
 
-                # 6. Render
-                fd, temp_path = tempfile.mkstemp(suffix=".jpg")
-                os.close(fd)
-                scene.render.filepath = temp_path
-
-                # Try OpenGL render first (fastest)
+                # 6. Render Strategy
                 render_success = False
-                try:
-                    with bpy.context.temp_override(area=view_area, region=view_region):
-                         bpy.ops.render.opengl(write_still=True)
-                    
-                    # Verify if file exists and has content
-                    if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
-                        render_success = True
-                except Exception as e:
-                    print(f"OpenGL render failed: {e}")
-
-                # Fallback: Full Render (slower, but works headless without UI context)
-                if not render_success:
-                    print("Falling back to full render...")
+                
+                # Strategy A: OpenGL Render (Fastest, requires Context)
+                # Only attempt if we found a valid 3D View context
+                if view_area and view_region:
                     try:
-                        # Optimize settings for speed
-                        scene.render.engine = 'BLENDER_WORKBENCH' # Fast, flat shading
-                        bpy.ops.render.render(write_still=True)
+                        with bpy.context.temp_override(area=view_area, region=view_region):
+                             # write_still=True forces write to filepath
+                             bpy.ops.render.opengl(write_still=True)
                         
-                        if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                        if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
                             render_success = True
                     except Exception as e:
-                        print(f"Full render failed: {e}")
+                        print(f"[Viewport] OpenGL render failed: {e}")
+
+                # Strategy B: Workbench Render (Software Rasterization, Headless Safe)
+                if not render_success:
+                    print("[Viewport] Fallback to Workbench render...")
+                    try:
+                        scene.render.engine = 'BLENDER_WORKBENCH'
+                        # Configure Workbench to match requested style roughly
+                        scene.display.shading.light = 'STUDIO'
+                        scene.display.shading.color_type = 'MATERIAL'
+                        
+                        if target_shading == 'WIREFRAME':
+                            # Workbench doesn't have direct "wireframe mode" global setting easily accessible via simple API in 4.0+ 
+                            # without tweaking display settings, but rendering as is usually gives Solid.
+                            # We can try to enable wireframe overlay if needed, but basic Workbench is usually SOLID.
+                            pass 
+                        
+                        bpy.ops.render.render(write_still=True)
+                        
+                        if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
+                            render_success = True
+                    except Exception as e:
+                        print(f"[Viewport] Workbench render failed: {e}")
+
+                # Strategy C: Cycles (Ultimate Fallback, CPU Raytracing)
+                if not render_success:
+                    print("[Viewport] Fallback to Cycles render...")
+                    try:
+                        scene.render.engine = 'CYCLES'
+                        scene.cycles.device = 'CPU'
+                        scene.cycles.samples = 1 # Extremely fast, noisy but visible
+                        scene.cycles.preview_samples = 1
+                        bpy.ops.render.render(write_still=True)
+                        
+                        if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
+                            render_success = True
+                    except Exception as e:
+                        print(f"[Viewport] Cycles render failed: {e}")
 
                 # 7. Read Result
                 if not render_success:
-                    raise RuntimeError("Render failed: Output file not created or empty. (Tried OpenGL and Workbench)")
+                    raise RuntimeError("Render failed: Could not generate viewport image using OpenGL, Workbench, or Cycles.")
 
                 b64_data = ""
-                with open(temp_path, "rb") as f:
+                with open(expected_output, "rb") as f:
                     data = f.read()
                     b64_data = base64.b64encode(data).decode('utf-8')
-                os.remove(temp_path)
                 
                 return b64_data
 
             finally:
-                # 8. Restore State
+                # 8. Cleanup Temp Files
+                if os.path.exists(expected_output):
+                    os.remove(expected_output)
+                try:
+                    os.rmdir(temp_dir)
+                except:
+                    pass
+                
+                # 9. Restore State
                 scene.render.resolution_x = original_res_x
                 scene.render.resolution_y = original_res_y
                 scene.render.filepath = original_filepath
                 scene.camera = original_camera
-                view_space.shading.type = original_shading_type
+                scene.render.engine = original_engine
+                scene.render.image_settings.file_format = original_file_format
+                
+                if view_space:
+                    view_space.shading.type = original_shading_type
                 
                 # Restore selection
                 bpy.ops.object.select_all(action='DESELECT')
@@ -254,9 +302,8 @@ class SceneHandler:
                 if temp_camera_obj:
                     bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
         finally:
-            # 9. Restore Mode
+            # 10. Restore Mode
             if original_mode and original_mode != 'OBJECT':
-                # Only switch back if we successfully switched away and object still exists
                 if bpy.context.active_object:
                      try:
                          bpy.ops.object.mode_set(mode=original_mode)
