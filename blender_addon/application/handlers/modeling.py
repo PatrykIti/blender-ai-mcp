@@ -6,6 +6,9 @@ class ModelingHandler:
     """Application service for modeling operations."""
 
     def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=(0,0,0), rotation=(0,0,0), name=None):
+        """
+        [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
+        """
         if primitive_type == "Cube":
             bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
         elif primitive_type == "Sphere":
@@ -30,6 +33,9 @@ class ModelingHandler:
         return {"name": obj.name, "type": "MESH"}
 
     def transform_object(self, name, location=None, rotation=None, scale=None):
+        """
+        [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -50,6 +56,10 @@ class ModelingHandler:
         return {"name": name, "location": list(obj.location)}
 
     def add_modifier(self, name, modifier_type, properties=None):
+        """
+        [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
+        Preferred method for booleans, subdivision, mirroring (non-destructive stack).
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -77,7 +87,9 @@ class ModelingHandler:
         return {"modifier": mod.name}
 
     def apply_modifier(self, name, modifier_name):
-        """Applies a modifier to an object."""
+        """
+        [OBJECT MODE][DESTRUCTIVE] Applies a modifier, making its changes permanent to the mesh.
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -109,7 +121,9 @@ class ModelingHandler:
         return {"applied_modifier": target_modifier_name, "object": name}
 
     def convert_to_mesh(self, name):
-        """Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh."""
+        """
+        [OBJECT MODE][DESTRUCTIVE] Converts a non-mesh object (Curve, Text, Surface) to a mesh.
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -132,7 +146,10 @@ class ModelingHandler:
         return {"name": obj.name, "type": "MESH", "status": "converted"}
 
     def join_objects(self, object_names):
-        """Joins multiple mesh objects into a single mesh object."""
+        """
+        [OBJECT MODE][DESTRUCTIVE] Joins multiple mesh objects into a single mesh.
+        The LAST object in the list becomes the Active Object (Base) and retains its name/properties.
+        """
         if not object_names:
             raise ValueError("No objects provided for joining.")
             
@@ -163,7 +180,9 @@ class ModelingHandler:
         return {"name": joined_obj.name, "joined_count": len(object_names)}
 
     def separate_object(self, name, type="LOOSE") -> List[str]:
-        """Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL)."""
+        """
+        [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -205,7 +224,9 @@ class ModelingHandler:
         return {"separated_objects": new_object_names, "original_object": name}
 
     def set_origin(self, name, type):
-        """Sets the origin point of an object using Blender's origin_set operator types."""
+        """
+        [OBJECT MODE][DESTRUCTIVE] Sets the origin point of an object.
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         
@@ -237,7 +258,9 @@ class ModelingHandler:
         return {"object": name, "origin_type": origin_type_upper, "status": "success"}
 
     def get_modifiers(self, name):
-        """Returns a list of modifiers on the object."""
+        """
+        [OBJECT MODE][SAFE][READ-ONLY] Returns a list of modifiers on the object.
+        """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
         

@@ -44,3 +44,18 @@ class IMeshTool(ABC):
     def inset(self, thickness: float, depth: float = 0.0) -> str:
         """Insets selected faces."""
         pass
+
+    @abstractmethod
+    def boolean(self, operation: str, solver: str = 'FAST') -> str:
+        """Performs a boolean operation on selected geometry (Edit Mode)."""
+        pass
+
+    @abstractmethod
+    def merge_by_distance(self, distance: float = 0.001) -> str:
+        """Merges vertices that are close to each other (cleanup)."""
+        pass
+
+    @abstractmethod
+    def subdivide(self, number_cuts: int = 1, smoothness: float = 0.0) -> str:
+        """Subdivides selected geometry."""
+        pass

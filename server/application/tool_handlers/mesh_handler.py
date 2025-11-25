@@ -57,3 +57,24 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def boolean(self, operation: str, solver: str = 'FAST') -> str:
+        args = {"operation": operation, "solver": solver}
+        response = self.rpc.send_request("mesh.boolean", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def merge_by_distance(self, distance: float = 0.001) -> str:
+        args = {"distance": distance}
+        response = self.rpc.send_request("mesh.merge_by_distance", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def subdivide(self, number_cuts: int = 1, smoothness: float = 0.0) -> str:
+        args = {"number_cuts": number_cuts, "smoothness": smoothness}
+        response = self.rpc.send_request("mesh.subdivide", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

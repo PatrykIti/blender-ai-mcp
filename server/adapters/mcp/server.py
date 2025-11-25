@@ -11,7 +11,9 @@ mcp = FastMCP("blender-ai-mcp", dependencies=["pydantic", "fastmcp"])
 # ... Scene Tools ...
 @mcp.tool()
 def scene_list_objects(ctx: Context) -> str:
-    """List all objects in the current Blender scene with their types."""
+    """
+    [SCENE][SAFE][READ-ONLY] Lists all objects in the current Blender scene with their types.
+    """
     handler = get_scene_handler()
     try:
         result = handler.list_objects()
@@ -22,7 +24,13 @@ def scene_list_objects(ctx: Context) -> str:
 
 @mcp.tool()
 def scene_delete_object(name: str, ctx: Context) -> str:
-    """Delete an object from the scene by name."""
+    """
+    [SCENE][DESTRUCTIVE] Deletes an object from the scene by name.
+    This permanently removes the object.
+    
+    Args:
+        name: Name of the object to delete.
+    """
     handler = get_scene_handler()
     try:
         return handler.delete_object(name)
@@ -32,7 +40,8 @@ def scene_delete_object(name: str, ctx: Context) -> str:
 @mcp.tool()
 def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
     """
-    Delete objects from the scene.
+    [SCENE][DESTRUCTIVE] Deletes objects from the scene.
+    WARNING: If keep_lights_and_cameras=False, deletes EVERYTHING (hard reset).
     
     Args:
         keep_lights_and_cameras: If True (default), keeps Lights and Cameras. 
@@ -47,7 +56,7 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
 @mcp.tool()
 def scene_duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
     """
-    Duplicate an object and optionally move it.
+    [SCENE][SAFE] Duplicates an object and optionally moves it.
     
     Args:
         name: Name of the object to duplicate.
@@ -62,8 +71,11 @@ def scene_duplicate_object(ctx: Context, name: str, translation: List[float] = N
 @mcp.tool()
 def scene_set_active_object(ctx: Context, name: str) -> str:
     """
-    Set the active object. 
-    This is important for operations that work on the "active" object (like adding modifiers).
+    [SCENE][SAFE] Sets the active object.
+    Important for operations that work on the "active" object (like adding modifiers).
+    
+    Args:
+        name: Name of the object to set as active.
     """
     handler = get_scene_handler()
     try:
@@ -81,7 +93,7 @@ def scene_get_viewport(
     focus_target: str = None
 ) -> Image:
     """
-    Get a visual preview of the scene (OpenGL Viewport Render).
+    [SCENE][SAFE][READ-ONLY] Gets a visual preview of the scene (OpenGL Viewport Render).
     Returns an Image resource that the AI can see.
 
     Args:
@@ -111,7 +123,7 @@ def scene_create_light(
     name: Optional[str] = None
 ) -> str:
     """
-    Create a light source.
+    [SCENE][SAFE] Creates a light source.
 
     Args:
         type: 'POINT', 'SUN', 'SPOT', 'AREA'.
@@ -137,7 +149,7 @@ def scene_create_camera(
     name: Optional[str] = None
 ) -> str:
     """
-    Create a camera object.
+    [SCENE][SAFE] Creates a camera object.
 
     Args:
         location: [x, y, z].
@@ -162,7 +174,7 @@ def scene_create_empty(
     name: Optional[str] = None
 ) -> str:
     """
-    Create an Empty object (useful for grouping or tracking).
+    [SCENE][SAFE] Creates an Empty object (useful for grouping or tracking).
 
     Args:
         type: 'PLAIN_AXES', 'ARROWS', 'SINGLE_ARROW', 'CIRCLE', 'CUBE', 'SPHERE', 'CONE', 'IMAGE'.
@@ -179,7 +191,7 @@ def scene_create_empty(
 @mcp.tool()
 def scene_set_mode(ctx: Context, mode: str) -> str:
     """
-    Set the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
+    [SCENE][SAFE] Sets the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
     
     Args:
         mode: The target mode (case-insensitive).
@@ -203,7 +215,7 @@ def modeling_create_primitive(
     name: str = None
 ) -> str:
     """
-    Create a 3D primitive.
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
     
     Args:
         primitive_type: "Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus".
@@ -228,7 +240,7 @@ def modeling_transform_object(
     scale: Optional[List[float]] = None
 ) -> str:
     """
-    Transform (move, rotate, scale) an existing object.
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
     
     Args:
         name: Name of the object.
@@ -250,7 +262,8 @@ def modeling_add_modifier(
     properties: Dict[str, Any] = None
 ) -> str:
     """
-    Add a modifier to an object.
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
+    Preferred method for booleans, subdivision, mirroring (non-destructive stack).
     
     Args:
         name: Object name.
@@ -270,7 +283,7 @@ def modeling_apply_modifier(
     modifier_name: str
 ) -> str:
     """
-    Applies a modifier to an object, making its changes permanent to the mesh.
+    [OBJECT MODE][DESTRUCTIVE] Applies a modifier, making its changes permanent to the mesh.
     
     Args:
         name: Object name.
@@ -288,7 +301,7 @@ def modeling_convert_to_mesh(
     name: str
 ) -> str:
     """
-    Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh.
+    [OBJECT MODE][DESTRUCTIVE] Converts a non-mesh object (Curve, Text, Surface) to a mesh.
     
     Args:
         name: The name of the object to convert.
@@ -305,7 +318,8 @@ def modeling_join_objects(
     object_names: List[str]
 ) -> str:
     """
-    Joins multiple mesh objects into a single mesh object.
+    [OBJECT MODE][DESTRUCTIVE] Joins multiple mesh objects into a single mesh.
+    IMPORTANT: The LAST object in the list becomes the Active Object (Base).
     
     Args:
         object_names: A list of names of the objects to join.
@@ -323,7 +337,7 @@ def modeling_separate_object(
     type: str = "LOOSE"
 ) -> str:
     """
-    Separates a mesh object into new objects based on type (LOOSE, SELECTED, MATERIAL).
+    [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
     
     Args:
         name: The name of the object to separate.
@@ -342,7 +356,7 @@ def modeling_list_modifiers(
     name: str
 ) -> str:
     """
-    Lists all modifiers currently on the specified object.
+    [OBJECT MODE][SAFE][READ-ONLY] Lists all modifiers currently on the specified object.
     
     Args:
         name: The name of the object.
@@ -361,8 +375,11 @@ def modeling_set_origin(
     type: str
 ) -> str:
     """
-    Sets the origin point of an object using Blender's origin_set operator types.
-    Examples for 'type': 'ORIGIN_GEOMETRY_TO_CURSOR', 'ORIGIN_CURSOR_TO_GEOMETRY', 'ORIGIN_GEOMETRY_TO_MASS'.
+    [OBJECT MODE][DESTRUCTIVE] Sets the origin point of an object.
+    
+    Args:
+        name: Object name.
+        type: Origin type (e.g., 'ORIGIN_GEOMETRY', 'ORIGIN_CURSOR', 'ORIGIN_CENTER_OF_MASS').
     """
     handler = get_modeling_handler()
     try:
@@ -377,8 +394,10 @@ from server.infrastructure.di import get_mesh_handler
 @mcp.tool()
 def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
     """
-    Selects or deselects all geometry elements in Edit Mode.
-    Ensures the active object is in Edit Mode.
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry elements.
+    
+    Args:
+        deselect: If True, deselects all. If False (default), selects all.
     """
     handler = get_mesh_handler()
     try:
@@ -389,8 +408,10 @@ def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
 @mcp.tool()
 def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
     """
-    Deletes selected geometry elements.
-    Type: 'VERT', 'EDGE', 'FACE'.
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected geometry elements.
+    
+    Args:
+        type: 'VERT', 'EDGE', 'FACE'.
     """
     handler = get_mesh_handler()
     try:
@@ -401,12 +422,13 @@ def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
 @mcp.tool()
 def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
     """
-    Selects specific geometry elements by their index.
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects specific geometry elements by index.
+    Uses BMesh for precise 0-based indexing.
     
     Args:
         indices: List of integer indices.
         type: 'VERT', 'EDGE', 'FACE'.
-        selection_mode: 'SET' (replace selection), 'ADD' (add to selection), 'SUBTRACT' (remove from selection).
+        selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect).
     """
     handler = get_mesh_handler()
     try:
@@ -417,11 +439,12 @@ def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', s
 @mcp.tool()
 def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
     """
-    Extrudes the currently selected region (vertices/edges/faces) and optionally moves it.
-    This is the primary way to add new geometry.
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Extrudes selected geometry.
+    WARNING: If 'move' is None, new geometry is created in-place (overlapping).
+    Always provide 'move' vector or follow up with transform.
     
     Args:
-        move: Optional vector [x, y, z] to move the extruded region.
+        move: Optional [x, y, z] vector to move extruded region.
     """
     handler = get_mesh_handler()
     try:
@@ -432,7 +455,8 @@ def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
 @mcp.tool()
 def mesh_fill_holes(ctx: Context) -> str:
     """
-    Fills holes by creating faces from selected edges/vertices (equivalent to 'F' key).
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills holes by creating faces from selected edges/vertices.
+    Equivalent to pressing 'F' key in Blender.
     """
     handler = get_mesh_handler()
     try:
@@ -449,11 +473,11 @@ def mesh_bevel(
     affect: str = 'EDGES'
 ) -> str:
     """
-    Bevels selected edges or vertices.
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bevels selected edges or vertices.
     
     Args:
-        offset: The size of the bevel (distance/width).
-        segments: Number of segments in the bevel (rounding).
+        offset: Size of the bevel (distance/width).
+        segments: Number of segments (rounding).
         profile: Shape of the bevel (0.5 is round).
         affect: 'EDGES' or 'VERTICES'.
     """
@@ -470,9 +494,9 @@ def mesh_loop_cut(
     smoothness: float = 0.0
 ) -> str:
     """
-    Adds cuts to the mesh geometry (Subdivide equivalent for now).
-    Note: True 'Loop Cut & Slide' is difficult to automate without mouse context.
-    This tool currently uses 'subdivide' on selected edges to add resolution.
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Adds cuts to mesh geometry.
+    IMPORTANT: Uses 'subdivide' on SELECTED edges.
+    Select edges perpendicular to desired cut direction first.
     
     Args:
         number_cuts: Number of cuts to make.
@@ -491,7 +515,7 @@ def mesh_inset(
     depth: float = 0.0
 ) -> str:
     """
-    Insets selected faces (creates smaller faces inside).
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Insets selected faces (creates smaller faces inside).
     
     Args:
         thickness: Amount to inset.
@@ -500,6 +524,69 @@ def mesh_inset(
     handler = get_mesh_handler()
     try:
         return handler.inset(thickness, depth)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_boolean(
+    ctx: Context,
+    operation: str = 'DIFFERENCE',
+    solver: str = 'FAST'
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
+    Formula: Unselected - Selected (for DIFFERENCE).
+    TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
+    
+    Workflow:
+      1. Select 'Cutter' geometry.
+      2. Deselect 'Base' geometry.
+      3. Run tool.
+    
+    Args:
+        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
+        solver: 'FAST' or 'EXACT'.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.boolean(operation, solver)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_merge_by_distance(
+    ctx: Context,
+    distance: float = 0.001
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Merges vertices within threshold distance.
+    Useful for cleaning up geometry after imports or boolean ops.
+    
+    Args:
+        distance: Threshold distance to merge.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.merge_by_distance(distance)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_subdivide(
+    ctx: Context,
+    number_cuts: int = 1,
+    smoothness: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Subdivides selected geometry.
+    
+    Args:
+        number_cuts: Number of cuts.
+        smoothness: Smoothness factor (0.0 to 1.0).
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.subdivide(number_cuts, smoothness)
     except RuntimeError as e:
         return str(e)
 

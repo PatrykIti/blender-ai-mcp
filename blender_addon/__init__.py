@@ -67,6 +67,9 @@ def register():
         rpc_server.register_handler("mesh.bevel", mesh_handler.bevel)
         rpc_server.register_handler("mesh.loop_cut", mesh_handler.loop_cut)
         rpc_server.register_handler("mesh.inset", mesh_handler.inset)
+        rpc_server.register_handler("mesh.boolean", mesh_handler.boolean)
+        rpc_server.register_handler("mesh.merge_by_distance", mesh_handler.merge_by_distance)
+        rpc_server.register_handler("mesh.subdivide", mesh_handler.subdivide)
         
         rpc_server.start()
     else:

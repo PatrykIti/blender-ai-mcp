@@ -56,14 +56,42 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`.
 - [x] `mesh_extrude_region`, `mesh_fill_holes`.
 - [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset` (Adding topology).
-- [ ] `mesh_boolean` (Destructive cutting).
-- [ ] `mesh_merge_by_distance` (Cleaning topology).
+- [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
 - [ ] `mesh_smooth` / `mesh_flatten`.
+
+#### 🎯 Phase 2.1: Advanced Selection (Planned)
+Smart selection tools to avoid "index hell" for the AI.
+- [ ] `mesh_select_loop`: Select edge loops.
+- [ ] `mesh_select_ring`: Select edge rings.
+- [ ] `mesh_select_linked`: Select linked geometry (islands).
+- [ ] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
+
+#### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
+Essential for organic shapes (hearts, lungs, muscles).
+- [ ] `mesh_smooth_vertices`: Laplacian smooth.
+- [ ] `mesh_randomize`: Add noise/irregularity.
+- [ ] `mesh_shrink_fatten`: Push vertices along normals.
+
+#### 🎨 Phase 2.3: Vertex Groups & Weight Painting (Planned)
+Preparation for rigging and simulation.
+- [ ] `mesh_create_vertex_group`: Create groups.
+- [ ] `mesh_assign_to_group`: Assign selected vertices.
+
+#### 🧪 Phase 2.5: Advanced Mesh Precision (Edit Mode)
+Fine-grained control tools for precise cuts and topology adjustments.
+- [ ] `mesh_knife` / `mesh_knife_project`: Precise cutting using screen or reference geometry.
+- [ ] `mesh_bisect`: Plane-based cutting with fill options.
+- [ ] `mesh_edge_slide` / `mesh_vertex_slide`: Sliding loops and vertices along existing topology.
+- [ ] `mesh_shrink_fatten` / `mesh_smooth`: Thickness and smoothing adjustments.
+- [ ] `mesh_triangulate` / `mesh_remesh_voxel`: Topology conversion utilities.
 
 #### ⏳ Phase 3: Materials & Organization
 - [ ] `material_create`: Setup PBR materials.
 - [ ] `material_assign`: Assign to objects/faces.
+- [ ] `material_set_params`: Adjust roughness, metallic, emission, alpha.
+- [ ] `material_set_texture`: Bind image textures to materials.
 - [ ] `uv_unwrap`: Smart UV Project / Cube Projection.
+- [ ] `uv_pack_islands`: Pack islands for efficient texture space usage.
 - [ ] `collection_manage`: Organize hierarchy.
 - [ ] `export`: Save to GLB/FBX/OBJ.
 
@@ -73,6 +101,36 @@ High-level abstractions where one command executes hundreds of Blender operation
 - [ ] `macro_create_phone_base`: Generates smartphone chassis with accurate topology.
 - [ ] `macro_human_blockout`: Generates proportional human base meshes.
 - [ ] `macro_retopologize`: Automates low-poly conversion.
+- [ ] `macro_panel_cut`: Hard-surface panel cutting for devices and robots.
+- [ ] `macro_lowpoly_convert`: Global polycount reduction while preserving silhouette.
+- [ ] `macro_cleanup_all`: Scene-wide cleanup (remove doubles, recalc normals, fix manifold).
+
+#### 🧱 Phase 5: Sculpting & Voxel Tools
+Organic shaping and high-level sculpt workflows.
+- [ ] `mesh_remesh_voxel`: Voxel remesh for uniform density.
+- [ ] `mesh_sculpt_auto`: High-level sculpt macro (smooth / grab / inflate / draw regions).
+- [ ] Future `sculpt_brush_*` tools for direct brush control (smooth, grab, crease, etc.).
+
+#### 🖥️ Phase 6: System & Session Management
+Global project-level operations and undo-safe workflows.
+- [ ] `system_set_mode`: High-level alias over scene/mode tools.
+- [ ] `system_undo` / `system_redo`: Safe history navigation for AI.
+- [ ] `system_save_file` / `system_new_file`: File-level save and reset.
+- [ ] `system_snapshot`: Optional quick save/restore checkpoints for complex modeling sessions.
+
+#### 📊 Phase 7: Introspection & Listing APIs
+Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
+- **Scene & System:**
+  - [ ] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
+- **Collections:**
+  - [ ] `collection_list`: List all collections and their hierarchy.
+  - [ ] `collection_list_objects`: List objects inside a given collection.
+- **Materials:**
+  - [ ] `material_list`: List all materials with key parameters.
+  - [ ] `material_list_by_object`: Materials and slots used by a specific object.
+- **UV & Geometry:**
+  - [ ] `uv_list_maps`: List UV maps for an object.
+  - [ ] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
 
 ---
 
