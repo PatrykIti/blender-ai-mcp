@@ -148,6 +148,60 @@ We recommend using Docker to run the MCP Server.
 
 **Cline Configuration (`cline_mcp_settings.json`):**
 
+**For macOS/Windows:**
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "scene_list_objects",
+        "scene_delete_object",
+        "scene_clean_scene",
+        "scene_duplicate_object",
+        "scene_set_active_object",
+        "scene_get_viewport",
+        "scene_create_light",
+        "scene_create_camera",
+        "scene_create_empty",
+        "scene_set_mode",
+        "modeling_create_primitive",
+        "modeling_transform_object",
+        "modeling_add_modifier",
+        "modeling_apply_modifier",
+        "modeling_convert_to_mesh",
+        "modeling_join_objects",
+        "modeling_separate_object",
+        "modeling_set_origin",
+        "modeling_list_modifiers",
+        "mesh_select_all",
+        "mesh_delete_selected",
+        "mesh_select_by_index",
+        "mesh_extrude_region",
+        "mesh_fill_holes",
+        "mesh_bevel",
+        "mesh_loop_cut",
+        "mesh_inset",
+        "mesh_boolean",
+        "mesh_merge_by_distance",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten"
+      ]
+    }
+  }
+}
+```
+
+**For Linux:**
 ```json
 {
   "mcpServers": {
@@ -202,8 +256,8 @@ We recommend using Docker to run the MCP Server.
 ```
 
 **⚠️ Important Network Configuration:**
-*   **Standard Mode:** We strongly recommend using `--network host` (as shown above) to ensure the Docker container can access the Blender server running on your local machine (`localhost:8765`).
-*   **MacOS/Windows Alternative:** If `--network host` causes issues, you can try removing it and setting `-e "BLENDER_RPC_HOST=host.docker.internal"`. However, this often requires additional Docker configuration.
+*   **macOS/Windows:** Use `host.docker.internal` (as shown in the first config). The `--network host` option does NOT work on Docker Desktop for Mac/Windows.
+*   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
 *   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
 
 ---
