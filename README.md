@@ -59,6 +59,24 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
 - [ ] `mesh_smooth` / `mesh_flatten`.
 
+#### 🎯 Phase 2.1: Advanced Selection (Planned)
+Smart selection tools to avoid "index hell" for the AI.
+- [ ] `mesh_select_loop`: Select edge loops.
+- [ ] `mesh_select_ring`: Select edge rings.
+- [ ] `mesh_select_linked`: Select linked geometry (islands).
+- [ ] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
+
+#### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
+Essential for organic shapes (hearts, lungs, muscles).
+- [ ] `mesh_smooth_vertices`: Laplacian smooth.
+- [ ] `mesh_randomize`: Add noise/irregularity.
+- [ ] `mesh_shrink_fatten`: Push vertices along normals.
+
+#### 🎨 Phase 2.3: Vertex Groups & Weight Painting (Planned)
+Preparation for rigging and simulation.
+- [ ] `mesh_create_vertex_group`: Create groups.
+- [ ] `mesh_assign_to_group`: Assign selected vertices.
+
 #### 🧪 Phase 2.5: Advanced Mesh Precision (Edit Mode)
 Fine-grained control tools for precise cuts and topology adjustments.
 - [ ] `mesh_knife` / `mesh_knife_project`: Precise cutting using screen or reference geometry.
