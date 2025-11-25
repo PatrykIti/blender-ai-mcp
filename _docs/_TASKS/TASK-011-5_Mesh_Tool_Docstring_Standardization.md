@@ -53,8 +53,67 @@ Introduce concise, consistent semantic tags in docstrings for all `mesh_*` tools
 
 ## ✅ Checklist
 - [ ] Define final tag vocabulary for mesh tools.
+- [ ] Create example docstrings for 2 key tools as templates (see Examples below).
 - [ ] Update all `mesh_*` tool docstrings in MCP server.
 - [ ] Update all `mesh_*` handler docstrings in Blender Addon.
 - [ ] Add boolean-specific guidance towards `modeling_add_modifier(BOOLEAN)`.
 - [ ] Document suggested tag scheme for `modeling_*` tools (future task).
 - [ ] Update `_docs/_TASKS/README.md` statistics and tables.
+
+---
+
+## 📝 Example Docstrings (Templates)
+
+### Example 1: `mesh_extrude_region` (MCP Server)
+```python
+@mcp.tool()
+def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Extrudes selected geometry.
+    WARNING: If 'move' is None, new geometry is created in-place (overlapping).
+    Always provide 'move' vector or follow up with transform.
+    
+    Args:
+        move: Optional [x, y, z] vector to move extruded region.
+    """
+```
+
+### Example 2: `mesh_boolean` (MCP Server)
+```python
+@mcp.tool()
+def mesh_boolean(ctx: Context, operation: str = 'DIFFERENCE', solver: str = 'FAST') -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
+    Formula: Unselected - Selected (for DIFFERENCE).
+    TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
+    
+    Workflow:
+      1. Select 'Cutter' geometry.
+      2. Deselect 'Base' geometry.
+      3. Run tool.
+    
+    Args:
+        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
+        solver: 'FAST' or 'EXACT'.
+    """
+```
+
+### Example 3: `mesh_select_by_index` (Blender Addon Handler)
+```python
+def select_by_index(self, indices, type='VERT', selection_mode='SET'):
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Select geometry elements by index.
+    Uses BMesh for precise indexing. Indices are 0-based.
+    
+    Args:
+        indices: List of integer indices.
+        type: 'VERT', 'EDGE', 'FACE'.
+        selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect).
+    """
+```
+
+### Pattern Summary
+- **First Line:** Tags `[MODE][BEHAVIOR][SAFETY]` + ultra-short description.
+- **Second Line:** Key warning or workflow tip (if critical).
+- **Third+ Lines:** Optional workflow steps or Args (keep under 3 lines total if possible).
+- **Consistency:** Reuse exact same tags across all `mesh_*` tools to minimize token diversity.
