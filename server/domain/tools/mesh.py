@@ -59,3 +59,13 @@ class IMeshTool(ABC):
     def subdivide(self, number_cuts: int = 1, smoothness: float = 0.0) -> str:
         """Subdivides selected geometry."""
         pass
+
+    @abstractmethod
+    def smooth_vertices(self, iterations: int = 1, factor: float = 0.5) -> str:
+        """Smooths selected vertices using Laplacian smoothing."""
+        pass
+
+    @abstractmethod
+    def flatten_vertices(self, axis: str) -> str:
+        """Flattens selected vertices along specified axis (X, Y, or Z)."""
+        pass

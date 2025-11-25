@@ -78,3 +78,17 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def smooth_vertices(self, iterations: int = 1, factor: float = 0.5) -> str:
+        args = {"iterations": iterations, "factor": factor}
+        response = self.rpc.send_request("mesh.smooth_vertices", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def flatten_vertices(self, axis: str) -> str:
+        args = {"axis": axis}
+        response = self.rpc.send_request("mesh.flatten_vertices", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

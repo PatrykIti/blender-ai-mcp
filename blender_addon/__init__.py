@@ -70,6 +70,8 @@ def register():
         rpc_server.register_handler("mesh.boolean", mesh_handler.boolean)
         rpc_server.register_handler("mesh.merge_by_distance", mesh_handler.merge_by_distance)
         rpc_server.register_handler("mesh.subdivide", mesh_handler.subdivide)
+        rpc_server.register_handler("mesh.smooth_vertices", mesh_handler.smooth_vertices)
+        rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
         
         rpc_server.start()
     else:

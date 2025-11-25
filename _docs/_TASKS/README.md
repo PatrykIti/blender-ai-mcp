@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0
 - **In Progress:** 0
-- **Done:** 17
+- **Done:** 18
 
 ---
 
@@ -26,6 +26,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-012](./TASK-012_Mesh_Smooth_Flatten.md) | **Mesh Smooth & Flatten Tools** | 🟡 Medium | 2025-11-25 |
 | [TASK-011-7](./TASK-011-7_Scene_Tool_Docstring_Standardization.md) | **Scene Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
 | [TASK-011-6](./TASK-011-6_Modeling_Tool_Docstring_Standardization.md) | **Modeling Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
 | [TASK-011-5](./TASK-011-5_Mesh_Tool_Docstring_Standardization.md) | **Mesh Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |

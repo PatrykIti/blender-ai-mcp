@@ -80,6 +80,8 @@ Low-level geometry manipulation.
 | `mesh_boolean` | `operation`, `solver` | Boolean op (Unselected - Selected). |
 | `mesh_merge_by_distance` | `distance` | Remove doubles / merge vertices. |
 | `mesh_subdivide` | `number_cuts`, `smoothness` | Subdivides selected geometry. |
+| `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |
+| `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 
 ## 🛠 Key Components
 

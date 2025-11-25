@@ -590,6 +590,44 @@ def mesh_subdivide(
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def mesh_smooth(
+    ctx: Context,
+    iterations: int = 1,
+    factor: float = 0.5
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
+    Uses Laplacian smoothing to refine organic shapes and remove hard edges.
+    
+    Args:
+        iterations: Number of smoothing passes (1-100). More = smoother
+        factor: Smoothing strength (0.0-1.0). 0=no effect, 1=maximum smoothing
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.smooth_vertices(iterations, factor)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_flatten(
+    ctx: Context,
+    axis: str
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
+    Aligns vertices perpendicular to chosen axis (X: YZ plane, Y: XZ plane, Z: XY plane).
+    
+    Args:
+        axis: Axis to flatten along ("X", "Y", or "Z")
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.flatten_vertices(axis)
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()

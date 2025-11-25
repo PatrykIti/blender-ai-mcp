@@ -238,3 +238,61 @@ class MeshHandler:
         self._ensure_edit_mode()
         bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
         return f"Subdivided selected geometry (cuts={number_cuts})"
+
+    def smooth_vertices(self, iterations=1, factor=0.5):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
+        Uses Laplacian smoothing algorithm.
+        """
+        self._ensure_edit_mode()
+        
+        bm = self._get_bmesh()
+        selected_verts = [v for v in bm.verts if v.select]
+        
+        if not selected_verts:
+            raise ValueError("No vertices selected")
+        
+        vert_count = len(selected_verts)
+        
+        bpy.ops.mesh.vertices_smooth(factor=factor, repeat=iterations)
+        
+        return f"Smoothed {vert_count} vertices ({iterations} iterations, {factor:.2f} factor)"
+
+    def flatten_vertices(self, axis):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
+        Aligns vertices perpendicular to chosen axis using scale-to-zero transform.
+        """
+        self._ensure_edit_mode()
+        
+        bm = self._get_bmesh()
+        selected_verts = [v for v in bm.verts if v.select]
+        
+        if not selected_verts:
+            raise ValueError("No vertices selected")
+        
+        vert_count = len(selected_verts)
+        
+        axis = axis.upper()
+        if axis not in ['X', 'Y', 'Z']:
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+        
+        constraint_map = {
+            "X": (True, False, False),
+            "Y": (False, True, False),
+            "Z": (False, False, True)
+        }
+        
+        constraint = constraint_map[axis]
+        scale_value = [1.0, 1.0, 1.0]
+        for i, constrained in enumerate(constraint):
+            if constrained:
+                scale_value[i] = 0.0
+        
+        bpy.ops.transform.resize(
+            value=tuple(scale_value),
+            constraint_axis=constraint,
+            orient_type='GLOBAL'
+        )
+        
+        return f"Flattened {vert_count} vertices along {axis} axis"

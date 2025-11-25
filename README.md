@@ -57,7 +57,7 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_extrude_region`, `mesh_fill_holes`.
 - [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset` (Adding topology).
 - [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
-- [ ] `mesh_smooth` / `mesh_flatten`.
+- [x] `mesh_smooth` / `mesh_flatten`.
 
 #### 🎯 Phase 2.1: Advanced Selection (Planned)
 Smart selection tools to avoid "index hell" for the AI.
@@ -189,7 +189,12 @@ We recommend using Docker to run the MCP Server.
         "mesh_fill_holes",
         "mesh_bevel",
         "mesh_loop_cut",
-        "mesh_inset"
+        "mesh_inset",
+        "mesh_boolean",
+        "mesh_merge_by_distance",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten"
       ]
     }
   }

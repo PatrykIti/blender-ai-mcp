@@ -124,5 +124,7 @@ Technical details.
 | `merge_by_distance` | `merge_by_distance` | Merges vertices (Remove Doubles). |
 
 | `subdivide` | `subdivide` | Subdivides selected geometry. |
+| `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
+| `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
 
 
