@@ -503,6 +503,63 @@ def mesh_inset(
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def mesh_boolean(
+    ctx: Context,
+    operation: str = 'DIFFERENCE',
+    solver: str = 'FAST'
+) -> str:
+    """
+    Performs a boolean operation on selected geometry in Edit Mode.
+    Requires overlapping geometry or specific selection context.
+    
+    Args:
+        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
+        solver: 'FAST' or 'EXACT'.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.boolean(operation, solver)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_merge_by_distance(
+    ctx: Context,
+    distance: float = 0.001
+) -> str:
+    """
+    Merges vertices that are close to each other (Remove Doubles).
+    Useful for cleaning up geometry after imports or boolean ops.
+    
+    Args:
+        distance: Threshold distance to merge.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.merge_by_distance(distance)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_subdivide(
+    ctx: Context,
+    number_cuts: int = 1,
+    smoothness: float = 0.0
+) -> str:
+    """
+    Subdivides selected geometry (Edges/Faces).
+    
+    Args:
+        number_cuts: Number of cuts.
+        smoothness: Smoothness factor (0.0 to 1.0).
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.subdivide(number_cuts, smoothness)
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()

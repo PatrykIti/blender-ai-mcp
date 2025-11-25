@@ -199,3 +199,28 @@ class MeshHandler:
         self._ensure_edit_mode()
         bpy.ops.mesh.inset(thickness=thickness, depth=depth)
         return f"Inset applied (thickness={thickness}, depth={depth})"
+
+    def boolean(self, operation='DIFFERENCE', solver='FAST'):
+        """
+        Performs boolean operation in Edit Mode (intersect_boolean).
+        Requires selection of target faces.
+        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'
+        """
+        self._ensure_edit_mode()
+        bpy.ops.mesh.intersect_boolean(operation=operation, solver=solver)
+        return f"Boolean {operation} applied"
+
+    def merge_by_distance(self, distance=0.001):
+        """Removes doubles (merges vertices by distance)."""
+        self._ensure_edit_mode()
+        # Assumes we want to clean up whole selection or everything?
+        # Usually 'remove doubles' implies everything selected.
+        # Let's rely on current selection.
+        bpy.ops.mesh.remove_doubles(threshold=distance)
+        return f"Merged vertices by distance {distance}"
+
+    def subdivide(self, number_cuts=1, smoothness=0.0):
+        """Subdivides selected geometry."""
+        self._ensure_edit_mode()
+        bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
+        return f"Subdivided selected geometry (cuts={number_cuts})"
