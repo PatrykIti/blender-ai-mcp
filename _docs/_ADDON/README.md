@@ -109,4 +109,8 @@ Technical details.
 
 | `select_by_index` | `select_by_index` | Selects elements by index using BMesh. |
 
+| `extrude_region` | `extrude_region` | Extrudes selected region (optionally moves). |
+
+| `fill_holes` | `fill_holes` | Fills holes by creating faces. |
+
 

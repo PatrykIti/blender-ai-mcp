@@ -54,7 +54,7 @@ Basic composition and scene understanding.
 #### 🚧 Phase 2: Mesh Editing (Edit Mode) - *In Progress*
 Critical for shaping geometry. AI needs these to actually "model" details, not just move cubes around.
 - [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`.
-- [ ] `mesh_extrude` (The basis of modeling).
+- [x] `mesh_extrude_region`, `mesh_fill_holes`.
 - [ ] `mesh_loop_cut` (Adding topology).
 - [ ] `mesh_bevel` (Rounding edges).
 - [ ] `mesh_inset` (Creating panels/windows).
@@ -127,7 +127,9 @@ We recommend using Docker to run the MCP Server.
         "modeling_list_modifiers",
         "mesh_select_all",
         "mesh_delete_selected",
-        "mesh_select_by_index"
+        "mesh_select_by_index",
+        "mesh_extrude_region",
+        "mesh_fill_holes"
       ]
     }
   }

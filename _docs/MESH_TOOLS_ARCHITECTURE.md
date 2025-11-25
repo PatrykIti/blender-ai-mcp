@@ -61,6 +61,38 @@ Example:
 
 ---
 
+# 4. mesh_extrude_region ✅ Done
+Extrudes the currently selected region (vertices, edges, or faces) and optionally moves it.
+This is the primary tool for "growing" geometry.
+
+Args:
+- move: List[float] (optional [x, y, z] translation vector)
+
+Example:
+```json
+{
+  "tool": "mesh_extrude_region",
+  "args": {
+    "move": [0.0, 0.0, 2.0]
+  }
+}
+```
+
+---
+
+# 5. mesh_fill_holes ✅ Done
+Creates a face from selected edges or vertices (equivalent to pressing 'F').
+
+Example:
+```json
+{
+  "tool": "mesh_fill_holes",
+  "args": {}
+}
+```
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: These tools MUST operate in Edit Mode. The handler handles the switch.

@@ -23,3 +23,16 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def extrude_region(self, move: List[float] = None) -> str:
+        args = {"move": move} if move else {}
+        response = self.rpc.send_request("mesh.extrude_region", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def fill_holes(self) -> str:
+        response = self.rpc.send_request("mesh.fill_holes")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

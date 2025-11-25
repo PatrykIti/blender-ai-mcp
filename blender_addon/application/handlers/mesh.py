@@ -71,3 +71,32 @@ class MeshHandler:
         
         action = "Deselected" if deselect else "Selected"
         return f"{action} {count} {type}(s)"
+
+    def extrude_region(self, move=None):
+        """Extrudes selected region."""
+        self._ensure_edit_mode()
+        
+        # Use built-in operator which handles context well for simple extrusion
+        # Default mode is REGION which is what 'E' key does
+        args = {}
+        if move:
+            args['TRANSFORM_OT_translate'] = {"value": move}
+            
+        # We call extrude_region_move. 
+        # Note: Passing transform args to a macro operator like this via python is sometimes tricky.
+        # Alternatively, we call extrude, then translate.
+        
+        bpy.ops.mesh.extrude_region_move(
+            MESH_OT_extrude_region={"use_normal_flip":False, "use_dissolve_ortho_edges":False, "mirror":False}, 
+            TRANSFORM_OT_translate={"value": move if move else (0,0,0)}
+        )
+        
+        return "Extruded region"
+
+    def fill_holes(self):
+        """Fills holes (creates faces) from selected edges."""
+        self._ensure_edit_mode()
+        # F key behavior
+        # Context: Selected edges/vertices
+        bpy.ops.mesh.edge_face_add()
+        return "Filled holes (created faces)"

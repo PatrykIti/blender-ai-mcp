@@ -410,6 +410,32 @@ def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', d
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
+    """
+    Extrudes the currently selected region (vertices/edges/faces) and optionally moves it.
+    This is the primary way to add new geometry.
+    
+    Args:
+        move: Optional vector [x, y, z] to move the extruded region.
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.extrude_region(move)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_fill_holes(ctx: Context) -> str:
+    """
+    Fills holes by creating faces from selected edges/vertices (equivalent to 'F' key).
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.fill_holes()
+    except RuntimeError as e:
+        return str(e)
+
 def run():
     """Starts the MCP server."""
     mcp.run()
