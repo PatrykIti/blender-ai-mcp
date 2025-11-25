@@ -22,14 +22,19 @@ class MeshHandler:
         return bm
 
     def select_all(self, deselect=False):
-        """Selects or deselects all geometry."""
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry.
+        """
         self._ensure_edit_mode()
         action = 'DESELECT' if deselect else 'SELECT'
         bpy.ops.mesh.select_all(action=action)
         return "Deselected all" if deselect else "Selected all"
 
     def delete_selected(self, type='VERT'):
-        """Deletes selected elements. Type: VERT, EDGE, FACE."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected elements.
+        Type: VERT, EDGE, FACE.
+        """
         # Using bmesh for deletion is safer when mixing with other bmesh ops
         bm = self._get_bmesh()
         
@@ -71,9 +76,12 @@ class MeshHandler:
 
     def select_by_index(self, indices, type='VERT', selection_mode='SET'):
         """
-        Selects elements by index using BMesh.
-        type: 'VERT', 'EDGE', 'FACE'
-        selection_mode: 'SET' (default), 'ADD', 'SUBTRACT'
+        [EDIT MODE][SELECTION-BASED][SAFE] Select geometry elements by index.
+        Uses BMesh for precise 0-based indexing.
+        
+        Args:
+            type: 'VERT', 'EDGE', 'FACE'
+            selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect)
         """
         # Handle SET mode (exclusive selection)
         if selection_mode == 'SET':
@@ -137,7 +145,10 @@ class MeshHandler:
         return "Extruded region"
 
     def fill_holes(self):
-        """Fills holes (creates faces) from selected edges."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills holes by creating faces from selected edges.
+        Equivalent to 'F' key. Recalculates normals automatically.
+        """
         self._ensure_edit_mode()
         # F key behavior
         # Context: Selected edges/vertices
@@ -151,7 +162,9 @@ class MeshHandler:
         return "Filled holes and recalculated normals"
 
     def bevel(self, offset=0.1, segments=1, profile=0.5, affect='EDGES'):
-        """Bevels selected geometry."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bevels selected geometry.
+        """
         self._ensure_edit_mode()
         # bpy.ops.mesh.bevel works on selection
         bpy.ops.mesh.bevel(
@@ -184,25 +197,33 @@ class MeshHandler:
             return f"Failed to loop cut: {e}"
 
     def inset(self, thickness=0.0, depth=0.0):
-        """Insets selected faces."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Insets selected faces.
+        """
         self._ensure_edit_mode()
         bpy.ops.mesh.inset(thickness=thickness, depth=depth)
         return f"Inset applied (thickness={thickness}, depth={depth})"
 
     def boolean(self, operation='DIFFERENCE', solver='FAST'):
         """
-        Performs boolean operation in Edit Mode (intersect_boolean).
-        Formula: Unselected - Selected (for Difference).
-        1. Select the 'Cutter' geometry.
-        2. Deselect the 'Base' geometry.
-        3. Run tool.
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
+        Formula: Unselected - Selected (for DIFFERENCE).
+        TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
+        
+        Workflow:
+          1. Select 'Cutter' geometry.
+          2. Deselect 'Base' geometry.
+          3. Run tool.
         """
         self._ensure_edit_mode()
         bpy.ops.mesh.intersect_boolean(operation=operation, solver=solver)
         return f"Boolean {operation} applied"
 
     def merge_by_distance(self, distance=0.001):
-        """Removes doubles (merges vertices by distance)."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Merges vertices within threshold distance.
+        Useful for cleaning up geometry after imports or boolean ops.
+        """
         self._ensure_edit_mode()
         # Assumes we want to clean up whole selection or everything?
         # Usually 'remove doubles' implies everything selected.
@@ -211,7 +232,9 @@ class MeshHandler:
         return f"Merged vertices by distance {distance}"
 
     def subdivide(self, number_cuts=1, smoothness=0.0):
-        """Subdivides selected geometry."""
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Subdivides selected geometry.
+        """
         self._ensure_edit_mode()
         bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
         return f"Subdivided selected geometry (cuts={number_cuts})"

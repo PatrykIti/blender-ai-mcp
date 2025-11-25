@@ -52,13 +52,13 @@ Introduce concise, consistent semantic tags in docstrings for all `mesh_*` tools
    - Leave a short "Future Work" note so a separate task can expand this to other groups.
 
 ## ✅ Checklist
-- [ ] Define final tag vocabulary for mesh tools.
-- [ ] Create example docstrings for 2 key tools as templates (see Examples below).
-- [ ] Update all `mesh_*` tool docstrings in MCP server.
-- [ ] Update all `mesh_*` handler docstrings in Blender Addon.
-- [ ] Add boolean-specific guidance towards `modeling_add_modifier(BOOLEAN)`.
-- [ ] Document suggested tag scheme for `modeling_*` tools (future task).
-- [ ] Update `_docs/_TASKS/README.md` statistics and tables.
+- [x] Define final tag vocabulary for mesh tools.
+- [x] Create example docstrings for 2 key tools as templates (see Examples below).
+- [x] Update all `mesh_*` tool docstrings in MCP server.
+- [x] Update all `mesh_*` handler docstrings in Blender Addon.
+- [x] Add boolean-specific guidance towards `modeling_add_modifier(BOOLEAN)`.
+- [x] Document suggested tag scheme for `modeling_*` tools (future task).
+- [x] Update `_docs/_TASKS/README.md` statistics and tables.
 
 ---
 

@@ -50,7 +50,7 @@ Define and apply concise semantic tags in docstrings for all `scene_*` tools so 
    - Reuse `[SCENE][SAFE]` / `[SCENE][DESTRUCTIVE]` combinations to minimize token diversity.
 
 ## ✅ Checklist
-- [ ] Define final tag vocabulary for scene tools.
-- [ ] Tag all `scene_*` tool docstrings in `server/adapters/mcp/server.py`.
-- [ ] Ensure destructive tools (`scene_clean_scene`, `scene_delete_object`) have very explicit, short warnings.
-- [ ] Update `_docs/_TASKS/README.md` statistics and To Do section.
+- [x] Define final tag vocabulary for scene tools.
+- [x] Tag all `scene_*` tool docstrings in `server/adapters/mcp/server.py`.
+- [x] Ensure destructive tools (`scene_clean_scene`, `scene_delete_object`) have very explicit, short warnings.
+- [x] Update `_docs/_TASKS/README.md` statistics and To Do section.

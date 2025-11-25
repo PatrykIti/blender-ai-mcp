@@ -55,8 +55,8 @@ Define and apply concise semantic tags in docstrings for all `modeling_*` tools 
    - Reuse tag combinations across tools as much as possible to minimize token diversity.
 
 ## ✅ Checklist
-- [ ] Finalize modeling tag vocabulary (`SAFE`, `NON-DESTRUCTIVE`, `DESTRUCTIVE`, etc.).
-- [ ] Tag all `modeling_*` tool docstrings in `server/adapters/mcp/server.py`.
-- [ ] Tag all corresponding methods in `blender_addon/application/handlers/modeling.py`.
-- [ ] Add a brief note in 1–2 modeling tools explaining that `modeling_*` is preferred over raw `mesh_*` for high-level AI workflows.
-- [ ] Update `_docs/_TASKS/README.md` statistics and To Do section.
+- [x] Finalize modeling tag vocabulary (`SAFE`, `NON-DESTRUCTIVE`, `DESTRUCTIVE`, etc.).
+- [x] Tag all `modeling_*` tool docstrings in `server/adapters/mcp/server.py`.
+- [x] Tag all corresponding methods in `blender_addon/application/handlers/modeling.py`.
+- [x] Add a brief note in 1–2 modeling tools explaining that `modeling_*` is preferred over raw `mesh_*` for high-level AI workflows.
+- [x] Update `_docs/_TASKS/README.md` statistics and To Do section.

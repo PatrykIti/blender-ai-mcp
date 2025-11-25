@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [21](./21-2025-11-25-tool-docstring-standardization.md) | 2025-11-25 | **Tool Docstring Standardization (Scene, Modeling, Mesh)** | 0.2.4 |
+| [20](./20-2025-11-25-advanced-mesh-ops.md) | 2025-11-25 | **Advanced Mesh Operations (Boolean, Merge, Subdivide)** | 0.2.3 |
 | [19](./19-2025-11-24-mesh-edges.md) | 2025-11-24 | **Edge Operations (Bevel, Loop Cut, Inset)** | 0.2.2 |
 | [18](./18-2025-11-24-basic-extrusions.md) | 2025-11-24 | **Basic Extrusions & Face Operations** | 0.2.1 |
 | [17](./17-2025-11-24-mesh-foundation.md) | 2025-11-24 | **Edit Mode Foundation (Phase 2 Start)** | 0.2.0 |
