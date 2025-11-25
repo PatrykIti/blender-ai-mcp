@@ -13,8 +13,11 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def select_by_index(self, indices: List[int], type: str = 'VERT', deselect: bool = False) -> str:
-        """Selects specific geometry elements by their index."""
+    def select_by_index(self, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
+        """
+        Selects specific geometry elements by their index.
+        selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect).
+        """
         pass
 
     @abstractmethod

@@ -107,7 +107,7 @@ Technical details.
 
 | `delete_selected` | `delete_selected` | Deletes selected elements (VERT, EDGE, FACE). |
 
-| `select_by_index` | `select_by_index` | Selects elements by index using BMesh. |
+| `select_by_index` | `select_by_index` | Selects elements by index using BMesh (supports SET/ADD/SUBTRACT). |
 
 | `extrude_region` | `extrude_region` | Extrudes selected region (optionally moves). |
 

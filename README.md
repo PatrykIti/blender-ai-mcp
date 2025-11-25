@@ -101,7 +101,8 @@ We recommend using Docker to run the MCP Server.
         "run",
         "-i",
         "--rm",
-        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "--network", "host",
+        "-e", "BLENDER_RPC_HOST=127.0.0.1",
         "ghcr.io/patrykiti/blender-ai-mcp:latest"
       ],
       "disabled": false,
@@ -136,7 +137,10 @@ We recommend using Docker to run the MCP Server.
 }
 ```
 
-*(Note: On Linux, replace `host.docker.internal` with `127.0.0.1` and add `--network host`)*.
+**⚠️ Important Network Configuration:**
+*   **Standard Mode:** We strongly recommend using `--network host` (as shown above) to ensure the Docker container can access the Blender server running on your local machine (`localhost:8765`).
+*   **MacOS/Windows Alternative:** If `--network host` causes issues, you can try removing it and setting `-e "BLENDER_RPC_HOST=host.docker.internal"`. However, this often requires additional Docker configuration.
+*   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
 
 ---
 

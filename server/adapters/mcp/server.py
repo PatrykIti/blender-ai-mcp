@@ -399,14 +399,18 @@ def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
         return str(e)
 
 @mcp.tool()
-def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', deselect: bool = False) -> str:
+def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
     """
     Selects specific geometry elements by their index.
-    Useful for AI to target specific parts of the mesh.
+    
+    Args:
+        indices: List of integer indices.
+        type: 'VERT', 'EDGE', 'FACE'.
+        selection_mode: 'SET' (replace selection), 'ADD' (add to selection), 'SUBTRACT' (remove from selection).
     """
     handler = get_mesh_handler()
     try:
-        return handler.select_by_index(indices, type, deselect)
+        return handler.select_by_index(indices, type, selection_mode)
     except RuntimeError as e:
         return str(e)
 

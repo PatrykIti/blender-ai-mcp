@@ -71,7 +71,7 @@ Low-level geometry manipulation.
 |-----------|-----------|-------------|
 | `mesh_select_all` | `deselect` (bool) | Selects or deselects all geometry. |
 | `mesh_delete_selected` | `type` (str) | Deletes selected elements ('VERT', 'EDGE', 'FACE'). |
-| `mesh_select_by_index` | `indices` (list[int]), `type` (str), `deselect` (bool) | Selects specific vertices/edges/faces by index. |
+| `mesh_select_by_index` | `indices` (list[int]), `type` (str), `selection_mode` (str) | Selects specific vertices/edges/faces by index. |
 | `mesh_extrude_region` | `move` (list[float]) | Extrudes selected region and optionally translates it. |
 | `mesh_fill_holes` | *none* | Creates faces from selection (F key). |
 

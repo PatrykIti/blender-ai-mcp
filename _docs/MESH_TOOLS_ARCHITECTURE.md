@@ -40,12 +40,12 @@ Example:
 
 # 3. mesh_select_by_index ✅ Done
 Selects specific geometry elements by their index using BMesh.
-This allows precise AI targeting (e.g., "select vertex 5 and 12").
+Supports different selection modes for precise control.
 
 Args:
 - indices: List[int]
 - type: str ('VERT', 'EDGE', 'FACE')
-- deselect: bool (default false)
+- selection_mode: str ('SET', 'ADD', 'SUBTRACT') - Default is 'SET'
 
 Example:
 ```json
@@ -54,7 +54,7 @@ Example:
   "args": {
     "indices": [0, 1, 4, 5],
     "type": "VERT",
-    "deselect": false
+    "selection_mode": "SET"
   }
 }
 ```
