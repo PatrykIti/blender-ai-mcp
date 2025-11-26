@@ -25,7 +25,7 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Run Tests
-        run: poetry run python -m unittest discover tests
+        run: poetry run python -m pytest tests
 
       - name: Verify Addon Build
         run: python scripts/build_addon.py

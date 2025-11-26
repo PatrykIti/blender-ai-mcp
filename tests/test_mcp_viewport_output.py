@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from fastmcp import Image
+from fastmcp.utilities.types import Image
 from server.adapters.mcp import server as mcp_server
 
 SCENE_GET_VIEWPORT = mcp_server.scene_get_viewport.fn

@@ -1,4 +1,5 @@
-from fastmcp import FastMCP, Context, Image
+from fastmcp import FastMCP, Context
+from fastmcp.utilities.types import Image
 from typing import Any, Dict, List, Literal, Optional, Union
 from server.infrastructure.di import get_scene_handler, get_modeling_handler
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -6,7 +7,7 @@ from datetime import datetime
 import base64
 
 # Initialize MCP Server
-mcp = FastMCP("blender-ai-mcp", dependencies=["pydantic", "fastmcp"])
+mcp = FastMCP("blender-ai-mcp")
 
 # --- Tool Definitions (Adapter Layer) ---
 
