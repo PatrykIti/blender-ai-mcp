@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from blender_addon.infrastructure.rpc_server import rpc_server
 from server.adapters.rpc.client import RpcClient
+from server.infrastructure.config import get_config
 
 def test_connection():
     print("--- Starting RPC Integration Test ---")
@@ -19,7 +20,8 @@ def test_connection():
 
     # 2. Connect Client
     print("[Test] Connecting Client...")
-    client = RpcClient()
+    config = get_config()
+    client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
     connected = client.connect()
     
     if not connected:
