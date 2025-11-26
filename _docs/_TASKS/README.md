@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0
 - **In Progress:** 0
-- **Done:** 18
+- **Done:** 19
 
 ---
 

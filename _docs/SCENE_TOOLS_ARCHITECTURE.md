@@ -80,7 +80,7 @@ Example:
 ---
 
 # 6. scene_get_viewport ✅ Done
-Gets a scene preview (base64 image).
+Gets a scene preview (viewport render) with selectable output mode.
 
 Args:
 - width: int
@@ -88,6 +88,7 @@ Args:
 - shading: str (SOLID, WIREFRAME, MATERIAL, RENDERED)
 - camera_name: str (optional)
 - focus_target: str (optional - object to frame)
+- output_mode: str ("IMAGE" default – FastMCP Image resource, or "BASE64", "FILE", "MARKDOWN")
 
 Example:
 ```json

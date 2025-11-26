@@ -1,6 +1,8 @@
 from fastmcp import FastMCP, Context, Image
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from server.infrastructure.di import get_scene_handler, get_modeling_handler
+from server.infrastructure.tmp_paths import get_viewport_output_paths
+from datetime import datetime
 import base64
 
 # Initialize MCP Server
@@ -85,33 +87,85 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
 
 @mcp.tool()
 def scene_get_viewport(
-    ctx: Context, 
-    width: int = 1024, 
-    height: int = 768, 
-    shading: str = "SOLID", 
-    camera_name: str = None, 
-    focus_target: str = None
-) -> Image:
-    """
-    [SCENE][SAFE][READ-ONLY] Gets a visual preview of the scene (OpenGL Viewport Render).
-    Returns an Image resource that the AI can see.
+    ctx: Context,
+    width: int = 1024,
+    height: int = 768,
+    shading: str = "SOLID",
+    camera_name: str = None,
+    focus_target: str = None,
+    output_mode: Literal["IMAGE", "BASE64", "FILE", "MARKDOWN"] = "IMAGE",
+) -> Union[Image, str]:
+    """Get a visual preview of the scene (OpenGL Viewport Render).
+
+    The tool can return the viewport in multiple formats, controlled by
+    ``output_mode``:
+
+    * ``IMAGE`` (default): Returns a FastMCP ``Image`` resource (best for
+      clients that natively support image resources, like Cline).
+    * ``BASE64``: Returns the raw base64-encoded JPEG data as a string for
+      direct consumption by Vision modules.
+    * ``FILE``: Saves the image to a temp directory and returns a description
+      containing **host-visible** file paths, without markdown or data URLs.
+    * ``MARKDOWN``: Saves the image to a temp directory and returns rich
+      markdown with an inline ``data:`` URL preview plus host-visible paths.
 
     Args:
-        width: Image width.
-        height: Image height.
+        width: Image width in pixels.
+        height: Image height in pixels.
         shading: Viewport shading mode ('WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED').
-        camera_name: Name of the camera to use. If None or "USER_PERSPECTIVE", uses a temporary camera.
-        focus_target: Name of the object to focus on. Only works if camera_name is None/"USER_PERSPECTIVE".
+        camera_name: Name of the camera to use. If None or "USER_PERSPECTIVE", uses a temporary
+            camera.
+        focus_target: Name of the object to focus on. Only works if camera_name is
+            None/"USER_PERSPECTIVE".
+        output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
     handler = get_scene_handler()
     try:
-        # Returns base64 string
+        # Domain/Application return base64 only; formatting happens here.
         b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
-        # Convert to bytes for FastMCP Image
+    except RuntimeError as e:
+        return str(e)
+
+    mode = (output_mode or "IMAGE").upper()
+
+    if mode == "IMAGE":
         image_bytes = base64.b64decode(b64_data)
         return Image(data=image_bytes, format="jpeg")
-    except RuntimeError as e:
-        raise e
+
+    if mode == "BASE64":
+        return b64_data
+
+    if mode in {"FILE", "MARKDOWN"}:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"viewport_{timestamp}.jpg"
+        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
+            filename
+        )
+        image_bytes = base64.b64decode(b64_data)
+        internal_file.write_bytes(image_bytes)
+        internal_latest.write_bytes(image_bytes)
+
+        header = (
+            f"Viewport render saved.\n\n"
+            f"Timestamped file: {external_file}\n"
+            f"Latest file: {external_latest}\n\n"
+            f"Resolution: {width}x{height}, shading: {shading}."
+        )
+
+        if mode == "FILE":
+            return header
+
+        data_url = f"data:image/jpeg;base64,{b64_data}"
+        return (
+            f"Viewport render saved to: {external_latest}\n\n"
+            f"**Preview ({width}x{height}, {shading} mode):**\n\n"
+            f"![Viewport]({data_url})\n\n"
+            f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
+        )
+
+    return (
+        f"Invalid output_mode '{mode}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
+    )
 
 @mcp.tool()
 def scene_create_light(
