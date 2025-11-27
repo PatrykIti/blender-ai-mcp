@@ -33,6 +33,35 @@ Example:
 
 ---
 
+# 2. collection_list_objects ✅ Done
+Lists all objects within a specified collection (optionally recursive).
+
+Args:
+- collection_name: str - name of the collection to query
+- recursive: bool (default True) - if True, includes objects from child collections
+- include_hidden: bool (default False) - if True, includes hidden objects
+
+Returns: Dict with:
+- collection_name: str
+- object_count: int
+- recursive: bool
+- include_hidden: bool
+- objects: List of objects with name, type, visibility, selection state, location
+
+Example:
+```json
+{
+  "tool": "collection_list_objects",
+  "args": {
+    "collection_name": "MyCollection",
+    "recursive": true,
+    "include_hidden": false
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `collection_`**: All tools must start with this prefix.
 2. **Read-Only**: Collection tools primarily query collection state; modification tools may be added in future phases.

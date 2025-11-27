@@ -82,6 +82,7 @@ def register():
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)
+        rpc_server.register_handler("collection.list_objects", collection_handler.list_objects)
 
         rpc_server.start()
     else:

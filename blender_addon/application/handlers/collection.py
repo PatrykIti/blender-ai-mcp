@@ -39,3 +39,61 @@ class CollectionHandler:
             collections_data.append(col_data)
 
         return collections_data
+
+    def list_objects(self, collection_name, recursive=True, include_hidden=False):
+        """Lists all objects within a specified collection."""
+        # Validate collection existence
+        collection = bpy.data.collections.get(collection_name)
+        if not collection:
+            raise ValueError(f"Collection '{collection_name}' not found")
+
+        objects_data = []
+        collections_to_process = [collection]
+
+        # Build list of collections to process (recursive if requested)
+        if recursive:
+            all_collections = [collection]
+            i = 0
+            while i < len(all_collections):
+                current = all_collections[i]
+                for child in current.children:
+                    all_collections.append(child)
+                i += 1
+            collections_to_process = all_collections
+
+        # Gather objects from all collections (avoiding duplicates)
+        seen_objects = set()
+
+        for col in collections_to_process:
+            for obj in col.objects:
+                # Skip if already processed
+                if obj.name in seen_objects:
+                    continue
+
+                # Filter hidden objects if requested
+                if not include_hidden and (obj.hide_viewport or obj.hide_render):
+                    continue
+
+                seen_objects.add(obj.name)
+
+                obj_data = {
+                    "name": obj.name,
+                    "type": obj.type,
+                    "visible_viewport": not obj.hide_viewport,
+                    "visible_render": not obj.hide_render,
+                    "selected": obj.select_get(),
+                    "location": [round(c, 3) for c in obj.location]
+                }
+
+                objects_data.append(obj_data)
+
+        # Sort for deterministic output
+        objects_data.sort(key=lambda o: o["name"])
+
+        return {
+            "collection_name": collection_name,
+            "object_count": len(objects_data),
+            "recursive": recursive,
+            "include_hidden": include_hidden,
+            "objects": objects_data
+        }

@@ -1,8 +1,9 @@
 # TASK-014-7: Collection List Objects Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟢 Low  
+**Status:** ✅ Done
+**Priority:** 🟢 Low
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Expose a tool that returns all objects contained within a specified collection (optionally recursive), including basic metadata for each entry.

@@ -562,6 +562,65 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
     except RuntimeError as e:
         return str(e)
 
+@mcp.tool()
+def collection_list_objects(
+    ctx: Context,
+    collection_name: str,
+    recursive: bool = True,
+    include_hidden: bool = False
+) -> str:
+    """
+    [COLLECTION][SAFE][READ-ONLY] Lists objects inside a collection.
+
+    Returns all objects contained within the specified collection. Optionally
+    includes objects from child collections (recursive) and hidden objects.
+
+    Args:
+        collection_name: Name of the collection to query
+        recursive: If True, includes objects from child collections (default True)
+        include_hidden: If True, includes hidden objects (default False)
+    """
+    handler = get_collection_handler()
+    try:
+        result = handler.list_objects(
+            collection_name=collection_name,
+            recursive=recursive,
+            include_hidden=include_hidden
+        )
+
+        objects = result.get("objects", [])
+        object_count = result.get("object_count", 0)
+
+        if object_count == 0:
+            return f"Collection '{collection_name}' contains no objects (recursive={recursive}, include_hidden={include_hidden})."
+
+        lines = [
+            f"Collection: {collection_name}",
+            f"Objects ({object_count}, recursive={recursive}, hidden={include_hidden}):"
+        ]
+
+        for obj in objects:
+            visibility = []
+            if not obj.get("visible_viewport"):
+                visibility.append("hidden-viewport")
+            if not obj.get("visible_render"):
+                visibility.append("hidden-render")
+
+            vis_str = f" [{', '.join(visibility)}]" if visibility else ""
+            selected_str = " [selected]" if obj.get("selected") else ""
+
+            lines.append(
+                f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}"
+            )
+
+        ctx.info(f"Listed {object_count} objects from collection '{collection_name}'")
+        return "\n".join(lines)
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use collection_list to see available collections."
+        return msg
+
 # ... Modeling Tools ...
 
 @mcp.tool()
