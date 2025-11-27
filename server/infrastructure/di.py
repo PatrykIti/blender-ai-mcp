@@ -4,12 +4,14 @@ from server.application.tool_handlers.modeling_handler import ModelingToolHandle
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.collection_handler import CollectionToolHandler
 from server.application.tool_handlers.material_handler import MaterialToolHandler
+from server.application.tool_handlers.uv_handler import UVToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
 from server.domain.tools.mesh import IMeshTool
 from server.domain.tools.collection import ICollectionTool
 from server.domain.tools.material import IMaterialTool
+from server.domain.tools.uv import IUVTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -49,5 +51,10 @@ def get_material_handler() -> IMaterialTool:
     """Provider for IMaterialTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return MaterialToolHandler(rpc)
+
+def get_uv_handler() -> IUVTool:
+    """Provider for IUVTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return UVToolHandler(rpc)
 
 

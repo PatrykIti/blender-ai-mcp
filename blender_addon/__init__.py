@@ -21,12 +21,14 @@ try:
     from .application.handlers.mesh import MeshHandler
     from .application.handlers.collection import CollectionHandler
     from .application.handlers.material import MaterialHandler
+    from .application.handlers.uv import UVHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
     MeshHandler = None
     CollectionHandler = None
     MaterialHandler = None
+    UVHandler = None
 
 
 def register():
@@ -39,6 +41,7 @@ def register():
         mesh_handler = MeshHandler()
         collection_handler = CollectionHandler()
         material_handler = MaterialHandler()
+        uv_handler = UVHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -91,6 +94,9 @@ def register():
         # Material
         rpc_server.register_handler("material.list", material_handler.list_materials)
         rpc_server.register_handler("material.list_by_object", material_handler.list_by_object)
+
+        # UV
+        rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
 
         rpc_server.start()
     else:

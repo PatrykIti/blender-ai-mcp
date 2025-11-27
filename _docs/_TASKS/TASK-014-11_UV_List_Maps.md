@@ -1,8 +1,9 @@
 # TASK-014-11: UV List Maps Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Create a tool that reports UV map information for a specified mesh object: map names, active flag, texture assignment counts, and optional island stats. This helps LLMs plan UV workflows deterministically.

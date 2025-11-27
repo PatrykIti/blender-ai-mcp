@@ -48,6 +48,15 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🗺️ UV Tools (`uv_`)
+*Tools for texture coordinate mapping operations.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `uv_list_maps` | `object_name` (str), `include_island_counts` (bool) | Lists UV maps for a mesh object with active flags and loop counts. | ✅ Done |
+
+---
+
 ## 🧊 Modeling Tools (`modeling_`)
 *Object-level geometry operations (non-destructive or container management).*
 
