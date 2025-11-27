@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0
+- **To Do:** 12
 - **In Progress:** 0
 - **Done:** 31
 
@@ -11,7 +11,33 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No tasks)*
+### Phase 2.1: Advanced Selection
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-015-1](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-1-mesh-select-loop-tool) | **Mesh Select Loop Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-015-2](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-2-mesh-select-ring-tool) | **Mesh Select Ring Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-015-3](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-3-mesh-select-linked-tool) | **Mesh Select Linked Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-015-4](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-4-mesh-select-moreless-tools) | **Mesh Select More/Less Tools** | 🟡 Medium | 2025-11-27 |
+
+### Phase 2.2: Organic & Deform
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-016-1](./TASK-016_017_Organic_and_Groups.md#task-016-1-mesh-randomize-tool) | **Mesh Randomize Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-27 |
+
+### Phase 2.3: Vertex Groups
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-27 |
+
+### Phase 2.5: Advanced Precision
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-018-1](./TASK-018_Phase_2_5_Precision.md#task-018-1-mesh-bisect-tool) | **Mesh Bisect Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-018-2](./TASK-018_Phase_2_5_Precision.md#task-018-2-mesh-edgevertex-slide-tools) | **Mesh Edge/Vertex Slide Tools** | 🟡 Medium | 2025-11-27 |
+| [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-27 |
+| [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-27 |
 
 ---
 
