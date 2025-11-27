@@ -121,16 +121,23 @@ Global project-level operations and undo-safe workflows.
 #### 📊 Phase 7: Introspection & Listing APIs
 Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
 - **Scene & System:**
+  - [ ] `scene_get_mode`: Report current Blender mode for context-aware ops.
+  - [ ] `scene_list_selection`: List currently selected objects/components.
   - [ ] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
+  - [ ] `scene_snapshot_state`: Capture structured snapshot of scene state.
+  - [ ] `scene_compare_snapshot`: Compare two snapshots to summarize changes.
 - **Collections:**
   - [ ] `collection_list`: List all collections and their hierarchy.
   - [ ] `collection_list_objects`: List objects inside a given collection.
 - **Materials:**
   - [ ] `material_list`: List all materials with key parameters.
   - [ ] `material_list_by_object`: Materials and slots used by a specific object.
+  - [ ] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
 - **UV & Geometry:**
   - [ ] `uv_list_maps`: List UV maps for an object.
   - [ ] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
+  - [ ] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
+  - [ ] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
 
 ---
 
