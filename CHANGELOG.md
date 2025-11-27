@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.10.0 (2025-11-27)
+
+### Features
+
+- Phase 7 Introspection Tools & Mesh Fixes
+  ([#13](https://github.com/PatrykIti/blender-ai-mcp/pull/13),
+  [`9d3d688`](https://github.com/PatrykIti/blender-ai-mcp/commit/9d3d6884c09fe2ebb3d9788f97952ecc4773c6da))
+
+
 ## v1.9.0 (2025-11-25)
 
 ### Features
