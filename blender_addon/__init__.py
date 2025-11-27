@@ -20,11 +20,13 @@ try:
     from .application.handlers.modeling import ModelingHandler
     from .application.handlers.mesh import MeshHandler
     from .application.handlers.collection import CollectionHandler
+    from .application.handlers.material import MaterialHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
     MeshHandler = None
     CollectionHandler = None
+    MaterialHandler = None
 
 
 def register():
@@ -36,6 +38,7 @@ def register():
         modeling_handler = ModelingHandler()
         mesh_handler = MeshHandler()
         collection_handler = CollectionHandler()
+        material_handler = MaterialHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -83,6 +86,10 @@ def register():
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)
         rpc_server.register_handler("collection.list_objects", collection_handler.list_objects)
+
+        # Material
+        rpc_server.register_handler("material.list", material_handler.list_materials)
+        rpc_server.register_handler("material.list_by_object", material_handler.list_by_object)
 
         rpc_server.start()
     else:

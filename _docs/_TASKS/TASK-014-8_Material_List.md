@@ -1,6 +1,7 @@
 # TASK-014-8: Material List Tool
 
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
+**Completion Date:** 2025-11-27  
 **Priority:** 🟢 Low  
 **Phase:** Phase 7 - Introspection & Listing APIs
 
