@@ -487,124 +487,124 @@ def scene_inspect_material_slots(
         summary = "\n".join(lines)
         ctx.info(f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
         return summary
-        except RuntimeError as e:
-            return str(e)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_inspect_mesh_topology(
+    ctx: Context,
+    object_name: str,
+    detailed: bool = False
+) -> str:
+    """
+    [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
     
-    @mcp.tool()
-    def scene_inspect_mesh_topology(
-        ctx: Context,
-        object_name: str,
-        detailed: bool = False
-    ) -> str:
-        """
-        [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
+    Includes counts for vertices, edges, faces, triangles, quads, ngons.
+    If detailed=True, checks for non-manifold edges and loose geometry (more expensive).
+    
+    Args:
+        object_name: Name of the mesh object.
+        detailed: If True, performs expensive checks (non-manifold, loose geometry).
+    """
+    handler = get_scene_handler()
+    try:
+        stats = handler.inspect_mesh_topology(object_name, detailed)
+        import json
         
-        Includes counts for vertices, edges, faces, triangles, quads, ngons.
-        If detailed=True, checks for non-manifold edges and loose geometry (more expensive).
+        lines = [
+            f"Topology Report for '{stats.get('object_name')}':",
+            f"- Vertices: {stats.get('vertex_count')}",
+            f"- Edges: {stats.get('edge_count')}",
+            f"- Faces: {stats.get('face_count')}",
+            f"  - Triangles: {stats.get('triangle_count')}",
+            f"  - Quads: {stats.get('quad_count')}",
+            f"  - N-Gons: {stats.get('ngon_count')}",
+        ]
         
-        Args:
-            object_name: Name of the mesh object.
-            detailed: If True, performs expensive checks (non-manifold, loose geometry).
-        """
-        handler = get_scene_handler()
-        try:
-            stats = handler.inspect_mesh_topology(object_name, detailed)
-            import json
+        if detailed:
+            lines.append("Detailed Checks:")
+            lines.append(f"  - Non-Manifold Edges: {stats.get('non_manifold_edges')}")
+            lines.append(f"  - Loose Vertices: {stats.get('loose_vertices')}")
+            lines.append(f"  - Loose Edges: {stats.get('loose_edges')}")
             
-            lines = [
-                f"Topology Report for '{stats.get('object_name')}':",
-                f"- Vertices: {stats.get('vertex_count')}",
-                f"- Edges: {stats.get('edge_count')}",
-                f"- Faces: {stats.get('face_count')}",
-                f"  - Triangles: {stats.get('triangle_count')}",
-                f"  - Quads: {stats.get('quad_count')}",
-                f"  - N-Gons: {stats.get('ngon_count')}",
-            ]
-            
-            if detailed:
-                lines.append("Detailed Checks:")
-                lines.append(f"  - Non-Manifold Edges: {stats.get('non_manifold_edges')}")
-                lines.append(f"  - Loose Vertices: {stats.get('loose_vertices')}")
-                lines.append(f"  - Loose Edges: {stats.get('loose_edges')}")
-                
-            return "\n".join(lines)
-            except RuntimeError as e:
-                return str(e)
+        return "\n".join(lines)
+    except RuntimeError as e:
+        return str(e)
+    
+@mcp.tool()
+def scene_inspect_modifiers(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    include_disabled: bool = True
+) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
+    
+    Can inspect a specific object or audit the entire scene.
+    
+    Args:
+        object_name: Optional name of the object to inspect. If None, scans all objects.
+        include_disabled: If True, includes modifiers disabled in viewport/render.
+    """
+    handler = get_scene_handler()
+    try:
+        result = handler.inspect_modifiers(object_name, include_disabled)
+        import json
         
-        @mcp.tool()
-        def scene_inspect_modifiers(
-            ctx: Context,
-            object_name: Optional[str] = None,
-            include_disabled: bool = True
-        ) -> str:
-            """
-            [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
+        obj_count = result.get("object_count", 0)
+        mod_count = result.get("modifier_count", 0)
+        objects = result.get("objects", [])
+        
+        if obj_count == 0:
+            if object_name:
+                return f"Object '{object_name}' has no modifiers."
+            return "No modifiers found in the scene."
             
-            Can inspect a specific object or audit the entire scene.
+        lines = [
+            f"Modifier Inspection ({mod_count} modifiers on {obj_count} objects):",
+            ""
+        ]
+        
+        # Limit output if scene-wide and too many objects
+        limit = 20
+        
+        for i, obj in enumerate(objects):
+            if i >= limit:
+                lines.append(f"... and {len(objects) - limit} more objects")
+                break
+                
+            lines.append(f"Object: {obj['name']}")
+            for mod in obj['modifiers']:
+                name = mod['name']
+                mtype = mod['type']
+                flags = []
+                if not mod['show_viewport']:
+                    flags.append("hidden_viewport")
+                if not mod['show_render']:
+                    flags.append("hidden_render")
+                
+                flag_str = f" [{', '.join(flags)}]" if flags else ""
+                
+                # Build details string from extra keys
+                details = []
+                for k, v in mod.items():
+                    if k not in ["name", "type", "is_enabled", "show_viewport", "show_render"]:
+                        details.append(f"{k}={v}")
+                
+                detail_str = f" ({', '.join(details)})" if details else ""
+                
+                lines.append(f"  - {name} ({mtype}){detail_str}{flag_str}")
+            lines.append("")
             
-            Args:
-                object_name: Optional name of the object to inspect. If None, scans all objects.
-                include_disabled: If True, includes modifiers disabled in viewport/render.
-            """
-            handler = get_scene_handler()
-            try:
-                result = handler.inspect_modifiers(object_name, include_disabled)
-                import json
-                
-                obj_count = result.get("object_count", 0)
-                mod_count = result.get("modifier_count", 0)
-                objects = result.get("objects", [])
-                
-                if obj_count == 0:
-                    if object_name:
-                        return f"Object '{object_name}' has no modifiers."
-                    return "No modifiers found in the scene."
-                    
-                lines = [
-                    f"Modifier Inspection ({mod_count} modifiers on {obj_count} objects):",
-                    ""
-                ]
-                
-                # Limit output if scene-wide and too many objects
-                limit = 20
-                
-                for i, obj in enumerate(objects):
-                    if i >= limit:
-                        lines.append(f"... and {len(objects) - limit} more objects")
-                        break
-                        
-                    lines.append(f"Object: {obj['name']}")
-                    for mod in obj['modifiers']:
-                        name = mod['name']
-                        mtype = mod['type']
-                        flags = []
-                        if not mod['show_viewport']:
-                            flags.append("hidden_viewport")
-                        if not mod['show_render']:
-                            flags.append("hidden_render")
-                        
-                        flag_str = f" [{', '.join(flags)}]" if flags else ""
-                        
-                        # Build details string from extra keys
-                        details = []
-                        for k, v in mod.items():
-                            if k not in ["name", "type", "is_enabled", "show_viewport", "show_render"]:
-                                details.append(f"{k}={v}")
-                        
-                        detail_str = f" ({', '.join(details)})" if details else ""
-                        
-                        lines.append(f"  - {name} ({mtype}){detail_str}{flag_str}")
-                    lines.append("")
-                    
-                ctx.info(f"Inspected modifiers: {mod_count} on {obj_count} objects")
-                return "\n".join(lines)
-            except RuntimeError as e:
-                return str(e)
+        ctx.info(f"Inspected modifiers: {mod_count} on {obj_count} objects")
+        return "\n".join(lines)
+    except RuntimeError as e:
+        return str(e)
         
         
-        @mcp.tool()
-        def scene_create_light(
-            ctx: Context,
+@mcp.tool()
+def scene_create_light(
+    ctx: Context,
     type: str,
     energy: float = 1000.0,
     color: List[float] = (1.0, 1.0, 1.0),
@@ -1379,81 +1379,80 @@ def mesh_flatten(
     handler = get_mesh_handler()
     try:
         return handler.flatten_vertices(axis)
-        except RuntimeError as e:
-            return str(e)
+    except RuntimeError as e:
+        return str(e)
     
     
-    @mcp.tool()
-    def mesh_list_groups(
-        ctx: Context,
-        object_name: str,
-        group_type: str = 'VERTEX'
-    ) -> str:
-        """
-        [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh.
+@mcp.tool()
+def mesh_list_groups(
+    ctx: Context,
+    object_name: str,
+    group_type: str = 'VERTEX'
+) -> str:
+    """
+    [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh.
+    
+    Args:
+        object_name: Name of the mesh object.
+        group_type: 'VERTEX' or 'FACE' (defaults to VERTEX).
+    """
+    handler = get_mesh_handler()
+    try:
+        result = handler.list_groups(object_name, group_type)
+        import json
         
-        Args:
-            object_name: Name of the mesh object.
-            group_type: 'VERTEX' or 'FACE' (defaults to VERTEX).
-        """
-        handler = get_mesh_handler()
-        try:
-            result = handler.list_groups(object_name, group_type)
-            import json
-            
-            obj_name = result.get("object_name")
-            g_type = result.get("group_type")
-            count = result.get("group_count", 0)
-            groups = result.get("groups", [])
-            note = result.get("note")
-            
-            if count == 0:
-                msg = f"Object '{obj_name}' has no {g_type.lower()} groups."
-                if note:
-                    msg += f"\nNote: {note}"
-                return msg
-                
-            lines = [
-                f"Object: {obj_name}",
-                f"{g_type} Groups ({count}):"
-            ]
-            
-            # Limit output if too many groups
-            limit = 50
-            
-            for i, group in enumerate(groups):
-                if i >= limit:
-                    lines.append(f"  ... and {len(groups) - limit} more")
-                    break
-                    
-                name = group.get("name")
-                idx = group.get("index")
-                # For vertex groups, show member count if available
-                # For face maps/attrs, show type info
-                
-                extras = []
-                if "member_count" in group:
-                    extras.append(f"members: {group['member_count']}")
-                if "lock_weight" in group and group["lock_weight"]:
-                    extras.append("locked")
-                if "data_type" in group:
-                    extras.append(f"type: {group['data_type']}")
-                    
-                extra_str = f" ({', '.join(extras)})" if extras else ""
-                
-                lines.append(f"  [{idx if idx is not None else '-'}] {name}{extra_str}")
-                
+        obj_name = result.get("object_name")
+        g_type = result.get("group_type")
+        count = result.get("group_count", 0)
+        groups = result.get("groups", [])
+        note = result.get("note")
+        
+        if count == 0:
+            msg = f"Object '{obj_name}' has no {g_type.lower()} groups."
             if note:
-                lines.append(f"\nNote: {note}")
-                
-            ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
-            return "\n".join(lines)
+                msg += f"\nNote: {note}"
+            return msg
             
-        except RuntimeError as e:
-            return str(e)
+        lines = [
+            f"Object: {obj_name}",
+            f"{g_type} Groups ({count}):"
+        ]
+        
+        # Limit output if too many groups
+        limit = 50
+        
+        for i, group in enumerate(groups):
+            if i >= limit:
+                lines.append(f"  ... and {len(groups) - limit} more")
+                break
+                
+            name = group.get("name")
+            idx = group.get("index")
+            # For vertex groups, show member count if available
+            # For face maps/attrs, show type info
+            
+            extras = []
+            if "member_count" in group:
+                extras.append(f"members: {group['member_count']}")
+            if "lock_weight" in group and group["lock_weight"]:
+                extras.append("locked")
+            if "data_type" in group:
+                extras.append(f"type: {group['data_type']}")
+                
+            extra_str = f" ({', '.join(extras)})" if extras else ""
+            
+            lines.append(f"  [{idx if idx is not None else '-'}] {name}{extra_str}")
+            
+        if note:
+            lines.append(f"\nNote: {note}")
+            
+        ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
+        return "\n".join(lines)
+        
+    except RuntimeError as e:
+        return str(e)
     
     
-    def run():
-    
+def run():
     """Starts the MCP server."""
     mcp.run()
