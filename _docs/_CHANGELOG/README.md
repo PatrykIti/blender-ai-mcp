@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [33](./33-2025-11-27-scene-inspect-mesh-topology.md) | 2025-11-27 | **Scene Inspect Mesh Topology (TASK-014-13)** | 1.9.12 |
 | [32](./32-2025-11-27-mesh-list-groups.md) | 2025-11-27 | **Mesh List Groups (TASK-014-12)** | 1.9.11 |
 | [31](./31-2025-11-27-uv-list-maps.md) | 2025-11-27 | **UV List Maps (TASK-014-11)** | 1.9.10 |
 | [30](./30-2025-11-27-scene-inspect-material-slots.md) | 2025-11-27 | **Scene Inspect Material Slots (TASK-014-10)** | 1.9.9 |

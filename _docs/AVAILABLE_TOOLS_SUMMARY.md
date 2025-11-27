@@ -25,6 +25,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_inspect_material_slots` | `material_filter`, `include_empty_slots` | Audits material slot assignments across entire scene. | ✅ Done |
+| `scene_inspect_mesh_topology` | `object_name`, `detailed` | Reports detailed topology stats (verts/edges/faces, N-gons, non-manifold). | ✅ Done |
 
 ---
 

@@ -55,6 +55,7 @@ Technical details.
 | `inspect_object` | `inspect_object` | Returns detailed metadata for a single object (transform, collections, modifiers, mesh stats). |
 | `snapshot_state` | `snapshot_state` | Captures structured JSON snapshot with SHA256 hash. |
 | `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
+| `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
 ### Collection (`application/handlers/collection.py`)

@@ -50,6 +50,7 @@ Managing objects at the scene level.
 | `scene_snapshot_state` | `include_mesh_stats` (bool), `include_materials` (bool) | Captures a structured JSON snapshot of scene state with SHA256 hash for change detection. |
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
 | `scene_inspect_material_slots` | `material_filter` (str), `include_empty_slots` (bool) | Audits material slot assignments across entire scene with warnings for empty/missing materials. |
+| `scene_inspect_mesh_topology` | `object_name` (str), `detailed` (bool) | Reports detailed topology stats (counts, N-gons) and optionally non-manifold/loose geometry. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
 | `scene_create_light` | `type` (str), `energy` (float), `color` (rgb), `location` (xyz) | Creates a light (POINT, SUN, SPOT, AREA). |
 | `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera object. |

@@ -288,6 +288,32 @@ Example:
 
 ---
 
+# 16. scene_inspect_mesh_topology ✅ Done
+Reports detailed topology stats for a given mesh object (vertex/edge/face counts, triangle/quad/ngon distribution). Optionally performs expensive checks for non-manifold geometry.
+
+Args:
+- object_name: str
+- detailed: bool (default False) - if True, checks for non-manifold edges and loose geometry.
+
+Returns: Dict with:
+- vertex_count, edge_count, face_count
+- triangle_count, quad_count, ngon_count
+- non_manifold_edges (if detailed)
+- loose_vertices, loose_edges (if detailed)
+
+Example:
+```json
+{
+  "tool": "scene_inspect_mesh_topology",
+  "args": {
+    "object_name": "Cube",
+    "detailed": true
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

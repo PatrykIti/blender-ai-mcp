@@ -55,6 +55,7 @@ def register():
         rpc_server.register_handler("scene.inspect_object", scene_handler.inspect_object)
         rpc_server.register_handler("scene.snapshot_state", scene_handler.snapshot_state)
         rpc_server.register_handler("scene.inspect_material_slots", scene_handler.inspect_material_slots)
+        rpc_server.register_handler("scene.inspect_mesh_topology", scene_handler.inspect_mesh_topology)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)

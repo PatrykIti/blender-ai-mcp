@@ -487,11 +487,54 @@ def scene_inspect_material_slots(
         summary = "\n".join(lines)
         ctx.info(f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
         return summary
-    except RuntimeError as e:
-        return str(e)
-
-@mcp.tool()
-def scene_create_light(
+        except RuntimeError as e:
+            return str(e)
+    
+    @mcp.tool()
+    def scene_inspect_mesh_topology(
+        ctx: Context,
+        object_name: str,
+        detailed: bool = False
+    ) -> str:
+        """
+        [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
+        
+        Includes counts for vertices, edges, faces, triangles, quads, ngons.
+        If detailed=True, checks for non-manifold edges and loose geometry (more expensive).
+        
+        Args:
+            object_name: Name of the mesh object.
+            detailed: If True, performs expensive checks (non-manifold, loose geometry).
+        """
+        handler = get_scene_handler()
+        try:
+            stats = handler.inspect_mesh_topology(object_name, detailed)
+            import json
+            
+            lines = [
+                f"Topology Report for '{stats.get('object_name')}':",
+                f"- Vertices: {stats.get('vertex_count')}",
+                f"- Edges: {stats.get('edge_count')}",
+                f"- Faces: {stats.get('face_count')}",
+                f"  - Triangles: {stats.get('triangle_count')}",
+                f"  - Quads: {stats.get('quad_count')}",
+                f"  - N-Gons: {stats.get('ngon_count')}",
+            ]
+            
+            if detailed:
+                lines.append("Detailed Checks:")
+                lines.append(f"  - Non-Manifold Edges: {stats.get('non_manifold_edges')}")
+                lines.append(f"  - Loose Vertices: {stats.get('loose_vertices')}")
+                lines.append(f"  - Loose Edges: {stats.get('loose_edges')}")
+                
+            return "\n".join(lines)
+        except RuntimeError as e:
+            return str(e)
+    
+    
+    @mcp.tool()
+    def scene_create_light(
+    
     ctx: Context,
     type: str,
     energy: float = 1000.0,

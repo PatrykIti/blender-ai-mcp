@@ -618,6 +618,70 @@ class SceneHandler:
             "snapshot": snapshot
         }
 
+    def inspect_mesh_topology(self, object_name, detailed=False):
+        """Reports detailed topology stats for a given mesh."""
+        if object_name not in bpy.data.objects:
+             raise ValueError(f"Object '{object_name}' not found")
+        
+        obj = bpy.data.objects[object_name]
+        if obj.type != 'MESH':
+             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+        
+        import bmesh
+        
+        # Create a new BMesh to inspect data safely without affecting the scene
+        bm = bmesh.new()
+        
+        try:
+            # Load mesh data
+            # Note: If object is in Edit Mode, this gets the underlying mesh data
+            # which might not include uncommitted bmesh changes.
+            # For 100% accuracy in Edit Mode, we'd need bmesh.from_edit_mesh,
+            # but that requires being in Edit Mode context.
+            # For a general introspection tool, looking at obj.data is standard.
+            bm.from_mesh(obj.data)
+            
+            bm.verts.ensure_lookup_table()
+            bm.edges.ensure_lookup_table()
+            bm.faces.ensure_lookup_table()
+            
+            stats = {
+                "object_name": obj.name,
+                "vertex_count": len(bm.verts),
+                "edge_count": len(bm.edges),
+                "face_count": len(bm.faces),
+                "triangle_count": 0,
+                "quad_count": 0,
+                "ngon_count": 0,
+                # Default these to 0/None unless detailed check runs
+                "non_manifold_edges": 0 if detailed else None,
+                "loose_vertices": 0 if detailed else None,
+                "loose_edges": 0 if detailed else None,
+            }
+            
+            # Face type counts
+            for f in bm.faces:
+                v_count = len(f.verts)
+                if v_count == 3:
+                    stats["triangle_count"] += 1
+                elif v_count == 4:
+                    stats["quad_count"] += 1
+                else:
+                    stats["ngon_count"] += 1
+            
+            if detailed:
+                # Non-manifold edges (wire edges or edges shared by >2 faces)
+                # is_manifold property handles this check
+                stats["non_manifold_edges"] = sum(1 for e in bm.edges if not e.is_manifold)
+                
+                # Loose geometry
+                stats["loose_vertices"] = sum(1 for v in bm.verts if not v.link_edges)
+                stats["loose_edges"] = sum(1 for e in bm.edges if not e.link_faces)
+            
+            return stats
+            
+        finally:
+            bm.free()
     def inspect_material_slots(self, material_filter=None, include_empty_slots=True):
         """Audits material slot assignments across the entire scene."""
         slot_data = []

@@ -76,3 +76,8 @@ class ISceneTool(ABC):
     def inspect_material_slots(self, material_filter: Optional[str] = None, include_empty_slots: bool = True) -> Dict[str, Any]:
         """Audits material slot assignments across the entire scene."""
         pass
+
+    @abstractmethod
+    def inspect_mesh_topology(self, object_name: str, detailed: bool = False) -> Dict[str, Any]:
+        """Reports detailed topology stats for a given mesh."""
+        pass

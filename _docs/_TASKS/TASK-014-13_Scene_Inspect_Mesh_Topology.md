@@ -1,8 +1,9 @@
 # TASK-014-13: Scene Inspect Mesh Topology Tool
 
-**Status:** ⏳ To Do  
+**Status:** ✅ Done
 **Priority:** 🔴 High  
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Add a diagnostics tool that reports detailed topology stats for a given mesh: vertex/edge/face counts, triangle/quads, non-manifold elements, loose geometry, normals consistency. This helps AI detect geometry issues before proceeding.
