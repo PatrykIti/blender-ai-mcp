@@ -174,6 +174,19 @@ Example:
 
 ---
 
+# 10. scene_get_mode ✅ Done
+Reports the current Blender mode, active object, and selection count so AI agents can branch logic safely.
+
+Example:
+```json
+{
+  "tool": "scene_get_mode",
+  "args": {}
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

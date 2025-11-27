@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 14
+- **To Do:** 13
 - **In Progress:** 0
-- **Done:** 19
+- **Done:** 20
 
 ---
 
@@ -13,7 +13,6 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Created |
 |----|-------|----------|---------|
-| [TASK-014-1](./TASK-014-1_Scene_Get_Mode.md) | **Scene Get Mode Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-014-2](./TASK-014-2_Scene_List_Selection.md) | **Scene List Selection Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-3](./TASK-014-3_Scene_Inspect_Object.md) | **Scene Inspect Object Tool** | 🔴 High | 2025-11-27 |
 | [TASK-014-4](./TASK-014-4_Scene_Snapshot_State.md) | **Scene Snapshot State Tool** | 🟡 Medium | 2025-11-27 |
@@ -40,6 +39,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-014-1](./TASK-014-1_Scene_Get_Mode.md) | **Scene Get Mode Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-012](./TASK-012_Mesh_Smooth_Flatten.md) | **Mesh Smooth & Flatten Tools** | 🟡 Medium | 2025-11-25 |
 | [TASK-011-7](./TASK-011-7_Scene_Tool_Docstring_Standardization.md) | **Scene Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
 | [TASK-011-6](./TASK-011-6_Modeling_Tool_Docstring_Standardization.md) | **Modeling Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |

@@ -93,6 +93,29 @@ class SceneHandler:
         bpy.context.view_layer.objects.active = obj
         return {"active": name}
 
+    def get_mode(self):
+        """Reports the current Blender interaction mode and selection summary."""
+        mode = getattr(bpy.context, "mode", "UNKNOWN")
+        active_obj = getattr(bpy.context, "active_object", None)
+        active_name = active_obj.name if active_obj else None
+        active_type = getattr(active_obj, "type", None) if active_obj else None
+
+        selected_names = []
+        try:
+            selected = getattr(bpy.context, "selected_objects", [])
+            if selected:
+                selected_names = [obj.name for obj in selected if hasattr(obj, "name")]
+        except Exception:
+            selected_names = []
+
+        return {
+            "mode": mode,
+            "active_object": active_name,
+            "active_object_type": active_type,
+            "selected_object_names": selected_names,
+            "selection_count": len(selected_names)
+        }
+
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         """Returns a base64 encoded OpenGL render of the viewport."""
         scene = bpy.context.scene

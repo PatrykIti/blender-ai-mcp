@@ -41,6 +41,7 @@ def register():
         rpc_server.register_handler("scene.clean_scene", scene_handler.clean_scene)
         rpc_server.register_handler("scene.duplicate_object", scene_handler.duplicate_object)
         rpc_server.register_handler("scene.set_active_object", scene_handler.set_active_object)
+        rpc_server.register_handler("scene.get_mode", scene_handler.get_mode)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)

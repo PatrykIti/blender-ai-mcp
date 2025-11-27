@@ -121,7 +121,7 @@ Global project-level operations and undo-safe workflows.
 #### 📊 Phase 7: Introspection & Listing APIs
 Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
 - **Scene & System:**
-  - [ ] `scene_get_mode`: Report current Blender mode for context-aware ops.
+  - [x] `scene_get_mode`: Report current Blender mode for context-aware ops.
   - [ ] `scene_list_selection`: List currently selected objects/components.
   - [ ] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
   - [ ] `scene_snapshot_state`: Capture structured snapshot of scene state.

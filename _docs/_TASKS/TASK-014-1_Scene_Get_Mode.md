@@ -1,8 +1,9 @@
 # TASK-014-1: Scene Get Mode Tool
 
-**Status:** ⏳ To Do  
+**Status:** ✅ Complete  
 **Priority:** 🟢 Low  
-**Phase:** Phase 7 - Introspection & Listing APIs
+**Phase:** Phase 7 - Introspection & Listing APIs  
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Expose a read-only MCP tool that reports Blender's current interaction mode (e.g., OBJECT, EDIT, SCULPT) so LLMs can branch logic without blindly attempting mode switches. The tool must strictly follow Clean Architecture boundaries and reuse existing DI patterns.
@@ -42,3 +43,10 @@ Expose a read-only MCP tool that reports Blender's current interaction mode (e.g
 ## 📚 References
 - `_docs/TOOLS_ARCHITECTURE_DEEP_DIVE.md` layering rules.
 - `GEMINI.md` Clean Architecture summary.
+
+## ✅ Completion Notes
+- Added domain models/interface plus application handler + DI provider for `scene_get_mode`.
+- Implemented Blender addon API, registered RPC command, and exposed MCP tool with structured response formatting.
+- Extended unit test coverage (`tests/test_scene_mode.py`, new `tests/test_scene_get_mode_handler.py`).
+- Updated README roadmap, `_docs/_ADDON`, `_docs/_MCP_SERVER`, architecture docs, and changelog per documentation policy.
+- Verified via `poetry run pytest`.

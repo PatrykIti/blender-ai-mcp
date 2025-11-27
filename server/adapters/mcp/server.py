@@ -1,7 +1,11 @@
 from fastmcp import FastMCP, Context
 from fastmcp.utilities.types import Image
 from typing import Any, Dict, List, Literal, Optional, Union
-from server.infrastructure.di import get_scene_handler, get_modeling_handler
+from server.infrastructure.di import (
+    get_modeling_handler,
+    get_scene_get_mode_handler,
+    get_scene_handler,
+)
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 from datetime import datetime
 import base64
@@ -85,6 +89,31 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
         return handler.set_active_object(name)
     except RuntimeError as e:
         return str(e)
+
+
+@mcp.tool()
+def scene_get_mode(ctx: Context) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Reports the current Blender interaction mode and selection summary.
+
+    Returns a multi-line description with mode, active object, and selected objects to help
+    AI agents branch logic without guessing the context.
+    """
+    handler = get_scene_get_mode_handler()
+    try:
+        response = handler.get_mode()
+    except RuntimeError as e:
+        return str(e)
+
+    selected = ", ".join(response.selected_object_names) if response.selected_object_names else "None"
+    active_suffix = f" ({response.active_object_type})" if response.active_object_type else ""
+    return (
+        "Blender Context Snapshot:\n"
+        f"- Mode: {response.mode}\n"
+        f"- Active Object: {response.active_object or 'None'}{active_suffix}\n"
+        f"- Selected Objects ({response.selection_count}): {selected}"
+    )
+
 
 @mcp.tool()
 def scene_get_viewport(

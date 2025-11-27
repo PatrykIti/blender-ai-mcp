@@ -48,6 +48,8 @@ Technical details.
 
 | `set_active_object` | `set_active_object` | Sets the active object. |
 
+| `get_mode` | `get_mode` | Reports current Blender mode and selection context. |
+
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
 
