@@ -53,10 +53,29 @@ Technical details.
 | `list_selection` | `list_selection` | Lists selected objects and Edit Mode component counts. |
 
 | `inspect_object` | `inspect_object` | Returns detailed metadata for a single object (transform, collections, modifiers, mesh stats). |
-
+| `snapshot_state` | `snapshot_state` | Captures structured JSON snapshot with SHA256 hash. |
+| `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
+### Collection (`application/handlers/collection.py`)
 
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `collection.list` | `list_collections` | Lists all collections with hierarchy. |
+| `collection.list_objects` | `list_objects` | Lists objects in a collection (recursive). |
+
+### Material (`application/handlers/material.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `material.list` | `list_materials` | Lists all materials with BSDF parameters. |
+| `material.list_by_object` | `list_by_object` | Lists material slots for specific object. |
+
+### UV (`application/handlers/uv.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `uv.list_maps` | `list_maps` | Lists UV maps for mesh object. |
 
 ### Modeling (`application/handlers/modeling.py`)
 

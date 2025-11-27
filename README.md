@@ -124,17 +124,17 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
   - [x] `scene_get_mode`: Report current Blender mode for context-aware ops.
   - [x] `scene_list_selection`: List currently selected objects/components.
   - [x] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
-  - [ ] `scene_snapshot_state`: Capture structured snapshot of scene state.
-  - [ ] `scene_compare_snapshot`: Compare two snapshots to summarize changes.
+  - [x] `scene_snapshot_state`: Capture structured snapshot of scene state.
+  - [x] `scene_compare_snapshot`: Compare two snapshots to summarize changes.
 - **Collections:**
-  - [ ] `collection_list`: List all collections and their hierarchy.
-  - [ ] `collection_list_objects`: List objects inside a given collection.
+  - [x] `collection_list`: List all collections and their hierarchy.
+  - [x] `collection_list_objects`: List objects inside a given collection.
 - **Materials:**
-  - [ ] `material_list`: List all materials with key parameters.
-  - [ ] `material_list_by_object`: Materials and slots used by a specific object.
-  - [ ] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
+  - [x] `material_list`: List all materials with key parameters.
+  - [x] `material_list_by_object`: Materials and slots used by a specific object.
+  - [x] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
 - **UV & Geometry:**
-  - [ ] `uv_list_maps`: List UV maps for an object.
+  - [x] `uv_list_maps`: List UV maps for an object.
   - [ ] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
   - [ ] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
   - [ ] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
@@ -180,6 +180,17 @@ We recommend using Docker to run the MCP Server.
         "scene_create_camera",
         "scene_create_empty",
         "scene_set_mode",
+        "scene_get_mode",
+        "scene_list_selection",
+        "scene_inspect_object",
+        "scene_snapshot_state",
+        "scene_compare_snapshot",
+        "scene_inspect_material_slots",
+        "collection_list",
+        "collection_list_objects",
+        "material_list",
+        "material_list_by_object",
+        "uv_list_maps",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
@@ -234,6 +245,17 @@ We recommend using Docker to run the MCP Server.
         "scene_create_camera",
         "scene_create_empty",
         "scene_set_mode",
+        "scene_get_mode",
+        "scene_list_selection",
+        "scene_inspect_object",
+        "scene_snapshot_state",
+        "scene_compare_snapshot",
+        "scene_inspect_material_slots",
+        "collection_list",
+        "collection_list_objects",
+        "material_list",
+        "material_list_by_object",
+        "uv_list_maps",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",

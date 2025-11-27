@@ -47,10 +47,36 @@ Managing objects at the scene level.
 | `scene_get_mode` | *none* | Returns current Blender mode, active object, and selected object names for deterministic branching. |
 | `scene_list_selection` | *none* | Lists selected objects (Object Mode) and Edit Mode vertex/edge/face counts. |
 | `scene_inspect_object` | `name` (str) | Detailed report for a single object (transform, collections, modifiers, materials, mesh stats). |
+| `scene_snapshot_state` | `include_mesh_stats` (bool), `include_materials` (bool) | Captures a structured JSON snapshot of scene state with SHA256 hash for change detection. |
+| `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
+| `scene_inspect_material_slots` | `material_filter` (str), `include_empty_slots` (bool) | Audits material slot assignments across entire scene with warnings for empty/missing materials. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
 | `scene_create_light` | `type` (str), `energy` (float), `color` (rgb), `location` (xyz) | Creates a light (POINT, SUN, SPOT, AREA). |
 | `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera object. |
 | `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object (useful for helpers/parents). |
+
+### Collection Tools
+Organizational tools for managing Blender collections.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. |
+| `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within a collection, optionally recursive through child collections. |
+
+### Material Tools
+Material and shader management.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `material_list` | `include_unassigned` (bool) | Lists all materials with Principled BSDF parameters and object assignment counts. |
+| `material_list_by_object` | `object_name` (str), `include_indices` (bool) | Lists material slots for a specific object. |
+
+### UV Tools
+Texture coordinate mapping operations.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `uv_list_maps` | `object_name` (str), `include_island_counts` (bool) | Lists UV maps for a mesh object with active flags and loop counts. |
 
 ### Modeling Tools
 Geometry creation and editing.
