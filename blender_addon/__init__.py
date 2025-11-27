@@ -19,10 +19,16 @@ try:
     from .application.handlers.scene import SceneHandler
     from .application.handlers.modeling import ModelingHandler
     from .application.handlers.mesh import MeshHandler
+    from .application.handlers.collection import CollectionHandler
+    from .application.handlers.material import MaterialHandler
+    from .application.handlers.uv import UVHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
     MeshHandler = None
+    CollectionHandler = None
+    MaterialHandler = None
+    UVHandler = None
 
 
 def register():
@@ -33,6 +39,9 @@ def register():
         scene_handler = SceneHandler()
         modeling_handler = ModelingHandler()
         mesh_handler = MeshHandler()
+        collection_handler = CollectionHandler()
+        material_handler = MaterialHandler()
+        uv_handler = UVHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -41,6 +50,13 @@ def register():
         rpc_server.register_handler("scene.clean_scene", scene_handler.clean_scene)
         rpc_server.register_handler("scene.duplicate_object", scene_handler.duplicate_object)
         rpc_server.register_handler("scene.set_active_object", scene_handler.set_active_object)
+        rpc_server.register_handler("scene.get_mode", scene_handler.get_mode)
+        rpc_server.register_handler("scene.list_selection", scene_handler.list_selection)
+        rpc_server.register_handler("scene.inspect_object", scene_handler.inspect_object)
+        rpc_server.register_handler("scene.snapshot_state", scene_handler.snapshot_state)
+        rpc_server.register_handler("scene.inspect_material_slots", scene_handler.inspect_material_slots)
+        rpc_server.register_handler("scene.inspect_mesh_topology", scene_handler.inspect_mesh_topology)
+        rpc_server.register_handler("scene.inspect_modifiers", scene_handler.inspect_modifiers)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
@@ -70,7 +86,21 @@ def register():
         rpc_server.register_handler("mesh.boolean", mesh_handler.boolean)
         rpc_server.register_handler("mesh.merge_by_distance", mesh_handler.merge_by_distance)
         rpc_server.register_handler("mesh.subdivide", mesh_handler.subdivide)
-        
+        rpc_server.register_handler("mesh.smooth_vertices", mesh_handler.smooth_vertices)
+        rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
+        rpc_server.register_handler("mesh.list_groups", mesh_handler.list_groups)
+
+        # Collection
+        rpc_server.register_handler("collection.list", collection_handler.list_collections)
+        rpc_server.register_handler("collection.list_objects", collection_handler.list_objects)
+
+        # Material
+        rpc_server.register_handler("material.list", material_handler.list_materials)
+        rpc_server.register_handler("material.list_by_object", material_handler.list_by_object)
+
+        # UV
+        rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
+
         rpc_server.start()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")

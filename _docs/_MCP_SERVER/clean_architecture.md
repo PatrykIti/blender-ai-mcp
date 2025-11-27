@@ -21,7 +21,9 @@ The MCP server project is organized according to Clean Architecture principles t
 
 - **RPC (`rpc/`)**: Socket client implementation (`RpcClient`) that satisfies `IRpcClient` interface.
 - **MCP (`mcp/`)**: Input Layer (Driver Adapter).
-  - `server.py`: Defines `@mcp.tool`. Retrieves handlers from Infrastructure layer and delegates control to them. Uses `fastmcp.Context` for logging.
+  - `instance.py`: Initializes the shared `FastMCP` application instance.
+  - `areas/`: Modular definitions of tools (e.g., `scene.py`, `mesh.py`). Each file imports `mcp` from `instance.py` and defines `@mcp.tool` functions that delegate to Application Handlers.
+  - `server.py`: Entry point that imports areas (triggering registration) and exposes the `run()` function.
 
 ### 4. Infrastructure (`server/infrastructure`)
 **Technical details and configuration.**
@@ -31,8 +33,8 @@ The MCP server project is organized according to Clean Architecture principles t
 
 ## Control Flow
 1. `main.py` -> calls `adapters.mcp.server.run()`.
-2. `adapters.mcp.server` (Tool Function) -> calls `infrastructure.di.get_scene_handler()`.
+2. `adapters.mcp.areas.*` (Tool Function) -> calls `infrastructure.di.get_scene_handler()`.
 3. `infrastructure.di` -> creates (or returns existing) `RpcClient` and injects it into a new `SceneToolHandler`.
-4. `adapters.mcp.server` -> calls `SceneToolHandler.list_objects()`.
+4. `adapters.mcp.areas.*` -> calls `SceneToolHandler.list_objects()`.
 5. `SceneToolHandler` -> calls `IRpcClient.send_request()`.
 6. `RpcClient` -> sends JSON via socket.

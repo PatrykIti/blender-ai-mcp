@@ -5,19 +5,24 @@ class MeshHandler:
     """Application service for Edit Mode mesh operations."""
 
     def _ensure_edit_mode(self):
-        """Ensures the active object is a Mesh and in Edit Mode."""
+        """
+        Ensures the active object is a Mesh and in Edit Mode.
+        Returns tuple (obj, previous_mode).
+        """
         obj = bpy.context.active_object
         if not obj or obj.type != 'MESH':
             raise ValueError("Active object must be a Mesh.")
         
-        if bpy.context.mode != 'EDIT_MESH':
+        previous_mode = obj.mode
+        
+        if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode='EDIT')
         
-        return obj
+        return obj, previous_mode
 
     def _get_bmesh(self):
         """Returns the BMesh of the active object."""
-        obj = self._ensure_edit_mode()
+        obj, _ = self._ensure_edit_mode()
         bm = bmesh.from_edit_mesh(obj.data)
         return bm
 
@@ -204,7 +209,7 @@ class MeshHandler:
         bpy.ops.mesh.inset(thickness=thickness, depth=depth)
         return f"Inset applied (thickness={thickness}, depth={depth})"
 
-    def boolean(self, operation='DIFFERENCE', solver='FAST'):
+    def boolean(self, operation='DIFFERENCE', solver='EXACT'):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
         Formula: Unselected - Selected (for DIFFERENCE).
@@ -238,3 +243,179 @@ class MeshHandler:
         self._ensure_edit_mode()
         bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
         return f"Subdivided selected geometry (cuts={number_cuts})"
+
+    def smooth_vertices(self, iterations=1, factor=0.5):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
+        Uses Laplacian smoothing algorithm.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = [v for v in bm.verts if v.select]
+        
+        if not selected_verts:
+            # Restore mode before raising error? Or just raise?
+            # Ideally restore, but if we fail fast...
+            # The context is already changed. Let's try to be nice.
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+        
+        vert_count = len(selected_verts)
+        
+        bpy.ops.mesh.vertices_smooth(factor=factor, repeat=iterations)
+        
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Smoothed {vert_count} vertices ({iterations} iterations, {factor:.2f} factor)"
+
+    def flatten_vertices(self, axis):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
+        Aligns vertices perpendicular to chosen axis using scale-to-zero transform.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = [v for v in bm.verts if v.select]
+        
+        if not selected_verts:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+        
+        vert_count = len(selected_verts)
+        
+        axis = axis.upper()
+        if axis not in ['X', 'Y', 'Z']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+        
+        constraint_map = {
+            "X": (True, False, False),
+            "Y": (False, True, False),
+            "Z": (False, False, True)
+        }
+        
+        constraint = constraint_map[axis]
+        scale_value = [1.0, 1.0, 1.0]
+        for i, constrained in enumerate(constraint):
+            if constrained:
+                scale_value[i] = 0.0
+        
+        bpy.ops.transform.resize(
+            value=tuple(scale_value),
+            constraint_axis=constraint,
+            orient_type='GLOBAL'
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Flattened {vert_count} vertices along {axis} axis"
+
+    def list_groups(self, object_name, group_type='VERTEX'):
+        """
+        [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh object.
+
+        Args:
+            object_name: Name of the mesh object to inspect
+            group_type: Type of groups to list ('VERTEX' or 'FACE')
+
+        Returns:
+            Dict with group information including name, index, member_count, and flags
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        group_type = group_type.upper()
+
+        if group_type == 'VERTEX':
+            groups_data = []
+
+            for idx, vg in enumerate(obj.vertex_groups):
+                # Count assigned vertices by iterating through mesh vertices
+                assigned_count = 0
+                for v in obj.data.vertices:
+                    try:
+                        # Check if vertex is in this group
+                        if vg.index in [g.group for g in v.groups]:
+                            assigned_count += 1
+                    except:
+                        pass
+
+                group_info = {
+                    "name": vg.name,
+                    "index": vg.index,
+                    "member_count": assigned_count,
+                    "lock_weight": vg.lock_weight,
+                }
+                groups_data.append(group_info)
+
+            return {
+                "object_name": object_name,
+                "group_type": "VERTEX",
+                "group_count": len(groups_data),
+                "groups": groups_data
+            }
+
+        elif group_type == 'FACE':
+            # Face maps were removed in Blender 3.0+
+            # Check if face_maps attribute exists
+            if hasattr(obj, 'face_maps'):
+                groups_data = []
+                for fm in obj.face_maps:
+                    group_info = {
+                        "name": fm.name,
+                        "index": fm.index,
+                        "member_count": 0  # Face maps don't track count directly
+                    }
+                    groups_data.append(group_info)
+
+                return {
+                    "object_name": object_name,
+                    "group_type": "FACE",
+                    "group_count": len(groups_data),
+                    "groups": groups_data,
+                    "note": "Face maps are deprecated in Blender 3.0+"
+                }
+            else:
+                # Try using face attributes (Blender 3.0+)
+                # Face attributes are stored in obj.data.attributes
+                face_attributes = [attr for attr in obj.data.attributes if attr.domain == 'FACE']
+
+                if not face_attributes:
+                    return {
+                        "object_name": object_name,
+                        "group_type": "FACE",
+                        "group_count": 0,
+                        "groups": [],
+                        "note": "No face attributes found. Face maps were deprecated in Blender 3.0+. Use vertex groups or custom attributes instead."
+                    }
+
+                groups_data = []
+                for attr in face_attributes:
+                    group_info = {
+                        "name": attr.name,
+                        "data_type": attr.data_type,
+                        "domain": attr.domain
+                    }
+                    groups_data.append(group_info)
+
+                return {
+                    "object_name": object_name,
+                    "group_type": "FACE",
+                    "group_count": len(groups_data),
+                    "groups": groups_data,
+                    "note": "Showing face-domain attributes (Blender 3.0+ replacement for face maps)"
+                }
+        else:
+            raise ValueError(f"Invalid group_type '{group_type}'. Must be 'VERTEX' or 'FACE'")

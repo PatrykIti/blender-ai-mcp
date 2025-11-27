@@ -94,3 +94,66 @@ class SceneToolHandler(ISceneTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def get_mode(self) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_mode")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_get_mode")
+        return response.result
+
+    def list_selection(self) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.list_selection")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_list_selection")
+        return response.result
+
+    def inspect_object(self, name: str) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_object", {"name": name})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_inspect_object")
+        return response.result
+
+    def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
+        args = {
+            "include_mesh_stats": include_mesh_stats,
+            "include_materials": include_materials
+        }
+        response = self.rpc.send_request("scene.snapshot_state", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_snapshot_state")
+        return response.result
+
+    def inspect_material_slots(self, material_filter: Optional[str] = None, include_empty_slots: bool = True) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_material_slots", {
+            "material_filter": material_filter,
+            "include_empty_slots": include_empty_slots
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def inspect_mesh_topology(self, object_name: str, detailed: bool = False) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_mesh_topology", {
+            "object_name": object_name,
+            "detailed": detailed
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_modifiers", {
+            "object_name": object_name,
+            "include_disabled": include_disabled
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

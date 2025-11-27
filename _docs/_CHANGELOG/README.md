@@ -6,6 +6,19 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [34](./34-2025-11-27-scene-inspect-modifiers.md) | 2025-11-27 | **Scene Inspect Modifiers (TASK-014-14)** | 1.9.13 |
+| [33](./33-2025-11-27-scene-inspect-mesh-topology.md) | 2025-11-27 | **Scene Inspect Mesh Topology (TASK-014-13)** | 1.9.12 |
+| [32](./32-2025-11-27-mesh-list-groups.md) | 2025-11-27 | **Mesh List Groups (TASK-014-12)** | 1.9.11 |
+| [31](./31-2025-11-27-uv-list-maps.md) | 2025-11-27 | **UV List Maps (TASK-014-11)** | 1.9.10 |
+| [30](./30-2025-11-27-scene-inspect-material-slots.md) | 2025-11-27 | **Scene Inspect Material Slots (TASK-014-10)** | 1.9.9 |
+| [29](./29-2025-11-27-material-tools.md) | 2025-11-27 | **Material Tools (TASK-014-8 & 9)** | 1.9.8 |
+| [28](./28-2025-11-27-collection-list-objects.md) | 2025-11-27 | **Collection List Objects Tool (TASK-014-7)** | 1.9.7 |
+| [27](./27-2025-11-27-collection-list.md) | 2025-11-27 | **Collection List Tool (TASK-014-6)** | 1.9.6 |
+| [26](./26-2025-11-27-scene-compare-snapshot.md) | 2025-11-27 | **Scene Compare Snapshot Tool (TASK-014-5)** | 1.9.5 |
+| [25](./25-2025-11-27-scene-snapshot-state.md) | 2025-11-27 | **Scene Snapshot State Tool (TASK-014-4)** | 1.9.4 |
+| [24](./24-2025-11-27-scene-inspect-object.md) | 2025-11-27 | **Scene Inspect Object Tool (TASK-014-3)** | 1.9.3 |
+| [23](./23-2025-11-27-scene-list-selection.md) | 2025-11-27 | **Scene List Selection Tool (TASK-014-2)** | 1.9.2 |
+| [22](./22-2025-11-27-scene-get-mode.md) | 2025-11-27 | **Scene Get Mode Tool (TASK-014-1)** | 1.9.1 |
 | [21](./21-2025-11-25-tool-docstring-standardization.md) | 2025-11-25 | **Tool Docstring Standardization (Scene, Modeling, Mesh)** | 0.2.4 |
 | [20](./20-2025-11-25-advanced-mesh-ops.md) | 2025-11-25 | **Advanced Mesh Operations (Boolean, Merge, Subdivide)** | 0.2.3 |
 | [19](./19-2025-11-24-mesh-edges.md) | 2025-11-24 | **Edge Operations (Bevel, Loop Cut, Inset)** | 0.2.2 |

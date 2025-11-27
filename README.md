@@ -57,7 +57,7 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_extrude_region`, `mesh_fill_holes`.
 - [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset` (Adding topology).
 - [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
-- [ ] `mesh_smooth` / `mesh_flatten`.
+- [x] `mesh_smooth` / `mesh_flatten`.
 
 #### 🎯 Phase 2.1: Advanced Selection (Planned)
 Smart selection tools to avoid "index hell" for the AI.
@@ -121,16 +121,23 @@ Global project-level operations and undo-safe workflows.
 #### 📊 Phase 7: Introspection & Listing APIs
 Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
 - **Scene & System:**
-  - [ ] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
+  - [x] `scene_get_mode`: Report current Blender mode for context-aware ops.
+  - [x] `scene_list_selection`: List currently selected objects/components.
+  - [x] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
+  - [x] `scene_snapshot_state`: Capture structured snapshot of scene state.
+  - [x] `scene_compare_snapshot`: Compare two snapshots to summarize changes.
 - **Collections:**
-  - [ ] `collection_list`: List all collections and their hierarchy.
-  - [ ] `collection_list_objects`: List objects inside a given collection.
+  - [x] `collection_list`: List all collections and their hierarchy.
+  - [x] `collection_list_objects`: List objects inside a given collection.
 - **Materials:**
-  - [ ] `material_list`: List all materials with key parameters.
-  - [ ] `material_list_by_object`: Materials and slots used by a specific object.
+  - [x] `material_list`: List all materials with key parameters.
+  - [x] `material_list_by_object`: Materials and slots used by a specific object.
+  - [x] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
 - **UV & Geometry:**
-  - [ ] `uv_list_maps`: List UV maps for an object.
-  - [ ] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
+  - [x] `uv_list_maps`: List UV maps for an object.
+  - [x] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
+  - [x] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
+  - [x] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
 
 ---
 
@@ -148,6 +155,74 @@ We recommend using Docker to run the MCP Server.
 
 **Cline Configuration (`cline_mcp_settings.json`):**
 
+**For macOS/Windows:**
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "scene_list_objects",
+        "scene_delete_object",
+        "scene_clean_scene",
+        "scene_duplicate_object",
+        "scene_set_active_object",
+        "scene_get_viewport",
+        "scene_create_light",
+        "scene_create_camera",
+        "scene_create_empty",
+        "scene_set_mode",
+        "scene_get_mode",
+        "scene_list_selection",
+        "scene_inspect_object",
+        "scene_snapshot_state",
+        "scene_compare_snapshot",
+        "scene_inspect_material_slots",
+        "scene_inspect_mesh_topology",
+        "scene_inspect_modifiers",
+        "collection_list",
+        "collection_list_objects",
+        "material_list",
+        "material_list_by_object",
+        "uv_list_maps",
+        "modeling_create_primitive",
+        "modeling_transform_object",
+        "modeling_add_modifier",
+        "modeling_apply_modifier",
+        "modeling_convert_to_mesh",
+        "modeling_join_objects",
+        "modeling_separate_object",
+        "modeling_set_origin",
+        "modeling_list_modifiers",
+        "mesh_select_all",
+        "mesh_delete_selected",
+        "mesh_select_by_index",
+        "mesh_extrude_region",
+        "mesh_fill_holes",
+        "mesh_bevel",
+        "mesh_loop_cut",
+        "mesh_inset",
+        "mesh_boolean",
+        "mesh_merge_by_distance",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten",
+        "mesh_list_groups"
+      ]
+    }
+  }
+}
+```
+
+**For Linux:**
 ```json
 {
   "mcpServers": {
@@ -173,6 +248,19 @@ We recommend using Docker to run the MCP Server.
         "scene_create_camera",
         "scene_create_empty",
         "scene_set_mode",
+        "scene_get_mode",
+        "scene_list_selection",
+        "scene_inspect_object",
+        "scene_snapshot_state",
+        "scene_compare_snapshot",
+        "scene_inspect_material_slots",
+        "scene_inspect_mesh_topology",
+        "scene_inspect_modifiers",
+        "collection_list",
+        "collection_list_objects",
+        "material_list",
+        "material_list_by_object",
+        "uv_list_maps",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
@@ -189,17 +277,73 @@ We recommend using Docker to run the MCP Server.
         "mesh_fill_holes",
         "mesh_bevel",
         "mesh_loop_cut",
-        "mesh_inset"
+        "mesh_inset",
+        "mesh_boolean",
+        "mesh_merge_by_distance",
+        "mesh_subdivide",
+        "mesh_smooth",
+        "mesh_flatten",
+        "mesh_list_groups"
       ]
     }
   }
 }
 ```
 
+**For GitHub Copilot CLI:**
+Copilot uses a slightly different config structure. Ensure you map the temp directory properly if you want file outputs.
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+      "type": "local",
+      "command": "docker",
+      "tools": [
+        "*"
+      ],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/tmp:/tmp",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ],
+      "env": {
+        "BLENDER_AI_TMP_INTERNAL_DIR": "/tmp",
+        "BLENDER_AI_TMP_EXTERNAL_DIR": "/tmp",
+        "BLENDER_RPC_HOST": "host.docker.internal"
+      }
+    }
+  }
+}
+```
+
 **⚠️ Important Network Configuration:**
-*   **Standard Mode:** We strongly recommend using `--network host` (as shown above) to ensure the Docker container can access the Blender server running on your local machine (`localhost:8765`).
-*   **MacOS/Windows Alternative:** If `--network host` causes issues, you can try removing it and setting `-e "BLENDER_RPC_HOST=host.docker.internal"`. However, this often requires additional Docker configuration.
+*   **macOS/Windows:** Use `host.docker.internal` (as shown in the first config). The `--network host` option does NOT work on Docker Desktop for Mac/Windows.
+*   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
 *   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
+
+### Viewport Output Modes & Temp Directory Mapping
+
+The `scene_get_viewport` tool supports multiple output modes via the `output_mode` argument:
+* `IMAGE` (default): returns a FastMCP `Image` resource (best for Cline / clients with native image support).
+* `BASE64`: returns the raw base64-encoded JPEG string for direct Vision-module consumption.
+* `FILE`: writes the image to a temp directory and returns a message with **host-visible** file paths.
+* `MARKDOWN`: writes the image and returns rich markdown with an inline `data:` URL plus host-visible paths.
+
+When running in Docker, map the internal temp directory to a host folder and configure env vars:
+
+```bash
+# Example volume & env mapping
+docker run -i --rm \
+  -v /host/tmp/blender-ai-mcp:/tmp/blender-ai-mcp \
+  -e BLENDER_RPC_HOST=host.docker.internal \
+  -e BLENDER_AI_TMP_INTERNAL_DIR=/tmp/blender-ai-mcp \
+  -e BLENDER_AI_TMP_EXTERNAL_DIR=/host/tmp/blender-ai-mcp \
+  ghcr.io/patrykiti/blender-ai-mcp:latest
+```
 
 ---
 

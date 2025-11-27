@@ -51,3 +51,38 @@ class ISceneTool(ABC):
     def set_mode(self, mode: str) -> str:
         """Sets the interaction mode (OBJECT, EDIT, SCULPT)."""
         pass
+
+    @abstractmethod
+    def get_mode(self) -> Dict[str, Any]:
+        """Returns the current Blender interaction mode snapshot."""
+        pass
+
+    @abstractmethod
+    def list_selection(self) -> Dict[str, Any]:
+        """Returns the current selection summary for Object/Edit modes."""
+        pass
+
+    @abstractmethod
+    def inspect_object(self, name: str) -> Dict[str, Any]:
+        """Returns a structured report for the specified object."""
+        pass
+
+    @abstractmethod
+    def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
+        """Captures a lightweight JSON snapshot of the scene state."""
+        pass
+
+    @abstractmethod
+    def inspect_material_slots(self, material_filter: Optional[str] = None, include_empty_slots: bool = True) -> Dict[str, Any]:
+        """Audits material slot assignments across the entire scene."""
+        pass
+
+    @abstractmethod
+    def inspect_mesh_topology(self, object_name: str, detailed: bool = False) -> Dict[str, Any]:
+        """Reports detailed topology stats for a given mesh."""
+        pass
+
+    @abstractmethod
+    def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
+        """Audits modifier stacks for a specific object or the entire scene."""
+        pass

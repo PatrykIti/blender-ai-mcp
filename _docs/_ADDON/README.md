@@ -48,9 +48,36 @@ Technical details.
 
 | `set_active_object` | `set_active_object` | Sets the active object. |
 
+| `get_mode` | `get_mode` | Reports current Blender mode and selection context. |
+
+| `list_selection` | `list_selection` | Lists selected objects and Edit Mode component counts. |
+
+| `inspect_object` | `inspect_object` | Returns detailed metadata for a single object (transform, collections, modifiers, mesh stats). |
+| `snapshot_state` | `snapshot_state` | Captures structured JSON snapshot with SHA256 hash. |
+| `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
+| `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
+| `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
+### Collection (`application/handlers/collection.py`)
 
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `collection.list` | `list_collections` | Lists all collections with hierarchy. |
+| `collection.list_objects` | `list_objects` | Lists objects in a collection (recursive). |
+
+### Material (`application/handlers/material.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `material.list` | `list_materials` | Lists all materials with BSDF parameters. |
+| `material.list_by_object` | `list_by_object` | Lists material slots for specific object. |
+
+### UV (`application/handlers/uv.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `uv.list_maps` | `list_maps` | Lists UV maps for mesh object. |
 
 ### Modeling (`application/handlers/modeling.py`)
 
@@ -124,5 +151,8 @@ Technical details.
 | `merge_by_distance` | `merge_by_distance` | Merges vertices (Remove Doubles). |
 
 | `subdivide` | `subdivide` | Subdivides selected geometry. |
+| `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
+| `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
+| `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
 
 
