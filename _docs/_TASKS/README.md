@@ -49,16 +49,6 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-011-X](./TASK-011-X_Mode_Switching.md) | **Scene Mode Switching Tool** | 🔴 High | 2025-11-24 |
 | [TASK-011-1](./TASK-011-1_Edit_Mode_Foundation.md) | **Edit Mode Foundation (Selection & Deletion)** | 🔴 High | 2025-11-24 |
 | [TASK-010](./TASK-010_Scene_Construction_Tools.md) | **Scene Construction Tools (Lights, Cameras, Empties)** | 🟡 Medium | 2025-11-24 |
-
-*(No tasks)*
-
----
-
-## ✅ Done
-
-| ID | Title | Priority | Completion Date |
-|----|-------|----------|-----------------|
-| [TASK-010](./TASK-010_Scene_Construction_Tools.md) | **Scene Construction Tools (Lights, Cameras, Empties)** | 🟡 Medium | 2025-11-24 |
 | [TASK-009](./TASK-009_Extend_Viewport_Control.md) | **Extend Viewport Control (Shading & Camera)** | 🟡 Medium | 2025-11-24 |
 | [TASK-001](./TASK-001_Project_Setup.md) | **Project Initialization and Structure** | 🔴 High | 2025-11-22 |
 | [TASK-002](./TASK-002_Communication_Core.md) | **Communication Bridge Implementation (RPC)** | 🔴 High | 2025-11-22 |
@@ -74,7 +64,6 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-008](./TASK-008_Implement_Apply_Modifier.md) | **Implement Modeling Tool - Apply Modifier** | 🟡 Medium | 2025-11-22 |
 | [TASK-008_1](./TASK-008_1_Modeling_Tools_Completion.md) | **Modeling Tools Completion (Object Mode)** | 🔴 High | 2025-11-22 |
 | [TASK-008_2](./TASK-008_2_Standardize_Tool_Naming.md) | **Standardize Tool Naming (Prefixing)** | 🟡 Medium | 2025-11-22 |
-| [TASK-007](./TASK-007_Scene_Tools_Extension.md) | **Scene Tools Extension (Duplicate, Set Active, Viewport)** | 🔴 High | - |
 
 ---
 

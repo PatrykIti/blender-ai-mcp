@@ -290,6 +290,36 @@ We recommend using Docker to run the MCP Server.
 }
 ```
 
+**For GitHub Copilot CLI:**
+Copilot uses a slightly different config structure. Ensure you map the temp directory properly if you want file outputs.
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+      "type": "local",
+      "command": "docker",
+      "tools": [
+        "*"
+      ],
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/tmp:/tmp",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ],
+      "env": {
+        "BLENDER_AI_TMP_INTERNAL_DIR": "/tmp",
+        "BLENDER_AI_TMP_EXTERNAL_DIR": "/tmp",
+        "BLENDER_RPC_HOST": "host.docker.internal"
+      }
+    }
+  }
+}
+```
+
 **⚠️ Important Network Configuration:**
 *   **macOS/Windows:** Use `host.docker.internal` (as shown in the first config). The `--network host` option does NOT work on Docker Desktop for Mac/Windows.
 *   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
