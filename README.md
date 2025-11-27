@@ -135,9 +135,9 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
   - [x] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
 - **UV & Geometry:**
   - [x] `uv_list_maps`: List UV maps for an object.
-  - [ ] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
-  - [ ] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
-  - [ ] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
+  - [x] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
+  - [x] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
+  - [x] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
 
 ---
 
@@ -186,6 +186,8 @@ We recommend using Docker to run the MCP Server.
         "scene_snapshot_state",
         "scene_compare_snapshot",
         "scene_inspect_material_slots",
+        "scene_inspect_mesh_topology",
+        "scene_inspect_modifiers",
         "collection_list",
         "collection_list_objects",
         "material_list",
@@ -212,7 +214,8 @@ We recommend using Docker to run the MCP Server.
         "mesh_merge_by_distance",
         "mesh_subdivide",
         "mesh_smooth",
-        "mesh_flatten"
+        "mesh_flatten",
+        "mesh_list_groups"
       ]
     }
   }
@@ -251,6 +254,8 @@ We recommend using Docker to run the MCP Server.
         "scene_snapshot_state",
         "scene_compare_snapshot",
         "scene_inspect_material_slots",
+        "scene_inspect_mesh_topology",
+        "scene_inspect_modifiers",
         "collection_list",
         "collection_list_objects",
         "material_list",
@@ -277,7 +282,8 @@ We recommend using Docker to run the MCP Server.
         "mesh_merge_by_distance",
         "mesh_subdivide",
         "mesh_smooth",
-        "mesh_flatten"
+        "mesh_flatten",
+        "mesh_list_groups"
       ]
     }
   }
