@@ -86,6 +86,7 @@ def register():
         rpc_server.register_handler("mesh.subdivide", mesh_handler.subdivide)
         rpc_server.register_handler("mesh.smooth_vertices", mesh_handler.smooth_vertices)
         rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
+        rpc_server.register_handler("mesh.list_groups", mesh_handler.list_groups)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

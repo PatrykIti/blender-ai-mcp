@@ -92,3 +92,10 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> dict:
+        args = {"object_name": object_name, "group_type": group_type}
+        response = self.rpc.send_request("mesh.list_groups", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

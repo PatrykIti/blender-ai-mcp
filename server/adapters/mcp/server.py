@@ -1267,9 +1267,81 @@ def mesh_flatten(
     handler = get_mesh_handler()
     try:
         return handler.flatten_vertices(axis)
-    except RuntimeError as e:
-        return str(e)
-
-def run():
+        except RuntimeError as e:
+            return str(e)
+    
+    
+    @mcp.tool()
+    def mesh_list_groups(
+        ctx: Context,
+        object_name: str,
+        group_type: str = 'VERTEX'
+    ) -> str:
+        """
+        [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh.
+        
+        Args:
+            object_name: Name of the mesh object.
+            group_type: 'VERTEX' or 'FACE' (defaults to VERTEX).
+        """
+        handler = get_mesh_handler()
+        try:
+            result = handler.list_groups(object_name, group_type)
+            import json
+            
+            obj_name = result.get("object_name")
+            g_type = result.get("group_type")
+            count = result.get("group_count", 0)
+            groups = result.get("groups", [])
+            note = result.get("note")
+            
+            if count == 0:
+                msg = f"Object '{obj_name}' has no {g_type.lower()} groups."
+                if note:
+                    msg += f"\nNote: {note}"
+                return msg
+                
+            lines = [
+                f"Object: {obj_name}",
+                f"{g_type} Groups ({count}):"
+            ]
+            
+            # Limit output if too many groups
+            limit = 50
+            
+            for i, group in enumerate(groups):
+                if i >= limit:
+                    lines.append(f"  ... and {len(groups) - limit} more")
+                    break
+                    
+                name = group.get("name")
+                idx = group.get("index")
+                # For vertex groups, show member count if available
+                # For face maps/attrs, show type info
+                
+                extras = []
+                if "member_count" in group:
+                    extras.append(f"members: {group['member_count']}")
+                if "lock_weight" in group and group["lock_weight"]:
+                    extras.append("locked")
+                if "data_type" in group:
+                    extras.append(f"type: {group['data_type']}")
+                    
+                extra_str = f" ({', '.join(extras)})" if extras else ""
+                
+                lines.append(f"  [{idx if idx is not None else '-'}] {name}{extra_str}")
+                
+            if note:
+                lines.append(f"\nNote: {note}")
+                
+            ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
+            return "\n".join(lines)
+            
+        except RuntimeError as e:
+            return str(e)
+    
+    
+    def run():
+    
     """Starts the MCP server."""
     mcp.run()

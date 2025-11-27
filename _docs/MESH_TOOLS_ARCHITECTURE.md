@@ -268,7 +268,29 @@ Behavior:
 
 ---
 
+# 14. mesh_list_groups ✅ Done
+Lists vertex/face groups defined on the mesh object.
+
+**Tag:** `[MESH][SAFE][READ-ONLY]`
+
+Args:
+- object_name: str
+- group_type: str ('VERTEX' or 'FACE') - Default 'VERTEX'
+
+Example:
+```json
+{
+  "tool": "mesh_list_groups",
+  "args": {
+    "object_name": "Cube",
+    "group_type": "VERTEX"
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
-2. **Edit Mode**: These tools MUST operate in Edit Mode. The handler handles the switch.
+2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.
 3. **BMesh**: Advanced operations should use `bmesh` for consistent indexing.

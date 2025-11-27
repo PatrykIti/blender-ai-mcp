@@ -294,5 +294,108 @@ class MeshHandler:
             constraint_axis=constraint,
             orient_type='GLOBAL'
         )
-        
+
         return f"Flattened {vert_count} vertices along {axis} axis"
+
+    def list_groups(self, object_name, group_type='VERTEX'):
+        """
+        [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh object.
+
+        Args:
+            object_name: Name of the mesh object to inspect
+            group_type: Type of groups to list ('VERTEX' or 'FACE')
+
+        Returns:
+            Dict with group information including name, index, member_count, and flags
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        group_type = group_type.upper()
+
+        if group_type == 'VERTEX':
+            groups_data = []
+
+            for idx, vg in enumerate(obj.vertex_groups):
+                # Count assigned vertices by iterating through mesh vertices
+                assigned_count = 0
+                for v in obj.data.vertices:
+                    try:
+                        # Check if vertex is in this group
+                        if vg.index in [g.group for g in v.groups]:
+                            assigned_count += 1
+                    except:
+                        pass
+
+                group_info = {
+                    "name": vg.name,
+                    "index": vg.index,
+                    "member_count": assigned_count,
+                    "lock_weight": vg.lock_weight,
+                }
+                groups_data.append(group_info)
+
+            return {
+                "object_name": object_name,
+                "group_type": "VERTEX",
+                "group_count": len(groups_data),
+                "groups": groups_data
+            }
+
+        elif group_type == 'FACE':
+            # Face maps were removed in Blender 3.0+
+            # Check if face_maps attribute exists
+            if hasattr(obj, 'face_maps'):
+                groups_data = []
+                for fm in obj.face_maps:
+                    group_info = {
+                        "name": fm.name,
+                        "index": fm.index,
+                        "member_count": 0  # Face maps don't track count directly
+                    }
+                    groups_data.append(group_info)
+
+                return {
+                    "object_name": object_name,
+                    "group_type": "FACE",
+                    "group_count": len(groups_data),
+                    "groups": groups_data,
+                    "note": "Face maps are deprecated in Blender 3.0+"
+                }
+            else:
+                # Try using face attributes (Blender 3.0+)
+                # Face attributes are stored in obj.data.attributes
+                face_attributes = [attr for attr in obj.data.attributes if attr.domain == 'FACE']
+
+                if not face_attributes:
+                    return {
+                        "object_name": object_name,
+                        "group_type": "FACE",
+                        "group_count": 0,
+                        "groups": [],
+                        "note": "No face attributes found. Face maps were deprecated in Blender 3.0+. Use vertex groups or custom attributes instead."
+                    }
+
+                groups_data = []
+                for attr in face_attributes:
+                    group_info = {
+                        "name": attr.name,
+                        "data_type": attr.data_type,
+                        "domain": attr.domain
+                    }
+                    groups_data.append(group_info)
+
+                return {
+                    "object_name": object_name,
+                    "group_type": "FACE",
+                    "group_count": len(groups_data),
+                    "groups": groups_data,
+                    "note": "Showing face-domain attributes (Blender 3.0+ replacement for face maps)"
+                }
+        else:
+            raise ValueError(f"Invalid group_type '{group_type}'. Must be 'VERTEX' or 'FACE'")

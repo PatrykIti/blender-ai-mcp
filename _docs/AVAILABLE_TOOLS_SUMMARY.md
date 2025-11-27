@@ -87,11 +87,15 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_bevel` | `offset`, `segments` | Bevels selected edges. | ✅ Done |
 | `mesh_loop_cut` | `number_cuts` | Adds topology (subdivide). | ✅ Done |
 | `mesh_inset` | `thickness` | Insets faces. | ✅ Done |
+| `mesh_boolean` | `operation`, `solver` | Boolean operation (Unselected - Selected). | ✅ Done |
+| `mesh_merge_by_distance` | `distance` | Merges vertices within threshold distance. | ✅ Done |
+| `mesh_subdivide` | `number_cuts`, `smoothness` | Subdivides selected geometry. | ✅ Done |
+| `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices. | ✅ Done |
+| `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
+| `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
 
 ---
 
 ## 🛠 Planned / In Progress
 
 ### Mesh Editing (`mesh_`) - Phase 2 Continued
-- [ ] `mesh_boolean`
-- [ ] `mesh_merge_by_distance`

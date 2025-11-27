@@ -69,3 +69,8 @@ class IMeshTool(ABC):
     def flatten_vertices(self, axis: str) -> str:
         """Flattens selected vertices along specified axis (X, Y, or Z)."""
         pass
+
+    @abstractmethod
+    def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> Dict[str, Any]:
+        """Lists vertex/face groups defined on a mesh object."""
+        pass

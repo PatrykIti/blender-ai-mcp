@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5
+- **To Do:** 2
 - **In Progress:** 0
-- **Done:** 28
+- **Done:** 29
 
 ---
 
@@ -13,7 +13,6 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Created |
 |----|-------|----------|---------|
-| [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-13](./TASK-014-13_Scene_Inspect_Mesh_Topology.md) | **Scene Inspect Mesh Topology Tool** | 🔴 High | 2025-11-27 |
 | [TASK-014-14](./TASK-014-14_Scene_Inspect_Modifiers.md) | **Scene Inspect Modifiers Tool** | 🟡 Medium | 2025-11-27 |
 
@@ -29,6 +28,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-11](./TASK-014-11_UV_List_Maps.md) | **UV List Maps Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-10](./TASK-014-10_Scene_Inspect_Material_Slots.md) | **Scene Inspect Material Slots Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-9](./TASK-014-9_Material_List_By_Object.md) | **Material List By Object Tool** | 🟢 Low | 2025-11-27 |

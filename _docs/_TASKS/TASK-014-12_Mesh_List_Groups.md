@@ -1,8 +1,9 @@
 # TASK-014-12: Mesh List Groups Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Expose vertex/face group inspection for a mesh object so AI workflows (rig prep, modifiers) can confirm groups exist and understand membership counts.

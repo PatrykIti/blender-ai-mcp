@@ -111,6 +111,7 @@ Low-level geometry manipulation.
 | `mesh_subdivide` | `number_cuts`, `smoothness` | Subdivides selected geometry. |
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
+| `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
 
 ## 🛠 Key Components
 

@@ -151,5 +151,6 @@ Technical details.
 | `subdivide` | `subdivide` | Subdivides selected geometry. |
 | `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
 | `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
+| `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
 
 
