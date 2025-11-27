@@ -24,8 +24,12 @@ Add a diagnostics tool that reports detailed topology stats for a given mesh: ve
 - Compute: vertex/edge/face counts, triangles/quads/ngons, `len(bm.verts)` etc., run `bmesh.ops.find_doubles`? (Better: use `bm.calc_face_angle`, `bm.calc_loop_triangles`).
 - Identify non-manifold edges via `not e.is_manifold`.
 
-### 5. RPC Registration
+### 5. RPC Registration & Addon Registration
 - Register `scene.inspect_mesh_topology` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("scene.inspect_mesh_topology", scene_handler.inspect_mesh_topology)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts.

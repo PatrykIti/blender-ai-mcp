@@ -118,3 +118,15 @@ class SceneToolHandler(ISceneTool):
         if not isinstance(response.result, dict):
             raise RuntimeError("Blender Error: Invalid payload for scene_inspect_object")
         return response.result
+
+    def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
+        args = {
+            "include_mesh_stats": include_mesh_stats,
+            "include_materials": include_materials
+        }
+        response = self.rpc.send_request("scene.snapshot_state", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_snapshot_state")
+        return response.result

@@ -1,8 +1,9 @@
 # TASK-014-4: Scene Snapshot State Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Add a tool that captures a lightweight JSON snapshot of the scene (object transforms, hierarchy, modifiers, selection) which the MCP server can store client-side for later diffing.
@@ -25,8 +26,12 @@ Add a tool that captures a lightweight JSON snapshot of the scene (object transf
 - Iterate all objects, capturing core metadata and optional extras.
 - Generate deterministic ordering, compute hash (e.g., SHA256 of JSON string) to detect changes.
 
-### 5. RPC Server
+### 5. RPC Server & Addon Registration
 - Register `scene.snapshot_state` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("scene.snapshot_state", scene_handler.snapshot_state)
+  ```
 
 ## ✅ Deliverables
 - Domain models & interface.

@@ -22,6 +22,17 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_create_light` | `type`, `energy`, `color`, `location` | Creates a light source. | ✅ Done |
 | `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera. | ✅ Done |
 | `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object. | ✅ Done |
+| `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
+| `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
+
+---
+
+## 📦 Collection Tools (`collection_`)
+*Tools for managing Blender collections (organizational containers).*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. | ✅ Done |
 
 ---
 

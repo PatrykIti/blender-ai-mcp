@@ -530,20 +530,20 @@ class SceneHandler:
 
     def set_mode(self, mode='OBJECT'):
         """Sets the interaction mode (OBJECT, EDIT, SCULPT)."""
-        # Mapping generic names to Blender internal modes if needed, 
+        # Mapping generic names to Blender internal modes if needed,
         # but standard names are OBJECT, EDIT, SCULPT.
         # Blender uses 'EDIT_MESH' for meshes, but 'EDIT' in ops usually works.
-        
+
         target_mode = mode.upper()
-        
+
         # Map friendly names
         if target_mode == 'EDIT':
             # If it's a mesh, use EDIT, otherwise standard behavior
-            pass 
-            
+            pass
+
         if bpy.context.mode == target_mode:
             return f"Already in {target_mode} mode"
-            
+
         # Ensure we have an active object for modes other than OBJECT
         if target_mode != 'OBJECT' and not bpy.context.active_object:
              raise ValueError(f"Cannot switch to {target_mode} mode: No active object.")
@@ -553,5 +553,67 @@ class SceneHandler:
         except RuntimeError as e:
              # Often happens if the object type doesn't support the mode (e.g. Camera -> Edit Mode)
              raise ValueError(f"Failed to switch to {target_mode} mode. Object might not support it. Error: {e}")
-             
+
         return f"Switched to {target_mode} mode"
+
+    def snapshot_state(self, include_mesh_stats=False, include_materials=False):
+        """Captures a lightweight JSON snapshot of the scene state."""
+        import json
+        import hashlib
+        from datetime import datetime
+
+        # Collect object data in deterministic order (alphabetical by name)
+        objects_data = []
+        for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+            obj_data = {
+                "name": obj.name,
+                "type": obj.type,
+                "location": self._vec_to_list(obj.location),
+                "rotation": self._vec_to_list(obj.rotation_euler),
+                "scale": self._vec_to_list(obj.scale),
+                "parent": obj.parent.name if obj.parent else None,
+                "visible": not obj.hide_get(),
+                "selected": obj.select_get(),
+                "collections": [col.name for col in obj.users_collection]
+            }
+
+            # Optional: Include modifiers info
+            if obj.modifiers:
+                obj_data["modifiers"] = [
+                    {"name": mod.name, "type": mod.type}
+                    for mod in obj.modifiers
+                ]
+
+            # Optional: Include mesh stats
+            if include_mesh_stats and obj.type == 'MESH':
+                mesh_stats = self._gather_mesh_stats(obj)
+                if mesh_stats:
+                    obj_data["mesh_stats"] = mesh_stats
+
+            # Optional: Include material info
+            if include_materials and obj.material_slots:
+                obj_data["materials"] = [
+                    slot.material.name if slot.material else None
+                    for slot in obj.material_slots
+                ]
+
+            objects_data.append(obj_data)
+
+        # Build snapshot payload
+        snapshot = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "object_count": len(objects_data),
+            "objects": objects_data,
+            "active_object": bpy.context.active_object.name if bpy.context.active_object else None,
+            "mode": getattr(bpy.context, "mode", "UNKNOWN")
+        }
+
+        # Compute hash for change detection (SHA256 of JSON string)
+        snapshot_json = json.dumps(snapshot, sort_keys=True)
+        snapshot_hash = hashlib.sha256(snapshot_json.encode('utf-8')).hexdigest()
+
+        # Return snapshot with hash
+        return {
+            "hash": snapshot_hash,
+            "snapshot": snapshot
+        }

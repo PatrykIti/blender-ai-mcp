@@ -24,8 +24,12 @@ Design a scene-wide audit tool summarizing how materials are distributed across 
 - Iterate all mesh objects, gather slot data, optionally compute face assignment ratios (requires temporary mode switch & bmesh read; follow context rules from TOOLS_ARCHITECTURE_DEEP_DIVE).
 - Add warnings for slots referencing missing materials or duplicates.
 
-### 5. RPC Server
+### 5. RPC Server & Addon Registration
 - Register `scene.inspect_material_slots` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("scene.inspect_material_slots", scene_handler.inspect_material_slots)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts & models.

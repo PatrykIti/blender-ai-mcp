@@ -19,10 +19,12 @@ try:
     from .application.handlers.scene import SceneHandler
     from .application.handlers.modeling import ModelingHandler
     from .application.handlers.mesh import MeshHandler
+    from .application.handlers.collection import CollectionHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
     MeshHandler = None
+    CollectionHandler = None
 
 
 def register():
@@ -33,6 +35,7 @@ def register():
         scene_handler = SceneHandler()
         modeling_handler = ModelingHandler()
         mesh_handler = MeshHandler()
+        collection_handler = CollectionHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -44,6 +47,7 @@ def register():
         rpc_server.register_handler("scene.get_mode", scene_handler.get_mode)
         rpc_server.register_handler("scene.list_selection", scene_handler.list_selection)
         rpc_server.register_handler("scene.inspect_object", scene_handler.inspect_object)
+        rpc_server.register_handler("scene.snapshot_state", scene_handler.snapshot_state)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
@@ -75,7 +79,10 @@ def register():
         rpc_server.register_handler("mesh.subdivide", mesh_handler.subdivide)
         rpc_server.register_handler("mesh.smooth_vertices", mesh_handler.smooth_vertices)
         rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
-        
+
+        # Collection
+        rpc_server.register_handler("collection.list", collection_handler.list_collections)
+
         rpc_server.start()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")

@@ -23,8 +23,14 @@ List all materials in the blend file with essential parameters (BSDF type, color
 - Iterate `bpy.data.materials`, inspect `material.use_nodes` and Principled BSDF default socket values when available.
 - Count object assignments by scanning `obj.material_slots` (efficient approach recommended, e.g., dictionary building once).
 
-### 5. RPC Server
+### 5. RPC Server & Addon Registration
 - Register `material.list` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  # Material
+  material_handler = MaterialHandler()
+  rpc_server.register_handler("material.list", material_handler.list_materials)
+  ```
 
 ## ✅ Deliverables
 - Domain contract + models.

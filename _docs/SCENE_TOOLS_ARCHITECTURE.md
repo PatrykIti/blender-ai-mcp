@@ -215,6 +215,52 @@ Example:
 
 ---
 
+# 13. scene_snapshot_state ✅ Done
+Captures a lightweight JSON snapshot of the scene state (object transforms, hierarchy, modifiers, selection) for client-side storage and later diffing.
+
+Args:
+- include_mesh_stats: bool (default False) - includes vertex/edge/face counts for meshes
+- include_materials: bool (default False) - includes material names assigned to objects
+
+Returns: Dict with `hash` (SHA256 for change detection) and `snapshot` (JSON payload)
+
+Example:
+```json
+{
+  "tool": "scene_snapshot_state",
+  "args": {
+    "include_mesh_stats": true,
+    "include_materials": false
+  }
+}
+```
+
+---
+
+# 14. scene_compare_snapshot ✅ Done
+Compares two scene snapshots and returns a structured diff summary (added/removed/modified objects).
+
+Args:
+- baseline_snapshot: str (JSON string from scene_snapshot_state)
+- target_snapshot: str (JSON string from scene_snapshot_state)
+- ignore_minor_transforms: float (default 0.0) - threshold for ignoring small transform changes
+
+Note: This tool runs entirely on the MCP server side without requiring RPC to Blender.
+
+Example:
+```json
+{
+  "tool": "scene_compare_snapshot",
+  "args": {
+    "baseline_snapshot": "{...}",
+    "target_snapshot": "{...}",
+    "ignore_minor_transforms": 0.001
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

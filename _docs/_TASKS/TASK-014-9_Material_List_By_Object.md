@@ -23,8 +23,12 @@ Provide per-object material slot insight, including slot names, linked materials
 - Validate object exists; ensure we can inspect `obj.material_slots` even for non-mesh? (if not, return helpful message).
 - Optionally compute assigned face counts using `bmesh` when `include_indices=True` (warning: requires Edit Mode toggle; follow best practices from TOOLS_ARCHITECTURE_DEEP_DIVE to temporarily switch mode and restore state).
 
-### 5. RPC Registration
+### 5. RPC Registration & Addon Registration
 - Add `material.list_by_object` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("material.list_by_object", material_handler.list_by_object)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts.

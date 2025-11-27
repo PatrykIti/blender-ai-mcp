@@ -12,3 +12,6 @@ dist/
 build/
 *.egg-info/
 .roo
+node_modules/
+package-lock.json
+package.json

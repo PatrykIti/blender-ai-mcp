@@ -4,7 +4,9 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from server.infrastructure.di import (
     get_modeling_handler,
     get_scene_handler,
+    get_collection_handler,
 )
+from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 from datetime import datetime
 import base64
@@ -299,6 +301,127 @@ def scene_get_viewport(
     )
 
 @mcp.tool()
+def scene_snapshot_state(
+    ctx: Context,
+    include_mesh_stats: bool = False,
+    include_materials: bool = False
+) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Captures a lightweight JSON snapshot of the scene state.
+
+    Returns a serialized snapshot containing object transforms, hierarchy, modifiers,
+    and selection state. Includes a SHA256 hash for change detection. Large payloads
+    are possible when optional flags are enabled.
+
+    Args:
+        include_mesh_stats: If True, includes vertex/edge/face counts for mesh objects.
+        include_materials: If True, includes material names assigned to objects.
+    """
+    handler = get_scene_handler()
+    try:
+        result = handler.snapshot_state(
+            include_mesh_stats=include_mesh_stats,
+            include_materials=include_materials
+        )
+        import json
+
+        snapshot = result.get("snapshot", {})
+        snapshot_hash = result.get("hash", "unknown")
+        object_count = snapshot.get("object_count", 0)
+        timestamp = snapshot.get("timestamp", "unknown")
+
+        # Format summary
+        summary = (
+            f"Scene Snapshot Captured:\n"
+            f"- Timestamp: {timestamp}\n"
+            f"- Objects: {object_count}\n"
+            f"- Hash: {snapshot_hash[:16]}...\n"
+            f"- Active Object: {snapshot.get('active_object') or 'None'}\n"
+            f"- Mode: {snapshot.get('mode', 'UNKNOWN')}\n\n"
+            f"Full snapshot (JSON):\n{json.dumps(snapshot, indent=2)}"
+        )
+
+        ctx.info(f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
+        return summary
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def scene_compare_snapshot(
+    ctx: Context,
+    baseline_snapshot: str,
+    target_snapshot: str,
+    ignore_minor_transforms: float = 0.0
+) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Compares two scene snapshots and returns a diff summary.
+
+    Takes two JSON snapshot strings (from scene_snapshot_state) and computes
+    the differences: objects added/removed, and modifications to transforms,
+    modifiers, and materials.
+
+    Args:
+        baseline_snapshot: JSON string of the baseline snapshot
+        target_snapshot: JSON string of the target snapshot
+        ignore_minor_transforms: Threshold for ignoring small transform changes (default 0.0)
+    """
+    diff_service = get_snapshot_diff_service()
+
+    try:
+        result = diff_service.compare_snapshots(
+            baseline_snapshot=baseline_snapshot,
+            target_snapshot=target_snapshot,
+            ignore_minor_transforms=ignore_minor_transforms
+        )
+    except ValueError as e:
+        return f"Error: {str(e)}"
+
+    # Format the diff summary
+    added = result.get("objects_added", [])
+    removed = result.get("objects_removed", [])
+    modified = result.get("objects_modified", [])
+    has_changes = result.get("has_changes", False)
+
+    if not has_changes:
+        return "No changes detected between snapshots."
+
+    lines = [
+        "Snapshot Comparison:",
+        f"- Baseline: {result.get('baseline_timestamp')} (hash: {result.get('baseline_hash', 'unknown')[:16]}...)",
+        f"- Target: {result.get('target_timestamp')} (hash: {result.get('target_hash', 'unknown')[:16]}...)",
+        ""
+    ]
+
+    if added:
+        lines.append(f"Objects Added ({len(added)}):")
+        for obj_name in added:
+            lines.append(f"  + {obj_name}")
+        lines.append("")
+
+    if removed:
+        lines.append(f"Objects Removed ({len(removed)}):")
+        for obj_name in removed:
+            lines.append(f"  - {obj_name}")
+        lines.append("")
+
+    if modified:
+        lines.append(f"Objects Modified ({len(modified)}):")
+        for mod in modified:
+            obj_name = mod.get("object_name")
+            changes = mod.get("changes", [])
+            lines.append(f"  ~ {obj_name}:")
+            for change in changes:
+                prop = change.get("property")
+                old_val = change.get("old_value")
+                new_val = change.get("new_value")
+                lines.append(f"      {prop}: {old_val} → {new_val}")
+        lines.append("")
+
+    summary = "\n".join(lines)
+    ctx.info(f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
+    return summary
+
+@mcp.tool()
 def scene_create_light(
     ctx: Context,
     type: str,
@@ -384,6 +507,58 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
     handler = get_scene_handler()
     try:
         return handler.set_mode(mode)
+    except RuntimeError as e:
+        return str(e)
+
+# ... Collection Tools ...
+
+@mcp.tool()
+def collection_list(ctx: Context, include_objects: bool = False) -> str:
+    """
+    [COLLECTION][SAFE][READ-ONLY] Lists all collections with hierarchy information.
+
+    Returns collection names, parent relationships, object counts, and visibility flags.
+    Optionally includes object names within each collection.
+
+    Args:
+        include_objects: If True, includes object names within each collection.
+    """
+    handler = get_collection_handler()
+    try:
+        collections = handler.list_collections(include_objects=include_objects)
+
+        if not collections:
+            return "No collections found in the scene."
+
+        lines = [f"Collections ({len(collections)}):"]
+
+        for col in collections:
+            parent = col.get("parent") or "<root>"
+            obj_count = col.get("object_count", 0)
+            child_count = col.get("child_count", 0)
+
+            # Build visibility info
+            visibility = []
+            if col.get("hide_viewport"):
+                visibility.append("hidden-viewport")
+            if col.get("hide_render"):
+                visibility.append("hidden-render")
+            if col.get("hide_select"):
+                visibility.append("unselectable")
+
+            vis_str = f" [{', '.join(visibility)}]" if visibility else ""
+
+            lines.append(
+                f"  • {col['name']} (parent: {parent}, objects: {obj_count}, children: {child_count}){vis_str}"
+            )
+
+            # Optionally list objects
+            if include_objects and col.get("objects"):
+                obj_list = ", ".join(col["objects"])
+                lines.append(f"      Objects: {obj_list}")
+
+        ctx.info(f"Listed {len(collections)} collections")
+        return "\n".join(lines)
     except RuntimeError as e:
         return str(e)
 

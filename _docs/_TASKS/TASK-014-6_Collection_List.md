@@ -1,8 +1,9 @@
 # TASK-014-6: Collection List Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟢 Low  
+**Status:** ✅ Done
+**Priority:** 🟢 Low
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Implement a tool that lists all collections with hierarchy depth, object counts, and visibility flags, enabling AI agents to reason about scene organization.
@@ -23,8 +24,14 @@ Implement a tool that lists all collections with hierarchy depth, object counts,
 - Traverse `bpy.data.collections`, compute tree recursively, respect optional `include_objects` flag.
 - Return deterministic ordering (e.g., alphabetical) to prevent diff noise.
 
-### 5. RPC Registration
+### 5. RPC Registration & Addon Registration
 - Register endpoint `collection.list`.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  # Collection
+  collection_handler = CollectionHandler()
+  rpc_server.register_handler("collection.list", collection_handler.list_collections)
+  ```
 
 ## ✅ Deliverables
 - Domain interface/model.

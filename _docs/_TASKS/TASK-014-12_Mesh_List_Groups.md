@@ -24,8 +24,12 @@ Expose vertex/face group inspection for a mesh object so AI workflows (rig prep,
 - Use `obj.vertex_groups` for vertex groups; for face maps (Blender 4+ `obj.face_maps` or `obj.data.attributes`), provide fallback message if unsupported.
 - Include totals plus e.g., top 5 sample vertex indices when group small (optional for context, ensure toggle?).
 
-### 5. RPC Registration
+### 5. RPC Registration & Addon Registration
 - Register `mesh.list_groups` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("mesh.list_groups", mesh_handler.list_groups)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts.

@@ -6,6 +6,9 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [27](./27-2025-11-27-collection-list.md) | 2025-11-27 | **Collection List Tool (TASK-014-6)** | 1.9.6 |
+| [26](./26-2025-11-27-scene-compare-snapshot.md) | 2025-11-27 | **Scene Compare Snapshot Tool (TASK-014-5)** | 1.9.5 |
+| [25](./25-2025-11-27-scene-snapshot-state.md) | 2025-11-27 | **Scene Snapshot State Tool (TASK-014-4)** | 1.9.4 |
 | [24](./24-2025-11-27-scene-inspect-object.md) | 2025-11-27 | **Scene Inspect Object Tool (TASK-014-3)** | 1.9.3 |
 | [23](./23-2025-11-27-scene-list-selection.md) | 2025-11-27 | **Scene List Selection Tool (TASK-014-2)** | 1.9.2 |
 | [22](./22-2025-11-27-scene-get-mode.md) | 2025-11-27 | **Scene Get Mode Tool (TASK-014-1)** | 1.9.1 |

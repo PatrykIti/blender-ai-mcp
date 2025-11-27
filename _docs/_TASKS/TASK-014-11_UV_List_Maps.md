@@ -24,8 +24,14 @@ Create a tool that reports UV map information for a specified mesh object: map n
 - For optional island counts, rely on `bmesh.ops.find_doubles`? (Alternatively, skip heavy computation and document as not implemented yet.)
 - Validate mode; stay in Object Mode when possible.
 
-### 5. RPC Server
+### 5. RPC Server & Addon Registration
 - Register `uv.list_maps` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  # UV
+  uv_handler = UVHandler()
+  rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts.

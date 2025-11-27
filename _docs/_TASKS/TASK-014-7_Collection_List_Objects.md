@@ -24,8 +24,12 @@ Expose a tool that returns all objects contained within a specified collection (
 - Validate collection existence via `bpy.data.collections.get`.
 - Support recursion using stack, optionally filtering hidden objects (check `obj.hide_viewport`/`obj.hide_render`).
 
-### 5. RPC Server
+### 5. RPC Server & Addon Registration
 - Register `collection.list_objects` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("collection.list_objects", collection_handler.list_objects)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts + models.

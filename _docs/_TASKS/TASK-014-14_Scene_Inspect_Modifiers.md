@@ -25,8 +25,12 @@ Implement a tool that audits modifier stacks for either a specific object or the
 - If `object_name` provided, inspect only that object; else iterate all mesh objects.
 - Extract key properties depending on modifier type (e.g., Subdivision: levels/subdivision_type; Mirror: axes, merge threshold) but keep consistent schema.
 
-### 5. RPC Registration
+### 5. RPC Registration & Addon Registration
 - Register `scene.inspect_modifiers` endpoint.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("scene.inspect_modifiers", scene_handler.inspect_modifiers)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts & models.

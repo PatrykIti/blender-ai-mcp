@@ -66,3 +66,8 @@ class ISceneTool(ABC):
     def inspect_object(self, name: str) -> Dict[str, Any]:
         """Returns a structured report for the specified object."""
         pass
+
+    @abstractmethod
+    def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
+        """Captures a lightweight JSON snapshot of the scene state."""
+        pass

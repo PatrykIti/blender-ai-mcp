@@ -1,8 +1,9 @@
 # TASK-014-5: Scene Compare Snapshot Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Build a comparison tool that takes two snapshots (from TASK-014-4) and returns a structured diff summary (added/removed objects, transform deltas, modifier changes). This lets LLMs verify whether operations achieved expected results without relying on viewport images.
@@ -25,8 +26,12 @@ Build a comparison tool that takes two snapshots (from TASK-014-4) and returns a
 - Decide where diffing lives: easiest is to compute diff on server side (Python) without Blender, so add pure-Python module under `server/application/services/snapshot_diff.py`.
 - If addon must assist (e.g., verifying live scene), keep RPC endpoint minimal.
 
-### 5. Infrastructure
+### 5. Infrastructure & Addon Registration
 - Update DI to wire new handler; ensure any helper services are registered as singletons.
+- **IMPORTANT:** Register handler in `blender_addon/__init__.py`:
+  ```python
+  rpc_server.register_handler("scene.compare_snapshot", scene_handler.compare_snapshot)
+  ```
 
 ## ✅ Deliverables
 - Domain contracts + Pydantic models.
