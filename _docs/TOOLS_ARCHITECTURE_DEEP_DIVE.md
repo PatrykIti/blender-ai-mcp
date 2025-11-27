@@ -473,23 +473,15 @@ def mesh_flatten(object_name: str, axis: Literal["X", "Y", "Z"]) -> str:
 
 **Complex Semantics (Boolean):**
 ```python
-@mcp.tool()
-def mesh_boolean(operation: str = 'DIFFERENCE', solver: str = 'FAST') -> str:
+def mesh_boolean(operation: str = 'DIFFERENCE', solver: str = 'EXACT') -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
-    Formula: Unselected - Selected (for DIFFERENCE).
-    TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
-    
-    Workflow:
-      1. Select 'Cutter' geometry.
-      2. Deselect 'Base' geometry.
-      3. Run tool.
-    
-    Args:
-        operation: 'INTERSECT', 'UNION', 'DIFFERENCE'
-        solver: 'FAST' or 'EXACT'
     """
 ```
+- Formula: `UNSELECTED (Base) - SELECTED (Cutter)` (for DIFFERENCE)
+- `solver='EXACT'`: Uses Exact Boolean solver (robust, default in Blender 4.0+).
+- `solver='FLOAT'`: Uses legacy Float solver (fast but error-prone).
+- `mesh_boolean` → Points to `modeling_add_modifier(BOOLEAN)` as safer alternative
 
 ## 🎨 Design Principles
 

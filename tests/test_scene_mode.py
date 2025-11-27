@@ -87,3 +87,37 @@ class TestSceneMode:
         with pytest.raises(ValueError):
             self.handler.inspect_object("Missing")
 
+    def test_set_mode_invalid_mode(self):
+        with pytest.raises(ValueError, match="Invalid mode 'INVALID'. Valid:"):
+            self.handler.set_mode('INVALID')
+
+    def test_set_mode_edit_wrong_object_type(self):
+        """Test that EDIT mode rejects non-editable object types."""
+        camera = MagicMock()
+        camera.name = "Camera"
+        camera.type = "CAMERA"
+        self.mock_bpy.context.active_object = camera
+        
+        with pytest.raises(ValueError, match="Cannot enter EDIT mode"):
+            self.handler.set_mode('EDIT')
+
+    def test_set_mode_sculpt_wrong_object_type(self):
+        """Test that SCULPT mode rejects non-MESH types."""
+        curve = MagicMock()
+        curve.name = "Curve"
+        curve.type = "CURVE"
+        self.mock_bpy.context.active_object = curve
+        
+        with pytest.raises(ValueError, match="Cannot enter SCULPT mode"):
+            self.handler.set_mode('SCULPT')
+            
+    def test_set_mode_pose_wrong_object_type(self):
+        """Test that POSE mode rejects non-ARMATURE types."""
+        cube = MagicMock()
+        cube.name = "Cube"
+        cube.type = "MESH"
+        self.mock_bpy.context.active_object = cube
+        
+        with pytest.raises(ValueError, match="Cannot enter POSE mode"):
+            self.handler.set_mode('POSE')
+

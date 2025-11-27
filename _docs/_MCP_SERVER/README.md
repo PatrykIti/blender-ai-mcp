@@ -108,7 +108,7 @@ Low-level geometry manipulation.
 | `mesh_bevel` | `offset`, `segments` | Bevels selected geometry. |
 | `mesh_loop_cut` | `number_cuts` | Adds cuts (subdivides) to selection. |
 | `mesh_inset` | `thickness`, `depth` | Insets selected faces. |
-| `mesh_boolean` | `operation`, `solver` | Boolean op (Unselected - Selected). |
+| `mesh_boolean` | `operation`, `solver='EXACT'` | Boolean op (Unselected - Selected). Note: FAST solver removed in Blender 4.0+. |
 | `mesh_merge_by_distance` | `distance` | Remove doubles / merge vertices. |
 | `mesh_subdivide` | `number_cuts`, `smoothness` | Subdivides selected geometry. |
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |

@@ -5,19 +5,24 @@ class MeshHandler:
     """Application service for Edit Mode mesh operations."""
 
     def _ensure_edit_mode(self):
-        """Ensures the active object is a Mesh and in Edit Mode."""
+        """
+        Ensures the active object is a Mesh and in Edit Mode.
+        Returns tuple (obj, previous_mode).
+        """
         obj = bpy.context.active_object
         if not obj or obj.type != 'MESH':
             raise ValueError("Active object must be a Mesh.")
         
-        if bpy.context.mode != 'EDIT_MESH':
+        previous_mode = obj.mode
+        
+        if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode='EDIT')
         
-        return obj
+        return obj, previous_mode
 
     def _get_bmesh(self):
         """Returns the BMesh of the active object."""
-        obj = self._ensure_edit_mode()
+        obj, _ = self._ensure_edit_mode()
         bm = bmesh.from_edit_mesh(obj.data)
         return bm
 
@@ -204,7 +209,7 @@ class MeshHandler:
         bpy.ops.mesh.inset(thickness=thickness, depth=depth)
         return f"Inset applied (thickness={thickness}, depth={depth})"
 
-    def boolean(self, operation='DIFFERENCE', solver='FAST'):
+    def boolean(self, operation='DIFFERENCE', solver='EXACT'):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
         Formula: Unselected - Selected (for DIFFERENCE).
@@ -244,17 +249,25 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
         Uses Laplacian smoothing algorithm.
         """
-        self._ensure_edit_mode()
+        obj, previous_mode = self._ensure_edit_mode()
         
-        bm = self._get_bmesh()
+        bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
         
         if not selected_verts:
+            # Restore mode before raising error? Or just raise?
+            # Ideally restore, but if we fail fast...
+            # The context is already changed. Let's try to be nice.
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
         
         vert_count = len(selected_verts)
         
         bpy.ops.mesh.vertices_smooth(factor=factor, repeat=iterations)
+        
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Smoothed {vert_count} vertices ({iterations} iterations, {factor:.2f} factor)"
 
@@ -263,18 +276,22 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
         Aligns vertices perpendicular to chosen axis using scale-to-zero transform.
         """
-        self._ensure_edit_mode()
+        obj, previous_mode = self._ensure_edit_mode()
         
-        bm = self._get_bmesh()
+        bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
         
         if not selected_verts:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
         
         vert_count = len(selected_verts)
         
         axis = axis.upper()
         if axis not in ['X', 'Y', 'Z']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
         
         constraint_map = {
@@ -294,6 +311,9 @@ class MeshHandler:
             constraint_axis=constraint,
             orient_type='GLOBAL'
         )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Flattened {vert_count} vertices along {axis} axis"
 

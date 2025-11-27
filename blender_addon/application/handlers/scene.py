@@ -32,6 +32,10 @@ class SceneHandler:
         Deletes objects from the scene.
         If keep_lights_and_cameras is True, preserves LIGHT and CAMERA objects.
         """
+        # Ensure we're in OBJECT mode before deleting
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
         # Select all objects
         bpy.ops.object.select_all(action='DESELECT')
         
@@ -529,32 +533,40 @@ class SceneHandler:
         return empty_obj.name
 
     def set_mode(self, mode='OBJECT'):
-        """Sets the interaction mode (OBJECT, EDIT, SCULPT)."""
-        # Mapping generic names to Blender internal modes if needed,
-        # but standard names are OBJECT, EDIT, SCULPT.
-        # Blender uses 'EDIT_MESH' for meshes, but 'EDIT' in ops usually works.
+        """Switch Blender context mode."""
+        mode = mode.upper()
+        valid_modes = ['OBJECT', 'EDIT', 'SCULPT', 'VERTEX_PAINT', 'WEIGHT_PAINT', 'TEXTURE_PAINT', 'POSE']
 
-        target_mode = mode.upper()
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid mode '{mode}'. Valid: {valid_modes}")
 
-        # Map friendly names
-        if target_mode == 'EDIT':
-            # If it's a mesh, use EDIT, otherwise standard behavior
-            pass
+        current_mode = bpy.context.mode
 
-        if bpy.context.mode == target_mode:
-            return f"Already in {target_mode} mode"
+        if current_mode == mode or current_mode.startswith(mode):
+            return f"Already in {mode} mode"
 
-        # Ensure we have an active object for modes other than OBJECT
-        if target_mode != 'OBJECT' and not bpy.context.active_object:
-             raise ValueError(f"Cannot switch to {target_mode} mode: No active object.")
+        active_obj = bpy.context.active_object
+        
+        if mode != 'OBJECT' and not active_obj:
+             raise ValueError(f"Cannot enter {mode} mode: no active object")
 
-        try:
-            bpy.ops.object.mode_set(mode=target_mode)
-        except RuntimeError as e:
-             # Often happens if the object type doesn't support the mode (e.g. Camera -> Edit Mode)
-             raise ValueError(f"Failed to switch to {target_mode} mode. Object might not support it. Error: {e}")
+        # Validate object type for specific modes
+        if mode == 'EDIT':
+            valid_types = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'LATTICE', 'ARMATURE']
+            if active_obj.type not in valid_types:
+                raise ValueError(
+                    f"Cannot enter {mode} mode: active object '{active_obj.name}' "
+                    f"is type '{active_obj.type}'. Supported types: {', '.join(valid_types)}"
+                )
+        elif mode == 'SCULPT':
+             if active_obj.type != 'MESH':
+                 raise ValueError(f"Cannot enter SCULPT mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only MESH supported.")
+        elif mode == 'POSE':
+             if active_obj.type != 'ARMATURE':
+                 raise ValueError(f"Cannot enter POSE mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only ARMATURE supported.")
 
-        return f"Switched to {target_mode} mode"
+        bpy.ops.object.mode_set(mode=mode)
+        return f"Switched to {mode} mode"
 
     def snapshot_state(self, include_mesh_stats=False, include_materials=False):
         """Captures a lightweight JSON snapshot of the scene state."""

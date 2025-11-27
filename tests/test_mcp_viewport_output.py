@@ -4,16 +4,17 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from fastmcp.utilities.types import Image
-from server.adapters.mcp import server as mcp_server
+# Update import to new location
+from server.adapters.mcp.areas import scene as mcp_scene
 
-SCENE_GET_VIEWPORT = mcp_server.scene_get_viewport.fn
+SCENE_GET_VIEWPORT = mcp_scene.scene_get_viewport.fn
 
 
 class TestMcpViewportOutputModes(unittest.TestCase):
     def setUp(self) -> None:
         self.ctx = MagicMock()
 
-    @patch("server.adapters.mcp.server.get_scene_handler")
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_default_outputs_image_resource(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "aGVsbG8="  # "hello" in base64
@@ -24,7 +25,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         self.assertIsInstance(result, Image)
         handler.get_viewport.assert_called_once()
 
-    @patch("server.adapters.mcp.server.get_scene_handler")
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_base64_mode_returns_raw_string(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "dGVzdF9iYXNlNjQ="
@@ -34,7 +35,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
 
         self.assertEqual(result, "dGVzdF9iYXNlNjQ=")
 
-    @patch("server.adapters.mcp.server.get_scene_handler")
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_file_mode_writes_and_returns_paths(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "dGVzdF9pbWFnZQ=="  # arbitrary base64
@@ -63,7 +64,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         # external_tmp should be reflected in returned paths
         self.assertIn(str(os.path.join(external_tmp, "blender-ai-mcp")), result)
 
-    @patch("server.adapters.mcp.server.get_scene_handler")
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_markdown_mode_returns_data_url_and_path(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "dGVzdF9pbWFnZQ=="
@@ -81,7 +82,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         self.assertIn("Viewport render saved to:", result)
         self.assertIn("open the file at", result)
 
-    @patch("server.adapters.mcp.server.get_scene_handler")
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_invalid_mode_returns_error_string(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "dGVzdF9pbWFnZQ=="
@@ -91,6 +92,10 @@ class TestMcpViewportOutputModes(unittest.TestCase):
 
         self.assertIsInstance(result, str)
         self.assertIn("Invalid output_mode", result)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 
 if __name__ == "__main__":
