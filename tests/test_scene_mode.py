@@ -74,7 +74,7 @@ class TestSceneMode:
         summary = self.handler.list_selection()
         assert summary["mode"] == 'OBJECT'
         assert summary["selection_count"] == 2
-        self.assertIsNone(summary["edit_mode_vertex_count"])
+        assert summary["edit_mode_vertex_count"] is None
 
     def test_inspect_object_basic(self):
         self.cube.type = 'LIGHT'

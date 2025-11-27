@@ -75,8 +75,8 @@ class TestSceneTools:
         # Get all args passed to remove
         removed_objects = [call.args[0] for call in self.mock_bpy.data.objects.remove.call_args_list]
         assert self.cube in removed_objects
-        self.assertNotIn(self.camera, removed_objects)
-        self.assertNotIn(self.light, removed_objects)
+        assert self.camera not in removed_objects
+        assert self.light not in removed_objects
 
     def test_clean_scene_hard_reset(self):
         # Should delete EVERYTHING

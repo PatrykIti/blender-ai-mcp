@@ -9,6 +9,7 @@ class TestSceneInspectMeshTopology:
     def setup_method(self):
         self.handler = SceneHandler()
         self.mock_bpy = sys.modules["bpy"]
+        self.mock_bmesh = sys.modules["bmesh"]
 
     def test_inspect_basic_topology(self):
         # Mock object
@@ -19,7 +20,7 @@ class TestSceneInspectMeshTopology:
         
         # Mock BMesh
         mock_bm = MagicMock()
-        mock_bmesh.new.return_value = mock_bm
+        self.mock_bmesh.new.return_value = mock_bm
         
         # Mock Geometry - Need to support ensure_lookup_table AND len() AND iteration
         verts_list = [MagicMock(), MagicMock(), MagicMock(), MagicMock()] # 4 verts
@@ -58,7 +59,7 @@ class TestSceneInspectMeshTopology:
         assert stats["non_manifold_edges"] is None
         
         # Verify bmesh lifecycle
-        mock_bmesh.new.assert_called_once()
+        self.mock_bmesh.new.assert_called_once()
         mock_bm.from_mesh.assert_called_with(mock_obj.data)
         mock_bm.free.assert_called_once()
         mock_bm.verts.ensure_lookup_table.assert_called()
@@ -70,7 +71,7 @@ class TestSceneInspectMeshTopology:
         self.mock_bpy.data.objects = {"BadMesh": mock_obj}
         
         mock_bm = MagicMock()
-        mock_bmesh.new.return_value = mock_bm
+        self.mock_bmesh.new.return_value = mock_bm
         
         # Mock Edges
         e1 = MagicMock(); e1.is_manifold = True
