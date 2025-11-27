@@ -148,3 +148,12 @@ class SceneToolHandler(ISceneTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_modifiers", {
+            "object_name": object_name,
+            "include_disabled": include_disabled
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

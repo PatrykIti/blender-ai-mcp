@@ -3,17 +3,15 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1
+- **To Do:** 0
 - **In Progress:** 0
-- **Done:** 30
+- **Done:** 31
 
 ---
 
 ## 🚨 To Do
 
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-014-14](./TASK-014-14_Scene_Inspect_Modifiers.md) | **Scene Inspect Modifiers Tool** | 🟡 Medium | 2025-11-27 |
+*(No tasks)*
 
 ---
 
@@ -27,6 +25,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-014-14](./TASK-014-14_Scene_Inspect_Modifiers.md) | **Scene Inspect Modifiers Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-13](./TASK-014-13_Scene_Inspect_Mesh_Topology.md) | **Scene Inspect Mesh Topology Tool** | 🔴 High | 2025-11-27 |
 | [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-11](./TASK-014-11_UV_List_Maps.md) | **UV List Maps Tool** | 🟡 Medium | 2025-11-27 |

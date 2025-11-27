@@ -528,14 +528,83 @@ def scene_inspect_material_slots(
                 lines.append(f"  - Loose Edges: {stats.get('loose_edges')}")
                 
             return "\n".join(lines)
-        except RuntimeError as e:
-            return str(e)
-    
-    
-    @mcp.tool()
-    def scene_create_light(
-    
-    ctx: Context,
+            except RuntimeError as e:
+                return str(e)
+        
+        @mcp.tool()
+        def scene_inspect_modifiers(
+            ctx: Context,
+            object_name: Optional[str] = None,
+            include_disabled: bool = True
+        ) -> str:
+            """
+            [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
+            
+            Can inspect a specific object or audit the entire scene.
+            
+            Args:
+                object_name: Optional name of the object to inspect. If None, scans all objects.
+                include_disabled: If True, includes modifiers disabled in viewport/render.
+            """
+            handler = get_scene_handler()
+            try:
+                result = handler.inspect_modifiers(object_name, include_disabled)
+                import json
+                
+                obj_count = result.get("object_count", 0)
+                mod_count = result.get("modifier_count", 0)
+                objects = result.get("objects", [])
+                
+                if obj_count == 0:
+                    if object_name:
+                        return f"Object '{object_name}' has no modifiers."
+                    return "No modifiers found in the scene."
+                    
+                lines = [
+                    f"Modifier Inspection ({mod_count} modifiers on {obj_count} objects):",
+                    ""
+                ]
+                
+                # Limit output if scene-wide and too many objects
+                limit = 20
+                
+                for i, obj in enumerate(objects):
+                    if i >= limit:
+                        lines.append(f"... and {len(objects) - limit} more objects")
+                        break
+                        
+                    lines.append(f"Object: {obj['name']}")
+                    for mod in obj['modifiers']:
+                        name = mod['name']
+                        mtype = mod['type']
+                        flags = []
+                        if not mod['show_viewport']:
+                            flags.append("hidden_viewport")
+                        if not mod['show_render']:
+                            flags.append("hidden_render")
+                        
+                        flag_str = f" [{', '.join(flags)}]" if flags else ""
+                        
+                        # Build details string from extra keys
+                        details = []
+                        for k, v in mod.items():
+                            if k not in ["name", "type", "is_enabled", "show_viewport", "show_render"]:
+                                details.append(f"{k}={v}")
+                        
+                        detail_str = f" ({', '.join(details)})" if details else ""
+                        
+                        lines.append(f"  - {name} ({mtype}){detail_str}{flag_str}")
+                    lines.append("")
+                    
+                ctx.info(f"Inspected modifiers: {mod_count} on {obj_count} objects")
+                return "\n".join(lines)
+            except RuntimeError as e:
+                return str(e)
+        
+        
+        @mcp.tool()
+        def scene_create_light(
+            ctx: Context,
     type: str,
     energy: float = 1000.0,
     color: List[float] = (1.0, 1.0, 1.0),

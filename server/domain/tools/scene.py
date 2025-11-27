@@ -81,3 +81,8 @@ class ISceneTool(ABC):
     def inspect_mesh_topology(self, object_name: str, detailed: bool = False) -> Dict[str, Any]:
         """Reports detailed topology stats for a given mesh."""
         pass
+
+    @abstractmethod
+    def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
+        """Audits modifier stacks for a specific object or the entire scene."""
+        pass

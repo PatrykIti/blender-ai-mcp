@@ -314,6 +314,26 @@ Example:
 
 ---
 
+# 17. scene_inspect_modifiers ✅ Done
+Audits modifier stacks for a specific object or the entire scene. returns details like enabled state, viewport/render visibility, and type-specific properties (e.g., Subsurf levels).
+
+Args:
+- object_name: str (optional) - if None, scans all objects.
+- include_disabled: bool (default True) - if False, skips modifiers disabled in both viewport and render.
+
+Example:
+```json
+{
+  "tool": "scene_inspect_modifiers",
+  "args": {
+    "object_name": "Cube",
+    "include_disabled": false
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

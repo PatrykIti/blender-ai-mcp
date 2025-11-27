@@ -1,8 +1,9 @@
 # TASK-014-14: Scene Inspect Modifiers Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Implement a tool that audits modifier stacks for either a specific object or the entire scene, detailing order, configuration highlights, enabled states, and dependency warnings. AI agents need this to reason about destructive vs. non-destructive workflows.

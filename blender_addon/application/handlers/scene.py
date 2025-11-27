@@ -737,3 +737,75 @@ class SceneHandler:
             "warnings": warnings,
             "slots": slot_data
         }
+
+    def inspect_modifiers(self, object_name=None, include_disabled=True):
+        """Audits modifier stacks for a specific object or the entire scene."""
+        result = {
+            "object_count": 0,
+            "modifier_count": 0,
+            "objects": []
+        }
+        
+        objects_to_check = []
+        if object_name:
+            if object_name not in bpy.data.objects:
+                raise ValueError(f"Object '{object_name}' not found")
+            objects_to_check.append(bpy.data.objects[object_name])
+        else:
+            # Deterministic order
+            objects_to_check = sorted(bpy.context.scene.objects, key=lambda o: o.name)
+            
+        for obj in objects_to_check:
+            # Skip objects that don't support modifiers (e.g. Empty, Light)
+            if not hasattr(obj, "modifiers") or len(obj.modifiers) == 0:
+                continue
+                
+            modifiers = []
+            for mod in obj.modifiers:
+                # Check visibility (viewport or render)
+                is_enabled = mod.show_viewport or mod.show_render
+                if not include_disabled and not is_enabled:
+                    continue
+                    
+                mod_info = {
+                    "name": mod.name,
+                    "type": mod.type,
+                    "is_enabled": is_enabled,
+                    "show_viewport": mod.show_viewport,
+                    "show_render": mod.show_render,
+                }
+                
+                # Extract key properties based on type
+                if mod.type == 'SUBSURF':
+                    mod_info["levels"] = mod.levels
+                    mod_info["render_levels"] = mod.render_levels
+                elif mod.type == 'BEVEL':
+                    mod_info["width"] = mod.width
+                    mod_info["segments"] = mod.segments
+                    mod_info["limit_method"] = mod.limit_method
+                elif mod.type == 'MIRROR':
+                    mod_info["use_axis"] = [mod.use_axis[0], mod.use_axis[1], mod.use_axis[2]]
+                    mod_info["mirror_object"] = mod.mirror_object.name if mod.mirror_object else None
+                elif mod.type == 'BOOLEAN':
+                    mod_info["operation"] = mod.operation
+                    mod_info["object"] = mod.object.name if mod.object else None
+                    mod_info["solver"] = mod.solver
+                elif mod.type == 'ARRAY':
+                    mod_info["count"] = mod.count
+                    mod_info["use_relative_offset"] = mod.use_relative_offset
+                    mod_info["use_constant_offset"] = mod.use_constant_offset
+                elif mod.type == 'SOLIDIFY':
+                    mod_info["thickness"] = mod.thickness
+                    mod_info["offset"] = mod.offset
+                
+                modifiers.append(mod_info)
+                
+            if modifiers:
+                result["objects"].append({
+                    "name": obj.name,
+                    "modifiers": modifiers
+                })
+                result["modifier_count"] += len(modifiers)
+                result["object_count"] += 1
+                
+        return result
