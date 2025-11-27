@@ -187,6 +187,19 @@ Example:
 
 ---
 
+# 11. scene_list_selection ✅ Done
+Lists current selection information. In Object Mode it returns the selected object names/count. In Edit Mode it includes selected vertex/edge/face counts.
+
+Example:
+```json
+{
+  "tool": "scene_list_selection",
+  "args": {}
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

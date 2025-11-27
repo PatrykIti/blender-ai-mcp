@@ -116,6 +116,37 @@ class SceneHandler:
             "selection_count": len(selected_names)
         }
 
+    def list_selection(self):
+        """Summarizes current selection for Object and Edit modes."""
+        mode = getattr(bpy.context, "mode", "UNKNOWN")
+        selected = getattr(bpy.context, "selected_objects", []) or []
+        selected_names = [obj.name for obj in selected if hasattr(obj, "name")]
+
+        summary = {
+            "mode": mode,
+            "selected_object_names": selected_names,
+            "selection_count": len(selected_names),
+            "edit_mode_vertex_count": None,
+            "edit_mode_edge_count": None,
+            "edit_mode_face_count": None,
+        }
+
+        if mode.startswith("EDIT"):
+            obj = getattr(bpy.context, "edit_object", None) or getattr(bpy.context, "active_object", None)
+            if obj and obj.type == 'MESH':
+                try:
+                    import bmesh
+
+                    bm = bmesh.from_edit_mesh(obj.data)
+                    summary["edit_mode_vertex_count"] = sum(1 for v in bm.verts if v.select)
+                    summary["edit_mode_edge_count"] = sum(1 for e in bm.edges if e.select)
+                    summary["edit_mode_face_count"] = sum(1 for f in bm.faces if f.select)
+                except Exception:
+                    # If bmesh access fails, leave counts as None
+                    pass
+
+        return summary
+
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         """Returns a base64 encoded OpenGL render of the viewport."""
         scene = bpy.context.scene

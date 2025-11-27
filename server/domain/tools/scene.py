@@ -51,3 +51,13 @@ class ISceneTool(ABC):
     def set_mode(self, mode: str) -> str:
         """Sets the interaction mode (OBJECT, EDIT, SCULPT)."""
         pass
+
+    @abstractmethod
+    def get_mode(self) -> Dict[str, Any]:
+        """Returns the current Blender interaction mode snapshot."""
+        pass
+
+    @abstractmethod
+    def list_selection(self) -> Dict[str, Any]:
+        """Returns the current selection summary for Object/Edit modes."""
+        pass

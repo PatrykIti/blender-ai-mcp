@@ -16,6 +16,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
 | `scene_get_mode` | *none* | Reports current Blender mode, active object, and selected objects. | ✅ Done |
+| `scene_list_selection` | *none* | Lists selected objects (Object Mode) plus vertex/edge/face counts in Edit Mode. | ✅ Done |
 | `scene_get_viewport` | `width`, `height`, `shading`, `camera_name`, `focus_target`, `output_mode` | Returns a visual preview of the scene (OpenGL Render) with selectable output mode (IMAGE/BASE64/FILE/MARKDOWN). | ✅ Done |
 | `scene_create_light` | `type`, `energy`, `color`, `location` | Creates a light source. | ✅ Done |
 | `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera. | ✅ Done |

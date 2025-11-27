@@ -50,6 +50,8 @@ Technical details.
 
 | `get_mode` | `get_mode` | Reports current Blender mode and selection context. |
 
+| `list_selection` | `list_selection` | Lists selected objects and Edit Mode component counts. |
+
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
 

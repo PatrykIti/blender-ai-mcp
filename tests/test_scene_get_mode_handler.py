@@ -1,47 +1,74 @@
 import unittest
 from typing import Dict, Any
 
-from server.application.tool_handlers.scene_get_mode_handler import SceneGetModeHandler
+from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.models.rpc import RpcResponse
 
 
 class DummyRpc(IRpcClient):
-    def __init__(self, payload: RpcResponse):
-        self._payload = payload
-        self.last_cmd: str | None = None
-        self.last_args: Dict[str, Any] | None = None
+    def __init__(self, responses: Dict[str, RpcResponse]):
+        self._responses = responses
 
     def send_request(self, cmd: str, args: Dict[str, Any] | None = None) -> RpcResponse:
-        self.last_cmd = cmd
-        self.last_args = args
-        return self._payload
+        return self._responses[cmd]
 
 
-class TestSceneGetModeHandler(unittest.TestCase):
+class TestSceneGetModeAndSelectionHandlers(unittest.TestCase):
     def test_get_mode_success(self):
-        response = RpcResponse(
-            request_id="abc",
-            status="ok",
-            result={
-                "mode": "OBJECT",
-                "active_object": "Cube",
-                "active_object_type": "MESH",
-                "selected_object_names": ["Cube"],
-                "selection_count": 1,
-            },
+        rpc = DummyRpc(
+            {
+                "scene.get_mode": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result={
+                        "mode": "OBJECT",
+                        "active_object": "Cube",
+                        "active_object_type": "MESH",
+                        "selected_object_names": ["Cube"],
+                        "selection_count": 1,
+                    },
+                )
+            }
         )
-        handler = SceneGetModeHandler(DummyRpc(response))
+        handler = SceneToolHandler(rpc)
 
         result = handler.get_mode()
 
-        self.assertEqual(result.mode, "OBJECT")
-        self.assertEqual(result.active_object, "Cube")
-        self.assertEqual(result.selection_count, 1)
+        self.assertEqual(result["mode"], "OBJECT")
+        self.assertEqual(result["active_object"], "Cube")
+        self.assertEqual(result["selection_count"], 1)
+
+    def test_list_selection_success(self):
+        rpc = DummyRpc(
+            {
+                "scene.list_selection": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result={
+                        "mode": "EDIT_MESH",
+                        "selected_object_names": ["Cube"],
+                        "selection_count": 1,
+                        "edit_mode_vertex_count": 10,
+                        "edit_mode_edge_count": 5,
+                        "edit_mode_face_count": 2,
+                    },
+                )
+            }
+        )
+        handler = SceneToolHandler(rpc)
+
+        summary = handler.list_selection()
+        self.assertEqual(summary["mode"], "EDIT_MESH")
+        self.assertEqual(summary["edit_mode_vertex_count"], 10)
 
     def test_get_mode_error(self):
-        response = RpcResponse(request_id="abc", status="error", error="oops")
-        handler = SceneGetModeHandler(DummyRpc(response))
+        rpc = DummyRpc(
+            {
+                "scene.get_mode": RpcResponse(request_id="abc", status="error", error="oops")
+            }
+        )
+        handler = SceneToolHandler(rpc)
 
         with self.assertRaises(RuntimeError):
             handler.get_mode()

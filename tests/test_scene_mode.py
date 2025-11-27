@@ -62,5 +62,12 @@ class TestSceneMode(unittest.TestCase):
         self.assertIn('Cube', result["selected_object_names"])
         self.assertIn('Light', result["selected_object_names"])
 
+    def test_list_selection_object_mode(self):
+        bpy.context.mode = 'OBJECT'
+        summary = self.handler.list_selection()
+        self.assertEqual(summary["mode"], 'OBJECT')
+        self.assertEqual(summary["selection_count"], 2)
+        self.assertIsNone(summary["edit_mode_vertex_count"])
+
 if __name__ == '__main__':
     unittest.main()

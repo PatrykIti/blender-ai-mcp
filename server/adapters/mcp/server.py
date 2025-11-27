@@ -3,7 +3,6 @@ from fastmcp.utilities.types import Image
 from typing import Any, Dict, List, Literal, Optional, Union
 from server.infrastructure.di import (
     get_modeling_handler,
-    get_scene_get_mode_handler,
     get_scene_handler,
 )
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -99,20 +98,56 @@ def scene_get_mode(ctx: Context) -> str:
     Returns a multi-line description with mode, active object, and selected objects to help
     AI agents branch logic without guessing the context.
     """
-    handler = get_scene_get_mode_handler()
+    handler = get_scene_handler()
     try:
         response = handler.get_mode()
     except RuntimeError as e:
         return str(e)
 
-    selected = ", ".join(response.selected_object_names) if response.selected_object_names else "None"
-    active_suffix = f" ({response.active_object_type})" if response.active_object_type else ""
+    selected_names = response.get("selected_object_names") or []
+    selected = ", ".join(selected_names) if selected_names else "None"
+    active_type = response.get("active_object_type")
+    active_suffix = f" ({active_type})" if active_type else ""
     return (
         "Blender Context Snapshot:\n"
-        f"- Mode: {response.mode}\n"
-        f"- Active Object: {response.active_object or 'None'}{active_suffix}\n"
-        f"- Selected Objects ({response.selection_count}): {selected}"
+        f"- Mode: {response.get('mode', 'UNKNOWN')}\n"
+        f"- Active Object: {response.get('active_object') or 'None'}{active_suffix}\n"
+        f"- Selected Objects ({response.get('selection_count', 0)}): {selected}"
     )
+
+
+@mcp.tool()
+def scene_list_selection(ctx: Context) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Lists the current selection in Object or Edit Mode.
+
+    Provides counts for selected objects and, when in Edit Mode, counts of selected
+    vertices/edges/faces. Useful for verifying assumptions before destructive edits.
+    """
+    handler = get_scene_handler()
+    try:
+        summary = handler.list_selection()
+    except RuntimeError as e:
+        return str(e)
+
+    selected_names = summary.get("selected_object_names") or []
+    selected = ", ".join(selected_names) if selected_names else "None"
+    parts = [
+        "Selection Summary:",
+        f"- Mode: {summary.get('mode', 'UNKNOWN')}",
+        f"- Objects Selected ({summary.get('selection_count', 0)}): {selected}",
+    ]
+
+    if summary.get("edit_mode_vertex_count") is not None:
+        parts.append(
+            "- Edit Mode Counts: V={} E={} F={}".format(
+                summary.get("edit_mode_vertex_count", 0),
+                summary.get("edit_mode_edge_count", 0),
+                summary.get("edit_mode_face_count", 0),
+            )
+        )
+
+    return "\n".join(parts)
 
 
 @mcp.tool()

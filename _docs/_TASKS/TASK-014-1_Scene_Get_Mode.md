@@ -9,13 +9,11 @@
 Expose a read-only MCP tool that reports Blender's current interaction mode (e.g., OBJECT, EDIT, SCULPT) so LLMs can branch logic without blindly attempting mode switches. The tool must strictly follow Clean Architecture boundaries and reuse existing DI patterns.
 
 ## 🏗️ Architecture Requirements
-### 1. Domain Layer (`server/domain/tools/scene_get_mode.py`)
-- Define a `SceneModeResponse` Pydantic model with `mode: Literal[...]` plus optional `details` (e.g., active object name).
-- Define `ISceneGetModeTool` with `get_mode() -> SceneModeResponse` and document possible errors (e.g., Blender unavailable).
+### 1. Domain Layer (`server/domain/tools/scene.py`)
+- Extend `ISceneTool` with `get_mode()` returning a dict (mode, active object, selected names/counts).
 
-### 2. Application Layer (`server/application/handlers/scene_get_mode_handler.py`)
-- Implement `SceneGetModeHandler(ISceneGetModeTool)` delegating to `RpcClient` (`scene.get_mode`).
-- Ensure handler only depends on Domain contracts and serializes responses to friendly strings for adapters.
+### 2. Application Layer (`server/application/tool_handlers/scene_handler.py`)
+- Implement `get_mode()` by forwarding RPC `scene.get_mode` and returning the dict to adapters.
 
 ### 3. Adapter Layer (`server/adapters/mcp/server.py`)
 - Register `scene_get_mode` MCP tool with docstring `[SCENE][SAFE][READ-ONLY] Reports current Blender mode.`
@@ -45,8 +43,8 @@ Expose a read-only MCP tool that reports Blender's current interaction mode (e.g
 - `GEMINI.md` Clean Architecture summary.
 
 ## ✅ Completion Notes
-- Added domain models/interface plus application handler + DI provider for `scene_get_mode`.
+- Extended `ISceneTool`/`SceneToolHandler` with `get_mode`, ensuring domain/application reuse existing abstractions.
 - Implemented Blender addon API, registered RPC command, and exposed MCP tool with structured response formatting.
-- Extended unit test coverage (`tests/test_scene_mode.py`, new `tests/test_scene_get_mode_handler.py`).
+- Extended unit test coverage (`tests/test_scene_mode.py`, `tests/test_scene_get_mode_handler.py`).
 - Updated README roadmap, `_docs/_ADDON`, `_docs/_MCP_SERVER`, architecture docs, and changelog per documentation policy.
-- Verified via `poetry run pytest`.
+- Verified via `PYTHONPATH=. poetry run pytest`.

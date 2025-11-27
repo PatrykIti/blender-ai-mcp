@@ -94,3 +94,19 @@ class SceneToolHandler(ISceneTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def get_mode(self) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_mode")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_get_mode")
+        return response.result
+
+    def list_selection(self) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.list_selection")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_list_selection")
+        return response.result

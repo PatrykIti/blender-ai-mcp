@@ -2,10 +2,8 @@ from server.adapters.rpc.client import RpcClient
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
-from server.application.tool_handlers.scene_get_mode_handler import SceneGetModeHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
-from server.domain.tools.scene_get_mode import ISceneGetModeTool
 from server.domain.tools.modeling import IModelingTool
 from server.domain.tools.mesh import IMeshTool
 from server.infrastructure.config import get_config
@@ -39,7 +37,3 @@ def get_mesh_handler() -> IMeshTool:
     return MeshToolHandler(rpc)
 
 
-def get_scene_get_mode_handler() -> ISceneGetModeTool:
-    """Provider for ISceneGetModeTool. Injects RpcClient."""
-    rpc = get_rpc_client()
-    return SceneGetModeHandler(rpc)
