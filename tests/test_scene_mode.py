@@ -17,6 +17,16 @@ class TestSceneMode(unittest.TestCase):
         self.cube = MagicMock()
         self.cube.name = "Cube"
         self.cube.type = "MESH"
+        self.cube.location = (0.0, 0.0, 0.0)
+        self.cube.rotation_euler = (0.0, 0.0, 0.0)
+        self.cube.scale = (1.0, 1.0, 1.0)
+        self.cube.dimensions = (2.0, 2.0, 2.0)
+        self.cube.users_collection = []
+        self.cube.material_slots = []
+        self.cube.modifiers = []
+        self.cube.keys = MagicMock(return_value=[])
+        self.cube.get = MagicMock()
+        self.cube.evaluated_get = MagicMock(return_value=self.cube)
         self.light = MagicMock()
         self.light.name = "Light"
 
@@ -24,6 +34,7 @@ class TestSceneMode(unittest.TestCase):
         bpy.ops.object.mode_set = MagicMock()
         bpy.context.active_object = self.cube
         bpy.context.selected_objects = [self.cube, self.light]
+        bpy.data.objects = {"Cube": self.cube}
 
     def test_set_mode_valid(self):
         # Execute
@@ -68,6 +79,17 @@ class TestSceneMode(unittest.TestCase):
         self.assertEqual(summary["mode"], 'OBJECT')
         self.assertEqual(summary["selection_count"], 2)
         self.assertIsNone(summary["edit_mode_vertex_count"])
+
+    def test_inspect_object_basic(self):
+        self.cube.type = 'LIGHT'
+        report = self.handler.inspect_object("Cube")
+        self.assertEqual(report["object_name"], "Cube")
+        self.assertEqual(report["material_slots"], [])
+
+    def test_inspect_object_missing(self):
+        bpy.data.objects = {}
+        with self.assertRaises(ValueError):
+            self.handler.inspect_object("Missing")
 
 if __name__ == '__main__':
     unittest.main()

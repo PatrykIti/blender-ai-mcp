@@ -151,6 +151,72 @@ def scene_list_selection(ctx: Context) -> str:
 
 
 @mcp.tool()
+def scene_inspect_object(ctx: Context, name: str) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Provides a detailed report for a single object (transform, collections, materials, modifiers, mesh stats).
+    """
+    handler = get_scene_handler()
+    try:
+        report = handler.inspect_object(name)
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use scene_list_objects to verify the name."
+        return msg
+
+    lines = [
+        f"Object: {report.get('object_name')} ({report.get('type')})",
+        f"Location: {report.get('location')}",
+        f"Rotation: {report.get('rotation')}",
+        f"Scale: {report.get('scale')}",
+        f"Dimensions: {report.get('dimensions')}",
+        f"Collections: {', '.join(report.get('collections') or ['<none>'])}",
+    ]
+
+    material_slots = report.get("material_slots") or []
+    if material_slots:
+        slot_lines = [
+            f"    #{slot['slot_index']}: {slot.get('material_name') or 'None'}"
+            for slot in material_slots
+        ]
+        lines.append("Materials:\n" + "\n".join(slot_lines))
+    else:
+        lines.append("Materials: <none>")
+
+    modifiers = report.get("modifiers") or []
+    if modifiers:
+        mod_lines = [
+            f"    {mod.get('name')} ({mod.get('type')}), viewport={mod.get('show_viewport')}, render={mod.get('show_render')}"
+            for mod in modifiers
+        ]
+        lines.append("Modifiers:\n" + "\n".join(mod_lines))
+    else:
+        lines.append("Modifiers: <none>")
+
+    mesh_stats = report.get("mesh_stats")
+    if mesh_stats:
+        lines.append(
+            "Mesh Stats: V={vertices}, E={edges}, F={faces}, T={triangles}".format(
+                vertices=mesh_stats.get("vertices"),
+                edges=mesh_stats.get("edges"),
+                faces=mesh_stats.get("faces"),
+                triangles=mesh_stats.get("triangles"),
+            )
+        )
+    else:
+        lines.append("Mesh Stats: <not a mesh>")
+
+    custom_props = report.get("custom_properties") or {}
+    if custom_props:
+        prop_lines = [f"    {k}: {v}" for k, v in custom_props.items()]
+        lines.append("Custom Properties:\n" + "\n".join(prop_lines))
+    else:
+        lines.append("Custom Properties: <none>")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
 def scene_get_viewport(
     ctx: Context,
     width: int = 1024,

@@ -1,30 +1,28 @@
 # TASK-014-3: Scene Inspect Object Tool
 
-**Status:** ⏳ To Do  
+**Status:** ✅ Complete  
 **Priority:** 🔴 High  
-**Phase:** Phase 7 - Introspection & Listing APIs
+**Phase:** Phase 7 - Introspection & Listing APIs  
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Deliver a deep inspection tool that returns structured data about a single object: type, transform, polycount, materials, modifiers, and custom metadata. This replaces unreliable visual inspection and is foundational for every later introspection tool.
 
 ## 🏗️ Architecture Requirements
-### 1. Domain Layer (`server/domain/tools/scene_inspect_object.py`)
-- Create Pydantic response model capturing object basics (type, collection names, active modifiers summary, material slot list, mesh stats).
-- Define `ISceneInspectObjectTool.inspect(object_name: str) -> SceneObjectReport` with explicit error contracts (`ObjectNotFoundError`).
+### 1. Domain Layer (`server/domain/tools/scene.py`)
+- Extend `ISceneTool` with `inspect_object(name: str) -> Dict[str, Any]` returning structured data (type, transforms, collections, materials, modifiers, mesh stats, custom props).
 
-### 2. Application Layer (`server/application/handlers/scene_inspect_object_handler.py`)
-- Handler validates input, calls RPC `scene.inspect_object`, and maps dictionaries into domain models.
-- Provide helper to format the report string for MCP adapter (bullet list per section).
+### 2. Application Layer (`server/application/tool_handlers/scene_handler.py`)
+- Handler validates RPC response for `scene.inspect_object` and returns the dict for adapters to format.
 
-### 3. Adapter Layer
-- Add `scene_inspect_object(ctx: Context, name: str) -> str` tool with docstring describing output sections and warnings (read-only, safe).
-- Ensure errors (object missing) produce actionable guidance ("Use scene_list_objects first").
+### 3. Adapter Layer (`server/adapters/mcp/server.py`)
+- Add `scene_inspect_object(ctx: Context, name: str) -> str` with docstring describing sections and actionable errors (suggesting `scene_list_objects` when missing).
 
-### 4. Blender Addon API (`blender_addon/api/scene_inspect_object_api.py`)
-- Gather info without mode switching; use `obj.evaluated_get(depsgraph)` for accurate counts when modifiers applied.
-- Return dict including: `object_name`, `type`, `dimensions`, `location`, `rotation`, `scale`, `collections`, `material_slots`, `modifier_stack`, `mesh_stats` (verts/edges/faces/triangles), `custom_properties` (safe subset).
+### 4. Blender Addon API (`blender_addon/application/handlers/scene.py`)
+- Gather info without mode switching; try `obj.evaluated_get(depsgraph)` for mesh stats after modifiers.
+- Return dict including: `object_name`, `type`, transforms, `dimensions`, `collections`, `material_slots`, `modifiers`, `mesh_stats` (verts/edges/faces/triangles), `custom_properties`.
 
-### 5. RPC Server
+### 5. RPC Server (`blender_addon/__init__.py`)
 - Register `scene.inspect_object` endpoint.
 
 ## ✅ Deliverables
@@ -42,3 +40,10 @@ Deliver a deep inspection tool that returns structured data about a single objec
 ## 📚 References
 - `_docs/TOOLS_ARCHITECTURE_DEEP_DIVE.md`
 - `README.md` Phase 7 scope description.
+
+## ✅ Completion Notes
+- Extended `ISceneTool`/`SceneToolHandler` with `inspect_object`, maintaining single scene interface per Clean Architecture rules.
+- Implemented Blender addon logic (transform data, collections, modifiers, material slots, optional mesh stats, custom props) and registered the RPC endpoint.
+- Added new MCP tool formatting multi-section summaries plus actionable error guidance.
+- Updated README, `_docs` knowledge base, task board, and changelog.
+- Added handler/unit tests (`tests/test_scene_mode.py`, `tests/test_scene_get_mode_handler.py`) and ran `PYTHONPATH=. poetry run pytest`.

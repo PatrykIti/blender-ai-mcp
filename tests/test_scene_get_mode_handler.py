@@ -62,6 +62,21 @@ class TestSceneGetModeAndSelectionHandlers(unittest.TestCase):
         self.assertEqual(summary["mode"], "EDIT_MESH")
         self.assertEqual(summary["edit_mode_vertex_count"], 10)
 
+    def test_inspect_object_success(self):
+        rpc = DummyRpc(
+            {
+                "scene.inspect_object": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result={"object_name": "Cube", "type": "MESH"},
+                )
+            }
+        )
+        handler = SceneToolHandler(rpc)
+
+        report = handler.inspect_object("Cube")
+        self.assertEqual(report["object_name"], "Cube")
+
     def test_get_mode_error(self):
         rpc = DummyRpc(
             {
@@ -72,6 +87,17 @@ class TestSceneGetModeAndSelectionHandlers(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             handler.get_mode()
+
+    def test_inspect_object_error(self):
+        rpc = DummyRpc(
+            {
+                "scene.inspect_object": RpcResponse(request_id="abc", status="error", error="missing")
+            }
+        )
+        handler = SceneToolHandler(rpc)
+
+        with self.assertRaises(RuntimeError):
+            handler.inspect_object("Cube")
 
 
 if __name__ == "__main__":

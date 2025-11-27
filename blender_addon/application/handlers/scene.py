@@ -147,6 +147,122 @@ class SceneHandler:
 
         return summary
 
+    def inspect_object(self, name):
+        """Returns a structured report containing object metadata."""
+        obj = bpy.data.objects.get(name)
+        if obj is None:
+            raise ValueError(f"Object '{name}' not found")
+
+        data = {
+            "object_name": obj.name,
+            "type": obj.type,
+            "location": self._vec_to_list(getattr(obj, "location", (0.0, 0.0, 0.0))),
+            "rotation": self._vec_to_list(getattr(obj, "rotation_euler", (0.0, 0.0, 0.0))),
+            "scale": self._vec_to_list(getattr(obj, "scale", (1.0, 1.0, 1.0))),
+            "dimensions": self._vec_to_list(getattr(obj, "dimensions", (0.0, 0.0, 0.0))),
+            "collections": [col.name for col in getattr(obj, "users_collection", [])],
+            "material_slots": self._gather_material_slots(obj),
+            "modifiers": self._gather_modifiers(obj),
+            "custom_properties": self._gather_custom_properties(obj),
+        }
+
+        mesh_stats = self._gather_mesh_stats(obj)
+        if mesh_stats:
+            data["mesh_stats"] = mesh_stats
+
+        return data
+
+    def _vec_to_list(self, value):
+        try:
+            return [round(float(v), 4) for v in value]
+        except Exception:
+            return [float(value) if isinstance(value, (int, float)) else 0.0]
+
+    def _gather_material_slots(self, obj):
+        slots = []
+        for index, slot in enumerate(getattr(obj, "material_slots", []) or []):
+            material = getattr(slot, "material", None)
+            slots.append(
+                {
+                    "slot_index": index,
+                    "slot_name": getattr(slot, "name", None),
+                    "material_name": material.name if material else None,
+                }
+            )
+        return slots
+
+    def _gather_modifiers(self, obj):
+        mods = []
+        for mod in getattr(obj, "modifiers", []) or []:
+            mods.append(
+                {
+                    "name": getattr(mod, "name", None),
+                    "type": getattr(mod, "type", None),
+                    "show_viewport": getattr(mod, "show_viewport", True),
+                    "show_render": getattr(mod, "show_render", True),
+                }
+            )
+        return mods
+
+    def _gather_custom_properties(self, obj):
+        custom = {}
+        try:
+            for key in obj.keys():
+                if key.startswith("_"):
+                    continue
+                value = obj.get(key)
+                if isinstance(value, (int, float, str, bool)):
+                    custom[key] = value
+                else:
+                    custom[key] = str(value)
+        except Exception:
+            return {}
+        return custom
+
+    def _gather_mesh_stats(self, obj):
+        if obj.type != 'MESH':
+            return None
+
+        mesh = None
+        try:
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+        except Exception:
+            depsgraph = None
+
+        obj_eval = obj
+        if depsgraph is not None:
+            try:
+                obj_eval = obj.evaluated_get(depsgraph)
+            except Exception:
+                obj_eval = obj
+
+        try:
+            mesh = obj_eval.to_mesh()
+        except Exception:
+            mesh = getattr(obj_eval, "data", None)
+
+        if mesh is None:
+            return None
+
+        stats = {
+            "vertices": len(getattr(mesh, "vertices", [])),
+            "edges": len(getattr(mesh, "edges", [])),
+            "faces": len(getattr(mesh, "polygons", [])),
+        }
+        try:
+            mesh.calc_loop_triangles()
+            stats["triangles"] = len(getattr(mesh, "loop_triangles", []))
+        except Exception:
+            stats["triangles"] = None
+
+        if hasattr(obj_eval, "to_mesh_clear"):
+            try:
+                obj_eval.to_mesh_clear()
+            except Exception:
+                pass
+
+        return stats
+
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         """Returns a base64 encoded OpenGL render of the viewport."""
         scene = bpy.context.scene

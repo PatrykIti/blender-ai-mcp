@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [24](./24-2025-11-27-scene-inspect-object.md) | 2025-11-27 | **Scene Inspect Object Tool (TASK-014-3)** | 1.9.3 |
 | [23](./23-2025-11-27-scene-list-selection.md) | 2025-11-27 | **Scene List Selection Tool (TASK-014-2)** | 1.9.2 |
 | [22](./22-2025-11-27-scene-get-mode.md) | 2025-11-27 | **Scene Get Mode Tool (TASK-014-1)** | 1.9.1 |
 | [21](./21-2025-11-25-tool-docstring-standardization.md) | 2025-11-25 | **Tool Docstring Standardization (Scene, Modeling, Mesh)** | 0.2.4 |

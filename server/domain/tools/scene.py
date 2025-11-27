@@ -61,3 +61,8 @@ class ISceneTool(ABC):
     def list_selection(self) -> Dict[str, Any]:
         """Returns the current selection summary for Object/Edit modes."""
         pass
+
+    @abstractmethod
+    def inspect_object(self, name: str) -> Dict[str, Any]:
+        """Returns a structured report for the specified object."""
+        pass

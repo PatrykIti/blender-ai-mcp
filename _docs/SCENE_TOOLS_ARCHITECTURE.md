@@ -200,6 +200,21 @@ Example:
 
 ---
 
+# 12. scene_inspect_object ✅ Done
+Provides a structured report for a specific object (transform, collections, materials, modifiers, mesh stats, custom properties).
+
+Example:
+```json
+{
+  "tool": "scene_inspect_object",
+  "args": {
+    "name": "Cube"
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

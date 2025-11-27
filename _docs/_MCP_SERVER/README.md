@@ -46,6 +46,7 @@ Managing objects at the scene level.
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
 | `scene_get_mode` | *none* | Returns current Blender mode, active object, and selected object names for deterministic branching. |
 | `scene_list_selection` | *none* | Lists selected objects (Object Mode) and Edit Mode vertex/edge/face counts. |
+| `scene_inspect_object` | `name` (str) | Detailed report for a single object (transform, collections, modifiers, materials, mesh stats). |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
 | `scene_create_light` | `type` (str), `energy` (float), `color` (rgb), `location` (xyz) | Creates a light (POINT, SUN, SPOT, AREA). |
 | `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera object. |

@@ -110,3 +110,11 @@ class SceneToolHandler(ISceneTool):
         if not isinstance(response.result, dict):
             raise RuntimeError("Blender Error: Invalid payload for scene_list_selection")
         return response.result
+
+    def inspect_object(self, name: str) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.inspect_object", {"name": name})
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        if not isinstance(response.result, dict):
+            raise RuntimeError("Blender Error: Invalid payload for scene_inspect_object")
+        return response.result

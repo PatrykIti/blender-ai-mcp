@@ -52,6 +52,8 @@ Technical details.
 
 | `list_selection` | `list_selection` | Lists selected objects and Edit Mode component counts. |
 
+| `inspect_object` | `inspect_object` | Returns detailed metadata for a single object (transform, collections, modifiers, mesh stats). |
+
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 
 
