@@ -261,6 +261,33 @@ Example:
 
 ---
 
+# 15. scene_inspect_material_slots ✅ Done
+Audits material slot assignments across the entire scene, providing a comprehensive view of how materials are distributed across all objects.
+
+Args:
+- material_filter: str (optional) - filter results by material name
+- include_empty_slots: bool (default True) - include slots with no material assigned
+
+Returns structured data including:
+- total_slots: total number of material slots
+- assigned_slots: number of slots with materials
+- empty_slots: number of empty slots
+- warnings: list of issues (empty slots, missing materials)
+- slots: detailed slot data for each object
+
+Example:
+```json
+{
+  "tool": "scene_inspect_material_slots",
+  "args": {
+    "material_filter": null,
+    "include_empty_slots": true
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.

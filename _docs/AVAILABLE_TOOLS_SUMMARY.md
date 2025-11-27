@@ -24,6 +24,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
+| `scene_inspect_material_slots` | `material_filter`, `include_empty_slots` | Audits material slot assignments across entire scene. | ✅ Done |
 
 ---
 
@@ -34,6 +35,16 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. | ✅ Done |
 | `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within specified collection, optionally recursive. | ✅ Done |
+
+---
+
+## 🎨 Material Tools (`material_`)
+*Tools for managing materials and shaders.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `material_list` | `include_unassigned` (bool) | Lists all materials with shader parameters (Principled BSDF) and object assignment counts. | ✅ Done |
+| `material_list_by_object` | `object_name` (str), `include_indices` (bool) | Lists material slots for a specific object. | ✅ Done |
 
 ---
 

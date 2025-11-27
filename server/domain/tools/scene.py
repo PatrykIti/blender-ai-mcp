@@ -71,3 +71,8 @@ class ISceneTool(ABC):
     def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
         """Captures a lightweight JSON snapshot of the scene state."""
         pass
+
+    @abstractmethod
+    def inspect_material_slots(self, material_filter: Optional[str] = None, include_empty_slots: bool = True) -> Dict[str, Any]:
+        """Audits material slot assignments across the entire scene."""
+        pass

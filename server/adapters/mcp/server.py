@@ -423,6 +423,73 @@ def scene_compare_snapshot(
     return summary
 
 @mcp.tool()
+def scene_inspect_material_slots(
+    ctx: Context,
+    material_filter: Optional[str] = None,
+    include_empty_slots: bool = True
+) -> str:
+    """
+    [SCENE][SAFE][READ-ONLY] Audits material slot assignments across the entire scene.
+
+    Provides a comprehensive view of how materials are distributed across all objects,
+    including empty slots, missing materials, and assignment statistics. Useful for
+    identifying material issues before rendering or export.
+
+    Args:
+        material_filter: Optional material name to filter results
+        include_empty_slots: If True, includes slots with no material assigned
+    """
+    handler = get_scene_handler()
+    try:
+        result = handler.inspect_material_slots(
+            material_filter=material_filter,
+            include_empty_slots=include_empty_slots
+        )
+        import json
+
+        total = result.get("total_slots", 0)
+        assigned = result.get("assigned_slots", 0)
+        empty = result.get("empty_slots", 0)
+        warnings = result.get("warnings", [])
+        slots = result.get("slots", [])
+
+        # Format summary
+        lines = [
+            "Material Slot Audit:",
+            f"- Total Slots: {total}",
+            f"- Assigned: {assigned}",
+            f"- Empty: {empty}",
+        ]
+
+        if material_filter:
+            lines.append(f"- Filter: '{material_filter}'")
+
+        if warnings:
+            lines.append(f"\nWarnings ({len(warnings)}):")
+            for warning in warnings:
+                lines.append(f"  ! {warning}")
+
+        if slots:
+            lines.append(f"\nSlot Details ({len(slots)} slots):")
+            for slot in slots[:20]:  # Limit to first 20 for readability
+                obj_name = slot.get("object_name")
+                slot_idx = slot.get("slot_index")
+                mat_name = slot.get("material_name") or "EMPTY"
+                slot_name = slot.get("slot_name", "")
+                lines.append(f"  [{obj_name}][{slot_idx}] {slot_name}: {mat_name}")
+
+            if len(slots) > 20:
+                lines.append(f"  ... and {len(slots) - 20} more slots")
+
+        lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
+
+        summary = "\n".join(lines)
+        ctx.info(f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
+        return summary
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
 def scene_create_light(
     ctx: Context,
     type: str,

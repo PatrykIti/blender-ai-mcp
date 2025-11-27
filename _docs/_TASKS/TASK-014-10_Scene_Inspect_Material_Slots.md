@@ -1,8 +1,9 @@
 # TASK-014-10: Scene Inspect Material Slots Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 7 - Introspection & Listing APIs
+**Completion Date:** 2025-11-27
 
 ## 🎯 Objective
 Design a scene-wide audit tool summarizing how materials are distributed across objects (slot usage, missing assignments, mismatched naming). This complements per-object queries by giving AI a holistic view for clean-up workflows.

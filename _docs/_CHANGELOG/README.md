@@ -6,8 +6,9 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
-| [28](./28-2025-11-27-collection-list-objects.md) | 2025-11-27 | **Collection List Objects Tool (TASK-014-7)** | 1.9.7 |
+| [30](./30-2025-11-27-scene-inspect-material-slots.md) | 2025-11-27 | **Scene Inspect Material Slots (TASK-014-10)** | 1.9.9 |
 | [29](./29-2025-11-27-material-tools.md) | 2025-11-27 | **Material Tools (TASK-014-8 & 9)** | 1.9.8 |
+| [28](./28-2025-11-27-collection-list-objects.md) | 2025-11-27 | **Collection List Objects Tool (TASK-014-7)** | 1.9.7 |
 | [27](./27-2025-11-27-collection-list.md) | 2025-11-27 | **Collection List Tool (TASK-014-6)** | 1.9.6 |
 | [26](./26-2025-11-27-scene-compare-snapshot.md) | 2025-11-27 | **Scene Compare Snapshot Tool (TASK-014-5)** | 1.9.5 |
 | [25](./25-2025-11-27-scene-snapshot-state.md) | 2025-11-27 | **Scene Snapshot State Tool (TASK-014-4)** | 1.9.4 |

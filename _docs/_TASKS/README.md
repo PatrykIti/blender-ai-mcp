@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 7
+- **To Do:** 6
 - **In Progress:** 0
-- **Done:** 26
+- **Done:** 27
 
 ---
 
@@ -13,9 +13,6 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Created |
 |----|-------|----------|---------|
-| [TASK-014-8](./TASK-014-8_Material_List.md) | **Material List Tool** | 🟢 Low | 2025-11-27 |
-| [TASK-014-9](./TASK-014-9_Material_List_By_Object.md) | **Material List By Object Tool** | 🟢 Low | 2025-11-27 |
-| [TASK-014-10](./TASK-014-10_Scene_Inspect_Material_Slots.md) | **Scene Inspect Material Slots Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-11](./TASK-014-11_UV_List_Maps.md) | **UV List Maps Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-13](./TASK-014-13_Scene_Inspect_Mesh_Topology.md) | **Scene Inspect Mesh Topology Tool** | 🔴 High | 2025-11-27 |
@@ -33,13 +30,16 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
-| [TASK-014-1](./TASK-014-1_Scene_Get_Mode.md) | **Scene Get Mode Tool** | 🟢 Low | 2025-11-27 |
-| [TASK-014-2](./TASK-014-2_Scene_List_Selection.md) | **Scene List Selection Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-014-10](./TASK-014-10_Scene_Inspect_Material_Slots.md) | **Scene Inspect Material Slots Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-014-9](./TASK-014-9_Material_List_By_Object.md) | **Material List By Object Tool** | 🟢 Low | 2025-11-27 |
+| [TASK-014-8](./TASK-014-8_Material_List.md) | **Material List Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-014-7](./TASK-014-7_Collection_List_Objects.md) | **Collection List Objects Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-014-6](./TASK-014-6_Collection_List.md) | **Collection List Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-014-5](./TASK-014-5_Scene_Compare_Snapshot.md) | **Scene Compare Snapshot Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-4](./TASK-014-4_Scene_Snapshot_State.md) | **Scene Snapshot State Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-3](./TASK-014-3_Scene_Inspect_Object.md) | **Scene Inspect Object Tool** | 🔴 High | 2025-11-27 |
+| [TASK-014-2](./TASK-014-2_Scene_List_Selection.md) | **Scene List Selection Tool** | 🟡 Medium | 2025-11-27 |
+| [TASK-014-1](./TASK-014-1_Scene_Get_Mode.md) | **Scene Get Mode Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-012](./TASK-012_Mesh_Smooth_Flatten.md) | **Mesh Smooth & Flatten Tools** | 🟡 Medium | 2025-11-25 |
 | [TASK-011-7](./TASK-011-7_Scene_Tool_Docstring_Standardization.md) | **Scene Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |
 | [TASK-011-6](./TASK-011-6_Modeling_Tool_Docstring_Standardization.md) | **Modeling Tool Docstring Standardization** | 🟢 Low | 2025-11-25 |

@@ -617,3 +617,59 @@ class SceneHandler:
             "hash": snapshot_hash,
             "snapshot": snapshot
         }
+
+    def inspect_material_slots(self, material_filter=None, include_empty_slots=True):
+        """Audits material slot assignments across the entire scene."""
+        slot_data = []
+        warnings = []
+
+        # Iterate all objects in deterministic order
+        for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+            # Only process objects that can have materials
+            if not hasattr(obj, 'material_slots') or len(obj.material_slots) == 0:
+                continue
+
+            for slot_idx, slot in enumerate(obj.material_slots):
+                mat_name = slot.material.name if slot.material else None
+
+                # Apply material filter if provided
+                if material_filter and mat_name != material_filter:
+                    continue
+
+                # Skip empty slots if requested
+                if not include_empty_slots and mat_name is None:
+                    continue
+
+                slot_info = {
+                    "object_name": obj.name,
+                    "object_type": obj.type,
+                    "slot_index": slot_idx,
+                    "slot_name": slot.name,
+                    "material_name": mat_name,
+                    "is_empty": mat_name is None
+                }
+
+                # Add warnings for problematic slots
+                slot_warnings = []
+                if mat_name is None:
+                    slot_warnings.append("Empty slot (no material assigned)")
+                elif mat_name not in bpy.data.materials:
+                    slot_warnings.append(f"Material '{mat_name}' not found in bpy.data.materials")
+
+                if slot_warnings:
+                    slot_info["warnings"] = slot_warnings
+                    warnings.extend([f"{obj.name}[{slot_idx}]: {w}" for w in slot_warnings])
+
+                slot_data.append(slot_info)
+
+        # Build summary
+        empty_count = sum(1 for s in slot_data if s["is_empty"])
+        assigned_count = len(slot_data) - empty_count
+
+        return {
+            "total_slots": len(slot_data),
+            "assigned_slots": assigned_count,
+            "empty_slots": empty_count,
+            "warnings": warnings,
+            "slots": slot_data
+        }
