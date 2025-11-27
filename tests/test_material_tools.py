@@ -82,12 +82,17 @@ def test_material_list_by_object(material_handler):
 def test_material_list_by_object_invalid(material_handler):
     """Test listing material slots with invalid object name."""
     try:
-        with pytest.raises(RuntimeError, match="not found"):
-            material_handler.list_by_object(
-                object_name="NonExistentObject12345",
-                include_indices=False
-            )
-        print("✓ material_list_by_object properly handles invalid object name")
+        material_handler.list_by_object(
+            object_name="NonExistentObject12345",
+            include_indices=False
+        )
+        # If we get here without exception, test should fail
+        assert False, "Expected RuntimeError for invalid object name"
     except RuntimeError as e:
-        if "not found" not in str(e).lower():
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "is blender running" in error_msg:
             pytest.skip(f"Blender not available: {e}")
+        elif "not found" in error_msg:
+            print("✓ material_list_by_object properly handles invalid object name")
+        else:
+            raise  # Re-raise unexpected errors

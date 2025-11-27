@@ -70,13 +70,18 @@ def test_collection_list_objects(collection_handler):
 def test_collection_list_objects_invalid(collection_handler):
     """Test listing objects with invalid collection name."""
     try:
-        with pytest.raises(RuntimeError, match="not found"):
-            collection_handler.list_objects(
-                collection_name="NonExistentCollection12345",
-                recursive=True,
-                include_hidden=False
-            )
-        print("✓ collection_list_objects properly handles invalid collection name")
+        collection_handler.list_objects(
+            collection_name="NonExistentCollection12345",
+            recursive=True,
+            include_hidden=False
+        )
+        # If we get here without exception, test should fail
+        assert False, "Expected RuntimeError for invalid collection name"
     except RuntimeError as e:
-        if "not found" not in str(e).lower():
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "is blender running" in error_msg:
             pytest.skip(f"Blender not available: {e}")
+        elif "not found" in error_msg:
+            print("✓ collection_list_objects properly handles invalid collection name")
+        else:
+            raise  # Re-raise unexpected errors
