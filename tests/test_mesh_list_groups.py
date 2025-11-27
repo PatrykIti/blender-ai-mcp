@@ -1,30 +1,15 @@
 import pytest
-from unittest.mock import MagicMock, patch
-
-# Mock bpy and bmesh before importing handlers
 import sys
-from types import ModuleType
+from unittest.mock import MagicMock
 
-mock_bpy = MagicMock()
-mock_bmesh = MagicMock()
-
-# Configure mock bpy structure
-mock_bpy.ops = MagicMock()
-mock_bpy.data = MagicMock()
-mock_bpy.context = MagicMock()
-
-sys.modules["bpy"] = mock_bpy
-sys.modules["bmesh"] = mock_bmesh
-
-# Now import the handler
+# Import handler after conftest.py has set up bpy mocks
 from blender_addon.application.handlers.mesh import MeshHandler
 
 class TestMeshListGroups:
     def setup_method(self):
         self.handler = MeshHandler()
-        # Reset mocks
-        mock_bpy.reset_mock()
-        mock_bmesh.reset_mock()
+        # Access the mock bpy from sys.modules (set up by conftest.py)
+        self.mock_bpy = sys.modules["bpy"]
 
     def test_list_vertex_groups(self):
         # Mock object with vertex groups
@@ -58,8 +43,8 @@ class TestMeshListGroups:
         v3.groups = [] # No group
         
         mock_obj.data.vertices = [v1, v2, v3]
-        
-        mock_bpy.data.objects = {"Cube": mock_obj}
+
+        self.mock_bpy.data.objects = {"Cube": mock_obj}
         
         result = self.handler.list_groups("Cube", "VERTEX")
         
@@ -101,8 +86,8 @@ class TestMeshListGroups:
         fm1.index = 0
         
         mock_obj.face_maps = [fm1]
-        
-        mock_bpy.data.objects = {"Cube": mock_obj}
+
+        self.mock_bpy.data.objects = {"Cube": mock_obj}
         
         result = self.handler.list_groups("Cube", "FACE")
         
@@ -111,14 +96,14 @@ class TestMeshListGroups:
         assert result["groups"][0]["name"] == "FaceMap.001"
 
     def test_object_not_found(self):
-        mock_bpy.data.objects = {}
+        self.mock_bpy.data.objects = {}
         with pytest.raises(ValueError, match="Object 'Ghost' not found"):
             self.handler.list_groups("Ghost")
 
     def test_invalid_type(self):
         mock_obj = MagicMock()
         mock_obj.type = 'CAMERA'
-        mock_bpy.data.objects = {"Cam": mock_obj}
+        self.mock_bpy.data.objects = {"Cam": mock_obj}
         
         with pytest.raises(ValueError, match="is not a MESH"):
             self.handler.list_groups("Cam")

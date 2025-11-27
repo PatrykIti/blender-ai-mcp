@@ -1,19 +1,14 @@
 import pytest
-from unittest.mock import MagicMock, patch
-
-# Mock bpy
 import sys
-from types import ModuleType
+from unittest.mock import MagicMock
 
-mock_bpy = MagicMock()
-sys.modules["bpy"] = mock_bpy
-
+# conftest.py handles bpy mocking
 from blender_addon.application.handlers.scene import SceneHandler
 
 class TestSceneInspectModifiers:
     def setup_method(self):
         self.handler = SceneHandler()
-        mock_bpy.reset_mock()
+        self.mock_bpy = sys.modules["bpy"]
 
     def test_inspect_modifiers_single_object(self):
         # Mock object
@@ -39,7 +34,7 @@ class TestSceneInspectModifiers:
         
         mock_obj.modifiers = [mod1, mod2]
         
-        mock_bpy.data.objects = {"Cube": mock_obj}
+        self.mock_bpy.data.objects = {"Cube": mock_obj}
         
         result = self.handler.inspect_modifiers("Cube")
         
@@ -73,7 +68,7 @@ class TestSceneInspectModifiers:
         mod2.show_render = False # Totally disabled
         
         mock_obj.modifiers = [mod1, mod2]
-        mock_bpy.data.objects = {"Cube": mock_obj}
+        self.mock_bpy.data.objects = {"Cube": mock_obj}
         
         result = self.handler.inspect_modifiers("Cube", include_disabled=False)
         
@@ -85,7 +80,7 @@ class TestSceneInspectModifiers:
         obj2 = MagicMock(); obj2.name = "Sphere"; obj2.modifiers = [] # No modifiers
         obj3 = MagicMock(); obj3.name = "Light"; del obj3.modifiers # No modifiers attr
         
-        mock_bpy.context.scene.objects = [obj1, obj2, obj3]
+        self.mock_bpy.context.scene.objects = [obj1, obj2, obj3]
         
         result = self.handler.inspect_modifiers(object_name=None)
         
@@ -94,6 +89,6 @@ class TestSceneInspectModifiers:
         assert result["objects"][0]["name"] == "Cube"
 
     def test_object_not_found(self):
-        mock_bpy.data.objects = {}
+        self.mock_bpy.data.objects = {}
         with pytest.raises(ValueError, match="Object 'Ghost' not found"):
             self.handler.inspect_modifiers("Ghost")

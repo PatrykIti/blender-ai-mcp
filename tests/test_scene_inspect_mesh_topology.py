@@ -1,30 +1,21 @@
 import pytest
-from unittest.mock import MagicMock, patch
-
-# Mock bpy and bmesh
 import sys
-from types import ModuleType
+from unittest.mock import MagicMock
 
-mock_bpy = MagicMock()
-mock_bmesh = MagicMock()
-
-sys.modules["bpy"] = mock_bpy
-sys.modules["bmesh"] = mock_bmesh
-
+# conftest.py handles bpy mocking
 from blender_addon.application.handlers.scene import SceneHandler
 
 class TestSceneInspectMeshTopology:
     def setup_method(self):
         self.handler = SceneHandler()
-        mock_bpy.reset_mock()
-        mock_bmesh.reset_mock()
+        self.mock_bpy = sys.modules["bpy"]
 
     def test_inspect_basic_topology(self):
         # Mock object
         mock_obj = MagicMock()
         mock_obj.name = "Cube"
         mock_obj.type = 'MESH'
-        mock_bpy.data.objects = {"Cube": mock_obj}
+        self.mock_bpy.data.objects = {"Cube": mock_obj}
         
         # Mock BMesh
         mock_bm = MagicMock()
@@ -76,7 +67,7 @@ class TestSceneInspectMeshTopology:
         mock_obj = MagicMock()
         mock_obj.name = "BadMesh"
         mock_obj.type = 'MESH'
-        mock_bpy.data.objects = {"BadMesh": mock_obj}
+        self.mock_bpy.data.objects = {"BadMesh": mock_obj}
         
         mock_bm = MagicMock()
         mock_bmesh.new.return_value = mock_bm
@@ -110,14 +101,14 @@ class TestSceneInspectMeshTopology:
         assert stats["loose_vertices"] == 1
 
     def test_object_not_found(self):
-        mock_bpy.data.objects = {}
+        self.mock_bpy.data.objects = {}
         with pytest.raises(ValueError, match="Object 'Ghost' not found"):
             self.handler.inspect_mesh_topology("Ghost")
 
     def test_not_a_mesh(self):
         mock_obj = MagicMock()
         mock_obj.type = 'CAMERA'
-        mock_bpy.data.objects = {"Cam": mock_obj}
+        self.mock_bpy.data.objects = {"Cam": mock_obj}
         
         with pytest.raises(ValueError, match="is not a MESH"):
             self.handler.inspect_mesh_topology("Cam")
