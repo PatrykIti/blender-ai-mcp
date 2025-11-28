@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.11.0 (2025-11-28)
+
+### Features
+
+- Phase 2.1 Advanced Selection Tools (TASK-015)
+  ([#15](https://github.com/PatrykIti/blender-ai-mcp/pull/15),
+  [`1edc6c5`](https://github.com/PatrykIti/blender-ai-mcp/commit/1edc6c5199a9234e0322c9bcb5f97d9b98378229))
+
+
 ## v1.10.1 (2025-11-28)
 
 ### Bug Fixes
