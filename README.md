@@ -64,9 +64,9 @@ Smart selection tools to avoid "index hell" for the AI.
 - [ ] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection.
 - [ ] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
 - [ ] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). Critical for `mesh_fill_holes`.
+- [ ] `mesh_select_linked`: Select linked/connected geometry (islands). Critical for multi-part operations.
 - [ ] `mesh_select_loop`: Select edge loops.
 - [ ] `mesh_select_ring`: Select edge rings.
-- [ ] `mesh_select_linked`: Select linked geometry (islands).
 - [ ] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
 
 #### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
