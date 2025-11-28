@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [36](./36-2025-11-28-mcp-parameter-validation-fixes.md) | 2025-11-28 | **MCP Parameter Validation Fixes (PR #14)** | - |
 | [34](./34-2025-11-27-scene-inspect-modifiers.md) | 2025-11-27 | **Scene Inspect Modifiers (TASK-014-14)** | 1.9.13 |
 | [33](./33-2025-11-27-scene-inspect-mesh-topology.md) | 2025-11-27 | **Scene Inspect Mesh Topology (TASK-014-13)** | 1.9.12 |
 | [32](./32-2025-11-27-mesh-list-groups.md) | 2025-11-27 | **Mesh List Groups (TASK-014-12)** | 1.9.11 |
