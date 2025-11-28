@@ -1,56 +1,66 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_modeling_handler
 
 @mcp.tool()
 def modeling_create_primitive(
     ctx: Context,
-    primitive_type: str, 
-    radius: float = 1.0, 
-    size: float = 2.0, 
-    location: List[float] = (0.0, 0.0, 0.0), 
-    rotation: List[float] = (0.0, 0.0, 0.0),
+    primitive_type: str,
+    radius: float = 1.0,
+    size: float = 2.0,
+    location: Union[str, List[float]] = [0.0, 0.0, 0.0],
+    rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: str = None
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
-    
+
     Args:
         primitive_type: "Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus".
         radius: Radius for Sphere/Cylinder/Cone.
         size: Size for Cube/Plane/Monkey.
-        location: [x, y, z] coordinates.
-        rotation: [rx, ry, rz] rotation in radians.
+        location: [x, y, z] coordinates. Can be a list [0.0, 0.0, 0.0] or string '[0.0, 0.0, 0.0]'.
+        rotation: [rx, ry, rz] rotation in radians. Can be a list or string.
         name: Optional name for the new object.
     """
     handler = get_modeling_handler()
     try:
-        return handler.create_primitive(primitive_type, radius, size, location, rotation, name)
-    except RuntimeError as e:
+        # Parse coordinates that might be sent as strings by some MCP clients
+        parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
+        parsed_rotation = parse_coordinate(rotation) or [0.0, 0.0, 0.0]
+
+        return handler.create_primitive(primitive_type, radius, size, parsed_location, parsed_rotation, name)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
 def modeling_transform_object(
     ctx: Context,
-    name: str, 
-    location: Optional[List[float]] = None, 
-    rotation: Optional[List[float]] = None, 
-    scale: Optional[List[float]] = None
+    name: str,
+    location: Union[str, List[float], None] = None,
+    rotation: Union[str, List[float], None] = None,
+    scale: Union[str, List[float], None] = None
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
-    
+
     Args:
         name: Name of the object.
-        location: New [x, y, z] coordinates (optional).
-        rotation: New [rx, ry, rz] rotation in radians (optional).
-        scale: New [sx, sy, sz] scale factors (optional).
+        location: New [x, y, z] coordinates (optional). Can be a list [0.0, 0.0, 2.0] or string '[0.0, 0.0, 2.0]'.
+        rotation: New [rx, ry, rz] rotation in radians (optional). Can be a list or string.
+        scale: New [sx, sy, sz] scale factors (optional). Can be a list or string.
     """
     handler = get_modeling_handler()
     try:
-        return handler.transform_object(name, location, rotation, scale)
-    except RuntimeError as e:
+        # Parse coordinates that might be sent as strings by some MCP clients
+        parsed_location = parse_coordinate(location)
+        parsed_rotation = parse_coordinate(rotation)
+        parsed_scale = parse_coordinate(scale)
+
+        return handler.transform_object(name, parsed_location, parsed_rotation, parsed_scale)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()

@@ -4,6 +4,7 @@ from typing import List, Literal, Optional, Union
 from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_scene_handler
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -54,18 +55,19 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
         return str(e)
 
 @mcp.tool()
-def scene_duplicate_object(ctx: Context, name: str, translation: List[float] = None) -> str:
+def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
     """
     [SCENE][SAFE] Duplicates an object and optionally moves it.
-    
+
     Args:
         name: Name of the object to duplicate.
-        translation: Optional [x, y, z] vector to move the copy.
+        translation: Optional [x, y, z] vector to move the copy. Can be a list or string '[1.0, 2.0, 3.0]'.
     """
     handler = get_scene_handler()
     try:
-        return str(handler.duplicate_object(name, translation))
-    except RuntimeError as e:
+        parsed_translation = parse_coordinate(translation)
+        return str(handler.duplicate_object(name, parsed_translation))
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
@@ -597,8 +599,8 @@ def scene_create_light(
     ctx: Context,
     type: str,
     energy: float = 1000.0,
-    color: List[float] = (1.0, 1.0, 1.0),
-    location: List[float] = (0.0, 0.0, 5.0),
+    color: Union[str, List[float]] = [1.0, 1.0, 1.0],
+    location: Union[str, List[float]] = [0.0, 0.0, 5.0],
     name: Optional[str] = None
 ) -> str:
     """
@@ -607,21 +609,23 @@ def scene_create_light(
     Args:
         type: 'POINT', 'SUN', 'SPOT', 'AREA'.
         energy: Power in Watts.
-        color: [r, g, b] (0.0 to 1.0).
-        location: [x, y, z].
+        color: [r, g, b] (0.0 to 1.0). Can be a list or string '[1.0, 1.0, 1.0]'.
+        location: [x, y, z]. Can be a list or string.
         name: Optional custom name.
     """
     handler = get_scene_handler()
     try:
-        return handler.create_light(type, energy, color, location, name)
-    except RuntimeError as e:
+        parsed_color = parse_coordinate(color) or [1.0, 1.0, 1.0]
+        parsed_location = parse_coordinate(location) or [0.0, 0.0, 5.0]
+        return handler.create_light(type, energy, parsed_color, parsed_location, name)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
 def scene_create_camera(
     ctx: Context,
-    location: List[float],
-    rotation: List[float],
+    location: Union[str, List[float]],
+    rotation: Union[str, List[float]],
     lens: float = 50.0,
     clip_start: Optional[float] = None,
     clip_end: Optional[float] = None,
@@ -631,8 +635,8 @@ def scene_create_camera(
     [SCENE][SAFE] Creates a camera object.
 
     Args:
-        location: [x, y, z].
-        rotation: [x, y, z] Euler angles in radians.
+        location: [x, y, z]. Can be a list or string '[0.0, 0.0, 10.0]'.
+        rotation: [x, y, z] Euler angles in radians. Can be a list or string.
         lens: Focal length in mm.
         clip_start: Near clipping distance.
         clip_end: Far clipping distance.
@@ -640,8 +644,10 @@ def scene_create_camera(
     """
     handler = get_scene_handler()
     try:
-        return handler.create_camera(location, rotation, lens, clip_start, clip_end, name)
-    except RuntimeError as e:
+        parsed_location = parse_coordinate(location)
+        parsed_rotation = parse_coordinate(rotation)
+        return handler.create_camera(parsed_location, parsed_rotation, lens, clip_start, clip_end, name)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
@@ -649,7 +655,7 @@ def scene_create_empty(
     ctx: Context,
     type: str,
     size: float = 1.0,
-    location: List[float] = (0.0, 0.0, 0.0),
+    location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: Optional[str] = None
 ) -> str:
     """
@@ -658,13 +664,14 @@ def scene_create_empty(
     Args:
         type: 'PLAIN_AXES', 'ARROWS', 'SINGLE_ARROW', 'CIRCLE', 'CUBE', 'SPHERE', 'CONE', 'IMAGE'.
         size: Display size.
-        location: [x, y, z].
+        location: [x, y, z]. Can be a list or string '[0.0, 0.0, 0.0]'.
         name: Optional custom name.
     """
     handler = get_scene_handler()
     try:
-        return handler.create_empty(type, size, location, name)
-    except RuntimeError as e:
+        parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
+        return handler.create_empty(type, size, parsed_location, name)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
