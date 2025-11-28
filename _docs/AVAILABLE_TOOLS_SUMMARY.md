@@ -27,6 +27,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_inspect_material_slots` | `material_filter`, `include_empty_slots` | Audits material slot assignments across entire scene. | ✅ Done |
 | `scene_inspect_mesh_topology` | `object_name`, `detailed` | Reports detailed topology stats (verts/edges/faces, N-gons, non-manifold). | ✅ Done |
 | `scene_inspect_modifiers` | `object_name`, `include_disabled` | Lists modifier stacks with key settings and visibility flags. | ✅ Done |
+| `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
 
 ---
 
@@ -95,6 +96,14 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices. | ✅ Done |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
+| `mesh_select_loop` | `edge_index` | Selects edge loop from target edge. | ✅ Done |
+| `mesh_select_ring` | `edge_index` | Selects edge ring from target edge. | ✅ Done |
+| `mesh_select_linked` | *none* | Selects all connected geometry (islands). 🔴 CRITICAL | ✅ Done |
+| `mesh_select_more` | *none* | Grows selection by one step. | ✅ Done |
+| `mesh_select_less` | *none* | Shrinks selection by one step. | ✅ Done |
+| `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
+| `mesh_select_by_location` | `axis`, `min_coord`, `max_coord`, `mode` | Selects geometry by coordinate range. | ✅ Done |
+| `mesh_select_boundary` | `mode` | Selects boundary edges/vertices (holes). 🔴 CRITICAL | ✅ Done |
 
 ---
 

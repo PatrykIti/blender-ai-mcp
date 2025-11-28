@@ -334,6 +334,30 @@ Example:
 
 ---
 
+# 18. scene_set_mode ✅ Done
+Sets the Blender interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
+
+**Tag:** `[SCENE][SAFE]`
+
+Args:
+- mode: str - target mode (case-insensitive)
+
+Example:
+```json
+{
+  "tool": "scene_set_mode",
+  "args": {
+    "mode": "EDIT"
+  }
+}
+```
+
+Use Case:
+- Switching between Object and Edit mode for mesh operations
+- Critical for workflows requiring mode changes
+
+---
+
 # Rules
 1. **Prefix `scene_`**: All tools must start with this prefix.
 2. **Atomicity**: One tool = one action. Do not group actions into one tool with an `action` parameter.
