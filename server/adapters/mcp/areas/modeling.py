@@ -17,6 +17,8 @@ def modeling_create_primitive(
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
 
+    Workflow: START → new object | AFTER → modeling_transform, scene_set_mode('EDIT')
+
     Args:
         primitive_type: "Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus".
         radius: Radius for Sphere/Cylinder/Cone.
@@ -46,6 +48,8 @@ def modeling_transform_object(
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
 
+    Workflow: AFTER → modeling_create_primitive | BEFORE → scene_set_mode('EDIT')
+
     Args:
         name: Name of the object.
         location: New [x, y, z] coordinates (optional). Can be a list [0.0, 0.0, 2.0] or string '[0.0, 0.0, 2.0]'.
@@ -74,6 +78,8 @@ def modeling_add_modifier(
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
     Preferred method for booleans, subdivision, mirroring (non-destructive stack).
 
+    Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier | ALT TO → mesh_boolean
+
     Args:
         name: Object name.
         modifier_type: Type of modifier (e.g., 'SUBSURF', 'BEVEL', 'MIRROR', 'BOOLEAN').
@@ -95,7 +101,9 @@ def modeling_apply_modifier(
 ) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Applies a modifier, making its changes permanent to the mesh.
-    
+
+    Workflow: BEFORE → modeling_list_modifiers | DESTRUCTIVE - bakes changes
+
     Args:
         name: Object name.
         modifier_name: The name of the modifier to apply.
@@ -113,7 +121,9 @@ def modeling_convert_to_mesh(
 ) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Converts a non-mesh object (Curve, Text, Surface) to a mesh.
-    
+
+    Workflow: USE FOR → Curve/Text → Mesh | AFTER → scene_set_mode('EDIT')
+
     Args:
         name: The name of the object to convert.
     """
@@ -131,7 +141,9 @@ def modeling_join_objects(
     """
     [OBJECT MODE][DESTRUCTIVE] Joins multiple mesh objects into a single mesh.
     IMPORTANT: The LAST object in the list becomes the Active Object (Base).
-    
+
+    Workflow: BEFORE → mesh_boolean workflow | AFTER → mesh_select_linked
+
     Args:
         object_names: A list of names of the objects to join.
     """
@@ -149,7 +161,9 @@ def modeling_separate_object(
 ) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
-    
+
+    Workflow: AFTER → mesh_select_linked | USE → split mesh islands
+
     Args:
         name: The name of the object to separate.
         type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
@@ -168,7 +182,9 @@ def modeling_list_modifiers(
 ) -> str:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Lists all modifiers currently on the specified object.
-    
+
+    Workflow: READ-ONLY | BEFORE → modeling_apply_modifier
+
     Args:
         name: The name of the object.
     """
@@ -187,7 +203,9 @@ def modeling_set_origin(
 ) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Sets the origin point of an object.
-    
+
+    Workflow: AFTER → geometry changes | BEFORE → modeling_transform
+
     Args:
         name: Object name.
         type: Origin type (e.g., 'ORIGIN_GEOMETRY', 'ORIGIN_CURSOR', 'ORIGIN_CENTER_OF_MASS').

@@ -7,6 +7,8 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
     """
     [COLLECTION][SAFE][READ-ONLY] Lists all collections with hierarchy information.
 
+    Workflow: READ-ONLY | USE → understand hierarchy
+
     Returns collection names, parent relationships, object counts, and visibility flags.
     Optionally includes object names within each collection.
 
@@ -61,6 +63,8 @@ def collection_list_objects(
 ) -> str:
     """
     [COLLECTION][SAFE][READ-ONLY] Lists objects inside a collection.
+
+    Workflow: READ-ONLY | USE → list collection contents
 
     Returns all objects contained within the specified collection. Optionally
     includes objects from child collections (recursive) and hidden objects.
