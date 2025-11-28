@@ -119,3 +119,15 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def select_more(self) -> str:
+        response = self.rpc.send_request("mesh.select_more")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_less(self) -> str:
+        response = self.rpc.send_request("mesh.select_less")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

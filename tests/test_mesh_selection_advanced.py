@@ -259,3 +259,97 @@ class TestMeshSelectLinked(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestMeshSelectMoreLess(unittest.TestCase):
+    def setUp(self):
+        self.handler = MeshHandler()
+
+        # Reset mocks
+        bpy.context.active_object = MagicMock()
+        bpy.context.active_object.type = 'MESH'
+        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.mode = 'OBJECT'
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.mesh.select_more = MagicMock()
+        bpy.ops.mesh.select_less = MagicMock()
+        bmesh.from_edit_mesh = MagicMock()
+        bmesh.update_edit_mesh = MagicMock()
+
+    def test_select_more_basic(self):
+        """Should grow selection by one step."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create verts - 3 selected initially
+        verts = []
+        for i in range(10):
+            vert = MagicMock()
+            vert.select = (i < 3)
+            verts.append(vert)
+
+        # Mock grow behavior: 3 -> 6 verts selected
+        def mock_select_more():
+            for i in range(6):
+                verts[i].select = True
+
+        bpy.ops.mesh.select_more = mock_select_more
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.side_effect = [iter(verts), iter(verts)]
+        bm.verts = mock_verts_seq
+
+        # Execute
+        result = self.handler.select_more()
+
+        # Verify
+        assert "Grew selection" in result
+        assert "3 -> 6 vertices" in result
+
+    def test_select_less_basic(self):
+        """Should shrink selection by one step."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create verts - 6 selected initially
+        verts = []
+        for i in range(10):
+            vert = MagicMock()
+            vert.select = (i < 6)
+            verts.append(vert)
+
+        # Mock shrink behavior: 6 -> 3 verts selected
+        def mock_select_less():
+            for i in range(3, 6):
+                verts[i].select = False
+
+        bpy.ops.mesh.select_less = mock_select_less
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.side_effect = [iter(verts), iter(verts)]
+        bm.verts = mock_verts_seq
+
+        # Execute
+        result = self.handler.select_less()
+
+        # Verify
+        assert "Shrunk selection" in result
+        assert "6 -> 3 vertices" in result
+
+    def test_select_more_no_selection(self):
+        """Should raise ValueError when nothing is selected."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        verts = [MagicMock() for _ in range(5)]
+        for v in verts:
+            v.select = False
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.return_value = iter(verts)
+        bm.verts = mock_verts_seq
+
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_more()
+
+        assert "No geometry selected" in str(context.exception)

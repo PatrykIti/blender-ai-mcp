@@ -89,3 +89,13 @@ class IMeshTool(ABC):
     def select_linked(self) -> str:
         """Selects all geometry linked to current selection (connected islands)."""
         pass
+
+    @abstractmethod
+    def select_more(self) -> str:
+        """Grows the current selection by one step."""
+        pass
+
+    @abstractmethod
+    def select_less(self) -> str:
+        """Shrinks the current selection by one step."""
+        pass

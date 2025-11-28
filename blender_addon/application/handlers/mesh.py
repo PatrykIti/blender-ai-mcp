@@ -523,3 +523,59 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Selected linked geometry ({final_count} vertices total)"
+
+    def select_more(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Count selected before
+        initial_count = sum(1 for v in bm.verts if v.select)
+        
+        if initial_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one element to grow selection")
+        
+        # Grow selection
+        bpy.ops.mesh.select_more()
+        
+        # Count selected after
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Grew selection by one step ({initial_count} -> {final_count} vertices)"
+
+    def select_less(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Count selected before
+        initial_count = sum(1 for v in bm.verts if v.select)
+        
+        if initial_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one element to shrink selection")
+        
+        # Shrink selection
+        bpy.ops.mesh.select_less()
+        
+        # Count selected after
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Shrunk selection by one step ({initial_count} -> {final_count} vertices)"

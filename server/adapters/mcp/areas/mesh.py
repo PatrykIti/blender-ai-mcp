@@ -385,3 +385,43 @@ def mesh_select_linked(ctx: Context) -> str:
         return handler.select_linked()
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_select_more(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
+    
+    Expands the selection to include all geometry elements adjacent to the current selection.
+    Useful for gradually expanding selection regions or creating selection borders.
+    
+    Returns:
+        Success message indicating selection was expanded.
+    
+    Example:
+        mesh_select_more() -> Expands selection by one step
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_more()
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_less(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
+    
+    Contracts the selection by removing boundary elements from the current selection.
+    Useful for refining selections or removing outer layers.
+    
+    Returns:
+        Success message indicating selection was contracted.
+    
+    Example:
+        mesh_select_less() -> Contracts selection by one step
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_less()
+    except RuntimeError as e:
+        return str(e)
