@@ -3,21 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 12
+- **To Do:** 8
 - **In Progress:** 0
-- **Done:** 31
+- **Done:** 38
 
 ---
 
 ## 🚨 To Do
-
-### Phase 2.1: Advanced Selection
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-015-1](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-1-mesh-select-loop-tool) | **Mesh Select Loop Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-2](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-2-mesh-select-ring-tool) | **Mesh Select Ring Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-3](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-3-mesh-select-linked-tool) | **Mesh Select Linked Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-4](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-4-mesh-select-moreless-tools) | **Mesh Select More/Less Tools** | 🟡 Medium | 2025-11-27 |
 
 ### Phase 2.2: Organic & Deform
 | ID | Title | Priority | Created |
@@ -51,6 +43,13 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-015-7](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-7-mesh-select-boundary-tool) | **Mesh Select Boundary Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-6](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-6-mesh-select-by-location-tool) | **Mesh Select By Location Tool** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-5](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-5-mesh-get-vertex-data-tool) | **Mesh Get Vertex Data Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-4](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-4-mesh-select-moreless-tools) | **Mesh Select More/Less Tools** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-3](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-3-mesh-select-linked-tool) | **Mesh Select Linked Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-2](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-2-mesh-select-ring-tool) | **Mesh Select Ring Tool** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-1](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-1-mesh-select-loop-tool) | **Mesh Select Loop Tool** | 🟡 Medium | 2025-11-28 |
 | [TASK-014-14](./TASK-014-14_Scene_Inspect_Modifiers.md) | **Scene Inspect Modifiers Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-13](./TASK-014-13_Scene_Inspect_Mesh_Topology.md) | **Scene Inspect Mesh Topology Tool** | 🔴 High | 2025-11-27 |
 | [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |

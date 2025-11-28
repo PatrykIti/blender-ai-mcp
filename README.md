@@ -59,15 +59,15 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
 - [x] `mesh_smooth` / `mesh_flatten`.
 
-#### 🎯 Phase 2.1: Advanced Selection (Planned)
+#### ✅ Phase 2.1: Advanced Selection (Completed)
 Smart selection tools to avoid "index hell" for the AI.
-- [ ] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection.
-- [ ] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
-- [ ] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). Critical for `mesh_fill_holes`.
-- [ ] `mesh_select_linked`: Select linked/connected geometry (islands). Critical for multi-part operations.
-- [ ] `mesh_select_loop`: Select edge loops.
-- [ ] `mesh_select_ring`: Select edge rings.
-- [ ] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
+- [x] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection. 🔴 CRITICAL
+- [x] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
+- [x] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). 🔴 CRITICAL for `mesh_fill_holes`.
+- [x] `mesh_select_linked`: Select linked/connected geometry (islands). 🔴 CRITICAL for multi-part operations.
+- [x] `mesh_select_loop`: Select edge loops.
+- [x] `mesh_select_ring`: Select edge rings.
+- [x] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
 
 #### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
 Essential for organic shapes (hearts, lungs, muscles).
@@ -218,7 +218,15 @@ We recommend using Docker to run the MCP Server.
         "mesh_subdivide",
         "mesh_smooth",
         "mesh_flatten",
-        "mesh_list_groups"
+        "mesh_list_groups",
+        "mesh_select_loop",
+        "mesh_select_ring",
+        "mesh_select_linked",
+        "mesh_select_more",
+        "mesh_select_less",
+        "mesh_get_vertex_data",
+        "mesh_select_by_location",
+        "mesh_select_boundary"
       ]
     }
   }
@@ -286,7 +294,15 @@ We recommend using Docker to run the MCP Server.
         "mesh_subdivide",
         "mesh_smooth",
         "mesh_flatten",
-        "mesh_list_groups"
+        "mesh_list_groups",
+        "mesh_select_loop",
+        "mesh_select_ring",
+        "mesh_select_linked",
+        "mesh_select_more",
+        "mesh_select_less",
+        "mesh_get_vertex_data",
+        "mesh_select_by_location",
+        "mesh_select_boundary"
       ]
     }
   }
