@@ -1,4 +1,4 @@
-# TASK-020-1: Scene Inspect Mega Tool
+# TASK-020-5: Scene Inspect Mega Tool
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
@@ -9,7 +9,7 @@
 
 ## 🎯 Cel
 
-Utworzyć zunifikowany tool `scene_inspect` który zastąpi 6 osobnych narzędzi inspection, oszczędzając kontekst LLM.
+Utworzyć zunifikowany tool `scene_inspect` dla głębokiej inspekcji obiektów i sceny (używany okazjonalnie do analizy).
 
 ---
 
@@ -17,14 +17,12 @@ Utworzyć zunifikowany tool `scene_inspect` który zastąpi 6 osobnych narzędzi
 
 | Oryginalny Tool | Action |
 |-----------------|--------|
-| `scene_get_mode` | `"mode"` |
-| `scene_list_selection` | `"selection"` |
 | `scene_inspect_object` | `"object"` |
 | `scene_inspect_mesh_topology` | `"topology"` |
 | `scene_inspect_modifiers` | `"modifiers"` |
 | `scene_inspect_material_slots` | `"materials"` |
 
-**Oszczędność:** 6 tools → 1 tool (-5 definitions dla LLM)
+**Oszczędność:** 4 tools → 1 tool (-3 definitions dla LLM)
 
 ---
 
@@ -38,7 +36,7 @@ from server.adapters.mcp.instance import mcp
 @mcp.tool()
 def scene_inspect(
     ctx: Context,
-    action: Literal["mode", "selection", "object", "topology", "modifiers", "materials"],
+    action: Literal["object", "topology", "modifiers", "materials"],
     object_name: Optional[str] = None,
     detailed: bool = False,
     include_disabled: bool = True,
@@ -46,23 +44,21 @@ def scene_inspect(
     include_empty_slots: bool = True
 ) -> str:
     """
-    [SCENE][SAFE][READ-ONLY] Unified inspection tool for scene state queries.
+    [SCENE][READ-ONLY][SAFE] Detailed inspection queries for objects and scene.
 
     Actions and required parameters:
-    - "mode": No params required. Returns current Blender mode, active object, selection count.
-    - "selection": No params required. Returns selected objects list + edit mode vertex/edge/face counts.
-    - "object": Requires object_name. Returns detailed report (transform, collections, materials, modifiers, mesh stats).
-    - "topology": Requires object_name. Returns vertex/edge/face/triangle/quad/ngon counts. Optional: detailed=True for non-manifold checks.
-    - "modifiers": Optional object_name (None scans all objects). Returns modifier stacks. Optional: include_disabled=False to skip disabled.
+    - "object": Requires object_name. Returns transform, collections, materials, modifiers, mesh stats.
+    - "topology": Requires object_name. Returns vertex/edge/face/tri/quad/ngon counts. Optional: detailed=True for non-manifold checks.
+    - "modifiers": Optional object_name (None scans all). Returns modifier stacks. Optional: include_disabled=False.
     - "materials": No params required. Returns material slot audit. Optional: material_filter, include_empty_slots.
 
-    Workflow: READ-ONLY | FIRST STEP → understand scene state before operations
+    Workflow: READ-ONLY | USE → detailed analysis before export or debugging
 
     Examples:
-        scene_inspect(action="mode")
         scene_inspect(action="object", object_name="Cube")
         scene_inspect(action="topology", object_name="Cube", detailed=True)
         scene_inspect(action="modifiers", object_name="Cube")
+        scene_inspect(action="modifiers")  # scans all objects
         scene_inspect(action="materials", material_filter="Wood")
     """
 ```
@@ -73,7 +69,7 @@ def scene_inspect(
 
 | Plik | Zmiany |
 |------|--------|
-| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_inspect`. Usuń `@mcp.tool()` z 6 funkcji (zachowaj same funkcje). |
+| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_inspect`. Usuń `@mcp.tool()` z 4 funkcji (zachowaj same funkcje). |
 
 ---
 
@@ -87,7 +83,7 @@ def scene_inspect(
 ## ✅ Deliverables
 
 - [ ] Implementacja `scene_inspect` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 6 zastąpionych funkcji
+- [ ] Usunięcie `@mcp.tool()` z 4 zastąpionych funkcji
 - [ ] Testy dla `scene_inspect`
 - [ ] Aktualizacja dokumentacji
 
@@ -95,6 +91,6 @@ def scene_inspect(
 
 ## 📊 Estymacja
 
-- **Nowe linie kodu:** ~50 (routing + docstring)
-- **Modyfikacje:** ~6 (usunięcie dekoratorów)
+- **Nowe linie kodu:** ~45 (routing + docstring)
+- **Modyfikacje:** ~4 (usunięcie dekoratorów)
 - **Testy:** ~30 linii
