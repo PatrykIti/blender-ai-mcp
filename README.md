@@ -103,6 +103,16 @@ Curve-based modeling and procedural geometry construction.
 - [ ] `mesh_add_vertex` / `mesh_add_edge` / `mesh_add_face`: Low-level procedural geometry construction.
 - [ ] `mesh_cursor_set_position`: Set 3D cursor for pivot control.
 
+#### 🧠 LLM Context Optimization: Mega Tools (Planned)
+Unified tools that consolidate multiple related operations to reduce LLM context usage.
+- [ ] `scene_context`: Quick context queries (mode, selection). Replaces 2 tools.
+- [ ] `scene_inspect`: Detailed inspection (object, topology, modifiers, materials). Replaces 4 tools.
+- [ ] `scene_create`: Create helper objects (light, camera, empty). Replaces 3 tools.
+- [ ] `mesh_select`: Simple selection ops (all, none, linked, more, less, boundary). Replaces 5 tools.
+- [ ] `mesh_select_targeted`: Targeted selection (by_index, loop, ring, by_location). Replaces 4 tools.
+
+**Total savings:** 18 tools → 5 mega tools (-13 tool definitions for LLM context)
+
 #### ⏳ Phase 3: Materials & Organization
 - [ ] `material_create`: Setup PBR materials.
 - [ ] `material_assign`: Assign to objects/faces.

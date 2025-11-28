@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 11
+- **To Do:** 13
 - **In Progress:** 0
 - **Done:** 39
 
@@ -34,9 +34,11 @@ Task board for the project. Update statuses in markdown files.
 ### LLM Context Optimization: Mega Tools
 | ID | Title | Priority | Created |
 |----|-------|----------|---------|
-| [TASK-020-1](./TASK-020-1_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** | 🔴 High | 2025-11-28 |
-| [TASK-020-2](./TASK-020-2_Mesh_Select_Mega_Tool.md) | **Mesh Select Mega Tool** | 🔴 High | 2025-11-28 |
-| [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** | 🟡 Medium | 2025-11-28 |
+| [TASK-020-1](./TASK-020-1_Scene_Context_Mega_Tool.md) | **Scene Context Mega Tool** (mode, selection) | 🔴 High | 2025-11-28 |
+| [TASK-020-2](./TASK-020-2_Mesh_Select_Mega_Tool.md) | **Mesh Select Mega Tool** (simple: all, none, linked, more, less, boundary) | 🔴 High | 2025-11-28 |
+| [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-28 |
+| [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-28 |
+| [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-28 |
 
 ---
 
