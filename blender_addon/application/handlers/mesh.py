@@ -457,3 +457,41 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Selected edge loop from edge {edge_index}"
+
+    def select_ring(self, edge_index):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge ring based on the target edge index.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate edge index
+        if edge_index < 0 or edge_index >= len(bm.edges):
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
+        
+        # Deselect all first
+        for edge in bm.edges:
+            edge.select = False
+        for vert in bm.verts:
+            vert.select = False
+        for face in bm.faces:
+            face.select = False
+        
+        # Select the target edge
+        target_edge = bm.edges[edge_index]
+        target_edge.select = True
+        
+        # Ensure mesh is updated
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Use Blender's ring selection operator
+        bpy.ops.mesh.loop_multi_select(ring=True)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected edge ring from edge {edge_index}"

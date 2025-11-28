@@ -79,3 +79,8 @@ class IMeshTool(ABC):
     def select_loop(self, edge_index: int) -> str:
         """Selects an edge loop based on the target edge index."""
         pass
+
+    @abstractmethod
+    def select_ring(self, edge_index: int) -> str:
+        """Selects an edge ring based on the target edge index."""
+        pass

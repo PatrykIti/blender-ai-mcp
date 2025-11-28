@@ -106,3 +106,10 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def select_ring(self, edge_index: int) -> str:
+        args = {"edge_index": edge_index}
+        response = self.rpc.send_request("mesh.select_ring", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

@@ -119,5 +119,74 @@ class TestMeshSelectLoop(unittest.TestCase):
         assert 'OBJECT' in mode_set_calls, "Should restore OBJECT mode"
 
 
+class TestMeshSelectRing(unittest.TestCase):
+    def setUp(self):
+        self.handler = MeshHandler()
+
+        # Reset mocks
+        bpy.context.active_object = MagicMock()
+        bpy.context.active_object.type = 'MESH'
+        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.mode = 'OBJECT'
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.mesh.loop_multi_select = MagicMock()
+        bmesh.from_edit_mesh = MagicMock()
+        bmesh.update_edit_mesh = MagicMock()
+
+    def test_select_ring_basic(self):
+        """Should select edge ring from target edge."""
+        # Setup BMesh mock
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create 10 edges
+        edges = []
+        for i in range(10):
+            edge = MagicMock()
+            edge.select = False
+            edge.index = i
+            edges.append(edge)
+
+        mock_edges_seq = MagicMock()
+        mock_edges_seq.__iter__.return_value = iter(edges)
+        mock_edges_seq.__len__.return_value = len(edges)
+        mock_edges_seq.__getitem__.side_effect = lambda idx: edges[idx]
+        bm.edges = mock_edges_seq
+
+        bm.verts = MagicMock()
+        bm.verts.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        # Execute
+        result = self.handler.select_ring(edge_index=3)
+
+        # Verify
+        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
+        assert edges[3].select == True, "Target edge should be selected"
+        bpy.ops.mesh.loop_multi_select.assert_called_once_with(ring=True)
+        assert "Selected edge ring from edge 3" in result
+
+    def test_select_ring_invalid_index(self):
+        """Should raise ValueError for invalid edge index."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        edges = [MagicMock() for _ in range(5)]
+        mock_edges_seq = MagicMock()
+        mock_edges_seq.__len__.return_value = len(edges)
+        bm.edges = mock_edges_seq
+
+        bm.verts = MagicMock()
+        bm.verts.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_ring(edge_index=10)
+
+        assert "Invalid edge_index 10" in str(context.exception)
+
+
 if __name__ == '__main__':
     unittest.main()

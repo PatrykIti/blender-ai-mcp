@@ -90,6 +90,7 @@ def register():
         rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
         rpc_server.register_handler("mesh.list_groups", mesh_handler.list_groups)
         rpc_server.register_handler("mesh.select_loop", mesh_handler.select_loop)
+        rpc_server.register_handler("mesh.select_ring", mesh_handler.select_ring)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

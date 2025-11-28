@@ -336,3 +336,29 @@ def mesh_select_loop(
         return handler.select_loop(edge_index)
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_select_ring(
+    ctx: Context,
+    edge_index: int
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge ring based on the target edge index.
+    
+    Edge rings are parallel rings of edges that run perpendicular to edge loops.
+    Useful for selecting parallel topology features around cylindrical or circular structures.
+    
+    Args:
+        edge_index: Index of the target edge that defines which ring to select.
+    
+    Returns:
+        Success message indicating the ring was selected.
+    
+    Example:
+        mesh_select_ring(edge_index=3) -> Selects the edge ring containing edge 3
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_ring(edge_index)
+    except RuntimeError as e:
+        return str(e)
