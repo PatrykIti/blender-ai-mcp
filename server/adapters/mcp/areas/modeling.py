@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
-from server.adapters.mcp.utils import parse_coordinate
+from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.infrastructure.di import get_modeling_handler
 
 @mcp.tool()
@@ -66,23 +66,25 @@ def modeling_transform_object(
 @mcp.tool()
 def modeling_add_modifier(
     ctx: Context,
-    name: str, 
-    modifier_type: str, 
-    properties: Dict[str, Any] = None
+    name: str,
+    modifier_type: str,
+    properties: Union[str, Dict[str, Any], None] = None
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
     Preferred method for booleans, subdivision, mirroring (non-destructive stack).
-    
+
     Args:
         name: Object name.
         modifier_type: Type of modifier (e.g., 'SUBSURF', 'BEVEL', 'MIRROR', 'BOOLEAN').
-        properties: Dictionary of modifier properties to set (e.g., {'levels': 2}).
+        properties: Dictionary of modifier properties to set (e.g., {'levels': 2}). Can be a dict or string '{"levels": 2}'.
     """
     handler = get_modeling_handler()
     try:
-        return handler.add_modifier(name, modifier_type, properties)
-    except RuntimeError as e:
+        # Parse properties that might be sent as strings by some MCP clients
+        parsed_properties = parse_dict(properties)
+        return handler.add_modifier(name, modifier_type, parsed_properties)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()

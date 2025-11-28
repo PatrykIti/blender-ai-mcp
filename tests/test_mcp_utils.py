@@ -1,6 +1,6 @@
 """Tests for MCP adapter utilities."""
 import pytest
-from server.adapters.mcp.utils import parse_coordinate
+from server.adapters.mcp.utils import parse_coordinate, parse_dict
 
 
 class TestParseCoordinate:
@@ -55,3 +55,52 @@ class TestParseCoordinate:
         """Should handle tuple input and convert to list of floats."""
         result = parse_coordinate((1, 2, 3))
         assert result == [1.0, 2.0, 3.0]
+
+
+class TestParseDict:
+    """Test dictionary parsing utility function."""
+
+    def test_parse_string_with_dict(self):
+        """Should parse JSON string with dict."""
+        result = parse_dict('{"levels": 2}')
+        assert result == {"levels": 2}
+
+    def test_parse_string_with_multiple_keys(self):
+        """Should parse JSON string with multiple keys."""
+        result = parse_dict('{"levels": 2, "render_levels": 3}')
+        assert result == {"levels": 2, "render_levels": 3}
+
+    def test_parse_string_with_nested_dict(self):
+        """Should parse JSON string with nested dict."""
+        result = parse_dict('{"outer": {"inner": "value"}}')
+        assert result == {"outer": {"inner": "value"}}
+
+    def test_parse_dict_directly(self):
+        """Should handle dict input without parsing."""
+        result = parse_dict({"levels": 2})
+        assert result == {"levels": 2}
+
+    def test_parse_none(self):
+        """Should return None when input is None."""
+        result = parse_dict(None)
+        assert result is None
+
+    def test_parse_invalid_string(self):
+        """Should raise ValueError for invalid JSON string."""
+        with pytest.raises(ValueError, match="Invalid dictionary format"):
+            parse_dict("invalid")
+
+    def test_parse_string_not_dict(self):
+        """Should raise ValueError when JSON string doesn't contain a dict."""
+        with pytest.raises(ValueError, match="Expected a dictionary"):
+            parse_dict('[1, 2, 3]')
+
+    def test_parse_empty_string(self):
+        """Should raise ValueError for empty string."""
+        with pytest.raises(ValueError, match="Invalid dictionary format"):
+            parse_dict("")
+
+    def test_parse_empty_dict(self):
+        """Should handle empty dict."""
+        result = parse_dict({})
+        assert result == {}
