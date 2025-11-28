@@ -80,6 +80,12 @@ Preparation for rigging and simulation.
 - [ ] `mesh_create_vertex_group`: Create groups.
 - [ ] `mesh_assign_to_group`: Assign selected vertices.
 
+#### 🔧 Phase 2.4: Core Transform & Geometry Connection (Planned)
+Critical tools for shaping and connecting geometry. 🔴 HIGH PRIORITY
+- [ ] `mesh_transform_selected`: Transform (move/scale/rotate) selected vertices/edges/faces. **CRITICAL - unlocks 80% of modeling tasks.**
+- [ ] `mesh_bridge_edge_loops`: Connect two edge loops with faces.
+- [ ] `mesh_duplicate_selected`: Duplicate selected geometry in-place.
+
 #### 🧪 Phase 2.5: Advanced Mesh Precision (Edit Mode)
 Fine-grained control tools for precise cuts and topology adjustments.
 - [ ] `mesh_knife` / `mesh_knife_project`: Precise cutting using screen or reference geometry.
@@ -87,6 +93,15 @@ Fine-grained control tools for precise cuts and topology adjustments.
 - [ ] `mesh_edge_slide` / `mesh_vertex_slide`: Sliding loops and vertices along existing topology.
 - [ ] `mesh_shrink_fatten` / `mesh_smooth`: Thickness and smoothing adjustments.
 - [ ] `mesh_triangulate` / `mesh_remesh_voxel`: Topology conversion utilities.
+
+#### 🌀 Phase 2.6: Curves & Procedural Geometry (Planned)
+Curve-based modeling and procedural geometry construction.
+- [ ] `curve_create`: Create Bezier/NURBS/Poly curves from control points.
+- [ ] `curve_to_mesh`: Convert curves to mesh with optional profile extrusion.
+- [ ] `mesh_spin`: Revolve/lathe geometry around axis (radial patterns).
+- [ ] `mesh_screw`: Create helical/spiral geometry.
+- [ ] `mesh_add_vertex` / `mesh_add_edge` / `mesh_add_face`: Low-level procedural geometry construction.
+- [ ] `mesh_cursor_set_position`: Set 3D cursor for pivot control.
 
 #### ⏳ Phase 3: Materials & Organization
 - [ ] `material_create`: Setup PBR materials.
