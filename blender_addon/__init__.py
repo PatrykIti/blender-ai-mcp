@@ -94,6 +94,7 @@ def register():
         rpc_server.register_handler("mesh.select_linked", mesh_handler.select_linked)
         rpc_server.register_handler("mesh.select_more", mesh_handler.select_more)
         rpc_server.register_handler("mesh.select_less", mesh_handler.select_less)
+        rpc_server.register_handler("mesh.get_vertex_data", mesh_handler.get_vertex_data)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

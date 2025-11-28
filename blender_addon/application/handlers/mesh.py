@@ -579,3 +579,50 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Shrunk selection by one step ({initial_count} -> {final_count} vertices)"
+
+    def get_vertex_data(self, object_name, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+        
+        # Ensure we're in EDIT mode to read bmesh data
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        vertices = []
+        selected_count = 0
+        
+        for v in bm.verts:
+            if v.select:
+                selected_count += 1
+            
+            # Skip if selected_only is True and vertex is not selected
+            if selected_only and not v.select:
+                continue
+            
+            vertices.append({
+                "index": v.index,
+                "position": [round(v.co.x, 6), round(v.co.y, 6), round(v.co.z, 6)],
+                "selected": v.select
+            })
+        
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+        
+        return {
+            "object_name": object_name,
+            "vertex_count": len(bm.verts),
+            "selected_count": selected_count,
+            "returned_count": len(vertices),
+            "vertices": vertices
+        }

@@ -131,3 +131,10 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        response = self.rpc.send_request("mesh.get_vertex_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

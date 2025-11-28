@@ -425,3 +425,47 @@ def mesh_select_less(ctx: Context) -> str:
         return handler.select_less()
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_get_vertex_data(
+    ctx: Context,
+    object_name: str,
+    selected_only: bool = False
+) -> str:
+    """
+    [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states for programmatic analysis.
+    
+    This is a CRITICAL introspection tool that enables AI to make programmatic selection decisions
+    based on geometry data. Does NOT modify the mesh - pure read operation.
+    
+    Args:
+        object_name: Name of the object to inspect
+        selected_only: If True, only return data for selected vertices (default: False)
+    
+    Returns:
+        JSON string with vertex data:
+        {
+            "vertex_count": 8,
+            "selected_count": 4,
+            "vertices": [
+                {"index": 0, "position": [1.0, 1.0, 1.0], "selected": true},
+                {"index": 1, "position": [1.0, -1.0, 1.0], "selected": false}
+            ]
+        }
+    
+    Use cases:
+        - Analyze vertex positions to determine selection strategy
+        - Find vertices by coordinate ranges
+        - Understand geometry before performing operations
+    
+    Example:
+        mesh_get_vertex_data(object_name="Cube") -> Returns all vertex data
+        mesh_get_vertex_data(object_name="Cube", selected_only=True) -> Returns only selected vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        import json
+        result = handler.get_vertex_data(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)

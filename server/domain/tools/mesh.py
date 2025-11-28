@@ -99,3 +99,8 @@ class IMeshTool(ABC):
     def select_less(self) -> str:
         """Shrinks the current selection by one step."""
         pass
+
+    @abstractmethod
+    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+        """Returns vertex positions and selection states for programmatic analysis."""
+        pass
