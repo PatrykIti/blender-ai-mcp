@@ -40,6 +40,9 @@ Most AI solutions for Blender rely on asking the LLM to "write a Python script".
 
 ## 🗺️ Roadmap & Capabilities
 
+> **Legend:** ✅ Completed | 🚧 In Progress
+> **Progress:** ████████████░░░░░░░░ ~40% (Phase 1 ✅, Phase 2 🚧, Phase 3-6 🚧, Phase 7 ✅)
+
 Our goal is to enable AI to model complex 3D assets—from organs and biological structures to hard-surface precision parts (cars, devices).
 
 #### ✅ Phase 1: Object & Scene Management (Completed)
@@ -51,69 +54,41 @@ Basic composition and scene understanding.
 - [x] **Modifiers**: Add Modifier, Apply Modifier, List Modifiers.
 - [x] **Structure**: Join Objects, Separate Objects, Convert to Mesh.
 
-#### 🚧 Phase 2: Mesh Editing (Edit Mode) - *In Progress*
+#### 🚧 Phase 2: Mesh Editing (Edit Mode)
 Critical for shaping geometry. AI needs these to actually "model" details, not just move cubes around.
-- [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`.
-- [x] `mesh_extrude_region`, `mesh_fill_holes`.
-- [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset` (Adding topology).
-- [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
-- [x] `mesh_smooth` / `mesh_flatten`.
 
-#### ✅ Phase 2.1: Advanced Selection (Completed)
-Smart selection tools to avoid "index hell" for the AI.
-- [x] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection. 🔴 CRITICAL
-- [x] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
-- [x] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). 🔴 CRITICAL for `mesh_fill_holes`.
-- [x] `mesh_select_linked`: Select linked/connected geometry (islands). 🔴 CRITICAL for multi-part operations.
-- [x] `mesh_select_loop`: Select edge loops.
-- [x] `mesh_select_ring`: Select edge rings.
-- [x] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
+**2.0 Core Edit Mode** ✅
+- [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`
+- [x] `mesh_extrude_region`, `mesh_fill_holes`
+- [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset`
+- [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide`
+- [x] `mesh_smooth`, `mesh_flatten`
 
-#### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
-Essential for organic shapes (hearts, lungs, muscles).
-- [ ] `mesh_smooth_vertices`: Laplacian smooth.
-- [ ] `mesh_randomize`: Add noise/irregularity.
-- [ ] `mesh_shrink_fatten`: Push vertices along normals.
+**2.1 Advanced Selection** ✅
+- [x] `mesh_get_vertex_data`, `mesh_select_by_location`, `mesh_select_boundary` 🔴 CRITICAL
+- [x] `mesh_select_linked`, `mesh_select_loop`, `mesh_select_ring`
+- [x] `mesh_select_more`, `mesh_select_less`
 
-#### 🎨 Phase 2.3: Vertex Groups & Weight Painting (Planned)
-Preparation for rigging and simulation.
-- [ ] `mesh_create_vertex_group`: Create groups.
-- [ ] `mesh_assign_to_group`: Assign selected vertices.
+**2.2 Organic & Deform**
+- [ ] `mesh_randomize`, `mesh_shrink_fatten`
 
-#### 🔧 Phase 2.4: Core Transform & Geometry Connection (Planned)
-Critical tools for shaping and connecting geometry. 🔴 HIGH PRIORITY
-- [ ] `mesh_transform_selected`: Transform (move/scale/rotate) selected vertices/edges/faces. **CRITICAL - unlocks 80% of modeling tasks.**
-- [ ] `mesh_bridge_edge_loops`: Connect two edge loops with faces.
-- [ ] `mesh_duplicate_selected`: Duplicate selected geometry in-place.
+**2.3 Vertex Groups**
+- [ ] `mesh_create_vertex_group`, `mesh_assign_to_group`
 
-#### 🧪 Phase 2.5: Advanced Mesh Precision (Edit Mode)
-Fine-grained control tools for precise cuts and topology adjustments.
-- [ ] `mesh_knife` / `mesh_knife_project`: Precise cutting using screen or reference geometry.
-- [ ] `mesh_bisect`: Plane-based cutting with fill options.
-- [ ] `mesh_edge_slide` / `mesh_vertex_slide`: Sliding loops and vertices along existing topology.
-- [ ] `mesh_shrink_fatten` / `mesh_smooth`: Thickness and smoothing adjustments.
-- [ ] `mesh_triangulate` / `mesh_remesh_voxel`: Topology conversion utilities.
+**2.4 Core Transform & Geometry** 🔴 HIGH PRIORITY
+- [ ] `mesh_transform_selected` **CRITICAL - unlocks 80% of modeling tasks**
+- [ ] `mesh_bridge_edge_loops`, `mesh_duplicate_selected`
 
-#### 🌀 Phase 2.6: Curves & Procedural Geometry (Planned)
-Curve-based modeling and procedural geometry construction.
-- [ ] `curve_create`: Create Bezier/NURBS/Poly curves from control points.
-- [ ] `curve_to_mesh`: Convert curves to mesh with optional profile extrusion.
-- [ ] `mesh_spin`: Revolve/lathe geometry around axis (radial patterns).
-- [ ] `mesh_screw`: Create helical/spiral geometry.
-- [ ] `mesh_add_vertex` / `mesh_add_edge` / `mesh_add_face`: Low-level procedural geometry construction.
-- [ ] `mesh_cursor_set_position`: Set 3D cursor for pivot control.
+**2.5 Advanced Precision**
+- [ ] `mesh_knife`, `mesh_bisect`, `mesh_edge_slide`, `mesh_vertex_slide`
+- [ ] `mesh_triangulate`, `mesh_remesh_voxel`
 
-#### 🧠 LLM Context Optimization: Mega Tools (Planned)
-Unified tools that consolidate multiple related operations to reduce LLM context usage.
-- [ ] `scene_context`: Quick context queries (mode, selection). Replaces 2 tools.
-- [ ] `scene_inspect`: Detailed inspection (object, topology, modifiers, materials). Replaces 4 tools.
-- [ ] `scene_create`: Create helper objects (light, camera, empty). Replaces 3 tools.
-- [ ] `mesh_select`: Simple selection ops (all, none, linked, more, less, boundary). Replaces 5 tools.
-- [ ] `mesh_select_targeted`: Targeted selection (by_index, loop, ring, by_location). Replaces 4 tools.
+**2.6 Curves & Procedural**
+- [ ] `curve_create`, `curve_to_mesh`
+- [ ] `mesh_spin`, `mesh_screw`
+- [ ] `mesh_add_vertex`, `mesh_add_edge`, `mesh_add_face`
 
-**Total savings:** 18 tools → 5 mega tools (-13 tool definitions for LLM context)
-
-#### ⏳ Phase 3: Materials & Organization
+#### 🚧 Phase 3: Materials & Organization
 - [ ] `material_create`: Setup PBR materials.
 - [ ] `material_assign`: Assign to objects/faces.
 - [ ] `material_set_params`: Adjust roughness, metallic, emission, alpha.
@@ -123,7 +98,7 @@ Unified tools that consolidate multiple related operations to reduce LLM context
 - [ ] `collection_manage`: Organize hierarchy.
 - [ ] `export`: Save to GLB/FBX/OBJ.
 
-#### ⭐ Phase 4: Macro Tools (The "Magic" Layer)
+#### 🚧 Phase 4: Macro Tools (The "Magic" Layer)
 High-level abstractions where one command executes hundreds of Blender operations.
 - [ ] `macro_organify`: Converts blockouts to organic shapes (hearts, lungs).
 - [ ] `macro_create_phone_base`: Generates smartphone chassis with accurate topology.
@@ -133,20 +108,20 @@ High-level abstractions where one command executes hundreds of Blender operation
 - [ ] `macro_lowpoly_convert`: Global polycount reduction while preserving silhouette.
 - [ ] `macro_cleanup_all`: Scene-wide cleanup (remove doubles, recalc normals, fix manifold).
 
-#### 🧱 Phase 5: Sculpting & Voxel Tools
+#### 🚧 Phase 5: Sculpting & Voxel Tools
 Organic shaping and high-level sculpt workflows.
 - [ ] `mesh_remesh_voxel`: Voxel remesh for uniform density.
 - [ ] `mesh_sculpt_auto`: High-level sculpt macro (smooth / grab / inflate / draw regions).
 - [ ] Future `sculpt_brush_*` tools for direct brush control (smooth, grab, crease, etc.).
 
-#### 🖥️ Phase 6: System & Session Management
+#### 🚧 Phase 6: System & Session Management
 Global project-level operations and undo-safe workflows.
 - [ ] `system_set_mode`: High-level alias over scene/mode tools.
 - [ ] `system_undo` / `system_redo`: Safe history navigation for AI.
 - [ ] `system_save_file` / `system_new_file`: File-level save and reset.
 - [ ] `system_snapshot`: Optional quick save/restore checkpoints for complex modeling sessions.
 
-#### 📊 Phase 7: Introspection & Listing APIs
+#### ✅ Phase 7: Introspection & Listing APIs (Completed)
 Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
 - **Scene & System:**
   - [x] `scene_get_mode`: Report current Blender mode for context-aware ops.
@@ -166,6 +141,22 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
   - [x] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
   - [x] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
   - [x] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
+
+---
+
+## 🧠 LLM Context Optimization (Planned)
+
+> Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
+
+| Mega Tool | Replaces | Savings |
+|-----------|----------|---------|
+| `scene_context` | mode, selection | -1 |
+| `scene_inspect` | object, topology, modifiers, materials | -3 |
+| `scene_create` | light, camera, empty | -2 |
+| `mesh_select` | all, none, linked, more, less, boundary | -4 |
+| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 |
+
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 
 ---
 
