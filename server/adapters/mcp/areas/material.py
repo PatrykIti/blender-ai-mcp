@@ -7,6 +7,8 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
     """
     [MATERIAL][SAFE][READ-ONLY] Lists materials with shader parameters and assignment counts.
 
+    Workflow: READ-ONLY | USE → find materials to assign
+
     Args:
         include_unassigned: If True, includes materials not assigned to any object
     """
@@ -47,6 +49,8 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
 def material_list_by_object(ctx: Context, object_name: str, include_indices: bool = False) -> str:
     """
     [MATERIAL][SAFE][READ-ONLY] Lists material slots for a given object.
+
+    Workflow: READ-ONLY | USE WITH → scene_inspect_material_slots
 
     Args:
         object_name: Name of the object to query

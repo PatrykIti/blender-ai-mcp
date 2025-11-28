@@ -11,6 +11,8 @@ def uv_list_maps(
     """
     [UV][SAFE][READ-ONLY] Lists UV maps on a mesh object.
 
+    Workflow: READ-ONLY | USE → check UV setup before texturing
+
     Reports UV map information including names, active flags, and loop counts.
     Helps plan UV workflows and verify texture coordinate setup.
 

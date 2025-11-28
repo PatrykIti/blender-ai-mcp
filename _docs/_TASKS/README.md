@@ -3,21 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 12
+- **To Do:** 13
 - **In Progress:** 0
-- **Done:** 31
+- **Done:** 39
 
 ---
 
 ## 🚨 To Do
-
-### Phase 2.1: Advanced Selection
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-015-1](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-1-mesh-select-loop-tool) | **Mesh Select Loop Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-2](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-2-mesh-select-ring-tool) | **Mesh Select Ring Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-3](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-3-mesh-select-linked-tool) | **Mesh Select Linked Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-015-4](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-4-mesh-select-moreless-tools) | **Mesh Select More/Less Tools** | 🟡 Medium | 2025-11-27 |
 
 ### Phase 2.2: Organic & Deform
 | ID | Title | Priority | Created |
@@ -39,6 +31,15 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-27 |
 
+### LLM Context Optimization: Mega Tools
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-020-1](./TASK-020-1_Scene_Context_Mega_Tool.md) | **Scene Context Mega Tool** (mode, selection) | 🔴 High | 2025-11-28 |
+| [TASK-020-2](./TASK-020-2_Mesh_Select_Mega_Tool.md) | **Mesh Select Mega Tool** (simple: all, none, linked, more, less, boundary) | 🔴 High | 2025-11-28 |
+| [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-28 |
+| [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-28 |
+| [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-28 |
+
 ---
 
 ## 🚧 In Progress
@@ -51,6 +52,14 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-015-1-WH](./TASK-015-1_Workflow_Hints.md) | **Workflow Hints for All MCP Tools** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-7](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-7-mesh-select-boundary-tool) | **Mesh Select Boundary Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-6](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-6-mesh-select-by-location-tool) | **Mesh Select By Location Tool** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-5](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-5-mesh-get-vertex-data-tool) | **Mesh Get Vertex Data Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-4](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-4-mesh-select-moreless-tools) | **Mesh Select More/Less Tools** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-3](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-3-mesh-select-linked-tool) | **Mesh Select Linked Tool** | 🔴 Critical | 2025-11-28 |
+| [TASK-015-2](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-2-mesh-select-ring-tool) | **Mesh Select Ring Tool** | 🟡 Medium | 2025-11-28 |
+| [TASK-015-1](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-1-mesh-select-loop-tool) | **Mesh Select Loop Tool** | 🟡 Medium | 2025-11-28 |
 | [TASK-014-14](./TASK-014-14_Scene_Inspect_Modifiers.md) | **Scene Inspect Modifiers Tool** | 🟡 Medium | 2025-11-27 |
 | [TASK-014-13](./TASK-014-13_Scene_Inspect_Mesh_Topology.md) | **Scene Inspect Mesh Topology Tool** | 🔴 High | 2025-11-27 |
 | [TASK-014-12](./TASK-014-12_Mesh_List_Groups.md) | **Mesh List Groups Tool** | 🟡 Medium | 2025-11-27 |

@@ -89,6 +89,14 @@ def register():
         rpc_server.register_handler("mesh.smooth_vertices", mesh_handler.smooth_vertices)
         rpc_server.register_handler("mesh.flatten_vertices", mesh_handler.flatten_vertices)
         rpc_server.register_handler("mesh.list_groups", mesh_handler.list_groups)
+        rpc_server.register_handler("mesh.select_loop", mesh_handler.select_loop)
+        rpc_server.register_handler("mesh.select_ring", mesh_handler.select_ring)
+        rpc_server.register_handler("mesh.select_linked", mesh_handler.select_linked)
+        rpc_server.register_handler("mesh.select_more", mesh_handler.select_more)
+        rpc_server.register_handler("mesh.select_less", mesh_handler.select_less)
+        rpc_server.register_handler("mesh.get_vertex_data", mesh_handler.get_vertex_data)
+        rpc_server.register_handler("mesh.select_by_location", mesh_handler.select_by_location)
+        rpc_server.register_handler("mesh.select_boundary", mesh_handler.select_boundary)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

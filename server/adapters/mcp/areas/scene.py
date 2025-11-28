@@ -14,6 +14,8 @@ from server.infrastructure.tmp_paths import get_viewport_output_paths
 def scene_list_objects(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Lists all objects in the current Blender scene with their types.
+
+    Workflow: READ-ONLY | START → understand scene
     """
     handler = get_scene_handler()
     try:
@@ -28,7 +30,9 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     """
     [SCENE][DESTRUCTIVE] Deletes an object from the scene by name.
     This permanently removes the object.
-    
+
+    Workflow: DESTRUCTIVE | BEFORE → scene_list_objects
+
     Args:
         name: Name of the object to delete.
     """
@@ -43,9 +47,11 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
     """
     [SCENE][DESTRUCTIVE] Deletes objects from the scene.
     WARNING: If keep_lights_and_cameras=False, deletes EVERYTHING (hard reset).
-    
+
+    Workflow: START → fresh scene | AFTER → modeling_create_primitive
+
     Args:
-        keep_lights_and_cameras: If True (default), keeps Lights and Cameras. 
+        keep_lights_and_cameras: If True (default), keeps Lights and Cameras.
                                  If False, deletes EVERYTHING (hard reset).
     """
     handler = get_scene_handler()
@@ -58,6 +64,8 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
 def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
     """
     [SCENE][SAFE] Duplicates an object and optionally moves it.
+
+    Workflow: AFTER → scene_set_active | USE FOR → copies with offset
 
     Args:
         name: Name of the object to duplicate.
@@ -75,7 +83,9 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
     """
     [SCENE][SAFE] Sets the active object.
     Important for operations that work on the "active" object (like adding modifiers).
-    
+
+    Workflow: BEFORE → any object operation | REQUIRED BY → modifiers, transforms
+
     Args:
         name: Name of the object to set as active.
     """
@@ -90,6 +100,8 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
 def scene_get_mode(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Reports the current Blender interaction mode and selection summary.
+
+    Workflow: READ-ONLY | USE → check context before operations
 
     Returns a multi-line description with mode, active object, and selected objects to help
     AI agents branch logic without guessing the context.
@@ -116,6 +128,8 @@ def scene_get_mode(ctx: Context) -> str:
 def scene_list_selection(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Lists the current selection in Object or Edit Mode.
+
+    Workflow: READ-ONLY | USE → verify selection state
 
     Provides counts for selected objects and, when in Edit Mode, counts of selected
     vertices/edges/faces. Useful for verifying assumptions before destructive edits.
@@ -150,6 +164,8 @@ def scene_list_selection(ctx: Context) -> str:
 def scene_inspect_object(ctx: Context, name: str) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Provides a detailed report for a single object (transform, collections, materials, modifiers, mesh stats).
+
+    Workflow: READ-ONLY | USE → detailed object audit
     """
     handler = get_scene_handler()
     try:
@@ -223,6 +239,8 @@ def scene_get_viewport(
     output_mode: Literal["IMAGE", "BASE64", "FILE", "MARKDOWN"] = "IMAGE",
 ) -> Union[Image, str]:
     """Get a visual preview of the scene (OpenGL Viewport Render).
+
+    Workflow: LAST STEP → visual verification | USE → AI preview
 
     The tool can return the viewport in multiple formats, controlled by
     ``output_mode``:
@@ -303,6 +321,8 @@ def scene_snapshot_state(
     """
     [SCENE][SAFE][READ-ONLY] Captures a lightweight JSON snapshot of the scene state.
 
+    Workflow: BEFORE → operations | AFTER → scene_compare_snapshot
+
     Returns a serialized snapshot containing object transforms, hierarchy, modifiers,
     and selection state. Includes a SHA256 hash for change detection. Large payloads
     are possible when optional flags are enabled.
@@ -349,6 +369,8 @@ def scene_compare_snapshot(
 ) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Compares two scene snapshots and returns a diff summary.
+
+    Workflow: AFTER → scene_snapshot_state (x2) | USE → verify changes
 
     Takes two JSON snapshot strings (from scene_snapshot_state) and computes
     the differences: objects added/removed, and modifications to transforms,
@@ -424,6 +446,8 @@ def scene_inspect_material_slots(
     """
     [SCENE][SAFE][READ-ONLY] Audits material slot assignments across the entire scene.
 
+    Workflow: READ-ONLY | USE WITH → material_list_by_object
+
     Provides a comprehensive view of how materials are distributed across all objects,
     including empty slots, missing materials, and assignment statistics. Useful for
     identifying material issues before rendering or export.
@@ -490,10 +514,12 @@ def scene_inspect_mesh_topology(
 ) -> str:
     """
     [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
-    
+
+    Workflow: READ-ONLY | USE → quality check before export
+
     Includes counts for vertices, edges, faces, triangles, quads, ngons.
     If detailed=True, checks for non-manifold edges and loose geometry (more expensive).
-    
+
     Args:
         object_name: Name of the mesh object.
         detailed: If True, performs expensive checks (non-manifold, loose geometry).
@@ -531,9 +557,11 @@ def scene_inspect_modifiers(
 ) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
-    
+
+    Workflow: READ-ONLY | BEFORE → modeling_apply_modifier
+
     Can inspect a specific object or audit the entire scene.
-    
+
     Args:
         object_name: Optional name of the object to inspect. If None, scans all objects.
         include_disabled: If True, includes modifiers disabled in viewport/render.
@@ -606,6 +634,8 @@ def scene_create_light(
     """
     [SCENE][SAFE] Creates a light source.
 
+    Workflow: AFTER → geometry complete | BEFORE → scene_get_viewport
+
     Args:
         type: 'POINT', 'SUN', 'SPOT', 'AREA'.
         energy: Power in Watts.
@@ -634,6 +664,8 @@ def scene_create_camera(
     """
     [SCENE][SAFE] Creates a camera object.
 
+    Workflow: AFTER → geometry complete | USE WITH → scene_get_viewport
+
     Args:
         location: [x, y, z]. Can be a list or string '[0.0, 0.0, 10.0]'.
         rotation: [x, y, z] Euler angles in radians. Can be a list or string.
@@ -661,6 +693,8 @@ def scene_create_empty(
     """
     [SCENE][SAFE] Creates an Empty object (useful for grouping or tracking).
 
+    Workflow: USE FOR → grouping/parenting | WITH → scene_set_active
+
     Args:
         type: 'PLAIN_AXES', 'ARROWS', 'SINGLE_ARROW', 'CIRCLE', 'CUBE', 'SPHERE', 'CONE', 'IMAGE'.
         size: Display size.
@@ -678,7 +712,9 @@ def scene_create_empty(
 def scene_set_mode(ctx: Context, mode: str) -> str:
     """
     [SCENE][SAFE] Sets the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
-    
+
+    Workflow: CRITICAL → switching OBJECT↔EDIT | BEFORE → mesh_* or modeling_*
+
     Args:
         mode: The target mode (case-insensitive).
     """

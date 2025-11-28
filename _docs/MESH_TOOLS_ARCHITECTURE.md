@@ -290,6 +290,214 @@ Example:
 
 ---
 
+# 15. mesh_select_loop ✅ Done
+
+Selects an edge loop (continuous line of edges) based on target edge index.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- edge_index: int (target edge to start loop selection)
+
+Example:
+```json
+{
+  "tool": "mesh_select_loop",
+  "args": {
+    "edge_index": 4
+  }
+}
+```
+
+Use Case:
+- Selecting borders, seams, or topological rings
+- Preparing edges for bevel or extrusion
+
+---
+
+# 16. mesh_select_ring ✅ Done
+
+Selects an edge ring (parallel edges) based on target edge index.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- edge_index: int (target edge to start ring selection)
+
+Example:
+```json
+{
+  "tool": "mesh_select_ring",
+  "args": {
+    "edge_index": 4
+  }
+}
+```
+
+Use Case:
+- Selecting parallel edge bands
+- Preparing for loop cuts or inset operations
+
+---
+
+# 17. mesh_select_linked ✅ Done
+
+Selects all geometry connected to current selection (islands).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+**Priority:** 🔴 CRITICAL for mesh_boolean after join_objects
+
+Args: None
+
+Example:
+```json
+{
+  "tool": "mesh_select_linked",
+  "args": {}
+}
+```
+
+Use Case:
+- Selecting mesh islands after join_objects
+- Preparing specific geometry for boolean operations
+
+---
+
+# 18. mesh_select_more ✅ Done
+
+Grows the current selection by one step.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args: None
+
+Example:
+```json
+{
+  "tool": "mesh_select_more",
+  "args": {}
+}
+```
+
+---
+
+# 19. mesh_select_less ✅ Done
+
+Shrinks the current selection by one step.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args: None
+
+Example:
+```json
+{
+  "tool": "mesh_select_less",
+  "args": {}
+}
+```
+
+---
+
+# 20. mesh_get_vertex_data ✅ Done
+
+Returns vertex positions and selection states for programmatic analysis.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+**Priority:** 🔴 CRITICAL - Foundation for programmatic selection
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "vertex_count": 8,
+  "selected_count": 4,
+  "returned_count": 8,
+  "vertices": [
+    {"index": 0, "position": [1.0, 1.0, 1.0], "selected": true},
+    {"index": 1, "position": [1.0, -1.0, 1.0], "selected": false}
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_vertex_data",
+  "args": {
+    "object_name": "Cube",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Analyzing vertex positions for selection decisions
+- Foundation for mesh_select_by_location validation
+
+---
+
+# 21. mesh_select_by_location ✅ Done
+
+Selects geometry within coordinate range on specified axis.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- axis: str ('X', 'Y', 'Z')
+- min_coord: float
+- max_coord: float
+- mode: str ('VERT', 'EDGE', 'FACE') - default 'VERT'
+
+Example:
+```json
+{
+  "tool": "mesh_select_by_location",
+  "args": {
+    "axis": "Z",
+    "min_coord": 0.5,
+    "max_coord": 2.0,
+    "mode": "VERT"
+  }
+}
+```
+
+Use Case:
+- "Select all vertices above Z=0.5"
+- Spatial operations without knowing exact indices
+
+---
+
+# 22. mesh_select_boundary ✅ Done
+
+Selects boundary edges (1 adjacent face) or boundary vertices.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+**Priority:** 🔴 CRITICAL for mesh_fill_holes workflow
+
+Args:
+- mode: str ('EDGE', 'VERT') - default 'EDGE'
+
+Example:
+```json
+{
+  "tool": "mesh_select_boundary",
+  "args": {
+    "mode": "EDGE"
+  }
+}
+```
+
+Use Case:
+- Targeting specific holes for mesh_fill_holes
+- Identifying open edges for quality checks
+- Selecting boundary loops for extrusion
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

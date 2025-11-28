@@ -99,3 +99,56 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def select_loop(self, edge_index: int) -> str:
+        args = {"edge_index": edge_index}
+        response = self.rpc.send_request("mesh.select_loop", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_ring(self, edge_index: int) -> str:
+        args = {"edge_index": edge_index}
+        response = self.rpc.send_request("mesh.select_ring", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_linked(self) -> str:
+        response = self.rpc.send_request("mesh.select_linked")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_more(self) -> str:
+        response = self.rpc.send_request("mesh.select_more")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_less(self) -> str:
+        response = self.rpc.send_request("mesh.select_less")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        response = self.rpc.send_request("mesh.get_vertex_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+        args = {"axis": axis, "min_coord": min_coord, "max_coord": max_coord, "mode": mode}
+        response = self.rpc.send_request("mesh.select_by_location", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def select_boundary(self, mode: str = 'EDGE') -> str:
+        args = {"mode": mode}
+        response = self.rpc.send_request("mesh.select_boundary", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

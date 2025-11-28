@@ -419,3 +419,332 @@ class MeshHandler:
                 }
         else:
             raise ValueError(f"Invalid group_type '{group_type}'. Must be 'VERTEX' or 'FACE'")
+
+    def select_loop(self, edge_index):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge loop based on the target edge index.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate edge index
+        if edge_index < 0 or edge_index >= len(bm.edges):
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
+        
+        # Deselect all first
+        for edge in bm.edges:
+            edge.select = False
+        for vert in bm.verts:
+            vert.select = False
+        for face in bm.faces:
+            face.select = False
+        
+        # Select the target edge
+        target_edge = bm.edges[edge_index]
+        target_edge.select = True
+        
+        # Ensure mesh is updated
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Use Blender's loop selection operator
+        bpy.ops.mesh.loop_multi_select(ring=False)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected edge loop from edge {edge_index}"
+
+    def select_ring(self, edge_index):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge ring based on the target edge index.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate edge index
+        if edge_index < 0 or edge_index >= len(bm.edges):
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
+        
+        # Deselect all first
+        for edge in bm.edges:
+            edge.select = False
+        for vert in bm.verts:
+            vert.select = False
+        for face in bm.faces:
+            face.select = False
+        
+        # Select the target edge
+        target_edge = bm.edges[edge_index]
+        target_edge.select = True
+        
+        # Ensure mesh is updated
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Use Blender's ring selection operator
+        bpy.ops.mesh.loop_multi_select(ring=True)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected edge ring from edge {edge_index}"
+
+    def select_linked(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Check if anything is selected
+        selected_count = sum(1 for v in bm.verts if v.select)
+        
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one vertex/edge/face to use select_linked")
+        
+        # Use Blender's select_linked operator
+        bpy.ops.mesh.select_linked()
+        
+        # Count selected after operation
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected linked geometry ({final_count} vertices total)"
+
+    def select_more(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Count selected before
+        initial_count = sum(1 for v in bm.verts if v.select)
+        
+        if initial_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one element to grow selection")
+        
+        # Grow selection
+        bpy.ops.mesh.select_more()
+        
+        # Count selected after
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Grew selection by one step ({initial_count} -> {final_count} vertices)"
+
+    def select_less(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Count selected before
+        initial_count = sum(1 for v in bm.verts if v.select)
+        
+        if initial_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one element to shrink selection")
+        
+        # Shrink selection
+        bpy.ops.mesh.select_less()
+        
+        # Count selected after
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Shrunk selection by one step ({initial_count} -> {final_count} vertices)"
+
+    def get_vertex_data(self, object_name, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+        
+        # Ensure we're in EDIT mode to read bmesh data
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        vertices = []
+        selected_count = 0
+        
+        for v in bm.verts:
+            if v.select:
+                selected_count += 1
+            
+            # Skip if selected_only is True and vertex is not selected
+            if selected_only and not v.select:
+                continue
+            
+            vertices.append({
+                "index": v.index,
+                "position": [round(v.co.x, 6), round(v.co.y, 6), round(v.co.z, 6)],
+                "selected": v.select
+            })
+        
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+        
+        return {
+            "object_name": object_name,
+            "vertex_count": len(bm.verts),
+            "selected_count": selected_count,
+            "returned_count": len(vertices),
+            "vertices": vertices
+        }
+
+    def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate axis
+        axis = axis.upper()
+        if axis not in ['X', 'Y', 'Z']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+        
+        # Validate mode
+        mode = mode.upper()
+        if mode not in ['VERT', 'EDGE', 'FACE']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid mode '{mode}'. Must be VERT, EDGE, or FACE")
+        
+        axis_idx = {'X': 0, 'Y': 1, 'Z': 2}[axis]
+        selected_count = 0
+        
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+        
+        if mode == 'VERT':
+            for v in bm.verts:
+                coord = v.co[axis_idx]
+                if min_coord <= coord <= max_coord:
+                    v.select = True
+                    selected_count += 1
+        
+        elif mode == 'EDGE':
+            for e in bm.edges:
+                # Check if both verts are in range
+                v1_coord = e.verts[0].co[axis_idx]
+                v2_coord = e.verts[1].co[axis_idx]
+                avg_coord = (v1_coord + v2_coord) / 2
+                if min_coord <= avg_coord <= max_coord:
+                    e.select = True
+                    e.verts[0].select = True
+                    e.verts[1].select = True
+                    selected_count += 1
+        
+        elif mode == 'FACE':
+            for f in bm.faces:
+                # Use face centroid
+                centroid = f.calc_center_median()
+                coord = centroid[axis_idx]
+                if min_coord <= coord <= max_coord:
+                    f.select = True
+                    for v in f.verts:
+                        v.select = True
+                    for e in f.edges:
+                        e.select = True
+                    selected_count += 1
+        
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected {selected_count} {mode.lower()}(s) in range {axis}=[{min_coord}, {max_coord}]"
+
+    def select_boundary(self, mode='EDGE'):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate mode
+        mode = mode.upper()
+        if mode not in ['EDGE', 'VERT']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid mode '{mode}'. Must be EDGE or VERT")
+        
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+        
+        selected_count = 0
+        
+        if mode == 'EDGE':
+            # Select boundary edges (edges with only 1 adjacent face)
+            for edge in bm.edges:
+                if edge.is_boundary:
+                    edge.select = True
+                    edge.verts[0].select = True
+                    edge.verts[1].select = True
+                    selected_count += 1
+        
+        elif mode == 'VERT':
+            # Select boundary vertices
+            for vert in bm.verts:
+                if vert.is_boundary:
+                    vert.select = True
+                    selected_count += 1
+        
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected {selected_count} boundary {mode.lower()}(s)"

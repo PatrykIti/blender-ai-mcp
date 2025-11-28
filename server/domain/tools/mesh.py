@@ -74,3 +74,43 @@ class IMeshTool(ABC):
     def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> Dict[str, Any]:
         """Lists vertex/face groups defined on a mesh object."""
         pass
+
+    @abstractmethod
+    def select_loop(self, edge_index: int) -> str:
+        """Selects an edge loop based on the target edge index."""
+        pass
+
+    @abstractmethod
+    def select_ring(self, edge_index: int) -> str:
+        """Selects an edge ring based on the target edge index."""
+        pass
+
+    @abstractmethod
+    def select_linked(self) -> str:
+        """Selects all geometry linked to current selection (connected islands)."""
+        pass
+
+    @abstractmethod
+    def select_more(self) -> str:
+        """Grows the current selection by one step."""
+        pass
+
+    @abstractmethod
+    def select_less(self) -> str:
+        """Shrinks the current selection by one step."""
+        pass
+
+    @abstractmethod
+    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+        """Returns vertex positions and selection states for programmatic analysis."""
+        pass
+
+    @abstractmethod
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+        """Selects geometry within coordinate range on specified axis."""
+        pass
+
+    @abstractmethod
+    def select_boundary(self, mode: str = 'EDGE') -> str:
+        """Selects boundary edges (1 adjacent face) or boundary vertices."""
+        pass

@@ -59,15 +59,15 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide` (Advanced boolean & density ops).
 - [x] `mesh_smooth` / `mesh_flatten`.
 
-#### 🎯 Phase 2.1: Advanced Selection (Planned)
+#### ✅ Phase 2.1: Advanced Selection (Completed)
 Smart selection tools to avoid "index hell" for the AI.
-- [ ] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection.
-- [ ] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
-- [ ] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). Critical for `mesh_fill_holes`.
-- [ ] `mesh_select_linked`: Select linked/connected geometry (islands). Critical for multi-part operations.
-- [ ] `mesh_select_loop`: Select edge loops.
-- [ ] `mesh_select_ring`: Select edge rings.
-- [ ] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
+- [x] `mesh_get_vertex_data`: Get vertex positions and selection state for programmatic selection. 🔴 CRITICAL
+- [x] `mesh_select_by_location`: Select vertices by coordinate range (e.g., all verts above Z=0.5).
+- [x] `mesh_select_boundary`: Select boundary edges/vertices (edges with only 1 face). 🔴 CRITICAL for `mesh_fill_holes`.
+- [x] `mesh_select_linked`: Select linked/connected geometry (islands). 🔴 CRITICAL for multi-part operations.
+- [x] `mesh_select_loop`: Select edge loops.
+- [x] `mesh_select_ring`: Select edge rings.
+- [x] `mesh_select_more` / `mesh_select_less`: Grow/Shrink selection.
 
 #### 🌿 Phase 2.2: Organic & Deform Tools (Planned)
 Essential for organic shapes (hearts, lungs, muscles).
@@ -80,6 +80,12 @@ Preparation for rigging and simulation.
 - [ ] `mesh_create_vertex_group`: Create groups.
 - [ ] `mesh_assign_to_group`: Assign selected vertices.
 
+#### 🔧 Phase 2.4: Core Transform & Geometry Connection (Planned)
+Critical tools for shaping and connecting geometry. 🔴 HIGH PRIORITY
+- [ ] `mesh_transform_selected`: Transform (move/scale/rotate) selected vertices/edges/faces. **CRITICAL - unlocks 80% of modeling tasks.**
+- [ ] `mesh_bridge_edge_loops`: Connect two edge loops with faces.
+- [ ] `mesh_duplicate_selected`: Duplicate selected geometry in-place.
+
 #### 🧪 Phase 2.5: Advanced Mesh Precision (Edit Mode)
 Fine-grained control tools for precise cuts and topology adjustments.
 - [ ] `mesh_knife` / `mesh_knife_project`: Precise cutting using screen or reference geometry.
@@ -87,6 +93,25 @@ Fine-grained control tools for precise cuts and topology adjustments.
 - [ ] `mesh_edge_slide` / `mesh_vertex_slide`: Sliding loops and vertices along existing topology.
 - [ ] `mesh_shrink_fatten` / `mesh_smooth`: Thickness and smoothing adjustments.
 - [ ] `mesh_triangulate` / `mesh_remesh_voxel`: Topology conversion utilities.
+
+#### 🌀 Phase 2.6: Curves & Procedural Geometry (Planned)
+Curve-based modeling and procedural geometry construction.
+- [ ] `curve_create`: Create Bezier/NURBS/Poly curves from control points.
+- [ ] `curve_to_mesh`: Convert curves to mesh with optional profile extrusion.
+- [ ] `mesh_spin`: Revolve/lathe geometry around axis (radial patterns).
+- [ ] `mesh_screw`: Create helical/spiral geometry.
+- [ ] `mesh_add_vertex` / `mesh_add_edge` / `mesh_add_face`: Low-level procedural geometry construction.
+- [ ] `mesh_cursor_set_position`: Set 3D cursor for pivot control.
+
+#### 🧠 LLM Context Optimization: Mega Tools (Planned)
+Unified tools that consolidate multiple related operations to reduce LLM context usage.
+- [ ] `scene_context`: Quick context queries (mode, selection). Replaces 2 tools.
+- [ ] `scene_inspect`: Detailed inspection (object, topology, modifiers, materials). Replaces 4 tools.
+- [ ] `scene_create`: Create helper objects (light, camera, empty). Replaces 3 tools.
+- [ ] `mesh_select`: Simple selection ops (all, none, linked, more, less, boundary). Replaces 5 tools.
+- [ ] `mesh_select_targeted`: Targeted selection (by_index, loop, ring, by_location). Replaces 4 tools.
+
+**Total savings:** 18 tools → 5 mega tools (-13 tool definitions for LLM context)
 
 #### ⏳ Phase 3: Materials & Organization
 - [ ] `material_create`: Setup PBR materials.
@@ -218,7 +243,15 @@ We recommend using Docker to run the MCP Server.
         "mesh_subdivide",
         "mesh_smooth",
         "mesh_flatten",
-        "mesh_list_groups"
+        "mesh_list_groups",
+        "mesh_select_loop",
+        "mesh_select_ring",
+        "mesh_select_linked",
+        "mesh_select_more",
+        "mesh_select_less",
+        "mesh_get_vertex_data",
+        "mesh_select_by_location",
+        "mesh_select_boundary"
       ]
     }
   }
@@ -286,7 +319,15 @@ We recommend using Docker to run the MCP Server.
         "mesh_subdivide",
         "mesh_smooth",
         "mesh_flatten",
-        "mesh_list_groups"
+        "mesh_list_groups",
+        "mesh_select_loop",
+        "mesh_select_ring",
+        "mesh_select_linked",
+        "mesh_select_more",
+        "mesh_select_less",
+        "mesh_get_vertex_data",
+        "mesh_select_by_location",
+        "mesh_select_boundary"
       ]
     }
   }

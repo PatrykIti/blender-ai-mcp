@@ -8,7 +8,9 @@ from server.infrastructure.di import get_mesh_handler
 def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry elements.
-    
+
+    Workflow: START → new workflow | AFTER → mesh_select_by_index, mesh_select_by_location
+
     Args:
         deselect: If True, deselects all. If False (default), selects all.
     """
@@ -22,7 +24,9 @@ def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
 def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected geometry elements.
-    
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_merge_by_distance
+
     Args:
         type: 'VERT', 'EDGE', 'FACE'.
     """
@@ -37,7 +41,9 @@ def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', s
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Selects specific geometry elements by index.
     Uses BMesh for precise 0-based indexing.
-    
+
+    Workflow: BEFORE → mesh_get_vertex_data | AFTER → mesh_select_linked, mesh_select_more
+
     Args:
         indices: List of integer indices.
         type: 'VERT', 'EDGE', 'FACE'.
@@ -56,6 +62,8 @@ def mesh_extrude_region(ctx: Context, move: Union[str, List[float], None] = None
     WARNING: If 'move' is None, new geometry is created in-place (overlapping).
     Always provide 'move' vector or follow up with transform.
 
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth, mesh_merge_by_distance
+
     Args:
         move: Optional [x, y, z] vector to move extruded region. Can be a list or string '[0.0, 0.0, 2.0]'.
     """
@@ -71,6 +79,8 @@ def mesh_fill_holes(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills holes by creating faces from selected edges/vertices.
     Equivalent to pressing 'F' key in Blender.
+
+    Workflow: BEFORE → mesh_select_boundary (CRITICAL!) | AFTER → mesh_merge_by_distance
     """
     handler = get_mesh_handler()
     try:
@@ -88,7 +98,9 @@ def mesh_bevel(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bevels selected edges or vertices.
-    
+
+    Workflow: BEFORE → mesh_select_loop, mesh_select_ring | AFTER → mesh_smooth
+
     Args:
         offset: Size of the bevel (distance/width).
         segments: Number of segments (rounding).
@@ -111,7 +123,9 @@ def mesh_loop_cut(
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Adds cuts to mesh geometry.
     IMPORTANT: Uses 'subdivide' on SELECTED edges.
     Select edges perpendicular to desired cut direction first.
-    
+
+    Workflow: BEFORE → mesh_select_by_index(EDGE) | AFTER → mesh_select_loop
+
     Args:
         number_cuts: Number of cuts to make.
         smoothness: Smoothness of the subdivision.
@@ -130,7 +144,9 @@ def mesh_inset(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Insets selected faces (creates smaller faces inside).
-    
+
+    Workflow: BEFORE → mesh_select_*(FACE) | AFTER → mesh_extrude_region
+
     Args:
         thickness: Amount to inset.
         depth: Amount to move the inset face in/out.
@@ -151,12 +167,14 @@ def mesh_boolean(
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
     Formula: Unselected - Selected (for DIFFERENCE).
     TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
-    
+
+    Workflow: BEFORE → modeling_join_objects + mesh_select_linked | AFTER → mesh_merge_by_distance, mesh_fill_holes
+
     Workflow:
       1. Select 'Cutter' geometry.
       2. Deselect 'Base' geometry.
       3. Run tool.
-    
+
     Args:
         operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
         solver: 'EXACT' (modern, recommended) or 'FLOAT' (legacy).
@@ -175,7 +193,9 @@ def mesh_merge_by_distance(
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Merges vertices within threshold distance.
     Useful for cleaning up geometry after imports or boolean ops.
-    
+
+    Workflow: BEFORE → mesh_boolean, mesh_extrude | AFTER → mesh_smooth
+
     Args:
         distance: Threshold distance to merge.
     """
@@ -193,7 +213,9 @@ def mesh_subdivide(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Subdivides selected geometry.
-    
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth
+
     Args:
         number_cuts: Number of cuts.
         smoothness: Smoothness factor (0.0 to 1.0).
@@ -213,7 +235,9 @@ def mesh_smooth(
     """
     [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
     Uses Laplacian smoothing to refine organic shapes and remove hard edges.
-    
+
+    Workflow: BEFORE → mesh_boolean, mesh_extrude, mesh_bevel | LAST STEP in edit workflow
+
     Args:
         iterations: Number of smoothing passes (1-100). More = smoother
         factor: Smoothing strength (0.0-1.0). 0=no effect, 1=maximum smoothing
@@ -232,7 +256,9 @@ def mesh_flatten(
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
     Aligns vertices perpendicular to chosen axis (X: YZ plane, Y: XZ plane, Z: XY plane).
-    
+
+    Workflow: BEFORE → mesh_select_by_location | USE FOR → creating flat surfaces
+
     Args:
         axis: Axis to flatten along ("X", "Y", or "Z")
     """
@@ -251,7 +277,9 @@ def mesh_list_groups(
 ) -> str:
     """
     [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh.
-    
+
+    Workflow: READ-ONLY | USE WITH → scene_inspect_object
+
     Args:
         object_name: Name of the mesh object.
         group_type: 'VERTEX' or 'FACE' (defaults to VERTEX).
@@ -309,5 +337,260 @@ def mesh_list_groups(
         ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
         return "\n".join(lines)
         
+    except RuntimeError as e:
+        return str(e)
+@mcp.tool()
+def mesh_select_loop(
+    ctx: Context,
+    edge_index: int
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge loop based on the target edge index.
+
+    Workflow: BEFORE → mesh_select_by_index(EDGE) | AFTER → mesh_bevel, mesh_extrude
+
+    Edge loops are continuous lines of edges that form rings around the mesh topology.
+    This is crucial for selecting borders, seams, or topological features.
+
+    Args:
+        edge_index: Index of the target edge that defines which loop to select.
+
+    Returns:
+        Success message indicating the loop was selected.
+
+    Example:
+        mesh_select_loop(edge_index=5) -> Selects the edge loop containing edge 5
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_loop(edge_index)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_ring(
+    ctx: Context,
+    edge_index: int
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge ring based on the target edge index.
+
+    Workflow: BEFORE → mesh_select_by_index(EDGE) | AFTER → mesh_loop_cut
+
+    Edge rings are parallel rings of edges that run perpendicular to edge loops.
+    Useful for selecting parallel topology features around cylindrical or circular structures.
+
+    Args:
+        edge_index: Index of the target edge that defines which ring to select.
+
+    Returns:
+        Success message indicating the ring was selected.
+
+    Example:
+        mesh_select_ring(edge_index=3) -> Selects the edge ring containing edge 3
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_ring(edge_index)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_linked(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
+
+    Workflow: BEFORE → mesh_select_by_index (one vert) | CRITICAL FOR → mesh_boolean after join
+
+    Selects all connected/linked geometry (mesh islands) starting from the current selection.
+    This is CRITICAL for multi-part operations like booleans after joining objects.
+
+    Use case: After joining two cubes, select one vertex of the first cube,
+    then use mesh_select_linked to select the entire first cube island.
+
+    Returns:
+        Success message indicating linked geometry was selected.
+
+    Example:
+        mesh_select_linked() -> Selects all geometry connected to current selection
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_linked()
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_more(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
+
+    Workflow: AFTER → mesh_select_* | USE → grow selection iteratively
+
+    Expands the selection to include all geometry elements adjacent to the current selection.
+    Useful for gradually expanding selection regions or creating selection borders.
+
+    Returns:
+        Success message indicating selection was expanded.
+
+    Example:
+        mesh_select_more() -> Expands selection by one step
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_more()
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_less(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
+
+    Workflow: AFTER → mesh_select_* | USE → shrink selection from boundaries
+
+    Contracts the selection by removing boundary elements from the current selection.
+    Useful for refining selections or removing outer layers.
+
+    Returns:
+        Success message indicating selection was contracted.
+
+    Example:
+        mesh_select_less() -> Contracts selection by one step
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_less()
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_get_vertex_data(
+    ctx: Context,
+    object_name: str,
+    selected_only: bool = False
+) -> str:
+    """
+    [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states for programmatic analysis.
+
+    Workflow: FIRST STEP for programmatic selection | AFTER → mesh_select_by_index, mesh_select_by_location
+
+    This is a CRITICAL introspection tool that enables AI to make programmatic selection decisions
+    based on geometry data. Does NOT modify the mesh - pure read operation.
+
+    Args:
+        object_name: Name of the object to inspect
+        selected_only: If True, only return data for selected vertices (default: False)
+
+    Returns:
+        JSON string with vertex data:
+        {
+            "vertex_count": 8,
+            "selected_count": 4,
+            "vertices": [
+                {"index": 0, "position": [1.0, 1.0, 1.0], "selected": true},
+                {"index": 1, "position": [1.0, -1.0, 1.0], "selected": false}
+            ]
+        }
+
+    Use cases:
+        - Analyze vertex positions to determine selection strategy
+        - Find vertices by coordinate ranges
+        - Understand geometry before performing operations
+
+    Example:
+        mesh_get_vertex_data(object_name="Cube") -> Returns all vertex data
+        mesh_get_vertex_data(object_name="Cube", selected_only=True) -> Returns only selected vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        import json
+        result = handler.get_vertex_data(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_by_location(
+    ctx: Context,
+    axis: str,
+    min_coord: float,
+    max_coord: float,
+    mode: str = 'VERT'
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range on specified axis.
+
+    Workflow: BEFORE → mesh_get_vertex_data (optional) | AFTER → mesh_select_more, mesh_select_linked
+
+    Enables spatial selection without manual index specification. Selects all vertices/edges/faces
+    whose coordinates fall within the specified range on the given axis.
+
+    Args:
+        axis: 'X', 'Y', or 'Z' - the axis to evaluate
+        min_coord: Minimum coordinate value (inclusive)
+        max_coord: Maximum coordinate value (inclusive)
+        mode: 'VERT' (vertices), 'EDGE' (edges), or 'FACE' (faces) - what to select
+
+    Returns:
+        Success message with count of selected elements.
+
+    Use cases:
+        - "Select all vertices above Z=0.5" -> axis='Z', min_coord=0.5, max_coord=999
+        - "Select faces in middle section" -> axis='Y', min_coord=-0.5, max_coord=0.5
+        - "Select left half of mesh" -> axis='X', min_coord=-999, max_coord=0
+
+    Examples:
+        mesh_select_by_location(axis='Z', min_coord=0.5, max_coord=10.0)
+          -> Selects all vertices with Z >= 0.5
+
+        mesh_select_by_location(axis='Y', min_coord=-1.0, max_coord=1.0, mode='FACE')
+          -> Selects all faces with centroids between Y=-1 and Y=1
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_by_location(axis, min_coord, max_coord, mode)
+    except RuntimeError as e:
+        return str(e)
+
+@mcp.tool()
+def mesh_select_boundary(
+    ctx: Context,
+    mode: str = 'EDGE'
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices (🔴 CRITICAL for mesh_fill_holes).
+
+    Workflow: CRITICAL BEFORE → mesh_fill_holes | USE → find holes/open edges
+
+    Boundary edges have only ONE adjacent face (indicating a hole or open edge in the mesh).
+    Boundary vertices are connected to boundary edges.
+
+    This is CRITICAL for mesh_fill_holes - use this to select specific hole edges before filling,
+    instead of selecting everything with mesh_select_all.
+
+    Args:
+        mode: 'EDGE' (select boundary edges) or 'VERT' (select boundary vertices)
+
+    Returns:
+        Success message with count of boundary elements selected.
+
+    Use cases:
+        - Select edges of a specific hole before mesh_fill_holes
+        - Identify open edges in mesh for quality checks
+        - Select boundary loops for extrusion/detachment operations
+
+    Workflow for targeted hole filling:
+        1. mesh_select_boundary(mode='EDGE')  # Select all hole edges
+        2. mesh_select_by_index to refine to specific hole (optional)
+        3. mesh_fill_holes()  # Fill only the selected hole
+
+    Examples:
+        mesh_select_boundary(mode='EDGE') -> Selects all edges with only 1 face
+        mesh_select_boundary(mode='VERT') -> Selects all vertices on boundaries
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_boundary(mode)
     except RuntimeError as e:
         return str(e)
