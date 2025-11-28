@@ -353,3 +353,75 @@ class TestMeshSelectMoreLess(unittest.TestCase):
             self.handler.select_more()
 
         assert "No geometry selected" in str(context.exception)
+
+
+class TestMeshSelectByLocation(unittest.TestCase):
+    def setUp(self):
+        self.handler = MeshHandler()
+
+        # Reset mocks
+        bpy.context.active_object = MagicMock()
+        bpy.context.active_object.type = 'MESH'
+        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.mode = 'OBJECT'
+        bpy.ops.object.mode_set = MagicMock()
+        bmesh.from_edit_mesh = MagicMock()
+        bmesh.update_edit_mesh = MagicMock()
+
+    def test_select_by_location_vertices(self):
+        """Should select vertices within coordinate range."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create 10 vertices with Z coordinates from 0 to 9
+        verts = []
+        for i in range(10):
+            v = MagicMock()
+            v.co = MagicMock()
+            v.co.__getitem__ = lambda self, idx, val=i: float(val) if idx == 2 else 0.0
+            v.select = False
+            verts.append(v)
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.side_effect = [iter(verts), iter(verts)]
+        bm.verts = mock_verts_seq
+
+        bm.edges = MagicMock()
+        bm.edges.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        # Execute: select vertices with Z between 3 and 6
+        result = self.handler.select_by_location(axis='Z', min_coord=3.0, max_coord=6.0, mode='VERT')
+
+        # Verify
+        assert "Selected 4 vert(s)" in result  # Verts 3, 4, 5, 6
+        assert "Z=[3.0, 6.0]" in result
+
+    def test_select_by_location_invalid_axis(self):
+        """Should raise ValueError for invalid axis."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+        
+        bm.verts = []
+        bm.edges = []
+        bm.faces = []
+
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_by_location(axis='W', min_coord=0, max_coord=1)
+
+        assert "Invalid axis 'W'" in str(context.exception)
+
+    def test_select_by_location_invalid_mode(self):
+        """Should raise ValueError for invalid mode."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+        
+        bm.verts = []
+        bm.edges = []
+        bm.faces = []
+
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_by_location(axis='X', min_coord=0, max_coord=1, mode='INVALID')
+
+        assert "Invalid mode 'INVALID'" in str(context.exception)

@@ -469,3 +469,44 @@ def mesh_get_vertex_data(
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_select_by_location(
+    ctx: Context,
+    axis: str,
+    min_coord: float,
+    max_coord: float,
+    mode: str = 'VERT'
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range on specified axis.
+    
+    Enables spatial selection without manual index specification. Selects all vertices/edges/faces
+    whose coordinates fall within the specified range on the given axis.
+    
+    Args:
+        axis: 'X', 'Y', or 'Z' - the axis to evaluate
+        min_coord: Minimum coordinate value (inclusive)
+        max_coord: Maximum coordinate value (inclusive)
+        mode: 'VERT' (vertices), 'EDGE' (edges), or 'FACE' (faces) - what to select
+    
+    Returns:
+        Success message with count of selected elements.
+    
+    Use cases:
+        - "Select all vertices above Z=0.5" -> axis='Z', min_coord=0.5, max_coord=999
+        - "Select faces in middle section" -> axis='Y', min_coord=-0.5, max_coord=0.5
+        - "Select left half of mesh" -> axis='X', min_coord=-999, max_coord=0
+    
+    Examples:
+        mesh_select_by_location(axis='Z', min_coord=0.5, max_coord=10.0) 
+          -> Selects all vertices with Z >= 0.5
+        
+        mesh_select_by_location(axis='Y', min_coord=-1.0, max_coord=1.0, mode='FACE')
+          -> Selects all faces with centroids between Y=-1 and Y=1
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_by_location(axis, min_coord, max_coord, mode)
+    except RuntimeError as e:
+        return str(e)

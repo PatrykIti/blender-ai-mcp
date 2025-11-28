@@ -626,3 +626,76 @@ class MeshHandler:
             "returned_count": len(vertices),
             "vertices": vertices
         }
+
+    def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate axis
+        axis = axis.upper()
+        if axis not in ['X', 'Y', 'Z']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+        
+        # Validate mode
+        mode = mode.upper()
+        if mode not in ['VERT', 'EDGE', 'FACE']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid mode '{mode}'. Must be VERT, EDGE, or FACE")
+        
+        axis_idx = {'X': 0, 'Y': 1, 'Z': 2}[axis]
+        selected_count = 0
+        
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+        
+        if mode == 'VERT':
+            for v in bm.verts:
+                coord = v.co[axis_idx]
+                if min_coord <= coord <= max_coord:
+                    v.select = True
+                    selected_count += 1
+        
+        elif mode == 'EDGE':
+            for e in bm.edges:
+                # Check if both verts are in range
+                v1_coord = e.verts[0].co[axis_idx]
+                v2_coord = e.verts[1].co[axis_idx]
+                avg_coord = (v1_coord + v2_coord) / 2
+                if min_coord <= avg_coord <= max_coord:
+                    e.select = True
+                    e.verts[0].select = True
+                    e.verts[1].select = True
+                    selected_count += 1
+        
+        elif mode == 'FACE':
+            for f in bm.faces:
+                # Use face centroid
+                centroid = f.calc_center_median()
+                coord = centroid[axis_idx]
+                if min_coord <= coord <= max_coord:
+                    f.select = True
+                    for v in f.verts:
+                        v.select = True
+                    for e in f.edges:
+                        e.select = True
+                    selected_count += 1
+        
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected {selected_count} {mode.lower()}(s) in range {axis}=[{min_coord}, {max_coord}]"

@@ -104,3 +104,8 @@ class IMeshTool(ABC):
     def get_vertex_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
         """Returns vertex positions and selection states for programmatic analysis."""
         pass
+
+    @abstractmethod
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+        """Selects geometry within coordinate range on specified axis."""
+        pass

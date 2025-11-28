@@ -138,3 +138,10 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+        args = {"axis": axis, "min_coord": min_coord, "max_coord": max_coord, "mode": mode}
+        response = self.rpc.send_request("mesh.select_by_location", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
