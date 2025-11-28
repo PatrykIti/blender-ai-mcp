@@ -1,4 +1,4 @@
-# TASK-020-2: Mesh Select Mega Tool
+# TASK-020-2: Mesh Select Mega Tool (Simple)
 
 **Status:** ⏳ To Do
 **Priority:** 🔴 High
@@ -9,7 +9,7 @@
 
 ## 🎯 Cel
 
-Utworzyć zunifikowany tool `mesh_select` który zastąpi 9 osobnych narzędzi selection, oszczędzając kontekst LLM.
+Utworzyć zunifikowany tool `mesh_select` dla prostych operacji selekcji (bez dodatkowych parametrów).
 
 ---
 
@@ -18,65 +18,49 @@ Utworzyć zunifikowany tool `mesh_select` który zastąpi 9 osobnych narzędzi s
 | Oryginalny Tool | Action |
 |-----------------|--------|
 | `mesh_select_all` | `"all"` / `"none"` |
-| `mesh_select_by_index` | `"by_index"` |
-| `mesh_select_loop` | `"loop"` |
-| `mesh_select_ring` | `"ring"` |
 | `mesh_select_linked` | `"linked"` |
 | `mesh_select_more` | `"more"` |
 | `mesh_select_less` | `"less"` |
-| `mesh_select_by_location` | `"by_location"` |
 | `mesh_select_boundary` | `"boundary"` |
 
-**NIE zastępuje (zostaje osobno):**
-- `mesh_get_vertex_data` - READ-ONLY tool zwracający dane, nie pasuje do selection
+**NIE zastępuje (osobne narzędzia):**
+- `mesh_get_vertex_data` - READ-ONLY tool zwracający dane
+- `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` → TASK-020-4
 
-**Oszczędność:** 9 tools → 1 tool (-8 definitions dla LLM)
+**Oszczędność:** 5 tools → 1 tool (-4 definitions dla LLM)
 
 ---
 
 ## 🔧 Sygnatura
 
 ```python
-from typing import List, Literal, Optional
+from typing import Literal
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 
 @mcp.tool()
 def mesh_select(
     ctx: Context,
-    action: Literal["all", "none", "by_index", "loop", "ring", "linked", "more", "less", "by_location", "boundary"],
-    indices: Optional[List[int]] = None,
-    element_type: Literal["VERT", "EDGE", "FACE"] = "VERT",
-    selection_mode: Literal["SET", "ADD", "SUBTRACT"] = "SET",
-    edge_index: Optional[int] = None,
-    axis: Optional[Literal["X", "Y", "Z"]] = None,
-    min_coord: Optional[float] = None,
-    max_coord: Optional[float] = None,
+    action: Literal["all", "none", "linked", "more", "less", "boundary"],
     boundary_mode: Literal["EDGE", "VERT"] = "EDGE"
 ) -> str:
     """
-    [EDIT MODE][SELECTION-BASED][SAFE] Unified selection tool for mesh geometry.
+    [EDIT MODE][SELECTION-BASED][SAFE] Simple selection operations for mesh geometry.
 
-    Actions and required parameters:
+    Actions:
     - "all": Selects all geometry. No params required.
     - "none": Deselects all geometry. No params required.
-    - "by_index": Requires indices (list of ints), element_type (VERT/EDGE/FACE). Optional: selection_mode (SET/ADD/SUBTRACT).
-    - "loop": Requires edge_index (int). Selects edge loop starting from that edge.
-    - "ring": Requires edge_index (int). Selects edge ring starting from that edge.
-    - "linked": No params required. Selects all geometry connected to current selection.
-    - "more": No params required. Grows selection by 1 step.
-    - "less": No params required. Shrinks selection by 1 step.
-    - "by_location": Requires axis (X/Y/Z), min_coord, max_coord. Optional: element_type. Selects geometry within coordinate range.
-    - "boundary": Optional boundary_mode (EDGE/VERT). Selects boundary edges or vertices (1 adjacent face).
+    - "linked": Selects all geometry connected to current selection.
+    - "more": Grows selection by 1 step.
+    - "less": Shrinks selection by 1 step.
+    - "boundary": Selects boundary edges/vertices. Optional: boundary_mode (EDGE/VERT).
 
-    Workflow: BEFORE → mesh_get_vertex_data (for indices) | AFTER → mesh_extrude, mesh_delete, mesh_boolean
+    Workflow: BEFORE → mesh_extrude, mesh_delete, mesh_boolean | START → new selection workflow
 
     Examples:
         mesh_select(action="all")
         mesh_select(action="none")
-        mesh_select(action="by_index", indices=[0, 1, 2], element_type="VERT")
-        mesh_select(action="loop", edge_index=4)
-        mesh_select(action="by_location", axis="Z", min_coord=0.5, max_coord=2.0)
+        mesh_select(action="linked")
         mesh_select(action="boundary", boundary_mode="EDGE")
     """
 ```
@@ -87,7 +71,7 @@ def mesh_select(
 
 | Plik | Zmiany |
 |------|--------|
-| `server/adapters/mcp/areas/mesh.py` | Dodaj `mesh_select`. Usuń `@mcp.tool()` z 9 funkcji (zachowaj same funkcje). |
+| `server/adapters/mcp/areas/mesh.py` | Dodaj `mesh_select`. Usuń `@mcp.tool()` z 5 funkcji (zachowaj same funkcje). |
 
 ---
 
@@ -101,7 +85,7 @@ def mesh_select(
 ## ✅ Deliverables
 
 - [ ] Implementacja `mesh_select` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 9 zastąpionych funkcji
+- [ ] Usunięcie `@mcp.tool()` z 5 zastąpionych funkcji
 - [ ] Testy dla `mesh_select`
 - [ ] Aktualizacja dokumentacji
 
@@ -109,6 +93,6 @@ def mesh_select(
 
 ## 📊 Estymacja
 
-- **Nowe linie kodu:** ~80 (routing + docstring)
-- **Modyfikacje:** ~9 (usunięcie dekoratorów)
-- **Testy:** ~50 linii
+- **Nowe linie kodu:** ~40 (routing + docstring)
+- **Modyfikacje:** ~5 (usunięcie dekoratorów)
+- **Testy:** ~25 linii

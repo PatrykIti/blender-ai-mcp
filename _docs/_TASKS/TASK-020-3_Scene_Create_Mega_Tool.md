@@ -9,20 +9,22 @@
 
 ## 🎯 Cel
 
-Utworzyć zunifikowany tool `scene_create` który zastąpi 4 osobne narzędzia tworzenia obiektów, oszczędzając kontekst LLM.
+Utworzyć zunifikowany tool `scene_create` dla tworzenia obiektów pomocniczych sceny (światła, kamery, empty).
 
 ---
 
 ## 📋 Zastępuje (unregister @mcp.tool())
 
-| Oryginalny Tool | Action | Plik źródłowy |
-|-----------------|--------|---------------|
+| Oryginalny Tool | Action | Plik |
+|-----------------|--------|------|
 | `scene_create_light` | `"light"` | scene.py |
 | `scene_create_camera` | `"camera"` | scene.py |
 | `scene_create_empty` | `"empty"` | scene.py |
-| `modeling_create_primitive` | `"primitive"` | modeling.py |
 
-**Oszczędność:** 4 tools → 1 tool (-3 definitions dla LLM)
+**NIE zastępuje (zostaje osobno):**
+- `modeling_create_primitive` - najczęściej używany tool, warto zachować bezpośredni dostęp
+
+**Oszczędność:** 3 tools → 1 tool (-2 definitions dla LLM)
 
 ---
 
@@ -36,7 +38,7 @@ from server.adapters.mcp.instance import mcp
 @mcp.tool()
 def scene_create(
     ctx: Context,
-    action: Literal["light", "camera", "empty", "primitive"],
+    action: Literal["light", "camera", "empty"],
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
     name: Optional[str] = None,
@@ -50,29 +52,27 @@ def scene_create(
     clip_end: Optional[float] = None,
     # Empty params:
     empty_type: Literal["PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"] = "PLAIN_AXES",
-    size: float = 1.0,
-    # Primitive params:
-    primitive_type: Literal["Cube", "Sphere", "Cylinder", "Plane", "Cone", "Monkey", "Torus"] = "Cube",
-    radius: float = 1.0
+    size: float = 1.0
 ) -> str:
     """
-    [SCENE][SAFE] Unified creation tool for scene objects.
+    [SCENE][SAFE] Creates scene helper objects (lights, cameras, empties).
 
-    Actions and required parameters:
+    Actions and parameters:
     - "light": Creates light source. Optional: light_type (POINT/SUN/SPOT/AREA), energy, color, location, name.
     - "camera": Creates camera. Optional: location, rotation, lens, clip_start, clip_end, name.
     - "empty": Creates empty object. Optional: empty_type (PLAIN_AXES/ARROWS/CIRCLE/CUBE/SPHERE/CONE/IMAGE), size, location, name.
-    - "primitive": Creates mesh primitive. Optional: primitive_type (Cube/Sphere/Cylinder/Plane/Cone/Monkey/Torus), radius, size, location, rotation, name.
 
     All location/rotation/color params accept either list [x,y,z] or string "[x,y,z]".
 
-    Workflow: START → new scene object | AFTER → modeling_transform, scene_set_mode('EDIT')
+    For mesh primitives (Cube, Sphere, etc.) use modeling_create_primitive instead.
+
+    Workflow: AFTER → geometry complete | BEFORE → scene_get_viewport
 
     Examples:
         scene_create(action="light", light_type="SUN", energy=5.0)
+        scene_create(action="light", light_type="AREA", location=[0, 0, 5], color=[1.0, 0.9, 0.8])
         scene_create(action="camera", location=[0, -10, 5], rotation=[1.0, 0, 0])
         scene_create(action="empty", empty_type="ARROWS", location=[0, 0, 2])
-        scene_create(action="primitive", primitive_type="Sphere", radius=2.0, location=[0, 0, 3])
     """
 ```
 
@@ -82,8 +82,7 @@ def scene_create(
 
 | Plik | Zmiany |
 |------|--------|
-| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_create`. Usuń `@mcp.tool()` z 3 funkcji. |
-| `server/adapters/mcp/areas/modeling.py` | Usuń `@mcp.tool()` z `modeling_create_primitive`. |
+| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_create`. Usuń `@mcp.tool()` z 3 funkcji (zachowaj same funkcje). |
 
 ---
 
@@ -97,7 +96,7 @@ def scene_create(
 ## ✅ Deliverables
 
 - [ ] Implementacja `scene_create` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 4 zastąpionych funkcji (3 w scene.py, 1 w modeling.py)
+- [ ] Usunięcie `@mcp.tool()` z 3 zastąpionych funkcji
 - [ ] Testy dla `scene_create`
 - [ ] Aktualizacja dokumentacji
 
@@ -105,6 +104,6 @@ def scene_create(
 
 ## 📊 Estymacja
 
-- **Nowe linie kodu:** ~60 (routing + docstring)
-- **Modyfikacje:** ~4 (usunięcie dekoratorów)
-- **Testy:** ~40 linii
+- **Nowe linie kodu:** ~45 (routing + docstring)
+- **Modyfikacje:** ~3 (usunięcie dekoratorów)
+- **Testy:** ~30 linii
