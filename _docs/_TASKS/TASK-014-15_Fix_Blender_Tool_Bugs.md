@@ -1,9 +1,10 @@
 # TASK-014-15: Fix Blender Tool Bugs (Mode Validation, Boolean Solver, Edit Mode Context)
 
-**Status:** 🔄 In Progress
+**Status:** ✅ Completed
 **Priority:** 🔴 Critical
 **Phase:** Phase 7 - Bug Fixes & Quality Improvements
 **Created:** 2025-11-27
+**Completed:** 2025-11-28
 
 ## 🎯 Objective
 Fix 3 critical bugs identified in Blender MCP tools:
@@ -267,16 +268,16 @@ File: `_docs/_MCP_SERVER/README.md`
 Update mesh_boolean section with correct solver options and note about FAST removal.
 
 ## ✅ Deliverables
-- [ ] Fix mesh_boolean solver default (CRITICAL)
-- [ ] Update _ensure_edit_mode() to return previous mode
-- [ ] Update smooth_vertices() to restore mode
-- [ ] Update flatten_vertices() to restore mode
-- [ ] Update scene_clean_scene() to ensure OBJECT mode
-- [ ] Improve scene_set_mode validation
-- [ ] Update MCP tool error handling
-- [ ] Add/update unit tests
-- [ ] Update CHANGELOG
-- [ ] Update tool documentation
+- [x] Fix mesh_boolean solver default (CRITICAL) - Changed to 'EXACT'
+- [x] Update _ensure_edit_mode() to return previous mode - Returns tuple (obj, previous_mode)
+- [x] Update smooth_vertices() to restore mode - Restores previous_mode
+- [x] Update flatten_vertices() to restore mode - Restores previous_mode
+- [x] Update scene_clean_scene() to ensure OBJECT mode - Added mode check
+- [x] Improve scene_set_mode validation - Added object type validation
+- [x] Update MCP tool error handling - ValueError handling added
+- [x] Add/update unit tests - Tests updated
+- [x] Update CHANGELOG - Entry #35 created
+- [x] Update tool documentation - Documentation updated
 
 ## 🧪 Testing Strategy
 

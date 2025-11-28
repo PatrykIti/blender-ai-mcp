@@ -64,9 +64,13 @@ class SceneHandler:
         """Duplicates an object and optionally translates it."""
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-            
+
         obj = bpy.data.objects[name]
-        
+
+        # Ensure we're in OBJECT mode
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
         # Deselect all, select target
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)
@@ -90,7 +94,11 @@ class SceneHandler:
         """Sets the active object."""
         if name not in bpy.data.objects:
              raise ValueError(f"Object '{name}' not found")
-        
+
+        # Ensure we're in OBJECT mode
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
         obj = bpy.data.objects[name]
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)

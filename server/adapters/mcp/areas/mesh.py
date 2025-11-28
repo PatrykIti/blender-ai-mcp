@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_mesh_handler
 
 @mcp.tool()
@@ -49,19 +50,20 @@ def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', s
         return str(e)
 
 @mcp.tool()
-def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
+def mesh_extrude_region(ctx: Context, move: Union[str, List[float], None] = None) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Extrudes selected geometry.
     WARNING: If 'move' is None, new geometry is created in-place (overlapping).
     Always provide 'move' vector or follow up with transform.
-    
+
     Args:
-        move: Optional [x, y, z] vector to move extruded region.
+        move: Optional [x, y, z] vector to move extruded region. Can be a list or string '[0.0, 0.0, 2.0]'.
     """
     handler = get_mesh_handler()
     try:
-        return handler.extrude_region(move)
-    except RuntimeError as e:
+        parsed_move = parse_coordinate(move)
+        return handler.extrude_region(parsed_move)
+    except (RuntimeError, ValueError) as e:
         return str(e)
 
 @mcp.tool()
