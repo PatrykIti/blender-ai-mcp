@@ -419,3 +419,41 @@ class MeshHandler:
                 }
         else:
             raise ValueError(f"Invalid group_type '{group_type}'. Must be 'VERTEX' or 'FACE'")
+
+    def select_loop(self, edge_index):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge loop based on the target edge index.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate edge index
+        if edge_index < 0 or edge_index >= len(bm.edges):
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
+        
+        # Deselect all first
+        for edge in bm.edges:
+            edge.select = False
+        for vert in bm.verts:
+            vert.select = False
+        for face in bm.faces:
+            face.select = False
+        
+        # Select the target edge
+        target_edge = bm.edges[edge_index]
+        target_edge.select = True
+        
+        # Ensure mesh is updated
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Use Blender's loop selection operator
+        bpy.ops.mesh.loop_multi_select(ring=False)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected edge loop from edge {edge_index}"

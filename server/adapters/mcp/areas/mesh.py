@@ -311,3 +311,28 @@ def mesh_list_groups(
         
     except RuntimeError as e:
         return str(e)
+@mcp.tool()
+def mesh_select_loop(
+    ctx: Context,
+    edge_index: int
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge loop based on the target edge index.
+    
+    Edge loops are continuous lines of edges that form rings around the mesh topology.
+    This is crucial for selecting borders, seams, or topological features.
+    
+    Args:
+        edge_index: Index of the target edge that defines which loop to select.
+    
+    Returns:
+        Success message indicating the loop was selected.
+    
+    Example:
+        mesh_select_loop(edge_index=5) -> Selects the edge loop containing edge 5
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_loop(edge_index)
+    except RuntimeError as e:
+        return str(e)

@@ -74,3 +74,8 @@ class IMeshTool(ABC):
     def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> Dict[str, Any]:
         """Lists vertex/face groups defined on a mesh object."""
         pass
+
+    @abstractmethod
+    def select_loop(self, edge_index: int) -> str:
+        """Selects an edge loop based on the target edge index."""
+        pass
