@@ -188,5 +188,74 @@ class TestMeshSelectRing(unittest.TestCase):
         assert "Invalid edge_index 10" in str(context.exception)
 
 
+class TestMeshSelectLinked(unittest.TestCase):
+    def setUp(self):
+        self.handler = MeshHandler()
+
+        # Reset mocks
+        bpy.context.active_object = MagicMock()
+        bpy.context.active_object.type = 'MESH'
+        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.mode = 'OBJECT'
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.mesh.select_linked = MagicMock()
+        bmesh.from_edit_mesh = MagicMock()
+        bmesh.update_edit_mesh = MagicMock()
+
+    def test_select_linked_basic(self):
+        """Should select all linked geometry from current selection."""
+        # Setup BMesh mock
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create verts - 3 selected initially
+        verts = []
+        for i in range(8):
+            vert = MagicMock()
+            vert.select = (i < 3)  # First 3 selected initially
+            verts.append(vert)
+
+        # Mock the selection behavior: after select_linked is called, all become selected
+        def mock_select_linked():
+            for v in verts:
+                v.select = True
+
+        bpy.ops.mesh.select_linked = mock_select_linked
+
+        mock_verts_seq = MagicMock()
+        # First __iter__ is for checking selected_count, second is for final_count (after operation)
+        mock_verts_seq.__iter__.side_effect = [iter(verts), iter(verts)]
+        bm.verts = mock_verts_seq
+
+        # Execute
+        result = self.handler.select_linked()
+
+        # Verify
+        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
+        assert "Selected linked geometry" in result
+        assert "8 vertices total" in result
+
+    def test_select_linked_no_selection(self):
+        """Should raise ValueError when nothing is selected."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # All verts unselected
+        verts = [MagicMock() for _ in range(5)]
+        for v in verts:
+            v.select = False
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.return_value = iter(verts)
+        bm.verts = mock_verts_seq
+
+        # Execute & Verify
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_linked()
+
+        assert "No geometry selected" in str(context.exception)
+        bpy.ops.mesh.select_linked.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

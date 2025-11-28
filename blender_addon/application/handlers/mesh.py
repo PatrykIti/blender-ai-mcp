@@ -495,3 +495,31 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Selected edge ring from edge {edge_index}"
+
+    def select_linked(self):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Check if anything is selected
+        selected_count = sum(1 for v in bm.verts if v.select)
+        
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select at least one vertex/edge/face to use select_linked")
+        
+        # Use Blender's select_linked operator
+        bpy.ops.mesh.select_linked()
+        
+        # Count selected after operation
+        final_count = sum(1 for v in bm.verts if v.select)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected linked geometry ({final_count} vertices total)"

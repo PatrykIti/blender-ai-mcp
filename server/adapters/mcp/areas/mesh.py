@@ -362,3 +362,26 @@ def mesh_select_ring(
         return handler.select_ring(edge_index)
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_select_linked(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
+    
+    Selects all connected/linked geometry (mesh islands) starting from the current selection.
+    This is CRITICAL for multi-part operations like booleans after joining objects.
+    
+    Use case: After joining two cubes, select one vertex of the first cube,
+    then use mesh_select_linked to select the entire first cube island.
+    
+    Returns:
+        Success message indicating linked geometry was selected.
+    
+    Example:
+        mesh_select_linked() -> Selects all geometry connected to current selection
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_linked()
+    except RuntimeError as e:
+        return str(e)
