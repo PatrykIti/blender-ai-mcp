@@ -109,3 +109,8 @@ class IMeshTool(ABC):
     def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
         """Selects geometry within coordinate range on specified axis."""
         pass
+
+    @abstractmethod
+    def select_boundary(self, mode: str = 'EDGE') -> str:
+        """Selects boundary edges (1 adjacent face) or boundary vertices."""
+        pass

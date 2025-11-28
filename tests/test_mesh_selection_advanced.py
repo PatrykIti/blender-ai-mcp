@@ -425,3 +425,104 @@ class TestMeshSelectByLocation(unittest.TestCase):
             self.handler.select_by_location(axis='X', min_coord=0, max_coord=1, mode='INVALID')
 
         assert "Invalid mode 'INVALID'" in str(context.exception)
+
+
+class TestMeshSelectBoundary(unittest.TestCase):
+    def setUp(self):
+        self.handler = MeshHandler()
+
+        # Reset mocks
+        bpy.context.active_object = MagicMock()
+        bpy.context.active_object.type = 'MESH'
+        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.mode = 'OBJECT'
+        bpy.ops.object.mode_set = MagicMock()
+        bmesh.from_edit_mesh = MagicMock()
+        bmesh.update_edit_mesh = MagicMock()
+
+    def test_select_boundary_edges(self):
+        """Should select boundary edges (edges with 1 adjacent face)."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create 6 edges - 2 boundary, 4 internal
+        edges = []
+        for i in range(6):
+            e = MagicMock()
+            e.is_boundary = (i < 2)  # First 2 are boundary
+            e.select = False
+            v1 = MagicMock()
+            v1.select = False
+            v2 = MagicMock()
+            v2.select = False
+            e.verts = [v1, v2]
+            edges.append(e)
+
+        mock_edges_seq = MagicMock()
+        # Need 2 iterations: one for deselect, one for select
+        mock_edges_seq.__iter__.side_effect = [iter(edges), iter(edges)]
+        bm.edges = mock_edges_seq
+
+        bm.verts = MagicMock()
+        bm.verts.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        # Execute
+        result = self.handler.select_boundary(mode='EDGE')
+
+        # Verify
+        assert edges[0].select == True, "First boundary edge should be selected"
+        assert edges[1].select == True, "Second boundary edge should be selected"
+        assert edges[2].select == False, "Internal edge should not be selected"
+        assert "Selected 2 boundary edge(s)" in result
+
+    def test_select_boundary_vertices(self):
+        """Should select boundary vertices."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        # Create 8 vertices - 3 boundary, 5 internal
+        verts = []
+        for i in range(8):
+            v = MagicMock()
+            v.is_boundary = (i < 3)  # First 3 are boundary
+            v.select = False
+            verts.append(v)
+
+        mock_verts_seq = MagicMock()
+        mock_verts_seq.__iter__.side_effect = [iter(verts), iter(verts)]
+        bm.verts = mock_verts_seq
+
+        bm.edges = MagicMock()
+        bm.edges.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        # Execute
+        result = self.handler.select_boundary(mode='VERT')
+
+        # Verify
+        assert verts[0].select == True, "First boundary vert should be selected"
+        assert verts[1].select == True, "Second boundary vert should be selected"
+        assert verts[2].select == True, "Third boundary vert should be selected"
+        assert verts[3].select == False, "Internal vert should not be selected"
+        assert "Selected 3 boundary vert(s)" in result
+
+    def test_select_boundary_invalid_mode(self):
+        """Should raise ValueError for invalid mode."""
+        bm = MagicMock()
+        bmesh.from_edit_mesh.return_value = bm
+
+        bm.verts = MagicMock()
+        bm.verts.__iter__.return_value = iter([])
+        bm.edges = MagicMock()
+        bm.edges.__iter__.return_value = iter([])
+        bm.faces = MagicMock()
+        bm.faces.__iter__.return_value = iter([])
+
+        with self.assertRaises(ValueError) as context:
+            self.handler.select_boundary(mode='INVALID')
+
+        assert "Invalid mode 'INVALID'" in str(context.exception)
+        assert "Must be EDGE or VERT" in str(context.exception)

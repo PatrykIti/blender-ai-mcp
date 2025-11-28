@@ -145,3 +145,10 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def select_boundary(self, mode: str = 'EDGE') -> str:
+        args = {"mode": mode}
+        response = self.rpc.send_request("mesh.select_boundary", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

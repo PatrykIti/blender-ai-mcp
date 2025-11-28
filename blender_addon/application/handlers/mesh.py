@@ -699,3 +699,52 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
         
         return f"Selected {selected_count} {mode.lower()}(s) in range {axis}=[{min_coord}, {max_coord}]"
+
+    def select_boundary(self, mode='EDGE'):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        
+        # Validate mode
+        mode = mode.upper()
+        if mode not in ['EDGE', 'VERT']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid mode '{mode}'. Must be EDGE or VERT")
+        
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+        
+        selected_count = 0
+        
+        if mode == 'EDGE':
+            # Select boundary edges (edges with only 1 adjacent face)
+            for edge in bm.edges:
+                if edge.is_boundary:
+                    edge.select = True
+                    edge.verts[0].select = True
+                    edge.verts[1].select = True
+                    selected_count += 1
+        
+        elif mode == 'VERT':
+            # Select boundary vertices
+            for vert in bm.verts:
+                if vert.is_boundary:
+                    vert.select = True
+                    selected_count += 1
+        
+        bmesh.update_edit_mesh(obj.data)
+        
+        # Restore previous mode
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        
+        return f"Selected {selected_count} boundary {mode.lower()}(s)"

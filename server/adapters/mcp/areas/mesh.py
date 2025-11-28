@@ -510,3 +510,43 @@ def mesh_select_by_location(
         return handler.select_by_location(axis, min_coord, max_coord, mode)
     except RuntimeError as e:
         return str(e)
+
+@mcp.tool()
+def mesh_select_boundary(
+    ctx: Context,
+    mode: str = 'EDGE'
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices (🔴 CRITICAL for mesh_fill_holes).
+    
+    Boundary edges have only ONE adjacent face (indicating a hole or open edge in the mesh).
+    Boundary vertices are connected to boundary edges.
+    
+    This is CRITICAL for mesh_fill_holes - use this to select specific hole edges before filling,
+    instead of selecting everything with mesh_select_all.
+    
+    Args:
+        mode: 'EDGE' (select boundary edges) or 'VERT' (select boundary vertices)
+    
+    Returns:
+        Success message with count of boundary elements selected.
+    
+    Use cases:
+        - Select edges of a specific hole before mesh_fill_holes
+        - Identify open edges in mesh for quality checks
+        - Select boundary loops for extrusion/detachment operations
+    
+    Workflow for targeted hole filling:
+        1. mesh_select_boundary(mode='EDGE')  # Select all hole edges
+        2. mesh_select_by_index to refine to specific hole (optional)
+        3. mesh_fill_holes()  # Fill only the selected hole
+    
+    Examples:
+        mesh_select_boundary(mode='EDGE') -> Selects all edges with only 1 face
+        mesh_select_boundary(mode='VERT') -> Selects all vertices on boundaries
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.select_boundary(mode)
+    except RuntimeError as e:
+        return str(e)
