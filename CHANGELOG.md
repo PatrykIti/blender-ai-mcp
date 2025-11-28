@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.10.1 (2025-11-28)
+
+### Bug Fixes
+
+- MCP parameter validation and context handling
+  ([#14](https://github.com/PatrykIti/blender-ai-mcp/pull/14),
+  [`11e9317`](https://github.com/PatrykIti/blender-ai-mcp/commit/11e93177fb36d9a73d77081d9b320334475a5932))
+
+
 ## v1.10.0 (2025-11-27)
 
 ### Features

@@ -1,6 +1,6 @@
 [project]
 name = "blender-ai-mcp"
-version = "1.10.0"
+version = "1.10.1"
 description = "Modular MCP Server + Blender Addon for AI-Driven 3D Modeling"
 authors = [
     {name = "Patryk Ciechański",email = "patryk.ciechanski@patrykiti.pl"}
