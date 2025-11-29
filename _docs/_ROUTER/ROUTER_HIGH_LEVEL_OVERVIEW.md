@@ -109,25 +109,34 @@ Cons: depends on embedding quality
 
 ------------------------------------------------------------
 
-## Embedding Models (small, high quality)
+## Embedding Model
 
-1) all-MiniLM-L6-v2
-- lightweight, 22M parameters
-- 384D embedding
-- very fast on CPU
+**LaBSE (Language-agnostic BERT Sentence Embedding)**
 
-2) intfloat/e5-base-v2
-- ~110M parameters
-- 768D embedding
-- better quality, better semantic matching
+| Property | Value |
+|----------|-------|
+| Model | `sentence-transformers/LaBSE` |
+| Parameters | 471M |
+| Embedding dim | 768D |
+| Languages | 109 (including PL, EN, DE, FR, ES, ...) |
+| RAM usage | ~1.8 GB |
 
-3) BAAI/bge-base-en-v1.5
-- very good for retrieval
-- ~110M parameters
+Why LaBSE:
+- Best cross-lingual semantic matching (Google Research)
+- Single model for all languages - no translation step needed
+- Handles slang, abbreviations, non-standard phrases
+- "wyciągnij ścianę" ≈ "extrude the face" ≈ "Fläche extrudieren"
 
-Recommendation:
-- Start: all-MiniLM-L6-v2 (lightest)
-- Later: e5-base-v2 or bge-base-en-v1.5
+Usage:
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('sentence-transformers/LaBSE')
+embedding = model.encode("stwórz kostkę 2x2x2")
+# → matches "create a 2x2x2 cube" semantically
+```
+
+Note: 1.8GB RAM is acceptable for modern desktop/server environments.
 
 ------------------------------------------------------------
 

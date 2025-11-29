@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0
+- **To Do:** 10 tasks (~41 sub-tasks)
 - **In Progress:** 1
 - **Done:** 79
 
@@ -11,7 +11,35 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No pending tasks)*
+### Game Dev Critical (Baking & Subdivision Control)
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-029](./TASK-029_Edge_Weights_Creases.md) | **Edge Weights & Creases** | 🔴 High | mesh_edge_crease, mesh_bevel_weight, mesh_mark_sharp |
+| [TASK-030](./TASK-030_Mesh_Cleanup_Optimization.md) | **Mesh Cleanup & Optimization** | 🔴 High | mesh_dissolve, mesh_tris_to_quads, mesh_normals_make_consistent |
+| [TASK-031](./TASK-031_Baking_Tools.md) | **Baking Tools** | 🔴 Critical | bake_normal_map, bake_ao, bake_combined |
+
+### Organic & Medical Modeling
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | metaballs, sculpt brushes (clay, inflate, blob, snake_hook), dyntopo, skin modifier |
+
+### Modeling & Architecture
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-032](./TASK-032_Knife_Cut_Tools.md) | **Knife & Cut Tools** | 🟠 High | mesh_knife_project, mesh_rip, mesh_split |
+| [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | lattice_create, lattice_bind, lattice_edit_point |
+| [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
+
+### Import & Workflow
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-035](./TASK-035_Import_Tools.md) | **Import Tools** | 🟠 High | import_obj, import_fbx, import_image_as_plane |
+| [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
+
+### Future / Nice-to-Have
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-037](./TASK-037_Armature_Rigging.md) | **Armature & Rigging** | 🟢 Low | armature_create, armature_add_bone, armature_bind |
 
 ---
 
