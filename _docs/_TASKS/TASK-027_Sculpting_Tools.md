@@ -1,8 +1,9 @@
 # TASK-027: Sculpting Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 **Category:** Sculpting Tools
+**Completion Date:** 2025-11-29
 
 ---
 
@@ -14,7 +15,7 @@ Implement sculpting tools for organic shape manipulation. These are lower priori
 
 # TASK-027-1: sculpt_auto
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -166,18 +167,18 @@ class SculptHandler:
 
 ## Deliverables
 
-- [ ] New Sculpt domain
-- [ ] Application handler
-- [ ] MCP adapter
-- [ ] Blender addon handler
-- [ ] Unit tests
-- [ ] Documentation
+- [x] New Sculpt domain
+- [x] Application handler
+- [x] MCP adapter
+- [x] Blender addon handler
+- [x] Unit tests
+- [x] Documentation
 
 ---
 
 # TASK-027-2: sculpt_brush_smooth
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -258,14 +259,14 @@ Programmatic brush strokes are complex in Blender. Consider using mesh filters o
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-027-3: sculpt_brush_grab
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -302,14 +303,14 @@ def sculpt_brush_grab(
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-027-4: sculpt_brush_crease
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -344,8 +345,8 @@ def sculpt_brush_crease(
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 

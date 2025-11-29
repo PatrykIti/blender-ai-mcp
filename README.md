@@ -29,7 +29,7 @@ Enable LLMs (Claude, ChatGPT) to control Blender reliably. Built with **Clean Ar
 ## 🚀 Why use this MCP Server instead of raw Python code?
 
 Most AI solutions for Blender rely on asking the LLM to "write a Python script". This often fails because:
-1.  **Hallucinations**: AI frequently uses outdated `bpy` API methods (mixing Blender 2.8 with 4.0).
+1.  **Hallucinations**: AI frequently uses outdated `bpy` API methods (mixing Blender 2.8 with 5.0).
 2.  **Context Errors**: Running operators requires specific context (active window, selected object, correct mode). Raw scripts often crash Blender due to `poll()` failures.
 3.  **No Feedback Loop**: If a script fails, the AI doesn't know why. Our MCP server returns precise error messages.
 4.  **Safety**: Executing arbitrary Python code is risky. Our tools are sandboxed endpoints with validated inputs.
@@ -179,7 +179,7 @@ Collection management and hierarchy.
 |------|-------------|--------|
 | `collection_list` | List all collections | ✅ |
 | `collection_list_objects` | List objects in collection | ✅ |
-| `collection_manage` | Create/delete/move collections | 🚧 |
+| `collection_manage` | Create/delete/move collections | ✅ |
 
 ---
 
@@ -191,10 +191,10 @@ Material creation and assignment.
 |------|-------------|--------|
 | `material_list` | List all materials | ✅ |
 | `material_list_by_object` | List materials on object | ✅ |
-| `material_create` | Setup PBR materials | 🚧 |
-| `material_assign` | Assign to objects/faces | 🚧 |
-| `material_set_params` | Adjust roughness, metallic, etc. | 🚧 |
-| `material_set_texture` | Bind image textures | 🚧 |
+| `material_create` | Setup PBR materials | ✅ |
+| `material_assign` | Assign to objects/faces | ✅ |
+| `material_set_params` | Adjust roughness, metallic, etc. | ✅ |
+| `material_set_texture` | Bind image textures | ✅ |
 
 ---
 
@@ -205,8 +205,9 @@ UV mapping operations.
 | Tool | Description | Status |
 |------|-------------|--------|
 | `uv_list_maps` | List UV maps on object | ✅ |
-| `uv_unwrap` | Smart UV Project / Cube Projection | 🚧 |
-| `uv_pack_islands` | Pack UV islands | 🚧 |
+| `uv_unwrap` | Smart UV Project / Cube Projection | ✅ |
+| `uv_pack_islands` | Pack UV islands | ✅ |
+| `uv_create_seam` | Mark/clear UV seams | ✅ |
 
 ---
 
@@ -216,12 +217,12 @@ Global project-level operations.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `system_set_mode` | High-level mode switching | 🚧 |
-| `system_undo` | Safe undo for AI | 🚧 |
-| `system_redo` | Safe redo for AI | 🚧 |
-| `system_save_file` | Save .blend file | 🚧 |
-| `system_new_file` | Create new file | 🚧 |
-| `system_snapshot` | Quick save/restore checkpoints | 🚧 |
+| `system_set_mode` | High-level mode switching | ✅ |
+| `system_undo` | Safe undo for AI | ✅ |
+| `system_redo` | Safe redo for AI | ✅ |
+| `system_save_file` | Save .blend file | ✅ |
+| `system_new_file` | Create new file | ✅ |
+| `system_snapshot` | Quick save/restore checkpoints | ✅ |
 
 ---
 
@@ -231,9 +232,9 @@ File export operations.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `export_glb` | Export to GLB format | 🚧 |
-| `export_fbx` | Export to FBX format | 🚧 |
-| `export_obj` | Export to OBJ format | 🚧 |
+| `export_glb` | Export to GLB format | ✅ |
+| `export_fbx` | Export to FBX format | ✅ |
+| `export_obj` | Export to OBJ format | ✅ |
 
 ---
 
@@ -259,10 +260,10 @@ Organic shaping and sculpt workflows.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_auto` | High-level sculpt macro | 🚧 |
-| `sculpt_brush_smooth` | Smooth brush | 🚧 |
-| `sculpt_brush_grab` | Grab brush | 🚧 |
-| `sculpt_brush_crease` | Crease brush | 🚧 |
+| `sculpt_auto` | High-level sculpt operation (mesh filters) | ✅ |
+| `sculpt_brush_smooth` | Smooth brush | ✅ |
+| `sculpt_brush_grab` | Grab brush | ✅ |
+| `sculpt_brush_crease` | Crease brush | ✅ |
 
 ---
 
@@ -332,9 +333,17 @@ We recommend using Docker to run the MCP Server.
         "scene_compare_snapshot",
         "collection_list",
         "collection_list_objects",
+        "collection_manage",
         "material_list",
         "material_list_by_object",
+        "material_create",
+        "material_assign",
+        "material_set_params",
+        "material_set_texture",
         "uv_list_maps",
+        "uv_unwrap",
+        "uv_pack_islands",
+        "uv_create_seam",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
@@ -377,7 +386,20 @@ We recommend using Docker to run the MCP Server.
         "mesh_add_vertex",
         "mesh_add_edge_face",
         "curve_create",
-        "curve_to_mesh"
+        "curve_to_mesh",
+        "export_glb",
+        "export_fbx",
+        "export_obj",
+        "sculpt_auto",
+        "sculpt_brush_smooth",
+        "sculpt_brush_grab",
+        "sculpt_brush_crease",
+        "system_set_mode",
+        "system_undo",
+        "system_redo",
+        "system_save_file",
+        "system_new_file",
+        "system_snapshot"
       ]
     }
   }
@@ -414,9 +436,17 @@ We recommend using Docker to run the MCP Server.
         "scene_compare_snapshot",
         "collection_list",
         "collection_list_objects",
+        "collection_manage",
         "material_list",
         "material_list_by_object",
+        "material_create",
+        "material_assign",
+        "material_set_params",
+        "material_set_texture",
         "uv_list_maps",
+        "uv_unwrap",
+        "uv_pack_islands",
+        "uv_create_seam",
         "modeling_create_primitive",
         "modeling_transform_object",
         "modeling_add_modifier",
@@ -459,7 +489,20 @@ We recommend using Docker to run the MCP Server.
         "mesh_add_vertex",
         "mesh_add_edge_face",
         "curve_create",
-        "curve_to_mesh"
+        "curve_to_mesh",
+        "export_glb",
+        "export_fbx",
+        "export_obj",
+        "sculpt_auto",
+        "sculpt_brush_smooth",
+        "sculpt_brush_grab",
+        "sculpt_brush_crease",
+        "system_set_mode",
+        "system_undo",
+        "system_redo",
+        "system_save_file",
+        "system_new_file",
+        "system_snapshot"
       ]
     }
   }

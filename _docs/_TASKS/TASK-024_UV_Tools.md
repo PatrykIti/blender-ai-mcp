@@ -1,8 +1,9 @@
 # TASK-024: UV Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Category:** UV Tools
+**Completion Date:** 2025-11-29
 
 ---
 
@@ -14,7 +15,7 @@ Implement UV mapping tools for texture coordinate management.
 
 # TASK-024-1: uv_unwrap
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -125,18 +126,18 @@ Register RPC handler in `blender_addon/__init__.py`.
 
 ## Deliverables
 
-- [ ] Domain interface extension
-- [ ] Application handler implementation
-- [ ] MCP adapter with docstrings
-- [ ] Blender addon handler
-- [ ] Unit tests
-- [ ] Documentation updates
+- [x] Domain interface extension
+- [x] Application handler implementation
+- [x] MCP adapter with docstrings
+- [x] Blender addon handler
+- [x] Unit tests
+- [x] Documentation updates
 
 ---
 
 # TASK-024-2: uv_pack_islands
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -207,14 +208,14 @@ def pack_islands(self, object_name=None, margin=0.02, rotate=True, scale=True):
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-024-3: uv_create_seam (Optional)
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -276,8 +277,8 @@ def create_seam(self, object_name=None, action="mark"):
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 

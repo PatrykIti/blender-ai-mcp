@@ -1,6 +1,6 @@
 # TASK-026: Export Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Category:** Export Tools
 
@@ -14,7 +14,7 @@ Implement file export tools for common 3D formats (GLB/GLTF, FBX, OBJ).
 
 # TASK-026-1: export_glb
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -145,18 +145,18 @@ class ExportHandler:
 
 ## Deliverables
 
-- [ ] New Export domain
-- [ ] Application handler
-- [ ] MCP adapter
-- [ ] Blender addon handler
-- [ ] Unit tests
-- [ ] Documentation
+- [x] New Export domain
+- [x] Application handler
+- [x] MCP adapter
+- [x] Blender addon handler
+- [x] Unit tests
+- [x] Documentation
 
 ---
 
 # TASK-026-2: export_fbx
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -234,14 +234,14 @@ def export_fbx(self, filepath, export_selected=False, export_animations=True,
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-026-3: export_obj
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
@@ -324,8 +324,8 @@ def export_obj(self, filepath, export_selected=False, apply_modifiers=True,
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 

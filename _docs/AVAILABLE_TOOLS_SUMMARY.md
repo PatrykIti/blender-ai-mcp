@@ -60,6 +60,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. | ✅ Done |
 | `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within specified collection, optionally recursive. | ✅ Done |
+| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. | ✅ Done |
 
 ---
 
@@ -70,6 +71,10 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `material_list` | `include_unassigned` (bool) | Lists all materials with shader parameters (Principled BSDF) and object assignment counts. | ✅ Done |
 | `material_list_by_object` | `object_name` (str), `include_indices` (bool) | Lists material slots for a specific object. | ✅ Done |
+| `material_create` | `name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Creates new PBR material with Principled BSDF shader. | ✅ Done |
+| `material_assign` | `material_name`, `object_name`, `slot_index`, `assign_to_selection` | Assigns material to object or selected faces (Edit Mode). | ✅ Done |
+| `material_set_params` | `material_name`, `base_color`, `metallic`, `roughness`, etc. | Modifies existing material parameters. | ✅ Done |
+| `material_set_texture` | `material_name`, `texture_path`, `input_name`, `color_space` | Binds image texture to material input (supports Normal maps). | ✅ Done |
 
 ---
 
@@ -79,6 +84,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `uv_list_maps` | `object_name` (str), `include_island_counts` (bool) | Lists UV maps for a mesh object with active flags and loop counts. | ✅ Done |
+| `uv_unwrap` | `object_name`, `method`, `angle_limit`, `island_margin`, `scale_to_bounds` | Unwraps selected faces to UV space using projection methods (SMART_PROJECT, CUBE, CYLINDER, SPHERE, UNWRAP). | ✅ Done |
+| `uv_pack_islands` | `object_name`, `margin`, `rotate`, `scale` | Packs UV islands for optimal texture space usage. | ✅ Done |
+| `uv_create_seam` | `object_name`, `action` | Marks or clears UV seams on selected edges ('mark' or 'clear'). | ✅ Done |
 
 ---
 
@@ -157,6 +165,43 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
 | `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
+
+---
+
+## 📤 Export Tools (`export_`)
+*Tools for exporting scene or objects to various 3D file formats.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `export_glb` | `filepath`, `export_selected`, `export_animations`, `export_materials`, `apply_modifiers` | Exports to GLB/GLTF format (web, game engines). | ✅ Done |
+| `export_fbx` | `filepath`, `export_selected`, `export_animations`, `apply_modifiers`, `mesh_smooth_type` | Exports to FBX format (industry standard). | ✅ Done |
+| `export_obj` | `filepath`, `export_selected`, `apply_modifiers`, `export_materials`, `export_uvs`, `export_normals`, `triangulate` | Exports to OBJ format (universal mesh). | ✅ Done |
+
+---
+
+## 🎨 Sculpt Tools (`sculpt_`)
+*Tools for Sculpt Mode operations (organic shape manipulation).*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. | ✅ Done |
+| `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. | ✅ Done |
+| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. | ✅ Done |
+| `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. | ✅ Done |
+
+---
+
+## ⚙️ System Tools (`system_`)
+*System-level operations for mode switching, undo/redo, and file management.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `system_set_mode` | `mode` (str), `object_name` (str, optional) | Switches Blender mode (OBJECT/EDIT/SCULPT/POSE/...) with optional object selection. | ✅ Done |
+| `system_undo` | `steps` (int, default 1) | Undoes last operation(s), max 10 steps per call. | ✅ Done |
+| `system_redo` | `steps` (int, default 1) | Redoes previously undone operation(s), max 10 steps per call. | ✅ Done |
+| `system_save_file` | `filepath` (str, optional), `compress` (bool) | Saves current .blend file. Auto-generates temp path if unsaved. | ✅ Done |
+| `system_new_file` | `load_ui` (bool) | Creates new file (resets scene to startup). | ✅ Done |
+| `system_snapshot` | `action` (save/restore/list/delete), `name` (str, optional) | Manages quick save/restore checkpoints in temp directory. | ✅ Done |
 
 ---
 

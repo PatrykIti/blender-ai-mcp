@@ -1,8 +1,9 @@
 # TASK-023: Material Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 **Category:** Material Tools
+**Completed:** 2025-11-29
 
 ---
 
@@ -14,7 +15,7 @@ Implement material creation and manipulation tools for PBR workflows.
 
 # TASK-023-1: material_create
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -98,14 +99,14 @@ def create_material(self, name, base_color=None, metallic=0.0, roughness=0.5, ..
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-023-2: material_assign
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟠 High
 
 ## Objective
@@ -182,14 +183,14 @@ def assign_material(self, material_name, object_name=None, slot_index=None, assi
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-023-3: material_set_params
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -251,14 +252,14 @@ def material_set_params(
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 
 # TASK-023-4: material_set_texture
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -344,8 +345,8 @@ def set_material_texture(self, material_name, texture_path, input_name="Base Col
 
 ## Deliverables
 
-- [ ] Implementation + Tests
-- [ ] Documentation
+- [x] Implementation + Tests
+- [x] Documentation
 
 ---
 

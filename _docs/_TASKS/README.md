@@ -3,56 +3,15 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 21
+- **To Do:** 0
 - **In Progress:** 1
-- **Done:** 60
+- **Done:** 79
 
 ---
 
 ## 🚨 To Do
 
-### Collection Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-022-1](./TASK-022_Collection_Tools.md#task-022-1-collection_manage) | **collection_manage** (create, delete, rename, move) | 🟡 Medium |
-
-### Material Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-023-1](./TASK-023_Material_Tools.md#task-023-1-material_create) | **material_create** | 🟠 High |
-| [TASK-023-2](./TASK-023_Material_Tools.md#task-023-2-material_assign) | **material_assign** | 🟠 High |
-| [TASK-023-3](./TASK-023_Material_Tools.md#task-023-3-material_set_params) | **material_set_params** | 🟡 Medium |
-| [TASK-023-4](./TASK-023_Material_Tools.md#task-023-4-material_set_texture) | **material_set_texture** | 🟡 Medium |
-
-### UV Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-024-1](./TASK-024_UV_Tools.md#task-024-1-uv_unwrap) | **uv_unwrap** | 🟡 Medium |
-| [TASK-024-2](./TASK-024_UV_Tools.md#task-024-2-uv_pack_islands) | **uv_pack_islands** | 🟡 Medium |
-| [TASK-024-3](./TASK-024_UV_Tools.md#task-024-3-uv_create_seam-optional) | **uv_create_seam** | 🟢 Low |
-
-### System Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-025-1](./TASK-025_System_Tools.md#task-025-1-system_set_mode) | **system_set_mode** | 🟡 Medium |
-| [TASK-025-2](./TASK-025_System_Tools.md#task-025-2-system_undo--system_redo) | **system_undo / system_redo** | 🟡 Medium |
-| [TASK-025-3](./TASK-025_System_Tools.md#task-025-3-system_save_file--system_new_file) | **system_save_file / system_new_file** | 🟡 Medium |
-| [TASK-025-4](./TASK-025_System_Tools.md#task-025-4-system_snapshot) | **system_snapshot** | 🟢 Low |
-
-### Export Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-026-1](./TASK-026_Export_Tools.md#task-026-1-export_glb) | **export_glb** | 🟠 High |
-| [TASK-026-2](./TASK-026_Export_Tools.md#task-026-2-export_fbx) | **export_fbx** | 🟡 Medium |
-| [TASK-026-3](./TASK-026_Export_Tools.md#task-026-3-export_obj) | **export_obj** | 🟢 Low |
-
-### Sculpting Tools
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-027-1](./TASK-027_Sculpting_Tools.md#task-027-1-sculpt_auto) | **sculpt_auto** | 🟢 Low |
-| [TASK-027-2](./TASK-027_Sculpting_Tools.md#task-027-2-sculpt_brush_smooth) | **sculpt_brush_smooth** | 🟢 Low |
-| [TASK-027-3](./TASK-027_Sculpting_Tools.md#task-027-3-sculpt_brush_grab) | **sculpt_brush_grab** | 🟢 Low |
-| [TASK-027-4](./TASK-027_Sculpting_Tools.md#task-027-4-sculpt_brush_crease) | **sculpt_brush_crease** | 🟢 Low |
+*(No pending tasks)*
 
 ---
 
@@ -69,6 +28,25 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-025-4](./TASK-025_System_Tools.md#task-025-4-system_snapshot) | **system_snapshot** | 🟢 Low | 2025-11-29 |
+| [TASK-025-3](./TASK-025_System_Tools.md#task-025-3-system_save_file--system_new_file) | **system_save_file / system_new_file** | 🟡 Medium | 2025-11-29 |
+| [TASK-025-2](./TASK-025_System_Tools.md#task-025-2-system_undo--system_redo) | **system_undo / system_redo** | 🟡 Medium | 2025-11-29 |
+| [TASK-025-1](./TASK-025_System_Tools.md#task-025-1-system_set_mode) | **system_set_mode** | 🟡 Medium | 2025-11-29 |
+| [TASK-026-3](./TASK-026_Export_Tools.md#task-026-3-export_obj) | **export_obj** | 🟢 Low | 2025-11-29 |
+| [TASK-026-2](./TASK-026_Export_Tools.md#task-026-2-export_fbx) | **export_fbx** | 🟡 Medium | 2025-11-29 |
+| [TASK-026-1](./TASK-026_Export_Tools.md#task-026-1-export_glb) | **export_glb** | 🟠 High | 2025-11-29 |
+| [TASK-027-4](./TASK-027_Sculpting_Tools.md#task-027-4-sculpt_brush_crease) | **sculpt_brush_crease** | 🟢 Low | 2025-11-29 |
+| [TASK-027-3](./TASK-027_Sculpting_Tools.md#task-027-3-sculpt_brush_grab) | **sculpt_brush_grab** | 🟢 Low | 2025-11-29 |
+| [TASK-027-2](./TASK-027_Sculpting_Tools.md#task-027-2-sculpt_brush_smooth) | **sculpt_brush_smooth** | 🟢 Low | 2025-11-29 |
+| [TASK-027-1](./TASK-027_Sculpting_Tools.md#task-027-1-sculpt_auto) | **sculpt_auto** | 🟢 Low | 2025-11-29 |
+| [TASK-022-1](./TASK-022_Collection_Tools.md#task-022-1-collection_manage) | **collection_manage** (create, delete, rename, move) | 🟡 Medium | 2025-11-29 |
+| [TASK-024-3](./TASK-024_UV_Tools.md#task-024-3-uv_create_seam-optional) | **uv_create_seam** | 🟢 Low | 2025-11-29 |
+| [TASK-024-2](./TASK-024_UV_Tools.md#task-024-2-uv_pack_islands) | **uv_pack_islands** | 🟡 Medium | 2025-11-29 |
+| [TASK-024-1](./TASK-024_UV_Tools.md#task-024-1-uv_unwrap) | **uv_unwrap** | 🟡 Medium | 2025-11-29 |
+| [TASK-023-4](./TASK-023_Material_Tools.md#task-023-4-material_set_texture) | **material_set_texture** | 🟡 Medium | 2025-11-29 |
+| [TASK-023-3](./TASK-023_Material_Tools.md#task-023-3-material_set_params) | **material_set_params** | 🟡 Medium | 2025-11-29 |
+| [TASK-023-2](./TASK-023_Material_Tools.md#task-023-2-material_assign) | **material_assign** | 🟠 High | 2025-11-29 |
+| [TASK-023-1](./TASK-023_Material_Tools.md#task-023-1-material_create) | **material_create** | 🟠 High | 2025-11-29 |
 | [TASK-021-5](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-5-mesh-add-geometry-tools) | **Mesh Add Geometry Tools** (vertex, edge, face) | 🟢 Low | 2025-11-29 |
 | [TASK-021-4](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-4-mesh-screw-tool) | **Mesh Screw Tool** | 🟡 Medium | 2025-11-29 |
 | [TASK-021-3](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-3-mesh-spin-tool) | **Mesh Spin Tool** | 🟡 Medium | 2025-11-29 |

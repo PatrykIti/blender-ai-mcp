@@ -23,6 +23,9 @@ try:
     from .application.handlers.material import MaterialHandler
     from .application.handlers.uv import UVHandler
     from .application.handlers.curve import CurveHandler
+    from .application.handlers.export import ExportHandler
+    from .application.handlers.system import SystemHandler
+    from .application.handlers.sculpt import SculptHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -31,6 +34,9 @@ except ImportError:
     MaterialHandler = None
     UVHandler = None
     CurveHandler = None
+    ExportHandler = None
+    SystemHandler = None
+    SculptHandler = None
 
 
 def register():
@@ -45,6 +51,9 @@ def register():
         material_handler = MaterialHandler()
         uv_handler = UVHandler()
         curve_handler = CurveHandler()
+        export_handler = ExportHandler()
+        system_handler = SystemHandler()
+        sculpt_handler = SculptHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -117,13 +126,23 @@ def register():
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)
         rpc_server.register_handler("collection.list_objects", collection_handler.list_objects)
+        rpc_server.register_handler("collection.manage", collection_handler.manage_collection)
 
         # Material
         rpc_server.register_handler("material.list", material_handler.list_materials)
         rpc_server.register_handler("material.list_by_object", material_handler.list_by_object)
+        # TASK-023: Material Tools
+        rpc_server.register_handler("material.create", material_handler.create_material)
+        rpc_server.register_handler("material.assign", material_handler.assign_material)
+        rpc_server.register_handler("material.set_params", material_handler.set_material_params)
+        rpc_server.register_handler("material.set_texture", material_handler.set_material_texture)
 
         # UV
         rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
+        # TASK-024: UV Tools
+        rpc_server.register_handler("uv.unwrap", uv_handler.unwrap)
+        rpc_server.register_handler("uv.pack_islands", uv_handler.pack_islands)
+        rpc_server.register_handler("uv.create_seam", uv_handler.create_seam)
 
         # TASK-019: Phase 2.4 - Core Transform & Geometry
         rpc_server.register_handler("mesh.transform_selected", mesh_handler.transform_selected)
@@ -137,6 +156,25 @@ def register():
         rpc_server.register_handler("mesh.screw", mesh_handler.screw)
         rpc_server.register_handler("mesh.add_vertex", mesh_handler.add_vertex)
         rpc_server.register_handler("mesh.add_edge_face", mesh_handler.add_edge_face)
+
+        # TASK-026: Export Tools
+        rpc_server.register_handler("export.glb", export_handler.export_glb)
+        rpc_server.register_handler("export.fbx", export_handler.export_fbx)
+        rpc_server.register_handler("export.obj", export_handler.export_obj)
+
+        # TASK-025: System Tools
+        rpc_server.register_handler("system.set_mode", system_handler.set_mode)
+        rpc_server.register_handler("system.undo", system_handler.undo)
+        rpc_server.register_handler("system.redo", system_handler.redo)
+        rpc_server.register_handler("system.save_file", system_handler.save_file)
+        rpc_server.register_handler("system.new_file", system_handler.new_file)
+        rpc_server.register_handler("system.snapshot", system_handler.snapshot)
+
+        # TASK-027: Sculpting Tools
+        rpc_server.register_handler("sculpt.auto", sculpt_handler.auto_sculpt)
+        rpc_server.register_handler("sculpt.brush_smooth", sculpt_handler.brush_smooth)
+        rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
+        rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)
 
         rpc_server.start()
     else:

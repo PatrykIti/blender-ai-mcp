@@ -1,8 +1,9 @@
 # TASK-022: Collection Management Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Category:** Collection Tools
+**Completion Date:** 2025-11-29
 
 ---
 
@@ -14,7 +15,7 @@ Implement collection management tools for organizing objects in Blender's outlin
 
 # TASK-022-1: collection_manage
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -132,12 +133,13 @@ Register RPC handler in `blender_addon/__init__.py`.
 
 ## Deliverables
 
-- [ ] Domain interface extension
-- [ ] Application handler implementation
-- [ ] MCP adapter with docstrings
-- [ ] Blender addon handler
-- [ ] Unit tests
-- [ ] Documentation updates
+- [x] Domain interface extension
+- [x] Application handler implementation
+- [x] MCP adapter with docstrings
+- [x] Blender addon handler
+- [x] Unit tests (21 tests)
+- [x] E2E tests (7 tests)
+- [x] Documentation updates
 
 ## Use Cases
 

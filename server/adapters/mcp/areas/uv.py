@@ -1,3 +1,4 @@
+from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.infrastructure.di import get_uv_handler
@@ -69,4 +70,128 @@ def uv_list_maps(
         msg = str(e)
         if "not found" in msg.lower() or "not a MESH" in msg:
             return f"{msg}. Use scene_list_objects to verify the object name and type."
+        return msg
+
+
+@mcp.tool()
+def uv_unwrap(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    method: Literal["SMART_PROJECT", "CUBE", "CYLINDER", "SPHERE", "UNWRAP"] = "SMART_PROJECT",
+    angle_limit: float = 66.0,
+    island_margin: float = 0.02,
+    scale_to_bounds: bool = True,
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Unwraps selected faces to UV space.
+
+    Methods:
+        - SMART_PROJECT: Automatic projection based on face angles (best for complex meshes)
+        - CUBE: Cube projection (best for boxy objects)
+        - CYLINDER: Cylindrical projection
+        - SPHERE: Spherical projection
+        - UNWRAP: Standard unwrap (requires seams for best results)
+
+    Workflow: BEFORE → mesh_select (select faces) | AFTER → uv_pack_islands
+
+    Args:
+        object_name: Target object (default: active object)
+        method: Unwrap projection method
+        angle_limit: Angle threshold for SMART_PROJECT (degrees, 0-89)
+        island_margin: Space between UV islands (0.0-1.0)
+        scale_to_bounds: Scale UVs to fill 0-1 space
+    """
+    handler = get_uv_handler()
+    try:
+        result = handler.unwrap(
+            object_name=object_name,
+            method=method,
+            angle_limit=angle_limit,
+            island_margin=island_margin,
+            scale_to_bounds=scale_to_bounds,
+        )
+        ctx.info(f"UV unwrap completed using {method}")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use scene_list_objects to verify the object name."
+        if "not a mesh" in msg.lower():
+            return f"{msg}. UV operations only work on mesh objects."
+        return msg
+
+
+@mcp.tool()
+def uv_pack_islands(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    margin: float = 0.02,
+    rotate: bool = True,
+    scale: bool = True,
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Packs UV islands for optimal texture space usage.
+
+    Reorganizes UV islands to minimize wasted texture space while maintaining relative sizes.
+    Best used after unwrapping to optimize the UV layout.
+
+    Workflow: BEFORE → uv_unwrap
+
+    Args:
+        object_name: Target object (default: active object)
+        margin: Space between packed islands (0.0-1.0)
+        rotate: Allow rotation for better packing
+        scale: Allow scaling islands to fill space
+    """
+    handler = get_uv_handler()
+    try:
+        result = handler.pack_islands(
+            object_name=object_name,
+            margin=margin,
+            rotate=rotate,
+            scale=scale,
+        )
+        ctx.info("UV islands packed")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use scene_list_objects to verify the object name."
+        if "not a mesh" in msg.lower():
+            return f"{msg}. UV operations only work on mesh objects."
+        return msg
+
+
+@mcp.tool()
+def uv_create_seam(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    action: Literal["mark", "clear"] = "mark",
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks or clears UV seams on selected edges.
+
+    Seams guide the UNWRAP method to split UV islands at specific edges.
+    Mark seams along natural breaks (like shirt seams, box edges) for cleaner UV layouts.
+
+    Workflow: BEFORE → mesh_select_targeted (select edges) | AFTER → uv_unwrap (with UNWRAP method)
+
+    Args:
+        object_name: Target object (default: active object)
+        action: 'mark' to add seams, 'clear' to remove seams from selected edges
+    """
+    handler = get_uv_handler()
+    try:
+        result = handler.create_seam(
+            object_name=object_name,
+            action=action,
+        )
+        ctx.info(f"UV seam {action} completed")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use scene_list_objects to verify the object name."
+        if "not a mesh" in msg.lower():
+            return f"{msg}. UV operations only work on mesh objects."
         return msg

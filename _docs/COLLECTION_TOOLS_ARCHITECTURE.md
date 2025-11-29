@@ -62,7 +62,71 @@ Example:
 
 ---
 
+# 3. collection_manage ✅ Done
+Comprehensive collection management: create, delete, rename, and move/link/unlink objects.
+
+**Semantic Tags:** `[OBJECT MODE][SCENE][NON-DESTRUCTIVE]`
+
+Args:
+- action: str (required) - One of: "create", "delete", "rename", "move_object", "link_object", "unlink_object"
+- collection_name: str (required) - Target collection name (or name to create)
+- new_name: str (optional) - New name for rename action
+- parent_name: str (optional) - Parent collection for create action (defaults to Scene Collection)
+- object_name: str (optional) - Object name for move/link/unlink actions
+
+### Actions
+
+| Action | Required Args | Optional Args | Description |
+|--------|---------------|---------------|-------------|
+| `create` | `collection_name` | `parent_name` | Creates new collection (optionally under parent) |
+| `delete` | `collection_name` | - | Deletes collection (objects moved to Scene Collection) |
+| `rename` | `collection_name`, `new_name` | - | Renames collection |
+| `move_object` | `collection_name`, `object_name` | - | Moves object to collection (exclusive - unlinks from all others) |
+| `link_object` | `collection_name`, `object_name` | - | Links object to collection (additive - keeps other links) |
+| `unlink_object` | `collection_name`, `object_name` | - | Unlinks object from collection |
+
+### Examples
+
+**Create collection:**
+```json
+{
+  "tool": "collection_manage",
+  "args": {
+    "action": "create",
+    "collection_name": "Lights",
+    "parent_name": "Scene Elements"
+  }
+}
+```
+
+**Move object to collection:**
+```json
+{
+  "tool": "collection_manage",
+  "args": {
+    "action": "move_object",
+    "collection_name": "Characters",
+    "object_name": "Player"
+  }
+}
+```
+
+**Link object to multiple collections:**
+```json
+{
+  "tool": "collection_manage",
+  "args": {
+    "action": "link_object",
+    "collection_name": "Export_Group",
+    "object_name": "Player"
+  }
+}
+```
+
+---
+
 # Rules
 1. **Prefix `collection_`**: All tools must start with this prefix.
-2. **Read-Only**: Collection tools primarily query collection state; modification tools may be added in future phases.
+2. **Read-Only vs Write**: `collection_list` and `collection_list_objects` are read-only; `collection_manage` is write-capable.
 3. **Deterministic Ordering**: Results are sorted alphabetically to prevent diff noise.
+4. **Object Safety**: Deleting a collection moves objects to Scene Collection (not deleted).

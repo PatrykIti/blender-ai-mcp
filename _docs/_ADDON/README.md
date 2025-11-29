@@ -65,6 +65,7 @@ Technical details.
 |-------------|----------------|-------------|
 | `collection.list` | `list_collections` | Lists all collections with hierarchy. |
 | `collection.list_objects` | `list_objects` | Lists objects in a collection (recursive). |
+| `collection.manage` | `manage_collection` | Manages collections (create, delete, rename, move/link/unlink objects). |
 
 ### Material (`application/handlers/material.py`)
 
@@ -72,12 +73,19 @@ Technical details.
 |-------------|----------------|-------------|
 | `material.list` | `list_materials` | Lists all materials with BSDF parameters. |
 | `material.list_by_object` | `list_by_object` | Lists material slots for specific object. |
+| `material.create` | `create_material` | Creates new PBR material with Principled BSDF. |
+| `material.assign` | `assign_material` | Assigns material to object or selected faces. |
+| `material.set_params` | `set_material_params` | Modifies existing material parameters. |
+| `material.set_texture` | `set_material_texture` | Binds image texture to material input. |
 
 ### UV (`application/handlers/uv.py`)
 
 | RPC Command | Handler Method | Description |
 |-------------|----------------|-------------|
 | `uv.list_maps` | `list_maps` | Lists UV maps for mesh object. |
+| `uv.unwrap` | `unwrap` | Unwraps selected faces using projection methods. |
+| `uv.pack_islands` | `pack_islands` | Packs UV islands for optimal texture space. |
+| `uv.create_seam` | `create_seam` | Marks or clears UV seams on selected edges. |
 
 ### Modeling (`application/handlers/modeling.py`)
 
@@ -180,4 +188,34 @@ Technical details.
 | `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
 | `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
 
+
+### Sculpt (`application/handlers/sculpt.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `sculpt.auto` | `auto_sculpt` | High-level sculpt operation using mesh filters (smooth, inflate, flatten, sharpen). |
+| `sculpt.brush_smooth` | `brush_smooth` | Sets up smooth brush at specified location. |
+| `sculpt.brush_grab` | `brush_grab` | Sets up grab brush for moving geometry. |
+| `sculpt.brush_crease` | `brush_crease` | Sets up crease brush for creating sharp lines. |
+
+
+### Export (`application/handlers/export.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `export.glb` | `export_glb` | Exports to GLB/GLTF format (web, game engines). |
+| `export.fbx` | `export_fbx` | Exports to FBX format (industry standard). |
+| `export.obj` | `export_obj` | Exports to OBJ format (universal mesh). |
+
+
+### System (`application/handlers/system.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `system.set_mode` | `set_mode` | Switches Blender mode (OBJECT/EDIT/SCULPT/POSE/...) with optional object selection. |
+| `system.undo` | `undo` | Undoes last operation(s), max 10 steps per call. |
+| `system.redo` | `redo` | Redoes previously undone operation(s), max 10 steps per call. |
+| `system.save_file` | `save_file` | Saves current .blend file (with optional filepath). |
+| `system.new_file` | `new_file` | Creates new file (resets scene to startup). |
+| `system.snapshot` | `snapshot` | Manages quick save/restore checkpoints (save/restore/list/delete). |
 

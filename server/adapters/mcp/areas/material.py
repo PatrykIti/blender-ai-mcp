@@ -1,6 +1,8 @@
+from typing import List, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.infrastructure.di import get_material_handler
+
 
 @mcp.tool()
 def material_list(ctx: Context, include_unassigned: bool = True) -> str:
@@ -87,4 +89,174 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
         msg = str(e)
         if "not found" in msg.lower():
             return f"{msg}. Use scene_list_objects to verify the name."
+        return msg
+
+
+# TASK-023-1: material_create
+@mcp.tool()
+def material_create(
+    ctx: Context,
+    name: str,
+    base_color: Optional[List[float]] = None,
+    metallic: float = 0.0,
+    roughness: float = 0.5,
+    emission_color: Optional[List[float]] = None,
+    emission_strength: float = 0.0,
+    alpha: float = 1.0,
+) -> str:
+    """
+    [OBJECT MODE][SAFE] Creates a new PBR material with Principled BSDF.
+
+    Workflow: AFTER → material_assign
+
+    Args:
+        name: Material name
+        base_color: RGBA color [0-1] (default: [0.8, 0.8, 0.8, 1.0])
+        metallic: Metallic value 0-1
+        roughness: Roughness value 0-1
+        emission_color: Emission RGB [0-1]
+        emission_strength: Emission strength
+        alpha: Alpha/opacity 0-1
+    """
+    handler = get_material_handler()
+    try:
+        result = handler.create_material(
+            name=name,
+            base_color=base_color,
+            metallic=metallic,
+            roughness=roughness,
+            emission_color=emission_color,
+            emission_strength=emission_strength,
+            alpha=alpha,
+        )
+        ctx.info(f"Created material '{name}'")
+        return result
+    except RuntimeError as e:
+        return str(e)
+
+
+# TASK-023-2: material_assign
+@mcp.tool()
+def material_assign(
+    ctx: Context,
+    material_name: str,
+    object_name: Optional[str] = None,
+    slot_index: Optional[int] = None,
+    assign_to_selection: bool = False,
+) -> str:
+    """
+    [OBJECT MODE/EDIT MODE][SELECTION-BASED] Assigns material to object or selected faces.
+
+    In Object Mode: Assigns material to entire object
+    In Edit Mode with assign_to_selection=True: Assigns to selected faces only
+
+    Workflow: BEFORE → material_create, mesh_select
+
+    Args:
+        material_name: Name of existing material
+        object_name: Target object (default: active object)
+        slot_index: Material slot index (default: auto)
+        assign_to_selection: If True and in Edit Mode, assign to selected faces
+    """
+    handler = get_material_handler()
+    try:
+        result = handler.assign_material(
+            material_name=material_name,
+            object_name=object_name,
+            slot_index=slot_index,
+            assign_to_selection=assign_to_selection,
+        )
+        ctx.info(f"Assigned material '{material_name}'")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use material_list to verify the material name."
+        return msg
+
+
+# TASK-023-3: material_set_params
+@mcp.tool()
+def material_set_params(
+    ctx: Context,
+    material_name: str,
+    base_color: Optional[List[float]] = None,
+    metallic: Optional[float] = None,
+    roughness: Optional[float] = None,
+    emission_color: Optional[List[float]] = None,
+    emission_strength: Optional[float] = None,
+    alpha: Optional[float] = None,
+) -> str:
+    """
+    [OBJECT MODE][SAFE] Modifies parameters of existing material.
+
+    Only provided parameters are changed; others remain unchanged.
+
+    Workflow: BEFORE → material_list
+
+    Args:
+        material_name: Name of material to modify
+        base_color: New RGBA color [0-1]
+        metallic: New metallic value 0-1
+        roughness: New roughness value 0-1
+        emission_color: New emission RGB [0-1]
+        emission_strength: New emission strength
+        alpha: New alpha/opacity 0-1
+    """
+    handler = get_material_handler()
+    try:
+        result = handler.set_material_params(
+            material_name=material_name,
+            base_color=base_color,
+            metallic=metallic,
+            roughness=roughness,
+            emission_color=emission_color,
+            emission_strength=emission_strength,
+            alpha=alpha,
+        )
+        ctx.info(f"Updated parameters for '{material_name}'")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use material_list to verify the material name."
+        return msg
+
+
+# TASK-023-4: material_set_texture
+@mcp.tool()
+def material_set_texture(
+    ctx: Context,
+    material_name: str,
+    texture_path: str,
+    input_name: str = "Base Color",
+    color_space: str = "sRGB",
+) -> str:
+    """
+    [OBJECT MODE][SAFE] Binds image texture to material input.
+
+    Automatically creates Image Texture node and connects to Principled BSDF.
+
+    Workflow: BEFORE → material_create
+
+    Args:
+        material_name: Target material name
+        texture_path: Path to image file
+        input_name: BSDF input ('Base Color', 'Roughness', 'Normal', 'Metallic', 'Emission Color')
+        color_space: Color space ('sRGB' for color, 'Non-Color' for data maps)
+    """
+    handler = get_material_handler()
+    try:
+        result = handler.set_material_texture(
+            material_name=material_name,
+            texture_path=texture_path,
+            input_name=input_name,
+            color_space=color_space,
+        )
+        ctx.info(f"Connected texture to '{input_name}' on '{material_name}'")
+        return result
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use material_list to verify the material name."
         return msg

@@ -1,8 +1,9 @@
 # TASK-025: System Tools
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Category:** System Tools
+**Completion Date:** 2025-11-29
 
 ---
 
@@ -14,7 +15,7 @@ Implement system-level tools for mode switching, undo/redo, and file operations.
 
 # TASK-025-1: system_set_mode
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -130,7 +131,7 @@ class SystemHandler:
 
 # TASK-025-2: system_undo / system_redo
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -198,7 +199,7 @@ def redo(self, steps=1):
 
 # TASK-025-3: system_save_file / system_new_file
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 
 ## Objective
@@ -281,7 +282,7 @@ def new_file(self, load_ui=False):
 
 # TASK-025-4: system_snapshot
 
-**Status:** To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 
 ## Objective
