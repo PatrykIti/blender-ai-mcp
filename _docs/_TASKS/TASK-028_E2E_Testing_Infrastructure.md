@@ -1,8 +1,34 @@
 # TASK-028: E2E Testing Infrastructure
 
-**Status:** To Do
+**Status:** 🟡 In Progress (Partial)
 **Priority:** 🔴 High
 **Category:** Testing Infrastructure
+
+---
+
+## Progress Summary
+
+### ✅ Completed (2025-11-29)
+
+| Item | Description |
+|------|-------------|
+| Directory structure | `tests/unit/`, `tests/e2e/`, `tests/fixtures/` created |
+| Unit test conftest | bpy/bmesh mocks in `tests/unit/conftest.py` |
+| E2E test conftest | Session-scoped RPC client in `tests/e2e/conftest.py` |
+| Test markers | `@pytest.mark.unit`, `@pytest.mark.e2e`, `@pytest.mark.slow` |
+| E2E tests | 19 working tests (collection, material, scene, uv) |
+| Documentation | `_docs/_TESTS/README.md`, `_docs/_TESTS/ARCHITECTURE.md` |
+| CI/CD update | Workflows run only unit tests (no Blender in CI) |
+| Bug fixes | Snapshot hash consistency, RPC connection exhaustion |
+
+### ⬚ Remaining
+
+| Item | Description |
+|------|-------------|
+| TASK-028-1 | Auto-start Blender as subprocess (currently requires manual start) |
+| TASK-028-2 | Scene verification helpers (`assert_object_exists`, etc.) |
+| TASK-028-4 | CI/CD workflow for E2E with Blender Docker image |
+| More E2E tests | Mesh tools, modeling tools, full workflow tests |
 
 ---
 

@@ -47,6 +47,19 @@ def rpc_connection_available():
     return is_rpc_available()
 
 
+@pytest.fixture(scope="session")
+def rpc_client():
+    """Session-scoped RPC client shared by all E2E tests.
+
+    This prevents connection exhaustion by reusing a single connection.
+    """
+    config = get_config()
+    client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+    client.connect()
+    yield client
+    client.close()
+
+
 def pytest_collection_modifyitems(config, items):
     """Mark E2E tests to skip if RPC is not available."""
     if not is_rpc_available():

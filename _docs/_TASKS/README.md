@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 22
-- **In Progress:** 0
+- **To Do:** 21
+- **In Progress:** 1
 - **Done:** 60
 
 ---
@@ -54,16 +54,14 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-027-3](./TASK-027_Sculpting_Tools.md#task-027-3-sculpt_brush_grab) | **sculpt_brush_grab** | 🟢 Low |
 | [TASK-027-4](./TASK-027_Sculpting_Tools.md#task-027-4-sculpt_brush_crease) | **sculpt_brush_crease** | 🟢 Low |
 
-### Testing Infrastructure
-| ID | Title | Priority |
-|----|-------|----------|
-| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High |
-
 ---
 
 ## 🚧 In Progress
 
-*(No tasks)*
+### Testing Infrastructure
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | Core infra done, remaining: auto-start Blender, CI/CD |
 
 ---
 

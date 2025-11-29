@@ -3,15 +3,11 @@ Tests for Scene Inspect Material Slots (TASK-014-10)
 """
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
-from server.adapters.rpc.client import RpcClient
-from server.infrastructure.config import get_config
 
 
 @pytest.fixture
-def scene_handler():
-    """Provides a scene handler instance."""
-    config = get_config()
-    rpc_client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+def scene_handler(rpc_client):
+    """Provides a scene handler instance using shared RPC client."""
     return SceneToolHandler(rpc_client)
 
 

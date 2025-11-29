@@ -31,8 +31,8 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: Run Tests
-        run: poetry run python -m pytest tests
+      - name: Run Unit Tests
+        run: poetry run pytest tests/unit/ -v
 
       - name: Build Addon Zip
         run: python scripts/build_addon.py

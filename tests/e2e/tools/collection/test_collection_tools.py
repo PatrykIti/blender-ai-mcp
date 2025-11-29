@@ -3,15 +3,11 @@ Tests for Collection Tools (TASK-014-6, 014-7)
 """
 import pytest
 from server.application.tool_handlers.collection_handler import CollectionToolHandler
-from server.adapters.rpc.client import RpcClient
-from server.infrastructure.config import get_config
 
 
 @pytest.fixture
-def collection_handler():
-    """Provides a collection handler instance."""
-    config = get_config()
-    rpc_client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+def collection_handler(rpc_client):
+    """Provides a collection handler instance using shared RPC client."""
     return CollectionToolHandler(rpc_client)
 
 
