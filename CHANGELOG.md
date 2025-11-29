@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.13.0 (2025-11-29)
+
+### Features
+
+- Phase 2 Mesh Tools - Organic, Precision, Transform, Curves & Testing (TASK-016 to TASK-028)
+  ([#18](https://github.com/PatrykIti/blender-ai-mcp/pull/18),
+  [`0f86081`](https://github.com/PatrykIti/blender-ai-mcp/commit/0f86081536ca2892c1a34478271b3d82d817cffd))
+
+
 ## v1.12.0 (2025-11-29)
 
 ### Documentation
