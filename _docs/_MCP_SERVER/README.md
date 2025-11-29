@@ -72,6 +72,7 @@ Organizational tools for managing Blender collections.
 |-----------|-----------|-------------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. |
 | `collection_list_objects` | `collection_name` (str), `recursive` (bool), `include_hidden` (bool) | Lists objects within a collection, optionally recursive through child collections. |
+| `collection_manage` | `action` (create/delete/rename/move_object/link_object/unlink_object), `collection_name`, `new_name`, `parent_name`, `object_name` | Manages collections: create, delete, rename, and move/link/unlink objects between collections. |
 
 ### Material Tools
 Material and shader management.
@@ -80,6 +81,10 @@ Material and shader management.
 |-----------|-----------|-------------|
 | `material_list` | `include_unassigned` (bool) | Lists all materials with Principled BSDF parameters and object assignment counts. |
 | `material_list_by_object` | `object_name` (str), `include_indices` (bool) | Lists material slots for a specific object. |
+| `material_create` | `name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Creates new PBR material with Principled BSDF shader. |
+| `material_assign` | `material_name`, `object_name`, `slot_index`, `assign_to_selection` | Assigns material to object or selected faces (Edit Mode). |
+| `material_set_params` | `material_name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Modifies existing material parameters. |
+| `material_set_texture` | `material_name`, `texture_path`, `input_name`, `color_space` | Binds image texture to material input (supports Normal maps). |
 
 ### UV Tools
 Texture coordinate mapping operations.
@@ -87,6 +92,9 @@ Texture coordinate mapping operations.
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
 | `uv_list_maps` | `object_name` (str), `include_island_counts` (bool) | Lists UV maps for a mesh object with active flags and loop counts. |
+| `uv_unwrap` | `object_name` (str), `method` (str), `angle_limit` (float), `island_margin` (float), `scale_to_bounds` (bool) | Unwraps selected faces to UV space using projection methods (SMART_PROJECT, CUBE, CYLINDER, SPHERE, UNWRAP). |
+| `uv_pack_islands` | `object_name` (str), `margin` (float), `rotate` (bool), `scale` (bool) | Packs UV islands for optimal texture space usage. |
+| `uv_create_seam` | `object_name` (str), `action` (str) | Marks or clears UV seams on selected edges ('mark' or 'clear'). |
 
 ### Modeling Tools
 Geometry creation and editing.
@@ -148,6 +156,39 @@ Curve creation and conversion.
 |-----------|-----------|-------------|
 | `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
 | `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
+
+### Sculpt Tools
+Sculpt Mode operations for organic shape manipulation.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. Recommended for AI workflows. |
+| `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. |
+| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. |
+| `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
+
+> **Note:** For reliable AI workflows, use `sculpt_auto` with mesh filters. Brush tools set up the brush but don't execute strokes programmatically.
+
+### Export Tools
+File export operations.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `export_glb` | `filepath`, `export_selected`, `export_animations`, `export_materials`, `apply_modifiers` | Exports to GLB/GLTF format (web, game engines). |
+| `export_fbx` | `filepath`, `export_selected`, `export_animations`, `apply_modifiers`, `mesh_smooth_type` | Exports to FBX format (industry standard). |
+| `export_obj` | `filepath`, `export_selected`, `apply_modifiers`, `export_materials`, `export_uvs`, `export_normals`, `triangulate` | Exports to OBJ format (universal mesh). |
+
+### System Tools
+System-level operations for mode switching, undo/redo, and file management.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `system_set_mode` | `mode`, `object_name` | Switches Blender mode (OBJECT/EDIT/SCULPT/POSE/...) with optional object selection. |
+| `system_undo` | `steps` | Undoes last operation(s), max 10 steps per call. |
+| `system_redo` | `steps` | Redoes previously undone operation(s), max 10 steps per call. |
+| `system_save_file` | `filepath`, `compress` | Saves current .blend file. Auto-generates temp path if unsaved. |
+| `system_new_file` | `load_ui` | Creates new file (resets scene to startup). |
+| `system_snapshot` | `action`, `name` | Manages quick save/restore checkpoints (save/restore/list/delete). |
 
 ## 🛠 Key Components
 

@@ -6,6 +6,9 @@ from server.application.tool_handlers.collection_handler import CollectionToolHa
 from server.application.tool_handlers.material_handler import MaterialToolHandler
 from server.application.tool_handlers.uv_handler import UVToolHandler
 from server.application.tool_handlers.curve_handler import CurveToolHandler
+from server.application.tool_handlers.system_handler import SystemToolHandler
+from server.application.tool_handlers.export_handler import ExportToolHandler
+from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -14,6 +17,9 @@ from server.domain.tools.collection import ICollectionTool
 from server.domain.tools.material import IMaterialTool
 from server.domain.tools.uv import IUVTool
 from server.domain.tools.curve import ICurveTool
+from server.domain.tools.system import ISystemTool
+from server.domain.tools.export import IExportTool
+from server.domain.tools.sculpt import ISculptTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -66,3 +72,19 @@ def get_curve_handler() -> ICurveTool:
     return CurveToolHandler(rpc)
 
 
+def get_system_handler() -> ISystemTool:
+    """Provider for ISystemTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return SystemToolHandler(rpc)
+
+
+def get_export_handler() -> IExportTool:
+    """Provider for IExportTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return ExportToolHandler(rpc)
+
+
+def get_sculpt_handler() -> ISculptTool:
+    """Provider for ISculptTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return SculptToolHandler(rpc)

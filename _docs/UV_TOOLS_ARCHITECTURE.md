@@ -1,6 +1,6 @@
 # UV Tools Architecture
 
-UV tools handle texture coordinate mapping operations, providing introspection and listing capabilities for UV maps on mesh objects.
+UV tools handle texture coordinate mapping operations, providing comprehensive UV mapping, unwrapping, and seam management for mesh objects.
 
 ---
 
@@ -99,6 +99,98 @@ Response:
 
 ---
 
+## 2. uv_unwrap ✅ Done
+
+Unwraps selected faces to UV space using specified projection method.
+
+**Tags:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+**Args:**
+- `object_name`: str (optional) - Target object (default: active object)
+- `method`: str - Projection method: SMART_PROJECT, CUBE, CYLINDER, SPHERE, UNWRAP
+- `angle_limit`: float - Angle threshold for SMART_PROJECT (degrees, 0-89)
+- `island_margin`: float - Space between UV islands (0.0-1.0)
+- `scale_to_bounds`: bool - Scale UVs to fill 0-1 space
+
+**Methods:**
+- **SMART_PROJECT**: Automatic projection based on face angles (best for complex meshes)
+- **CUBE**: Cube projection (best for boxy objects)
+- **CYLINDER**: Cylindrical projection
+- **SPHERE**: Spherical projection
+- **UNWRAP**: Standard unwrap (requires seams for best results)
+
+**Workflow:** BEFORE → mesh_select (select faces) | AFTER → uv_pack_islands
+
+Example:
+```json
+{
+  "tool": "uv_unwrap",
+  "args": {
+    "object_name": "Cube",
+    "method": "SMART_PROJECT",
+    "angle_limit": 66.0,
+    "island_margin": 0.02,
+    "scale_to_bounds": true
+  }
+}
+```
+
+---
+
+## 3. uv_pack_islands ✅ Done
+
+Packs UV islands for optimal texture space usage.
+
+**Tags:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+**Args:**
+- `object_name`: str (optional) - Target object (default: active object)
+- `margin`: float - Space between packed islands (0.0-1.0)
+- `rotate`: bool - Allow rotation for better packing
+- `scale`: bool - Allow scaling islands to fill space
+
+**Workflow:** BEFORE → uv_unwrap
+
+Example:
+```json
+{
+  "tool": "uv_pack_islands",
+  "args": {
+    "object_name": "Cube",
+    "margin": 0.02,
+    "rotate": true,
+    "scale": true
+  }
+}
+```
+
+---
+
+## 4. uv_create_seam ✅ Done
+
+Marks or clears UV seams on selected edges.
+
+**Tags:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+**Args:**
+- `object_name`: str (optional) - Target object (default: active object)
+- `action`: str - 'mark' to add seams, 'clear' to remove seams
+
+**Workflow:** BEFORE → mesh_select_targeted (select edges) | AFTER → uv_unwrap (with UNWRAP method)
+
+Example:
+```json
+{
+  "tool": "uv_create_seam",
+  "args": {
+    "object_name": "Cube",
+    "action": "mark"
+  }
+}
+```
+
+---
+
 ## Future Enhancements
 
 - **UV Island Counting**: Implement proper island detection using bmesh.ops
@@ -113,8 +205,10 @@ Response:
 
 - `scene_inspect_object` - Includes basic UV map count
 - `material_list_by_object` - Shows material slots (textures use UV maps)
+- `mesh_select` - Select geometry before UV operations
+- `mesh_select_targeted` - Select specific edges for seam marking
 
 ---
 
-**Status:** ✅ Complete (Phase 7)
-**Version:** 1.9.10
+**Status:** ✅ Complete (Phase 8)
+**Version:** 1.17.0

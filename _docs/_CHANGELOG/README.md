@@ -6,6 +6,12 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [48](./48-2025-11-29-sculpt-tools.md) | 2025-11-29 | **Sculpt Tools (TASK-027)** | 1.21.0 |
+| [47](./47-2025-11-29-system-tools.md) | 2025-11-29 | **System Tools (TASK-025)** | 1.20.0 |
+| [46](./46-2025-11-29-export-tools.md) | 2025-11-29 | **Export Tools (TASK-026)** | 1.19.0 |
+| [45](./45-2025-11-29-collection-manage.md) | 2025-11-29 | **Collection Manage Tool (TASK-022)** | 1.18.0 |
+| [44](./44-2025-11-29-uv-tools.md) | 2025-11-29 | **UV Tools (TASK-024)** | 1.17.0 |
+| [43](./43-2025-11-29-material-tools.md) | 2025-11-29 | **Material Tools (TASK-023)** | 1.16.0 |
 | [42](./42-2025-11-29-e2e-testing-infrastructure.md) | 2025-11-29 | **E2E Testing Infrastructure (TASK-028)** | 1.15.1 |
 | [41](./41-2025-11-29-transform-curves-procedural.md) | 2025-11-29 | **Phase 2.4 & 2.6: Transform, Curves & Procedural (TASK-019 & TASK-021)** | 1.15.0 |
 | [40](./40-2025-11-29-precision-tools.md) | 2025-11-29 | **Phase 2.5 Advanced Precision Tools (TASK-018)** | 1.14.0 |

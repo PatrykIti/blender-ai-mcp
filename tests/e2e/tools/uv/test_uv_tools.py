@@ -1,5 +1,5 @@
 """
-Tests for UV Tools (TASK-014-11)
+Tests for UV Tools (TASK-014-11, TASK-024)
 """
 import pytest
 from server.application.tool_handlers.uv_handler import UVToolHandler
@@ -139,3 +139,375 @@ def test_uv_list_maps_non_mesh_object(uv_handler):
         error_msg = str(e).lower()
         if "could not connect" in error_msg or "unknown command" in error_msg:
             pytest.skip(f"Blender not available: {e}")
+
+
+# =============================================================================
+# TASK-024: uv_unwrap Tests
+# =============================================================================
+
+def test_uv_unwrap_smart_project(uv_handler):
+    """Test UV unwrap with SMART_PROJECT method."""
+    try:
+        # Try common mesh object names
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.unwrap(
+                    object_name=obj_name,
+                    method="SMART_PROJECT",
+                    angle_limit=66.0,
+                    island_margin=0.02,
+                    scale_to_bounds=True
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "Unwrapped" in result or "unwrap" in result.lower()
+        print(f"✓ uv_unwrap (SMART_PROJECT): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_unwrap_cube_project(uv_handler):
+    """Test UV unwrap with CUBE projection."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.unwrap(
+                    object_name=obj_name,
+                    method="CUBE",
+                    scale_to_bounds=True
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "CUBE" in result
+        print(f"✓ uv_unwrap (CUBE): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_unwrap_cylinder_project(uv_handler):
+    """Test UV unwrap with CYLINDER projection."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.unwrap(
+                    object_name=obj_name,
+                    method="CYLINDER",
+                    scale_to_bounds=True
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "CYLINDER" in result
+        print(f"✓ uv_unwrap (CYLINDER): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_unwrap_sphere_project(uv_handler):
+    """Test UV unwrap with SPHERE projection."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.unwrap(
+                    object_name=obj_name,
+                    method="SPHERE",
+                    scale_to_bounds=True
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "SPHERE" in result
+        print(f"✓ uv_unwrap (SPHERE): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_unwrap_standard(uv_handler):
+    """Test UV unwrap with standard UNWRAP method."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.unwrap(
+                    object_name=obj_name,
+                    method="UNWRAP",
+                    island_margin=0.02
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "UNWRAP" in result
+        print(f"✓ uv_unwrap (UNWRAP): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_unwrap_invalid_object(uv_handler):
+    """Test UV unwrap with non-existent object."""
+    try:
+        with pytest.raises(RuntimeError) as exc_info:
+            uv_handler.unwrap(
+                object_name="NonExistentObject12345",
+                method="SMART_PROJECT"
+            )
+        error_msg = str(exc_info.value).lower()
+        if "not found" in error_msg:
+            print("✓ uv_unwrap properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {exc_info.value}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "not found" in error_msg:
+            print("✓ uv_unwrap properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        else:
+            raise
+
+
+# =============================================================================
+# TASK-024: uv_pack_islands Tests
+# =============================================================================
+
+def test_uv_pack_islands_basic(uv_handler):
+    """Test packing UV islands with default parameters."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.pack_islands(
+                    object_name=obj_name,
+                    margin=0.02,
+                    rotate=True,
+                    scale=True
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "Packed" in result or "pack" in result.lower()
+        print(f"✓ uv_pack_islands: {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_pack_islands_custom_params(uv_handler):
+    """Test packing UV islands with custom parameters."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.pack_islands(
+                    object_name=obj_name,
+                    margin=0.05,
+                    rotate=False,
+                    scale=False
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "Packed" in result
+        print(f"✓ uv_pack_islands (custom params): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_pack_islands_invalid_object(uv_handler):
+    """Test packing UV islands with non-existent object."""
+    try:
+        with pytest.raises(RuntimeError) as exc_info:
+            uv_handler.pack_islands(
+                object_name="NonExistentObject12345",
+                margin=0.02
+            )
+        error_msg = str(exc_info.value).lower()
+        if "not found" in error_msg:
+            print("✓ uv_pack_islands properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {exc_info.value}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "not found" in error_msg:
+            print("✓ uv_pack_islands properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        else:
+            raise
+
+
+# =============================================================================
+# TASK-024: uv_create_seam Tests
+# =============================================================================
+
+def test_uv_create_seam_mark(uv_handler):
+    """Test marking UV seams on selected edges."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.create_seam(
+                    object_name=obj_name,
+                    action="mark"
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "Marked" in result or "seam" in result.lower()
+        print(f"✓ uv_create_seam (mark): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_create_seam_clear(uv_handler):
+    """Test clearing UV seams from selected edges."""
+    try:
+        test_objects = ["Cube", "Sphere", "Plane"]
+
+        result = None
+        for obj_name in test_objects:
+            try:
+                result = uv_handler.create_seam(
+                    object_name=obj_name,
+                    action="clear"
+                )
+                break
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    continue
+                raise
+
+        if result is None:
+            pytest.skip("No test objects available")
+
+        assert isinstance(result, str)
+        assert "Cleared" in result or "seam" in result.lower()
+        print(f"✓ uv_create_seam (clear): {result}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+
+
+def test_uv_create_seam_invalid_object(uv_handler):
+    """Test creating seam with non-existent object."""
+    try:
+        with pytest.raises(RuntimeError) as exc_info:
+            uv_handler.create_seam(
+                object_name="NonExistentObject12345",
+                action="mark"
+            )
+        error_msg = str(exc_info.value).lower()
+        if "not found" in error_msg:
+            print("✓ uv_create_seam properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {exc_info.value}")
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "not found" in error_msg:
+            print("✓ uv_create_seam properly handles invalid object name")
+        elif "could not connect" in error_msg or "unknown command" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        else:
+            raise

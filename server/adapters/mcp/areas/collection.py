@@ -1,3 +1,4 @@
+from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.infrastructure.di import get_collection_handler
@@ -109,6 +110,53 @@ def collection_list_objects(
 
         ctx.info(f"Listed {object_count} objects from collection '{collection_name}'")
         return "\n".join(lines)
+    except RuntimeError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return f"{msg}. Use collection_list to see available collections."
+        return msg
+
+
+@mcp.tool()
+def collection_manage(
+    ctx: Context,
+    action: Literal["create", "delete", "rename", "move_object", "link_object", "unlink_object"],
+    collection_name: str,
+    new_name: Optional[str] = None,
+    parent_name: Optional[str] = None,
+    object_name: Optional[str] = None,
+) -> str:
+    """
+    [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Manages collections in the scene.
+
+    Workflow: BEFORE -> collection_list | AFTER -> collection_list_objects
+
+    Actions:
+        - create: Create new collection (optionally under parent_name)
+        - delete: Delete collection (objects moved to scene root)
+        - rename: Rename collection (requires new_name)
+        - move_object: Move object to collection - unlinks from all others (requires object_name)
+        - link_object: Link object to collection - keeps other links (requires object_name)
+        - unlink_object: Unlink object from collection (requires object_name)
+
+    Args:
+        action: Operation to perform
+        collection_name: Target collection name (or name for new collection when creating)
+        new_name: New name for 'rename' action
+        parent_name: Parent collection for 'create' action (defaults to Scene Collection)
+        object_name: Object name for move/link/unlink actions
+    """
+    handler = get_collection_handler()
+    try:
+        result = handler.manage_collection(
+            action=action,
+            collection_name=collection_name,
+            new_name=new_name,
+            parent_name=parent_name,
+            object_name=object_name,
+        )
+        ctx.info(f"collection_manage({action}): {result}")
+        return result
     except RuntimeError as e:
         msg = str(e)
         if "not found" in msg.lower():
