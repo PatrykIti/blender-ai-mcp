@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 21
+- **To Do:** 22
 - **In Progress:** 0
 - **Done:** 60
 
@@ -53,6 +53,11 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-027-2](./TASK-027_Sculpting_Tools.md#task-027-2-sculpt_brush_smooth) | **sculpt_brush_smooth** | 🟢 Low |
 | [TASK-027-3](./TASK-027_Sculpting_Tools.md#task-027-3-sculpt_brush_grab) | **sculpt_brush_grab** | 🟢 Low |
 | [TASK-027-4](./TASK-027_Sculpting_Tools.md#task-027-4-sculpt_brush_crease) | **sculpt_brush_crease** | 🟢 Low |
+
+### Testing Infrastructure
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High |
 
 ---
 
