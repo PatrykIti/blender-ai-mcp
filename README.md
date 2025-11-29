@@ -267,6 +267,34 @@ Organic shaping and sculpt workflows.
 
 ---
 
+### 🤖 Intent Router (Planned)
+
+Offline intent-matching system that maps natural language prompts to tools without requiring an external LLM.
+
+| Component | Description | Status |
+|-----------|-------------|--------|
+| `Intent Classifier` | TF-IDF + SVM/LogisticRegression for keyword matching | 🚧 |
+| `Embedding Store` | Semantic matching via sentence-transformers (all-MiniLM-L6-v2) | 🚧 |
+| `Workflow Planner` | Maps complex intents to tool sequences | 🚧 |
+| `Feedback Learning` | Self-improvement from user corrections | 🚧 |
+
+**Key Features:**
+- **100% Offline** - No external API calls required
+- **Deterministic** - Same prompt → same tool selection
+- **Workflow Support** - "make a phone" → automatic multi-tool sequence
+- **Lightweight** - Uses small embedding models (~22MB)
+
+**Example:**
+```
+User: "extrude the face outward"
+Router: mesh_extrude_region
+
+User: "create a phone with rounded edges"
+Router: [modeling_add_cube, mesh_bevel, mesh_inset, mesh_extrude, material_assign]
+```
+
+---
+
 ## 🧠 LLM Context Optimization
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
