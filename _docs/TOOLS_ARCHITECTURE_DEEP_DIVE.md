@@ -479,7 +479,7 @@ def mesh_boolean(operation: str = 'DIFFERENCE', solver: str = 'EXACT') -> str:
     """
 ```
 - Formula: `UNSELECTED (Base) - SELECTED (Cutter)` (for DIFFERENCE)
-- `solver='EXACT'`: Uses Exact Boolean solver (robust, default in Blender 4.0+).
+- `solver='EXACT'`: Uses Exact Boolean solver (robust, default in Blender 5.0+).
 - `solver='FLOAT'`: Uses legacy Float solver (fast but error-prone).
 - `mesh_boolean` → Points to `modeling_add_modifier(BOOLEAN)` as safer alternative
 

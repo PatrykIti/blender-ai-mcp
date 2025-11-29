@@ -8,7 +8,7 @@
 
 ## 🎯 Objective
 Fix 3 critical bugs identified in Blender MCP tools:
-1. **mesh_boolean**: CRITICAL - Invalid default solver='FAST' (removed in Blender 4.0+)
+1. **mesh_boolean**: CRITICAL - Invalid default solver='FAST' (removed in Blender 5.0+)
 2. **Edit mode operations**: Context consistency issues causing "context is incorrect" errors
 3. **scene_set_mode**: Improve validation to prevent cryptic "enum not found" errors
 
@@ -20,7 +20,7 @@ Fix 3 critical bugs identified in Blender MCP tools:
 - `server/adapters/mcp/server.py:1285-1308`
 
 **Problem:**
-- Default `solver='FAST'` is INVALID in Blender 4.0+
+- Default `solver='FAST'` is INVALID in Blender 5.0+
 - Valid values: 'EXACT' (modern, recommended) or 'FLOAT' (legacy)
 - This causes immediate failure on EVERY boolean operation
 
@@ -81,7 +81,7 @@ Update schema:
 ```
 
 **1.3 Update Docstring**
-Document that EXACT is modern/recommended, FLOAT is legacy, FAST was removed in Blender 4.0.
+Document that EXACT is modern/recommended, FLOAT is legacy, FAST was removed in Blender 5.0.
 
 ### Task 2: Fix Edit Mode Context Consistency
 
@@ -246,7 +246,7 @@ Add bug fix entries:
 ## Bug Fixes (2025-11-27)
 
 ### mesh_boolean - Invalid Solver Default (CRITICAL)
-- **Fixed**: Changed default `solver` from 'FAST' (invalid in Blender 4.0+) to 'EXACT'
+- **Fixed**: Changed default `solver` from 'FAST' (invalid in Blender 5.0+) to 'EXACT'
 - **Impact**: mesh_boolean now works correctly with modern Blender versions
 - **Files**: mesh.py:207, server.py:1285
 
@@ -320,6 +320,6 @@ Expected results:
 - **Test Coverage**: Existing 79 passing tests will catch any regressions
 
 ## 📚 References
-- Blender 4.0+ Boolean Modifier API documentation
+- Blender 5.0+ Boolean Modifier API documentation
 - Previous bug reports from LLM analysis
 - `_docs/TOOLS_ARCHITECTURE_DEEP_DIVE.md` for testing guidelines

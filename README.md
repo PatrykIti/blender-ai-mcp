@@ -29,7 +29,7 @@ Enable LLMs (Claude, ChatGPT) to control Blender reliably. Built with **Clean Ar
 ## 🚀 Why use this MCP Server instead of raw Python code?
 
 Most AI solutions for Blender rely on asking the LLM to "write a Python script". This often fails because:
-1.  **Hallucinations**: AI frequently uses outdated `bpy` API methods (mixing Blender 2.8 with 4.0).
+1.  **Hallucinations**: AI frequently uses outdated `bpy` API methods (mixing Blender 2.8 with 5.0).
 2.  **Context Errors**: Running operators requires specific context (active window, selected object, correct mode). Raw scripts often crash Blender due to `poll()` failures.
 3.  **No Feedback Loop**: If a script fails, the AI doesn't know why. Our MCP server returns precise error messages.
 4.  **Safety**: Executing arbitrary Python code is risky. Our tools are sandboxed endpoints with validated inputs.

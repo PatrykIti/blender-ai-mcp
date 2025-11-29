@@ -103,11 +103,13 @@ class SculptHandler:
         iterations = max(1, iterations)
 
         # Map operation to mesh filter type
+        # Blender 5.0 available: SMOOTH, SCALE, INFLATE, SPHERE, RANDOM, RELAX,
+        # RELAX_FACE_SETS, SURFACE_SMOOTH, SHARPEN, ENHANCE_DETAILS, ERASE_DISPLACEMENT
         operation = operation.upper()
         filter_map = {
             'SMOOTH': 'SMOOTH',
             'INFLATE': 'INFLATE',
-            'FLATTEN': 'FLATTEN',
+            'FLATTEN': 'SURFACE_SMOOTH',  # FLATTEN removed in Blender 5.0
             'SHARPEN': 'SHARPEN',
         }
 

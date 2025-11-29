@@ -3,7 +3,7 @@
 ## 🐛 Bug Fixes
 
 ### mesh_boolean - Invalid Solver Default (CRITICAL)
-- **Fixed**: Changed default `solver` from 'FAST' (invalid in Blender 4.0+) to 'EXACT'
+- **Fixed**: Changed default `solver` from 'FAST' (invalid in Blender 5.0+) to 'EXACT'
 - **Impact**: `mesh_boolean` now works correctly with modern Blender versions
 - **Files**: `mesh.py`, `server.py`
 
