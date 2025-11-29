@@ -3,6 +3,9 @@
 Scene tools are used for managing objects, their selection, and preview.
 According to the adopted convention (just like in Modeling Tools), **each operation is a separate tool**.
 
+> **Note:** Some scene tools have been consolidated into **mega tools** for LLM context optimization.
+> See `MEGA_TOOLS_ARCHITECTURE.md` for details on `scene_context` and `scene_create`.
+
 ---
 
 # 1. scene_list_objects ✅ Done

@@ -97,7 +97,33 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
 
 
 @mcp.tool()
-def scene_get_mode(ctx: Context) -> str:
+def scene_context(
+    ctx: Context,
+    action: Literal["mode", "selection"]
+) -> str:
+    """
+    [SCENE][READ-ONLY][SAFE] Quick context queries for scene state.
+
+    Actions:
+    - "mode": Returns current Blender mode, active object, selection count.
+    - "selection": Returns selected objects list + edit mode vertex/edge/face counts.
+
+    Workflow: READ-ONLY | FIRST STEP → check context before any operation
+
+    Examples:
+        scene_context(action="mode")
+        scene_context(action="selection")
+    """
+    if action == "mode":
+        return _scene_get_mode(ctx)
+    elif action == "selection":
+        return _scene_list_selection(ctx)
+    else:
+        return f"Unknown action '{action}'. Valid actions: mode, selection"
+
+
+# Internal function - exposed via scene_context mega tool
+def _scene_get_mode(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Reports the current Blender interaction mode and selection summary.
 
@@ -124,8 +150,8 @@ def scene_get_mode(ctx: Context) -> str:
     )
 
 
-@mcp.tool()
-def scene_list_selection(ctx: Context) -> str:
+# Internal function - exposed via scene_context mega tool
+def _scene_list_selection(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Lists the current selection in Object or Edit Mode.
 
@@ -623,7 +649,56 @@ def scene_inspect_modifiers(
         
         
 @mcp.tool()
-def scene_create_light(
+def scene_create(
+    ctx: Context,
+    action: Literal["light", "camera", "empty"],
+    location: Union[str, List[float]] = [0.0, 0.0, 0.0],
+    rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
+    name: Optional[str] = None,
+    # Light params:
+    light_type: Literal["POINT", "SUN", "SPOT", "AREA"] = "POINT",
+    energy: float = 1000.0,
+    color: Union[str, List[float]] = [1.0, 1.0, 1.0],
+    # Camera params:
+    lens: float = 50.0,
+    clip_start: Optional[float] = None,
+    clip_end: Optional[float] = None,
+    # Empty params:
+    empty_type: Literal["PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"] = "PLAIN_AXES",
+    size: float = 1.0
+) -> str:
+    """
+    [SCENE][SAFE] Creates scene helper objects (lights, cameras, empties).
+
+    Actions and parameters:
+    - "light": Creates light source. Optional: light_type (POINT/SUN/SPOT/AREA), energy, color, location, name.
+    - "camera": Creates camera. Optional: location, rotation, lens, clip_start, clip_end, name.
+    - "empty": Creates empty object. Optional: empty_type (PLAIN_AXES/ARROWS/CIRCLE/CUBE/SPHERE/CONE/IMAGE), size, location, name.
+
+    All location/rotation/color params accept either list [x,y,z] or string "[x,y,z]".
+
+    For mesh primitives (Cube, Sphere, etc.) use modeling_create_primitive instead.
+
+    Workflow: AFTER → geometry complete | BEFORE → scene_get_viewport
+
+    Examples:
+        scene_create(action="light", light_type="SUN", energy=5.0)
+        scene_create(action="light", light_type="AREA", location=[0, 0, 5], color=[1.0, 0.9, 0.8])
+        scene_create(action="camera", location=[0, -10, 5], rotation=[1.0, 0, 0])
+        scene_create(action="empty", empty_type="ARROWS", location=[0, 0, 2])
+    """
+    if action == "light":
+        return _scene_create_light(ctx, light_type, energy, color, location, name)
+    elif action == "camera":
+        return _scene_create_camera(ctx, location, rotation, lens, clip_start, clip_end, name)
+    elif action == "empty":
+        return _scene_create_empty(ctx, empty_type, size, location, name)
+    else:
+        return f"Unknown action '{action}'. Valid actions: light, camera, empty"
+
+
+# Internal function - exposed via scene_create mega tool
+def _scene_create_light(
     ctx: Context,
     type: str,
     energy: float = 1000.0,
@@ -651,8 +726,9 @@ def scene_create_light(
     except (RuntimeError, ValueError) as e:
         return str(e)
 
-@mcp.tool()
-def scene_create_camera(
+
+# Internal function - exposed via scene_create mega tool
+def _scene_create_camera(
     ctx: Context,
     location: Union[str, List[float]],
     rotation: Union[str, List[float]],
@@ -682,8 +758,9 @@ def scene_create_camera(
     except (RuntimeError, ValueError) as e:
         return str(e)
 
-@mcp.tool()
-def scene_create_empty(
+
+# Internal function - exposed via scene_create mega tool
+def _scene_create_empty(
     ctx: Context,
     type: str,
     size: float = 1.0,

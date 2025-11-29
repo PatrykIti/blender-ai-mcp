@@ -144,19 +144,19 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
 
 ---
 
-## 🧠 LLM Context Optimization (Planned)
+## 🧠 LLM Context Optimization
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
 
-| Mega Tool | Replaces | Savings |
-|-----------|----------|---------|
-| `scene_context` | mode, selection | -1 |
-| `scene_inspect` | object, topology, modifiers, materials | -3 |
-| `scene_create` | light, camera, empty | -2 |
-| `mesh_select` | all, none, linked, more, less, boundary | -4 |
-| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 |
+| Mega Tool | Replaces | Savings | Status |
+|-----------|----------|---------|--------|
+| `scene_context` | mode, selection | -1 | ✅ Done |
+| `scene_create` | light, camera, empty | -2 | ✅ Done |
+| `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ Done |
+| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ Done |
+| `scene_inspect` | object, topology, modifiers, materials | -3 | 🚧 Planned |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Implemented:** 14 tools → 4 mega tools (**-10 definitions** for LLM context)
 
 ---
 

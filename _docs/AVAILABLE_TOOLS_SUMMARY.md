@@ -5,29 +5,49 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🧠 LLM Context Optimization - Mega Tools
+
+> **Unified tools that consolidate multiple related operations to reduce LLM context usage.**
+> Original tools are kept as internal functions and routed via mega tools.
+
+| Mega Tool | Actions | Replaces | Status |
+|-----------|---------|----------|--------|
+| `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
+| `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
+| `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
+| `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
+
+**Total Savings:** 14 tools → 4 mega tools (**-10 definitions** for LLM context)
+
+---
+
 ## 🏗️ Scene Tools (`scene_`)
 *Tools for managing the scene graph, selection, and visualization.*
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
+| `scene_context` | `action` (mode/selection) | **MEGA TOOL** - Quick context queries (mode, selection state). | ✅ Done |
+| `scene_create` | `action` (light/camera/empty), params | **MEGA TOOL** - Creates scene helper objects (lights, cameras, empties). | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
-| `scene_get_mode` | *none* | Reports current Blender mode, active object, and selected objects. | ✅ Done |
-| `scene_list_selection` | *none* | Lists selected objects (Object Mode) plus vertex/edge/face counts in Edit Mode. | ✅ Done |
 | `scene_inspect_object` | `name` (str) | Detailed report about a single object (transform, collections, modifiers, materials, mesh stats). | ✅ Done |
 | `scene_get_viewport` | `width`, `height`, `shading`, `camera_name`, `focus_target`, `output_mode` | Returns a visual preview of the scene (OpenGL Render) with selectable output mode (IMAGE/BASE64/FILE/MARKDOWN). | ✅ Done |
-| `scene_create_light` | `type`, `energy`, `color`, `location` | Creates a light source. | ✅ Done |
-| `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera. | ✅ Done |
-| `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_inspect_material_slots` | `material_filter`, `include_empty_slots` | Audits material slot assignments across entire scene. | ✅ Done |
 | `scene_inspect_mesh_topology` | `object_name`, `detailed` | Reports detailed topology stats (verts/edges/faces, N-gons, non-manifold). | ✅ Done |
 | `scene_inspect_modifiers` | `object_name`, `include_disabled` | Lists modifier stacks with key settings and visibility flags. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
+
+**Deprecated (now internal, use mega tools):**
+- ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
+- ~~`scene_list_selection`~~ → Use `scene_context(action="selection")`
+- ~~`scene_create_light`~~ → Use `scene_create(action="light", ...)`
+- ~~`scene_create_camera`~~ → Use `scene_create(action="camera", ...)`
+- ~~`scene_create_empty`~~ → Use `scene_create(action="empty", ...)`
 
 ---
 
@@ -82,9 +102,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
-| `mesh_select_all` | `deselect` (bool) | Selects/Deselects all geometry. | ✅ Done |
+| `mesh_select` | `action` (all/none/linked/more/less/boundary) | **MEGA TOOL** - Simple selection operations. | ✅ Done |
+| `mesh_select_targeted` | `action` (by_index/loop/ring/by_location), params | **MEGA TOOL** - Targeted selection operations with parameters. | ✅ Done |
 | `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
-| `mesh_select_by_index` | `indices`, `type`, `selection_mode` | Selects elements by index. | ✅ Done |
 | `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
 | `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |
 | `mesh_bevel` | `offset`, `segments` | Bevels selected edges. | ✅ Done |
@@ -96,14 +116,18 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices. | ✅ Done |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
-| `mesh_select_loop` | `edge_index` | Selects edge loop from target edge. | ✅ Done |
-| `mesh_select_ring` | `edge_index` | Selects edge ring from target edge. | ✅ Done |
-| `mesh_select_linked` | *none* | Selects all connected geometry (islands). 🔴 CRITICAL | ✅ Done |
-| `mesh_select_more` | *none* | Grows selection by one step. | ✅ Done |
-| `mesh_select_less` | *none* | Shrinks selection by one step. | ✅ Done |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
-| `mesh_select_by_location` | `axis`, `min_coord`, `max_coord`, `mode` | Selects geometry by coordinate range. | ✅ Done |
-| `mesh_select_boundary` | `mode` | Selects boundary edges/vertices (holes). 🔴 CRITICAL | ✅ Done |
+
+**Deprecated (now internal, use mega tools):**
+- ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
+- ~~`mesh_select_linked`~~ → Use `mesh_select(action="linked")`
+- ~~`mesh_select_more`~~ → Use `mesh_select(action="more")`
+- ~~`mesh_select_less`~~ → Use `mesh_select(action="less")`
+- ~~`mesh_select_boundary`~~ → Use `mesh_select(action="boundary")`
+- ~~`mesh_select_by_index`~~ → Use `mesh_select_targeted(action="by_index", ...)`
+- ~~`mesh_select_loop`~~ → Use `mesh_select_targeted(action="loop", ...)`
+- ~~`mesh_select_ring`~~ → Use `mesh_select_targeted(action="ring", ...)`
+- ~~`mesh_select_by_location`~~ → Use `mesh_select_targeted(action="by_location", ...)`
 
 ---
 
