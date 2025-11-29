@@ -58,18 +58,12 @@ Managing objects at the scene level.
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for context-dependent operations). |
-| `scene_get_mode` | *none* | Returns current Blender mode, active object, and selected object names for deterministic branching. |
-| `scene_list_selection` | *none* | Lists selected objects (Object Mode) and Edit Mode vertex/edge/face counts. |
-| `scene_inspect_object` | `name` (str) | Detailed report for a single object (transform, collections, modifiers, materials, mesh stats). |
+| `scene_set_mode` | `mode` (str) | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). |
 | `scene_snapshot_state` | `include_mesh_stats` (bool), `include_materials` (bool) | Captures a structured JSON snapshot of scene state with SHA256 hash for change detection. |
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
-| `scene_inspect_material_slots` | `material_filter` (str), `include_empty_slots` (bool) | Audits material slot assignments across entire scene with warnings for empty/missing materials. |
-| `scene_inspect_mesh_topology` | `object_name` (str), `detailed` (bool) | Reports detailed topology stats (counts, N-gons) and optionally non-manifold/loose geometry. |
-| `scene_inspect_modifiers` | `object_name` (str), `include_disabled` (bool) | Lists modifier stacks with key settings and visibility flags. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
-| `scene_create_light` | `type` (str), `energy` (float), `color` (rgb), `location` (xyz) | Creates a light (POINT, SUN, SPOT, AREA). |
-| `scene_create_camera` | `location`, `rotation`, `lens` | Creates a camera object. |
-| `scene_create_empty` | `type`, `size`, `location` | Creates an Empty object (useful for helpers/parents). |
+
+> **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 
 ### Collection Tools
 Organizational tools for managing Blender collections.
@@ -114,9 +108,7 @@ Low-level geometry manipulation.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `mesh_select_all` | `deselect` (bool) | Selects or deselects all geometry. |
 | `mesh_delete_selected` | `type` (str) | Deletes selected elements ('VERT', 'EDGE', 'FACE'). |
-| `mesh_select_by_index` | `indices` (list[int]), `type` (str), `selection_mode` (str) | Selects specific vertices/edges/faces by index. |
 | `mesh_extrude_region` | `move` (list[float]) | Extrudes selected region and optionally translates it. |
 | `mesh_fill_holes` | *none* | Creates faces from selection (F key). |
 | `mesh_bevel` | `offset`, `segments` | Bevels selected geometry. |
@@ -128,6 +120,9 @@ Low-level geometry manipulation.
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
+| `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
+
+> **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
 ## 🛠 Key Components
 
