@@ -152,11 +152,11 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
 |-----------|----------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ Done |
 | `scene_create` | light, camera, empty | -2 | ✅ Done |
+| `scene_inspect` | object, topology, modifiers, materials | -3 | ✅ Done |
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ Done |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ Done |
-| `scene_inspect` | object, topology, modifiers, materials | -3 | 🚧 Planned |
 
-**Implemented:** 14 tools → 4 mega tools (**-10 definitions** for LLM context)
+**Implemented:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 
 ---
 
@@ -195,18 +195,12 @@ We recommend using Docker to run the MCP Server.
         "scene_duplicate_object",
         "scene_set_active_object",
         "scene_get_viewport",
-        "scene_create_light",
-        "scene_create_camera",
-        "scene_create_empty",
         "scene_set_mode",
-        "scene_get_mode",
-        "scene_list_selection",
-        "scene_inspect_object",
+        "scene_context",
+        "scene_create",
+        "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
-        "scene_inspect_material_slots",
-        "scene_inspect_mesh_topology",
-        "scene_inspect_modifiers",
         "collection_list",
         "collection_list_objects",
         "material_list",
@@ -221,9 +215,9 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
-        "mesh_select_all",
+        "mesh_select",
+        "mesh_select_targeted",
         "mesh_delete_selected",
-        "mesh_select_by_index",
         "mesh_extrude_region",
         "mesh_fill_holes",
         "mesh_bevel",
@@ -235,14 +229,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_select_loop",
-        "mesh_select_ring",
-        "mesh_select_linked",
-        "mesh_select_more",
-        "mesh_select_less",
-        "mesh_get_vertex_data",
-        "mesh_select_by_location",
-        "mesh_select_boundary"
+        "mesh_get_vertex_data"
       ]
     }
   }
@@ -271,18 +258,12 @@ We recommend using Docker to run the MCP Server.
         "scene_duplicate_object",
         "scene_set_active_object",
         "scene_get_viewport",
-        "scene_create_light",
-        "scene_create_camera",
-        "scene_create_empty",
         "scene_set_mode",
-        "scene_get_mode",
-        "scene_list_selection",
-        "scene_inspect_object",
+        "scene_context",
+        "scene_create",
+        "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
-        "scene_inspect_material_slots",
-        "scene_inspect_mesh_topology",
-        "scene_inspect_modifiers",
         "collection_list",
         "collection_list_objects",
         "material_list",
@@ -297,9 +278,9 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
-        "mesh_select_all",
+        "mesh_select",
+        "mesh_select_targeted",
         "mesh_delete_selected",
-        "mesh_select_by_index",
         "mesh_extrude_region",
         "mesh_fill_holes",
         "mesh_bevel",
@@ -311,14 +292,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_select_loop",
-        "mesh_select_ring",
-        "mesh_select_linked",
-        "mesh_select_more",
-        "mesh_select_less",
-        "mesh_get_vertex_data",
-        "mesh_select_by_location",
-        "mesh_select_boundary"
+        "mesh_get_vertex_data"
       ]
     }
   }
