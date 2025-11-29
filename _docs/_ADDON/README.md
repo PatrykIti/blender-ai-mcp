@@ -159,5 +159,10 @@ Technical details.
 | `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |
 | `assign_to_group` | `assign_to_group` | Assigns selected vertices to vertex group with weight. |
 | `remove_from_group` | `remove_from_group` | Removes selected vertices from vertex group. |
+| `bisect` | `bisect` | Cuts mesh along a plane. |
+| `edge_slide` | `edge_slide` | Slides selected edges along mesh topology. |
+| `vert_slide` | `vert_slide` | Slides selected vertices along connected edges. |
+| `triangulate` | `triangulate` | Converts selected faces to triangles. |
+| `remesh_voxel` | `remesh_voxel` | Performs voxel remesh on object (Object Mode). |
 
 

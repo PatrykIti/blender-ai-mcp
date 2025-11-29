@@ -143,3 +143,32 @@ class IMeshTool(ABC):
     def remove_from_group(self, object_name: str, group_name: str) -> str:
         """Removes selected vertices from a vertex group."""
         pass
+
+    # TASK-018-1: Mesh Bisect Tool
+    @abstractmethod
+    def bisect(self, plane_co: List[float], plane_no: List[float], clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+        """Cuts mesh along a plane defined by point and normal."""
+        pass
+
+    # TASK-018-2: Mesh Edge/Vertex Slide Tools
+    @abstractmethod
+    def edge_slide(self, value: float = 0.0) -> str:
+        """Slides selected edges along the mesh topology."""
+        pass
+
+    @abstractmethod
+    def vert_slide(self, value: float = 0.0) -> str:
+        """Slides selected vertices along connected edges."""
+        pass
+
+    # TASK-018-3: Mesh Triangulate Tool
+    @abstractmethod
+    def triangulate(self) -> str:
+        """Converts selected faces to triangles."""
+        pass
+
+    # TASK-018-4: Mesh Remesh Voxel Tool
+    @abstractmethod
+    def remesh_voxel(self, voxel_size: float = 0.1, adaptivity: float = 0.0) -> str:
+        """Performs voxel remesh on the object (Object Mode operation)."""
+        pass

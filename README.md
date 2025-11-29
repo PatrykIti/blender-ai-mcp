@@ -79,9 +79,9 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [ ] `mesh_transform_selected` **CRITICAL - unlocks 80% of modeling tasks**
 - [ ] `mesh_bridge_edge_loops`, `mesh_duplicate_selected`
 
-**2.5 Advanced Precision**
-- [ ] `mesh_knife`, `mesh_bisect`, `mesh_edge_slide`, `mesh_vertex_slide`
-- [ ] `mesh_triangulate`, `mesh_remesh_voxel`
+**2.5 Advanced Precision** ✅
+- [x] `mesh_bisect`, `mesh_edge_slide`, `mesh_vert_slide`
+- [x] `mesh_triangulate`, `mesh_remesh_voxel`
 
 **2.6 Curves & Procedural**
 - [ ] `curve_create`, `curve_to_mesh`
@@ -234,7 +234,12 @@ We recommend using Docker to run the MCP Server.
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
         "mesh_assign_to_group",
-        "mesh_remove_from_group"
+        "mesh_remove_from_group",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel"
       ]
     }
   }
@@ -302,7 +307,12 @@ We recommend using Docker to run the MCP Server.
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
         "mesh_assign_to_group",
-        "mesh_remove_from_group"
+        "mesh_remove_from_group",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel"
       ]
     }
   }

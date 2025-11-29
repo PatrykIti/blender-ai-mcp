@@ -124,6 +124,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
 | `mesh_assign_to_group` | `object_name`, `group_name`, `weight` | Assigns selected vertices to vertex group. | ✅ Done |
 | `mesh_remove_from_group` | `object_name`, `group_name` | Removes selected vertices from vertex group. | ✅ Done |
+| `mesh_bisect` | `plane_co`, `plane_no`, `clear_inner`, `clear_outer`, `fill` | Cuts mesh along a plane. | ✅ Done |
+| `mesh_edge_slide` | `value` | Slides selected edges along mesh topology. | ✅ Done |
+| `mesh_vert_slide` | `value` | Slides selected vertices along connected edges. | ✅ Done |
+| `mesh_triangulate` | *none* | Converts selected faces to triangles. | ✅ Done |
+| `mesh_remesh_voxel` | `voxel_size`, `adaptivity` | Remeshes object using Voxel algorithm (Object Mode). | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`

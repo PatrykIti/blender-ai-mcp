@@ -642,6 +642,143 @@ Use Case:
 
 ---
 
+# 28. mesh_bisect ✅ Done
+
+Cuts mesh along a plane defined by point and normal.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- plane_co: [x, y, z] (point on the cutting plane)
+- plane_no: [x, y, z] (normal direction of the plane)
+- clear_inner: bool (remove geometry on negative side, default false)
+- clear_outer: bool (remove geometry on positive side, default false)
+- fill: bool (fill the cut with a face, default false)
+
+Example:
+```json
+{
+  "tool": "mesh_bisect",
+  "args": {
+    "plane_co": [0, 0, 0],
+    "plane_no": [0, 0, 1],
+    "clear_outer": true,
+    "fill": true
+  }
+}
+```
+
+Use Case:
+- Cutting meshes in half
+- Creating cross-sections
+- Removing parts of geometry above/below a plane
+
+---
+
+# 29. mesh_edge_slide ✅ Done
+
+Slides selected edges along mesh topology.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (-1.0 to 1.0, slide amount)
+
+Example:
+```json
+{
+  "tool": "mesh_edge_slide",
+  "args": {
+    "value": 0.5
+  }
+}
+```
+
+Use Case:
+- Repositioning edge loops without changing topology
+- Fine-tuning mesh flow
+- Adjusting topology for better deformation
+
+---
+
+# 30. mesh_vert_slide ✅ Done
+
+Slides selected vertices along connected edges.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (-1.0 to 1.0, slide amount)
+
+Example:
+```json
+{
+  "tool": "mesh_vert_slide",
+  "args": {
+    "value": -0.3
+  }
+}
+```
+
+Use Case:
+- Repositioning vertices along edge paths
+- Precise vertex placement
+- Maintaining edge flow while adjusting position
+
+---
+
+# 31. mesh_triangulate ✅ Done
+
+Converts selected faces to triangles.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args: None (operates on selection)
+
+Example:
+```json
+{
+  "tool": "mesh_triangulate",
+  "args": {}
+}
+```
+
+Use Case:
+- Preparing mesh for game engine export
+- Ensuring consistent topology
+- Boolean cleanup
+
+---
+
+# 32. mesh_remesh_voxel ✅ Done
+
+Performs voxel remesh on the object.
+
+**Tag:** `[OBJECT MODE][DESTRUCTIVE]`
+
+Args:
+- voxel_size: float (size of voxels, default 0.1)
+- adaptivity: float (polygon reduction in flat areas, 0-1, default 0)
+
+Example:
+```json
+{
+  "tool": "mesh_remesh_voxel",
+  "args": {
+    "voxel_size": 0.05,
+    "adaptivity": 0.5
+  }
+}
+```
+
+Use Case:
+- Creating uniform topology after boolean operations
+- Preparing mesh for sculpting
+- Cleaning up complex geometry
+- NOTE: Destroys UVs, vertex groups, and existing topology!
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

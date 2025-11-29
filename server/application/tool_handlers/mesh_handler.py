@@ -191,3 +191,47 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-018-1: Mesh Bisect Tool
+    def bisect(self, plane_co: list, plane_no: list, clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+        args = {
+            "plane_co": plane_co,
+            "plane_no": plane_no,
+            "clear_inner": clear_inner,
+            "clear_outer": clear_outer,
+            "fill": fill
+        }
+        response = self.rpc.send_request("mesh.bisect", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-2: Mesh Edge/Vertex Slide Tools
+    def edge_slide(self, value: float = 0.0) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.edge_slide", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def vert_slide(self, value: float = 0.0) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.vert_slide", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-3: Mesh Triangulate Tool
+    def triangulate(self) -> str:
+        response = self.rpc.send_request("mesh.triangulate")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-4: Mesh Remesh Voxel Tool
+    def remesh_voxel(self, voxel_size: float = 0.1, adaptivity: float = 0.0) -> str:
+        args = {"voxel_size": voxel_size, "adaptivity": adaptivity}
+        response = self.rpc.send_request("mesh.remesh_voxel", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

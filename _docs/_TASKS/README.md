@@ -3,21 +3,15 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4
+- **To Do:** 0
 - **In Progress:** 0
-- **Done:** 48
+- **Done:** 52
 
 ---
 
 ## 🚨 To Do
 
-### Phase 2.5: Advanced Precision
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-018-1](./TASK-018_Phase_2_5_Precision.md#task-018-1-mesh-bisect-tool) | **Mesh Bisect Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-018-2](./TASK-018_Phase_2_5_Precision.md#task-018-2-mesh-edgevertex-slide-tools) | **Mesh Edge/Vertex Slide Tools** | 🟡 Medium | 2025-11-27 |
-| [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-27 |
-| [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-27 |
+*(No tasks)*
 
 ---
 
@@ -31,6 +25,10 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-29 |
+| [TASK-018-2](./TASK-018_Phase_2_5_Precision.md#task-018-2-mesh-edgevertex-slide-tools) | **Mesh Edge/Vertex Slide Tools** | 🟡 Medium | 2025-11-29 |
+| [TASK-018-1](./TASK-018_Phase_2_5_Precision.md#task-018-1-mesh-bisect-tool) | **Mesh Bisect Tool** | 🟡 Medium | 2025-11-29 |
 | [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-29 |
 | [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-29 |
 | [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-29 |

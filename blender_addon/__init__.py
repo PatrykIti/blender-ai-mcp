@@ -104,6 +104,12 @@ def register():
         rpc_server.register_handler("mesh.create_vertex_group", mesh_handler.create_vertex_group)
         rpc_server.register_handler("mesh.assign_to_group", mesh_handler.assign_to_group)
         rpc_server.register_handler("mesh.remove_from_group", mesh_handler.remove_from_group)
+        # TASK-018: Phase 2.5 - Advanced Precision Tools
+        rpc_server.register_handler("mesh.bisect", mesh_handler.bisect)
+        rpc_server.register_handler("mesh.edge_slide", mesh_handler.edge_slide)
+        rpc_server.register_handler("mesh.vert_slide", mesh_handler.vert_slide)
+        rpc_server.register_handler("mesh.triangulate", mesh_handler.triangulate)
+        rpc_server.register_handler("mesh.remesh_voxel", mesh_handler.remesh_voxel)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

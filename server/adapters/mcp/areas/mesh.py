@@ -840,3 +840,140 @@ def mesh_remove_from_group(
         return handler.remove_from_group(object_name, group_name)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-018: Phase 2.5 - Advanced Precision Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_bisect(
+    ctx: Context,
+    plane_co: List[float],
+    plane_no: List[float],
+    clear_inner: bool = False,
+    clear_outer: bool = False,
+    fill: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Cuts mesh along a plane.
+    Can optionally remove geometry on either side and fill the cut with a face.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_fill_holes, mesh_merge_by_distance
+
+    Args:
+        plane_co: Point on the cutting plane [x, y, z]. E.g. [0, 0, 0] for origin.
+        plane_no: Normal direction of the plane [x, y, z]. E.g. [0, 0, 1] for Z-up plane.
+        clear_inner: If True, removes geometry on the negative side of the plane.
+        clear_outer: If True, removes geometry on the positive side of the plane.
+        fill: If True, fills the cut with a face (creates cap).
+
+    Examples:
+        mesh_bisect(plane_co=[0,0,0], plane_no=[0,0,1]) -> Cut at Z=0 (horizontal plane)
+        mesh_bisect(plane_co=[0,0,1], plane_no=[0,0,1], clear_outer=True) -> Cut and remove top
+        mesh_bisect(plane_co=[0,0,0], plane_no=[1,0,0], fill=True) -> Cut at X=0 with cap
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bisect(plane_co, plane_no, clear_inner, clear_outer, fill)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_edge_slide(
+    ctx: Context,
+    value: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected edges along mesh topology.
+    Maintains mesh connectivity while repositioning edge loops.
+    Value range is -1.0 to 1.0 (relative to adjacent edges).
+
+    Workflow: BEFORE → mesh_select_loop, mesh_select_ring | AFTER → mesh_smooth
+
+    Args:
+        value: Slide amount (-1.0 to 1.0). 0 = no movement. Negative = one direction, positive = other.
+
+    Examples:
+        mesh_edge_slide(value=0.5) -> Slide selected edges 50% toward one side
+        mesh_edge_slide(value=-0.3) -> Slide selected edges 30% toward other side
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_slide(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_vert_slide(
+    ctx: Context,
+    value: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected vertices along connected edges.
+    Moves vertices along the edge they are connected to without changing topology.
+    Value range is -1.0 to 1.0 (relative to connected edge length).
+
+    Workflow: BEFORE → mesh_select_by_index(VERT) | AFTER → mesh_smooth
+
+    Args:
+        value: Slide amount (-1.0 to 1.0). 0 = no movement.
+
+    Examples:
+        mesh_vert_slide(value=0.5) -> Slide vertices 50% along their connected edges
+        mesh_vert_slide(value=-0.2) -> Slide vertices 20% in opposite direction
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.vert_slide(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_triangulate(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts selected faces to triangles.
+    Useful for export to game engines or ensuring consistent topology.
+    NOTE: This is irreversible - consider using a TRIANGULATE modifier for non-destructive workflow.
+
+    Workflow: BEFORE → mesh_select_*(FACE) | USE FOR → game export prep, boolean cleanup
+
+    Examples:
+        mesh_triangulate() -> Converts all selected faces to triangles
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.triangulate()
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_remesh_voxel(
+    ctx: Context,
+    voxel_size: float = 0.1,
+    adaptivity: float = 0.0
+) -> str:
+    """
+    [OBJECT MODE][DESTRUCTIVE] Remeshes object using Voxel algorithm.
+    Creates uniform topology - useful for sculpting or boolean cleanup.
+    WARNING: Destroys all existing topology, UVs, and vertex groups!
+
+    Workflow: AFTER → mesh_boolean, modeling_join_objects | USE FOR → sculpt prep, topology cleanup
+
+    Args:
+        voxel_size: Size of voxels (smaller = more detail, more polygons). Default 0.1.
+        adaptivity: Reduces polygons in flat areas (0.0-1.0). 0 = uniform, 1 = maximum reduction.
+
+    Examples:
+        mesh_remesh_voxel(voxel_size=0.05) -> High detail remesh
+        mesh_remesh_voxel(voxel_size=0.2, adaptivity=0.5) -> Lower detail with adaptive reduction
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.remesh_voxel(voxel_size, adaptivity)
+    except RuntimeError as e:
+        return str(e)

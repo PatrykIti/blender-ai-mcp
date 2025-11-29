@@ -928,3 +928,159 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=prev_mode)
 
         return f"Removed {len(selected_indices)} vertices from '{group_name}'"
+
+    # ==========================================================================
+    # TASK-018: Phase 2.5 - Advanced Precision Tools
+    # ==========================================================================
+
+    def bisect(self, plane_co, plane_no, clear_inner=False, clear_outer=False, fill=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Cuts mesh along a plane.
+        Uses bpy.ops.mesh.bisect.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select geometry to bisect.")
+
+        # Validate inputs
+        if len(plane_co) != 3:
+            raise ValueError(f"plane_co must be [x, y, z], got {plane_co}")
+        if len(plane_no) != 3:
+            raise ValueError(f"plane_no must be [x, y, z], got {plane_no}")
+
+        # Execute bisect
+        bpy.ops.mesh.bisect(
+            plane_co=tuple(plane_co),
+            plane_no=tuple(plane_no),
+            clear_inner=clear_inner,
+            clear_outer=clear_outer,
+            use_fill=fill
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        options = []
+        if clear_inner:
+            options.append("cleared inner")
+        if clear_outer:
+            options.append("cleared outer")
+        if fill:
+            options.append("filled")
+        options_str = f" ({', '.join(options)})" if options else ""
+
+        return f"Bisected mesh at plane_co={plane_co}, plane_no={plane_no}{options_str}"
+
+    def edge_slide(self, value=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected edges along topology.
+        Uses bpy.ops.transform.edge_slide.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to slide.")
+
+        # Clamp value to valid range
+        value = max(-1.0, min(1.0, value))
+
+        bpy.ops.transform.edge_slide(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Slid {selected_edges} edge(s) by {value}"
+
+    def vert_slide(self, value=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected vertices along connected edges.
+        Uses bpy.ops.transform.vert_slide.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected. Select vertices to slide.")
+
+        # Clamp value to valid range
+        value = max(-1.0, min(1.0, value))
+
+        bpy.ops.transform.vert_slide(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Slid {selected_verts} vertex/vertices by {value}"
+
+    def triangulate(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts selected faces to triangles.
+        Uses bpy.ops.mesh.quads_convert_to_tris.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_faces == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No faces selected. Select faces to triangulate.")
+
+        # Count non-triangular faces
+        non_tri_count = sum(1 for f in bm.faces if f.select and len(f.verts) > 3)
+
+        bpy.ops.mesh.quads_convert_to_tris()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Triangulated {selected_faces} face(s) ({non_tri_count} were non-triangular)"
+
+    def remesh_voxel(self, voxel_size=0.1, adaptivity=0.0):
+        """
+        [OBJECT MODE][DESTRUCTIVE] Remeshes object using Voxel algorithm.
+        Uses bpy.ops.object.voxel_remesh.
+        """
+        obj = bpy.context.active_object
+        if not obj or obj.type != 'MESH':
+            raise ValueError("Active object must be a Mesh.")
+
+        # Ensure we're in Object Mode for voxel remesh
+        prev_mode = obj.mode
+        if prev_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Store original face count for comparison
+        original_faces = len(obj.data.polygons)
+
+        # Set voxel remesh parameters on the mesh data
+        obj.data.remesh_voxel_size = voxel_size
+        obj.data.remesh_voxel_adaptivity = adaptivity
+
+        # Execute voxel remesh
+        bpy.ops.object.voxel_remesh()
+
+        # Get new face count
+        new_faces = len(obj.data.polygons)
+
+        # Restore previous mode if it was EDIT
+        if prev_mode == 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        return f"Voxel remesh complete (voxel_size={voxel_size}, adaptivity={adaptivity}). Faces: {original_faces} → {new_faces}"
