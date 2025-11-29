@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.13.1 (2025-11-29)
+
+### Bug Fixes
+
+- Blender 5.0 API compatibility (TASK-022 to TASK-027)
+  ([#19](https://github.com/PatrykIti/blender-ai-mcp/pull/19),
+  [`aa48369`](https://github.com/PatrykIti/blender-ai-mcp/commit/aa48369c2e98ebef3ee76b4e00a9b639305065c1))
+
+
 ## v1.13.0 (2025-11-29)
 
 ### Features
