@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0
+- **To Do:** 8
 - **In Progress:** 0
 - **Done:** 52
 
@@ -11,7 +11,21 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
-*(No tasks)*
+### Phase 2.4: Core Transform & Geometry
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-019-1](./TASK-019_Phase_2_4_Core_Transform.md#task-019-1-mesh-transform-selected-tool) | **Mesh Transform Selected Tool** 🔥 CRITICAL | 🔴 Critical | 2025-11-29 |
+| [TASK-019-2](./TASK-019_Phase_2_4_Core_Transform.md#task-019-2-mesh-bridge-edge-loops-tool) | **Mesh Bridge Edge Loops Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-019-3](./TASK-019_Phase_2_4_Core_Transform.md#task-019-3-mesh-duplicate-selected-tool) | **Mesh Duplicate Selected Tool** | 🟡 Medium | 2025-11-29 |
+
+### Phase 2.6: Curves & Procedural
+| ID | Title | Priority | Created |
+|----|-------|----------|---------|
+| [TASK-021-1](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-1-curve-create-tool) | **Curve Create Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-2](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-2-curve-to-mesh-tool) | **Curve To Mesh Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-3](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-3-mesh-spin-tool) | **Mesh Spin Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-4](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-4-mesh-screw-tool) | **Mesh Screw Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-5](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-5-mesh-add-geometry-tools) | **Mesh Add Geometry Tools** (vertex, edge, face) | 🟢 Low | 2025-11-29 |
 
 ---
 
