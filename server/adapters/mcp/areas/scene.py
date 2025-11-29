@@ -187,7 +187,51 @@ def _scene_list_selection(ctx: Context) -> str:
 
 
 @mcp.tool()
-def scene_inspect_object(ctx: Context, name: str) -> str:
+def scene_inspect(
+    ctx: Context,
+    action: Literal["object", "topology", "modifiers", "materials"],
+    object_name: Optional[str] = None,
+    detailed: bool = False,
+    include_disabled: bool = True,
+    material_filter: Optional[str] = None,
+    include_empty_slots: bool = True
+) -> str:
+    """
+    [SCENE][READ-ONLY][SAFE] Detailed inspection queries for objects and scene.
+
+    Actions and required parameters:
+    - "object": Requires object_name. Returns transform, collections, materials, modifiers, mesh stats.
+    - "topology": Requires object_name. Returns vertex/edge/face/tri/quad/ngon counts. Optional: detailed=True for non-manifold checks.
+    - "modifiers": Optional object_name (None scans all). Returns modifier stacks. Optional: include_disabled=False.
+    - "materials": No params required. Returns material slot audit. Optional: material_filter, include_empty_slots.
+
+    Workflow: READ-ONLY | USE → detailed analysis before export or debugging
+
+    Examples:
+        scene_inspect(action="object", object_name="Cube")
+        scene_inspect(action="topology", object_name="Cube", detailed=True)
+        scene_inspect(action="modifiers", object_name="Cube")
+        scene_inspect(action="modifiers")  # scans all objects
+        scene_inspect(action="materials", material_filter="Wood")
+    """
+    if action == "object":
+        if object_name is None:
+            return "Error: 'object' action requires 'object_name' parameter."
+        return _scene_inspect_object(ctx, object_name)
+    elif action == "topology":
+        if object_name is None:
+            return "Error: 'topology' action requires 'object_name' parameter."
+        return _scene_inspect_mesh_topology(ctx, object_name, detailed)
+    elif action == "modifiers":
+        return _scene_inspect_modifiers(ctx, object_name, include_disabled)
+    elif action == "materials":
+        return _scene_inspect_material_slots(ctx, material_filter, include_empty_slots)
+    else:
+        return f"Unknown action '{action}'. Valid actions: object, topology, modifiers, materials"
+
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_object(ctx: Context, name: str) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Provides a detailed report for a single object (transform, collections, materials, modifiers, mesh stats).
 
@@ -463,8 +507,8 @@ def scene_compare_snapshot(
     ctx.info(f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
     return summary
 
-@mcp.tool()
-def scene_inspect_material_slots(
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_material_slots(
     ctx: Context,
     material_filter: Optional[str] = None,
     include_empty_slots: bool = True
@@ -532,8 +576,8 @@ def scene_inspect_material_slots(
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def scene_inspect_mesh_topology(
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_mesh_topology(
     ctx: Context,
     object_name: str,
     detailed: bool = False
@@ -575,8 +619,8 @@ def scene_inspect_mesh_topology(
     except RuntimeError as e:
         return str(e)
     
-@mcp.tool()
-def scene_inspect_modifiers(
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_modifiers(
     ctx: Context,
     object_name: Optional[str] = None,
     include_disabled: bool = True

@@ -14,10 +14,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
 
-**Total Savings:** 14 tools → 4 mega tools (**-10 definitions** for LLM context)
+**Total Savings:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 
 ---
 
@@ -28,18 +29,15 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `scene_context` | `action` (mode/selection) | **MEGA TOOL** - Quick context queries (mode, selection state). | ✅ Done |
 | `scene_create` | `action` (light/camera/empty), params | **MEGA TOOL** - Creates scene helper objects (lights, cameras, empties). | ✅ Done |
+| `scene_inspect` | `action` (object/topology/modifiers/materials), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |
 | `scene_duplicate_object` | `name` (str), `translation` ([x,y,z]) | Duplicates an object and optionally moves it. | ✅ Done |
 | `scene_set_active_object` | `name` (str) | Sets the active object (crucial for modifiers). | ✅ Done |
-| `scene_inspect_object` | `name` (str) | Detailed report about a single object (transform, collections, modifiers, materials, mesh stats). | ✅ Done |
 | `scene_get_viewport` | `width`, `height`, `shading`, `camera_name`, `focus_target`, `output_mode` | Returns a visual preview of the scene (OpenGL Render) with selectable output mode (IMAGE/BASE64/FILE/MARKDOWN). | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
-| `scene_inspect_material_slots` | `material_filter`, `include_empty_slots` | Audits material slot assignments across entire scene. | ✅ Done |
-| `scene_inspect_mesh_topology` | `object_name`, `detailed` | Reports detailed topology stats (verts/edges/faces, N-gons, non-manifold). | ✅ Done |
-| `scene_inspect_modifiers` | `object_name`, `include_disabled` | Lists modifier stacks with key settings and visibility flags. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
@@ -48,6 +46,10 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 - ~~`scene_create_light`~~ → Use `scene_create(action="light", ...)`
 - ~~`scene_create_camera`~~ → Use `scene_create(action="camera", ...)`
 - ~~`scene_create_empty`~~ → Use `scene_create(action="empty", ...)`
+- ~~`scene_inspect_object`~~ → Use `scene_inspect(action="object", ...)`
+- ~~`scene_inspect_mesh_topology`~~ → Use `scene_inspect(action="topology", ...)`
+- ~~`scene_inspect_modifiers`~~ → Use `scene_inspect(action="modifiers", ...)`
+- ~~`scene_inspect_material_slots`~~ → Use `scene_inspect(action="materials", ...)`
 
 ---
 

@@ -34,6 +34,20 @@ docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
 
 ## 🛠 Available Tools
 
+### 🧠 Mega Tools (LLM Context Optimization)
+
+Unified tools that consolidate multiple related operations to reduce LLM context usage.
+
+| Mega Tool | Actions | Description |
+|-----------|---------|-------------|
+| `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
+| `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | Detailed inspection queries for objects. |
+| `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
+| `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
+
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+
 ### Scene Tools
 Managing objects at the scene level.
 

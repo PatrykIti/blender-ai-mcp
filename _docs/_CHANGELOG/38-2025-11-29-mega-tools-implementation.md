@@ -2,14 +2,14 @@
 
 **Date:** 2025-11-29
 **Type:** Feature / LLM Context Optimization
-**Tasks:** TASK-020-1, TASK-020-2, TASK-020-3, TASK-020-4
+**Tasks:** TASK-020-1, TASK-020-2, TASK-020-3, TASK-020-4, TASK-020-5
 
 ---
 
 ## Summary
 
-Implemented 4 "mega tools" that consolidate 14 related operations into unified tools with action parameters.
-This reduces LLM context usage by **-10 tool definitions**.
+Implemented 5 "mega tools" that consolidate 18 related operations into unified tools with action parameters.
+This reduces LLM context usage by **-13 tool definitions**.
 
 ---
 
@@ -21,6 +21,7 @@ This reduces LLM context usage by **-10 tool definitions**.
 |------|---------|----------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` |
 
@@ -36,7 +37,7 @@ This reduces LLM context usage by **-10 tool definitions**.
 ## Files Changed
 
 ### Modified
-- `server/adapters/mcp/areas/scene.py` - Added `scene_context`, `scene_create`; converted 5 functions to internal
+- `server/adapters/mcp/areas/scene.py` - Added `scene_context`, `scene_create`, `scene_inspect`; converted 9 functions to internal
 - `server/adapters/mcp/areas/mesh.py` - Added `mesh_select`, `mesh_select_targeted`; converted 9 functions to internal
 
 ### New Documentation

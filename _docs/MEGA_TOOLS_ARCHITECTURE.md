@@ -1,7 +1,7 @@
 # Mega Tools Architecture
 
 Mega tools are unified tools that consolidate multiple related operations to **reduce LLM context usage**.
-Instead of learning 14+ separate tools, the LLM only needs to learn 4 mega tools with action parameters.
+Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools with action parameters.
 
 ---
 
@@ -11,10 +11,11 @@ Instead of learning 14+ separate tools, the LLM only needs to learn 4 mega tools
 |-----------|---------|----------|---------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | -1 |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | -2 |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | -3 |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
 
-**Total:** 14 tools → 4 mega tools (**-10 definitions** for LLM context)
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 
 ---
 
@@ -147,7 +148,110 @@ Creates scene helper objects (lights, cameras, empties).
 
 ---
 
-# 3. mesh_select ✅ Done
+# 3. scene_inspect ✅ Done
+
+Detailed inspection queries for objects and scene.
+
+**Tag:** `[SCENE][READ-ONLY][SAFE]`
+
+## Actions
+
+| Action | Parameters | Description |
+|--------|------------|-------------|
+| `"object"` | `object_name` (required) | Returns transform, collections, materials, modifiers, mesh stats for a single object. |
+| `"topology"` | `object_name` (required), `detailed` | Returns vertex/edge/face/tri/quad/ngon counts. Optional: `detailed=True` for non-manifold checks. |
+| `"modifiers"` | `object_name` (optional), `include_disabled` | Returns modifier stacks. If `object_name` is None, scans all objects. |
+| `"materials"` | `material_filter`, `include_empty_slots` | Returns material slot audit across scene. |
+
+## Object Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Name of the object to inspect. |
+
+## Topology Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Name of the mesh object to analyze. |
+| `detailed` | `bool` | `False` | Include non-manifold/loose geometry checks. |
+
+## Modifiers Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | `None` | Object name (None scans all objects). |
+| `include_disabled` | `bool` | `True` | Include disabled modifiers in output. |
+
+## Materials Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `material_filter` | `str` | `None` | Filter materials by name substring. |
+| `include_empty_slots` | `bool` | `True` | Include empty material slots. |
+
+## Examples
+
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "object",
+    "object_name": "Cube"
+  }
+}
+```
+
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "topology",
+    "object_name": "Cube",
+    "detailed": true
+  }
+}
+```
+
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "modifiers",
+    "object_name": "Cube"
+  }
+}
+```
+
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "modifiers"
+  }
+}
+```
+
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "materials",
+    "material_filter": "Wood"
+  }
+}
+```
+
+## Replaces
+
+- `scene_inspect_object` → `scene_inspect(action="object", ...)`
+- `scene_inspect_mesh_topology` → `scene_inspect(action="topology", ...)`
+- `scene_inspect_modifiers` → `scene_inspect(action="modifiers", ...)`
+- `scene_inspect_material_slots` → `scene_inspect(action="materials", ...)`
+
+---
+
+# 4. mesh_select ✅ Done
 
 Simple selection operations for mesh geometry.
 
@@ -211,7 +315,7 @@ Simple selection operations for mesh geometry.
 
 ---
 
-# 4. mesh_select_targeted ✅ Done
+# 5. mesh_select_targeted ✅ Done
 
 Targeted selection operations for mesh geometry (with parameters).
 

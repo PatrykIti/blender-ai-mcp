@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [38](./38-2025-11-29-mega-tools-implementation.md) | 2025-11-29 | **Mega Tools Implementation (TASK-020)** | 1.11.0 |
 | [37](./37-2025-11-28-phase-2-1-advanced-selection.md) | 2025-11-28 | **Phase 2.1: Advanced Selection Tools (TASK-015)** | - |
 | [36](./36-2025-11-28-mcp-parameter-validation-fixes.md) | 2025-11-28 | **MCP Parameter Validation Fixes (PR #14)** | - |
 | [34](./34-2025-11-27-scene-inspect-modifiers.md) | 2025-11-27 | **Scene Inspect Modifiers (TASK-014-14)** | 1.9.13 |
