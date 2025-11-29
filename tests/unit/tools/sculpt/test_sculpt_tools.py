@@ -103,13 +103,14 @@ class TestSculptAuto:
         assert "inflate" in result.lower()
 
     def test_auto_sculpt_flatten(self, sculpt_handler, mock_mesh_object_sculpt_mode):
-        """Should apply flatten filter."""
+        """Should apply flatten filter (mapped to SURFACE_SMOOTH in Blender 5.0+)."""
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.sculpt.mesh_filter = MagicMock()
 
         result = sculpt_handler.auto_sculpt(operation="flatten")
 
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='FLATTEN', strength=0.5)
+        # FLATTEN was removed in Blender 5.0, mapped to SURFACE_SMOOTH
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SURFACE_SMOOTH', strength=0.5)
         assert "flatten" in result.lower()
 
     def test_auto_sculpt_sharpen(self, sculpt_handler, mock_mesh_object_sculpt_mode):
