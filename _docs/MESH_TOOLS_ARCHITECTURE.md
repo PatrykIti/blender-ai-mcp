@@ -779,6 +779,218 @@ Use Case:
 
 ---
 
+# 33. mesh_transform_selected ✅ Done
+
+Transforms selected geometry (move/rotate/scale).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+**Priority:** 🔴 CRITICAL - Unlocks ~80% of modeling tasks
+
+Args:
+- translate: [x, y, z] (optional) - Translation vector
+- rotate: [x, y, z] (optional) - Rotation in radians per axis
+- scale: [x, y, z] (optional) - Scale factors
+- pivot: str ('MEDIAN_POINT', 'BOUNDING_BOX_CENTER', 'CURSOR', 'INDIVIDUAL_ORIGINS', 'ACTIVE_ELEMENT')
+
+Example:
+```json
+{
+  "tool": "mesh_transform_selected",
+  "args": {
+    "translate": [0, 0, 2],
+    "rotate": [0, 0, 1.5708],
+    "scale": [1, 1, 1],
+    "pivot": "MEDIAN_POINT"
+  }
+}
+```
+
+Use Case:
+- Repositioning geometry after selection
+- Rotating faces/edges/vertices
+- Scaling selected elements
+- Combined transformations in single call
+
+---
+
+# 34. mesh_bridge_edge_loops ✅ Done
+
+Bridges two edge loops with faces.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- number_cuts: int (default 0) - Number of intermediate cuts
+- interpolation: str ('LINEAR', 'PATH', 'SURFACE') - Bridge interpolation type
+- smoothness: float (0.0-1.0) - Smoothness factor
+- twist: int (default 0) - Twist offset
+
+Example:
+```json
+{
+  "tool": "mesh_bridge_edge_loops",
+  "args": {
+    "number_cuts": 4,
+    "interpolation": "SURFACE",
+    "smoothness": 1.0
+  }
+}
+```
+
+Use Case:
+- Connecting two separate edge loops
+- Creating connecting geometry between holes
+- Building tube-like structures
+
+---
+
+# 35. mesh_duplicate_selected ✅ Done
+
+Duplicates selected geometry within the same mesh.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- translate: [x, y, z] (optional) - Offset for duplicated geometry
+
+Example:
+```json
+{
+  "tool": "mesh_duplicate_selected",
+  "args": {
+    "translate": [2, 0, 0]
+  }
+}
+```
+
+Use Case:
+- Creating copies of geometry within mesh
+- Building repetitive structures
+- Duplicating and offsetting for patterns
+
+---
+
+# 36. mesh_spin ✅ Done
+
+Spins/lathes selected geometry around an axis.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- steps: int (default 12) - Number of steps/segments
+- angle: float (default 6.283185 = 360°) - Total angle in radians
+- axis: str ('X', 'Y', 'Z') - Axis to spin around
+- center: [x, y, z] (optional) - Center point (default: 3D cursor)
+- dupli: bool (default False) - Duplicate instead of extrude
+
+Example:
+```json
+{
+  "tool": "mesh_spin",
+  "args": {
+    "steps": 32,
+    "angle": 6.283185,
+    "axis": "Z",
+    "center": [0, 0, 0]
+  }
+}
+```
+
+Use Case:
+- Creating vases, bowls, glasses (lathe)
+- Circular patterns
+- Rotational geometry
+
+---
+
+# 37. mesh_screw ✅ Done
+
+Creates spiral/screw/helical geometry.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- steps: int (default 12) - Steps per turn
+- turns: int (default 1) - Number of complete rotations
+- axis: str ('X', 'Y', 'Z') - Axis to screw around
+- center: [x, y, z] (optional) - Center point (default: 3D cursor)
+- offset: float (default 0.0) - Distance per turn (pitch)
+
+Example:
+```json
+{
+  "tool": "mesh_screw",
+  "args": {
+    "steps": 32,
+    "turns": 3,
+    "axis": "Z",
+    "offset": 0.5
+  }
+}
+```
+
+Use Case:
+- Creating springs
+- Threads/screws
+- Spiral staircases
+- Helical patterns
+
+---
+
+# 38. mesh_add_vertex ✅ Done
+
+Adds a single vertex at the specified position.
+
+**Tag:** `[EDIT MODE][DESTRUCTIVE]`
+
+Args:
+- position: [x, y, z] - Coordinates for new vertex
+
+Example:
+```json
+{
+  "tool": "mesh_add_vertex",
+  "args": {
+    "position": [1, 2, 3]
+  }
+}
+```
+
+Use Case:
+- Building geometry from scratch
+- Adding connection points
+- Creating guide vertices
+
+---
+
+# 39. mesh_add_edge_face ✅ Done
+
+Creates an edge or face from selected vertices.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args: None (operates on selection)
+
+Behavior:
+- 2 vertices selected → creates edge
+- 3+ vertices selected → creates face
+
+Example:
+```json
+{
+  "tool": "mesh_add_edge_face",
+  "args": {}
+}
+```
+
+Use Case:
+- Connecting vertices with edges
+- Filling gaps with faces
+- Manual geometry construction
+- Equivalent to pressing 'F' key in Blender
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [41](./41-2025-11-29-transform-curves-procedural.md) | 2025-11-29 | **Phase 2.4 & 2.6: Transform, Curves & Procedural (TASK-019 & TASK-021)** | 1.15.0 |
 | [40](./40-2025-11-29-precision-tools.md) | 2025-11-29 | **Phase 2.5 Advanced Precision Tools (TASK-018)** | 1.14.0 |
 | [39](./39-2025-11-29-organic-vertex-groups.md) | 2025-11-29 | **Organic & Vertex Group Tools (TASK-016 & TASK-017)** | 1.13.0 |
 | [38](./38-2025-11-29-mega-tools-implementation.md) | 2025-11-29 | **Mega Tools Implementation (TASK-020)** | 1.11.0 |

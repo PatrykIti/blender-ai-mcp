@@ -1,6 +1,6 @@
 # TASK-021-1: Curve Create Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.6 - Curves & Procedural
 
@@ -36,7 +36,7 @@ Implement `curve_create` to create various curve primitives (Bezier, NURBS, Path
 
 # TASK-021-2: Curve To Mesh Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.6 - Curves & Procedural
 
@@ -69,7 +69,7 @@ Implement `curve_to_mesh` to convert a curve object to mesh geometry.
 
 # TASK-021-3: Mesh Spin Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.6 - Curves & Procedural
 
@@ -101,7 +101,7 @@ Implement `mesh_spin` to spin/lathe selected geometry around an axis.
 
 # TASK-021-4: Mesh Screw Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.6 - Curves & Procedural
 
@@ -133,7 +133,7 @@ Implement `mesh_screw` to create helical/spiral geometry from selected profile.
 
 # TASK-021-5: Mesh Add Geometry Tools
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟢 Low
 **Phase:** Phase 2.6 - Curves & Procedural
 

@@ -235,3 +235,110 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-019-1: Mesh Transform Selected Tool
+    def transform_selected(
+        self,
+        translate: list = None,
+        rotate: list = None,
+        scale: list = None,
+        pivot: str = 'MEDIAN_POINT'
+    ) -> str:
+        args = {"pivot": pivot}
+        if translate:
+            args["translate"] = translate
+        if rotate:
+            args["rotate"] = rotate
+        if scale:
+            args["scale"] = scale
+        response = self.rpc.send_request("mesh.transform_selected", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-019-2: Mesh Bridge Edge Loops Tool
+    def bridge_edge_loops(
+        self,
+        number_cuts: int = 0,
+        interpolation: str = 'LINEAR',
+        smoothness: float = 0.0,
+        twist: int = 0
+    ) -> str:
+        args = {
+            "number_cuts": number_cuts,
+            "interpolation": interpolation,
+            "smoothness": smoothness,
+            "twist": twist
+        }
+        response = self.rpc.send_request("mesh.bridge_edge_loops", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-019-3: Mesh Duplicate Selected Tool
+    def duplicate_selected(self, translate: list = None) -> str:
+        args = {}
+        if translate:
+            args["translate"] = translate
+        response = self.rpc.send_request("mesh.duplicate_selected", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-3: Mesh Spin Tool
+    def spin(
+        self,
+        steps: int = 12,
+        angle: float = 6.283185,
+        axis: str = 'Z',
+        center: list = None,
+        dupli: bool = False
+    ) -> str:
+        args = {
+            "steps": steps,
+            "angle": angle,
+            "axis": axis,
+            "dupli": dupli
+        }
+        if center:
+            args["center"] = center
+        response = self.rpc.send_request("mesh.spin", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-4: Mesh Screw Tool
+    def screw(
+        self,
+        steps: int = 12,
+        turns: int = 1,
+        axis: str = 'Z',
+        center: list = None,
+        offset: float = 0.0
+    ) -> str:
+        args = {
+            "steps": steps,
+            "turns": turns,
+            "axis": axis,
+            "offset": offset
+        }
+        if center:
+            args["center"] = center
+        response = self.rpc.send_request("mesh.screw", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-5: Mesh Add Geometry Tools
+    def add_vertex(self, position: list) -> str:
+        args = {"position": position}
+        response = self.rpc.send_request("mesh.add_vertex", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def add_edge_face(self) -> str:
+        response = self.rpc.send_request("mesh.add_edge_face")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

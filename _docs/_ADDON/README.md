@@ -164,5 +164,20 @@ Technical details.
 | `vert_slide` | `vert_slide` | Slides selected vertices along connected edges. |
 | `triangulate` | `triangulate` | Converts selected faces to triangles. |
 | `remesh_voxel` | `remesh_voxel` | Performs voxel remesh on object (Object Mode). |
+| `transform_selected` | `transform_selected` | Transforms selected geometry (move/rotate/scale). |
+| `bridge_edge_loops` | `bridge_edge_loops` | Bridges two edge loops with faces. |
+| `duplicate_selected` | `duplicate_selected` | Duplicates selected geometry. |
+| `spin` | `spin` | Spins/lathes selected geometry around axis. |
+| `screw` | `screw` | Creates spiral/screw geometry. |
+| `add_vertex` | `add_vertex` | Adds single vertex at position. |
+| `add_edge_face` | `add_edge_face` | Creates edge or face from selected vertices. |
+
+
+### Curve (`application/handlers/curve.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
+| `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
 
 

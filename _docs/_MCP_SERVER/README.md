@@ -131,8 +131,23 @@ Low-level geometry manipulation.
 | `mesh_vert_slide` | `value` | Slides selected vertices along connected edges. |
 | `mesh_triangulate` | *none* | Converts selected faces to triangles. |
 | `mesh_remesh_voxel` | `voxel_size`, `adaptivity` | Remeshes object using Voxel algorithm (Object Mode). |
+| `mesh_transform_selected` | `translate`, `rotate`, `scale`, `pivot` | Transforms selected geometry (move/rotate/scale). **CRITICAL** |
+| `mesh_bridge_edge_loops` | `number_cuts`, `interpolation`, `smoothness`, `twist` | Bridges two edge loops with faces. |
+| `mesh_duplicate_selected` | `translate` | Duplicates selected geometry within the same mesh. |
+| `mesh_spin` | `steps`, `angle`, `axis`, `center`, `dupli` | Spins/lathes selected geometry around an axis. |
+| `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. |
+| `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. |
+| `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices (F key). |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
+
+### Curve Tools
+Curve creation and conversion.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
+| `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
 
 ## 🛠 Key Components
 

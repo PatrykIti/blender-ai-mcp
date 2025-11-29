@@ -1,6 +1,6 @@
 # TASK-019-1: Mesh Transform Selected Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 Critical
 **Phase:** Phase 2.4 - Core Transform & Geometry
 
@@ -36,7 +36,7 @@ Implement `mesh_transform_selected` to move/rotate/scale selected geometry in Ed
 
 # TASK-019-2: Mesh Bridge Edge Loops Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.4 - Core Transform & Geometry
 
@@ -68,7 +68,7 @@ Implement `mesh_bridge_edge_loops` to connect two edge loops with faces.
 
 # TASK-019-3: Mesh Duplicate Selected Tool
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Phase:** Phase 2.4 - Core Transform & Geometry
 

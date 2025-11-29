@@ -1084,3 +1084,276 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode='EDIT')
 
         return f"Voxel remesh complete (voxel_size={voxel_size}, adaptivity={adaptivity}). Faces: {original_faces} → {new_faces}"
+
+    # ==========================================================================
+    # TASK-019: Phase 2.4 - Core Transform & Geometry
+    # ==========================================================================
+
+    def transform_selected(self, translate=None, rotate=None, scale=None, pivot='MEDIAN_POINT'):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected geometry.
+        Uses bpy.ops.transform.* operators.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected")
+
+        # Set pivot point
+        original_pivot = bpy.context.scene.tool_settings.transform_pivot_point
+        bpy.context.scene.tool_settings.transform_pivot_point = pivot
+
+        operations = []
+
+        try:
+            # Apply translation
+            if translate:
+                bpy.ops.transform.translate(value=tuple(translate))
+                operations.append(f"translated by {translate}")
+
+            # Apply rotation (in radians)
+            if rotate:
+                # Rotate around each axis
+                if rotate[0] != 0:
+                    bpy.ops.transform.rotate(value=rotate[0], orient_axis='X')
+                if rotate[1] != 0:
+                    bpy.ops.transform.rotate(value=rotate[1], orient_axis='Y')
+                if rotate[2] != 0:
+                    bpy.ops.transform.rotate(value=rotate[2], orient_axis='Z')
+                operations.append(f"rotated by {rotate} rad")
+
+            # Apply scale
+            if scale:
+                bpy.ops.transform.resize(value=tuple(scale))
+                operations.append(f"scaled by {scale}")
+
+        finally:
+            # Restore original pivot point
+            bpy.context.scene.tool_settings.transform_pivot_point = original_pivot
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        if not operations:
+            return "No transformation applied (all parameters were None)"
+
+        return f"Transformed {selected_count} vertices: {', '.join(operations)} (pivot: {pivot})"
+
+    def bridge_edge_loops(self, number_cuts=0, interpolation='LINEAR', smoothness=0.0, twist=0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bridges two edge loops with faces.
+        Uses bpy.ops.mesh.bridge_edge_loops.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges < 2:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("Select at least two edge loops to bridge")
+
+        # Execute bridge
+        bpy.ops.mesh.bridge_edge_loops(
+            type=interpolation,
+            number_cuts=number_cuts,
+            smoothness=smoothness,
+            twist_offset=twist
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Bridged edge loops (cuts={number_cuts}, interpolation={interpolation}, smoothness={smoothness}, twist={twist})"
+
+    def duplicate_selected(self, translate=None):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Duplicates selected geometry.
+        Uses bpy.ops.mesh.duplicate_move.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected")
+
+        # Duplicate with optional translation
+        if translate:
+            bpy.ops.mesh.duplicate_move(
+                MESH_OT_duplicate={},
+                TRANSFORM_OT_translate={"value": tuple(translate)}
+            )
+        else:
+            bpy.ops.mesh.duplicate()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        move_str = f", moved by {translate}" if translate else " (in-place)"
+        return f"Duplicated {selected_verts} vertices, {selected_edges} edges, {selected_faces} faces{move_str}"
+
+    # ==========================================================================
+    # TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
+    # ==========================================================================
+
+    def spin(self, steps=12, angle=6.283185, axis='Z', center=None, dupli=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/lathes selected geometry.
+        Uses bpy.ops.mesh.spin.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select a profile to spin.")
+
+        # Determine axis vector
+        axis_map = {
+            'X': (1, 0, 0),
+            'Y': (0, 1, 0),
+            'Z': (0, 0, 1)
+        }
+        axis_upper = axis.upper()
+        if axis_upper not in axis_map:
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+
+        axis_vector = axis_map[axis_upper]
+
+        # Center defaults to 3D cursor if not provided
+        if center is None:
+            center = list(bpy.context.scene.cursor.location)
+
+        # Execute spin
+        bpy.ops.mesh.spin(
+            steps=steps,
+            angle=angle,
+            center=tuple(center),
+            axis=axis_vector,
+            dupli=dupli
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        degrees = round(angle * 180 / 3.14159, 1)
+        dupli_str = " (duplicate mode)" if dupli else ""
+        return f"Spin complete: {steps} steps, {degrees}° around {axis} at center {center}{dupli_str}"
+
+    def screw(self, steps=12, turns=1, axis='Z', center=None, offset=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates spiral/screw geometry.
+        Uses bpy.ops.mesh.screw.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select a profile to screw.")
+
+        # Determine axis vector
+        axis_map = {
+            'X': (1, 0, 0),
+            'Y': (0, 1, 0),
+            'Z': (0, 0, 1)
+        }
+        axis_upper = axis.upper()
+        if axis_upper not in axis_map:
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+
+        axis_vector = axis_map[axis_upper]
+
+        # Center defaults to 3D cursor if not provided
+        if center is None:
+            center = list(bpy.context.scene.cursor.location)
+
+        # Execute screw
+        bpy.ops.mesh.screw(
+            steps=steps,
+            turns=turns,
+            center=tuple(center),
+            axis=axis_vector,
+            screw_offset=offset
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Screw complete: {steps} steps, {turns} turn(s), offset={offset} around {axis} at center {center}"
+
+    def add_vertex(self, position):
+        """
+        [EDIT MODE][DESTRUCTIVE] Adds a single vertex at the specified position.
+        Uses BMesh API.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        if len(position) != 3:
+            raise ValueError(f"position must be [x, y, z], got {position}")
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+
+        # Create new vertex
+        new_vert = bm.verts.new(position)
+        new_vert.select = True
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Added vertex at {position} (index: {new_vert.index})"
+
+    def add_edge_face(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates edge or face from selected vertices.
+        Uses bpy.ops.mesh.edge_face_add (same as 'F' key).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts < 2:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("Select at least 2 vertices to create edge/face")
+
+        # Execute edge/face add
+        bpy.ops.mesh.edge_face_add()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        if selected_verts == 2:
+            return f"Created edge from {selected_verts} vertices"
+        else:
+            return f"Created face from {selected_verts} vertices"

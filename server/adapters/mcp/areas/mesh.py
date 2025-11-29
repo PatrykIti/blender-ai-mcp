@@ -977,3 +977,227 @@ def mesh_remesh_voxel(
         return handler.remesh_voxel(voxel_size, adaptivity)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-019: Phase 2.4 - Core Transform & Geometry
+# ==============================================================================
+
+@mcp.tool()
+def mesh_transform_selected(
+    ctx: Context,
+    translate: Optional[List[float]] = None,
+    rotate: Optional[List[float]] = None,
+    scale: Optional[List[float]] = None,
+    pivot: Literal["MEDIAN_POINT", "BOUNDING_BOX_CENTER", "CURSOR", "INDIVIDUAL_ORIGINS", "ACTIVE_ELEMENT"] = "MEDIAN_POINT"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected geometry (move/rotate/scale).
+    CRITICAL: This is the primary tool for repositioning geometry after selection.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_merge_by_distance
+
+    Args:
+        translate: Translation vector [x, y, z]. Moves geometry.
+        rotate: Rotation in radians [x, y, z]. Rotates around pivot.
+        scale: Scale factors [x, y, z]. Scales from pivot.
+        pivot: Pivot point for rotation/scale.
+            - MEDIAN_POINT: Center of selection (default)
+            - BOUNDING_BOX_CENTER: Center of bounding box
+            - CURSOR: 3D cursor position
+            - INDIVIDUAL_ORIGINS: Each element's own origin
+            - ACTIVE_ELEMENT: Active element's position
+
+    Examples:
+        mesh_transform_selected(translate=[0, 0, 2]) -> Move up by 2 units
+        mesh_transform_selected(rotate=[0, 0, 1.5708]) -> Rotate 90° around Z
+        mesh_transform_selected(scale=[2, 2, 1]) -> Double size in X and Y
+        mesh_transform_selected(translate=[1, 0, 0], pivot="CURSOR") -> Move relative to cursor
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.transform_selected(translate, rotate, scale, pivot)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_bridge_edge_loops(
+    ctx: Context,
+    number_cuts: int = 0,
+    interpolation: Literal["LINEAR", "PATH", "SURFACE"] = "LINEAR",
+    smoothness: float = 0.0,
+    twist: int = 0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bridges two edge loops with faces.
+    Connects two separate edge loops/rings to create connecting geometry.
+
+    Workflow: BEFORE → mesh_select_loop (select two loops) | AFTER → mesh_smooth, mesh_subdivide
+
+    Args:
+        number_cuts: Number of intermediate cuts (0 = direct bridge).
+        interpolation: How to interpolate the bridge.
+            - LINEAR: Straight connection
+            - PATH: Follow edge flow
+            - SURFACE: Smooth surface interpolation
+        smoothness: Smoothness factor for interpolation (0.0-1.0).
+        twist: Number of twist segments between loops.
+
+    Examples:
+        mesh_bridge_edge_loops() -> Simple direct bridge
+        mesh_bridge_edge_loops(number_cuts=4) -> Bridge with 4 subdivisions
+        mesh_bridge_edge_loops(interpolation="SURFACE", smoothness=1.0) -> Smooth curved bridge
+        mesh_bridge_edge_loops(twist=1) -> Twisted bridge connection
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bridge_edge_loops(number_cuts, interpolation, smoothness, twist)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_duplicate_selected(
+    ctx: Context,
+    translate: Optional[List[float]] = None
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Duplicates selected geometry within the same mesh.
+    Creates a copy of selected elements. New geometry is automatically selected.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_transform_selected
+
+    Args:
+        translate: Optional [x, y, z] offset for duplicated geometry.
+            If not provided, duplicate is created in-place (overlapping).
+
+    Examples:
+        mesh_duplicate_selected(translate=[2, 0, 0]) -> Duplicate and move 2 units on X
+        mesh_duplicate_selected() -> Duplicate in-place (WARNING: overlapping geometry!)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.duplicate_selected(translate)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
+# ==============================================================================
+
+@mcp.tool()
+def mesh_spin(
+    ctx: Context,
+    steps: int = 12,
+    angle: float = 6.283185,
+    axis: Literal["X", "Y", "Z"] = "Z",
+    center: Optional[List[float]] = None,
+    dupli: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/lathes selected geometry around an axis.
+    Creates rotational geometry like vases, bowls, or circular patterns.
+
+    Workflow: BEFORE → mesh_select_* (select profile) | AFTER → mesh_merge_by_distance
+
+    Args:
+        steps: Number of steps/segments for the spin (12 = 30° per step for full circle).
+        angle: Total angle in radians (default 6.283185 = 360° = full circle).
+            Common values: 3.14159 (180°), 1.5708 (90°)
+        axis: Axis to spin around (X, Y, or Z).
+        center: Optional [x, y, z] center point for spin. Default is 3D cursor.
+        dupli: If True, duplicates geometry instead of extruding.
+
+    Examples:
+        mesh_spin(steps=32) -> Full 360° spin with 32 segments (smooth)
+        mesh_spin(steps=16, angle=3.14159) -> 180° half-spin
+        mesh_spin(axis="X", center=[0, 0, 0]) -> Spin around X at origin
+        mesh_spin(dupli=True) -> Create radial pattern without connecting faces
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.spin(steps, angle, axis, center, dupli)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_screw(
+    ctx: Context,
+    steps: int = 12,
+    turns: int = 1,
+    axis: Literal["X", "Y", "Z"] = "Z",
+    center: Optional[List[float]] = None,
+    offset: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates spiral/screw/helical geometry.
+    Combines rotation with translation for spirals, threads, springs, or helixes.
+
+    Workflow: BEFORE → mesh_select_* (select profile) | AFTER → mesh_merge_by_distance
+
+    Args:
+        steps: Number of steps per turn (more = smoother spiral).
+        turns: Number of complete rotations.
+        axis: Axis to screw around (X, Y, or Z).
+        center: Optional [x, y, z] center point. Default is 3D cursor.
+        offset: Distance to move along axis per turn (thread pitch).
+
+    Examples:
+        mesh_screw(steps=32, turns=3, offset=0.5) -> 3-turn spiral with 0.5 unit pitch
+        mesh_screw(turns=1, offset=0) -> Same as spin (no translation)
+        mesh_screw(steps=64, turns=5, offset=0.2) -> Fine-threaded screw
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.screw(steps, turns, axis, center, offset)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_add_vertex(
+    ctx: Context,
+    position: List[float]
+) -> str:
+    """
+    [EDIT MODE][DESTRUCTIVE] Adds a single vertex at the specified position.
+    Useful for creating geometry from scratch or adding connection points.
+
+    Workflow: START → mesh_add_edge_face | USE FOR → manual geometry construction
+
+    Args:
+        position: [x, y, z] coordinates for the new vertex.
+
+    Examples:
+        mesh_add_vertex(position=[0, 0, 0]) -> Add vertex at origin
+        mesh_add_vertex(position=[1.5, 2.0, 0.5]) -> Add vertex at specific location
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.add_vertex(position)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_add_edge_face(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates an edge or face from selected vertices.
+    - 2 vertices selected → creates edge
+    - 3+ vertices selected → creates face
+    Equivalent to pressing 'F' key in Blender.
+
+    Workflow: BEFORE → mesh_select_by_index, mesh_add_vertex | AFTER → mesh_fill_holes
+
+    Examples:
+        (select 2 verts) mesh_add_edge_face() -> Creates edge between them
+        (select 3+ verts) mesh_add_edge_face() -> Creates face from vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.add_edge_face()
+    except RuntimeError as e:
+        return str(e)
