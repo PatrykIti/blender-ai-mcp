@@ -40,8 +40,7 @@ Most AI solutions for Blender rely on asking the LLM to "write a Python script".
 
 ## 🗺️ Roadmap & Capabilities
 
-> **Legend:** ✅ Completed | 🚧 In Progress
-
+> **Legend:** ✅ Completed | 🚧 In Progress <br>
 > **Progress:** ████████████░░░░░░░░ ~40% (Phase 1 ✅, Phase 2 🚧, Phase 3-6 🚧, Phase 7 ✅)
 
 Our goal is to enable AI to model complex 3D assets—from organs and biological structures to hard-surface precision parts (cars, devices).
