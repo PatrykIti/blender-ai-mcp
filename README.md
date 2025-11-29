@@ -85,6 +85,25 @@ Object Mode operations for creating and transforming objects.
 | `modeling_separate_object` | Separate by loose parts/material | ✅ |
 | `modeling_set_origin` | Set object origin point | ✅ |
 
+#### Lattice Deformation
+| Tool | Description | Status |
+|------|-------------|--------|
+| `lattice_create` | Create lattice fitted to object | 🚧 |
+| `lattice_bind` | Bind object to lattice deformer | 🚧 |
+| `lattice_edit_point` | Move lattice control points | 🚧 |
+
+#### Text Objects
+| Tool | Description | Status |
+|------|-------------|--------|
+| `text_create` | Create 3D text object | 🚧 |
+| `text_edit` | Modify text content and properties | 🚧 |
+
+#### Skin Modifier (Tubular Structures)
+| Tool | Description | Status |
+|------|-------------|--------|
+| `skin_create_skeleton` | Create skeleton for skin modifier | 🚧 |
+| `skin_set_radius` | Set skin radius at vertices | 🚧 |
+
 ---
 
 ### Mesh Tools (`mesh_*`)
@@ -157,6 +176,38 @@ Edit Mode operations for geometry manipulation.
 | `mesh_create_vertex_group` | Create new vertex group | ✅ |
 | `mesh_assign_to_group` | Assign vertices to group | ✅ |
 | `mesh_remove_from_group` | Remove vertices from group | ✅ |
+
+#### Edge Weights & Creases
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_edge_crease` | Set crease weight for subdivision | 🚧 |
+| `mesh_bevel_weight` | Set bevel weight for bevel modifier | 🚧 |
+| `mesh_mark_sharp` | Mark/clear sharp edges | 🚧 |
+
+#### Cleanup & Optimization
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_dissolve` | Dissolve vertices/edges/faces (limited dissolve) | 🚧 |
+| `mesh_tris_to_quads` | Convert triangles to quads | 🚧 |
+| `mesh_normals_make_consistent` | Recalculate normals | 🚧 |
+| `mesh_decimate` | Reduce polycount on selection | 🚧 |
+
+#### Knife & Cut
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_knife_project` | Project cut from selected geometry | 🚧 |
+| `mesh_rip` | Rip/tear geometry at selection | 🚧 |
+| `mesh_split` | Split selection from mesh | 🚧 |
+| `mesh_edge_split` | Split mesh at selected edges | 🚧 |
+
+#### Symmetry & Fill
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_symmetrize` | Make mesh symmetric | 🚧 |
+| `mesh_grid_fill` | Fill boundary with quad grid | 🚧 |
+| `mesh_poke_faces` | Poke faces (add center vertex) | 🚧 |
+| `mesh_beautify_fill` | Rearrange triangles uniformly | 🚧 |
+| `mesh_set_proportional_edit` | Enable soft selection falloff | 🚧 |
 
 ---
 
@@ -238,6 +289,44 @@ File export operations.
 
 ---
 
+### Import Tools (`import_*`)
+
+File import operations.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `import_obj` | Import OBJ file | 🚧 |
+| `import_fbx` | Import FBX file | 🚧 |
+| `import_glb` | Import GLB/GLTF file | 🚧 |
+| `import_image_as_plane` | Import image as textured plane (reference) | 🚧 |
+
+---
+
+### Baking Tools (`bake_*`)
+
+Texture baking for game dev workflows.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `bake_normal_map` | Bake normal map (high-to-low or self) | 🚧 |
+| `bake_ao` | Bake ambient occlusion map | 🚧 |
+| `bake_combined` | Bake full render to texture | 🚧 |
+| `bake_diffuse` | Bake diffuse/albedo color | 🚧 |
+
+---
+
+### Metaball Tools (`metaball_*`)
+
+Organic blob primitives for medical/biological modeling.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `metaball_create` | Create metaball object | 🚧 |
+| `metaball_add_element` | Add element (ball, capsule, ellipsoid) | 🚧 |
+| `metaball_to_mesh` | Convert metaball to mesh | 🚧 |
+
+---
+
 ### Macro Tools (`macro_*`)
 
 High-level abstractions where one command executes hundreds of Blender operations.
@@ -258,12 +347,44 @@ High-level abstractions where one command executes hundreds of Blender operation
 
 Organic shaping and sculpt workflows.
 
+#### Core Brushes
 | Tool | Description | Status |
 |------|-------------|--------|
 | `sculpt_auto` | High-level sculpt operation (mesh filters) | ✅ |
 | `sculpt_brush_smooth` | Smooth brush | ✅ |
 | `sculpt_brush_grab` | Grab brush | ✅ |
 | `sculpt_brush_crease` | Crease brush | ✅ |
+
+#### Organic Brushes
+| Tool | Description | Status |
+|------|-------------|--------|
+| `sculpt_brush_clay` | Add clay-like material | 🚧 |
+| `sculpt_brush_inflate` | Inflate/deflate areas | 🚧 |
+| `sculpt_brush_blob` | Create organic bulges | 🚧 |
+| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | 🚧 |
+| `sculpt_brush_draw` | Basic sculpt draw | 🚧 |
+| `sculpt_brush_pinch` | Pinch geometry together | 🚧 |
+
+#### Dynamic Topology
+| Tool | Description | Status |
+|------|-------------|--------|
+| `sculpt_enable_dyntopo` | Enable dynamic topology | 🚧 |
+| `sculpt_disable_dyntopo` | Disable dynamic topology | 🚧 |
+| `sculpt_dyntopo_flood_fill` | Apply detail level to entire mesh | 🚧 |
+
+---
+
+### Armature Tools (`armature_*`)
+
+Skeletal rigging and animation (future).
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `armature_create` | Create armature with initial bone | 🚧 |
+| `armature_add_bone` | Add bone to armature | 🚧 |
+| `armature_bind` | Bind mesh to armature (auto weights) | 🚧 |
+| `armature_pose_bone` | Pose armature bone | 🚧 |
+| `weight_paint_assign` | Assign weights to vertex group | 🚧 |
 
 ---
 
@@ -274,15 +395,16 @@ Offline intent-matching system that maps natural language prompts to tools witho
 | Component | Description | Status |
 |-----------|-------------|--------|
 | `Intent Classifier` | TF-IDF + SVM/LogisticRegression for keyword matching | 🚧 |
-| `Embedding Store` | Semantic matching via sentence-transformers (all-MiniLM-L6-v2) | 🚧 |
+| `Embedding Store` | Semantic matching via LaBSE (109 languages) | 🚧 |
 | `Workflow Planner` | Maps complex intents to tool sequences | 🚧 |
 | `Feedback Learning` | Self-improvement from user corrections | 🚧 |
 
 **Key Features:**
 - **100% Offline** - No external API calls required
 - **Deterministic** - Same prompt → same tool selection
+- **Multilingual** - LaBSE supports 109 languages (PL, EN, DE, FR, ES, ...)
 - **Workflow Support** - "make a phone" → automatic multi-tool sequence
-- **Lightweight** - Uses small embedding models (~22MB)
+- **Anti-Hallucination** - Validates tools exist before execution
 
 **Example:**
 ```
