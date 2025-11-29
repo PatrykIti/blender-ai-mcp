@@ -1,11 +1,107 @@
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_mesh_handler
 
+
 @mcp.tool()
-def mesh_select_all(ctx: Context, deselect: bool = False) -> str:
+def mesh_select(
+    ctx: Context,
+    action: Literal["all", "none", "linked", "more", "less", "boundary"],
+    boundary_mode: Literal["EDGE", "VERT"] = "EDGE"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Simple selection operations for mesh geometry.
+
+    Actions:
+    - "all": Selects all geometry. No params required.
+    - "none": Deselects all geometry. No params required.
+    - "linked": Selects all geometry connected to current selection.
+    - "more": Grows selection by 1 step.
+    - "less": Shrinks selection by 1 step.
+    - "boundary": Selects boundary edges/vertices. Optional: boundary_mode (EDGE/VERT).
+
+    Workflow: BEFORE → mesh_extrude, mesh_delete, mesh_boolean | START → new selection workflow
+
+    Examples:
+        mesh_select(action="all")
+        mesh_select(action="none")
+        mesh_select(action="linked")
+        mesh_select(action="boundary", boundary_mode="EDGE")
+    """
+    if action == "all":
+        return _mesh_select_all(ctx, deselect=False)
+    elif action == "none":
+        return _mesh_select_all(ctx, deselect=True)
+    elif action == "linked":
+        return _mesh_select_linked(ctx)
+    elif action == "more":
+        return _mesh_select_more(ctx)
+    elif action == "less":
+        return _mesh_select_less(ctx)
+    elif action == "boundary":
+        return _mesh_select_boundary(ctx, mode=boundary_mode)
+    else:
+        return f"Unknown action '{action}'. Valid actions: all, none, linked, more, less, boundary"
+
+
+@mcp.tool()
+def mesh_select_targeted(
+    ctx: Context,
+    action: Literal["by_index", "loop", "ring", "by_location"],
+    # by_index params:
+    indices: Optional[List[int]] = None,
+    element_type: Literal["VERT", "EDGE", "FACE"] = "VERT",
+    selection_mode: Literal["SET", "ADD", "SUBTRACT"] = "SET",
+    # loop/ring params:
+    edge_index: Optional[int] = None,
+    # by_location params:
+    axis: Optional[Literal["X", "Y", "Z"]] = None,
+    min_coord: Optional[float] = None,
+    max_coord: Optional[float] = None
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Targeted selection operations for mesh geometry.
+
+    Actions and required parameters:
+    - "by_index": Requires indices (list of ints). Optional: element_type (VERT/EDGE/FACE), selection_mode (SET/ADD/SUBTRACT).
+    - "loop": Requires edge_index (int). Selects edge loop starting from that edge.
+    - "ring": Requires edge_index (int). Selects edge ring starting from that edge.
+    - "by_location": Requires axis (X/Y/Z), min_coord, max_coord. Optional: element_type. Selects geometry within coordinate range.
+
+    Workflow: BEFORE → mesh_get_vertex_data (for indices) | AFTER → mesh_extrude, mesh_delete, mesh_boolean
+
+    Examples:
+        mesh_select_targeted(action="by_index", indices=[0, 1, 2], element_type="VERT")
+        mesh_select_targeted(action="by_index", indices=[0, 1], element_type="FACE", selection_mode="ADD")
+        mesh_select_targeted(action="loop", edge_index=4)
+        mesh_select_targeted(action="ring", edge_index=3)
+        mesh_select_targeted(action="by_location", axis="Z", min_coord=0.5, max_coord=2.0)
+        mesh_select_targeted(action="by_location", axis="X", min_coord=-1.0, max_coord=0.0, element_type="FACE")
+    """
+    if action == "by_index":
+        if indices is None:
+            return "Error: 'by_index' action requires 'indices' parameter (list of integers)."
+        return _mesh_select_by_index(ctx, indices, element_type, selection_mode)
+    elif action == "loop":
+        if edge_index is None:
+            return "Error: 'loop' action requires 'edge_index' parameter (integer)."
+        return _mesh_select_loop(ctx, edge_index)
+    elif action == "ring":
+        if edge_index is None:
+            return "Error: 'ring' action requires 'edge_index' parameter (integer)."
+        return _mesh_select_ring(ctx, edge_index)
+    elif action == "by_location":
+        if axis is None or min_coord is None or max_coord is None:
+            return "Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord' parameters."
+        return _mesh_select_by_location(ctx, axis, min_coord, max_coord, element_type)
+    else:
+        return f"Unknown action '{action}'. Valid actions: by_index, loop, ring, by_location"
+
+
+# Internal function - exposed via mesh_select mega tool
+def _mesh_select_all(ctx: Context, deselect: bool = False) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry elements.
 
@@ -36,8 +132,8 @@ def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
+# Internal function - exposed via mesh_select_targeted mega tool
+def _mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Selects specific geometry elements by index.
     Uses BMesh for precise 0-based indexing.
@@ -339,8 +435,8 @@ def mesh_list_groups(
         
     except RuntimeError as e:
         return str(e)
-@mcp.tool()
-def mesh_select_loop(
+# Internal function - exposed via mesh_select_targeted mega tool
+def _mesh_select_loop(
     ctx: Context,
     edge_index: int
 ) -> str:
@@ -367,8 +463,9 @@ def mesh_select_loop(
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_ring(
+
+# Internal function - exposed via mesh_select_targeted mega tool
+def _mesh_select_ring(
     ctx: Context,
     edge_index: int
 ) -> str:
@@ -395,8 +492,8 @@ def mesh_select_ring(
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_linked(ctx: Context) -> str:
+# Internal function - exposed via mesh_select mega tool
+def _mesh_select_linked(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
 
@@ -420,8 +517,9 @@ def mesh_select_linked(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_more(ctx: Context) -> str:
+
+# Internal function - exposed via mesh_select mega tool
+def _mesh_select_more(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
 
@@ -442,8 +540,9 @@ def mesh_select_more(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_less(ctx: Context) -> str:
+
+# Internal function - exposed via mesh_select mega tool
+def _mesh_select_less(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
 
@@ -510,8 +609,8 @@ def mesh_get_vertex_data(
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_by_location(
+# Internal function - exposed via mesh_select_targeted mega tool
+def _mesh_select_by_location(
     ctx: Context,
     axis: str,
     min_coord: float,
@@ -553,8 +652,8 @@ def mesh_select_by_location(
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
-def mesh_select_boundary(
+# Internal function - exposed via mesh_select mega tool
+def _mesh_select_boundary(
     ctx: Context,
     mode: str = 'EDGE'
 ) -> str:

@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 13
+- **To Do:** 8
 - **In Progress:** 0
-- **Done:** 39
+- **Done:** 44
 
 ---
 
@@ -31,15 +31,6 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-27 |
 | [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-27 |
 
-### LLM Context Optimization: Mega Tools
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-020-1](./TASK-020-1_Scene_Context_Mega_Tool.md) | **Scene Context Mega Tool** (mode, selection) | 🔴 High | 2025-11-28 |
-| [TASK-020-2](./TASK-020-2_Mesh_Select_Mega_Tool.md) | **Mesh Select Mega Tool** (simple: all, none, linked, more, less, boundary) | 🔴 High | 2025-11-28 |
-| [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-28 |
-| [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-28 |
-| [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-28 |
-
 ---
 
 ## 🚧 In Progress
@@ -52,6 +43,11 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-29 |
+| [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-29 |
+| [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-29 |
+| [TASK-020-2](./TASK-020-2_Mesh_Select_Mega_Tool.md) | **Mesh Select Mega Tool** (all, none, linked, more, less, boundary) | 🔴 High | 2025-11-29 |
+| [TASK-020-1](./TASK-020-1_Scene_Context_Mega_Tool.md) | **Scene Context Mega Tool** (mode, selection) | 🔴 High | 2025-11-29 |
 | [TASK-015-1-WH](./TASK-015-1_Workflow_Hints.md) | **Workflow Hints for All MCP Tools** | 🟡 Medium | 2025-11-28 |
 | [TASK-015-7](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-7-mesh-select-boundary-tool) | **Mesh Select Boundary Tool** | 🔴 Critical | 2025-11-28 |
 | [TASK-015-6](./TASK-015_Phase_2_1_Advanced_Selection.md#task-015-6-mesh-select-by-location-tool) | **Mesh Select By Location Tool** | 🟡 Medium | 2025-11-28 |
