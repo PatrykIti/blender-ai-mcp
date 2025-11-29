@@ -110,9 +110,8 @@ class TestMaterialCreate(unittest.TestCase):
             alpha=0.5
         )
 
-        # Verify blend method was set
+        # Verify blend method was set (shadow_method removed in Blender 4.2+)
         self.assertEqual(mock_mat.blend_method, 'BLEND')
-        self.assertEqual(mock_mat.shadow_method, 'HASHED')
         self.assertIn("Created material", result)
 
 

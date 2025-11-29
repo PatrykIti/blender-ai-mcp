@@ -21,51 +21,56 @@ def sculpt_handler():
 
 
 @pytest.fixture
-def mock_mesh_object():
+def mock_sculpt_tool_settings():
+    """Sets up mock sculpt tool settings for Blender 5.0+ symmetry."""
+    mock_sculpt = MagicMock()
+    mock_sculpt.use_symmetry_x = False
+    mock_sculpt.use_symmetry_y = False
+    mock_sculpt.use_symmetry_z = False
+    mock_sculpt.brush = MagicMock()
+    mock_sculpt.brush.size = 50
+    mock_sculpt.brush.strength = 0.5
+    mock_sculpt.brush.crease_pinch_factor = 0.5
+
+    mock_tool_settings = MagicMock()
+    mock_tool_settings.sculpt = mock_sculpt
+
+    mock_scene = MagicMock()
+    mock_scene.tool_settings = mock_tool_settings
+
+    bpy.context.scene = mock_scene
+    bpy.context.tool_settings = mock_tool_settings
+    return mock_sculpt
+
+
+@pytest.fixture
+def mock_mesh_object(mock_sculpt_tool_settings):
     """Sets up mock mesh object in object mode."""
     mock_obj = MagicMock()
     mock_obj.name = 'Cube'
     mock_obj.type = 'MESH'
     mock_obj.mode = 'OBJECT'
-    mock_obj.use_mesh_symmetry_x = False
-    mock_obj.use_mesh_symmetry_y = False
-    mock_obj.use_mesh_symmetry_z = False
     bpy.context.active_object = mock_obj
     bpy.data.objects = {'Cube': mock_obj}
     return mock_obj
 
 
 @pytest.fixture
-def mock_mesh_object_sculpt_mode():
+def mock_mesh_object_sculpt_mode(mock_sculpt_tool_settings):
     """Sets up mock mesh object already in sculpt mode."""
     mock_obj = MagicMock()
     mock_obj.name = 'Sphere'
     mock_obj.type = 'MESH'
     mock_obj.mode = 'SCULPT'
-    mock_obj.use_mesh_symmetry_x = False
-    mock_obj.use_mesh_symmetry_y = False
-    mock_obj.use_mesh_symmetry_z = False
     bpy.context.active_object = mock_obj
     bpy.data.objects = {'Sphere': mock_obj}
     return mock_obj
 
 
 @pytest.fixture
-def mock_sculpt_context():
-    """Sets up mock sculpt context with brush."""
-    mock_brush = MagicMock()
-    mock_brush.size = 50
-    mock_brush.strength = 0.5
-    mock_brush.crease_pinch_factor = 0.5
-
-    mock_sculpt = MagicMock()
-    mock_sculpt.brush = mock_brush
-
-    mock_tool_settings = MagicMock()
-    mock_tool_settings.sculpt = mock_sculpt
-
-    bpy.context.tool_settings = mock_tool_settings
-    return mock_sculpt
+def mock_sculpt_context(mock_sculpt_tool_settings):
+    """Sets up mock sculpt context with brush (depends on mock_sculpt_tool_settings)."""
+    return mock_sculpt_tool_settings
 
 
 # =============================================================================
@@ -134,9 +139,11 @@ class TestSculptAuto:
 
         result = sculpt_handler.auto_sculpt(use_symmetry=True, symmetry_axis="Y")
 
-        assert mock_mesh_object.use_mesh_symmetry_y is True
-        assert mock_mesh_object.use_mesh_symmetry_x is False
-        assert mock_mesh_object.use_mesh_symmetry_z is False
+        # Blender 5.0+: symmetry is on sculpt tool settings
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        assert sculpt_settings.use_symmetry_y is True
+        assert sculpt_settings.use_symmetry_x is False
+        assert sculpt_settings.use_symmetry_z is False
         assert "symmetry: Y" in result
 
     def test_auto_sculpt_no_symmetry(self, sculpt_handler, mock_mesh_object):
@@ -146,9 +153,11 @@ class TestSculptAuto:
 
         result = sculpt_handler.auto_sculpt(use_symmetry=False)
 
-        assert mock_mesh_object.use_mesh_symmetry_x is False
-        assert mock_mesh_object.use_mesh_symmetry_y is False
-        assert mock_mesh_object.use_mesh_symmetry_z is False
+        # Blender 5.0+: symmetry is on sculpt tool settings
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        assert sculpt_settings.use_symmetry_x is False
+        assert sculpt_settings.use_symmetry_y is False
+        assert sculpt_settings.use_symmetry_z is False
         assert "symmetry" not in result
 
     def test_auto_sculpt_clamps_strength(self, sculpt_handler, mock_mesh_object_sculpt_mode):
@@ -333,36 +342,41 @@ class TestSculptHelpers:
         assert prev_mode == 'SCULPT'
 
     def test_set_symmetry_x(self, sculpt_handler, mock_mesh_object):
-        """Should set X symmetry correctly."""
+        """Should set X symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
         sculpt_handler._set_symmetry(mock_mesh_object, True, 'X')
 
-        assert mock_mesh_object.use_mesh_symmetry_x is True
-        assert mock_mesh_object.use_mesh_symmetry_y is False
-        assert mock_mesh_object.use_mesh_symmetry_z is False
+        # Blender 5.0+: symmetry is on sculpt tool settings, not on object
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        assert sculpt_settings.use_symmetry_x is True
+        assert sculpt_settings.use_symmetry_y is False
+        assert sculpt_settings.use_symmetry_z is False
 
     def test_set_symmetry_y(self, sculpt_handler, mock_mesh_object):
-        """Should set Y symmetry correctly."""
+        """Should set Y symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
         sculpt_handler._set_symmetry(mock_mesh_object, True, 'Y')
 
-        assert mock_mesh_object.use_mesh_symmetry_x is False
-        assert mock_mesh_object.use_mesh_symmetry_y is True
-        assert mock_mesh_object.use_mesh_symmetry_z is False
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        assert sculpt_settings.use_symmetry_x is False
+        assert sculpt_settings.use_symmetry_y is True
+        assert sculpt_settings.use_symmetry_z is False
 
     def test_set_symmetry_z(self, sculpt_handler, mock_mesh_object):
-        """Should set Z symmetry correctly."""
+        """Should set Z symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
         sculpt_handler._set_symmetry(mock_mesh_object, True, 'Z')
 
-        assert mock_mesh_object.use_mesh_symmetry_x is False
-        assert mock_mesh_object.use_mesh_symmetry_y is False
-        assert mock_mesh_object.use_mesh_symmetry_z is True
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        assert sculpt_settings.use_symmetry_x is False
+        assert sculpt_settings.use_symmetry_y is False
+        assert sculpt_settings.use_symmetry_z is True
 
     def test_set_symmetry_disabled(self, sculpt_handler, mock_mesh_object):
         """Should disable all symmetry when use_symmetry=False."""
         # First enable X symmetry
-        mock_mesh_object.use_mesh_symmetry_x = True
+        sculpt_settings = bpy.context.scene.tool_settings.sculpt
+        sculpt_settings.use_symmetry_x = True
 
         sculpt_handler._set_symmetry(mock_mesh_object, False, 'X')
 
-        assert mock_mesh_object.use_mesh_symmetry_x is False
-        assert mock_mesh_object.use_mesh_symmetry_y is False
-        assert mock_mesh_object.use_mesh_symmetry_z is False
+        assert sculpt_settings.use_symmetry_x is False
+        assert sculpt_settings.use_symmetry_y is False
+        assert sculpt_settings.use_symmetry_z is False

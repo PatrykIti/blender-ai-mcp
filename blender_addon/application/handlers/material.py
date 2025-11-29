@@ -138,7 +138,7 @@ class MaterialHandler:
         # Set alpha/transparency
         if alpha < 1.0:
             mat.blend_method = 'BLEND'
-            mat.shadow_method = 'HASHED'
+            # Note: shadow_method was removed in Blender 4.2+
             bsdf.inputs["Alpha"].default_value = max(0.0, min(1.0, alpha))
 
         return f"Created material '{mat.name}'"
@@ -286,7 +286,7 @@ class MaterialHandler:
             bsdf.inputs["Alpha"].default_value = max(0.0, min(1.0, alpha))
             if alpha < 1.0:
                 mat.blend_method = 'BLEND'
-                mat.shadow_method = 'HASHED'
+                # Note: shadow_method was removed in Blender 4.2+
             else:
                 mat.blend_method = 'OPAQUE'
             modified.append("alpha")

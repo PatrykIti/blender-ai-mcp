@@ -50,18 +50,21 @@ class SculptHandler:
             axis: The axis for symmetry (X, Y, or Z).
         """
         axis = axis.upper()
+        # In Blender 5.0+, symmetry is on sculpt tool settings
+        sculpt = bpy.context.scene.tool_settings.sculpt
+
         # Reset all axes first
-        obj.use_mesh_symmetry_x = False
-        obj.use_mesh_symmetry_y = False
-        obj.use_mesh_symmetry_z = False
+        sculpt.use_symmetry_x = False
+        sculpt.use_symmetry_y = False
+        sculpt.use_symmetry_z = False
 
         if use_symmetry:
             if axis == 'X':
-                obj.use_mesh_symmetry_x = True
+                sculpt.use_symmetry_x = True
             elif axis == 'Y':
-                obj.use_mesh_symmetry_y = True
+                sculpt.use_symmetry_y = True
             elif axis == 'Z':
-                obj.use_mesh_symmetry_z = True
+                sculpt.use_symmetry_z = True
 
     # ==========================================================================
     # TASK-027-1: sculpt_auto (Mesh Filters)
