@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 9 tasks (~35 sub-tasks)
+- **To Do:** 10 tasks (~41 sub-tasks)
 - **In Progress:** 1
 - **Done:** 79
 
@@ -17,6 +17,11 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-029](./TASK-029_Edge_Weights_Creases.md) | **Edge Weights & Creases** | 🔴 High | mesh_edge_crease, mesh_bevel_weight, mesh_mark_sharp |
 | [TASK-030](./TASK-030_Mesh_Cleanup_Optimization.md) | **Mesh Cleanup & Optimization** | 🔴 High | mesh_dissolve, mesh_tris_to_quads, mesh_normals_make_consistent |
 | [TASK-031](./TASK-031_Baking_Tools.md) | **Baking Tools** | 🔴 Critical | bake_normal_map, bake_ao, bake_combined |
+
+### Organic & Medical Modeling
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | metaballs, sculpt brushes (clay, inflate, blob, snake_hook), dyntopo, skin modifier |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
