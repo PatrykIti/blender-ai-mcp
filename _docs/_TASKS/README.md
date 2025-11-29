@@ -3,25 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 8
+- **To Do:** 4
 - **In Progress:** 0
-- **Done:** 44
+- **Done:** 48
 
 ---
 
 ## 🚨 To Do
-
-### Phase 2.2: Organic & Deform
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-016-1](./TASK-016_017_Organic_and_Groups.md#task-016-1-mesh-randomize-tool) | **Mesh Randomize Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-27 |
-
-### Phase 2.3: Vertex Groups
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-27 |
 
 ### Phase 2.5: Advanced Precision
 | ID | Title | Priority | Created |
@@ -43,6 +31,10 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-29 |
+| [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-016-1](./TASK-016_017_Organic_and_Groups.md#task-016-1-mesh-randomize-tool) | **Mesh Randomize Tool** | 🟡 Medium | 2025-11-29 |
 | [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-29 |
 | [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-29 |
 | [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-29 |

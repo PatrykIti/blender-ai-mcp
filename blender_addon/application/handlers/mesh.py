@@ -705,16 +705,16 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Validate mode
         mode = mode.upper()
         if mode not in ['EDGE', 'VERT']:
             if previous_mode != 'EDIT':
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid mode '{mode}'. Must be EDGE or VERT")
-        
+
         # Deselect all first
         for v in bm.verts:
             v.select = False
@@ -722,9 +722,9 @@ class MeshHandler:
             e.select = False
         for f in bm.faces:
             f.select = False
-        
+
         selected_count = 0
-        
+
         if mode == 'EDGE':
             # Select boundary edges (edges with only 1 adjacent face)
             for edge in bm.edges:
@@ -733,18 +733,198 @@ class MeshHandler:
                     edge.verts[0].select = True
                     edge.verts[1].select = True
                     selected_count += 1
-        
+
         elif mode == 'VERT':
             # Select boundary vertices
             for vert in bm.verts:
                 if vert.is_boundary:
                     vert.select = True
                     selected_count += 1
-        
+
         bmesh.update_edit_mesh(obj.data)
-        
+
         # Restore previous mode
         if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected {selected_count} boundary {mode.lower()}(s)"
+
+    # ==========================================================================
+    # TASK-016: Organic & Deform Tools
+    # ==========================================================================
+
+    def randomize(self, amount=0.1, uniform=0.0, normal=0.0, seed=0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Randomizes vertex positions.
+        Uses bpy.ops.transform.vertex_random for displacement.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+
+        # bpy.ops.transform.vertex_random parameters:
+        # offset: maximum displacement
+        # uniform: uniform random factor (0-1)
+        # normal: normal-based factor (0-1)
+        # seed: random seed
+        bpy.ops.transform.vertex_random(
+            offset=amount,
+            uniform=uniform,
+            normal=normal,
+            seed=seed
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Randomized {selected_count} vertices (amount={amount}, uniform={uniform}, normal={normal}, seed={seed})"
+
+    def shrink_fatten(self, value):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Moves vertices along their normals.
+        Positive values = fatten (outward), negative values = shrink (inward).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+
+        # bpy.ops.transform.shrink_fatten moves selection along normals
+        bpy.ops.transform.shrink_fatten(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        direction = "fattened" if value > 0 else "shrunk"
+        return f"Shrink/Fatten: {direction} {selected_count} vertices by {abs(value)}"
+
+    # ==========================================================================
+    # TASK-017: Vertex Group Tools
+    # ==========================================================================
+
+    def create_vertex_group(self, object_name, name):
+        """
+        [MESH][SAFE] Creates a new vertex group on the specified mesh object.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        # Check if group already exists
+        if name in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{name}' already exists on '{object_name}'")
+
+        # Create new vertex group
+        vg = obj.vertex_groups.new(name=name)
+
+        return f"Created vertex group '{vg.name}' on '{object_name}' (index: {vg.index})"
+
+    def assign_to_group(self, object_name, group_name, weight=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Assigns selected vertices to a vertex group.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        if group_name not in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{group_name}' not found on '{object_name}'")
+
+        # Validate weight
+        weight = max(0.0, min(1.0, weight))
+
+        # Ensure we're in EDIT mode and object is active
+        bpy.context.view_layer.objects.active = obj
+        prev_mode = obj.mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_indices = [v.index for v in bm.verts if v.select]
+
+        if not selected_indices:
+            if prev_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            raise ValueError("No vertices selected")
+
+        # Set active vertex group
+        obj.vertex_groups.active = obj.vertex_groups[group_name]
+
+        # Use operator to assign (works in edit mode)
+        bpy.ops.object.vertex_group_assign()
+
+        # If we need to set specific weight, we need to go through the vertices
+        # The operator assigns with weight based on weight paint tools
+        # For specific weight, we use the vertex group API directly
+        if weight != 1.0:
+            # Need to briefly switch to object mode to modify weights
+            bpy.ops.object.mode_set(mode='OBJECT')
+            vg = obj.vertex_groups[group_name]
+            vg.add(selected_indices, weight, 'REPLACE')
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return f"Assigned {len(selected_indices)} vertices to '{group_name}' with weight {weight}"
+
+    def remove_from_group(self, object_name, group_name):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Removes selected vertices from a vertex group.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        if group_name not in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{group_name}' not found on '{object_name}'")
+
+        # Ensure we're in EDIT mode and object is active
+        bpy.context.view_layer.objects.active = obj
+        prev_mode = obj.mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_indices = [v.index for v in bm.verts if v.select]
+
+        if not selected_indices:
+            if prev_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            raise ValueError("No vertices selected")
+
+        # Set active vertex group
+        obj.vertex_groups.active = obj.vertex_groups[group_name]
+
+        # Use operator to remove (works in edit mode)
+        bpy.ops.object.vertex_group_remove_from()
+
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return f"Removed {len(selected_indices)} vertices from '{group_name}'"

@@ -154,5 +154,10 @@ Technical details.
 | `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
 | `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
 | `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
+| `randomize` | `randomize` | Randomizes vertex positions for organic surfaces. |
+| `shrink_fatten` | `shrink_fatten` | Moves vertices along their normals (inflate/deflate). |
+| `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |
+| `assign_to_group` | `assign_to_group` | Assigns selected vertices to vertex group with weight. |
+| `remove_from_group` | `remove_from_group` | Removes selected vertices from vertex group. |
 
 

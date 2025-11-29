@@ -693,3 +693,150 @@ def _mesh_select_boundary(
         return handler.select_boundary(mode)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-016: Organic & Deform Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_randomize(
+    ctx: Context,
+    amount: float = 0.1,
+    uniform: float = 0.0,
+    normal: float = 0.0,
+    seed: int = 0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Randomizes vertex positions.
+    Useful for making organic surfaces less perfect and adding natural variation.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth (optional)
+
+    Args:
+        amount: Maximum displacement amount (default 0.1)
+        uniform: Uniform random displacement (0.0-1.0). Displaces equally in all directions.
+        normal: Normal-based displacement (0.0-1.0). Displaces along vertex normals.
+        seed: Random seed for reproducible results (0 = random)
+
+    Examples:
+        mesh_randomize(amount=0.05) -> Subtle surface noise
+        mesh_randomize(amount=0.2, normal=1.0) -> Displacement along normals
+        mesh_randomize(amount=0.1, uniform=0.5, normal=0.5, seed=42) -> Mix with fixed seed
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.randomize(amount, uniform, normal, seed)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_shrink_fatten(
+    ctx: Context,
+    value: float
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Moves vertices along their normals (Shrink/Fatten).
+    Crucial for thickening or thinning organic shapes without losing volume style.
+    Positive values = fatten (outward), negative values = shrink (inward).
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth (optional)
+
+    Args:
+        value: Distance to move along normals. Positive = outward, negative = inward.
+
+    Examples:
+        mesh_shrink_fatten(value=0.1) -> Fatten/inflate selected vertices
+        mesh_shrink_fatten(value=-0.05) -> Shrink/deflate selected vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.shrink_fatten(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-017: Vertex Group Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_create_vertex_group(
+    ctx: Context,
+    object_name: str,
+    name: str
+) -> str:
+    """
+    [MESH][SAFE] Creates a new vertex group on the specified mesh object.
+    Vertex groups are used for weight painting, armature deformation, and selective operations.
+
+    Workflow: START → mesh_assign_to_group | USE WITH → mesh_list_groups
+
+    Args:
+        object_name: Name of the mesh object to add the group to
+        name: Name for the new vertex group
+
+    Examples:
+        mesh_create_vertex_group(object_name="Body", name="Head")
+        mesh_create_vertex_group(object_name="Character", name="LeftArm")
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.create_vertex_group(object_name, name)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_assign_to_group(
+    ctx: Context,
+    object_name: str,
+    group_name: str,
+    weight: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Assigns selected vertices to a vertex group.
+    Weight controls influence strength (0.0 = no influence, 1.0 = full influence).
+
+    Workflow: BEFORE → mesh_select_*, mesh_create_vertex_group | USE WITH → mesh_list_groups
+
+    Args:
+        object_name: Name of the mesh object
+        group_name: Name of the vertex group to assign to
+        weight: Weight value for assignment (0.0 to 1.0, default 1.0)
+
+    Examples:
+        mesh_assign_to_group(object_name="Body", group_name="Head", weight=1.0)
+        mesh_assign_to_group(object_name="Arm", group_name="Bicep", weight=0.5)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.assign_to_group(object_name, group_name, weight)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_remove_from_group(
+    ctx: Context,
+    object_name: str,
+    group_name: str
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Removes selected vertices from a vertex group.
+
+    Workflow: BEFORE → mesh_select_* | USE WITH → mesh_list_groups, mesh_assign_to_group
+
+    Args:
+        object_name: Name of the mesh object
+        group_name: Name of the vertex group to remove from
+
+    Examples:
+        mesh_remove_from_group(object_name="Body", group_name="Head")
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.remove_from_group(object_name, group_name)
+    except RuntimeError as e:
+        return str(e)

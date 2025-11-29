@@ -498,6 +498,150 @@ Use Case:
 
 ---
 
+# 23. mesh_randomize ✅ Done
+
+Randomizes vertex positions for organic surface variations.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- amount: float (maximum displacement, default 0.1)
+- uniform: float (uniform random factor 0-1, default 0.0)
+- normal: float (normal-based factor 0-1, default 0.0)
+- seed: int (random seed, 0 = random)
+
+Example:
+```json
+{
+  "tool": "mesh_randomize",
+  "args": {
+    "amount": 0.05,
+    "uniform": 0.5,
+    "normal": 0.0,
+    "seed": 42
+  }
+}
+```
+
+Use Case:
+- Creating organic terrain variations
+- Adding imperfections to mechanical surfaces
+- Generating natural-looking irregularities
+
+---
+
+# 24. mesh_shrink_fatten ✅ Done
+
+Moves vertices along their normals (inflate/deflate effect).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (distance along normals, + outward, - inward)
+
+Example:
+```json
+{
+  "tool": "mesh_shrink_fatten",
+  "args": {
+    "value": 0.1
+  }
+}
+```
+
+Use Case:
+- Inflating geometry for organic shapes
+- Creating shell/thickness effects
+- Sculpting surface details
+
+---
+
+# 25. mesh_create_vertex_group ✅ Done
+
+Creates a new vertex group on mesh object.
+
+**Tag:** `[MESH][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- name: str (name for new group)
+
+Example:
+```json
+{
+  "tool": "mesh_create_vertex_group",
+  "args": {
+    "object_name": "Cube",
+    "name": "TopVertices"
+  }
+}
+```
+
+Use Case:
+- Organizing vertices for armature weights
+- Preparing selection sets for modifiers
+- Grouping vertices for later operations
+
+---
+
+# 26. mesh_assign_to_group ✅ Done
+
+Assigns selected vertices to vertex group with weight.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- group_name: str (vertex group name)
+- weight: float (weight value 0.0-1.0, default 1.0)
+
+Example:
+```json
+{
+  "tool": "mesh_assign_to_group",
+  "args": {
+    "object_name": "Cube",
+    "group_name": "TopVertices",
+    "weight": 1.0
+  }
+}
+```
+
+Use Case:
+- Assigning bone weights for rigging
+- Setting up modifier influence areas
+- Creating soft selection masks
+
+---
+
+# 27. mesh_remove_from_group ✅ Done
+
+Removes selected vertices from vertex group.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- group_name: str (vertex group name)
+
+Example:
+```json
+{
+  "tool": "mesh_remove_from_group",
+  "args": {
+    "object_name": "Cube",
+    "group_name": "TopVertices"
+  }
+}
+```
+
+Use Case:
+- Refining vertex group assignments
+- Correcting weight painting mistakes
+- Adjusting modifier influence
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

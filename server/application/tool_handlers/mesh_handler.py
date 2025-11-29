@@ -152,3 +152,42 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-016-1: Mesh Randomize Tool
+    def randomize(self, amount: float = 0.1, uniform: float = 0.0, normal: float = 0.0, seed: int = 0) -> str:
+        args = {"amount": amount, "uniform": uniform, "normal": normal, "seed": seed}
+        response = self.rpc.send_request("mesh.randomize", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-016-2: Mesh Shrink/Fatten Tool
+    def shrink_fatten(self, value: float) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.shrink_fatten", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-017-1: Mesh Create Vertex Group Tool
+    def create_vertex_group(self, object_name: str, name: str) -> str:
+        args = {"object_name": object_name, "name": name}
+        response = self.rpc.send_request("mesh.create_vertex_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-017-2: Mesh Assign/Remove Vertex Group Tools
+    def assign_to_group(self, object_name: str, group_name: str, weight: float = 1.0) -> str:
+        args = {"object_name": object_name, "group_name": group_name, "weight": weight}
+        response = self.rpc.send_request("mesh.assign_to_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def remove_from_group(self, object_name: str, group_name: str) -> str:
+        args = {"object_name": object_name, "group_name": group_name}
+        response = self.rpc.send_request("mesh.remove_from_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

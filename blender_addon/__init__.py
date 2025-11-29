@@ -97,6 +97,13 @@ def register():
         rpc_server.register_handler("mesh.get_vertex_data", mesh_handler.get_vertex_data)
         rpc_server.register_handler("mesh.select_by_location", mesh_handler.select_by_location)
         rpc_server.register_handler("mesh.select_boundary", mesh_handler.select_boundary)
+        # TASK-016: Organic & Deform Tools
+        rpc_server.register_handler("mesh.randomize", mesh_handler.randomize)
+        rpc_server.register_handler("mesh.shrink_fatten", mesh_handler.shrink_fatten)
+        # TASK-017: Vertex Group Tools
+        rpc_server.register_handler("mesh.create_vertex_group", mesh_handler.create_vertex_group)
+        rpc_server.register_handler("mesh.assign_to_group", mesh_handler.assign_to_group)
+        rpc_server.register_handler("mesh.remove_from_group", mesh_handler.remove_from_group)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)

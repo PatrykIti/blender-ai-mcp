@@ -1,7 +1,7 @@
 # TASK-016-1: Mesh Randomize Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 2.2 - Organic & Deform
 
 ## 🎯 Objective
@@ -32,8 +32,8 @@ Implement `mesh_randomize` to displace vertices randomly. Useful for making orga
 
 # TASK-016-2: Mesh Shrink/Fatten Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 2.2 - Organic & Deform
 
 ## 🎯 Objective
@@ -64,8 +64,8 @@ Implement `mesh_shrink_fatten` to move vertices along their normals. Crucial for
 
 # TASK-017-1: Mesh Create Vertex Group Tool
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 2.3 - Vertex Groups
 
 ## 🎯 Objective
@@ -96,8 +96,8 @@ Allow AI to create named vertex groups.
 
 # TASK-017-2: Mesh Assign/Remove Vertex Group Tools
 
-**Status:** ⏳ To Do  
-**Priority:** 🟡 Medium  
+**Status:** ✅ Done
+**Priority:** 🟡 Medium
 **Phase:** Phase 2.3 - Vertex Groups
 
 ## 🎯 Objective

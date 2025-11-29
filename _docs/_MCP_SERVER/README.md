@@ -121,6 +121,11 @@ Low-level geometry manipulation.
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
+| `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
+| `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
+| `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |
+| `mesh_assign_to_group` | `object_name`, `group_name`, `weight` | Assigns selected vertices to vertex group. |
+| `mesh_remove_from_group` | `object_name`, `group_name` | Removes selected vertices from vertex group. |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 

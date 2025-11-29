@@ -69,11 +69,11 @@ Critical for shaping geometry. AI needs these to actually "model" details, not j
 - [x] `mesh_select_linked`, `mesh_select_loop`, `mesh_select_ring`
 - [x] `mesh_select_more`, `mesh_select_less`
 
-**2.2 Organic & Deform**
-- [ ] `mesh_randomize`, `mesh_shrink_fatten`
+**2.2 Organic & Deform** ✅
+- [x] `mesh_randomize`, `mesh_shrink_fatten`
 
-**2.3 Vertex Groups**
-- [ ] `mesh_create_vertex_group`, `mesh_assign_to_group`
+**2.3 Vertex Groups** ✅
+- [x] `mesh_create_vertex_group`, `mesh_assign_to_group`, `mesh_remove_from_group`
 
 **2.4 Core Transform & Geometry** 🔴 HIGH PRIORITY
 - [ ] `mesh_transform_selected` **CRITICAL - unlocks 80% of modeling tasks**
@@ -229,7 +229,12 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data"
+        "mesh_get_vertex_data",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group"
       ]
     }
   }
@@ -292,7 +297,12 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data"
+        "mesh_get_vertex_data",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group"
       ]
     }
   }

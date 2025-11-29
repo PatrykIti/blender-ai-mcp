@@ -114,3 +114,32 @@ class IMeshTool(ABC):
     def select_boundary(self, mode: str = 'EDGE') -> str:
         """Selects boundary edges (1 adjacent face) or boundary vertices."""
         pass
+
+    # TASK-016-1: Mesh Randomize Tool
+    @abstractmethod
+    def randomize(self, amount: float = 0.1, uniform: float = 0.0, normal: float = 0.0, seed: int = 0) -> str:
+        """Randomizes vertex positions for organic surface variations."""
+        pass
+
+    # TASK-016-2: Mesh Shrink/Fatten Tool
+    @abstractmethod
+    def shrink_fatten(self, value: float) -> str:
+        """Moves vertices along their normals (Shrink/Fatten)."""
+        pass
+
+    # TASK-017-1: Mesh Create Vertex Group Tool
+    @abstractmethod
+    def create_vertex_group(self, object_name: str, name: str) -> str:
+        """Creates a new vertex group on the specified object."""
+        pass
+
+    # TASK-017-2: Mesh Assign/Remove Vertex Group Tools
+    @abstractmethod
+    def assign_to_group(self, object_name: str, group_name: str, weight: float = 1.0) -> str:
+        """Assigns selected vertices to a vertex group with specified weight."""
+        pass
+
+    @abstractmethod
+    def remove_from_group(self, object_name: str, group_name: str) -> str:
+        """Removes selected vertices from a vertex group."""
+        pass
