@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v1.12.0 (2025-11-29)
+
+### Documentation
+
+- Improve README roadmap structure + add mega tools tasks
+  ([#16](https://github.com/PatrykIti/blender-ai-mcp/pull/16),
+  [`f6a79d5`](https://github.com/PatrykIti/blender-ai-mcp/commit/f6a79d5b1645e422ee494b1956674674f848369c))
+
+### Features
+
+- LLM Context Optimization - Mega Tools (TASK-020)
+  ([#17](https://github.com/PatrykIti/blender-ai-mcp/pull/17),
+  [`473f04f`](https://github.com/PatrykIti/blender-ai-mcp/commit/473f04fc0a98e045efb789d4638a4e4929243f22))
+
+
 ## v1.11.0 (2025-11-28)
 
 ### Features
