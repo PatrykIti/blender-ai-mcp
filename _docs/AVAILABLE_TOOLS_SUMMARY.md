@@ -119,6 +119,23 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
+| `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. | ✅ Done |
+| `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). | ✅ Done |
+| `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
+| `mesh_assign_to_group` | `object_name`, `group_name`, `weight` | Assigns selected vertices to vertex group. | ✅ Done |
+| `mesh_remove_from_group` | `object_name`, `group_name` | Removes selected vertices from vertex group. | ✅ Done |
+| `mesh_bisect` | `plane_co`, `plane_no`, `clear_inner`, `clear_outer`, `fill` | Cuts mesh along a plane. | ✅ Done |
+| `mesh_edge_slide` | `value` | Slides selected edges along mesh topology. | ✅ Done |
+| `mesh_vert_slide` | `value` | Slides selected vertices along connected edges. | ✅ Done |
+| `mesh_triangulate` | *none* | Converts selected faces to triangles. | ✅ Done |
+| `mesh_remesh_voxel` | `voxel_size`, `adaptivity` | Remeshes object using Voxel algorithm (Object Mode). | ✅ Done |
+| `mesh_transform_selected` | `translate`, `rotate`, `scale`, `pivot` | Transforms selected geometry (move/rotate/scale). 🔴 CRITICAL | ✅ Done |
+| `mesh_bridge_edge_loops` | `number_cuts`, `interpolation`, `smoothness`, `twist` | Bridges two edge loops with faces. | ✅ Done |
+| `mesh_duplicate_selected` | `translate` | Duplicates selected geometry within the same mesh. | ✅ Done |
+| `mesh_spin` | `steps`, `angle`, `axis`, `center`, `dupli` | Spins/lathes selected geometry around an axis. | ✅ Done |
+| `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. | ✅ Done |
+| `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. | ✅ Done |
+| `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
@@ -133,6 +150,16 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 〰️ Curve Tools (`curve_`)
+*Tools for creating and managing curve objects.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
+| `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
+
+---
+
 ## 🛠 Planned / In Progress
 
-### Mesh Editing (`mesh_`) - Phase 2 Continued
+*(All tasks completed!)*

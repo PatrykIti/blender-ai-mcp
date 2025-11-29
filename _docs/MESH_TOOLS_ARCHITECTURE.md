@@ -498,6 +498,499 @@ Use Case:
 
 ---
 
+# 23. mesh_randomize ✅ Done
+
+Randomizes vertex positions for organic surface variations.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- amount: float (maximum displacement, default 0.1)
+- uniform: float (uniform random factor 0-1, default 0.0)
+- normal: float (normal-based factor 0-1, default 0.0)
+- seed: int (random seed, 0 = random)
+
+Example:
+```json
+{
+  "tool": "mesh_randomize",
+  "args": {
+    "amount": 0.05,
+    "uniform": 0.5,
+    "normal": 0.0,
+    "seed": 42
+  }
+}
+```
+
+Use Case:
+- Creating organic terrain variations
+- Adding imperfections to mechanical surfaces
+- Generating natural-looking irregularities
+
+---
+
+# 24. mesh_shrink_fatten ✅ Done
+
+Moves vertices along their normals (inflate/deflate effect).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (distance along normals, + outward, - inward)
+
+Example:
+```json
+{
+  "tool": "mesh_shrink_fatten",
+  "args": {
+    "value": 0.1
+  }
+}
+```
+
+Use Case:
+- Inflating geometry for organic shapes
+- Creating shell/thickness effects
+- Sculpting surface details
+
+---
+
+# 25. mesh_create_vertex_group ✅ Done
+
+Creates a new vertex group on mesh object.
+
+**Tag:** `[MESH][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- name: str (name for new group)
+
+Example:
+```json
+{
+  "tool": "mesh_create_vertex_group",
+  "args": {
+    "object_name": "Cube",
+    "name": "TopVertices"
+  }
+}
+```
+
+Use Case:
+- Organizing vertices for armature weights
+- Preparing selection sets for modifiers
+- Grouping vertices for later operations
+
+---
+
+# 26. mesh_assign_to_group ✅ Done
+
+Assigns selected vertices to vertex group with weight.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- group_name: str (vertex group name)
+- weight: float (weight value 0.0-1.0, default 1.0)
+
+Example:
+```json
+{
+  "tool": "mesh_assign_to_group",
+  "args": {
+    "object_name": "Cube",
+    "group_name": "TopVertices",
+    "weight": 1.0
+  }
+}
+```
+
+Use Case:
+- Assigning bone weights for rigging
+- Setting up modifier influence areas
+- Creating soft selection masks
+
+---
+
+# 27. mesh_remove_from_group ✅ Done
+
+Removes selected vertices from vertex group.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
+
+Args:
+- object_name: str (target mesh object)
+- group_name: str (vertex group name)
+
+Example:
+```json
+{
+  "tool": "mesh_remove_from_group",
+  "args": {
+    "object_name": "Cube",
+    "group_name": "TopVertices"
+  }
+}
+```
+
+Use Case:
+- Refining vertex group assignments
+- Correcting weight painting mistakes
+- Adjusting modifier influence
+
+---
+
+# 28. mesh_bisect ✅ Done
+
+Cuts mesh along a plane defined by point and normal.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- plane_co: [x, y, z] (point on the cutting plane)
+- plane_no: [x, y, z] (normal direction of the plane)
+- clear_inner: bool (remove geometry on negative side, default false)
+- clear_outer: bool (remove geometry on positive side, default false)
+- fill: bool (fill the cut with a face, default false)
+
+Example:
+```json
+{
+  "tool": "mesh_bisect",
+  "args": {
+    "plane_co": [0, 0, 0],
+    "plane_no": [0, 0, 1],
+    "clear_outer": true,
+    "fill": true
+  }
+}
+```
+
+Use Case:
+- Cutting meshes in half
+- Creating cross-sections
+- Removing parts of geometry above/below a plane
+
+---
+
+# 29. mesh_edge_slide ✅ Done
+
+Slides selected edges along mesh topology.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (-1.0 to 1.0, slide amount)
+
+Example:
+```json
+{
+  "tool": "mesh_edge_slide",
+  "args": {
+    "value": 0.5
+  }
+}
+```
+
+Use Case:
+- Repositioning edge loops without changing topology
+- Fine-tuning mesh flow
+- Adjusting topology for better deformation
+
+---
+
+# 30. mesh_vert_slide ✅ Done
+
+Slides selected vertices along connected edges.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- value: float (-1.0 to 1.0, slide amount)
+
+Example:
+```json
+{
+  "tool": "mesh_vert_slide",
+  "args": {
+    "value": -0.3
+  }
+}
+```
+
+Use Case:
+- Repositioning vertices along edge paths
+- Precise vertex placement
+- Maintaining edge flow while adjusting position
+
+---
+
+# 31. mesh_triangulate ✅ Done
+
+Converts selected faces to triangles.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args: None (operates on selection)
+
+Example:
+```json
+{
+  "tool": "mesh_triangulate",
+  "args": {}
+}
+```
+
+Use Case:
+- Preparing mesh for game engine export
+- Ensuring consistent topology
+- Boolean cleanup
+
+---
+
+# 32. mesh_remesh_voxel ✅ Done
+
+Performs voxel remesh on the object.
+
+**Tag:** `[OBJECT MODE][DESTRUCTIVE]`
+
+Args:
+- voxel_size: float (size of voxels, default 0.1)
+- adaptivity: float (polygon reduction in flat areas, 0-1, default 0)
+
+Example:
+```json
+{
+  "tool": "mesh_remesh_voxel",
+  "args": {
+    "voxel_size": 0.05,
+    "adaptivity": 0.5
+  }
+}
+```
+
+Use Case:
+- Creating uniform topology after boolean operations
+- Preparing mesh for sculpting
+- Cleaning up complex geometry
+- NOTE: Destroys UVs, vertex groups, and existing topology!
+
+---
+
+# 33. mesh_transform_selected ✅ Done
+
+Transforms selected geometry (move/rotate/scale).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+**Priority:** 🔴 CRITICAL - Unlocks ~80% of modeling tasks
+
+Args:
+- translate: [x, y, z] (optional) - Translation vector
+- rotate: [x, y, z] (optional) - Rotation in radians per axis
+- scale: [x, y, z] (optional) - Scale factors
+- pivot: str ('MEDIAN_POINT', 'BOUNDING_BOX_CENTER', 'CURSOR', 'INDIVIDUAL_ORIGINS', 'ACTIVE_ELEMENT')
+
+Example:
+```json
+{
+  "tool": "mesh_transform_selected",
+  "args": {
+    "translate": [0, 0, 2],
+    "rotate": [0, 0, 1.5708],
+    "scale": [1, 1, 1],
+    "pivot": "MEDIAN_POINT"
+  }
+}
+```
+
+Use Case:
+- Repositioning geometry after selection
+- Rotating faces/edges/vertices
+- Scaling selected elements
+- Combined transformations in single call
+
+---
+
+# 34. mesh_bridge_edge_loops ✅ Done
+
+Bridges two edge loops with faces.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- number_cuts: int (default 0) - Number of intermediate cuts
+- interpolation: str ('LINEAR', 'PATH', 'SURFACE') - Bridge interpolation type
+- smoothness: float (0.0-1.0) - Smoothness factor
+- twist: int (default 0) - Twist offset
+
+Example:
+```json
+{
+  "tool": "mesh_bridge_edge_loops",
+  "args": {
+    "number_cuts": 4,
+    "interpolation": "SURFACE",
+    "smoothness": 1.0
+  }
+}
+```
+
+Use Case:
+- Connecting two separate edge loops
+- Creating connecting geometry between holes
+- Building tube-like structures
+
+---
+
+# 35. mesh_duplicate_selected ✅ Done
+
+Duplicates selected geometry within the same mesh.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- translate: [x, y, z] (optional) - Offset for duplicated geometry
+
+Example:
+```json
+{
+  "tool": "mesh_duplicate_selected",
+  "args": {
+    "translate": [2, 0, 0]
+  }
+}
+```
+
+Use Case:
+- Creating copies of geometry within mesh
+- Building repetitive structures
+- Duplicating and offsetting for patterns
+
+---
+
+# 36. mesh_spin ✅ Done
+
+Spins/lathes selected geometry around an axis.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- steps: int (default 12) - Number of steps/segments
+- angle: float (default 6.283185 = 360°) - Total angle in radians
+- axis: str ('X', 'Y', 'Z') - Axis to spin around
+- center: [x, y, z] (optional) - Center point (default: 3D cursor)
+- dupli: bool (default False) - Duplicate instead of extrude
+
+Example:
+```json
+{
+  "tool": "mesh_spin",
+  "args": {
+    "steps": 32,
+    "angle": 6.283185,
+    "axis": "Z",
+    "center": [0, 0, 0]
+  }
+}
+```
+
+Use Case:
+- Creating vases, bowls, glasses (lathe)
+- Circular patterns
+- Rotational geometry
+
+---
+
+# 37. mesh_screw ✅ Done
+
+Creates spiral/screw/helical geometry.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- steps: int (default 12) - Steps per turn
+- turns: int (default 1) - Number of complete rotations
+- axis: str ('X', 'Y', 'Z') - Axis to screw around
+- center: [x, y, z] (optional) - Center point (default: 3D cursor)
+- offset: float (default 0.0) - Distance per turn (pitch)
+
+Example:
+```json
+{
+  "tool": "mesh_screw",
+  "args": {
+    "steps": 32,
+    "turns": 3,
+    "axis": "Z",
+    "offset": 0.5
+  }
+}
+```
+
+Use Case:
+- Creating springs
+- Threads/screws
+- Spiral staircases
+- Helical patterns
+
+---
+
+# 38. mesh_add_vertex ✅ Done
+
+Adds a single vertex at the specified position.
+
+**Tag:** `[EDIT MODE][DESTRUCTIVE]`
+
+Args:
+- position: [x, y, z] - Coordinates for new vertex
+
+Example:
+```json
+{
+  "tool": "mesh_add_vertex",
+  "args": {
+    "position": [1, 2, 3]
+  }
+}
+```
+
+Use Case:
+- Building geometry from scratch
+- Adding connection points
+- Creating guide vertices
+
+---
+
+# 39. mesh_add_edge_face ✅ Done
+
+Creates an edge or face from selected vertices.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args: None (operates on selection)
+
+Behavior:
+- 2 vertices selected → creates edge
+- 3+ vertices selected → creates face
+
+Example:
+```json
+{
+  "tool": "mesh_add_edge_face",
+  "args": {}
+}
+```
+
+Use Case:
+- Connecting vertices with edges
+- Filling gaps with faces
+- Manual geometry construction
+- Equivalent to pressing 'F' key in Blender
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

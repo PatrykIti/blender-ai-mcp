@@ -152,3 +152,193 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-016-1: Mesh Randomize Tool
+    def randomize(self, amount: float = 0.1, uniform: float = 0.0, normal: float = 0.0, seed: int = 0) -> str:
+        args = {"amount": amount, "uniform": uniform, "normal": normal, "seed": seed}
+        response = self.rpc.send_request("mesh.randomize", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-016-2: Mesh Shrink/Fatten Tool
+    def shrink_fatten(self, value: float) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.shrink_fatten", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-017-1: Mesh Create Vertex Group Tool
+    def create_vertex_group(self, object_name: str, name: str) -> str:
+        args = {"object_name": object_name, "name": name}
+        response = self.rpc.send_request("mesh.create_vertex_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-017-2: Mesh Assign/Remove Vertex Group Tools
+    def assign_to_group(self, object_name: str, group_name: str, weight: float = 1.0) -> str:
+        args = {"object_name": object_name, "group_name": group_name, "weight": weight}
+        response = self.rpc.send_request("mesh.assign_to_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def remove_from_group(self, object_name: str, group_name: str) -> str:
+        args = {"object_name": object_name, "group_name": group_name}
+        response = self.rpc.send_request("mesh.remove_from_group", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-1: Mesh Bisect Tool
+    def bisect(self, plane_co: list, plane_no: list, clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+        args = {
+            "plane_co": plane_co,
+            "plane_no": plane_no,
+            "clear_inner": clear_inner,
+            "clear_outer": clear_outer,
+            "fill": fill
+        }
+        response = self.rpc.send_request("mesh.bisect", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-2: Mesh Edge/Vertex Slide Tools
+    def edge_slide(self, value: float = 0.0) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.edge_slide", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def vert_slide(self, value: float = 0.0) -> str:
+        args = {"value": value}
+        response = self.rpc.send_request("mesh.vert_slide", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-3: Mesh Triangulate Tool
+    def triangulate(self) -> str:
+        response = self.rpc.send_request("mesh.triangulate")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-018-4: Mesh Remesh Voxel Tool
+    def remesh_voxel(self, voxel_size: float = 0.1, adaptivity: float = 0.0) -> str:
+        args = {"voxel_size": voxel_size, "adaptivity": adaptivity}
+        response = self.rpc.send_request("mesh.remesh_voxel", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-019-1: Mesh Transform Selected Tool
+    def transform_selected(
+        self,
+        translate: list = None,
+        rotate: list = None,
+        scale: list = None,
+        pivot: str = 'MEDIAN_POINT'
+    ) -> str:
+        args = {"pivot": pivot}
+        if translate:
+            args["translate"] = translate
+        if rotate:
+            args["rotate"] = rotate
+        if scale:
+            args["scale"] = scale
+        response = self.rpc.send_request("mesh.transform_selected", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-019-2: Mesh Bridge Edge Loops Tool
+    def bridge_edge_loops(
+        self,
+        number_cuts: int = 0,
+        interpolation: str = 'LINEAR',
+        smoothness: float = 0.0,
+        twist: int = 0
+    ) -> str:
+        args = {
+            "number_cuts": number_cuts,
+            "interpolation": interpolation,
+            "smoothness": smoothness,
+            "twist": twist
+        }
+        response = self.rpc.send_request("mesh.bridge_edge_loops", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-019-3: Mesh Duplicate Selected Tool
+    def duplicate_selected(self, translate: list = None) -> str:
+        args = {}
+        if translate:
+            args["translate"] = translate
+        response = self.rpc.send_request("mesh.duplicate_selected", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-3: Mesh Spin Tool
+    def spin(
+        self,
+        steps: int = 12,
+        angle: float = 6.283185,
+        axis: str = 'Z',
+        center: list = None,
+        dupli: bool = False
+    ) -> str:
+        args = {
+            "steps": steps,
+            "angle": angle,
+            "axis": axis,
+            "dupli": dupli
+        }
+        if center:
+            args["center"] = center
+        response = self.rpc.send_request("mesh.spin", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-4: Mesh Screw Tool
+    def screw(
+        self,
+        steps: int = 12,
+        turns: int = 1,
+        axis: str = 'Z',
+        center: list = None,
+        offset: float = 0.0
+    ) -> str:
+        args = {
+            "steps": steps,
+            "turns": turns,
+            "axis": axis,
+            "offset": offset
+        }
+        if center:
+            args["center"] = center
+        response = self.rpc.send_request("mesh.screw", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-021-5: Mesh Add Geometry Tools
+    def add_vertex(self, position: list) -> str:
+        args = {"position": position}
+        response = self.rpc.send_request("mesh.add_vertex", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def add_edge_face(self) -> str:
+        response = self.rpc.send_request("mesh.add_edge_face")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

@@ -121,8 +121,33 @@ Low-level geometry manipulation.
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
+| `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
+| `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
+| `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |
+| `mesh_assign_to_group` | `object_name`, `group_name`, `weight` | Assigns selected vertices to vertex group. |
+| `mesh_remove_from_group` | `object_name`, `group_name` | Removes selected vertices from vertex group. |
+| `mesh_bisect` | `plane_co`, `plane_no`, `clear_inner`, `clear_outer`, `fill` | Cuts mesh along a plane. |
+| `mesh_edge_slide` | `value` | Slides selected edges along mesh topology. |
+| `mesh_vert_slide` | `value` | Slides selected vertices along connected edges. |
+| `mesh_triangulate` | *none* | Converts selected faces to triangles. |
+| `mesh_remesh_voxel` | `voxel_size`, `adaptivity` | Remeshes object using Voxel algorithm (Object Mode). |
+| `mesh_transform_selected` | `translate`, `rotate`, `scale`, `pivot` | Transforms selected geometry (move/rotate/scale). **CRITICAL** |
+| `mesh_bridge_edge_loops` | `number_cuts`, `interpolation`, `smoothness`, `twist` | Bridges two edge loops with faces. |
+| `mesh_duplicate_selected` | `translate` | Duplicates selected geometry within the same mesh. |
+| `mesh_spin` | `steps`, `angle`, `axis`, `center`, `dupli` | Spins/lathes selected geometry around an axis. |
+| `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. |
+| `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. |
+| `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices (F key). |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
+
+### Curve Tools
+Curve creation and conversion.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
+| `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
 
 ## 🛠 Key Components
 

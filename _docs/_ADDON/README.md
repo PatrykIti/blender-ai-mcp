@@ -154,5 +154,30 @@ Technical details.
 | `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
 | `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
 | `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
+| `randomize` | `randomize` | Randomizes vertex positions for organic surfaces. |
+| `shrink_fatten` | `shrink_fatten` | Moves vertices along their normals (inflate/deflate). |
+| `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |
+| `assign_to_group` | `assign_to_group` | Assigns selected vertices to vertex group with weight. |
+| `remove_from_group` | `remove_from_group` | Removes selected vertices from vertex group. |
+| `bisect` | `bisect` | Cuts mesh along a plane. |
+| `edge_slide` | `edge_slide` | Slides selected edges along mesh topology. |
+| `vert_slide` | `vert_slide` | Slides selected vertices along connected edges. |
+| `triangulate` | `triangulate` | Converts selected faces to triangles. |
+| `remesh_voxel` | `remesh_voxel` | Performs voxel remesh on object (Object Mode). |
+| `transform_selected` | `transform_selected` | Transforms selected geometry (move/rotate/scale). |
+| `bridge_edge_loops` | `bridge_edge_loops` | Bridges two edge loops with faces. |
+| `duplicate_selected` | `duplicate_selected` | Duplicates selected geometry. |
+| `spin` | `spin` | Spins/lathes selected geometry around axis. |
+| `screw` | `screw` | Creates spiral/screw geometry. |
+| `add_vertex` | `add_vertex` | Adds single vertex at position. |
+| `add_edge_face` | `add_edge_face` | Creates edge or face from selected vertices. |
+
+
+### Curve (`application/handlers/curve.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
+| `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
 
 

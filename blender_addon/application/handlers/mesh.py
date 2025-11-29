@@ -705,16 +705,16 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Validate mode
         mode = mode.upper()
         if mode not in ['EDGE', 'VERT']:
             if previous_mode != 'EDIT':
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid mode '{mode}'. Must be EDGE or VERT")
-        
+
         # Deselect all first
         for v in bm.verts:
             v.select = False
@@ -722,9 +722,9 @@ class MeshHandler:
             e.select = False
         for f in bm.faces:
             f.select = False
-        
+
         selected_count = 0
-        
+
         if mode == 'EDGE':
             # Select boundary edges (edges with only 1 adjacent face)
             for edge in bm.edges:
@@ -733,18 +733,627 @@ class MeshHandler:
                     edge.verts[0].select = True
                     edge.verts[1].select = True
                     selected_count += 1
-        
+
         elif mode == 'VERT':
             # Select boundary vertices
             for vert in bm.verts:
                 if vert.is_boundary:
                     vert.select = True
                     selected_count += 1
-        
+
         bmesh.update_edit_mesh(obj.data)
-        
+
         # Restore previous mode
         if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected {selected_count} boundary {mode.lower()}(s)"
+
+    # ==========================================================================
+    # TASK-016: Organic & Deform Tools
+    # ==========================================================================
+
+    def randomize(self, amount=0.1, uniform=0.0, normal=0.0, seed=0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Randomizes vertex positions.
+        Uses bpy.ops.transform.vertex_random for displacement.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+
+        # bpy.ops.transform.vertex_random parameters:
+        # offset: maximum displacement
+        # uniform: uniform random factor (0-1)
+        # normal: normal-based factor (0-1)
+        # seed: random seed
+        bpy.ops.transform.vertex_random(
+            offset=amount,
+            uniform=uniform,
+            normal=normal,
+            seed=seed
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Randomized {selected_count} vertices (amount={amount}, uniform={uniform}, normal={normal}, seed={seed})"
+
+    def shrink_fatten(self, value):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Moves vertices along their normals.
+        Positive values = fatten (outward), negative values = shrink (inward).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected")
+
+        # bpy.ops.transform.shrink_fatten moves selection along normals
+        bpy.ops.transform.shrink_fatten(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        direction = "fattened" if value > 0 else "shrunk"
+        return f"Shrink/Fatten: {direction} {selected_count} vertices by {abs(value)}"
+
+    # ==========================================================================
+    # TASK-017: Vertex Group Tools
+    # ==========================================================================
+
+    def create_vertex_group(self, object_name, name):
+        """
+        [MESH][SAFE] Creates a new vertex group on the specified mesh object.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        # Check if group already exists
+        if name in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{name}' already exists on '{object_name}'")
+
+        # Create new vertex group
+        vg = obj.vertex_groups.new(name=name)
+
+        return f"Created vertex group '{vg.name}' on '{object_name}' (index: {vg.index})"
+
+    def assign_to_group(self, object_name, group_name, weight=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Assigns selected vertices to a vertex group.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        if group_name not in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{group_name}' not found on '{object_name}'")
+
+        # Validate weight
+        weight = max(0.0, min(1.0, weight))
+
+        # Ensure we're in EDIT mode and object is active
+        bpy.context.view_layer.objects.active = obj
+        prev_mode = obj.mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_indices = [v.index for v in bm.verts if v.select]
+
+        if not selected_indices:
+            if prev_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            raise ValueError("No vertices selected")
+
+        # Set active vertex group
+        obj.vertex_groups.active = obj.vertex_groups[group_name]
+
+        # Use operator to assign (works in edit mode)
+        bpy.ops.object.vertex_group_assign()
+
+        # If we need to set specific weight, we need to go through the vertices
+        # The operator assigns with weight based on weight paint tools
+        # For specific weight, we use the vertex group API directly
+        if weight != 1.0:
+            # Need to briefly switch to object mode to modify weights
+            bpy.ops.object.mode_set(mode='OBJECT')
+            vg = obj.vertex_groups[group_name]
+            vg.add(selected_indices, weight, 'REPLACE')
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return f"Assigned {len(selected_indices)} vertices to '{group_name}' with weight {weight}"
+
+    def remove_from_group(self, object_name, group_name):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Removes selected vertices from a vertex group.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        if group_name not in obj.vertex_groups:
+            raise ValueError(f"Vertex group '{group_name}' not found on '{object_name}'")
+
+        # Ensure we're in EDIT mode and object is active
+        bpy.context.view_layer.objects.active = obj
+        prev_mode = obj.mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_indices = [v.index for v in bm.verts if v.select]
+
+        if not selected_indices:
+            if prev_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            raise ValueError("No vertices selected")
+
+        # Set active vertex group
+        obj.vertex_groups.active = obj.vertex_groups[group_name]
+
+        # Use operator to remove (works in edit mode)
+        bpy.ops.object.vertex_group_remove_from()
+
+        # Restore previous mode
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return f"Removed {len(selected_indices)} vertices from '{group_name}'"
+
+    # ==========================================================================
+    # TASK-018: Phase 2.5 - Advanced Precision Tools
+    # ==========================================================================
+
+    def bisect(self, plane_co, plane_no, clear_inner=False, clear_outer=False, fill=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Cuts mesh along a plane.
+        Uses bpy.ops.mesh.bisect.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select geometry to bisect.")
+
+        # Validate inputs
+        if len(plane_co) != 3:
+            raise ValueError(f"plane_co must be [x, y, z], got {plane_co}")
+        if len(plane_no) != 3:
+            raise ValueError(f"plane_no must be [x, y, z], got {plane_no}")
+
+        # Execute bisect
+        bpy.ops.mesh.bisect(
+            plane_co=tuple(plane_co),
+            plane_no=tuple(plane_no),
+            clear_inner=clear_inner,
+            clear_outer=clear_outer,
+            use_fill=fill
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        options = []
+        if clear_inner:
+            options.append("cleared inner")
+        if clear_outer:
+            options.append("cleared outer")
+        if fill:
+            options.append("filled")
+        options_str = f" ({', '.join(options)})" if options else ""
+
+        return f"Bisected mesh at plane_co={plane_co}, plane_no={plane_no}{options_str}"
+
+    def edge_slide(self, value=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected edges along topology.
+        Uses bpy.ops.transform.edge_slide.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to slide.")
+
+        # Clamp value to valid range
+        value = max(-1.0, min(1.0, value))
+
+        bpy.ops.transform.edge_slide(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Slid {selected_edges} edge(s) by {value}"
+
+    def vert_slide(self, value=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected vertices along connected edges.
+        Uses bpy.ops.transform.vert_slide.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected. Select vertices to slide.")
+
+        # Clamp value to valid range
+        value = max(-1.0, min(1.0, value))
+
+        bpy.ops.transform.vert_slide(value=value)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Slid {selected_verts} vertex/vertices by {value}"
+
+    def triangulate(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts selected faces to triangles.
+        Uses bpy.ops.mesh.quads_convert_to_tris.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_faces == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No faces selected. Select faces to triangulate.")
+
+        # Count non-triangular faces
+        non_tri_count = sum(1 for f in bm.faces if f.select and len(f.verts) > 3)
+
+        bpy.ops.mesh.quads_convert_to_tris()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Triangulated {selected_faces} face(s) ({non_tri_count} were non-triangular)"
+
+    def remesh_voxel(self, voxel_size=0.1, adaptivity=0.0):
+        """
+        [OBJECT MODE][DESTRUCTIVE] Remeshes object using Voxel algorithm.
+        Uses bpy.ops.object.voxel_remesh.
+        """
+        obj = bpy.context.active_object
+        if not obj or obj.type != 'MESH':
+            raise ValueError("Active object must be a Mesh.")
+
+        # Ensure we're in Object Mode for voxel remesh
+        prev_mode = obj.mode
+        if prev_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Store original face count for comparison
+        original_faces = len(obj.data.polygons)
+
+        # Set voxel remesh parameters on the mesh data
+        obj.data.remesh_voxel_size = voxel_size
+        obj.data.remesh_voxel_adaptivity = adaptivity
+
+        # Execute voxel remesh
+        bpy.ops.object.voxel_remesh()
+
+        # Get new face count
+        new_faces = len(obj.data.polygons)
+
+        # Restore previous mode if it was EDIT
+        if prev_mode == 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        return f"Voxel remesh complete (voxel_size={voxel_size}, adaptivity={adaptivity}). Faces: {original_faces} → {new_faces}"
+
+    # ==========================================================================
+    # TASK-019: Phase 2.4 - Core Transform & Geometry
+    # ==========================================================================
+
+    def transform_selected(self, translate=None, rotate=None, scale=None, pivot='MEDIAN_POINT'):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected geometry.
+        Uses bpy.ops.transform.* operators.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected")
+
+        # Set pivot point
+        original_pivot = bpy.context.scene.tool_settings.transform_pivot_point
+        bpy.context.scene.tool_settings.transform_pivot_point = pivot
+
+        operations = []
+
+        try:
+            # Apply translation
+            if translate:
+                bpy.ops.transform.translate(value=tuple(translate))
+                operations.append(f"translated by {translate}")
+
+            # Apply rotation (in radians)
+            if rotate:
+                # Rotate around each axis
+                if rotate[0] != 0:
+                    bpy.ops.transform.rotate(value=rotate[0], orient_axis='X')
+                if rotate[1] != 0:
+                    bpy.ops.transform.rotate(value=rotate[1], orient_axis='Y')
+                if rotate[2] != 0:
+                    bpy.ops.transform.rotate(value=rotate[2], orient_axis='Z')
+                operations.append(f"rotated by {rotate} rad")
+
+            # Apply scale
+            if scale:
+                bpy.ops.transform.resize(value=tuple(scale))
+                operations.append(f"scaled by {scale}")
+
+        finally:
+            # Restore original pivot point
+            bpy.context.scene.tool_settings.transform_pivot_point = original_pivot
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        if not operations:
+            return "No transformation applied (all parameters were None)"
+
+        return f"Transformed {selected_count} vertices: {', '.join(operations)} (pivot: {pivot})"
+
+    def bridge_edge_loops(self, number_cuts=0, interpolation='LINEAR', smoothness=0.0, twist=0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bridges two edge loops with faces.
+        Uses bpy.ops.mesh.bridge_edge_loops.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges < 2:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("Select at least two edge loops to bridge")
+
+        # Execute bridge
+        bpy.ops.mesh.bridge_edge_loops(
+            type=interpolation,
+            number_cuts=number_cuts,
+            smoothness=smoothness,
+            twist_offset=twist
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Bridged edge loops (cuts={number_cuts}, interpolation={interpolation}, smoothness={smoothness}, twist={twist})"
+
+    def duplicate_selected(self, translate=None):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Duplicates selected geometry.
+        Uses bpy.ops.mesh.duplicate_move.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected")
+
+        # Duplicate with optional translation
+        if translate:
+            bpy.ops.mesh.duplicate_move(
+                MESH_OT_duplicate={},
+                TRANSFORM_OT_translate={"value": tuple(translate)}
+            )
+        else:
+            bpy.ops.mesh.duplicate()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        move_str = f", moved by {translate}" if translate else " (in-place)"
+        return f"Duplicated {selected_verts} vertices, {selected_edges} edges, {selected_faces} faces{move_str}"
+
+    # ==========================================================================
+    # TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
+    # ==========================================================================
+
+    def spin(self, steps=12, angle=6.283185, axis='Z', center=None, dupli=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/lathes selected geometry.
+        Uses bpy.ops.mesh.spin.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select a profile to spin.")
+
+        # Determine axis vector
+        axis_map = {
+            'X': (1, 0, 0),
+            'Y': (0, 1, 0),
+            'Z': (0, 0, 1)
+        }
+        axis_upper = axis.upper()
+        if axis_upper not in axis_map:
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+
+        axis_vector = axis_map[axis_upper]
+
+        # Center defaults to 3D cursor if not provided
+        if center is None:
+            center = list(bpy.context.scene.cursor.location)
+
+        # Execute spin
+        bpy.ops.mesh.spin(
+            steps=steps,
+            angle=angle,
+            center=tuple(center),
+            axis=axis_vector,
+            dupli=dupli
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        degrees = round(angle * 180 / 3.14159, 1)
+        dupli_str = " (duplicate mode)" if dupli else ""
+        return f"Spin complete: {steps} steps, {degrees}° around {axis} at center {center}{dupli_str}"
+
+    def screw(self, steps=12, turns=1, axis='Z', center=None, offset=0.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates spiral/screw geometry.
+        Uses bpy.ops.mesh.screw.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for v in bm.verts if v.select)
+
+        if selected_count == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select a profile to screw.")
+
+        # Determine axis vector
+        axis_map = {
+            'X': (1, 0, 0),
+            'Y': (0, 1, 0),
+            'Z': (0, 0, 1)
+        }
+        axis_upper = axis.upper()
+        if axis_upper not in axis_map:
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+
+        axis_vector = axis_map[axis_upper]
+
+        # Center defaults to 3D cursor if not provided
+        if center is None:
+            center = list(bpy.context.scene.cursor.location)
+
+        # Execute screw
+        bpy.ops.mesh.screw(
+            steps=steps,
+            turns=turns,
+            center=tuple(center),
+            axis=axis_vector,
+            screw_offset=offset
+        )
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Screw complete: {steps} steps, {turns} turn(s), offset={offset} around {axis} at center {center}"
+
+    def add_vertex(self, position):
+        """
+        [EDIT MODE][DESTRUCTIVE] Adds a single vertex at the specified position.
+        Uses BMesh API.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        if len(position) != 3:
+            raise ValueError(f"position must be [x, y, z], got {position}")
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+
+        # Create new vertex
+        new_vert = bm.verts.new(position)
+        new_vert.select = True
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Added vertex at {position} (index: {new_vert.index})"
+
+    def add_edge_face(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates edge or face from selected vertices.
+        Uses bpy.ops.mesh.edge_face_add (same as 'F' key).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts < 2:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("Select at least 2 vertices to create edge/face")
+
+        # Execute edge/face add
+        bpy.ops.mesh.edge_face_add()
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        if selected_verts == 2:
+            return f"Created edge from {selected_verts} vertices"
+        else:
+            return f"Created face from {selected_verts} vertices"

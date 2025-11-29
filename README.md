@@ -40,107 +40,229 @@ Most AI solutions for Blender rely on asking the LLM to "write a Python script".
 
 ## 🗺️ Roadmap & Capabilities
 
-> **Legend:** ✅ Completed | 🚧 In Progress
-> **Progress:** ████████████░░░░░░░░ ~40% (Phase 1 ✅, Phase 2 🚧, Phase 3-6 🚧, Phase 7 ✅)
+> **Legend:** ✅ Done | 🚧 To Do
 
 Our goal is to enable AI to model complex 3D assets—from organs and biological structures to hard-surface precision parts (cars, devices).
 
-#### ✅ Phase 1: Object & Scene Management (Completed)
-Basic composition and scene understanding.
-- [x] **Scene**: List, Delete, Duplicate, Set Active, Clean Scene.
-- [x] **Vision**: `get_viewport` (AI sees the scene).
-- [x] **Construction**: Create Lights, Cameras, Empties.
-- [x] **Object Ops**: Create Primitives, Transform (Move/Rotate/Scale), Set Origin.
-- [x] **Modifiers**: Add Modifier, Apply Modifier, List Modifiers.
-- [x] **Structure**: Join Objects, Separate Objects, Convert to Mesh.
+---
 
-#### 🚧 Phase 2: Mesh Editing (Edit Mode)
-Critical for shaping geometry. AI needs these to actually "model" details, not just move cubes around.
+### Scene Tools (`scene_*`)
 
-**2.0 Core Edit Mode** ✅
-- [x] `mesh_select_all`, `mesh_delete_selected`, `mesh_select_by_index`
-- [x] `mesh_extrude_region`, `mesh_fill_holes`
-- [x] `mesh_loop_cut`, `mesh_bevel`, `mesh_inset`
-- [x] `mesh_boolean`, `mesh_merge_by_distance`, `mesh_subdivide`
-- [x] `mesh_smooth`, `mesh_flatten`
+Object Mode operations for scene management and inspection.
 
-**2.1 Advanced Selection** ✅
-- [x] `mesh_get_vertex_data`, `mesh_select_by_location`, `mesh_select_boundary` 🔴 CRITICAL
-- [x] `mesh_select_linked`, `mesh_select_loop`, `mesh_select_ring`
-- [x] `mesh_select_more`, `mesh_select_less`
+| Tool | Description | Status |
+|------|-------------|--------|
+| `scene_list_objects` | List all objects in scene | ✅ |
+| `scene_delete_object` | Delete object by name | ✅ |
+| `scene_clean_scene` | Remove all objects | ✅ |
+| `scene_duplicate_object` | Duplicate object | ✅ |
+| `scene_set_active_object` | Set active object | ✅ |
+| `scene_get_viewport` | Capture viewport image (AI vision) | ✅ |
+| `scene_get_mode` | Report current Blender mode | ✅ |
+| `scene_list_selection` | List selected objects/components | ✅ |
+| `scene_inspect_object` | Detailed object info | ✅ |
+| `scene_snapshot_state` | Capture scene snapshot | ✅ |
+| `scene_compare_snapshot` | Compare two snapshots | ✅ |
+| `scene_inspect_material_slots` | Material slot assignments | ✅ |
+| `scene_inspect_mesh_topology` | Topology stats | ✅ |
+| `scene_inspect_modifiers` | Modifier stack info | ✅ |
 
-**2.2 Organic & Deform**
-- [ ] `mesh_randomize`, `mesh_shrink_fatten`
+---
 
-**2.3 Vertex Groups**
-- [ ] `mesh_create_vertex_group`, `mesh_assign_to_group`
+### Modeling Tools (`modeling_*`)
 
-**2.4 Core Transform & Geometry** 🔴 HIGH PRIORITY
-- [ ] `mesh_transform_selected` **CRITICAL - unlocks 80% of modeling tasks**
-- [ ] `mesh_bridge_edge_loops`, `mesh_duplicate_selected`
+Object Mode operations for creating and transforming objects.
 
-**2.5 Advanced Precision**
-- [ ] `mesh_knife`, `mesh_bisect`, `mesh_edge_slide`, `mesh_vertex_slide`
-- [ ] `mesh_triangulate`, `mesh_remesh_voxel`
+| Tool | Description | Status |
+|------|-------------|--------|
+| `modeling_create_primitive` | Create cube, sphere, cylinder, etc. | ✅ |
+| `modeling_transform_object` | Move, rotate, scale objects | ✅ |
+| `modeling_add_modifier` | Add modifier to object | ✅ |
+| `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
+| `modeling_list_modifiers` | List modifiers on object | ✅ |
+| `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
+| `modeling_join_objects` | Join multiple objects | ✅ |
+| `modeling_separate_object` | Separate by loose parts/material | ✅ |
+| `modeling_set_origin` | Set object origin point | ✅ |
 
-**2.6 Curves & Procedural**
-- [ ] `curve_create`, `curve_to_mesh`
-- [ ] `mesh_spin`, `mesh_screw`
-- [ ] `mesh_add_vertex`, `mesh_add_edge`, `mesh_add_face`
+---
 
-#### 🚧 Phase 3: Materials & Organization
-- [ ] `material_create`: Setup PBR materials.
-- [ ] `material_assign`: Assign to objects/faces.
-- [ ] `material_set_params`: Adjust roughness, metallic, emission, alpha.
-- [ ] `material_set_texture`: Bind image textures to materials.
-- [ ] `uv_unwrap`: Smart UV Project / Cube Projection.
-- [ ] `uv_pack_islands`: Pack islands for efficient texture space usage.
-- [ ] `collection_manage`: Organize hierarchy.
-- [ ] `export`: Save to GLB/FBX/OBJ.
+### Mesh Tools (`mesh_*`)
 
-#### 🚧 Phase 4: Macro Tools (The "Magic" Layer)
+Edit Mode operations for geometry manipulation.
+
+#### Selection
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_select_all` | Select/deselect all geometry | ✅ |
+| `mesh_select_by_index` | Select by vertex/edge/face index | ✅ |
+| `mesh_select_linked` | Select connected geometry | ✅ |
+| `mesh_select_more` | Grow selection | ✅ |
+| `mesh_select_less` | Shrink selection | ✅ |
+| `mesh_select_boundary` | Select boundary edges | ✅ |
+| `mesh_select_loop` | Select edge loop | ✅ |
+| `mesh_select_ring` | Select edge ring | ✅ |
+| `mesh_select_by_location` | Select by 3D position | ✅ |
+| `mesh_get_vertex_data` | Get vertex positions | ✅ |
+
+#### Core Operations
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_extrude_region` | Extrude selected faces | ✅ |
+| `mesh_delete_selected` | Delete selected geometry | ✅ |
+| `mesh_fill_holes` | Fill holes with faces | ✅ |
+| `mesh_bevel` | Bevel edges/vertices | ✅ |
+| `mesh_loop_cut` | Add loop cuts | ✅ |
+| `mesh_inset` | Inset faces | ✅ |
+| `mesh_boolean` | Boolean operations | ✅ |
+| `mesh_merge_by_distance` | Merge nearby vertices | ✅ |
+| `mesh_subdivide` | Subdivide geometry | ✅ |
+
+#### Transform & Geometry
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_transform_selected` | Move/rotate/scale selected geometry | ✅ |
+| `mesh_bridge_edge_loops` | Bridge two edge loops | ✅ |
+| `mesh_duplicate_selected` | Duplicate selected geometry | ✅ |
+
+#### Deformation
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_smooth` | Smooth vertices | ✅ |
+| `mesh_flatten` | Flatten to plane | ✅ |
+| `mesh_randomize` | Randomize vertex positions | ✅ |
+| `mesh_shrink_fatten` | Move along normals | ✅ |
+
+#### Precision Tools
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_bisect` | Cut mesh with plane | ✅ |
+| `mesh_edge_slide` | Slide edges along topology | ✅ |
+| `mesh_vert_slide` | Slide vertices along edges | ✅ |
+| `mesh_triangulate` | Convert to triangles | ✅ |
+| `mesh_remesh_voxel` | Voxel remesh | ✅ |
+
+#### Procedural
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_spin` | Spin/lathe geometry around axis | ✅ |
+| `mesh_screw` | Create spiral/helix geometry | ✅ |
+| `mesh_add_vertex` | Add single vertex | ✅ |
+| `mesh_add_edge_face` | Create edge/face from selection | ✅ |
+
+#### Vertex Groups
+| Tool | Description | Status |
+|------|-------------|--------|
+| `mesh_list_groups` | List vertex groups | ✅ |
+| `mesh_create_vertex_group` | Create new vertex group | ✅ |
+| `mesh_assign_to_group` | Assign vertices to group | ✅ |
+| `mesh_remove_from_group` | Remove vertices from group | ✅ |
+
+---
+
+### Curve Tools (`curve_*`)
+
+Curve creation and conversion.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `curve_create` | Create Bezier/NURBS/Path/Circle curve | ✅ |
+| `curve_to_mesh` | Convert curve to mesh | ✅ |
+
+---
+
+### Collection Tools (`collection_*`)
+
+Collection management and hierarchy.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `collection_list` | List all collections | ✅ |
+| `collection_list_objects` | List objects in collection | ✅ |
+| `collection_manage` | Create/delete/move collections | 🚧 |
+
+---
+
+### Material Tools (`material_*`)
+
+Material creation and assignment.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `material_list` | List all materials | ✅ |
+| `material_list_by_object` | List materials on object | ✅ |
+| `material_create` | Setup PBR materials | 🚧 |
+| `material_assign` | Assign to objects/faces | 🚧 |
+| `material_set_params` | Adjust roughness, metallic, etc. | 🚧 |
+| `material_set_texture` | Bind image textures | 🚧 |
+
+---
+
+### UV Tools (`uv_*`)
+
+UV mapping operations.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `uv_list_maps` | List UV maps on object | ✅ |
+| `uv_unwrap` | Smart UV Project / Cube Projection | 🚧 |
+| `uv_pack_islands` | Pack UV islands | 🚧 |
+
+---
+
+### System Tools (`system_*`)
+
+Global project-level operations.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `system_set_mode` | High-level mode switching | 🚧 |
+| `system_undo` | Safe undo for AI | 🚧 |
+| `system_redo` | Safe redo for AI | 🚧 |
+| `system_save_file` | Save .blend file | 🚧 |
+| `system_new_file` | Create new file | 🚧 |
+| `system_snapshot` | Quick save/restore checkpoints | 🚧 |
+
+---
+
+### Export Tools (`export_*`)
+
+File export operations.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `export_glb` | Export to GLB format | 🚧 |
+| `export_fbx` | Export to FBX format | 🚧 |
+| `export_obj` | Export to OBJ format | 🚧 |
+
+---
+
+### Macro Tools (`macro_*`)
+
 High-level abstractions where one command executes hundreds of Blender operations.
-- [ ] `macro_organify`: Converts blockouts to organic shapes (hearts, lungs).
-- [ ] `macro_create_phone_base`: Generates smartphone chassis with accurate topology.
-- [ ] `macro_human_blockout`: Generates proportional human base meshes.
-- [ ] `macro_retopologize`: Automates low-poly conversion.
-- [ ] `macro_panel_cut`: Hard-surface panel cutting for devices and robots.
-- [ ] `macro_lowpoly_convert`: Global polycount reduction while preserving silhouette.
-- [ ] `macro_cleanup_all`: Scene-wide cleanup (remove doubles, recalc normals, fix manifold).
 
-#### 🚧 Phase 5: Sculpting & Voxel Tools
-Organic shaping and high-level sculpt workflows.
-- [ ] `mesh_remesh_voxel`: Voxel remesh for uniform density.
-- [ ] `mesh_sculpt_auto`: High-level sculpt macro (smooth / grab / inflate / draw regions).
-- [ ] Future `sculpt_brush_*` tools for direct brush control (smooth, grab, crease, etc.).
+| Tool | Description | Status |
+|------|-------------|--------|
+| `macro_organify` | Convert blockouts to organic shapes | 🚧 |
+| `macro_create_phone_base` | Generate smartphone chassis | 🚧 |
+| `macro_human_blockout` | Generate proportional human mesh | 🚧 |
+| `macro_retopologize` | Automate low-poly conversion | 🚧 |
+| `macro_panel_cut` | Hard-surface panel cutting | 🚧 |
+| `macro_lowpoly_convert` | Reduce polycount preserving silhouette | 🚧 |
+| `macro_cleanup_all` | Scene-wide mesh cleanup | 🚧 |
 
-#### 🚧 Phase 6: System & Session Management
-Global project-level operations and undo-safe workflows.
-- [ ] `system_set_mode`: High-level alias over scene/mode tools.
-- [ ] `system_undo` / `system_redo`: Safe history navigation for AI.
-- [ ] `system_save_file` / `system_new_file`: File-level save and reset.
-- [ ] `system_snapshot`: Optional quick save/restore checkpoints for complex modeling sessions.
+---
 
-#### ✅ Phase 7: Introspection & Listing APIs (Completed)
-Read-only inspection tools giving AI a structured view of scene, assets, and geometry.
-- **Scene & System:**
-  - [x] `scene_get_mode`: Report current Blender mode for context-aware ops.
-  - [x] `scene_list_selection`: List currently selected objects/components.
-  - [x] `scene_inspect_object`: Detailed info about a single object (type, modifiers, materials, polycount).
-  - [x] `scene_snapshot_state`: Capture structured snapshot of scene state.
-  - [x] `scene_compare_snapshot`: Compare two snapshots to summarize changes.
-- **Collections:**
-  - [x] `collection_list`: List all collections and their hierarchy.
-  - [x] `collection_list_objects`: List objects inside a given collection.
-- **Materials:**
-  - [x] `material_list`: List all materials with key parameters.
-  - [x] `material_list_by_object`: Materials and slots used by a specific object.
-  - [x] `scene_inspect_material_slots`: Detailed slot/material assignments per object.
-- **UV & Geometry:**
-  - [x] `uv_list_maps`: List UV maps for an object.
-  - [x] `mesh_list_groups`: List vertex/face groups or selection sets (if modeled).
-  - [x] `scene_inspect_mesh_topology`: Provide topology stats (verts/edges/faces, non-manifold data).
-  - [x] `scene_inspect_modifiers`: Enumerate modifiers with statuses/settings.
+### Sculpting Tools (`sculpt_*`)
+
+Organic shaping and sculpt workflows.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `sculpt_auto` | High-level sculpt macro | 🚧 |
+| `sculpt_brush_smooth` | Smooth brush | 🚧 |
+| `sculpt_brush_grab` | Grab brush | 🚧 |
+| `sculpt_brush_crease` | Crease brush | 🚧 |
 
 ---
 
@@ -148,15 +270,22 @@ Read-only inspection tools giving AI a structured view of scene, assets, and geo
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
 
-| Mega Tool | Replaces | Savings | Status |
-|-----------|----------|---------|--------|
-| `scene_context` | mode, selection | -1 | ✅ Done |
-| `scene_create` | light, camera, empty | -2 | ✅ Done |
-| `scene_inspect` | object, topology, modifiers, materials | -3 | ✅ Done |
-| `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ Done |
-| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ Done |
+### Scene Mega Tools
 
-**Implemented:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+| Mega Tool | Actions | Savings | Status |
+|-----------|---------|---------|--------|
+| `scene_context` | mode, selection | -1 | ✅ |
+| `scene_create` | light, camera, empty | -2 | ✅ |
+| `scene_inspect` | object, topology, modifiers, materials | -3 | ✅ |
+
+### Mesh Mega Tools
+
+| Mega Tool | Actions | Savings | Status |
+|-----------|---------|---------|--------|
+| `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
+| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
+
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 
 ---
 
@@ -229,7 +358,26 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data"
+        "mesh_get_vertex_data",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel",
+        "mesh_transform_selected",
+        "mesh_bridge_edge_loops",
+        "mesh_duplicate_selected",
+        "mesh_spin",
+        "mesh_screw",
+        "mesh_add_vertex",
+        "mesh_add_edge_face",
+        "curve_create",
+        "curve_to_mesh"
       ]
     }
   }
@@ -292,7 +440,26 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data"
+        "mesh_get_vertex_data",
+        "mesh_randomize",
+        "mesh_shrink_fatten",
+        "mesh_create_vertex_group",
+        "mesh_assign_to_group",
+        "mesh_remove_from_group",
+        "mesh_bisect",
+        "mesh_edge_slide",
+        "mesh_vert_slide",
+        "mesh_triangulate",
+        "mesh_remesh_voxel",
+        "mesh_transform_selected",
+        "mesh_bridge_edge_loops",
+        "mesh_duplicate_selected",
+        "mesh_spin",
+        "mesh_screw",
+        "mesh_add_vertex",
+        "mesh_add_edge_face",
+        "curve_create",
+        "curve_to_mesh"
       ]
     }
   }

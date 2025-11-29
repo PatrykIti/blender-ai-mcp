@@ -3,15 +3,11 @@ Tests for UV Tools (TASK-014-11)
 """
 import pytest
 from server.application.tool_handlers.uv_handler import UVToolHandler
-from server.adapters.rpc.client import RpcClient
-from server.infrastructure.config import get_config
 
 
 @pytest.fixture
-def uv_handler():
-    """Provides a UV handler instance."""
-    config = get_config()
-    rpc_client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+def uv_handler(rpc_client):
+    """Provides a UV handler instance using shared RPC client."""
     return UVToolHandler(rpc_client)
 
 

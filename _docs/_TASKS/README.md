@@ -3,39 +3,65 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 8
-- **In Progress:** 0
-- **Done:** 44
+- **To Do:** 21
+- **In Progress:** 1
+- **Done:** 60
 
 ---
 
 ## 🚨 To Do
 
-### Phase 2.2: Organic & Deform
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-016-1](./TASK-016_017_Organic_and_Groups.md#task-016-1-mesh-randomize-tool) | **Mesh Randomize Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-27 |
+### Collection Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-022-1](./TASK-022_Collection_Tools.md#task-022-1-collection_manage) | **collection_manage** (create, delete, rename, move) | 🟡 Medium |
 
-### Phase 2.3: Vertex Groups
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-27 |
+### Material Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-023-1](./TASK-023_Material_Tools.md#task-023-1-material_create) | **material_create** | 🟠 High |
+| [TASK-023-2](./TASK-023_Material_Tools.md#task-023-2-material_assign) | **material_assign** | 🟠 High |
+| [TASK-023-3](./TASK-023_Material_Tools.md#task-023-3-material_set_params) | **material_set_params** | 🟡 Medium |
+| [TASK-023-4](./TASK-023_Material_Tools.md#task-023-4-material_set_texture) | **material_set_texture** | 🟡 Medium |
 
-### Phase 2.5: Advanced Precision
-| ID | Title | Priority | Created |
-|----|-------|----------|---------|
-| [TASK-018-1](./TASK-018_Phase_2_5_Precision.md#task-018-1-mesh-bisect-tool) | **Mesh Bisect Tool** | 🟡 Medium | 2025-11-27 |
-| [TASK-018-2](./TASK-018_Phase_2_5_Precision.md#task-018-2-mesh-edgevertex-slide-tools) | **Mesh Edge/Vertex Slide Tools** | 🟡 Medium | 2025-11-27 |
-| [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-27 |
-| [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-27 |
+### UV Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-024-1](./TASK-024_UV_Tools.md#task-024-1-uv_unwrap) | **uv_unwrap** | 🟡 Medium |
+| [TASK-024-2](./TASK-024_UV_Tools.md#task-024-2-uv_pack_islands) | **uv_pack_islands** | 🟡 Medium |
+| [TASK-024-3](./TASK-024_UV_Tools.md#task-024-3-uv_create_seam-optional) | **uv_create_seam** | 🟢 Low |
+
+### System Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-025-1](./TASK-025_System_Tools.md#task-025-1-system_set_mode) | **system_set_mode** | 🟡 Medium |
+| [TASK-025-2](./TASK-025_System_Tools.md#task-025-2-system_undo--system_redo) | **system_undo / system_redo** | 🟡 Medium |
+| [TASK-025-3](./TASK-025_System_Tools.md#task-025-3-system_save_file--system_new_file) | **system_save_file / system_new_file** | 🟡 Medium |
+| [TASK-025-4](./TASK-025_System_Tools.md#task-025-4-system_snapshot) | **system_snapshot** | 🟢 Low |
+
+### Export Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-026-1](./TASK-026_Export_Tools.md#task-026-1-export_glb) | **export_glb** | 🟠 High |
+| [TASK-026-2](./TASK-026_Export_Tools.md#task-026-2-export_fbx) | **export_fbx** | 🟡 Medium |
+| [TASK-026-3](./TASK-026_Export_Tools.md#task-026-3-export_obj) | **export_obj** | 🟢 Low |
+
+### Sculpting Tools
+| ID | Title | Priority |
+|----|-------|----------|
+| [TASK-027-1](./TASK-027_Sculpting_Tools.md#task-027-1-sculpt_auto) | **sculpt_auto** | 🟢 Low |
+| [TASK-027-2](./TASK-027_Sculpting_Tools.md#task-027-2-sculpt_brush_smooth) | **sculpt_brush_smooth** | 🟢 Low |
+| [TASK-027-3](./TASK-027_Sculpting_Tools.md#task-027-3-sculpt_brush_grab) | **sculpt_brush_grab** | 🟢 Low |
+| [TASK-027-4](./TASK-027_Sculpting_Tools.md#task-027-4-sculpt_brush_crease) | **sculpt_brush_crease** | 🟢 Low |
 
 ---
 
 ## 🚧 In Progress
 
-*(No tasks)*
+### Testing Infrastructure
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | Core infra done, remaining: auto-start Blender, CI/CD |
 
 ---
 
@@ -43,6 +69,22 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-021-5](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-5-mesh-add-geometry-tools) | **Mesh Add Geometry Tools** (vertex, edge, face) | 🟢 Low | 2025-11-29 |
+| [TASK-021-4](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-4-mesh-screw-tool) | **Mesh Screw Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-3](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-3-mesh-spin-tool) | **Mesh Spin Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-2](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-2-curve-to-mesh-tool) | **Curve To Mesh Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-021-1](./TASK-021_Phase_2_6_Curves_Procedural.md#task-021-1-curve-create-tool) | **Curve Create Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-019-3](./TASK-019_Phase_2_4_Core_Transform.md#task-019-3-mesh-duplicate-selected-tool) | **Mesh Duplicate Selected Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-019-2](./TASK-019_Phase_2_4_Core_Transform.md#task-019-2-mesh-bridge-edge-loops-tool) | **Mesh Bridge Edge Loops Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-019-1](./TASK-019_Phase_2_4_Core_Transform.md#task-019-1-mesh-transform-selected-tool) | **Mesh Transform Selected Tool** 🔥 CRITICAL | 🔴 Critical | 2025-11-29 |
+| [TASK-018-4](./TASK-018_Phase_2_5_Precision.md#task-018-4-mesh-remesh-voxel-tool) | **Mesh Remesh Voxel Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-018-3](./TASK-018_Phase_2_5_Precision.md#task-018-3-mesh-triangulate-tool) | **Mesh Triangulate Tool** | 🟢 Low | 2025-11-29 |
+| [TASK-018-2](./TASK-018_Phase_2_5_Precision.md#task-018-2-mesh-edgevertex-slide-tools) | **Mesh Edge/Vertex Slide Tools** | 🟡 Medium | 2025-11-29 |
+| [TASK-018-1](./TASK-018_Phase_2_5_Precision.md#task-018-1-mesh-bisect-tool) | **Mesh Bisect Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-017-2](./TASK-016_017_Organic_and_Groups.md#task-017-2-mesh-assignremove-vertex-group-tools) | **Mesh Assign/Remove Vertex Group Tools** | 🟡 Medium | 2025-11-29 |
+| [TASK-017-1](./TASK-016_017_Organic_and_Groups.md#task-017-1-mesh-create-vertex-group-tool) | **Mesh Create Vertex Group Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-016-2](./TASK-016_017_Organic_and_Groups.md#task-016-2-mesh-shrinkfatten-tool) | **Mesh Shrink/Fatten Tool** | 🟡 Medium | 2025-11-29 |
+| [TASK-016-1](./TASK-016_017_Organic_and_Groups.md#task-016-1-mesh-randomize-tool) | **Mesh Randomize Tool** | 🟡 Medium | 2025-11-29 |
 | [TASK-020-5](./TASK-020-5_Scene_Inspect_Mega_Tool.md) | **Scene Inspect Mega Tool** (object, topology, modifiers, materials) | 🔴 High | 2025-11-29 |
 | [TASK-020-4](./TASK-020-4_Mesh_Select_Targeted_Mega_Tool.md) | **Mesh Select Targeted Mega Tool** (by_index, loop, ring, by_location) | 🔴 High | 2025-11-29 |
 | [TASK-020-3](./TASK-020-3_Scene_Create_Mega_Tool.md) | **Scene Create Mega Tool** (light, camera, empty) | 🟡 Medium | 2025-11-29 |

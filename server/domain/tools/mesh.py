@@ -114,3 +114,128 @@ class IMeshTool(ABC):
     def select_boundary(self, mode: str = 'EDGE') -> str:
         """Selects boundary edges (1 adjacent face) or boundary vertices."""
         pass
+
+    # TASK-016-1: Mesh Randomize Tool
+    @abstractmethod
+    def randomize(self, amount: float = 0.1, uniform: float = 0.0, normal: float = 0.0, seed: int = 0) -> str:
+        """Randomizes vertex positions for organic surface variations."""
+        pass
+
+    # TASK-016-2: Mesh Shrink/Fatten Tool
+    @abstractmethod
+    def shrink_fatten(self, value: float) -> str:
+        """Moves vertices along their normals (Shrink/Fatten)."""
+        pass
+
+    # TASK-017-1: Mesh Create Vertex Group Tool
+    @abstractmethod
+    def create_vertex_group(self, object_name: str, name: str) -> str:
+        """Creates a new vertex group on the specified object."""
+        pass
+
+    # TASK-017-2: Mesh Assign/Remove Vertex Group Tools
+    @abstractmethod
+    def assign_to_group(self, object_name: str, group_name: str, weight: float = 1.0) -> str:
+        """Assigns selected vertices to a vertex group with specified weight."""
+        pass
+
+    @abstractmethod
+    def remove_from_group(self, object_name: str, group_name: str) -> str:
+        """Removes selected vertices from a vertex group."""
+        pass
+
+    # TASK-018-1: Mesh Bisect Tool
+    @abstractmethod
+    def bisect(self, plane_co: List[float], plane_no: List[float], clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+        """Cuts mesh along a plane defined by point and normal."""
+        pass
+
+    # TASK-018-2: Mesh Edge/Vertex Slide Tools
+    @abstractmethod
+    def edge_slide(self, value: float = 0.0) -> str:
+        """Slides selected edges along the mesh topology."""
+        pass
+
+    @abstractmethod
+    def vert_slide(self, value: float = 0.0) -> str:
+        """Slides selected vertices along connected edges."""
+        pass
+
+    # TASK-018-3: Mesh Triangulate Tool
+    @abstractmethod
+    def triangulate(self) -> str:
+        """Converts selected faces to triangles."""
+        pass
+
+    # TASK-018-4: Mesh Remesh Voxel Tool
+    @abstractmethod
+    def remesh_voxel(self, voxel_size: float = 0.1, adaptivity: float = 0.0) -> str:
+        """Performs voxel remesh on the object (Object Mode operation)."""
+        pass
+
+    # TASK-019-1: Mesh Transform Selected Tool
+    @abstractmethod
+    def transform_selected(
+        self,
+        translate: Optional[List[float]] = None,
+        rotate: Optional[List[float]] = None,
+        scale: Optional[List[float]] = None,
+        pivot: str = 'MEDIAN_POINT'
+    ) -> str:
+        """Transforms selected geometry (move/rotate/scale) in Edit Mode."""
+        pass
+
+    # TASK-019-2: Mesh Bridge Edge Loops Tool
+    @abstractmethod
+    def bridge_edge_loops(
+        self,
+        number_cuts: int = 0,
+        interpolation: str = 'LINEAR',
+        smoothness: float = 0.0,
+        twist: int = 0
+    ) -> str:
+        """Bridges two edge loops with faces."""
+        pass
+
+    # TASK-019-3: Mesh Duplicate Selected Tool
+    @abstractmethod
+    def duplicate_selected(self, translate: Optional[List[float]] = None) -> str:
+        """Duplicates selected geometry within the same mesh."""
+        pass
+
+    # TASK-021-3: Mesh Spin Tool
+    @abstractmethod
+    def spin(
+        self,
+        steps: int = 12,
+        angle: float = 6.283185,
+        axis: str = 'Z',
+        center: Optional[List[float]] = None,
+        dupli: bool = False
+    ) -> str:
+        """Spins/lathes selected geometry around an axis."""
+        pass
+
+    # TASK-021-4: Mesh Screw Tool
+    @abstractmethod
+    def screw(
+        self,
+        steps: int = 12,
+        turns: int = 1,
+        axis: str = 'Z',
+        center: Optional[List[float]] = None,
+        offset: float = 0.0
+    ) -> str:
+        """Creates spiral/screw geometry from selected profile."""
+        pass
+
+    # TASK-021-5: Mesh Add Geometry Tools
+    @abstractmethod
+    def add_vertex(self, position: List[float]) -> str:
+        """Adds a single vertex at the specified position."""
+        pass
+
+    @abstractmethod
+    def add_edge_face(self) -> str:
+        """Creates an edge or face from selected vertices."""
+        pass

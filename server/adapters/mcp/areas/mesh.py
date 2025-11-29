@@ -693,3 +693,511 @@ def _mesh_select_boundary(
         return handler.select_boundary(mode)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-016: Organic & Deform Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_randomize(
+    ctx: Context,
+    amount: float = 0.1,
+    uniform: float = 0.0,
+    normal: float = 0.0,
+    seed: int = 0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Randomizes vertex positions.
+    Useful for making organic surfaces less perfect and adding natural variation.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth (optional)
+
+    Args:
+        amount: Maximum displacement amount (default 0.1)
+        uniform: Uniform random displacement (0.0-1.0). Displaces equally in all directions.
+        normal: Normal-based displacement (0.0-1.0). Displaces along vertex normals.
+        seed: Random seed for reproducible results (0 = random)
+
+    Examples:
+        mesh_randomize(amount=0.05) -> Subtle surface noise
+        mesh_randomize(amount=0.2, normal=1.0) -> Displacement along normals
+        mesh_randomize(amount=0.1, uniform=0.5, normal=0.5, seed=42) -> Mix with fixed seed
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.randomize(amount, uniform, normal, seed)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_shrink_fatten(
+    ctx: Context,
+    value: float
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Moves vertices along their normals (Shrink/Fatten).
+    Crucial for thickening or thinning organic shapes without losing volume style.
+    Positive values = fatten (outward), negative values = shrink (inward).
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_smooth (optional)
+
+    Args:
+        value: Distance to move along normals. Positive = outward, negative = inward.
+
+    Examples:
+        mesh_shrink_fatten(value=0.1) -> Fatten/inflate selected vertices
+        mesh_shrink_fatten(value=-0.05) -> Shrink/deflate selected vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.shrink_fatten(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-017: Vertex Group Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_create_vertex_group(
+    ctx: Context,
+    object_name: str,
+    name: str
+) -> str:
+    """
+    [MESH][SAFE] Creates a new vertex group on the specified mesh object.
+    Vertex groups are used for weight painting, armature deformation, and selective operations.
+
+    Workflow: START → mesh_assign_to_group | USE WITH → mesh_list_groups
+
+    Args:
+        object_name: Name of the mesh object to add the group to
+        name: Name for the new vertex group
+
+    Examples:
+        mesh_create_vertex_group(object_name="Body", name="Head")
+        mesh_create_vertex_group(object_name="Character", name="LeftArm")
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.create_vertex_group(object_name, name)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_assign_to_group(
+    ctx: Context,
+    object_name: str,
+    group_name: str,
+    weight: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Assigns selected vertices to a vertex group.
+    Weight controls influence strength (0.0 = no influence, 1.0 = full influence).
+
+    Workflow: BEFORE → mesh_select_*, mesh_create_vertex_group | USE WITH → mesh_list_groups
+
+    Args:
+        object_name: Name of the mesh object
+        group_name: Name of the vertex group to assign to
+        weight: Weight value for assignment (0.0 to 1.0, default 1.0)
+
+    Examples:
+        mesh_assign_to_group(object_name="Body", group_name="Head", weight=1.0)
+        mesh_assign_to_group(object_name="Arm", group_name="Bicep", weight=0.5)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.assign_to_group(object_name, group_name, weight)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_remove_from_group(
+    ctx: Context,
+    object_name: str,
+    group_name: str
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][SAFE] Removes selected vertices from a vertex group.
+
+    Workflow: BEFORE → mesh_select_* | USE WITH → mesh_list_groups, mesh_assign_to_group
+
+    Args:
+        object_name: Name of the mesh object
+        group_name: Name of the vertex group to remove from
+
+    Examples:
+        mesh_remove_from_group(object_name="Body", group_name="Head")
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.remove_from_group(object_name, group_name)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-018: Phase 2.5 - Advanced Precision Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_bisect(
+    ctx: Context,
+    plane_co: List[float],
+    plane_no: List[float],
+    clear_inner: bool = False,
+    clear_outer: bool = False,
+    fill: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Cuts mesh along a plane.
+    Can optionally remove geometry on either side and fill the cut with a face.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_fill_holes, mesh_merge_by_distance
+
+    Args:
+        plane_co: Point on the cutting plane [x, y, z]. E.g. [0, 0, 0] for origin.
+        plane_no: Normal direction of the plane [x, y, z]. E.g. [0, 0, 1] for Z-up plane.
+        clear_inner: If True, removes geometry on the negative side of the plane.
+        clear_outer: If True, removes geometry on the positive side of the plane.
+        fill: If True, fills the cut with a face (creates cap).
+
+    Examples:
+        mesh_bisect(plane_co=[0,0,0], plane_no=[0,0,1]) -> Cut at Z=0 (horizontal plane)
+        mesh_bisect(plane_co=[0,0,1], plane_no=[0,0,1], clear_outer=True) -> Cut and remove top
+        mesh_bisect(plane_co=[0,0,0], plane_no=[1,0,0], fill=True) -> Cut at X=0 with cap
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bisect(plane_co, plane_no, clear_inner, clear_outer, fill)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_edge_slide(
+    ctx: Context,
+    value: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected edges along mesh topology.
+    Maintains mesh connectivity while repositioning edge loops.
+    Value range is -1.0 to 1.0 (relative to adjacent edges).
+
+    Workflow: BEFORE → mesh_select_loop, mesh_select_ring | AFTER → mesh_smooth
+
+    Args:
+        value: Slide amount (-1.0 to 1.0). 0 = no movement. Negative = one direction, positive = other.
+
+    Examples:
+        mesh_edge_slide(value=0.5) -> Slide selected edges 50% toward one side
+        mesh_edge_slide(value=-0.3) -> Slide selected edges 30% toward other side
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_slide(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_vert_slide(
+    ctx: Context,
+    value: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Slides selected vertices along connected edges.
+    Moves vertices along the edge they are connected to without changing topology.
+    Value range is -1.0 to 1.0 (relative to connected edge length).
+
+    Workflow: BEFORE → mesh_select_by_index(VERT) | AFTER → mesh_smooth
+
+    Args:
+        value: Slide amount (-1.0 to 1.0). 0 = no movement.
+
+    Examples:
+        mesh_vert_slide(value=0.5) -> Slide vertices 50% along their connected edges
+        mesh_vert_slide(value=-0.2) -> Slide vertices 20% in opposite direction
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.vert_slide(value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_triangulate(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts selected faces to triangles.
+    Useful for export to game engines or ensuring consistent topology.
+    NOTE: This is irreversible - consider using a TRIANGULATE modifier for non-destructive workflow.
+
+    Workflow: BEFORE → mesh_select_*(FACE) | USE FOR → game export prep, boolean cleanup
+
+    Examples:
+        mesh_triangulate() -> Converts all selected faces to triangles
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.triangulate()
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_remesh_voxel(
+    ctx: Context,
+    voxel_size: float = 0.1,
+    adaptivity: float = 0.0
+) -> str:
+    """
+    [OBJECT MODE][DESTRUCTIVE] Remeshes object using Voxel algorithm.
+    Creates uniform topology - useful for sculpting or boolean cleanup.
+    WARNING: Destroys all existing topology, UVs, and vertex groups!
+
+    Workflow: AFTER → mesh_boolean, modeling_join_objects | USE FOR → sculpt prep, topology cleanup
+
+    Args:
+        voxel_size: Size of voxels (smaller = more detail, more polygons). Default 0.1.
+        adaptivity: Reduces polygons in flat areas (0.0-1.0). 0 = uniform, 1 = maximum reduction.
+
+    Examples:
+        mesh_remesh_voxel(voxel_size=0.05) -> High detail remesh
+        mesh_remesh_voxel(voxel_size=0.2, adaptivity=0.5) -> Lower detail with adaptive reduction
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.remesh_voxel(voxel_size, adaptivity)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-019: Phase 2.4 - Core Transform & Geometry
+# ==============================================================================
+
+@mcp.tool()
+def mesh_transform_selected(
+    ctx: Context,
+    translate: Optional[List[float]] = None,
+    rotate: Optional[List[float]] = None,
+    scale: Optional[List[float]] = None,
+    pivot: Literal["MEDIAN_POINT", "BOUNDING_BOX_CENTER", "CURSOR", "INDIVIDUAL_ORIGINS", "ACTIVE_ELEMENT"] = "MEDIAN_POINT"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected geometry (move/rotate/scale).
+    CRITICAL: This is the primary tool for repositioning geometry after selection.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_merge_by_distance
+
+    Args:
+        translate: Translation vector [x, y, z]. Moves geometry.
+        rotate: Rotation in radians [x, y, z]. Rotates around pivot.
+        scale: Scale factors [x, y, z]. Scales from pivot.
+        pivot: Pivot point for rotation/scale.
+            - MEDIAN_POINT: Center of selection (default)
+            - BOUNDING_BOX_CENTER: Center of bounding box
+            - CURSOR: 3D cursor position
+            - INDIVIDUAL_ORIGINS: Each element's own origin
+            - ACTIVE_ELEMENT: Active element's position
+
+    Examples:
+        mesh_transform_selected(translate=[0, 0, 2]) -> Move up by 2 units
+        mesh_transform_selected(rotate=[0, 0, 1.5708]) -> Rotate 90° around Z
+        mesh_transform_selected(scale=[2, 2, 1]) -> Double size in X and Y
+        mesh_transform_selected(translate=[1, 0, 0], pivot="CURSOR") -> Move relative to cursor
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.transform_selected(translate, rotate, scale, pivot)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_bridge_edge_loops(
+    ctx: Context,
+    number_cuts: int = 0,
+    interpolation: Literal["LINEAR", "PATH", "SURFACE"] = "LINEAR",
+    smoothness: float = 0.0,
+    twist: int = 0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bridges two edge loops with faces.
+    Connects two separate edge loops/rings to create connecting geometry.
+
+    Workflow: BEFORE → mesh_select_loop (select two loops) | AFTER → mesh_smooth, mesh_subdivide
+
+    Args:
+        number_cuts: Number of intermediate cuts (0 = direct bridge).
+        interpolation: How to interpolate the bridge.
+            - LINEAR: Straight connection
+            - PATH: Follow edge flow
+            - SURFACE: Smooth surface interpolation
+        smoothness: Smoothness factor for interpolation (0.0-1.0).
+        twist: Number of twist segments between loops.
+
+    Examples:
+        mesh_bridge_edge_loops() -> Simple direct bridge
+        mesh_bridge_edge_loops(number_cuts=4) -> Bridge with 4 subdivisions
+        mesh_bridge_edge_loops(interpolation="SURFACE", smoothness=1.0) -> Smooth curved bridge
+        mesh_bridge_edge_loops(twist=1) -> Twisted bridge connection
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bridge_edge_loops(number_cuts, interpolation, smoothness, twist)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_duplicate_selected(
+    ctx: Context,
+    translate: Optional[List[float]] = None
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Duplicates selected geometry within the same mesh.
+    Creates a copy of selected elements. New geometry is automatically selected.
+
+    Workflow: BEFORE → mesh_select_* | AFTER → mesh_transform_selected
+
+    Args:
+        translate: Optional [x, y, z] offset for duplicated geometry.
+            If not provided, duplicate is created in-place (overlapping).
+
+    Examples:
+        mesh_duplicate_selected(translate=[2, 0, 0]) -> Duplicate and move 2 units on X
+        mesh_duplicate_selected() -> Duplicate in-place (WARNING: overlapping geometry!)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.duplicate_selected(translate)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
+# ==============================================================================
+
+@mcp.tool()
+def mesh_spin(
+    ctx: Context,
+    steps: int = 12,
+    angle: float = 6.283185,
+    axis: Literal["X", "Y", "Z"] = "Z",
+    center: Optional[List[float]] = None,
+    dupli: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/lathes selected geometry around an axis.
+    Creates rotational geometry like vases, bowls, or circular patterns.
+
+    Workflow: BEFORE → mesh_select_* (select profile) | AFTER → mesh_merge_by_distance
+
+    Args:
+        steps: Number of steps/segments for the spin (12 = 30° per step for full circle).
+        angle: Total angle in radians (default 6.283185 = 360° = full circle).
+            Common values: 3.14159 (180°), 1.5708 (90°)
+        axis: Axis to spin around (X, Y, or Z).
+        center: Optional [x, y, z] center point for spin. Default is 3D cursor.
+        dupli: If True, duplicates geometry instead of extruding.
+
+    Examples:
+        mesh_spin(steps=32) -> Full 360° spin with 32 segments (smooth)
+        mesh_spin(steps=16, angle=3.14159) -> 180° half-spin
+        mesh_spin(axis="X", center=[0, 0, 0]) -> Spin around X at origin
+        mesh_spin(dupli=True) -> Create radial pattern without connecting faces
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.spin(steps, angle, axis, center, dupli)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_screw(
+    ctx: Context,
+    steps: int = 12,
+    turns: int = 1,
+    axis: Literal["X", "Y", "Z"] = "Z",
+    center: Optional[List[float]] = None,
+    offset: float = 0.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates spiral/screw/helical geometry.
+    Combines rotation with translation for spirals, threads, springs, or helixes.
+
+    Workflow: BEFORE → mesh_select_* (select profile) | AFTER → mesh_merge_by_distance
+
+    Args:
+        steps: Number of steps per turn (more = smoother spiral).
+        turns: Number of complete rotations.
+        axis: Axis to screw around (X, Y, or Z).
+        center: Optional [x, y, z] center point. Default is 3D cursor.
+        offset: Distance to move along axis per turn (thread pitch).
+
+    Examples:
+        mesh_screw(steps=32, turns=3, offset=0.5) -> 3-turn spiral with 0.5 unit pitch
+        mesh_screw(turns=1, offset=0) -> Same as spin (no translation)
+        mesh_screw(steps=64, turns=5, offset=0.2) -> Fine-threaded screw
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.screw(steps, turns, axis, center, offset)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_add_vertex(
+    ctx: Context,
+    position: List[float]
+) -> str:
+    """
+    [EDIT MODE][DESTRUCTIVE] Adds a single vertex at the specified position.
+    Useful for creating geometry from scratch or adding connection points.
+
+    Workflow: START → mesh_add_edge_face | USE FOR → manual geometry construction
+
+    Args:
+        position: [x, y, z] coordinates for the new vertex.
+
+    Examples:
+        mesh_add_vertex(position=[0, 0, 0]) -> Add vertex at origin
+        mesh_add_vertex(position=[1.5, 2.0, 0.5]) -> Add vertex at specific location
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.add_vertex(position)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_add_edge_face(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates an edge or face from selected vertices.
+    - 2 vertices selected → creates edge
+    - 3+ vertices selected → creates face
+    Equivalent to pressing 'F' key in Blender.
+
+    Workflow: BEFORE → mesh_select_by_index, mesh_add_vertex | AFTER → mesh_fill_holes
+
+    Examples:
+        (select 2 verts) mesh_add_edge_face() -> Creates edge between them
+        (select 3+ verts) mesh_add_edge_face() -> Creates face from vertices
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.add_edge_face()
+    except RuntimeError as e:
+        return str(e)

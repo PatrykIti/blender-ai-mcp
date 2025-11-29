@@ -3,15 +3,11 @@ Tests for Material Tools (TASK-014-8, 014-9)
 """
 import pytest
 from server.application.tool_handlers.material_handler import MaterialToolHandler
-from server.adapters.rpc.client import RpcClient
-from server.infrastructure.config import get_config
 
 
 @pytest.fixture
-def material_handler():
-    """Provides a material handler instance."""
-    config = get_config()
-    rpc_client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+def material_handler(rpc_client):
+    """Provides a material handler instance using shared RPC client."""
     return MaterialToolHandler(rpc_client)
 
 

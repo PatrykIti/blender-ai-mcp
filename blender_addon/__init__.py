@@ -22,6 +22,7 @@ try:
     from .application.handlers.collection import CollectionHandler
     from .application.handlers.material import MaterialHandler
     from .application.handlers.uv import UVHandler
+    from .application.handlers.curve import CurveHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -29,12 +30,13 @@ except ImportError:
     CollectionHandler = None
     MaterialHandler = None
     UVHandler = None
+    CurveHandler = None
 
 
 def register():
     if bpy:
         print("[Blender AI MCP] Registering addon...")
-        
+
         # --- Composition Root (Simple Manual DI) ---
         scene_handler = SceneHandler()
         modeling_handler = ModelingHandler()
@@ -42,6 +44,7 @@ def register():
         collection_handler = CollectionHandler()
         material_handler = MaterialHandler()
         uv_handler = UVHandler()
+        curve_handler = CurveHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -97,6 +100,19 @@ def register():
         rpc_server.register_handler("mesh.get_vertex_data", mesh_handler.get_vertex_data)
         rpc_server.register_handler("mesh.select_by_location", mesh_handler.select_by_location)
         rpc_server.register_handler("mesh.select_boundary", mesh_handler.select_boundary)
+        # TASK-016: Organic & Deform Tools
+        rpc_server.register_handler("mesh.randomize", mesh_handler.randomize)
+        rpc_server.register_handler("mesh.shrink_fatten", mesh_handler.shrink_fatten)
+        # TASK-017: Vertex Group Tools
+        rpc_server.register_handler("mesh.create_vertex_group", mesh_handler.create_vertex_group)
+        rpc_server.register_handler("mesh.assign_to_group", mesh_handler.assign_to_group)
+        rpc_server.register_handler("mesh.remove_from_group", mesh_handler.remove_from_group)
+        # TASK-018: Phase 2.5 - Advanced Precision Tools
+        rpc_server.register_handler("mesh.bisect", mesh_handler.bisect)
+        rpc_server.register_handler("mesh.edge_slide", mesh_handler.edge_slide)
+        rpc_server.register_handler("mesh.vert_slide", mesh_handler.vert_slide)
+        rpc_server.register_handler("mesh.triangulate", mesh_handler.triangulate)
+        rpc_server.register_handler("mesh.remesh_voxel", mesh_handler.remesh_voxel)
 
         # Collection
         rpc_server.register_handler("collection.list", collection_handler.list_collections)
@@ -108,6 +124,19 @@ def register():
 
         # UV
         rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
+
+        # TASK-019: Phase 2.4 - Core Transform & Geometry
+        rpc_server.register_handler("mesh.transform_selected", mesh_handler.transform_selected)
+        rpc_server.register_handler("mesh.bridge_edge_loops", mesh_handler.bridge_edge_loops)
+        rpc_server.register_handler("mesh.duplicate_selected", mesh_handler.duplicate_selected)
+
+        # TASK-021: Phase 2.6 - Curves & Procedural
+        rpc_server.register_handler("curve.create_curve", curve_handler.create_curve)
+        rpc_server.register_handler("curve.curve_to_mesh", curve_handler.curve_to_mesh)
+        rpc_server.register_handler("mesh.spin", mesh_handler.spin)
+        rpc_server.register_handler("mesh.screw", mesh_handler.screw)
+        rpc_server.register_handler("mesh.add_vertex", mesh_handler.add_vertex)
+        rpc_server.register_handler("mesh.add_edge_face", mesh_handler.add_edge_face)
 
         rpc_server.start()
     else:

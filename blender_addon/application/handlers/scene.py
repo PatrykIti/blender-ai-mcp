@@ -628,9 +628,16 @@ class SceneHandler:
             "mode": getattr(bpy.context, "mode", "UNKNOWN")
         }
 
-        # Compute hash for change detection (SHA256 of JSON string)
-        snapshot_json = json.dumps(snapshot, sort_keys=True)
-        snapshot_hash = hashlib.sha256(snapshot_json.encode('utf-8')).hexdigest()
+        # Compute hash for change detection (SHA256 of scene state, excluding timestamp)
+        # This ensures identical scenes produce identical hashes
+        state_for_hash = {
+            "object_count": snapshot["object_count"],
+            "objects": snapshot["objects"],
+            "active_object": snapshot["active_object"],
+            "mode": snapshot["mode"]
+        }
+        state_json = json.dumps(state_for_hash, sort_keys=True)
+        snapshot_hash = hashlib.sha256(state_json.encode('utf-8')).hexdigest()
 
         # Return snapshot with hash
         return {
