@@ -1,48 +1,58 @@
 """
-E2E test configuration for blender-ai-mcp.
+E2E/Integration test configuration for blender-ai-mcp.
 
-This conftest provides fixtures for running tests against a real Blender instance.
+These tests require a running Blender instance with the addon loaded.
+They connect via RPC to execute real Blender operations.
 
-To run E2E tests:
-    BLENDER_PATH=/path/to/blender pytest tests/e2e/ -v
+To run:
+    1. Start Blender with the addon enabled
+    2. Run: pytest tests/e2e/ -v
 
-Prerequisites:
-- Blender installed and accessible
-- blender_addon properly configured
-
-Note: E2E tests are not yet implemented. See TASK-028 for implementation plan.
+The tests will skip automatically if RPC connection fails.
 """
-import os
 import pytest
+from server.adapters.rpc.client import RpcClient
+from server.infrastructure.config import get_config
 
-# Skip all E2E tests if Blender is not available
-BLENDER_PATH = os.environ.get("BLENDER_PATH", "blender")
+
+def _check_rpc_connection():
+    """Check if Blender RPC server is available."""
+    try:
+        config = get_config()
+        client = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+        connected = client.connect()
+        if connected:
+            client.close()
+            return True
+        return False
+    except Exception:
+        return False
+
+
+# Cache the connection check result
+_rpc_available = None
+
+
+def is_rpc_available():
+    """Check RPC availability (cached)."""
+    global _rpc_available
+    if _rpc_available is None:
+        _rpc_available = _check_rpc_connection()
+    return _rpc_available
+
+
+@pytest.fixture(scope="session")
+def rpc_connection_available():
+    """Session-scoped fixture to check RPC availability."""
+    return is_rpc_available()
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip E2E tests if Blender is not available."""
-    import shutil
-
-    if not shutil.which(BLENDER_PATH):
-        skip_marker = pytest.mark.skip(reason="Blender not found. Set BLENDER_PATH env var.")
+    """Mark E2E tests to skip if RPC is not available."""
+    if not is_rpc_available():
+        skip_marker = pytest.mark.skip(
+            reason="Blender RPC server not available. Start Blender with addon enabled."
+        )
         for item in items:
             if "/e2e/" in str(item.fspath):
                 item.add_marker(skip_marker)
-
-
-# Placeholder fixtures - to be implemented in TASK-028
-
-# @pytest.fixture(scope="session")
-# def blender_process():
-#     """Start Blender with addon loaded for entire test session."""
-#     pass
-
-# @pytest.fixture
-# def rpc_client(blender_process):
-#     """Provide RPC client connected to test Blender instance."""
-#     pass
-
-# @pytest.fixture
-# def clean_scene(rpc_client):
-#     """Ensure clean scene before each test."""
-#     pass

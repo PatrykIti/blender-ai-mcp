@@ -1,10 +1,10 @@
 """
-Tests for Snapshot Tools (TASK-014-4, 014-5)
+E2E Tests for Snapshot Tools (TASK-014-4)
+
+These tests require a running Blender instance with the addon loaded.
 """
 import pytest
-import json
 from server.application.tool_handlers.scene_handler import SceneToolHandler
-from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.adapters.rpc.client import RpcClient
 from server.infrastructure.config import get_config
 
@@ -78,77 +78,3 @@ def test_snapshot_hash_consistency(scene_handler):
         print(f"✓ snapshot hash consistency: {result1['hash'][:8]}... == {result2['hash'][:8]}...")
     except RuntimeError as e:
         pytest.skip(f"Blender not available: {e}")
-
-
-def test_compare_snapshot_identical():
-    """Test comparing identical snapshots."""
-    diff_service = get_snapshot_diff_service()
-
-    snapshot_data = {
-        "hash": "abc123",
-        "snapshot": {
-            "timestamp": "2025-01-01T00:00:00Z",
-            "object_count": 1,
-            "objects": [
-                {
-                    "name": "Cube",
-                    "type": "MESH",
-                    "location": [0, 0, 0],
-                    "rotation": [0, 0, 0],
-                    "scale": [1, 1, 1]
-                }
-            ]
-        }
-    }
-
-    snapshot_str = json.dumps(snapshot_data)
-
-    result = diff_service.compare_snapshots(
-        baseline_snapshot=snapshot_str,
-        target_snapshot=snapshot_str,
-        ignore_minor_transforms=0.0
-    )
-
-    assert result["has_changes"] == False
-    assert len(result["objects_added"]) == 0
-    assert len(result["objects_removed"]) == 0
-    assert len(result["objects_modified"]) == 0
-
-    print("✓ compare_snapshot: identical snapshots have no changes")
-
-
-def test_compare_snapshot_with_changes():
-    """Test comparing snapshots with changes."""
-    diff_service = get_snapshot_diff_service()
-
-    baseline = {
-        "snapshot": {
-            "timestamp": "2025-01-01T00:00:00Z",
-            "objects": [
-                {"name": "Cube", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
-            ]
-        }
-    }
-
-    target = {
-        "snapshot": {
-            "timestamp": "2025-01-01T00:01:00Z",
-            "objects": [
-                {"name": "Cube", "type": "MESH", "location": [1, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
-                {"name": "Sphere", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
-            ]
-        }
-    }
-
-    result = diff_service.compare_snapshots(
-        baseline_snapshot=json.dumps(baseline),
-        target_snapshot=json.dumps(target),
-        ignore_minor_transforms=0.0
-    )
-
-    assert result["has_changes"] == True
-    assert "Sphere" in result["objects_added"]
-    assert len(result["objects_modified"]) == 1
-    assert result["objects_modified"][0]["object_name"] == "Cube"
-
-    print(f"✓ compare_snapshot: detected changes (+{len(result['objects_added'])}, ~{len(result['objects_modified'])})")
