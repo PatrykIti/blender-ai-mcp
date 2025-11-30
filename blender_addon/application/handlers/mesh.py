@@ -1375,10 +1375,10 @@ class MeshHandler:
 
         bm = bmesh.from_edit_mesh(obj.data)
 
-        # Count selected edges
-        selected_edges = [e for e in bm.edges if e.select]
+        # First check if any edges are selected (quick count)
+        has_selection = any(e.select for e in bm.edges)
 
-        if not selected_edges:
+        if not has_selection:
             if previous_mode != 'EDIT':
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to set crease weight.")
@@ -1386,8 +1386,8 @@ class MeshHandler:
         # Clamp crease value to valid range
         crease_value = max(0.0, min(1.0, crease_value))
 
-        # Get or create crease layer - Blender 4.0+ uses float layers
-        # Try new API first (Blender 4.0+), fall back to old API
+        # Get or create crease layer FIRST - Blender 4.0+ uses float layers
+        # Creating a layer may invalidate edge references, so do this before iterating
         crease_layer = None
         if hasattr(bm.edges.layers, 'crease'):
             # Blender 3.x
@@ -1398,9 +1398,12 @@ class MeshHandler:
             if crease_layer is None:
                 crease_layer = bm.edges.layers.float.new('crease_edge')
 
-        # Set crease on selected edges
-        for edge in selected_edges:
-            edge[crease_layer] = crease_value
+        # NOW collect and set crease on selected edges (after layer is created)
+        edge_count = 0
+        for edge in bm.edges:
+            if edge.select:
+                edge[crease_layer] = crease_value
+                edge_count += 1
 
         # Update mesh
         bmesh.update_edit_mesh(obj.data)
@@ -1408,7 +1411,7 @@ class MeshHandler:
         if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=previous_mode)
 
-        return f"Set crease weight {crease_value} on {len(selected_edges)} edge(s)"
+        return f"Set crease weight {crease_value} on {edge_count} edge(s)"
 
     def bevel_weight(self, weight=1.0):
         """
@@ -1420,10 +1423,10 @@ class MeshHandler:
 
         bm = bmesh.from_edit_mesh(obj.data)
 
-        # Count selected edges
-        selected_edges = [e for e in bm.edges if e.select]
+        # First check if any edges are selected (quick count)
+        has_selection = any(e.select for e in bm.edges)
 
-        if not selected_edges:
+        if not has_selection:
             if previous_mode != 'EDIT':
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to set bevel weight.")
@@ -1431,8 +1434,8 @@ class MeshHandler:
         # Clamp weight to valid range
         weight = max(0.0, min(1.0, weight))
 
-        # Get or create bevel weight layer - Blender 4.0+ uses float layers
-        # Try new API first (Blender 4.0+), fall back to old API
+        # Get or create bevel weight layer FIRST - Blender 4.0+ uses float layers
+        # Creating a layer may invalidate edge references, so do this before iterating
         bevel_layer = None
         if hasattr(bm.edges.layers, 'bevel_weight'):
             # Blender 3.x
@@ -1443,9 +1446,12 @@ class MeshHandler:
             if bevel_layer is None:
                 bevel_layer = bm.edges.layers.float.new('bevel_weight_edge')
 
-        # Set bevel weight on selected edges
-        for edge in selected_edges:
-            edge[bevel_layer] = weight
+        # NOW collect and set bevel weight on selected edges (after layer is created)
+        edge_count = 0
+        for edge in bm.edges:
+            if edge.select:
+                edge[bevel_layer] = weight
+                edge_count += 1
 
         # Update mesh
         bmesh.update_edit_mesh(obj.data)
@@ -1453,7 +1459,7 @@ class MeshHandler:
         if previous_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=previous_mode)
 
-        return f"Set bevel weight {weight} on {len(selected_edges)} edge(s)"
+        return f"Set bevel weight {weight} on {edge_count} edge(s)"
 
     def mark_sharp(self, action="mark"):
         """

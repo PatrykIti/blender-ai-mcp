@@ -412,10 +412,9 @@ def test_workflow_crease_with_subsurf(mesh_handler, modeling_handler, scene_hand
 
         # Add Subdivision Surface modifier
         modifier_result = modeling_handler.add_modifier(
-            object_name=obj_name,
+            name=obj_name,
             modifier_type="SUBSURF",
-            levels=2,
-            render_levels=2
+            properties={"levels": 2, "render_levels": 2}
         )
         assert "SUBSURF" in modifier_result or "Subsurf" in modifier_result or "added" in modifier_result.lower()
 
@@ -448,11 +447,9 @@ def test_workflow_bevel_weight_with_bevel_modifier(mesh_handler, modeling_handle
 
         # Add Bevel modifier with Weight limit method
         modifier_result = modeling_handler.add_modifier(
-            object_name=obj_name,
+            name=obj_name,
             modifier_type="BEVEL",
-            width=0.1,
-            segments=2,
-            limit_method="WEIGHT"
+            properties={"width": 0.1, "segments": 2, "limit_method": "WEIGHT"}
         )
         assert "BEVEL" in modifier_result or "Bevel" in modifier_result or "added" in modifier_result.lower()
 
