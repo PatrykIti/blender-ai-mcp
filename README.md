@@ -195,10 +195,10 @@ Edit Mode operations for geometry manipulation.
 #### Knife & Cut
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_knife_project` | Project cut from selected geometry | 🚧 |
-| `mesh_rip` | Rip/tear geometry at selection | 🚧 |
-| `mesh_split` | Split selection from mesh | 🚧 |
-| `mesh_edge_split` | Split mesh at selected edges | 🚧 |
+| `mesh_knife_project` | Project cut from selected geometry | ✅ |
+| `mesh_rip` | Rip/tear geometry at selection | ✅ |
+| `mesh_split` | Split selection from mesh | ✅ |
+| `mesh_edge_split` | Split mesh at selected edges | ✅ |
 
 #### Symmetry & Fill
 | Tool | Description | Status |
@@ -542,6 +542,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_tris_to_quads",
         "mesh_normals_make_consistent",
         "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
@@ -656,6 +660,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_tris_to_quads",
         "mesh_normals_make_consistent",
         "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
         "export_glb",

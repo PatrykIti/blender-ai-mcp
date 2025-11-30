@@ -153,6 +153,10 @@ Low-level geometry manipulation.
 | `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. |
 | `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward if inside=True). |
 | `mesh_decimate` | `ratio`, `use_symmetry`, `symmetry_axis` | Reduces polycount while preserving shape (Edit Mode). |
+| `mesh_knife_project` | `cut_through` | Projects cut from selected geometry (requires view angle). |
+| `mesh_rip` | `use_fill` | Rips (tears) geometry at selected vertices. |
+| `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). |
+| `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 

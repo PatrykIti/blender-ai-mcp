@@ -151,6 +151,10 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. | ✅ Done |
 | `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward). | ✅ Done |
 | `mesh_decimate` | `ratio`, `use_symmetry`, `symmetry_axis` | Reduces polycount while preserving shape. | ✅ Done |
+| `mesh_knife_project` | `cut_through` | Projects cut from selected geometry (requires view angle). | ✅ Done |
+| `mesh_rip` | `use_fill` | Rips (tears) geometry at selected vertices. | ✅ Done |
+| `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). | ✅ Done |
+| `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`

@@ -186,6 +186,10 @@ Technical details.
 | `mesh.tris_to_quads` | `tris_to_quads` | Converts triangles to quads. |
 | `mesh.normals_make_consistent` | `normals_make_consistent` | Recalculates normals to face consistently. |
 | `mesh.decimate` | `decimate` | Reduces polycount while preserving shape. |
+| `mesh.knife_project` | `knife_project` | Projects cut from selected geometry (view-dependent). |
+| `mesh.rip` | `rip` | Rips (tears) geometry at selected vertices. |
+| `mesh.split` | `split` | Splits selection from mesh (disconnects without separating). |
+| `mesh.edge_split` | `edge_split` | Splits mesh at selected edges (creates seams). |
 
 
 ### Curve (`application/handlers/curve.py`)

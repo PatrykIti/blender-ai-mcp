@@ -425,3 +425,33 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-032-1: Mesh Knife Project Tool
+    def knife_project(self, cut_through: bool = True) -> str:
+        args = {"cut_through": cut_through}
+        response = self.rpc.send_request("mesh.knife_project", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-2: Mesh Rip Tool
+    def rip(self, use_fill: bool = False) -> str:
+        args = {"use_fill": use_fill}
+        response = self.rpc.send_request("mesh.rip", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-3: Mesh Split Tool
+    def split(self) -> str:
+        response = self.rpc.send_request("mesh.split")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-4: Mesh Edge Split Tool
+    def edge_split(self) -> str:
+        response = self.rpc.send_request("mesh.edge_split")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

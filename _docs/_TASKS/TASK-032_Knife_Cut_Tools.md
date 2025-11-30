@@ -23,7 +23,7 @@ Knife and cut tools enable **precise geometry cutting** - essential for hard-sur
 
 ### TASK-032-1: mesh_knife_project
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Projects knife cut from view using selected edges/faces as cutter.
 
@@ -58,7 +58,7 @@ bpy.ops.mesh.knife_project(cut_through=cut_through)
 
 ### TASK-032-2: mesh_rip
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Rips (tears) geometry at selected vertices/edges.
 
@@ -89,7 +89,7 @@ bpy.ops.mesh.rip('INVOKE_DEFAULT', use_fill=use_fill)
 
 ### TASK-032-3: mesh_split
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Splits selected geometry from the rest of the mesh.
 
@@ -118,7 +118,7 @@ bpy.ops.mesh.split()
 
 ### TASK-032-4: mesh_edge_split
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Splits edges to create sharp boundaries.
 
@@ -168,7 +168,27 @@ Consider that `mesh_bisect` (TASK-018-1) already exists. These tools complement 
 
 ## Testing Requirements
 
-- [ ] Unit tests for each tool
-- [ ] E2E test: Create cube → select top face → split → verify disconnection
-- [ ] E2E test: Edge split → verify vertex duplication
-- [ ] Test knife_project limitations/requirements
+- [x] Unit tests for each tool (9 tests)
+- [x] E2E test: Create cube → select top face → split → verify disconnection
+- [x] E2E test: Edge split → verify vertex duplication
+- [x] Test knife_project limitations/requirements
+
+## Implementation Summary
+
+**Completed:** 2025-11-30
+
+**Files Modified:**
+- `server/domain/tools/mesh.py` - Added 4 abstract methods
+- `server/application/tool_handlers/mesh_handler.py` - Added 4 RPC methods
+- `server/adapters/mcp/areas/mesh.py` - Added 4 MCP tools
+- `blender_addon/application/handlers/mesh.py` - Added 4 Blender implementations
+- `blender_addon/__init__.py` - Registered 4 RPC handlers
+
+**Test Files:**
+- `tests/unit/tools/knife_cut/test_knife_cut_handler.py` - 9 unit tests
+- `tests/e2e/tools/knife_cut/test_knife_cut_tools.py` - E2E tests
+
+**Notes:**
+- mesh_knife_project is view-dependent and requires orthographic views for best results
+- mesh_rip uses rip_move operator with zero translation for programmatic use
+- All tools include proper error handling for missing selections

@@ -296,3 +296,27 @@ class IMeshTool(ABC):
     ) -> str:
         """Reduces polycount while preserving shape."""
         pass
+
+    # TASK-032-1: Mesh Knife Project Tool
+    @abstractmethod
+    def knife_project(self, cut_through: bool = True) -> str:
+        """Projects cut from selected geometry (requires view angle)."""
+        pass
+
+    # TASK-032-2: Mesh Rip Tool
+    @abstractmethod
+    def rip(self, use_fill: bool = False) -> str:
+        """Rips (tears) geometry at selected vertices."""
+        pass
+
+    # TASK-032-3: Mesh Split Tool
+    @abstractmethod
+    def split(self) -> str:
+        """Splits selected geometry from the rest of the mesh."""
+        pass
+
+    # TASK-032-4: Mesh Edge Split Tool
+    @abstractmethod
+    def edge_split(self) -> str:
+        """Splits mesh at selected edges to create sharp boundaries."""
+        pass

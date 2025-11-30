@@ -190,6 +190,12 @@ def register():
         rpc_server.register_handler("mesh.normals_make_consistent", mesh_handler.normals_make_consistent)
         rpc_server.register_handler("mesh.decimate", mesh_handler.decimate)
 
+        # TASK-032: Knife & Cut Tools
+        rpc_server.register_handler("mesh.knife_project", mesh_handler.knife_project)
+        rpc_server.register_handler("mesh.rip", mesh_handler.rip)
+        rpc_server.register_handler("mesh.split", mesh_handler.split)
+        rpc_server.register_handler("mesh.edge_split", mesh_handler.edge_split)
+
         # TASK-031: Baking Tools
         rpc_server.register_handler("baking.normal_map", baking_handler.bake_normal_map)
         rpc_server.register_handler("baking.ao", baking_handler.bake_ao)

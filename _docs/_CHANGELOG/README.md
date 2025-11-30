@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [52](./52-2025-11-30-knife-cut-tools.md) | 2025-11-30 | **Knife & Cut Tools (TASK-032)** | 1.25.0 |
 | [51](./51-2025-11-30-baking-tools.md) | 2025-11-30 | **Baking Tools (TASK-031)** | 1.24.0 |
 | [50](./50-2025-11-30-mesh-cleanup.md) | 2025-11-30 | **Mesh Cleanup & Optimization (TASK-030)** | 1.23.0 |
 | [49](./49-2025-11-30-edge-weights-creases.md) | 2025-11-30 | **Edge Weights & Creases (TASK-029)** | 1.22.0 |

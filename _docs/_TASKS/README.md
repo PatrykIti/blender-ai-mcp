@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks (~30 sub-tasks)
+- **To Do:** 6 tasks (~26 sub-tasks)
 - **In Progress:** 1
-- **Done:** 90
+- **Done:** 94
 
 ---
 
@@ -19,7 +19,6 @@ Task board for the project. Update statuses in markdown files.
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-032](./TASK-032_Knife_Cut_Tools.md) | **Knife & Cut Tools** | 🟠 High | mesh_knife_project, mesh_rip, mesh_split |
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | lattice_create, lattice_bind, lattice_edit_point |
 | [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
 
@@ -49,6 +48,10 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-032-4](./TASK-032_Knife_Cut_Tools.md#task-032-4-mesh_edge_split) | **mesh_edge_split** | 🟠 High | 2025-11-30 |
+| [TASK-032-3](./TASK-032_Knife_Cut_Tools.md#task-032-3-mesh_split) | **mesh_split** | 🟠 High | 2025-11-30 |
+| [TASK-032-2](./TASK-032_Knife_Cut_Tools.md#task-032-2-mesh_rip) | **mesh_rip** | 🟠 High | 2025-11-30 |
+| [TASK-032-1](./TASK-032_Knife_Cut_Tools.md#task-032-1-mesh_knife_project) | **mesh_knife_project** | 🟠 High | 2025-11-30 |
 | [TASK-031-4](./TASK-031_Baking_Tools.md#task-031-4-bake_diffuse) | **bake_diffuse** | 🔴 Critical | 2025-11-30 |
 | [TASK-031-3](./TASK-031_Baking_Tools.md#task-031-3-bake_combined) | **bake_combined** | 🔴 Critical | 2025-11-30 |
 | [TASK-031-2](./TASK-031_Baking_Tools.md#task-031-2-bake_ao) | **bake_ao** | 🔴 Critical | 2025-11-30 |

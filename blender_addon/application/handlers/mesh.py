@@ -1622,3 +1622,125 @@ class MeshHandler:
 
         symmetry_desc = f" with {symmetry_axis} symmetry" if use_symmetry else ""
         return f"Decimated mesh to {ratio*100:.1f}% of original{symmetry_desc}"
+
+    # ==========================================================================
+    # TASK-032: Knife & Cut Tools
+    # ==========================================================================
+
+    def knife_project(self, cut_through=True):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Projects cut from selected geometry.
+
+        Projects knife cut from view using selected edges/faces as cutter.
+        Requires specific view angle - best used with orthographic views.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for f in bm.faces if f.select)
+
+        try:
+            bpy.ops.mesh.knife_project(cut_through=cut_through)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Knife project failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        cut_mode = "through entire mesh" if cut_through else "visible faces only"
+        return f"Knife project completed ({cut_mode})"
+
+    def rip(self, use_fill=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Rips (tears) geometry at selection.
+
+        Creates a hole/tear at selected vertices. Uses mesh.rip_move operator.
+        Note: Rips from the center of selection.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected. Select vertices to rip.")
+
+        try:
+            # Use rip_move but with zero movement for programmatic use
+            bpy.ops.mesh.rip_move(
+                MESH_OT_rip={'use_fill': use_fill},
+                TRANSFORM_OT_translate={'value': (0, 0, 0)}
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Rip failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        fill_desc = " (hole filled)" if use_fill else ""
+        return f"Ripped {selected_verts} vertex(es){fill_desc}"
+
+    def split(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits selection from mesh.
+
+        Unlike 'separate', split keeps geometry in the same object
+        but disconnects it from surrounding geometry.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select geometry to split.")
+
+        try:
+            bpy.ops.mesh.split()
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Split failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Split {selected_verts} vertices ({selected_faces} faces) from mesh"
+
+    def edge_split(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits mesh at selected edges.
+
+        Creates a seam/split along selected edges. Geometry becomes disconnected
+        but stays in place (vertices are duplicated at the split).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to split.")
+
+        try:
+            bpy.ops.mesh.edge_split()
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Edge split failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Split mesh at {selected_edges} edge(s)"

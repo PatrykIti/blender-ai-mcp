@@ -1441,3 +1441,123 @@ def mesh_decimate(
         return handler.decimate(ratio, use_symmetry, symmetry_axis)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-032: Knife & Cut Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_knife_project(
+    ctx: Context,
+    cut_through: bool = True
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Projects cut from selected geometry.
+
+    Projects knife cut from view using selected edges/faces as cutter.
+    Useful for: logo cutouts, panel lines, window frames, hard-surface details.
+
+    IMPORTANT: Requires specific view angle for correct projection.
+    Best used with orthographic views (Numpad 1, 3, 7).
+
+    Requirements:
+    - Object must be in Edit Mode
+    - Select cutting geometry (edges/faces) in another object or same mesh
+    - View angle determines projection direction
+
+    Workflow: BEFORE → Position view orthographically, select cutter geometry
+
+    Args:
+        cut_through: If True, cuts through entire mesh. If False, only cuts visible faces.
+
+    Examples:
+        mesh_knife_project(cut_through=True) -> Cut through entire mesh
+        mesh_knife_project(cut_through=False) -> Only cut visible faces from view
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.knife_project(cut_through)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_rip(
+    ctx: Context,
+    use_fill: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Rips (tears) geometry at selection.
+
+    Creates a hole/tear in the mesh at selected vertices or edges.
+    Useful for: creating openings, tears, separating connected geometry.
+
+    Note: Rips from the center of selection outward.
+
+    Workflow: BEFORE → mesh_select_targeted(action="by_index", element_type="VERT")
+
+    Args:
+        use_fill: If True, fills the ripped hole with a face. Default False.
+
+    Examples:
+        mesh_rip() -> Rip at selected vertices
+        mesh_rip(use_fill=True) -> Rip and fill the hole
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.rip(use_fill)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_split(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits selection from mesh.
+
+    Unlike 'separate' (which creates new objects), split keeps geometry
+    in the same object but disconnects it from surrounding geometry.
+
+    Useful for:
+    - Creating movable parts that stay in the same object
+    - Preparing geometry for animation
+    - Isolating regions for material assignment
+    - Pre-separation editing
+
+    Workflow: BEFORE → mesh_select(action) or mesh_select_targeted | AFTER → mesh_transform_selected
+
+    Examples:
+        (select faces) mesh_split() -> Disconnect selected faces from rest of mesh
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.split()
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_edge_split(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits mesh at selected edges.
+
+    Creates a seam/split along selected edges. Geometry becomes disconnected
+    but stays in place (vertices are duplicated at the split).
+
+    Useful for:
+    - UV seam preparation
+    - Material boundaries
+    - Rigging preparation (separating limbs)
+    - Creating hard edges without modifiers
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → mesh_transform_selected
+
+    Examples:
+        (select edge loop) mesh_edge_split() -> Split mesh along the edge loop
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_split()
+    except RuntimeError as e:
+        return str(e)
