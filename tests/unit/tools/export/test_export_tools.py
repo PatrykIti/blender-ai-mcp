@@ -242,13 +242,21 @@ class TestExportObj:
         """Reset mock and reconfigure before each test."""
         mock_bpy.reset_mock()
         mock_bpy.ops = MagicMock()
+        mock_bpy.ops.wm.obj_export.return_value = {'FINISHED'}
         mock_bpy.data = MagicMock()
         mock_bpy.context = MagicMock()
+
+        # Mock mesh objects in scene (required for OBJ export)
+        mock_mesh_obj = MagicMock()
+        mock_mesh_obj.type = 'MESH'
+        mock_mesh_obj.name = 'Cube'
+        mock_bpy.data.objects = [mock_mesh_obj]
+
         self.handler = SystemHandler()
 
     def test_export_obj_basic(self):
         """Test basic OBJ export with default parameters."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj"
             )
@@ -267,7 +275,7 @@ class TestExportObj:
 
     def test_export_obj_adds_extension(self):
         """Test that .obj extension is added if missing."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test"
             )
@@ -277,7 +285,7 @@ class TestExportObj:
 
     def test_export_obj_selected_only(self):
         """Test OBJ export with selected objects only."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 export_selected=True
@@ -288,7 +296,7 @@ class TestExportObj:
 
     def test_export_obj_no_modifiers(self):
         """Test OBJ export without applying modifiers."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 apply_modifiers=False
@@ -299,7 +307,7 @@ class TestExportObj:
 
     def test_export_obj_no_materials(self):
         """Test OBJ export without materials."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 export_materials=False
@@ -310,7 +318,7 @@ class TestExportObj:
 
     def test_export_obj_no_uvs(self):
         """Test OBJ export without UVs."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 export_uvs=False
@@ -321,7 +329,7 @@ class TestExportObj:
 
     def test_export_obj_no_normals(self):
         """Test OBJ export without normals."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 export_normals=False
@@ -332,7 +340,7 @@ class TestExportObj:
 
     def test_export_obj_triangulate(self):
         """Test OBJ export with triangulation."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 triangulate=True
@@ -343,14 +351,17 @@ class TestExportObj:
 
     def test_export_obj_creates_directory(self):
         """Test that directories are created if needed."""
-        with patch("os.makedirs") as mock_makedirs:
+        with patch("os.makedirs") as mock_makedirs, \
+             patch("os.access", return_value=True), \
+             patch("os.path.exists", return_value=True), \
+             patch("os.listdir", return_value=["test.obj"]):
             self.handler.export_obj(filepath="/tmp/subdir/test.obj")
 
         mock_makedirs.assert_called_once_with("/tmp/subdir", exist_ok=True)
 
     def test_export_obj_all_options_disabled(self):
         """Test OBJ export with all optional features disabled."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.obj",
                 export_selected=True,
@@ -377,8 +388,16 @@ class TestExportEdgeCases:
         """Reset mock and reconfigure before each test."""
         mock_bpy.reset_mock()
         mock_bpy.ops = MagicMock()
+        mock_bpy.ops.wm.obj_export.return_value = {'FINISHED'}
         mock_bpy.data = MagicMock()
         mock_bpy.context = MagicMock()
+
+        # Mock mesh objects in scene (required for OBJ export)
+        mock_mesh_obj = MagicMock()
+        mock_mesh_obj.type = 'MESH'
+        mock_mesh_obj.name = 'Cube'
+        mock_bpy.data.objects = [mock_mesh_obj]
+
         self.handler = SystemHandler()
 
     def test_export_glb_uppercase_extension(self):
@@ -403,7 +422,7 @@ class TestExportEdgeCases:
 
     def test_export_obj_uppercase_extension(self):
         """Test OBJ export with uppercase extension."""
-        with patch("os.makedirs"):
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="/tmp/test.OBJ"
             )
@@ -432,7 +451,7 @@ class TestExportEdgeCases:
 
     def test_export_obj_empty_directory(self):
         """Test OBJ export to current directory (no dir path)."""
-        with patch("os.makedirs") as mock_makedirs:
+        with patch("os.makedirs") as mock_makedirs, patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
             result = self.handler.export_obj(
                 filepath="test.obj"
             )

@@ -79,6 +79,20 @@ class TestMeshRip(unittest.TestCase):
         bpy.ops.mesh.rip_move = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
 
+        # Mock screen areas for temp_override context
+        mock_region = MagicMock()
+        mock_region.type = 'WINDOW'
+
+        mock_area = MagicMock()
+        mock_area.type = 'VIEW_3D'
+        mock_area.regions = [mock_region]
+
+        bpy.context.screen = MagicMock()
+        bpy.context.screen.areas = [mock_area]
+
+        # Mock temp_override context manager
+        bpy.context.temp_override = MagicMock(return_value=MagicMock(__enter__=MagicMock(), __exit__=MagicMock()))
+
         # Mock bmesh with selected vertices
         mock_bm = MagicMock()
         mock_verts = [MagicMock(select=True), MagicMock(select=True)]
@@ -89,6 +103,7 @@ class TestMeshRip(unittest.TestCase):
         """Test rip with default parameters"""
         result = self.handler.rip()
 
+        # The rip_move is called inside temp_override context
         bpy.ops.mesh.rip_move.assert_called_once()
         self.assertIn("Ripped", result)
         self.assertIn("vertex", result)
