@@ -3,13 +3,18 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~16 sub-tasks)
+- **To Do:** 5 tasks (~40 sub-tasks)
 - **In Progress:** 0
 - **Done:** 100
 
 ---
 
 ## 🚨 To Do
+
+### Core Infrastructure
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor** | 🔴 High | 24 sub-tasks: interceptor, analyzers, engines, workflows |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |

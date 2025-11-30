@@ -88,9 +88,9 @@ Object Mode operations for creating and transforming objects.
 #### Lattice Deformation
 | Tool | Description | Status |
 |------|-------------|--------|
-| `lattice_create` | Create lattice fitted to object | 🚧 |
-| `lattice_bind` | Bind object to lattice deformer | 🚧 |
-| `lattice_edit_point` | Move lattice control points | 🚧 |
+| `lattice_create` | Create lattice fitted to object | ✅ |
+| `lattice_bind` | Bind object to lattice deformer | ✅ |
+| `lattice_edit_point` | Move lattice control points | ✅ |
 
 #### Text Objects
 | Tool | Description | Status |
@@ -388,31 +388,78 @@ Skeletal rigging and animation (future).
 
 ---
 
-### 🤖 Intent Router (Planned)
+### 🤖 Router Supervisor (Planned)
 
-Offline intent-matching system that maps natural language prompts to tools without requiring an external LLM.
+Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
+#### Phase 1: Foundation & Infrastructure
 | Component | Description | Status |
 |-----------|-------------|--------|
-| `Intent Classifier` | TF-IDF + SVM/LogisticRegression for keyword matching | 🚧 |
-| `Embedding Store` | Semantic matching via LaBSE (109 languages) | 🚧 |
-| `Workflow Planner` | Maps complex intents to tool sequences | 🚧 |
-| `Feedback Learning` | Self-improvement from user corrections | 🚧 |
+| Router Directory Structure | Clean Architecture package structure | 🚧 |
+| Domain Entities | InterceptedToolCall, SceneContext, Pattern | 🚧 |
+| Domain Interfaces | Abstract interfaces for all components | 🚧 |
+| Metadata Loader | Tool definitions from JSON | 🚧 |
+| Configuration System | Router behavior settings | 🚧 |
+
+#### Phase 2: Scene Analysis
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Tool Interceptor | Capture all LLM tool calls | 🚧 |
+| Scene Context Analyzer | Read Blender state via RPC | 🚧 |
+| Geometry Pattern Detector | Detect tower/phone/table patterns | 🚧 |
+| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | 🚧 |
+
+#### Phase 3: Tool Processing Engines
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Tool Correction Engine | Fix params, mode, selection | 🚧 |
+| Tool Override Engine | Replace with better alternatives | 🚧 |
+| Workflow Expansion Engine | 1 tool → N tools | 🚧 |
+| Error Firewall | Block/fix invalid operations | 🚧 |
+| Intent Classifier (TF-IDF) | Offline intent matching | 🚧 |
+
+#### Phase 4: Integration
+| Component | Description | Status |
+|-----------|-------------|--------|
+| SupervisorRouter | Main orchestrator | 🚧 |
+| MCP Integration | Hook into tool execution | 🚧 |
+| Logging & Telemetry | Decision logging | 🚧 |
+
+#### Phase 5: Workflows & Patterns
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Phone Workflow | Complete phone modeling sequence | 🚧 |
+| Tower Workflow | Pillar/column with taper | 🚧 |
+| Screen Cutout Workflow | Display inset sub-workflow | 🚧 |
+| Custom Workflow System | YAML-defined workflows | 🚧 |
 
 **Key Features:**
-- **100% Offline** - No external API calls required
-- **Deterministic** - Same prompt → same tool selection
-- **Multilingual** - LaBSE supports 109 languages (PL, EN, DE, FR, ES, ...)
-- **Workflow Support** - "make a phone" → automatic multi-tool sequence
-- **Anti-Hallucination** - Validates tools exist before execution
+- **LLM Supervisor** - Intercepts and corrects LLM tool calls before execution
+- **Scene-Aware** - Analyzes Blender state to make informed decisions
+- **Pattern Detection** - Recognizes tower, phone, table structures
+- **Auto-Correction** - Fixes mode, selection, parameter errors
+- **Workflow Expansion** - Single tool → complete workflow
+- **Error Firewall** - Blocks invalid operations before they crash
+- **100% Offline** - No external API calls for core routing
+- **Multilingual** - LaBSE supports 109 languages (optional)
 
-**Example:**
+**Example: LLM sends mesh tool in wrong mode**
 ```
-User: "extrude the face outward"
-Router: mesh_extrude_region
+LLM: mesh_extrude(depth=0.5)  # In OBJECT mode, no selection
 
-User: "create a phone with rounded edges"
-Router: [modeling_add_cube, mesh_bevel, mesh_inset, mesh_extrude, material_assign]
+Router detects:
+  - Mode: OBJECT (mesh tool needs EDIT)
+  - Selection: None (extrude needs faces)
+  - Pattern: phone_like
+
+Router outputs:
+  1. system_set_mode(mode="EDIT")
+  2. mesh_select(action="all", mode="FACE")
+  3. mesh_inset(thickness=0.03)
+  4. mesh_extrude(depth=-0.02)
+  5. system_set_mode(mode="OBJECT")
+
+Result: Screen cutout created instead of crash!
 ```
 
 ---
