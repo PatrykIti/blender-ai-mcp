@@ -182,6 +182,10 @@ Technical details.
 | `edge_crease` | `edge_crease` | Sets crease weight on selected edges. |
 | `bevel_weight` | `bevel_weight` | Sets bevel weight on selected edges. |
 | `mark_sharp` | `mark_sharp` | Marks or clears sharp edges. |
+| `mesh.dissolve` | `dissolve` | Dissolves geometry (limited/verts/edges/faces). |
+| `mesh.tris_to_quads` | `tris_to_quads` | Converts triangles to quads. |
+| `mesh.normals_make_consistent` | `normals_make_consistent` | Recalculates normals to face consistently. |
+| `mesh.decimate` | `decimate` | Reduces polycount while preserving shape. |
 
 
 ### Curve (`application/handlers/curve.py`)

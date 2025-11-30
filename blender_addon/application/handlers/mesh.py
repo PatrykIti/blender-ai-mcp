@@ -1471,3 +1471,154 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"{action_desc} {selected_edges} edge(s) as sharp"
+
+    # TASK-030-1: Mesh Dissolve Tool
+    def dissolve(self, dissolve_type="limited", angle_limit=5.0, use_face_split=False, use_boundary_tear=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Dissolves selected geometry while preserving shape.
+
+        dissolve_type options:
+        - 'limited': Dissolve based on angle limit (planar faces)
+        - 'verts': Dissolve selected vertices
+        - 'edges': Dissolve selected edges
+        - 'faces': Dissolve selected faces
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Validate dissolve_type
+        valid_types = ["limited", "verts", "edges", "faces"]
+        dissolve_type = dissolve_type.lower()
+        if dissolve_type not in valid_types:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid dissolve_type '{dissolve_type}'. Must be one of: {valid_types}")
+
+        # Convert angle to radians for limited dissolve
+        import math
+        angle_limit_rad = math.radians(angle_limit)
+
+        try:
+            if dissolve_type == "limited":
+                bpy.ops.mesh.dissolve_limited(
+                    angle_limit=angle_limit_rad,
+                    use_dissolve_boundaries=use_boundary_tear
+                )
+                result_desc = f"Limited dissolve (angle: {angle_limit}°)"
+            elif dissolve_type == "verts":
+                bpy.ops.mesh.dissolve_verts(
+                    use_face_split=use_face_split,
+                    use_boundary_tear=use_boundary_tear
+                )
+                result_desc = "Dissolved selected vertices"
+            elif dissolve_type == "edges":
+                bpy.ops.mesh.dissolve_edges(
+                    use_verts=True,
+                    use_face_split=use_face_split
+                )
+                result_desc = "Dissolved selected edges"
+            else:  # faces
+                bpy.ops.mesh.dissolve_faces(use_verts=True)
+                result_desc = "Dissolved selected faces"
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Dissolve failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"{result_desc} completed successfully"
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    def tris_to_quads(self, face_threshold=40.0, shape_threshold=40.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts triangles to quads where possible.
+
+        Merges adjacent triangles into quads based on angle thresholds.
+        face_threshold: Maximum angle between face normals (degrees)
+        shape_threshold: Maximum shape deviation allowed (degrees)
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Convert thresholds to radians
+        import math
+        face_threshold_rad = math.radians(face_threshold)
+        shape_threshold_rad = math.radians(shape_threshold)
+
+        try:
+            bpy.ops.mesh.tris_convert_to_quads(
+                face_threshold=face_threshold_rad,
+                shape_threshold=shape_threshold_rad
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Tris to quads conversion failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Converted triangles to quads (face threshold: {face_threshold}°, shape threshold: {shape_threshold}°)"
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    def normals_make_consistent(self, inside=False):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Recalculates normals to face consistently.
+
+        Makes all normals point in the same direction (outward by default).
+        inside: If True, normals point inward instead of outward
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        try:
+            bpy.ops.mesh.normals_make_consistent(inside=inside)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Normals recalculation failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        direction = "inward" if inside else "outward"
+        return f"Recalculated normals to face consistently {direction}"
+
+    # TASK-030-4: Mesh Decimate Tool
+    def decimate(self, ratio=0.5, use_symmetry=False, symmetry_axis="X"):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Reduces polycount while preserving shape.
+
+        Uses collapse decimation to reduce geometry complexity.
+        ratio: Target ratio of faces to keep (0.0 to 1.0)
+        use_symmetry: Maintain mesh symmetry during decimation
+        symmetry_axis: Axis for symmetry ('X', 'Y', or 'Z')
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Validate ratio
+        ratio = max(0.0, min(1.0, ratio))
+
+        # Validate symmetry axis
+        valid_axes = ['X', 'Y', 'Z']
+        symmetry_axis = symmetry_axis.upper()
+        if symmetry_axis not in valid_axes:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid symmetry_axis '{symmetry_axis}'. Must be one of: {valid_axes}")
+
+        try:
+            bpy.ops.mesh.decimate(
+                ratio=ratio,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Decimate failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        symmetry_desc = f" with {symmetry_axis} symmetry" if use_symmetry else ""
+        return f"Decimated mesh to {ratio*100:.1f}% of original{symmetry_desc}"

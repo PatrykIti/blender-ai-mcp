@@ -366,3 +366,62 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-030-1: Mesh Dissolve Tool
+    def dissolve(
+        self,
+        dissolve_type: str = "limited",
+        angle_limit: float = 5.0,
+        use_face_split: bool = False,
+        use_boundary_tear: bool = False
+    ) -> str:
+        args = {
+            "dissolve_type": dissolve_type,
+            "angle_limit": angle_limit,
+            "use_face_split": use_face_split,
+            "use_boundary_tear": use_boundary_tear
+        }
+        response = self.rpc.send_request("mesh.dissolve", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    def tris_to_quads(
+        self,
+        face_threshold: float = 40.0,
+        shape_threshold: float = 40.0
+    ) -> str:
+        args = {
+            "face_threshold": face_threshold,
+            "shape_threshold": shape_threshold
+        }
+        response = self.rpc.send_request("mesh.tris_to_quads", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    def normals_make_consistent(self, inside: bool = False) -> str:
+        args = {"inside": inside}
+        response = self.rpc.send_request("mesh.normals_make_consistent", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-4: Mesh Decimate Tool
+    def decimate(
+        self,
+        ratio: float = 0.5,
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X"
+    ) -> str:
+        args = {
+            "ratio": ratio,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis
+        }
+        response = self.rpc.send_request("mesh.decimate", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

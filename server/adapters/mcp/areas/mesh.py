@@ -1298,3 +1298,146 @@ def mesh_mark_sharp(
         return handler.mark_sharp(action)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-030: Mesh Cleanup & Optimization
+# ==============================================================================
+
+@mcp.tool()
+def mesh_dissolve(
+    ctx: Context,
+    dissolve_type: Literal["verts", "edges", "faces", "limited"] = "limited",
+    angle_limit: float = 5.0,
+    use_face_split: bool = False,
+    use_boundary_tear: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Dissolves geometry while preserving shape.
+
+    Types:
+    - verts: Dissolve selected vertices (merge surrounding faces)
+    - edges: Dissolve selected edges (merge adjacent faces)
+    - faces: Dissolve selected faces (remove while keeping boundary)
+    - limited: Auto-dissolve edges below angle threshold (best for cleanup)
+
+    ESSENTIAL for game dev: Removes unnecessary edge loops, cleans up booleans.
+
+    Workflow: BEFORE → mesh_select(action="all") | Limited dissolve is best for cleanup
+
+    Args:
+        dissolve_type: Type of dissolve operation ("verts", "edges", "faces", "limited").
+        angle_limit: Max angle between faces for limited dissolve (degrees). Default 5.0.
+        use_face_split: Split off non-planar faces. Default False.
+        use_boundary_tear: Split off boundary vertices. Default False.
+
+    Examples:
+        mesh_dissolve(dissolve_type="limited", angle_limit=5.0) -> Clean up flat areas
+        mesh_dissolve(dissolve_type="verts") -> Dissolve selected vertices
+        mesh_dissolve(dissolve_type="edges") -> Dissolve selected edges
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.dissolve(dissolve_type, angle_limit, use_face_split, use_boundary_tear)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_tris_to_quads(
+    ctx: Context,
+    face_threshold: float = 40.0,
+    shape_threshold: float = 40.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts triangles to quads where possible.
+
+    Useful for:
+    - Cleaning up triangulated imports (OBJ, FBX from game engines)
+    - Post-boolean cleanup
+    - Preparing mesh for subdivision surface
+    - Better topology for animation deformation
+
+    Workflow: BEFORE → mesh_select(action="all")
+
+    Args:
+        face_threshold: Max angle between face normals (degrees). Default 40.0.
+        shape_threshold: Max shape difference for quad quality (degrees). Default 40.0.
+
+    Examples:
+        mesh_tris_to_quads() -> Convert with default thresholds
+        mesh_tris_to_quads(face_threshold=60.0, shape_threshold=60.0) -> More aggressive conversion
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.tris_to_quads(face_threshold, shape_threshold)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_normals_make_consistent(
+    ctx: Context,
+    inside: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Recalculates normals to face consistently.
+
+    Fixes:
+    - Inverted faces (black patches in render)
+    - Inconsistent shading after boolean operations
+    - Import artifacts from other 3D software
+
+    Default: Normals face outward (standard for solid objects).
+    Set inside=True for hollow objects like rooms/caves.
+
+    Workflow: BEFORE → mesh_select(action="all")
+
+    Args:
+        inside: If True, flip normals to face inward. Default False (outward).
+
+    Examples:
+        mesh_normals_make_consistent() -> Fix normals facing outward
+        mesh_normals_make_consistent(inside=True) -> Fix normals facing inward (for rooms)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.normals_make_consistent(inside)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_decimate(
+    ctx: Context,
+    ratio: float = 0.5,
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Reduces polycount while preserving shape.
+
+    For whole-object decimation, prefer modeling_add_modifier(type="DECIMATE").
+    This tool works on selected geometry only - useful for partial decimation.
+
+    Use cases:
+    - Creating LOD (Level of Detail) meshes for games
+    - Optimizing dense sculpts for animation
+    - Reducing polycount in specific areas
+
+    Workflow: BEFORE → mesh_select(action="all") or select specific region
+
+    Args:
+        ratio: Target ratio (0.0-1.0). 0.5 = reduce by half. Default 0.5.
+        use_symmetry: Maintain mesh symmetry during decimation. Default False.
+        symmetry_axis: Axis for symmetry ("X", "Y", "Z"). Default "X".
+
+    Examples:
+        mesh_decimate(ratio=0.5) -> Reduce selected geometry by half
+        mesh_decimate(ratio=0.25, use_symmetry=True) -> Aggressive reduction with symmetry
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.decimate(ratio, use_symmetry, symmetry_axis)
+    except RuntimeError as e:
+        return str(e)

@@ -1083,6 +1083,152 @@ Sharp edges affect:
 
 ---
 
+# 43. mesh_dissolve ✅ Done (TASK-030-1)
+
+Dissolves selected geometry while preserving shape. Essential for mesh cleanup.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- dissolve_type: str ("limited", "verts", "edges", "faces") - default: "limited"
+- angle_limit: float (degrees, for limited dissolve) - default: 5.0
+- use_face_split: bool - default: false
+- use_boundary_tear: bool - default: false
+
+Example:
+```json
+{
+  "tool": "mesh_dissolve",
+  "args": {
+    "dissolve_type": "limited",
+    "angle_limit": 5.0
+  }
+}
+```
+
+Dissolve Types:
+- **limited**: Auto-dissolves edges below angle threshold (most common cleanup)
+- **verts**: Dissolves selected vertices, merging connected edges/faces
+- **edges**: Dissolves selected edges, merging adjacent faces
+- **faces**: Dissolves selected faces, removing them while preserving boundaries
+
+Use Case:
+- Boolean operation cleanup
+- Removing unnecessary edge loops
+- Import cleanup (OBJ/FBX)
+- Reducing mesh complexity
+
+Workflow: BEFORE → mesh_select(action="all") | Limited dissolve is ideal for cleanup
+
+---
+
+# 44. mesh_tris_to_quads ✅ Done (TASK-030-2)
+
+Converts triangles to quads where possible based on angle thresholds.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- face_threshold: float (degrees, max angle between face normals) - default: 40.0
+- shape_threshold: float (degrees, max shape deviation) - default: 40.0
+
+Example:
+```json
+{
+  "tool": "mesh_tris_to_quads",
+  "args": {
+    "face_threshold": 40.0,
+    "shape_threshold": 40.0
+  }
+}
+```
+
+Use Case:
+- Cleaning triangulated imports (OBJ, FBX, STL)
+- Post-boolean cleanup
+- Preparing mesh for subdivision surface
+
+Higher thresholds = more aggressive conversion (may create distorted quads)
+Lower thresholds = conservative conversion (better quality but fewer conversions)
+
+Workflow: BEFORE → mesh_select(action="all") | AFTER → mesh_dissolve (optional cleanup)
+
+---
+
+# 45. mesh_normals_make_consistent ✅ Done (TASK-030-3)
+
+Recalculates normals to face consistently outward (or inward).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- inside: bool (true = normals point inward) - default: false
+
+Example:
+```json
+{
+  "tool": "mesh_normals_make_consistent",
+  "args": {
+    "inside": false
+  }
+}
+```
+
+Use Case:
+- Fixing inverted faces (black patches in render)
+- Inconsistent shading correction
+- Boolean operation artifacts
+- Import cleanup
+
+Symptoms of flipped normals:
+- Black faces in rendered view
+- Incorrect lighting/shadows
+- Backface culling issues in game engines
+- Problems with boolean operations
+
+Workflow: BEFORE → mesh_select(action="all") | Essential after import or boolean ops
+
+---
+
+# 46. mesh_decimate ✅ Done (TASK-030-4)
+
+Reduces polycount while preserving shape (Edit Mode operation).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- ratio: float (target ratio, 0.0-1.0) - default: 0.5
+- use_symmetry: bool - default: false
+- symmetry_axis: str ("X", "Y", "Z") - default: "X"
+
+Example:
+```json
+{
+  "tool": "mesh_decimate",
+  "args": {
+    "ratio": 0.5,
+    "use_symmetry": false
+  }
+}
+```
+
+Use Case:
+- LOD (Level of Detail) generation
+- Game-ready asset optimization
+- Retopology preparation
+- Reducing sculpt detail
+
+For whole-object decimation, consider `modeling_add_modifier(type="DECIMATE")` which offers more control (collapse/unsubdiv/planar modes).
+
+ratio values:
+- 1.0 = keep all faces (no change)
+- 0.5 = keep 50% of faces
+- 0.25 = keep 25% of faces (aggressive reduction)
+
+Workflow: BEFORE → mesh_select(action="all") | Use symmetry for symmetric meshes
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

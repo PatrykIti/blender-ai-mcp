@@ -147,6 +147,10 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. | ✅ Done |
 | `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. | ✅ Done |
 | `mesh_mark_sharp` | `action` (mark/clear) | Marks or clears sharp edges for Auto Smooth and Edge Split. | ✅ Done |
+| `mesh_dissolve` | `dissolve_type` (limited/verts/edges/faces), `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry while preserving shape (cleanup). | ✅ Done |
+| `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. | ✅ Done |
+| `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward). | ✅ Done |
+| `mesh_decimate` | `ratio`, `use_symmetry`, `symmetry_axis` | Reduces polycount while preserving shape. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`

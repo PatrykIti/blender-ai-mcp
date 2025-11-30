@@ -257,3 +257,42 @@ class IMeshTool(ABC):
     def mark_sharp(self, action: str = "mark") -> str:
         """Marks or clears sharp edges for auto-smooth and edge split."""
         pass
+
+    # TASK-030-1: Mesh Dissolve Tool
+    @abstractmethod
+    def dissolve(
+        self,
+        dissolve_type: str = "limited",
+        angle_limit: float = 5.0,
+        use_face_split: bool = False,
+        use_boundary_tear: bool = False
+    ) -> str:
+        """Dissolves selected geometry while preserving shape."""
+        pass
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    @abstractmethod
+    def tris_to_quads(
+        self,
+        face_threshold: float = 40.0,
+        shape_threshold: float = 40.0
+    ) -> str:
+        """Converts triangles to quads where possible."""
+        pass
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    @abstractmethod
+    def normals_make_consistent(self, inside: bool = False) -> str:
+        """Recalculates normals to face consistently outward."""
+        pass
+
+    # TASK-030-4: Mesh Decimate Tool
+    @abstractmethod
+    def decimate(
+        self,
+        ratio: float = 0.5,
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X"
+    ) -> str:
+        """Reduces polycount while preserving shape."""
+        pass

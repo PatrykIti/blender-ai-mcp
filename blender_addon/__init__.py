@@ -181,6 +181,12 @@ def register():
         rpc_server.register_handler("mesh.bevel_weight", mesh_handler.bevel_weight)
         rpc_server.register_handler("mesh.mark_sharp", mesh_handler.mark_sharp)
 
+        # TASK-030: Mesh Cleanup & Optimization
+        rpc_server.register_handler("mesh.dissolve", mesh_handler.dissolve)
+        rpc_server.register_handler("mesh.tris_to_quads", mesh_handler.tris_to_quads)
+        rpc_server.register_handler("mesh.normals_make_consistent", mesh_handler.normals_make_consistent)
+        rpc_server.register_handler("mesh.decimate", mesh_handler.decimate)
+
         rpc_server.start()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")

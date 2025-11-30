@@ -3,18 +3,17 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 9 tasks (~38 sub-tasks)
+- **To Do:** 8 tasks (~34 sub-tasks)
 - **In Progress:** 1
-- **Done:** 82
+- **Done:** 86
 
 ---
 
 ## 🚨 To Do
 
-### Game Dev Critical (Baking & Mesh Cleanup)
+### Game Dev Critical (Baking)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-030](./TASK-030_Mesh_Cleanup_Optimization.md) | **Mesh Cleanup & Optimization** | 🔴 High | mesh_dissolve, mesh_tris_to_quads, mesh_normals_make_consistent |
 | [TASK-031](./TASK-031_Baking_Tools.md) | **Baking Tools** | 🔴 Critical | bake_normal_map, bake_ao, bake_combined |
 
 ### Organic & Medical Modeling
@@ -55,6 +54,10 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-030-4](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-4-mesh_decimate) | **mesh_decimate** | 🔴 High | 2025-11-30 |
+| [TASK-030-3](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-3-mesh_normals_make_consistent) | **mesh_normals_make_consistent** | 🔴 High | 2025-11-30 |
+| [TASK-030-2](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-2-mesh_tris_to_quads) | **mesh_tris_to_quads** | 🔴 High | 2025-11-30 |
+| [TASK-030-1](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-1-mesh_dissolve) | **mesh_dissolve** | 🔴 High | 2025-11-30 |
 | [TASK-029-3](./TASK-029_Edge_Weights_Creases.md#task-029-3-mesh_mark_sharp) | **mesh_mark_sharp** | 🔴 High | 2025-11-30 |
 | [TASK-029-2](./TASK-029_Edge_Weights_Creases.md#task-029-2-mesh_bevel_weight) | **mesh_bevel_weight** | 🔴 High | 2025-11-30 |
 | [TASK-029-1](./TASK-029_Edge_Weights_Creases.md#task-029-1-mesh_edge_crease) | **mesh_edge_crease** | 🔴 High | 2025-11-30 |

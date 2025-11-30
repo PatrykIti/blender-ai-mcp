@@ -187,10 +187,10 @@ Edit Mode operations for geometry manipulation.
 #### Cleanup & Optimization
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_dissolve` | Dissolve vertices/edges/faces (limited dissolve) | 🚧 |
-| `mesh_tris_to_quads` | Convert triangles to quads | 🚧 |
-| `mesh_normals_make_consistent` | Recalculate normals | 🚧 |
-| `mesh_decimate` | Reduce polycount on selection | 🚧 |
+| `mesh_dissolve` | Dissolve vertices/edges/faces (limited dissolve) | ✅ |
+| `mesh_tris_to_quads` | Convert triangles to quads | ✅ |
+| `mesh_normals_make_consistent` | Recalculate normals | ✅ |
+| `mesh_decimate` | Reduce polycount on selection | ✅ |
 
 #### Knife & Cut
 | Tool | Description | Status |
@@ -538,6 +538,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_edge_crease",
         "mesh_bevel_weight",
         "mesh_mark_sharp",
+        "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
@@ -644,6 +648,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_edge_crease",
         "mesh_bevel_weight",
         "mesh_mark_sharp",
+        "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
