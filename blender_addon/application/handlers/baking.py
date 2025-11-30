@@ -14,6 +14,13 @@ except ImportError:
 class BakingHandler:
     """Handler for texture baking operations in Blender."""
 
+    def _ensure_object_mode(self):
+        """Ensures we are in OBJECT mode. Returns previous mode."""
+        current_mode = bpy.context.mode
+        if current_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        return current_mode
+
     def _ensure_cycles(self):
         """Ensures Cycles renderer is active. Returns previous engine."""
         previous_engine = bpy.context.scene.render.engine
@@ -133,6 +140,7 @@ class BakingHandler:
         """
         Bakes normal map from high-poly to low-poly or from geometry.
         """
+        self._ensure_object_mode()
         previous_engine = self._ensure_cycles()
 
         try:
@@ -207,6 +215,7 @@ class BakingHandler:
         """
         Bakes ambient occlusion map.
         """
+        self._ensure_object_mode()
         previous_engine = self._ensure_cycles()
 
         try:
@@ -263,6 +272,7 @@ class BakingHandler:
         """
         Bakes combined render (full material + lighting) to texture.
         """
+        self._ensure_object_mode()
         previous_engine = self._ensure_cycles()
 
         try:
@@ -323,6 +333,7 @@ class BakingHandler:
         """
         Bakes diffuse/albedo color only.
         """
+        self._ensure_object_mode()
         previous_engine = self._ensure_cycles()
 
         try:
