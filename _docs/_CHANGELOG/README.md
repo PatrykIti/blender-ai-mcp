@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [55](./55-2025-11-30-lattice-deformation.md) | 2025-11-30 | **Lattice Deformation Tools (TASK-033)** | 1.28.0 |
 | [54](./54-2025-11-30-organic-modeling-tools.md) | 2025-11-30 | **Organic Modeling Tools (TASK-038)** | 1.27.0 |
 | [53](./53-2025-11-30-import-tools.md) | 2025-11-30 | **Import Tools (TASK-035)** | 1.26.0 |
 | [52](./52-2025-11-30-knife-cut-tools.md) | 2025-11-30 | **Knife & Cut Tools (TASK-032)** | 1.25.0 |

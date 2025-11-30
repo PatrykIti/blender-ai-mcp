@@ -26,6 +26,7 @@ try:
     from .application.handlers.system import SystemHandler
     from .application.handlers.sculpt import SculptHandler
     from .application.handlers.baking import BakingHandler
+    from .application.handlers.lattice import LatticeHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -37,6 +38,7 @@ except ImportError:
     SystemHandler = None
     SculptHandler = None
     BakingHandler = None
+    LatticeHandler = None
 
 
 def register():
@@ -54,6 +56,7 @@ def register():
         system_handler = SystemHandler()
         sculpt_handler = SculptHandler()
         baking_handler = BakingHandler()
+        lattice_handler = LatticeHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -226,6 +229,11 @@ def register():
         rpc_server.register_handler("import.fbx", system_handler.import_fbx)
         rpc_server.register_handler("import.glb", system_handler.import_glb)
         rpc_server.register_handler("import.image_as_plane", system_handler.import_image_as_plane)
+
+        # TASK-033: Lattice Deformation Tools
+        rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
+        rpc_server.register_handler("lattice.bind", lattice_handler.lattice_bind)
+        rpc_server.register_handler("lattice.edit_point", lattice_handler.lattice_edit_point)
 
         rpc_server.start()
     else:

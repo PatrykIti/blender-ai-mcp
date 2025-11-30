@@ -265,3 +265,12 @@ Technical details.
 | `import.glb` | `import_glb` | Imports GLB/GLTF file (PBR materials, animations). |
 | `import.image_as_plane` | `import_image_as_plane` | Imports image as textured plane (reference images). |
 
+
+### Lattice (`application/handlers/lattice.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `lattice.create` | `lattice_create` | Creates lattice object, auto-fits to target bounds. |
+| `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
+| `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
+

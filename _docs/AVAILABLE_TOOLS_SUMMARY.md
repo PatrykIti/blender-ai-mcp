@@ -112,6 +112,23 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🔲 Lattice Tools (`lattice_`)
+*Non-destructive deformation using lattice cages for architectural and organic modeling.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object. If target_object provided, auto-fits to bounding box. | ✅ Done |
+| `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice using Lattice modifier. Non-destructive deformation. | ✅ Done |
+| `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. | ✅ Done |
+
+**Use Cases:**
+- Tapering towers (Eiffel Tower workflow)
+- Bending/twisting shapes
+- Organic character deformations
+- Product design (curved surfaces)
+
+---
+
 ## 🕸️ Mesh Tools (`mesh_`) - Edit Mode
 *Low-level geometry manipulation (vertices, edges, faces).*
 

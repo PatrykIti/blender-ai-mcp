@@ -1,6 +1,7 @@
 from . import baking
 from . import collection
 from . import curve
+from . import lattice
 from . import material
 from . import mesh
 from . import modeling

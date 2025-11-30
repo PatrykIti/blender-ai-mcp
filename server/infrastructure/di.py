@@ -9,6 +9,7 @@ from server.application.tool_handlers.curve_handler import CurveToolHandler
 from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.application.tool_handlers.baking_handler import BakingToolHandler
+from server.application.tool_handlers.lattice_handler import LatticeToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -20,6 +21,7 @@ from server.domain.tools.curve import ICurveTool
 from server.domain.tools.system import ISystemTool
 from server.domain.tools.sculpt import ISculptTool
 from server.domain.tools.baking import IBakingTool
+from server.domain.tools.lattice import ILatticeTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -84,5 +86,10 @@ def get_baking_handler() -> IBakingTool:
     """Provider for IBakingTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return BakingToolHandler(rpc)
+
+def get_lattice_handler() -> ILatticeTool:
+    """Provider for ILatticeTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return LatticeToolHandler(rpc)
 
 

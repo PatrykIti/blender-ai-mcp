@@ -214,6 +214,15 @@ File import operations.
 | `import_glb` | `filepath`, `import_pack_images`, `merge_vertices`, `import_shading` | Imports GLB/GLTF file (PBR materials, animations). |
 | `import_image_as_plane` | `filepath`, `name`, `location`, `size`, `align_axis`, `shader`, `use_transparency` | Imports image as textured plane (reference images). |
 
+### Lattice Tools
+Non-destructive shape deformation using control point cages.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object, auto-fits to target object bounds. |
+| `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice via Lattice modifier. |
+| `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. |
+
 ### System Tools
 System-level operations for mode switching, undo/redo, and file management.
 
