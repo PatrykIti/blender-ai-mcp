@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 4 tasks (~16 sub-tasks)
-- **In Progress:** 1
-- **Done:** 99
+- **In Progress:** 0
+- **Done:** 100
 
 ---
 
@@ -31,10 +31,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-### Testing Infrastructure
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | Core infra done, remaining: auto-start Blender, CI/CD |
+*No tasks currently in progress*
 
 ---
 
@@ -42,6 +39,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | 2025-11-30 |
 | [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | 2025-11-30 |
 | [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |
 | [TASK-035-3](./TASK-035_Import_Tools.md#task-035-3-import_image_as_plane) | **import_image_as_plane** | 🟠 High | 2025-11-30 |
