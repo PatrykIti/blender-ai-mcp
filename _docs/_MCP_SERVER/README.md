@@ -197,6 +197,16 @@ System-level operations for mode switching, undo/redo, and file management.
 | `system_new_file` | `load_ui` | Creates new file (resets scene to startup). |
 | `system_snapshot` | `action`, `name` | Manages quick save/restore checkpoints (save/restore/list/delete). |
 
+### Baking Tools
+Texture baking operations using Cycles renderer. Critical for game development workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `bake_normal_map` | `object_name`, `output_path`, `resolution`, `high_poly_source`, `cage_extrusion`, `margin`, `normal_space` | Bakes normal map from geometry or high-poly to low-poly. Supports TANGENT/OBJECT space. |
+| `bake_ao` | `object_name`, `output_path`, `resolution`, `samples`, `distance`, `margin` | Bakes ambient occlusion map with configurable samples. |
+| `bake_combined` | `object_name`, `output_path`, `resolution`, `samples`, `margin`, `use_pass_direct`, `use_pass_indirect`, `use_pass_color` | Bakes full render (material + lighting) to texture. |
+| `bake_diffuse` | `object_name`, `output_path`, `resolution`, `margin` | Bakes diffuse/albedo color only (no lighting). |
+
 ## 🛠 Key Components
 
 ### Entry Point (`server/main.py`)

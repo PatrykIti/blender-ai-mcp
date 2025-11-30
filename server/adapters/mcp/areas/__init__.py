@@ -1,3 +1,4 @@
+from . import baking
 from . import collection
 from . import curve
 from . import export

@@ -226,3 +226,13 @@ Technical details.
 | `system.new_file` | `new_file` | Creates new file (resets scene to startup). |
 | `system.snapshot` | `snapshot` | Manages quick save/restore checkpoints (save/restore/list/delete). |
 
+
+### Baking (`application/handlers/baking.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `baking.normal_map` | `bake_normal_map` | Bakes normal map from geometry or high-poly to low-poly. |
+| `baking.ao` | `bake_ao` | Bakes ambient occlusion map. |
+| `baking.combined` | `bake_combined` | Bakes full render (material + lighting) to texture. |
+| `baking.diffuse` | `bake_diffuse` | Bakes diffuse/albedo color only (no lighting). |
+

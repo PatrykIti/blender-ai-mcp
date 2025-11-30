@@ -308,10 +308,10 @@ Texture baking for game dev workflows.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `bake_normal_map` | Bake normal map (high-to-low or self) | 🚧 |
-| `bake_ao` | Bake ambient occlusion map | 🚧 |
-| `bake_combined` | Bake full render to texture | 🚧 |
-| `bake_diffuse` | Bake diffuse/albedo color | 🚧 |
+| `bake_normal_map` | Bake normal map (high-to-low or self) | ✅ |
+| `bake_ao` | Bake ambient occlusion map | ✅ |
+| `bake_combined` | Bake full render to texture | ✅ |
+| `bake_diffuse` | Bake diffuse/albedo color | ✅ |
 
 ---
 
@@ -556,7 +556,11 @@ We recommend using Docker to run the MCP Server.
         "system_redo",
         "system_save_file",
         "system_new_file",
-        "system_snapshot"
+        "system_snapshot",
+        "bake_normal_map",
+        "bake_ao",
+        "bake_combined",
+        "bake_diffuse"
       ]
     }
   }
@@ -666,7 +670,11 @@ We recommend using Docker to run the MCP Server.
         "system_redo",
         "system_save_file",
         "system_new_file",
-        "system_snapshot"
+        "system_snapshot",
+        "bake_normal_map",
+        "bake_ao",
+        "bake_combined",
+        "bake_diffuse"
       ]
     }
   }

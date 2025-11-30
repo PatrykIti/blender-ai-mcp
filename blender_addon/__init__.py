@@ -26,6 +26,7 @@ try:
     from .application.handlers.export import ExportHandler
     from .application.handlers.system import SystemHandler
     from .application.handlers.sculpt import SculptHandler
+    from .application.handlers.baking import BakingHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -37,6 +38,7 @@ except ImportError:
     ExportHandler = None
     SystemHandler = None
     SculptHandler = None
+    BakingHandler = None
 
 
 def register():
@@ -54,6 +56,7 @@ def register():
         export_handler = ExportHandler()
         system_handler = SystemHandler()
         sculpt_handler = SculptHandler()
+        baking_handler = BakingHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -186,6 +189,12 @@ def register():
         rpc_server.register_handler("mesh.tris_to_quads", mesh_handler.tris_to_quads)
         rpc_server.register_handler("mesh.normals_make_consistent", mesh_handler.normals_make_consistent)
         rpc_server.register_handler("mesh.decimate", mesh_handler.decimate)
+
+        # TASK-031: Baking Tools
+        rpc_server.register_handler("baking.normal_map", baking_handler.bake_normal_map)
+        rpc_server.register_handler("baking.ao", baking_handler.bake_ao)
+        rpc_server.register_handler("baking.combined", baking_handler.bake_combined)
+        rpc_server.register_handler("baking.diffuse", baking_handler.bake_diffuse)
 
         rpc_server.start()
     else:

@@ -9,6 +9,7 @@ from server.application.tool_handlers.curve_handler import CurveToolHandler
 from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.export_handler import ExportToolHandler
 from server.application.tool_handlers.sculpt_handler import SculptToolHandler
+from server.application.tool_handlers.baking_handler import BakingToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -20,6 +21,7 @@ from server.domain.tools.curve import ICurveTool
 from server.domain.tools.system import ISystemTool
 from server.domain.tools.export import IExportTool
 from server.domain.tools.sculpt import ISculptTool
+from server.domain.tools.baking import IBakingTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -88,3 +90,9 @@ def get_sculpt_handler() -> ISculptTool:
     """Provider for ISculptTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return SculptToolHandler(rpc)
+
+
+def get_baking_handler() -> IBakingTool:
+    """Provider for IBakingTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return BakingToolHandler(rpc)

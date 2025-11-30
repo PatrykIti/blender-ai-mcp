@@ -23,7 +23,7 @@ Baking is **absolutely critical for game development**. It allows transferring h
 
 ### TASK-031-1: bake_normal_map
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Bakes normal map from high-poly to low-poly or from geometry.
 
@@ -86,7 +86,7 @@ image.save()
 
 ### TASK-031-2: bake_ao
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Bakes Ambient Occlusion map.
 
@@ -122,9 +122,9 @@ bpy.ops.object.bake(type='AO')
 
 ---
 
-### TASK-031-3: bake_combined (Optional)
+### TASK-031-3: bake_combined
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Bakes full material (diffuse + lighting) to texture.
 
@@ -153,9 +153,9 @@ def bake_combined(
 
 ---
 
-### TASK-031-4: bake_diffuse (Optional)
+### TASK-031-4: bake_diffuse
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Bakes diffuse/albedo color only.
 
@@ -201,8 +201,30 @@ Consider creating a `BakingHandler` class in `blender_addon/application/handlers
 
 ## Testing Requirements
 
-- [ ] Unit tests with mocked bpy.ops.object.bake
-- [ ] E2E test: Create sphere → UV unwrap → bake normal → verify image file
-- [ ] E2E test: High-to-low baking workflow
-- [ ] Test error handling for missing UVs
-- [ ] Test Cycles renderer auto-switch
+- [x] Unit tests with mocked bpy.ops.object.bake (14 tests)
+- [x] E2E test: Create sphere → UV unwrap → bake normal → verify image file
+- [x] E2E test: High-to-low baking workflow
+- [x] Test error handling for missing UVs
+- [x] Test Cycles renderer auto-switch
+
+## Implementation Summary
+
+**Completed:** 2025-11-30
+
+**Files Created/Modified:**
+- `server/domain/tools/baking.py` - IBakingTool interface
+- `server/application/tool_handlers/baking_handler.py` - RPC bridge implementation
+- `server/adapters/mcp/areas/baking.py` - MCP tool definitions (4 tools)
+- `server/infrastructure/di.py` - Added get_baking_handler provider
+- `blender_addon/application/handlers/baking.py` - Blender API implementation
+- `blender_addon/__init__.py` - RPC handler registration
+- `tests/unit/tools/baking/test_baking_handler.py` - 14 unit tests
+- `tests/e2e/tools/baking/test_baking_tools.py` - E2E tests
+
+**Features:**
+- Automatic Cycles renderer switching (required for baking)
+- UV map validation with helpful error messages
+- Auto-creation of bake material/node if missing
+- Support for PNG, JPEG, EXR output formats
+- High-to-low poly baking with cage extrusion
+- TANGENT and OBJECT normal space support

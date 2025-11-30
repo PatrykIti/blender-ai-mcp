@@ -212,6 +212,23 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🔥 Baking Tools (`bake_`)
+*Texture baking operations using Cycles renderer. Critical for game development workflows.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `bake_normal_map` | `object_name`, `output_path`, `resolution`, `high_poly_source`, `cage_extrusion`, `margin`, `normal_space` | Bakes normal map from geometry or high-poly to low-poly. Supports TANGENT/OBJECT space. | ✅ Done |
+| `bake_ao` | `object_name`, `output_path`, `resolution`, `samples`, `distance`, `margin` | Bakes ambient occlusion map with configurable ray distance and samples. | ✅ Done |
+| `bake_combined` | `object_name`, `output_path`, `resolution`, `samples`, `margin`, `use_pass_direct`, `use_pass_indirect`, `use_pass_color` | Bakes full render (material + lighting) to texture with configurable passes. | ✅ Done |
+| `bake_diffuse` | `object_name`, `output_path`, `resolution`, `margin` | Bakes diffuse/albedo color only (no lighting). | ✅ Done |
+
+**Requirements:**
+- Object must have UV map (use `uv_unwrap` first)
+- Cycles renderer (auto-switched)
+- For high-to-low baking: both high-poly and low-poly objects
+
+---
+
 ## 🛠 Planned / In Progress
 
 *(All tasks completed!)*
