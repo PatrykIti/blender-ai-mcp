@@ -342,3 +342,136 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-029-1: Mesh Edge Crease Tool
+    def edge_crease(self, crease_value: float = 1.0) -> str:
+        args = {"crease_value": crease_value}
+        response = self.rpc.send_request("mesh.edge_crease", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-029-2: Mesh Bevel Weight Tool
+    def bevel_weight(self, weight: float = 1.0) -> str:
+        args = {"weight": weight}
+        response = self.rpc.send_request("mesh.bevel_weight", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-029-3: Mesh Mark Sharp Tool
+    def mark_sharp(self, action: str = "mark") -> str:
+        args = {"action": action}
+        response = self.rpc.send_request("mesh.mark_sharp", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-1: Mesh Dissolve Tool
+    def dissolve(
+        self,
+        dissolve_type: str = "limited",
+        angle_limit: float = 5.0,
+        use_face_split: bool = False,
+        use_boundary_tear: bool = False
+    ) -> str:
+        args = {
+            "dissolve_type": dissolve_type,
+            "angle_limit": angle_limit,
+            "use_face_split": use_face_split,
+            "use_boundary_tear": use_boundary_tear
+        }
+        response = self.rpc.send_request("mesh.dissolve", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    def tris_to_quads(
+        self,
+        face_threshold: float = 40.0,
+        shape_threshold: float = 40.0
+    ) -> str:
+        args = {
+            "face_threshold": face_threshold,
+            "shape_threshold": shape_threshold
+        }
+        response = self.rpc.send_request("mesh.tris_to_quads", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    def normals_make_consistent(self, inside: bool = False) -> str:
+        args = {"inside": inside}
+        response = self.rpc.send_request("mesh.normals_make_consistent", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-030-4: Mesh Decimate Tool
+    def decimate(
+        self,
+        ratio: float = 0.5,
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X"
+    ) -> str:
+        args = {
+            "ratio": ratio,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis
+        }
+        response = self.rpc.send_request("mesh.decimate", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-1: Mesh Knife Project Tool
+    def knife_project(self, cut_through: bool = True) -> str:
+        args = {"cut_through": cut_through}
+        response = self.rpc.send_request("mesh.knife_project", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-2: Mesh Rip Tool
+    def rip(self, use_fill: bool = False) -> str:
+        args = {"use_fill": use_fill}
+        response = self.rpc.send_request("mesh.rip", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-3: Mesh Split Tool
+    def split(self) -> str:
+        response = self.rpc.send_request("mesh.split")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-032-4: Mesh Edge Split Tool
+    def edge_split(self) -> str:
+        response = self.rpc.send_request("mesh.edge_split")
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-038-5: Proportional Editing
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ) -> str:
+        """Configures proportional editing settings."""
+        args = {
+            "enabled": enabled,
+            "falloff_type": falloff_type,
+            "size": size,
+            "use_connected": use_connected,
+        }
+        response = self.rpc.send_request("mesh.set_proportional_edit", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

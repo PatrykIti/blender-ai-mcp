@@ -23,9 +23,10 @@ try:
     from .application.handlers.material import MaterialHandler
     from .application.handlers.uv import UVHandler
     from .application.handlers.curve import CurveHandler
-    from .application.handlers.export import ExportHandler
     from .application.handlers.system import SystemHandler
     from .application.handlers.sculpt import SculptHandler
+    from .application.handlers.baking import BakingHandler
+    from .application.handlers.lattice import LatticeHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -34,9 +35,10 @@ except ImportError:
     MaterialHandler = None
     UVHandler = None
     CurveHandler = None
-    ExportHandler = None
     SystemHandler = None
     SculptHandler = None
+    BakingHandler = None
+    LatticeHandler = None
 
 
 def register():
@@ -51,9 +53,10 @@ def register():
         material_handler = MaterialHandler()
         uv_handler = UVHandler()
         curve_handler = CurveHandler()
-        export_handler = ExportHandler()
         system_handler = SystemHandler()
         sculpt_handler = SculptHandler()
+        baking_handler = BakingHandler()
+        lattice_handler = LatticeHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -157,10 +160,10 @@ def register():
         rpc_server.register_handler("mesh.add_vertex", mesh_handler.add_vertex)
         rpc_server.register_handler("mesh.add_edge_face", mesh_handler.add_edge_face)
 
-        # TASK-026: Export Tools
-        rpc_server.register_handler("export.glb", export_handler.export_glb)
-        rpc_server.register_handler("export.fbx", export_handler.export_fbx)
-        rpc_server.register_handler("export.obj", export_handler.export_obj)
+        # Export Tools (consolidated into system_handler)
+        rpc_server.register_handler("export.glb", system_handler.export_glb)
+        rpc_server.register_handler("export.fbx", system_handler.export_fbx)
+        rpc_server.register_handler("export.obj", system_handler.export_obj)
 
         # TASK-025: System Tools
         rpc_server.register_handler("system.set_mode", system_handler.set_mode)
@@ -175,6 +178,62 @@ def register():
         rpc_server.register_handler("sculpt.brush_smooth", sculpt_handler.brush_smooth)
         rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
         rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)
+
+        # TASK-038: Organic Modeling Tools
+        # Metaball tools
+        rpc_server.register_handler("modeling.metaball_create", modeling_handler.metaball_create)
+        rpc_server.register_handler("modeling.metaball_add_element", modeling_handler.metaball_add_element)
+        rpc_server.register_handler("modeling.metaball_to_mesh", modeling_handler.metaball_to_mesh)
+        # Skin modifier tools
+        rpc_server.register_handler("modeling.skin_create_skeleton", modeling_handler.skin_create_skeleton)
+        rpc_server.register_handler("modeling.skin_set_radius", modeling_handler.skin_set_radius)
+        # Sculpt brushes
+        rpc_server.register_handler("sculpt.brush_clay", sculpt_handler.brush_clay)
+        rpc_server.register_handler("sculpt.brush_inflate", sculpt_handler.brush_inflate)
+        rpc_server.register_handler("sculpt.brush_blob", sculpt_handler.brush_blob)
+        rpc_server.register_handler("sculpt.brush_snake_hook", sculpt_handler.brush_snake_hook)
+        rpc_server.register_handler("sculpt.brush_draw", sculpt_handler.brush_draw)
+        rpc_server.register_handler("sculpt.brush_pinch", sculpt_handler.brush_pinch)
+        # Dyntopo tools
+        rpc_server.register_handler("sculpt.enable_dyntopo", sculpt_handler.enable_dyntopo)
+        rpc_server.register_handler("sculpt.disable_dyntopo", sculpt_handler.disable_dyntopo)
+        rpc_server.register_handler("sculpt.dyntopo_flood_fill", sculpt_handler.dyntopo_flood_fill)
+        # Proportional editing
+        rpc_server.register_handler("mesh.set_proportional_edit", mesh_handler.set_proportional_edit)
+
+        # TASK-029: Edge Weights & Creases (Subdivision Control)
+        rpc_server.register_handler("mesh.edge_crease", mesh_handler.edge_crease)
+        rpc_server.register_handler("mesh.bevel_weight", mesh_handler.bevel_weight)
+        rpc_server.register_handler("mesh.mark_sharp", mesh_handler.mark_sharp)
+
+        # TASK-030: Mesh Cleanup & Optimization
+        rpc_server.register_handler("mesh.dissolve", mesh_handler.dissolve)
+        rpc_server.register_handler("mesh.tris_to_quads", mesh_handler.tris_to_quads)
+        rpc_server.register_handler("mesh.normals_make_consistent", mesh_handler.normals_make_consistent)
+        rpc_server.register_handler("mesh.decimate", mesh_handler.decimate)
+
+        # TASK-032: Knife & Cut Tools
+        rpc_server.register_handler("mesh.knife_project", mesh_handler.knife_project)
+        rpc_server.register_handler("mesh.rip", mesh_handler.rip)
+        rpc_server.register_handler("mesh.split", mesh_handler.split)
+        rpc_server.register_handler("mesh.edge_split", mesh_handler.edge_split)
+
+        # TASK-031: Baking Tools
+        rpc_server.register_handler("baking.normal_map", baking_handler.bake_normal_map)
+        rpc_server.register_handler("baking.ao", baking_handler.bake_ao)
+        rpc_server.register_handler("baking.combined", baking_handler.bake_combined)
+        rpc_server.register_handler("baking.diffuse", baking_handler.bake_diffuse)
+
+        # Import Tools (consolidated into system_handler)
+        rpc_server.register_handler("import.obj", system_handler.import_obj)
+        rpc_server.register_handler("import.fbx", system_handler.import_fbx)
+        rpc_server.register_handler("import.glb", system_handler.import_glb)
+        rpc_server.register_handler("import.image_as_plane", system_handler.import_image_as_plane)
+
+        # TASK-033: Lattice Deformation Tools
+        rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
+        rpc_server.register_handler("lattice.bind", lattice_handler.lattice_bind)
+        rpc_server.register_handler("lattice.edit_point", lattice_handler.lattice_edit_point)
 
         rpc_server.start()
     else:

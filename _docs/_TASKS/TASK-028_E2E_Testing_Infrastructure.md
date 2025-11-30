@@ -1,34 +1,70 @@
 # TASK-028: E2E Testing Infrastructure
 
-**Status:** 🟡 In Progress (Partial)
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Testing Infrastructure
+**Completion Date:** 2025-11-30
 
 ---
 
-## Progress Summary
+## Final Summary
 
-### ✅ Completed (2025-11-29)
+### Test Statistics
+
+| Type | Count | Execution Time |
+|------|-------|----------------|
+| Unit Tests | 662+ | ~3-4 seconds |
+| E2E Tests | 142 | ~12 seconds |
+
+### Coverage by Tool Area
+
+| Area | Unit Tests | E2E Tests |
+|------|------------|-----------|
+| Scene | ✅ | ✅ |
+| Modeling | ✅ | ✅ |
+| Mesh | ✅ | ✅ |
+| Collection | ✅ | ✅ |
+| Material | ✅ | ✅ |
+| UV | ✅ | ✅ |
+| Sculpt | ✅ | ✅ |
+| Export | ✅ | ✅ |
+| Import | ✅ | ✅ |
+| Baking | ✅ | ✅ |
+| Knife/Cut | ✅ | ✅ |
+| System | ✅ | ✅ |
+| Curve | ✅ | ✅ |
+
+### Completed Items
 
 | Item | Description |
 |------|-------------|
-| Directory structure | `tests/unit/`, `tests/e2e/`, `tests/fixtures/` created |
+| Directory structure | `tests/unit/`, `tests/e2e/`, `tests/fixtures/` |
 | Unit test conftest | bpy/bmesh mocks in `tests/unit/conftest.py` |
 | E2E test conftest | Session-scoped RPC client in `tests/e2e/conftest.py` |
 | Test markers | `@pytest.mark.unit`, `@pytest.mark.e2e`, `@pytest.mark.slow` |
-| E2E tests | 19 working tests (collection, material, scene, uv) |
+| E2E tests | **142 tests** across all tool areas |
 | Documentation | `_docs/_TESTS/README.md`, `_docs/_TESTS/ARCHITECTURE.md` |
 | CI/CD update | Workflows run only unit tests (no Blender in CI) |
 | Bug fixes | Snapshot hash consistency, RPC connection exhaustion |
+| **Auto-start Blender** | `scripts/run_e2e_tests.py` - Full automated workflow |
+| **Test Runner** | Build → Install addon → Start Blender → Run tests → Cleanup |
 
-### ⬚ Remaining
+### E2E Test Runner
 
-| Item | Description |
-|------|-------------|
-| TASK-028-1 | Auto-start Blender as subprocess (currently requires manual start) |
-| TASK-028-2 | Scene verification helpers (`assert_object_exists`, etc.) |
-| TASK-028-4 | CI/CD workflow for E2E with Blender Docker image |
-| More E2E tests | Mesh tools, modeling tools, full workflow tests |
+```bash
+# Full automated E2E workflow
+python3 scripts/run_e2e_tests.py
+
+# Options
+python3 scripts/run_e2e_tests.py --skip-build      # Use existing addon ZIP
+python3 scripts/run_e2e_tests.py --keep-blender    # Don't close Blender after
+python3 scripts/run_e2e_tests.py --quiet           # No console output
+```
+
+### Note on CI/CD
+
+E2E tests require a running Blender instance with GUI (RPC server uses `bpy.app.timers`).
+CI/CD runs **only unit tests** - E2E tests are run locally before releases.
 
 ---
 

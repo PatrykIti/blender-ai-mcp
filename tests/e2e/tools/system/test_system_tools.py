@@ -7,12 +7,26 @@ import os
 import tempfile
 import pytest
 from server.application.tool_handlers.system_handler import SystemToolHandler
+from server.application.tool_handlers.modeling_handler import ModelingToolHandler
+from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 
 @pytest.fixture
 def system_handler(rpc_client):
     """Provides a system handler instance using shared RPC client."""
     return SystemToolHandler(rpc_client)
+
+
+@pytest.fixture
+def modeling_handler(rpc_client):
+    """Provides a modeling handler instance using shared RPC client."""
+    return ModelingToolHandler(rpc_client)
+
+
+@pytest.fixture
+def scene_handler(rpc_client):
+    """Provides a scene handler instance using shared RPC client."""
+    return SceneToolHandler(rpc_client)
 
 
 class TestSystemSetMode:
@@ -28,9 +42,23 @@ class TestSystemSetMode:
         except RuntimeError as e:
             pytest.skip(f"Blender not available: {e}")
 
-    def test_set_mode_edit(self, system_handler):
+    def test_set_mode_edit(self, system_handler, modeling_handler, scene_handler):
         """Test switching to EDIT mode."""
+        obj_name = "E2E_SetModeTest"
         try:
+            # Clean up if exists
+            try:
+                scene_handler.delete_object(obj_name)
+            except RuntimeError:
+                pass
+
+            # Create a mesh object (EDIT mode requires active mesh)
+            modeling_handler.create_primitive(
+                primitive_type="CUBE",
+                name=obj_name,
+                location=[0, 0, 0]
+            )
+
             # First ensure we're in OBJECT mode
             system_handler.set_mode("OBJECT")
 
@@ -42,7 +70,16 @@ class TestSystemSetMode:
             # Return to OBJECT mode
             system_handler.set_mode("OBJECT")
         except RuntimeError as e:
-            pytest.skip(f"Blender not available: {e}")
+            error_msg = str(e).lower()
+            if "could not connect" in error_msg or "is blender running" in error_msg:
+                pytest.skip(f"Blender not available: {e}")
+            raise
+        finally:
+            try:
+                system_handler.set_mode("OBJECT")
+                scene_handler.delete_object(obj_name)
+            except RuntimeError:
+                pass
 
     def test_set_mode_invalid(self, system_handler):
         """Test invalid mode returns error."""

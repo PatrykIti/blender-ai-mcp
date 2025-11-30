@@ -312,3 +312,357 @@ class SystemHandler:
                 snapshots.append(filename[:-6])  # Remove .blend extension
 
         return sorted(snapshots)
+
+    # === Export Tools ===
+
+    def export_glb(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        export_animations: bool = True,
+        export_materials: bool = True,
+        apply_modifiers: bool = True,
+    ) -> str:
+        """Exports scene or selected objects to GLB/GLTF format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith((".glb", ".gltf")):
+            filepath += ".glb"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Determine export format
+        export_format = "GLB" if filepath.lower().endswith(".glb") else "GLTF_SEPARATE"
+
+        # Export with GLTF exporter
+        bpy.ops.export_scene.gltf(
+            filepath=filepath,
+            export_format=export_format,
+            use_selection=export_selected,
+            export_animations=export_animations,
+            export_materials="EXPORT" if export_materials else "NONE",
+            export_apply=apply_modifiers,
+        )
+
+        return f"Successfully exported to '{filepath}'"
+
+    def export_fbx(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        export_animations: bool = True,
+        apply_modifiers: bool = True,
+        mesh_smooth_type: str = "FACE",
+    ) -> str:
+        """Exports scene or selected objects to FBX format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith(".fbx"):
+            filepath += ".fbx"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Validate mesh_smooth_type
+        valid_smooth_types = {"OFF", "FACE", "EDGE"}
+        if mesh_smooth_type not in valid_smooth_types:
+            mesh_smooth_type = "FACE"
+
+        # Export with FBX exporter
+        bpy.ops.export_scene.fbx(
+            filepath=filepath,
+            use_selection=export_selected,
+            bake_anim=export_animations,
+            use_mesh_modifiers=apply_modifiers,
+            mesh_smooth_type=mesh_smooth_type,
+            add_leaf_bones=False,
+            primary_bone_axis="Y",
+            secondary_bone_axis="X",
+        )
+
+        return f"Successfully exported to '{filepath}'"
+
+    def export_obj(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        apply_modifiers: bool = True,
+        export_materials: bool = True,
+        export_uvs: bool = True,
+        export_normals: bool = True,
+        triangulate: bool = False,
+    ) -> str:
+        """Exports scene or selected objects to OBJ format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith(".obj"):
+            filepath += ".obj"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Verify directory is writable
+        if dir_path and not os.access(dir_path, os.W_OK):
+            raise RuntimeError(f"Directory not writable: {dir_path}")
+
+        # Check objects in scene
+        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == 'MESH']
+        if not mesh_objects:
+            raise RuntimeError("No mesh objects in scene to export")
+
+        # Export with OBJ exporter (Blender 4.0+ uses wm.obj_export)
+        # Blender 5.0 requires check_existing=False for non-interactive export
+        result = bpy.ops.wm.obj_export(
+            filepath=filepath,
+            check_existing=False,
+            export_selected_objects=export_selected,
+            apply_modifiers=apply_modifiers,
+            export_materials=export_materials,
+            export_uv=export_uvs,
+            export_normals=export_normals,
+            export_triangulated_mesh=triangulate,
+        )
+
+        # Verify export succeeded
+        if result != {'FINISHED'}:
+            raise RuntimeError(f"OBJ export failed with result: {result}")
+
+        # List files in directory for debugging
+        if dir_path:
+            files_in_dir = os.listdir(dir_path)
+        else:
+            files_in_dir = []
+
+        if not os.path.exists(filepath):
+            raise RuntimeError(
+                f"OBJ export reported success but file was not created: {filepath}. "
+                f"Files in dir: {files_in_dir}"
+            )
+
+        return f"Successfully exported to '{filepath}'"
+
+    # === Import Tools ===
+
+    def import_obj(
+        self,
+        filepath: str,
+        use_split_objects: bool = True,
+        use_split_groups: bool = False,
+        global_scale: float = 1.0,
+        forward_axis: str = "NEGATIVE_Z",
+        up_axis: str = "Y",
+    ) -> str:
+        """Imports OBJ file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"OBJ file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import OBJ (Blender 3.3+ uses wm.obj_import)
+        bpy.ops.wm.obj_import(
+            filepath=filepath,
+            use_split_objects=use_split_objects,
+            use_split_groups=use_split_groups,
+            global_scale=global_scale,
+            forward_axis=forward_axis,
+            up_axis=up_axis,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported OBJ from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported OBJ from '{filepath}' (no new objects created)"
+
+    def import_fbx(
+        self,
+        filepath: str,
+        use_custom_normals: bool = True,
+        use_image_search: bool = True,
+        ignore_leaf_bones: bool = False,
+        automatic_bone_orientation: bool = False,
+        global_scale: float = 1.0,
+    ) -> str:
+        """Imports FBX file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"FBX file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import FBX
+        bpy.ops.import_scene.fbx(
+            filepath=filepath,
+            use_custom_normals=use_custom_normals,
+            use_image_search=use_image_search,
+            ignore_leaf_bones=ignore_leaf_bones,
+            automatic_bone_orientation=automatic_bone_orientation,
+            global_scale=global_scale,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported FBX from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported FBX from '{filepath}' (no new objects created)"
+
+    def import_glb(
+        self,
+        filepath: str,
+        import_pack_images: bool = True,
+        merge_vertices: bool = False,
+        import_shading: str = "NORMALS",
+    ) -> str:
+        """Imports GLB/GLTF file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"GLB/GLTF file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import GLTF
+        bpy.ops.import_scene.gltf(
+            filepath=filepath,
+            import_pack_images=import_pack_images,
+            merge_vertices=merge_vertices,
+            import_shading=import_shading,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported GLB/GLTF from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported GLB/GLTF from '{filepath}' (no new objects created)"
+
+    def import_image_as_plane(
+        self,
+        filepath: str,
+        name: str = None,
+        location: list = None,
+        size: float = 1.0,
+        align_axis: str = "Z+",
+        shader: str = "PRINCIPLED",
+        use_transparency: bool = True,
+    ) -> str:
+        """Imports image as a textured plane.
+
+        Creates a plane mesh with a material using the image as texture.
+        Works without external addons (compatible with Blender 4.0+).
+        """
+        import math
+
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Image file not found: {filepath}")
+
+        # Load the image
+        img = bpy.data.images.load(filepath)
+        img_width, img_height = img.size
+
+        # Calculate aspect ratio for plane dimensions
+        aspect = img_width / img_height if img_height > 0 else 1.0
+
+        # Create plane name
+        base_name = name if name else os.path.splitext(os.path.basename(filepath))[0]
+
+        # Create plane mesh
+        bpy.ops.mesh.primitive_plane_add(size=2.0)
+        plane = bpy.context.active_object
+        plane.name = base_name
+
+        # Scale to match image aspect ratio
+        if aspect >= 1.0:
+            plane.scale = (size * aspect / 2, size / 2, 1.0)
+        else:
+            plane.scale = (size / 2, size / (2 * aspect), 1.0)
+
+        # Apply scale
+        bpy.ops.object.transform_apply(scale=True)
+
+        # Set location
+        if location:
+            plane.location = location
+
+        # Rotate based on align_axis
+        rotation_map = {
+            "Z+": (0, 0, 0),
+            "Z-": (math.pi, 0, 0),
+            "Y+": (math.pi / 2, 0, 0),
+            "Y-": (-math.pi / 2, 0, 0),
+            "X+": (0, math.pi / 2, 0),
+            "X-": (0, -math.pi / 2, 0),
+        }
+        rotation = rotation_map.get(align_axis, (0, 0, 0))
+        plane.rotation_euler = rotation
+
+        # Create material
+        mat_name = f"{base_name}_Material"
+        mat = bpy.data.materials.new(name=mat_name)
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+
+        # Clear default nodes
+        nodes.clear()
+
+        # Create nodes based on shader type
+        # Output node
+        output_node = nodes.new('ShaderNodeOutputMaterial')
+        output_node.location = (400, 0)
+
+        # Image texture node
+        tex_node = nodes.new('ShaderNodeTexImage')
+        tex_node.image = img
+        tex_node.location = (-300, 0)
+
+        if shader == "EMISSION":
+            # Emission shader
+            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
+            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+
+        elif shader == "SHADELESS":
+            # Shadeless (Background shader in Cycles, or just emission)
+            # Use emission with strength 1 for shadeless look
+            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node.inputs['Strength'].default_value = 1.0
+            emission_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
+            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+
+        else:  # PRINCIPLED (default)
+            # Principled BSDF
+            bsdf_node = nodes.new('ShaderNodeBsdfPrincipled')
+            bsdf_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], bsdf_node.inputs['Base Color'])
+            links.new(bsdf_node.outputs['BSDF'], output_node.inputs['Surface'])
+
+            # Handle transparency
+            if use_transparency:
+                mat.blend_method = 'BLEND'
+                links.new(tex_node.outputs['Alpha'], bsdf_node.inputs['Alpha'])
+
+        # Assign material to plane
+        if plane.data.materials:
+            plane.data.materials[0] = mat
+        else:
+            plane.data.materials.append(mat)
+
+        # Ensure proper UV mapping (plane already has UVs from primitive)
+
+        return f"Successfully imported image as plane '{plane.name}' from '{filepath}'"

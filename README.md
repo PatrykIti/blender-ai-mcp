@@ -88,9 +88,9 @@ Object Mode operations for creating and transforming objects.
 #### Lattice Deformation
 | Tool | Description | Status |
 |------|-------------|--------|
-| `lattice_create` | Create lattice fitted to object | 🚧 |
-| `lattice_bind` | Bind object to lattice deformer | 🚧 |
-| `lattice_edit_point` | Move lattice control points | 🚧 |
+| `lattice_create` | Create lattice fitted to object | ✅ |
+| `lattice_bind` | Bind object to lattice deformer | ✅ |
+| `lattice_edit_point` | Move lattice control points | ✅ |
 
 #### Text Objects
 | Tool | Description | Status |
@@ -101,8 +101,8 @@ Object Mode operations for creating and transforming objects.
 #### Skin Modifier (Tubular Structures)
 | Tool | Description | Status |
 |------|-------------|--------|
-| `skin_create_skeleton` | Create skeleton for skin modifier | 🚧 |
-| `skin_set_radius` | Set skin radius at vertices | 🚧 |
+| `skin_create_skeleton` | Create skeleton for skin modifier | ✅ |
+| `skin_set_radius` | Set skin radius at vertices | ✅ |
 
 ---
 
@@ -180,25 +180,25 @@ Edit Mode operations for geometry manipulation.
 #### Edge Weights & Creases
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_edge_crease` | Set crease weight for subdivision | 🚧 |
-| `mesh_bevel_weight` | Set bevel weight for bevel modifier | 🚧 |
-| `mesh_mark_sharp` | Mark/clear sharp edges | 🚧 |
+| `mesh_edge_crease` | Set crease weight for subdivision | ✅ |
+| `mesh_bevel_weight` | Set bevel weight for bevel modifier | ✅ |
+| `mesh_mark_sharp` | Mark/clear sharp edges | ✅ |
 
 #### Cleanup & Optimization
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_dissolve` | Dissolve vertices/edges/faces (limited dissolve) | 🚧 |
-| `mesh_tris_to_quads` | Convert triangles to quads | 🚧 |
-| `mesh_normals_make_consistent` | Recalculate normals | 🚧 |
-| `mesh_decimate` | Reduce polycount on selection | 🚧 |
+| `mesh_dissolve` | Dissolve vertices/edges/faces (limited dissolve) | ✅ |
+| `mesh_tris_to_quads` | Convert triangles to quads | ✅ |
+| `mesh_normals_make_consistent` | Recalculate normals | ✅ |
+| `mesh_decimate` | Reduce polycount on selection | ✅ |
 
 #### Knife & Cut
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_knife_project` | Project cut from selected geometry | 🚧 |
-| `mesh_rip` | Rip/tear geometry at selection | 🚧 |
-| `mesh_split` | Split selection from mesh | 🚧 |
-| `mesh_edge_split` | Split mesh at selected edges | 🚧 |
+| `mesh_knife_project` | Project cut from selected geometry | ✅ |
+| `mesh_rip` | Rip/tear geometry at selection | ✅ |
+| `mesh_split` | Split selection from mesh | ✅ |
+| `mesh_edge_split` | Split mesh at selected edges | ✅ |
 
 #### Symmetry & Fill
 | Tool | Description | Status |
@@ -207,7 +207,7 @@ Edit Mode operations for geometry manipulation.
 | `mesh_grid_fill` | Fill boundary with quad grid | 🚧 |
 | `mesh_poke_faces` | Poke faces (add center vertex) | 🚧 |
 | `mesh_beautify_fill` | Rearrange triangles uniformly | 🚧 |
-| `mesh_set_proportional_edit` | Enable soft selection falloff | 🚧 |
+| `mesh_set_proportional_edit` | Enable soft selection falloff | ✅ |
 
 ---
 
@@ -295,10 +295,10 @@ File import operations.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `import_obj` | Import OBJ file | 🚧 |
-| `import_fbx` | Import FBX file | 🚧 |
-| `import_glb` | Import GLB/GLTF file | 🚧 |
-| `import_image_as_plane` | Import image as textured plane (reference) | 🚧 |
+| `import_obj` | Import OBJ file | ✅ |
+| `import_fbx` | Import FBX file | ✅ |
+| `import_glb` | Import GLB/GLTF file | ✅ |
+| `import_image_as_plane` | Import image as textured plane (reference) | ✅ |
 
 ---
 
@@ -308,10 +308,10 @@ Texture baking for game dev workflows.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `bake_normal_map` | Bake normal map (high-to-low or self) | 🚧 |
-| `bake_ao` | Bake ambient occlusion map | 🚧 |
-| `bake_combined` | Bake full render to texture | 🚧 |
-| `bake_diffuse` | Bake diffuse/albedo color | 🚧 |
+| `bake_normal_map` | Bake normal map (high-to-low or self) | ✅ |
+| `bake_ao` | Bake ambient occlusion map | ✅ |
+| `bake_combined` | Bake full render to texture | ✅ |
+| `bake_diffuse` | Bake diffuse/albedo color | ✅ |
 
 ---
 
@@ -321,9 +321,9 @@ Organic blob primitives for medical/biological modeling.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `metaball_create` | Create metaball object | 🚧 |
-| `metaball_add_element` | Add element (ball, capsule, ellipsoid) | 🚧 |
-| `metaball_to_mesh` | Convert metaball to mesh | 🚧 |
+| `metaball_create` | Create metaball object | ✅ |
+| `metaball_add_element` | Add element (ball, capsule, ellipsoid) | ✅ |
+| `metaball_to_mesh` | Convert metaball to mesh | ✅ |
 
 ---
 
@@ -358,19 +358,19 @@ Organic shaping and sculpt workflows.
 #### Organic Brushes
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_brush_clay` | Add clay-like material | 🚧 |
-| `sculpt_brush_inflate` | Inflate/deflate areas | 🚧 |
-| `sculpt_brush_blob` | Create organic bulges | 🚧 |
-| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | 🚧 |
-| `sculpt_brush_draw` | Basic sculpt draw | 🚧 |
-| `sculpt_brush_pinch` | Pinch geometry together | 🚧 |
+| `sculpt_brush_clay` | Add clay-like material | ✅ |
+| `sculpt_brush_inflate` | Inflate/deflate areas | ✅ |
+| `sculpt_brush_blob` | Create organic bulges | ✅ |
+| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | ✅ |
+| `sculpt_brush_draw` | Basic sculpt draw | ✅ |
+| `sculpt_brush_pinch` | Pinch geometry together | ✅ |
 
 #### Dynamic Topology
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_enable_dyntopo` | Enable dynamic topology | 🚧 |
-| `sculpt_disable_dyntopo` | Disable dynamic topology | 🚧 |
-| `sculpt_dyntopo_flood_fill` | Apply detail level to entire mesh | 🚧 |
+| `sculpt_enable_dyntopo` | Enable dynamic topology | ✅ |
+| `sculpt_disable_dyntopo` | Disable dynamic topology | ✅ |
+| `sculpt_dyntopo_flood_fill` | Apply detail level to entire mesh | ✅ |
 
 ---
 
@@ -388,31 +388,78 @@ Skeletal rigging and animation (future).
 
 ---
 
-### 🤖 Intent Router (Planned)
+### 🤖 Router Supervisor (Planned)
 
-Offline intent-matching system that maps natural language prompts to tools without requiring an external LLM.
+Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
+#### Phase 1: Foundation & Infrastructure
 | Component | Description | Status |
 |-----------|-------------|--------|
-| `Intent Classifier` | TF-IDF + SVM/LogisticRegression for keyword matching | 🚧 |
-| `Embedding Store` | Semantic matching via LaBSE (109 languages) | 🚧 |
-| `Workflow Planner` | Maps complex intents to tool sequences | 🚧 |
-| `Feedback Learning` | Self-improvement from user corrections | 🚧 |
+| Router Directory Structure | Clean Architecture package structure | 🚧 |
+| Domain Entities | InterceptedToolCall, SceneContext, Pattern | 🚧 |
+| Domain Interfaces | Abstract interfaces for all components | 🚧 |
+| Metadata Loader | Tool definitions from JSON | 🚧 |
+| Configuration System | Router behavior settings | 🚧 |
+
+#### Phase 2: Scene Analysis
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Tool Interceptor | Capture all LLM tool calls | 🚧 |
+| Scene Context Analyzer | Read Blender state via RPC | 🚧 |
+| Geometry Pattern Detector | Detect tower/phone/table patterns | 🚧 |
+| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | 🚧 |
+
+#### Phase 3: Tool Processing Engines
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Tool Correction Engine | Fix params, mode, selection | 🚧 |
+| Tool Override Engine | Replace with better alternatives | 🚧 |
+| Workflow Expansion Engine | 1 tool → N tools | 🚧 |
+| Error Firewall | Block/fix invalid operations | 🚧 |
+| Intent Classifier (TF-IDF) | Offline intent matching | 🚧 |
+
+#### Phase 4: Integration
+| Component | Description | Status |
+|-----------|-------------|--------|
+| SupervisorRouter | Main orchestrator | 🚧 |
+| MCP Integration | Hook into tool execution | 🚧 |
+| Logging & Telemetry | Decision logging | 🚧 |
+
+#### Phase 5: Workflows & Patterns
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Phone Workflow | Complete phone modeling sequence | 🚧 |
+| Tower Workflow | Pillar/column with taper | 🚧 |
+| Screen Cutout Workflow | Display inset sub-workflow | 🚧 |
+| Custom Workflow System | YAML-defined workflows | 🚧 |
 
 **Key Features:**
-- **100% Offline** - No external API calls required
-- **Deterministic** - Same prompt → same tool selection
-- **Multilingual** - LaBSE supports 109 languages (PL, EN, DE, FR, ES, ...)
-- **Workflow Support** - "make a phone" → automatic multi-tool sequence
-- **Anti-Hallucination** - Validates tools exist before execution
+- **LLM Supervisor** - Intercepts and corrects LLM tool calls before execution
+- **Scene-Aware** - Analyzes Blender state to make informed decisions
+- **Pattern Detection** - Recognizes tower, phone, table structures
+- **Auto-Correction** - Fixes mode, selection, parameter errors
+- **Workflow Expansion** - Single tool → complete workflow
+- **Error Firewall** - Blocks invalid operations before they crash
+- **100% Offline** - No external API calls for core routing
+- **Multilingual** - LaBSE supports 109 languages (optional)
 
-**Example:**
+**Example: LLM sends mesh tool in wrong mode**
 ```
-User: "extrude the face outward"
-Router: mesh_extrude_region
+LLM: mesh_extrude(depth=0.5)  # In OBJECT mode, no selection
 
-User: "create a phone with rounded edges"
-Router: [modeling_add_cube, mesh_bevel, mesh_inset, mesh_extrude, material_assign]
+Router detects:
+  - Mode: OBJECT (mesh tool needs EDIT)
+  - Selection: None (extrude needs faces)
+  - Pattern: phone_like
+
+Router outputs:
+  1. system_set_mode(mode="EDIT")
+  2. mesh_select(action="all", mode="FACE")
+  3. mesh_inset(thickness=0.03)
+  4. mesh_extrude(depth=-0.02)
+  5. system_set_mode(mode="OBJECT")
+
+Result: Screen cutout created instead of crash!
 ```
 
 ---
@@ -535,6 +582,17 @@ We recommend using Docker to run the MCP Server.
         "mesh_screw",
         "mesh_add_vertex",
         "mesh_add_edge_face",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
+        "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
@@ -544,12 +602,35 @@ We recommend using Docker to run the MCP Server.
         "sculpt_brush_smooth",
         "sculpt_brush_grab",
         "sculpt_brush_crease",
+        "sculpt_brush_clay",
+        "sculpt_brush_inflate",
+        "sculpt_brush_blob",
+        "sculpt_brush_snake_hook",
+        "sculpt_brush_draw",
+        "sculpt_brush_pinch",
+        "sculpt_enable_dyntopo",
+        "sculpt_disable_dyntopo",
+        "sculpt_dyntopo_flood_fill",
+        "metaball_create",
+        "metaball_add_element",
+        "metaball_to_mesh",
+        "skin_create_skeleton",
+        "skin_set_radius",
+        "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
         "system_redo",
         "system_save_file",
         "system_new_file",
-        "system_snapshot"
+        "system_snapshot",
+        "bake_normal_map",
+        "bake_ao",
+        "bake_combined",
+        "bake_diffuse",
+        "import_obj",
+        "import_fbx",
+        "import_glb",
+        "import_image_as_plane"
       ]
     }
   }
@@ -638,6 +719,17 @@ We recommend using Docker to run the MCP Server.
         "mesh_screw",
         "mesh_add_vertex",
         "mesh_add_edge_face",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
+        "mesh_dissolve",
+        "mesh_tris_to_quads",
+        "mesh_normals_make_consistent",
+        "mesh_decimate",
+        "mesh_knife_project",
+        "mesh_rip",
+        "mesh_split",
+        "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
@@ -647,12 +739,35 @@ We recommend using Docker to run the MCP Server.
         "sculpt_brush_smooth",
         "sculpt_brush_grab",
         "sculpt_brush_crease",
+        "sculpt_brush_clay",
+        "sculpt_brush_inflate",
+        "sculpt_brush_blob",
+        "sculpt_brush_snake_hook",
+        "sculpt_brush_draw",
+        "sculpt_brush_pinch",
+        "sculpt_enable_dyntopo",
+        "sculpt_disable_dyntopo",
+        "sculpt_dyntopo_flood_fill",
+        "metaball_create",
+        "metaball_add_element",
+        "metaball_to_mesh",
+        "skin_create_skeleton",
+        "skin_set_radius",
+        "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
         "system_redo",
         "system_save_file",
         "system_new_file",
-        "system_snapshot"
+        "system_snapshot",
+        "bake_normal_map",
+        "bake_ao",
+        "bake_combined",
+        "bake_diffuse",
+        "import_obj",
+        "import_fbx",
+        "import_glb",
+        "import_image_as_plane"
       ]
     }
   }
@@ -731,6 +846,54 @@ This project uses a split-architecture design:
 Communication happens via **JSON-RPC over TCP sockets**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
+
+## 🧪 Testing
+
+**Unit Tests** (662+ tests, ~3-4s, no Blender required):
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/ -v
+```
+
+**E2E Tests** (142 tests, ~12s, requires Blender):
+```bash
+# Automated: build → install addon → start Blender → run tests → cleanup
+python3 scripts/run_e2e_tests.py
+```
+
+| Type | Count | Coverage |
+|------|-------|----------|
+| Unit Tests | 662+ | All tool handlers |
+| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
+
+See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
+
+<details>
+<summary>📋 Latest E2E Test Results (click to expand)</summary>
+
+```
+============================= test session starts ==============================
+platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
+collected 142 items
+
+tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
+tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
+tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+
+============================= 142 passed in 12.25s =============================
+```
+
+</details>
+
+---
 
 ## 🤝 Contributing
 

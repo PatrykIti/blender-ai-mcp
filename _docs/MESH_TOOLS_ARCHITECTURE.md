@@ -991,6 +991,289 @@ Use Case:
 
 ---
 
+# 40. mesh_edge_crease ✅ Done
+
+Sets crease weight on selected edges for Subdivision Surface modifier control.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- crease_value: float (0.0 to 1.0)
+  - 0.0 = fully smoothed (no crease effect)
+  - 1.0 = fully sharp (edge remains sharp after subdivision)
+
+Example:
+```json
+{
+  "tool": "mesh_edge_crease",
+  "args": {
+    "crease_value": 1.0
+  }
+}
+```
+
+Use Case:
+- Hard-surface modeling (weapons, vehicles, devices)
+- Maintaining sharp edges while having smooth surfaces elsewhere
+- Architectural details (window frames, door edges)
+
+Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="SUBSURF")
+
+---
+
+# 41. mesh_bevel_weight ✅ Done
+
+Sets bevel weight on selected edges for selective beveling with Bevel modifier.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- weight: float (0.0 to 1.0)
+  - 0.0 = no bevel effect
+  - 1.0 = full bevel effect
+
+Example:
+```json
+{
+  "tool": "mesh_bevel_weight",
+  "args": {
+    "weight": 1.0
+  }
+}
+```
+
+Use Case:
+- Product design (selective edge beveling)
+- Hard-surface modeling with controlled bevel application
+- Architectural details
+
+Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="BEVEL", limit_method="WEIGHT")
+
+---
+
+# 42. mesh_mark_sharp ✅ Done
+
+Marks or clears sharp edges for Auto Smooth and Edge Split modifier.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- action: str ("mark" or "clear")
+
+Example:
+```json
+{
+  "tool": "mesh_mark_sharp",
+  "args": {
+    "action": "mark"
+  }
+}
+```
+
+Use Case:
+- Visual edge definition
+- Smooth shading control
+- Normal maps preparation
+- Edge Split modifier workflow
+
+Sharp edges affect:
+- Auto Smooth: Splits normals at sharp edges for flat shading
+- Edge Split modifier: Creates hard edges without geometry duplication
+- Normal display and shading calculations
+
+---
+
+# 43. mesh_dissolve ✅ Done (TASK-030-1)
+
+Dissolves selected geometry while preserving shape. Essential for mesh cleanup.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- dissolve_type: str ("limited", "verts", "edges", "faces") - default: "limited"
+- angle_limit: float (degrees, for limited dissolve) - default: 5.0
+- use_face_split: bool - default: false
+- use_boundary_tear: bool - default: false
+
+Example:
+```json
+{
+  "tool": "mesh_dissolve",
+  "args": {
+    "dissolve_type": "limited",
+    "angle_limit": 5.0
+  }
+}
+```
+
+Dissolve Types:
+- **limited**: Auto-dissolves edges below angle threshold (most common cleanup)
+- **verts**: Dissolves selected vertices, merging connected edges/faces
+- **edges**: Dissolves selected edges, merging adjacent faces
+- **faces**: Dissolves selected faces, removing them while preserving boundaries
+
+Use Case:
+- Boolean operation cleanup
+- Removing unnecessary edge loops
+- Import cleanup (OBJ/FBX)
+- Reducing mesh complexity
+
+Workflow: BEFORE → mesh_select(action="all") | Limited dissolve is ideal for cleanup
+
+---
+
+# 44. mesh_tris_to_quads ✅ Done (TASK-030-2)
+
+Converts triangles to quads where possible based on angle thresholds.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- face_threshold: float (degrees, max angle between face normals) - default: 40.0
+- shape_threshold: float (degrees, max shape deviation) - default: 40.0
+
+Example:
+```json
+{
+  "tool": "mesh_tris_to_quads",
+  "args": {
+    "face_threshold": 40.0,
+    "shape_threshold": 40.0
+  }
+}
+```
+
+Use Case:
+- Cleaning triangulated imports (OBJ, FBX, STL)
+- Post-boolean cleanup
+- Preparing mesh for subdivision surface
+
+Higher thresholds = more aggressive conversion (may create distorted quads)
+Lower thresholds = conservative conversion (better quality but fewer conversions)
+
+Workflow: BEFORE → mesh_select(action="all") | AFTER → mesh_dissolve (optional cleanup)
+
+---
+
+# 45. mesh_normals_make_consistent ✅ Done (TASK-030-3)
+
+Recalculates normals to face consistently outward (or inward).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- inside: bool (true = normals point inward) - default: false
+
+Example:
+```json
+{
+  "tool": "mesh_normals_make_consistent",
+  "args": {
+    "inside": false
+  }
+}
+```
+
+Use Case:
+- Fixing inverted faces (black patches in render)
+- Inconsistent shading correction
+- Boolean operation artifacts
+- Import cleanup
+
+Symptoms of flipped normals:
+- Black faces in rendered view
+- Incorrect lighting/shadows
+- Backface culling issues in game engines
+- Problems with boolean operations
+
+Workflow: BEFORE → mesh_select(action="all") | Essential after import or boolean ops
+
+---
+
+# 46. mesh_decimate ✅ Done (TASK-030-4)
+
+Reduces polycount while preserving shape (Edit Mode operation).
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][DESTRUCTIVE]`
+
+Args:
+- ratio: float (target ratio, 0.0-1.0) - default: 0.5
+- use_symmetry: bool - default: false
+- symmetry_axis: str ("X", "Y", "Z") - default: "X"
+
+Example:
+```json
+{
+  "tool": "mesh_decimate",
+  "args": {
+    "ratio": 0.5,
+    "use_symmetry": false
+  }
+}
+```
+
+Use Case:
+- LOD (Level of Detail) generation
+- Game-ready asset optimization
+- Retopology preparation
+- Reducing sculpt detail
+
+For whole-object decimation, consider `modeling_add_modifier(type="DECIMATE")` which offers more control (collapse/unsubdiv/planar modes).
+
+ratio values:
+- 1.0 = keep all faces (no change)
+- 0.5 = keep 50% of faces
+- 0.25 = keep 25% of faces (aggressive reduction)
+
+Workflow: BEFORE → mesh_select(action="all") | Use symmetry for symmetric meshes
+
+---
+
+# 47. mesh_set_proportional_edit ✅ Done (TASK-038)
+
+Configures proportional editing mode for organic deformations.
+
+**Tag:** `[EDIT MODE][CONFIGURATION][SAFE]`
+
+Args:
+- enabled: bool (enable/disable proportional editing) - default true
+- falloff_type: str ("SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM") - default "SMOOTH"
+- size: float (influence radius) - default 1.0
+- use_connected: bool (only affect connected geometry) - default false
+
+Example:
+```json
+{
+  "tool": "mesh_set_proportional_edit",
+  "args": {
+    "enabled": true,
+    "falloff_type": "SMOOTH",
+    "size": 2.0,
+    "use_connected": false
+  }
+}
+```
+
+Falloff Types:
+- **SMOOTH** - Gradual falloff (default, most natural)
+- **SPHERE** - Spherical falloff (sharp boundary)
+- **ROOT** - Square root falloff (medium transition)
+- **INVERSE_SQUARE** - Strong center influence
+- **SHARP** - Sharp falloff (concentrated effect)
+- **LINEAR** - Linear falloff (even transition)
+- **CONSTANT** - All affected vertices move equally
+- **RANDOM** - Random influence (organic variation)
+
+Use Case:
+- Organic surface deformation
+- Natural-looking vertex adjustments
+- Soft modifications to mesh areas
+- Mountain/terrain modeling
+
+Workflow: Set proportional edit → mesh_transform_selected (transforms use proportional influence)
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

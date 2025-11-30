@@ -1201,3 +1201,416 @@ def mesh_add_edge_face(ctx: Context) -> str:
         return handler.add_edge_face()
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-029: Edge Weights & Creases (Subdivision Control)
+# ==============================================================================
+
+@mcp.tool()
+def mesh_edge_crease(
+    ctx: Context,
+    crease_value: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets crease weight on selected edges.
+
+    Crease controls how Subdivision Surface modifier affects edges:
+    - 0.0 = fully smoothed (no crease effect)
+    - 1.0 = fully sharp (edge remains sharp after subdivision)
+
+    CRITICAL for hard-surface modeling: weapons, vehicles, devices, architectural details.
+    Use to maintain sharp edges while still having smooth surfaces elsewhere.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="SUBSURF")
+
+    Args:
+        crease_value: Crease weight (0.0 to 1.0). 0.0 = smooth, 1.0 = fully sharp.
+
+    Examples:
+        mesh_edge_crease(crease_value=1.0) -> Make selected edges fully sharp
+        mesh_edge_crease(crease_value=0.5) -> Partially sharp edges (softer bevel effect)
+        mesh_edge_crease(crease_value=0.0) -> Remove crease (fully smoothed)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_crease(crease_value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_bevel_weight(
+    ctx: Context,
+    weight: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets bevel weight on selected edges.
+
+    When Bevel modifier uses "Weight" limit method, only edges with weight > 0 are beveled.
+    This allows selective beveling without selecting edges manually each time.
+
+    Perfect for: product design, hard-surface modeling, architectural details.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="BEVEL", limit_method="WEIGHT")
+
+    Args:
+        weight: Bevel weight (0.0 to 1.0). 0.0 = no bevel, 1.0 = full bevel effect.
+
+    Examples:
+        mesh_bevel_weight(weight=1.0) -> Full bevel effect on selected edges
+        mesh_bevel_weight(weight=0.5) -> Half bevel effect (smaller bevel)
+        mesh_bevel_weight(weight=0.0) -> Remove bevel weight (no beveling)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bevel_weight(weight)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_mark_sharp(
+    ctx: Context,
+    action: Literal["mark", "clear"] = "mark"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks or clears sharp edges.
+
+    Sharp edges affect:
+    - Auto Smooth: Splits normals at sharp edges for flat shading
+    - Edge Split modifier: Creates hard edges without geometry duplication
+    - Normal display and shading calculations
+
+    Use for: visual edge definition, smooth shading control, normal maps.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop")
+
+    Args:
+        action: "mark" to mark edges as sharp, "clear" to remove sharp marking.
+
+    Examples:
+        mesh_mark_sharp(action="mark") -> Mark selected edges as sharp
+        mesh_mark_sharp(action="clear") -> Clear sharp marking from selected edges
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.mark_sharp(action)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-030: Mesh Cleanup & Optimization
+# ==============================================================================
+
+@mcp.tool()
+def mesh_dissolve(
+    ctx: Context,
+    dissolve_type: Literal["verts", "edges", "faces", "limited"] = "limited",
+    angle_limit: float = 5.0,
+    use_face_split: bool = False,
+    use_boundary_tear: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Dissolves geometry while preserving shape.
+
+    Types:
+    - verts: Dissolve selected vertices (merge surrounding faces)
+    - edges: Dissolve selected edges (merge adjacent faces)
+    - faces: Dissolve selected faces (remove while keeping boundary)
+    - limited: Auto-dissolve edges below angle threshold (best for cleanup)
+
+    ESSENTIAL for game dev: Removes unnecessary edge loops, cleans up booleans.
+
+    Workflow: BEFORE → mesh_select(action="all") | Limited dissolve is best for cleanup
+
+    Args:
+        dissolve_type: Type of dissolve operation ("verts", "edges", "faces", "limited").
+        angle_limit: Max angle between faces for limited dissolve (degrees). Default 5.0.
+        use_face_split: Split off non-planar faces. Default False.
+        use_boundary_tear: Split off boundary vertices. Default False.
+
+    Examples:
+        mesh_dissolve(dissolve_type="limited", angle_limit=5.0) -> Clean up flat areas
+        mesh_dissolve(dissolve_type="verts") -> Dissolve selected vertices
+        mesh_dissolve(dissolve_type="edges") -> Dissolve selected edges
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.dissolve(dissolve_type, angle_limit, use_face_split, use_boundary_tear)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_tris_to_quads(
+    ctx: Context,
+    face_threshold: float = 40.0,
+    shape_threshold: float = 40.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts triangles to quads where possible.
+
+    Useful for:
+    - Cleaning up triangulated imports (OBJ, FBX from game engines)
+    - Post-boolean cleanup
+    - Preparing mesh for subdivision surface
+    - Better topology for animation deformation
+
+    Workflow: BEFORE → mesh_select(action="all")
+
+    Args:
+        face_threshold: Max angle between face normals (degrees). Default 40.0.
+        shape_threshold: Max shape difference for quad quality (degrees). Default 40.0.
+
+    Examples:
+        mesh_tris_to_quads() -> Convert with default thresholds
+        mesh_tris_to_quads(face_threshold=60.0, shape_threshold=60.0) -> More aggressive conversion
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.tris_to_quads(face_threshold, shape_threshold)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_normals_make_consistent(
+    ctx: Context,
+    inside: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Recalculates normals to face consistently.
+
+    Fixes:
+    - Inverted faces (black patches in render)
+    - Inconsistent shading after boolean operations
+    - Import artifacts from other 3D software
+
+    Default: Normals face outward (standard for solid objects).
+    Set inside=True for hollow objects like rooms/caves.
+
+    Workflow: BEFORE → mesh_select(action="all")
+
+    Args:
+        inside: If True, flip normals to face inward. Default False (outward).
+
+    Examples:
+        mesh_normals_make_consistent() -> Fix normals facing outward
+        mesh_normals_make_consistent(inside=True) -> Fix normals facing inward (for rooms)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.normals_make_consistent(inside)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_decimate(
+    ctx: Context,
+    ratio: float = 0.5,
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Reduces polycount while preserving shape.
+
+    For whole-object decimation, prefer modeling_add_modifier(type="DECIMATE").
+    This tool works on selected geometry only - useful for partial decimation.
+
+    Use cases:
+    - Creating LOD (Level of Detail) meshes for games
+    - Optimizing dense sculpts for animation
+    - Reducing polycount in specific areas
+
+    Workflow: BEFORE → mesh_select(action="all") or select specific region
+
+    Args:
+        ratio: Target ratio (0.0-1.0). 0.5 = reduce by half. Default 0.5.
+        use_symmetry: Maintain mesh symmetry during decimation. Default False.
+        symmetry_axis: Axis for symmetry ("X", "Y", "Z"). Default "X".
+
+    Examples:
+        mesh_decimate(ratio=0.5) -> Reduce selected geometry by half
+        mesh_decimate(ratio=0.25, use_symmetry=True) -> Aggressive reduction with symmetry
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.decimate(ratio, use_symmetry, symmetry_axis)
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-032: Knife & Cut Tools
+# ==============================================================================
+
+@mcp.tool()
+def mesh_knife_project(
+    ctx: Context,
+    cut_through: bool = True
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Projects cut from selected geometry.
+
+    Projects knife cut from view using selected edges/faces as cutter.
+    Useful for: logo cutouts, panel lines, window frames, hard-surface details.
+
+    IMPORTANT: Requires specific view angle for correct projection.
+    Best used with orthographic views (Numpad 1, 3, 7).
+
+    Requirements:
+    - Object must be in Edit Mode
+    - Select cutting geometry (edges/faces) in another object or same mesh
+    - View angle determines projection direction
+
+    Workflow: BEFORE → Position view orthographically, select cutter geometry
+
+    Args:
+        cut_through: If True, cuts through entire mesh. If False, only cuts visible faces.
+
+    Examples:
+        mesh_knife_project(cut_through=True) -> Cut through entire mesh
+        mesh_knife_project(cut_through=False) -> Only cut visible faces from view
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.knife_project(cut_through)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_rip(
+    ctx: Context,
+    use_fill: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Rips (tears) geometry at selection.
+
+    Creates a hole/tear in the mesh at selected vertices or edges.
+    Useful for: creating openings, tears, separating connected geometry.
+
+    Note: Rips from the center of selection outward.
+
+    Workflow: BEFORE → mesh_select_targeted(action="by_index", element_type="VERT")
+
+    Args:
+        use_fill: If True, fills the ripped hole with a face. Default False.
+
+    Examples:
+        mesh_rip() -> Rip at selected vertices
+        mesh_rip(use_fill=True) -> Rip and fill the hole
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.rip(use_fill)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_split(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits selection from mesh.
+
+    Unlike 'separate' (which creates new objects), split keeps geometry
+    in the same object but disconnects it from surrounding geometry.
+
+    Useful for:
+    - Creating movable parts that stay in the same object
+    - Preparing geometry for animation
+    - Isolating regions for material assignment
+    - Pre-separation editing
+
+    Workflow: BEFORE → mesh_select(action) or mesh_select_targeted | AFTER → mesh_transform_selected
+
+    Examples:
+        (select faces) mesh_split() -> Disconnect selected faces from rest of mesh
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.split()
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_edge_split(ctx: Context) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits mesh at selected edges.
+
+    Creates a seam/split along selected edges. Geometry becomes disconnected
+    but stays in place (vertices are duplicated at the split).
+
+    Useful for:
+    - UV seam preparation
+    - Material boundaries
+    - Rigging preparation (separating limbs)
+    - Creating hard edges without modifiers
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → mesh_transform_selected
+
+    Examples:
+        (select edge loop) mesh_edge_split() -> Split mesh along the edge loop
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_split()
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-038-5: Proportional Editing
+# ==============================================================================
+
+
+@mcp.tool()
+def mesh_set_proportional_edit(
+    ctx: Context,
+    enabled: bool = True,
+    falloff_type: Literal["SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM"] = "SMOOTH",
+    size: float = 1.0,
+    use_connected: bool = False,
+) -> str:
+    """
+    [EDIT MODE][SETTING] Configures proportional editing mode.
+
+    Proportional editing affects nearby unselected geometry when transforming.
+    Essential for organic modeling - creates smooth falloff in deformations.
+
+    Falloff types:
+    - SMOOTH: Smooth bell curve (default, best for organic shapes)
+    - SPHERE: Spherical falloff (uniform distance-based)
+    - ROOT: Square root falloff (faster initial falloff)
+    - INVERSE_SQUARE: Inverse square falloff (sharp center, soft edges)
+    - SHARP: Sharp falloff (aggressive center influence)
+    - LINEAR: Linear falloff (even gradient)
+    - CONSTANT: All affected vertices move equally
+    - RANDOM: Randomized falloff (adds variation)
+
+    Use connected=True to limit influence to connected geometry only
+    (ignores other mesh islands/separate objects).
+
+    Workflow: BEFORE → mesh_transform_selected | USE WITH → sculpt workflow prep
+
+    Args:
+        enabled: Enable or disable proportional editing (default True)
+        falloff_type: Type of falloff curve (default SMOOTH)
+        size: Radius of influence in Blender units (default 1.0)
+        use_connected: Only affect connected geometry (default False)
+
+    Examples:
+        mesh_set_proportional_edit(enabled=True) -> Enable with defaults
+        mesh_set_proportional_edit(falloff_type="SHARP", size=2.0) -> Sharp falloff, large area
+        mesh_set_proportional_edit(use_connected=True) -> Only affect connected verts
+        mesh_set_proportional_edit(enabled=False) -> Disable proportional editing
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.set_proportional_edit(enabled, falloff_type, size, use_connected)
+    except RuntimeError as e:
+        return str(e)

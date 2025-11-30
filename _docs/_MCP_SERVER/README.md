@@ -110,6 +110,11 @@ Geometry creation and editing.
 | `modeling_separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
 | `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
 | `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
+| `metaball_create` | `name`, `location`, `element_type`, `radius`, `resolution`, `threshold` | Creates a metaball object for organic blob shapes. |
+| `metaball_add_element` | `metaball_name`, `element_type`, `location`, `radius`, `stiffness` | Adds element to existing metaball for merging. |
+| `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. |
+| `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. |
+| `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. |
 
 ### Mesh Tools (Edit Mode)
 Low-level geometry manipulation.
@@ -146,6 +151,18 @@ Low-level geometry manipulation.
 | `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. |
 | `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. |
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices (F key). |
+| `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. |
+| `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. |
+| `mesh_mark_sharp` | `action` | Marks ('mark') or clears ('clear') sharp edges for Auto Smooth. |
+| `mesh_dissolve` | `dissolve_type`, `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry (limited/verts/edges/faces) while preserving shape. |
+| `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. |
+| `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward if inside=True). |
+| `mesh_decimate` | `ratio`, `use_symmetry`, `symmetry_axis` | Reduces polycount while preserving shape (Edit Mode). |
+| `mesh_knife_project` | `cut_through` | Projects cut from selected geometry (requires view angle). |
+| `mesh_rip` | `use_fill` | Rips (tears) geometry at selected vertices. |
+| `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). |
+| `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). |
+| `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
@@ -166,6 +183,15 @@ Sculpt Mode operations for organic shape manipulation.
 | `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. |
 | `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. |
 | `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
+| `sculpt_brush_clay` | `radius`, `strength` | Sets up clay brush for adding material (muscle mass, fat deposits). |
+| `sculpt_brush_inflate` | `radius`, `strength` | Sets up inflate brush for pushing geometry outward (tumors, swelling). |
+| `sculpt_brush_blob` | `radius`, `strength` | Sets up blob brush for creating rounded organic bulges. |
+| `sculpt_brush_snake_hook` | `radius`, `strength` | Sets up snake hook brush for pulling tendrils (blood vessels, nerves). |
+| `sculpt_brush_draw` | `radius`, `strength` | Sets up draw brush for basic sculpting. |
+| `sculpt_brush_pinch` | `radius`, `strength` | Sets up pinch brush for creating sharp creases (wrinkles, folds). |
+| `sculpt_enable_dyntopo` | `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology for automatic geometry addition. |
+| `sculpt_disable_dyntopo` | *none* | Disables Dynamic Topology. |
+| `sculpt_dyntopo_flood_fill` | *none* | Applies current detail level to entire mesh. |
 
 > **Note:** For reliable AI workflows, use `sculpt_auto` with mesh filters. Brush tools set up the brush but don't execute strokes programmatically.
 
@@ -178,6 +204,25 @@ File export operations.
 | `export_fbx` | `filepath`, `export_selected`, `export_animations`, `apply_modifiers`, `mesh_smooth_type` | Exports to FBX format (industry standard). |
 | `export_obj` | `filepath`, `export_selected`, `apply_modifiers`, `export_materials`, `export_uvs`, `export_normals`, `triangulate` | Exports to OBJ format (universal mesh). |
 
+### Import Tools
+File import operations.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `import_obj` | `filepath`, `use_split_objects`, `use_split_groups`, `global_scale`, `forward_axis`, `up_axis` | Imports OBJ file (geometry, UVs, normals). |
+| `import_fbx` | `filepath`, `use_custom_normals`, `use_image_search`, `ignore_leaf_bones`, `automatic_bone_orientation`, `global_scale` | Imports FBX file (geometry, materials, animations). |
+| `import_glb` | `filepath`, `import_pack_images`, `merge_vertices`, `import_shading` | Imports GLB/GLTF file (PBR materials, animations). |
+| `import_image_as_plane` | `filepath`, `name`, `location`, `size`, `align_axis`, `shader`, `use_transparency` | Imports image as textured plane (reference images). |
+
+### Lattice Tools
+Non-destructive shape deformation using control point cages.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object, auto-fits to target object bounds. |
+| `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice via Lattice modifier. |
+| `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. |
+
 ### System Tools
 System-level operations for mode switching, undo/redo, and file management.
 
@@ -189,6 +234,16 @@ System-level operations for mode switching, undo/redo, and file management.
 | `system_save_file` | `filepath`, `compress` | Saves current .blend file. Auto-generates temp path if unsaved. |
 | `system_new_file` | `load_ui` | Creates new file (resets scene to startup). |
 | `system_snapshot` | `action`, `name` | Manages quick save/restore checkpoints (save/restore/list/delete). |
+
+### Baking Tools
+Texture baking operations using Cycles renderer. Critical for game development workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `bake_normal_map` | `object_name`, `output_path`, `resolution`, `high_poly_source`, `cage_extrusion`, `margin`, `normal_space` | Bakes normal map from geometry or high-poly to low-poly. Supports TANGENT/OBJECT space. |
+| `bake_ao` | `object_name`, `output_path`, `resolution`, `samples`, `distance`, `margin` | Bakes ambient occlusion map with configurable samples. |
+| `bake_combined` | `object_name`, `output_path`, `resolution`, `samples`, `margin`, `use_pass_direct`, `use_pass_indirect`, `use_pass_color` | Bakes full render (material + lighting) to texture. |
+| `bake_diffuse` | `object_name`, `output_path`, `resolution`, `margin` | Bakes diffuse/albedo color only (no lighting). |
 
 ## 🛠 Key Components
 

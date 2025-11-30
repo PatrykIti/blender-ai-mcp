@@ -23,7 +23,7 @@ Cleanup tools are **essential for game dev** - they optimize geometry, remove un
 
 ### TASK-030-1: mesh_dissolve
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Dissolves selected geometry while preserving shape.
 
@@ -66,7 +66,7 @@ elif dissolve_type == "limited":
 
 ### TASK-030-2: mesh_tris_to_quads
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Converts triangles to quads where possible.
 
@@ -102,7 +102,7 @@ bpy.ops.mesh.tris_convert_to_quads(
 
 ### TASK-030-3: mesh_normals_make_consistent
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Recalculates normals to face consistently outward.
 
@@ -132,9 +132,9 @@ bpy.ops.mesh.normals_make_consistent(inside=inside)
 
 ---
 
-### TASK-030-4: mesh_decimate (Optional)
+### TASK-030-4: mesh_decimate
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Reduces polycount while preserving shape.
 
@@ -172,7 +172,7 @@ bpy.ops.mesh.decimate(ratio=ratio)
 
 ## Testing Requirements
 
-- [ ] Unit tests for each tool
-- [ ] E2E test: Import triangulated mesh → tris_to_quads → verify quad count
-- [ ] E2E test: Boolean operation → dissolve limited → verify cleanup
-- [ ] E2E test: Inverted normals → make consistent → verify render
+- [x] Unit tests for each tool (24 tests passing)
+- [x] E2E test: Import triangulated mesh → tris_to_quads → verify quad count
+- [x] E2E test: Boolean operation → dissolve limited → verify cleanup
+- [x] E2E test: Inverted normals → make consistent → verify render

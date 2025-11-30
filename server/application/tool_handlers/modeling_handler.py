@@ -98,3 +98,108 @@ class ModelingToolHandler(IModelingTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # ==========================================================================
+    # TASK-038-1: Metaball Tools
+    # ==========================================================================
+
+    def metaball_create(
+        self,
+        name: str = "Metaball",
+        location: Optional[List[float]] = None,
+        element_type: str = "BALL",
+        radius: float = 1.0,
+        resolution: float = 0.2,
+        threshold: float = 0.6,
+    ) -> str:
+        """Creates a metaball object."""
+        args = {
+            "name": name,
+            "location": location or [0, 0, 0],
+            "element_type": element_type,
+            "radius": radius,
+            "resolution": resolution,
+            "threshold": threshold,
+        }
+        response = self.rpc.send_request("modeling.metaball_create", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def metaball_add_element(
+        self,
+        metaball_name: str,
+        element_type: str = "BALL",
+        location: Optional[List[float]] = None,
+        radius: float = 1.0,
+        stiffness: float = 2.0,
+    ) -> str:
+        """Adds element to existing metaball."""
+        args = {
+            "metaball_name": metaball_name,
+            "element_type": element_type,
+            "location": location or [0, 0, 0],
+            "radius": radius,
+            "stiffness": stiffness,
+        }
+        response = self.rpc.send_request("modeling.metaball_add_element", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def metaball_to_mesh(
+        self,
+        metaball_name: str,
+        apply_resolution: bool = True,
+    ) -> str:
+        """Converts metaball to mesh."""
+        args = {
+            "metaball_name": metaball_name,
+            "apply_resolution": apply_resolution,
+        }
+        response = self.rpc.send_request("modeling.metaball_to_mesh", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # ==========================================================================
+    # TASK-038-6: Skin Modifier Workflow
+    # ==========================================================================
+
+    def skin_create_skeleton(
+        self,
+        name: str = "Skeleton",
+        vertices: List[List[float]] = None,
+        edges: Optional[List[List[int]]] = None,
+        location: Optional[List[float]] = None,
+    ) -> str:
+        """Creates skeleton mesh for Skin modifier."""
+        args = {
+            "name": name,
+            "vertices": vertices or [[0, 0, 0], [0, 0, 1]],
+            "edges": edges,
+            "location": location or [0, 0, 0],
+        }
+        response = self.rpc.send_request("modeling.skin_create_skeleton", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def skin_set_radius(
+        self,
+        object_name: str,
+        vertex_index: Optional[int] = None,
+        radius_x: float = 0.25,
+        radius_y: float = 0.25,
+    ) -> str:
+        """Sets skin radius at vertices."""
+        args = {
+            "object_name": object_name,
+            "vertex_index": vertex_index,
+            "radius_x": radius_x,
+            "radius_y": radius_y,
+        }
+        response = self.rpc.send_request("modeling.skin_set_radius", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

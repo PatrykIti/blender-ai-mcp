@@ -215,3 +215,222 @@ def modeling_set_origin(
         return handler.set_origin(name, type)
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-038-1: Metaball Tools
+# ==============================================================================
+
+
+@mcp.tool()
+def metaball_create(
+    ctx: Context,
+    name: str = "Metaball",
+    location: Union[str, List[float], None] = None,
+    element_type: str = "BALL",
+    radius: float = 1.0,
+    resolution: float = 0.2,
+    threshold: float = 0.6,
+) -> str:
+    """
+    [OBJECT MODE][SCENE] Creates a metaball object.
+
+    Metaballs automatically merge when close together, creating organic blob shapes.
+    Perfect for: veins, tumors, fat deposits, cellular structures, organs.
+
+    Element types:
+        - BALL: Spherical element (default)
+        - CAPSULE: Tubular element for blood vessels
+        - PLANE: Flat disc element
+        - ELLIPSOID: Stretched sphere
+        - CUBE: Cubic element
+
+    Workflow: AFTER → metaball_add_element | metaball_to_mesh
+
+    Args:
+        name: Name for the metaball object
+        location: World position [x, y, z]
+        element_type: BALL, CAPSULE, PLANE, ELLIPSOID, CUBE
+        radius: Initial element radius (default 1.0)
+        resolution: Surface resolution - lower = higher quality (default 0.2)
+        threshold: Merge threshold for elements (default 0.6)
+
+    Examples:
+        metaball_create(name="Heart", element_type="ELLIPSOID", radius=1.5)
+        metaball_create(name="Tumor", resolution=0.1) -> Higher quality
+    """
+    handler = get_modeling_handler()
+    try:
+        parsed_location = parse_coordinate(location)
+        return handler.metaball_create(
+            name=name,
+            location=parsed_location,
+            element_type=element_type,
+            radius=radius,
+            resolution=resolution,
+            threshold=threshold,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def metaball_add_element(
+    ctx: Context,
+    metaball_name: str,
+    element_type: str = "BALL",
+    location: Union[str, List[float], None] = None,
+    radius: float = 1.0,
+    stiffness: float = 2.0,
+) -> str:
+    """
+    [OBJECT MODE] Adds element to existing metaball.
+
+    Multiple elements merge together based on proximity and stiffness.
+    Use CAPSULE for tubular structures (blood vessels, nerves).
+
+    Workflow: BEFORE → metaball_create | AFTER → metaball_to_mesh
+
+    Args:
+        metaball_name: Name of target metaball object
+        element_type: BALL, CAPSULE, PLANE, ELLIPSOID, CUBE
+        location: Position relative to metaball origin [x, y, z]
+        radius: Element radius (default 1.0)
+        stiffness: How strongly it merges with other elements (default 2.0)
+
+    Examples:
+        metaball_add_element("Heart", location=[0.5, 0, 0.3], radius=0.8)
+        metaball_add_element("Vessel", element_type="CAPSULE", radius=0.2)
+    """
+    handler = get_modeling_handler()
+    try:
+        parsed_location = parse_coordinate(location)
+        return handler.metaball_add_element(
+            metaball_name=metaball_name,
+            element_type=element_type,
+            location=parsed_location,
+            radius=radius,
+            stiffness=stiffness,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def metaball_to_mesh(
+    ctx: Context,
+    metaball_name: str,
+    apply_resolution: bool = True,
+) -> str:
+    """
+    [OBJECT MODE][DESTRUCTIVE] Converts metaball to mesh.
+
+    Required for:
+    - Mesh editing operations (extrude, bevel, etc.)
+    - Export to game engines
+    - Further sculpting with dyntopo
+
+    Workflow: AFTER → sculpt_enable_dyntopo | mesh_remesh_voxel (cleanup)
+
+    Args:
+        metaball_name: Name of metaball to convert
+        apply_resolution: Whether to apply current resolution (default True)
+
+    Examples:
+        metaball_to_mesh("Heart") -> Converts to mesh for editing
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.metaball_to_mesh(
+            metaball_name=metaball_name,
+            apply_resolution=apply_resolution,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-038-6: Skin Modifier Workflow
+# ==============================================================================
+
+
+@mcp.tool()
+def skin_create_skeleton(
+    ctx: Context,
+    name: str = "Skeleton",
+    vertices: Union[str, List[List[float]], None] = None,
+    edges: Union[str, List[List[int]], None] = None,
+    location: Union[str, List[float], None] = None,
+) -> str:
+    """
+    [OBJECT MODE][SCENE] Creates skeleton mesh for Skin modifier.
+
+    Define vertices as path points, edges connect them.
+    Skin modifier will create tubular mesh around this skeleton.
+
+    Use case: blood vessels, nerves, tree branches, tentacles.
+
+    Workflow: AFTER → modeling_add_modifier(type="SKIN") | skin_set_radius
+
+    Args:
+        name: Name for skeleton object (default "Skeleton")
+        vertices: List of vertex positions [[x,y,z], ...] (default [[0,0,0], [0,0,1]])
+        edges: List of edge connections [[v1, v2], ...] (auto-connect sequentially if None)
+        location: World position [x, y, z]
+
+    Examples:
+        skin_create_skeleton(name="Artery", vertices=[[0,0,0], [0,0,1], [0.3,0,1.5]])
+        skin_create_skeleton(name="Branch", vertices=[[0,0,0], [0,0,1], [0.5,0,1.5], [-0.5,0,1.5]], edges=[[0,1], [1,2], [1,3]])
+    """
+    handler = get_modeling_handler()
+    try:
+        parsed_location = parse_coordinate(location)
+        parsed_vertices = parse_coordinate(vertices) if isinstance(vertices, str) else vertices
+        parsed_edges = parse_coordinate(edges) if isinstance(edges, str) else edges
+        return handler.skin_create_skeleton(
+            name=name,
+            vertices=parsed_vertices,
+            edges=parsed_edges,
+            location=parsed_location,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def skin_set_radius(
+    ctx: Context,
+    object_name: str,
+    vertex_index: Optional[int] = None,
+    radius_x: float = 0.25,
+    radius_y: float = 0.25,
+) -> str:
+    """
+    [EDIT MODE] Sets skin radius at vertices.
+
+    Each vertex can have different X/Y radius for elliptical cross-sections.
+
+    Use case: Varying vessel thickness (aorta thicker than capillaries).
+
+    Workflow: BEFORE → skin_create_skeleton | AFTER → modeling_apply_modifier
+
+    Args:
+        object_name: Name of object with skin modifier
+        vertex_index: Specific vertex index (None = all selected/all vertices)
+        radius_x: X radius for elliptical cross-section (default 0.25)
+        radius_y: Y radius for elliptical cross-section (default 0.25)
+
+    Examples:
+        skin_set_radius("Artery", vertex_index=0, radius_x=0.15) -> Thick at base
+        skin_set_radius("Artery", radius_x=0.05, radius_y=0.05) -> Thin everywhere
+    """
+    handler = get_modeling_handler()
+    try:
+        return handler.skin_set_radius(
+            object_name=object_name,
+            vertex_index=vertex_index,
+            radius_x=radius_x,
+            radius_y=radius_y,
+        )
+    except RuntimeError as e:
+        return str(e)

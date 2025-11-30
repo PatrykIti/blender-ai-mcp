@@ -3,12 +3,26 @@ Tests for Scene Inspect Material Slots (TASK-014-10)
 """
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.modeling_handler import ModelingToolHandler
+from server.application.tool_handlers.material_handler import MaterialToolHandler
 
 
 @pytest.fixture
 def scene_handler(rpc_client):
     """Provides a scene handler instance using shared RPC client."""
     return SceneToolHandler(rpc_client)
+
+
+@pytest.fixture
+def modeling_handler(rpc_client):
+    """Provides a modeling handler instance using shared RPC client."""
+    return ModelingToolHandler(rpc_client)
+
+
+@pytest.fixture
+def material_handler(rpc_client):
+    """Provides a material handler instance using shared RPC client."""
+    return MaterialToolHandler(rpc_client)
 
 
 def test_inspect_material_slots_basic(scene_handler):
@@ -52,35 +66,54 @@ def test_inspect_material_slots_exclude_empty(scene_handler):
         pytest.skip(f"Blender not available: {e}")
 
 
-def test_inspect_material_slots_with_filter(scene_handler):
+def test_inspect_material_slots_with_filter(scene_handler, modeling_handler, material_handler):
     """Test filtering by material name."""
+    obj_name = "E2E_MatSlotFilterTest"
+    mat_name = "E2E_FilterTestMaterial"
     try:
-        # First get all materials to know what's available
-        all_result = scene_handler.inspect_material_slots(
-            material_filter=None,
-            include_empty_slots=False
+        # Clean up if exists
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
+
+        # Create test object
+        modeling_handler.create_primitive(
+            primitive_type="CUBE",
+            name=obj_name,
+            location=[0, 0, 0]
         )
 
-        if not all_result["slots"]:
-            pytest.skip("No assigned material slots available for filter test")
-
-        # Get first material name
-        test_material = all_result["slots"][0]["material_name"]
+        # Create and assign material
+        material_handler.create_material(name=mat_name)
+        material_handler.assign_material(material_name=mat_name, object_name=obj_name)
 
         # Now filter by that material
         filtered_result = scene_handler.inspect_material_slots(
-            material_filter=test_material,
+            material_filter=mat_name,
             include_empty_slots=True
         )
 
         assert isinstance(filtered_result, dict)
+        assert len(filtered_result["slots"]) > 0, "Expected at least one slot with test material"
+
         # All returned slots should use the filtered material
         for slot in filtered_result["slots"]:
-            assert slot["material_name"] == test_material, f"Found slot with wrong material: {slot['material_name']}"
+            assert slot["material_name"] == mat_name, f"Found slot with wrong material: {slot['material_name']}"
 
-        print(f"✓ inspect_material_slots (filter '{test_material}'): {len(filtered_result['slots'])} slots")
+        print(f"✓ inspect_material_slots (filter '{mat_name}'): {len(filtered_result['slots'])} slots")
+
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "is blender running" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+    finally:
+        # Cleanup
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
 
 
 def test_inspect_material_slots_warnings(scene_handler):

@@ -6,6 +6,13 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [55](./55-2025-11-30-lattice-deformation.md) | 2025-11-30 | **Lattice Deformation Tools (TASK-033)** | 1.28.0 |
+| [54](./54-2025-11-30-organic-modeling-tools.md) | 2025-11-30 | **Organic Modeling Tools (TASK-038)** | 1.27.0 |
+| [53](./53-2025-11-30-import-tools.md) | 2025-11-30 | **Import Tools (TASK-035)** | 1.26.0 |
+| [52](./52-2025-11-30-knife-cut-tools.md) | 2025-11-30 | **Knife & Cut Tools (TASK-032)** | 1.25.0 |
+| [51](./51-2025-11-30-baking-tools.md) | 2025-11-30 | **Baking Tools (TASK-031)** | 1.24.0 |
+| [50](./50-2025-11-30-mesh-cleanup.md) | 2025-11-30 | **Mesh Cleanup & Optimization (TASK-030)** | 1.23.0 |
+| [49](./49-2025-11-30-edge-weights-creases.md) | 2025-11-30 | **Edge Weights & Creases (TASK-029)** | 1.22.0 |
 | [48](./48-2025-11-29-sculpt-tools.md) | 2025-11-29 | **Sculpt Tools (TASK-027)** | 1.21.0 |
 | [47](./47-2025-11-29-system-tools.md) | 2025-11-29 | **System Tools (TASK-025)** | 1.20.0 |
 | [46](./46-2025-11-29-export-tools.md) | 2025-11-29 | **Export Tools (TASK-026)** | 1.19.0 |

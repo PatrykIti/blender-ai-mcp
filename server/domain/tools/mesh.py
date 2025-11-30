@@ -239,3 +239,107 @@ class IMeshTool(ABC):
     def add_edge_face(self) -> str:
         """Creates an edge or face from selected vertices."""
         pass
+
+    # TASK-029-1: Mesh Edge Crease Tool
+    @abstractmethod
+    def edge_crease(self, crease_value: float = 1.0) -> str:
+        """Sets crease weight on selected edges for subdivision surface control."""
+        pass
+
+    # TASK-029-2: Mesh Bevel Weight Tool
+    @abstractmethod
+    def bevel_weight(self, weight: float = 1.0) -> str:
+        """Sets bevel weight on selected edges for bevel modifier control."""
+        pass
+
+    # TASK-029-3: Mesh Mark Sharp Tool
+    @abstractmethod
+    def mark_sharp(self, action: str = "mark") -> str:
+        """Marks or clears sharp edges for auto-smooth and edge split."""
+        pass
+
+    # TASK-030-1: Mesh Dissolve Tool
+    @abstractmethod
+    def dissolve(
+        self,
+        dissolve_type: str = "limited",
+        angle_limit: float = 5.0,
+        use_face_split: bool = False,
+        use_boundary_tear: bool = False
+    ) -> str:
+        """Dissolves selected geometry while preserving shape."""
+        pass
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    @abstractmethod
+    def tris_to_quads(
+        self,
+        face_threshold: float = 40.0,
+        shape_threshold: float = 40.0
+    ) -> str:
+        """Converts triangles to quads where possible."""
+        pass
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    @abstractmethod
+    def normals_make_consistent(self, inside: bool = False) -> str:
+        """Recalculates normals to face consistently outward."""
+        pass
+
+    # TASK-030-4: Mesh Decimate Tool
+    @abstractmethod
+    def decimate(
+        self,
+        ratio: float = 0.5,
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X"
+    ) -> str:
+        """Reduces polycount while preserving shape."""
+        pass
+
+    # TASK-032-1: Mesh Knife Project Tool
+    @abstractmethod
+    def knife_project(self, cut_through: bool = True) -> str:
+        """Projects cut from selected geometry (requires view angle)."""
+        pass
+
+    # TASK-032-2: Mesh Rip Tool
+    @abstractmethod
+    def rip(self, use_fill: bool = False) -> str:
+        """Rips (tears) geometry at selected vertices."""
+        pass
+
+    # TASK-032-3: Mesh Split Tool
+    @abstractmethod
+    def split(self) -> str:
+        """Splits selected geometry from the rest of the mesh."""
+        pass
+
+    # TASK-032-4: Mesh Edge Split Tool
+    @abstractmethod
+    def edge_split(self) -> str:
+        """Splits mesh at selected edges to create sharp boundaries."""
+        pass
+
+    # TASK-038-5: Proportional Editing
+    @abstractmethod
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ) -> str:
+        """
+        Configures proportional editing settings.
+
+        Args:
+            enabled: Whether to enable proportional editing
+            falloff_type: SMOOTH, SPHERE, ROOT, INVERSE_SQUARE, SHARP, LINEAR, CONSTANT, RANDOM
+            size: Influence radius
+            use_connected: Only affect connected geometry
+
+        Returns:
+            Success message.
+        """
+        pass

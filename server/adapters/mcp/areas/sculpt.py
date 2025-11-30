@@ -183,3 +183,324 @@ def sculpt_brush_crease(
         )
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-038-2: Core Sculpt Brushes
+# ==============================================================================
+
+
+@mcp.tool()
+def sculpt_brush_clay(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Clay brush for adding material.
+
+    Adds material like clay - builds up surface.
+    Essential for: muscle mass, fat deposits, organ volume.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_clay(radius=0.2, strength=0.6) -> Build up material
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_clay(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_brush_inflate(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Inflate brush for pushing geometry outward.
+
+    Pushes geometry outward along normals - inflates like balloon.
+    Essential for: swelling, tumors, blisters, organ volume.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_inflate(radius=0.15, strength=0.4) -> Gentle inflation
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_inflate(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_brush_blob(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Blob brush for creating rounded organic bulges.
+
+    Creates rounded, organic bulges.
+    Essential for: nodules, bumps, organic growths.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_blob(radius=0.1, strength=0.5) -> Create organic bumps
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_blob(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-038-3: Detail Sculpt Brushes
+# ==============================================================================
+
+
+@mcp.tool()
+def sculpt_brush_snake_hook(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Snake Hook brush for pulling geometry like taffy.
+
+    Pulls geometry like taffy - creates long tendrils.
+    Essential for: blood vessels, nerves, tentacles, organic protrusions.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_snake_hook(radius=0.08, strength=0.7) -> Pull tendrils
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_snake_hook(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_brush_draw(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Draw brush for basic sculpting.
+
+    Basic sculpting - pushes/pulls surface.
+    Essential for: general shaping, wrinkles, surface variation.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_draw(radius=0.1, strength=0.5) -> General sculpting
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_draw(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_brush_pinch(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    radius: float = 0.1,
+    strength: float = 0.5,
+) -> str:
+    """
+    [SCULPT MODE][DESTRUCTIVE] Sets up Pinch brush for pulling geometry toward center.
+
+    Pulls geometry toward center - creates sharp creases.
+    Essential for: wrinkles, folds, membrane attachments.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
+
+    Args:
+        object_name: Target object (default: active object)
+        radius: Brush radius in Blender units (default 0.1)
+        strength: Brush strength 0-1 (default 0.5)
+
+    Examples:
+        sculpt_brush_pinch(radius=0.05, strength=0.6) -> Create sharp folds
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.brush_pinch(
+            object_name=object_name,
+            radius=radius,
+            strength=strength,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+# ==============================================================================
+# TASK-038-4: Dynamic Topology (Dyntopo)
+# ==============================================================================
+
+
+@mcp.tool()
+def sculpt_enable_dyntopo(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    detail_mode: Literal["RELATIVE", "CONSTANT", "BRUSH", "MANUAL"] = "RELATIVE",
+    detail_size: float = 12.0,
+    use_smooth_shading: bool = True,
+) -> str:
+    """
+    [SCULPT MODE] Enables Dynamic Topology for automatic geometry addition.
+
+    Dyntopo automatically adds/removes geometry as you sculpt.
+    No need to worry about base mesh topology.
+
+    Detail modes:
+    - RELATIVE: Detail based on view distance (default)
+    - CONSTANT: Fixed detail size in Blender units
+    - BRUSH: Detail based on brush size
+    - MANUAL: No automatic detail, use Flood Fill
+
+    Essential for: sculpting from scratch, adding detail where needed.
+
+    Warning: Destroys UV maps and vertex groups. Use for concept/base mesh.
+
+    Workflow: BEFORE -> scene_set_mode(mode='SCULPT') | AFTER -> mesh_remesh_voxel
+
+    Args:
+        object_name: Target object (default: active object)
+        detail_mode: RELATIVE, CONSTANT, BRUSH, MANUAL (default RELATIVE)
+        detail_size: Detail level - pixels for RELATIVE, units for CONSTANT (default 12.0)
+        use_smooth_shading: Use smooth shading (default True)
+
+    Examples:
+        sculpt_enable_dyntopo(detail_mode="RELATIVE", detail_size=8) -> Higher detail
+        sculpt_enable_dyntopo(detail_mode="CONSTANT", detail_size=0.05) -> Fixed detail
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.enable_dyntopo(
+            object_name=object_name,
+            detail_mode=detail_mode,
+            detail_size=detail_size,
+            use_smooth_shading=use_smooth_shading,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_disable_dyntopo(
+    ctx: Context,
+    object_name: Optional[str] = None,
+) -> str:
+    """
+    [SCULPT MODE] Disables Dynamic Topology.
+
+    After disabling, consider mesh_remesh_voxel for clean topology.
+
+    Workflow: AFTER -> sculpt_enable_dyntopo | AFTER -> mesh_remesh_voxel
+
+    Args:
+        object_name: Target object (default: active object)
+
+    Examples:
+        sculpt_disable_dyntopo() -> Turn off dyntopo for active object
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.disable_dyntopo(
+            object_name=object_name,
+        )
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def sculpt_dyntopo_flood_fill(
+    ctx: Context,
+    object_name: Optional[str] = None,
+) -> str:
+    """
+    [SCULPT MODE] Applies current detail level to entire mesh.
+
+    Useful for: unifying detail level after sculpting.
+
+    Workflow: BEFORE -> sculpt_enable_dyntopo
+
+    Args:
+        object_name: Target object (default: active object)
+
+    Examples:
+        sculpt_dyntopo_flood_fill() -> Apply detail to entire mesh
+    """
+    handler = get_sculpt_handler()
+    try:
+        return handler.dyntopo_flood_fill(
+            object_name=object_name,
+        )
+    except RuntimeError as e:
+        return str(e)

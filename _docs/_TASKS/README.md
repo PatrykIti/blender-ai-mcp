@@ -3,37 +3,28 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 10 tasks (~41 sub-tasks)
-- **In Progress:** 1
-- **Done:** 79
+- **To Do:** 5 tasks (~40 sub-tasks)
+- **In Progress:** 0
+- **Done:** 100
 
 ---
 
 ## 🚨 To Do
 
-### Game Dev Critical (Baking & Subdivision Control)
+### Core Infrastructure
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-029](./TASK-029_Edge_Weights_Creases.md) | **Edge Weights & Creases** | 🔴 High | mesh_edge_crease, mesh_bevel_weight, mesh_mark_sharp |
-| [TASK-030](./TASK-030_Mesh_Cleanup_Optimization.md) | **Mesh Cleanup & Optimization** | 🔴 High | mesh_dissolve, mesh_tris_to_quads, mesh_normals_make_consistent |
-| [TASK-031](./TASK-031_Baking_Tools.md) | **Baking Tools** | 🔴 Critical | bake_normal_map, bake_ao, bake_combined |
-
-### Organic & Medical Modeling
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | metaballs, sculpt brushes (clay, inflate, blob, snake_hook), dyntopo, skin modifier |
+| [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor** | 🔴 High | 24 sub-tasks: interceptor, analyzers, engines, workflows |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-032](./TASK-032_Knife_Cut_Tools.md) | **Knife & Cut Tools** | 🟠 High | mesh_knife_project, mesh_rip, mesh_split |
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | lattice_create, lattice_bind, lattice_edit_point |
 | [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
 
 ### Import & Workflow
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-035](./TASK-035_Import_Tools.md) | **Import Tools** | 🟠 High | import_obj, import_fbx, import_image_as_plane |
 | [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
 
 ### Future / Nice-to-Have
@@ -45,10 +36,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-### Testing Infrastructure
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | Core infra done, remaining: auto-start Blender, CI/CD |
+*No tasks currently in progress*
 
 ---
 
@@ -56,6 +44,27 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | 2025-11-30 |
+| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | 2025-11-30 |
+| [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |
+| [TASK-035-3](./TASK-035_Import_Tools.md#task-035-3-import_image_as_plane) | **import_image_as_plane** | 🟠 High | 2025-11-30 |
+| [TASK-035-2](./TASK-035_Import_Tools.md#task-035-2-import_fbx) | **import_fbx** | 🟠 High | 2025-11-30 |
+| [TASK-035-1](./TASK-035_Import_Tools.md#task-035-1-import_obj) | **import_obj** | 🟠 High | 2025-11-30 |
+| [TASK-032-4](./TASK-032_Knife_Cut_Tools.md#task-032-4-mesh_edge_split) | **mesh_edge_split** | 🟠 High | 2025-11-30 |
+| [TASK-032-3](./TASK-032_Knife_Cut_Tools.md#task-032-3-mesh_split) | **mesh_split** | 🟠 High | 2025-11-30 |
+| [TASK-032-2](./TASK-032_Knife_Cut_Tools.md#task-032-2-mesh_rip) | **mesh_rip** | 🟠 High | 2025-11-30 |
+| [TASK-032-1](./TASK-032_Knife_Cut_Tools.md#task-032-1-mesh_knife_project) | **mesh_knife_project** | 🟠 High | 2025-11-30 |
+| [TASK-031-4](./TASK-031_Baking_Tools.md#task-031-4-bake_diffuse) | **bake_diffuse** | 🔴 Critical | 2025-11-30 |
+| [TASK-031-3](./TASK-031_Baking_Tools.md#task-031-3-bake_combined) | **bake_combined** | 🔴 Critical | 2025-11-30 |
+| [TASK-031-2](./TASK-031_Baking_Tools.md#task-031-2-bake_ao) | **bake_ao** | 🔴 Critical | 2025-11-30 |
+| [TASK-031-1](./TASK-031_Baking_Tools.md#task-031-1-bake_normal_map) | **bake_normal_map** | 🔴 Critical | 2025-11-30 |
+| [TASK-030-4](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-4-mesh_decimate) | **mesh_decimate** | 🔴 High | 2025-11-30 |
+| [TASK-030-3](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-3-mesh_normals_make_consistent) | **mesh_normals_make_consistent** | 🔴 High | 2025-11-30 |
+| [TASK-030-2](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-2-mesh_tris_to_quads) | **mesh_tris_to_quads** | 🔴 High | 2025-11-30 |
+| [TASK-030-1](./TASK-030_Mesh_Cleanup_Optimization.md#task-030-1-mesh_dissolve) | **mesh_dissolve** | 🔴 High | 2025-11-30 |
+| [TASK-029-3](./TASK-029_Edge_Weights_Creases.md#task-029-3-mesh_mark_sharp) | **mesh_mark_sharp** | 🔴 High | 2025-11-30 |
+| [TASK-029-2](./TASK-029_Edge_Weights_Creases.md#task-029-2-mesh_bevel_weight) | **mesh_bevel_weight** | 🔴 High | 2025-11-30 |
+| [TASK-029-1](./TASK-029_Edge_Weights_Creases.md#task-029-1-mesh_edge_crease) | **mesh_edge_crease** | 🔴 High | 2025-11-30 |
 | [TASK-025-4](./TASK-025_System_Tools.md#task-025-4-system_snapshot) | **system_snapshot** | 🟢 Low | 2025-11-29 |
 | [TASK-025-3](./TASK-025_System_Tools.md#task-025-3-system_save_file--system_new_file) | **system_save_file / system_new_file** | 🟡 Medium | 2025-11-29 |
 | [TASK-025-2](./TASK-025_System_Tools.md#task-025-2-system_undo--system_redo) | **system_undo / system_redo** | 🟡 Medium | 2025-11-29 |

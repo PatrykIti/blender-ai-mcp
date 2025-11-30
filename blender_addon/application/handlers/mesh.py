@@ -83,11 +83,14 @@ class MeshHandler:
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Select geometry elements by index.
         Uses BMesh for precise 0-based indexing.
-        
+
         Args:
             type: 'VERT', 'EDGE', 'FACE'
             selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect)
         """
+        # Ensure edit mode before any mesh operations
+        self._ensure_edit_mode()
+
         # Handle SET mode (exclusive selection)
         if selection_mode == 'SET':
             bpy.ops.mesh.select_all(action='DESELECT')
@@ -1357,3 +1360,487 @@ class MeshHandler:
             return f"Created edge from {selected_verts} vertices"
         else:
             return f"Created face from {selected_verts} vertices"
+
+    # ==========================================================================
+    # TASK-029: Edge Weights & Creases (Subdivision Control)
+    # ==========================================================================
+
+    def edge_crease(self, crease_value=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets crease weight on selected edges.
+        Crease controls how Subdivision Surface modifier affects edges.
+        Uses BMesh API for direct edge crease manipulation.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # First check if any edges are selected (quick count)
+        has_selection = any(e.select for e in bm.edges)
+
+        if not has_selection:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to set crease weight.")
+
+        # Clamp crease value to valid range
+        crease_value = max(0.0, min(1.0, crease_value))
+
+        # Get or create crease layer FIRST - Blender 4.0+ uses float layers
+        # Creating a layer may invalidate edge references, so do this before iterating
+        crease_layer = None
+        if hasattr(bm.edges.layers, 'crease'):
+            # Blender 3.x
+            crease_layer = bm.edges.layers.crease.verify()
+        else:
+            # Blender 4.0+ uses float layer named 'crease_edge'
+            crease_layer = bm.edges.layers.float.get('crease_edge')
+            if crease_layer is None:
+                crease_layer = bm.edges.layers.float.new('crease_edge')
+
+        # NOW collect and set crease on selected edges (after layer is created)
+        edge_count = 0
+        for edge in bm.edges:
+            if edge.select:
+                edge[crease_layer] = crease_value
+                edge_count += 1
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Set crease weight {crease_value} on {edge_count} edge(s)"
+
+    def bevel_weight(self, weight=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets bevel weight on selected edges.
+        When Bevel modifier uses 'Weight' limit method, only edges with weight > 0 are beveled.
+        Uses BMesh API for direct bevel weight manipulation.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # First check if any edges are selected (quick count)
+        has_selection = any(e.select for e in bm.edges)
+
+        if not has_selection:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to set bevel weight.")
+
+        # Clamp weight to valid range
+        weight = max(0.0, min(1.0, weight))
+
+        # Get or create bevel weight layer FIRST - Blender 4.0+ uses float layers
+        # Creating a layer may invalidate edge references, so do this before iterating
+        bevel_layer = None
+        if hasattr(bm.edges.layers, 'bevel_weight'):
+            # Blender 3.x
+            bevel_layer = bm.edges.layers.bevel_weight.verify()
+        else:
+            # Blender 4.0+ uses float layer named 'bevel_weight_edge'
+            bevel_layer = bm.edges.layers.float.get('bevel_weight_edge')
+            if bevel_layer is None:
+                bevel_layer = bm.edges.layers.float.new('bevel_weight_edge')
+
+        # NOW collect and set bevel weight on selected edges (after layer is created)
+        edge_count = 0
+        for edge in bm.edges:
+            if edge.select:
+                edge[bevel_layer] = weight
+                edge_count += 1
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Set bevel weight {weight} on {edge_count} edge(s)"
+
+    def mark_sharp(self, action="mark"):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks or clears sharp edges.
+        Sharp edges affect Auto Smooth, Edge Split modifier, and normal calculations.
+        Uses bpy.ops.mesh.mark_sharp.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Count selected edges
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to mark/clear sharp.")
+
+        # Validate action
+        action = action.lower()
+        if action not in ["mark", "clear"]:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid action '{action}'. Must be 'mark' or 'clear'.")
+
+        # Execute mark_sharp
+        if action == "mark":
+            bpy.ops.mesh.mark_sharp()
+            action_desc = "Marked"
+        else:
+            bpy.ops.mesh.mark_sharp(clear=True)
+            action_desc = "Cleared sharp from"
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"{action_desc} {selected_edges} edge(s) as sharp"
+
+    # TASK-030-1: Mesh Dissolve Tool
+    def dissolve(self, dissolve_type="limited", angle_limit=5.0, use_face_split=False, use_boundary_tear=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Dissolves selected geometry while preserving shape.
+
+        dissolve_type options:
+        - 'limited': Dissolve based on angle limit (planar faces)
+        - 'verts': Dissolve selected vertices
+        - 'edges': Dissolve selected edges
+        - 'faces': Dissolve selected faces
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Validate dissolve_type
+        valid_types = ["limited", "verts", "edges", "faces"]
+        dissolve_type = dissolve_type.lower()
+        if dissolve_type not in valid_types:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid dissolve_type '{dissolve_type}'. Must be one of: {valid_types}")
+
+        # Convert angle to radians for limited dissolve
+        import math
+        angle_limit_rad = math.radians(angle_limit)
+
+        try:
+            if dissolve_type == "limited":
+                bpy.ops.mesh.dissolve_limited(
+                    angle_limit=angle_limit_rad,
+                    use_dissolve_boundaries=use_boundary_tear
+                )
+                result_desc = f"Limited dissolve (angle: {angle_limit}°)"
+            elif dissolve_type == "verts":
+                bpy.ops.mesh.dissolve_verts(
+                    use_face_split=use_face_split,
+                    use_boundary_tear=use_boundary_tear
+                )
+                result_desc = "Dissolved selected vertices"
+            elif dissolve_type == "edges":
+                bpy.ops.mesh.dissolve_edges(
+                    use_verts=True,
+                    use_face_split=use_face_split
+                )
+                result_desc = "Dissolved selected edges"
+            else:  # faces
+                bpy.ops.mesh.dissolve_faces(use_verts=True)
+                result_desc = "Dissolved selected faces"
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Dissolve failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"{result_desc} completed successfully"
+
+    # TASK-030-2: Mesh Tris To Quads Tool
+    def tris_to_quads(self, face_threshold=40.0, shape_threshold=40.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts triangles to quads where possible.
+
+        Merges adjacent triangles into quads based on angle thresholds.
+        face_threshold: Maximum angle between face normals (degrees)
+        shape_threshold: Maximum shape deviation allowed (degrees)
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Convert thresholds to radians
+        import math
+        face_threshold_rad = math.radians(face_threshold)
+        shape_threshold_rad = math.radians(shape_threshold)
+
+        try:
+            bpy.ops.mesh.tris_convert_to_quads(
+                face_threshold=face_threshold_rad,
+                shape_threshold=shape_threshold_rad
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Tris to quads conversion failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Converted triangles to quads (face threshold: {face_threshold}°, shape threshold: {shape_threshold}°)"
+
+    # TASK-030-3: Mesh Normals Make Consistent Tool
+    def normals_make_consistent(self, inside=False):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Recalculates normals to face consistently.
+
+        Makes all normals point in the same direction (outward by default).
+        inside: If True, normals point inward instead of outward
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        try:
+            bpy.ops.mesh.normals_make_consistent(inside=inside)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Normals recalculation failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        direction = "inward" if inside else "outward"
+        return f"Recalculated normals to face consistently {direction}"
+
+    # TASK-030-4: Mesh Decimate Tool
+    def decimate(self, ratio=0.5, use_symmetry=False, symmetry_axis="X"):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Reduces polycount while preserving shape.
+
+        Uses collapse decimation to reduce geometry complexity.
+        ratio: Target ratio of faces to keep (0.0 to 1.0)
+        use_symmetry: Maintain mesh symmetry during decimation
+        symmetry_axis: Axis for symmetry ('X', 'Y', or 'Z')
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Validate ratio
+        ratio = max(0.0, min(1.0, ratio))
+
+        # Validate symmetry axis
+        valid_axes = ['X', 'Y', 'Z']
+        symmetry_axis = symmetry_axis.upper()
+        if symmetry_axis not in valid_axes:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid symmetry_axis '{symmetry_axis}'. Must be one of: {valid_axes}")
+
+        try:
+            bpy.ops.mesh.decimate(
+                ratio=ratio,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Decimate failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        symmetry_desc = f" with {symmetry_axis} symmetry" if use_symmetry else ""
+        return f"Decimated mesh to {ratio*100:.1f}% of original{symmetry_desc}"
+
+    # ==========================================================================
+    # TASK-032: Knife & Cut Tools
+    # ==========================================================================
+
+    def knife_project(self, cut_through=True):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Projects cut from selected geometry.
+
+        Projects knife cut from view using selected edges/faces as cutter.
+        Requires specific view angle - best used with orthographic views.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_count = sum(1 for f in bm.faces if f.select)
+
+        try:
+            bpy.ops.mesh.knife_project(cut_through=cut_through)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Knife project failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        cut_mode = "through entire mesh" if cut_through else "visible faces only"
+        return f"Knife project completed ({cut_mode})"
+
+    def rip(self, use_fill=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Rips (tears) geometry at selection.
+
+        Creates a hole/tear at selected vertices. Uses mesh.rip_move operator.
+        Note: Rips from the center of selection.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No vertices selected. Select vertices to rip.")
+
+        try:
+            # Find 3D View context for operators that require it
+            view_area = None
+            view_region = None
+
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    view_area = area
+                    for region in area.regions:
+                        if region.type == 'WINDOW':
+                            view_region = region
+                    break
+
+            if view_area and view_region:
+                # Use context override for rip_move
+                with bpy.context.temp_override(area=view_area, region=view_region):
+                    bpy.ops.mesh.rip_move(
+                        MESH_OT_rip={'use_fill': use_fill},
+                        TRANSFORM_OT_translate={'value': (0, 0, 0)}
+                    )
+            else:
+                # Fallback: use split as alternative (different behavior but similar result)
+                bpy.ops.mesh.split()
+                if use_fill:
+                    bpy.ops.mesh.edge_face_add()
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Rip failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        fill_desc = " (hole filled)" if use_fill else ""
+        return f"Ripped {selected_verts} vertex(es){fill_desc}"
+
+    def split(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits selection from mesh.
+
+        Unlike 'separate', split keeps geometry in the same object
+        but disconnects it from surrounding geometry.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select geometry to split.")
+
+        try:
+            bpy.ops.mesh.split()
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Split failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Split {selected_verts} vertices ({selected_faces} faces) from mesh"
+
+    def edge_split(self):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits mesh at selected edges.
+
+        Creates a seam/split along selected edges. Geometry becomes disconnected
+        but stays in place (vertices are duplicated at the split).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to split.")
+
+        try:
+            bpy.ops.mesh.edge_split()
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Edge split failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Split mesh at {selected_edges} edge(s)"
+
+    # ==========================================================================
+    # TASK-038-5: Proportional Editing
+    # ==========================================================================
+
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ):
+        """
+        [EDIT MODE][SETTING] Configures proportional editing mode.
+
+        Proportional editing affects nearby unselected geometry when transforming.
+        Essential for organic modeling - creates smooth falloff in deformations.
+        """
+        # Validate falloff type
+        valid_falloffs = [
+            "SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE",
+            "SHARP", "LINEAR", "CONSTANT", "RANDOM"
+        ]
+        falloff_type = falloff_type.upper()
+        if falloff_type not in valid_falloffs:
+            raise ValueError(f"Invalid falloff type: {falloff_type}. Valid: {valid_falloffs}")
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+
+        # Set proportional edit mode
+        if enabled:
+            if use_connected:
+                tool_settings.proportional_edit = 'CONNECTED'
+            else:
+                tool_settings.proportional_edit = 'ENABLED'
+        else:
+            tool_settings.proportional_edit = 'DISABLED'
+
+        # Set falloff type
+        tool_settings.proportional_edit_falloff = falloff_type
+
+        # Set size
+        tool_settings.proportional_size = max(0.001, size)
+
+        # Build status message
+        if enabled:
+            mode = "connected" if use_connected else "enabled"
+            return (
+                f"Proportional editing {mode} "
+                f"(falloff={falloff_type}, size={size})"
+            )
+        else:
+            return "Proportional editing disabled"

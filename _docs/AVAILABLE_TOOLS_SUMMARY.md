@@ -104,6 +104,28 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `modeling_join_objects` | `object_names` (list) | Joins multiple objects into one mesh. | ✅ Done |
 | `modeling_separate_object` | `name`, `type` (LOOSE/SELECTED/MATERIAL) | Separates a mesh into multiple objects. | ✅ Done |
 | `modeling_set_origin` | `name`, `type` (GEOMETRY/CURSOR/CENTER_OF_MASS) | Sets the object's origin point. | ✅ Done |
+| `metaball_create` | `name`, `location`, `element_type`, `radius`, `resolution`, `threshold` | Creates metaball object for organic blob shapes. | ✅ Done |
+| `metaball_add_element` | `metaball_name`, `element_type`, `location`, `radius`, `stiffness` | Adds element to existing metaball for merging. | ✅ Done |
+| `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. | ✅ Done |
+| `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
+| `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
+
+---
+
+## 🔲 Lattice Tools (`lattice_`)
+*Non-destructive deformation using lattice cages for architectural and organic modeling.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object. If target_object provided, auto-fits to bounding box. | ✅ Done |
+| `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice using Lattice modifier. Non-destructive deformation. | ✅ Done |
+| `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. | ✅ Done |
+
+**Use Cases:**
+- Tapering towers (Eiffel Tower workflow)
+- Bending/twisting shapes
+- Organic character deformations
+- Product design (curved surfaces)
 
 ---
 
@@ -144,6 +166,18 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. | ✅ Done |
 | `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. | ✅ Done |
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices. | ✅ Done |
+| `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. | ✅ Done |
+| `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. | ✅ Done |
+| `mesh_mark_sharp` | `action` (mark/clear) | Marks or clears sharp edges for Auto Smooth and Edge Split. | ✅ Done |
+| `mesh_dissolve` | `dissolve_type` (limited/verts/edges/faces), `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry while preserving shape (cleanup). | ✅ Done |
+| `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. | ✅ Done |
+| `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward). | ✅ Done |
+| `mesh_decimate` | `ratio`, `use_symmetry`, `symmetry_axis` | Reduces polycount while preserving shape. | ✅ Done |
+| `mesh_knife_project` | `cut_through` | Projects cut from selected geometry (requires view angle). | ✅ Done |
+| `mesh_rip` | `use_fill` | Rips (tears) geometry at selected vertices. | ✅ Done |
+| `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). | ✅ Done |
+| `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). | ✅ Done |
+| `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
@@ -188,6 +222,15 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. | ✅ Done |
 | `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. | ✅ Done |
 | `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. | ✅ Done |
+| `sculpt_brush_clay` | `object_name`, `radius`, `strength` | Clay brush for adding material (muscle mass, fat deposits). | ✅ Done |
+| `sculpt_brush_inflate` | `object_name`, `radius`, `strength` | Inflate brush for pushing geometry outward (swelling, tumors). | ✅ Done |
+| `sculpt_brush_blob` | `object_name`, `radius`, `strength` | Blob brush for creating rounded organic bulges. | ✅ Done |
+| `sculpt_brush_snake_hook` | `object_name`, `radius`, `strength` | Snake hook for pulling tendrils (blood vessels, nerves). | ✅ Done |
+| `sculpt_brush_draw` | `object_name`, `radius`, `strength` | Basic draw brush for general sculpting. | ✅ Done |
+| `sculpt_brush_pinch` | `object_name`, `radius`, `strength` | Pinch brush for creating sharp creases (wrinkles, folds). | ✅ Done |
+| `sculpt_enable_dyntopo` | `object_name`, `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology with RELATIVE/CONSTANT/BRUSH/MANUAL modes. | ✅ Done |
+| `sculpt_disable_dyntopo` | `object_name` | Disables Dynamic Topology. | ✅ Done |
+| `sculpt_dyntopo_flood_fill` | `object_name` | Applies current detail level to entire mesh. | ✅ Done |
 
 ---
 
@@ -202,6 +245,35 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `system_save_file` | `filepath` (str, optional), `compress` (bool) | Saves current .blend file. Auto-generates temp path if unsaved. | ✅ Done |
 | `system_new_file` | `load_ui` (bool) | Creates new file (resets scene to startup). | ✅ Done |
 | `system_snapshot` | `action` (save/restore/list/delete), `name` (str, optional) | Manages quick save/restore checkpoints in temp directory. | ✅ Done |
+
+---
+
+## 🔥 Baking Tools (`bake_`)
+*Texture baking operations using Cycles renderer. Critical for game development workflows.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `bake_normal_map` | `object_name`, `output_path`, `resolution`, `high_poly_source`, `cage_extrusion`, `margin`, `normal_space` | Bakes normal map from geometry or high-poly to low-poly. Supports TANGENT/OBJECT space. | ✅ Done |
+| `bake_ao` | `object_name`, `output_path`, `resolution`, `samples`, `distance`, `margin` | Bakes ambient occlusion map with configurable ray distance and samples. | ✅ Done |
+| `bake_combined` | `object_name`, `output_path`, `resolution`, `samples`, `margin`, `use_pass_direct`, `use_pass_indirect`, `use_pass_color` | Bakes full render (material + lighting) to texture with configurable passes. | ✅ Done |
+| `bake_diffuse` | `object_name`, `output_path`, `resolution`, `margin` | Bakes diffuse/albedo color only (no lighting). | ✅ Done |
+
+**Requirements:**
+- Object must have UV map (use `uv_unwrap` first)
+- Cycles renderer (auto-switched)
+- For high-to-low baking: both high-poly and low-poly objects
+
+---
+
+## 📥 Import Tools (`import_`)
+*Tools for importing external 3D files and reference images.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `import_obj` | `filepath`, `use_split_objects`, `use_split_groups`, `global_scale`, `forward_axis`, `up_axis` | Imports OBJ file (geometry, UVs, normals). | ✅ Done |
+| `import_fbx` | `filepath`, `use_custom_normals`, `use_image_search`, `ignore_leaf_bones`, `automatic_bone_orientation`, `global_scale` | Imports FBX file (geometry, materials, animations). | ✅ Done |
+| `import_glb` | `filepath`, `import_pack_images`, `merge_vertices`, `import_shading` | Imports GLB/GLTF file (PBR materials, animations). | ✅ Done |
+| `import_image_as_plane` | `filepath`, `name`, `location`, `size`, `align_axis`, `shader`, `use_transparency` | Imports image as textured plane (reference images, blueprints). | ✅ Done |
 
 ---
 

@@ -116,3 +116,189 @@ class ISculptTool(ABC):
             Success message describing the operation performed.
         """
         pass
+
+    # ==========================================================================
+    # TASK-038-2: Core Sculpt Brushes
+    # ==========================================================================
+
+    @abstractmethod
+    def brush_clay(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Clay brush for adding material.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def brush_inflate(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Inflate brush for pushing geometry outward.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def brush_blob(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Blob brush for creating rounded organic bulges.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    # ==========================================================================
+    # TASK-038-3: Detail Sculpt Brushes
+    # ==========================================================================
+
+    @abstractmethod
+    def brush_snake_hook(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Snake Hook brush for pulling geometry like taffy.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def brush_draw(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Draw brush for basic sculpting.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def brush_pinch(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Pinch brush for pulling geometry toward center.
+
+        Args:
+            object_name: Target object (default: active object)
+            radius: Brush radius
+            strength: Brush strength 0-1
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    # ==========================================================================
+    # TASK-038-4: Dynamic Topology (Dyntopo)
+    # ==========================================================================
+
+    @abstractmethod
+    def enable_dyntopo(
+        self,
+        object_name: Optional[str] = None,
+        detail_mode: str = "RELATIVE",
+        detail_size: float = 12.0,
+        use_smooth_shading: bool = True,
+    ) -> str:
+        """
+        Enables Dynamic Topology for automatic geometry addition.
+
+        Args:
+            object_name: Target object (default: active object)
+            detail_mode: RELATIVE, CONSTANT, BRUSH, MANUAL
+            detail_size: Detail level (pixels for RELATIVE, units for CONSTANT)
+            use_smooth_shading: Use smooth shading
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def disable_dyntopo(
+        self,
+        object_name: Optional[str] = None,
+    ) -> str:
+        """
+        Disables Dynamic Topology.
+
+        Args:
+            object_name: Target object (default: active object)
+
+        Returns:
+            Success message.
+        """
+        pass
+
+    @abstractmethod
+    def dyntopo_flood_fill(
+        self,
+        object_name: Optional[str] = None,
+    ) -> str:
+        """
+        Applies current detail level to entire mesh.
+
+        Args:
+            object_name: Target object (default: active object)
+
+        Returns:
+            Success message.
+        """
+        pass

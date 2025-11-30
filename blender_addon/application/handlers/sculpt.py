@@ -297,3 +297,333 @@ class SculptHandler:
             f"(radius={radius}, strength={strength}, pinch={pinch}){location_str}. "
             f"Note: For sharp edges, consider mesh_bevel with edge selection."
         )
+
+    # ==========================================================================
+    # TASK-038-2: Core Sculpt Brushes
+    # ==========================================================================
+
+    def brush_clay(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Clay brush for adding material.
+
+        Adds material like clay - builds up surface.
+        Essential for: muscle mass, fat deposits, organ volume.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select clay brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Clay")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Clay brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Builds up surface like sculpting clay."
+        )
+
+    def brush_inflate(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Inflate brush for pushing geometry outward.
+
+        Pushes geometry outward along normals - inflates like balloon.
+        Essential for: swelling, tumors, blisters, organ volume.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select inflate brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Inflate")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Inflate brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Pushes geometry outward along normals."
+        )
+
+    def brush_blob(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Blob brush for creating rounded organic bulges.
+
+        Creates rounded, organic bulges.
+        Essential for: nodules, bumps, organic growths.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select blob brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Blob")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Blob brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Creates rounded organic bulges."
+        )
+
+    # ==========================================================================
+    # TASK-038-3: Detail Sculpt Brushes
+    # ==========================================================================
+
+    def brush_snake_hook(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Snake Hook brush for pulling geometry like taffy.
+
+        Pulls geometry like taffy - creates long tendrils.
+        Essential for: blood vessels, nerves, tentacles, organic protrusions.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select snake hook brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Snake Hook")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Snake Hook brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Pulls geometry like taffy for tendrils."
+        )
+
+    def brush_draw(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Draw brush for basic sculpting.
+
+        Basic sculpting - pushes/pulls surface.
+        Essential for: general shaping, wrinkles, surface variation.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select draw brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Draw")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Draw brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Basic sculpting - pushes/pulls surface."
+        )
+
+    def brush_pinch(
+        self,
+        object_name: Optional[str] = None,
+        radius: float = 0.1,
+        strength: float = 0.5,
+    ) -> str:
+        """
+        Sets up Pinch brush for pulling geometry toward center.
+
+        Pulls geometry toward center - creates sharp creases.
+        Essential for: wrinkles, folds, membrane attachments.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Clamp values
+        radius = max(0.001, radius)
+        strength = max(0.0, min(1.0, strength))
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+        sculpt = tool_settings.sculpt
+
+        # Select pinch brush
+        bpy.ops.wm.tool_set_by_id(name="builtin_brush.Pinch")
+
+        # Configure brush settings
+        brush = sculpt.brush
+        if brush:
+            brush.size = int(radius * 200)
+            brush.strength = strength
+
+        return (
+            f"Pinch brush ready on '{obj.name}' "
+            f"(radius={radius}, strength={strength}). "
+            f"Pulls geometry toward center for creases."
+        )
+
+    # ==========================================================================
+    # TASK-038-4: Dynamic Topology (Dyntopo)
+    # ==========================================================================
+
+    def enable_dyntopo(
+        self,
+        object_name: Optional[str] = None,
+        detail_mode: str = "RELATIVE",
+        detail_size: float = 12.0,
+        use_smooth_shading: bool = True,
+    ) -> str:
+        """
+        Enables Dynamic Topology for automatic geometry addition.
+
+        Dyntopo automatically adds/removes geometry as you sculpt.
+        No need to worry about base mesh topology.
+
+        Warning: Destroys UV maps and vertex groups.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Validate detail mode
+        valid_modes = ['RELATIVE', 'CONSTANT', 'BRUSH', 'MANUAL']
+        detail_mode = detail_mode.upper()
+        if detail_mode not in valid_modes:
+            raise ValueError(f"Invalid detail mode: {detail_mode}. Valid: {valid_modes}")
+
+        # Enable dynamic topology
+        sculpt = bpy.context.tool_settings.sculpt
+
+        # Check if dyntopo is already enabled
+        if not bpy.context.sculpt_object.use_dynamic_topology_sculpting:
+            bpy.ops.sculpt.dynamic_topology_toggle()
+
+        # Set detail mode
+        sculpt.detail_type_method = detail_mode
+
+        # Set detail size based on mode
+        if detail_mode == 'RELATIVE':
+            sculpt.detail_size = detail_size  # Pixels
+        elif detail_mode == 'CONSTANT':
+            sculpt.constant_detail_resolution = detail_size  # Blender units (inverted)
+        elif detail_mode == 'BRUSH':
+            sculpt.detail_percent = detail_size  # Percentage
+
+        # Set shading
+        if use_smooth_shading:
+            obj.data.use_auto_smooth = False
+            bpy.ops.mesh.faces_shade_smooth()
+
+        return (
+            f"Dynamic Topology enabled on '{obj.name}' "
+            f"(mode={detail_mode}, detail={detail_size}, smooth={use_smooth_shading}). "
+            f"Warning: UVs and vertex groups will be destroyed."
+        )
+
+    def disable_dyntopo(
+        self,
+        object_name: Optional[str] = None,
+    ) -> str:
+        """
+        Disables Dynamic Topology.
+
+        After disabling, consider mesh_remesh_voxel for clean topology.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Check if dyntopo is enabled
+        if bpy.context.sculpt_object.use_dynamic_topology_sculpting:
+            bpy.ops.sculpt.dynamic_topology_toggle()
+            return (
+                f"Dynamic Topology disabled on '{obj.name}'. "
+                f"Consider mesh_remesh_voxel for clean topology."
+            )
+        else:
+            return f"Dynamic Topology was not enabled on '{obj.name}'."
+
+    def dyntopo_flood_fill(
+        self,
+        object_name: Optional[str] = None,
+    ) -> str:
+        """
+        Applies current detail level to entire mesh.
+
+        Useful for: unifying detail level after sculpting.
+        """
+        obj, previous_mode = self._ensure_sculpt_mode(object_name)
+
+        # Check if dyntopo is enabled
+        if not bpy.context.sculpt_object.use_dynamic_topology_sculpting:
+            raise ValueError(
+                f"Dynamic Topology is not enabled on '{obj.name}'. "
+                f"Enable it first with enable_dyntopo()."
+            )
+
+        # Flood fill detail
+        bpy.ops.sculpt.detail_flood_fill()
+
+        return f"Applied current detail level to entire mesh '{obj.name}'."

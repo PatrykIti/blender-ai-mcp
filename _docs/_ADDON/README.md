@@ -130,6 +130,11 @@ Technical details.
 | `set_origin` | `set_origin` | Sets the origin point of an object. |
 
 | `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
+| `modeling.metaball_create` | `metaball_create` | Creates metaball object. |
+| `modeling.metaball_add_element` | `metaball_add_element` | Adds element to metaball. |
+| `modeling.metaball_to_mesh` | `metaball_to_mesh` | Converts metaball to mesh. |
+| `modeling.skin_create_skeleton` | `skin_create_skeleton` | Creates skeleton for skin modifier. |
+| `modeling.skin_set_radius` | `skin_set_radius` | Sets skin radius at vertices. |
 
 
 ### Mesh (`application/handlers/mesh.py`)
@@ -179,6 +184,18 @@ Technical details.
 | `screw` | `screw` | Creates spiral/screw geometry. |
 | `add_vertex` | `add_vertex` | Adds single vertex at position. |
 | `add_edge_face` | `add_edge_face` | Creates edge or face from selected vertices. |
+| `edge_crease` | `edge_crease` | Sets crease weight on selected edges. |
+| `bevel_weight` | `bevel_weight` | Sets bevel weight on selected edges. |
+| `mark_sharp` | `mark_sharp` | Marks or clears sharp edges. |
+| `mesh.dissolve` | `dissolve` | Dissolves geometry (limited/verts/edges/faces). |
+| `mesh.tris_to_quads` | `tris_to_quads` | Converts triangles to quads. |
+| `mesh.normals_make_consistent` | `normals_make_consistent` | Recalculates normals to face consistently. |
+| `mesh.decimate` | `decimate` | Reduces polycount while preserving shape. |
+| `mesh.knife_project` | `knife_project` | Projects cut from selected geometry (view-dependent). |
+| `mesh.rip` | `rip` | Rips (tears) geometry at selected vertices. |
+| `mesh.split` | `split` | Splits selection from mesh (disconnects without separating). |
+| `mesh.edge_split` | `edge_split` | Splits mesh at selected edges (creates seams). |
+| `mesh.set_proportional_edit` | `set_proportional_edit` | Configures proportional editing mode. |
 
 
 ### Curve (`application/handlers/curve.py`)
@@ -197,6 +214,15 @@ Technical details.
 | `sculpt.brush_smooth` | `brush_smooth` | Sets up smooth brush at specified location. |
 | `sculpt.brush_grab` | `brush_grab` | Sets up grab brush for moving geometry. |
 | `sculpt.brush_crease` | `brush_crease` | Sets up crease brush for creating sharp lines. |
+| `sculpt.brush_clay` | `brush_clay` | Sets up clay brush for adding material. |
+| `sculpt.brush_inflate` | `brush_inflate` | Sets up inflate brush for pushing outward. |
+| `sculpt.brush_blob` | `brush_blob` | Sets up blob brush for organic bulges. |
+| `sculpt.brush_snake_hook` | `brush_snake_hook` | Sets up snake hook brush for tendrils. |
+| `sculpt.brush_draw` | `brush_draw` | Sets up draw brush for basic sculpting. |
+| `sculpt.brush_pinch` | `brush_pinch` | Sets up pinch brush for creases. |
+| `sculpt.enable_dyntopo` | `enable_dyntopo` | Enables Dynamic Topology. |
+| `sculpt.disable_dyntopo` | `disable_dyntopo` | Disables Dynamic Topology. |
+| `sculpt.dyntopo_flood_fill` | `dyntopo_flood_fill` | Applies detail to entire mesh. |
 
 
 ### Export (`application/handlers/export.py`)
@@ -218,4 +244,33 @@ Technical details.
 | `system.save_file` | `save_file` | Saves current .blend file (with optional filepath). |
 | `system.new_file` | `new_file` | Creates new file (resets scene to startup). |
 | `system.snapshot` | `snapshot` | Manages quick save/restore checkpoints (save/restore/list/delete). |
+
+
+### Baking (`application/handlers/baking.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `baking.normal_map` | `bake_normal_map` | Bakes normal map from geometry or high-poly to low-poly. |
+| `baking.ao` | `bake_ao` | Bakes ambient occlusion map. |
+| `baking.combined` | `bake_combined` | Bakes full render (material + lighting) to texture. |
+| `baking.diffuse` | `bake_diffuse` | Bakes diffuse/albedo color only (no lighting). |
+
+
+### Import (`application/handlers/import_handler.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `import.obj` | `import_obj` | Imports OBJ file (geometry, UVs, normals). |
+| `import.fbx` | `import_fbx` | Imports FBX file (geometry, materials, animations). |
+| `import.glb` | `import_glb` | Imports GLB/GLTF file (PBR materials, animations). |
+| `import.image_as_plane` | `import_image_as_plane` | Imports image as textured plane (reference images). |
+
+
+### Lattice (`application/handlers/lattice.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `lattice.create` | `lattice_create` | Creates lattice object, auto-fits to target bounds. |
+| `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
+| `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
 
