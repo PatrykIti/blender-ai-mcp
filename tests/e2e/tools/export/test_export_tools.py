@@ -7,13 +7,13 @@ These tests require Blender with the addon enabled.
 import os
 import tempfile
 import pytest
-from server.application.tool_handlers.export_handler import ExportToolHandler
+from server.application.tool_handlers.system_handler import SystemToolHandler
 
 
 @pytest.fixture
-def export_handler(rpc_client):
-    """Provides an export handler instance using shared RPC client."""
-    return ExportToolHandler(rpc_client)
+def system_handler(rpc_client):
+    """Provides a system handler instance using shared RPC client."""
+    return SystemToolHandler(rpc_client)
 
 
 @pytest.fixture
@@ -26,12 +26,12 @@ def temp_dir():
 class TestExportGlb:
     """E2E tests for GLB export."""
 
-    def test_export_glb_basic(self, export_handler, temp_dir):
+    def test_export_glb_basic(self, system_handler, temp_dir):
         """Test basic GLB export."""
         filepath = os.path.join(temp_dir, "test_export.glb")
 
         try:
-            result = export_handler.export_glb(filepath=filepath)
+            result = system_handler.export_glb(filepath=filepath)
 
             assert "Successfully exported" in result
             assert os.path.exists(filepath)
@@ -44,12 +44,12 @@ class TestExportGlb:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_glb_with_options(self, export_handler, temp_dir):
+    def test_export_glb_with_options(self, system_handler, temp_dir):
         """Test GLB export with various options."""
         filepath = os.path.join(temp_dir, "test_options.glb")
 
         try:
-            result = export_handler.export_glb(
+            result = system_handler.export_glb(
                 filepath=filepath,
                 export_selected=False,
                 export_animations=False,
@@ -67,12 +67,12 @@ class TestExportGlb:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_gltf(self, export_handler, temp_dir):
+    def test_export_gltf(self, system_handler, temp_dir):
         """Test GLTF export (separate files)."""
         filepath = os.path.join(temp_dir, "test_export.gltf")
 
         try:
-            result = export_handler.export_glb(filepath=filepath)
+            result = system_handler.export_glb(filepath=filepath)
 
             assert "Successfully exported" in result
             assert os.path.exists(filepath)
@@ -88,12 +88,12 @@ class TestExportGlb:
 class TestExportFbx:
     """E2E tests for FBX export."""
 
-    def test_export_fbx_basic(self, export_handler, temp_dir):
+    def test_export_fbx_basic(self, system_handler, temp_dir):
         """Test basic FBX export."""
         filepath = os.path.join(temp_dir, "test_export.fbx")
 
         try:
-            result = export_handler.export_fbx(filepath=filepath)
+            result = system_handler.export_fbx(filepath=filepath)
 
             assert "Successfully exported" in result
             assert os.path.exists(filepath)
@@ -106,12 +106,12 @@ class TestExportFbx:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_fbx_with_options(self, export_handler, temp_dir):
+    def test_export_fbx_with_options(self, system_handler, temp_dir):
         """Test FBX export with various options."""
         filepath = os.path.join(temp_dir, "test_options.fbx")
 
         try:
-            result = export_handler.export_fbx(
+            result = system_handler.export_fbx(
                 filepath=filepath,
                 export_selected=False,
                 export_animations=False,
@@ -129,13 +129,13 @@ class TestExportFbx:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_fbx_smooth_types(self, export_handler, temp_dir):
+    def test_export_fbx_smooth_types(self, system_handler, temp_dir):
         """Test FBX export with different smooth types."""
         for smooth_type in ["OFF", "FACE", "EDGE"]:
             filepath = os.path.join(temp_dir, f"test_smooth_{smooth_type}.fbx")
 
             try:
-                result = export_handler.export_fbx(
+                result = system_handler.export_fbx(
                     filepath=filepath,
                     mesh_smooth_type=smooth_type,
                 )
@@ -154,12 +154,12 @@ class TestExportFbx:
 class TestExportObj:
     """E2E tests for OBJ export."""
 
-    def test_export_obj_basic(self, export_handler, temp_dir):
+    def test_export_obj_basic(self, system_handler, temp_dir):
         """Test basic OBJ export."""
         filepath = os.path.join(temp_dir, "test_export.obj")
 
         try:
-            result = export_handler.export_obj(filepath=filepath)
+            result = system_handler.export_obj(filepath=filepath)
 
             assert "Successfully exported" in result
             assert os.path.exists(filepath)
@@ -172,13 +172,13 @@ class TestExportObj:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_obj_with_materials(self, export_handler, temp_dir):
+    def test_export_obj_with_materials(self, system_handler, temp_dir):
         """Test OBJ export with materials (creates .mtl file)."""
         filepath = os.path.join(temp_dir, "test_materials.obj")
         mtl_filepath = os.path.join(temp_dir, "test_materials.mtl")
 
         try:
-            result = export_handler.export_obj(
+            result = system_handler.export_obj(
                 filepath=filepath,
                 export_materials=True,
             )
@@ -195,12 +195,12 @@ class TestExportObj:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_obj_with_options(self, export_handler, temp_dir):
+    def test_export_obj_with_options(self, system_handler, temp_dir):
         """Test OBJ export with various options."""
         filepath = os.path.join(temp_dir, "test_options.obj")
 
         try:
-            result = export_handler.export_obj(
+            result = system_handler.export_obj(
                 filepath=filepath,
                 export_selected=False,
                 apply_modifiers=True,
@@ -220,12 +220,12 @@ class TestExportObj:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_obj_triangulated(self, export_handler, temp_dir):
+    def test_export_obj_triangulated(self, system_handler, temp_dir):
         """Test OBJ export with triangulation."""
         filepath = os.path.join(temp_dir, "test_triangulated.obj")
 
         try:
-            result = export_handler.export_obj(
+            result = system_handler.export_obj(
                 filepath=filepath,
                 triangulate=True,
             )
@@ -250,12 +250,12 @@ class TestExportObj:
 class TestExportEdgeCases:
     """E2E tests for edge cases and error handling."""
 
-    def test_export_creates_nested_directories(self, export_handler, temp_dir):
+    def test_export_creates_nested_directories(self, system_handler, temp_dir):
         """Test that export creates nested directories if needed."""
         nested_path = os.path.join(temp_dir, "a", "b", "c", "test.glb")
 
         try:
-            result = export_handler.export_glb(filepath=nested_path)
+            result = system_handler.export_glb(filepath=nested_path)
 
             assert "Successfully exported" in result
             assert os.path.exists(nested_path)
@@ -267,12 +267,12 @@ class TestExportEdgeCases:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_adds_extension_if_missing(self, export_handler, temp_dir):
+    def test_export_adds_extension_if_missing(self, system_handler, temp_dir):
         """Test that export adds correct extension if missing."""
         filepath_no_ext = os.path.join(temp_dir, "test_no_extension")
 
         try:
-            result = export_handler.export_glb(filepath=filepath_no_ext)
+            result = system_handler.export_glb(filepath=filepath_no_ext)
 
             expected_path = filepath_no_ext + ".glb"
             assert "Successfully exported" in result
@@ -285,12 +285,12 @@ class TestExportEdgeCases:
                 pytest.skip(f"Blender not available: {e}")
             raise
 
-    def test_export_all_formats(self, export_handler, temp_dir):
+    def test_export_all_formats(self, system_handler, temp_dir):
         """Test exporting to all supported formats."""
         formats = [
-            ("glb", export_handler.export_glb),
-            ("fbx", export_handler.export_fbx),
-            ("obj", export_handler.export_obj),
+            ("glb", system_handler.export_glb),
+            ("fbx", system_handler.export_fbx),
+            ("obj", system_handler.export_obj),
         ]
 
         for ext, export_func in formats:

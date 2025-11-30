@@ -6,13 +6,13 @@ Implements IBakingTool interface using RPC calls to Blender addon.
 
 from typing import Optional
 from server.domain.tools.baking import IBakingTool
-from server.infrastructure.rpc_client import RpcClient
+from server.domain.interfaces.rpc import IRpcClient
 
 
 class BakingToolHandler(IBakingTool):
     """Handler for texture baking operations via RPC."""
 
-    def __init__(self, rpc_client: RpcClient):
+    def __init__(self, rpc_client: IRpcClient):
         self.rpc = rpc_client
 
     def bake_normal_map(

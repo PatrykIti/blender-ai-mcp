@@ -15,8 +15,7 @@ import tempfile
 import pytest
 
 from server.adapters.rpc.client import RpcClient
-from server.application.tool_handlers.export_handler import ExportToolHandler
-from server.application.tool_handlers.import_handler import ImportToolHandler
+from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 
@@ -45,15 +44,9 @@ def modeling_handler(rpc_client):
 
 
 @pytest.fixture(scope="module")
-def export_handler(rpc_client):
-    """Create export handler."""
-    return ExportToolHandler(rpc_client)
-
-
-@pytest.fixture(scope="module")
-def import_handler(rpc_client):
-    """Create import handler."""
-    return ImportToolHandler(rpc_client)
+def system_handler(rpc_client):
+    """Create system handler for export/import."""
+    return SystemToolHandler(rpc_client)
 
 
 @pytest.fixture
@@ -76,7 +69,7 @@ class TestImportOBJ:
     """E2E tests for OBJ import."""
 
     def test_import_obj_roundtrip(
-        self, clean_scene, modeling_handler, export_handler, import_handler, scene_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test export cube to OBJ, clear scene, import, verify."""
         # Create a cube
@@ -89,14 +82,14 @@ class TestImportOBJ:
 
         # Export to OBJ
         obj_path = os.path.join(temp_dir, "test_cube.obj")
-        export_handler.export_obj(filepath=obj_path)
+        system_handler.export_obj(filepath=obj_path)
         assert os.path.exists(obj_path)
 
         # Clear scene
         scene_handler.clean_scene(keep_lights_and_cameras=False)
 
         # Import OBJ
-        result = import_handler.import_obj(filepath=obj_path)
+        result = system_handler.import_obj(filepath=obj_path)
         assert "Successfully imported" in result
 
         # Verify object exists
@@ -104,20 +97,20 @@ class TestImportOBJ:
         assert len([o for o in objects if "Cube" in o.get("name", "")]) > 0
 
     def test_import_obj_with_scale(
-        self, clean_scene, modeling_handler, export_handler, import_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, temp_dir
     ):
         """Test OBJ import with custom scale."""
         # Create and export cube
         modeling_handler.create_primitive(primitive_type="CUBE", name="ScaleCube")
         obj_path = os.path.join(temp_dir, "scale_cube.obj")
-        export_handler.export_obj(filepath=obj_path)
+        system_handler.export_obj(filepath=obj_path)
 
         # Clear and import with scale
         from server.adapters.rpc.client import RpcClient
         scene_handler = SceneToolHandler(RpcClient(host="127.0.0.1", port=8765))
         scene_handler.clean_scene(keep_lights_and_cameras=False)
 
-        result = import_handler.import_obj(filepath=obj_path, global_scale=0.5)
+        result = system_handler.import_obj(filepath=obj_path, global_scale=0.5)
         assert "Successfully imported" in result
 
 
@@ -125,7 +118,7 @@ class TestImportFBX:
     """E2E tests for FBX import."""
 
     def test_import_fbx_roundtrip(
-        self, clean_scene, modeling_handler, export_handler, import_handler, scene_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test export to FBX, clear scene, import, verify."""
         # Create a sphere
@@ -137,14 +130,14 @@ class TestImportFBX:
 
         # Export to FBX
         fbx_path = os.path.join(temp_dir, "test_sphere.fbx")
-        export_handler.export_fbx(filepath=fbx_path)
+        system_handler.export_fbx(filepath=fbx_path)
         assert os.path.exists(fbx_path)
 
         # Clear scene
         scene_handler.clean_scene(keep_lights_and_cameras=False)
 
         # Import FBX
-        result = import_handler.import_fbx(filepath=fbx_path)
+        result = system_handler.import_fbx(filepath=fbx_path)
         assert "Successfully imported" in result
 
         # Verify object exists
@@ -156,7 +149,7 @@ class TestImportGLB:
     """E2E tests for GLB/GLTF import."""
 
     def test_import_glb_roundtrip(
-        self, clean_scene, modeling_handler, export_handler, import_handler, scene_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test export to GLB, clear scene, import, verify."""
         # Create a cylinder
@@ -168,14 +161,14 @@ class TestImportGLB:
 
         # Export to GLB
         glb_path = os.path.join(temp_dir, "test_cylinder.glb")
-        export_handler.export_glb(filepath=glb_path)
+        system_handler.export_glb(filepath=glb_path)
         assert os.path.exists(glb_path)
 
         # Clear scene
         scene_handler.clean_scene(keep_lights_and_cameras=False)
 
         # Import GLB
-        result = import_handler.import_glb(filepath=glb_path)
+        result = system_handler.import_glb(filepath=glb_path)
         assert "Successfully imported" in result
 
         # Verify object exists
@@ -183,7 +176,7 @@ class TestImportGLB:
         assert len(objects) > 0
 
     def test_import_gltf_separate(
-        self, clean_scene, modeling_handler, export_handler, import_handler, scene_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test GLTF import with separate file format."""
         # Create object
@@ -191,11 +184,11 @@ class TestImportGLB:
 
         # Export to GLTF (separate)
         gltf_path = os.path.join(temp_dir, "test_cone.gltf")
-        export_handler.export_glb(filepath=gltf_path)
+        system_handler.export_glb(filepath=gltf_path)
 
         # Clear and import
         scene_handler.clean_scene(keep_lights_and_cameras=False)
-        result = import_handler.import_glb(filepath=gltf_path)
+        result = system_handler.import_glb(filepath=gltf_path)
         assert "Successfully imported" in result or "Imported" in result
 
 
@@ -203,7 +196,7 @@ class TestImportImageAsPlane:
     """E2E tests for image as plane import."""
 
     def test_import_image_as_plane(
-        self, clean_scene, import_handler, scene_handler, temp_dir
+        self, clean_scene, system_handler, scene_handler, temp_dir
     ):
         """Test importing an image as a textured plane."""
         # Create a simple test image (1x1 pixel PNG)
@@ -216,7 +209,7 @@ class TestImportImageAsPlane:
             pytest.skip("PIL not installed, skipping image import test")
 
         # Import image as plane
-        result = import_handler.import_image_as_plane(
+        result = system_handler.import_image_as_plane(
             filepath=img_path,
             name="RefImage",
             shader="PRINCIPLED"
@@ -233,14 +226,14 @@ class TestImportImageAsPlane:
 class TestImportErrorHandling:
     """E2E tests for error handling."""
 
-    def test_import_nonexistent_file(self, clean_scene, import_handler):
+    def test_import_nonexistent_file(self, clean_scene, system_handler):
         """Test importing non-existent file returns error."""
         with pytest.raises(RuntimeError) as excinfo:
-            import_handler.import_obj(filepath="/nonexistent/path/file.obj")
+            system_handler.import_obj(filepath="/nonexistent/path/file.obj")
 
         assert "not found" in str(excinfo.value).lower() or "error" in str(excinfo.value).lower()
 
-    def test_import_invalid_format(self, clean_scene, import_handler, temp_dir):
+    def test_import_invalid_format(self, clean_scene, system_handler, temp_dir):
         """Test importing file with wrong format."""
         # Create a text file with .obj extension
         fake_obj = os.path.join(temp_dir, "fake.obj")
@@ -249,7 +242,7 @@ class TestImportErrorHandling:
 
         # This should either fail or import nothing
         try:
-            result = import_handler.import_obj(filepath=fake_obj)
+            result = system_handler.import_obj(filepath=fake_obj)
             # If it doesn't raise, it should indicate no objects imported
             assert "imported" in result.lower()
         except RuntimeError:
@@ -260,7 +253,7 @@ class TestImportIntegration:
     """Integration tests combining import with other operations."""
 
     def test_import_modify_export(
-        self, clean_scene, modeling_handler, export_handler, import_handler, scene_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test full workflow: create -> export -> import -> modify -> export."""
         # Create original object
@@ -272,11 +265,11 @@ class TestImportIntegration:
 
         # Export
         original_path = os.path.join(temp_dir, "original.obj")
-        export_handler.export_obj(filepath=original_path)
+        system_handler.export_obj(filepath=original_path)
 
         # Clear and import
         scene_handler.clean_scene(keep_lights_and_cameras=False)
-        import_handler.import_obj(filepath=original_path)
+        system_handler.import_obj(filepath=original_path)
 
         # Apply transformation
         objects = scene_handler.list_objects()
@@ -286,7 +279,7 @@ class TestImportIntegration:
 
         # Export modified version
         modified_path = os.path.join(temp_dir, "modified.obj")
-        export_handler.export_obj(filepath=modified_path)
+        system_handler.export_obj(filepath=modified_path)
 
         assert os.path.exists(modified_path)
         # Modified file should be larger due to scaled geometry

@@ -7,8 +7,6 @@ from server.application.tool_handlers.material_handler import MaterialToolHandle
 from server.application.tool_handlers.uv_handler import UVToolHandler
 from server.application.tool_handlers.curve_handler import CurveToolHandler
 from server.application.tool_handlers.system_handler import SystemToolHandler
-from server.application.tool_handlers.export_handler import ExportToolHandler
-from server.application.tool_handlers.import_handler import ImportToolHandler
 from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.application.tool_handlers.baking_handler import BakingToolHandler
 from server.domain.interfaces.rpc import IRpcClient
@@ -20,8 +18,6 @@ from server.domain.tools.material import IMaterialTool
 from server.domain.tools.uv import IUVTool
 from server.domain.tools.curve import ICurveTool
 from server.domain.tools.system import ISystemTool
-from server.domain.tools.export import IExportTool
-from server.domain.tools.import_tool import IImportTool
 from server.domain.tools.sculpt import ISculptTool
 from server.domain.tools.baking import IBakingTool
 from server.infrastructure.config import get_config
@@ -69,30 +65,20 @@ def get_uv_handler() -> IUVTool:
     rpc = get_rpc_client()
     return UVToolHandler(rpc)
 
-
 def get_curve_handler() -> ICurveTool:
     """Provider for ICurveTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return CurveToolHandler(rpc)
-
 
 def get_system_handler() -> ISystemTool:
     """Provider for ISystemTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return SystemToolHandler(rpc)
 
-
-def get_export_handler() -> IExportTool:
-    """Provider for IExportTool. Injects RpcClient."""
-    rpc = get_rpc_client()
-    return ExportToolHandler(rpc)
-
-
 def get_sculpt_handler() -> ISculptTool:
     """Provider for ISculptTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return SculptToolHandler(rpc)
-
 
 def get_baking_handler() -> IBakingTool:
     """Provider for IBakingTool. Injects RpcClient."""
@@ -100,7 +86,3 @@ def get_baking_handler() -> IBakingTool:
     return BakingToolHandler(rpc)
 
 
-def get_import_handler() -> IImportTool:
-    """Provider for IImportTool. Injects RpcClient."""
-    rpc = get_rpc_client()
-    return ImportToolHandler(rpc)

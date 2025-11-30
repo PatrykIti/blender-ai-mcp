@@ -1,67 +1,63 @@
-"""Unit tests for Import Handler (TASK-035)."""
+"""Unit tests for Import Handler (TASK-035).
+
+Tests SystemHandler import methods after consolidation.
+"""
 
 import pytest
 from unittest.mock import MagicMock, patch
 import sys
 
-# Mock bpy module
-mock_bpy = MagicMock()
-mock_bpy.data = MagicMock()
-mock_bpy.ops = MagicMock()
-mock_bpy.context = MagicMock()
-sys.modules['bpy'] = mock_bpy
-
-from blender_addon.application.handlers.import_handler import ImportHandler
+from blender_addon.application.handlers.system import SystemHandler
 
 
-@pytest.fixture
-def import_handler():
-    """Create import handler instance."""
-    return ImportHandler()
-
-
-@pytest.fixture
-def mock_objects():
-    """Mock bpy.data.objects with keys method."""
-    mock_bpy.data.objects.keys.return_value = []
-    return mock_bpy.data.objects
+# Get the mock_bpy from sys.modules (set by conftest.py)
+mock_bpy = sys.modules['bpy']
 
 
 class TestImportOBJ:
     """Tests for import_obj method."""
 
+    def setup_method(self):
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        mock_bpy.data.objects.keys.return_value = []
+        self.handler = SystemHandler()
+
     @patch('os.path.exists')
-    def test_import_obj_basic(self, mock_exists, import_handler, mock_objects):
+    def test_import_obj_basic(self, mock_exists):
         """Test basic OBJ import."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [
+        mock_bpy.data.objects.keys.side_effect = [
             [],  # before import
             ['ImportedMesh']  # after import
         ]
 
-        result = import_handler.import_obj(filepath="/path/to/model.obj")
+        result = self.handler.import_obj(filepath="/path/to/model.obj")
 
         mock_bpy.ops.wm.obj_import.assert_called_once()
         assert "Successfully imported" in result
         assert "ImportedMesh" in result
 
     @patch('os.path.exists')
-    def test_import_obj_file_not_found(self, mock_exists, import_handler):
+    def test_import_obj_file_not_found(self, mock_exists):
         """Test OBJ import with missing file."""
         mock_exists.return_value = False
 
         with pytest.raises(FileNotFoundError) as excinfo:
-            import_handler.import_obj(filepath="/missing/model.obj")
+            self.handler.import_obj(filepath="/missing/model.obj")
 
         assert "OBJ file not found" in str(excinfo.value)
 
     @patch('os.path.exists')
-    def test_import_obj_with_scale(self, mock_exists, import_handler, mock_objects):
+    def test_import_obj_with_scale(self, mock_exists):
         """Test OBJ import with custom scale."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [[], ['Mesh']]
+        mock_bpy.data.objects.keys.side_effect = [[], ['Mesh']]
 
-        result = import_handler.import_obj(
+        result = self.handler.import_obj(
             filepath="/path/to/model.obj",
             global_scale=2.0,
             use_split_objects=False
@@ -75,38 +71,47 @@ class TestImportOBJ:
 class TestImportFBX:
     """Tests for import_fbx method."""
 
+    def setup_method(self):
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        mock_bpy.data.objects.keys.return_value = []
+        self.handler = SystemHandler()
+
     @patch('os.path.exists')
-    def test_import_fbx_basic(self, mock_exists, import_handler, mock_objects):
+    def test_import_fbx_basic(self, mock_exists):
         """Test basic FBX import."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [
+        mock_bpy.data.objects.keys.side_effect = [
             [],
             ['Character', 'Armature']
         ]
 
-        result = import_handler.import_fbx(filepath="/path/to/character.fbx")
+        result = self.handler.import_fbx(filepath="/path/to/character.fbx")
 
         mock_bpy.ops.import_scene.fbx.assert_called_once()
         assert "Successfully imported" in result
         assert "Character" in result
 
     @patch('os.path.exists')
-    def test_import_fbx_file_not_found(self, mock_exists, import_handler):
+    def test_import_fbx_file_not_found(self, mock_exists):
         """Test FBX import with missing file."""
         mock_exists.return_value = False
 
         with pytest.raises(FileNotFoundError) as excinfo:
-            import_handler.import_fbx(filepath="/missing/model.fbx")
+            self.handler.import_fbx(filepath="/missing/model.fbx")
 
         assert "FBX file not found" in str(excinfo.value)
 
     @patch('os.path.exists')
-    def test_import_fbx_with_options(self, mock_exists, import_handler, mock_objects):
+    def test_import_fbx_with_options(self, mock_exists):
         """Test FBX import with custom options."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [[], ['Model']]
+        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
 
-        result = import_handler.import_fbx(
+        result = self.handler.import_fbx(
             filepath="/path/to/model.fbx",
             use_custom_normals=False,
             ignore_leaf_bones=True,
@@ -122,38 +127,47 @@ class TestImportFBX:
 class TestImportGLB:
     """Tests for import_glb method."""
 
+    def setup_method(self):
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        mock_bpy.data.objects.keys.return_value = []
+        self.handler = SystemHandler()
+
     @patch('os.path.exists')
-    def test_import_glb_basic(self, mock_exists, import_handler, mock_objects):
+    def test_import_glb_basic(self, mock_exists):
         """Test basic GLB import."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [
+        mock_bpy.data.objects.keys.side_effect = [
             [],
             ['SceneRoot', 'Mesh']
         ]
 
-        result = import_handler.import_glb(filepath="/path/to/model.glb")
+        result = self.handler.import_glb(filepath="/path/to/model.glb")
 
         mock_bpy.ops.import_scene.gltf.assert_called_once()
         assert "Successfully imported" in result
         assert "Mesh" in result
 
     @patch('os.path.exists')
-    def test_import_glb_file_not_found(self, mock_exists, import_handler):
+    def test_import_glb_file_not_found(self, mock_exists):
         """Test GLB import with missing file."""
         mock_exists.return_value = False
 
         with pytest.raises(FileNotFoundError) as excinfo:
-            import_handler.import_glb(filepath="/missing/model.glb")
+            self.handler.import_glb(filepath="/missing/model.glb")
 
         assert "GLB/GLTF file not found" in str(excinfo.value)
 
     @patch('os.path.exists')
-    def test_import_glb_with_options(self, mock_exists, import_handler, mock_objects):
+    def test_import_glb_with_options(self, mock_exists):
         """Test GLB import with custom options."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [[], ['Model']]
+        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
 
-        result = import_handler.import_glb(
+        result = self.handler.import_glb(
             filepath="/path/to/model.gltf",
             import_pack_images=False,
             merge_vertices=True,
@@ -169,64 +183,70 @@ class TestImportGLB:
 class TestImportImageAsPlane:
     """Tests for import_image_as_plane method."""
 
+    def setup_method(self):
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        mock_bpy.data.objects.keys.return_value = []
+        mock_bpy.context.preferences.addons = {'io_import_images_as_planes': True}
+        self.handler = SystemHandler()
+
     @patch('os.path.exists')
-    def test_import_image_basic(self, mock_exists, import_handler, mock_objects):
+    def test_import_image_basic(self, mock_exists):
         """Test basic image as plane import."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [
+        mock_bpy.data.objects.keys.side_effect = [
             [],
             ['reference.png']
         ]
-        mock_bpy.context.preferences.addons = {'io_import_images_as_planes': True}
 
         # Create mock plane object
         mock_plane = MagicMock()
         mock_plane.name = 'reference.png'
         mock_bpy.data.objects.__getitem__.return_value = mock_plane
 
-        result = import_handler.import_image_as_plane(filepath="/path/to/reference.png")
+        result = self.handler.import_image_as_plane(filepath="/path/to/reference.png")
 
         mock_bpy.ops.import_image.to_plane.assert_called_once()
         assert "Successfully imported" in result
 
     @patch('os.path.exists')
-    def test_import_image_file_not_found(self, mock_exists, import_handler):
+    def test_import_image_file_not_found(self, mock_exists):
         """Test image import with missing file."""
         mock_exists.return_value = False
 
         with pytest.raises(FileNotFoundError) as excinfo:
-            import_handler.import_image_as_plane(filepath="/missing/image.png")
+            self.handler.import_image_as_plane(filepath="/missing/image.png")
 
         assert "Image file not found" in str(excinfo.value)
 
     @patch('os.path.exists')
-    def test_import_image_with_custom_name(self, mock_exists, import_handler, mock_objects):
+    def test_import_image_with_custom_name(self, mock_exists):
         """Test image import with custom plane name."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [[], ['image.png']]
-        mock_bpy.context.preferences.addons = {'io_import_images_as_planes': True}
+        mock_bpy.data.objects.keys.side_effect = [[], ['image.png']]
 
         mock_plane = MagicMock()
         mock_plane.name = 'image.png'
         mock_bpy.data.objects.__getitem__.return_value = mock_plane
 
-        result = import_handler.import_image_as_plane(
+        result = self.handler.import_image_as_plane(
             filepath="/path/to/image.png",
             name="RefImage",
             location=[1.0, 2.0, 0.0],
             size=2.0
         )
 
-        # Verify name was set
-        mock_plane.name = "RefImage"
-        mock_plane.location = [1.0, 2.0, 0.0]
-        mock_plane.scale = (2.0, 2.0, 2.0)
+        # Verify import was called
+        mock_bpy.ops.import_image.to_plane.assert_called_once()
 
     @patch('os.path.exists')
-    def test_import_image_addon_enable(self, mock_exists, import_handler, mock_objects):
+    def test_import_image_addon_enable(self, mock_exists):
         """Test that addon is enabled if not already."""
         mock_exists.return_value = True
-        mock_objects.keys.side_effect = [[], ['image.png']]
+        mock_bpy.data.objects.keys.side_effect = [[], ['image.png']]
         # Addon not enabled
         mock_bpy.context.preferences.addons = {}
 
@@ -234,7 +254,7 @@ class TestImportImageAsPlane:
         mock_plane.name = 'image.png'
         mock_bpy.data.objects.__getitem__.return_value = mock_plane
 
-        result = import_handler.import_image_as_plane(filepath="/path/to/image.png")
+        result = self.handler.import_image_as_plane(filepath="/path/to/image.png")
 
         # Verify addon enable was attempted
         mock_bpy.ops.preferences.addon_enable.assert_called_once_with(

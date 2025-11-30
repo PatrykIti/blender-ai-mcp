@@ -1,7 +1,7 @@
 """
 Unit tests for export tools (TASK-026).
 
-Tests the ExportHandler methods:
+Tests the SystemHandler export methods:
 - export_glb: Export to GLB/GLTF format
 - export_fbx: Export to FBX format
 - export_obj: Export to OBJ format
@@ -10,15 +10,23 @@ import sys
 import pytest
 from unittest.mock import MagicMock, patch
 
-from blender_addon.application.handlers.export import ExportHandler
+from blender_addon.application.handlers.system import SystemHandler
+
+
+# Get the mock_bpy from sys.modules (set by conftest.py)
+mock_bpy = sys.modules['bpy']
 
 
 class TestExportGlb:
     """Tests for export_glb method."""
 
     def setup_method(self):
-        self.mock_bpy = sys.modules["bpy"]
-        self.handler = ExportHandler()
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        self.handler = SystemHandler()
 
     def test_export_glb_basic(self):
         """Test basic GLB export with default parameters."""
@@ -27,8 +35,8 @@ class TestExportGlb:
                 filepath="/tmp/test.glb"
             )
 
-        self.mock_bpy.ops.export_scene.gltf.assert_called_once()
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        mock_bpy.ops.export_scene.gltf.assert_called_once()
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
 
         assert call_kwargs["filepath"] == "/tmp/test.glb"
         assert call_kwargs["export_format"] == "GLB"
@@ -46,7 +54,7 @@ class TestExportGlb:
                 filepath="/tmp/test.gltf"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["export_format"] == "GLTF_SEPARATE"
 
     def test_export_glb_adds_extension(self):
@@ -56,7 +64,7 @@ class TestExportGlb:
                 filepath="/tmp/test"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["filepath"] == "/tmp/test.glb"
         assert call_kwargs["export_format"] == "GLB"
 
@@ -68,7 +76,7 @@ class TestExportGlb:
                 export_selected=True
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["use_selection"] is True
 
     def test_export_glb_no_animations(self):
@@ -79,7 +87,7 @@ class TestExportGlb:
                 export_animations=False
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["export_animations"] is False
 
     def test_export_glb_no_materials(self):
@@ -90,7 +98,7 @@ class TestExportGlb:
                 export_materials=False
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["export_materials"] == "NONE"
 
     def test_export_glb_no_modifiers(self):
@@ -101,7 +109,7 @@ class TestExportGlb:
                 apply_modifiers=False
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["export_apply"] is False
 
     def test_export_glb_creates_directory(self):
@@ -116,8 +124,12 @@ class TestExportFbx:
     """Tests for export_fbx method."""
 
     def setup_method(self):
-        self.mock_bpy = sys.modules["bpy"]
-        self.handler = ExportHandler()
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        self.handler = SystemHandler()
 
     def test_export_fbx_basic(self):
         """Test basic FBX export with default parameters."""
@@ -126,8 +138,8 @@ class TestExportFbx:
                 filepath="/tmp/test.fbx"
             )
 
-        self.mock_bpy.ops.export_scene.fbx.assert_called_once()
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        mock_bpy.ops.export_scene.fbx.assert_called_once()
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
 
         assert call_kwargs["filepath"] == "/tmp/test.fbx"
         assert call_kwargs["use_selection"] is False
@@ -146,7 +158,7 @@ class TestExportFbx:
                 filepath="/tmp/test"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["filepath"] == "/tmp/test.fbx"
 
     def test_export_fbx_selected_only(self):
@@ -157,7 +169,7 @@ class TestExportFbx:
                 export_selected=True
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["use_selection"] is True
 
     def test_export_fbx_no_animations(self):
@@ -168,7 +180,7 @@ class TestExportFbx:
                 export_animations=False
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["bake_anim"] is False
 
     def test_export_fbx_no_modifiers(self):
@@ -179,7 +191,7 @@ class TestExportFbx:
                 apply_modifiers=False
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["use_mesh_modifiers"] is False
 
     def test_export_fbx_smooth_type_edge(self):
@@ -190,7 +202,7 @@ class TestExportFbx:
                 mesh_smooth_type="EDGE"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["mesh_smooth_type"] == "EDGE"
 
     def test_export_fbx_smooth_type_off(self):
@@ -201,7 +213,7 @@ class TestExportFbx:
                 mesh_smooth_type="OFF"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["mesh_smooth_type"] == "OFF"
 
     def test_export_fbx_invalid_smooth_type_defaults(self):
@@ -212,7 +224,7 @@ class TestExportFbx:
                 mesh_smooth_type="INVALID"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["mesh_smooth_type"] == "FACE"
 
     def test_export_fbx_creates_directory(self):
@@ -227,8 +239,12 @@ class TestExportObj:
     """Tests for export_obj method."""
 
     def setup_method(self):
-        self.mock_bpy = sys.modules["bpy"]
-        self.handler = ExportHandler()
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        self.handler = SystemHandler()
 
     def test_export_obj_basic(self):
         """Test basic OBJ export with default parameters."""
@@ -237,8 +253,8 @@ class TestExportObj:
                 filepath="/tmp/test.obj"
             )
 
-        self.mock_bpy.ops.wm.obj_export.assert_called_once()
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        mock_bpy.ops.wm.obj_export.assert_called_once()
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
 
         assert call_kwargs["filepath"] == "/tmp/test.obj"
         assert call_kwargs["export_selected_objects"] is False
@@ -256,7 +272,7 @@ class TestExportObj:
                 filepath="/tmp/test"
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["filepath"] == "/tmp/test.obj"
 
     def test_export_obj_selected_only(self):
@@ -267,7 +283,7 @@ class TestExportObj:
                 export_selected=True
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_selected_objects"] is True
 
     def test_export_obj_no_modifiers(self):
@@ -278,7 +294,7 @@ class TestExportObj:
                 apply_modifiers=False
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["apply_modifiers"] is False
 
     def test_export_obj_no_materials(self):
@@ -289,7 +305,7 @@ class TestExportObj:
                 export_materials=False
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_materials"] is False
 
     def test_export_obj_no_uvs(self):
@@ -300,7 +316,7 @@ class TestExportObj:
                 export_uvs=False
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_uv"] is False
 
     def test_export_obj_no_normals(self):
@@ -311,7 +327,7 @@ class TestExportObj:
                 export_normals=False
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_normals"] is False
 
     def test_export_obj_triangulate(self):
@@ -322,7 +338,7 @@ class TestExportObj:
                 triangulate=True
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_triangulated_mesh"] is True
 
     def test_export_obj_creates_directory(self):
@@ -345,7 +361,7 @@ class TestExportObj:
                 triangulate=True
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["export_selected_objects"] is True
         assert call_kwargs["apply_modifiers"] is False
         assert call_kwargs["export_materials"] is False
@@ -358,8 +374,12 @@ class TestExportEdgeCases:
     """Tests for edge cases and special scenarios."""
 
     def setup_method(self):
-        self.mock_bpy = sys.modules["bpy"]
-        self.handler = ExportHandler()
+        """Reset mock and reconfigure before each test."""
+        mock_bpy.reset_mock()
+        mock_bpy.ops = MagicMock()
+        mock_bpy.data = MagicMock()
+        mock_bpy.context = MagicMock()
+        self.handler = SystemHandler()
 
     def test_export_glb_uppercase_extension(self):
         """Test GLB export with uppercase extension."""
@@ -368,7 +388,7 @@ class TestExportEdgeCases:
                 filepath="/tmp/test.GLB"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.gltf.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.gltf.call_args[1]
         assert call_kwargs["export_format"] == "GLB"
 
     def test_export_fbx_uppercase_extension(self):
@@ -378,7 +398,7 @@ class TestExportEdgeCases:
                 filepath="/tmp/test.FBX"
             )
 
-        call_kwargs = self.mock_bpy.ops.export_scene.fbx.call_args[1]
+        call_kwargs = mock_bpy.ops.export_scene.fbx.call_args[1]
         assert call_kwargs["filepath"] == "/tmp/test.FBX"
 
     def test_export_obj_uppercase_extension(self):
@@ -388,7 +408,7 @@ class TestExportEdgeCases:
                 filepath="/tmp/test.OBJ"
             )
 
-        call_kwargs = self.mock_bpy.ops.wm.obj_export.call_args[1]
+        call_kwargs = mock_bpy.ops.wm.obj_export.call_args[1]
         assert call_kwargs["filepath"] == "/tmp/test.OBJ"
 
     def test_export_glb_empty_directory(self):

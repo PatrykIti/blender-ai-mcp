@@ -312,3 +312,298 @@ class SystemHandler:
                 snapshots.append(filename[:-6])  # Remove .blend extension
 
         return sorted(snapshots)
+
+    # === Export Tools ===
+
+    def export_glb(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        export_animations: bool = True,
+        export_materials: bool = True,
+        apply_modifiers: bool = True,
+    ) -> str:
+        """Exports scene or selected objects to GLB/GLTF format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith((".glb", ".gltf")):
+            filepath += ".glb"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Determine export format
+        export_format = "GLB" if filepath.lower().endswith(".glb") else "GLTF_SEPARATE"
+
+        # Export with GLTF exporter
+        bpy.ops.export_scene.gltf(
+            filepath=filepath,
+            export_format=export_format,
+            use_selection=export_selected,
+            export_animations=export_animations,
+            export_materials="EXPORT" if export_materials else "NONE",
+            export_apply=apply_modifiers,
+        )
+
+        return f"Successfully exported to '{filepath}'"
+
+    def export_fbx(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        export_animations: bool = True,
+        apply_modifiers: bool = True,
+        mesh_smooth_type: str = "FACE",
+    ) -> str:
+        """Exports scene or selected objects to FBX format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith(".fbx"):
+            filepath += ".fbx"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Validate mesh_smooth_type
+        valid_smooth_types = {"OFF", "FACE", "EDGE"}
+        if mesh_smooth_type not in valid_smooth_types:
+            mesh_smooth_type = "FACE"
+
+        # Export with FBX exporter
+        bpy.ops.export_scene.fbx(
+            filepath=filepath,
+            use_selection=export_selected,
+            bake_anim=export_animations,
+            use_mesh_modifiers=apply_modifiers,
+            mesh_smooth_type=mesh_smooth_type,
+            add_leaf_bones=False,
+            primary_bone_axis="Y",
+            secondary_bone_axis="X",
+        )
+
+        return f"Successfully exported to '{filepath}'"
+
+    def export_obj(
+        self,
+        filepath: str,
+        export_selected: bool = False,
+        apply_modifiers: bool = True,
+        export_materials: bool = True,
+        export_uvs: bool = True,
+        export_normals: bool = True,
+        triangulate: bool = False,
+    ) -> str:
+        """Exports scene or selected objects to OBJ format."""
+        # Ensure correct extension
+        if not filepath.lower().endswith(".obj"):
+            filepath += ".obj"
+
+        # Ensure directory exists
+        dir_path = os.path.dirname(filepath)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
+        # Export with OBJ exporter (Blender 3.3+ uses wm.obj_export)
+        bpy.ops.wm.obj_export(
+            filepath=filepath,
+            export_selected_objects=export_selected,
+            apply_modifiers=apply_modifiers,
+            export_materials=export_materials,
+            export_uv=export_uvs,
+            export_normals=export_normals,
+            export_triangulated_mesh=triangulate,
+        )
+
+        return f"Successfully exported to '{filepath}'"
+
+    # === Import Tools ===
+
+    def import_obj(
+        self,
+        filepath: str,
+        use_split_objects: bool = True,
+        use_split_groups: bool = False,
+        global_scale: float = 1.0,
+        forward_axis: str = "NEGATIVE_Z",
+        up_axis: str = "Y",
+    ) -> str:
+        """Imports OBJ file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"OBJ file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import OBJ (Blender 3.3+ uses wm.obj_import)
+        bpy.ops.wm.obj_import(
+            filepath=filepath,
+            use_split_objects=use_split_objects,
+            use_split_groups=use_split_groups,
+            global_scale=global_scale,
+            forward_axis=forward_axis,
+            up_axis=up_axis,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported OBJ from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported OBJ from '{filepath}' (no new objects created)"
+
+    def import_fbx(
+        self,
+        filepath: str,
+        use_custom_normals: bool = True,
+        use_image_search: bool = True,
+        ignore_leaf_bones: bool = False,
+        automatic_bone_orientation: bool = False,
+        global_scale: float = 1.0,
+    ) -> str:
+        """Imports FBX file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"FBX file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import FBX
+        bpy.ops.import_scene.fbx(
+            filepath=filepath,
+            use_custom_normals=use_custom_normals,
+            use_image_search=use_image_search,
+            ignore_leaf_bones=ignore_leaf_bones,
+            automatic_bone_orientation=automatic_bone_orientation,
+            global_scale=global_scale,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported FBX from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported FBX from '{filepath}' (no new objects created)"
+
+    def import_glb(
+        self,
+        filepath: str,
+        import_pack_images: bool = True,
+        merge_vertices: bool = False,
+        import_shading: str = "NORMALS",
+    ) -> str:
+        """Imports GLB/GLTF file."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"GLB/GLTF file not found: {filepath}")
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Import GLTF
+        bpy.ops.import_scene.gltf(
+            filepath=filepath,
+            import_pack_images=import_pack_images,
+            merge_vertices=merge_vertices,
+            import_shading=import_shading,
+        )
+
+        # Find newly imported objects
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            return f"Successfully imported GLB/GLTF from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
+        return f"Imported GLB/GLTF from '{filepath}' (no new objects created)"
+
+    def import_image_as_plane(
+        self,
+        filepath: str,
+        name: str = None,
+        location: list = None,
+        size: float = 1.0,
+        align_axis: str = "Z+",
+        shader: str = "PRINCIPLED",
+        use_transparency: bool = True,
+    ) -> str:
+        """Imports image as a textured plane."""
+        # Validate file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Image file not found: {filepath}")
+
+        # Enable the addon if not already enabled
+        addon_name = "io_import_images_as_planes"
+        if addon_name not in bpy.context.preferences.addons:
+            try:
+                bpy.ops.preferences.addon_enable(module=addon_name)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to enable 'Import Images as Planes' addon: {e}. "
+                    "This addon is required for import_image_as_plane."
+                )
+
+        # Track objects before import
+        objects_before = set(bpy.data.objects.keys())
+
+        # Map align_axis to Blender's axis format
+        axis_mapping = {
+            "Z+": "Z+",
+            "Z-": "Z-",
+            "Y+": "Y+",
+            "Y-": "Y-",
+            "X+": "X+",
+            "X-": "X-",
+        }
+        blender_axis = axis_mapping.get(align_axis, "Z+")
+
+        # Map shader type
+        shader_mapping = {
+            "PRINCIPLED": "PRINCIPLED",
+            "SHADELESS": "SHADELESS",
+            "EMISSION": "EMISSION",
+        }
+        blender_shader = shader_mapping.get(shader, "PRINCIPLED")
+
+        # Get directory and filename
+        directory = os.path.dirname(filepath)
+        filename = os.path.basename(filepath)
+
+        # Import image as plane
+        bpy.ops.import_image.to_plane(
+            files=[{"name": filename}],
+            directory=directory,
+            align_axis=blender_axis,
+            shader=blender_shader,
+            use_transparency=use_transparency,
+        )
+
+        # Find newly created object
+        objects_after = set(bpy.data.objects.keys())
+        new_objects = objects_after - objects_before
+
+        if new_objects:
+            # Get the newly created plane
+            plane_name = list(new_objects)[0]
+            plane = bpy.data.objects[plane_name]
+
+            # Rename if custom name provided
+            if name:
+                plane.name = name
+                plane_name = plane.name  # Get actual name (may have .001 suffix)
+
+            # Set location if provided
+            if location:
+                plane.location = location
+
+            # Scale the plane
+            if size != 1.0:
+                plane.scale = (size, size, size)
+
+            return f"Successfully imported image as plane '{plane_name}' from '{filepath}'"
+
+        return f"Imported image from '{filepath}' (plane may have merged with existing)"
