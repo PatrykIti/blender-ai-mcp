@@ -83,11 +83,14 @@ class MeshHandler:
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Select geometry elements by index.
         Uses BMesh for precise 0-based indexing.
-        
+
         Args:
             type: 'VERT', 'EDGE', 'FACE'
             selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect)
         """
+        # Ensure edit mode before any mesh operations
+        self._ensure_edit_mode()
+
         # Handle SET mode (exclusive selection)
         if selection_mode == 'SET':
             bpy.ops.mesh.select_all(action='DESELECT')
@@ -1670,11 +1673,30 @@ class MeshHandler:
             raise ValueError("No vertices selected. Select vertices to rip.")
 
         try:
-            # Use rip_move but with zero movement for programmatic use
-            bpy.ops.mesh.rip_move(
-                MESH_OT_rip={'use_fill': use_fill},
-                TRANSFORM_OT_translate={'value': (0, 0, 0)}
-            )
+            # Find 3D View context for operators that require it
+            view_area = None
+            view_region = None
+
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    view_area = area
+                    for region in area.regions:
+                        if region.type == 'WINDOW':
+                            view_region = region
+                    break
+
+            if view_area and view_region:
+                # Use context override for rip_move
+                with bpy.context.temp_override(area=view_area, region=view_region):
+                    bpy.ops.mesh.rip_move(
+                        MESH_OT_rip={'use_fill': use_fill},
+                        TRANSFORM_OT_translate={'value': (0, 0, 0)}
+                    )
+            else:
+                # Fallback: use split as alternative (different behavior but similar result)
+                bpy.ops.mesh.split()
+                if use_fill:
+                    bpy.ops.mesh.edge_face_add()
         except RuntimeError as e:
             if previous_mode != 'EDIT':
                 bpy.ops.object.mode_set(mode=previous_mode)

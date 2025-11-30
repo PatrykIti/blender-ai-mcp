@@ -431,8 +431,17 @@ class SystemHandler:
         if result != {'FINISHED'}:
             raise RuntimeError(f"OBJ export failed with result: {result}")
 
+        # List files in directory for debugging
+        if dir_path:
+            files_in_dir = os.listdir(dir_path)
+        else:
+            files_in_dir = []
+
         if not os.path.exists(filepath):
-            raise RuntimeError(f"OBJ export failed: file was not created at {filepath}")
+            raise RuntimeError(
+                f"OBJ export reported success but file was not created: {filepath}. "
+                f"Files in dir: {files_in_dir}"
+            )
 
         return f"Successfully exported to '{filepath}'"
 
@@ -549,79 +558,111 @@ class SystemHandler:
         shader: str = "PRINCIPLED",
         use_transparency: bool = True,
     ) -> str:
-        """Imports image as a textured plane."""
+        """Imports image as a textured plane.
+
+        Creates a plane mesh with a material using the image as texture.
+        Works without external addons (compatible with Blender 4.0+).
+        """
+        import math
+
         # Validate file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Image file not found: {filepath}")
 
-        # Enable the addon if not already enabled
-        addon_name = "io_import_images_as_planes"
-        if addon_name not in bpy.context.preferences.addons:
-            try:
-                bpy.ops.preferences.addon_enable(module=addon_name)
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to enable 'Import Images as Planes' addon: {e}. "
-                    "This addon is required for import_image_as_plane."
-                )
+        # Load the image
+        img = bpy.data.images.load(filepath)
+        img_width, img_height = img.size
 
-        # Track objects before import
-        objects_before = set(bpy.data.objects.keys())
+        # Calculate aspect ratio for plane dimensions
+        aspect = img_width / img_height if img_height > 0 else 1.0
 
-        # Map align_axis to Blender's axis format
-        axis_mapping = {
-            "Z+": "Z+",
-            "Z-": "Z-",
-            "Y+": "Y+",
-            "Y-": "Y-",
-            "X+": "X+",
-            "X-": "X-",
+        # Create plane name
+        base_name = name if name else os.path.splitext(os.path.basename(filepath))[0]
+
+        # Create plane mesh
+        bpy.ops.mesh.primitive_plane_add(size=2.0)
+        plane = bpy.context.active_object
+        plane.name = base_name
+
+        # Scale to match image aspect ratio
+        if aspect >= 1.0:
+            plane.scale = (size * aspect / 2, size / 2, 1.0)
+        else:
+            plane.scale = (size / 2, size / (2 * aspect), 1.0)
+
+        # Apply scale
+        bpy.ops.object.transform_apply(scale=True)
+
+        # Set location
+        if location:
+            plane.location = location
+
+        # Rotate based on align_axis
+        rotation_map = {
+            "Z+": (0, 0, 0),
+            "Z-": (math.pi, 0, 0),
+            "Y+": (math.pi / 2, 0, 0),
+            "Y-": (-math.pi / 2, 0, 0),
+            "X+": (0, math.pi / 2, 0),
+            "X-": (0, -math.pi / 2, 0),
         }
-        blender_axis = axis_mapping.get(align_axis, "Z+")
+        rotation = rotation_map.get(align_axis, (0, 0, 0))
+        plane.rotation_euler = rotation
 
-        # Map shader type
-        shader_mapping = {
-            "PRINCIPLED": "PRINCIPLED",
-            "SHADELESS": "SHADELESS",
-            "EMISSION": "EMISSION",
-        }
-        blender_shader = shader_mapping.get(shader, "PRINCIPLED")
+        # Create material
+        mat_name = f"{base_name}_Material"
+        mat = bpy.data.materials.new(name=mat_name)
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
 
-        # Get directory and filename
-        directory = os.path.dirname(filepath)
-        filename = os.path.basename(filepath)
+        # Clear default nodes
+        nodes.clear()
 
-        # Import image as plane
-        bpy.ops.import_image.to_plane(
-            files=[{"name": filename}],
-            directory=directory,
-            align_axis=blender_axis,
-            shader=blender_shader,
-            use_transparency=use_transparency,
-        )
+        # Create nodes based on shader type
+        # Output node
+        output_node = nodes.new('ShaderNodeOutputMaterial')
+        output_node.location = (400, 0)
 
-        # Find newly created object
-        objects_after = set(bpy.data.objects.keys())
-        new_objects = objects_after - objects_before
+        # Image texture node
+        tex_node = nodes.new('ShaderNodeTexImage')
+        tex_node.image = img
+        tex_node.location = (-300, 0)
 
-        if new_objects:
-            # Get the newly created plane
-            plane_name = list(new_objects)[0]
-            plane = bpy.data.objects[plane_name]
+        if shader == "EMISSION":
+            # Emission shader
+            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
+            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
 
-            # Rename if custom name provided
-            if name:
-                plane.name = name
-                plane_name = plane.name  # Get actual name (may have .001 suffix)
+        elif shader == "SHADELESS":
+            # Shadeless (Background shader in Cycles, or just emission)
+            # Use emission with strength 1 for shadeless look
+            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node.inputs['Strength'].default_value = 1.0
+            emission_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
+            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
 
-            # Set location if provided
-            if location:
-                plane.location = location
+        else:  # PRINCIPLED (default)
+            # Principled BSDF
+            bsdf_node = nodes.new('ShaderNodeBsdfPrincipled')
+            bsdf_node.location = (100, 0)
+            links.new(tex_node.outputs['Color'], bsdf_node.inputs['Base Color'])
+            links.new(bsdf_node.outputs['BSDF'], output_node.inputs['Surface'])
 
-            # Scale the plane
-            if size != 1.0:
-                plane.scale = (size, size, size)
+            # Handle transparency
+            if use_transparency:
+                mat.blend_method = 'BLEND'
+                links.new(tex_node.outputs['Alpha'], bsdf_node.inputs['Alpha'])
 
-            return f"Successfully imported image as plane '{plane_name}' from '{filepath}'"
+        # Assign material to plane
+        if plane.data.materials:
+            plane.data.materials[0] = mat
+        else:
+            plane.data.materials.append(mat)
 
-        return f"Imported image from '{filepath}' (plane may have merged with existing)"
+        # Ensure proper UV mapping (plane already has UVs from primitive)
+
+        return f"Successfully imported image as plane '{plane.name}' from '{filepath}'"
