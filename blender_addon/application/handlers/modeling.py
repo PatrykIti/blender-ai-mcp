@@ -9,22 +9,25 @@ class ModelingHandler:
         """
         [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
         """
-        if primitive_type == "Cube":
+        # Normalize primitive_type to lowercase for case-insensitive matching
+        ptype = primitive_type.lower()
+
+        if ptype == "cube":
             bpy.ops.mesh.primitive_cube_add(size=size, location=location, rotation=rotation)
-        elif primitive_type == "Sphere":
+        elif ptype in ("sphere", "uv_sphere"):
             bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, rotation=rotation)
-        elif primitive_type == "Cylinder":
+        elif ptype == "cylinder":
             bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=size, location=location, rotation=rotation)
-        elif primitive_type == "Plane":
+        elif ptype == "plane":
             bpy.ops.mesh.primitive_plane_add(size=size, location=location, rotation=rotation)
-        elif primitive_type == "Cone":
+        elif ptype == "cone":
             bpy.ops.mesh.primitive_cone_add(radius1=radius, depth=size, location=location, rotation=rotation)
-        elif primitive_type == "Torus":
+        elif ptype == "torus":
             bpy.ops.mesh.primitive_torus_add(location=location, rotation=rotation)
-        elif primitive_type == "Monkey":
+        elif ptype == "monkey":
             bpy.ops.mesh.primitive_monkey_add(size=size, location=location, rotation=rotation)
         else:
-            raise ValueError(f"Unknown primitive type: {primitive_type}")
+            raise ValueError(f"Unknown primitive type: {primitive_type}. Valid types: cube, sphere, cylinder, plane, cone, torus, monkey")
         
         obj = bpy.context.active_object
         if name:

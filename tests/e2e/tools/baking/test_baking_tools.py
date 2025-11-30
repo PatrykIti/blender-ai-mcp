@@ -65,8 +65,6 @@ def create_test_object_with_uv(modeling_handler, scene_handler, uv_handler, name
     # Create UV sphere (better for baking than cube)
     result = modeling_handler.create_primitive(
         primitive_type="UV_SPHERE",
-        segments=32,
-        ring_count=16,
         radius=1.0,
         location=[0, 0, 0],
         name=name

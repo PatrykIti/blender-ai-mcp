@@ -14,7 +14,6 @@ import os
 import tempfile
 import pytest
 
-from server.adapters.rpc.client import RpcClient
 from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -23,27 +22,22 @@ from server.application.tool_handlers.modeling_handler import ModelingToolHandle
 # Skip all tests if Blender is not running
 pytestmark = pytest.mark.e2e
 
-
-@pytest.fixture(scope="module")
-def rpc_client():
-    """Create RPC client connected to Blender."""
-    client = RpcClient(host="127.0.0.1", port=8765)
-    yield client
+# Note: rpc_client fixture is inherited from tests/e2e/conftest.py (scope="session")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def scene_handler(rpc_client):
     """Create scene handler."""
     return SceneToolHandler(rpc_client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def modeling_handler(rpc_client):
     """Create modeling handler."""
     return ModelingToolHandler(rpc_client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def system_handler(rpc_client):
     """Create system handler for export/import."""
     return SystemToolHandler(rpc_client)
@@ -97,7 +91,7 @@ class TestImportOBJ:
         assert len([o for o in objects if "Cube" in o.get("name", "")]) > 0
 
     def test_import_obj_with_scale(
-        self, clean_scene, modeling_handler, system_handler, temp_dir
+        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
     ):
         """Test OBJ import with custom scale."""
         # Create and export cube
@@ -106,8 +100,6 @@ class TestImportOBJ:
         system_handler.export_obj(filepath=obj_path)
 
         # Clear and import with scale
-        from server.adapters.rpc.client import RpcClient
-        scene_handler = SceneToolHandler(RpcClient(host="127.0.0.1", port=8765))
         scene_handler.clean_scene(keep_lights_and_cameras=False)
 
         result = system_handler.import_obj(filepath=obj_path, global_scale=0.5)

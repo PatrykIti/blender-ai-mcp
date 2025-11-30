@@ -405,9 +405,20 @@ class SystemHandler:
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
 
-        # Export with OBJ exporter (Blender 3.3+ uses wm.obj_export)
-        bpy.ops.wm.obj_export(
+        # Verify directory is writable
+        if dir_path and not os.access(dir_path, os.W_OK):
+            raise RuntimeError(f"Directory not writable: {dir_path}")
+
+        # Check objects in scene
+        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == 'MESH']
+        if not mesh_objects:
+            raise RuntimeError("No mesh objects in scene to export")
+
+        # Export with OBJ exporter (Blender 4.0+ uses wm.obj_export)
+        # Blender 5.0 requires check_existing=False for non-interactive export
+        result = bpy.ops.wm.obj_export(
             filepath=filepath,
+            check_existing=False,
             export_selected_objects=export_selected,
             apply_modifiers=apply_modifiers,
             export_materials=export_materials,
@@ -415,6 +426,13 @@ class SystemHandler:
             export_normals=export_normals,
             export_triangulated_mesh=triangulate,
         )
+
+        # Verify export succeeded
+        if result != {'FINISHED'}:
+            raise RuntimeError(f"OBJ export failed with result: {result}")
+
+        if not os.path.exists(filepath):
+            raise RuntimeError(f"OBJ export failed: file was not created at {filepath}")
 
         return f"Successfully exported to '{filepath}'"
 
