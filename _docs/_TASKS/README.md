@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks (~26 sub-tasks)
+- **To Do:** 5 tasks (~22 sub-tasks)
 - **In Progress:** 1
-- **Done:** 94
+- **Done:** 98
 
 ---
 
@@ -25,7 +25,6 @@ Task board for the project. Update statuses in markdown files.
 ### Import & Workflow
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-035](./TASK-035_Import_Tools.md) | **Import Tools** | 🟠 High | import_obj, import_fbx, import_image_as_plane |
 | [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
 
 ### Future / Nice-to-Have
@@ -48,6 +47,10 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |
+| [TASK-035-3](./TASK-035_Import_Tools.md#task-035-3-import_image_as_plane) | **import_image_as_plane** | 🟠 High | 2025-11-30 |
+| [TASK-035-2](./TASK-035_Import_Tools.md#task-035-2-import_fbx) | **import_fbx** | 🟠 High | 2025-11-30 |
+| [TASK-035-1](./TASK-035_Import_Tools.md#task-035-1-import_obj) | **import_obj** | 🟠 High | 2025-11-30 |
 | [TASK-032-4](./TASK-032_Knife_Cut_Tools.md#task-032-4-mesh_edge_split) | **mesh_edge_split** | 🟠 High | 2025-11-30 |
 | [TASK-032-3](./TASK-032_Knife_Cut_Tools.md#task-032-3-mesh_split) | **mesh_split** | 🟠 High | 2025-11-30 |
 | [TASK-032-2](./TASK-032_Knife_Cut_Tools.md#task-032-2-mesh_rip) | **mesh_rip** | 🟠 High | 2025-11-30 |

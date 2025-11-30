@@ -295,10 +295,10 @@ File import operations.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `import_obj` | Import OBJ file | 🚧 |
-| `import_fbx` | Import FBX file | 🚧 |
-| `import_glb` | Import GLB/GLTF file | 🚧 |
-| `import_image_as_plane` | Import image as textured plane (reference) | 🚧 |
+| `import_obj` | Import OBJ file | ✅ |
+| `import_fbx` | Import FBX file | ✅ |
+| `import_glb` | Import GLB/GLTF file | ✅ |
+| `import_image_as_plane` | Import image as textured plane (reference) | ✅ |
 
 ---
 
@@ -564,7 +564,11 @@ We recommend using Docker to run the MCP Server.
         "bake_normal_map",
         "bake_ao",
         "bake_combined",
-        "bake_diffuse"
+        "bake_diffuse",
+        "import_obj",
+        "import_fbx",
+        "import_glb",
+        "import_image_as_plane"
       ]
     }
   }
@@ -682,7 +686,11 @@ We recommend using Docker to run the MCP Server.
         "bake_normal_map",
         "bake_ao",
         "bake_combined",
-        "bake_diffuse"
+        "bake_diffuse",
+        "import_obj",
+        "import_fbx",
+        "import_glb",
+        "import_image_as_plane"
       ]
     }
   }

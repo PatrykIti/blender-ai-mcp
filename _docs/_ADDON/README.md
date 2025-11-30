@@ -240,3 +240,13 @@ Technical details.
 | `baking.combined` | `bake_combined` | Bakes full render (material + lighting) to texture. |
 | `baking.diffuse` | `bake_diffuse` | Bakes diffuse/albedo color only (no lighting). |
 
+
+### Import (`application/handlers/import_handler.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `import.obj` | `import_obj` | Imports OBJ file (geometry, UVs, normals). |
+| `import.fbx` | `import_fbx` | Imports FBX file (geometry, materials, animations). |
+| `import.glb` | `import_glb` | Imports GLB/GLTF file (PBR materials, animations). |
+| `import.image_as_plane` | `import_image_as_plane` | Imports image as textured plane (reference images). |
+

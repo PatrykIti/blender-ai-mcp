@@ -23,7 +23,7 @@ Import tools enable **bringing external assets into Blender** - essential for re
 
 ### TASK-035-1: import_obj
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Imports OBJ file.
 
@@ -65,7 +65,7 @@ bpy.ops.wm.obj_import(
 
 ### TASK-035-2: import_fbx
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Imports FBX file.
 
@@ -112,7 +112,7 @@ bpy.ops.import_scene.fbx(
 
 ### TASK-035-3: import_image_as_plane
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Imports image as a textured plane (reference image).
 
@@ -158,9 +158,9 @@ bpy.ops.import_image.to_plane(
 
 ---
 
-### TASK-035-4: import_glb (Optional)
+### TASK-035-4: import_glb
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Imports GLB/GLTF file.
 
@@ -213,8 +213,32 @@ We already have:
 
 ## Testing Requirements
 
-- [ ] Unit tests with mocked bpy.ops
-- [ ] E2E test: Export cube to OBJ → import → verify geometry
-- [ ] E2E test: Import reference image → verify plane created
-- [ ] Test file not found error handling
-- [ ] Test addon auto-enable for import_image_as_plane
+- [x] Unit tests with mocked bpy.ops (13 tests)
+- [x] E2E test: Export cube to OBJ → import → verify geometry
+- [x] E2E test: Import reference image → verify plane created
+- [x] Test file not found error handling
+- [x] Test addon auto-enable for import_image_as_plane
+
+## Implementation Summary
+
+**Completed:** 2025-11-30
+
+**Files Created:**
+- `server/domain/tools/import_tool.py` - IImportTool interface (4 methods)
+- `server/application/tool_handlers/import_handler.py` - RPC bridge
+- `server/adapters/mcp/areas/import_tool.py` - 4 MCP tools
+- `blender_addon/application/handlers/import_handler.py` - Blender implementations
+
+**Files Modified:**
+- `server/infrastructure/di.py` - Added get_import_handler provider
+- `server/adapters/mcp/areas/__init__.py` - Registered import_tool module
+- `blender_addon/__init__.py` - Registered 4 RPC handlers
+
+**Test Files:**
+- `tests/unit/tools/import_tool/test_import_handler.py` - 13 unit tests
+- `tests/e2e/tools/import_tool/test_import_tools.py` - E2E roundtrip tests
+
+**Notes:**
+- All tools validate file existence before import
+- `import_image_as_plane` auto-enables the required addon if not already enabled
+- Returns list of imported object names for verification

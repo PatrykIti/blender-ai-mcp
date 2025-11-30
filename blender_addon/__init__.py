@@ -24,6 +24,7 @@ try:
     from .application.handlers.uv import UVHandler
     from .application.handlers.curve import CurveHandler
     from .application.handlers.export import ExportHandler
+    from .application.handlers.import_handler import ImportHandler
     from .application.handlers.system import SystemHandler
     from .application.handlers.sculpt import SculptHandler
     from .application.handlers.baking import BakingHandler
@@ -36,6 +37,7 @@ except ImportError:
     UVHandler = None
     CurveHandler = None
     ExportHandler = None
+    ImportHandler = None
     SystemHandler = None
     SculptHandler = None
     BakingHandler = None
@@ -54,6 +56,7 @@ def register():
         uv_handler = UVHandler()
         curve_handler = CurveHandler()
         export_handler = ExportHandler()
+        import_handler = ImportHandler()
         system_handler = SystemHandler()
         sculpt_handler = SculptHandler()
         baking_handler = BakingHandler()
@@ -201,6 +204,12 @@ def register():
         rpc_server.register_handler("baking.ao", baking_handler.bake_ao)
         rpc_server.register_handler("baking.combined", baking_handler.bake_combined)
         rpc_server.register_handler("baking.diffuse", baking_handler.bake_diffuse)
+
+        # TASK-035: Import Tools
+        rpc_server.register_handler("import.obj", import_handler.import_obj)
+        rpc_server.register_handler("import.fbx", import_handler.import_fbx)
+        rpc_server.register_handler("import.glb", import_handler.import_glb)
+        rpc_server.register_handler("import.image_as_plane", import_handler.import_image_as_plane)
 
         rpc_server.start()
     else:

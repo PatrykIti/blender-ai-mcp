@@ -2,6 +2,7 @@ from . import baking
 from . import collection
 from . import curve
 from . import export
+from . import import_tool
 from . import material
 from . import mesh
 from . import modeling
