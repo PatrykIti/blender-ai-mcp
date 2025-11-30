@@ -455,3 +455,23 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-038-5: Proportional Editing
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ) -> str:
+        """Configures proportional editing settings."""
+        args = {
+            "enabled": enabled,
+            "falloff_type": falloff_type,
+            "size": size,
+            "use_connected": use_connected,
+        }
+        response = self.rpc.send_request("mesh.set_proportional_edit", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

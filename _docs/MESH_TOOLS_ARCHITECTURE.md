@@ -1229,6 +1229,51 @@ Workflow: BEFORE → mesh_select(action="all") | Use symmetry for symmetric mesh
 
 ---
 
+# 47. mesh_set_proportional_edit ✅ Done (TASK-038)
+
+Configures proportional editing mode for organic deformations.
+
+**Tag:** `[EDIT MODE][CONFIGURATION][SAFE]`
+
+Args:
+- enabled: bool (enable/disable proportional editing) - default true
+- falloff_type: str ("SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM") - default "SMOOTH"
+- size: float (influence radius) - default 1.0
+- use_connected: bool (only affect connected geometry) - default false
+
+Example:
+```json
+{
+  "tool": "mesh_set_proportional_edit",
+  "args": {
+    "enabled": true,
+    "falloff_type": "SMOOTH",
+    "size": 2.0,
+    "use_connected": false
+  }
+}
+```
+
+Falloff Types:
+- **SMOOTH** - Gradual falloff (default, most natural)
+- **SPHERE** - Spherical falloff (sharp boundary)
+- **ROOT** - Square root falloff (medium transition)
+- **INVERSE_SQUARE** - Strong center influence
+- **SHARP** - Sharp falloff (concentrated effect)
+- **LINEAR** - Linear falloff (even transition)
+- **CONSTANT** - All affected vertices move equally
+- **RANDOM** - Random influence (organic variation)
+
+Use Case:
+- Organic surface deformation
+- Natural-looking vertex adjustments
+- Soft modifications to mesh areas
+- Mountain/terrain modeling
+
+Workflow: Set proportional edit → mesh_transform_selected (transforms use proportional influence)
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

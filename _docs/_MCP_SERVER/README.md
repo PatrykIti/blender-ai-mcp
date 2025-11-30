@@ -110,6 +110,11 @@ Geometry creation and editing.
 | `modeling_separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
 | `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
 | `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
+| `metaball_create` | `name`, `location`, `element_type`, `radius`, `resolution`, `threshold` | Creates a metaball object for organic blob shapes. |
+| `metaball_add_element` | `metaball_name`, `element_type`, `location`, `radius`, `stiffness` | Adds element to existing metaball for merging. |
+| `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. |
+| `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. |
+| `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. |
 
 ### Mesh Tools (Edit Mode)
 Low-level geometry manipulation.
@@ -157,6 +162,7 @@ Low-level geometry manipulation.
 | `mesh_rip` | `use_fill` | Rips (tears) geometry at selected vertices. |
 | `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). |
 | `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). |
+| `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
@@ -177,6 +183,15 @@ Sculpt Mode operations for organic shape manipulation.
 | `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. |
 | `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. |
 | `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
+| `sculpt_brush_clay` | `radius`, `strength` | Sets up clay brush for adding material (muscle mass, fat deposits). |
+| `sculpt_brush_inflate` | `radius`, `strength` | Sets up inflate brush for pushing geometry outward (tumors, swelling). |
+| `sculpt_brush_blob` | `radius`, `strength` | Sets up blob brush for creating rounded organic bulges. |
+| `sculpt_brush_snake_hook` | `radius`, `strength` | Sets up snake hook brush for pulling tendrils (blood vessels, nerves). |
+| `sculpt_brush_draw` | `radius`, `strength` | Sets up draw brush for basic sculpting. |
+| `sculpt_brush_pinch` | `radius`, `strength` | Sets up pinch brush for creating sharp creases (wrinkles, folds). |
+| `sculpt_enable_dyntopo` | `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology for automatic geometry addition. |
+| `sculpt_disable_dyntopo` | *none* | Disables Dynamic Topology. |
+| `sculpt_dyntopo_flood_fill` | *none* | Applies current detail level to entire mesh. |
 
 > **Note:** For reliable AI workflows, use `sculpt_auto` with mesh filters. Brush tools set up the brush but don't execute strokes programmatically.
 

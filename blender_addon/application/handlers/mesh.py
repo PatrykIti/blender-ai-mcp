@@ -1790,3 +1790,57 @@ class MeshHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Split mesh at {selected_edges} edge(s)"
+
+    # ==========================================================================
+    # TASK-038-5: Proportional Editing
+    # ==========================================================================
+
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ):
+        """
+        [EDIT MODE][SETTING] Configures proportional editing mode.
+
+        Proportional editing affects nearby unselected geometry when transforming.
+        Essential for organic modeling - creates smooth falloff in deformations.
+        """
+        # Validate falloff type
+        valid_falloffs = [
+            "SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE",
+            "SHARP", "LINEAR", "CONSTANT", "RANDOM"
+        ]
+        falloff_type = falloff_type.upper()
+        if falloff_type not in valid_falloffs:
+            raise ValueError(f"Invalid falloff type: {falloff_type}. Valid: {valid_falloffs}")
+
+        # Get tool settings
+        tool_settings = bpy.context.tool_settings
+
+        # Set proportional edit mode
+        if enabled:
+            if use_connected:
+                tool_settings.proportional_edit = 'CONNECTED'
+            else:
+                tool_settings.proportional_edit = 'ENABLED'
+        else:
+            tool_settings.proportional_edit = 'DISABLED'
+
+        # Set falloff type
+        tool_settings.proportional_edit_falloff = falloff_type
+
+        # Set size
+        tool_settings.proportional_size = max(0.001, size)
+
+        # Build status message
+        if enabled:
+            mode = "connected" if use_connected else "enabled"
+            return (
+                f"Proportional editing {mode} "
+                f"(falloff={falloff_type}, size={size})"
+            )
+        else:
+            return "Proportional editing disabled"

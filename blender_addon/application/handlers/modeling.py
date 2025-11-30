@@ -1,6 +1,6 @@
 import bpy
 import math
-from typing import List
+from typing import List, Optional
 
 class ModelingHandler:
     """Application service for modeling operations."""
@@ -266,10 +266,10 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
         modifiers_list = []
-        
+
         for mod in obj.modifiers:
             modifiers_list.append({
                 "name": mod.name,
@@ -277,5 +277,252 @@ class ModelingHandler:
                 "show_viewport": mod.show_viewport,
                 "show_render": mod.show_render
             })
-            
+
         return modifiers_list
+
+    # ==========================================================================
+    # TASK-038-1: Metaball Tools
+    # ==========================================================================
+
+    def metaball_create(
+        self,
+        name: str = "Metaball",
+        location: List = None,
+        element_type: str = "BALL",
+        radius: float = 1.0,
+        resolution: float = 0.2,
+        threshold: float = 0.6,
+    ):
+        """
+        [OBJECT MODE][SCENE] Creates a metaball object.
+
+        Metaballs automatically merge when close together, creating organic blob shapes.
+        """
+        location = location or [0, 0, 0]
+
+        # Valid metaball element types
+        valid_types = ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+        element_type = element_type.upper()
+        if element_type not in valid_types:
+            raise ValueError(f"Invalid element type: {element_type}. Valid: {valid_types}")
+
+        # Create metaball data
+        mball = bpy.data.metaballs.new(name)
+        mball.resolution = resolution
+        mball.threshold = threshold
+
+        # Add the first element
+        elem = mball.elements.new()
+        elem.type = element_type
+        elem.radius = radius
+        elem.co = (0, 0, 0)  # Local position relative to object
+
+        # Create object from metaball
+        obj = bpy.data.objects.new(name, mball)
+        obj.location = location
+
+        # Link to scene
+        bpy.context.collection.objects.link(obj)
+
+        # Select and make active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        return (
+            f"Created metaball '{obj.name}' at {list(location)} "
+            f"(type={element_type}, radius={radius}, resolution={resolution})"
+        )
+
+    def metaball_add_element(
+        self,
+        metaball_name: str,
+        element_type: str = "BALL",
+        location: List = None,
+        radius: float = 1.0,
+        stiffness: float = 2.0,
+    ):
+        """
+        [OBJECT MODE] Adds element to existing metaball.
+
+        Multiple elements merge together based on proximity and stiffness.
+        """
+        location = location or [0, 0, 0]
+
+        if metaball_name not in bpy.data.objects:
+            raise ValueError(f"Object '{metaball_name}' not found")
+
+        obj = bpy.data.objects[metaball_name]
+
+        if obj.type != 'META':
+            raise ValueError(f"Object '{metaball_name}' is not a metaball (type: {obj.type})")
+
+        # Valid metaball element types
+        valid_types = ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+        element_type = element_type.upper()
+        if element_type not in valid_types:
+            raise ValueError(f"Invalid element type: {element_type}. Valid: {valid_types}")
+
+        mball = obj.data
+
+        # Add new element
+        elem = mball.elements.new()
+        elem.type = element_type
+        elem.radius = radius
+        elem.stiffness = stiffness
+        elem.co = tuple(location)  # Position relative to metaball object
+
+        element_count = len(mball.elements)
+
+        return (
+            f"Added {element_type} element to '{metaball_name}' at {location} "
+            f"(radius={radius}, stiffness={stiffness}). Total elements: {element_count}"
+        )
+
+    def metaball_to_mesh(
+        self,
+        metaball_name: str,
+        apply_resolution: bool = True,
+    ):
+        """
+        [OBJECT MODE][DESTRUCTIVE] Converts metaball to mesh.
+
+        Required for mesh editing operations and export.
+        """
+        if metaball_name not in bpy.data.objects:
+            raise ValueError(f"Object '{metaball_name}' not found")
+
+        obj = bpy.data.objects[metaball_name]
+
+        if obj.type != 'META':
+            raise ValueError(f"Object '{metaball_name}' is not a metaball (type: {obj.type})")
+
+        # Select and make active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        # Convert to mesh
+        bpy.ops.object.convert(target='MESH')
+
+        # Get the new mesh object
+        new_obj = bpy.context.active_object
+        vertex_count = len(new_obj.data.vertices)
+        face_count = len(new_obj.data.polygons)
+
+        return (
+            f"Converted metaball '{metaball_name}' to mesh '{new_obj.name}' "
+            f"({vertex_count} vertices, {face_count} faces)"
+        )
+
+    # ==========================================================================
+    # TASK-038-6: Skin Modifier Workflow
+    # ==========================================================================
+
+    def skin_create_skeleton(
+        self,
+        name: str = "Skeleton",
+        vertices: List = None,
+        edges: List = None,
+        location: List = None,
+    ):
+        """
+        [OBJECT MODE][SCENE] Creates skeleton mesh for Skin modifier.
+
+        Define vertices as path points, edges connect them.
+        Skin modifier will create tubular mesh around this skeleton.
+        """
+        vertices = vertices or [[0, 0, 0], [0, 0, 1]]
+        location = location or [0, 0, 0]
+
+        # Auto-create sequential edges if not provided
+        if edges is None:
+            edges = [[i, i + 1] for i in range(len(vertices) - 1)]
+
+        # Create mesh data
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata(vertices, edges, [])  # vertices, edges, faces
+        mesh.update()
+
+        # Create object
+        obj = bpy.data.objects.new(name, mesh)
+        obj.location = location
+
+        # Link to scene
+        bpy.context.collection.objects.link(obj)
+
+        # Select and make active
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        # Add Skin modifier
+        mod = obj.modifiers.new(name="Skin", type='SKIN')
+
+        # Add Subdivision modifier for smooth result
+        subsurf = obj.modifiers.new(name="Subdivision", type='SUBSURF')
+        subsurf.levels = 2
+        subsurf.render_levels = 2
+
+        return (
+            f"Created skeleton '{obj.name}' with {len(vertices)} vertices, "
+            f"{len(edges)} edges. Skin modifier added."
+        )
+
+    def skin_set_radius(
+        self,
+        object_name: str,
+        vertex_index: int = None,
+        radius_x: float = 0.25,
+        radius_y: float = 0.25,
+    ):
+        """
+        [EDIT MODE] Sets skin radius at vertices.
+
+        Each vertex can have different X/Y radius for elliptical cross-sections.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a mesh")
+
+        # Check for skin modifier
+        skin_mod = None
+        for mod in obj.modifiers:
+            if mod.type == 'SKIN':
+                skin_mod = mod
+                break
+
+        if not skin_mod:
+            raise ValueError(f"Object '{object_name}' has no Skin modifier")
+
+        # Get skin layer
+        mesh = obj.data
+        if not mesh.skin_vertices:
+            raise ValueError(f"Object '{object_name}' has no skin data")
+
+        skin_layer = mesh.skin_vertices[0]  # First (default) layer
+
+        if vertex_index is not None:
+            # Set specific vertex
+            if vertex_index < 0 or vertex_index >= len(skin_layer.data):
+                raise ValueError(
+                    f"Vertex index {vertex_index} out of range "
+                    f"(0 to {len(skin_layer.data) - 1})"
+                )
+            skin_layer.data[vertex_index].radius = (radius_x, radius_y)
+            return (
+                f"Set skin radius at vertex {vertex_index} to "
+                f"({radius_x}, {radius_y}) on '{object_name}'"
+            )
+        else:
+            # Set all vertices
+            for sv in skin_layer.data:
+                sv.radius = (radius_x, radius_y)
+            return (
+                f"Set skin radius for all {len(skin_layer.data)} vertices to "
+                f"({radius_x}, {radius_y}) on '{object_name}'"
+            )

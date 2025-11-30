@@ -320,3 +320,26 @@ class IMeshTool(ABC):
     def edge_split(self) -> str:
         """Splits mesh at selected edges to create sharp boundaries."""
         pass
+
+    # TASK-038-5: Proportional Editing
+    @abstractmethod
+    def set_proportional_edit(
+        self,
+        enabled: bool = True,
+        falloff_type: str = "SMOOTH",
+        size: float = 1.0,
+        use_connected: bool = False,
+    ) -> str:
+        """
+        Configures proportional editing settings.
+
+        Args:
+            enabled: Whether to enable proportional editing
+            falloff_type: SMOOTH, SPHERE, ROOT, INVERSE_SQUARE, SHARP, LINEAR, CONSTANT, RANDOM
+            size: Influence radius
+            use_connected: Only affect connected geometry
+
+        Returns:
+            Success message.
+        """
+        pass

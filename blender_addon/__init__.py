@@ -176,6 +176,28 @@ def register():
         rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
         rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)
 
+        # TASK-038: Organic Modeling Tools
+        # Metaball tools
+        rpc_server.register_handler("modeling.metaball_create", modeling_handler.metaball_create)
+        rpc_server.register_handler("modeling.metaball_add_element", modeling_handler.metaball_add_element)
+        rpc_server.register_handler("modeling.metaball_to_mesh", modeling_handler.metaball_to_mesh)
+        # Skin modifier tools
+        rpc_server.register_handler("modeling.skin_create_skeleton", modeling_handler.skin_create_skeleton)
+        rpc_server.register_handler("modeling.skin_set_radius", modeling_handler.skin_set_radius)
+        # Sculpt brushes
+        rpc_server.register_handler("sculpt.brush_clay", sculpt_handler.brush_clay)
+        rpc_server.register_handler("sculpt.brush_inflate", sculpt_handler.brush_inflate)
+        rpc_server.register_handler("sculpt.brush_blob", sculpt_handler.brush_blob)
+        rpc_server.register_handler("sculpt.brush_snake_hook", sculpt_handler.brush_snake_hook)
+        rpc_server.register_handler("sculpt.brush_draw", sculpt_handler.brush_draw)
+        rpc_server.register_handler("sculpt.brush_pinch", sculpt_handler.brush_pinch)
+        # Dyntopo tools
+        rpc_server.register_handler("sculpt.enable_dyntopo", sculpt_handler.enable_dyntopo)
+        rpc_server.register_handler("sculpt.disable_dyntopo", sculpt_handler.disable_dyntopo)
+        rpc_server.register_handler("sculpt.dyntopo_flood_fill", sculpt_handler.dyntopo_flood_fill)
+        # Proportional editing
+        rpc_server.register_handler("mesh.set_proportional_edit", mesh_handler.set_proportional_edit)
+
         # TASK-029: Edge Weights & Creases (Subdivision Control)
         rpc_server.register_handler("mesh.edge_crease", mesh_handler.edge_crease)
         rpc_server.register_handler("mesh.bevel_weight", mesh_handler.bevel_weight)

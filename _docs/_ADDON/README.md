@@ -130,6 +130,11 @@ Technical details.
 | `set_origin` | `set_origin` | Sets the origin point of an object. |
 
 | `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
+| `modeling.metaball_create` | `metaball_create` | Creates metaball object. |
+| `modeling.metaball_add_element` | `metaball_add_element` | Adds element to metaball. |
+| `modeling.metaball_to_mesh` | `metaball_to_mesh` | Converts metaball to mesh. |
+| `modeling.skin_create_skeleton` | `skin_create_skeleton` | Creates skeleton for skin modifier. |
+| `modeling.skin_set_radius` | `skin_set_radius` | Sets skin radius at vertices. |
 
 
 ### Mesh (`application/handlers/mesh.py`)
@@ -190,6 +195,7 @@ Technical details.
 | `mesh.rip` | `rip` | Rips (tears) geometry at selected vertices. |
 | `mesh.split` | `split` | Splits selection from mesh (disconnects without separating). |
 | `mesh.edge_split` | `edge_split` | Splits mesh at selected edges (creates seams). |
+| `mesh.set_proportional_edit` | `set_proportional_edit` | Configures proportional editing mode. |
 
 
 ### Curve (`application/handlers/curve.py`)
@@ -208,6 +214,15 @@ Technical details.
 | `sculpt.brush_smooth` | `brush_smooth` | Sets up smooth brush at specified location. |
 | `sculpt.brush_grab` | `brush_grab` | Sets up grab brush for moving geometry. |
 | `sculpt.brush_crease` | `brush_crease` | Sets up crease brush for creating sharp lines. |
+| `sculpt.brush_clay` | `brush_clay` | Sets up clay brush for adding material. |
+| `sculpt.brush_inflate` | `brush_inflate` | Sets up inflate brush for pushing outward. |
+| `sculpt.brush_blob` | `brush_blob` | Sets up blob brush for organic bulges. |
+| `sculpt.brush_snake_hook` | `brush_snake_hook` | Sets up snake hook brush for tendrils. |
+| `sculpt.brush_draw` | `brush_draw` | Sets up draw brush for basic sculpting. |
+| `sculpt.brush_pinch` | `brush_pinch` | Sets up pinch brush for creases. |
+| `sculpt.enable_dyntopo` | `enable_dyntopo` | Enables Dynamic Topology. |
+| `sculpt.disable_dyntopo` | `disable_dyntopo` | Disables Dynamic Topology. |
+| `sculpt.dyntopo_flood_fill` | `dyntopo_flood_fill` | Applies detail to entire mesh. |
 
 
 ### Export (`application/handlers/export.py`)

@@ -101,8 +101,8 @@ Object Mode operations for creating and transforming objects.
 #### Skin Modifier (Tubular Structures)
 | Tool | Description | Status |
 |------|-------------|--------|
-| `skin_create_skeleton` | Create skeleton for skin modifier | 🚧 |
-| `skin_set_radius` | Set skin radius at vertices | 🚧 |
+| `skin_create_skeleton` | Create skeleton for skin modifier | ✅ |
+| `skin_set_radius` | Set skin radius at vertices | ✅ |
 
 ---
 
@@ -207,7 +207,7 @@ Edit Mode operations for geometry manipulation.
 | `mesh_grid_fill` | Fill boundary with quad grid | 🚧 |
 | `mesh_poke_faces` | Poke faces (add center vertex) | 🚧 |
 | `mesh_beautify_fill` | Rearrange triangles uniformly | 🚧 |
-| `mesh_set_proportional_edit` | Enable soft selection falloff | 🚧 |
+| `mesh_set_proportional_edit` | Enable soft selection falloff | ✅ |
 
 ---
 
@@ -321,9 +321,9 @@ Organic blob primitives for medical/biological modeling.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `metaball_create` | Create metaball object | 🚧 |
-| `metaball_add_element` | Add element (ball, capsule, ellipsoid) | 🚧 |
-| `metaball_to_mesh` | Convert metaball to mesh | 🚧 |
+| `metaball_create` | Create metaball object | ✅ |
+| `metaball_add_element` | Add element (ball, capsule, ellipsoid) | ✅ |
+| `metaball_to_mesh` | Convert metaball to mesh | ✅ |
 
 ---
 
@@ -358,19 +358,19 @@ Organic shaping and sculpt workflows.
 #### Organic Brushes
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_brush_clay` | Add clay-like material | 🚧 |
-| `sculpt_brush_inflate` | Inflate/deflate areas | 🚧 |
-| `sculpt_brush_blob` | Create organic bulges | 🚧 |
-| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | 🚧 |
-| `sculpt_brush_draw` | Basic sculpt draw | 🚧 |
-| `sculpt_brush_pinch` | Pinch geometry together | 🚧 |
+| `sculpt_brush_clay` | Add clay-like material | ✅ |
+| `sculpt_brush_inflate` | Inflate/deflate areas | ✅ |
+| `sculpt_brush_blob` | Create organic bulges | ✅ |
+| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | ✅ |
+| `sculpt_brush_draw` | Basic sculpt draw | ✅ |
+| `sculpt_brush_pinch` | Pinch geometry together | ✅ |
 
 #### Dynamic Topology
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_enable_dyntopo` | Enable dynamic topology | 🚧 |
-| `sculpt_disable_dyntopo` | Disable dynamic topology | 🚧 |
-| `sculpt_dyntopo_flood_fill` | Apply detail level to entire mesh | 🚧 |
+| `sculpt_enable_dyntopo` | Enable dynamic topology | ✅ |
+| `sculpt_disable_dyntopo` | Disable dynamic topology | ✅ |
+| `sculpt_dyntopo_flood_fill` | Apply detail level to entire mesh | ✅ |
 
 ---
 
@@ -555,6 +555,21 @@ We recommend using Docker to run the MCP Server.
         "sculpt_brush_smooth",
         "sculpt_brush_grab",
         "sculpt_brush_crease",
+        "sculpt_brush_clay",
+        "sculpt_brush_inflate",
+        "sculpt_brush_blob",
+        "sculpt_brush_snake_hook",
+        "sculpt_brush_draw",
+        "sculpt_brush_pinch",
+        "sculpt_enable_dyntopo",
+        "sculpt_disable_dyntopo",
+        "sculpt_dyntopo_flood_fill",
+        "metaball_create",
+        "metaball_add_element",
+        "metaball_to_mesh",
+        "skin_create_skeleton",
+        "skin_set_radius",
+        "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
         "system_redo",
@@ -677,6 +692,21 @@ We recommend using Docker to run the MCP Server.
         "sculpt_brush_smooth",
         "sculpt_brush_grab",
         "sculpt_brush_crease",
+        "sculpt_brush_clay",
+        "sculpt_brush_inflate",
+        "sculpt_brush_blob",
+        "sculpt_brush_snake_hook",
+        "sculpt_brush_draw",
+        "sculpt_brush_pinch",
+        "sculpt_enable_dyntopo",
+        "sculpt_disable_dyntopo",
+        "sculpt_dyntopo_flood_fill",
+        "metaball_create",
+        "metaball_add_element",
+        "metaball_to_mesh",
+        "skin_create_skeleton",
+        "skin_set_radius",
+        "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
         "system_redo",

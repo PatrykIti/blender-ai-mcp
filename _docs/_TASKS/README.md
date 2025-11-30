@@ -3,18 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~22 sub-tasks)
+- **To Do:** 4 tasks (~16 sub-tasks)
 - **In Progress:** 1
-- **Done:** 98
+- **Done:** 99
 
 ---
 
 ## 🚨 To Do
-
-### Organic & Medical Modeling
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | metaballs, sculpt brushes (clay, inflate, blob, snake_hook), dyntopo, skin modifier |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
@@ -47,6 +42,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | 2025-11-30 |
 | [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |
 | [TASK-035-3](./TASK-035_Import_Tools.md#task-035-3-import_image_as_plane) | **import_image_as_plane** | 🟠 High | 2025-11-30 |
 | [TASK-035-2](./TASK-035_Import_Tools.md#task-035-2-import_fbx) | **import_fbx** | 🟠 High | 2025-11-30 |

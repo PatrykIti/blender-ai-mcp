@@ -25,8 +25,24 @@ Sculpt tools enable organic shape manipulation through Blender's Sculpt Mode. Th
 | `sculpt_brush_smooth` | Smooth brush setup | Sets up brush only |
 | `sculpt_brush_grab` | Grab brush setup | Sets up brush only |
 | `sculpt_brush_crease` | Crease brush setup | Sets up brush only |
+| `sculpt_brush_clay` | Clay brush setup | Adds material (muscle, fat) |
+| `sculpt_brush_inflate` | Inflate brush setup | Pushes outward (swelling, tumors) |
+| `sculpt_brush_blob` | Blob brush setup | Creates organic bulges |
+| `sculpt_brush_snake_hook` | Snake hook setup | Pulls tendrils (vessels, nerves) |
+| `sculpt_brush_draw` | Draw brush setup | General sculpting |
+| `sculpt_brush_pinch` | Pinch brush setup | Sharp creases (wrinkles, folds) |
 
 > **Note:** Brush tools configure the brush and context but don't execute strokes programmatically. For whole-mesh operations, use `sculpt_auto`.
+
+### Dynamic Topology Tools (TASK-038)
+
+| Tool | Operation | Reliability |
+|------|-----------|-------------|
+| `sculpt_enable_dyntopo` | Enables dynamic topology | ✅ High |
+| `sculpt_disable_dyntopo` | Disables dynamic topology | ✅ High |
+| `sculpt_dyntopo_flood_fill` | Applies detail to entire mesh | ✅ High |
+
+> **Warning:** Dynamic Topology (Dyntopo) destroys UV maps and vertex groups. Use for concept/base mesh only.
 
 ---
 
@@ -116,6 +132,144 @@ Sets up the crease brush for creating sharp lines.
 
 ---
 
+### sculpt_brush_clay
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Clay brush for adding material. Ideal for muscle mass, fat deposits.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_brush_inflate
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Inflate brush for pushing geometry outward. Ideal for swelling, tumors.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_brush_blob
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Blob brush for creating rounded organic bulges.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_brush_snake_hook
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Snake hook brush for pulling tendrils. Ideal for blood vessels, nerves, tentacles.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_brush_draw
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Basic draw brush for general sculpting operations.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_brush_pinch
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Pinch brush for creating sharp creases. Ideal for wrinkles, folds, skin details.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `radius` | float | 50.0 | Brush radius (pixels) |
+| `strength` | float | 0.5 | Brush strength (0-1) |
+
+---
+
+### sculpt_enable_dyntopo
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Enables Dynamic Topology for adaptive sculpting. Destroys UVs and vertex groups.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+| `detail_mode` | Literal["RELATIVE", "CONSTANT", "BRUSH", "MANUAL"] | "RELATIVE" | Detail calculation mode |
+| `detail_size` | float | 12.0 | Detail size (px for RELATIVE, units for others) |
+| `use_smooth_shading` | bool | True | Use smooth shading |
+
+**Detail Modes:**
+- `RELATIVE` - Detail size in screen pixels (good for consistent detail at any zoom)
+- `CONSTANT` - Fixed detail size in scene units
+- `BRUSH` - Detail follows brush size
+- `MANUAL` - Manual control via flood fill
+
+---
+
+### sculpt_disable_dyntopo
+
+**[SCULPT MODE][SAFE]**
+
+Disables Dynamic Topology.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+
+---
+
+### sculpt_dyntopo_flood_fill
+
+**[SCULPT MODE][DESTRUCTIVE]**
+
+Applies current detail level to entire mesh. Useful for uniform detail.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | Optional[str] | None | Target object |
+
+---
+
 ## Architecture
 
 ### Layer Structure
@@ -125,7 +279,7 @@ Sets up the crease brush for creating sharp lines.
 │ 1. DOMAIN LAYER                                             │
 │    server/domain/tools/sculpt.py                            │
 │    - ISculptTool interface                                  │
-│    - auto_sculpt, brush_smooth, brush_grab, brush_crease    │
+│    - auto_sculpt, all brush methods, dyntopo methods        │
 ├─────────────────────────────────────────────────────────────┤
 │ 2. APPLICATION LAYER                                        │
 │    server/application/tool_handlers/sculpt_handler.py       │
@@ -152,6 +306,15 @@ Sets up the crease brush for creating sharp lines.
 | `sculpt.brush_smooth` | `SculptHandler.brush_smooth()` |
 | `sculpt.brush_grab` | `SculptHandler.brush_grab()` |
 | `sculpt.brush_crease` | `SculptHandler.brush_crease()` |
+| `sculpt.brush_clay` | `SculptHandler.brush_clay()` |
+| `sculpt.brush_inflate` | `SculptHandler.brush_inflate()` |
+| `sculpt.brush_blob` | `SculptHandler.brush_blob()` |
+| `sculpt.brush_snake_hook` | `SculptHandler.brush_snake_hook()` |
+| `sculpt.brush_draw` | `SculptHandler.brush_draw()` |
+| `sculpt.brush_pinch` | `SculptHandler.brush_pinch()` |
+| `sculpt.enable_dyntopo` | `SculptHandler.enable_dyntopo()` |
+| `sculpt.disable_dyntopo` | `SculptHandler.disable_dyntopo()` |
+| `sculpt.dyntopo_flood_fill` | `SculptHandler.dyntopo_flood_fill()` |
 
 ---
 

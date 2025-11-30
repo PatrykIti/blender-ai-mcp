@@ -381,3 +381,238 @@ class TestSculptHelpers:
         assert sculpt_settings.use_symmetry_x is False
         assert sculpt_settings.use_symmetry_y is False
         assert sculpt_settings.use_symmetry_z is False
+
+
+# =============================================================================
+# TASK-038-2: Core Sculpt Brushes
+# =============================================================================
+
+class TestSculptBrushClay:
+    """Tests for sculpt_brush_clay tool."""
+
+    def test_brush_clay_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up clay brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_clay(radius=0.2, strength=0.6)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Clay")
+        assert mock_sculpt_context.brush.strength == 0.6
+        assert "Clay brush ready" in result
+
+    def test_brush_clay_clamps_values(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should clamp radius and strength to valid ranges."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        # Strength should be clamped to 1.0
+        sculpt_handler.brush_clay(strength=2.0)
+        assert mock_sculpt_context.brush.strength == 1.0
+
+
+class TestSculptBrushInflate:
+    """Tests for sculpt_brush_inflate tool."""
+
+    def test_brush_inflate_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up inflate brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_inflate(radius=0.15, strength=0.4)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Inflate")
+        assert mock_sculpt_context.brush.strength == 0.4
+        assert "Inflate brush ready" in result
+
+
+class TestSculptBrushBlob:
+    """Tests for sculpt_brush_blob tool."""
+
+    def test_brush_blob_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up blob brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_blob(radius=0.1, strength=0.5)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Blob")
+        assert mock_sculpt_context.brush.strength == 0.5
+        assert "Blob brush ready" in result
+
+
+# =============================================================================
+# TASK-038-3: Detail Sculpt Brushes
+# =============================================================================
+
+class TestSculptBrushSnakeHook:
+    """Tests for sculpt_brush_snake_hook tool."""
+
+    def test_brush_snake_hook_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up snake hook brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_snake_hook(radius=0.08, strength=0.7)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Snake Hook")
+        assert mock_sculpt_context.brush.strength == 0.7
+        assert "Snake Hook brush ready" in result
+
+
+class TestSculptBrushDraw:
+    """Tests for sculpt_brush_draw tool."""
+
+    def test_brush_draw_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up draw brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_draw(radius=0.1, strength=0.5)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Draw")
+        assert mock_sculpt_context.brush.strength == 0.5
+        assert "Draw brush ready" in result
+
+
+class TestSculptBrushPinch:
+    """Tests for sculpt_brush_pinch tool."""
+
+    def test_brush_pinch_sets_brush(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
+        """Should set up pinch brush with correct parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.wm.tool_set_by_id = MagicMock()
+
+        result = sculpt_handler.brush_pinch(radius=0.05, strength=0.6)
+
+        bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Pinch")
+        assert mock_sculpt_context.brush.strength == 0.6
+        assert "Pinch brush ready" in result
+
+
+# =============================================================================
+# TASK-038-4: Dynamic Topology (Dyntopo)
+# =============================================================================
+
+class TestSculptEnableDyntopo:
+    """Tests for sculpt_enable_dyntopo tool."""
+
+    def test_enable_dyntopo_default(self, sculpt_handler, mock_mesh_object):
+        """Should enable dyntopo with default parameters."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.sculpt.dynamic_topology_toggle = MagicMock()
+        bpy.ops.mesh.faces_shade_smooth = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = False
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        mock_mesh_object.data = MagicMock()
+        mock_mesh_object.data.use_auto_smooth = True
+
+        sculpt = MagicMock()
+        sculpt.detail_type_method = None
+        sculpt.detail_size = 0
+        bpy.context.tool_settings.sculpt = sculpt
+
+        result = sculpt_handler.enable_dyntopo()
+
+        bpy.ops.sculpt.dynamic_topology_toggle.assert_called_once()
+        assert "Dynamic Topology enabled" in result
+
+    def test_enable_dyntopo_constant_mode(self, sculpt_handler, mock_mesh_object):
+        """Should enable dyntopo with constant detail mode."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.sculpt.dynamic_topology_toggle = MagicMock()
+        bpy.ops.mesh.faces_shade_smooth = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = False
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        mock_mesh_object.data = MagicMock()
+
+        sculpt = MagicMock()
+        bpy.context.tool_settings.sculpt = sculpt
+
+        result = sculpt_handler.enable_dyntopo(detail_mode="CONSTANT", detail_size=0.05)
+
+        assert sculpt.detail_type_method == "CONSTANT"
+        assert "CONSTANT" in result
+
+    def test_enable_dyntopo_invalid_mode_raises(self, sculpt_handler, mock_mesh_object):
+        """Should raise ValueError for invalid detail mode."""
+        bpy.ops.object.mode_set = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = False
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        mock_mesh_object.data = MagicMock()
+
+        sculpt = MagicMock()
+        bpy.context.tool_settings.sculpt = sculpt
+
+        with pytest.raises(ValueError, match="Invalid detail mode"):
+            sculpt_handler.enable_dyntopo(detail_mode="INVALID")
+
+
+class TestSculptDisableDyntopo:
+    """Tests for sculpt_disable_dyntopo tool."""
+
+    def test_disable_dyntopo_when_enabled(self, sculpt_handler, mock_mesh_object):
+        """Should disable dyntopo when it's enabled."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.sculpt.dynamic_topology_toggle = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = True
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        result = sculpt_handler.disable_dyntopo()
+
+        bpy.ops.sculpt.dynamic_topology_toggle.assert_called_once()
+        assert "disabled" in result
+
+    def test_disable_dyntopo_when_already_disabled(self, sculpt_handler, mock_mesh_object):
+        """Should return message when dyntopo is already disabled."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.sculpt.dynamic_topology_toggle = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = False
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        result = sculpt_handler.disable_dyntopo()
+
+        bpy.ops.sculpt.dynamic_topology_toggle.assert_not_called()
+        assert "was not enabled" in result
+
+
+class TestSculptDyntopoFloodFill:
+    """Tests for sculpt_dyntopo_flood_fill tool."""
+
+    def test_dyntopo_flood_fill(self, sculpt_handler, mock_mesh_object):
+        """Should apply flood fill when dyntopo is enabled."""
+        bpy.ops.object.mode_set = MagicMock()
+        bpy.ops.sculpt.detail_flood_fill = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = True
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        result = sculpt_handler.dyntopo_flood_fill()
+
+        bpy.ops.sculpt.detail_flood_fill.assert_called_once()
+        assert "Applied current detail level" in result
+
+    def test_dyntopo_flood_fill_raises_when_disabled(self, sculpt_handler, mock_mesh_object):
+        """Should raise ValueError when dyntopo is disabled."""
+        bpy.ops.object.mode_set = MagicMock()
+
+        mock_sculpt_obj = MagicMock()
+        mock_sculpt_obj.use_dynamic_topology_sculpting = False
+        bpy.context.sculpt_object = mock_sculpt_obj
+
+        with pytest.raises(ValueError, match="Dynamic Topology is not enabled"):
+            sculpt_handler.dyntopo_flood_fill()

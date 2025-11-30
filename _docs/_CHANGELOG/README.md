@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [54](./54-2025-11-30-organic-modeling-tools.md) | 2025-11-30 | **Organic Modeling Tools (TASK-038)** | 1.27.0 |
 | [53](./53-2025-11-30-import-tools.md) | 2025-11-30 | **Import Tools (TASK-035)** | 1.26.0 |
 | [52](./52-2025-11-30-knife-cut-tools.md) | 2025-11-30 | **Knife & Cut Tools (TASK-032)** | 1.25.0 |
 | [51](./51-2025-11-30-baking-tools.md) | 2025-11-30 | **Baking Tools (TASK-031)** | 1.24.0 |

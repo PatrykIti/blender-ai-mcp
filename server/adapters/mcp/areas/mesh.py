@@ -1561,3 +1561,56 @@ def mesh_edge_split(ctx: Context) -> str:
         return handler.edge_split()
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-038-5: Proportional Editing
+# ==============================================================================
+
+
+@mcp.tool()
+def mesh_set_proportional_edit(
+    ctx: Context,
+    enabled: bool = True,
+    falloff_type: Literal["SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM"] = "SMOOTH",
+    size: float = 1.0,
+    use_connected: bool = False,
+) -> str:
+    """
+    [EDIT MODE][SETTING] Configures proportional editing mode.
+
+    Proportional editing affects nearby unselected geometry when transforming.
+    Essential for organic modeling - creates smooth falloff in deformations.
+
+    Falloff types:
+    - SMOOTH: Smooth bell curve (default, best for organic shapes)
+    - SPHERE: Spherical falloff (uniform distance-based)
+    - ROOT: Square root falloff (faster initial falloff)
+    - INVERSE_SQUARE: Inverse square falloff (sharp center, soft edges)
+    - SHARP: Sharp falloff (aggressive center influence)
+    - LINEAR: Linear falloff (even gradient)
+    - CONSTANT: All affected vertices move equally
+    - RANDOM: Randomized falloff (adds variation)
+
+    Use connected=True to limit influence to connected geometry only
+    (ignores other mesh islands/separate objects).
+
+    Workflow: BEFORE → mesh_transform_selected | USE WITH → sculpt workflow prep
+
+    Args:
+        enabled: Enable or disable proportional editing (default True)
+        falloff_type: Type of falloff curve (default SMOOTH)
+        size: Radius of influence in Blender units (default 1.0)
+        use_connected: Only affect connected geometry (default False)
+
+    Examples:
+        mesh_set_proportional_edit(enabled=True) -> Enable with defaults
+        mesh_set_proportional_edit(falloff_type="SHARP", size=2.0) -> Sharp falloff, large area
+        mesh_set_proportional_edit(use_connected=True) -> Only affect connected verts
+        mesh_set_proportional_edit(enabled=False) -> Disable proportional editing
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.set_proportional_edit(enabled, falloff_type, size, use_connected)
+    except RuntimeError as e:
+        return str(e)

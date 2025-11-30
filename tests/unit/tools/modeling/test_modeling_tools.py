@@ -315,24 +315,372 @@ class TestModelingTools:
         mod1 = MagicMock()
         mod1.name = "Subdiv"
         mod1.type = "SUBSURF"
-        
+
         mod2 = MagicMock()
         mod2.name = "Mirror"
         mod2.type = "MIRROR"
-        
+
         # Setup object with modifiers list
         obj = MagicMock()
         obj.name = "Cube"
         obj.modifiers = [mod1, mod2]
-        
+
         self.objects_mock["Cube"] = obj
-        
+
         # When
         result = self.handler.get_modifiers("Cube")
-        
+
         # Then
         assert len(result) == 2
         assert result[0]["name"] == "Subdiv"
         assert result[0]["type"] == "SUBSURF"
         assert result[1]["name"] == "Mirror"
+
+
+# =============================================================================
+# TASK-038-1: Metaball Tools
+# =============================================================================
+
+class TestMetaballTools:
+    """Tests for TASK-038 metaball tools."""
+
+    def setup_method(self):
+        self.mock_bpy = sys.modules["bpy"]
+
+        # Setup operators
+        self.mock_bpy.ops.object.select_all = MagicMock()
+        self.mock_bpy.ops.object.convert = MagicMock()
+
+        # Setup data
+        self.mock_bpy.data.metaballs = MagicMock()
+        self.mock_bpy.data.objects = MockObjects()
+
+        # Setup context
+        self.mock_bpy.context.collection = MagicMock()
+        self.mock_bpy.context.collection.objects = MagicMock()
+        self.mock_bpy.context.view_layer = MagicMock()
+
+        self.handler = ModelingHandler()
+
+    def test_metaball_create_default(self):
+        """Should create metaball with default parameters."""
+        # Setup mock metaball
+        mock_mball = MagicMock()
+        mock_elem = MagicMock()
+        mock_mball.elements.new.return_value = mock_elem
+        self.mock_bpy.data.metaballs.new.return_value = mock_mball
+
+        # Setup mock object
+        mock_obj = MagicMock()
+        mock_obj.name = "Metaball"
+        self.mock_bpy.data.objects.new = MagicMock(return_value=mock_obj)
+
+        # When
+        result = self.handler.metaball_create()
+
+        # Then
+        self.mock_bpy.data.metaballs.new.assert_called_once()
+        assert mock_mball.resolution == 0.2
+        assert mock_mball.threshold == 0.6
+        assert mock_elem.type == "BALL"
+        assert "Created metaball" in result
+
+    def test_metaball_create_with_options(self):
+        """Should create metaball with custom options."""
+        # Setup mock metaball
+        mock_mball = MagicMock()
+        mock_elem = MagicMock()
+        mock_mball.elements.new.return_value = mock_elem
+        self.mock_bpy.data.metaballs.new.return_value = mock_mball
+
+        # Setup mock object
+        mock_obj = MagicMock()
+        mock_obj.name = "Heart"
+        self.mock_bpy.data.objects.new = MagicMock(return_value=mock_obj)
+
+        # When
+        result = self.handler.metaball_create(
+            name="Heart",
+            location=[1, 2, 3],
+            element_type="ELLIPSOID",
+            radius=1.5,
+            resolution=0.1,
+            threshold=0.5
+        )
+
+        # Then
+        assert mock_mball.resolution == 0.1
+        assert mock_mball.threshold == 0.5
+        assert mock_elem.type == "ELLIPSOID"
+        assert mock_elem.radius == 1.5
+        assert "Heart" in result
+
+    def test_metaball_create_invalid_type_raises(self):
+        """Should raise ValueError for invalid element type."""
+        with pytest.raises(ValueError, match="Invalid element type"):
+            self.handler.metaball_create(element_type="INVALID")
+
+    def test_metaball_add_element(self):
+        """Should add element to existing metaball."""
+        # Setup mock metaball object
+        mock_mball_data = MagicMock()
+        mock_elem = MagicMock()
+        mock_mball_data.elements.new.return_value = mock_elem
+        mock_mball_data.elements.__len__ = MagicMock(return_value=2)
+
+        mock_obj = MagicMock()
+        mock_obj.name = "Metaball"
+        mock_obj.type = "META"
+        mock_obj.data = mock_mball_data
+
+        self.mock_bpy.data.objects["Metaball"] = mock_obj
+
+        # When
+        result = self.handler.metaball_add_element(
+            metaball_name="Metaball",
+            element_type="CAPSULE",
+            location=[0.5, 0, 0],
+            radius=0.3,
+            stiffness=1.5
+        )
+
+        # Then
+        mock_mball_data.elements.new.assert_called_once()
+        assert mock_elem.type == "CAPSULE"
+        assert mock_elem.radius == 0.3
+        assert mock_elem.stiffness == 1.5
+        assert "Added CAPSULE element" in result
+
+    def test_metaball_add_element_object_not_found_raises(self):
+        """Should raise ValueError when object not found."""
+        with pytest.raises(ValueError, match="not found"):
+            self.handler.metaball_add_element(metaball_name="NonExistent")
+
+    def test_metaball_add_element_not_metaball_raises(self):
+        """Should raise ValueError when object is not a metaball."""
+        mock_obj = MagicMock()
+        mock_obj.name = "Cube"
+        mock_obj.type = "MESH"
+
+        self.mock_bpy.data.objects["Cube"] = mock_obj
+
+        with pytest.raises(ValueError, match="not a metaball"):
+            self.handler.metaball_add_element(metaball_name="Cube")
+
+    def test_metaball_to_mesh(self):
+        """Should convert metaball to mesh."""
+        # Setup mock metaball object
+        mock_obj = MagicMock()
+        mock_obj.name = "Metaball"
+        mock_obj.type = "META"
+
+        self.mock_bpy.data.objects["Metaball"] = mock_obj
+
+        # Setup mock converted object
+        mock_converted = MagicMock()
+        mock_converted.name = "Metaball"
+        mock_converted.data = MagicMock()
+        mock_converted.data.vertices = [MagicMock()] * 100
+        mock_converted.data.polygons = [MagicMock()] * 50
+
+        self.mock_bpy.context.active_object = mock_converted
+
+        # When
+        result = self.handler.metaball_to_mesh(metaball_name="Metaball")
+
+        # Then
+        self.mock_bpy.ops.object.convert.assert_called_with(target='MESH')
+        assert "Converted metaball" in result
+        assert "100 vertices" in result
+        assert "50 faces" in result
+
+    def test_metaball_to_mesh_not_found_raises(self):
+        """Should raise ValueError when object not found."""
+        with pytest.raises(ValueError, match="not found"):
+            self.handler.metaball_to_mesh(metaball_name="NonExistent")
+
+    def test_metaball_to_mesh_not_metaball_raises(self):
+        """Should raise ValueError when object is not a metaball."""
+        mock_obj = MagicMock()
+        mock_obj.name = "Cube"
+        mock_obj.type = "MESH"
+
+        self.mock_bpy.data.objects["Cube"] = mock_obj
+
+        with pytest.raises(ValueError, match="not a metaball"):
+            self.handler.metaball_to_mesh(metaball_name="Cube")
+
+
+# =============================================================================
+# TASK-038-6: Skin Modifier Workflow
+# =============================================================================
+
+class TestSkinModifierTools:
+    """Tests for TASK-038 skin modifier tools."""
+
+    def setup_method(self):
+        self.mock_bpy = sys.modules["bpy"]
+
+        # Setup operators
+        self.mock_bpy.ops.object.select_all = MagicMock()
+
+        # Setup data
+        self.mock_bpy.data.meshes = MagicMock()
+        self.mock_bpy.data.objects = MockObjects()
+
+        # Setup context
+        self.mock_bpy.context.collection = MagicMock()
+        self.mock_bpy.context.collection.objects = MagicMock()
+        self.mock_bpy.context.view_layer = MagicMock()
+
+        self.handler = ModelingHandler()
+
+    def test_skin_create_skeleton_default(self):
+        """Should create skeleton with default parameters."""
+        # Setup mock mesh
+        mock_mesh = MagicMock()
+        self.mock_bpy.data.meshes.new.return_value = mock_mesh
+
+        # Setup mock object
+        mock_obj = MagicMock()
+        mock_obj.name = "Skeleton"
+        mock_obj.modifiers = MagicMock()
+        mock_mod = MagicMock()
+        mock_obj.modifiers.new.return_value = mock_mod
+        self.mock_bpy.data.objects.new = MagicMock(return_value=mock_obj)
+
+        # When
+        result = self.handler.skin_create_skeleton()
+
+        # Then
+        self.mock_bpy.data.meshes.new.assert_called_once()
+        mock_mesh.from_pydata.assert_called_once()
+        assert "Created skeleton" in result
+        assert "Skin modifier added" in result
+
+    def test_skin_create_skeleton_custom_vertices(self):
+        """Should create skeleton with custom vertices and edges."""
+        # Setup mock mesh
+        mock_mesh = MagicMock()
+        self.mock_bpy.data.meshes.new.return_value = mock_mesh
+
+        # Setup mock object
+        mock_obj = MagicMock()
+        mock_obj.name = "Branch"
+        mock_obj.modifiers = MagicMock()
+        mock_mod = MagicMock()
+        mock_obj.modifiers.new.return_value = mock_mod
+        self.mock_bpy.data.objects.new = MagicMock(return_value=mock_obj)
+
+        vertices = [[0, 0, 0], [0, 0, 1], [0.5, 0, 1.5], [-0.5, 0, 1.5]]
+        edges = [[0, 1], [1, 2], [1, 3]]
+
+        # When
+        result = self.handler.skin_create_skeleton(
+            name="Branch",
+            vertices=vertices,
+            edges=edges
+        )
+
+        # Then
+        mock_mesh.from_pydata.assert_called_once_with(vertices, edges, [])
+        assert "4 vertices" in result
+        assert "3 edges" in result
+
+    def test_skin_set_radius_specific_vertex(self):
+        """Should set skin radius for specific vertex."""
+        # Setup mock object with skin data
+        mock_skin_vert = MagicMock()
+        mock_skin_layer = MagicMock()
+        mock_skin_layer.data = [mock_skin_vert, MagicMock(), MagicMock()]
+
+        mock_mesh = MagicMock()
+        mock_mesh.skin_vertices = [mock_skin_layer]
+
+        mock_obj = MagicMock()
+        mock_obj.name = "Artery"
+        mock_obj.type = "MESH"
+        mock_obj.data = mock_mesh
+        mock_obj.modifiers = [MagicMock(type='SKIN')]
+
+        self.mock_bpy.data.objects["Artery"] = mock_obj
+
+        # When
+        result = self.handler.skin_set_radius(
+            object_name="Artery",
+            vertex_index=0,
+            radius_x=0.15,
+            radius_y=0.15
+        )
+
+        # Then
+        assert mock_skin_vert.radius == (0.15, 0.15)
+        assert "vertex 0" in result
+
+    def test_skin_set_radius_all_vertices(self):
+        """Should set skin radius for all vertices."""
+        # Setup mock object with skin data
+        mock_skin_verts = [MagicMock() for _ in range(3)]
+        mock_skin_layer = MagicMock()
+        mock_skin_layer.data = mock_skin_verts
+
+        mock_mesh = MagicMock()
+        mock_mesh.skin_vertices = [mock_skin_layer]
+
+        mock_obj = MagicMock()
+        mock_obj.name = "Artery"
+        mock_obj.type = "MESH"
+        mock_obj.data = mock_mesh
+        mock_obj.modifiers = [MagicMock(type='SKIN')]
+
+        self.mock_bpy.data.objects["Artery"] = mock_obj
+
+        # When
+        result = self.handler.skin_set_radius(
+            object_name="Artery",
+            radius_x=0.05,
+            radius_y=0.05
+        )
+
+        # Then
+        for sv in mock_skin_verts:
+            assert sv.radius == (0.05, 0.05)
+        assert "all 3 vertices" in result
+
+    def test_skin_set_radius_object_not_found_raises(self):
+        """Should raise ValueError when object not found."""
+        with pytest.raises(ValueError, match="not found"):
+            self.handler.skin_set_radius(object_name="NonExistent")
+
+    def test_skin_set_radius_no_skin_modifier_raises(self):
+        """Should raise ValueError when no skin modifier present."""
+        mock_obj = MagicMock()
+        mock_obj.name = "Cube"
+        mock_obj.type = "MESH"
+        mock_obj.modifiers = []
+
+        self.mock_bpy.data.objects["Cube"] = mock_obj
+
+        with pytest.raises(ValueError, match="no Skin modifier"):
+            self.handler.skin_set_radius(object_name="Cube")
+
+    def test_skin_set_radius_invalid_vertex_index_raises(self):
+        """Should raise ValueError for invalid vertex index."""
+        # Setup mock object with skin data
+        mock_skin_layer = MagicMock()
+        mock_skin_layer.data = [MagicMock(), MagicMock()]  # Only 2 vertices
+
+        mock_mesh = MagicMock()
+        mock_mesh.skin_vertices = [mock_skin_layer]
+
+        mock_obj = MagicMock()
+        mock_obj.name = "Artery"
+        mock_obj.type = "MESH"
+        mock_obj.data = mock_mesh
+        mock_obj.modifiers = [MagicMock(type='SKIN')]
+
+        self.mock_bpy.data.objects["Artery"] = mock_obj
+
+        with pytest.raises(ValueError, match="out of range"):
+            self.handler.skin_set_radius(object_name="Artery", vertex_index=10)
 
