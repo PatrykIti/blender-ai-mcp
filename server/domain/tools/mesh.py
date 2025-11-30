@@ -239,3 +239,21 @@ class IMeshTool(ABC):
     def add_edge_face(self) -> str:
         """Creates an edge or face from selected vertices."""
         pass
+
+    # TASK-029-1: Mesh Edge Crease Tool
+    @abstractmethod
+    def edge_crease(self, crease_value: float = 1.0) -> str:
+        """Sets crease weight on selected edges for subdivision surface control."""
+        pass
+
+    # TASK-029-2: Mesh Bevel Weight Tool
+    @abstractmethod
+    def bevel_weight(self, weight: float = 1.0) -> str:
+        """Sets bevel weight on selected edges for bevel modifier control."""
+        pass
+
+    # TASK-029-3: Mesh Mark Sharp Tool
+    @abstractmethod
+    def mark_sharp(self, action: str = "mark") -> str:
+        """Marks or clears sharp edges for auto-smooth and edge split."""
+        pass

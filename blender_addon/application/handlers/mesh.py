@@ -1357,3 +1357,117 @@ class MeshHandler:
             return f"Created edge from {selected_verts} vertices"
         else:
             return f"Created face from {selected_verts} vertices"
+
+    # ==========================================================================
+    # TASK-029: Edge Weights & Creases (Subdivision Control)
+    # ==========================================================================
+
+    def edge_crease(self, crease_value=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets crease weight on selected edges.
+        Crease controls how Subdivision Surface modifier affects edges.
+        Uses BMesh API for direct edge crease manipulation.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Count selected edges
+        selected_edges = [e for e in bm.edges if e.select]
+
+        if not selected_edges:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to set crease weight.")
+
+        # Clamp crease value to valid range
+        crease_value = max(0.0, min(1.0, crease_value))
+
+        # Get or create crease layer
+        crease_layer = bm.edges.layers.crease.verify()
+
+        # Set crease on selected edges
+        for edge in selected_edges:
+            edge[crease_layer] = crease_value
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Set crease weight {crease_value} on {len(selected_edges)} edge(s)"
+
+    def bevel_weight(self, weight=1.0):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets bevel weight on selected edges.
+        When Bevel modifier uses 'Weight' limit method, only edges with weight > 0 are beveled.
+        Uses BMesh API for direct bevel weight manipulation.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Count selected edges
+        selected_edges = [e for e in bm.edges if e.select]
+
+        if not selected_edges:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to set bevel weight.")
+
+        # Clamp weight to valid range
+        weight = max(0.0, min(1.0, weight))
+
+        # Get or create bevel weight layer
+        bevel_layer = bm.edges.layers.bevel_weight.verify()
+
+        # Set bevel weight on selected edges
+        for edge in selected_edges:
+            edge[bevel_layer] = weight
+
+        # Update mesh
+        bmesh.update_edit_mesh(obj.data)
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Set bevel weight {weight} on {len(selected_edges)} edge(s)"
+
+    def mark_sharp(self, action="mark"):
+        """
+        [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks or clears sharp edges.
+        Sharp edges affect Auto Smooth, Edge Split modifier, and normal calculations.
+        Uses bpy.ops.mesh.mark_sharp.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        # Count selected edges
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No edges selected. Select edges to mark/clear sharp.")
+
+        # Validate action
+        action = action.lower()
+        if action not in ["mark", "clear"]:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid action '{action}'. Must be 'mark' or 'clear'.")
+
+        # Execute mark_sharp
+        if action == "mark":
+            bpy.ops.mesh.mark_sharp()
+            action_desc = "Marked"
+        else:
+            bpy.ops.mesh.mark_sharp(clear=True)
+            action_desc = "Cleared sharp from"
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"{action_desc} {selected_edges} edge(s) as sharp"

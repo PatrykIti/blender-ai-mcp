@@ -4,6 +4,8 @@
 **Category:** Mesh Tools
 **Estimated Effort:** Medium
 **Dependencies:** TASK-011 (Edit Mode Foundation)
+**Status:** ✅ Done
+**Completion Date:** 2025-11-30
 
 ---
 
@@ -22,7 +24,7 @@ Edge weights and creases are **critical for game dev** - they control how subdiv
 
 ### TASK-029-1: mesh_edge_crease
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Controls subdivision surface sharpness on selected edges.
 
@@ -57,7 +59,7 @@ for edge in bm.edges:
 
 ### TASK-029-2: mesh_bevel_weight
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Controls which edges are affected by Bevel modifier.
 
@@ -91,7 +93,7 @@ for edge in bm.edges:
 
 ### TASK-029-3: mesh_mark_sharp
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Marks edges as sharp for flat shading / auto-smooth.
 
@@ -135,7 +137,7 @@ else:
 
 ## Testing Requirements
 
-- [ ] Unit tests for each tool
-- [ ] E2E test: Create cube → select edges → set crease → add Subsurf → verify sharp corners
-- [ ] E2E test: Bevel weight + Bevel modifier workflow
-- [ ] E2E test: Mark sharp + Auto Smooth workflow
+- [x] Unit tests for each tool (15 tests passing)
+- [x] E2E test: Create cube → select edges → set crease → add Subsurf → verify sharp corners
+- [x] E2E test: Bevel weight + Bevel modifier workflow
+- [x] E2E test: Mark sharp + Auto Smooth workflow

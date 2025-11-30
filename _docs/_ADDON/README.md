@@ -179,6 +179,9 @@ Technical details.
 | `screw` | `screw` | Creates spiral/screw geometry. |
 | `add_vertex` | `add_vertex` | Adds single vertex at position. |
 | `add_edge_face` | `add_edge_face` | Creates edge or face from selected vertices. |
+| `edge_crease` | `edge_crease` | Sets crease weight on selected edges. |
+| `bevel_weight` | `bevel_weight` | Sets bevel weight on selected edges. |
+| `mark_sharp` | `mark_sharp` | Marks or clears sharp edges. |
 
 
 ### Curve (`application/handlers/curve.py`)

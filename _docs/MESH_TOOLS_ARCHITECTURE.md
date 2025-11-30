@@ -991,6 +991,98 @@ Use Case:
 
 ---
 
+# 40. mesh_edge_crease ✅ Done
+
+Sets crease weight on selected edges for Subdivision Surface modifier control.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- crease_value: float (0.0 to 1.0)
+  - 0.0 = fully smoothed (no crease effect)
+  - 1.0 = fully sharp (edge remains sharp after subdivision)
+
+Example:
+```json
+{
+  "tool": "mesh_edge_crease",
+  "args": {
+    "crease_value": 1.0
+  }
+}
+```
+
+Use Case:
+- Hard-surface modeling (weapons, vehicles, devices)
+- Maintaining sharp edges while having smooth surfaces elsewhere
+- Architectural details (window frames, door edges)
+
+Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="SUBSURF")
+
+---
+
+# 41. mesh_bevel_weight ✅ Done
+
+Sets bevel weight on selected edges for selective beveling with Bevel modifier.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- weight: float (0.0 to 1.0)
+  - 0.0 = no bevel effect
+  - 1.0 = full bevel effect
+
+Example:
+```json
+{
+  "tool": "mesh_bevel_weight",
+  "args": {
+    "weight": 1.0
+  }
+}
+```
+
+Use Case:
+- Product design (selective edge beveling)
+- Hard-surface modeling with controlled bevel application
+- Architectural details
+
+Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="BEVEL", limit_method="WEIGHT")
+
+---
+
+# 42. mesh_mark_sharp ✅ Done
+
+Marks or clears sharp edges for Auto Smooth and Edge Split modifier.
+
+**Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
+
+Args:
+- action: str ("mark" or "clear")
+
+Example:
+```json
+{
+  "tool": "mesh_mark_sharp",
+  "args": {
+    "action": "mark"
+  }
+}
+```
+
+Use Case:
+- Visual edge definition
+- Smooth shading control
+- Normal maps preparation
+- Edge Split modifier workflow
+
+Sharp edges affect:
+- Auto Smooth: Splits normals at sharp edges for flat shading
+- Edge Split modifier: Creates hard edges without geometry duplication
+- Normal display and shading calculations
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

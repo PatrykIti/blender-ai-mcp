@@ -3,18 +3,17 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 10 tasks (~41 sub-tasks)
+- **To Do:** 9 tasks (~38 sub-tasks)
 - **In Progress:** 1
-- **Done:** 79
+- **Done:** 82
 
 ---
 
 ## 🚨 To Do
 
-### Game Dev Critical (Baking & Subdivision Control)
+### Game Dev Critical (Baking & Mesh Cleanup)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-029](./TASK-029_Edge_Weights_Creases.md) | **Edge Weights & Creases** | 🔴 High | mesh_edge_crease, mesh_bevel_weight, mesh_mark_sharp |
 | [TASK-030](./TASK-030_Mesh_Cleanup_Optimization.md) | **Mesh Cleanup & Optimization** | 🔴 High | mesh_dissolve, mesh_tris_to_quads, mesh_normals_make_consistent |
 | [TASK-031](./TASK-031_Baking_Tools.md) | **Baking Tools** | 🔴 Critical | bake_normal_map, bake_ao, bake_combined |
 
@@ -56,6 +55,9 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-029-3](./TASK-029_Edge_Weights_Creases.md#task-029-3-mesh_mark_sharp) | **mesh_mark_sharp** | 🔴 High | 2025-11-30 |
+| [TASK-029-2](./TASK-029_Edge_Weights_Creases.md#task-029-2-mesh_bevel_weight) | **mesh_bevel_weight** | 🔴 High | 2025-11-30 |
+| [TASK-029-1](./TASK-029_Edge_Weights_Creases.md#task-029-1-mesh_edge_crease) | **mesh_edge_crease** | 🔴 High | 2025-11-30 |
 | [TASK-025-4](./TASK-025_System_Tools.md#task-025-4-system_snapshot) | **system_snapshot** | 🟢 Low | 2025-11-29 |
 | [TASK-025-3](./TASK-025_System_Tools.md#task-025-3-system_save_file--system_new_file) | **system_save_file / system_new_file** | 🟡 Medium | 2025-11-29 |
 | [TASK-025-2](./TASK-025_System_Tools.md#task-025-2-system_undo--system_redo) | **system_undo / system_redo** | 🟡 Medium | 2025-11-29 |

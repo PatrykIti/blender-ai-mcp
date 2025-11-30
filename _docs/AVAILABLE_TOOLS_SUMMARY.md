@@ -144,6 +144,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_screw` | `steps`, `turns`, `axis`, `center`, `offset` | Creates spiral/screw geometry from selected profile. | ✅ Done |
 | `mesh_add_vertex` | `position` | Adds a single vertex at the specified position. | ✅ Done |
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices. | ✅ Done |
+| `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. | ✅ Done |
+| `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. | ✅ Done |
+| `mesh_mark_sharp` | `action` (mark/clear) | Marks or clears sharp edges for Auto Smooth and Edge Split. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`

@@ -176,6 +176,11 @@ def register():
         rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
         rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)
 
+        # TASK-029: Edge Weights & Creases (Subdivision Control)
+        rpc_server.register_handler("mesh.edge_crease", mesh_handler.edge_crease)
+        rpc_server.register_handler("mesh.bevel_weight", mesh_handler.bevel_weight)
+        rpc_server.register_handler("mesh.mark_sharp", mesh_handler.mark_sharp)
+
         rpc_server.start()
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")

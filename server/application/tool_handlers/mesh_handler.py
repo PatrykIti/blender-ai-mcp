@@ -342,3 +342,27 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-029-1: Mesh Edge Crease Tool
+    def edge_crease(self, crease_value: float = 1.0) -> str:
+        args = {"crease_value": crease_value}
+        response = self.rpc.send_request("mesh.edge_crease", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-029-2: Mesh Bevel Weight Tool
+    def bevel_weight(self, weight: float = 1.0) -> str:
+        args = {"weight": weight}
+        response = self.rpc.send_request("mesh.bevel_weight", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-029-3: Mesh Mark Sharp Tool
+    def mark_sharp(self, action: str = "mark") -> str:
+        args = {"action": action}
+        response = self.rpc.send_request("mesh.mark_sharp", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

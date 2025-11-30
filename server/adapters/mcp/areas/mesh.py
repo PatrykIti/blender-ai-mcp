@@ -1201,3 +1201,100 @@ def mesh_add_edge_face(ctx: Context) -> str:
         return handler.add_edge_face()
     except RuntimeError as e:
         return str(e)
+
+
+# ==============================================================================
+# TASK-029: Edge Weights & Creases (Subdivision Control)
+# ==============================================================================
+
+@mcp.tool()
+def mesh_edge_crease(
+    ctx: Context,
+    crease_value: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets crease weight on selected edges.
+
+    Crease controls how Subdivision Surface modifier affects edges:
+    - 0.0 = fully smoothed (no crease effect)
+    - 1.0 = fully sharp (edge remains sharp after subdivision)
+
+    CRITICAL for hard-surface modeling: weapons, vehicles, devices, architectural details.
+    Use to maintain sharp edges while still having smooth surfaces elsewhere.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="SUBSURF")
+
+    Args:
+        crease_value: Crease weight (0.0 to 1.0). 0.0 = smooth, 1.0 = fully sharp.
+
+    Examples:
+        mesh_edge_crease(crease_value=1.0) -> Make selected edges fully sharp
+        mesh_edge_crease(crease_value=0.5) -> Partially sharp edges (softer bevel effect)
+        mesh_edge_crease(crease_value=0.0) -> Remove crease (fully smoothed)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.edge_crease(crease_value)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_bevel_weight(
+    ctx: Context,
+    weight: float = 1.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Sets bevel weight on selected edges.
+
+    When Bevel modifier uses "Weight" limit method, only edges with weight > 0 are beveled.
+    This allows selective beveling without selecting edges manually each time.
+
+    Perfect for: product design, hard-surface modeling, architectural details.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_add_modifier(type="BEVEL", limit_method="WEIGHT")
+
+    Args:
+        weight: Bevel weight (0.0 to 1.0). 0.0 = no bevel, 1.0 = full bevel effect.
+
+    Examples:
+        mesh_bevel_weight(weight=1.0) -> Full bevel effect on selected edges
+        mesh_bevel_weight(weight=0.5) -> Half bevel effect (smaller bevel)
+        mesh_bevel_weight(weight=0.0) -> Remove bevel weight (no beveling)
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.bevel_weight(weight)
+    except RuntimeError as e:
+        return str(e)
+
+
+@mcp.tool()
+def mesh_mark_sharp(
+    ctx: Context,
+    action: Literal["mark", "clear"] = "mark"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks or clears sharp edges.
+
+    Sharp edges affect:
+    - Auto Smooth: Splits normals at sharp edges for flat shading
+    - Edge Split modifier: Creates hard edges without geometry duplication
+    - Normal display and shading calculations
+
+    Use for: visual edge definition, smooth shading control, normal maps.
+
+    Workflow: BEFORE → mesh_select_targeted(action="loop")
+
+    Args:
+        action: "mark" to mark edges as sharp, "clear" to remove sharp marking.
+
+    Examples:
+        mesh_mark_sharp(action="mark") -> Mark selected edges as sharp
+        mesh_mark_sharp(action="clear") -> Clear sharp marking from selected edges
+    """
+    handler = get_mesh_handler()
+    try:
+        return handler.mark_sharp(action)
+    except RuntimeError as e:
+        return str(e)

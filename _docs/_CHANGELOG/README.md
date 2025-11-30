@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [49](./49-2025-11-30-edge-weights-creases.md) | 2025-11-30 | **Edge Weights & Creases (TASK-029)** | 1.22.0 |
 | [48](./48-2025-11-29-sculpt-tools.md) | 2025-11-29 | **Sculpt Tools (TASK-027)** | 1.21.0 |
 | [47](./47-2025-11-29-system-tools.md) | 2025-11-29 | **System Tools (TASK-025)** | 1.20.0 |
 | [46](./46-2025-11-29-export-tools.md) | 2025-11-29 | **Export Tools (TASK-026)** | 1.19.0 |

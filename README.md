@@ -180,9 +180,9 @@ Edit Mode operations for geometry manipulation.
 #### Edge Weights & Creases
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_edge_crease` | Set crease weight for subdivision | 🚧 |
-| `mesh_bevel_weight` | Set bevel weight for bevel modifier | 🚧 |
-| `mesh_mark_sharp` | Mark/clear sharp edges | 🚧 |
+| `mesh_edge_crease` | Set crease weight for subdivision | ✅ |
+| `mesh_bevel_weight` | Set bevel weight for bevel modifier | ✅ |
+| `mesh_mark_sharp` | Mark/clear sharp edges | ✅ |
 
 #### Cleanup & Optimization
 | Tool | Description | Status |
@@ -535,6 +535,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_screw",
         "mesh_add_vertex",
         "mesh_add_edge_face",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
@@ -638,6 +641,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_screw",
         "mesh_add_vertex",
         "mesh_add_edge_face",
+        "mesh_edge_crease",
+        "mesh_bevel_weight",
+        "mesh_mark_sharp",
         "curve_create",
         "curve_to_mesh",
         "export_glb",
