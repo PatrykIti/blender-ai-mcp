@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v1.14.0 (2025-11-30)
+
+### Documentation
+
+- Roadmap expansion - 10 new TASKs + LaBSE Router + 47 planned tools
+  ([#20](https://github.com/PatrykIti/blender-ai-mcp/pull/20),
+  [`240f882`](https://github.com/PatrykIti/blender-ai-mcp/commit/240f8820f04d149660687f438160ab6b566ac9a6))
+
+### Features
+
+- New Tools Suite - TASK-029 to TASK-039
+  ([#21](https://github.com/PatrykIti/blender-ai-mcp/pull/21),
+  [`1343046`](https://github.com/PatrykIti/blender-ai-mcp/commit/1343046d3fb67226b3b8a61a97db3a0a7fa4d5ce))
+
+
 ## v1.13.1 (2025-11-29)
 
 ### Bug Fixes
