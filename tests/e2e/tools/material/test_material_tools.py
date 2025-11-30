@@ -3,12 +3,26 @@ Tests for Material Tools (TASK-014-8, 014-9, TASK-023)
 """
 import pytest
 from server.application.tool_handlers.material_handler import MaterialToolHandler
+from server.application.tool_handlers.modeling_handler import ModelingToolHandler
+from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 
 @pytest.fixture
 def material_handler(rpc_client):
     """Provides a material handler instance using shared RPC client."""
     return MaterialToolHandler(rpc_client)
+
+
+@pytest.fixture
+def modeling_handler(rpc_client):
+    """Provides a modeling handler instance using shared RPC client."""
+    return ModelingToolHandler(rpc_client)
+
+
+@pytest.fixture
+def scene_handler(rpc_client):
+    """Provides a scene handler instance using shared RPC client."""
+    return SceneToolHandler(rpc_client)
 
 
 def test_material_list(material_handler):
@@ -44,25 +58,28 @@ def test_material_list_exclude_unassigned(material_handler):
         pytest.skip(f"Blender not available: {e}")
 
 
-def test_material_list_by_object(material_handler):
+def test_material_list_by_object(material_handler, modeling_handler, scene_handler):
     """Test listing material slots by object."""
+    obj_name = "E2E_MatListTest"
     try:
-        # Use a known object name - try common defaults
-        test_objects = ["Cube", "Sphere", "Plane"]
+        # Clean up if exists
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
 
-        result = None
-        for obj_name in test_objects:
-            try:
-                result = material_handler.list_by_object(
-                    object_name=obj_name,
-                    include_indices=False
-                )
-                break
-            except RuntimeError:
-                continue
+        # Create test object
+        modeling_handler.create_primitive(
+            primitive_type="CUBE",
+            name=obj_name,
+            location=[0, 0, 0]
+        )
 
-        if result is None:
-            pytest.skip("No test objects available")
+        # List material slots
+        result = material_handler.list_by_object(
+            object_name=obj_name,
+            include_indices=False
+        )
 
         assert isinstance(result, dict)
         assert "object_name" in result
@@ -71,8 +88,18 @@ def test_material_list_by_object(material_handler):
         assert isinstance(result["slots"], list)
 
         print(f"✓ material_list_by_object: '{result['object_name']}' has {result['slot_count']} slots")
+
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "is blender running" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
+    finally:
+        # Cleanup
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
 
 
 def test_material_list_by_object_invalid(material_handler):
@@ -160,38 +187,47 @@ def test_material_create_transparent(material_handler):
 
 
 # TASK-023-2: material_assign
-def test_material_assign_to_object(material_handler):
+def test_material_assign_to_object(material_handler, modeling_handler, scene_handler):
     """Test assigning material to an object."""
+    obj_name = "E2E_MatAssignTest"
+    mat_name = "E2E_AssignMaterial"
     try:
-        # First, create a test material
-        material_handler.create_material(name="E2E_AssignMaterial")
+        # Clean up if exists
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
 
-        # Try to assign to common objects
-        test_objects = ["Cube", "Sphere", "Plane"]
-        result = None
+        # Create test object
+        modeling_handler.create_primitive(
+            primitive_type="CUBE",
+            name=obj_name,
+            location=[0, 0, 0]
+        )
 
-        for obj_name in test_objects:
-            try:
-                result = material_handler.assign_material(
-                    material_name="E2E_AssignMaterial",
-                    object_name=obj_name
-                )
-                break
-            except RuntimeError as e:
-                if "not found" in str(e).lower():
-                    continue
-                raise
+        # Create a test material
+        material_handler.create_material(name=mat_name)
 
-        if result is None:
-            pytest.skip("No test objects available")
+        # Assign material to object
+        result = material_handler.assign_material(
+            material_name=mat_name,
+            object_name=obj_name
+        )
 
         assert "Assigned" in result
         print(f"✓ material_assign: {result}")
+
     except RuntimeError as e:
         error_msg = str(e).lower()
         if "could not connect" in error_msg or "is blender running" in error_msg:
             pytest.skip(f"Blender not available: {e}")
         raise
+    finally:
+        # Cleanup
+        try:
+            scene_handler.delete_object(obj_name)
+        except RuntimeError:
+            pass
 
 
 def test_material_assign_invalid_material(material_handler):

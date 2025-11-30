@@ -1386,8 +1386,17 @@ class MeshHandler:
         # Clamp crease value to valid range
         crease_value = max(0.0, min(1.0, crease_value))
 
-        # Get or create crease layer
-        crease_layer = bm.edges.layers.crease.verify()
+        # Get or create crease layer - Blender 4.0+ uses float layers
+        # Try new API first (Blender 4.0+), fall back to old API
+        crease_layer = None
+        if hasattr(bm.edges.layers, 'crease'):
+            # Blender 3.x
+            crease_layer = bm.edges.layers.crease.verify()
+        else:
+            # Blender 4.0+ uses float layer named 'crease_edge'
+            crease_layer = bm.edges.layers.float.get('crease_edge')
+            if crease_layer is None:
+                crease_layer = bm.edges.layers.float.new('crease_edge')
 
         # Set crease on selected edges
         for edge in selected_edges:
@@ -1422,8 +1431,17 @@ class MeshHandler:
         # Clamp weight to valid range
         weight = max(0.0, min(1.0, weight))
 
-        # Get or create bevel weight layer
-        bevel_layer = bm.edges.layers.bevel_weight.verify()
+        # Get or create bevel weight layer - Blender 4.0+ uses float layers
+        # Try new API first (Blender 4.0+), fall back to old API
+        bevel_layer = None
+        if hasattr(bm.edges.layers, 'bevel_weight'):
+            # Blender 3.x
+            bevel_layer = bm.edges.layers.bevel_weight.verify()
+        else:
+            # Blender 4.0+ uses float layer named 'bevel_weight_edge'
+            bevel_layer = bm.edges.layers.float.get('bevel_weight_edge')
+            if bevel_layer is None:
+                bevel_layer = bm.edges.layers.float.new('bevel_weight_edge')
 
         # Set bevel weight on selected edges
         for edge in selected_edges:

@@ -56,21 +56,29 @@ def create_test_cube(modeling_handler, scene_handler, name="E2E_CleanupCube"):
     return name
 
 
-def create_test_icosphere(modeling_handler, scene_handler, name="E2E_CleanupSphere", subdivisions=3):
-    """Creates a test icosphere (triangulated mesh) for cleanup operations."""
+def create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, name="E2E_CleanupSphere"):
+    """Creates a test sphere and triangulates it for cleanup operations."""
     try:
         # Clean up existing
         scene_handler.delete_object(name)
     except RuntimeError:
         pass  # Object didn't exist
 
-    # Create icosphere (produces triangles)
-    result = modeling_handler.create_primitive(
-        primitive_type="ICO_SPHERE",
-        subdivisions=subdivisions,
+    # Create UV sphere (produces quads/tris)
+    modeling_handler.create_primitive(
+        primitive_type="SPHERE",
+        radius=1.0,
         location=[0, 0, 0],
         name=name
     )
+
+    # Set active and triangulate to ensure we have triangles
+    scene_handler.set_active_object(name)
+    scene_handler.set_mode("EDIT")
+    mesh_handler.select_all(deselect=False)
+    mesh_handler.triangulate()
+    scene_handler.set_mode("OBJECT")
+
     return name
 
 
@@ -204,8 +212,8 @@ def test_dissolve_invalid_type_raises(mesh_handler, modeling_handler, scene_hand
 def test_tris_to_quads_default(mesh_handler, modeling_handler, scene_handler):
     """Test tris to quads conversion with default thresholds."""
     try:
-        # Setup: Create icosphere (triangulated)
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_TrisToQuads1")
+        # Setup: Create triangulated mesh
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_TrisToQuads1")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test tris to quads
@@ -227,8 +235,8 @@ def test_tris_to_quads_default(mesh_handler, modeling_handler, scene_handler):
 def test_tris_to_quads_custom_thresholds(mesh_handler, modeling_handler, scene_handler):
     """Test tris to quads conversion with custom thresholds."""
     try:
-        # Setup: Create icosphere
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_TrisToQuads2")
+        # Setup: Create triangulated mesh
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_TrisToQuads2")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test with custom thresholds
@@ -322,10 +330,10 @@ def test_normals_make_consistent_inward(mesh_handler, modeling_handler, scene_ha
 
 
 def test_normals_on_complex_mesh(mesh_handler, modeling_handler, scene_handler):
-    """Test normals on more complex mesh (icosphere)."""
+    """Test normals on more complex mesh (triangulated sphere)."""
     try:
         # Setup
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_Normals3")
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_Normals3")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test
@@ -351,8 +359,8 @@ def test_normals_on_complex_mesh(mesh_handler, modeling_handler, scene_handler):
 def test_decimate_default(mesh_handler, modeling_handler, scene_handler):
     """Test decimate with default ratio (50%)."""
     try:
-        # Setup: Create icosphere with more geometry
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_Decimate1", subdivisions=3)
+        # Setup: Create triangulated mesh with more geometry
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_Decimate1")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test
@@ -375,7 +383,7 @@ def test_decimate_custom_ratio(mesh_handler, modeling_handler, scene_handler):
     """Test decimate with custom ratio (25%)."""
     try:
         # Setup
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_Decimate2", subdivisions=3)
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_Decimate2")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test
@@ -398,7 +406,7 @@ def test_decimate_with_symmetry(mesh_handler, modeling_handler, scene_handler):
     """Test decimate with symmetry enabled."""
     try:
         # Setup
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_Decimate3", subdivisions=3)
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_Decimate3")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test
@@ -452,8 +460,8 @@ def test_workflow_cleanup_imported_mesh(mesh_handler, modeling_handler, scene_ha
     Create triangulated mesh → tris to quads → normals → dissolve.
     """
     try:
-        # Setup: Create icosphere (simulating imported triangulated mesh)
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_CleanupWorkflow")
+        # Setup: Create triangulated mesh (simulating imported triangulated mesh)
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_CleanupWorkflow")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Step 1: Convert triangles to quads where possible
@@ -487,8 +495,8 @@ def test_workflow_optimize_high_poly(mesh_handler, modeling_handler, scene_handl
     Create detailed mesh → decimate → clean up → normals.
     """
     try:
-        # Setup: Create high-poly icosphere
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_OptimizeWorkflow", subdivisions=4)
+        # Setup: Create triangulated mesh (high-poly)
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_OptimizeWorkflow")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Step 1: Decimate to reduce polycount
@@ -518,7 +526,7 @@ def test_workflow_retopology_preparation(mesh_handler, modeling_handler, scene_h
     """
     try:
         # Setup
-        obj_name = create_test_icosphere(modeling_handler, scene_handler, "E2E_RetopoWorkflow", subdivisions=3)
+        obj_name = create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, "E2E_RetopoWorkflow")
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Step 1: Convert triangles to quads
