@@ -800,6 +800,54 @@ Communication happens via **JSON-RPC over TCP sockets**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
 
+## 🧪 Testing
+
+**Unit Tests** (662+ tests, ~3-4s, no Blender required):
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/ -v
+```
+
+**E2E Tests** (142 tests, ~12s, requires Blender):
+```bash
+# Automated: build → install addon → start Blender → run tests → cleanup
+python3 scripts/run_e2e_tests.py
+```
+
+| Type | Count | Coverage |
+|------|-------|----------|
+| Unit Tests | 662+ | All tool handlers |
+| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
+
+See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
+
+<details>
+<summary>📋 Latest E2E Test Results (click to expand)</summary>
+
+```
+============================= test session starts ==============================
+platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
+collected 142 items
+
+tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
+tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
+tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+
+============================= 142 passed in 12.25s =============================
+```
+
+</details>
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our Clean Architecture standards before submitting a Pull Request.
