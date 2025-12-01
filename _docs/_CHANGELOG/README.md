@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [77](./77-2025-12-01-router-e2e-tests.md) | 2025-12-01 | **Router E2E Test Suite (TASK-039-23)** | - |
 | [76](./76-2025-12-01-router-workflow-system.md) | 2025-12-01 | **Router Workflow System (TASK-039-20,22)** | - |
 | [75](./75-2025-12-01-router-screen-cutout-workflow.md) | 2025-12-01 | **Router Screen Cutout Workflow (TASK-039-21)** | - |
 | [74](./74-2025-12-01-router-tower-workflow.md) | 2025-12-01 | **Router Tower Workflow (TASK-039-20)** | - |
