@@ -3,26 +3,13 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["snapshot", "state", "capture", "checkpoint"],
-  "sample_prompts": [
-    "capture scene state",
-    "take a snapshot",
-    "save current state",
-    "checkpoint the scene"
-  ],
+  "keywords": ["snapshot", "state", "capture", "save", "checkpoint"],
+  "sample_prompts": ["capture scene state", "take a snapshot", "save scene state", "create checkpoint"],
   "parameters": {
-    "include_mesh_stats": {
-      "type": "bool",
-      "default": false,
-      "description": "Include vertex/edge/face counts"
-    },
-    "include_materials": {
-      "type": "bool",
-      "default": false,
-      "description": "Include material names"
-    }
+    "include_mesh_stats": {"type": "bool", "default": false},
+    "include_materials": {"type": "bool", "default": false}
   },
   "related_tools": ["scene_compare_snapshot"],
   "patterns": [],
-  "description": "Captures a lightweight JSON snapshot of the scene state."
+  "description": "Captures a lightweight JSON snapshot of scene state."
 }

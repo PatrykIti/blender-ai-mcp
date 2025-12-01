@@ -4,22 +4,11 @@
   "mode_required": "ANY",
   "selection_required": false,
   "keywords": ["context", "mode", "selection", "state", "status"],
-  "sample_prompts": [
-    "what mode am I in",
-    "get current context",
-    "show selection",
-    "what is selected",
-    "check blender mode"
-  ],
+  "sample_prompts": ["what mode am I in", "show current context", "what is selected", "get scene state"],
   "parameters": {
-    "action": {
-      "type": "enum",
-      "options": ["mode", "selection"],
-      "required": true,
-      "description": "Context query type"
-    }
+    "action": {"type": "enum", "options": ["mode", "selection"], "required": true}
   },
-  "related_tools": ["scene_set_mode", "scene_inspect"],
+  "related_tools": ["scene_list_objects", "scene_inspect"],
   "patterns": [],
-  "description": "Quick context queries for scene state (mode or selection)."
+  "description": "Quick context queries for mode and selection state."
 }

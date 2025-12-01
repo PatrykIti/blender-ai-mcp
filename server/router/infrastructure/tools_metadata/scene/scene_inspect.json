@@ -3,38 +3,14 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["inspect", "object", "topology", "modifiers", "materials", "analyze"],
-  "sample_prompts": [
-    "inspect the object",
-    "show object details",
-    "check topology",
-    "list object modifiers",
-    "analyze mesh"
-  ],
+  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object"],
+  "sample_prompts": ["inspect the cube", "analyze mesh topology", "show modifiers on object"],
   "parameters": {
-    "action": {
-      "type": "enum",
-      "options": ["object", "topology", "modifiers", "materials"],
-      "required": true,
-      "description": "Inspection type"
-    },
-    "object_name": {
-      "type": "string",
-      "default": null,
-      "description": "Object to inspect (required for object/topology)"
-    },
-    "detailed": {
-      "type": "bool",
-      "default": false,
-      "description": "Perform detailed checks for topology"
-    },
-    "include_disabled": {
-      "type": "bool",
-      "default": true,
-      "description": "Include disabled modifiers"
-    }
+    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials"], "required": true},
+    "object_name": {"type": "string", "default": null},
+    "detailed": {"type": "bool", "default": false}
   },
-  "related_tools": ["scene_context", "scene_list_objects"],
+  "related_tools": ["scene_list_objects", "scene_context"],
   "patterns": [],
-  "description": "Detailed inspection queries for objects and scene."
+  "description": "Detailed inspection of objects, topology, modifiers, and materials."
 }

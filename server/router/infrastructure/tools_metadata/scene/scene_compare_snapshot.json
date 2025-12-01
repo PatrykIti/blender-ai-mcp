@@ -3,31 +3,14 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["compare", "snapshot", "diff", "changes"],
-  "sample_prompts": [
-    "compare snapshots",
-    "what changed",
-    "diff scene states",
-    "show differences"
-  ],
+  "keywords": ["compare", "diff", "snapshot", "changes"],
+  "sample_prompts": ["compare snapshots", "show what changed", "diff scene states", "find differences"],
   "parameters": {
-    "baseline_snapshot": {
-      "type": "string",
-      "required": true,
-      "description": "JSON string of baseline snapshot"
-    },
-    "target_snapshot": {
-      "type": "string",
-      "required": true,
-      "description": "JSON string of target snapshot"
-    },
-    "ignore_minor_transforms": {
-      "type": "float",
-      "default": 0.0,
-      "description": "Threshold for ignoring small transform changes"
-    }
+    "baseline_snapshot": {"type": "string", "required": true},
+    "target_snapshot": {"type": "string", "required": true},
+    "ignore_minor_transforms": {"type": "float", "default": 0.0}
   },
   "related_tools": ["scene_snapshot_state"],
   "patterns": [],
-  "description": "Compares two scene snapshots and returns a diff summary."
+  "description": "Compares two scene snapshots and returns differences."
 }

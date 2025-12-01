@@ -1,62 +1,17 @@
 {
   "tool_name": "scene_create",
   "category": "scene",
-  "mode_required": "ANY",
+  "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["create", "light", "camera", "empty", "add"],
-  "sample_prompts": [
-    "create a light",
-    "add a camera",
-    "create an empty",
-    "add sun light",
-    "place a camera"
-  ],
+  "keywords": ["create", "light", "camera", "empty", "sun", "point", "spot", "area"],
+  "sample_prompts": ["create a light", "add a camera", "create empty object", "add sun light"],
   "parameters": {
-    "action": {
-      "type": "enum",
-      "options": ["light", "camera", "empty"],
-      "required": true,
-      "description": "Type of object to create"
-    },
-    "location": {
-      "type": "list[float]",
-      "default": [0.0, 0.0, 0.0],
-      "description": "World position"
-    },
-    "rotation": {
-      "type": "list[float]",
-      "default": [0.0, 0.0, 0.0],
-      "description": "Rotation in radians"
-    },
-    "name": {
-      "type": "string",
-      "default": null,
-      "description": "Custom name"
-    },
-    "light_type": {
-      "type": "enum",
-      "options": ["POINT", "SUN", "SPOT", "AREA"],
-      "default": "POINT",
-      "description": "Light type (for light action)"
-    },
-    "energy": {
-      "type": "float",
-      "default": 1000.0,
-      "description": "Light energy in watts"
-    },
-    "lens": {
-      "type": "float",
-      "default": 50.0,
-      "description": "Camera focal length (for camera action)"
-    },
-    "empty_type": {
-      "type": "enum",
-      "options": ["PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"],
-      "default": "PLAIN_AXES",
-      "description": "Empty display type"
-    }
+    "action": {"type": "enum", "options": ["light", "camera", "empty"], "required": true},
+    "location": {"type": "array", "default": [0.0, 0.0, 0.0]},
+    "light_type": {"type": "enum", "options": ["POINT", "SUN", "SPOT", "AREA"], "default": "POINT"},
+    "energy": {"type": "float", "default": 1000.0}
   },
-  "related_tools": ["scene_get_viewport", "scene_list_objects"],
+  "related_tools": ["scene_get_viewport", "modeling_create_primitive"],
   "patterns": [],
   "description": "Creates scene helper objects (lights, cameras, empties)."
 }
