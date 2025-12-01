@@ -904,6 +904,11 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to unde
 **Patryk Ciechański**
 *   GitHub: [PatrykIti](https://github.com/PatrykIti)
 
-## 📜 License
+## License
 
-MIT License.
+This project is licensed under the **Business Source License 1.1 (BSL 1.1)**  
+with a custom Additional Use Grant authored by Patryk Ciechański (PatrykIti).
+
+The license automatically converts to **Apache 2.0** on 2029-12-01.
+
+For the full license text, see: [LICENSE](./LICENSE.md)
