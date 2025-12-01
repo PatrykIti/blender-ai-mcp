@@ -1,0 +1,18 @@
+{
+  "tool_name": "export_glb",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["export", "glb", "gltf", "web", "game", "unity", "unreal"],
+  "sample_prompts": ["export as glb", "export to gltf", "save as glb file", "export for web"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "export_selected": {"type": "bool", "default": false},
+    "export_animations": {"type": "bool", "default": true},
+    "export_materials": {"type": "bool", "default": true},
+    "apply_modifiers": {"type": "bool", "default": true}
+  },
+  "related_tools": ["export_fbx", "export_obj", "scene_list_objects"],
+  "patterns": [],
+  "description": "Exports scene or selected objects to GLB/GLTF format."
+}

@@ -1,0 +1,17 @@
+{
+  "tool_name": "import_glb",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["import", "glb", "gltf", "load", "web"],
+  "sample_prompts": ["import glb file", "load gltf", "import from web format"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "import_pack_images": {"type": "bool", "default": true},
+    "merge_vertices": {"type": "bool", "default": false},
+    "import_shading": {"type": "enum", "options": ["NORMALS", "FLAT", "SMOOTH"], "default": "NORMALS"}
+  },
+  "related_tools": ["import_obj", "import_fbx", "export_glb"],
+  "patterns": [],
+  "description": "Imports GLB/GLTF file into the scene."
+}

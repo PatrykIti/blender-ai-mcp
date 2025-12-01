@@ -1,0 +1,18 @@
+{
+  "tool_name": "export_obj",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["export", "obj", "wavefront", "universal", "mesh"],
+  "sample_prompts": ["export as obj", "save as obj file", "export wavefront"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "export_selected": {"type": "bool", "default": false},
+    "apply_modifiers": {"type": "bool", "default": true},
+    "export_materials": {"type": "bool", "default": true},
+    "triangulate": {"type": "bool", "default": false}
+  },
+  "related_tools": ["export_glb", "export_fbx", "import_obj"],
+  "patterns": [],
+  "description": "Exports scene or selected objects to OBJ format."
+}

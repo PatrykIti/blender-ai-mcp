@@ -1,0 +1,17 @@
+{
+  "tool_name": "import_obj",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["import", "obj", "wavefront", "load", "mesh"],
+  "sample_prompts": ["import obj file", "load obj", "import wavefront file"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "use_split_objects": {"type": "bool", "default": true},
+    "use_split_groups": {"type": "bool", "default": false},
+    "global_scale": {"type": "float", "default": 1.0}
+  },
+  "related_tools": ["import_fbx", "import_glb", "export_obj"],
+  "patterns": [],
+  "description": "Imports OBJ file into the scene."
+}
