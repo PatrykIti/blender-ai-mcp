@@ -6,6 +6,10 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [76](./76-2025-12-01-router-workflow-system.md) | 2025-12-01 | **Router Workflow System (TASK-039-20,22)** | - |
+| [75](./75-2025-12-01-router-screen-cutout-workflow.md) | 2025-12-01 | **Router Screen Cutout Workflow (TASK-039-21)** | - |
+| [74](./74-2025-12-01-router-tower-workflow.md) | 2025-12-01 | **Router Tower Workflow (TASK-039-20)** | - |
+| [73](./73-2025-12-01-router-phone-workflow.md) | 2025-12-01 | **Router Phone Workflow (TASK-039-19)** | - |
 | [72](./72-2025-12-01-router-logging-telemetry.md) | 2025-12-01 | **Router Logging & Telemetry (TASK-039-18)** | - |
 | [71](./71-2025-12-01-router-mcp-integration.md) | 2025-12-01 | **Router MCP Integration (TASK-039-17)** | - |
 | [70](./70-2025-12-01-router-supervisor-router.md) | 2025-12-01 | **Router SupervisorRouter Core (TASK-039-16)** | - |

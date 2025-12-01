@@ -1,0 +1,75 @@
+# Example Custom Workflow: Table
+# This is an example of a custom workflow definition in YAML format
+
+name: "table_workflow"
+description: "Creates a simple table with four legs"
+category: "furniture"
+author: "blender-ai-mcp"
+version: "1.0.0"
+
+trigger_pattern: "table_like"
+trigger_keywords:
+  - "table"
+  - "desk"
+  - "surface"
+
+steps:
+  # Create table top
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create base cube for table top"
+
+  - tool: "modeling_transform_object"
+    params:
+      scale: [1.2, 0.8, 0.05]
+      location: [0, 0, 0.75]
+    description: "Scale and position table top"
+
+  # Create first leg
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create first leg"
+
+  - tool: "modeling_transform_object"
+    params:
+      scale: [0.05, 0.05, 0.75]
+      location: [0.55, 0.35, 0.375]
+    description: "Scale and position first leg"
+
+  # Create second leg
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create second leg"
+
+  - tool: "modeling_transform_object"
+    params:
+      scale: [0.05, 0.05, 0.75]
+      location: [-0.55, 0.35, 0.375]
+    description: "Scale and position second leg"
+
+  # Create third leg
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create third leg"
+
+  - tool: "modeling_transform_object"
+    params:
+      scale: [0.05, 0.05, 0.75]
+      location: [0.55, -0.35, 0.375]
+    description: "Scale and position third leg"
+
+  # Create fourth leg
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create fourth leg"
+
+  - tool: "modeling_transform_object"
+    params:
+      scale: [0.05, 0.05, 0.75]
+      location: [-0.55, -0.35, 0.375]
+    description: "Scale and position fourth leg"

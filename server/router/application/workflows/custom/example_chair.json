@@ -1,0 +1,89 @@
+{
+  "name": "chair_workflow",
+  "description": "Creates a simple chair with back support",
+  "category": "furniture",
+  "author": "blender-ai-mcp",
+  "version": "1.0.0",
+  "trigger_pattern": null,
+  "trigger_keywords": ["chair", "seat", "stool"],
+  "steps": [
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create seat base"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.45, 0.45, 0.05],
+        "location": [0, 0, 0.45]
+      },
+      "description": "Scale and position seat"
+    },
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create back support"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.45, 0.05, 0.4],
+        "location": [0, -0.2, 0.7]
+      },
+      "description": "Scale and position back support"
+    },
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create front-left leg"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.04, 0.04, 0.45],
+        "location": [0.2, 0.2, 0.225]
+      },
+      "description": "Position front-left leg"
+    },
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create front-right leg"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.04, 0.04, 0.45],
+        "location": [-0.2, 0.2, 0.225]
+      },
+      "description": "Position front-right leg"
+    },
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create back-left leg"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.04, 0.04, 0.45],
+        "location": [0.2, -0.2, 0.225]
+      },
+      "description": "Position back-left leg"
+    },
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create back-right leg"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.04, 0.04, 0.45],
+        "location": [-0.2, -0.2, 0.225]
+      },
+      "description": "Position back-right leg"
+    }
+  ]
+}

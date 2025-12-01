@@ -25,6 +25,11 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 15 | `15-supervisor-router.md` | SupervisorRouter | TASK-039-16 | ✅ |
 | 16 | `16-mcp-integration.md` | MCP Integration | TASK-039-17 | ✅ |
 | 17 | `17-logging-telemetry.md` | Logging & Telemetry | TASK-039-18 | ✅ |
+| 18 | `18-phone-workflow.md` | Phone Workflow | TASK-039-19 | ✅ |
+| 19 | `19-tower-workflow.md` | Tower Workflow | TASK-039-20 | ✅ |
+| 20 | `20-screen-cutout-workflow.md` | Screen Cutout Workflow | TASK-039-21 | ✅ |
+| 21 | `21-workflow-registry.md` | Workflow Registry | TASK-039-20 | ✅ |
+| 22 | `22-custom-workflow-loader.md` | Custom Workflow Loader | TASK-039-22 | ✅ |
 
 ---
 
@@ -55,6 +60,13 @@ Phase 4: Integration ✅
   ├─ 15-supervisor-router.md ✅
   ├─ 16-mcp-integration.md ✅
   └─ 17-logging-telemetry.md ✅
+
+Phase 5: Workflows & Patterns ✅
+  ├─ 18-phone-workflow.md ✅
+  ├─ 19-tower-workflow.md ✅
+  ├─ 20-screen-cutout-workflow.md ✅
+  ├─ 21-workflow-registry.md ✅
+  └─ 22-custom-workflow-loader.md ✅
 ```
 
 ---

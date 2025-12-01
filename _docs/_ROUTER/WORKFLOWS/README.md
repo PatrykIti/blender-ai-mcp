@@ -8,9 +8,9 @@ Predefined workflow definitions for common modeling patterns.
 
 | Workflow | Pattern | Steps | Task |
 |----------|---------|-------|------|
-| [phone-workflow.md](./phone-workflow.md) | `phone_like` | 12 | TASK-039-19 |
-| [tower-workflow.md](./tower-workflow.md) | `tower_like` | 7 | TASK-039-20 |
-| [screen-cutout-workflow.md](./screen-cutout-workflow.md) | Sub-workflow | 4 | TASK-039-21 |
+| [phone-workflow.md](./phone-workflow.md) | `phone_like` | 10 | TASK-039-19 |
+| [tower-workflow.md](./tower-workflow.md) | `tower_like` | 5-8 | TASK-039-20 |
+| [screen-cutout-workflow.md](./screen-cutout-workflow.md) | Sub-workflow | 3-4 | TASK-039-21 |
 | [custom-workflows.md](./custom-workflows.md) | User-defined | - | TASK-039-22 |
 
 ---
@@ -55,11 +55,15 @@ Creates a smartphone/tablet shape with screen cutout.
 
 **Steps:**
 1. Create cube
-2. Scale to phone proportions
-3. Bevel all edges
-4. Inset top face (screen area)
-5. Extrude screen inward
-6. Apply material
+2. Scale to phone proportions (0.4 × 0.8 × 0.05)
+3. Enter Edit mode
+4. Select all
+5. Bevel all edges
+6. Deselect all
+7. Select top face (screen area)
+8. Inset top face
+9. Extrude screen inward
+10. Return to Object mode
 
 ---
 
@@ -74,9 +78,12 @@ Creates a pillar/column with tapered top.
 **Steps:**
 1. Create cube
 2. Scale to tall proportions
-3. Subdivide horizontally
-4. Select top loop
-5. Scale down (taper)
+3. Enter Edit mode
+4. Subdivide horizontally
+5. Deselect all
+6. Select top vertices
+7. Scale down (taper effect)
+8. Return to Object mode
 
 ---
 
@@ -86,53 +93,219 @@ Sub-workflow for creating display/screen insets.
 
 **Trigger:**
 - Used within phone_workflow
-- Can be triggered by `mesh_extrude` on `phone_like` pattern
+- Can be triggered by keywords: "screen", "display", "cutout"
 
 **Steps:**
 1. Select top face
 2. Inset face
 3. Extrude inward
-4. Bevel edges
+4. Bevel edges (optional)
 
 ---
 
-## Custom Workflows
+## Creating Custom Workflows
 
-Users can define custom workflows via YAML files in `server/router/workflows/custom/`.
+You can create your own workflows **without writing Python code** - just create a YAML or JSON file!
 
-See [custom-workflows.md](./custom-workflows.md) for format and examples.
+### Step 1: Create a File
 
----
+Create a file in: `server/router/application/workflows/custom/`
 
-## Workflow Definition Format
+Supported formats:
+- `.yaml` or `.yml` - YAML format (recommended)
+- `.json` - JSON format
+
+### Step 2: Define Your Workflow
+
+**YAML Example (`my_table.yaml`):**
 
 ```yaml
-name: "workflow_name"
-description: "What this workflow does"
+# Required fields
+name: "table_workflow"
+description: "Creates a simple table with four legs"
 
-trigger:
-  pattern: "phone_like"  # Optional: geometry pattern
-  keywords:              # Optional: intent keywords
-    - "phone"
-    - "smartphone"
-  tool_override:         # Optional: replace specific tool
-    tool: "mesh_extrude"
-    condition: "pattern == phone_like"
+# Optional metadata
+category: "furniture"
+author: "your_name"
+version: "1.0.0"
 
+# Trigger configuration (optional)
+trigger_pattern: "table_like"          # Pattern from GeometryPatternDetector
+trigger_keywords:                      # Keywords to match in prompts
+  - "table"
+  - "desk"
+  - "surface"
+
+# Required: list of steps
 steps:
+  # Step 1: Create table top
   - tool: "modeling_create_primitive"
     params:
       type: "CUBE"
+    description: "Create base cube for table top"
 
-  - tool: "modeling_transform"
+  # Step 2: Scale table top
+  - tool: "modeling_transform_object"
     params:
-      scale: [0.4, 0.8, 0.05]
+      scale: [1.2, 0.8, 0.05]
+      location: [0, 0, 0.75]
+    description: "Scale and position table top"
 
+  # Step 3: Create first leg
+  - tool: "modeling_create_primitive"
+    params:
+      type: "CUBE"
+    description: "Create first leg"
+
+  # Step 4: Position first leg
+  - tool: "modeling_transform_object"
+    params:
+      scale: [0.05, 0.05, 0.75]
+      location: [0.55, 0.35, 0.375]
+    description: "Scale and position first leg"
+
+  # ... add more legs similarly
+```
+
+**JSON Example (`my_chair.json`):**
+
+```json
+{
+  "name": "chair_workflow",
+  "description": "Creates a simple chair with back support",
+  "category": "furniture",
+  "trigger_keywords": ["chair", "seat", "stool"],
+  "steps": [
+    {
+      "tool": "modeling_create_primitive",
+      "params": {"type": "CUBE"},
+      "description": "Create seat base"
+    },
+    {
+      "tool": "modeling_transform_object",
+      "params": {
+        "scale": [0.45, 0.45, 0.05],
+        "location": [0, 0, 0.45]
+      }
+    }
+  ]
+}
+```
+
+### Step 3: Use Parameter Inheritance (Optional)
+
+Use `$param_name` syntax to allow users to customize your workflow:
+
+```yaml
+steps:
   - tool: "mesh_bevel"
     params:
-      width: "$bevel_width"  # $ = parameter from config or input
-      segments: 3
+      width: "$width"        # Takes 'width' from user parameters
+      segments: "$segments"  # Takes 'segments' from user parameters
 ```
+
+When expanding, users can provide custom values:
+```python
+calls = registry.expand_workflow("my_workflow", {"width": 0.1, "segments": 5})
+```
+
+---
+
+## Example Workflows Included
+
+The following example workflows are included in `server/router/application/workflows/custom/`:
+
+| File | Description |
+|------|-------------|
+| `example_table.yaml` | Table with 4 legs (YAML format) |
+| `example_chair.json` | Chair with back support (JSON format) |
+
+Use these as templates for your own workflows!
+
+---
+
+## Workflow Schema Reference
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique identifier (use snake_case) |
+| `steps` | array | List of tool call steps |
+
+### Optional Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `description` | string | `""` | Human-readable description |
+| `category` | string | `"custom"` | Workflow category |
+| `author` | string | `"user"` | Author name |
+| `version` | string | `"1.0.0"` | Version string |
+| `trigger_pattern` | string | `null` | Geometry pattern to trigger |
+| `trigger_keywords` | array | `[]` | Keywords to match |
+
+### Step Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tool` | string | Yes | Tool name to call |
+| `params` | object | Yes | Parameters for the tool |
+| `description` | string | No | Step description |
+| `condition` | string | No | Condition expression (future) |
+
+---
+
+## Validation
+
+Before the workflow is loaded, it's validated. Common errors:
+
+| Error | Cause |
+|-------|-------|
+| `Missing required field 'name'` | No `name` field in workflow |
+| `Missing required field 'steps'` | No `steps` array in workflow |
+| `Workflow must have at least one step` | Empty `steps` array |
+| `Step N: Missing required field 'tool'` | Step doesn't have `tool` |
+| `Workflow name should not contain spaces` | Use underscores, not spaces |
+
+---
+
+## Using Your Workflow
+
+After creating your workflow file, it's automatically loaded on server start:
+
+```python
+from server.router.application.workflows import get_workflow_registry
+
+registry = get_workflow_registry()
+
+# Find your workflow by keywords
+workflow_name = registry.find_by_keywords("create a table")
+
+# Expand to tool calls
+calls = registry.expand_workflow("table_workflow")
+
+# Expand with custom parameters
+calls = registry.expand_workflow("table_workflow", {
+    "width": 1.5,
+    "height": 0.8
+})
+```
+
+---
+
+## Available Tools for Workflows
+
+Common tools you can use in workflow steps:
+
+| Category | Tools |
+|----------|-------|
+| **Modeling** | `modeling_create_primitive`, `modeling_transform_object`, `modeling_add_modifier`, `modeling_apply_modifier` |
+| **Mesh** | `mesh_select`, `mesh_select_targeted`, `mesh_extrude_region`, `mesh_bevel`, `mesh_inset`, `mesh_subdivide` |
+| **System** | `system_set_mode`, `system_export_obj`, `system_import_obj` |
+| **Scene** | `scene_delete_object`, `scene_duplicate_object` |
+| **Material** | `material_create`, `material_assign` |
+
+See `_docs/AVAILABLE_TOOLS_SUMMARY.md` for the complete list.
 
 ---
 
@@ -140,4 +313,5 @@ steps:
 
 - [ROUTER_HIGH_LEVEL_OVERVIEW.md](../ROUTER_HIGH_LEVEL_OVERVIEW.md)
 - [ROUTER_ARCHITECTURE.md](../ROUTER_ARCHITECTURE.md)
+- [Custom Workflow Loader](../IMPLEMENTATION/22-custom-workflow-loader.md)
 - [TASK-039: Router Supervisor Implementation](../../_TASKS/TASK-039_Router_Supervisor_Implementation.md)
