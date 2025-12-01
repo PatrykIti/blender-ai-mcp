@@ -6,6 +6,11 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [69](./69-2025-12-01-router-intent-classifier.md) | 2025-12-01 | **Router Intent Classifier (TASK-039-15)** | - |
+| [68](./68-2025-12-01-router-error-firewall.md) | 2025-12-01 | **Router Error Firewall (TASK-039-14)** | - |
+| [67](./67-2025-12-01-router-workflow-expansion-engine.md) | 2025-12-01 | **Router Workflow Expansion Engine (TASK-039-13)** | - |
+| [66](./66-2025-12-01-router-tool-override-engine.md) | 2025-12-01 | **Router Tool Override Engine (TASK-039-12)** | - |
+| [65](./65-2025-12-01-router-tool-correction-engine.md) | 2025-12-01 | **Router Tool Correction Engine (TASK-039-10,11)** | - |
 | [64](./64-2025-12-01-router-proportion-calculator.md) | 2025-12-01 | **Router Proportion Calculator (TASK-039-9)** | - |
 | [63](./63-2025-12-01-router-geometry-pattern-detector.md) | 2025-12-01 | **Router Geometry Pattern Detector (TASK-039-8)** | - |
 | [62](./62-2025-12-01-router-scene-context-analyzer.md) | 2025-12-01 | **Router Scene Context Analyzer (TASK-039-7)** | - |

@@ -42,14 +42,14 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 
 | Component | Purpose | Status |
 |-----------|---------|--------|
-| **Tool Interceptor** | Capture LLM tool calls | 🚧 To Do |
-| **Scene Context Analyzer** | Read Blender state | 🚧 To Do |
-| **Geometry Pattern Detector** | Detect tower/phone/table patterns | 🚧 To Do |
-| **Tool Correction Engine** | Fix params, mode, selection | 🚧 To Do |
-| **Tool Override Engine** | Replace with better alternatives | 🚧 To Do |
-| **Workflow Expansion Engine** | 1 tool → N tools | 🚧 To Do |
-| **Error Firewall** | Block invalid operations | 🚧 To Do |
-| **Intent Classifier** | Offline intent matching (TF-IDF) | 🚧 To Do |
+| **Tool Interceptor** | Capture LLM tool calls | ✅ Done |
+| **Scene Context Analyzer** | Read Blender state | ✅ Done |
+| **Geometry Pattern Detector** | Detect tower/phone/table patterns | ✅ Done |
+| **Tool Correction Engine** | Fix params, mode, selection | ✅ Done |
+| **Tool Override Engine** | Replace with better alternatives | ✅ Done |
+| **Workflow Expansion Engine** | 1 tool → N tools | ✅ Done |
+| **Error Firewall** | Block invalid operations | ✅ Done |
+| **Intent Classifier** | Offline intent matching (LaBSE) | ✅ Done |
 | **SupervisorRouter** | Main orchestrator | 🚧 To Do |
 
 ---

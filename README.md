@@ -392,7 +392,7 @@ Skeletal rigging and animation (future).
 
 Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
-**Progress:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🚧 | Phase 4 🚧 | Phase 5 🚧 | **191 unit tests**
+**Progress:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 🚧 | Phase 5 🚧 | **371 unit tests**
 
 #### Phase 1: Foundation & Infrastructure ✅
 | Component | Description | Status |

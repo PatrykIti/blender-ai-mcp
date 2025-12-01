@@ -4,4 +4,10 @@ Intent Classifier Module.
 Offline intent classification using LaBSE embeddings.
 """
 
-# Will be populated in TASK-039-15
+from server.router.application.classifier.intent_classifier import IntentClassifier
+from server.router.application.classifier.embedding_cache import EmbeddingCache
+
+__all__ = [
+    "IntentClassifier",
+    "EmbeddingCache",
+]
