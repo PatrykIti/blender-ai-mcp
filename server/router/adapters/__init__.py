@@ -4,4 +4,16 @@ Router Adapters Layer.
 Contains MCP integration and external interfaces.
 """
 
-# Will be populated in TASK-039-17
+from server.router.adapters.mcp_integration import (
+    MCPRouterIntegration,
+    RouterMiddleware,
+    create_router_integration,
+    with_router,
+)
+
+__all__ = [
+    "MCPRouterIntegration",
+    "RouterMiddleware",
+    "create_router_integration",
+    "with_router",
+]
