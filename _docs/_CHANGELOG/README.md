@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [72](./72-2025-12-01-router-logging-telemetry.md) | 2025-12-01 | **Router Logging & Telemetry (TASK-039-18)** | - |
+| [71](./71-2025-12-01-router-mcp-integration.md) | 2025-12-01 | **Router MCP Integration (TASK-039-17)** | - |
 | [70](./70-2025-12-01-router-supervisor-router.md) | 2025-12-01 | **Router SupervisorRouter Core (TASK-039-16)** | - |
 | [69](./69-2025-12-01-router-intent-classifier.md) | 2025-12-01 | **Router Intent Classifier (TASK-039-15)** | - |
 | [68](./68-2025-12-01-router-error-firewall.md) | 2025-12-01 | **Router Error Firewall (TASK-039-14)** | - |
