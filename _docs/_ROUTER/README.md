@@ -77,9 +77,22 @@ server/router/
 │   └── router.py           # SupervisorRouter
 │
 ├── infrastructure/
-│   ├── metadata_loader.py  # Tool metadata
+│   ├── metadata_loader.py  # Tool metadata loader
 │   ├── config.py           # Router configuration
-│   └── logger.py           # Telemetry
+│   ├── logger.py           # Telemetry
+│   └── tools_metadata/     # Per-tool JSON metadata (modular)
+│       ├── _schema.json    # JSON Schema for validation
+│       ├── scene/          # scene_*.json files
+│       ├── system/         # system_*.json files
+│       ├── modeling/       # modeling_*.json files
+│       ├── mesh/           # mesh_*.json files
+│       ├── material/       # material_*.json files
+│       ├── uv/             # uv_*.json files
+│       ├── curve/          # curve_*.json files
+│       ├── collection/     # collection_*.json files
+│       ├── lattice/        # lattice_*.json files
+│       ├── sculpt/         # sculpt_*.json files
+│       └── baking/         # baking_*.json files
 │
 └── adapters/
     └── mcp_integration.py  # Hook into MCP server

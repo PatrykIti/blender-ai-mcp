@@ -70,11 +70,27 @@ server/router/
 │   ├── interceptor/
 │   ├── analyzers/
 │   ├── engines/
+│   ├── classifier/
+│   ├── workflows/
 │   └── router.py                  # SupervisorRouter
 ├── infrastructure/
 │   ├── __init__.py
 │   ├── metadata_loader.py
-│   └── config.py
+│   ├── config.py
+│   ├── logger.py
+│   └── tools_metadata/            # Per-tool JSON metadata
+│       ├── _schema.json           # JSON Schema for validation
+│       ├── scene/
+│       ├── system/
+│       ├── modeling/
+│       ├── mesh/
+│       ├── material/
+│       ├── uv/
+│       ├── curve/
+│       ├── collection/
+│       ├── lattice/
+│       ├── sculpt/
+│       └── baking/
 └── adapters/
     ├── __init__.py
     └── mcp_integration.py         # Hook into MCP server
@@ -180,17 +196,93 @@ class ICorrectionEngine(ABC):
 **Priority:** 🔴 High
 **Layer:** Infrastructure
 
-Create tool metadata loading system.
+Create tool metadata loading system with modular per-tool JSON files.
 
 **Files:**
 - `server/router/infrastructure/metadata_loader.py`
-- `server/router/infrastructure/tools_metadata.json`
+
+**Directory Structure:**
+```
+server/router/infrastructure/tools_metadata/
+├── _schema.json                    # JSON Schema for validation
+├── scene/
+│   ├── scene_list_objects.json
+│   ├── scene_delete_object.json
+│   ├── scene_context.json
+│   └── ...
+├── system/
+│   ├── system_set_mode.json
+│   ├── system_import_obj.json
+│   ├── system_export_obj.json
+│   └── ...
+├── modeling/
+│   ├── modeling_create_primitive.json
+│   ├── modeling_add_modifier.json
+│   └── ...
+├── mesh/
+│   ├── mesh_extrude.json
+│   ├── mesh_bevel.json
+│   ├── mesh_select.json
+│   └── ...
+├── material/
+│   ├── material_create.json
+│   ├── material_assign.json
+│   └── ...
+├── uv/
+│   ├── uv_unwrap.json
+│   ├── uv_project.json
+│   └── ...
+├── curve/
+│   └── ...
+├── collection/
+│   └── ...
+├── lattice/
+│   └── ...
+├── sculpt/
+│   └── ...
+└── baking/
+    └── ...
+```
+
+**Single Tool Metadata Format:**
+```json
+{
+  "tool_name": "mesh_extrude",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["extrude", "pull", "extend", "push"],
+  "sample_prompts": [
+    "extrude the selected faces",
+    "pull out the top face",
+    "extend the geometry upward"
+  ],
+  "parameters": {
+    "value": {"type": "float", "default": 0.0, "range": [-100.0, 100.0]},
+    "direction": {"type": "enum", "options": ["NORMAL", "X", "Y", "Z"]}
+  },
+  "related_tools": ["mesh_inset", "mesh_bevel"],
+  "patterns": ["phone_like:screen_cutout", "tower_like:height_extension"]
+}
+```
 
 **Features:**
-- Load tool definitions from JSON
-- Parse keywords, categories, sample_prompts
-- Validate metadata schema
-- Cache loaded metadata
+- Load tool definitions from per-tool JSON files
+- Auto-discover files by walking `tools_metadata/` directory
+- Parse keywords, categories, sample_prompts, parameters
+- Validate against `_schema.json`
+- Cache loaded metadata in memory
+- Hot-reload support (detect file changes)
+
+**MetadataLoader API:**
+```python
+class MetadataLoader:
+    def load_all(self) -> Dict[str, ToolMetadata]
+    def load_by_area(self, area: str) -> Dict[str, ToolMetadata]
+    def get_tool(self, tool_name: str) -> Optional[ToolMetadata]
+    def reload(self) -> None
+    def validate_all(self) -> List[ValidationError]
+```
 
 **Tests:**
 - `tests/unit/router/infrastructure/test_metadata_loader.py`
