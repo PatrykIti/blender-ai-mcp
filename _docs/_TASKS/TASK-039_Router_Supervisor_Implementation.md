@@ -687,30 +687,65 @@ FirewallResult:
 
 ---
 
-### TASK-039-15: Intent Classifier (TF-IDF)
+### TASK-039-15: Intent Classifier (Sentence-Transformers)
 
 **Priority:** 🟡 Medium
 **Layer:** Application
 
-Implement offline intent classification.
+Implement offline intent classification using semantic embeddings.
 
 **Files:**
 - `server/router/application/classifier/intent_classifier.py`
+- `server/router/application/classifier/embedding_cache.py`
+
+**Approach: LaBSE Embeddings (Offline, ~1.8GB RAM)**
+
+Uses `sentence-transformers` with LaBSE model for multilingual semantic similarity.
+No external API calls - everything runs locally.
 
 **Features:**
-- TF-IDF vectorization of prompts
-- LogisticRegression classifier
-- Train on `sample_prompts` from metadata
-- Predict tool from natural language
+- LaBSE embeddings for semantic understanding
+- Cosine similarity matching against tool embeddings
+- Pre-compute and cache tool embeddings on startup
+- Fallback to TF-IDF if embeddings unavailable
+- Support for multilingual prompts (LaBSE is 109 languages)
 
 **Dependencies:**
-- scikit-learn (add to pyproject.toml)
+- sentence-transformers (add to pyproject.toml)
+- torch (CPU-only, auto-installed with sentence-transformers)
 
 **Usage:**
 ```python
 classifier = IntentClassifier()
-classifier.train(metadata)
-tool = classifier.predict("extrude the top face")  # → "mesh_extrude"
+classifier.load_tool_embeddings(metadata)  # Pre-compute on startup
+
+# Fast inference (~10ms)
+tool, confidence = classifier.predict("extrude the top face")
+# → ("mesh_extrude", 0.87)
+
+# Multilingual support
+tool, confidence = classifier.predict("wyciągnij górną ścianę")
+# → ("mesh_extrude", 0.82)
+```
+
+**Model Details:**
+```python
+# LaBSE - Language-agnostic BERT Sentence Embedding
+MODEL_NAME = "sentence-transformers/LaBSE"
+EMBEDDING_DIM = 768
+RAM_USAGE = "~1.8GB"
+INFERENCE_TIME = "~10ms per query"
+```
+
+**Embedding Cache:**
+```python
+class EmbeddingCache:
+    def __init__(self, cache_dir: Path):
+        self.cache_file = cache_dir / "tool_embeddings.pkl"
+
+    def save(self, embeddings: Dict[str, np.ndarray]) -> None
+    def load(self) -> Optional[Dict[str, np.ndarray]]
+    def is_valid(self, metadata_hash: str) -> bool
 ```
 
 **Tests:**
@@ -1050,7 +1085,7 @@ Finalize all router documentation.
 [project]
 dependencies = [
     # ... existing ...
-    "scikit-learn (>=1.4.0,<2.0.0)",  # For TF-IDF classifier
+    "sentence-transformers>=2.0.0,<4.0.0",  # LaBSE embeddings (~1.8GB RAM)
 ]
 
 [dependency-groups]
@@ -1059,11 +1094,13 @@ dev = [
 ]
 ```
 
-### Optional (for advanced features)
+**Note:** `sentence-transformers` automatically installs `torch` (CPU version) and `numpy`.
+Model downloads on first use (~500MB for LaBSE).
+
+### Optional (for faster similarity search with 1000+ tools)
 ```toml
-# Optional: for LaBSE embeddings
-# "sentence-transformers (>=2.0.0,<3.0.0)",
-# "faiss-cpu (>=1.7.0,<2.0.0)",
+# Optional: for FAISS-based similarity search
+# "faiss-cpu>=1.7.0,<2.0.0",
 ```
 
 ---
