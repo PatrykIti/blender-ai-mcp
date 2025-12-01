@@ -1,0 +1,28 @@
+{
+  "tool_name": "metaball_to_mesh",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["metaball", "convert", "mesh", "bake"],
+  "sample_prompts": [
+    "convert metaball to mesh",
+    "bake metaball",
+    "make metaball editable",
+    "convert blob to mesh"
+  ],
+  "parameters": {
+    "metaball_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of metaball to convert"
+    },
+    "apply_resolution": {
+      "type": "bool",
+      "default": true,
+      "description": "Apply current resolution"
+    }
+  },
+  "related_tools": ["metaball_create", "metaball_add_element", "sculpt_enable_dyntopo"],
+  "patterns": [],
+  "description": "Converts metaball to mesh for editing."
+}

@@ -1,0 +1,23 @@
+{
+  "tool_name": "scene_set_active_object",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["active", "select", "object", "focus"],
+  "sample_prompts": [
+    "set active object",
+    "select cube",
+    "make object active",
+    "focus on mesh"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of object to set as active"
+    }
+  },
+  "related_tools": ["scene_list_objects", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Sets the active object for subsequent operations."
+}

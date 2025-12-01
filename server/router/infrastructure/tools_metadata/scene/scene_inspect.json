@@ -1,0 +1,40 @@
+{
+  "tool_name": "scene_inspect",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["inspect", "object", "topology", "modifiers", "materials", "analyze"],
+  "sample_prompts": [
+    "inspect the object",
+    "show object details",
+    "check topology",
+    "list object modifiers",
+    "analyze mesh"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": ["object", "topology", "modifiers", "materials"],
+      "required": true,
+      "description": "Inspection type"
+    },
+    "object_name": {
+      "type": "string",
+      "default": null,
+      "description": "Object to inspect (required for object/topology)"
+    },
+    "detailed": {
+      "type": "bool",
+      "default": false,
+      "description": "Perform detailed checks for topology"
+    },
+    "include_disabled": {
+      "type": "bool",
+      "default": true,
+      "description": "Include disabled modifiers"
+    }
+  },
+  "related_tools": ["scene_context", "scene_list_objects"],
+  "patterns": [],
+  "description": "Detailed inspection queries for objects and scene."
+}

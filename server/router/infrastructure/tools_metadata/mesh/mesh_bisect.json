@@ -1,0 +1,44 @@
+{
+  "tool_name": "mesh_bisect",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["bisect", "cut", "slice", "plane", "split", "half"],
+  "sample_prompts": [
+    "bisect the mesh",
+    "cut along a plane",
+    "slice the object in half",
+    "cut at Z equals zero",
+    "split mesh with plane"
+  ],
+  "parameters": {
+    "plane_co": {
+      "type": "list[float]",
+      "required": true,
+      "description": "Point on the cutting plane [x, y, z]"
+    },
+    "plane_no": {
+      "type": "list[float]",
+      "required": true,
+      "description": "Normal direction of the plane [x, y, z]"
+    },
+    "clear_inner": {
+      "type": "bool",
+      "default": false,
+      "description": "Remove geometry on negative side"
+    },
+    "clear_outer": {
+      "type": "bool",
+      "default": false,
+      "description": "Remove geometry on positive side"
+    },
+    "fill": {
+      "type": "bool",
+      "default": false,
+      "description": "Fill cut with a face"
+    }
+  },
+  "related_tools": ["mesh_fill_holes", "mesh_merge_by_distance"],
+  "patterns": [],
+  "description": "Cuts mesh along a plane with options to remove sides and fill."
+}

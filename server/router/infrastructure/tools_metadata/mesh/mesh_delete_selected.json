@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_delete_selected",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["delete", "remove", "erase", "destroy", "vertices", "edges", "faces"],
+  "sample_prompts": [
+    "delete selected vertices",
+    "remove selected faces",
+    "delete selected edges",
+    "erase the selection"
+  ],
+  "parameters": {
+    "type": {
+      "type": "enum",
+      "options": ["VERT", "EDGE", "FACE"],
+      "default": "VERT",
+      "description": "Type of elements to delete"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_merge_by_distance"],
+  "patterns": [],
+  "description": "Deletes selected geometry elements (vertices, edges, or faces)."
+}

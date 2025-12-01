@@ -1,0 +1,17 @@
+{
+  "tool_name": "mesh_split",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["split", "disconnect", "separate", "isolate"],
+  "sample_prompts": [
+    "split selection from mesh",
+    "disconnect selected geometry",
+    "isolate selection",
+    "split off faces"
+  ],
+  "parameters": {},
+  "related_tools": ["mesh_edge_split", "mesh_select", "modeling_separate_object"],
+  "patterns": [],
+  "description": "Splits selection from mesh while keeping in same object."
+}

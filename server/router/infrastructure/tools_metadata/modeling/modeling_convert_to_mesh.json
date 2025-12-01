@@ -1,0 +1,23 @@
+{
+  "tool_name": "modeling_convert_to_mesh",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["convert", "mesh", "curve", "text", "surface"],
+  "sample_prompts": [
+    "convert to mesh",
+    "convert curve to mesh",
+    "convert text to mesh",
+    "make it a mesh object"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to convert"
+    }
+  },
+  "related_tools": ["curve_create", "curve_to_mesh"],
+  "patterns": [],
+  "description": "Converts a non-mesh object (Curve, Text, Surface) to mesh."
+}

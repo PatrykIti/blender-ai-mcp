@@ -1,0 +1,41 @@
+{
+  "tool_name": "mesh_bridge_edge_loops",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["bridge", "edge loops", "connect", "loft", "fill"],
+  "sample_prompts": [
+    "bridge the edge loops",
+    "connect two loops",
+    "loft between edges",
+    "bridge selected edges",
+    "create faces between loops"
+  ],
+  "parameters": {
+    "number_cuts": {
+      "type": "int",
+      "default": 0,
+      "description": "Number of intermediate cuts"
+    },
+    "interpolation": {
+      "type": "enum",
+      "options": ["LINEAR", "PATH", "SURFACE"],
+      "default": "LINEAR",
+      "description": "Interpolation method"
+    },
+    "smoothness": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 1.0],
+      "description": "Smoothness factor"
+    },
+    "twist": {
+      "type": "int",
+      "default": 0,
+      "description": "Number of twist segments"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "mesh_smooth", "mesh_subdivide"],
+  "patterns": [],
+  "description": "Bridges two edge loops with faces."
+}

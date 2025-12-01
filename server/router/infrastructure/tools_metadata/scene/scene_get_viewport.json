@@ -1,0 +1,51 @@
+{
+  "tool_name": "scene_get_viewport",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["viewport", "render", "preview", "screenshot", "image"],
+  "sample_prompts": [
+    "show the viewport",
+    "take a screenshot",
+    "render preview",
+    "get viewport image",
+    "show me the scene"
+  ],
+  "parameters": {
+    "width": {
+      "type": "int",
+      "default": 1024,
+      "description": "Image width in pixels"
+    },
+    "height": {
+      "type": "int",
+      "default": 768,
+      "description": "Image height in pixels"
+    },
+    "shading": {
+      "type": "enum",
+      "options": ["WIREFRAME", "SOLID", "MATERIAL", "RENDERED"],
+      "default": "SOLID",
+      "description": "Viewport shading mode"
+    },
+    "camera_name": {
+      "type": "string",
+      "default": null,
+      "description": "Camera to use (null = user perspective)"
+    },
+    "focus_target": {
+      "type": "string",
+      "default": null,
+      "description": "Object to focus on"
+    },
+    "output_mode": {
+      "type": "enum",
+      "options": ["IMAGE", "BASE64", "FILE", "MARKDOWN"],
+      "default": "IMAGE",
+      "description": "Output format"
+    }
+  },
+  "related_tools": ["scene_create"],
+  "patterns": [],
+  "description": "Gets a visual preview of the scene (OpenGL viewport render)."
+}

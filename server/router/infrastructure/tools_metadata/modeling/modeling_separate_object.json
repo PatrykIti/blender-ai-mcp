@@ -1,0 +1,29 @@
+{
+  "tool_name": "modeling_separate_object",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["separate", "split", "loose", "parts", "material"],
+  "sample_prompts": [
+    "separate loose parts",
+    "split by material",
+    "separate selected",
+    "split mesh into objects"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to separate"
+    },
+    "type": {
+      "type": "enum",
+      "options": ["LOOSE", "SELECTED", "MATERIAL"],
+      "default": "LOOSE",
+      "description": "Separation method"
+    }
+  },
+  "related_tools": ["modeling_join_objects", "mesh_select"],
+  "patterns": [],
+  "description": "Separates a mesh into new objects by loose parts, selection, or material."
+}

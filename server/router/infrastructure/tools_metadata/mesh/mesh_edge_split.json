@@ -1,0 +1,17 @@
+{
+  "tool_name": "mesh_edge_split",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["edge split", "split edges", "seam", "separate"],
+  "sample_prompts": [
+    "split mesh at edges",
+    "create seam at edge loop",
+    "edge split for UV",
+    "separate along edges"
+  ],
+  "parameters": {},
+  "related_tools": ["mesh_split", "mesh_select_targeted", "uv_create_seam"],
+  "patterns": [],
+  "description": "Splits mesh at selected edges (creates seam)."
+}

@@ -1,0 +1,40 @@
+{
+  "tool_name": "mesh_transform_selected",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["transform", "move", "rotate", "scale", "translate", "position"],
+  "sample_prompts": [
+    "move selected vertices",
+    "rotate the selection",
+    "scale selected faces",
+    "translate geometry up",
+    "transform selected elements"
+  ],
+  "parameters": {
+    "translate": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Translation vector [x, y, z]"
+    },
+    "rotate": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Rotation in radians [x, y, z]"
+    },
+    "scale": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Scale factors [x, y, z]"
+    },
+    "pivot": {
+      "type": "enum",
+      "options": ["MEDIAN_POINT", "BOUNDING_BOX_CENTER", "CURSOR", "INDIVIDUAL_ORIGINS", "ACTIVE_ELEMENT"],
+      "default": "MEDIAN_POINT",
+      "description": "Pivot point for rotation/scale"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_merge_by_distance"],
+  "patterns": [],
+  "description": "Transforms selected geometry (move, rotate, scale)."
+}

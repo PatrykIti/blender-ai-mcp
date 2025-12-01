@@ -1,0 +1,36 @@
+{
+  "tool_name": "mesh_decimate",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["decimate", "reduce", "polycount", "LOD", "optimize", "simplify"],
+  "sample_prompts": [
+    "reduce polycount",
+    "decimate the mesh",
+    "create LOD version",
+    "simplify geometry",
+    "reduce by half"
+  ],
+  "parameters": {
+    "ratio": {
+      "type": "float",
+      "default": 0.5,
+      "range": [0.0, 1.0],
+      "description": "Target ratio (0.5 = reduce by half)"
+    },
+    "use_symmetry": {
+      "type": "bool",
+      "default": false,
+      "description": "Maintain mesh symmetry"
+    },
+    "symmetry_axis": {
+      "type": "enum",
+      "options": ["X", "Y", "Z"],
+      "default": "X",
+      "description": "Symmetry axis"
+    }
+  },
+  "related_tools": ["mesh_dissolve", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Reduces polycount while preserving shape."
+}

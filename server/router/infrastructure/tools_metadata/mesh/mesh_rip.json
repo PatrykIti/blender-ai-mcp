@@ -1,0 +1,23 @@
+{
+  "tool_name": "mesh_rip",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["rip", "tear", "split", "hole", "opening"],
+  "sample_prompts": [
+    "rip the geometry",
+    "tear at selection",
+    "create opening",
+    "rip vertices apart"
+  ],
+  "parameters": {
+    "use_fill": {
+      "type": "bool",
+      "default": false,
+      "description": "Fill the ripped hole"
+    }
+  },
+  "related_tools": ["mesh_split", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Rips (tears) geometry at selection."
+}

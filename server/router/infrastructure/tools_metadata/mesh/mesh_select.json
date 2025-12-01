@@ -1,0 +1,32 @@
+{
+  "tool_name": "mesh_select",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["select", "all", "none", "deselect", "linked", "more", "less", "boundary", "grow", "shrink"],
+  "sample_prompts": [
+    "select all geometry",
+    "deselect everything",
+    "select linked geometry",
+    "grow the selection",
+    "shrink the selection",
+    "select boundary edges"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": ["all", "none", "linked", "more", "less", "boundary"],
+      "required": true,
+      "description": "Selection action to perform"
+    },
+    "boundary_mode": {
+      "type": "enum",
+      "options": ["EDGE", "VERT"],
+      "default": "EDGE",
+      "description": "Mode for boundary selection"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "mesh_extrude_region", "mesh_delete_selected"],
+  "patterns": [],
+  "description": "Simple selection operations for mesh geometry including select all, none, linked, grow/shrink, and boundary."
+}

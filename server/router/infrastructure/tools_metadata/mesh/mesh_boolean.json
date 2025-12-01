@@ -1,0 +1,31 @@
+{
+  "tool_name": "mesh_boolean",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["boolean", "difference", "union", "intersect", "subtract", "cut", "carve"],
+  "sample_prompts": [
+    "boolean difference",
+    "subtract one mesh from another",
+    "union the meshes",
+    "intersect the geometry",
+    "cut out a shape"
+  ],
+  "parameters": {
+    "operation": {
+      "type": "enum",
+      "options": ["INTERSECT", "UNION", "DIFFERENCE"],
+      "default": "DIFFERENCE",
+      "description": "Boolean operation type"
+    },
+    "solver": {
+      "type": "enum",
+      "options": ["EXACT", "FLOAT"],
+      "default": "EXACT",
+      "description": "Boolean solver algorithm"
+    }
+  },
+  "related_tools": ["modeling_join_objects", "mesh_select", "mesh_merge_by_distance"],
+  "patterns": ["phone_like:screen_cutout", "tower_like:window_cutouts"],
+  "description": "Boolean operation on selected geometry (difference, union, intersect)."
+}

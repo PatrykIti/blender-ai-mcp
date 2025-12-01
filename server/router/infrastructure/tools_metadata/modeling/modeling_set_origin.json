@@ -1,0 +1,29 @@
+{
+  "tool_name": "modeling_set_origin",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["origin", "center", "pivot", "geometry"],
+  "sample_prompts": [
+    "set origin to geometry",
+    "center origin",
+    "set origin to cursor",
+    "move origin to center of mass"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Object name"
+    },
+    "type": {
+      "type": "enum",
+      "options": ["ORIGIN_GEOMETRY", "ORIGIN_CURSOR", "ORIGIN_CENTER_OF_MASS"],
+      "required": true,
+      "description": "Origin type"
+    }
+  },
+  "related_tools": ["modeling_transform_object"],
+  "patterns": [],
+  "description": "Sets the origin point of an object."
+}

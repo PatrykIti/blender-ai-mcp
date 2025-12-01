@@ -1,0 +1,23 @@
+{
+  "tool_name": "mesh_add_vertex",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["add vertex", "create vertex", "new vertex", "point"],
+  "sample_prompts": [
+    "add a vertex",
+    "create vertex at position",
+    "add new point",
+    "place vertex at origin"
+  ],
+  "parameters": {
+    "position": {
+      "type": "list[float]",
+      "required": true,
+      "description": "Position [x, y, z] for the new vertex"
+    }
+  },
+  "related_tools": ["mesh_add_edge_face", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Adds a single vertex at the specified position."
+}

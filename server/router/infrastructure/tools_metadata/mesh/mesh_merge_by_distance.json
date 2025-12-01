@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_merge_by_distance",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["merge", "weld", "remove doubles", "cleanup", "vertices", "distance"],
+  "sample_prompts": [
+    "merge vertices by distance",
+    "remove doubles",
+    "weld close vertices",
+    "cleanup overlapping vertices",
+    "merge nearby vertices"
+  ],
+  "parameters": {
+    "distance": {
+      "type": "float",
+      "default": 0.001,
+      "description": "Threshold distance for merging"
+    }
+  },
+  "related_tools": ["mesh_boolean", "mesh_extrude_region", "mesh_smooth"],
+  "patterns": [],
+  "description": "Merges vertices within threshold distance for geometry cleanup."
+}

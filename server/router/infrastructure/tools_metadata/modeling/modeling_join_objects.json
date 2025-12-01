@@ -1,0 +1,23 @@
+{
+  "tool_name": "modeling_join_objects",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["join", "merge", "combine", "unite", "objects"],
+  "sample_prompts": [
+    "join the objects",
+    "merge meshes together",
+    "combine objects into one",
+    "unite cubes"
+  ],
+  "parameters": {
+    "object_names": {
+      "type": "list[string]",
+      "required": true,
+      "description": "List of object names to join (last becomes active)"
+    }
+  },
+  "related_tools": ["mesh_boolean", "mesh_select", "modeling_separate_object"],
+  "patterns": [],
+  "description": "Joins multiple mesh objects into a single mesh."
+}

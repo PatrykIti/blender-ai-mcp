@@ -1,0 +1,24 @@
+{
+  "tool_name": "scene_clean_scene",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["clean", "clear", "reset", "fresh", "new scene"],
+  "sample_prompts": [
+    "clean the scene",
+    "clear all objects",
+    "start fresh",
+    "reset scene",
+    "delete everything"
+  ],
+  "parameters": {
+    "keep_lights_and_cameras": {
+      "type": "bool",
+      "default": true,
+      "description": "If false, deletes everything including lights/cameras"
+    }
+  },
+  "related_tools": ["scene_list_objects", "scene_delete_object"],
+  "patterns": [],
+  "description": "Deletes objects from the scene for a fresh start."
+}

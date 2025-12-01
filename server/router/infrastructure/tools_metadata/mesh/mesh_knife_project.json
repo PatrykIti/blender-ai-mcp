@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_knife_project",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["knife", "project", "cut", "logo", "panel lines", "decal"],
+  "sample_prompts": [
+    "project cut from view",
+    "knife project",
+    "cut logo shape",
+    "create panel lines",
+    "project geometry cut"
+  ],
+  "parameters": {
+    "cut_through": {
+      "type": "bool",
+      "default": true,
+      "description": "Cut through entire mesh"
+    }
+  },
+  "related_tools": ["mesh_bisect", "mesh_boolean"],
+  "patterns": ["phone_like:logo_cutout"],
+  "description": "Projects knife cut from selected geometry onto mesh."
+}

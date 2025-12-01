@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_extrude_region",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["extrude", "pull", "extend", "push", "outward", "geometry"],
+  "sample_prompts": [
+    "extrude the selected faces",
+    "pull out the top face",
+    "extend the geometry upward",
+    "extrude by 2 units",
+    "push the face out"
+  ],
+  "parameters": {
+    "move": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Translation vector [x, y, z] for extruded geometry"
+    }
+  },
+  "related_tools": ["mesh_inset", "mesh_bevel", "mesh_select"],
+  "patterns": ["phone_like:screen_cutout", "tower_like:height_extension"],
+  "description": "Extrudes selected geometry with optional movement vector."
+}

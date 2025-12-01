@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_shrink_fatten",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["shrink", "fatten", "inflate", "deflate", "normals", "thicken", "thin"],
+  "sample_prompts": [
+    "fatten the mesh",
+    "shrink the selection",
+    "inflate along normals",
+    "thicken the surface",
+    "push vertices outward"
+  ],
+  "parameters": {
+    "value": {
+      "type": "float",
+      "required": true,
+      "description": "Distance to move along normals (positive=outward, negative=inward)"
+    }
+  },
+  "related_tools": ["mesh_smooth", "mesh_select"],
+  "patterns": [],
+  "description": "Moves vertices along their normals (shrink/fatten)."
+}

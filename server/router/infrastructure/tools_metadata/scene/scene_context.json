@@ -1,0 +1,25 @@
+{
+  "tool_name": "scene_context",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["context", "mode", "selection", "state", "status"],
+  "sample_prompts": [
+    "what mode am I in",
+    "get current context",
+    "show selection",
+    "what is selected",
+    "check blender mode"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": ["mode", "selection"],
+      "required": true,
+      "description": "Context query type"
+    }
+  },
+  "related_tools": ["scene_set_mode", "scene_inspect"],
+  "patterns": [],
+  "description": "Quick context queries for scene state (mode or selection)."
+}

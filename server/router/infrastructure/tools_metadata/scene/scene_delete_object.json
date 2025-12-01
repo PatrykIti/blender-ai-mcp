@@ -1,0 +1,23 @@
+{
+  "tool_name": "scene_delete_object",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["delete", "remove", "object", "destroy"],
+  "sample_prompts": [
+    "delete the object",
+    "remove cube",
+    "delete selected object",
+    "destroy the mesh"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of object to delete"
+    }
+  },
+  "related_tools": ["scene_list_objects", "scene_clean_scene"],
+  "patterns": [],
+  "description": "Deletes an object from the scene by name."
+}

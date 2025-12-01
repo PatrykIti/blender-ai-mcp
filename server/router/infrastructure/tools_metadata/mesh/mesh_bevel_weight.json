@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_bevel_weight",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["bevel weight", "edge weight", "selective bevel", "modifier"],
+  "sample_prompts": [
+    "set bevel weight",
+    "add weight for bevel modifier",
+    "mark edges for beveling",
+    "control bevel modifier"
+  ],
+  "parameters": {
+    "weight": {
+      "type": "float",
+      "default": 1.0,
+      "range": [0.0, 1.0],
+      "description": "Bevel weight (0=no bevel, 1=full bevel)"
+    }
+  },
+  "related_tools": ["mesh_edge_crease", "modeling_add_modifier", "mesh_select_targeted"],
+  "patterns": ["phone_like:rounded_edges"],
+  "description": "Sets bevel weight on selected edges for Bevel modifier control."
+}
