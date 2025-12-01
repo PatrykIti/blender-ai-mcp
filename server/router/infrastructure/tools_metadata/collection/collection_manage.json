@@ -1,0 +1,18 @@
+{
+  "tool_name": "collection_manage",
+  "category": "collection",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["collection", "create", "delete", "rename", "move", "link", "unlink"],
+  "sample_prompts": ["create collection", "delete collection", "move object to collection", "link to collection"],
+  "parameters": {
+    "action": {"type": "enum", "options": ["create", "delete", "rename", "move_object", "link_object", "unlink_object"], "required": true},
+    "collection_name": {"type": "string", "required": true},
+    "new_name": {"type": "string", "default": null},
+    "parent_name": {"type": "string", "default": null},
+    "object_name": {"type": "string", "default": null}
+  },
+  "related_tools": ["collection_list", "collection_list_objects"],
+  "patterns": [],
+  "description": "Manages collections in the scene."
+}

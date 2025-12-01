@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_clay",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "clay", "build", "add"],
+  "sample_prompts": ["use clay brush", "add material", "build up surface"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_inflate", "sculpt_brush_draw"],
+  "patterns": [],
+  "description": "Sets up Clay brush for adding material."
+}

@@ -1,0 +1,17 @@
+{
+  "tool_name": "uv_pack_islands",
+  "category": "uv",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["pack", "uv", "islands", "optimize", "space"],
+  "sample_prompts": ["pack uv islands", "optimize uv layout", "reorganize uvs"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "margin": {"type": "float", "default": 0.02},
+    "rotate": {"type": "bool", "default": true},
+    "scale": {"type": "bool", "default": true}
+  },
+  "related_tools": ["uv_unwrap", "uv_list_maps"],
+  "patterns": [],
+  "description": "Packs UV islands for optimal texture space usage."
+}

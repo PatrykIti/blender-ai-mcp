@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_blob",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "blob", "bump", "organic"],
+  "sample_prompts": ["create blob", "add bump", "make organic bulge"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_inflate", "sculpt_brush_clay"],
+  "patterns": [],
+  "description": "Sets up Blob brush for creating rounded organic bulges."
+}

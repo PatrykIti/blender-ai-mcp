@@ -1,0 +1,14 @@
+{
+  "tool_name": "curve_to_mesh",
+  "category": "curve",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["curve", "mesh", "convert", "bake"],
+  "sample_prompts": ["convert curve to mesh", "bake curve", "make curve editable"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true}
+  },
+  "related_tools": ["curve_create", "modeling_convert_to_mesh"],
+  "patterns": [],
+  "description": "Converts a curve object to mesh geometry."
+}

@@ -1,0 +1,15 @@
+{
+  "tool_name": "uv_list_maps",
+  "category": "uv",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "uv", "maps", "texture", "coordinates"],
+  "sample_prompts": ["list uv maps", "show uv layers", "what uv maps exist"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "include_island_counts": {"type": "bool", "default": false}
+  },
+  "related_tools": ["uv_unwrap", "uv_pack_islands"],
+  "patterns": [],
+  "description": "Lists UV maps on a mesh object."
+}

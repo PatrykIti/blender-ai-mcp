@@ -1,0 +1,17 @@
+{
+  "tool_name": "lattice_edit_point",
+  "category": "lattice",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["lattice", "point", "edit", "move", "deform"],
+  "sample_prompts": ["move lattice point", "edit lattice", "deform with lattice"],
+  "parameters": {
+    "lattice_name": {"type": "string", "required": true},
+    "point_index": {"type": "int", "required": true},
+    "offset": {"type": "array", "required": true},
+    "relative": {"type": "bool", "default": true}
+  },
+  "related_tools": ["lattice_create", "lattice_bind"],
+  "patterns": ["tower_like:taper"],
+  "description": "Moves lattice control points to deform bound objects."
+}

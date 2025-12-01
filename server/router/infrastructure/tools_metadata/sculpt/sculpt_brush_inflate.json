@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_inflate",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "inflate", "expand", "swell"],
+  "sample_prompts": ["inflate surface", "expand area", "swell geometry"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_clay", "sculpt_brush_blob"],
+  "patterns": [],
+  "description": "Sets up Inflate brush for pushing geometry outward."
+}

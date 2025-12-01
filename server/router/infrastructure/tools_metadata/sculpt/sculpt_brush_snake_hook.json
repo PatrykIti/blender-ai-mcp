@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_snake_hook",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "snake", "hook", "pull", "tendril"],
+  "sample_prompts": ["pull tendrils", "snake hook", "create protrusion"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_grab", "sculpt_enable_dyntopo"],
+  "patterns": [],
+  "description": "Sets up Snake Hook brush for pulling geometry like taffy."
+}

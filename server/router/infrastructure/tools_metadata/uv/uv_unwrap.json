@@ -1,0 +1,18 @@
+{
+  "tool_name": "uv_unwrap",
+  "category": "uv",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["unwrap", "uv", "texture", "project", "smart"],
+  "sample_prompts": ["unwrap the mesh", "create uv map", "smart project", "uv unwrap"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "method": {"type": "enum", "options": ["SMART_PROJECT", "CUBE", "CYLINDER", "SPHERE", "UNWRAP"], "default": "SMART_PROJECT"},
+    "angle_limit": {"type": "float", "default": 66.0},
+    "island_margin": {"type": "float", "default": 0.02},
+    "scale_to_bounds": {"type": "bool", "default": true}
+  },
+  "related_tools": ["uv_pack_islands", "uv_create_seam"],
+  "patterns": [],
+  "description": "Unwraps selected faces to UV space."
+}

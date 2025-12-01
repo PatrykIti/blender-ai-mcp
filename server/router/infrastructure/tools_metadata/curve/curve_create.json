@@ -1,0 +1,15 @@
+{
+  "tool_name": "curve_create",
+  "category": "curve",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["curve", "bezier", "nurbs", "path", "circle", "spline"],
+  "sample_prompts": ["create a curve", "add bezier curve", "create circle curve", "make path"],
+  "parameters": {
+    "curve_type": {"type": "enum", "options": ["BEZIER", "NURBS", "PATH", "CIRCLE"], "default": "BEZIER"},
+    "location": {"type": "array", "default": null}
+  },
+  "related_tools": ["curve_to_mesh", "modeling_convert_to_mesh"],
+  "patterns": [],
+  "description": "Creates a curve primitive object."
+}
