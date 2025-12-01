@@ -388,26 +388,28 @@ Skeletal rigging and animation (future).
 
 ---
 
-### 🤖 Router Supervisor (Planned)
+### 🤖 Router Supervisor (In Progress)
 
 Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
-#### Phase 1: Foundation & Infrastructure
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Router Directory Structure | Clean Architecture package structure | 🚧 |
-| Domain Entities | InterceptedToolCall, SceneContext, Pattern | 🚧 |
-| Domain Interfaces | Abstract interfaces for all components | 🚧 |
-| Metadata Loader | Tool definitions from JSON | 🚧 |
-| Configuration System | Router behavior settings | 🚧 |
+**Progress:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🚧 | Phase 4 🚧 | Phase 5 🚧 | **191 unit tests**
 
-#### Phase 2: Scene Analysis
+#### Phase 1: Foundation & Infrastructure ✅
 | Component | Description | Status |
 |-----------|-------------|--------|
-| Tool Interceptor | Capture all LLM tool calls | 🚧 |
-| Scene Context Analyzer | Read Blender state via RPC | 🚧 |
-| Geometry Pattern Detector | Detect tower/phone/table patterns | 🚧 |
-| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | 🚧 |
+| Router Directory Structure | Clean Architecture package structure | ✅ |
+| Domain Entities | InterceptedToolCall, SceneContext, Pattern | ✅ |
+| Domain Interfaces | Abstract interfaces for all components | ✅ |
+| Metadata Loader | Tool definitions from JSON (119 files) | ✅ |
+| Configuration System | Router behavior settings | ✅ |
+
+#### Phase 2: Scene Analysis ✅
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Tool Interceptor | Capture all LLM tool calls | ✅ |
+| Scene Context Analyzer | Read Blender state via RPC | ✅ |
+| Geometry Pattern Detector | Detect tower/phone/table patterns | ✅ |
+| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | ✅ |
 
 #### Phase 3: Tool Processing Engines
 | Component | Description | Status |

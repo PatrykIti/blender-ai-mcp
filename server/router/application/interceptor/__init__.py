@@ -4,4 +4,6 @@ Tool Interceptor Module.
 Captures all LLM tool calls before execution.
 """
 
-# Will be populated in TASK-039-6
+from server.router.application.interceptor.tool_interceptor import ToolInterceptor
+
+__all__ = ["ToolInterceptor"]
