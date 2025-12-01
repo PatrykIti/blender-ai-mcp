@@ -6,5 +6,6 @@ LLM tool calls before execution.
 """
 
 from server.router.infrastructure.config import RouterConfig
+from server.router.application.router import SupervisorRouter
 
-__all__ = ["RouterConfig"]
+__all__ = ["RouterConfig", "SupervisorRouter"]

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [70](./70-2025-12-01-router-supervisor-router.md) | 2025-12-01 | **Router SupervisorRouter Core (TASK-039-16)** | - |
 | [69](./69-2025-12-01-router-intent-classifier.md) | 2025-12-01 | **Router Intent Classifier (TASK-039-15)** | - |
 | [68](./68-2025-12-01-router-error-firewall.md) | 2025-12-01 | **Router Error Firewall (TASK-039-14)** | - |
 | [67](./67-2025-12-01-router-workflow-expansion-engine.md) | 2025-12-01 | **Router Workflow Expansion Engine (TASK-039-13)** | - |

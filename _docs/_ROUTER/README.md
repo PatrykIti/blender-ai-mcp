@@ -50,7 +50,7 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **Workflow Expansion Engine** | 1 tool → N tools | ✅ Done |
 | **Error Firewall** | Block invalid operations | ✅ Done |
 | **Intent Classifier** | Offline intent matching (LaBSE) | ✅ Done |
-| **SupervisorRouter** | Main orchestrator | 🚧 To Do |
+| **SupervisorRouter** | Main orchestrator | ✅ Done |
 
 ---
 
