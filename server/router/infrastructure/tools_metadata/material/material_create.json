@@ -1,0 +1,18 @@
+{
+  "tool_name": "material_create",
+  "category": "material",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["create", "material", "new", "pbr", "color"],
+  "sample_prompts": ["create a material", "make new material", "create red material", "add metallic material"],
+  "parameters": {
+    "name": {"type": "string", "required": true},
+    "base_color": {"type": "array", "default": [0.8, 0.8, 0.8, 1.0]},
+    "metallic": {"type": "float", "default": 0.0, "range": [0.0, 1.0]},
+    "roughness": {"type": "float", "default": 0.5, "range": [0.0, 1.0]},
+    "alpha": {"type": "float", "default": 1.0, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["material_assign", "material_set_params"],
+  "patterns": [],
+  "description": "Creates a new PBR material with Principled BSDF."
+}

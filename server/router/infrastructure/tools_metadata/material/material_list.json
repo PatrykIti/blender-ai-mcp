@@ -1,0 +1,14 @@
+{
+  "tool_name": "material_list",
+  "category": "material",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "materials", "show", "all"],
+  "sample_prompts": ["list all materials", "show materials", "what materials exist"],
+  "parameters": {
+    "include_unassigned": {"type": "bool", "default": true}
+  },
+  "related_tools": ["material_create", "material_assign"],
+  "patterns": [],
+  "description": "Lists materials with shader parameters and assignment counts."
+}
