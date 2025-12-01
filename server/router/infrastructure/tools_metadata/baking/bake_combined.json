@@ -1,0 +1,21 @@
+{
+  "tool_name": "bake_combined",
+  "category": "baking",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bake", "combined", "render", "lightmap", "full"],
+  "sample_prompts": ["bake combined render", "create lightmap", "bake full appearance"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "output_path": {"type": "string", "required": true},
+    "resolution": {"type": "int", "default": 1024},
+    "samples": {"type": "int", "default": 128},
+    "margin": {"type": "int", "default": 16},
+    "use_pass_direct": {"type": "bool", "default": true},
+    "use_pass_indirect": {"type": "bool", "default": true},
+    "use_pass_color": {"type": "bool", "default": true}
+  },
+  "related_tools": ["bake_normal_map", "bake_ao"],
+  "patterns": [],
+  "description": "Bakes combined render to texture file."
+}

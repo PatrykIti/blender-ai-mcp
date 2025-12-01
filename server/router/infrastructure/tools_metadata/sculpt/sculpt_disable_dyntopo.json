@@ -1,0 +1,14 @@
+{
+  "tool_name": "sculpt_disable_dyntopo",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["dyntopo", "disable", "off", "topology"],
+  "sample_prompts": ["disable dyntopo", "turn off dynamic topology"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null}
+  },
+  "related_tools": ["sculpt_enable_dyntopo", "mesh_remesh_voxel"],
+  "patterns": [],
+  "description": "Disables Dynamic Topology."
+}

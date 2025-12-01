@@ -1,0 +1,17 @@
+{
+  "tool_name": "sculpt_enable_dyntopo",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["dyntopo", "dynamic", "topology", "detail", "sculpt"],
+  "sample_prompts": ["enable dyntopo", "turn on dynamic topology", "automatic detail"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "detail_mode": {"type": "enum", "options": ["RELATIVE", "CONSTANT", "BRUSH", "MANUAL"], "default": "RELATIVE"},
+    "detail_size": {"type": "float", "default": 12.0},
+    "use_smooth_shading": {"type": "bool", "default": true}
+  },
+  "related_tools": ["sculpt_disable_dyntopo", "sculpt_dyntopo_flood_fill"],
+  "patterns": [],
+  "description": "Enables Dynamic Topology for automatic geometry addition."
+}

@@ -1,0 +1,17 @@
+{
+  "tool_name": "bake_diffuse",
+  "category": "baking",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bake", "diffuse", "albedo", "color", "texture"],
+  "sample_prompts": ["bake diffuse map", "create albedo texture", "bake color"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "output_path": {"type": "string", "required": true},
+    "resolution": {"type": "int", "default": 1024},
+    "margin": {"type": "int", "default": 16}
+  },
+  "related_tools": ["bake_normal_map", "bake_combined"],
+  "patterns": [],
+  "description": "Bakes diffuse/albedo color to texture file."
+}

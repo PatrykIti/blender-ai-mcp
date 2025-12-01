@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_draw",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "draw", "basic", "push", "pull"],
+  "sample_prompts": ["use draw brush", "basic sculpting", "push pull surface"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_clay", "sculpt_brush_smooth"],
+  "patterns": [],
+  "description": "Sets up Draw brush for basic sculpting."
+}

@@ -1,0 +1,16 @@
+{
+  "tool_name": "sculpt_brush_pinch",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "pinch", "narrow", "sharp"],
+  "sample_prompts": ["pinch geometry", "narrow area", "create sharp edge"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_crease", "sculpt_brush_draw"],
+  "patterns": [],
+  "description": "Sets up Pinch brush for pulling geometry toward center."
+}
