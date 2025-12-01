@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [58](./58-2025-12-01-router-domain-interfaces.md) | 2025-12-01 | **Router Domain Interfaces (TASK-039-3)** | - |
 | [57](./57-2025-12-01-router-domain-entities.md) | 2025-12-01 | **Router Domain Entities (TASK-039-2)** | - |
 | [56](./56-2025-12-01-router-directory-structure.md) | 2025-12-01 | **Router Directory Structure (TASK-039-1)** | - |
 | [55](./55-2025-11-30-lattice-deformation.md) | 2025-11-30 | **Lattice Deformation Tools (TASK-033)** | 1.28.0 |
