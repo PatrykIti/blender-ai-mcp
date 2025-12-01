@@ -1,0 +1,31 @@
+{
+  "tool_name": "mesh_extrude",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["extrude", "pull", "extend", "push", "outward"],
+  "sample_prompts": [
+    "extrude the selected faces",
+    "pull out the top face",
+    "extend the geometry upward",
+    "push the face outward",
+    "extrude by 1 unit"
+  ],
+  "parameters": {
+    "value": {
+      "type": "float",
+      "default": 0.0,
+      "range": [-100.0, 100.0],
+      "description": "Extrusion distance"
+    },
+    "direction": {
+      "type": "enum",
+      "options": ["NORMAL", "X", "Y", "Z"],
+      "default": "NORMAL",
+      "description": "Extrusion direction"
+    }
+  },
+  "related_tools": ["mesh_inset", "mesh_bevel", "mesh_select"],
+  "patterns": ["phone_like:screen_cutout", "tower_like:height_extension"],
+  "description": "Extrudes selected geometry along normals or a specified axis."
+}

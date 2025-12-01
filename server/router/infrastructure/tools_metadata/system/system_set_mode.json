@@ -1,0 +1,25 @@
+{
+  "tool_name": "system_set_mode",
+  "category": "system",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["mode", "switch", "edit mode", "object mode", "sculpt mode", "change mode"],
+  "sample_prompts": [
+    "switch to edit mode",
+    "go to object mode",
+    "enter sculpt mode",
+    "change to edit mode",
+    "set mode to object"
+  ],
+  "parameters": {
+    "mode": {
+      "type": "enum",
+      "options": ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT"],
+      "required": true,
+      "description": "Target mode to switch to"
+    }
+  },
+  "related_tools": [],
+  "patterns": [],
+  "description": "Switches Blender between different editing modes."
+}

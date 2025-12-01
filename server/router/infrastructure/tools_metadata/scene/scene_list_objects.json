@@ -1,0 +1,25 @@
+{
+  "tool_name": "scene_list_objects",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "objects", "show", "display", "what objects", "scene contents"],
+  "sample_prompts": [
+    "list all objects",
+    "show me the objects in the scene",
+    "what objects are there",
+    "display scene contents",
+    "list objects"
+  ],
+  "parameters": {
+    "filter_type": {
+      "type": "enum",
+      "options": ["ALL", "MESH", "CURVE", "LIGHT", "CAMERA", "EMPTY"],
+      "default": "ALL",
+      "description": "Filter by object type"
+    }
+  },
+  "related_tools": ["scene_inspect", "scene_delete_object"],
+  "patterns": [],
+  "description": "Lists all objects in the current Blender scene."
+}

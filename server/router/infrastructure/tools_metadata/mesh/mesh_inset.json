@@ -1,0 +1,36 @@
+{
+  "tool_name": "mesh_inset",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["inset", "inner face", "shrink face", "frame"],
+  "sample_prompts": [
+    "inset the face",
+    "create an inner face",
+    "shrink the selected face",
+    "add frame to face",
+    "inset faces by 0.1"
+  ],
+  "parameters": {
+    "thickness": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 10.0],
+      "description": "Inset thickness"
+    },
+    "depth": {
+      "type": "float",
+      "default": 0.0,
+      "range": [-10.0, 10.0],
+      "description": "Inset depth"
+    },
+    "use_boundary": {
+      "type": "bool",
+      "default": true,
+      "description": "Inset face boundaries"
+    }
+  },
+  "related_tools": ["mesh_extrude", "mesh_bevel"],
+  "patterns": ["phone_like:screen_area"],
+  "description": "Insets selected faces, creating new faces around the edges."
+}
