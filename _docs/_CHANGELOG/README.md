@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [56](./56-2025-12-01-router-directory-structure.md) | 2025-12-01 | **Router Directory Structure (TASK-039-1)** | - |
 | [55](./55-2025-11-30-lattice-deformation.md) | 2025-11-30 | **Lattice Deformation Tools (TASK-033)** | 1.28.0 |
 | [54](./54-2025-11-30-organic-modeling-tools.md) | 2025-11-30 | **Organic Modeling Tools (TASK-038)** | 1.27.0 |
 | [53](./53-2025-11-30-import-tools.md) | 2025-11-30 | **Import Tools (TASK-035)** | 1.26.0 |
