@@ -157,8 +157,8 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.debug(
-            f"Intercepted: {tool_name} with params={json.dumps(params, default=str)}"
+        self.logger.info(
+            f"[ROUTER] Intercepted: {tool_name} params={json.dumps(params, default=str)}"
         )
 
     def log_context_analyzed(
@@ -187,8 +187,8 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.debug(
-            f"Context: mode={mode}, active={active_object}, "
+        self.logger.info(
+            f"[ROUTER] Context: mode={mode}, active={active_object}, "
             f"selection={has_selection}, objects={object_count}"
         )
 
@@ -216,7 +216,7 @@ class RouterLogger:
         self._add_event(event)
 
         self.logger.info(
-            f"Pattern detected: {pattern_name} (confidence={confidence:.2f})"
+            f"[ROUTER] Pattern: {pattern_name} (confidence={confidence:.2f})"
         )
 
     def log_correction(
@@ -245,7 +245,7 @@ class RouterLogger:
         self._add_event(event)
 
         self.logger.info(
-            f"Corrections applied to {original_tool}: {', '.join(corrections)}"
+            f"[ROUTER] Correction: {original_tool} → {', '.join(corrections)}"
         )
 
     def log_override(
@@ -275,8 +275,7 @@ class RouterLogger:
 
         replacement_names = [t.get("tool", "unknown") for t in replacement_tools]
         self.logger.info(
-            f"Override: {original_tool} → {', '.join(replacement_names)} "
-            f"(reason: {reason})"
+            f"[ROUTER] Override: {original_tool} → {', '.join(replacement_names)} ({reason})"
         )
 
     def log_workflow_expanded(
@@ -305,7 +304,7 @@ class RouterLogger:
         self._add_event(event)
 
         self.logger.info(
-            f"Workflow expanded: {workflow_name} ({step_count} steps)"
+            f"[ROUTER] Workflow: {workflow_name} ({step_count} steps)"
         )
 
     def log_firewall(
@@ -336,8 +335,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        log_level = logging.WARNING if action == "block" else logging.DEBUG
-        self.logger.log(log_level, f"Firewall: {tool_name} → {action}: {message}")
+        self.logger.info(f"[ROUTER] Firewall: {tool_name} → {action}: {message}")
 
     def log_execution_complete(
         self,
@@ -367,8 +365,7 @@ class RouterLogger:
 
         status = "OK" if success else "FAILED"
         self.logger.info(
-            f"Execution complete: {original_tool} → "
-            f"{len(executed_tools)} tools ({duration_ms:.1f}ms) [{status}]"
+            f"[ROUTER] Done: {original_tool} → {len(executed_tools)} tools ({duration_ms:.1f}ms) [{status}]"
         )
 
     def log_error(
@@ -396,7 +393,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.error(f"Error in {tool_name}: {error}")
+        self.logger.error(f"[ROUTER] Error: {tool_name}: {error}")
 
     def get_events(
         self,
