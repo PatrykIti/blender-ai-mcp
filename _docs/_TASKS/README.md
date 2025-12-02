@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks (~50 sub-tasks)
+- **To Do:** 5 tasks (~40 sub-tasks)
 - **In Progress:** 0
-- **Done:** 100
+- **Done:** 101
 
 ---
 
@@ -15,7 +15,6 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor** | 🔴 High | 24 sub-tasks: interceptor, analyzers, engines, workflows |
-| [TASK-040](./TASK-040_Router_E2E_Test_Coverage_Extension.md) | **Router E2E Test Coverage** | 🟡 Medium | 10 sub-tasks: firewall, override, classifier, edge cases |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
@@ -45,6 +44,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-040](./TASK-040_Router_E2E_Test_Coverage_Extension.md) | **Router E2E Test Coverage Extension** | 🟡 Medium | 2025-12-02 |
 | [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | 2025-11-30 |
 | [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | 2025-11-30 |
 | [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |

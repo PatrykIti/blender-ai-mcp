@@ -1,6 +1,6 @@
 # TASK-040: Router E2E Test Coverage Extension
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
 **Category:** Testing / Quality Assurance
 **Estimated Sub-Tasks:** 10
@@ -314,18 +314,18 @@ class TestRouterConfiguration:
 
 ## Acceptance Criteria
 
-1. ✅ Wszystkie nowe testy przechodzą
-2. ✅ Każda reguła Error Firewall ma test
-3. ✅ Każda reguła Tool Override ma test
-4. ✅ Intent Classifier testowany dla PL i EN
-5. ✅ Edge cases nie powodują crashów
-6. ✅ Łączne pokrycie testów E2E > 55
+1. ✅ All new tests pass (74 E2E tests passing)
+2. ✅ Each Error Firewall rule has a test (8 rules covered)
+3. ✅ Each Tool Override rule has a test (3 rules covered)
+4. ✅ Intent Classifier tested for PL, EN, and DE
+5. ✅ Edge cases don't cause crashes (15 edge case tests)
+6. ✅ Total E2E test coverage > 55 (74 tests)
 
 ---
 
 ## Documentation Updates
 
-Po zakończeniu:
-- [ ] `_docs/_CHANGELOG/79-YYYY-MM-DD-router-e2e-coverage.md` - changelog
-- [ ] `_docs/_TASKS/README.md` - update status
-- [ ] `_docs/_ROUTER/README.md` - update test coverage info
+Completed:
+- [x] `_docs/_CHANGELOG/79-2025-12-02-router-e2e-coverage-extension.md` - changelog
+- [x] `_docs/_TASKS/README.md` - status updated
+- [x] `_docs/_ROUTER/IMPLEMENTATION/00-tests-structure.md` - test coverage documentation
