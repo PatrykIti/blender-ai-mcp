@@ -24,6 +24,9 @@ class TestModeCorrection:
         # Ensure we're in OBJECT mode
         rpc_client.send_request("system.set_mode", {"mode": "OBJECT"})
 
+        # Invalidate router's scene context cache to get fresh state
+        router.invalidate_cache()
+
         # LLM tries to extrude without switching to EDIT mode
         tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 
@@ -31,7 +34,7 @@ class TestModeCorrection:
         tool_names = [t["tool"] for t in tools]
 
         # Should have mode switch
-        assert "system_set_mode" in tool_names, "Router should add mode switch"
+        assert "system_set_mode" in tool_names, f"Router should add mode switch, got: {tool_names}"
 
         # Mode switch should come before extrude
         mode_idx = tool_names.index("system_set_mode")
@@ -44,6 +47,9 @@ class TestModeCorrection:
         rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
 
+        # Invalidate router's scene context cache to get fresh state
+        router.invalidate_cache()
+
         # LLM tries to add modifier while in EDIT mode
         tools = router.process_llm_tool_call(
             "modeling_add_modifier",
@@ -52,7 +58,7 @@ class TestModeCorrection:
 
         # Router should add mode switch to OBJECT
         tool_names = [t["tool"] for t in tools]
-        assert "system_set_mode" in tool_names
+        assert "system_set_mode" in tool_names, f"Expected mode switch for EDIT->OBJECT, got: {tool_names}"
 
 
 class TestParameterClamping:

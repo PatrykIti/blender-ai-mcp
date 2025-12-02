@@ -70,7 +70,7 @@ class TestFullPipeline:
     def test_pipeline_telemetry(self, router, rpc_client, clean_scene):
         """Test: Pipeline generates telemetry events."""
         logger = get_router_logger()
-        logger.clear()
+        logger.clear_events()  # Method is clear_events(), not clear()
 
         # Create and process
         rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
@@ -81,8 +81,8 @@ class TestFullPipeline:
         events = logger.get_events()
         assert len(events) > 0, "Should have logged events"
 
-        # Check for intercept event
-        event_types = [e.event_type.value for e in events]
+        # Check for intercept event (events are dicts with 'event_type' key)
+        event_types = [e["event_type"] for e in events]
         assert "intercept" in event_types, "Should have intercept event"
 
 
