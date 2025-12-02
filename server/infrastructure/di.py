@@ -1,3 +1,4 @@
+from typing import Optional
 from server.adapters.rpc.client import RpcClient
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -92,4 +93,53 @@ def get_lattice_handler() -> ILatticeTool:
     rpc = get_rpc_client()
     return LatticeToolHandler(rpc)
 
+
+# --- Router Supervisor ---
+
+_router_instance = None
+
+def get_router():
+    """Provider for SupervisorRouter. Singleton with lazy initialization.
+
+    Returns None if router is disabled in config.
+    """
+    global _router_instance
+    config = get_config()
+
+    if not config.ROUTER_ENABLED:
+        return None
+
+    if _router_instance is None:
+        from server.router.application.router import SupervisorRouter
+        from server.router.infrastructure.config import RouterConfig
+        from server.router.infrastructure.metadata_loader import MetadataLoader
+
+        router_config = RouterConfig(
+            log_decisions=config.ROUTER_LOG_DECISIONS,
+        )
+        _router_instance = SupervisorRouter(
+            config=router_config,
+            rpc_client=get_rpc_client(),
+        )
+
+        # Load tool metadata for intent classification
+        try:
+            loader = MetadataLoader()
+            metadata = loader.load_all()
+            # Convert ToolMetadata objects to dicts for classifier
+            metadata_dicts = {
+                name: tool.to_dict() for name, tool in metadata.items()
+            }
+            _router_instance.load_tool_metadata(metadata_dicts)
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to load tool metadata for router: {e}")
+
+    return _router_instance
+
+
+def is_router_enabled() -> bool:
+    """Check if router is enabled in config."""
+    config = get_config()
+    return config.ROUTER_ENABLED
 

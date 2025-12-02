@@ -23,6 +23,11 @@ RUN poetry config virtualenvs.create false
 # Install dependencies
 RUN poetry install --no-interaction --no-ansi --no-root
 
+# Pre-download LaBSE model for fast router startup (~1.2GB)
+# This avoids 60-70s download delay on every container start
+ENV HF_HOME=/app/.cache/huggingface
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/LaBSE')"
+
 # Copy the rest of the application
 COPY server /app/server
 
@@ -32,6 +37,7 @@ COPY server /app/server
 ENV BLENDER_RPC_HOST=host.docker.internal
 ENV BLENDER_RPC_PORT=8765
 ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
 # Run the server
 CMD ["python", "-m", "server.main"]
