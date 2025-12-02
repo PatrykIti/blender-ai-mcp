@@ -31,6 +31,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 21 | `21-workflow-registry.md` | Workflow Registry | TASK-039-20 | ✅ |
 | 22 | `22-custom-workflow-loader.md` | Custom Workflow Loader | TASK-039-22 | ✅ |
 | 23 | `23-yaml-workflow-integration.md` | YAML Integration & Clean Architecture | TASK-041 P-1, P0 | ✅ |
+| 24 | `24-workflow-triggerer-integration.md` | WorkflowTriggerer Integration | TASK-041 P1 | ✅ |
 
 ---
 
@@ -75,7 +76,7 @@ Phase 6: Testing & Documentation ✅
 
 Phase 7: YAML Workflow Integration (TASK-041) 🚧
   ├─ 23-yaml-workflow-integration.md ✅ (Phase -1, P0)
-  ├─ WorkflowTriggerer Integration (P1) 🚧
+  ├─ 24-workflow-triggerer-integration.md ✅ (P1)
   ├─ Expression Evaluator (P2) 🚧
   ├─ Condition Evaluator (P3) 🚧
   └─ Proportion Resolver (P4) 🚧

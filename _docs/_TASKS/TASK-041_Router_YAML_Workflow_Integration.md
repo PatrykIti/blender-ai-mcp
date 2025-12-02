@@ -1,6 +1,6 @@
 # TASK-041: Router YAML Workflow Integration
 
-**Status:** 🟡 In Progress
+**Status:** 🟡 In Progress (Phase -1, P0, P1 ✅)
 **Priority:** 🔴 High
 **Category:** Router Enhancement
 **Estimated Sub-Tasks:** 18
@@ -262,10 +262,10 @@ Tool docstring contains:
 - `tests/e2e/router/test_goal_workflow_trigger.py`
 
 **Acceptance Criteria:**
-- [ ] `router_set_goal("phone")` sets goal and finds `phone_workflow`
-- [ ] `router_get_status()` shows current goal
-- [ ] LLM receives clear feedback about matched workflow
-- [ ] Goal persists across subsequent tool calls in session
+- [x] `router_set_goal("phone")` sets goal and finds `phone_workflow`
+- [x] `router_get_status()` shows current goal
+- [x] LLM receives clear feedback about matched workflow
+- [x] Goal persists across subsequent tool calls in session
 
 ---
 
@@ -383,9 +383,9 @@ class WorkflowRegistry:
 - `tests/unit/router/workflows/test_registry_yaml_integration.py`
 
 **Acceptance Criteria:**
-- [ ] `WorkflowRegistry.load_custom_workflows()` loads all YAML from `workflows/custom/`
-- [ ] `find_by_keywords("table")` returns `"table_workflow"` from YAML
-- [ ] YAML workflows are available via `expand_workflow()`
+- [x] `WorkflowRegistry.load_custom_workflows()` loads all YAML from `workflows/custom/`
+- [x] `find_by_keywords("table")` returns `"table_workflow"` from YAML
+- [x] YAML workflows are available via `expand_workflow()`
 
 ---
 
@@ -466,9 +466,9 @@ class WorkflowExpansionEngine(IExpansionEngine):
 - Update `tests/unit/router/application/test_workflow_expansion_engine.py`
 
 **Acceptance Criteria:**
-- [ ] `WorkflowExpansionEngine` uses `WorkflowRegistry` as single source
-- [ ] Old `PREDEFINED_WORKFLOWS` dict removed
-- [ ] All existing tests pass with new implementation
+- [x] `WorkflowExpansionEngine` uses `WorkflowRegistry` as single source
+- [x] Old `PREDEFINED_WORKFLOWS` dict removed
+- [x] All existing tests pass with new implementation
 
 ---
 
@@ -522,13 +522,13 @@ class WorkflowLoader:
 ```
 
 **Acceptance Criteria:**
-- [ ] Router loads YAML workflows automatically on startup
-- [ ] Missing `workflows/custom/` directory is created
-- [ ] Log message shows number of loaded workflows
+- [x] Router loads YAML workflows automatically on startup
+- [x] Missing `workflows/custom/` directory is created
+- [x] Log message shows number of loaded workflows
 
 ---
 
-## Phase 1: Auto-Triggering Workflows (P1)
+## Phase 1: Auto-Triggering Workflows (P1) ✅
 
 ### TASK-041-4: Create WorkflowTriggerer Component
 
@@ -672,13 +672,13 @@ class WorkflowTriggerer(IWorkflowTriggerer):
 - `tests/unit/router/application/test_workflow_triggerer.py`
 
 **Acceptance Criteria:**
-- [ ] `WorkflowTriggerer` checks prompt keywords first
-- [ ] Falls back to pattern matching
-- [ ] Integrates with `WorkflowRegistry.find_by_keywords()`
+- [x] `WorkflowTriggerer` checks prompt keywords first
+- [x] Falls back to pattern matching
+- [x] Integrates with `WorkflowRegistry.find_by_keywords()`
 
 ---
 
-### TASK-041-5: Integrate WorkflowTriggerer into SupervisorRouter
+### TASK-041-5: Integrate WorkflowTriggerer into SupervisorRouter ✅
 
 **Priority:** 🔴 High (P1)
 **Layer:** Application
@@ -764,13 +764,13 @@ class SupervisorRouter:
 ```
 
 **Acceptance Criteria:**
-- [ ] Workflow triggering happens before override check
-- [ ] Triggered workflows bypass override engine
-- [ ] Logging shows workflow trigger reason
+- [x] Workflow triggering happens before override check
+- [x] Triggered workflows bypass override engine
+- [x] Logging shows workflow trigger reason
 
 ---
 
-### TASK-041-6: Add Workflow Trigger Logging
+### TASK-041-6: Add Workflow Trigger Logging ✅
 
 **Priority:** 🟡 Medium (P1)
 **Layer:** Infrastructure
