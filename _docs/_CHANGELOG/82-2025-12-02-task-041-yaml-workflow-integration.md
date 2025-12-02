@@ -22,18 +22,20 @@ WorkflowExpansionEngine ◀── uses hardcoded PREDEFINED_WORKFLOWS dict
 
 | Phase | Tasks | Priority | Est. Time |
 |-------|-------|----------|-----------|
+| **Phase -1: Intent Source** | 2 tasks | 🔴 Critical | 2h |
 | **P0: Connect YAML** | 3 tasks | 🔴 High | 2.5h |
 | **P1: Auto-Trigger** | 3 tasks | 🔴 High | 3.5h |
 | **P2: Expressions** | 3 tasks | 🟡 Medium | 3.5h |
 | **P3: Conditions** | 3 tasks | 🟡 Medium | 3.5h |
 | **P4: Proportions** | 2 tasks | 🟢 Low | 1.5h |
 | **Testing/Docs** | 2 tasks | 🟡 Medium | 3h |
-| **TOTAL** | **16 tasks** | | **~17.5h** |
+| **TOTAL** | **18 tasks** | | **~19.5h** |
 
 ## New Components to Create
 
 | Component | Purpose |
 |-----------|---------|
+| `router_set_goal` MCP tool | **CRITICAL** - LLM tells router what it's building (e.g., "smartphone") |
 | `WorkflowTriggerer` | Determines when to trigger workflows (keywords, patterns, tools) |
 | `ExpressionEvaluator` | Evaluates `$CALCULATE(...)` expressions safely |
 | `ConditionEvaluator` | Evaluates boolean conditions for step execution |

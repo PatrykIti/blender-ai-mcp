@@ -3,7 +3,7 @@
 **Status:** 🟡 In Progress
 **Priority:** 🔴 High
 **Category:** Router Enhancement
-**Estimated Sub-Tasks:** 16
+**Estimated Sub-Tasks:** 18
 **Parent Task:** TASK-039 (Router Supervisor Implementation)
 **Created:** 2025-12-02
 
@@ -77,6 +77,247 @@ Integrate YAML-based custom workflows into the Router Supervisor system. Current
                     │   (loads YAML at startup)            │
                     └──────────────────────────────────────┘
 ```
+
+---
+
+## Phase -1: Intent Source (PREREQUISITE)
+
+**Problem:** Router nie ma dostępu do oryginalnego prompta użytkownika. FastMCP `Context` nie udostępnia conversation history.
+
+**Rozwiązanie:** Dedykowany MCP tool `router_set_goal` + heurystyki jako fallback.
+
+### TASK-041-0: Create `router_set_goal` MCP Tool
+
+**Priority:** 🔴 Critical (PREREQUISITE)
+**Layer:** Adapters (MCP)
+**Estimated Time:** 1h
+
+**Problem:** Router nie wie co user chce zbudować. LLM wywołuje `modeling_create_primitive(CUBE)` ale router nie wie czy to telefon, dom, czy stół.
+
+**Solution:** Dodać tool który LLM **MUSI** wywołać jako pierwszy przy modelowaniu.
+
+**Files to Create/Modify:**
+
+| File | Change |
+|------|--------|
+| `server/adapters/mcp/areas/router.py` | **NEW** - router tools (set_goal, get_status) |
+| `server/router/application/router.py` | Add `set_current_goal()`, `get_current_goal()` |
+| `server/adapters/mcp/instance.py` | Import router area |
+
+**Code:**
+
+```python
+# server/adapters/mcp/areas/router.py
+
+from typing import Optional
+from fastmcp import Context
+from server.adapters.mcp.instance import mcp
+from server.infrastructure.di import get_router, is_router_enabled
+
+
+@mcp.tool()
+def router_set_goal(ctx: Context, goal: str) -> str:
+    """
+    🎯 [SYSTEM][CRITICAL] Tell the Router what you're building.
+
+    ⚠️  IMPORTANT: Call this FIRST before ANY modeling operation!
+
+    The Router Supervisor uses this to optimize your workflow automatically.
+    Without setting a goal, the router cannot help you with smart workflow
+    expansion and error prevention.
+
+    Args:
+        goal: What you're creating. Be specific!
+              Examples: "smartphone", "wooden table", "medieval tower",
+                       "office chair", "sports car", "human face"
+
+    Returns:
+        Confirmation with matched workflow (if any).
+
+    Example workflow:
+        1. router_set_goal("smartphone")     # ← FIRST!
+        2. modeling_create_primitive("CUBE") # Router expands to phone workflow
+        3. ... router handles the rest automatically
+
+    Supported goal keywords (trigger workflows):
+        - phone, smartphone, tablet, mobile → phone_workflow
+        - tower, pillar, column, obelisk → tower_workflow
+        - table, desk, surface → table_workflow
+        - house, building, dom → house_workflow
+        - chair, seat, stool → chair_workflow
+    """
+    if not is_router_enabled():
+        return "Router is disabled. Goal noted but no workflow optimization available."
+
+    router = get_router()
+    if router is None:
+        return "Router not initialized."
+
+    # Set goal and find matching workflow
+    matched_workflow = router.set_current_goal(goal)
+
+    if matched_workflow:
+        ctx.info(f"[ROUTER] Goal set: {goal} → workflow: {matched_workflow}")
+        return f"✅ Goal set: '{goal}'\n🔄 Matched workflow: {matched_workflow}\n\nProceeding with your next tool call will trigger this workflow automatically."
+    else:
+        ctx.info(f"[ROUTER] Goal set: {goal} (no matching workflow)")
+        return f"✅ Goal set: '{goal}'\n⚠️ No specific workflow matched. Router will use heuristics to assist.\n\nYou can proceed with modeling - router will still help with mode switching and error prevention."
+
+
+@mcp.tool()
+def router_get_status(ctx: Context) -> str:
+    """
+    [SYSTEM][SAFE] Get current Router Supervisor status.
+
+    Returns information about:
+    - Current goal (if set)
+    - Pending workflow
+    - Router statistics
+    - Component status
+    """
+    if not is_router_enabled():
+        return "Router Supervisor is DISABLED.\nSet ROUTER_ENABLED=true to enable."
+
+    router = get_router()
+    if router is None:
+        return "Router not initialized."
+
+    goal = router.get_current_goal()
+    stats = router.get_stats()
+    components = router.get_component_status()
+
+    lines = [
+        "=== Router Supervisor Status ===",
+        f"Current goal: {goal or '(not set)'}",
+        f"Pending workflow: {router.get_pending_workflow() or '(none)'}",
+        "",
+        "Statistics:",
+        f"  Total calls processed: {stats.get('total_calls', 0)}",
+        f"  Corrections applied: {stats.get('corrections_applied', 0)}",
+        f"  Workflows expanded: {stats.get('workflows_expanded', 0)}",
+        f"  Blocked calls: {stats.get('blocked_calls', 0)}",
+    ]
+
+    return "\n".join(lines)
+```
+
+**Router Changes:**
+
+```python
+# server/router/application/router.py
+
+class SupervisorRouter:
+    def __init__(self, ...):
+        # ... existing ...
+        self._current_goal: Optional[str] = None
+        self._pending_workflow: Optional[str] = None
+
+    def set_current_goal(self, goal: str) -> Optional[str]:
+        """Set current modeling goal and find matching workflow.
+
+        Args:
+            goal: User's modeling goal (e.g., "smartphone", "table")
+
+        Returns:
+            Name of matched workflow, or None.
+        """
+        self._current_goal = goal
+
+        # Try to find matching workflow
+        from server.router.application.workflows.registry import get_workflow_registry
+        registry = get_workflow_registry()
+        registry.ensure_custom_loaded()
+
+        workflow_name = registry.find_by_keywords(goal)
+        if workflow_name:
+            self._pending_workflow = workflow_name
+            self.logger.log_info(f"Goal '{goal}' matched workflow: {workflow_name}")
+
+        return workflow_name
+
+    def get_current_goal(self) -> Optional[str]:
+        """Get current modeling goal."""
+        return self._current_goal
+
+    def get_pending_workflow(self) -> Optional[str]:
+        """Get pending workflow (set by goal)."""
+        return self._pending_workflow
+
+    def clear_goal(self) -> None:
+        """Clear current goal (after workflow completion)."""
+        self._current_goal = None
+        self._pending_workflow = None
+```
+
+**Docstring Strategy (wymuszenie użycia):**
+
+Tool docstring zawiera:
+1. `🎯 [SYSTEM][CRITICAL]` - wizualne wyróżnienie
+2. `⚠️ IMPORTANT: Call this FIRST` - jasna instrukcja
+3. `Example workflow:` - pokazuje kolejność
+4. `Supported goal keywords` - lista słów kluczowych
+
+**Tests:**
+- `tests/unit/router/test_router_set_goal.py`
+- `tests/e2e/router/test_goal_workflow_trigger.py`
+
+**Acceptance Criteria:**
+- [ ] `router_set_goal("phone")` sets goal and finds `phone_workflow`
+- [ ] `router_get_status()` shows current goal
+- [ ] LLM receives clear feedback about matched workflow
+- [ ] Goal persists across subsequent tool calls in session
+
+---
+
+### TASK-041-0b: Add Heuristics Fallback
+
+**Priority:** 🟡 Medium (PREREQUISITE)
+**Layer:** Application
+**Estimated Time:** 1h
+
+**Problem:** Jeśli LLM nie wywoła `router_set_goal`, router powinien próbować zgadnąć.
+
+**Files to Modify:**
+
+| File | Change |
+|------|--------|
+| `server/router/application/triggerer/workflow_triggerer.py` | Add `_check_heuristic_trigger()` |
+
+**Heuristics:**
+
+```python
+# In WorkflowTriggerer
+
+TOOL_HEURISTICS = {
+    "modeling_create_primitive": {
+        # If creating CUBE with flat scale params → might be phone/tablet
+        "CUBE": lambda params: "phone_workflow" if _is_flat_scale(params) else None,
+    },
+}
+
+def _check_heuristic_trigger(
+    self,
+    tool_name: str,
+    params: Dict[str, Any],
+    context: SceneContext,
+) -> Optional[str]:
+    """Guess workflow based on tool + params + context."""
+
+    # Check tool-specific heuristics
+    if tool_name in self.TOOL_HEURISTICS:
+        tool_heuristics = self.TOOL_HEURISTICS[tool_name]
+        # ... apply heuristics ...
+
+    # Check scene proportions
+    if context.proportions:
+        if context.proportions.is_flat:
+            # Flat object being edited → might be phone/tablet
+            pass
+
+    return None
+```
+
+**Note:** Heurystyki są fallback - nie są idealne, ale lepsze niż nic.
 
 ---
 
@@ -1420,19 +1661,29 @@ steps:
 
 | Phase | Tasks | Priority | Estimated Time |
 |-------|-------|----------|----------------|
+| **Phase -1: Intent Source** | 2 tasks | 🔴 Critical | 2h |
 | **P0: Connect YAML** | 3 tasks | 🔴 High | 2.5h |
 | **P1: Auto-Trigger** | 3 tasks | 🔴 High | 3.5h |
 | **P2: Expressions** | 3 tasks | 🟡 Medium | 3.5h |
 | **P3: Conditions** | 3 tasks | 🟡 Medium | 3.5h |
 | **P4: Proportions** | 2 tasks | 🟢 Low | 1.5h |
 | **Testing/Docs** | 2 tasks | 🟡 Medium | 3h |
-| **TOTAL** | **16 tasks** | | **~17.5h** |
+| **TOTAL** | **18 tasks** | | **~19.5h** |
 
 ---
 
 ## Dependencies
 
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE -1 (PREREQUISITE)                                        │
+│                                                                 │
+│  TASK-041-0 (router_set_goal tool)                              │
+│       │                                                         │
+│       └──▶ TASK-041-0b (heuristics fallback)                    │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
 TASK-041-1 ──┬──▶ TASK-041-2 ──▶ TASK-041-3
              │
              └──▶ TASK-041-4 ──▶ TASK-041-5 ──▶ TASK-041-6
