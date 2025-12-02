@@ -12,6 +12,7 @@
 | [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md) | Code templates and structure |
 | [IMPLEMENTATION/](./IMPLEMENTATION/) | Step-by-step implementation docs |
 | [WORKFLOWS/](./WORKFLOWS/) | Predefined workflow definitions |
+| [TOOLS/](./TOOLS/) | **Guide for adding new tools to Router** |
 
 ---
 
