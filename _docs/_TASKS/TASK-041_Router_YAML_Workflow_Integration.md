@@ -13,14 +13,14 @@
 
 Integrate YAML-based custom workflows into the Router Supervisor system. Currently, the router has separate components that are not connected:
 
-1. **WorkflowLoader** - parsuje YAML/JSON workflows ✅
-2. **WorkflowRegistry** - centralny rejestr workflows ✅
-3. **WorkflowExpansionEngine** - expanduje toole do workflows (używa WŁASNYCH hardcoded workflows, ignoruje Registry!)
+1. **WorkflowLoader** - parses YAML/JSON workflows ✅
+2. **WorkflowRegistry** - central workflow registry ✅
+3. **WorkflowExpansionEngine** - expands tools to workflows (uses its OWN hardcoded workflows, ignores Registry!)
 
-**Problem:** YAML workflows są parsowane, ale NIE SĄ używane przez router. Brakuje też:
-- Dynamicznych parametrów (`$CALCULATE(...)`)
-- Warunkowego wykonywania stepów (`condition: "..."`)
-- Auto-triggering workflows na podstawie user prompts
+**Problem:** YAML workflows are parsed but NOT used by the router. Also missing:
+- Dynamic parameters (`$CALCULATE(...)`)
+- Conditional step execution (`condition: "..."`)
+- Auto-triggering workflows based on user prompts
 
 ---
 
@@ -35,16 +35,16 @@ Integrate YAML-based custom workflows into the Router Supervisor system. Current
                     │     WorkflowExpansionEngine          │
                     │  ┌─────────────────────────────┐     │
                     │  │   PREDEFINED_WORKFLOWS      │     │  ← Hardcoded dict
-                    │  │   (ignoruje Registry!)      │     │
+                    │  │   (ignores Registry!)       │     │
                     │  └─────────────────────────────┘     │
                     └──────────────────────────────────────┘
 
     ┌────────────────────┐          ┌─────────────────────┐
     │   WorkflowLoader   │          │   WorkflowRegistry   │
-    │   (parsuje YAML)   │────X────▶│   (ma find_by_*)    │
+    │   (parses YAML)    │────X────▶│   (has find_by_*)   │
     └────────────────────┘          └─────────────────────┘
               │                              │
-              ▼                              X (nie używane)
+              ▼                              X (not used)
     workflows/custom/*.yaml
 ```
 
@@ -82,9 +82,9 @@ Integrate YAML-based custom workflows into the Router Supervisor system. Current
 
 ## Phase -1: Intent Source (PREREQUISITE)
 
-**Problem:** Router nie ma dostępu do oryginalnego prompta użytkownika. FastMCP `Context` nie udostępnia conversation history.
+**Problem:** Router has no access to the original user prompt. FastMCP `Context` does not expose conversation history.
 
-**Rozwiązanie:** Dedykowany MCP tool `router_set_goal` + heurystyki jako fallback.
+**Solution:** Dedicated MCP tool `router_set_goal` + heuristics as fallback.
 
 ### TASK-041-0: Create `router_set_goal` MCP Tool
 
@@ -92,9 +92,9 @@ Integrate YAML-based custom workflows into the Router Supervisor system. Current
 **Layer:** Adapters (MCP)
 **Estimated Time:** 1h
 
-**Problem:** Router nie wie co user chce zbudować. LLM wywołuje `modeling_create_primitive(CUBE)` ale router nie wie czy to telefon, dom, czy stół.
+**Problem:** Router doesn't know what the user wants to build. LLM calls `modeling_create_primitive(CUBE)` but router doesn't know if it's a phone, house, or table.
 
-**Solution:** Dodać tool który LLM **MUSI** wywołać jako pierwszy przy modelowaniu.
+**Solution:** Add a tool that LLM **MUST** call first when modeling.
 
 **Files to Create/Modify:**
 
@@ -249,13 +249,13 @@ class SupervisorRouter:
         self._pending_workflow = None
 ```
 
-**Docstring Strategy (wymuszenie użycia):**
+**Docstring Strategy (forcing usage):**
 
-Tool docstring zawiera:
-1. `🎯 [SYSTEM][CRITICAL]` - wizualne wyróżnienie
-2. `⚠️ IMPORTANT: Call this FIRST` - jasna instrukcja
-3. `Example workflow:` - pokazuje kolejność
-4. `Supported goal keywords` - lista słów kluczowych
+Tool docstring contains:
+1. `🎯 [SYSTEM][CRITICAL]` - visual highlighting
+2. `⚠️ IMPORTANT: Call this FIRST` - clear instruction
+3. `Example workflow:` - shows order of operations
+4. `Supported goal keywords` - list of keywords
 
 **Tests:**
 - `tests/unit/router/test_router_set_goal.py`
@@ -275,7 +275,7 @@ Tool docstring zawiera:
 **Layer:** Application
 **Estimated Time:** 1h
 
-**Problem:** Jeśli LLM nie wywoła `router_set_goal`, router powinien próbować zgadnąć.
+**Problem:** If LLM doesn't call `router_set_goal`, router should try to guess.
 
 **Files to Modify:**
 
@@ -317,7 +317,7 @@ def _check_heuristic_trigger(
     return None
 ```
 
-**Note:** Heurystyki są fallback - nie są idealne, ale lepsze niż nic.
+**Note:** Heuristics are a fallback - not ideal, but better than nothing.
 
 ---
 
@@ -329,7 +329,7 @@ def _check_heuristic_trigger(
 **Layer:** Infrastructure → Application
 **Estimated Time:** 1h
 
-**Problem:** `WorkflowLoader` parsuje YAML, ale wyniki NIE trafiają do `WorkflowRegistry`.
+**Problem:** `WorkflowLoader` parses YAML, but results do NOT reach `WorkflowRegistry`.
 
 **Files to Modify:**
 
@@ -385,7 +385,7 @@ class WorkflowRegistry:
 **Acceptance Criteria:**
 - [ ] `WorkflowRegistry.load_custom_workflows()` loads all YAML from `workflows/custom/`
 - [ ] `find_by_keywords("table")` returns `"table_workflow"` from YAML
-- [ ] YAML workflows są dostępne przez `expand_workflow()`
+- [ ] YAML workflows are available via `expand_workflow()`
 
 ---
 
@@ -395,7 +395,7 @@ class WorkflowRegistry:
 **Layer:** Application
 **Estimated Time:** 1h
 
-**Problem:** `WorkflowExpansionEngine` ma własny `PREDEFINED_WORKFLOWS` dict i ignoruje `WorkflowRegistry`.
+**Problem:** `WorkflowExpansionEngine` has its own `PREDEFINED_WORKFLOWS` dict and ignores `WorkflowRegistry`.
 
 **Files to Modify:**
 
@@ -1705,7 +1705,7 @@ All ──▶ TASK-041-15 ──▶ TASK-041-16
 # workflows/custom/house_simple.yaml
 name: house_simple
 description: Simple house with roof
-trigger_keywords: ["house", "building", "dom", "budynek"]
+trigger_keywords: ["house", "building", "home", "cottage"]
 
 steps:
   - tool: modeling_create_primitive

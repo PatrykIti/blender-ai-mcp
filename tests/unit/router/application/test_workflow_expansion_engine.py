@@ -8,8 +8,8 @@ import pytest
 
 from server.router.application.engines.workflow_expansion_engine import (
     WorkflowExpansionEngine,
-    PREDEFINED_WORKFLOWS,
 )
+from server.router.application.workflows.registry import get_workflow_registry
 from server.router.domain.entities.scene_context import (
     SceneContext,
     ObjectInfo,
@@ -89,7 +89,8 @@ class TestWorkflowExpansionEngineInit:
         assert "phone_workflow" in workflows
         assert "tower_workflow" in workflows
         assert "screen_cutout_workflow" in workflows
-        assert "bevel_all_edges_workflow" in workflows
+        # Custom workflows from YAML are also available
+        assert "table_workflow" in workflows or "chair_workflow" in workflows
 
 
 class TestExpand:
@@ -266,9 +267,18 @@ class TestParameterInheritance:
 
     def test_inherit_param_with_dollar(self, engine):
         """Test parameter inheritance with $ syntax."""
-        # bevel_all_edges_workflow uses $width and $segments
+        # Register a workflow that uses $param syntax
+        engine.register_workflow(
+            name="test_bevel_workflow",
+            steps=[
+                {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
+                {"tool": "mesh_select", "params": {"action": "all"}},
+                {"tool": "mesh_bevel", "params": {"width": "$width", "segments": "$segments"}},
+            ],
+        )
+
         result = engine.expand_workflow(
-            "bevel_all_edges_workflow",
+            "test_bevel_workflow",
             {"width": 0.5, "segments": 5},
         )
 
@@ -284,8 +294,16 @@ class TestParameterInheritance:
 
     def test_missing_inherited_param_skipped(self, engine):
         """Test that missing inherited params are skipped."""
+        # Register a workflow that uses $param syntax
+        engine.register_workflow(
+            name="test_bevel_workflow_2",
+            steps=[
+                {"tool": "mesh_bevel", "params": {"width": "$width", "segments": "$segments"}},
+            ],
+        )
+
         result = engine.expand_workflow(
-            "bevel_all_edges_workflow",
+            "test_bevel_workflow_2",
             {},  # No width or segments
         )
 
@@ -324,8 +342,10 @@ class TestGetAvailableWorkflows:
         """Test that list contains predefined workflows."""
         workflows = engine.get_available_workflows()
 
-        for workflow_name in PREDEFINED_WORKFLOWS.keys():
-            assert workflow_name in workflows
+        # Built-in workflows should always be present
+        assert "phone_workflow" in workflows
+        assert "tower_workflow" in workflows
+        assert "screen_cutout_workflow" in workflows
 
 
 class TestGetWorkflowForPattern:
@@ -394,35 +414,42 @@ class TestGetWorkflowForKeywords:
         assert result == "phone_workflow"
 
 
-class TestPredefinedWorkflows:
-    """Tests for PREDEFINED_WORKFLOWS constant."""
+class TestRegistryWorkflows:
+    """Tests for workflows from registry."""
 
     def test_phone_workflow_structure(self):
         """Test phone workflow has required fields."""
-        workflow = PREDEFINED_WORKFLOWS["phone_workflow"]
+        registry = get_workflow_registry()
+        definition = registry.get_definition("phone_workflow")
 
-        assert "description" in workflow
-        assert "trigger_pattern" in workflow
-        assert "trigger_keywords" in workflow
-        assert "steps" in workflow
+        assert definition is not None
+        assert definition.description is not None
+        assert definition.trigger_pattern is not None
+        assert len(definition.trigger_keywords) > 0
+        assert len(definition.steps) > 0
 
     def test_tower_workflow_structure(self):
         """Test tower workflow has required fields."""
-        workflow = PREDEFINED_WORKFLOWS["tower_workflow"]
+        registry = get_workflow_registry()
+        definition = registry.get_definition("tower_workflow")
 
-        assert "description" in workflow
-        assert "steps" in workflow
+        assert definition is not None
+        assert definition.description is not None
+        assert len(definition.steps) > 0
 
     def test_all_workflows_have_steps(self):
         """Test all workflows have steps."""
-        for name, workflow in PREDEFINED_WORKFLOWS.items():
-            assert "steps" in workflow
-            assert len(workflow["steps"]) > 0
+        registry = get_workflow_registry()
+        for name in registry.get_all_workflows():
+            definition = registry.get_definition(name)
+            assert definition is not None
+            assert len(definition.steps) > 0
 
     def test_phone_workflow_step_count(self):
         """Test phone workflow has correct step count."""
-        steps = PREDEFINED_WORKFLOWS["phone_workflow"]["steps"]
-        assert len(steps) == 10
+        registry = get_workflow_registry()
+        definition = registry.get_definition("phone_workflow")
+        assert len(definition.steps) == 10
 
 
 class TestEdgeCases:

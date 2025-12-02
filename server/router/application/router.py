@@ -100,6 +100,10 @@ class SupervisorRouter:
             "blocked_calls": 0,
         }
 
+        # Goal tracking (set via router_set_goal MCP tool)
+        self._current_goal: Optional[str] = None
+        self._pending_workflow: Optional[str] = None
+
     def set_rpc_client(self, rpc_client: Any) -> None:
         """Set the RPC client for Blender communication.
 
@@ -656,3 +660,53 @@ class SupervisorRouter:
         for key, value in kwargs.items():
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
+
+    # --- Goal Management ---
+
+    def set_current_goal(self, goal: str) -> Optional[str]:
+        """Set current modeling goal and find matching workflow.
+
+        Args:
+            goal: User's modeling goal (e.g., "smartphone", "table")
+
+        Returns:
+            Name of matched workflow, or None.
+        """
+        self._current_goal = goal
+
+        # Try to find matching workflow
+        from server.router.application.workflows.registry import get_workflow_registry
+
+        registry = get_workflow_registry()
+        workflow_name = registry.find_by_keywords(goal)
+
+        if workflow_name:
+            self._pending_workflow = workflow_name
+            self.logger.log_info(f"Goal '{goal}' matched workflow: {workflow_name}")
+        else:
+            self._pending_workflow = None
+            self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
+
+        return workflow_name
+
+    def get_current_goal(self) -> Optional[str]:
+        """Get current modeling goal.
+
+        Returns:
+            Current goal string or None if not set.
+        """
+        return self._current_goal
+
+    def get_pending_workflow(self) -> Optional[str]:
+        """Get pending workflow (set by goal).
+
+        Returns:
+            Pending workflow name or None.
+        """
+        return self._pending_workflow
+
+    def clear_goal(self) -> None:
+        """Clear current goal (after workflow completion)."""
+        self._current_goal = None
+        self._pending_workflow = None
+        self.logger.log_info("Goal cleared")

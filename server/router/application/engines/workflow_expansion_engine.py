@@ -13,68 +13,11 @@ from server.router.domain.entities.pattern import DetectedPattern
 from server.router.infrastructure.config import RouterConfig
 
 
-# Predefined workflows
-PREDEFINED_WORKFLOWS: Dict[str, Dict[str, Any]] = {
-    "phone_workflow": {
-        "description": "Complete phone/tablet modeling workflow",
-        "trigger_pattern": "phone_like",
-        "trigger_keywords": ["phone", "smartphone", "tablet", "mobile"],
-        "steps": [
-            {"tool": "modeling_create_primitive", "params": {"type": "CUBE"}},
-            {"tool": "modeling_transform_object", "params": {"scale": [0.4, 0.8, 0.05]}},
-            {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_select", "params": {"action": "all"}},
-            {"tool": "mesh_bevel", "params": {"width": 0.02, "segments": 3}},
-            {"tool": "mesh_select", "params": {"action": "none"}},
-            {"tool": "mesh_select_targeted", "params": {"action": "by_location", "location": [0, 0, 1]}},
-            {"tool": "mesh_inset", "params": {"thickness": 0.03}},
-            {"tool": "mesh_extrude_region", "params": {"depth": -0.02}},
-            {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
-        ],
-    },
-    "tower_workflow": {
-        "description": "Tower/pillar modeling workflow with taper",
-        "trigger_pattern": "tower_like",
-        "trigger_keywords": ["tower", "pillar", "column", "obelisk"],
-        "steps": [
-            {"tool": "modeling_create_primitive", "params": {"type": "CUBE"}},
-            {"tool": "modeling_transform_object", "params": {"scale": [0.3, 0.3, 2.0]}},
-            {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_subdivide", "params": {"number_cuts": 3}},
-            {"tool": "mesh_select", "params": {"action": "none"}},
-            {"tool": "mesh_select_targeted", "params": {"action": "by_location", "location": [0, 0, 1]}},
-            {"tool": "mesh_transform_selected", "params": {"scale": [0.7, 0.7, 1.0]}},
-            {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
-        ],
-    },
-    "screen_cutout_workflow": {
-        "description": "Screen/display cutout sub-workflow",
-        "trigger_pattern": "phone_like",
-        "trigger_keywords": ["screen", "display", "cutout"],
-        "steps": [
-            {"tool": "mesh_select_targeted", "params": {"action": "by_location", "location": [0, 0, 1]}},
-            {"tool": "mesh_inset", "params": {"thickness": 0.05}},
-            {"tool": "mesh_extrude_region", "params": {"depth": -0.02}},
-            {"tool": "mesh_bevel", "params": {"width": 0.005, "segments": 2}},
-        ],
-    },
-    "bevel_all_edges_workflow": {
-        "description": "Bevel all edges of object",
-        "trigger_keywords": ["bevel all", "round edges", "smooth edges"],
-        "steps": [
-            {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_select", "params": {"action": "all"}},
-            {"tool": "mesh_bevel", "params": {"width": "$width", "segments": "$segments"}},
-            {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
-        ],
-    },
-}
-
-
 class WorkflowExpansionEngine(IExpansionEngine):
     """Implementation of workflow expansion.
 
     Transforms single tool calls into multi-step workflows.
+    Uses WorkflowRegistry as the source of workflows.
     """
 
     def __init__(self, config: Optional[RouterConfig] = None):
@@ -84,7 +27,18 @@ class WorkflowExpansionEngine(IExpansionEngine):
             config: Router configuration (uses defaults if None).
         """
         self._config = config or RouterConfig()
-        self._workflows: Dict[str, Dict[str, Any]] = dict(PREDEFINED_WORKFLOWS)
+        self._registry = None  # Lazy-loaded
+
+    def _get_registry(self):
+        """Get or create the workflow registry.
+
+        Returns:
+            WorkflowRegistry instance.
+        """
+        if self._registry is None:
+            from server.router.application.workflows.registry import get_workflow_registry
+            self._registry = get_workflow_registry()
+        return self._registry
 
     def expand(
         self,
@@ -107,10 +61,12 @@ class WorkflowExpansionEngine(IExpansionEngine):
         if not self._config.enable_workflow_expansion:
             return None
 
+        registry = self._get_registry()
+
         # Check if pattern suggests a workflow
         if pattern and pattern.suggested_workflow:
             workflow_name = pattern.suggested_workflow
-            if workflow_name in self._workflows:
+            if registry.get_definition(workflow_name):
                 return self.expand_workflow(workflow_name, params)
 
         return None
@@ -124,9 +80,10 @@ class WorkflowExpansionEngine(IExpansionEngine):
         Returns:
             Workflow steps definition, or None if not found.
         """
-        workflow = self._workflows.get(workflow_name)
-        if workflow:
-            return workflow.get("steps", [])
+        registry = self._get_registry()
+        definition = registry.get_definition(workflow_name)
+        if definition:
+            return [{"tool": s.tool, "params": s.params} for s in definition.steps]
         return None
 
     def register_workflow(
@@ -144,12 +101,23 @@ class WorkflowExpansionEngine(IExpansionEngine):
             trigger_pattern: Pattern that triggers this workflow.
             trigger_keywords: Keywords that trigger this workflow.
         """
-        self._workflows[name] = {
-            "description": f"Custom workflow: {name}",
-            "trigger_pattern": trigger_pattern,
-            "trigger_keywords": trigger_keywords or [],
-            "steps": steps,
-        }
+        from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+
+        workflow_steps = [
+            WorkflowStep(tool=s["tool"], params=s.get("params", {}))
+            for s in steps
+        ]
+
+        definition = WorkflowDefinition(
+            name=name,
+            description=f"Custom workflow: {name}",
+            steps=workflow_steps,
+            trigger_pattern=trigger_pattern,
+            trigger_keywords=trigger_keywords or [],
+        )
+
+        registry = self._get_registry()
+        registry.register_definition(definition)
 
     def get_available_workflows(self) -> List[str]:
         """Get names of all registered workflows.
@@ -157,7 +125,8 @@ class WorkflowExpansionEngine(IExpansionEngine):
         Returns:
             List of workflow names.
         """
-        return list(self._workflows.keys())
+        registry = self._get_registry()
+        return registry.get_all_workflows()
 
     def expand_workflow(
         self,
@@ -173,25 +142,17 @@ class WorkflowExpansionEngine(IExpansionEngine):
         Returns:
             List of expanded tool calls.
         """
-        workflow = self._workflows.get(workflow_name)
-        if not workflow:
-            return []
+        registry = self._get_registry()
 
-        steps = workflow.get("steps", [])
-        expanded_calls = []
+        # Use registry's expand_workflow which handles both built-in and custom
+        calls = registry.expand_workflow(workflow_name, params)
 
-        for i, step in enumerate(steps):
-            resolved_params = self._resolve_step_params(step.get("params", {}), params)
+        # If registry returned calls, resolve any $param references
+        if calls:
+            for call in calls:
+                call.params = self._resolve_step_params(call.params, params)
 
-            call = CorrectedToolCall(
-                tool_name=step["tool"],
-                params=resolved_params,
-                corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
-                is_injected=True,
-            )
-            expanded_calls.append(call)
-
-        return expanded_calls
+        return calls
 
     def _resolve_step_params(
         self,
@@ -233,13 +194,8 @@ class WorkflowExpansionEngine(IExpansionEngine):
         Returns:
             Workflow name or None.
         """
-        pattern_name = pattern.name
-
-        for name, workflow in self._workflows.items():
-            if workflow.get("trigger_pattern") == pattern_name:
-                return name
-
-        return None
+        registry = self._get_registry()
+        return registry.find_by_pattern(pattern.name)
 
     def get_workflow_for_keywords(
         self,
@@ -253,12 +209,7 @@ class WorkflowExpansionEngine(IExpansionEngine):
         Returns:
             Workflow name or None.
         """
-        keywords_lower = [k.lower() for k in keywords]
-
-        for name, workflow in self._workflows.items():
-            trigger_keywords = workflow.get("trigger_keywords", [])
-            for kw in trigger_keywords:
-                if kw.lower() in " ".join(keywords_lower):
-                    return name
-
-        return None
+        registry = self._get_registry()
+        # Combine keywords into text for search
+        text = " ".join(keywords)
+        return registry.find_by_keywords(text)

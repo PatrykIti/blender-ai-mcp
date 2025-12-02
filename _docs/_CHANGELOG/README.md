@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [83](./83-2025-12-02-task-041-router-clean-architecture.md) | 2025-12-02 | **Router Clean Architecture & YAML Integration (TASK-041 Phase -1, P0)** | - |
 | [82](./82-2025-12-02-task-041-yaml-workflow-integration.md) | 2025-12-02 | **TASK-041 Created: Router YAML Workflow Integration** | - |
 | [81](./81-2025-12-02-router-mcp-tools-integration.md) | 2025-12-02 | **Router MCP Tools Integration (119 tools wrapped)** | - |
 | [80](./80-2025-12-02-router-documentation-complete.md) | 2025-12-02 | **Router Documentation Complete (TASK-039-24)** | - |

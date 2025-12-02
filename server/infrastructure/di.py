@@ -11,6 +11,7 @@ from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.application.tool_handlers.baking_handler import BakingToolHandler
 from server.application.tool_handlers.lattice_handler import LatticeToolHandler
+from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -23,6 +24,7 @@ from server.domain.tools.system import ISystemTool
 from server.domain.tools.sculpt import ISculptTool
 from server.domain.tools.baking import IBakingTool
 from server.domain.tools.lattice import ILatticeTool
+from server.domain.tools.router import IRouterTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -142,4 +144,25 @@ def is_router_enabled() -> bool:
     """Check if router is enabled in config."""
     config = get_config()
     return config.ROUTER_ENABLED
+
+
+# --- Router Handler ---
+
+_router_handler_instance = None
+
+
+def get_router_handler() -> IRouterTool:
+    """Provider for IRouterTool. Singleton with lazy initialization.
+
+    Returns:
+        RouterToolHandler instance.
+    """
+    global _router_handler_instance
+    if _router_handler_instance is None:
+        config = get_config()
+        _router_handler_instance = RouterToolHandler(
+            router=get_router() if config.ROUTER_ENABLED else None,
+            enabled=config.ROUTER_ENABLED,
+        )
+    return _router_handler_instance
 

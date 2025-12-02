@@ -13,7 +13,6 @@ from server.router.application.engines.tool_correction_engine import (
 from server.router.application.engines.tool_override_engine import ToolOverrideEngine
 from server.router.application.engines.workflow_expansion_engine import (
     WorkflowExpansionEngine,
-    PREDEFINED_WORKFLOWS,
 )
 from server.router.application.engines.error_firewall import ErrorFirewall
 
@@ -25,5 +24,4 @@ __all__ = [
     "MODE_REQUIREMENTS",
     "PARAM_LIMITS",
     "SELECTION_REQUIRED_TOOLS",
-    "PREDEFINED_WORKFLOWS",
 ]

@@ -4,6 +4,7 @@ Workflow Registry.
 Central registry for all available workflows.
 """
 
+import logging
 from typing import Dict, Any, Optional, List
 
 from .base import BaseWorkflow, WorkflowDefinition, WorkflowStep
@@ -11,6 +12,8 @@ from .phone_workflow import phone_workflow
 from .tower_workflow import tower_workflow
 from .screen_cutout_workflow import screen_cutout_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowRegistry:
@@ -24,6 +27,7 @@ class WorkflowRegistry:
         """Initialize registry with built-in workflows."""
         self._workflows: Dict[str, BaseWorkflow] = {}
         self._custom_definitions: Dict[str, WorkflowDefinition] = {}
+        self._custom_loaded: bool = False
 
         # Register built-in workflows
         self._register_builtin(phone_workflow)
@@ -53,6 +57,46 @@ class WorkflowRegistry:
             definition: Workflow definition to register.
         """
         self._custom_definitions[definition.name] = definition
+
+    def load_custom_workflows(self, reload: bool = False) -> int:
+        """Load custom workflows from YAML/JSON files.
+
+        Uses WorkflowLoader to load workflows from the custom workflows
+        directory and registers them in this registry.
+
+        Args:
+            reload: If True, reload even if already loaded.
+
+        Returns:
+            Number of workflows loaded.
+        """
+        if self._custom_loaded and not reload:
+            return len(self._custom_definitions)
+
+        from server.router.infrastructure.workflow_loader import get_workflow_loader
+
+        loader = get_workflow_loader()
+
+        if reload:
+            workflows = loader.reload()
+        else:
+            workflows = loader.load_all()
+
+        # Register all loaded workflows
+        count = 0
+        for name, definition in workflows.items():
+            self._custom_definitions[name] = definition
+            count += 1
+            logger.debug(f"Registered custom workflow: {name}")
+
+        self._custom_loaded = True
+        logger.info(f"Loaded {count} custom workflows into registry")
+        return count
+
+    def ensure_custom_loaded(self) -> None:
+        """Ensure custom workflows are loaded (lazy loading)."""
+        if not self._custom_loaded:
+            self.load_custom_workflows()
 
     def get_workflow(self, name: str) -> Optional[BaseWorkflow]:
         """Get a workflow by name.
@@ -91,6 +135,9 @@ class WorkflowRegistry:
         Returns:
             List of workflow names.
         """
+        # Ensure custom workflows are loaded
+        self.ensure_custom_loaded()
+
         all_names = set(self._workflows.keys())
         all_names.update(self._custom_definitions.keys())
         return sorted(all_names)
@@ -104,6 +151,9 @@ class WorkflowRegistry:
         Returns:
             Workflow name or None.
         """
+        # Ensure custom workflows are loaded
+        self.ensure_custom_loaded()
+
         # Check built-in workflows
         for name, workflow in self._workflows.items():
             if workflow.matches_pattern(pattern_name):
@@ -125,6 +175,9 @@ class WorkflowRegistry:
         Returns:
             Workflow name or None.
         """
+        # Ensure custom workflows are loaded
+        self.ensure_custom_loaded()
+
         text_lower = text.lower()
 
         # Check built-in workflows
@@ -154,6 +207,9 @@ class WorkflowRegistry:
         Returns:
             List of tool calls to execute.
         """
+        # Ensure custom workflows are loaded
+        self.ensure_custom_loaded()
+
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
         if workflow:

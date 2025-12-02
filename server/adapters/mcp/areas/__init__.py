@@ -5,6 +5,7 @@ from . import lattice
 from . import material
 from . import mesh
 from . import modeling
+from . import router
 from . import scene
 from . import sculpt
 from . import system

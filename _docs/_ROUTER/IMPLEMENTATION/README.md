@@ -30,6 +30,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 20 | `20-screen-cutout-workflow.md` | Screen Cutout Workflow | TASK-039-21 | ✅ |
 | 21 | `21-workflow-registry.md` | Workflow Registry | TASK-039-20 | ✅ |
 | 22 | `22-custom-workflow-loader.md` | Custom Workflow Loader | TASK-039-22 | ✅ |
+| 23 | `23-yaml-workflow-integration.md` | YAML Integration & Clean Architecture | TASK-041 P-1, P0 | ✅ |
 
 ---
 
@@ -71,6 +72,13 @@ Phase 5: Workflows & Patterns ✅
 Phase 6: Testing & Documentation ✅
   ├─ E2E Test Suite (38 tests) ✅
   └─ Documentation Complete ✅
+
+Phase 7: YAML Workflow Integration (TASK-041) 🚧
+  ├─ 23-yaml-workflow-integration.md ✅ (Phase -1, P0)
+  ├─ WorkflowTriggerer Integration (P1) 🚧
+  ├─ Expression Evaluator (P2) 🚧
+  ├─ Condition Evaluator (P3) 🚧
+  └─ Proportion Resolver (P4) 🚧
 ```
 
 ---

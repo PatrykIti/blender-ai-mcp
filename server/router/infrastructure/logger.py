@@ -395,6 +395,14 @@ class RouterLogger:
 
         self.logger.error(f"[ROUTER] Error: {tool_name}: {error}")
 
+    def log_info(self, message: str) -> None:
+        """Log an info message.
+
+        Args:
+            message: Message to log.
+        """
+        self.logger.info(f"[ROUTER] {message}")
+
     def get_events(
         self,
         limit: int = 100,

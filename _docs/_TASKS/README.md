@@ -34,7 +34,7 @@ Task board for the project. Update statuses in markdown files.
 ### Router Enhancement
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-041](./TASK-041_Router_YAML_Workflow_Integration.md) | **Router YAML Workflow Integration** | 🔴 High | P0-P4: YAML loading, auto-triggering, expressions, conditions |
+| [TASK-041](./TASK-041_Router_YAML_Workflow_Integration.md) | **Router YAML Workflow Integration** | 🔴 High | ✅ P-1, P0 done. P1-P4 remaining. Clean Architecture applied. |
 
 ---
 
