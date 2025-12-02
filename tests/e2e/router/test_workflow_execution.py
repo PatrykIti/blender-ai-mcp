@@ -139,7 +139,7 @@ class TestScreenCutoutWorkflowExecution:
     def test_screen_cutout_on_existing_object(self, router, rpc_client, clean_scene):
         """Test: Screen cutout workflow on existing object."""
         # First create a phone-like object
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {
             "scale": [0.4, 0.8, 0.05]
         })

@@ -11,7 +11,6 @@ import pytest
 
 from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
-from server.router.infrastructure.logger import get_router_logger
 
 
 class TestFullPipeline:
@@ -21,7 +20,7 @@ class TestFullPipeline:
         """Test: Complete modeling session with multiple tools."""
         # Simulate a modeling session
         session_tools = [
-            ("modeling_create_primitive", {"type": "CUBE"}),
+            ("modeling_create_primitive", {"primitive_type": "CUBE"}),
             ("modeling_transform_object", {"scale": [0.5, 0.5, 1.0]}),
             ("mesh_subdivide", {"number_cuts": 2}),
             ("mesh_bevel", {"width": 0.05, "segments": 2}),
@@ -69,16 +68,16 @@ class TestFullPipeline:
 
     def test_pipeline_telemetry(self, router, rpc_client, clean_scene):
         """Test: Pipeline generates telemetry events."""
-        logger = get_router_logger()
-        logger.clear_events()  # Method is clear_events(), not clear()
+        # Use router's own logger, not the global singleton
+        router.logger.clear_events()
 
         # Create and process
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         router.process_llm_tool_call("mesh_bevel", {"width": 0.1})
 
         # Should have logged events
-        events = logger.get_events()
+        events = router.logger.get_events()
         assert len(events) > 0, "Should have logged events"
 
         # Check for intercept event (events are dicts with 'event_type' key)
@@ -105,7 +104,7 @@ class TestErrorRecovery:
 
     def test_missing_params_handled(self, router, rpc_client, clean_scene):
         """Test: Missing required params are handled."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Bevel without width might use default
         tools = router.process_llm_tool_call("mesh_bevel", {})
@@ -115,7 +114,7 @@ class TestErrorRecovery:
 
     def test_wrong_mode_recovery(self, router, rpc_client, clean_scene):
         """Test: Wrong mode is corrected and recovered."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Ensure OBJECT mode
         rpc_client.send_request("system.set_mode", {"mode": "OBJECT"})
@@ -153,7 +152,7 @@ class TestRouterConfiguration:
         # Use shared_classifier to avoid loading LaBSE model again
         router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
 
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.3})
 
@@ -173,7 +172,7 @@ class TestRouterConfiguration:
         router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
 
         # Even with matching pattern, shouldn't expand
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {
             "scale": [0.4, 0.8, 0.05]
         })
@@ -199,7 +198,7 @@ class TestConcurrentOperations:
             # Create object
             tools = router.process_llm_tool_call(
                 "modeling_create_primitive",
-                {"type": "CUBE"}
+                {"primitive_type": "CUBE"}
             )
 
             for tool in tools:
@@ -224,7 +223,7 @@ class TestConcurrentOperations:
 
     def test_rapid_tool_calls(self, router, rpc_client, clean_scene):
         """Test: Rapid succession of tool calls."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 

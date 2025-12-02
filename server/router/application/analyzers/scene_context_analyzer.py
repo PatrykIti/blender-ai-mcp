@@ -242,7 +242,9 @@ class SceneContextAnalyzer(ISceneAnalyzer):
                 timestamp=datetime.now(),
             )
 
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.error(f"SceneContextAnalyzer._build_context failed: {e}", exc_info=True)
             return SceneContext.empty()
 
     def _get_mode_rpc(self) -> str:
@@ -257,8 +259,12 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result
+            import logging
+            logging.warning(f"_get_mode_data_rpc: status={response.status}, result type={type(response.result)}")
             return {"mode": "OBJECT"}
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.error(f"_get_mode_data_rpc failed: {e}")
             return {"mode": "OBJECT"}
 
     def _get_objects_rpc(self) -> List[Dict[str, Any]]:

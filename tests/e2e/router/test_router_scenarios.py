@@ -19,7 +19,7 @@ class TestModeCorrection:
     def test_mesh_tool_in_object_mode_adds_mode_switch(self, router, rpc_client, clean_scene):
         """Test: mesh_extrude in OBJECT mode → Router adds mode switch."""
         # Create a cube (starts in OBJECT mode)
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Ensure we're in OBJECT mode
         rpc_client.send_request("system.set_mode", {"mode": "OBJECT"})
@@ -44,7 +44,7 @@ class TestModeCorrection:
     def test_modeling_tool_in_edit_mode_adds_mode_switch(self, router, rpc_client, clean_scene):
         """Test: modeling_add_modifier in EDIT mode → Router adds mode switch."""
         # Create a cube and enter EDIT mode
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
 
         # Invalidate router's scene context cache to get fresh state
@@ -67,7 +67,7 @@ class TestParameterClamping:
     def test_bevel_width_clamped(self, router, rpc_client, clean_scene):
         """Test: Excessive bevel width is clamped."""
         # Create a small cube
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 
@@ -83,7 +83,7 @@ class TestParameterClamping:
 
     def test_subdivide_cuts_clamped(self, router, rpc_client, clean_scene):
         """Test: Excessive subdivide cuts are clamped."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
 
         # LLM tries too many subdivisions
@@ -101,7 +101,7 @@ class TestSelectionHandling:
 
     def test_extrude_without_selection_adds_select_all(self, router, rpc_client, clean_scene):
         """Test: Extrude without selection → Router adds select all."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
 
         # Deselect all
@@ -123,7 +123,7 @@ class TestFullPipelineExecution:
     def test_corrected_extrude_executes_successfully(self, router, rpc_client, clean_scene):
         """Test: Corrected extrude pipeline executes without errors."""
         # Create cube in OBJECT mode
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Get corrected tools (should add mode switch, selection)
         tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.3})
@@ -151,7 +151,7 @@ class TestFullPipelineExecution:
 
     def test_bevel_after_mode_switch_works(self, router, rpc_client, clean_scene):
         """Test: Bevel with mode correction executes correctly."""
-        rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
+        rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Stay in OBJECT mode, try to bevel
         tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1, "segments": 2})
