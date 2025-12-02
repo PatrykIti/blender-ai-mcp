@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_modeling_handler
 
 @mcp.tool()
@@ -27,15 +28,20 @@ def modeling_create_primitive(
         rotation: [rx, ry, rz] rotation in radians. Can be a list or string.
         name: Optional name for the new object.
     """
-    handler = get_modeling_handler()
-    try:
-        # Parse coordinates that might be sent as strings by some MCP clients
-        parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
-        parsed_rotation = parse_coordinate(rotation) or [0.0, 0.0, 0.0]
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
+            parsed_rotation = parse_coordinate(rotation) or [0.0, 0.0, 0.0]
+            return handler.create_primitive(primitive_type, radius, size, parsed_location, parsed_rotation, name)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
 
-        return handler.create_primitive(primitive_type, radius, size, parsed_location, parsed_rotation, name)
-    except (RuntimeError, ValueError) as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_create_primitive",
+        params={"primitive_type": primitive_type, "radius": radius, "size": size, "location": location, "rotation": rotation, "name": name},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def modeling_transform_object(
@@ -56,16 +62,21 @@ def modeling_transform_object(
         rotation: New [rx, ry, rz] rotation in radians (optional). Can be a list or string.
         scale: New [sx, sy, sz] scale factors (optional). Can be a list or string.
     """
-    handler = get_modeling_handler()
-    try:
-        # Parse coordinates that might be sent as strings by some MCP clients
-        parsed_location = parse_coordinate(location)
-        parsed_rotation = parse_coordinate(rotation)
-        parsed_scale = parse_coordinate(scale)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            parsed_rotation = parse_coordinate(rotation)
+            parsed_scale = parse_coordinate(scale)
+            return handler.transform_object(name, parsed_location, parsed_rotation, parsed_scale)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
 
-        return handler.transform_object(name, parsed_location, parsed_rotation, parsed_scale)
-    except (RuntimeError, ValueError) as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_transform_object",
+        params={"name": name, "location": location, "rotation": rotation, "scale": scale},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def modeling_add_modifier(
@@ -85,13 +96,19 @@ def modeling_add_modifier(
         modifier_type: Type of modifier (e.g., 'SUBSURF', 'BEVEL', 'MIRROR', 'BOOLEAN').
         properties: Dictionary of modifier properties to set (e.g., {'levels': 2}). Can be a dict or string '{"levels": 2}'.
     """
-    handler = get_modeling_handler()
-    try:
-        # Parse properties that might be sent as strings by some MCP clients
-        parsed_properties = parse_dict(properties)
-        return handler.add_modifier(name, modifier_type, parsed_properties)
-    except (RuntimeError, ValueError) as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_properties = parse_dict(properties)
+            return handler.add_modifier(name, modifier_type, parsed_properties)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="modeling_add_modifier",
+        params={"name": name, "modifier_type": modifier_type, "properties": properties},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def modeling_apply_modifier(
@@ -108,11 +125,11 @@ def modeling_apply_modifier(
         name: Object name.
         modifier_name: The name of the modifier to apply.
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.apply_modifier(name, modifier_name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_apply_modifier",
+        params={"name": name, "modifier_name": modifier_name},
+        direct_executor=lambda: get_modeling_handler().apply_modifier(name, modifier_name)
+    )
 
 @mcp.tool()
 def modeling_convert_to_mesh(
@@ -127,11 +144,11 @@ def modeling_convert_to_mesh(
     Args:
         name: The name of the object to convert.
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.convert_to_mesh(name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_convert_to_mesh",
+        params={"name": name},
+        direct_executor=lambda: get_modeling_handler().convert_to_mesh(name)
+    )
 
 @mcp.tool()
 def modeling_join_objects(
@@ -147,11 +164,11 @@ def modeling_join_objects(
     Args:
         object_names: A list of names of the objects to join.
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.join_objects(object_names)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_join_objects",
+        params={"object_names": object_names},
+        direct_executor=lambda: get_modeling_handler().join_objects(object_names)
+    )
 
 @mcp.tool()
 def modeling_separate_object(
@@ -168,12 +185,19 @@ def modeling_separate_object(
         name: The name of the object to separate.
         type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
     """
-    handler = get_modeling_handler()
-    try:
-        result = handler.separate_object(name, type)
-        return str(result)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            result = handler.separate_object(name, type)
+            return str(result)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="modeling_separate_object",
+        params={"name": name, "type": type},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def modeling_list_modifiers(
@@ -188,12 +212,19 @@ def modeling_list_modifiers(
     Args:
         name: The name of the object.
     """
-    handler = get_modeling_handler()
-    try:
-        modifiers = handler.get_modifiers(name)
-        return str(modifiers)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            modifiers = handler.get_modifiers(name)
+            return str(modifiers)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="modeling_list_modifiers",
+        params={"name": name},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def modeling_set_origin(
@@ -210,11 +241,11 @@ def modeling_set_origin(
         name: Object name.
         type: Origin type (e.g., 'ORIGIN_GEOMETRY', 'ORIGIN_CURSOR', 'ORIGIN_CENTER_OF_MASS').
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.set_origin(name, type)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="modeling_set_origin",
+        params={"name": name, "type": type},
+        direct_executor=lambda: get_modeling_handler().set_origin(name, type)
+    )
 
 
 # ==============================================================================
@@ -259,19 +290,26 @@ def metaball_create(
         metaball_create(name="Heart", element_type="ELLIPSOID", radius=1.5)
         metaball_create(name="Tumor", resolution=0.1) -> Higher quality
     """
-    handler = get_modeling_handler()
-    try:
-        parsed_location = parse_coordinate(location)
-        return handler.metaball_create(
-            name=name,
-            location=parsed_location,
-            element_type=element_type,
-            radius=radius,
-            resolution=resolution,
-            threshold=threshold,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            return handler.metaball_create(
+                name=name,
+                location=parsed_location,
+                element_type=element_type,
+                radius=radius,
+                resolution=resolution,
+                threshold=threshold,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="metaball_create",
+        params={"name": name, "location": location, "element_type": element_type, "radius": radius, "resolution": resolution, "threshold": threshold},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -302,18 +340,25 @@ def metaball_add_element(
         metaball_add_element("Heart", location=[0.5, 0, 0.3], radius=0.8)
         metaball_add_element("Vessel", element_type="CAPSULE", radius=0.2)
     """
-    handler = get_modeling_handler()
-    try:
-        parsed_location = parse_coordinate(location)
-        return handler.metaball_add_element(
-            metaball_name=metaball_name,
-            element_type=element_type,
-            location=parsed_location,
-            radius=radius,
-            stiffness=stiffness,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            return handler.metaball_add_element(
+                metaball_name=metaball_name,
+                element_type=element_type,
+                location=parsed_location,
+                radius=radius,
+                stiffness=stiffness,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="metaball_add_element",
+        params={"metaball_name": metaball_name, "element_type": element_type, "location": location, "radius": radius, "stiffness": stiffness},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -339,14 +384,11 @@ def metaball_to_mesh(
     Examples:
         metaball_to_mesh("Heart") -> Converts to mesh for editing
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.metaball_to_mesh(
-            metaball_name=metaball_name,
-            apply_resolution=apply_resolution,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="metaball_to_mesh",
+        params={"metaball_name": metaball_name, "apply_resolution": apply_resolution},
+        direct_executor=lambda: get_modeling_handler().metaball_to_mesh(metaball_name=metaball_name, apply_resolution=apply_resolution)
+    )
 
 
 # ==============================================================================
@@ -382,19 +424,26 @@ def skin_create_skeleton(
         skin_create_skeleton(name="Artery", vertices=[[0,0,0], [0,0,1], [0.3,0,1.5]])
         skin_create_skeleton(name="Branch", vertices=[[0,0,0], [0,0,1], [0.5,0,1.5], [-0.5,0,1.5]], edges=[[0,1], [1,2], [1,3]])
     """
-    handler = get_modeling_handler()
-    try:
-        parsed_location = parse_coordinate(location)
-        parsed_vertices = parse_coordinate(vertices) if isinstance(vertices, str) else vertices
-        parsed_edges = parse_coordinate(edges) if isinstance(edges, str) else edges
-        return handler.skin_create_skeleton(
-            name=name,
-            vertices=parsed_vertices,
-            edges=parsed_edges,
-            location=parsed_location,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_modeling_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            parsed_vertices = parse_coordinate(vertices) if isinstance(vertices, str) else vertices
+            parsed_edges = parse_coordinate(edges) if isinstance(edges, str) else edges
+            return handler.skin_create_skeleton(
+                name=name,
+                vertices=parsed_vertices,
+                edges=parsed_edges,
+                location=parsed_location,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="skin_create_skeleton",
+        params={"name": name, "vertices": vertices, "edges": edges, "location": location},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -424,13 +473,8 @@ def skin_set_radius(
         skin_set_radius("Artery", vertex_index=0, radius_x=0.15) -> Thick at base
         skin_set_radius("Artery", radius_x=0.05, radius_y=0.05) -> Thin everywhere
     """
-    handler = get_modeling_handler()
-    try:
-        return handler.skin_set_radius(
-            object_name=object_name,
-            vertex_index=vertex_index,
-            radius_x=radius_x,
-            radius_y=radius_y,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="skin_set_radius",
+        params={"object_name": object_name, "vertex_index": vertex_index, "radius_x": radius_x, "radius_y": radius_y},
+        direct_executor=lambda: get_modeling_handler().skin_set_radius(object_name=object_name, vertex_index=vertex_index, radius_x=radius_x, radius_y=radius_y)
+    )

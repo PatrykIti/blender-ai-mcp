@@ -1,7 +1,9 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_collection_handler
+
 
 @mcp.tool()
 def collection_list(ctx: Context, include_objects: bool = False) -> str:
@@ -16,44 +18,50 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
     Args:
         include_objects: If True, includes object names within each collection.
     """
-    handler = get_collection_handler()
-    try:
-        collections = handler.list_collections(include_objects=include_objects)
+    def execute():
+        handler = get_collection_handler()
+        try:
+            collections = handler.list_collections(include_objects=include_objects)
 
-        if not collections:
-            return "No collections found in the scene."
+            if not collections:
+                return "No collections found in the scene."
 
-        lines = [f"Collections ({len(collections)}):"]
+            lines = [f"Collections ({len(collections)}):"]
 
-        for col in collections:
-            parent = col.get("parent") or "<root>"
-            obj_count = col.get("object_count", 0)
-            child_count = col.get("child_count", 0)
+            for col in collections:
+                parent = col.get("parent") or "<root>"
+                obj_count = col.get("object_count", 0)
+                child_count = col.get("child_count", 0)
 
-            # Build visibility info
-            visibility = []
-            if col.get("hide_viewport"):
-                visibility.append("hidden-viewport")
-            if col.get("hide_render"):
-                visibility.append("hidden-render")
-            if col.get("hide_select"):
-                visibility.append("unselectable")
+                visibility = []
+                if col.get("hide_viewport"):
+                    visibility.append("hidden-viewport")
+                if col.get("hide_render"):
+                    visibility.append("hidden-render")
+                if col.get("hide_select"):
+                    visibility.append("unselectable")
 
-            vis_str = f" [{', '.join(visibility)}]" if visibility else ""
+                vis_str = f" [{', '.join(visibility)}]" if visibility else ""
 
-            lines.append(
-                f"  • {col['name']} (parent: {parent}, objects: {obj_count}, children: {child_count}){vis_str}"
-            )
+                lines.append(
+                    f"  • {col['name']} (parent: {parent}, objects: {obj_count}, children: {child_count}){vis_str}"
+                )
 
-            # Optionally list objects
-            if include_objects and col.get("objects"):
-                obj_list = ", ".join(col["objects"])
-                lines.append(f"      Objects: {obj_list}")
+                if include_objects and col.get("objects"):
+                    obj_list = ", ".join(col["objects"])
+                    lines.append(f"      Objects: {obj_list}")
 
-        ctx.info(f"Listed {len(collections)} collections")
-        return "\n".join(lines)
-    except RuntimeError as e:
-        return str(e)
+            ctx.info(f"Listed {len(collections)} collections")
+            return "\n".join(lines)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="collection_list",
+        params={"include_objects": include_objects},
+        direct_executor=execute
+    )
+
 
 @mcp.tool()
 def collection_list_objects(
@@ -75,46 +83,57 @@ def collection_list_objects(
         recursive: If True, includes objects from child collections (default True)
         include_hidden: If True, includes hidden objects (default False)
     """
-    handler = get_collection_handler()
-    try:
-        result = handler.list_objects(
-            collection_name=collection_name,
-            recursive=recursive,
-            include_hidden=include_hidden
-        )
-
-        objects = result.get("objects", [])
-        object_count = result.get("object_count", 0)
-
-        if object_count == 0:
-            return f"Collection '{collection_name}' contains no objects (recursive={recursive}, include_hidden={include_hidden})."
-
-        lines = [
-            f"Collection: {collection_name}",
-            f"Objects ({object_count}, recursive={recursive}, hidden={include_hidden}):"
-        ]
-
-        for obj in objects:
-            visibility = []
-            if not obj.get("visible_viewport"):
-                visibility.append("hidden-viewport")
-            if not obj.get("visible_render"):
-                visibility.append("hidden-render")
-
-            vis_str = f" [{', '.join(visibility)}]" if visibility else ""
-            selected_str = " [selected]" if obj.get("selected") else ""
-
-            lines.append(
-                f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}"
+    def execute():
+        handler = get_collection_handler()
+        try:
+            result = handler.list_objects(
+                collection_name=collection_name,
+                recursive=recursive,
+                include_hidden=include_hidden
             )
 
-        ctx.info(f"Listed {object_count} objects from collection '{collection_name}'")
-        return "\n".join(lines)
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use collection_list to see available collections."
-        return msg
+            objects = result.get("objects", [])
+            object_count = result.get("object_count", 0)
+
+            if object_count == 0:
+                return f"Collection '{collection_name}' contains no objects (recursive={recursive}, include_hidden={include_hidden})."
+
+            lines = [
+                f"Collection: {collection_name}",
+                f"Objects ({object_count}, recursive={recursive}, hidden={include_hidden}):"
+            ]
+
+            for obj in objects:
+                visibility = []
+                if not obj.get("visible_viewport"):
+                    visibility.append("hidden-viewport")
+                if not obj.get("visible_render"):
+                    visibility.append("hidden-render")
+
+                vis_str = f" [{', '.join(visibility)}]" if visibility else ""
+                selected_str = " [selected]" if obj.get("selected") else ""
+
+                lines.append(
+                    f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}"
+                )
+
+            ctx.info(f"Listed {object_count} objects from collection '{collection_name}'")
+            return "\n".join(lines)
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use collection_list to see available collections."
+            return msg
+
+    return route_tool_call(
+        tool_name="collection_list_objects",
+        params={
+            "collection_name": collection_name,
+            "recursive": recursive,
+            "include_hidden": include_hidden
+        },
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -146,19 +165,32 @@ def collection_manage(
         parent_name: Parent collection for 'create' action (defaults to Scene Collection)
         object_name: Object name for move/link/unlink actions
     """
-    handler = get_collection_handler()
-    try:
-        result = handler.manage_collection(
-            action=action,
-            collection_name=collection_name,
-            new_name=new_name,
-            parent_name=parent_name,
-            object_name=object_name,
-        )
-        ctx.info(f"collection_manage({action}): {result}")
-        return result
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use collection_list to see available collections."
-        return msg
+    def execute():
+        handler = get_collection_handler()
+        try:
+            result = handler.manage_collection(
+                action=action,
+                collection_name=collection_name,
+                new_name=new_name,
+                parent_name=parent_name,
+                object_name=object_name,
+            )
+            ctx.info(f"collection_manage({action}): {result}")
+            return result
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use collection_list to see available collections."
+            return msg
+
+    return route_tool_call(
+        tool_name="collection_manage",
+        params={
+            "action": action,
+            "collection_name": collection_name,
+            "new_name": new_name,
+            "parent_name": parent_name,
+            "object_name": object_name
+        },
+        direct_executor=execute
+    )

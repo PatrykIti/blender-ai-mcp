@@ -1,6 +1,7 @@
 from typing import List, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_curve_handler
 
 
@@ -33,11 +34,18 @@ def curve_create(
         curve_create(curve_type="CIRCLE", location=[0, 0, 1]) -> Circle at Z=1
         curve_create(curve_type="PATH") -> Creates animation path
     """
-    handler = get_curve_handler()
-    try:
-        return handler.create_curve(curve_type, location)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_curve_handler()
+        try:
+            return handler.create_curve(curve_type, location)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="curve_create",
+        params={"curve_type": curve_type, "location": location},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -57,8 +65,15 @@ def curve_to_mesh(
     Examples:
         curve_to_mesh(object_name="BezierCurve") -> Converts curve to mesh
     """
-    handler = get_curve_handler()
-    try:
-        return handler.curve_to_mesh(object_name)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_curve_handler()
+        try:
+            return handler.curve_to_mesh(object_name)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="curve_to_mesh",
+        params={"object_name": object_name},
+        direct_executor=execute
+    )

@@ -5,6 +5,7 @@ from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.utils import parse_coordinate
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_scene_handler
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -17,13 +18,20 @@ def scene_list_objects(ctx: Context) -> str:
 
     Workflow: READ-ONLY | START → understand scene
     """
-    handler = get_scene_handler()
-    try:
-        result = handler.list_objects()
-        ctx.info(f"Listed {len(result)} objects")
-        return str(result)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = handler.list_objects()
+            ctx.info(f"Listed {len(result)} objects")
+            return str(result)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_list_objects",
+        params={},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def scene_delete_object(name: str, ctx: Context) -> str:
@@ -36,11 +44,11 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     Args:
         name: Name of the object to delete.
     """
-    handler = get_scene_handler()
-    try:
-        return handler.delete_object(name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="scene_delete_object",
+        params={"name": name},
+        direct_executor=lambda: get_scene_handler().delete_object(name)
+    )
 
 @mcp.tool()
 def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
@@ -54,11 +62,11 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
         keep_lights_and_cameras: If True (default), keeps Lights and Cameras.
                                  If False, deletes EVERYTHING (hard reset).
     """
-    handler = get_scene_handler()
-    try:
-        return handler.clean_scene(keep_lights_and_cameras)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="scene_clean_scene",
+        params={"keep_lights_and_cameras": keep_lights_and_cameras},
+        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras)
+    )
 
 @mcp.tool()
 def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
@@ -71,12 +79,19 @@ def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List
         name: Name of the object to duplicate.
         translation: Optional [x, y, z] vector to move the copy. Can be a list or string '[1.0, 2.0, 3.0]'.
     """
-    handler = get_scene_handler()
-    try:
-        parsed_translation = parse_coordinate(translation)
-        return str(handler.duplicate_object(name, parsed_translation))
-    except (RuntimeError, ValueError) as e:
-        return str(e)
+    def execute():
+        handler = get_scene_handler()
+        try:
+            parsed_translation = parse_coordinate(translation)
+            return str(handler.duplicate_object(name, parsed_translation))
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_duplicate_object",
+        params={"name": name, "translation": translation},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def scene_set_active_object(ctx: Context, name: str) -> str:
@@ -89,11 +104,11 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
     Args:
         name: Name of the object to set as active.
     """
-    handler = get_scene_handler()
-    try:
-        return handler.set_active_object(name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="scene_set_active_object",
+        params={"name": name},
+        direct_executor=lambda: get_scene_handler().set_active_object(name)
+    )
 
 
 @mcp.tool()
@@ -114,12 +129,19 @@ def scene_context(
         scene_context(action="mode")
         scene_context(action="selection")
     """
-    if action == "mode":
-        return _scene_get_mode(ctx)
-    elif action == "selection":
-        return _scene_list_selection(ctx)
-    else:
-        return f"Unknown action '{action}'. Valid actions: mode, selection"
+    def execute():
+        if action == "mode":
+            return _scene_get_mode(ctx)
+        elif action == "selection":
+            return _scene_list_selection(ctx)
+        else:
+            return f"Unknown action '{action}'. Valid actions: mode, selection"
+
+    return route_tool_call(
+        tool_name="scene_context",
+        params={"action": action},
+        direct_executor=execute
+    )
 
 
 # Internal function - exposed via scene_context mega tool
@@ -214,20 +236,27 @@ def scene_inspect(
         scene_inspect(action="modifiers")  # scans all objects
         scene_inspect(action="materials", material_filter="Wood")
     """
-    if action == "object":
-        if object_name is None:
-            return "Error: 'object' action requires 'object_name' parameter."
-        return _scene_inspect_object(ctx, object_name)
-    elif action == "topology":
-        if object_name is None:
-            return "Error: 'topology' action requires 'object_name' parameter."
-        return _scene_inspect_mesh_topology(ctx, object_name, detailed)
-    elif action == "modifiers":
-        return _scene_inspect_modifiers(ctx, object_name, include_disabled)
-    elif action == "materials":
-        return _scene_inspect_material_slots(ctx, material_filter, include_empty_slots)
-    else:
-        return f"Unknown action '{action}'. Valid actions: object, topology, modifiers, materials"
+    def execute():
+        if action == "object":
+            if object_name is None:
+                return "Error: 'object' action requires 'object_name' parameter."
+            return _scene_inspect_object(ctx, object_name)
+        elif action == "topology":
+            if object_name is None:
+                return "Error: 'topology' action requires 'object_name' parameter."
+            return _scene_inspect_mesh_topology(ctx, object_name, detailed)
+        elif action == "modifiers":
+            return _scene_inspect_modifiers(ctx, object_name, include_disabled)
+        elif action == "materials":
+            return _scene_inspect_material_slots(ctx, material_filter, include_empty_slots)
+        else:
+            return f"Unknown action '{action}'. Valid actions: object, topology, modifiers, materials"
+
+    return route_tool_call(
+        tool_name="scene_inspect",
+        params={"action": action, "object_name": object_name, "detailed": detailed, "include_disabled": include_disabled, "material_filter": material_filter, "include_empty_slots": include_empty_slots},
+        direct_executor=execute
+    )
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -334,52 +363,58 @@ def scene_get_viewport(
             None/"USER_PERSPECTIVE".
         output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
-    handler = get_scene_handler()
-    try:
-        # Domain/Application return base64 only; formatting happens here.
-        b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_scene_handler()
+        try:
+            b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
+        except RuntimeError as e:
+            return str(e)
 
-    mode = (output_mode or "IMAGE").upper()
+        mode_val = (output_mode or "IMAGE").upper()
 
-    if mode == "IMAGE":
-        image_bytes = base64.b64decode(b64_data)
-        return Image(data=image_bytes, format="jpeg")
+        if mode_val == "IMAGE":
+            image_bytes = base64.b64decode(b64_data)
+            return Image(data=image_bytes, format="jpeg")
 
-    if mode == "BASE64":
-        return b64_data
+        if mode_val == "BASE64":
+            return b64_data
 
-    if mode in {"FILE", "MARKDOWN"}:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"viewport_{timestamp}.jpg"
-        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
-            filename
-        )
-        image_bytes = base64.b64decode(b64_data)
-        internal_file.write_bytes(image_bytes)
-        internal_latest.write_bytes(image_bytes)
+        if mode_val in {"FILE", "MARKDOWN"}:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"viewport_{timestamp}.jpg"
+            internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
+                filename
+            )
+            image_bytes = base64.b64decode(b64_data)
+            internal_file.write_bytes(image_bytes)
+            internal_latest.write_bytes(image_bytes)
 
-        header = (
-            f"Viewport render saved.\n\n"
-            f"Timestamped file: {external_file}\n"
-            f"Latest file: {external_latest}\n\n"
-            f"Resolution: {width}x{height}, shading: {shading}."
-        )
+            header = (
+                f"Viewport render saved.\n\n"
+                f"Timestamped file: {external_file}\n"
+                f"Latest file: {external_latest}\n\n"
+                f"Resolution: {width}x{height}, shading: {shading}."
+            )
 
-        if mode == "FILE":
-            return header
+            if mode_val == "FILE":
+                return header
 
-        data_url = f"data:image/jpeg;base64,{b64_data}"
+            data_url = f"data:image/jpeg;base64,{b64_data}"
+            return (
+                f"Viewport render saved to: {external_latest}\n\n"
+                f"**Preview ({width}x{height}, {shading} mode):**\n\n"
+                f"![Viewport]({data_url})\n\n"
+                f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
+            )
+
         return (
-            f"Viewport render saved to: {external_latest}\n\n"
-            f"**Preview ({width}x{height}, {shading} mode):**\n\n"
-            f"![Viewport]({data_url})\n\n"
-            f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
+            f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
         )
 
-    return (
-        f"Invalid output_mode '{mode}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
+    return route_tool_call(
+        tool_name="scene_get_viewport",
+        params={"width": width, "height": height, "shading": shading, "camera_name": camera_name, "focus_target": focus_target, "output_mode": output_mode},
+        direct_executor=execute
     )
 
 @mcp.tool()
@@ -401,34 +436,40 @@ def scene_snapshot_state(
         include_mesh_stats: If True, includes vertex/edge/face counts for mesh objects.
         include_materials: If True, includes material names assigned to objects.
     """
-    handler = get_scene_handler()
-    try:
-        result = handler.snapshot_state(
-            include_mesh_stats=include_mesh_stats,
-            include_materials=include_materials
-        )
-        import json
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = handler.snapshot_state(
+                include_mesh_stats=include_mesh_stats,
+                include_materials=include_materials
+            )
+            import json
 
-        snapshot = result.get("snapshot", {})
-        snapshot_hash = result.get("hash", "unknown")
-        object_count = snapshot.get("object_count", 0)
-        timestamp = snapshot.get("timestamp", "unknown")
+            snapshot = result.get("snapshot", {})
+            snapshot_hash = result.get("hash", "unknown")
+            object_count = snapshot.get("object_count", 0)
+            timestamp = snapshot.get("timestamp", "unknown")
 
-        # Format summary
-        summary = (
-            f"Scene Snapshot Captured:\n"
-            f"- Timestamp: {timestamp}\n"
-            f"- Objects: {object_count}\n"
-            f"- Hash: {snapshot_hash[:16]}...\n"
-            f"- Active Object: {snapshot.get('active_object') or 'None'}\n"
-            f"- Mode: {snapshot.get('mode', 'UNKNOWN')}\n\n"
-            f"Full snapshot (JSON):\n{json.dumps(snapshot, indent=2)}"
-        )
+            summary = (
+                f"Scene Snapshot Captured:\n"
+                f"- Timestamp: {timestamp}\n"
+                f"- Objects: {object_count}\n"
+                f"- Hash: {snapshot_hash[:16]}...\n"
+                f"- Active Object: {snapshot.get('active_object') or 'None'}\n"
+                f"- Mode: {snapshot.get('mode', 'UNKNOWN')}\n\n"
+                f"Full snapshot (JSON):\n{json.dumps(snapshot, indent=2)}"
+            )
 
-        ctx.info(f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
-        return summary
-    except RuntimeError as e:
-        return str(e)
+            ctx.info(f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
+            return summary
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_snapshot_state",
+        params={"include_mesh_stats": include_mesh_stats, "include_materials": include_materials},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def scene_compare_snapshot(
@@ -451,61 +492,67 @@ def scene_compare_snapshot(
         target_snapshot: JSON string of the target snapshot
         ignore_minor_transforms: Threshold for ignoring small transform changes (default 0.0)
     """
-    diff_service = get_snapshot_diff_service()
+    def execute():
+        diff_service = get_snapshot_diff_service()
 
-    try:
-        result = diff_service.compare_snapshots(
-            baseline_snapshot=baseline_snapshot,
-            target_snapshot=target_snapshot,
-            ignore_minor_transforms=ignore_minor_transforms
-        )
-    except ValueError as e:
-        return f"Error: {str(e)}"
+        try:
+            result = diff_service.compare_snapshots(
+                baseline_snapshot=baseline_snapshot,
+                target_snapshot=target_snapshot,
+                ignore_minor_transforms=ignore_minor_transforms
+            )
+        except ValueError as e:
+            return f"Error: {str(e)}"
 
-    # Format the diff summary
-    added = result.get("objects_added", [])
-    removed = result.get("objects_removed", [])
-    modified = result.get("objects_modified", [])
-    has_changes = result.get("has_changes", False)
+        added = result.get("objects_added", [])
+        removed = result.get("objects_removed", [])
+        modified = result.get("objects_modified", [])
+        has_changes = result.get("has_changes", False)
 
-    if not has_changes:
-        return "No changes detected between snapshots."
+        if not has_changes:
+            return "No changes detected between snapshots."
 
-    lines = [
-        "Snapshot Comparison:",
-        f"- Baseline: {result.get('baseline_timestamp')} (hash: {result.get('baseline_hash', 'unknown')[:16]}...)",
-        f"- Target: {result.get('target_timestamp')} (hash: {result.get('target_hash', 'unknown')[:16]}...)",
-        ""
-    ]
+        lines = [
+            "Snapshot Comparison:",
+            f"- Baseline: {result.get('baseline_timestamp')} (hash: {result.get('baseline_hash', 'unknown')[:16]}...)",
+            f"- Target: {result.get('target_timestamp')} (hash: {result.get('target_hash', 'unknown')[:16]}...)",
+            ""
+        ]
 
-    if added:
-        lines.append(f"Objects Added ({len(added)}):")
-        for obj_name in added:
-            lines.append(f"  + {obj_name}")
-        lines.append("")
+        if added:
+            lines.append(f"Objects Added ({len(added)}):")
+            for obj_name in added:
+                lines.append(f"  + {obj_name}")
+            lines.append("")
 
-    if removed:
-        lines.append(f"Objects Removed ({len(removed)}):")
-        for obj_name in removed:
-            lines.append(f"  - {obj_name}")
-        lines.append("")
+        if removed:
+            lines.append(f"Objects Removed ({len(removed)}):")
+            for obj_name in removed:
+                lines.append(f"  - {obj_name}")
+            lines.append("")
 
-    if modified:
-        lines.append(f"Objects Modified ({len(modified)}):")
-        for mod in modified:
-            obj_name = mod.get("object_name")
-            changes = mod.get("changes", [])
-            lines.append(f"  ~ {obj_name}:")
-            for change in changes:
-                prop = change.get("property")
-                old_val = change.get("old_value")
-                new_val = change.get("new_value")
-                lines.append(f"      {prop}: {old_val} → {new_val}")
-        lines.append("")
+        if modified:
+            lines.append(f"Objects Modified ({len(modified)}):")
+            for mod in modified:
+                obj_name = mod.get("object_name")
+                changes = mod.get("changes", [])
+                lines.append(f"  ~ {obj_name}:")
+                for change in changes:
+                    prop = change.get("property")
+                    old_val = change.get("old_value")
+                    new_val = change.get("new_value")
+                    lines.append(f"      {prop}: {old_val} → {new_val}")
+            lines.append("")
 
-    summary = "\n".join(lines)
-    ctx.info(f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
-    return summary
+        summary = "\n".join(lines)
+        ctx.info(f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
+        return summary
+
+    return route_tool_call(
+        tool_name="scene_compare_snapshot",
+        params={"baseline_snapshot": baseline_snapshot, "target_snapshot": target_snapshot, "ignore_minor_transforms": ignore_minor_transforms},
+        direct_executor=execute
+    )
 
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_material_slots(
@@ -731,14 +778,21 @@ def scene_create(
         scene_create(action="camera", location=[0, -10, 5], rotation=[1.0, 0, 0])
         scene_create(action="empty", empty_type="ARROWS", location=[0, 0, 2])
     """
-    if action == "light":
-        return _scene_create_light(ctx, light_type, energy, color, location, name)
-    elif action == "camera":
-        return _scene_create_camera(ctx, location, rotation, lens, clip_start, clip_end, name)
-    elif action == "empty":
-        return _scene_create_empty(ctx, empty_type, size, location, name)
-    else:
-        return f"Unknown action '{action}'. Valid actions: light, camera, empty"
+    def execute():
+        if action == "light":
+            return _scene_create_light(ctx, light_type, energy, color, location, name)
+        elif action == "camera":
+            return _scene_create_camera(ctx, location, rotation, lens, clip_start, clip_end, name)
+        elif action == "empty":
+            return _scene_create_empty(ctx, empty_type, size, location, name)
+        else:
+            return f"Unknown action '{action}'. Valid actions: light, camera, empty"
+
+    return route_tool_call(
+        tool_name="scene_create",
+        params={"action": action, "location": location, "rotation": rotation, "name": name, "light_type": light_type, "energy": energy, "color": color, "lens": lens, "clip_start": clip_start, "clip_end": clip_end, "empty_type": empty_type, "size": size},
+        direct_executor=execute
+    )
 
 
 # Internal function - exposed via scene_create mega tool
@@ -839,10 +893,17 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
     Args:
         mode: The target mode (case-insensitive).
     """
-    handler = get_scene_handler()
-    try:
-        return handler.set_mode(mode)
-    except ValueError as e:
-        return f"Validation error: {str(e)}"
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_scene_handler()
+        try:
+            return handler.set_mode(mode)
+        except ValueError as e:
+            return f"Validation error: {str(e)}"
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_set_mode",
+        params={"mode": mode},
+        direct_executor=execute
+    )
