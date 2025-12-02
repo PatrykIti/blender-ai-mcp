@@ -108,9 +108,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             return "OBJECT"
 
         try:
-            response = self._rpc_client.send_request("scene.context", {"action": "mode"})
-            if isinstance(response, dict):
-                return response.get("mode", "OBJECT")
+            # Use scene.get_mode RPC method (addon method)
+            response = self._rpc_client.send_request("scene.get_mode", {})
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                return response.result.get("mode", "OBJECT")
             return "OBJECT"
         except Exception:
             return "OBJECT"
@@ -129,17 +131,31 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             return False
 
         try:
-            response = self._rpc_client.send_request("scene.context", {"action": "selection"})
-            if isinstance(response, dict):
-                selection = response.get("selection", {})
-                if isinstance(selection, dict):
-                    return bool(selection.get("has_selection", False))
+            # Use scene.list_selection RPC method (addon method)
+            response = self._rpc_client.send_request("scene.list_selection", {})
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                result = response.result
+                # Addon uses "selected_object_names" not "selected_objects"
+                selected_objects = result.get("selected_object_names", [])
+                # Edit mode selection counts
+                selected_verts = result.get("edit_mode_vertex_count") or 0
+                selected_edges = result.get("edit_mode_edge_count") or 0
+                selected_faces = result.get("edit_mode_face_count") or 0
+                return bool(selected_objects) or selected_verts > 0 or selected_edges > 0 or selected_faces > 0
             return False
         except Exception:
             return False
 
     def _build_context(self, object_name: Optional[str] = None) -> SceneContext:
         """Build scene context from RPC calls.
+
+        Uses individual addon RPC methods to gather scene state:
+        - scene.get_mode (returns: mode, active_object, selected_object_names)
+        - scene.list_objects (returns: [{name, type, location}])
+        - scene.list_selection (returns: mode, selected_object_names)
+        - scene.inspect_object (for dimensions, materials, modifiers)
+        - scene.inspect_mesh_topology (for topology info)
 
         Args:
             object_name: Specific object to focus on.
@@ -151,16 +167,161 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             return SceneContext.empty()
 
         try:
-            # Get full context via scene_context tool
-            response = self._rpc_client.send_request("scene.context", {"action": "full"})
+            # Get mode and active object from get_mode (includes active_object)
+            mode_data = self._get_mode_data_rpc()
+            mode = mode_data.get("mode", "OBJECT")
+            active_object = mode_data.get("active_object")
+            # Note: addon uses "selected_object_names" not "selected_objects"
+            selected_objects = mode_data.get("selected_object_names", [])
 
-            if not isinstance(response, dict):
-                return SceneContext.empty()
+            # Get objects list (basic info only - no dimensions)
+            objects_data = self._get_objects_rpc()
 
-            return self._parse_context_response(response, object_name)
+            # If specific object requested, use it
+            if object_name:
+                active_object = object_name
+
+            # Build objects list - need to get dimensions from inspect_object
+            objects = []
+            for obj_data in objects_data:
+                if isinstance(obj_data, dict):
+                    obj_name = obj_data.get("name", "")
+                    obj_type = obj_data.get("type", "MESH")
+                    obj_location = obj_data.get("location", [0.0, 0.0, 0.0])
+
+                    # Get dimensions from inspect_object (only for active object to avoid many RPC calls)
+                    dimensions = [1.0, 1.0, 1.0]
+                    if obj_name == active_object:
+                        inspect_data = self._get_inspect_rpc(obj_name)
+                        if inspect_data:
+                            dimensions = inspect_data.get("dimensions", [1.0, 1.0, 1.0])
+
+                    objects.append(ObjectInfo(
+                        name=obj_name,
+                        type=obj_type,
+                        location=obj_location,
+                        dimensions=dimensions,
+                        selected=obj_name in selected_objects,
+                        active=obj_name == active_object,
+                    ))
+
+            # Get topology for active mesh object in EDIT mode
+            topology = None
+            if active_object and mode.startswith("EDIT"):
+                topology = self._get_topology_rpc(active_object)
+
+            # Calculate proportions for active object
+            proportions = None
+            for obj in objects:
+                if obj.active and obj.dimensions:
+                    proportions = calculate_proportions(obj.dimensions)
+                    break
+
+            # Get materials and modifiers for active object (already fetched above)
+            materials = []
+            modifiers = []
+            if active_object:
+                inspect_data = self._get_inspect_rpc(active_object)
+                if inspect_data:
+                    # Addon uses "material_slots" not "materials"
+                    material_slots = inspect_data.get("material_slots", [])
+                    materials = [slot.get("material_name", "") for slot in material_slots if isinstance(slot, dict)]
+                    # Addon uses list of modifier dicts
+                    mod_list = inspect_data.get("modifiers", [])
+                    modifiers = [mod.get("name", "") for mod in mod_list if isinstance(mod, dict)]
+
+            return SceneContext(
+                mode=mode,
+                active_object=active_object,
+                selected_objects=selected_objects,
+                objects=objects,
+                topology=topology,
+                proportions=proportions,
+                materials=materials if isinstance(materials, list) else [],
+                modifiers=modifiers if isinstance(modifiers, list) else [],
+                timestamp=datetime.now(),
+            )
 
         except Exception:
             return SceneContext.empty()
+
+    def _get_mode_rpc(self) -> str:
+        """Get mode string via RPC."""
+        data = self._get_mode_data_rpc()
+        return data.get("mode", "OBJECT")
+
+    def _get_mode_data_rpc(self) -> Dict[str, Any]:
+        """Get full mode data via RPC (includes active_object, selected_object_names)."""
+        try:
+            response = self._rpc_client.send_request("scene.get_mode", {})
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                return response.result
+            return {"mode": "OBJECT"}
+        except Exception:
+            return {"mode": "OBJECT"}
+
+    def _get_objects_rpc(self) -> List[Dict[str, Any]]:
+        """Get objects list via RPC."""
+        try:
+            response = self._rpc_client.send_request("scene.list_objects", {})
+            # RpcResponse has .status and .result
+            if response.status == "ok":
+                if isinstance(response.result, list):
+                    return response.result
+                elif isinstance(response.result, dict):
+                    return response.result.get("objects", [])
+            return []
+        except Exception:
+            return []
+
+    def _get_selection_rpc(self) -> Dict[str, Any]:
+        """Get selection info via RPC."""
+        try:
+            response = self._rpc_client.send_request("scene.list_selection", {})
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                return response.result
+            return {}
+        except Exception:
+            return {}
+
+    def _get_topology_rpc(self, object_name: str) -> Optional[TopologyInfo]:
+        """Get mesh topology via RPC."""
+        try:
+            response = self._rpc_client.send_request(
+                "scene.inspect_mesh_topology",
+                {"object_name": object_name}
+            )
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                result = response.result
+                return TopologyInfo(
+                    vertices=result.get("vertices", 0),
+                    edges=result.get("edges", 0),
+                    faces=result.get("faces", 0),
+                    triangles=result.get("triangles", 0),
+                    selected_verts=result.get("selected_verts", 0),
+                    selected_edges=result.get("selected_edges", 0),
+                    selected_faces=result.get("selected_faces", 0),
+                )
+            return None
+        except Exception:
+            return None
+
+    def _get_inspect_rpc(self, object_name: str) -> Dict[str, Any]:
+        """Get object inspection data via RPC."""
+        try:
+            response = self._rpc_client.send_request(
+                "scene.inspect_object",
+                {"object_name": object_name}
+            )
+            # RpcResponse has .status and .result
+            if response.status == "ok" and isinstance(response.result, dict):
+                return response.result
+            return {}
+        except Exception:
+            return {}
 
     def _parse_context_response(
         self,

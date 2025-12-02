@@ -31,13 +31,24 @@ def router_config():
 
 
 @pytest.fixture(scope="session")
-def shared_classifier(router_config):
+def shared_classifier(router_config, request):
     """Session-scoped IntentClassifier - LaBSE model loaded once.
 
     This prevents loading the ~1.8GB model for each test.
     35 tests × 1.8GB = ~63GB without sharing.
     """
-    return IntentClassifier(config=router_config)
+    classifier = IntentClassifier(config=router_config)
+
+    # Explicit cleanup when session ends
+    def cleanup():
+        import gc
+        # Clear any cached data
+        if hasattr(classifier, '_model'):
+            del classifier._model
+        gc.collect()
+
+    request.addfinalizer(cleanup)
+    return classifier
 
 
 @pytest.fixture(scope="session")
@@ -67,16 +78,21 @@ def clean_scene(rpc_client, rpc_connection_available):
     if not rpc_connection_available:
         pytest.skip("Blender RPC server not available")
 
-    try:
-        rpc_client.send_request("scene.clean_scene", {"hard_reset": True})
-    except Exception:
-        pass  # Ignore if clean fails
+    def do_cleanup():
+        try:
+            # Delete all objects (keep_lights_and_cameras=False for full reset)
+            rpc_client.send_request("scene.clean_scene", {"keep_lights_and_cameras": False})
+        except Exception:
+            pass
+        try:
+            # Purge orphan data-blocks to free memory
+            rpc_client.send_request("system.purge_orphans", {})
+        except Exception:
+            pass  # Method might not exist yet
+
+    do_cleanup()
     yield
-    # Cleanup after test
-    try:
-        rpc_client.send_request("scene.clean_scene", {"hard_reset": True})
-    except Exception:
-        pass
+    do_cleanup()
 
 
 @pytest.fixture(scope="session")

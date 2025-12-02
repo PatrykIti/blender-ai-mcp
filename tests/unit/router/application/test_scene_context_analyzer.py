@@ -12,6 +12,14 @@ from server.router.application.analyzers.scene_context_analyzer import SceneCont
 from server.router.domain.entities.scene_context import SceneContext, ObjectInfo, TopologyInfo
 
 
+def make_rpc_response(result, status="ok"):
+    """Helper to create mock RpcResponse."""
+    response = MagicMock()
+    response.status = status
+    response.result = result
+    return response
+
+
 class TestSceneContextAnalyzerBasic:
     """Test basic analyzer functionality."""
 
@@ -118,7 +126,7 @@ class TestSceneContextAnalyzerWithRPC:
     def test_get_mode_from_rpc(self):
         """Test get_mode retrieves mode from RPC."""
         mock_rpc = MagicMock()
-        mock_rpc.send_request.return_value = {"mode": "EDIT"}
+        mock_rpc.send_request.return_value = make_rpc_response({"mode": "EDIT"})
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc)
 
         mode = analyzer.get_mode()
@@ -129,9 +137,11 @@ class TestSceneContextAnalyzerWithRPC:
     def test_has_selection_from_rpc(self):
         """Test has_selection from RPC."""
         mock_rpc = MagicMock()
-        mock_rpc.send_request.return_value = {
-            "selection": {"has_selection": True}
-        }
+        # Addon format: scene.list_selection returns selected_object_names list
+        mock_rpc.send_request.return_value = make_rpc_response({
+            "selected_object_names": ["Cube"],
+            "mode": "OBJECT",
+        })
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc)
 
         has_sel = analyzer.has_selection()
@@ -139,30 +149,35 @@ class TestSceneContextAnalyzerWithRPC:
         assert has_sel is True
 
     def test_analyze_parses_response(self):
-        """Test analyze parses full RPC response."""
+        """Test analyze parses full RPC response from multiple calls."""
         mock_rpc = MagicMock()
-        mock_rpc.send_request.return_value = {
-            "mode": "OBJECT",
-            "active_object": "Cube",
-            "selected_objects": ["Cube"],
-            "objects": [
-                {
-                    "name": "Cube",
-                    "type": "MESH",
-                    "location": [0.0, 0.0, 0.0],
+
+        # Mock responses for different RPC methods
+        # Addon returns active_object and selected_object_names from scene.get_mode
+        def mock_send_request(method, params=None):
+            if method == "scene.get_mode":
+                return make_rpc_response({
+                    "mode": "OBJECT",
+                    "active_object": "Cube",
+                    "selected_object_names": ["Cube"],
+                })
+            elif method == "scene.list_objects":
+                return make_rpc_response([
+                    {
+                        "name": "Cube",
+                        "type": "MESH",
+                        "location": [0.0, 0.0, 0.0],
+                    }
+                ])
+            elif method == "scene.inspect_object":
+                return make_rpc_response({
                     "dimensions": [2.0, 2.0, 2.0],
-                    "selected": True,
-                    "active": True,
-                }
-            ],
-            "topology": {
-                "vertices": 8,
-                "edges": 12,
-                "faces": 6,
-            },
-            "materials": ["Material"],
-            "modifiers": [],
-        }
+                    "material_slots": [{"material_name": "Material"}],
+                    "modifiers": [],
+                })
+            return make_rpc_response({})
+
+        mock_rpc.send_request.side_effect = mock_send_request
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc)
 
         context = analyzer.analyze()
@@ -171,7 +186,8 @@ class TestSceneContextAnalyzerWithRPC:
         assert context.active_object == "Cube"
         assert len(context.objects) == 1
         assert context.objects[0].name == "Cube"
-        assert context.topology.vertices == 8
+        # Topology only fetched in EDIT mode, so None in OBJECT mode
+        assert context.topology is None
 
     def test_rpc_error_returns_empty(self):
         """Test that RPC error returns empty context."""
@@ -269,35 +285,68 @@ class TestSceneContextAnalyzerCacheUpdate:
     def test_analyze_updates_cache(self):
         """Test that analyze updates the cache."""
         mock_rpc = MagicMock()
-        mock_rpc.send_request.return_value = {
-            "mode": "OBJECT",
-            "active_object": "Cube",
-        }
+
+        # Mock multiple RPC methods
+        # Addon returns active_object and selected_object_names from scene.get_mode
+        def mock_send_request(method, params=None):
+            if method == "scene.get_mode":
+                return make_rpc_response({
+                    "mode": "OBJECT",
+                    "active_object": "Cube",
+                    "selected_object_names": ["Cube"],
+                })
+            elif method == "scene.list_objects":
+                return make_rpc_response([{"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]}])
+            elif method == "scene.inspect_object":
+                return make_rpc_response({"dimensions": [2.0, 2.0, 2.0], "material_slots": [], "modifiers": []})
+            return make_rpc_response({})
+
+        mock_rpc.send_request.side_effect = mock_send_request
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc, cache_ttl=10.0)
 
-        # First call - should hit RPC
+        # First call - should hit RPC:
+        # 1. get_mode (mode, active_object, selected_object_names)
+        # 2. list_objects (object list)
+        # 3. inspect_object (for active object dimensions)
+        # 4. inspect_object (for active object materials/modifiers)
         context1 = analyzer.analyze()
-        assert mock_rpc.send_request.call_count == 1
+        first_call_count = mock_rpc.send_request.call_count
+        assert first_call_count == 4  # 4 RPC method calls
 
         # Second call - should use cache
         context2 = analyzer.analyze()
-        assert mock_rpc.send_request.call_count == 1  # No additional call
+        assert mock_rpc.send_request.call_count == first_call_count  # No additional calls
 
     def test_analyze_refreshes_expired_cache(self):
         """Test that analyze refreshes expired cache."""
         mock_rpc = MagicMock()
-        mock_rpc.send_request.return_value = {
-            "mode": "OBJECT",
-            "active_object": "Cube",
-        }
+
+        # Mock multiple RPC methods
+        # Addon returns active_object and selected_object_names from scene.get_mode
+        def mock_send_request(method, params=None):
+            if method == "scene.get_mode":
+                return make_rpc_response({
+                    "mode": "OBJECT",
+                    "active_object": "Cube",
+                    "selected_object_names": ["Cube"],
+                })
+            elif method == "scene.list_objects":
+                return make_rpc_response([{"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]}])
+            elif method == "scene.inspect_object":
+                return make_rpc_response({"dimensions": [2.0, 2.0, 2.0], "material_slots": [], "modifiers": []})
+            return make_rpc_response({})
+
+        mock_rpc.send_request.side_effect = mock_send_request
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc, cache_ttl=0.0)
 
-        # First call
+        # First call - 4 RPC calls
         analyzer.analyze()
+        first_call_count = mock_rpc.send_request.call_count
+
         # Expire the cache
         analyzer._cache_timestamp = datetime.now() - timedelta(seconds=1)
 
-        # Second call should refresh
+        # Second call should refresh - another 4 RPC calls
         analyzer.analyze()
 
-        assert mock_rpc.send_request.call_count == 2
+        assert mock_rpc.send_request.call_count == first_call_count * 2  # 8 calls total

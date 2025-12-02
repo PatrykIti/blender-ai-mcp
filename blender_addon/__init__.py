@@ -172,6 +172,7 @@ def register():
         rpc_server.register_handler("system.save_file", system_handler.save_file)
         rpc_server.register_handler("system.new_file", system_handler.new_file)
         rpc_server.register_handler("system.snapshot", system_handler.snapshot)
+        rpc_server.register_handler("system.purge_orphans", system_handler.purge_orphans)
 
         # TASK-027: Sculpting Tools
         rpc_server.register_handler("sculpt.auto", sculpt_handler.auto_sculpt)
