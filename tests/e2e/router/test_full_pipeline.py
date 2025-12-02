@@ -144,13 +144,14 @@ class TestErrorRecovery:
 class TestRouterConfiguration:
     """Tests for different router configurations."""
 
-    def test_disabled_mode_switch(self, rpc_client, clean_scene):
+    def test_disabled_mode_switch(self, rpc_client, clean_scene, shared_classifier):
         """Test: Router with disabled mode switch."""
         config = RouterConfig(
             auto_mode_switch=False,
             auto_selection=True,
         )
-        router = SupervisorRouter(config=config, rpc_client=rpc_client)
+        # Use shared_classifier to avoid loading LaBSE model again
+        router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
 
         rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
 
@@ -163,12 +164,13 @@ class TestRouterConfiguration:
         # Behavior depends on implementation
         assert "mesh_extrude_region" in tool_names
 
-    def test_disabled_workflow_expansion(self, rpc_client, clean_scene):
+    def test_disabled_workflow_expansion(self, rpc_client, clean_scene, shared_classifier):
         """Test: Router with disabled workflow expansion."""
         config = RouterConfig(
             enable_workflow_expansion=False,
         )
-        router = SupervisorRouter(config=config, rpc_client=rpc_client)
+        # Use shared_classifier to avoid loading LaBSE model again
+        router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
 
         # Even with matching pattern, shouldn't expand
         rpc_client.send_request("modeling.create_primitive", {"type": "CUBE"})
