@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [80](./80-2025-12-02-router-documentation-complete.md) | 2025-12-02 | **Router Documentation Complete (TASK-039-24)** | - |
 | [79](./79-2025-12-02-router-e2e-coverage-extension.md) | 2025-12-02 | **Router E2E Test Coverage Extension (TASK-040)** | - |
 | [78](./78-2025-12-02-router-e2e-test-fixes.md) | 2025-12-02 | **Router E2E Test Fixes (TASK-039)** | - |
 | [77](./77-2025-12-01-router-e2e-tests.md) | 2025-12-01 | **Router E2E Test Suite (TASK-039-23)** | - |

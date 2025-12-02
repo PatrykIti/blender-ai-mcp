@@ -388,64 +388,40 @@ Skeletal rigging and animation (future).
 
 ---
 
-### 🤖 Router Supervisor (In Progress)
+### 🤖 Router Supervisor ✅
 
 Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
-**Progress:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 🚧 | Phase 5 🚧 | **371 unit tests**
+**Status:** ✅ **Complete** | All 6 Phases Done | **450+ unit tests** | **74 E2E tests**
 
-#### Phase 1: Foundation & Infrastructure ✅
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Router Directory Structure | Clean Architecture package structure | ✅ |
-| Domain Entities | InterceptedToolCall, SceneContext, Pattern | ✅ |
-| Domain Interfaces | Abstract interfaces for all components | ✅ |
-| Metadata Loader | Tool definitions from JSON (119 files) | ✅ |
-| Configuration System | Router behavior settings | ✅ |
+> **Documentation:** See [`_docs/_ROUTER/`](_docs/_ROUTER/) for full documentation including [Quick Start](_docs/_ROUTER/QUICK_START.md), [Configuration](_docs/_ROUTER/CONFIGURATION.md), [Patterns](_docs/_ROUTER/PATTERNS.md), and [API Reference](_docs/_ROUTER/API.md).
 
-#### Phase 2: Scene Analysis ✅
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Tool Interceptor | Capture all LLM tool calls | ✅ |
-| Scene Context Analyzer | Read Blender state via RPC | ✅ |
-| Geometry Pattern Detector | Detect tower/phone/table patterns | ✅ |
-| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | ✅ |
+#### All Phases Complete ✅
 
-#### Phase 3: Tool Processing Engines
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Tool Correction Engine | Fix params, mode, selection | 🚧 |
-| Tool Override Engine | Replace with better alternatives | 🚧 |
-| Workflow Expansion Engine | 1 tool → N tools | 🚧 |
-| Error Firewall | Block/fix invalid operations | 🚧 |
-| Intent Classifier (TF-IDF) | Offline intent matching | 🚧 |
+| Phase | Components | Status |
+|-------|------------|--------|
+| **Phase 1: Foundation** | Directory structure, Domain entities, Interfaces, Metadata loader (119 JSON files), Config | ✅ |
+| **Phase 2: Analysis** | Tool interceptor, Scene context analyzer, Geometry pattern detector, Proportion calculator | ✅ |
+| **Phase 3: Engines** | Tool correction, Tool override, Workflow expansion, Error firewall, Intent classifier (LaBSE) | ✅ |
+| **Phase 4: Integration** | SupervisorRouter orchestrator, MCP integration, Logging & telemetry | ✅ |
+| **Phase 5: Workflows** | Phone workflow, Tower workflow, Screen cutout workflow, Custom YAML workflows | ✅ |
+| **Phase 6: Testing & Docs** | E2E test suite (74 tests), Complete documentation (6 guides) | ✅ |
 
-#### Phase 4: Integration
-| Component | Description | Status |
-|-----------|-------------|--------|
-| SupervisorRouter | Main orchestrator | 🚧 |
-| MCP Integration | Hook into tool execution | 🚧 |
-| Logging & Telemetry | Decision logging | 🚧 |
+#### Key Features
 
-#### Phase 5: Workflows & Patterns
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Phone Workflow | Complete phone modeling sequence | 🚧 |
-| Tower Workflow | Pillar/column with taper | 🚧 |
-| Screen Cutout Workflow | Display inset sub-workflow | 🚧 |
-| Custom Workflow System | YAML-defined workflows | 🚧 |
+| Feature | Description |
+|---------|-------------|
+| **LLM Supervisor** | Intercepts and corrects LLM tool calls before execution |
+| **Scene-Aware** | Analyzes Blender state via RPC for informed decisions |
+| **Pattern Detection** | Recognizes 9 patterns: tower, phone, table, pillar, wheel, box, sphere, cylinder |
+| **Auto-Correction** | Fixes mode violations, missing selection, invalid parameters |
+| **Workflow Expansion** | Single tool → complete multi-step workflow |
+| **Error Firewall** | Blocks/fixes invalid operations before they crash |
+| **100% Offline** | No external API calls - LaBSE runs locally (~1.8GB RAM) |
+| **Multilingual** | LaBSE supports 109 languages for intent classification |
 
-**Key Features:**
-- **LLM Supervisor** - Intercepts and corrects LLM tool calls before execution
-- **Scene-Aware** - Analyzes Blender state to make informed decisions
-- **Pattern Detection** - Recognizes tower, phone, table structures
-- **Auto-Correction** - Fixes mode, selection, parameter errors
-- **Workflow Expansion** - Single tool → complete workflow
-- **Error Firewall** - Blocks invalid operations before they crash
-- **100% Offline** - No external API calls for core routing
-- **Multilingual** - LaBSE supports 109 languages (optional)
+#### Example: LLM sends mesh tool in wrong mode
 
-**Example: LLM sends mesh tool in wrong mode**
 ```
 LLM: mesh_extrude(depth=0.5)  # In OBJECT mode, no selection
 
@@ -462,6 +438,21 @@ Router outputs:
   5. system_set_mode(mode="OBJECT")
 
 Result: Screen cutout created instead of crash!
+```
+
+#### Configuration Presets
+
+```python
+from server.router.infrastructure.config import RouterConfig
+
+# Default (recommended)
+config = RouterConfig()
+
+# Strict mode (no auto-fixes)
+config = RouterConfig(auto_mode_switch=False, auto_selection=False)
+
+# Performance mode (longer cache)
+config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ```
 
 ---
