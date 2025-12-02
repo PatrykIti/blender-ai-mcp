@@ -394,8 +394,10 @@ class TestRealCustomWorkflows:
         pytest.importorskip("yaml")
 
         # Get the actual custom workflows directory
+        # Path: tests/unit/router/infrastructure/test_workflow_loader.py
+        # Need 5 parents to reach project root
         custom_dir = (
-            Path(__file__).parent.parent.parent.parent.parent.parent
+            Path(__file__).parent.parent.parent.parent.parent
             / "server" / "router" / "application" / "workflows" / "custom"
         )
 
@@ -410,8 +412,10 @@ class TestRealCustomWorkflows:
 
     def test_load_example_chair_json(self):
         """Test loading the example chair workflow."""
+        # Path: tests/unit/router/infrastructure/test_workflow_loader.py
+        # Need 5 parents to reach project root
         custom_dir = (
-            Path(__file__).parent.parent.parent.parent.parent.parent
+            Path(__file__).parent.parent.parent.parent.parent
             / "server" / "router" / "application" / "workflows" / "custom"
         )
 
