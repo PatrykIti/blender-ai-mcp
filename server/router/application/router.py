@@ -25,6 +25,7 @@ from server.router.application.engines.tool_override_engine import ToolOverrideE
 from server.router.application.engines.workflow_expansion_engine import WorkflowExpansionEngine
 from server.router.application.engines.error_firewall import ErrorFirewall
 from server.router.application.classifier.intent_classifier import IntentClassifier
+from server.router.application.triggerer.workflow_triggerer import WorkflowTriggerer
 
 
 class SupervisorRouter:
@@ -38,10 +39,12 @@ class SupervisorRouter:
         2. Analyze → read scene context
         3. Detect → identify geometry patterns
         4. Correct → fix params/mode/selection
-        5. Override → check for better alternatives
-        6. Expand → transform to workflow if needed
-        7. Firewall → validate each tool
-        8. Execute → return final tool list
+        5. Trigger → check for workflow trigger (goal or heuristics)
+        6. Override → check for better alternatives (if no trigger)
+        7. Expand → transform to workflow if needed
+        8. Build → build final tool sequence
+        9. Firewall → validate each tool
+        10. Execute → return final tool list
 
     Attributes:
         config: Router configuration.
@@ -53,6 +56,7 @@ class SupervisorRouter:
         expansion_engine: Workflow expansion engine.
         firewall: Error firewall.
         classifier: Intent classifier.
+        triggerer: Workflow triggerer.
         logger: Router logger.
     """
 
@@ -87,6 +91,7 @@ class SupervisorRouter:
         self.expansion_engine = WorkflowExpansionEngine(config=self.config)
         self.firewall = ErrorFirewall(config=self.config)
         self.classifier = classifier or IntentClassifier(config=self.config)
+        self.triggerer = WorkflowTriggerer()
         self.logger = RouterLogger()
 
         # Tracking
@@ -149,13 +154,24 @@ class SupervisorRouter:
         # Step 4: Correct - fix params/mode/selection
         corrected, pre_steps = self._correct_tool_call(tool_name, params, context)
 
-        # Step 5: Override - check for better alternatives
-        override_result = self._check_override(tool_name, params, context, pattern)
+        # Step 5: Check workflow trigger (from goal or heuristics)
+        triggered_workflow = self._check_workflow_trigger(
+            tool_name, params, context, pattern
+        )
 
-        # Step 6: Expand - transform to workflow if needed
-        expanded = self._expand_workflow(tool_name, params, context, pattern)
+        # Step 6: Override - check for better alternatives (skip if workflow triggered)
+        override_result = None
+        if not triggered_workflow:
+            override_result = self._check_override(tool_name, params, context, pattern)
 
-        # Step 7: Build final tool sequence
+        # Step 7: Expand - transform to workflow if needed
+        expanded = None
+        if triggered_workflow:
+            expanded = self._expand_triggered_workflow(triggered_workflow, params, context)
+        elif not override_result:
+            expanded = self._expand_workflow(tool_name, params, context, pattern)
+
+        # Step 8: Build final tool sequence
         final_tools = self._build_tool_sequence(
             corrected=corrected,
             pre_steps=pre_steps,
@@ -163,7 +179,7 @@ class SupervisorRouter:
             expanded_tools=expanded,
         )
 
-        # Step 8: Firewall - validate each tool
+        # Step 9: Firewall - validate each tool
         validated_tools = self._validate_tools(final_tools, context)
 
         # Convert to output format
@@ -354,6 +370,85 @@ class SupervisorRouter:
             self._processing_stats["workflows_expanded"] += 1
 
         return expanded
+
+    def _check_workflow_trigger(
+        self,
+        tool_name: str,
+        params: Dict[str, Any],
+        context: SceneContext,
+        pattern: Optional[DetectedPattern],
+    ) -> Optional[str]:
+        """Check if a workflow should be triggered.
+
+        Priority:
+        1. Pending workflow from goal (set via router_set_goal)
+        2. WorkflowTriggerer heuristics
+
+        Args:
+            tool_name: Tool being called.
+            params: Tool parameters.
+            context: Scene context.
+            pattern: Detected pattern.
+
+        Returns:
+            Workflow name to trigger, or None.
+        """
+        if not self.config.enable_workflow_expansion:
+            return None
+
+        # Priority 1: Use pending workflow from goal
+        if self._pending_workflow:
+            self.logger.log_info(
+                f"Using pending workflow from goal: {self._pending_workflow}"
+            )
+            return self._pending_workflow
+
+        # Priority 2: Check triggerer heuristics
+        workflow_name = self.triggerer.determine_workflow(
+            tool_name, params, context, pattern
+        )
+
+        if workflow_name:
+            self.logger.log_info(
+                f"Workflow triggered by heuristics: {workflow_name}"
+            )
+
+        return workflow_name
+
+    def _expand_triggered_workflow(
+        self,
+        workflow_name: str,
+        params: Dict[str, Any],
+        context: SceneContext,
+    ) -> Optional[List[CorrectedToolCall]]:
+        """Expand a triggered workflow by name.
+
+        Args:
+            workflow_name: Name of workflow to expand.
+            params: Original tool parameters.
+            context: Scene context.
+
+        Returns:
+            List of workflow steps or None.
+        """
+        from server.router.application.workflows.registry import get_workflow_registry
+
+        registry = get_workflow_registry()
+        registry.ensure_custom_loaded()
+
+        # Expand workflow
+        # Note: Context/expression evaluation will be added in TASK-041 P2
+        calls = registry.expand_workflow(workflow_name, params)
+
+        if calls:
+            self._processing_stats["workflows_expanded"] += 1
+            self.logger.log_info(
+                f"Expanded workflow '{workflow_name}' to {len(calls)} steps"
+            )
+            # Clear pending workflow after expansion
+            self._pending_workflow = None
+
+        return calls
 
     def _build_tool_sequence(
         self,
