@@ -60,12 +60,17 @@ class SupervisorRouter:
         self,
         config: Optional[RouterConfig] = None,
         rpc_client: Optional[Any] = None,
+        classifier: Optional[IntentClassifier] = None,
     ):
         """Initialize supervisor router.
 
         Args:
             config: Router configuration. Uses defaults if not provided.
             rpc_client: RPC client for Blender communication.
+            classifier: Optional shared IntentClassifier instance.
+                        If not provided, creates a new one.
+                        Use this to share the LaBSE model (~1.8GB) between
+                        multiple router instances in tests.
         """
         self.config = config or RouterConfig()
         self._rpc_client = rpc_client
@@ -81,7 +86,7 @@ class SupervisorRouter:
         self.override_engine = ToolOverrideEngine(config=self.config)
         self.expansion_engine = WorkflowExpansionEngine(config=self.config)
         self.firewall = ErrorFirewall(config=self.config)
-        self.classifier = IntentClassifier(config=self.config)
+        self.classifier = classifier or IntentClassifier(config=self.config)
         self.logger = RouterLogger()
 
         # Tracking

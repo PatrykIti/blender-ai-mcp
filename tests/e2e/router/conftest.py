@@ -3,19 +3,23 @@ E2E test fixtures for Router Supervisor.
 
 Provides fixtures for router testing with real Blender connection.
 These tests are automatically SKIPPED if Blender is not running.
+
+IMPORTANT: Fixtures are session-scoped to prevent memory exhaustion.
+The IntentClassifier loads LaBSE model (~1.8GB RAM), so sharing it
+between tests is essential.
 """
 
 import pytest
 from typing import Optional
-from unittest.mock import MagicMock
 
 from server.router.application.router import SupervisorRouter
+from server.router.application.classifier.intent_classifier import IntentClassifier
 from server.router.infrastructure.config import RouterConfig
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def router_config():
-    """Default router configuration for E2E tests."""
+    """Session-scoped router configuration for E2E tests."""
     return RouterConfig(
         auto_mode_switch=True,
         auto_selection=True,
@@ -26,22 +30,38 @@ def router_config():
     )
 
 
-@pytest.fixture
-def router(rpc_client, router_config, rpc_connection_available):
-    """SupervisorRouter with real RPC client.
+@pytest.fixture(scope="session")
+def shared_classifier(router_config):
+    """Session-scoped IntentClassifier - LaBSE model loaded once.
 
-    Skips test if Blender is not available.
+    This prevents loading the ~1.8GB model for each test.
+    35 tests × 1.8GB = ~63GB without sharing.
+    """
+    return IntentClassifier(config=router_config)
+
+
+@pytest.fixture(scope="session")
+def router(rpc_client, router_config, shared_classifier, rpc_connection_available):
+    """Session-scoped SupervisorRouter with shared classifier.
+
+    Skips all tests if Blender is not available.
+    Uses shared IntentClassifier to prevent memory exhaustion.
     """
     if not rpc_connection_available:
         pytest.skip("Blender RPC server not available")
 
-    return SupervisorRouter(config=router_config, rpc_client=rpc_client)
+    return SupervisorRouter(
+        config=router_config,
+        rpc_client=rpc_client,
+        classifier=shared_classifier,
+    )
 
 
 @pytest.fixture
 def clean_scene(rpc_client, rpc_connection_available):
     """Ensure clean scene before each test.
 
+    Function-scoped to run before/after each test.
     Skips if Blender not available.
     """
     if not rpc_connection_available:
@@ -59,10 +79,17 @@ def clean_scene(rpc_client, rpc_connection_available):
         pass
 
 
-@pytest.fixture
-def mock_router(router_config):
-    """Router without RPC client - for testing router logic only."""
-    return SupervisorRouter(config=router_config, rpc_client=None)
+@pytest.fixture(scope="session")
+def mock_router(router_config, shared_classifier):
+    """Session-scoped router without RPC client - for testing router logic only.
+
+    Uses shared classifier to prevent memory exhaustion.
+    """
+    return SupervisorRouter(
+        config=router_config,
+        rpc_client=None,
+        classifier=shared_classifier,
+    )
 
 
 def execute_tool(rpc_client, tool_name: str, params: dict) -> str:
