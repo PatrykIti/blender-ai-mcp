@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~40 sub-tasks)
+- **To Do:** 6 tasks (~50 sub-tasks)
 - **In Progress:** 0
 - **Done:** 100
 
@@ -15,6 +15,7 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor** | 🔴 High | 24 sub-tasks: interceptor, analyzers, engines, workflows |
+| [TASK-040](./TASK-040_Router_E2E_Test_Coverage_Extension.md) | **Router E2E Test Coverage** | 🟡 Medium | 10 sub-tasks: firewall, override, classifier, edge cases |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
