@@ -4,7 +4,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 4 tasks (~16 sub-tasks)
-- **In Progress:** 0
+- **In Progress:** 1
 - **Done:** 102
 
 ---
@@ -31,7 +31,10 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-*No tasks currently in progress*
+### Router Enhancement
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-041](./TASK-041_Router_YAML_Workflow_Integration.md) | **Router YAML Workflow Integration** | 🔴 High | P0-P4: YAML loading, auto-triggering, expressions, conditions |
 
 ---
 
