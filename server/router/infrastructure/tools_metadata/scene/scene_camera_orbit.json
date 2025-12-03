@@ -1,0 +1,23 @@
+{
+  "tool_name": "scene_camera_orbit",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["orbit", "rotate view", "spin camera", "turn around", "camera angle", "viewport rotation"],
+  "sample_prompts": [
+    "orbit the camera around the object",
+    "rotate the view 45 degrees",
+    "spin the camera to the right",
+    "look at it from the side",
+    "turn the view around"
+  ],
+  "parameters": {
+    "angle_horizontal": {"type": "float", "default": 0.0, "description": "Horizontal rotation in degrees (positive = right)"},
+    "angle_vertical": {"type": "float", "default": 0.0, "description": "Vertical rotation in degrees (positive = up)"},
+    "target_object": {"type": "string", "required": false, "description": "Object name to orbit around"},
+    "target_point": {"type": "list", "required": false, "description": "[x, y, z] point to orbit around"}
+  },
+  "related_tools": ["scene_camera_focus", "scene_get_viewport"],
+  "patterns": [],
+  "description": "Orbits viewport camera around target."
+}

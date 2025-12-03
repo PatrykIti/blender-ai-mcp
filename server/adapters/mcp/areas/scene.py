@@ -907,3 +907,199 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
         params={"mode": mode},
         direct_executor=execute
     )
+
+
+# TASK-043: Scene Utility Tools
+
+@mcp.tool()
+def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
+    """
+    [OBJECT MODE][SCENE][SAFE] Renames an object in the scene.
+
+    Workflow: AFTER → scene_list_objects | USE FOR → organizing imported models
+
+    Args:
+        old_name: Current name of the object
+        new_name: New name for the object
+
+    Returns:
+        Success message with old and new name, or error if object not found
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            return handler.rename_object(old_name, new_name)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_rename_object",
+        params={"old_name": old_name, "new_name": new_name},
+        direct_executor=execute
+    )
+
+
+@mcp.tool()
+def scene_hide_object(
+    ctx: Context,
+    object_name: str,
+    hide: bool = True,
+    hide_render: bool = False
+) -> str:
+    """
+    [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Hides or shows an object.
+
+    Workflow: USE FOR → isolating components, cleaning viewport
+
+    Args:
+        object_name: Name of the object to hide/show
+        hide: True to hide in viewport, False to show
+        hide_render: If True, also hide in renders
+
+    Returns:
+        Success message with visibility state
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            return handler.hide_object(object_name, hide, hide_render)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_hide_object",
+        params={"object_name": object_name, "hide": hide, "hide_render": hide_render},
+        direct_executor=execute
+    )
+
+
+@mcp.tool()
+def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
+    """
+    [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Shows all hidden objects.
+
+    Workflow: AFTER → scene_hide_object | USE FOR → resetting visibility
+
+    Args:
+        include_render: If True, also unhide in renders
+
+    Returns:
+        Count of objects made visible
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            return handler.show_all_objects(include_render)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_show_all_objects",
+        params={"include_render": include_render},
+        direct_executor=execute
+    )
+
+
+@mcp.tool()
+def scene_isolate_object(
+    ctx: Context,
+    object_name: Union[str, List[str]]
+) -> str:
+    """
+    [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Isolates object(s) by hiding all others.
+
+    Workflow: USE FOR → focused inspection of specific component
+
+    Args:
+        object_name: Name or list of names to keep visible (all others hidden)
+
+    Returns:
+        Count of objects hidden
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            # Normalize to list
+            if isinstance(object_name, str):
+                names = [object_name]
+            else:
+                names = list(object_name)
+            return handler.isolate_object(names)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_isolate_object",
+        params={"object_name": object_name},
+        direct_executor=execute
+    )
+
+
+@mcp.tool()
+def scene_camera_orbit(
+    ctx: Context,
+    angle_horizontal: float = 0.0,
+    angle_vertical: float = 0.0,
+    target_object: Optional[str] = None,
+    target_point: Union[str, List[float], None] = None
+) -> str:
+    """
+    [OBJECT MODE][SCENE][SAFE] Orbits viewport camera around target.
+
+    Workflow: USE FOR → inspecting object from different angles
+
+    Args:
+        angle_horizontal: Horizontal rotation in degrees (positive = right)
+        angle_vertical: Vertical rotation in degrees (positive = up)
+        target_object: Object name to orbit around (uses object center)
+        target_point: [x, y, z] point to orbit around (if no target_object)
+
+    Returns:
+        New camera position and angles
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            parsed_point = parse_coordinate(target_point)
+            return handler.camera_orbit(angle_horizontal, angle_vertical, target_object, parsed_point)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_camera_orbit",
+        params={"angle_horizontal": angle_horizontal, "angle_vertical": angle_vertical,
+                "target_object": target_object, "target_point": target_point},
+        direct_executor=execute
+    )
+
+
+@mcp.tool()
+def scene_camera_focus(
+    ctx: Context,
+    object_name: str,
+    zoom_factor: float = 1.0
+) -> str:
+    """
+    [OBJECT MODE][SCENE][SAFE] Focuses viewport camera on object.
+
+    Workflow: AFTER → scene_set_active_object | USE FOR → centering view on component
+
+    Args:
+        object_name: Object to focus on
+        zoom_factor: 1.0 = fit to view, <1.0 = zoom out, >1.0 = zoom in
+
+    Returns:
+        Success message
+    """
+    def execute():
+        handler = get_scene_handler()
+        try:
+            return handler.camera_focus(object_name, zoom_factor)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="scene_camera_focus",
+        params={"object_name": object_name, "zoom_factor": zoom_factor},
+        direct_executor=execute
+    )

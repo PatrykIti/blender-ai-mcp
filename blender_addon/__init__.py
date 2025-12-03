@@ -77,7 +77,14 @@ def register():
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
         rpc_server.register_handler("scene.set_mode", scene_handler.set_mode)
-        
+        # TASK-043: Scene Utility Tools
+        rpc_server.register_handler("scene.rename_object", scene_handler.rename_object)
+        rpc_server.register_handler("scene.hide_object", scene_handler.hide_object)
+        rpc_server.register_handler("scene.show_all_objects", scene_handler.show_all_objects)
+        rpc_server.register_handler("scene.isolate_object", scene_handler.isolate_object)
+        rpc_server.register_handler("scene.camera_orbit", scene_handler.camera_orbit)
+        rpc_server.register_handler("scene.camera_focus", scene_handler.camera_focus)
+
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
         rpc_server.register_handler("modeling.transform_object", modeling_handler.transform_object)

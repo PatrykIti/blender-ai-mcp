@@ -772,7 +772,7 @@ class SceneHandler:
             "modifier_count": 0,
             "objects": []
         }
-        
+
         objects_to_check = []
         if object_name:
             if object_name not in bpy.data.objects:
@@ -781,19 +781,19 @@ class SceneHandler:
         else:
             # Deterministic order
             objects_to_check = sorted(bpy.context.scene.objects, key=lambda o: o.name)
-            
+
         for obj in objects_to_check:
             # Skip objects that don't support modifiers (e.g. Empty, Light)
             if not hasattr(obj, "modifiers") or len(obj.modifiers) == 0:
                 continue
-                
+
             modifiers = []
             for mod in obj.modifiers:
                 # Check visibility (viewport or render)
                 is_enabled = mod.show_viewport or mod.show_render
                 if not include_disabled and not is_enabled:
                     continue
-                    
+
                 mod_info = {
                     "name": mod.name,
                     "type": mod.type,
@@ -801,7 +801,7 @@ class SceneHandler:
                     "show_viewport": mod.show_viewport,
                     "show_render": mod.show_render,
                 }
-                
+
                 # Extract key properties based on type
                 if mod.type == 'SUBSURF':
                     mod_info["levels"] = mod.levels
@@ -824,9 +824,9 @@ class SceneHandler:
                 elif mod.type == 'SOLIDIFY':
                     mod_info["thickness"] = mod.thickness
                     mod_info["offset"] = mod.offset
-                
+
                 modifiers.append(mod_info)
-                
+
             if modifiers:
                 result["objects"].append({
                     "name": obj.name,
@@ -834,5 +834,160 @@ class SceneHandler:
                 })
                 result["modifier_count"] += len(modifiers)
                 result["object_count"] += 1
-                
+
         return result
+
+    # TASK-043: Scene Utility Tools
+    def rename_object(self, old_name, new_name):
+        """Renames an object in the scene."""
+        obj = bpy.data.objects.get(old_name)
+        if obj is None:
+            raise ValueError(f"Object '{old_name}' not found")
+
+        obj.name = new_name
+        # Note: Blender may add suffix if name already exists
+        actual_name = obj.name
+
+        if actual_name != new_name:
+            return f"Renamed '{old_name}' to '{actual_name}' (suffix added due to name collision)"
+        return f"Renamed '{old_name}' to '{actual_name}'"
+
+    def hide_object(self, object_name, hide=True, hide_render=False):
+        """Hides or shows an object in the viewport and/or render."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj.hide_viewport = hide
+        if hide_render:
+            obj.hide_render = hide
+
+        state = "hidden" if hide else "visible"
+        render_state = " (also in render)" if hide_render else ""
+        return f"Object '{object_name}' is now {state}{render_state}"
+
+    def show_all_objects(self, include_render=False):
+        """Shows all hidden objects in the scene."""
+        count = 0
+        for obj in bpy.data.objects:
+            if obj.hide_viewport:
+                obj.hide_viewport = False
+                count += 1
+            if include_render and obj.hide_render:
+                obj.hide_render = False
+
+        render_note = " (including render visibility)" if include_render else ""
+        return f"Made {count} objects visible{render_note}"
+
+    def isolate_object(self, object_names):
+        """Isolates object(s) by hiding all others."""
+        # Validate all requested objects exist
+        keep_visible = set(object_names)
+        for name in keep_visible:
+            if name not in bpy.data.objects:
+                raise ValueError(f"Object '{name}' not found")
+
+        hidden_count = 0
+        for obj in bpy.data.objects:
+            if obj.name not in keep_visible:
+                if not obj.hide_viewport:
+                    obj.hide_viewport = True
+                    hidden_count += 1
+            else:
+                # Ensure isolated objects are visible
+                obj.hide_viewport = False
+
+        return f"Isolated {len(keep_visible)} object(s), hid {hidden_count} others"
+
+    def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
+        """Orbits viewport camera around target."""
+        from mathutils import Matrix, Vector, Euler
+
+        # Get orbit center
+        if target_object:
+            obj = bpy.data.objects.get(target_object)
+            if not obj:
+                raise ValueError(f"Object '{target_object}' not found")
+            center = obj.location.copy()
+        elif target_point:
+            center = Vector(target_point)
+        else:
+            center = Vector((0, 0, 0))
+
+        # Find 3D viewport
+        view_area = None
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                view_area = area
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        rv3d = space.region_3d
+                        break
+                break
+
+        if not rv3d:
+            return "No 3D viewport found. Camera orbit requires an active 3D view."
+
+        # Convert degrees to radians
+        h_rad = math.radians(angle_horizontal)
+        v_rad = math.radians(angle_vertical)
+
+        # Apply rotation to view
+        # Horizontal rotation (around Z axis)
+        rot_h = Matrix.Rotation(h_rad, 4, 'Z')
+        # Vertical rotation (around local X axis)
+        rot_v = Matrix.Rotation(v_rad, 4, 'X')
+
+        # Combine rotations with existing view rotation
+        rv3d.view_rotation = rv3d.view_rotation @ rot_h.to_quaternion()
+        rv3d.view_rotation = rv3d.view_rotation @ rot_v.to_quaternion()
+
+        # Set pivot point
+        rv3d.view_location = center
+
+        return f"Orbited viewport by {angle_horizontal}° horizontal, {angle_vertical}° vertical around {list(center)}"
+
+    def camera_focus(self, object_name, zoom_factor=1.0):
+        """Focuses viewport camera on object."""
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Find 3D viewport
+        view_area = None
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                view_area = area
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        rv3d = space.region_3d
+                        break
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        break
+                break
+
+        if not view_area or not rv3d:
+            return "No 3D viewport found. Camera focus requires an active 3D view."
+
+        # Select object and frame it
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        # Frame selected object
+        try:
+            with bpy.context.temp_override(area=view_area):
+                bpy.ops.view3d.view_selected()
+        except Exception as e:
+            return f"Could not frame object: {str(e)}"
+
+        # Adjust zoom
+        if zoom_factor != 1.0 and rv3d:
+            rv3d.view_distance /= zoom_factor
+
+        return f"Focused on '{object_name}' with zoom factor {zoom_factor}"

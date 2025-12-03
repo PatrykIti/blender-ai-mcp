@@ -3,18 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~25 sub-tasks)
+- **To Do:** 4 tasks (~19 sub-tasks)
 - **In Progress:** 1
-- **Done:** 103
+- **Done:** 104
 
 ---
 
 ## 🚨 To Do
-
-### Scene & Utility
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | scene_rename_object, scene_hide_object, scene_isolate_object, scene_camera_orbit, scene_camera_focus |
 
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
@@ -51,6 +46,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | 2025-12-03 |
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | 2025-12-03 |
 | [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor Implementation** | 🔴 High | 2025-12-02 |
 | [TASK-040](./TASK-040_Router_E2E_Test_Coverage_Extension.md) | **Router E2E Test Coverage Extension** | 🟡 Medium | 2025-12-02 |

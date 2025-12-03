@@ -23,7 +23,7 @@ Essential scene utility tools for object management, visibility control, and cam
 
 ### TASK-043-1: scene_rename_object
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Renames an object in the scene.
 
@@ -75,7 +75,7 @@ else:
 
 ### TASK-043-2: scene_hide_object
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Hides or shows an object in the viewport and/or render.
 
@@ -132,7 +132,7 @@ else:
 
 ### TASK-043-3: scene_show_all_objects
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Shows all hidden objects in the scene.
 
@@ -184,7 +184,7 @@ return f"Made {count} objects visible"
 
 ### TASK-043-4: scene_isolate_object
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Isolates an object (hides all others) - similar to Local View.
 
@@ -242,7 +242,7 @@ return f"Isolated {len(keep_visible)} objects, hid {count} others"
 
 ### TASK-043-5: scene_camera_orbit
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Orbits the viewport camera around a target point or object.
 
@@ -321,7 +321,7 @@ for area in bpy.context.screen.areas:
 
 ### TASK-043-6: scene_camera_focus
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Centers the viewport camera on an object with optional zoom.
 

@@ -66,12 +66,12 @@ Object Mode operations for scene management and inspection.
 | `scene_inspect_material_slots` | Material slot assignments | ✅ |
 | `scene_inspect_mesh_topology` | Topology stats | ✅ |
 | `scene_inspect_modifiers` | Modifier stack info | ✅ |
-| `scene_rename_object` | Rename object by name | 🚧 |
-| `scene_hide_object` | Hide/show object in viewport | 🚧 |
-| `scene_show_all_objects` | Show all hidden objects | 🚧 |
-| `scene_isolate_object` | Isolate object (hide all others) | 🚧 |
-| `scene_camera_orbit` | Orbit viewport around target | 🚧 |
-| `scene_camera_focus` | Focus viewport on object | 🚧 |
+| `scene_rename_object` | Rename object by name | ✅ |
+| `scene_hide_object` | Hide/show object in viewport | ✅ |
+| `scene_show_all_objects` | Show all hidden objects | ✅ |
+| `scene_isolate_object` | Isolate object (hide all others) | ✅ |
+| `scene_camera_orbit` | Orbit viewport around target | ✅ |
+| `scene_camera_focus` | Focus viewport on object | ✅ |
 
 ---
 
@@ -527,6 +527,12 @@ We recommend using Docker to run the MCP Server.
         "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
+        "scene_rename_object",
+        "scene_hide_object",
+        "scene_show_all_objects",
+        "scene_isolate_object",
+        "scene_camera_orbit",
+        "scene_camera_focus",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -667,6 +673,12 @@ We recommend using Docker to run the MCP Server.
         "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
+        "scene_rename_object",
+        "scene_hide_object",
+        "scene_show_all_objects",
+        "scene_isolate_object",
+        "scene_camera_orbit",
+        "scene_camera_focus",
         "collection_list",
         "collection_list_objects",
         "collection_manage",

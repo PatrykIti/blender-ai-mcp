@@ -1,0 +1,20 @@
+{
+  "tool_name": "scene_show_all_objects",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["show all", "unhide all", "reveal", "visible", "visibility", "reset visibility"],
+  "sample_prompts": [
+    "show all hidden objects",
+    "unhide everything",
+    "reveal all objects",
+    "reset visibility",
+    "make everything visible"
+  ],
+  "parameters": {
+    "include_render": {"type": "boolean", "default": false, "description": "If True, also unhide in renders"}
+  },
+  "related_tools": ["scene_hide_object", "scene_isolate_object"],
+  "patterns": [],
+  "description": "Shows all hidden objects in the scene."
+}

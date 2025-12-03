@@ -1,0 +1,21 @@
+{
+  "tool_name": "scene_camera_focus",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["focus", "frame", "center", "zoom to", "fit view", "look at", "camera"],
+  "sample_prompts": [
+    "focus on the cube",
+    "center the view on the object",
+    "zoom to fit the sphere",
+    "frame the selected object",
+    "look at the body mesh"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "required": true, "description": "Object to focus on"},
+    "zoom_factor": {"type": "float", "default": 1.0, "description": "1.0 = fit to view, <1.0 = zoom out, >1.0 = zoom in"}
+  },
+  "related_tools": ["scene_camera_orbit", "scene_set_active_object", "scene_get_viewport"],
+  "patterns": [],
+  "description": "Focuses viewport camera on object."
+}

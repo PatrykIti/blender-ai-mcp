@@ -86,3 +86,35 @@ class ISceneTool(ABC):
     def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
         """Audits modifier stacks for a specific object or the entire scene."""
         pass
+
+    # TASK-043: Scene Utility Tools
+    @abstractmethod
+    def rename_object(self, old_name: str, new_name: str) -> str:
+        """Renames an object in the scene."""
+        pass
+
+    @abstractmethod
+    def hide_object(self, object_name: str, hide: bool = True, hide_render: bool = False) -> str:
+        """Hides or shows an object in the viewport and/or render."""
+        pass
+
+    @abstractmethod
+    def show_all_objects(self, include_render: bool = False) -> str:
+        """Shows all hidden objects in the scene."""
+        pass
+
+    @abstractmethod
+    def isolate_object(self, object_names: List[str]) -> str:
+        """Isolates object(s) by hiding all others."""
+        pass
+
+    @abstractmethod
+    def camera_orbit(self, angle_horizontal: float = 0.0, angle_vertical: float = 0.0,
+                     target_object: Optional[str] = None, target_point: Optional[List[float]] = None) -> str:
+        """Orbits viewport camera around target."""
+        pass
+
+    @abstractmethod
+    def camera_focus(self, object_name: str, zoom_factor: float = 1.0) -> str:
+        """Focuses viewport camera on object."""
+        pass
