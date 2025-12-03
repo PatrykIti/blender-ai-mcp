@@ -66,6 +66,12 @@ Object Mode operations for scene management and inspection.
 | `scene_inspect_material_slots` | Material slot assignments | ✅ |
 | `scene_inspect_mesh_topology` | Topology stats | ✅ |
 | `scene_inspect_modifiers` | Modifier stack info | ✅ |
+| `scene_rename_object` | Rename object by name | 🚧 |
+| `scene_hide_object` | Hide/show object in viewport | 🚧 |
+| `scene_show_all_objects` | Show all hidden objects | 🚧 |
+| `scene_isolate_object` | Isolate object (hide all others) | 🚧 |
+| `scene_camera_orbit` | Orbit viewport around target | 🚧 |
+| `scene_camera_focus` | Focus viewport on object | 🚧 |
 
 ---
 

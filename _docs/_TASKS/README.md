@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~16 sub-tasks)
+- **To Do:** 6 tasks (~28 sub-tasks)
 - **In Progress:** 1
 - **Done:** 102
 
@@ -11,13 +11,23 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚨 To Do
 
+### Scene & Utility
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | scene_rename_object, scene_hide_object, scene_isolate_object, scene_camera_orbit, scene_camera_focus |
+
 ### Modeling & Architecture
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | lattice_create, lattice_bind, lattice_edit_point |
 | [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
 
-### Import & Workflow
+### Router & Workflow Extraction
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
+
+### Mesh & Symmetry
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
