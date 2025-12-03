@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~19 sub-tasks)
+- **To Do:** 5 tasks (~25 sub-tasks)
 - **In Progress:** 1
 - **Done:** 104
 
@@ -19,6 +19,7 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 6 tools: deep_topology, component_separate, detect_symmetry, edge_loop_analysis, face_group_analysis, render_angles |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
 
 ### Mesh & Symmetry

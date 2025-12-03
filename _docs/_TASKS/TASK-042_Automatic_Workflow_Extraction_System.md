@@ -310,7 +310,22 @@ python -m server.router.adapters.extraction_cli validate phone_workflow.yaml
 
 ---
 
-## 10. Status Router (weryfikacja)
+## 10. Dostępne narzędzia (TASK-043 Complete)
+
+### Scene Utility Tools (gotowe do użycia)
+Narzędzia z TASK-043 są dostępne i mogą wspomóc workflow extraction:
+
+| Narzędzie | Zastosowanie w Extraction |
+|-----------|--------------------------|
+| `scene_isolate_object` | Izolacja komponentów do analizy (Phase 2) |
+| `scene_camera_focus` | Fokus na komponencie dla LLM Vision (Phase 6) |
+| `scene_camera_orbit` | Renderowanie z różnych kątów (Phase 6) |
+| `scene_rename_object` | Nadawanie nazw wykrytym komponentom |
+| `scene_hide_object` | Ukrywanie części podczas analizy |
+
+---
+
+## 11. Status Router (weryfikacja)
 
 ### ✅ Poprawnie połączone:
 - Pipeline 10-kroków działa
