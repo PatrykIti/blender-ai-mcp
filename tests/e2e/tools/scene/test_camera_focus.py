@@ -24,7 +24,7 @@ def test_camera_focus(scene_handler):
         object_name = objects[0]["name"]
         result = scene_handler.camera_focus(object_name, zoom_factor=1.0)
 
-        assert "focus" in result.lower() or object_name in result
+        assert "Focused" in result or object_name in result
         print(f"✓ camera_focus on {object_name}: {result}")
 
     except RuntimeError as e:
@@ -42,7 +42,7 @@ def test_camera_focus_zoom_in(scene_handler):
         object_name = objects[0]["name"]
         result = scene_handler.camera_focus(object_name, zoom_factor=2.0)
 
-        assert "focus" in result.lower() or object_name in result
+        assert "Focused" in result or object_name in result
         print(f"✓ camera_focus zoom in on {object_name}: {result}")
 
     except RuntimeError as e:
@@ -60,7 +60,7 @@ def test_camera_focus_zoom_out(scene_handler):
         object_name = objects[0]["name"]
         result = scene_handler.camera_focus(object_name, zoom_factor=0.5)
 
-        assert "focus" in result.lower() or object_name in result
+        assert "Focused" in result or object_name in result
         print(f"✓ camera_focus zoom out on {object_name}: {result}")
 
     except RuntimeError as e:

@@ -951,43 +951,48 @@ class SceneHandler:
 
     def camera_focus(self, object_name, zoom_factor=1.0):
         """Focuses viewport camera on object."""
+        from mathutils import Vector
+
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
 
         # Find 3D viewport
-        view_area = None
         rv3d = None
 
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
-                view_area = area
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
                         rv3d = space.region_3d
                         break
-                for region in area.regions:
-                    if region.type == 'WINDOW':
-                        break
                 break
 
-        if not view_area or not rv3d:
+        if not rv3d:
             return "No 3D viewport found. Camera focus requires an active 3D view."
 
-        # Select object and frame it
-        bpy.ops.object.select_all(action='DESELECT')
+        # Calculate object center and size from bounding box
+        if obj.type == 'MESH' and obj.data:
+            # Get world-space bounding box
+            bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+            center = sum(bbox_corners, Vector()) / 8
+
+            # Calculate bounding sphere radius
+            max_dist = max((corner - center).length for corner in bbox_corners)
+            view_distance = max_dist * 2.5  # Add margin for framing
+        else:
+            # For non-mesh objects, use location and a default distance
+            center = obj.location.copy()
+            view_distance = 5.0
+
+        # Set view location to object center
+        rv3d.view_location = center
+
+        # Set view distance (apply zoom factor)
+        rv3d.view_distance = view_distance / zoom_factor
+
+        # Also select the object for consistency
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-
-        # Frame selected object
-        try:
-            with bpy.context.temp_override(area=view_area):
-                bpy.ops.view3d.view_selected()
-        except Exception as e:
-            return f"Could not frame object: {str(e)}"
-
-        # Adjust zoom
-        if zoom_factor != 1.0 and rv3d:
-            rv3d.view_distance /= zoom_factor
 
         return f"Focused on '{object_name}' with zoom factor {zoom_factor}"

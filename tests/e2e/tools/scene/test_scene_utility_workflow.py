@@ -47,7 +47,7 @@ def test_full_inspection_workflow(scene_handler):
 
         # Step 4: Focus camera on it
         result = scene_handler.camera_focus(new_name, zoom_factor=1.5)
-        assert "focus" in result.lower() or new_name in result
+        assert "Focused" in result or new_name in result
         print(f"✓ Step 4: Focused camera on '{new_name}'")
 
         # Step 5: Orbit around it
@@ -56,7 +56,7 @@ def test_full_inspection_workflow(scene_handler):
             angle_vertical=15.0,
             target_object=new_name
         )
-        assert "orbit" in result.lower() or "rotated" in result.lower() or "camera" in result.lower()
+        assert "orbit" in result.lower() or "Orbited" in result
         print(f"✓ Step 5: Orbited camera around '{new_name}'")
 
         # Step 6: Show all objects again
@@ -139,6 +139,7 @@ def test_multi_object_isolation_workflow(scene_handler):
         # Step 3: Focus on each
         for name in mesh_names:
             result = scene_handler.camera_focus(name, zoom_factor=1.0)
+            assert "Focused" in result or name in result
             print(f"✓ Step 3: Focused on '{name}'")
 
         # Step 4: Restore
