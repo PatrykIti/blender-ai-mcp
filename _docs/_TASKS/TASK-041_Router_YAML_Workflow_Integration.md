@@ -1,6 +1,6 @@
 # TASK-041: Router YAML Workflow Integration
 
-**Status:** 🟡 In Progress (Phase -1, P0, P1 ✅)
+**Status:** 🟡 In Progress (Phase -1, P0, P1, P2 ✅)
 **Priority:** 🔴 High
 **Category:** Router Enhancement
 **Estimated Sub-Tasks:** 18
@@ -803,9 +803,9 @@ class RouterLogger:
 
 ---
 
-## Phase 2: Expression Evaluator (P2)
+## Phase 2: Expression Evaluator (P2) ✅
 
-### TASK-041-7: Create Expression Evaluator
+### TASK-041-7: Create Expression Evaluator ✅
 
 **Priority:** 🟡 Medium (P2)
 **Layer:** Application
@@ -1043,15 +1043,15 @@ def test_calculate_in_param():
 ```
 
 **Acceptance Criteria:**
-- [ ] Basic arithmetic works: `+`, `-`, `*`, `/`, `**`
-- [ ] Math functions work: `min`, `max`, `abs`, `round`, `sqrt`
-- [ ] Variable references resolve from context
-- [ ] Invalid expressions return `None` (not raise)
-- [ ] No arbitrary code execution possible
+- [x] Basic arithmetic works: `+`, `-`, `*`, `/`, `**`
+- [x] Math functions work: `min`, `max`, `abs`, `round`, `sqrt`
+- [x] Variable references resolve from context
+- [x] Invalid expressions return `None` (not raise)
+- [x] No arbitrary code execution possible
 
 ---
 
-### TASK-041-8: Integrate Expression Evaluator into WorkflowRegistry
+### TASK-041-8: Integrate Expression Evaluator into WorkflowRegistry ✅
 
 **Priority:** 🟡 Medium (P2)
 **Layer:** Application
@@ -1124,13 +1124,13 @@ class WorkflowRegistry:
 ```
 
 **Acceptance Criteria:**
-- [ ] `$CALCULATE(width * 0.1)` evaluates to actual number
-- [ ] Context from scene (dimensions) is available
-- [ ] Simple `$param` inheritance still works
+- [x] `$CALCULATE(width * 0.1)` evaluates to actual number
+- [x] Context from scene (dimensions) is available
+- [x] Simple `$param` inheritance still works
 
 ---
 
-### TASK-041-9: Pass Scene Context to Workflow Expansion
+### TASK-041-9: Pass Scene Context to Workflow Expansion ✅
 
 **Priority:** 🟡 Medium (P2)
 **Layer:** Application

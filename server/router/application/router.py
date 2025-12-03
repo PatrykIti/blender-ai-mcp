@@ -436,9 +436,11 @@ class SupervisorRouter:
         registry = get_workflow_registry()
         registry.ensure_custom_loaded()
 
-        # Expand workflow
-        # Note: Context/expression evaluation will be added in TASK-041 P2
-        calls = registry.expand_workflow(workflow_name, params)
+        # Build evaluation context for $CALCULATE expressions (TASK-041-9)
+        eval_context = self._build_eval_context(context, params)
+
+        # Expand workflow with context
+        calls = registry.expand_workflow(workflow_name, params, eval_context)
 
         if calls:
             self._processing_stats["workflows_expanded"] += 1
@@ -449,6 +451,59 @@ class SupervisorRouter:
             self._pending_workflow = None
 
         return calls
+
+    def _build_eval_context(
+        self,
+        context: SceneContext,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Build evaluation context for expression evaluator.
+
+        Combines scene context (dimensions, proportions, mode) with
+        tool parameters for use in $CALCULATE expressions.
+
+        Args:
+            context: Current scene context.
+            params: Tool parameters.
+
+        Returns:
+            Dictionary with all available variables for expressions.
+        """
+        eval_context: Dict[str, Any] = {
+            "mode": context.mode,
+        }
+
+        # Add tool parameters
+        if params:
+            eval_context.update(params)
+
+        # Add dimensions from active object
+        active_dims = context.get_active_dimensions()
+        if active_dims and len(active_dims) >= 3:
+            eval_context["dimensions"] = active_dims
+            eval_context["width"] = active_dims[0]
+            eval_context["height"] = active_dims[1]
+            eval_context["depth"] = active_dims[2]
+            eval_context["min_dim"] = min(active_dims[:3])
+            eval_context["max_dim"] = max(active_dims[:3])
+
+        # Add proportions
+        if context.proportions:
+            eval_context["proportions"] = context.proportions.to_dict()
+            # Add flat proportions as direct variables
+            props_dict = context.proportions.to_dict()
+            for key, value in props_dict.items():
+                if isinstance(value, (int, float)):
+                    eval_context[f"proportions_{key}"] = value
+
+        # Add selection info
+        if context.topology:
+            eval_context["selected_verts"] = context.topology.selected_verts
+            eval_context["selected_edges"] = context.topology.selected_edges
+            eval_context["selected_faces"] = context.topology.selected_faces
+            eval_context["has_selection"] = context.topology.has_selection
+
+        return eval_context
 
     def _build_tool_sequence(
         self,

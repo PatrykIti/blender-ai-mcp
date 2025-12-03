@@ -2,6 +2,9 @@
 Workflow Registry.
 
 Central registry for all available workflows.
+Supports expression evaluation for $CALCULATE(...) parameters.
+
+TASK-041-8: Added ExpressionEvaluator integration
 """
 
 import logging
@@ -12,6 +15,7 @@ from .phone_workflow import phone_workflow
 from .tower_workflow import tower_workflow
 from .screen_cutout_workflow import screen_cutout_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
+from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +32,7 @@ class WorkflowRegistry:
         self._workflows: Dict[str, BaseWorkflow] = {}
         self._custom_definitions: Dict[str, WorkflowDefinition] = {}
         self._custom_loaded: bool = False
+        self._evaluator = ExpressionEvaluator()
 
         # Register built-in workflows
         self._register_builtin(phone_workflow)
@@ -197,18 +202,27 @@ class WorkflowRegistry:
         self,
         workflow_name: str,
         params: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
     ) -> List[CorrectedToolCall]:
         """Expand a workflow into tool calls.
 
         Args:
             workflow_name: Name of workflow to expand.
             params: Optional parameters to customize workflow.
+            context: Optional context for expression evaluation.
+                    Contains dimensions, proportions, mode, etc.
 
         Returns:
             List of tool calls to execute.
         """
         # Ensure custom workflows are loaded
         self.ensure_custom_loaded()
+
+        # Set up evaluator context
+        eval_context = dict(context or {})
+        if params:
+            eval_context.update(params)
+        self._evaluator.set_context(eval_context)
 
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
@@ -256,6 +270,10 @@ class WorkflowRegistry:
     ) -> List[WorkflowStep]:
         """Resolve parameter references in workflow steps.
 
+        Supports:
+        - Simple $variable references (inherit from params)
+        - $CALCULATE(...) expressions (evaluate using ExpressionEvaluator)
+
         Args:
             steps: Original workflow steps.
             params: Parameters to substitute.
@@ -268,12 +286,12 @@ class WorkflowRegistry:
         for step in steps:
             resolved_params = {}
             for key, value in step.params.items():
-                if isinstance(value, str) and value.startswith("$"):
-                    param_name = value[1:]
-                    if param_name in params:
-                        resolved_params[key] = params[param_name]
-                    # Skip if param not found (use defaults from tool)
-                else:
+                resolved_value = self._resolve_single_value(value, params)
+                # Only add to params if we got a resolved value
+                if resolved_value is not None:
+                    resolved_params[key] = resolved_value
+                elif not isinstance(value, str) or not value.startswith("$"):
+                    # Keep non-variable values as-is
                     resolved_params[key] = value
 
             resolved_steps.append(
@@ -286,6 +304,52 @@ class WorkflowRegistry:
             )
 
         return resolved_steps
+
+    def _resolve_single_value(
+        self,
+        value: Any,
+        params: Dict[str, Any],
+    ) -> Any:
+        """Resolve a single parameter value.
+
+        Args:
+            value: Value to resolve.
+            params: Available parameters.
+
+        Returns:
+            Resolved value or None if unresolvable.
+        """
+        # Handle list values
+        if isinstance(value, list):
+            return [self._resolve_single_value(v, params) for v in value]
+
+        # Handle dict values
+        if isinstance(value, dict):
+            return {k: self._resolve_single_value(v, params) for k, v in value.items()}
+
+        # Handle non-strings
+        if not isinstance(value, str):
+            return value
+
+        # Check for $CALCULATE(...) expression
+        if value.startswith("$CALCULATE("):
+            result = self._evaluator.resolve_param_value(value)
+            if result != value:  # Expression was evaluated
+                return result
+            # Fall through to try simple variable resolution
+
+        # Check for simple $variable reference
+        if value.startswith("$") and not value.startswith("$CALCULATE"):
+            param_name = value[1:]
+            if param_name in params:
+                return params[param_name]
+            # Try evaluator context (dimensions, etc.)
+            result = self._evaluator.resolve_param_value(value)
+            if result != value:
+                return result
+            return None  # Variable not found
+
+        return value
 
     def get_workflow_info(self, name: str) -> Optional[Dict[str, Any]]:
         """Get detailed info about a workflow.

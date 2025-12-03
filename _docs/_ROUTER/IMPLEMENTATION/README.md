@@ -32,6 +32,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 22 | `22-custom-workflow-loader.md` | Custom Workflow Loader | TASK-039-22 | ✅ |
 | 23 | `23-yaml-workflow-integration.md` | YAML Integration & Clean Architecture | TASK-041 P-1, P0 | ✅ |
 | 24 | `24-workflow-triggerer-integration.md` | WorkflowTriggerer Integration | TASK-041 P1 | ✅ |
+| 25 | `25-expression-evaluator.md` | Expression Evaluator | TASK-041 P2 | ✅ |
 
 ---
 
