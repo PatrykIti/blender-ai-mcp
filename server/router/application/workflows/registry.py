@@ -3,8 +3,11 @@ Workflow Registry.
 
 Central registry for all available workflows.
 Supports expression evaluation for $CALCULATE(...) parameters.
+Supports conditional step execution.
 
 TASK-041-8: Added ExpressionEvaluator integration
+TASK-041-11: Added ConditionEvaluator integration
+TASK-041-12: Added context simulation during expansion
 """
 
 import logging
@@ -16,6 +19,7 @@ from .tower_workflow import tower_workflow
 from .screen_cutout_workflow import screen_cutout_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
+from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +37,7 @@ class WorkflowRegistry:
         self._custom_definitions: Dict[str, WorkflowDefinition] = {}
         self._custom_loaded: bool = False
         self._evaluator = ExpressionEvaluator()
+        self._condition_evaluator = ConditionEvaluator()
 
         # Register built-in workflows
         self._register_builtin(phone_workflow)
@@ -224,6 +229,10 @@ class WorkflowRegistry:
             eval_context.update(params)
         self._evaluator.set_context(eval_context)
 
+        # Set up condition evaluator context (TASK-041-11)
+        condition_context = self._build_condition_context(context or {})
+        self._condition_evaluator.set_context(condition_context)
+
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
         if workflow:
@@ -238,6 +247,46 @@ class WorkflowRegistry:
 
         return []
 
+    def _build_condition_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Build context for condition evaluation.
+
+        Extracts and normalizes context variables for condition checks.
+
+        Args:
+            context: Raw context dictionary.
+
+        Returns:
+            Normalized context for condition evaluator.
+        """
+        condition_context: Dict[str, Any] = {}
+
+        # Mode
+        if "mode" in context:
+            condition_context["current_mode"] = context["mode"]
+        elif "current_mode" in context:
+            condition_context["current_mode"] = context["current_mode"]
+
+        # Selection
+        if "has_selection" in context:
+            condition_context["has_selection"] = context["has_selection"]
+        elif "selected_verts" in context:
+            # Derive has_selection from vertex count
+            condition_context["has_selection"] = context["selected_verts"] > 0
+
+        # Topology info
+        for key in ["selected_verts", "selected_edges", "selected_faces",
+                    "total_verts", "total_edges", "total_faces"]:
+            if key in context:
+                condition_context[key] = context[key]
+
+        # Object info
+        if "object_count" in context:
+            condition_context["object_count"] = context["object_count"]
+        if "active_object" in context:
+            condition_context["active_object"] = context["active_object"]
+
+        return condition_context
+
     def _steps_to_calls(
         self,
         steps: List[WorkflowStep],
@@ -245,15 +294,32 @@ class WorkflowRegistry:
     ) -> List[CorrectedToolCall]:
         """Convert workflow steps to corrected tool calls.
 
+        Evaluates conditions for each step and simulates context updates
+        to enable accurate condition evaluation for subsequent steps.
+
         Args:
             steps: Workflow steps.
             workflow_name: Name of the workflow.
 
         Returns:
-            List of tool calls.
+            List of tool calls (skips steps where condition is False).
         """
         calls = []
+        skipped_count = 0
+
         for i, step in enumerate(steps):
+            # Check condition if present (TASK-041-11)
+            if step.condition:
+                should_execute = self._condition_evaluator.evaluate(step.condition)
+                if not should_execute:
+                    logger.debug(
+                        f"Skipping workflow step {i+1} ({step.tool}): "
+                        f"condition '{step.condition}' not met"
+                    )
+                    skipped_count += 1
+                    continue
+
+            # Create tool call
             call = CorrectedToolCall(
                 tool_name=step.tool,
                 params=dict(step.params),
@@ -261,6 +327,17 @@ class WorkflowRegistry:
                 is_injected=True,
             )
             calls.append(call)
+
+            # Simulate step effect on context (TASK-041-12)
+            # This allows subsequent conditions to see updated state
+            self._condition_evaluator.simulate_step_effect(step.tool, step.params)
+
+        if skipped_count > 0:
+            logger.info(
+                f"Workflow '{workflow_name}': {len(calls)} steps to execute, "
+                f"{skipped_count} skipped due to conditions"
+            )
+
         return calls
 
     def _resolve_definition_params(

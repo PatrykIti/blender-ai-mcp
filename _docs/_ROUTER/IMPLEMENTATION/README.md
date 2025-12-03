@@ -33,6 +33,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 23 | `23-yaml-workflow-integration.md` | YAML Integration & Clean Architecture | TASK-041 P-1, P0 | ✅ |
 | 24 | `24-workflow-triggerer-integration.md` | WorkflowTriggerer Integration | TASK-041 P1 | ✅ |
 | 25 | `25-expression-evaluator.md` | Expression Evaluator | TASK-041 P2 | ✅ |
+| 26 | `26-condition-evaluator.md` | Condition Evaluator | TASK-041 P3 | ✅ |
 
 ---
 

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [86](./86-2025-12-03-task-041-p3-condition-evaluator.md) | 2025-12-03 | **Condition Evaluator (TASK-041 P3)** | - |
 | [85](./85-2025-12-03-task-041-p2-expression-evaluator.md) | 2025-12-03 | **Expression Evaluator (TASK-041 P2)** | - |
 | [84](./84-2025-12-02-task-041-p1-workflow-triggerer.md) | 2025-12-02 | **WorkflowTriggerer Integration (TASK-041 P1)** | - |
 | [83](./83-2025-12-02-task-041-router-clean-architecture.md) | 2025-12-02 | **Router Clean Architecture & YAML Integration (TASK-041 Phase -1, P0)** | - |
