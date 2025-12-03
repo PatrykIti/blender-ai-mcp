@@ -4,7 +4,23 @@ Predefined workflow definitions for common modeling patterns.
 
 ---
 
+## Quick Start
+
+**Chcesz stworzyć własny workflow?** → [creating-workflows-tutorial.md](./creating-workflows-tutorial.md)
+
+---
+
 ## Index
+
+### Dokumentacja
+
+| Dokument | Opis |
+|----------|------|
+| [creating-workflows-tutorial.md](./creating-workflows-tutorial.md) | **Tutorial: Tworzenie workflow od podstaw** |
+| [yaml-workflow-guide.md](./yaml-workflow-guide.md) | Kompletny przewodnik po składni YAML |
+| [expression-reference.md](./expression-reference.md) | Referencja wyrażeń ($CALCULATE, $AUTO_*, warunki) |
+
+### Wbudowane Workflow
 
 | Workflow | Pattern | Steps | Task |
 |----------|---------|-------|------|
@@ -192,21 +208,76 @@ steps:
 }
 ```
 
-### Step 3: Use Parameter Inheritance (Optional)
+### Step 3: Add Conditional Steps (TASK-041)
 
-Use `$param_name` syntax to allow users to customize your workflow:
+Use `condition` to skip steps when not needed:
 
 ```yaml
 steps:
-  - tool: "mesh_bevel"
+  # Only switch mode if not already in EDIT
+  - tool: "system_set_mode"
     params:
-      width: "$width"        # Takes 'width' from user parameters
-      segments: "$segments"  # Takes 'segments' from user parameters
+      mode: "EDIT"
+    condition: "current_mode != 'EDIT'"
+
+  # Only select if nothing selected
+  - tool: "mesh_select"
+    params:
+      action: "all"
+    condition: "not has_selection"
 ```
 
-When expanding, users can provide custom values:
-```python
-calls = registry.expand_workflow("my_workflow", {"width": 0.1, "segments": 5})
+**Available conditions:**
+- `current_mode == 'EDIT'` / `!= 'OBJECT'`
+- `has_selection` / `not has_selection`
+- `object_count > 0`
+- `selected_verts >= 4`
+- `A and B` / `A or B`
+
+### Step 4: Use Dynamic Parameters (TASK-041)
+
+#### $CALCULATE - Mathematical Expressions
+
+```yaml
+params:
+  # 5% of smallest dimension
+  width: "$CALCULATE(min_dim * 0.05)"
+
+  # Average of width and height
+  size: "$CALCULATE((width + height) / 2)"
+```
+
+#### $AUTO_* - Smart Defaults
+
+```yaml
+params:
+  # Auto-sized bevel (5% of min dim)
+  width: "$AUTO_BEVEL"
+
+  # Auto-sized inset (3% of XY min)
+  thickness: "$AUTO_INSET"
+
+  # Screen depth (50% of Z inward)
+  move: [0, 0, "$AUTO_SCREEN_DEPTH_NEG"]
+```
+
+**Available $AUTO_* params:**
+| Param | Formula |
+|-------|---------|
+| `$AUTO_BEVEL` | 5% of min dim |
+| `$AUTO_BEVEL_SMALL` | 2% of min dim |
+| `$AUTO_INSET` | 3% of XY min |
+| `$AUTO_EXTRUDE` | 10% of Z |
+| `$AUTO_EXTRUDE_NEG` | -10% of Z |
+| `$AUTO_SCREEN_DEPTH_NEG` | -50% of Z |
+| `$AUTO_SCALE_SMALL` | 80% scale |
+
+#### Simple Variables
+
+```yaml
+params:
+  width: "$width"        # From context
+  depth: "$depth"
 ```
 
 ---
