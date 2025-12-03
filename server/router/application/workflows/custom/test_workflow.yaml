@@ -1,0 +1,57 @@
+# Test workflow for E2E testing
+# TASK-041-15
+
+name: test_e2e_workflow
+description: Test workflow for E2E validation of YAML workflow features
+category: testing
+author: Claude
+version: "1.0"
+
+trigger_pattern: test_pattern
+trigger_keywords:
+  - test
+  - e2e_test
+  - yaml_test
+
+steps:
+  # Step 1: Create primitive (always runs)
+  - tool: modeling_create_primitive
+    params:
+      type: CUBE
+    description: Create base cube
+
+  # Step 2: Switch to EDIT mode (conditional)
+  - tool: system_set_mode
+    params:
+      mode: EDIT
+    description: Switch to edit mode
+    condition: "current_mode != 'EDIT'"
+
+  # Step 3: Select all (conditional)
+  - tool: mesh_select
+    params:
+      action: all
+    description: Select all geometry
+    condition: "not has_selection"
+
+  # Step 4: Bevel with $AUTO_* param
+  - tool: mesh_bevel
+    params:
+      width: "$AUTO_BEVEL"
+      segments: 3
+    description: Auto-sized bevel
+
+  # Step 5: Inset with $CALCULATE expression
+  - tool: mesh_inset
+    params:
+      thickness: "$CALCULATE(min_dim * 0.03)"
+    description: Calculated inset thickness
+
+  # Step 6: Extrude with $AUTO_* negative
+  - tool: mesh_extrude_region
+    params:
+      move:
+        - 0
+        - 0
+        - "$AUTO_EXTRUDE_NEG"
+    description: Auto extrude inward

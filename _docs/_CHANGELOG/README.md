@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [88](./88-2025-12-03-task-041-p5-testing-documentation.md) | 2025-12-03 | **Testing & Documentation (TASK-041 P5 Complete)** | - |
 | [87](./87-2025-12-03-task-041-p4-proportion-resolver.md) | 2025-12-03 | **Proportion Resolver (TASK-041 P4)** | - |
 | [86](./86-2025-12-03-task-041-p3-condition-evaluator.md) | 2025-12-03 | **Condition Evaluator (TASK-041 P3)** | - |
 | [85](./85-2025-12-03-task-041-p2-expression-evaluator.md) | 2025-12-03 | **Expression Evaluator (TASK-041 P2)** | - |
