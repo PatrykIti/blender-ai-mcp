@@ -52,7 +52,7 @@ class TestDeepTopology:
         camera.type = "CAMERA"
 
         self.mock_bpy.data.objects.__contains__ = lambda s, name: name in ["Cube", "Camera"]
-        self.mock_bpy.data.objects.__getitem__ = lambda name: camera if name == "Camera" else self.cube
+        self.mock_bpy.data.objects.__getitem__ = lambda s, name: camera if name == "Camera" else self.cube
 
         with pytest.raises(ValueError, match="not a mesh"):
             self.handler.deep_topology("Camera")

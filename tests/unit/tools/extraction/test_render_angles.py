@@ -26,7 +26,7 @@ class TestRenderAngles:
         ]
         self.cube.matrix_world = MagicMock()
 
-        def get_object(name):
+        def get_object(s, name):
             if name == "Cube":
                 return self.cube
             return None

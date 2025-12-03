@@ -136,9 +136,17 @@ class ExtractionHandler:
         """Detect the likely base primitive of the mesh."""
         # Calculate aspect ratios from bounding box
         dims = obj.dimensions
-        if dims.x == 0 or dims.y == 0 or dims.z == 0:
+
+        # Plane detection: 4 verts, 1 face, very flat (check BEFORE zero-dim check)
+        # Planes have one zero dimension, so we check this first
+        if vert_count == 4 and face_count == 1:
+            return "PLANE", 0.95
+
+        # If all dimensions are zero (degenerate mesh)
+        if dims.x == 0 and dims.y == 0 and dims.z == 0:
             return "CUSTOM", 0.0
 
+        # Safe division with fallback for zero dimensions
         aspect_xy = dims.x / dims.y if dims.y > 0 else 1.0
         aspect_xz = dims.x / dims.z if dims.z > 0 else 1.0
         aspect_yz = dims.y / dims.z if dims.z > 0 else 1.0
@@ -149,10 +157,6 @@ class ExtractionHandler:
                 return "CUBE", 0.95
             else:
                 return "CUBE", 0.7  # Box shape but not cubic
-
-        # Plane detection: 4 verts, 1 face, very flat
-        if vert_count == 4 and face_count == 1:
-            return "PLANE", 0.95
 
         # Cylinder detection: many verts, circular cross-section
         if vert_count >= 12 and face_count >= 3:
