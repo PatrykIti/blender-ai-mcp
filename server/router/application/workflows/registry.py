@@ -4,10 +4,12 @@ Workflow Registry.
 Central registry for all available workflows.
 Supports expression evaluation for $CALCULATE(...) parameters.
 Supports conditional step execution.
+Supports $AUTO_* proportion-relative parameters.
 
 TASK-041-8: Added ExpressionEvaluator integration
 TASK-041-11: Added ConditionEvaluator integration
 TASK-041-12: Added context simulation during expansion
+TASK-041-14: Added ProportionResolver integration
 """
 
 import logging
@@ -20,6 +22,7 @@ from .screen_cutout_workflow import screen_cutout_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
+from server.router.application.evaluator.proportion_resolver import ProportionResolver
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +41,7 @@ class WorkflowRegistry:
         self._custom_loaded: bool = False
         self._evaluator = ExpressionEvaluator()
         self._condition_evaluator = ConditionEvaluator()
+        self._proportion_resolver = ProportionResolver()
 
         # Register built-in workflows
         self._register_builtin(phone_workflow)
@@ -233,6 +237,9 @@ class WorkflowRegistry:
         condition_context = self._build_condition_context(context or {})
         self._condition_evaluator.set_context(condition_context)
 
+        # Set up proportion resolver (TASK-041-14)
+        self._setup_proportion_resolver(context or {})
+
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
         if workflow:
@@ -286,6 +293,26 @@ class WorkflowRegistry:
             condition_context["active_object"] = context["active_object"]
 
         return condition_context
+
+    def _setup_proportion_resolver(self, context: Dict[str, Any]) -> None:
+        """Set up proportion resolver with dimensions from context.
+
+        Args:
+            context: Context dictionary that may contain dimensions.
+        """
+        dimensions = None
+
+        # Try to get dimensions from various sources
+        if "dimensions" in context:
+            dimensions = context["dimensions"]
+        elif all(k in context for k in ["width", "height", "depth"]):
+            dimensions = [context["width"], context["height"], context["depth"]]
+
+        if dimensions and len(dimensions) >= 3:
+            self._proportion_resolver.set_dimensions(dimensions)
+            logger.debug(f"ProportionResolver set with dimensions: {dimensions[:3]}")
+        else:
+            self._proportion_resolver.clear_dimensions()
 
     def _steps_to_calls(
         self,
@@ -415,8 +442,15 @@ class WorkflowRegistry:
                 return result
             # Fall through to try simple variable resolution
 
+        # Check for $AUTO_* proportion parameters (TASK-041-14)
+        if value.startswith("$AUTO_"):
+            result = self._proportion_resolver.resolve(value)
+            if result != value:  # Resolved successfully
+                return result
+            # Fall through if not resolved (no dimensions set)
+
         # Check for simple $variable reference
-        if value.startswith("$") and not value.startswith("$CALCULATE"):
+        if value.startswith("$") and not value.startswith("$CALCULATE") and not value.startswith("$AUTO_"):
             param_name = value[1:]
             if param_name in params:
                 return params[param_name]

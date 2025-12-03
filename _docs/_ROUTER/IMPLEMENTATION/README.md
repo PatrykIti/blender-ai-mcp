@@ -34,6 +34,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 24 | `24-workflow-triggerer-integration.md` | WorkflowTriggerer Integration | TASK-041 P1 | ✅ |
 | 25 | `25-expression-evaluator.md` | Expression Evaluator | TASK-041 P2 | ✅ |
 | 26 | `26-condition-evaluator.md` | Condition Evaluator | TASK-041 P3 | ✅ |
+| 27 | `27-proportion-resolver.md` | Proportion Resolver | TASK-041 P4 | ✅ |
 
 ---
 
