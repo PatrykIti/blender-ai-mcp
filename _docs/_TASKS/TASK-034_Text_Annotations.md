@@ -172,3 +172,52 @@ bpy.ops.object.convert(target='MESH')
 - [ ] Test custom font loading
 - [ ] Test alignment options
 - [ ] Verify modeling_convert_to_mesh handles text (if so, text_to_mesh may be redundant)
+
+---
+
+## Router Integration
+
+For each tool, create metadata JSON file in `server/router/infrastructure/tools_metadata/text/`:
+
+### Example: text_create.json
+
+```json
+{
+  "tool_name": "text_create",
+  "category": "text",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["text", "typography", "3d text", "font", "label", "sign", "logo"],
+  "sample_prompts": [
+    "create 3d text saying Hello",
+    "add text label",
+    "make a sign with the word EXIT"
+  ],
+  "parameters": {
+    "text": {"type": "string", "default": "Text"},
+    "size": {"type": "float", "default": 1.0, "range": [0.01, 100.0]},
+    "extrude": {"type": "float", "default": 0.0, "range": [0.0, 10.0]},
+    "bevel_depth": {"type": "float", "default": 0.0, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["text_edit", "text_to_mesh", "modeling_convert_to_mesh"],
+  "patterns": [],
+  "description": "Creates a 3D text object with optional extrusion and bevel."
+}
+```
+
+---
+
+## Documentation Updates Required
+
+After implementing these tools, update:
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-034_Text_Annotations.md` | Mark sub-tasks as ✅ Done |
+| `_docs/_TASKS/README.md` | Move task to Done section |
+| `_docs/_CHANGELOG/{NN}-{date}-text-tools.md` | Create changelog entry |
+| `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
+| `_docs/_ADDON/README.md` | Add RPC commands to handler table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
+| `_docs/MODELING_TOOLS_ARCHITECTURE.md` | Add Text section |
+| `README.md` | Update roadmap checkboxes, add to autoApprove lists |

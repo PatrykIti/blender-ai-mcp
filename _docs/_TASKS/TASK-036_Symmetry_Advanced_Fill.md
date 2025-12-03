@@ -222,3 +222,78 @@ bpy.ops.transform.mirror(orient_type='GLOBAL', constraint_axis=(axis == 'X', axi
 - [ ] E2E test: Create asymmetric mesh → symmetrize → verify symmetry
 - [ ] E2E test: Create hole → grid_fill → verify quad topology
 - [ ] Test boundary selection requirement for grid_fill
+
+---
+
+## Router Integration
+
+For each tool, create metadata JSON file in `server/router/infrastructure/tools_metadata/mesh/`:
+
+### Example: mesh_symmetrize.json
+
+```json
+{
+  "tool_name": "mesh_symmetrize",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["symmetry", "symmetric", "mirror", "symmetrize", "left right"],
+  "sample_prompts": [
+    "make the mesh symmetric",
+    "mirror the left side to the right",
+    "symmetrize the character"
+  ],
+  "parameters": {
+    "direction": {
+      "type": "enum",
+      "options": ["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"],
+      "default": "NEGATIVE_X"
+    },
+    "threshold": {"type": "float", "default": 0.0001, "range": [0.0, 0.01]}
+  },
+  "related_tools": ["mesh_mirror", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Makes mesh symmetric by mirroring one side to the other."
+}
+```
+
+### Example: mesh_grid_fill.json
+
+```json
+{
+  "tool_name": "mesh_grid_fill",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["grid fill", "fill hole", "quad fill", "fill boundary"],
+  "sample_prompts": [
+    "fill this hole with quads",
+    "grid fill the boundary",
+    "fill the hole with proper topology"
+  ],
+  "parameters": {
+    "span": {"type": "int", "default": 1, "range": [1, 32]},
+    "offset": {"type": "int", "default": 0, "range": [-32, 32]}
+  },
+  "related_tools": ["mesh_fill_holes", "mesh_bridge_edge_loops", "mesh_select"],
+  "patterns": [],
+  "description": "Fills boundary with a grid of quads for clean topology."
+}
+```
+
+---
+
+## Documentation Updates Required
+
+After implementing these tools, update:
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-036_Symmetry_Advanced_Fill.md` | Mark sub-tasks as ✅ Done |
+| `_docs/_TASKS/README.md` | Move task to Done section |
+| `_docs/_CHANGELOG/{NN}-{date}-symmetry-fill-tools.md` | Create changelog entry |
+| `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
+| `_docs/_ADDON/README.md` | Add RPC commands to handler table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
+| `_docs/MESH_TOOLS_ARCHITECTURE.md` | Add Symmetry & Fill section |
+| `README.md` | Update roadmap checkboxes, add to autoApprove lists |

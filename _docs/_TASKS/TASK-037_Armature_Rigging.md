@@ -247,3 +247,80 @@ Start simple, expand based on user demand.
 - [ ] E2E test: Create armature → add bones → bind mesh → pose → verify deformation
 - [ ] Test automatic weights on simple mesh (cube)
 - [ ] Test manual weight assignment workflow
+
+---
+
+## Router Integration
+
+For each tool, create metadata JSON file in `server/router/infrastructure/tools_metadata/armature/`:
+
+### Example: armature_create.json
+
+```json
+{
+  "tool_name": "armature_create",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["armature", "skeleton", "bone", "rig", "rigging"],
+  "sample_prompts": [
+    "create an armature",
+    "add skeleton for rigging",
+    "create bones for the character"
+  ],
+  "parameters": {
+    "name": {"type": "string", "default": "Armature"},
+    "bone_name": {"type": "string", "default": "Bone"},
+    "bone_length": {"type": "float", "default": 1.0, "range": [0.01, 100.0]}
+  },
+  "related_tools": ["armature_add_bone", "armature_bind"],
+  "patterns": [],
+  "description": "Creates an armature object with initial bone for rigging."
+}
+```
+
+### Example: armature_bind.json
+
+```json
+{
+  "tool_name": "armature_bind",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bind", "parent", "skin", "weight", "deform", "rig"],
+  "sample_prompts": [
+    "bind the mesh to the armature",
+    "attach skeleton to character",
+    "apply automatic weights"
+  ],
+  "parameters": {
+    "mesh_name": {"type": "string", "description": "Mesh to bind"},
+    "armature_name": {"type": "string", "description": "Armature to bind to"},
+    "bind_type": {
+      "type": "enum",
+      "options": ["AUTO", "ENVELOPE", "EMPTY"],
+      "default": "AUTO"
+    }
+  },
+  "related_tools": ["armature_create", "armature_pose_bone", "mesh_create_vertex_group"],
+  "patterns": [],
+  "description": "Binds mesh to armature with automatic weight calculation."
+}
+```
+
+---
+
+## Documentation Updates Required
+
+After implementing these tools, update:
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-037_Armature_Rigging.md` | Mark sub-tasks as ✅ Done |
+| `_docs/_TASKS/README.md` | Move task to Done section |
+| `_docs/_CHANGELOG/{NN}-{date}-armature-tools.md` | Create changelog entry |
+| `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
+| `_docs/_ADDON/README.md` | Add RPC commands to handler table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
+| `_docs/ARMATURE_TOOLS_ARCHITECTURE.md` | Create new architecture doc |
+| `README.md` | Update roadmap checkboxes, add to autoApprove lists |
