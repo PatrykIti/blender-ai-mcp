@@ -27,6 +27,7 @@ try:
     from .application.handlers.sculpt import SculptHandler
     from .application.handlers.baking import BakingHandler
     from .application.handlers.lattice import LatticeHandler
+    from .application.handlers.extraction import ExtractionHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -39,6 +40,7 @@ except ImportError:
     SculptHandler = None
     BakingHandler = None
     LatticeHandler = None
+    ExtractionHandler = None
 
 
 def register():
@@ -57,6 +59,7 @@ def register():
         sculpt_handler = SculptHandler()
         baking_handler = BakingHandler()
         lattice_handler = LatticeHandler()
+        extraction_handler = ExtractionHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -242,6 +245,14 @@ def register():
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
         rpc_server.register_handler("lattice.bind", lattice_handler.lattice_bind)
         rpc_server.register_handler("lattice.edit_point", lattice_handler.lattice_edit_point)
+
+        # TASK-044: Extraction Analysis Tools
+        rpc_server.register_handler("extraction.deep_topology", extraction_handler.deep_topology)
+        rpc_server.register_handler("extraction.component_separate", extraction_handler.component_separate)
+        rpc_server.register_handler("extraction.detect_symmetry", extraction_handler.detect_symmetry)
+        rpc_server.register_handler("extraction.edge_loop_analysis", extraction_handler.edge_loop_analysis)
+        rpc_server.register_handler("extraction.face_group_analysis", extraction_handler.face_group_analysis)
+        rpc_server.register_handler("extraction.render_angles", extraction_handler.render_angles)
 
         rpc_server.start()
     else:

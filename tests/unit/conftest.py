@@ -58,6 +58,73 @@ class MockVector:
 
 mock_mathutils.Vector = MockVector
 
+
+class MockKDTree:
+    """Mock KDTree class for mathutils.kdtree."""
+
+    def __init__(self, size=0):
+        self._points = []
+
+    def insert(self, co, index):
+        self._points.append((tuple(co), index))
+
+    def balance(self):
+        pass
+
+    def find(self, co, filter=None):
+        """Returns (co, index, dist) - mock returns None if no points."""
+        if not self._points:
+            return None, None, float('inf')
+        # Simple mock: return first point with distance 0
+        return self._points[0][0], self._points[0][1], 0.0
+
+    def find_n(self, co, n):
+        """Returns list of (co, index, dist) tuples."""
+        return [(p[0], p[1], 0.0) for p in self._points[:n]]
+
+    def find_range(self, co, radius):
+        """Returns list of (co, index, dist) tuples within radius."""
+        return [(p[0], p[1], 0.0) for p in self._points]
+
+
+class MockEuler:
+    """Mock Euler class for mathutils."""
+
+    def __init__(self, rotation=(0, 0, 0), order='XYZ'):
+        if hasattr(rotation, '__iter__'):
+            self._rotation = list(rotation)
+        else:
+            self._rotation = [rotation, rotation, rotation]
+        self.order = order
+
+    def __iter__(self):
+        return iter(self._rotation)
+
+    def __getitem__(self, idx):
+        return self._rotation[idx]
+
+    def __setitem__(self, idx, value):
+        self._rotation[idx] = value
+
+    @property
+    def x(self):
+        return self._rotation[0]
+
+    @property
+    def y(self):
+        return self._rotation[1]
+
+    @property
+    def z(self):
+        return self._rotation[2]
+
+
+mock_mathutils.Euler = MockEuler
+
+# Create mock for mathutils.kdtree submodule
+mock_kdtree = MagicMock()
+mock_kdtree.KDTree = MockKDTree
+
 # Configure mock bpy structure
 mock_bpy.ops = MagicMock()
 mock_bpy.data = MagicMock()
@@ -69,6 +136,7 @@ mock_bpy.types = MagicMock()
 sys.modules["bpy"] = mock_bpy
 sys.modules["bmesh"] = mock_bmesh
 sys.modules["mathutils"] = mock_mathutils
+sys.modules["mathutils.kdtree"] = mock_kdtree
 
 
 @pytest.fixture(autouse=True)

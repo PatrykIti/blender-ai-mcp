@@ -12,6 +12,7 @@ from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.application.tool_handlers.baking_handler import BakingToolHandler
 from server.application.tool_handlers.lattice_handler import LatticeToolHandler
 from server.application.tool_handlers.router_handler import RouterToolHandler
+from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -25,6 +26,7 @@ from server.domain.tools.sculpt import ISculptTool
 from server.domain.tools.baking import IBakingTool
 from server.domain.tools.lattice import ILatticeTool
 from server.domain.tools.router import IRouterTool
+from server.domain.tools.extraction import IExtractionTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -94,6 +96,12 @@ def get_lattice_handler() -> ILatticeTool:
     """Provider for ILatticeTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return LatticeToolHandler(rpc)
+
+
+def get_extraction_handler() -> IExtractionTool:
+    """Provider for IExtractionTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return ExtractionToolHandler(rpc)
 
 
 # --- Router Supervisor ---

@@ -1,0 +1,19 @@
+{
+  "tool_name": "extraction_deep_topology",
+  "category": "extraction",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["topology", "analyze", "mesh analysis", "vertex count", "edge loops", "features", "extraction", "workflow"],
+  "sample_prompts": [
+    "analyze the mesh topology",
+    "get detailed mesh information",
+    "what features does this mesh have",
+    "deep analysis of the model"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "required": true, "description": "Object to analyze"}
+  },
+  "related_tools": ["scene_inspect", "extraction_edge_loop_analysis", "extraction_face_group_analysis"],
+  "patterns": [],
+  "description": "Deep topology analysis for workflow extraction including vertex/edge/face counts, edge loops, and feature detection."
+}
