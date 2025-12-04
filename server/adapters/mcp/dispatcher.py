@@ -20,6 +20,7 @@ from server.infrastructure.di import (
     get_baking_handler,
     get_lattice_handler,
     get_extraction_handler,
+    get_text_handler,
 )
 
 logger = logging.getLogger(__name__)
@@ -229,6 +230,14 @@ class ToolDispatcher:
             "extraction_edge_loop_analysis": extraction.edge_loop_analysis,
             "extraction_face_group_analysis": extraction.face_group_analysis,
             "extraction_render_angles": extraction.render_angles,
+        })
+
+        # Text tools
+        text = get_text_handler()
+        self._tool_map.update({
+            "text_create": text.create,
+            "text_edit": text.edit,
+            "text_to_mesh": text.to_mesh,
         })
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:

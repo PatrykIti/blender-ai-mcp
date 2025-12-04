@@ -174,6 +174,15 @@ Curve creation and conversion.
 | `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
 | `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
 
+### Text Tools
+3D typography and text annotations.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `text_create` | `text`, `name`, `location`, `font`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Creates 3D text object with optional extrusion and bevel. |
+| `text_edit` | `object_name`, `text`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Edits existing text object content and properties. |
+| `text_to_mesh` | `object_name`, `keep_original` | Converts text to mesh for game export and editing. |
+
 ### Sculpt Tools
 Sculpt Mode operations for organic shape manipulation.
 

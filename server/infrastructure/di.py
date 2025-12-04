@@ -13,6 +13,7 @@ from server.application.tool_handlers.baking_handler import BakingToolHandler
 from server.application.tool_handlers.lattice_handler import LatticeToolHandler
 from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
+from server.application.tool_handlers.text_handler import TextToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -27,6 +28,7 @@ from server.domain.tools.baking import IBakingTool
 from server.domain.tools.lattice import ILatticeTool
 from server.domain.tools.router import IRouterTool
 from server.domain.tools.extraction import IExtractionTool
+from server.domain.tools.text import ITextTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -102,6 +104,12 @@ def get_extraction_handler() -> IExtractionTool:
     """Provider for IExtractionTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return ExtractionToolHandler(rpc)
+
+
+def get_text_handler() -> ITextTool:
+    """Provider for ITextTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return TextToolHandler(rpc)
 
 
 # --- Router Supervisor ---

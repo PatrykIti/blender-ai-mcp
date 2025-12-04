@@ -202,6 +202,23 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🔤 Text Tools (`text_`)
+*Tools for 3D typography and text annotations.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `text_create` | `text`, `name`, `location`, `font`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Creates a 3D text object with optional extrusion and bevel. | ✅ Done |
+| `text_edit` | `object_name`, `text`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Edits existing text object content and properties. | ✅ Done |
+| `text_to_mesh` | `object_name`, `keep_original` | Converts text object to mesh for game export and editing. | ✅ Done |
+
+**Use Cases:**
+- 3D logos and signage
+- Architectural dimension annotations
+- Product labels and branding
+- Game UI elements (3D text)
+
+---
+
 ## 📤 Export Tools (`export_`)
 *Tools for exporting scene or objects to various 3D file formats.*
 

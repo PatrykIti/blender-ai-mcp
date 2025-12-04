@@ -101,8 +101,9 @@ Object Mode operations for creating and transforming objects.
 #### Text Objects
 | Tool | Description | Status |
 |------|-------------|--------|
-| `text_create` | Create 3D text object | 🚧 |
-| `text_edit` | Modify text content and properties | 🚧 |
+| `text_create` | Create 3D text object | ✅ |
+| `text_edit` | Modify text content and properties | ✅ |
+| `text_to_mesh` | Convert text to mesh for export | ✅ |
 
 #### Skin Modifier (Tubular Structures)
 | Tool | Description | Status |
@@ -615,6 +616,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
+        "text_create",
+        "text_edit",
+        "text_to_mesh",
         "export_glb",
         "export_fbx",
         "export_obj",
@@ -767,6 +771,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_edge_split",
         "curve_create",
         "curve_to_mesh",
+        "text_create",
+        "text_edit",
+        "text_to_mesh",
         "export_glb",
         "export_fbx",
         "export_obj",

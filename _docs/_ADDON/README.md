@@ -206,6 +206,15 @@ Technical details.
 | `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
 
 
+### Text (`application/handlers/text.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `text.create` | `create` | Creates 3D text object with optional extrusion and bevel. |
+| `text.edit` | `edit` | Edits text object content and properties. |
+| `text.to_mesh` | `to_mesh` | Converts text to mesh for game export. |
+
+
 ### Sculpt (`application/handlers/sculpt.py`)
 
 | RPC Command | Handler Method | Description |

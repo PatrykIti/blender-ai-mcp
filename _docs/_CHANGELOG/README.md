@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [90](./90-2025-12-04-text-tools.md) | 2025-12-04 | **Text & Annotations Tools (TASK-034)** | 1.30.0 |
+| [89](./89-2025-12-04-task-044-extraction-analysis-tools.md) | 2025-12-04 | **Extraction Analysis Tools (TASK-044)** | 1.29.0 |
 | [88](./88-2025-12-03-task-041-p5-testing-documentation.md) | 2025-12-03 | **Testing & Documentation (TASK-041 P5 Complete)** | - |
 | [87](./87-2025-12-03-task-041-p4-proportion-resolver.md) | 2025-12-03 | **Proportion Resolver (TASK-041 P4)** | - |
 | [86](./86-2025-12-03-task-041-p3-condition-evaluator.md) | 2025-12-03 | **Condition Evaluator (TASK-041 P3)** | - |

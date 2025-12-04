@@ -3,18 +3,13 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~26 sub-tasks)
+- **To Do:** 4 tasks (~23 sub-tasks)
 - **In Progress:** 1
-- **Done:** 105
+- **Done:** 106
 
 ---
 
 ## 🚨 To Do
-
-### Modeling & Architecture
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -51,6 +46,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | 2025-12-04 |
 | [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 2025-12-04 |
 | [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | 2025-12-03 |
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | 2025-12-03 |

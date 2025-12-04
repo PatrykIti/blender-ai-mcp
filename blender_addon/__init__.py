@@ -28,6 +28,7 @@ try:
     from .application.handlers.baking import BakingHandler
     from .application.handlers.lattice import LatticeHandler
     from .application.handlers.extraction import ExtractionHandler
+    from .application.handlers.text import TextHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -41,6 +42,7 @@ except ImportError:
     BakingHandler = None
     LatticeHandler = None
     ExtractionHandler = None
+    TextHandler = None
 
 
 def register():
@@ -60,6 +62,7 @@ def register():
         baking_handler = BakingHandler()
         lattice_handler = LatticeHandler()
         extraction_handler = ExtractionHandler()
+        text_handler = TextHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -253,6 +256,11 @@ def register():
         rpc_server.register_handler("extraction.edge_loop_analysis", extraction_handler.edge_loop_analysis)
         rpc_server.register_handler("extraction.face_group_analysis", extraction_handler.face_group_analysis)
         rpc_server.register_handler("extraction.render_angles", extraction_handler.render_angles)
+
+        # TASK-034: Text & Annotations
+        rpc_server.register_handler("text.create", text_handler.create)
+        rpc_server.register_handler("text.edit", text_handler.edit)
+        rpc_server.register_handler("text.to_mesh", text_handler.to_mesh)
 
         rpc_server.start()
     else:
