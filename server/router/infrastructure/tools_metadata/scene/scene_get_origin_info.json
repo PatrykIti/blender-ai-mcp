@@ -1,0 +1,14 @@
+{
+  "tool_name": "scene_get_origin_info",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["origin", "pivot", "center", "position", "offset"],
+  "sample_prompts": ["where is the origin", "show pivot point", "get origin info"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true}
+  },
+  "related_tools": ["scene_get_bounding_box", "modeling_set_origin"],
+  "patterns": [],
+  "description": "Gets origin (pivot point) information for an object."
+}

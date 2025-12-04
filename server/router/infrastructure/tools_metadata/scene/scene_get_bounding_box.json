@@ -1,0 +1,15 @@
+{
+  "tool_name": "scene_get_bounding_box",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bounding", "box", "bounds", "size", "dimensions", "min", "max", "corners"],
+  "sample_prompts": ["get bounding box", "what is the size", "show object bounds"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "world_space": {"type": "bool", "default": true}
+  },
+  "related_tools": ["scene_get_origin_info", "scene_inspect"],
+  "patterns": [],
+  "description": "Gets bounding box corners for an object."
+}

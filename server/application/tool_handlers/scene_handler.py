@@ -214,3 +214,59 @@ class SceneToolHandler(ISceneTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-045: Object Inspection Tools
+    def get_custom_properties(self, object_name: str) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_custom_properties", {
+            "object_name": object_name
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def set_custom_property(
+        self,
+        object_name: str,
+        property_name: str,
+        property_value: Any,
+        delete: bool = False
+    ) -> str:
+        response = self.rpc.send_request("scene.set_custom_property", {
+            "object_name": object_name,
+            "property_name": property_name,
+            "property_value": property_value,
+            "delete": delete
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_hierarchy(
+        self,
+        object_name: Optional[str] = None,
+        include_transforms: bool = False
+    ) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_hierarchy", {
+            "object_name": object_name,
+            "include_transforms": include_transforms
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_bounding_box(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_bounding_box", {
+            "object_name": object_name,
+            "world_space": world_space
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_origin_info(self, object_name: str) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_origin_info", {
+            "object_name": object_name
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

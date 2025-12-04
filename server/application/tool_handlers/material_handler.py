@@ -115,3 +115,18 @@ class MaterialToolHandler(IMaterialTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-045-6: material_inspect_nodes
+    def inspect_nodes(
+        self,
+        material_name: str,
+        include_connections: bool = True,
+    ) -> Dict[str, Any]:
+        args = {
+            "material_name": material_name,
+            "include_connections": include_connections,
+        }
+        response = self.rpc.send_request("material.inspect_nodes", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

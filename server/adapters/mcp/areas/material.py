@@ -325,3 +325,89 @@ def material_set_texture(
         },
         direct_executor=execute
     )
+
+
+# TASK-045-6: material_inspect_nodes
+@mcp.tool()
+def material_inspect_nodes(
+    ctx: Context,
+    material_name: str,
+    include_connections: bool = True,
+) -> str:
+    """
+    [MATERIAL][SAFE][READ-ONLY] Inspects material shader node graph.
+
+    Returns all nodes in the material's node tree with their types,
+    parameters, and connections. Useful for understanding complex materials.
+
+    Workflow: READ-ONLY | USE WITH → material_list, material_set_texture
+
+    Args:
+        material_name: Name of the material to inspect
+        include_connections: Include node connections/links (default True)
+    """
+    def execute():
+        handler = get_material_handler()
+        try:
+            result = handler.inspect_nodes(
+                material_name=material_name,
+                include_connections=include_connections,
+            )
+
+            # Format output for readability
+            lines = [f"Material: {material_name}"]
+            lines.append(f"Uses Nodes: {result.get('uses_nodes', False)}")
+
+            nodes = result.get("nodes", [])
+            lines.append(f"\nNodes ({len(nodes)}):")
+
+            for node in nodes:
+                node_name = node.get("name", "Unknown")
+                node_type = node.get("type", "Unknown")
+                lines.append(f"  • {node_name} ({node_type})")
+
+                # Show key inputs with values
+                inputs = node.get("inputs", [])
+                if inputs:
+                    for inp in inputs[:5]:  # Limit to first 5 inputs
+                        inp_name = inp.get("name", "")
+                        inp_value = inp.get("default_value")
+                        is_linked = inp.get("is_linked", False)
+                        if is_linked:
+                            lines.append(f"      {inp_name}: [connected]")
+                        elif inp_value is not None:
+                            if isinstance(inp_value, list) and len(inp_value) >= 3:
+                                # Format colors/vectors nicely
+                                formatted = [round(v, 3) if isinstance(v, float) else v for v in inp_value]
+                                lines.append(f"      {inp_name}: {formatted}")
+                            else:
+                                lines.append(f"      {inp_name}: {inp_value}")
+
+            # Show connections if requested
+            if include_connections:
+                connections = result.get("connections", [])
+                if connections:
+                    lines.append(f"\nConnections ({len(connections)}):")
+                    for conn in connections:
+                        from_node = conn.get("from_node", "?")
+                        from_socket = conn.get("from_socket", "?")
+                        to_node = conn.get("to_node", "?")
+                        to_socket = conn.get("to_socket", "?")
+                        lines.append(f"  {from_node}.{from_socket} → {to_node}.{to_socket}")
+
+            ctx.info(f"Inspected nodes for material '{material_name}'")
+            return "\n".join(lines)
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use material_list to verify the material name."
+            return msg
+
+    return route_tool_call(
+        tool_name="material_inspect_nodes",
+        params={
+            "material_name": material_name,
+            "include_connections": include_connections
+        },
+        direct_executor=execute
+    )

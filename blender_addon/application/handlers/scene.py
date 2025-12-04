@@ -996,3 +996,197 @@ class SceneHandler:
         bpy.context.view_layer.objects.active = obj
 
         return f"Focused on '{object_name}' with zoom factor {zoom_factor}"
+
+    # TASK-045: Object Inspection Tools
+    def get_custom_properties(self, object_name):
+        """Gets custom properties (metadata) from an object."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        properties = {}
+        try:
+            for key in obj.keys():
+                # Skip internal properties (start with underscore)
+                if key.startswith("_"):
+                    continue
+                value = obj.get(key)
+                # Convert to JSON-serializable types
+                if isinstance(value, (int, float, str, bool)):
+                    properties[key] = value
+                elif hasattr(value, '__iter__') and not isinstance(value, str):
+                    # Convert vectors/arrays to lists
+                    try:
+                        properties[key] = list(value)
+                    except Exception:
+                        properties[key] = str(value)
+                else:
+                    properties[key] = str(value)
+        except Exception as e:
+            raise ValueError(f"Failed to read custom properties: {e}")
+
+        return {
+            "object_name": object_name,
+            "property_count": len(properties),
+            "properties": properties
+        }
+
+    def set_custom_property(self, object_name, property_name, property_value, delete=False):
+        """Sets or deletes a custom property on an object."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        if delete:
+            if property_name in obj.keys():
+                del obj[property_name]
+                return f"Deleted property '{property_name}' from '{object_name}'"
+            else:
+                return f"Property '{property_name}' not found on '{object_name}'"
+
+        # Set the property
+        obj[property_name] = property_value
+        return f"Set property '{property_name}' = {property_value} on '{object_name}'"
+
+    def get_hierarchy(self, object_name=None, include_transforms=False):
+        """Gets parent-child hierarchy for objects."""
+        def build_hierarchy(obj, include_transforms):
+            """Recursively builds hierarchy dict for an object."""
+            node = {
+                "name": obj.name,
+                "type": obj.type,
+                "children": []
+            }
+
+            if include_transforms:
+                node["location"] = self._vec_to_list(obj.location)
+                node["rotation"] = self._vec_to_list(obj.rotation_euler)
+                node["scale"] = self._vec_to_list(obj.scale)
+
+            # Find children
+            for child in obj.children:
+                node["children"].append(build_hierarchy(child, include_transforms))
+
+            return node
+
+        if object_name:
+            # Get hierarchy for specific object
+            obj = bpy.data.objects.get(object_name)
+            if obj is None:
+                raise ValueError(f"Object '{object_name}' not found")
+
+            # Build hierarchy from this object down
+            hierarchy = build_hierarchy(obj, include_transforms)
+
+            # Also include parent chain
+            parent_chain = []
+            current = obj.parent
+            while current:
+                parent_chain.append(current.name)
+                current = current.parent
+
+            return {
+                "root": hierarchy,
+                "parent_chain": parent_chain
+            }
+        else:
+            # Get all root objects (no parent)
+            roots = []
+            for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+                if obj.parent is None:
+                    roots.append(build_hierarchy(obj, include_transforms))
+
+            return {
+                "root_count": len(roots),
+                "hierarchy": roots
+            }
+
+    def get_bounding_box(self, object_name, world_space=True):
+        """Gets bounding box corners for an object."""
+        from mathutils import Vector
+
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Get bounding box corners
+        bbox = obj.bound_box
+
+        if world_space:
+            # Transform to world space
+            corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
+        else:
+            corners = [Vector(corner) for corner in bbox]
+
+        # Calculate min/max
+        min_corner = [
+            min(c[0] for c in corners),
+            min(c[1] for c in corners),
+            min(c[2] for c in corners)
+        ]
+        max_corner = [
+            max(c[0] for c in corners),
+            max(c[1] for c in corners),
+            max(c[2] for c in corners)
+        ]
+
+        # Calculate center and dimensions
+        center = [
+            (min_corner[0] + max_corner[0]) / 2,
+            (min_corner[1] + max_corner[1]) / 2,
+            (min_corner[2] + max_corner[2]) / 2
+        ]
+        dimensions = [
+            max_corner[0] - min_corner[0],
+            max_corner[1] - min_corner[1],
+            max_corner[2] - min_corner[2]
+        ]
+
+        return {
+            "object_name": object_name,
+            "world_space": world_space,
+            "min": [round(v, 4) for v in min_corner],
+            "max": [round(v, 4) for v in max_corner],
+            "center": [round(v, 4) for v in center],
+            "dimensions": [round(v, 4) for v in dimensions],
+            "corners": [[round(c, 4) for c in corner] for corner in corners]
+        }
+
+    def get_origin_info(self, object_name):
+        """Gets origin (pivot point) information for an object."""
+        from mathutils import Vector
+
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Origin is at obj.location in world space
+        origin = obj.location.copy()
+
+        # Calculate bounding box center for comparison
+        bbox = obj.bound_box
+        corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
+        bbox_center = sum(corners, Vector()) / 8
+
+        # Calculate offset from bbox center
+        offset_from_center = origin - bbox_center
+
+        # Determine origin type (approximate)
+        origin_type = "CUSTOM"
+        offset_magnitude = offset_from_center.length
+
+        if offset_magnitude < 0.001:
+            origin_type = "CENTER"
+        else:
+            # Check if at bottom center
+            min_z = min(c[2] for c in corners)
+            if abs(origin[2] - min_z) < 0.001 and abs(offset_from_center[0]) < 0.001 and abs(offset_from_center[1]) < 0.001:
+                origin_type = "BOTTOM_CENTER"
+
+        return {
+            "object_name": object_name,
+            "origin_world": [round(v, 4) for v in origin],
+            "bbox_center": [round(v, 4) for v in bbox_center],
+            "offset_from_center": [round(v, 4) for v in offset_from_center],
+            "estimated_type": origin_type
+        }

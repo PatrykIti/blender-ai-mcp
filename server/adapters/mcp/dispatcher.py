@@ -65,6 +65,12 @@ class ToolDispatcher:
             "scene_isolate_object": scene.isolate_object,
             "scene_camera_orbit": scene.camera_orbit,
             "scene_camera_focus": scene.camera_focus,
+            # TASK-045: Object Inspection Tools
+            "scene_get_custom_properties": scene.get_custom_properties,
+            "scene_set_custom_property": scene.set_custom_property,
+            "scene_get_hierarchy": scene.get_hierarchy,
+            "scene_get_bounding_box": scene.get_bounding_box,
+            "scene_get_origin_info": scene.get_origin_info,
         })
 
         # System tools
@@ -153,10 +159,12 @@ class ToolDispatcher:
         self._tool_map.update({
             "material_list": material.list_materials,
             "material_list_by_object": material.list_by_object,
-            "material_create": material.create,
-            "material_assign": material.assign,
-            "material_set_params": material.set_params,
-            "material_set_texture": material.set_texture,
+            "material_create": material.create_material,
+            "material_assign": material.assign_material,
+            "material_set_params": material.set_material_params,
+            "material_set_texture": material.set_material_texture,
+            # TASK-045-6: material_inspect_nodes
+            "material_inspect_nodes": material.inspect_nodes,
         })
 
         # UV tools

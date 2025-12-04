@@ -118,3 +118,39 @@ class ISceneTool(ABC):
     def camera_focus(self, object_name: str, zoom_factor: float = 1.0) -> str:
         """Focuses viewport camera on object."""
         pass
+
+    # TASK-045: Object Inspection Tools
+    @abstractmethod
+    def get_custom_properties(self, object_name: str) -> Dict[str, Any]:
+        """Gets custom properties (metadata) from an object."""
+        pass
+
+    @abstractmethod
+    def set_custom_property(
+        self,
+        object_name: str,
+        property_name: str,
+        property_value: Any,
+        delete: bool = False
+    ) -> str:
+        """Sets or deletes a custom property on an object."""
+        pass
+
+    @abstractmethod
+    def get_hierarchy(
+        self,
+        object_name: Optional[str] = None,
+        include_transforms: bool = False
+    ) -> Dict[str, Any]:
+        """Gets parent-child hierarchy for objects."""
+        pass
+
+    @abstractmethod
+    def get_bounding_box(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
+        """Gets bounding box corners for an object."""
+        pass
+
+    @abstractmethod
+    def get_origin_info(self, object_name: str) -> Dict[str, Any]:
+        """Gets origin (pivot point) information for an object."""
+        pass

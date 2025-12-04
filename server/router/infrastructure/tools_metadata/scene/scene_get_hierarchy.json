@@ -1,0 +1,15 @@
+{
+  "tool_name": "scene_get_hierarchy",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["hierarchy", "parent", "child", "children", "tree", "structure", "family"],
+  "sample_prompts": ["show hierarchy", "what are the children", "get parent of object"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "include_transforms": {"type": "bool", "default": false}
+  },
+  "related_tools": ["scene_list_objects", "scene_inspect"],
+  "patterns": [],
+  "description": "Gets parent-child hierarchy for objects."
+}

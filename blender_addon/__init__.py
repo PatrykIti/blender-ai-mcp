@@ -90,6 +90,12 @@ def register():
         rpc_server.register_handler("scene.isolate_object", scene_handler.isolate_object)
         rpc_server.register_handler("scene.camera_orbit", scene_handler.camera_orbit)
         rpc_server.register_handler("scene.camera_focus", scene_handler.camera_focus)
+        # TASK-045: Object Inspection Tools
+        rpc_server.register_handler("scene.get_custom_properties", scene_handler.get_custom_properties)
+        rpc_server.register_handler("scene.set_custom_property", scene_handler.set_custom_property)
+        rpc_server.register_handler("scene.get_hierarchy", scene_handler.get_hierarchy)
+        rpc_server.register_handler("scene.get_bounding_box", scene_handler.get_bounding_box)
+        rpc_server.register_handler("scene.get_origin_info", scene_handler.get_origin_info)
 
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
@@ -152,6 +158,8 @@ def register():
         rpc_server.register_handler("material.assign", material_handler.assign_material)
         rpc_server.register_handler("material.set_params", material_handler.set_material_params)
         rpc_server.register_handler("material.set_texture", material_handler.set_material_texture)
+        # TASK-045-6: material_inspect_nodes
+        rpc_server.register_handler("material.inspect_nodes", material_handler.inspect_nodes)
 
         # UV
         rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
