@@ -136,7 +136,7 @@ def test_text_create_with_alignment(text_handler, scene_handler):
             text="Centered",
             name=text_name,
             align_x="CENTER",
-            align_y="MIDDLE",
+            align_y="CENTER",
         )
 
         assert "Created text object" in result
@@ -501,7 +501,7 @@ def test_signage_workflow(text_handler, scene_handler):
             size=1.5,
             extrude=0.1,
             align_x="CENTER",
-            align_y="MIDDLE",
+            align_y="CENTER",
         )
 
         assert "Created text object" in result

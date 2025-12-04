@@ -63,7 +63,7 @@ class TextHandler:
         align_y_upper = align_y.upper()
 
         valid_align_x = ["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"]
-        valid_align_y = ["TOP", "TOP_BASELINE", "MIDDLE", "BOTTOM_BASELINE", "BOTTOM"]
+        valid_align_y = ["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"]
 
         if align_x_upper not in valid_align_x:
             raise ValueError(f"Invalid align_x '{align_x}'. Must be one of {valid_align_x}")
@@ -135,7 +135,7 @@ class TextHandler:
 
         if align_y is not None:
             align_y_upper = align_y.upper()
-            valid_align_y = ["TOP", "TOP_BASELINE", "MIDDLE", "BOTTOM_BASELINE", "BOTTOM"]
+            valid_align_y = ["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"]
             if align_y_upper not in valid_align_y:
                 raise ValueError(f"Invalid align_y '{align_y}'. Must be one of {valid_align_y}")
             obj.data.align_y = align_y_upper

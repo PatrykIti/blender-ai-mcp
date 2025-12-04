@@ -32,7 +32,7 @@ class ITextTool(ABC):
             bevel_depth: Bevel depth for rounded edges
             bevel_resolution: Bevel resolution (segments)
             align_x: Horizontal alignment (LEFT, CENTER, RIGHT, JUSTIFY, FLUSH)
-            align_y: Vertical alignment (TOP, TOP_BASELINE, MIDDLE, BOTTOM_BASELINE, BOTTOM)
+            align_y: Vertical alignment (TOP, TOP_BASELINE, CENTER, BOTTOM_BASELINE, BOTTOM)
 
         Returns:
             Success message with object name.

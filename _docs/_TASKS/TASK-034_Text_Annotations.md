@@ -41,7 +41,7 @@ def text_create(
     bevel_depth: float = 0.0,
     bevel_resolution: int = 0,
     align_x: Literal["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"] = "LEFT",
-    align_y: Literal["TOP", "TOP_BASELINE", "MIDDLE", "BOTTOM_BASELINE", "BOTTOM"] = "BOTTOM_BASELINE"
+    align_y: Literal["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"] = "BOTTOM_BASELINE"
 ) -> str:
     """
     [OBJECT MODE][SCENE] Creates a 3D text object.

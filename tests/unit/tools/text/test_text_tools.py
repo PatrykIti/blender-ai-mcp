@@ -118,7 +118,7 @@ class TestTextCreate:
         bpy.ops.object.mode_set = MagicMock()
         bpy.context.mode = 'OBJECT'
 
-        result = text_handler.create(text="Centered", align_x="CENTER", align_y="MIDDLE")
+        result = text_handler.create(text="Centered", align_x="CENTER", align_y="CENTER")
 
         assert mock_text_object.data.align_x == "CENTER"
         assert mock_text_object.data.align_y == "MIDDLE"

@@ -21,7 +21,7 @@ def text_create(
     bevel_depth: float = 0.0,
     bevel_resolution: int = 0,
     align_x: Literal["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"] = "LEFT",
-    align_y: Literal["TOP", "TOP_BASELINE", "MIDDLE", "BOTTOM_BASELINE", "BOTTOM"] = "BOTTOM_BASELINE",
+    align_y: Literal["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"] = "BOTTOM_BASELINE",
 ) -> str:
     """
     [OBJECT MODE][SCENE] Creates a 3D text object.
@@ -41,7 +41,7 @@ def text_create(
         bevel_depth: Bevel depth for rounded edges (default 0.0)
         bevel_resolution: Bevel resolution/segments (default 0)
         align_x: Horizontal alignment (LEFT, CENTER, RIGHT, JUSTIFY, FLUSH)
-        align_y: Vertical alignment (TOP, TOP_BASELINE, MIDDLE, BOTTOM_BASELINE, BOTTOM)
+        align_y: Vertical alignment (TOP, TOP_BASELINE, CENTER, BOTTOM_BASELINE, BOTTOM)
 
     Examples:
         text_create(text="Hello World") -> Creates flat text at origin
@@ -94,7 +94,7 @@ def text_edit(
     bevel_depth: Optional[float] = None,
     bevel_resolution: Optional[int] = None,
     align_x: Optional[Literal["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"]] = None,
-    align_y: Optional[Literal["TOP", "TOP_BASELINE", "MIDDLE", "BOTTOM_BASELINE", "BOTTOM"]] = None,
+    align_y: Optional[Literal["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"]] = None,
 ) -> str:
     """
     [OBJECT MODE][NON-DESTRUCTIVE] Edits an existing text object's properties.
