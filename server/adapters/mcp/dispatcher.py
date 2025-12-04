@@ -19,6 +19,7 @@ from server.infrastructure.di import (
     get_sculpt_handler,
     get_baking_handler,
     get_lattice_handler,
+    get_extraction_handler,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,12 @@ class ToolDispatcher:
             "scene_create_light": scene.create_light,
             "scene_create_camera": scene.create_camera,
             "scene_create_empty": scene.create_empty,
+            "scene_rename_object": scene.rename_object,
+            "scene_hide_object": scene.hide_object,
+            "scene_show_all_objects": scene.show_all_objects,
+            "scene_isolate_object": scene.isolate_object,
+            "scene_camera_orbit": scene.camera_orbit,
+            "scene_camera_focus": scene.camera_focus,
         })
 
         # System tools
@@ -211,6 +218,17 @@ class ToolDispatcher:
             "lattice_create": lattice.create,
             "lattice_bind": lattice.bind,
             "lattice_edit_point": lattice.edit_point,
+        })
+
+        # Extraction tools
+        extraction = get_extraction_handler()
+        self._tool_map.update({
+            "extraction_deep_topology": extraction.deep_topology,
+            "extraction_component_separate": extraction.component_separate,
+            "extraction_detect_symmetry": extraction.detect_symmetry,
+            "extraction_edge_loop_analysis": extraction.edge_loop_analysis,
+            "extraction_face_group_analysis": extraction.face_group_analysis,
+            "extraction_render_angles": extraction.render_angles,
         })
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:
