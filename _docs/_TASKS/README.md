@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~23 sub-tasks)
+- **To Do:** 3 tasks (~17 sub-tasks)
 - **In Progress:** 1
-- **Done:** 106
+- **Done:** 107
 
 ---
 
@@ -15,11 +15,6 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
-
-### Inspection & Analysis
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-045](./TASK-045_Object_Inspection_Tools.md) | **Object Inspection Tools** | 🟡 Medium | 6 tools: custom properties, hierarchy, bounding box, origin info, material nodes |
 
 ### Mesh & Symmetry
 | ID | Title | Priority | Notes |
@@ -46,6 +41,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-045](./TASK-045_Object_Inspection_Tools.md) | **Object Inspection Tools** | 🟡 Medium | 2025-12-04 |
 | [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | 2025-12-04 |
 | [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 2025-12-04 |
 | [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | 2025-12-03 |

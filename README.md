@@ -72,6 +72,11 @@ Object Mode operations for scene management and inspection.
 | `scene_isolate_object` | Isolate object (hide all others) | ✅ |
 | `scene_camera_orbit` | Orbit viewport around target | ✅ |
 | `scene_camera_focus` | Focus viewport on object | ✅ |
+| `scene_get_custom_properties` | Get object metadata/custom properties | ✅ |
+| `scene_set_custom_property` | Set/delete custom property on object | ✅ |
+| `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
+| `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
+| `scene_get_origin_info` | Get origin/pivot point info | ✅ |
 
 ---
 
@@ -253,6 +258,7 @@ Material creation and assignment.
 | `material_assign` | Assign to objects/faces | ✅ |
 | `material_set_params` | Adjust roughness, metallic, etc. | ✅ |
 | `material_set_texture` | Bind image textures | ✅ |
+| `material_inspect_nodes` | Inspect shader node graph | ✅ |
 
 ---
 
@@ -549,6 +555,11 @@ We recommend using Docker to run the MCP Server.
         "scene_isolate_object",
         "scene_camera_orbit",
         "scene_camera_focus",
+        "scene_get_custom_properties",
+        "scene_set_custom_property",
+        "scene_get_hierarchy",
+        "scene_get_bounding_box",
+        "scene_get_origin_info",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -558,6 +569,7 @@ We recommend using Docker to run the MCP Server.
         "material_assign",
         "material_set_params",
         "material_set_texture",
+        "material_inspect_nodes",
         "uv_list_maps",
         "uv_unwrap",
         "uv_pack_islands",
@@ -704,6 +716,11 @@ We recommend using Docker to run the MCP Server.
         "scene_isolate_object",
         "scene_camera_orbit",
         "scene_camera_focus",
+        "scene_get_custom_properties",
+        "scene_set_custom_property",
+        "scene_get_hierarchy",
+        "scene_get_bounding_box",
+        "scene_get_origin_info",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -713,6 +730,7 @@ We recommend using Docker to run the MCP Server.
         "material_assign",
         "material_set_params",
         "material_set_texture",
+        "material_inspect_nodes",
         "uv_list_maps",
         "uv_unwrap",
         "uv_pack_islands",

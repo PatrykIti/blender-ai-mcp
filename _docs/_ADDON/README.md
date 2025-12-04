@@ -58,6 +58,11 @@ Technical details.
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
+| `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
+| `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
+| `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
+| `scene.get_bounding_box` | `get_bounding_box` | Gets bounding box corners in world/local space. |
+| `scene.get_origin_info` | `get_origin_info` | Gets origin (pivot point) information for an object. |
 
 ### Collection (`application/handlers/collection.py`)
 
@@ -77,6 +82,7 @@ Technical details.
 | `material.assign` | `assign_material` | Assigns material to object or selected faces. |
 | `material.set_params` | `set_material_params` | Modifies existing material parameters. |
 | `material.set_texture` | `set_material_texture` | Binds image texture to material input. |
+| `material.inspect_nodes` | `inspect_nodes` | Inspects material shader node graph with connections. |
 
 ### UV (`application/handlers/uv.py`)
 

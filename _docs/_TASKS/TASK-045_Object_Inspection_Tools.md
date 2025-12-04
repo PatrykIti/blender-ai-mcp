@@ -4,7 +4,7 @@
 **Category:** Scene/Material Tools (Extensions)
 **Estimated Effort:** Medium
 **Dependencies:** TASK-043 (Scene Utility Tools), TASK-044 (Extraction Analysis Tools)
-**Status:** 🚧 **In Progress**
+**Status:** ✅ **Done** (2025-12-04)
 
 ---
 
@@ -51,7 +51,7 @@ blender_addon/application/handlers/
 
 ### TASK-045-1: scene_get_custom_properties
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Read-only access to object custom properties (Blender's metadata system).
 
@@ -123,7 +123,7 @@ for key in obj.keys():
 
 ### TASK-045-2: scene_set_custom_property
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Write custom properties (metadata) to objects.
 
@@ -192,7 +192,7 @@ else:
 
 ### TASK-045-3: scene_get_hierarchy
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Get parent-child hierarchy information for objects.
 
@@ -279,7 +279,7 @@ hierarchy = {"roots": [get_hierarchy_tree(r) for r in roots]}
 
 ### TASK-045-4: scene_get_bounding_box
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Get precise bounding box corners for objects.
 
@@ -371,7 +371,7 @@ volume = dimensions.x * dimensions.y * dimensions.z
 
 ### TASK-045-5: scene_get_origin_info
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Get object origin/pivot point information.
 
@@ -460,7 +460,7 @@ if obj.type == 'MESH':
 
 ### TASK-045-6: material_inspect_nodes
 
-**Status:** 🚧 Pending
+**Status:** ✅ Done
 
 Inspect material shader node graph.
 

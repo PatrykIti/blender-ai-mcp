@@ -39,6 +39,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
+| `scene_get_custom_properties` | `object_name` | Gets custom properties (metadata) from an object. | ✅ Done |
+| `scene_set_custom_property` | `object_name`, `property_name`, `property_value`, `delete` | Sets or deletes a custom property on an object. | ✅ Done |
+| `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
+| `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
+| `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
@@ -75,6 +80,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `material_assign` | `material_name`, `object_name`, `slot_index`, `assign_to_selection` | Assigns material to object or selected faces (Edit Mode). | ✅ Done |
 | `material_set_params` | `material_name`, `base_color`, `metallic`, `roughness`, etc. | Modifies existing material parameters. | ✅ Done |
 | `material_set_texture` | `material_name`, `texture_path`, `input_name`, `color_space` | Binds image texture to material input (supports Normal maps). | ✅ Done |
+| `material_inspect_nodes` | `material_name`, `include_connections` | Inspects material shader node graph, returns nodes with types, inputs, and connections. | ✅ Done |
 
 ---
 
