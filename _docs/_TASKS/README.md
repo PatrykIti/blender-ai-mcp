@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~20 sub-tasks)
+- **To Do:** 5 tasks (~26 sub-tasks)
 - **In Progress:** 1
 - **Done:** 105
 
@@ -20,6 +20,11 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
+
+### Inspection & Analysis
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-045](./TASK-045_Object_Inspection_Tools.md) | **Object Inspection Tools** | 🟡 Medium | 6 tools: custom properties, hierarchy, bounding box, origin info, material nodes |
 
 ### Mesh & Symmetry
 | ID | Title | Priority | Notes |
