@@ -121,7 +121,7 @@ class TestTextCreate:
         result = text_handler.create(text="Centered", align_x="CENTER", align_y="CENTER")
 
         assert mock_text_object.data.align_x == "CENTER"
-        assert mock_text_object.data.align_y == "MIDDLE"
+        assert mock_text_object.data.align_y == "CENTER"
 
     def test_create_text_invalid_align_x_raises(self, text_handler, mock_text_object):
         """Should raise ValueError for invalid align_x."""
@@ -147,10 +147,10 @@ class TestTextCreate:
         bpy.ops.object.mode_set = MagicMock()
         bpy.context.mode = 'OBJECT'
 
-        result = text_handler.create(align_x="center", align_y="middle")
+        result = text_handler.create(align_x="center", align_y="center")
 
         assert mock_text_object.data.align_x == "CENTER"
-        assert mock_text_object.data.align_y == "MIDDLE"
+        assert mock_text_object.data.align_y == "CENTER"
 
     def test_create_text_font_not_found_raises(self, text_handler, mock_text_object):
         """Should raise ValueError when font file not found."""
