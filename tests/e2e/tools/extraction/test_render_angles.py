@@ -3,29 +3,21 @@ E2E Tests for extraction_render_angles (TASK-044-6)
 
 These tests require a running Blender instance with the addon loaded.
 """
-import os
 import pytest
-from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 
 
-@pytest.fixture
-def extraction_handler(rpc_client):
-    """Provides an extraction handler instance using shared RPC client."""
-    return ExtractionToolHandler(rpc_client)
-
-
-def test_render_angles_single(extraction_handler):
+def test_render_angles_single(extraction_handler, test_cube):
     """Test rendering a single angle."""
     try:
         result = extraction_handler.render_angles(
-            "Cube",
+            test_cube,
             angles=["front"],
             resolution=256,
             output_dir="/tmp/extraction_test"
         )
 
         assert "object_name" in result
-        assert result["object_name"] == "Cube"
+        assert result["object_name"] == test_cube
         assert "renders" in result
         assert len(result["renders"]) == 1
         assert result["renders"][0]["angle"] == "front"
@@ -33,14 +25,17 @@ def test_render_angles_single(extraction_handler):
         print(f"✓ render_angles single: {result['renders'][0]['path']}")
 
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "connection" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
 
 
-def test_render_angles_multiple(extraction_handler):
+def test_render_angles_multiple(extraction_handler, test_cube):
     """Test rendering multiple angles."""
     try:
         result = extraction_handler.render_angles(
-            "Cube",
+            test_cube,
             angles=["front", "iso"],
             resolution=256,
             output_dir="/tmp/extraction_test"
@@ -54,14 +49,17 @@ def test_render_angles_multiple(extraction_handler):
         print(f"✓ render_angles multiple: {len(result['renders'])} renders")
 
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "connection" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
 
 
-def test_render_angles_default_all(extraction_handler):
+def test_render_angles_default_all(extraction_handler, test_cube):
     """Test rendering with default angles (all 6)."""
     try:
         result = extraction_handler.render_angles(
-            "Cube",
+            test_cube,
             resolution=256,
             output_dir="/tmp/extraction_test"
         )
@@ -72,7 +70,10 @@ def test_render_angles_default_all(extraction_handler):
         print(f"✓ render_angles all: {len(result['renders'])} renders created")
 
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        error_msg = str(e).lower()
+        if "could not connect" in error_msg or "connection" in error_msg:
+            pytest.skip(f"Blender not available: {e}")
+        raise
 
 
 def test_render_angles_not_found(extraction_handler):

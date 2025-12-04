@@ -550,11 +550,14 @@ class ExtractionHandler:
 
         height_levels = sorted(set(height_groups.keys()))
 
+        # Calculate total faces before freeing bmesh
+        total_faces = len(bm.faces)
+
         bm.free()
 
         return {
             "object_name": object_name,
-            "total_faces": len(bm.faces) if hasattr(bm, 'faces') else sum(len(g) for g in normal_groups.values()),
+            "total_faces": total_faces,
             "face_groups": face_groups[:10],  # Top 10 groups
             "normal_group_count": len(normal_groups),
             "height_level_count": len(height_levels),
