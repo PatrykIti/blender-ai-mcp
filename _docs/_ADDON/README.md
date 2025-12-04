@@ -274,3 +274,17 @@ Technical details.
 | `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
 | `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
 
+
+### Extraction (`application/handlers/extraction.py`)
+
+Analysis tools for the Automatic Workflow Extraction System (TASK-042).
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `extraction.deep_topology` | `deep_topology` | Deep topology analysis with base primitive and feature detection. |
+| `extraction.component_separate` | `component_separate` | Separates mesh into loose parts for individual analysis. |
+| `extraction.detect_symmetry` | `detect_symmetry` | Detects X/Y/Z symmetry planes using KDTree with confidence scores. |
+| `extraction.edge_loop_analysis` | `edge_loop_analysis` | Analyzes edge loops, boundary/manifold/non-manifold edges. |
+| `extraction.face_group_analysis` | `face_group_analysis` | Analyzes face groups by normal direction and height levels. |
+| `extraction.render_angles` | `render_angles` | Multi-angle renders for LLM Vision semantic analysis. |
+

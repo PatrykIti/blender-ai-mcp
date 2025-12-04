@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~25 sub-tasks)
+- **To Do:** 4 tasks (~20 sub-tasks)
 - **In Progress:** 1
-- **Done:** 104
+- **Done:** 105
 
 ---
 
@@ -19,7 +19,6 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 6 tools: deep_topology, component_separate, detect_symmetry, edge_loop_analysis, face_group_analysis, render_angles |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
 
 ### Mesh & Symmetry
@@ -47,6 +46,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 2025-12-04 |
 | [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | 2025-12-03 |
 | [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | 2025-12-03 |
 | [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor Implementation** | 🔴 High | 2025-12-02 |

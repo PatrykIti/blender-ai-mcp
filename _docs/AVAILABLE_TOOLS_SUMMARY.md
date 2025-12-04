@@ -277,6 +277,26 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🔍 Extraction Tools (`extraction_`)
+*Specialized analysis tools for the Automatic Workflow Extraction System (TASK-042).*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `extraction_deep_topology` | `object_name` (str) | Deep topology analysis: vertex/edge/face counts, feature detection (bevels, insets, extrusions), base primitive estimation. | ✅ Done |
+| `extraction_component_separate` | `object_name` (str), `min_vertex_count` (int) | Separates mesh into loose parts (components) for individual analysis. | ✅ Done |
+| `extraction_detect_symmetry` | `object_name` (str), `tolerance` (float) | Detects symmetry planes (X/Y/Z) using KDTree matching with confidence scores. | ✅ Done |
+| `extraction_edge_loop_analysis` | `object_name` (str) | Analyzes edge loops: parallel groups, chamfer detection, support loop candidates. | ✅ Done |
+| `extraction_face_group_analysis` | `object_name` (str), `angle_threshold` (float) | Analyzes face groups by normal, height levels, inset/extrusion detection. | ✅ Done |
+| `extraction_render_angles` | `object_name` (str), `angles` (list), `resolution` (int), `output_dir` (str) | Renders object from multiple angles (front, back, left, right, top, iso) for LLM Vision analysis. | ✅ Done |
+
+**Use Cases:**
+- Analyzing imported 3D models for workflow extraction
+- Detecting mesh features (bevels, insets, extrusions)
+- Component separation and symmetry detection
+- Multi-angle rendering for LLM-based semantic analysis
+
+---
+
 ## 🛠 Planned / In Progress
 
 *(All tasks completed!)*

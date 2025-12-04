@@ -321,6 +321,21 @@ Texture baking for game dev workflows.
 
 ---
 
+### Extraction Tools (`extraction_*`)
+
+Analysis tools for the Automatic Workflow Extraction System. Enables deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `extraction_deep_topology` | Deep topology analysis with feature detection | ✅ |
+| `extraction_component_separate` | Separate mesh into loose parts | ✅ |
+| `extraction_detect_symmetry` | Detect X/Y/Z symmetry planes | ✅ |
+| `extraction_edge_loop_analysis` | Analyze edge loops and patterns | ✅ |
+| `extraction_face_group_analysis` | Analyze face groups by normal/height | ✅ |
+| `extraction_render_angles` | Multi-angle renders for LLM Vision | ✅ |
+
+---
+
 ### Metaball Tools (`metaball_*`)
 
 Organic blob primitives for medical/biological modeling.
@@ -638,7 +653,13 @@ We recommend using Docker to run the MCP Server.
         "import_obj",
         "import_fbx",
         "import_glb",
-        "import_image_as_plane"
+        "import_image_as_plane",
+        "extraction_deep_topology",
+        "extraction_component_separate",
+        "extraction_detect_symmetry",
+        "extraction_edge_loop_analysis",
+        "extraction_face_group_analysis",
+        "extraction_render_angles"
       ]
     }
   }
@@ -784,7 +805,13 @@ We recommend using Docker to run the MCP Server.
         "import_obj",
         "import_fbx",
         "import_glb",
-        "import_image_as_plane"
+        "import_image_as_plane",
+        "extraction_deep_topology",
+        "extraction_component_separate",
+        "extraction_detect_symmetry",
+        "extraction_edge_loop_analysis",
+        "extraction_face_group_analysis",
+        "extraction_render_angles"
       ]
     }
   }

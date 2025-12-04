@@ -450,11 +450,14 @@ class ExtractionHandler:
                 if 0.05 < angle < 0.3:  # Very small angle (chamfer)
                     chamfer_edges += 1
 
+        # Calculate total edges before freeing bmesh
+        total_edges = boundary_count + manifold_count + non_manifold_count
+
         bm.free()
 
         return {
             "object_name": object_name,
-            "total_edges": len(bm.edges) if hasattr(bm, 'edges') else boundary_count + manifold_count + non_manifold_count,
+            "total_edges": total_edges,
             "boundary_edges": boundary_count,
             "manifold_edges": manifold_count,
             "non_manifold_edges": non_manifold_count,
