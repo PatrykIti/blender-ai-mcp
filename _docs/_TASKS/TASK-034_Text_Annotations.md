@@ -208,6 +208,25 @@ For each tool, create metadata JSON file in `server/router/infrastructure/tools_
 
 ---
 
+## Implementation Checklist (per tool)
+
+Each tool requires implementation in **4 layers** + infrastructure:
+
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/text.py` | `@abstractmethod def tool_name(...)` |
+| Application | `server/application/tool_handlers/text_handler.py` | `def tool_name(...)` RPC call |
+| Adapter | `server/adapters/mcp/areas/text.py` | `@mcp.tool() def text_tool_name(...)` |
+| Addon | `blender_addon/application/handlers/text.py` | `def tool_name(...)` with bpy |
+| Addon Init | `blender_addon/__init__.py` | Register RPC handler `text.tool_name` |
+| Dispatcher | `server/adapters/mcp/dispatcher.py` | Add to `_tool_map` |
+| Router Metadata | `server/router/infrastructure/tools_metadata/text/text_tool_name.json` | Tool metadata |
+| DI Provider | `server/infrastructure/di.py` | Add `get_text_handler()` if new handler |
+| Unit Tests | `tests/unit/tools/text/test_tool_name.py` | Handler tests |
+| E2E Tests | `tests/e2e/tools/text/test_tool_name.py` | Full integration tests |
+
+---
+
 ## Documentation Updates Required
 
 After implementing these tools, update:
@@ -220,5 +239,4 @@ After implementing these tools, update:
 | `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
 | `_docs/_ADDON/README.md` | Add RPC commands to handler table |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
-| `_docs/MODELING_TOOLS_ARCHITECTURE.md` | Add Text section |
 | `README.md` | Update roadmap checkboxes, add to autoApprove lists |

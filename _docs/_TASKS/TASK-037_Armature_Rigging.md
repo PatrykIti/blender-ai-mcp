@@ -310,6 +310,25 @@ For each tool, create metadata JSON file in `server/router/infrastructure/tools_
 
 ---
 
+## Implementation Checklist (per tool)
+
+Each tool requires implementation in **4 layers** + infrastructure:
+
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/armature.py` | `@abstractmethod def tool_name(...)` (NEW FILE) |
+| Application | `server/application/tool_handlers/armature_handler.py` | `def tool_name(...)` RPC call (NEW FILE) |
+| Adapter | `server/adapters/mcp/areas/armature.py` | `@mcp.tool() def armature_tool_name(...)` (NEW FILE) |
+| Addon | `blender_addon/application/handlers/armature.py` | `def tool_name(...)` with bpy (NEW FILE) |
+| Addon Init | `blender_addon/__init__.py` | Register RPC handler `armature.tool_name` |
+| Dispatcher | `server/adapters/mcp/dispatcher.py` | Add `get_armature_handler()` + tool mappings |
+| DI Provider | `server/infrastructure/di.py` | Add `get_armature_handler()` (NEW) |
+| Router Metadata | `server/router/infrastructure/tools_metadata/armature/armature_tool_name.json` | Tool metadata (NEW DIR) |
+| Unit Tests | `tests/unit/tools/armature/test_tool_name.py` | Handler tests (NEW DIR) |
+| E2E Tests | `tests/e2e/tools/armature/test_tool_name.py` | Full integration tests (NEW DIR) |
+
+---
+
 ## Documentation Updates Required
 
 After implementing these tools, update:
@@ -322,5 +341,4 @@ After implementing these tools, update:
 | `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
 | `_docs/_ADDON/README.md` | Add RPC commands to handler table |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
-| `_docs/ARMATURE_TOOLS_ARCHITECTURE.md` | Create new architecture doc |
 | `README.md` | Update roadmap checkboxes, add to autoApprove lists |
