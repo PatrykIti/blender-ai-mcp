@@ -1,0 +1,15 @@
+{
+  "tool_name": "text_to_mesh",
+  "category": "text",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["text", "mesh", "convert", "geometry", "polygons"],
+  "sample_prompts": ["convert text to mesh", "make text editable", "text to geometry"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "keep_original": {"type": "bool", "default": false}
+  },
+  "related_tools": ["text_create", "text_edit", "modeling_convert_to_mesh"],
+  "patterns": [],
+  "description": "Converts a text object to mesh geometry for editing."
+}
