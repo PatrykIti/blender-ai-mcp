@@ -219,10 +219,11 @@ bpy.ops.transform.mirror(orient_type='GLOBAL', constraint_axis=(axis == 'X', axi
 
 ## Testing Requirements
 
-- [ ] Unit tests for each tool
-- [ ] E2E test: Create asymmetric mesh → symmetrize → verify symmetry
-- [ ] E2E test: Create hole → grid_fill → verify quad topology
-- [ ] Test boundary selection requirement for grid_fill
+- [x] Unit tests for each tool (39 tests in `tests/unit/tools/mesh/test_mesh_symmetry_fill.py`)
+- [x] E2E test: Create asymmetric mesh → symmetrize → verify symmetry
+- [x] E2E test: Create hole → grid_fill → verify quad topology
+- [x] Test boundary selection requirement for grid_fill
+- [x] E2E tests: 28 tests in `tests/e2e/tools/mesh/test_mesh_symmetry_fill.py`
 
 ---
 

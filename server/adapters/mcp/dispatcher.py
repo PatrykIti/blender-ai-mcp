@@ -152,6 +152,12 @@ class ToolDispatcher:
             "mesh_split": mesh.split,
             "mesh_edge_split": mesh.edge_split,
             "mesh_set_proportional_edit": mesh.set_proportional_edit,
+            # TASK-036: Symmetry & Advanced Fill
+            "mesh_symmetrize": mesh.symmetrize,
+            "mesh_grid_fill": mesh.grid_fill,
+            "mesh_poke_faces": mesh.poke_faces,
+            "mesh_beautify_fill": mesh.beautify_fill,
+            "mesh_mirror": mesh.mirror,
         })
 
         # Material tools
