@@ -463,15 +463,15 @@ Organic shaping and sculpt workflows.
 
 ### Armature Tools (`armature_*`)
 
-Skeletal rigging and animation (future).
+Skeletal rigging and animation.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `armature_create` | Create armature with initial bone | 🚧 |
-| `armature_add_bone` | Add bone to armature | 🚧 |
-| `armature_bind` | Bind mesh to armature (auto weights) | 🚧 |
-| `armature_pose_bone` | Pose armature bone | 🚧 |
-| `weight_paint_assign` | Assign weights to vertex group | 🚧 |
+| `armature_create` | Create armature with initial bone | ✅ |
+| `armature_add_bone` | Add bone to armature | ✅ |
+| `armature_bind` | Bind mesh to armature (auto weights) | ✅ |
+| `armature_pose_bone` | Pose armature bone | ✅ |
+| `armature_weight_paint_assign` | Assign weights to vertex group | ✅ |
 
 ---
 
@@ -739,7 +739,12 @@ We recommend using Docker to run the MCP Server.
         "extraction_detect_symmetry",
         "extraction_edge_loop_analysis",
         "extraction_face_group_analysis",
-        "extraction_render_angles"
+        "extraction_render_angles",
+        "armature_create",
+        "armature_add_bone",
+        "armature_bind",
+        "armature_pose_bone",
+        "armature_weight_paint_assign"
       ]
     }
   }
@@ -905,7 +910,12 @@ We recommend using Docker to run the MCP Server.
         "extraction_detect_symmetry",
         "extraction_edge_loop_analysis",
         "extraction_face_group_analysis",
-        "extraction_render_angles"
+        "extraction_render_angles",
+        "armature_create",
+        "armature_add_bone",
+        "armature_bind",
+        "armature_pose_bone",
+        "armature_weight_paint_assign"
       ]
     }
   }

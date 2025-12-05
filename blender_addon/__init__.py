@@ -29,6 +29,7 @@ try:
     from .application.handlers.lattice import LatticeHandler
     from .application.handlers.extraction import ExtractionHandler
     from .application.handlers.text import TextHandler
+    from .application.handlers.armature import ArmatureHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -43,6 +44,7 @@ except ImportError:
     LatticeHandler = None
     ExtractionHandler = None
     TextHandler = None
+    ArmatureHandler = None
 
 
 def register():
@@ -63,6 +65,7 @@ def register():
         lattice_handler = LatticeHandler()
         extraction_handler = ExtractionHandler()
         text_handler = TextHandler()
+        armature_handler = ArmatureHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -276,6 +279,13 @@ def register():
         rpc_server.register_handler("text.create", text_handler.create)
         rpc_server.register_handler("text.edit", text_handler.edit)
         rpc_server.register_handler("text.to_mesh", text_handler.to_mesh)
+
+        # TASK-037: Armature & Rigging
+        rpc_server.register_handler("armature.create", armature_handler.create)
+        rpc_server.register_handler("armature.add_bone", armature_handler.add_bone)
+        rpc_server.register_handler("armature.bind", armature_handler.bind)
+        rpc_server.register_handler("armature.pose_bone", armature_handler.pose_bone)
+        rpc_server.register_handler("armature.weight_paint_assign", armature_handler.weight_paint_assign)
 
         rpc_server.start()
     else:

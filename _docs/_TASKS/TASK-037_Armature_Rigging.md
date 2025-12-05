@@ -1,9 +1,10 @@
-# TASK-037: Armature & Rigging (Future)
+# TASK-037: Armature & Rigging ✅
 
 **Priority:** 🟢 Low (Future)
 **Category:** Animation / Rigging
 **Estimated Effort:** High
 **Dependencies:** TASK-017 (Vertex Groups)
+**Status:** ✅ Done
 
 ---
 
@@ -25,7 +26,7 @@ Armature and rigging tools enable **skeletal animation** - essential for charact
 
 ### TASK-037-1: armature_create
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Creates an armature object with initial bone.
 
@@ -60,7 +61,7 @@ armature.data.bones[0].name = bone_name
 
 ### TASK-037-2: armature_add_bone
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Adds a new bone to existing armature.
 
@@ -107,7 +108,7 @@ bpy.ops.object.mode_set(mode='OBJECT')
 
 ### TASK-037-3: armature_bind
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Binds mesh to armature (automatic weights).
 
@@ -154,9 +155,9 @@ else:
 
 ---
 
-### TASK-037-4: armature_pose_bone (Optional)
+### TASK-037-4: armature_pose_bone
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Poses a bone (rotation/location).
 
@@ -195,9 +196,9 @@ if scale:
 
 ---
 
-### TASK-037-5: weight_paint_assign (Optional)
+### TASK-037-5: armature_weight_paint_assign
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Assigns weights to vertex group (for manual rigging).
 
@@ -243,10 +244,10 @@ Start simple, expand based on user demand.
 
 ## Testing Requirements
 
-- [ ] Unit tests with mocked armature operations
-- [ ] E2E test: Create armature → add bones → bind mesh → pose → verify deformation
-- [ ] Test automatic weights on simple mesh (cube)
-- [ ] Test manual weight assignment workflow
+- [x] Unit tests with mocked armature operations
+- [x] E2E test: Create armature → add bones → bind mesh → pose → verify deformation
+- [x] Test automatic weights on simple mesh (cube)
+- [x] Test manual weight assignment workflow
 
 ---
 

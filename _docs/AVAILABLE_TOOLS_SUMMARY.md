@@ -325,6 +325,25 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## 🦴 Armature Tools (`armature_`)
+*Skeletal animation and rigging tools for character/mechanical animation.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `armature_create` | `name`, `location`, `bone_name`, `bone_length` | Creates armature with initial bone for rigging. | ✅ Done |
+| `armature_add_bone` | `armature_name`, `bone_name`, `head`, `tail`, `parent_bone`, `use_connect` | Adds new bone to existing armature with optional parenting. | ✅ Done |
+| `armature_bind` | `mesh_name`, `armature_name`, `bind_type` (AUTO/ENVELOPE/EMPTY) | Binds mesh to armature with automatic weight calculation. | ✅ Done |
+| `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses armature bone (rotation/location/scale in Pose Mode). | ✅ Done |
+| `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` (REPLACE/ADD/SUBTRACT) | Assigns weights to selected vertices for manual rigging. | ✅ Done |
+
+**Use Cases:**
+- Character rigging for games/film
+- Mechanical rigs (robot arms, machines)
+- Procedural animation setups
+- Weight painting for precise deformation control
+
+---
+
 ## 🛠 Planned / In Progress
 
 *(All tasks completed!)*

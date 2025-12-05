@@ -21,6 +21,7 @@ from server.infrastructure.di import (
     get_lattice_handler,
     get_extraction_handler,
     get_text_handler,
+    get_armature_handler,
 )
 
 logger = logging.getLogger(__name__)
@@ -252,6 +253,16 @@ class ToolDispatcher:
             "text_create": text.create,
             "text_edit": text.edit,
             "text_to_mesh": text.to_mesh,
+        })
+
+        # Armature tools (TASK-037)
+        armature = get_armature_handler()
+        self._tool_map.update({
+            "armature_create": armature.create,
+            "armature_add_bone": armature.add_bone,
+            "armature_bind": armature.bind,
+            "armature_pose_bone": armature.pose_bone,
+            "armature_weight_paint_assign": armature.weight_paint_assign,
         })
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:

@@ -14,6 +14,7 @@ from server.application.tool_handlers.lattice_handler import LatticeToolHandler
 from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 from server.application.tool_handlers.text_handler import TextToolHandler
+from server.application.tool_handlers.armature_handler import ArmatureToolHandler
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -29,6 +30,7 @@ from server.domain.tools.lattice import ILatticeTool
 from server.domain.tools.router import IRouterTool
 from server.domain.tools.extraction import IExtractionTool
 from server.domain.tools.text import ITextTool
+from server.domain.tools.armature import IArmatureTool
 from server.infrastructure.config import get_config
 
 # --- Providers (Factory Functions) ---
@@ -110,6 +112,12 @@ def get_text_handler() -> ITextTool:
     """Provider for ITextTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return TextToolHandler(rpc)
+
+
+def get_armature_handler() -> IArmatureTool:
+    """Provider for IArmatureTool. Injects RpcClient."""
+    rpc = get_rpc_client()
+    return ArmatureToolHandler(rpc)
 
 
 # --- Router Supervisor ---

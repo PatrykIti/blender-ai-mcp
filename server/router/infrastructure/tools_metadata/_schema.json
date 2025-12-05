@@ -14,12 +14,12 @@
     "category": {
       "type": "string",
       "description": "Tool category/area",
-      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking"]
+      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking", "armature"]
     },
     "mode_required": {
       "type": "string",
       "description": "Blender mode required for this tool",
-      "enum": ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "ANY"]
+      "enum": ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE", "ANY"]
     },
     "selection_required": {
       "type": "boolean",
