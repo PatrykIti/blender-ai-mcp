@@ -202,6 +202,11 @@ Technical details.
 | `mesh.split` | `split` | Splits selection from mesh (disconnects without separating). |
 | `mesh.edge_split` | `edge_split` | Splits mesh at selected edges (creates seams). |
 | `mesh.set_proportional_edit` | `set_proportional_edit` | Configures proportional editing mode. |
+| `mesh.symmetrize` | `symmetrize` | Makes mesh symmetric by mirroring one side to the other. |
+| `mesh.grid_fill` | `grid_fill` | Fills boundary with a grid of quads. |
+| `mesh.poke_faces` | `poke_faces` | Pokes selected faces (adds vertex at center). |
+| `mesh.beautify_fill` | `beautify_fill` | Rearranges triangles to more uniform triangulation. |
+| `mesh.mirror` | `mirror` | Mirrors selected geometry within the same object. |
 
 
 ### Curve (`application/handlers/curve.py`)

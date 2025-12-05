@@ -184,6 +184,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). | ✅ Done |
 | `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). | ✅ Done |
 | `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. | ✅ Done |
+| `mesh_symmetrize` | `direction`, `threshold` | Makes mesh symmetric by mirroring one side to the other. | ✅ Done |
+| `mesh_grid_fill` | `span`, `offset`, `use_interp_simple` | Fills boundary with a grid of quads (superior to triangle fill). | ✅ Done |
+| `mesh_poke_faces` | `offset`, `use_relative_offset`, `center_mode` | Pokes faces (adds vertex at center, creates triangle fan). | ✅ Done |
+| `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
+| `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`

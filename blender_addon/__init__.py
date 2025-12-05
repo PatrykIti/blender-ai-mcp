@@ -240,6 +240,13 @@ def register():
         rpc_server.register_handler("mesh.split", mesh_handler.split)
         rpc_server.register_handler("mesh.edge_split", mesh_handler.edge_split)
 
+        # TASK-036: Symmetry & Advanced Fill
+        rpc_server.register_handler("mesh.symmetrize", mesh_handler.symmetrize)
+        rpc_server.register_handler("mesh.grid_fill", mesh_handler.grid_fill)
+        rpc_server.register_handler("mesh.poke_faces", mesh_handler.poke_faces)
+        rpc_server.register_handler("mesh.beautify_fill", mesh_handler.beautify_fill)
+        rpc_server.register_handler("mesh.mirror", mesh_handler.mirror)
+
         # TASK-031: Baking Tools
         rpc_server.register_handler("baking.normal_map", baking_handler.bake_normal_map)
         rpc_server.register_handler("baking.ao", baking_handler.bake_ao)

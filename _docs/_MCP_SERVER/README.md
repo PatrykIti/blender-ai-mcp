@@ -169,6 +169,11 @@ Low-level geometry manipulation.
 | `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). |
 | `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). |
 | `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. |
+| `mesh_symmetrize` | `direction`, `threshold` | Makes mesh symmetric by mirroring one side to the other. |
+| `mesh_grid_fill` | `span`, `offset`, `use_interp_simple` | Fills boundary with a grid of quads (superior to triangle fill). |
+| `mesh_poke_faces` | `offset`, `use_relative_offset`, `center_mode` | Pokes faces (adds vertex at center, creates triangle fan). |
+| `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. |
+| `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 

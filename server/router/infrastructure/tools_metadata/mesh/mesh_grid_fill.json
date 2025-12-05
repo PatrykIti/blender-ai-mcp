@@ -1,0 +1,36 @@
+{
+  "tool_name": "mesh_grid_fill",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["grid fill", "fill hole", "quad fill", "fill boundary", "cap hole", "close hole"],
+  "sample_prompts": [
+    "fill this hole with quads",
+    "grid fill the boundary",
+    "fill the hole with proper topology",
+    "cap the hole with a grid",
+    "fill the selected edges with quads"
+  ],
+  "parameters": {
+    "span": {
+      "type": "int",
+      "default": 1,
+      "range": [1, 32],
+      "description": "Grid resolution (number of rows)"
+    },
+    "offset": {
+      "type": "int",
+      "default": 0,
+      "range": [-32, 32],
+      "description": "Shifts the grid pattern alignment"
+    },
+    "use_interp_simple": {
+      "type": "bool",
+      "default": false,
+      "description": "Use simple interpolation (faster, less smooth)"
+    }
+  },
+  "related_tools": ["mesh_fill_holes", "mesh_bridge_edge_loops", "mesh_select"],
+  "patterns": [],
+  "description": "Fills boundary with a grid of quads for clean topology."
+}

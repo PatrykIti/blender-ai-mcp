@@ -4,6 +4,7 @@
 **Category:** Mesh Tools
 **Estimated Effort:** Medium
 **Dependencies:** TASK-011 (Edit Mode Foundation)
+**Status:** ✅ **Done** (2025-12-05)
 
 ---
 
@@ -23,7 +24,7 @@ Symmetry and advanced fill tools enable **efficient symmetric modeling and hole 
 
 ### TASK-036-1: mesh_symmetrize
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Makes mesh symmetric by mirroring one side to the other.
 
@@ -61,7 +62,7 @@ bpy.ops.mesh.symmetrize(direction=direction, threshold=threshold)
 
 ### TASK-036-2: mesh_grid_fill
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Fills hole with a grid of quads.
 
@@ -97,7 +98,7 @@ bpy.ops.mesh.fill_grid(span=span, offset=offset, use_interp_simple=use_interp_si
 
 ### TASK-036-3: mesh_poke_faces
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Pokes faces (adds vertex at center, creating triangles).
 
@@ -132,7 +133,7 @@ bpy.ops.mesh.poke(offset=offset, use_relative_offset=use_relative_offset, center
 
 ### TASK-036-4: mesh_beautify_fill
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Rearranges triangles to more uniform/aesthetic pattern.
 
@@ -163,7 +164,7 @@ bpy.ops.mesh.beautify_fill(angle_limit=math.radians(angle_limit))
 
 ### TASK-036-5: mesh_mirror (Optional)
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 
 Mirrors selected geometry within the same object.
 
@@ -280,6 +281,24 @@ For each tool, create metadata JSON file in `server/router/infrastructure/tools_
   "description": "Fills boundary with a grid of quads for clean topology."
 }
 ```
+
+---
+
+## Implementation Checklist (per tool)
+
+Each tool requires implementation in **4 layers** + infrastructure:
+
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/mesh.py` | `@abstractmethod def tool_name(...)` |
+| Application | `server/application/tool_handlers/mesh_handler.py` | `def tool_name(...)` RPC call |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool() def mesh_tool_name(...)` |
+| Addon | `blender_addon/application/handlers/mesh.py` | `def tool_name(...)` with bpy |
+| Addon Init | `blender_addon/__init__.py` | Register RPC handler `mesh.tool_name` |
+| Dispatcher | `server/adapters/mcp/dispatcher.py` | Add to `_tool_map` (if using router) |
+| Router Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_tool_name.json` | Tool metadata |
+| Unit Tests | `tests/unit/tools/mesh/test_tool_name.py` | Handler tests |
+| E2E Tests | `tests/e2e/tools/mesh/test_tool_name.py` | Full integration tests |
 
 ---
 

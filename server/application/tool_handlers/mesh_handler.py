@@ -475,3 +475,43 @@ class MeshToolHandler(IMeshTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-036-1: Mesh Symmetrize Tool
+    def symmetrize(self, direction: str = "NEGATIVE_X", threshold: float = 0.0001) -> str:
+        args = {"direction": direction, "threshold": threshold}
+        response = self.rpc.send_request("mesh.symmetrize", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-036-2: Mesh Grid Fill Tool
+    def grid_fill(self, span: int = 1, offset: int = 0, use_interp_simple: bool = False) -> str:
+        args = {"span": span, "offset": offset, "use_interp_simple": use_interp_simple}
+        response = self.rpc.send_request("mesh.grid_fill", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-036-3: Mesh Poke Faces Tool
+    def poke_faces(self, offset: float = 0.0, use_relative_offset: bool = False, center_mode: str = "MEDIAN_WEIGHTED") -> str:
+        args = {"offset": offset, "use_relative_offset": use_relative_offset, "center_mode": center_mode}
+        response = self.rpc.send_request("mesh.poke_faces", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-036-4: Mesh Beautify Fill Tool
+    def beautify_fill(self, angle_limit: float = 180.0) -> str:
+        args = {"angle_limit": angle_limit}
+        response = self.rpc.send_request("mesh.beautify_fill", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    # TASK-036-5: Mesh Mirror Tool
+    def mirror(self, axis: str = "X", use_mirror_merge: bool = True, merge_threshold: float = 0.001) -> str:
+        args = {"axis": axis, "use_mirror_merge": use_mirror_merge, "merge_threshold": merge_threshold}
+        response = self.rpc.send_request("mesh.mirror", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

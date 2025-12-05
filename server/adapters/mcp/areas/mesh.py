@@ -1656,3 +1656,181 @@ def mesh_set_proportional_edit(
         params={"enabled": enabled, "falloff_type": falloff_type, "size": size, "use_connected": use_connected},
         direct_executor=lambda: get_mesh_handler().set_proportional_edit(enabled, falloff_type, size, use_connected)
     )
+
+
+# ==============================================================================
+# TASK-036: Symmetry & Advanced Fill
+# ==============================================================================
+
+@mcp.tool()
+def mesh_symmetrize(
+    ctx: Context,
+    direction: Literal["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"] = "NEGATIVE_X",
+    threshold: float = 0.0001
+) -> str:
+    """
+    [EDIT MODE][DESTRUCTIVE] Symmetrizes mesh.
+
+    Mirrors geometry from one side to the other, making the mesh perfectly symmetric.
+    Useful for:
+    - Fixing asymmetric character models
+    - Creating symmetric objects from half-models
+    - Repair after asymmetric edits
+
+    Direction examples:
+    - NEGATIVE_X: Copy from +X to -X (right to left)
+    - POSITIVE_X: Copy from -X to +X (left to right)
+
+    Workflow: BEFORE → mesh_select(action="all") to symmetrize entire mesh
+
+    Args:
+        direction: Which side to copy FROM and TO. NEGATIVE_X = copy +X to -X.
+        threshold: Distance threshold for merging mirrored vertices.
+
+    Examples:
+        mesh_symmetrize() -> Mirror right side to left (NEGATIVE_X)
+        mesh_symmetrize(direction="POSITIVE_X") -> Mirror left side to right
+        mesh_symmetrize(direction="NEGATIVE_Z") -> Mirror top to bottom
+    """
+    return route_tool_call(
+        tool_name="mesh_symmetrize",
+        params={"direction": direction, "threshold": threshold},
+        direct_executor=lambda: get_mesh_handler().symmetrize(direction, threshold)
+    )
+
+
+@mcp.tool()
+def mesh_grid_fill(
+    ctx: Context,
+    span: int = 1,
+    offset: int = 0,
+    use_interp_simple: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills boundary with a grid of quads.
+
+    Unlike mesh_fill_holes (which creates triangles), grid_fill creates
+    a proper quad grid - essential for subdivision-ready topology.
+
+    Requirements:
+    - Selection must be a closed edge loop (boundary)
+    - Works best with even number of edges
+
+    Workflow: BEFORE → mesh_select(action="boundary") to select hole edge
+
+    Args:
+        span: Grid resolution (number of rows). Higher = denser grid.
+        offset: Shifts the grid pattern alignment.
+        use_interp_simple: Use simple interpolation (faster, less smooth).
+
+    Examples:
+        mesh_grid_fill() -> Fill with minimal quads
+        mesh_grid_fill(span=4) -> Fill with 4-row grid
+        mesh_grid_fill(span=2, offset=1) -> Shifted grid pattern
+    """
+    return route_tool_call(
+        tool_name="mesh_grid_fill",
+        params={"span": span, "offset": offset, "use_interp_simple": use_interp_simple},
+        direct_executor=lambda: get_mesh_handler().grid_fill(span, offset, use_interp_simple)
+    )
+
+
+@mcp.tool()
+def mesh_poke_faces(
+    ctx: Context,
+    offset: float = 0.0,
+    use_relative_offset: bool = False,
+    center_mode: Literal["MEDIAN", "MEDIAN_WEIGHTED", "BOUNDS"] = "MEDIAN_WEIGHTED"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Pokes selected faces.
+
+    Adds a vertex at the center of each selected face and connects to edges,
+    creating a fan of triangles. Useful for:
+    - Creating spikes/cones
+    - Preparing for subdivision patterns
+    - Artistic effects
+
+    Workflow: BEFORE → mesh_select faces | Can combine with extrude for spikes
+
+    Args:
+        offset: Distance to push center vertex outward (negative = inward).
+        use_relative_offset: Scale offset by face size.
+        center_mode: How to calculate face center (MEDIAN, MEDIAN_WEIGHTED, BOUNDS).
+
+    Examples:
+        mesh_poke_faces() -> Poke faces with vertex at center
+        mesh_poke_faces(offset=0.5) -> Poke and push center out (creates spikes)
+        mesh_poke_faces(offset=-0.2) -> Poke and push center in (creates dimples)
+    """
+    return route_tool_call(
+        tool_name="mesh_poke_faces",
+        params={"offset": offset, "use_relative_offset": use_relative_offset, "center_mode": center_mode},
+        direct_executor=lambda: get_mesh_handler().poke_faces(offset, use_relative_offset, center_mode)
+    )
+
+
+@mcp.tool()
+def mesh_beautify_fill(
+    ctx: Context,
+    angle_limit: float = 180.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Beautifies face arrangement.
+
+    Rotates triangle edges to create more uniform triangulation.
+    Useful after:
+    - Boolean operations
+    - Triangulation
+    - Import cleanup
+
+    Workflow: BEFORE → mesh_select faces (select triangulated area)
+
+    Args:
+        angle_limit: Maximum angle for edge rotation (degrees). 180 = no limit.
+
+    Examples:
+        mesh_beautify_fill() -> Beautify all selected triangles
+        mesh_beautify_fill(angle_limit=45.0) -> Only rotate edges below 45°
+    """
+    return route_tool_call(
+        tool_name="mesh_beautify_fill",
+        params={"angle_limit": angle_limit},
+        direct_executor=lambda: get_mesh_handler().beautify_fill(angle_limit)
+    )
+
+
+@mcp.tool()
+def mesh_mirror(
+    ctx: Context,
+    axis: Literal["X", "Y", "Z"] = "X",
+    use_mirror_merge: bool = True,
+    merge_threshold: float = 0.001
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Mirrors selected geometry.
+
+    Unlike symmetrize (which replaces one side), mirror creates a copy.
+    Useful for:
+    - Duplicating symmetric parts
+    - Creating mirrored elements
+
+    For non-destructive mirroring, use modeling_add_modifier(type="MIRROR").
+
+    Workflow: BEFORE → mesh_select geometry to mirror
+
+    Args:
+        axis: Axis to mirror across (X, Y, or Z).
+        use_mirror_merge: Merge vertices at mirror plane.
+        merge_threshold: Distance for merging mirrored vertices.
+
+    Examples:
+        mesh_mirror() -> Mirror selection across X axis
+        mesh_mirror(axis="Y") -> Mirror across Y axis
+        mesh_mirror(use_mirror_merge=False) -> Mirror without merging (keeps gap)
+    """
+    return route_tool_call(
+        tool_name="mesh_mirror",
+        params={"axis": axis, "use_mirror_merge": use_mirror_merge, "merge_threshold": merge_threshold},
+        direct_executor=lambda: get_mesh_handler().mirror(axis, use_mirror_merge, merge_threshold)
+    )

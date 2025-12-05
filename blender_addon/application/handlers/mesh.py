@@ -1844,3 +1844,186 @@ class MeshHandler:
             )
         else:
             return "Proportional editing disabled"
+
+    # ==========================================================================
+    # TASK-036: Symmetry & Advanced Fill Tools
+    # ==========================================================================
+
+    def symmetrize(self, direction="NEGATIVE_X", threshold=0.0001):
+        """
+        [EDIT MODE][DESTRUCTIVE] Symmetrizes mesh.
+        Mirrors geometry from one side to the other, making the mesh perfectly symmetric.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        # Validate direction
+        valid_directions = [
+            "NEGATIVE_X", "POSITIVE_X",
+            "NEGATIVE_Y", "POSITIVE_Y",
+            "NEGATIVE_Z", "POSITIVE_Z"
+        ]
+        direction = direction.upper()
+        if direction not in valid_directions:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid direction '{direction}'. Must be one of: {valid_directions}")
+
+        try:
+            bpy.ops.mesh.symmetrize(direction=direction, threshold=threshold)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Symmetrize failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Symmetrized mesh (direction={direction}, threshold={threshold})"
+
+    def grid_fill(self, span=1, offset=0, use_interp_simple=False):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills boundary with a grid of quads.
+        Unlike mesh_fill_holes (which creates triangles), grid_fill creates proper quad grid.
+        Requirements: Selection must be a closed edge loop (boundary).
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = sum(1 for e in bm.edges if e.select)
+
+        if selected_edges < 3:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("Select at least 3 edges forming a closed boundary to use grid fill.")
+
+        try:
+            bpy.ops.mesh.fill_grid(span=span, offset=offset, use_interp_simple=use_interp_simple)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Grid fill failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Grid filled boundary (span={span}, offset={offset})"
+
+    def poke_faces(self, offset=0.0, use_relative_offset=False, center_mode="MEDIAN_WEIGHTED"):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Pokes selected faces.
+        Adds a vertex at the center of each selected face and connects to edges,
+        creating a fan of triangles.
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_faces == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No faces selected. Select faces to poke.")
+
+        # Validate center_mode
+        valid_modes = ["MEDIAN", "MEDIAN_WEIGHTED", "BOUNDS"]
+        center_mode = center_mode.upper()
+        if center_mode not in valid_modes:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid center_mode '{center_mode}'. Must be one of: {valid_modes}")
+
+        try:
+            bpy.ops.mesh.poke(
+                offset=offset,
+                use_relative_offset=use_relative_offset,
+                center_mode=center_mode
+            )
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Poke faces failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Poked {selected_faces} face(s) (offset={offset}, center_mode={center_mode})"
+
+    def beautify_fill(self, angle_limit=180.0):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Beautifies face arrangement.
+        Rotates triangle edges to create more uniform triangulation.
+        Useful after boolean operations, triangulation, or import cleanup.
+        """
+        import math
+
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_faces = sum(1 for f in bm.faces if f.select)
+
+        if selected_faces == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No faces selected. Select triangulated faces to beautify.")
+
+        # Convert angle to radians
+        angle_limit_rad = math.radians(angle_limit)
+
+        try:
+            bpy.ops.mesh.beautify_fill(angle_limit=angle_limit_rad)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Beautify fill failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        return f"Beautified {selected_faces} face(s) (angle_limit={angle_limit}°)"
+
+    def mirror(self, axis="X", use_mirror_merge=True, merge_threshold=0.001):
+        """
+        [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Mirrors selected geometry.
+        Unlike symmetrize (which replaces one side), mirror creates a copy.
+        For non-destructive mirroring, use modeling_add_modifier(type='MIRROR').
+        """
+        obj, previous_mode = self._ensure_edit_mode()
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_verts = sum(1 for v in bm.verts if v.select)
+
+        if selected_verts == 0:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError("No geometry selected. Select geometry to mirror.")
+
+        # Validate axis
+        axis = axis.upper()
+        if axis not in ['X', 'Y', 'Z']:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
+
+        # Determine constraint axis
+        constraint_axis = (axis == 'X', axis == 'Y', axis == 'Z')
+
+        try:
+            # Use transform.mirror operator
+            bpy.ops.transform.mirror(
+                orient_type='GLOBAL',
+                constraint_axis=constraint_axis
+            )
+
+            # Optionally merge mirrored vertices
+            if use_mirror_merge:
+                bpy.ops.mesh.remove_doubles(threshold=merge_threshold)
+        except RuntimeError as e:
+            if previous_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=previous_mode)
+            raise RuntimeError(f"Mirror failed: {e}")
+
+        if previous_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+
+        merge_desc = f", merged vertices within {merge_threshold}" if use_mirror_merge else ""
+        return f"Mirrored {selected_verts} vertices along {axis} axis{merge_desc}"

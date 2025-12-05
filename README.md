@@ -38,6 +38,64 @@ Most AI solutions for Blender rely on asking the LLM to "write a Python script".
 
 ---
 
+## 🏗️ Architecture
+
+This project uses a split-architecture design:
+1.  **MCP Server (Python/FastMCP)**: Handles AI communication.
+2.  **Blender Addon (Python/bpy)**: Executes 3D operations.
+
+Communication happens via **JSON-RPC over TCP sockets**.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
+
+## 🧪 Testing
+
+**Unit Tests** (662+ tests, ~3-4s, no Blender required):
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/ -v
+```
+
+**E2E Tests** (142 tests, ~12s, requires Blender):
+```bash
+# Automated: build → install addon → start Blender → run tests → cleanup
+python3 scripts/run_e2e_tests.py
+```
+
+| Type | Count | Coverage |
+|------|-------|----------|
+| Unit Tests | 662+ | All tool handlers |
+| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
+
+See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
+
+<details>
+<summary>📋 Latest E2E Test Results (click to expand)</summary>
+
+```
+============================= test session starts ==============================
+platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
+collected 142 items
+
+tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
+tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
+tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+
+============================= 142 passed in 12.25s =============================
+```
+
+</details>
+
+---
+
 ## 🗺️ Roadmap & Capabilities
 
 > **Legend:** ✅ Done | 🚧 To Do
@@ -215,10 +273,11 @@ Edit Mode operations for geometry manipulation.
 #### Symmetry & Fill
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_symmetrize` | Make mesh symmetric | 🚧 |
-| `mesh_grid_fill` | Fill boundary with quad grid | 🚧 |
-| `mesh_poke_faces` | Poke faces (add center vertex) | 🚧 |
-| `mesh_beautify_fill` | Rearrange triangles uniformly | 🚧 |
+| `mesh_symmetrize` | Make mesh symmetric | ✅ |
+| `mesh_grid_fill` | Fill boundary with quad grid | ✅ |
+| `mesh_poke_faces` | Poke faces (add center vertex) | ✅ |
+| `mesh_beautify_fill` | Rearrange triangles uniformly | ✅ |
+| `mesh_mirror` | Mirror selected geometry | ✅ |
 | `mesh_set_proportional_edit` | Enable soft selection falloff | ✅ |
 
 ---
@@ -626,6 +685,11 @@ We recommend using Docker to run the MCP Server.
         "mesh_rip",
         "mesh_split",
         "mesh_edge_split",
+        "mesh_symmetrize",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
         "text_create",
@@ -787,6 +851,11 @@ We recommend using Docker to run the MCP Server.
         "mesh_rip",
         "mesh_split",
         "mesh_edge_split",
+        "mesh_symmetrize",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
         "text_create",
@@ -903,64 +972,6 @@ docker run -i --rm \
 ## 📈 Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=PatrykIti/blender-ai-mcp&type=date&legend=top-left)](https://www.star-history.com/#PatrykIti/blender-ai-mcp&type=date&legend=top-left)
-
----
-
-## 🏗️ Architecture
-
-This project uses a split-architecture design:
-1.  **MCP Server (Python/FastMCP)**: Handles AI communication.
-2.  **Blender Addon (Python/bpy)**: Executes 3D operations.
-
-Communication happens via **JSON-RPC over TCP sockets**.
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
-
-## 🧪 Testing
-
-**Unit Tests** (662+ tests, ~3-4s, no Blender required):
-```bash
-PYTHONPATH=. poetry run pytest tests/unit/ -v
-```
-
-**E2E Tests** (142 tests, ~12s, requires Blender):
-```bash
-# Automated: build → install addon → start Blender → run tests → cleanup
-python3 scripts/run_e2e_tests.py
-```
-
-| Type | Count | Coverage |
-|------|-------|----------|
-| Unit Tests | 662+ | All tool handlers |
-| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
-
-See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
-
-<details>
-<summary>📋 Latest E2E Test Results (click to expand)</summary>
-
-```
-============================= test session starts ==============================
-platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
-collected 142 items
-
-tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
-tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
-tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-
-============================= 142 passed in 12.25s =============================
-```
-
-</details>
 
 ---
 

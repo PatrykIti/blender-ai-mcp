@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks (~17 sub-tasks)
+- **To Do:** 2 tasks (~12 sub-tasks)
 - **In Progress:** 1
-- **Done:** 107
+- **Done:** 108
 
 ---
 
@@ -15,11 +15,6 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
-
-### Mesh & Symmetry
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
 
 ### Future / Nice-to-Have
 | ID | Title | Priority | Notes |
@@ -41,6 +36,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | 2025-12-05 |
 | [TASK-045](./TASK-045_Object_Inspection_Tools.md) | **Object Inspection Tools** | 🟡 Medium | 2025-12-04 |
 | [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | 2025-12-04 |
 | [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 2025-12-04 |
