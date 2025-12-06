@@ -11,3 +11,4 @@ from . import scene
 from . import sculpt
 from . import system
 from . import uv
+from . import vector_db

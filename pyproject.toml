@@ -14,7 +14,9 @@ dependencies = [
     "uvicorn (>=0.38.0,<0.39.0)",
     "pydantic (>=2.12.4,<3.0.0)",
     "numpy (>=1.24.0) ; python_version >= \"3.11\"",
-    "sentence-transformers (>=5.1.2,<6.0.0) ; python_version >= \"3.11\""
+    "sentence-transformers (>=5.1.2,<6.0.0) ; python_version >= \"3.11\"",
+    "lancedb (>=0.3.0,<1.0.0) ; python_version >= \"3.11\"",
+    "pyarrow (>=14.0.0) ; python_version >= \"3.11\""
 ]
 
 

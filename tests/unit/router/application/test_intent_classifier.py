@@ -1,7 +1,9 @@
 """
-Unit tests for IntentClassifier and EmbeddingCache.
+Unit tests for IntentClassifier.
 
 Tests intent classification with mocked embeddings.
+
+TASK-047: Updated for LanceDB integration
 """
 
 import pytest
@@ -13,27 +15,80 @@ from server.router.application.classifier.intent_classifier import (
     IntentClassifier,
     EMBEDDINGS_AVAILABLE,
 )
-from server.router.application.classifier.embedding_cache import EmbeddingCache
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+    SearchResult,
+)
 from server.router.infrastructure.config import RouterConfig
 
 
-@pytest.fixture
-def temp_cache_dir():
-    """Create a temporary cache directory."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+class MockVectorStore(IVectorStore):
+    """Mock vector store for testing."""
+
+    def __init__(self):
+        self._records = {}
+        self._search_results = []
+
+    def upsert(self, records):
+        for r in records:
+            key = f"{r.namespace.value}:{r.id}"
+            self._records[key] = r
+        return len(records)
+
+    def search(self, query_vector, namespace, top_k=5, threshold=0.0, metadata_filter=None):
+        return self._search_results[:top_k]
+
+    def delete(self, ids, namespace):
+        count = 0
+        for id_ in ids:
+            key = f"{namespace.value}:{id_}"
+            if key in self._records:
+                del self._records[key]
+                count += 1
+        return count
+
+    def count(self, namespace=None):
+        if namespace is None:
+            return len(self._records)
+        return sum(1 for k in self._records if k.startswith(namespace.value))
+
+    def get_stats(self):
+        return {
+            "total_records": len(self._records),
+            "tools_count": self.count(VectorNamespace.TOOLS),
+            "workflows_count": self.count(VectorNamespace.WORKFLOWS),
+        }
+
+    def rebuild_index(self):
+        return True
+
+    def clear(self, namespace=None):
+        if namespace is None:
+            count = len(self._records)
+            self._records.clear()
+            return count
+        to_delete = [k for k in self._records if k.startswith(namespace.value)]
+        for k in to_delete:
+            del self._records[k]
+        return len(to_delete)
+
+    def set_search_results(self, results):
+        """Set results to return from search."""
+        self._search_results = results
 
 
 @pytest.fixture
-def embedding_cache(temp_cache_dir):
-    """Create an EmbeddingCache with temp directory."""
-    return EmbeddingCache(cache_dir=temp_cache_dir)
+def mock_store():
+    """Create a mock vector store."""
+    return MockVectorStore()
 
 
 @pytest.fixture
-def classifier(temp_cache_dir):
-    """Create an IntentClassifier with temp cache."""
-    return IntentClassifier(cache_dir=temp_cache_dir)
+def classifier(mock_store):
+    """Create an IntentClassifier with mock store."""
+    return IntentClassifier(vector_store=mock_store)
 
 
 @pytest.fixture
@@ -67,135 +122,6 @@ def sample_metadata():
     }
 
 
-class TestEmbeddingCacheInit:
-    """Tests for EmbeddingCache initialization."""
-
-    def test_init_default_dir(self):
-        """Test initialization with default directory."""
-        cache = EmbeddingCache()
-        assert cache._cache_dir.exists() or True  # May not exist yet
-
-    def test_init_custom_dir(self, temp_cache_dir):
-        """Test initialization with custom directory."""
-        cache = EmbeddingCache(cache_dir=temp_cache_dir)
-        assert cache._cache_dir == temp_cache_dir
-
-    def test_cache_dir_created(self, temp_cache_dir):
-        """Test that cache directory is created."""
-        cache = EmbeddingCache(cache_dir=temp_cache_dir / "subdir")
-        assert cache._cache_dir.exists()
-
-
-class TestEmbeddingCacheSaveLoad:
-    """Tests for EmbeddingCache save/load functionality."""
-
-    @pytest.mark.skipif(not EMBEDDINGS_AVAILABLE, reason="NumPy not available")
-    def test_save_and_load(self, embedding_cache):
-        """Test saving and loading embeddings."""
-        import numpy as np
-
-        embeddings = {
-            "tool1": np.array([0.1, 0.2, 0.3]),
-            "tool2": np.array([0.4, 0.5, 0.6]),
-        }
-
-        # Save
-        result = embedding_cache.save(embeddings, "test_hash")
-        assert result is True
-
-        # Load
-        loaded = embedding_cache.load()
-        assert loaded is not None
-        assert "tool1" in loaded
-        assert "tool2" in loaded
-
-    def test_load_nonexistent(self, embedding_cache):
-        """Test loading when no cache exists."""
-        loaded = embedding_cache.load()
-        assert loaded is None
-
-    @pytest.mark.skipif(not EMBEDDINGS_AVAILABLE, reason="NumPy not available")
-    def test_is_valid_matching_hash(self, embedding_cache):
-        """Test cache validity with matching hash."""
-        import numpy as np
-
-        embeddings = {"tool1": np.array([0.1, 0.2])}
-        embedding_cache.save(embeddings, "test_hash_123")
-
-        assert embedding_cache.is_valid("test_hash_123") is True
-
-    @pytest.mark.skipif(not EMBEDDINGS_AVAILABLE, reason="NumPy not available")
-    def test_is_valid_different_hash(self, embedding_cache):
-        """Test cache invalidity with different hash."""
-        import numpy as np
-
-        embeddings = {"tool1": np.array([0.1, 0.2])}
-        embedding_cache.save(embeddings, "old_hash")
-
-        assert embedding_cache.is_valid("new_hash") is False
-
-    def test_is_valid_no_cache(self, embedding_cache):
-        """Test cache validity when no cache exists."""
-        assert embedding_cache.is_valid("any_hash") is False
-
-
-class TestEmbeddingCacheClear:
-    """Tests for EmbeddingCache clear functionality."""
-
-    @pytest.mark.skipif(not EMBEDDINGS_AVAILABLE, reason="NumPy not available")
-    def test_clear_existing(self, embedding_cache):
-        """Test clearing existing cache."""
-        import numpy as np
-
-        embeddings = {"tool1": np.array([0.1, 0.2])}
-        embedding_cache.save(embeddings, "hash")
-
-        result = embedding_cache.clear()
-        assert result is True
-        assert embedding_cache.load() is None
-
-    def test_clear_nonexistent(self, embedding_cache):
-        """Test clearing non-existent cache."""
-        result = embedding_cache.clear()
-        assert result is True
-
-
-class TestEmbeddingCacheUtilities:
-    """Tests for EmbeddingCache utility methods."""
-
-    def test_get_cache_path(self, embedding_cache, temp_cache_dir):
-        """Test get_cache_path returns correct path."""
-        assert embedding_cache.get_cache_path() == temp_cache_dir
-
-    def test_get_cache_size_no_cache(self, embedding_cache):
-        """Test cache size when no cache exists."""
-        assert embedding_cache.get_cache_size() == 0
-
-    @pytest.mark.skipif(not EMBEDDINGS_AVAILABLE, reason="NumPy not available")
-    def test_get_cache_size_with_cache(self, embedding_cache):
-        """Test cache size with existing cache."""
-        import numpy as np
-
-        embeddings = {"tool1": np.array([0.1] * 100)}
-        embedding_cache.save(embeddings, "hash")
-
-        assert embedding_cache.get_cache_size() > 0
-
-    def test_compute_metadata_hash(self):
-        """Test metadata hash computation."""
-        metadata1 = {"tool1": {"keywords": ["a", "b"]}}
-        metadata2 = {"tool1": {"keywords": ["a", "b"]}}
-        metadata3 = {"tool1": {"keywords": ["c", "d"]}}
-
-        hash1 = EmbeddingCache.compute_metadata_hash(metadata1)
-        hash2 = EmbeddingCache.compute_metadata_hash(metadata2)
-        hash3 = EmbeddingCache.compute_metadata_hash(metadata3)
-
-        assert hash1 == hash2  # Same content = same hash
-        assert hash1 != hash3  # Different content = different hash
-        assert len(hash1) == 16  # SHA256 truncated to 16 chars
-
-
 class TestIntentClassifierInit:
     """Tests for IntentClassifier initialization."""
 
@@ -204,17 +130,17 @@ class TestIntentClassifierInit:
         assert classifier._config is not None
         assert classifier._is_loaded is False
 
-    def test_init_custom_config(self, temp_cache_dir):
+    def test_init_custom_config(self, mock_store):
         """Test initialization with custom config."""
         config = RouterConfig(embedding_threshold=0.5)
-        classifier = IntentClassifier(config=config, cache_dir=temp_cache_dir)
+        classifier = IntentClassifier(config=config, vector_store=mock_store)
 
         assert classifier._config.embedding_threshold == 0.5
 
-    def test_init_creates_cache(self, temp_cache_dir):
-        """Test that cache is created on init."""
-        classifier = IntentClassifier(cache_dir=temp_cache_dir)
-        assert classifier._cache is not None
+    def test_init_creates_store_lazily(self, mock_store):
+        """Test that vector store is injected correctly."""
+        classifier = IntentClassifier(vector_store=mock_store)
+        assert classifier._vector_store is mock_store
 
 
 class TestIntentClassifierLoadEmbeddings:
@@ -331,6 +257,7 @@ class TestIntentClassifierModelInfo:
         assert "model_loaded" in info
         assert "num_tools" in info
         assert "is_loaded" in info
+        assert "vector_store" in info
 
     def test_model_info_before_load(self, classifier):
         """Test model info before loading."""
@@ -350,12 +277,23 @@ class TestIntentClassifierModelInfo:
 class TestIntentClassifierClearCache:
     """Tests for clear_cache method."""
 
-    def test_clear_cache(self, classifier, sample_metadata):
+    def test_clear_cache(self, classifier, mock_store, sample_metadata):
         """Test clearing the cache."""
-        classifier.load_tool_embeddings(sample_metadata)
+        # Add some records first
+        mock_store.upsert([
+            VectorRecord(
+                id="test_tool",
+                namespace=VectorNamespace.TOOLS,
+                vector=[0.0] * 768,
+                text="test",
+                metadata={},
+            )
+        ])
+
         result = classifier.clear_cache()
 
         assert result is True
+        assert mock_store.count(VectorNamespace.TOOLS) == 0
 
 
 class TestTfidfFallback:
@@ -401,3 +339,31 @@ class TestEdgeCases:
         tool, confidence = classifier.predict(long_prompt)
         # Should handle gracefully
         assert isinstance(tool, str)
+
+
+class TestIntentClassifierInterface:
+    """Tests for IIntentClassifier interface compliance."""
+
+    def test_implements_interface(self, mock_store):
+        """Test that IntentClassifier implements the interface."""
+        from server.router.domain.interfaces.i_intent_classifier import (
+            IIntentClassifier,
+        )
+
+        classifier = IntentClassifier(vector_store=mock_store)
+
+        assert isinstance(classifier, IIntentClassifier)
+
+    def test_interface_methods_exist(self, mock_store):
+        """Test all interface methods are implemented."""
+        classifier = IntentClassifier(vector_store=mock_store)
+
+        # Check all required methods exist
+        assert hasattr(classifier, 'predict')
+        assert hasattr(classifier, 'predict_top_k')
+        assert hasattr(classifier, 'load_tool_embeddings')
+        assert hasattr(classifier, 'is_loaded')
+        assert hasattr(classifier, 'get_embedding')
+        assert hasattr(classifier, 'similarity')
+        assert hasattr(classifier, 'get_model_info')
+        assert hasattr(classifier, 'clear_cache')

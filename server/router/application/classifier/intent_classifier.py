@@ -2,6 +2,9 @@
 Intent Classifier Implementation.
 
 Classifies user prompts to tool names using LaBSE embeddings.
+Now uses LanceDB for O(log N) vector search.
+
+TASK-047-4: Integrated with LanceVectorStore
 """
 
 import logging
@@ -9,7 +12,11 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 
 from server.router.domain.interfaces.i_intent_classifier import IIntentClassifier
-from server.router.application.classifier.embedding_cache import EmbeddingCache
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+)
 from server.router.infrastructure.config import RouterConfig
 
 logger = logging.getLogger(__name__)
@@ -18,9 +25,11 @@ logger = logging.getLogger(__name__)
 try:
     from sentence_transformers import SentenceTransformer
     import numpy as np
+
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
+    np = None  # type: ignore
     logger.warning(
         "sentence-transformers not installed. "
         "Intent classification will use fallback TF-IDF matching."
@@ -37,33 +46,48 @@ class IntentClassifier(IIntentClassifier):
 
     Uses Language-agnostic BERT Sentence Embedding (LaBSE) for
     multilingual semantic similarity matching against tool descriptions.
+
+    Now uses LanceDB for O(log N) vector search instead of linear scan.
     """
 
     def __init__(
         self,
         config: Optional[RouterConfig] = None,
-        cache_dir: Optional[Path] = None,
+        vector_store: Optional[IVectorStore] = None,
         model_name: str = MODEL_NAME,
     ):
         """Initialize intent classifier.
 
         Args:
             config: Router configuration (uses defaults if None).
-            cache_dir: Directory for embedding cache.
+            vector_store: Vector store for embeddings (creates LanceVectorStore if None).
             model_name: Sentence transformer model name.
         """
         self._config = config or RouterConfig()
-        self._cache = EmbeddingCache(cache_dir)
+        self._vector_store = vector_store
         self._model_name = model_name
         self._model: Optional[Any] = None
-        self._tool_embeddings: Dict[str, Any] = {}
         self._tool_texts: Dict[str, List[str]] = {}
         self._is_loaded = False
 
-        # TF-IDF fallback components
+        # TF-IDF fallback components (used when embeddings unavailable)
         self._tfidf_vectorizer: Optional[Any] = None
         self._tfidf_matrix: Optional[Any] = None
         self._tfidf_tool_names: List[str] = []
+
+    def _ensure_vector_store(self) -> IVectorStore:
+        """Lazily create vector store if not injected.
+
+        Returns:
+            The vector store instance.
+        """
+        if self._vector_store is None:
+            from server.router.infrastructure.vector_store.lance_store import (
+                LanceVectorStore,
+            )
+
+            self._vector_store = LanceVectorStore()
+        return self._vector_store
 
     def _load_model(self) -> bool:
         """Load the sentence transformer model.
@@ -107,6 +131,8 @@ class IntentClassifier(IIntentClassifier):
     ) -> List[Tuple[str, float]]:
         """Predict top K matching tools for a prompt.
 
+        Uses LanceDB for O(log N) vector search.
+
         Args:
             prompt: Natural language prompt.
             k: Number of results to return.
@@ -118,22 +144,22 @@ class IntentClassifier(IIntentClassifier):
             logger.warning("Embeddings not loaded, returning empty results")
             return []
 
-        # Try embeddings first
-        if EMBEDDINGS_AVAILABLE and self._model is not None and self._tool_embeddings:
-            return self._predict_with_embeddings(prompt, k)
-
-        # Fallback to TF-IDF
+        # Fallback to TF-IDF if embeddings unavailable
         if self._tfidf_vectorizer is not None:
             return self._predict_with_tfidf(prompt, k)
 
+        # Use LanceDB vector search
+        if EMBEDDINGS_AVAILABLE and self._model is not None:
+            return self._predict_with_vector_store(prompt, k)
+
         return []
 
-    def _predict_with_embeddings(
+    def _predict_with_vector_store(
         self,
         prompt: str,
         k: int,
     ) -> List[Tuple[str, float]]:
-        """Predict using LaBSE embeddings.
+        """Predict using LanceDB vector search.
 
         Args:
             prompt: Natural language prompt.
@@ -153,24 +179,19 @@ class IntentClassifier(IIntentClassifier):
                 normalize_embeddings=True,
             )
 
-            # Calculate similarities
-            similarities = []
-            for tool_name, tool_embedding in self._tool_embeddings.items():
-                # Cosine similarity (embeddings are normalized)
-                sim = float(np.dot(prompt_embedding, tool_embedding))
-                similarities.append((tool_name, sim))
+            # Search using LanceDB
+            store = self._ensure_vector_store()
+            results = store.search(
+                query_vector=prompt_embedding.tolist(),
+                namespace=VectorNamespace.TOOLS,
+                top_k=k,
+                threshold=self._config.embedding_threshold,
+            )
 
-            # Sort by similarity
-            similarities.sort(key=lambda x: x[1], reverse=True)
-
-            # Apply threshold
-            threshold = self._config.embedding_threshold
-            filtered = [(t, s) for t, s in similarities if s >= threshold]
-
-            return filtered[:k]
+            return [(r.id, r.score) for r in results]
 
         except Exception as e:
-            logger.error(f"Embedding prediction failed: {e}")
+            logger.error(f"Vector store prediction failed: {e}")
             return []
 
     def _predict_with_tfidf(
@@ -202,7 +223,9 @@ class IntentClassifier(IIntentClassifier):
             results = []
             for idx in top_indices:
                 if similarities[idx] > 0:
-                    results.append((self._tfidf_tool_names[idx], float(similarities[idx])))
+                    results.append(
+                        (self._tfidf_tool_names[idx], float(similarities[idx]))
+                    )
 
             return results
 
@@ -212,6 +235,8 @@ class IntentClassifier(IIntentClassifier):
 
     def load_tool_embeddings(self, metadata: Dict[str, Any]) -> None:
         """Load and cache tool embeddings from metadata.
+
+        Stores embeddings in LanceDB for fast retrieval.
 
         Args:
             metadata: Tool metadata with sample_prompts.
@@ -240,21 +265,21 @@ class IntentClassifier(IIntentClassifier):
             if texts:
                 self._tool_texts[tool_name] = texts
 
-        # Try to load from cache
-        metadata_hash = EmbeddingCache.compute_metadata_hash(metadata)
-        if self._cache.is_valid(metadata_hash):
-            cached = self._cache.load()
-            if cached:
-                self._tool_embeddings = cached
-                self._is_loaded = True
-                logger.info(f"Loaded {len(cached)} tool embeddings from cache")
-                return
+        # Check if vector store already has embeddings
+        store = self._ensure_vector_store()
+        existing_count = store.count(VectorNamespace.TOOLS)
 
-        # Compute embeddings if available
+        if existing_count >= len(self._tool_texts):
+            logger.info(
+                f"Vector store already has {existing_count} tool embeddings"
+            )
+            self._is_loaded = True
+            return
+
+        # Compute and store embeddings if available
         if EMBEDDINGS_AVAILABLE and self._load_model():
-            self._compute_embeddings()
-            if self._tool_embeddings:
-                self._cache.save(self._tool_embeddings, metadata_hash)
+            self._compute_and_store_embeddings(metadata)
+            if store.count(VectorNamespace.TOOLS) > 0:
                 self._is_loaded = True
                 return
 
@@ -262,12 +287,19 @@ class IntentClassifier(IIntentClassifier):
         self._setup_tfidf_fallback()
         self._is_loaded = True
 
-    def _compute_embeddings(self) -> None:
-        """Compute embeddings for all tools."""
+    def _compute_and_store_embeddings(self, metadata: Dict[str, Any]) -> None:
+        """Compute embeddings and store in LanceDB.
+
+        Args:
+            metadata: Tool metadata for storing alongside vectors.
+        """
         if self._model is None:
             return
 
         logger.info(f"Computing embeddings for {len(self._tool_texts)} tools")
+
+        store = self._ensure_vector_store()
+        records = []
 
         for tool_name, texts in self._tool_texts.items():
             try:
@@ -278,12 +310,30 @@ class IntentClassifier(IIntentClassifier):
                     convert_to_numpy=True,
                     normalize_embeddings=True,
                 )
-                self._tool_embeddings[tool_name] = embedding
+
+                # Get metadata for this tool
+                tool_meta = metadata.get(tool_name, {})
+
+                records.append(
+                    VectorRecord(
+                        id=tool_name,
+                        namespace=VectorNamespace.TOOLS,
+                        vector=embedding.tolist(),
+                        text=combined,
+                        metadata={
+                            "keywords": tool_meta.get("keywords", []),
+                            "mode_required": tool_meta.get("mode_required"),
+                            "category": tool_meta.get("category"),
+                        },
+                    )
+                )
 
             except Exception as e:
                 logger.error(f"Failed to compute embedding for {tool_name}: {e}")
 
-        logger.info(f"Computed {len(self._tool_embeddings)} tool embeddings")
+        if records:
+            count = store.upsert(records)
+            logger.info(f"Stored {count} tool embeddings in LanceDB")
 
     def _setup_tfidf_fallback(self) -> None:
         """Setup TF-IDF fallback when embeddings unavailable."""
@@ -358,7 +408,7 @@ class IntentClassifier(IIntentClassifier):
         Returns:
             Similarity score (0.0 to 1.0).
         """
-        if not EMBEDDINGS_AVAILABLE or self._model is None:
+        if not EMBEDDINGS_AVAILABLE or self._model is None or np is None:
             return 0.0
 
         try:
@@ -379,24 +429,40 @@ class IntentClassifier(IIntentClassifier):
         Returns:
             Dictionary with model information.
         """
+        store = self._ensure_vector_store()
+        stats = store.get_stats()
+
         return {
             "model_name": self._model_name,
             "embeddings_available": EMBEDDINGS_AVAILABLE,
             "model_loaded": self._model is not None,
-            "num_tools": len(self._tool_embeddings),
+            "num_tools": stats.get("tools_count", 0),
             "is_loaded": self._is_loaded,
             "using_fallback": (
                 self._is_loaded
-                and not self._tool_embeddings
                 and self._tfidf_vectorizer is not None
             ),
-            "cache_size_bytes": self._cache.get_cache_size(),
+            "vector_store": {
+                "type": "LanceDB",
+                "using_fallback": stats.get("using_fallback", False),
+                "total_records": stats.get("total_records", 0),
+            },
         }
 
     def clear_cache(self) -> bool:
         """Clear the embedding cache.
 
+        Removes all tool embeddings from LanceDB.
+
         Returns:
             True if cleared successfully.
         """
-        return self._cache.clear()
+        try:
+            store = self._ensure_vector_store()
+            store.clear(VectorNamespace.TOOLS)
+            self._is_loaded = False
+            logger.info("Cleared tool embeddings from vector store")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to clear cache: {e}")
+            return False

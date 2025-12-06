@@ -3,15 +3,24 @@ Workflow Intent Classifier.
 
 Classifies user prompts to workflows using LaBSE embeddings.
 Enables semantic matching and generalization across workflows.
+Now uses LanceDB for O(log N) vector search.
 
-TASK-046-2
+TASK-046-2: Initial implementation
+TASK-047-4: Integrated with LanceVectorStore, implements IWorkflowIntentClassifier
 """
 
-import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional, Union
+from typing import Dict, Any, List, Tuple, Optional
 
+from server.router.domain.interfaces.i_workflow_intent_classifier import (
+    IWorkflowIntentClassifier,
+)
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+)
 from server.router.infrastructure.config import RouterConfig
 
 logger = logging.getLogger(__name__)
@@ -36,142 +45,35 @@ MODEL_NAME = "sentence-transformers/LaBSE"
 EMBEDDING_DIM = 768
 
 
-class WorkflowEmbeddingCache:
-    """Cache for workflow embeddings.
-
-    Separate from tool embedding cache to avoid conflicts.
-    """
-
-    def __init__(self, cache_dir: Optional[Path] = None, prefix: str = "workflow_"):
-        """Initialize embedding cache.
-
-        Args:
-            cache_dir: Directory for cache files.
-            prefix: Prefix for cache files.
-        """
-        if cache_dir is None:
-            cache_dir = Path.home() / ".cache" / "blender-ai-mcp" / "router"
-        self._cache_dir = Path(cache_dir)
-        self._prefix = prefix
-        self._cache_file = self._cache_dir / f"{prefix}embeddings.pkl"
-        self._hash_file = self._cache_dir / f"{prefix}hash.txt"
-        self._ensure_cache_dir()
-
-    def _ensure_cache_dir(self) -> None:
-        """Ensure cache directory exists."""
-        self._cache_dir.mkdir(parents=True, exist_ok=True)
-
-    def save(self, embeddings: Dict[str, Any], metadata_hash: str) -> bool:
-        """Save embeddings to cache."""
-        if not EMBEDDINGS_AVAILABLE:
-            return False
-
-        try:
-            import pickle
-
-            with open(self._cache_file, "wb") as f:
-                pickle.dump(embeddings, f)
-
-            with open(self._hash_file, "w") as f:
-                f.write(metadata_hash)
-
-            logger.info(f"Saved {len(embeddings)} workflow embeddings to cache")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save workflow embeddings cache: {e}")
-            return False
-
-    def load(self) -> Optional[Dict[str, Any]]:
-        """Load embeddings from cache."""
-        if not EMBEDDINGS_AVAILABLE or not self._cache_file.exists():
-            return None
-
-        try:
-            import pickle
-
-            with open(self._cache_file, "rb") as f:
-                embeddings = pickle.load(f)
-
-            logger.info(f"Loaded {len(embeddings)} workflow embeddings from cache")
-            return embeddings
-
-        except Exception as e:
-            logger.error(f"Failed to load workflow embeddings cache: {e}")
-            return None
-
-    def is_valid(self, metadata_hash: str) -> bool:
-        """Check if cache is valid for given metadata."""
-        if not self._cache_file.exists() or not self._hash_file.exists():
-            return False
-
-        try:
-            with open(self._hash_file, "r") as f:
-                cached_hash = f.read().strip()
-            return cached_hash == metadata_hash
-
-        except Exception:
-            return False
-
-    def clear(self) -> bool:
-        """Clear the cache."""
-        try:
-            if self._cache_file.exists():
-                self._cache_file.unlink()
-            if self._hash_file.exists():
-                self._hash_file.unlink()
-            logger.info("Cleared workflow embeddings cache")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to clear workflow cache: {e}")
-            return False
-
-    @staticmethod
-    def compute_hash(workflows: Dict[str, Any]) -> str:
-        """Compute hash of workflows for cache validation."""
-        # Create a string representation of workflow sample_prompts
-        content_parts = []
-        for name in sorted(workflows.keys()):
-            workflow = workflows[name]
-            prompts = []
-            if hasattr(workflow, "sample_prompts"):
-                prompts = workflow.sample_prompts
-            elif isinstance(workflow, dict) and "sample_prompts" in workflow:
-                prompts = workflow["sample_prompts"]
-            content_parts.append(f"{name}:{','.join(sorted(prompts))}")
-
-        content = "|".join(content_parts)
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
-class WorkflowIntentClassifier:
+class WorkflowIntentClassifier(IWorkflowIntentClassifier):
     """Classifies user prompts to workflows using LaBSE embeddings.
+
+    Implements IWorkflowIntentClassifier interface for Clean Architecture.
 
     Unlike IntentClassifier (for tools), this classifier:
     - Works with workflow definitions
     - Supports generalization (finding similar workflows)
     - Can combine knowledge from multiple workflows
-    - Uses separate cache from tool embeddings
+    - Uses LanceDB for O(log N) vector search
     """
 
     def __init__(
         self,
         config: Optional[RouterConfig] = None,
-        cache_dir: Optional[Path] = None,
+        vector_store: Optional[IVectorStore] = None,
         model_name: str = MODEL_NAME,
     ):
         """Initialize workflow classifier.
 
         Args:
             config: Router configuration.
-            cache_dir: Directory for embedding cache.
+            vector_store: Vector store for embeddings (creates LanceVectorStore if None).
             model_name: Sentence transformer model name.
         """
         self._config = config or RouterConfig()
-        self._cache = WorkflowEmbeddingCache(cache_dir, prefix="workflow_")
+        self._vector_store = vector_store
         self._model_name = model_name
         self._model: Optional[Any] = None
-        self._workflow_embeddings: Dict[str, Any] = {}
         self._workflow_texts: Dict[str, List[str]] = {}
         self._is_loaded = False
 
@@ -179,6 +81,20 @@ class WorkflowIntentClassifier:
         self._tfidf_vectorizer: Optional[Any] = None
         self._tfidf_matrix: Optional[Any] = None
         self._tfidf_workflow_names: List[str] = []
+
+    def _ensure_vector_store(self) -> IVectorStore:
+        """Lazily create vector store if not injected.
+
+        Returns:
+            The vector store instance.
+        """
+        if self._vector_store is None:
+            from server.router.infrastructure.vector_store.lance_store import (
+                LanceVectorStore,
+            )
+
+            self._vector_store = LanceVectorStore()
+        return self._vector_store
 
     def _load_model(self) -> bool:
         """Load the sentence transformer model.
@@ -193,7 +109,7 @@ class WorkflowIntentClassifier:
             return True
 
         try:
-            logger.info(f"Loading LaBSE model for workflow classification")
+            logger.info("Loading LaBSE model for workflow classification")
             self._model = SentenceTransformer(self._model_name)
             logger.info("LaBSE model loaded successfully")
             return True
@@ -206,6 +122,8 @@ class WorkflowIntentClassifier:
         workflows: Dict[str, Any],
     ) -> None:
         """Load and cache workflow embeddings.
+
+        Stores embeddings in LanceDB for fast retrieval.
 
         Args:
             workflows: Dictionary of workflow name -> workflow object/definition.
@@ -225,23 +143,21 @@ class WorkflowIntentClassifier:
             logger.warning("No workflow texts extracted for embedding")
             return
 
-        # Try to load from cache
-        metadata_hash = WorkflowEmbeddingCache.compute_hash(workflows)
-        if self._cache.is_valid(metadata_hash):
-            cached = self._cache.load()
-            if cached:
-                self._workflow_embeddings = cached
-                self._is_loaded = True
-                logger.info(
-                    f"Loaded {len(cached)} workflow embeddings from cache"
-                )
-                return
+        # Check if vector store already has embeddings
+        store = self._ensure_vector_store()
+        existing_count = store.count(VectorNamespace.WORKFLOWS)
 
-        # Compute embeddings if available
+        if existing_count >= len(self._workflow_texts):
+            logger.info(
+                f"Vector store already has {existing_count} workflow embeddings"
+            )
+            self._is_loaded = True
+            return
+
+        # Compute and store embeddings if available
         if EMBEDDINGS_AVAILABLE and self._load_model():
-            self._compute_embeddings()
-            if self._workflow_embeddings:
-                self._cache.save(self._workflow_embeddings, metadata_hash)
+            self._compute_and_store_embeddings(workflows)
+            if store.count(VectorNamespace.WORKFLOWS) > 0:
                 self._is_loaded = True
                 return
 
@@ -288,12 +204,19 @@ class WorkflowIntentClassifier:
 
         return texts
 
-    def _compute_embeddings(self) -> None:
-        """Compute embeddings for all workflows."""
+    def _compute_and_store_embeddings(self, workflows: Dict[str, Any]) -> None:
+        """Compute embeddings and store in LanceDB.
+
+        Args:
+            workflows: Workflow definitions for metadata extraction.
+        """
         if self._model is None:
             return
 
         logger.info(f"Computing embeddings for {len(self._workflow_texts)} workflows")
+
+        store = self._ensure_vector_store()
+        records = []
 
         for name, texts in self._workflow_texts.items():
             try:
@@ -304,12 +227,37 @@ class WorkflowIntentClassifier:
                     convert_to_numpy=True,
                     normalize_embeddings=True,
                 )
-                self._workflow_embeddings[name] = embedding
+
+                # Extract metadata from workflow
+                workflow = workflows.get(name, {})
+                metadata = {}
+
+                if hasattr(workflow, "category"):
+                    metadata["category"] = workflow.category
+                elif isinstance(workflow, dict):
+                    metadata["category"] = workflow.get("category")
+
+                if hasattr(workflow, "trigger_keywords"):
+                    metadata["trigger_keywords"] = workflow.trigger_keywords
+                elif isinstance(workflow, dict):
+                    metadata["trigger_keywords"] = workflow.get("trigger_keywords", [])
+
+                records.append(
+                    VectorRecord(
+                        id=name,
+                        namespace=VectorNamespace.WORKFLOWS,
+                        vector=embedding.tolist(),
+                        text=combined,
+                        metadata=metadata,
+                    )
+                )
 
             except Exception as e:
                 logger.error(f"Failed to compute embedding for {name}: {e}")
 
-        logger.info(f"Computed {len(self._workflow_embeddings)} workflow embeddings")
+        if records:
+            count = store.upsert(records)
+            logger.info(f"Stored {count} workflow embeddings in LanceDB")
 
     def _setup_tfidf_fallback(self) -> None:
         """Setup TF-IDF fallback when embeddings unavailable."""
@@ -352,6 +300,8 @@ class WorkflowIntentClassifier:
     ) -> List[Tuple[str, float]]:
         """Find workflows semantically similar to prompt.
 
+        Uses LanceDB for O(log N) vector search.
+
         Args:
             prompt: User prompt or intent.
             top_k: Number of results to return.
@@ -364,9 +314,13 @@ class WorkflowIntentClassifier:
             logger.warning("Workflow embeddings not loaded, returning empty results")
             return []
 
+        # Use config threshold if none provided
+        if threshold == 0.0:
+            threshold = self._config.workflow_similarity_threshold
+
         # Try embeddings first
-        if EMBEDDINGS_AVAILABLE and self._model is not None and self._workflow_embeddings:
-            return self._find_similar_with_embeddings(prompt, top_k, threshold)
+        if EMBEDDINGS_AVAILABLE and self._model is not None:
+            return self._find_similar_with_vector_store(prompt, top_k, threshold)
 
         # Fallback to TF-IDF
         if self._tfidf_vectorizer is not None:
@@ -374,14 +328,14 @@ class WorkflowIntentClassifier:
 
         return []
 
-    def _find_similar_with_embeddings(
+    def _find_similar_with_vector_store(
         self,
         prompt: str,
         top_k: int,
         threshold: float,
     ) -> List[Tuple[str, float]]:
-        """Find similar workflows using LaBSE embeddings."""
-        if self._model is None or np is None:
+        """Find similar workflows using LanceDB vector search."""
+        if self._model is None:
             return []
 
         try:
@@ -392,21 +346,19 @@ class WorkflowIntentClassifier:
                 normalize_embeddings=True,
             )
 
-            # Calculate similarities
-            similarities = []
-            for name, workflow_embedding in self._workflow_embeddings.items():
-                # Cosine similarity (embeddings are normalized)
-                sim = float(np.dot(prompt_embedding, workflow_embedding))
-                if sim >= threshold:
-                    similarities.append((name, sim))
+            # Search using LanceDB
+            store = self._ensure_vector_store()
+            results = store.search(
+                query_vector=prompt_embedding.tolist(),
+                namespace=VectorNamespace.WORKFLOWS,
+                top_k=top_k,
+                threshold=threshold,
+            )
 
-            # Sort by similarity
-            similarities.sort(key=lambda x: x[1], reverse=True)
-
-            return similarities[:top_k]
+            return [(r.id, r.score) for r in results]
 
         except Exception as e:
-            logger.error(f"Embedding similarity search failed: {e}")
+            logger.error(f"Vector store similarity search failed: {e}")
             return []
 
     def _find_similar_with_tfidf(
@@ -470,14 +422,18 @@ class WorkflowIntentClassifier:
         Returns:
             List of (workflow_name, similarity) tuples.
         """
+        # Use generalization threshold from config if not specified
+        if min_similarity == 0.3:
+            min_similarity = self._config.generalization_threshold
+
         return self.find_similar(
             prompt,
             top_k=max_candidates,
             threshold=min_similarity,
         )
 
-    def get_embedding(self, text: str) -> Optional[Any]:
-        """Get embedding for a text.
+    def get_embedding(self, text: str) -> Optional[List[float]]:
+        """Get embedding vector for a text.
 
         Args:
             text: Text to embed.
@@ -489,11 +445,12 @@ class WorkflowIntentClassifier:
             return None
 
         try:
-            return self._model.encode(
+            embedding = self._model.encode(
                 text,
                 convert_to_numpy=True,
                 normalize_embeddings=True,
             )
+            return embedding.tolist()
         except Exception as e:
             logger.error(f"Failed to get embedding: {e}")
             return None
@@ -536,23 +493,40 @@ class WorkflowIntentClassifier:
         Returns:
             Dictionary with classifier information.
         """
+        store = self._ensure_vector_store()
+        stats = store.get_stats()
+
         return {
             "model_name": self._model_name,
             "embeddings_available": EMBEDDINGS_AVAILABLE,
             "model_loaded": self._model is not None,
-            "num_workflows": len(self._workflow_embeddings),
+            "num_workflows": stats.get("workflows_count", 0),
             "is_loaded": self._is_loaded,
             "using_fallback": (
                 self._is_loaded
-                and not self._workflow_embeddings
                 and self._tfidf_vectorizer is not None
             ),
+            "vector_store": {
+                "type": "LanceDB",
+                "using_fallback": stats.get("using_fallback", False),
+                "total_records": stats.get("total_records", 0),
+            },
         }
 
     def clear_cache(self) -> bool:
         """Clear the embedding cache.
 
+        Removes all workflow embeddings from LanceDB.
+
         Returns:
             True if cleared successfully.
         """
-        return self._cache.clear()
+        try:
+            store = self._ensure_vector_store()
+            store.clear(VectorNamespace.WORKFLOWS)
+            self._is_loaded = False
+            logger.info("Cleared workflow embeddings from vector store")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to clear cache: {e}")
+            return False

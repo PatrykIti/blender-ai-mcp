@@ -12,6 +12,15 @@ from server.router.domain.interfaces.i_override_engine import IOverrideEngine
 from server.router.domain.interfaces.i_expansion_engine import IExpansionEngine
 from server.router.domain.interfaces.i_firewall import IFirewall
 from server.router.domain.interfaces.i_intent_classifier import IIntentClassifier
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+    SearchResult,
+)
+from server.router.domain.interfaces.i_workflow_intent_classifier import (
+    IWorkflowIntentClassifier,
+)
 
 __all__ = [
     "IToolInterceptor",
@@ -22,4 +31,11 @@ __all__ = [
     "IExpansionEngine",
     "IFirewall",
     "IIntentClassifier",
+    # Vector Store (TASK-047)
+    "IVectorStore",
+    "VectorNamespace",
+    "VectorRecord",
+    "SearchResult",
+    # Workflow Intent Classifier (TASK-047)
+    "IWorkflowIntentClassifier",
 ]

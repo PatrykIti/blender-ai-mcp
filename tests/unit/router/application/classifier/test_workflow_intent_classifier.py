@@ -1,91 +1,96 @@
 """
 Tests for WorkflowIntentClassifier.
 
-TASK-046-2
+TASK-046-2: Initial tests
+TASK-047: Updated for LanceDB integration
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 from pathlib import Path
 import tempfile
 
 from server.router.application.classifier.workflow_intent_classifier import (
     WorkflowIntentClassifier,
-    WorkflowEmbeddingCache,
     EMBEDDINGS_AVAILABLE,
+)
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+    SearchResult,
 )
 from server.router.infrastructure.config import RouterConfig
 
 
-class TestWorkflowEmbeddingCache:
-    """Tests for WorkflowEmbeddingCache."""
+class MockVectorStore(IVectorStore):
+    """Mock vector store for testing."""
 
-    def test_init_creates_cache_dir(self, tmp_path):
-        """Test that init creates cache directory."""
-        cache_dir = tmp_path / "cache"
-        cache = WorkflowEmbeddingCache(cache_dir=cache_dir)
+    def __init__(self):
+        self._records = {}
+        self._search_results = []
 
-        assert cache_dir.exists()
+    def upsert(self, records):
+        for r in records:
+            key = f"{r.namespace.value}:{r.id}"
+            self._records[key] = r
+        return len(records)
 
-    def test_compute_hash_consistent(self):
-        """Test that hash is consistent for same input."""
-        workflows1 = {
-            "phone_workflow": MagicMock(sample_prompts=["create phone"]),
-            "table_workflow": MagicMock(sample_prompts=["create table"]),
+    def search(self, query_vector, namespace, top_k=5, threshold=0.0, metadata_filter=None):
+        return self._search_results[:top_k]
+
+    def delete(self, ids, namespace):
+        count = 0
+        for id_ in ids:
+            key = f"{namespace.value}:{id_}"
+            if key in self._records:
+                del self._records[key]
+                count += 1
+        return count
+
+    def count(self, namespace=None):
+        if namespace is None:
+            return len(self._records)
+        return sum(1 for k in self._records if k.startswith(namespace.value))
+
+    def get_stats(self):
+        return {
+            "total_records": len(self._records),
+            "tools_count": self.count(VectorNamespace.TOOLS),
+            "workflows_count": self.count(VectorNamespace.WORKFLOWS),
         }
-        workflows2 = {
-            "phone_workflow": MagicMock(sample_prompts=["create phone"]),
-            "table_workflow": MagicMock(sample_prompts=["create table"]),
-        }
 
-        hash1 = WorkflowEmbeddingCache.compute_hash(workflows1)
-        hash2 = WorkflowEmbeddingCache.compute_hash(workflows2)
+    def rebuild_index(self):
+        return True
 
-        assert hash1 == hash2
+    def clear(self, namespace=None):
+        if namespace is None:
+            count = len(self._records)
+            self._records.clear()
+            return count
+        to_delete = [k for k in self._records if k.startswith(namespace.value)]
+        for k in to_delete:
+            del self._records[k]
+        return len(to_delete)
 
-    def test_compute_hash_different_for_different_prompts(self):
-        """Test that hash differs for different prompts."""
-        workflows1 = {
-            "phone_workflow": MagicMock(sample_prompts=["create phone"]),
-        }
-        workflows2 = {
-            "phone_workflow": MagicMock(sample_prompts=["make smartphone"]),
-        }
-
-        hash1 = WorkflowEmbeddingCache.compute_hash(workflows1)
-        hash2 = WorkflowEmbeddingCache.compute_hash(workflows2)
-
-        assert hash1 != hash2
-
-    def test_is_valid_false_when_no_cache(self, tmp_path):
-        """Test that is_valid returns False when no cache exists."""
-        cache = WorkflowEmbeddingCache(cache_dir=tmp_path)
-
-        assert not cache.is_valid("some_hash")
-
-    def test_clear_cache(self, tmp_path):
-        """Test clearing cache."""
-        cache = WorkflowEmbeddingCache(cache_dir=tmp_path)
-
-        # Create fake cache files
-        cache._cache_file.touch()
-        cache._hash_file.touch()
-
-        result = cache.clear()
-
-        assert result is True
-        assert not cache._cache_file.exists()
-        assert not cache._hash_file.exists()
+    def set_search_results(self, results):
+        """Set results to return from search."""
+        self._search_results = results
 
 
 class TestWorkflowIntentClassifier:
     """Tests for WorkflowIntentClassifier."""
 
     @pytest.fixture
-    def classifier(self, tmp_path):
-        """Create classifier with temp cache."""
+    def mock_store(self):
+        """Create mock vector store."""
+        return MockVectorStore()
+
+    @pytest.fixture
+    def classifier(self, mock_store):
+        """Create classifier with mock store."""
         config = RouterConfig()
-        return WorkflowIntentClassifier(config=config, cache_dir=tmp_path)
+        return WorkflowIntentClassifier(config=config, vector_store=mock_store)
 
     @pytest.fixture
     def mock_workflows(self):
@@ -174,26 +179,66 @@ class TestWorkflowIntentClassifier:
         assert "model_loaded" in info
         assert "num_workflows" in info
         assert "is_loaded" in info
+        assert "vector_store" in info
 
-    def test_clear_cache(self, classifier, tmp_path):
+    def test_clear_cache(self, classifier, mock_store):
         """Test clearing cache."""
-        # Create fake cache
-        cache_file = tmp_path / "workflow_embeddings.pkl"
-        cache_file.touch()
+        # Add some records
+        mock_store.upsert([
+            VectorRecord(
+                id="test_workflow",
+                namespace=VectorNamespace.WORKFLOWS,
+                vector=[0.0] * 768,
+                text="test",
+                metadata={},
+            )
+        ])
 
         result = classifier.clear_cache()
 
         assert result is True
+        assert mock_store.count(VectorNamespace.WORKFLOWS) == 0
+
+    def test_find_similar_with_mock_results(self, classifier, mock_store, mock_workflows):
+        """Test find_similar returns mock search results."""
+        # Setup mock results
+        mock_store.set_search_results([
+            SearchResult(id="phone_workflow", score=0.9, text="phone", metadata={}),
+            SearchResult(id="table_workflow", score=0.7, text="table", metadata={}),
+        ])
+
+        # Load workflows to set _is_loaded
+        classifier.load_workflow_embeddings(mock_workflows)
+
+        # If embeddings are available, test would work with real model
+        # Otherwise we test TF-IDF fallback
+        result = classifier.find_similar("create a phone", top_k=2)
+
+        assert isinstance(result, list)
+
+    def test_similarity_returns_float(self, classifier):
+        """Test similarity method returns float."""
+        result = classifier.similarity("text1", "text2")
+
+        assert isinstance(result, float)
+        assert 0.0 <= result <= 1.0
+
+    def test_get_embedding_returns_none_without_model(self, classifier):
+        """Test get_embedding returns None when model not available."""
+        if not EMBEDDINGS_AVAILABLE:
+            result = classifier.get_embedding("test text")
+            assert result is None
 
 
 class TestWorkflowIntentClassifierWithTFIDF:
     """Tests for TF-IDF fallback when embeddings unavailable."""
 
     @pytest.fixture
-    def classifier_with_tfidf(self, tmp_path):
+    def classifier_with_tfidf(self):
         """Create classifier that will use TF-IDF fallback."""
+        mock_store = MockVectorStore()
         config = RouterConfig()
-        classifier = WorkflowIntentClassifier(config=config, cache_dir=tmp_path)
+        classifier = WorkflowIntentClassifier(config=config, vector_store=mock_store)
 
         # Force TF-IDF fallback
         workflows = {
@@ -234,3 +279,34 @@ class TestWorkflowIntentClassifierWithTFIDF:
         if results:
             assert results[0][0] in ["phone_workflow", "table_workflow"]
             assert 0.0 <= results[0][1] <= 1.0
+
+
+class TestWorkflowIntentClassifierInterface:
+    """Tests for IWorkflowIntentClassifier interface compliance."""
+
+    def test_implements_interface(self):
+        """Test that WorkflowIntentClassifier implements the interface."""
+        from server.router.domain.interfaces.i_workflow_intent_classifier import (
+            IWorkflowIntentClassifier,
+        )
+
+        mock_store = MockVectorStore()
+        classifier = WorkflowIntentClassifier(vector_store=mock_store)
+
+        assert isinstance(classifier, IWorkflowIntentClassifier)
+
+    def test_interface_methods_exist(self):
+        """Test all interface methods are implemented."""
+        mock_store = MockVectorStore()
+        classifier = WorkflowIntentClassifier(vector_store=mock_store)
+
+        # Check all required methods exist
+        assert hasattr(classifier, 'load_workflow_embeddings')
+        assert hasattr(classifier, 'find_similar')
+        assert hasattr(classifier, 'find_best_match')
+        assert hasattr(classifier, 'get_generalization_candidates')
+        assert hasattr(classifier, 'get_embedding')
+        assert hasattr(classifier, 'similarity')
+        assert hasattr(classifier, 'is_loaded')
+        assert hasattr(classifier, 'get_info')
+        assert hasattr(classifier, 'clear_cache')
