@@ -88,11 +88,13 @@ IntentClassifier            WorkflowIntentClassifier
 
 ## Sub-Tasks
 
-### TASK-047-1: Domain Layer - IVectorStore Interface
+### TASK-047-1: Domain Layer - IVectorStore & IWorkflowIntentClassifier Interfaces
 
 **Status:** 🚧 Pending
 
-Create the abstract interface for vector storage in the domain layer.
+Create the abstract interfaces for vector storage and workflow classification in the domain layer.
+
+#### 1a. IVectorStore Interface
 
 **New file: `server/router/domain/interfaces/i_vector_store.py`**
 
@@ -169,13 +171,114 @@ class IVectorStore(ABC):
         pass
 ```
 
+#### 1b. IWorkflowIntentClassifier Interface
+
+**New file: `server/router/domain/interfaces/i_workflow_intent_classifier.py`**
+
+> **Note:** This interface ensures Clean Architecture compliance. Currently `WorkflowIntentClassifier`
+> does not implement an interface, which violates DIP (Dependency Inversion Principle).
+
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, Any, List, Tuple, Optional
+
+
+class IWorkflowIntentClassifier(ABC):
+    """Abstract interface for workflow intent classification.
+
+    Enables semantic matching of user prompts to workflow definitions.
+    Supports workflow generalization for unknown object types.
+    """
+
+    @abstractmethod
+    def load_workflow_embeddings(self, workflows: Dict[str, Any]) -> None:
+        """Load and cache workflow embeddings.
+
+        Args:
+            workflows: Dictionary of workflow name -> workflow object/definition.
+        """
+        pass
+
+    @abstractmethod
+    def find_similar(
+        self,
+        prompt: str,
+        top_k: int = 3,
+        threshold: float = 0.0,
+    ) -> List[Tuple[str, float]]:
+        """Find workflows semantically similar to prompt.
+
+        Args:
+            prompt: User prompt or intent.
+            top_k: Number of results to return.
+            threshold: Minimum similarity score.
+
+        Returns:
+            List of (workflow_name, similarity_score) tuples.
+        """
+        pass
+
+    @abstractmethod
+    def find_best_match(
+        self,
+        prompt: str,
+        min_confidence: float = 0.5,
+    ) -> Optional[Tuple[str, float]]:
+        """Find the best matching workflow.
+
+        Args:
+            prompt: User prompt.
+            min_confidence: Minimum confidence score.
+
+        Returns:
+            (workflow_name, confidence) or None.
+        """
+        pass
+
+    @abstractmethod
+    def get_generalization_candidates(
+        self,
+        prompt: str,
+        min_similarity: float = 0.3,
+        max_candidates: int = 3,
+    ) -> List[Tuple[str, float]]:
+        """Get workflows that could be generalized for this prompt.
+
+        Args:
+            prompt: User prompt.
+            min_similarity: Minimum similarity to consider.
+            max_candidates: Maximum workflows to return.
+
+        Returns:
+            List of (workflow_name, similarity) tuples.
+        """
+        pass
+
+    @abstractmethod
+    def is_loaded(self) -> bool:
+        """Check if classifier is loaded."""
+        pass
+
+    @abstractmethod
+    def get_info(self) -> Dict[str, Any]:
+        """Get classifier information."""
+        pass
+
+    @abstractmethod
+    def clear_cache(self) -> bool:
+        """Clear the embedding cache."""
+        pass
+```
+
 **Implementation Checklist:**
 
 | Layer | File | What to Create |
 |-------|------|----------------|
-| Domain | `server/router/domain/interfaces/i_vector_store.py` | Full implementation above |
-| Domain | `server/router/domain/interfaces/__init__.py` | Export `IVectorStore`, `VectorNamespace`, etc. |
+| Domain | `server/router/domain/interfaces/i_vector_store.py` | IVectorStore + dataclasses |
+| Domain | `server/router/domain/interfaces/i_workflow_intent_classifier.py` | IWorkflowIntentClassifier |
+| Domain | `server/router/domain/interfaces/__init__.py` | Export all new interfaces |
 | Tests | `tests/unit/router/domain/interfaces/test_i_vector_store.py` | Interface contract tests |
+| Tests | `tests/unit/router/domain/interfaces/test_i_workflow_intent_classifier.py` | Interface contract tests |
 
 ---
 
@@ -364,6 +467,29 @@ class LanceVectorStore(IVectorStore):
 
 Auto-migrate existing pickle caches to LanceDB on first run.
 
+#### Current Pickle Cache Format Analysis
+
+**Actual cache file locations (from current implementation):**
+```python
+# EmbeddingCache (embedding_cache.py:37-39)
+~/.cache/blender-ai-mcp/router/tool_embeddings.pkl
+~/.cache/blender-ai-mcp/router/metadata_hash.txt
+
+# WorkflowEmbeddingCache (workflow_intent_classifier.py:56-57)
+~/.cache/blender-ai-mcp/router/workflow_embeddings.pkl
+~/.cache/blender-ai-mcp/router/workflow_hash.txt
+```
+
+**Actual pickle data format:**
+```python
+# The pickle files contain: Dict[str, numpy.ndarray]
+# Key: tool_name or workflow_name
+# Value: numpy.ndarray with shape (768,) - the embedding vector directly
+#
+# NO nested dict structure with "embedding", "text", "metadata" keys!
+# The metadata (sample_prompts, keywords) is NOT stored in pickle.
+```
+
 **New file: `server/router/infrastructure/vector_store/migrations.py`**
 
 ```python
@@ -371,6 +497,8 @@ import logging
 import pickle
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+
+import numpy as np
 
 from server.router.domain.interfaces.i_vector_store import (
     VectorNamespace,
@@ -380,13 +508,24 @@ from server.router.infrastructure.vector_store.lance_store import LanceVectorSto
 
 logger = logging.getLogger(__name__)
 
-# Legacy pickle cache paths
-LEGACY_TOOL_CACHE = Path.home() / ".cache" / "blender-mcp" / "router" / "embedding_cache.pkl"
-LEGACY_WORKFLOW_CACHE = Path.home() / ".cache" / "blender-mcp" / "router" / "workflow_embedding_cache.pkl"
+# Legacy pickle cache paths (CORRECTED)
+LEGACY_CACHE_DIR = Path.home() / ".cache" / "blender-ai-mcp" / "router"
+LEGACY_TOOL_CACHE = LEGACY_CACHE_DIR / "tool_embeddings.pkl"
+LEGACY_TOOL_HASH = LEGACY_CACHE_DIR / "metadata_hash.txt"
+LEGACY_WORKFLOW_CACHE = LEGACY_CACHE_DIR / "workflow_embeddings.pkl"
+LEGACY_WORKFLOW_HASH = LEGACY_CACHE_DIR / "workflow_hash.txt"
 
 
 class PickleToLanceMigration:
-    """Migrates pickle-based embedding caches to LanceDB."""
+    """Migrates pickle-based embedding caches to LanceDB.
+
+    The legacy pickle format stores Dict[str, numpy.ndarray] where:
+    - Key: tool_name or workflow_name
+    - Value: 768-dimensional numpy array (LaBSE embedding)
+
+    Note: Original text and metadata are NOT stored in pickle files.
+    They must be reconstructed from tool/workflow definitions.
+    """
 
     def __init__(self, vector_store: LanceVectorStore):
         """Initialize migration.
@@ -438,25 +577,26 @@ class PickleToLanceMigration:
 
             records = []
             for key, value in data.items():
-                # Handle different pickle formats
-                if isinstance(value, dict):
-                    vector = value.get("embedding", value.get("vector", []))
-                    text = value.get("text", key)
-                    metadata = value.get("metadata", {})
+                # Current format: value is numpy.ndarray directly
+                if isinstance(value, np.ndarray):
+                    vector = value.tolist()
+                elif hasattr(value, "__iter__"):
+                    vector = list(value)
                 else:
-                    # Assume value is the vector directly
-                    vector = list(value) if hasattr(value, "__iter__") else []
-                    text = key
-                    metadata = {}
+                    logger.warning(f"Skipping {key}: unexpected value type {type(value)}")
+                    continue
 
-                if vector:
-                    records.append(VectorRecord(
-                        id=key,
-                        namespace=namespace,
-                        vector=vector,
-                        text=text,
-                        metadata=metadata,
-                    ))
+                if len(vector) != 768:
+                    logger.warning(f"Skipping {key}: wrong vector dimension {len(vector)}")
+                    continue
+
+                records.append(VectorRecord(
+                    id=key,
+                    namespace=namespace,
+                    vector=vector,
+                    text=key.replace("_", " "),  # Fallback: use name as text
+                    metadata={},  # Metadata not stored in legacy pickle
+                ))
 
             if records:
                 return self._store.upsert(records)
@@ -474,13 +614,28 @@ class PickleToLanceMigration:
             List of removed file paths.
         """
         removed = []
-        for path in [LEGACY_TOOL_CACHE, LEGACY_WORKFLOW_CACHE]:
+        legacy_files = [
+            LEGACY_TOOL_CACHE,
+            LEGACY_TOOL_HASH,
+            LEGACY_WORKFLOW_CACHE,
+            LEGACY_WORKFLOW_HASH,
+        ]
+
+        for path in legacy_files:
             if path.exists():
                 path.unlink()
                 removed.append(str(path))
                 logger.info(f"Removed legacy cache: {path}")
 
         return removed
+
+    def needs_migration(self) -> bool:
+        """Check if legacy caches exist and need migration.
+
+        Returns:
+            True if any legacy pickle files exist.
+        """
+        return LEGACY_TOOL_CACHE.exists() or LEGACY_WORKFLOW_CACHE.exists()
 ```
 
 **Implementation Checklist:**
@@ -498,71 +653,176 @@ class PickleToLanceMigration:
 
 Modify IntentClassifier and WorkflowIntentClassifier to use LanceVectorStore.
 
-**Changes to `server/router/application/classifier/intent_classifier.py`:**
+#### Current Config Field Names (from `config.py`)
+
+```python
+# RouterConfig currently has:
+embedding_threshold: float = 0.40              # For tool classification
+workflow_similarity_threshold: float = 0.5    # For workflow matching
+generalization_threshold: float = 0.3         # For workflow generalization
+```
+
+#### Changes to IntentClassifier
+
+**File: `server/router/application/classifier/intent_classifier.py`**
 
 ```python
 # Add to imports
-from server.router.infrastructure.vector_store.lance_store import LanceVectorStore
-from server.router.domain.interfaces.i_vector_store import VectorNamespace, VectorRecord
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+)
 
-class IntentClassifier:
+class IntentClassifier(IIntentClassifier):
+    """Implementation using LanceDB vector store."""
+
     def __init__(
         self,
         config: Optional[RouterConfig] = None,
-        vector_store: Optional[LanceVectorStore] = None,  # NEW
+        vector_store: Optional[IVectorStore] = None,  # NEW: inject via interface
+        model_name: str = MODEL_NAME,
     ):
         self._config = config or RouterConfig()
-        self._vector_store = vector_store or LanceVectorStore()  # LanceDB required
-        # ... rest of init
+        self._vector_store = vector_store  # Will be injected or created lazily
+        self._model_name = model_name
+        self._model: Optional[Any] = None
+        self._is_loaded = False
 
-    def _load_tool_embeddings(self) -> None:
+    def _ensure_vector_store(self) -> IVectorStore:
+        """Lazily create vector store if not injected."""
+        if self._vector_store is None:
+            from server.router.infrastructure.vector_store.lance_store import LanceVectorStore
+            self._vector_store = LanceVectorStore()
+        return self._vector_store
+
+    def load_tool_embeddings(self, metadata: Dict[str, Any]) -> None:
         """Load tool embeddings into vector store."""
+        store = self._ensure_vector_store()
+
         # Check if already populated
-        if self._vector_store.count(VectorNamespace.TOOLS) > 0:
+        if store.count(VectorNamespace.TOOLS) > 0:
+            self._is_loaded = True
             return
 
-        # Get all tool metadata
-        tools = self._get_tool_metadata()
+        if not EMBEDDINGS_AVAILABLE or not self._load_model():
+            self._setup_tfidf_fallback()
+            self._is_loaded = True
+            return
 
         # Build records
         records = []
-        for tool_name, metadata in tools.items():
-            text = self._build_tool_text(tool_name, metadata)
+        for tool_name, tool_meta in metadata.items():
+            text = self._build_tool_text(tool_name, tool_meta)
             vector = self._model.encode(text, normalize_embeddings=True)
             records.append(VectorRecord(
                 id=tool_name,
                 namespace=VectorNamespace.TOOLS,
                 vector=vector.tolist(),
                 text=text,
-                metadata=metadata,
+                metadata=tool_meta,
             ))
 
-        self._vector_store.upsert(records)
+        store.upsert(records)
+        self._is_loaded = True
 
-    def classify(self, prompt: str, top_k: int = 5) -> List[Tuple[str, float]]:
+    def predict_top_k(
+        self,
+        prompt: str,
+        k: int = 5,
+    ) -> List[Tuple[str, float]]:
         """Classify prompt to tools using vector search."""
+        if not self._is_loaded:
+            return []
+
+        # Fallback to TF-IDF if embeddings unavailable
+        if self._tfidf_vectorizer is not None:
+            return self._predict_with_tfidf(prompt, k)
+
+        if self._model is None:
+            return []
+
+        store = self._ensure_vector_store()
         query_vector = self._model.encode(prompt, normalize_embeddings=True)
 
-        results = self._vector_store.search(
+        results = store.search(
             query_vector=query_vector.tolist(),
             namespace=VectorNamespace.TOOLS,
-            top_k=top_k,
-            threshold=self._config.tool_similarity_threshold,
+            top_k=k,
+            threshold=self._config.embedding_threshold,  # CORRECT field name
         )
 
         return [(r.id, r.score) for r in results]
 ```
 
-**Similar changes to `server/router/application/classifier/workflow_intent_classifier.py`**
+#### Changes to WorkflowIntentClassifier
+
+**File: `server/router/application/classifier/workflow_intent_classifier.py`**
+
+```python
+# Add import
+from server.router.domain.interfaces.i_workflow_intent_classifier import IWorkflowIntentClassifier
+from server.router.domain.interfaces.i_vector_store import (
+    IVectorStore,
+    VectorNamespace,
+    VectorRecord,
+)
+
+class WorkflowIntentClassifier(IWorkflowIntentClassifier):
+    """Implementation using LanceDB vector store.
+
+    Now implements IWorkflowIntentClassifier interface for Clean Architecture compliance.
+    """
+
+    def __init__(
+        self,
+        config: Optional[RouterConfig] = None,
+        vector_store: Optional[IVectorStore] = None,  # NEW: inject via interface
+        model_name: str = MODEL_NAME,
+    ):
+        self._config = config or RouterConfig()
+        self._vector_store = vector_store
+        self._model_name = model_name
+        self._model: Optional[Any] = None
+        self._is_loaded = False
+
+    def find_similar(
+        self,
+        prompt: str,
+        top_k: int = 3,
+        threshold: float = 0.0,
+    ) -> List[Tuple[str, float]]:
+        """Find similar workflows using vector search."""
+        if not self._is_loaded or self._model is None:
+            return []
+
+        store = self._ensure_vector_store()
+        query_vector = self._model.encode(prompt, normalize_embeddings=True)
+
+        # Use config threshold if none provided
+        if threshold == 0.0:
+            threshold = self._config.workflow_similarity_threshold  # CORRECT field name
+
+        results = store.search(
+            query_vector=query_vector.tolist(),
+            namespace=VectorNamespace.WORKFLOWS,
+            top_k=top_k,
+            threshold=threshold,
+        )
+
+        return [(r.id, r.score) for r in results]
+```
 
 **Implementation Checklist:**
 
 | Layer | File | What to Change |
 |-------|------|----------------|
-| Classifier | `server/router/application/classifier/intent_classifier.py` | Replace pickle with LanceDB |
-| Classifier | `server/router/application/classifier/workflow_intent_classifier.py` | Replace pickle with LanceDB |
-| Config | `server/router/infrastructure/config.py` | Add vector store settings |
+| Classifier | `server/router/application/classifier/intent_classifier.py` | Replace pickle with LanceDB, use `embedding_threshold` |
+| Classifier | `server/router/application/classifier/workflow_intent_classifier.py` | Replace pickle with LanceDB, implement `IWorkflowIntentClassifier`, use `workflow_similarity_threshold` |
+| Domain | `server/router/domain/interfaces/__init__.py` | Export `IWorkflowIntentClassifier` |
+| Config | `server/router/infrastructure/config.py` | Add `vector_store_path` setting (optional) |
 | Tests | `tests/unit/router/application/classifier/test_intent_classifier_lance.py` | Integration tests |
+| Tests | `tests/unit/router/application/classifier/test_workflow_intent_classifier_lance.py` | Integration tests |
 
 ---
 
@@ -749,6 +1009,7 @@ def register_vector_db_tools(mcp):
 
 ```
 server/router/domain/interfaces/i_vector_store.py
+server/router/domain/interfaces/i_workflow_intent_classifier.py
 server/router/infrastructure/vector_store/__init__.py
 server/router/infrastructure/vector_store/lance_store.py
 server/router/infrastructure/vector_store/migrations.py
@@ -759,10 +1020,12 @@ server/adapters/mcp/areas/vector_db.py
 
 ```
 tests/unit/router/domain/interfaces/test_i_vector_store.py
+tests/unit/router/domain/interfaces/test_i_workflow_intent_classifier.py
 tests/unit/router/infrastructure/vector_store/__init__.py
 tests/unit/router/infrastructure/vector_store/test_lance_store.py
 tests/unit/router/infrastructure/vector_store/test_migrations.py
 tests/unit/router/application/classifier/test_intent_classifier_lance.py
+tests/unit/router/application/classifier/test_workflow_intent_classifier_lance.py
 tests/e2e/router/test_vector_db_tool.py
 ```
 
@@ -772,10 +1035,11 @@ tests/e2e/router/test_vector_db_tool.py
 
 | File | What to Change |
 |------|----------------|
-| `server/router/application/classifier/intent_classifier.py` | Replace EmbeddingCache with LanceVectorStore |
-| `server/router/application/classifier/workflow_intent_classifier.py` | Replace WorkflowEmbeddingCache with LanceVectorStore |
+| `server/router/application/classifier/intent_classifier.py` | Replace EmbeddingCache with LanceVectorStore, use `embedding_threshold` |
+| `server/router/application/classifier/workflow_intent_classifier.py` | Replace WorkflowEmbeddingCache with LanceVectorStore, implement `IWorkflowIntentClassifier`, use `workflow_similarity_threshold` |
 | `server/router/application/classifier/__init__.py` | Update exports |
-| `server/router/infrastructure/config.py` | Add vector store settings |
+| `server/router/domain/interfaces/__init__.py` | Export `IVectorStore`, `IWorkflowIntentClassifier`, `VectorNamespace`, `VectorRecord`, `SearchResult` |
+| `server/router/infrastructure/config.py` | Add `vector_store_path: Optional[Path] = None` setting |
 | `server/adapters/mcp/server.py` | Register vector_db_manage tool |
 | `pyproject.toml` | Add lancedb and pyarrow dependencies |
 
