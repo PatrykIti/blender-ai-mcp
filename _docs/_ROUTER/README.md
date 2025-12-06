@@ -75,10 +75,39 @@ server/router/
 │
 ├── application/
 │   ├── interceptor/        # Tool interception
+│   │   └── tool_interceptor.py
 │   ├── analyzers/          # Scene & pattern analysis
+│   │   ├── scene_context_analyzer.py
+│   │   ├── geometry_pattern_detector.py
+│   │   └── proportion_calculator.py
 │   ├── engines/            # Correction, override, expansion
-│   ├── classifier/         # Intent classification
+│   │   ├── tool_correction_engine.py
+│   │   ├── tool_override_engine.py
+│   │   ├── workflow_expansion_engine.py
+│   │   └── error_firewall.py
+│   ├── classifier/         # Intent classification (LaBSE)
+│   │   ├── intent_classifier.py
+│   │   ├── workflow_intent_classifier.py   # TASK-046
+│   │   └── embedding_cache.py
+│   ├── matcher/            # Semantic workflow matching (TASK-046)
+│   │   └── semantic_workflow_matcher.py
+│   ├── inheritance/        # Proportion inheritance (TASK-046)
+│   │   └── proportion_inheritance.py
+│   ├── learning/           # Feedback learning (TASK-046)
+│   │   └── feedback_collector.py
+│   ├── evaluator/          # Condition & expression evaluation
+│   │   ├── condition_evaluator.py
+│   │   ├── expression_evaluator.py
+│   │   └── proportion_resolver.py
+│   ├── triggerer/          # Workflow triggering
+│   │   └── workflow_triggerer.py
 │   ├── workflows/          # Predefined workflows
+│   │   ├── registry.py
+│   │   ├── base.py
+│   │   ├── phone_workflow.py
+│   │   ├── tower_workflow.py
+│   │   ├── screen_cutout_workflow.py
+│   │   └── custom/         # Custom YAML workflows
 │   └── router.py           # SupervisorRouter
 │
 ├── infrastructure/
