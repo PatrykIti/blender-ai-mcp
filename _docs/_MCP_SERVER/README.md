@@ -277,6 +277,16 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042). Enables 
 | `extraction_face_group_analysis` | `object_name`, `normal_tolerance`, `height_tolerance` | Analyzes face groups by normal direction, height levels, and inset/extrusion pattern detection. |
 | `extraction_render_angles` | `object_name`, `output_dir`, `resolution`, `angles` | Multi-angle renders (front, back, left, right, top, iso) for LLM Vision semantic analysis. |
 
+### Router Tools
+Tools for managing the Router Supervisor's vector database and semantic workflow matching.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace` (tools/workflows), `query`, `workflow_name`, `workflow_data`, `top_k` | Manages vector database for semantic workflow search. Actions: stats (counts, size), list (IDs in namespace), search_test (semantic search), add_workflow (add embeddings), remove (delete record), rebuild (HNSW index), clear (namespace), migrate (legacy pickle caches). |
+| `router_set_goal` | `goal` (str) | Sets the modeling goal for Router Supervisor workflow optimization. |
+| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
+| `router_clear_goal` | *none* | Clears the current modeling goal. |
+
 ## 🛠 Key Components
 
 ### Entry Point (`server/main.py`)

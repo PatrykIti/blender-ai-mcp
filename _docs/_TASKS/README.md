@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 task (~6 sub-tasks)
-- **In Progress:** 1 task (~5 sub-tasks)
-- **Done:** 111
+- **In Progress:** 0 tasks
+- **Done:** 112
 
 ---
 
@@ -20,10 +20,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-### Router & Vector DB
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-047](./TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md) | **Migrate Router Semantic Search to LanceDB** | 🔴 High | 5 sub-tasks: interface → LanceDB impl → migration → classifier integration → MCP tool |
+*(No tasks currently in progress)*
 
 ---
 
@@ -31,6 +28,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-047](./TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md) | **LanceDB Vector Store Migration** | 🔴 High | 2025-12-06 |
 | [TASK-046](./TASK-046_Router_Semantic_Generalization.md) | **Router Semantic Generalization (LaBSE)** | 🔴 High | 2025-12-06 |
 | [TASK-041](./TASK-041_Router_YAML_Workflow_Integration.md) | **Router YAML Workflow Integration** | 🔴 High | 2025-12-03 |
 | [TASK-037](./TASK-037_Armature_Rigging.md) | **Armature & Rigging** | 🟢 Low | 2025-12-05 |

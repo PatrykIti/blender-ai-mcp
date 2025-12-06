@@ -56,6 +56,9 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **SemanticWorkflowMatcher** | Matching + generalization | ✅ Done |
 | **ProportionInheritance** | Cross-workflow rule inheritance | ✅ Done |
 | **FeedbackCollector** | Learning from user feedback | ✅ Done |
+| **LanceVectorStore** | LanceDB vector database (TASK-047) | ✅ Done |
+| **IVectorStore** | Vector store interface (DIP compliance) | ✅ Done |
+| **PickleToLanceMigration** | Legacy pickle cache migration | ✅ Done |
 
 ---
 
@@ -87,8 +90,7 @@ server/router/
 │   │   └── error_firewall.py
 │   ├── classifier/         # Intent classification (LaBSE)
 │   │   ├── intent_classifier.py
-│   │   ├── workflow_intent_classifier.py   # TASK-046
-│   │   └── embedding_cache.py
+│   │   └── workflow_intent_classifier.py   # TASK-046
 │   ├── matcher/            # Semantic workflow matching (TASK-046)
 │   │   └── semantic_workflow_matcher.py
 │   ├── inheritance/        # Proportion inheritance (TASK-046)
@@ -114,6 +116,10 @@ server/router/
 │   ├── metadata_loader.py  # Tool metadata loader
 │   ├── config.py           # Router configuration
 │   ├── logger.py           # Telemetry
+│   ├── vector_store/       # LanceDB vector storage (TASK-047)
+│   │   ├── __init__.py
+│   │   ├── lance_store.py  # LanceVectorStore implementation
+│   │   └── migrations.py   # Pickle to Lance migration
 │   └── tools_metadata/     # Per-tool JSON metadata (modular)
 │       ├── _schema.json    # JSON Schema for validation
 │       ├── scene/          # scene_*.json files
@@ -266,6 +272,64 @@ result: [
 - [29-semantic-workflow-matcher.md](./IMPLEMENTATION/29-semantic-workflow-matcher.md)
 - [30-proportion-inheritance.md](./IMPLEMENTATION/30-proportion-inheritance.md)
 - [31-feedback-learning.md](./IMPLEMENTATION/31-feedback-learning.md)
+
+---
+
+## LanceDB Vector Store (TASK-047)
+
+> **Status:** ✅ Done | [Task Details](../_TASKS/TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md)
+
+Replaces pickle-based embedding cache with LanceDB - an embedded vector database.
+
+### Problem
+
+```python
+# Before: O(N) linear search on all embeddings
+EmbeddingCache (pickle)     WorkflowEmbeddingCache (pickle)
+       ↓                              ↓
+IntentClassifier            WorkflowIntentClassifier
+       ↓                              ↓
+   O(N) linear search on all embeddings
+```
+
+### Solution
+
+```python
+# After: O(log N) HNSW ANN search + metadata filters
+              LanceVectorStore (LanceDB)
+                 ├── namespace: "tools"
+                 └── namespace: "workflows"
+                        ↓
+         IVectorStore interface (domain layer)
+                        ↓
+    IntentClassifier    WorkflowIntentClassifier
+           ↓                      ↓
+      O(log N) HNSW ANN search + metadata filters
+```
+
+### Key Benefits
+
+| Feature | Benefit |
+|---------|---------|
+| **HNSW Indexing** | O(log N) instead of O(N) linear search |
+| **Metadata Filtering** | Filter by category, mode, etc. |
+| **Embedded-first** | No external server required (MCP compatible) |
+| **Persistence** | Folder-based, survives restarts |
+| **Namespace Support** | Unified store for tools and workflows |
+| **In-Memory Fallback** | Works when LanceDB unavailable |
+
+### New Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **IVectorStore** | Domain interface for vector storage | `domain/interfaces/i_vector_store.py` |
+| **LanceVectorStore** | LanceDB implementation | `infrastructure/vector_store/lance_store.py` |
+| **PickleToLanceMigration** | Migrate legacy pickle caches | `infrastructure/vector_store/migrations.py` |
+| **vector_db_manage** | MCP tool for vector DB management | `server/adapters/mcp/areas/vector_db.py` |
+
+### Implementation Docs
+
+- [32-lance-vector-store.md](./IMPLEMENTATION/32-lance-vector-store.md)
 
 ---
 

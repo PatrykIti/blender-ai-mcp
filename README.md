@@ -506,9 +506,10 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Error Firewall** | Blocks/fixes invalid operations before they crash |
 | **100% Offline** | No external API calls - LaBSE runs locally (~1.8GB RAM) |
 | **Multilingual** | LaBSE supports 109 languages for intent classification |
-| **Semantic Matching** | 📋 *Planned (TASK-046)* - Match workflows by meaning, not just keywords |
-| **Generalization** | 📋 *Planned (TASK-046)* - Use similar workflow when exact match missing |
-| **Feedback Learning** | 📋 *Planned (TASK-046)* - Improve matching from user corrections |
+| **Semantic Matching** | Match workflows by meaning, not just keywords (LaBSE embeddings) |
+| **Generalization** | Use similar workflow when exact match missing |
+| **Feedback Learning** | Improve matching from user corrections |
+| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
 
 #### Example: LLM sends mesh tool in wrong mode
 
@@ -530,15 +531,12 @@ Router outputs:
 Result: Screen cutout created instead of crash!
 ```
 
-#### Planned: Semantic Workflow Matching (TASK-046)
+#### Semantic Workflow Matching
 
 ```
 User: "zrób krzesło" (make a chair)
 
-Current behavior:
-  → No "krzesło" keyword → No workflow match
-
-After TASK-046:
+Router behavior:
   → LaBSE semantic similarity search
   → Found: table_workflow (0.72), tower_workflow (0.45)
   → Uses table_workflow with inherited proportions
@@ -762,7 +760,11 @@ We recommend using Docker to run the MCP Server.
         "armature_add_bone",
         "armature_bind",
         "armature_pose_bone",
-        "armature_weight_paint_assign"
+        "armature_weight_paint_assign",
+        "vector_db_manage",
+        "router_set_goal",
+        "router_get_status",
+        "router_clear_goal"
       ]
     }
   }
@@ -933,7 +935,11 @@ We recommend using Docker to run the MCP Server.
         "armature_add_bone",
         "armature_bind",
         "armature_pose_bone",
-        "armature_weight_paint_assign"
+        "armature_weight_paint_assign",
+        "vector_db_manage",
+        "router_set_goal",
+        "router_get_status",
+        "router_clear_goal"
       ]
     }
   }
