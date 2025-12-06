@@ -226,6 +226,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
                     combined,
                     convert_to_numpy=True,
                     normalize_embeddings=True,
+                    show_progress_bar=False,
                 )
 
                 # Extract metadata from workflow
@@ -344,6 +345,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
                 prompt,
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
 
             # Search using LanceDB
@@ -449,6 +451,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
                 text,
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
             return embedding.tolist()
         except Exception as e:
@@ -473,6 +476,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
                 [text1, text2],
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
             return float(np.dot(embeddings[0], embeddings[1]))
         except Exception as e:

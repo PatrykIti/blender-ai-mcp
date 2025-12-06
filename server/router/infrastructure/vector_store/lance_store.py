@@ -191,10 +191,11 @@ class LanceVectorStore(IVectorStore):
             # Convert to SearchResult
             output = []
             for r in results:
-                # LanceDB returns _distance (L2), convert to similarity
-                # For cosine distance: similarity = 1 - distance
+                # LanceDB returns _distance (L2 squared for normalized vectors)
+                # For normalized vectors: L2² = 2 - 2*cosine_similarity
+                # Therefore: cosine_similarity = 1 - (L2² / 2)
                 distance = r.get("_distance", 0)
-                score = max(0.0, 1.0 - distance)
+                score = max(0.0, 1.0 - (distance / 2.0))
 
                 if score >= threshold:
                     metadata = {}

@@ -177,6 +177,7 @@ class IntentClassifier(IIntentClassifier):
                 prompt,
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
 
             # Search using LanceDB
@@ -309,6 +310,7 @@ class IntentClassifier(IIntentClassifier):
                     combined,
                     convert_to_numpy=True,
                     normalize_embeddings=True,
+                    show_progress_bar=False,
                 )
 
                 # Get metadata for this tool
@@ -393,6 +395,7 @@ class IntentClassifier(IIntentClassifier):
                 text,
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
         except Exception as e:
             logger.error(f"Failed to get embedding: {e}")
@@ -416,6 +419,7 @@ class IntentClassifier(IIntentClassifier):
                 [text1, text2],
                 convert_to_numpy=True,
                 normalize_embeddings=True,
+                show_progress_bar=False,
             )
             # Cosine similarity of normalized vectors
             return float(np.dot(embeddings[0], embeddings[1]))
