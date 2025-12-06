@@ -4,7 +4,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 task (~6 sub-tasks)
-- **In Progress:** 0
+- **In Progress:** 1 task (~5 sub-tasks)
 - **Done:** 111
 
 ---
@@ -20,7 +20,10 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-*No tasks in progress.*
+### Router & Vector DB
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-047](./TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md) | **Migrate Router Semantic Search to LanceDB** | 🔴 High | 5 sub-tasks: interface → LanceDB impl → migration → classifier integration → MCP tool |
 
 ---
 
