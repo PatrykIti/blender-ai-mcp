@@ -16,9 +16,6 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from .base import BaseWorkflow, WorkflowDefinition, WorkflowStep
-from .phone_workflow import phone_workflow
-from .tower_workflow import tower_workflow
-from .screen_cutout_workflow import screen_cutout_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
@@ -35,18 +32,13 @@ class WorkflowRegistry:
     """
 
     def __init__(self):
-        """Initialize registry with built-in workflows."""
+        """Initialize registry with workflows from YAML/JSON files."""
         self._workflows: Dict[str, BaseWorkflow] = {}
         self._custom_definitions: Dict[str, WorkflowDefinition] = {}
         self._custom_loaded: bool = False
         self._evaluator = ExpressionEvaluator()
         self._condition_evaluator = ConditionEvaluator()
         self._proportion_resolver = ProportionResolver()
-
-        # Register built-in workflows
-        self._register_builtin(phone_workflow)
-        self._register_builtin(tower_workflow)
-        self._register_builtin(screen_cutout_workflow)
 
     def _register_builtin(self, workflow: BaseWorkflow) -> None:
         """Register a built-in workflow.

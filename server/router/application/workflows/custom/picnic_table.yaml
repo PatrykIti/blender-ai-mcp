@@ -1,0 +1,481 @@
+# Picnic Table Workflow
+# Based on precise analysis of Sketchfab model with 22 separate parts
+# All values extracted 1:1 from bounding boxes, normalized by factor 0.1
+# Structure: Table with 5 planks + 4 benches (2 planks each side) + A-frame legs + supports
+
+name: picnic_table_workflow
+description: Creates a classic picnic table with attached benches and A-frame legs
+category: furniture
+author: blender-ai-mcp
+version: "2.0.0"
+
+trigger_pattern: table_like
+trigger_keywords:
+  - picnic table
+  - outdoor table
+  - garden table
+  - park bench
+  - camping table
+
+sample_prompts:
+  # English
+  - "create a picnic table"
+  - "make an outdoor table with benches"
+  - "build a park table"
+  - "design a garden picnic table"
+
+  # Polish
+  - "zrob stol piknikowy"
+  - "stworz stol ogrodowy z lawkami"
+
+  # German
+  - "erstelle einen Picknicktisch"
+
+  # French
+  - "creer une table de pique-nique"
+
+# ============================================================
+# DIMENSIONS REFERENCE (from model analysis, normalized /10):
+#
+# Table planks (5x):     0.20 x 1.188 x 0.0228 (width x length x thickness)
+# Table crossbeam:       0.798 x 1.101 x 0.0221
+# A-frame legs (4x):     ~0.474 x 0.048 x 0.915 (angled ~33°)
+# Leg crossbeams (2x):   1.739 x 0.021 x 0.107
+# Side bench planks (4x): 0.148 x 1.188 x 0.0228
+# Diagonal supports (2x): 0.022 x 1.739 x 0.107
+# Front/back benches (4x): 1.188 x 0.149 x 0.0228
+#
+# Height references (Z):
+#   Table top: 0.254
+#   Bench seat: -0.081
+#   Leg crossbeam: -0.142
+#   Ground level: ~-0.65
+# ============================================================
+
+steps:
+  # ============================================
+  # SECTION 1: TABLE TOP (5 planks)
+  # Cube.000-004 from model
+  # Dimensions: 2.0 x 11.88 x 0.228 (world space)
+  # Center Z: 2.542
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_1"
+    description: Create first table plank (leftmost)
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_1"
+      scale: [0.100, 0.594, 0.0114]
+      location: [-0.198, -0.160, 0.254]
+    description: "Position plank 1 - center X=-1.984 from model"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_2"
+    description: Create second table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_2"
+      scale: [0.100, 0.594, 0.0114]
+      location: [-0.402, -0.160, 0.254]
+    description: "Position plank 2 - center X=-4.022 from model"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_3"
+    description: Create center table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_3"
+      scale: [0.100, 0.594, 0.0114]
+      location: [0.006, -0.160, 0.254]
+    description: "Position plank 3 (center) - center X=0.063 from model"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_4"
+    description: Create fourth table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_4"
+      scale: [0.100, 0.594, 0.0114]
+      location: [0.210, -0.160, 0.254]
+    description: "Position plank 4 - center X=2.101 from model"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_5"
+    description: Create fifth table plank (rightmost)
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_5"
+      scale: [0.100, 0.594, 0.0114]
+      location: [0.414, -0.160, 0.254]
+    description: "Position plank 5 - center X=4.141 from model"
+
+  # ============================================
+  # SECTION 2: TABLE TOP CROSS BEAM
+  # Cube.009 from model
+  # Dimensions: 7.98 x 11.01 x 0.221
+  # Center: (0.097, -1.599, 2.312)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableCrossBeam"
+    description: Create table cross beam under planks
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableCrossBeam"
+      scale: [0.399, 0.550, 0.0110]
+      location: [0.010, -0.160, 0.231]
+    description: "Position cross beam - sits just under table planks"
+
+  # ============================================
+  # SECTION 3: A-FRAME LEGS (4 pieces)
+  # Cube.005, 006, 007, 008 from model
+  # These are angled beams - bounding box: 4.74 x 0.48 x 9.15
+  # Legs form "A" shape when viewed from front/back (along Y axis)
+  # Rotation is around Y axis: ~18° (0.32 rad)
+  # Left legs: +Y rotation (top leans right toward center)
+  # Right legs: -Y rotation (top leans left toward center)
+  # ============================================
+
+  # Front-left leg (Cube.005) - Y=-6.36
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FL"
+    description: Create front-left A-frame leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      scale: [0.024, 0.024, 0.458]
+      location: [-0.356, -0.636, -0.190]
+      rotation: [0, 0.32, 0]
+    description: "Front-left leg - rotated +18° around Y (top toward center)"
+
+  # Front-right leg (Cube.008) - Y=-6.36
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FR"
+    description: Create front-right A-frame leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FR"
+      scale: [0.024, 0.024, 0.458]
+      location: [0.370, -0.636, -0.190]
+      rotation: [0, -0.32, 0]
+    description: "Front-right leg - rotated -18° around Y (top toward center)"
+
+  # Back-left leg (Cube.007) - Y=+3.18
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BL"
+    description: Create back-left A-frame leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BL"
+      scale: [0.024, 0.024, 0.458]
+      location: [-0.356, 0.318, -0.190]
+      rotation: [0, 0.32, 0]
+    description: "Back-left leg - rotated +18° around Y (top toward center)"
+
+  # Back-right leg (Cube.006) - Y=+3.18
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BR"
+    description: Create back-right A-frame leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BR"
+      scale: [0.024, 0.024, 0.458]
+      location: [0.374, 0.318, -0.190]
+      rotation: [0, -0.32, 0]
+    description: "Back-right leg - rotated -18° around Y (top toward center)"
+
+  # ============================================
+  # SECTION 4: LEG CROSS BEAMS (2 horizontal bars)
+  # Cube.010, 011 from model
+  # Dimensions: 17.39 x 0.21 x 1.07
+  # These connect the A-frame legs horizontally
+  # ============================================
+
+  # Back crossbeam (Cube.010)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "LegCrossBeam_Back"
+    description: Create back leg crossbeam
+
+  - tool: modeling_transform_object
+    params:
+      name: "LegCrossBeam_Back"
+      scale: [0.870, 0.011, 0.054]
+      location: [0.010, 0.285, -0.142]
+    description: "Back crossbeam - connects back legs"
+
+  # Front crossbeam (Cube.011)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "LegCrossBeam_Front"
+    description: Create front leg crossbeam
+
+  - tool: modeling_transform_object
+    params:
+      name: "LegCrossBeam_Front"
+      scale: [0.870, 0.011, 0.054]
+      location: [0.010, -0.602, -0.142]
+    description: "Front crossbeam - connects front legs"
+
+  # ============================================
+  # SECTION 5: DIAGONAL SUPPORTS (2 vertical bars)
+  # Cube.016, 017 from model
+  # Dimensions: 0.22 x 17.39 x 1.07
+  # These run diagonally supporting the structure
+  # ============================================
+
+  # Right diagonal support (Cube.016)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "DiagonalSupport_R"
+    description: Create right diagonal support
+
+  - tool: modeling_transform_object
+    params:
+      name: "DiagonalSupport_R"
+      scale: [0.011, 0.870, 0.054]
+      location: [0.448, -0.187, -0.142]
+    description: "Right diagonal - runs front to back"
+
+  # Left diagonal support (Cube.017)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "DiagonalSupport_L"
+    description: Create left diagonal support
+
+  - tool: modeling_transform_object
+    params:
+      name: "DiagonalSupport_L"
+      scale: [0.011, 0.870, 0.054]
+      location: [-0.439, -0.188, -0.142]
+    description: "Left diagonal - runs front to back"
+
+  # ============================================
+  # SECTION 6: SIDE BENCHES - LEFT (2 planks)
+  # Cube.012, 013 from model
+  # Dimensions: 1.48 x 11.88 x 0.228
+  # ============================================
+
+  # Left bench inner plank (Cube.012)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchLeft_Inner"
+    description: Create left bench inner plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchLeft_Inner"
+      scale: [0.074, 0.594, 0.0114]
+      location: [-0.747, -0.160, -0.081]
+    description: "Left bench inner - closer to table"
+
+  # Left bench outer plank (Cube.013)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchLeft_Outer"
+    description: Create left bench outer plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchLeft_Outer"
+      scale: [0.074, 0.594, 0.0114]
+      location: [-0.898, -0.160, -0.081]
+    description: "Left bench outer - edge of bench"
+
+  # ============================================
+  # SECTION 7: SIDE BENCHES - RIGHT (2 planks)
+  # Cube.014, 015 from model
+  # Dimensions: 1.48 x 11.88 x 0.228
+  # ============================================
+
+  # Right bench outer plank (Cube.014)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchRight_Outer"
+    description: Create right bench outer plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchRight_Outer"
+      scale: [0.074, 0.594, 0.0114]
+      location: [0.918, -0.160, -0.081]
+    description: "Right bench outer - edge of bench"
+
+  # Right bench inner plank (Cube.015)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchRight_Inner"
+    description: Create right bench inner plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchRight_Inner"
+      scale: [0.074, 0.594, 0.0114]
+      location: [0.767, -0.160, -0.081]
+    description: "Right bench inner - closer to table"
+
+  # ============================================
+  # SECTION 8: FRONT/BACK BENCHES (4 planks total)
+  # Cube.018, 019 (back), Cube.020, 021 (front)
+  # Dimensions: 11.88 x 1.49 x 0.228
+  # ============================================
+
+  # Back bench inner (Cube.018)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchBack_Inner"
+    description: Create back bench inner plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchBack_Inner"
+      scale: [0.594, 0.074, 0.0114]
+      location: [0.003, 0.569, -0.081]
+    description: "Back bench inner - closer to table"
+
+  # Back bench outer (Cube.019)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchBack_Outer"
+    description: Create back bench outer plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchBack_Outer"
+      scale: [0.594, 0.074, 0.0114]
+      location: [0.003, 0.720, -0.081]
+    description: "Back bench outer - edge of bench"
+
+  # Front bench outer (Cube.020)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchFront_Outer"
+    description: Create front bench outer plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchFront_Outer"
+      scale: [0.594, 0.074, 0.0114]
+      location: [0.004, -1.096, -0.081]
+    description: "Front bench outer - edge of bench"
+
+  # Front bench inner (Cube.021)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchFront_Inner"
+    description: Create front bench inner plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchFront_Inner"
+      scale: [0.594, 0.074, 0.0114]
+      location: [0.004, -0.945, -0.081]
+    description: "Front bench inner - closer to table"
+
+  # ============================================
+  # SECTION 9: FINALIZE - Join all parts
+  # ============================================
+
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "TablePlank_1"
+        - "TablePlank_2"
+        - "TablePlank_3"
+        - "TablePlank_4"
+        - "TablePlank_5"
+        - "TableCrossBeam"
+        - "Leg_FL"
+        - "Leg_FR"
+        - "Leg_BL"
+        - "Leg_BR"
+        - "LegCrossBeam_Back"
+        - "LegCrossBeam_Front"
+        - "DiagonalSupport_R"
+        - "DiagonalSupport_L"
+        - "BenchLeft_Inner"
+        - "BenchLeft_Outer"
+        - "BenchRight_Inner"
+        - "BenchRight_Outer"
+        - "BenchBack_Inner"
+        - "BenchBack_Outer"
+        - "BenchFront_Inner"
+        - "BenchFront_Outer"
+    description: Join all 22 parts into single picnic table
+
+  - tool: scene_rename_object
+    params:
+      old_name: "BenchFront_Outer"
+      new_name: "Picnic_Table"
+    description: Rename final object
+
+  - tool: modeling_set_origin
+    params:
+      name: "Picnic_Table"
+      type: ORIGIN_GEOMETRY
+    description: Center origin on geometry
+
+  # ============================================
+  # SECTION 10: MATERIAL
+  # Extracted from original Sketchfab model
+  # Material.001 - warm wood color
+  # RGB: [0.661, 0.24, 0.02] = orangey-brown wood
+  # Roughness: 0.985 (very matte, like unfinished wood)
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "PicnicTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material (extracted from original model)
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "Picnic_Table"
+    description: Assign wood material to picnic table
