@@ -31,6 +31,11 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy the rest of the application
 COPY server /app/server
 
+# Pre-compute tool/workflow embeddings and store in LanceDB
+# This avoids ~30s embedding computation on every container start
+# Cache is stored in /root/.cache/blender-ai-mcp/vector_store
+RUN python -m server.scripts.precompute_embeddings
+
 # Set environment variables
 # For Docker -> Host communication on Mac/Windows, use host.docker.internal
 # On Linux, use --network host or the host IP
