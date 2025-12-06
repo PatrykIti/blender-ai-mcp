@@ -1,6 +1,6 @@
 # 28 - Workflow Intent Classifier
 
-> **Task:** TASK-046-2 | **Status:** 📋 Planned
+> **Task:** TASK-046-2 | **Status:** ✅ Done
 
 ---
 

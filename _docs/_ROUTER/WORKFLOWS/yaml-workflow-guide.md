@@ -295,7 +295,7 @@ router.process_llm_tool_call("workflow_trigger", {"name": "phone_workflow"})
 
 ## Sample Prompts (Semantic Matching)
 
-> **Status:** 📋 Planned (TASK-046) | Requires LaBSE model (~1.8GB)
+> **Status:** ✅ Done (TASK-046) | Requires LaBSE model (~1.8GB)
 
 `sample_prompts` enable **semantic matching** using LaBSE embeddings. Unlike keyword matching (exact "phone" → phone_workflow), semantic matching understands meaning:
 

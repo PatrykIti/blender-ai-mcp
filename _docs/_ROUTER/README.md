@@ -52,10 +52,10 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **Error Firewall** | Block invalid operations | ✅ Done |
 | **Intent Classifier** | Offline intent matching (LaBSE) | ✅ Done |
 | **SupervisorRouter** | Main orchestrator | ✅ Done |
-| **WorkflowIntentClassifier** | Semantic workflow matching (LaBSE) | 📋 Planned |
-| **SemanticWorkflowMatcher** | Matching + generalization | 📋 Planned |
-| **ProportionInheritance** | Cross-workflow rule inheritance | 📋 Planned |
-| **FeedbackCollector** | Learning from user feedback | 📋 Planned |
+| **WorkflowIntentClassifier** | Semantic workflow matching (LaBSE) | ✅ Done |
+| **SemanticWorkflowMatcher** | Matching + generalization | ✅ Done |
+| **ProportionInheritance** | Cross-workflow rule inheritance | ✅ Done |
+| **FeedbackCollector** | Learning from user feedback | ✅ Done |
 
 ---
 
@@ -190,7 +190,7 @@ RouterConfig:
 
 ## Semantic Generalization (TASK-046)
 
-> **Status:** 📋 Planned | [Task Details](../_TASKS/TASK-046_Router_Semantic_Generalization.md)
+> **Status:** ✅ Done | [Task Details](../_TASKS/TASK-046_Router_Semantic_Generalization.md)
 
 Extends Router with semantic workflow matching using LaBSE embeddings.
 

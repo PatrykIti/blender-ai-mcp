@@ -35,10 +35,10 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 25 | `25-expression-evaluator.md` | Expression Evaluator | TASK-041 P2 | ✅ |
 | 26 | `26-condition-evaluator.md` | Condition Evaluator | TASK-041 P3 | ✅ |
 | 27 | `27-proportion-resolver.md` | Proportion Resolver | TASK-041 P4 | ✅ |
-| 28 | `28-workflow-intent-classifier.md` | Workflow Intent Classifier | TASK-046-2 | 📋 |
-| 29 | `29-semantic-workflow-matcher.md` | Semantic Workflow Matcher | TASK-046-3 | 📋 |
-| 30 | `30-proportion-inheritance.md` | Proportion Inheritance | TASK-046-4 | 📋 |
-| 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | 📋 |
+| 28 | `28-workflow-intent-classifier.md` | Workflow Intent Classifier | TASK-046-2 | ✅ |
+| 29 | `29-semantic-workflow-matcher.md` | Semantic Workflow Matcher | TASK-046-3 | ✅ |
+| 30 | `30-proportion-inheritance.md` | Proportion Inheritance | TASK-046-4 | ✅ |
+| 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | ✅ |
 
 ---
 
@@ -88,11 +88,11 @@ Phase 7: YAML Workflow Integration (TASK-041) ✅
   ├─ 26-condition-evaluator.md ✅ (P3)
   └─ 27-proportion-resolver.md ✅ (P4)
 
-Phase 8: Semantic Generalization (TASK-046) 📋
-  ├─ 28-workflow-intent-classifier.md 📋 (TASK-046-2)
-  ├─ 29-semantic-workflow-matcher.md 📋 (TASK-046-3)
-  ├─ 30-proportion-inheritance.md 📋 (TASK-046-4)
-  └─ 31-feedback-learning.md 📋 (TASK-046-6)
+Phase 8: Semantic Generalization (TASK-046) ✅
+  ├─ 28-workflow-intent-classifier.md ✅ (TASK-046-2)
+  ├─ 29-semantic-workflow-matcher.md ✅ (TASK-046-3)
+  ├─ 30-proportion-inheritance.md ✅ (TASK-046-4)
+  └─ 31-feedback-learning.md ✅ (TASK-046-6)
 ```
 
 ---

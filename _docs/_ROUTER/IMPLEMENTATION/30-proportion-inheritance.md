@@ -1,6 +1,6 @@
 # 30 - Proportion Inheritance
 
-> **Task:** TASK-046-4 | **Status:** 📋 Planned
+> **Task:** TASK-046-4 | **Status:** ✅ Done
 
 ---
 
