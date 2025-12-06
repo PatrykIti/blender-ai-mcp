@@ -151,6 +151,9 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             logger.info(
                 f"Vector store already has {existing_count} workflow embeddings"
             )
+            # Still need to load model for query encoding
+            if EMBEDDINGS_AVAILABLE:
+                self._load_model()
             self._is_loaded = True
             return
 
