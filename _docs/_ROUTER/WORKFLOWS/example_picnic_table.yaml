@@ -149,10 +149,13 @@ steps:
   # SECTION 3: A-FRAME LEGS (4 pieces)
   # Cube.005, 006, 007, 008 from model
   # These are angled beams - bounding box: 4.74 x 0.48 x 9.15
-  # Actual beam is ~0.48 thick, angled at ~33° (0.576 rad)
+  # Legs form "A" shape when viewed from front/back (along Y axis)
+  # Rotation is around Y axis: ~18° (0.32 rad)
+  # Left legs: +Y rotation (top leans right toward center)
+  # Right legs: -Y rotation (top leans left toward center)
   # ============================================
 
-  # Front-left leg (Cube.005)
+  # Front-left leg (Cube.005) - Y=-6.36
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
@@ -164,10 +167,10 @@ steps:
       name: "Leg_FL"
       scale: [0.024, 0.024, 0.458]
       location: [-0.356, -0.636, -0.190]
-      rotation: [0.576, 0, 0]
-    description: "Front-left leg - angled 33° forward"
+      rotation: [0, 0.32, 0]
+    description: "Front-left leg - rotated +18° around Y (top toward center)"
 
-  # Front-right leg (Cube.008)
+  # Front-right leg (Cube.008) - Y=-6.36
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
@@ -179,10 +182,10 @@ steps:
       name: "Leg_FR"
       scale: [0.024, 0.024, 0.458]
       location: [0.370, -0.636, -0.190]
-      rotation: [0.576, 0, 0]
-    description: "Front-right leg - angled 33° forward"
+      rotation: [0, -0.32, 0]
+    description: "Front-right leg - rotated -18° around Y (top toward center)"
 
-  # Back-left leg (Cube.007)
+  # Back-left leg (Cube.007) - Y=+3.18
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
@@ -194,10 +197,10 @@ steps:
       name: "Leg_BL"
       scale: [0.024, 0.024, 0.458]
       location: [-0.356, 0.318, -0.190]
-      rotation: [-0.576, 0, 0]
-    description: "Back-left leg - angled 33° backward"
+      rotation: [0, 0.32, 0]
+    description: "Back-left leg - rotated +18° around Y (top toward center)"
 
-  # Back-right leg (Cube.006)
+  # Back-right leg (Cube.006) - Y=+3.18
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
@@ -209,8 +212,8 @@ steps:
       name: "Leg_BR"
       scale: [0.024, 0.024, 0.458]
       location: [0.374, 0.318, -0.190]
-      rotation: [-0.576, 0, 0]
-    description: "Back-right leg - angled 33° backward"
+      rotation: [0, -0.32, 0]
+    description: "Back-right leg - rotated -18° around Y (top toward center)"
 
   # ============================================
   # SECTION 4: LEG CROSS BEAMS (2 horizontal bars)
