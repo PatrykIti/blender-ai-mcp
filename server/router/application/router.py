@@ -4,7 +4,7 @@ Supervisor Router.
 Main orchestrator that processes LLM tool calls through the router pipeline.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
 from server.router.infrastructure.config import RouterConfig
@@ -26,6 +26,16 @@ from server.router.application.engines.workflow_expansion_engine import Workflow
 from server.router.application.engines.error_firewall import ErrorFirewall
 from server.router.application.classifier.intent_classifier import IntentClassifier
 from server.router.application.triggerer.workflow_triggerer import WorkflowTriggerer
+from server.router.application.matcher.semantic_workflow_matcher import (
+    SemanticWorkflowMatcher,
+    MatchResult,
+)
+from server.router.application.inheritance.proportion_inheritance import (
+    ProportionInheritance,
+)
+from server.router.application.learning.feedback_collector import (
+    FeedbackCollector,
+)
 
 
 class SupervisorRouter:
@@ -108,6 +118,15 @@ class SupervisorRouter:
         # Goal tracking (set via router_set_goal MCP tool)
         self._current_goal: Optional[str] = None
         self._pending_workflow: Optional[str] = None
+
+        # Semantic workflow matching (TASK-046)
+        self._semantic_matcher = SemanticWorkflowMatcher(config=self.config)
+        self._proportion_inheritance = ProportionInheritance()
+        self._semantic_initialized = False
+        self._last_match_result: Optional[MatchResult] = None
+
+        # Feedback collection (TASK-046-6)
+        self._feedback_collector = FeedbackCollector(auto_save=True)
 
     def set_rpc_client(self, rpc_client: Any) -> None:
         """Set the RPC client for Blender communication.
@@ -791,6 +810,8 @@ class SupervisorRouter:
             "expansion_engine": True,
             "firewall": True,
             "classifier": self.classifier.is_loaded(),
+            "semantic_matcher": self._semantic_initialized,
+            "proportion_inheritance": True,
         }
 
     def get_config(self) -> RouterConfig:
@@ -816,6 +837,11 @@ class SupervisorRouter:
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set current modeling goal and find matching workflow.
 
+        Uses a matching hierarchy:
+        1. Exact keyword match (fastest)
+        2. Semantic similarity match (LaBSE)
+        3. Generalization from similar workflows
+
         Args:
             goal: User's modeling goal (e.g., "smartphone", "table")
 
@@ -824,7 +850,7 @@ class SupervisorRouter:
         """
         self._current_goal = goal
 
-        # Try to find matching workflow
+        # Step 1: Try exact keyword match
         from server.router.application.workflows.registry import get_workflow_registry
 
         registry = get_workflow_registry()
@@ -832,12 +858,46 @@ class SupervisorRouter:
 
         if workflow_name:
             self._pending_workflow = workflow_name
-            self.logger.log_info(f"Goal '{goal}' matched workflow: {workflow_name}")
-        else:
-            self._pending_workflow = None
-            self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
+            self.logger.log_info(f"Goal '{goal}' matched workflow (keyword): {workflow_name}")
+            return workflow_name
 
-        return workflow_name
+        # Step 2: Try semantic matching (TASK-046)
+        if self.config.enable_generalization:
+            match_result = self.match_workflow_semantic(goal)
+
+            if match_result.is_match():
+                self._pending_workflow = match_result.workflow_name
+                self._last_match_result = match_result
+
+                self.logger.log_info(
+                    f"Goal '{goal}' matched workflow ({match_result.match_type}): "
+                    f"{match_result.workflow_name} (confidence: {match_result.confidence:.1%})"
+                )
+
+                # Record feedback for learning
+                self._feedback_collector.record_match(
+                    prompt=goal,
+                    matched_workflow=match_result.workflow_name,
+                    confidence=match_result.confidence,
+                    match_type=match_result.match_type,
+                    metadata={
+                        "similar_workflows": match_result.similar_workflows,
+                    },
+                )
+
+                return match_result.workflow_name
+
+        # No match - record for learning
+        self._feedback_collector.record_match(
+            prompt=goal,
+            matched_workflow=None,
+            confidence=0.0,
+            match_type="none",
+        )
+
+        self._pending_workflow = None
+        self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
+        return None
 
     def get_current_goal(self) -> Optional[str]:
         """Get current modeling goal.
@@ -860,3 +920,261 @@ class SupervisorRouter:
         self._current_goal = None
         self._pending_workflow = None
         self.logger.log_info("Goal cleared")
+
+    # --- Semantic Workflow Matching (TASK-046) ---
+
+    def _ensure_semantic_initialized(self) -> bool:
+        """Ensure semantic workflow matcher is initialized.
+
+        Lazily initializes the semantic matcher with workflow embeddings
+        when first needed.
+
+        Returns:
+            True if initialized successfully, False otherwise.
+        """
+        if self._semantic_initialized:
+            return True
+
+        try:
+            from server.router.application.workflows.registry import get_workflow_registry
+
+            registry = get_workflow_registry()
+            registry.ensure_custom_loaded()
+
+            self._semantic_matcher.initialize(registry)
+            self._semantic_initialized = True
+
+            self.logger.log_info(
+                f"Semantic matcher initialized with {len(registry.get_all_workflows())} workflows"
+            )
+            return True
+        except Exception as e:
+            self.logger.log_info(f"Semantic matcher initialization failed: {e}")
+            return False
+
+    def find_similar_workflows(
+        self,
+        prompt: str,
+        top_k: int = 5,
+    ) -> List[Tuple[str, float]]:
+        """Find workflows similar to a prompt.
+
+        Uses LaBSE semantic similarity to find workflows that match
+        the user's intent, even if not an exact keyword match.
+
+        Args:
+            prompt: User prompt or goal description.
+            top_k: Number of results to return.
+
+        Returns:
+            List of (workflow_name, similarity) tuples, sorted by similarity.
+        """
+        if not self._ensure_semantic_initialized():
+            return []
+
+        return self._semantic_matcher.find_similar(prompt, top_k=top_k)
+
+    def match_workflow_semantic(
+        self,
+        prompt: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> MatchResult:
+        """Match prompt to workflow using semantic understanding.
+
+        Tries matching in order:
+        1. Exact keyword match
+        2. Semantic similarity match (LaBSE embeddings)
+        3. Generalization from similar workflows
+
+        Args:
+            prompt: User prompt or goal.
+            context: Optional scene context.
+
+        Returns:
+            MatchResult with workflow and confidence.
+        """
+        if not self._ensure_semantic_initialized():
+            return MatchResult(
+                match_type="error",
+                metadata={"error": "Semantic matcher not initialized"},
+            )
+
+        return self._semantic_matcher.match(prompt, context)
+
+    def get_inherited_proportions(
+        self,
+        similar_workflows: List[Tuple[str, float]],
+        dimensions: Optional[List[float]] = None,
+    ) -> Dict[str, Any]:
+        """Get inherited proportions from similar workflows.
+
+        Combines proportion rules from multiple workflows weighted
+        by similarity scores.
+
+        Args:
+            similar_workflows: List of (workflow_name, similarity) tuples.
+            dimensions: Optional object dimensions [x, y, z] for scaling.
+
+        Returns:
+            Dictionary with inherited proportion data.
+        """
+        inherited = self._proportion_inheritance.inherit_proportions(
+            similar_workflows
+        )
+
+        result = {
+            "proportions": inherited.to_dict(),
+            "sources": inherited.sources,
+            "total_weight": inherited.total_weight,
+        }
+
+        if dimensions and len(dimensions) >= 3:
+            applied = self._proportion_inheritance.apply_to_dimensions(
+                inherited, dimensions
+            )
+            result["applied_values"] = applied
+            result["dimension_context"] = self._proportion_inheritance.get_dimension_context(
+                dimensions
+            )
+
+        return result
+
+    def suggest_proportions_for_goal(
+        self,
+        goal: str,
+        dimensions: Optional[List[float]] = None,
+    ) -> Dict[str, Any]:
+        """Suggest proportions for a modeling goal.
+
+        Combines semantic workflow matching with proportion inheritance
+        to suggest good starting parameters for unknown object types.
+
+        Args:
+            goal: Modeling goal (e.g., "chair", "lamp").
+            dimensions: Optional object dimensions [x, y, z].
+
+        Returns:
+            Dictionary with suggested proportions and workflow sources.
+        """
+        # Find similar workflows
+        similar = self.find_similar_workflows(goal, top_k=3)
+
+        if not similar:
+            return {
+                "goal": goal,
+                "similar_workflows": [],
+                "proportions": {},
+                "confidence": 0.0,
+            }
+
+        # Get inherited proportions
+        inherited = self.get_inherited_proportions(similar, dimensions)
+
+        return {
+            "goal": goal,
+            "similar_workflows": similar,
+            **inherited,
+            "confidence": similar[0][1] if similar else 0.0,
+        }
+
+    def get_semantic_matcher_info(self) -> Dict[str, Any]:
+        """Get semantic matcher information.
+
+        Returns:
+            Dictionary with matcher status and configuration.
+        """
+        return {
+            "initialized": self._semantic_initialized,
+            "matcher_info": self._semantic_matcher.get_info()
+            if self._semantic_initialized
+            else {},
+            "proportion_info": self._proportion_inheritance.get_info(),
+        }
+
+    # --- Feedback Collection (TASK-046-6) ---
+
+    def record_feedback_correction(
+        self,
+        prompt: str,
+        correct_workflow: str,
+    ) -> None:
+        """Record user correction for workflow matching.
+
+        Call this when the user indicates a different workflow
+        should have been matched.
+
+        Args:
+            prompt: Original prompt.
+            correct_workflow: The workflow that should have matched.
+        """
+        original_match = None
+        if self._last_match_result:
+            original_match = self._last_match_result.workflow_name
+
+        self._feedback_collector.record_correction(
+            prompt=prompt,
+            original_match=original_match,
+            correct_workflow=correct_workflow,
+        )
+
+        self.logger.log_info(
+            f"Recorded feedback correction: '{prompt[:30]}...' -> {correct_workflow}"
+        )
+
+    def record_feedback_helpful(
+        self,
+        prompt: str,
+        workflow_name: str,
+        was_helpful: bool = True,
+    ) -> None:
+        """Record whether a match was helpful.
+
+        Args:
+            prompt: Original prompt.
+            workflow_name: Matched workflow name.
+            was_helpful: Whether the match was helpful.
+        """
+        self._feedback_collector.record_helpful(
+            prompt=prompt,
+            matched_workflow=workflow_name,
+            was_helpful=was_helpful,
+        )
+
+    def get_feedback_statistics(self) -> Dict[str, Any]:
+        """Get feedback statistics.
+
+        Returns:
+            Dictionary with feedback statistics.
+        """
+        return self._feedback_collector.get_statistics()
+
+    def get_suggested_sample_prompts(
+        self,
+        workflow_name: str,
+        min_corrections: int = 3,
+    ) -> List[str]:
+        """Get suggested sample prompts from user corrections.
+
+        Returns prompts that were frequently corrected to this workflow,
+        which are good candidates for adding to sample_prompts.
+
+        Args:
+            workflow_name: Workflow to get suggestions for.
+            min_corrections: Minimum corrections needed.
+
+        Returns:
+            List of suggested prompts.
+        """
+        return self._feedback_collector.get_new_sample_prompts(
+            workflow_name, min_corrections
+        )
+
+    def get_feedback_collector(self) -> FeedbackCollector:
+        """Get the feedback collector instance.
+
+        For advanced operations not exposed through the router API.
+
+        Returns:
+            FeedbackCollector instance.
+        """
+        return self._feedback_collector

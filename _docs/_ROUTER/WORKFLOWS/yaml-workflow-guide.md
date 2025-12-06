@@ -12,6 +12,7 @@ YAML workflows allow you to define sequences of Blender operations that execute 
 - **Dynamic parameters** - Calculate values from object dimensions
 - **Smart defaults** - Auto-sized operations with `$AUTO_*` params
 - **Keyword triggering** - Automatic activation from user prompts
+- **Semantic matching** - LaBSE-powered multilingual prompt matching (TASK-046)
 
 ---
 
@@ -41,6 +42,11 @@ trigger_keywords:                     # Optional: keywords to trigger
   - table
   - desk
   - surface
+
+sample_prompts:                       # Optional: LaBSE semantic matching (TASK-046)
+  - "create a table"
+  - "make a desk"
+  - "zrób stół"                       # Polish - LaBSE supports 109 languages
 
 steps:                                # Required: list of tool calls
   - tool: modeling_create_primitive
@@ -283,6 +289,139 @@ LLM can explicitly request a workflow:
 
 ```python
 router.process_llm_tool_call("workflow_trigger", {"name": "phone_workflow"})
+```
+
+---
+
+## Sample Prompts (Semantic Matching)
+
+> **Status:** 📋 Planned (TASK-046) | Requires LaBSE model (~1.8GB)
+
+`sample_prompts` enable **semantic matching** using LaBSE embeddings. Unlike keyword matching (exact "phone" → phone_workflow), semantic matching understands meaning:
+
+```
+User: "design a mobile device"
+→ No exact keyword match
+→ LaBSE finds similarity to "create a phone" (0.85)
+→ phone_workflow triggers
+```
+
+### Why Use Sample Prompts?
+
+| Feature | `trigger_keywords` | `sample_prompts` |
+|---------|-------------------|------------------|
+| Matching | Exact substring | Semantic similarity |
+| Multilingual | Manual per language | Automatic (109 languages) |
+| Variations | Must list all | Understands synonyms |
+| Speed | Instant | ~10ms (embeddings) |
+
+### Syntax
+
+```yaml
+sample_prompts:
+  # English variations
+  - "create a phone"
+  - "make a smartphone"
+  - "model a mobile device"
+  - "build a cellphone"
+
+  # Polish (LaBSE understands meaning)
+  - "zrób telefon"
+  - "stwórz smartfon"
+
+  # German
+  - "erstelle ein Handy"
+
+  # Spanish
+  - "crear un teléfono móvil"
+```
+
+### How It Works
+
+1. **Embedding**: Each `sample_prompt` is converted to a 768-dim vector by LaBSE
+2. **User Prompt**: User's text is also embedded
+3. **Similarity**: Cosine similarity finds closest workflow
+4. **Threshold**: Match if similarity > 0.5 (configurable)
+
+### Matching Hierarchy
+
+Router tries matching in this order:
+
+```
+1. Exact keyword match (fastest)     → confidence = 1.0
+2. Semantic similarity (sample_prompts) → confidence = score
+3. Generalization (combine similar workflows) → confidence = score * 0.8
+```
+
+### Best Practices for Sample Prompts
+
+```yaml
+# Good: Diverse, natural language
+sample_prompts:
+  - "create a phone"
+  - "model a smartphone with screen"
+  - "I want to make a mobile device"
+  - "design an iPhone-like object"
+
+# Bad: Too similar, keyword-like
+sample_prompts:
+  - "phone"
+  - "smartphone"
+  - "mobile"
+```
+
+### Multilingual Support
+
+LaBSE supports 109 languages. Add prompts in any language:
+
+```yaml
+sample_prompts:
+  # No need to translate all - LaBSE understands cross-lingual
+  - "create a chair"      # English
+  - "zrób krzesło"        # Polish
+  - "créer une chaise"    # French
+  - "Stuhl erstellen"     # German
+  - "создать стул"        # Russian
+  - "椅子を作る"           # Japanese
+```
+
+### Complete Example with Sample Prompts
+
+```yaml
+name: chair_workflow
+description: Create a simple chair with legs and seat
+category: furniture
+author: BlenderAI
+version: "1.0"
+
+trigger_keywords:
+  - chair
+  - seat
+  - stool
+
+sample_prompts:
+  # English
+  - "create a chair"
+  - "make a wooden chair"
+  - "model a seat with legs"
+  - "build a simple stool"
+  - "design an office chair"
+
+  # Polish
+  - "zrób krzesło"
+  - "stwórz fotel"
+  - "zaprojektuj taboret"
+
+  # German
+  - "erstelle einen Stuhl"
+  - "baue einen Hocker"
+
+steps:
+  - tool: modeling_create_primitive
+    params:
+      type: CUBE
+    description: Create seat base
+  # ... more steps
 ```
 
 ---

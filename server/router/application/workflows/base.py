@@ -37,6 +37,7 @@ class WorkflowDefinition:
     steps: List[WorkflowStep]
     trigger_pattern: Optional[str] = None
     trigger_keywords: List[str] = field(default_factory=list)
+    sample_prompts: List[str] = field(default_factory=list)
     category: str = "general"
     author: str = "system"
     version: str = "1.0.0"
@@ -48,6 +49,7 @@ class WorkflowDefinition:
             "description": self.description,
             "trigger_pattern": self.trigger_pattern,
             "trigger_keywords": self.trigger_keywords,
+            "sample_prompts": self.sample_prompts,
             "category": self.category,
             "author": self.author,
             "version": self.version,
@@ -82,6 +84,18 @@ class BaseWorkflow(ABC):
         """Keywords that trigger this workflow."""
         pass
 
+    @property
+    def sample_prompts(self) -> List[str]:
+        """Sample prompts for semantic matching with LaBSE.
+
+        These prompts are embedded by LaBSE for semantic similarity matching.
+        Include variations in multiple languages if needed (LaBSE supports 109 languages).
+
+        Returns:
+            List of sample prompts that should trigger this workflow.
+        """
+        return []
+
     @abstractmethod
     def get_steps(self, params: Optional[Dict[str, Any]] = None) -> List[WorkflowStep]:
         """Get workflow steps, optionally customized by parameters.
@@ -109,6 +123,7 @@ class BaseWorkflow(ABC):
             steps=self.get_steps(params),
             trigger_pattern=self.trigger_pattern,
             trigger_keywords=self.trigger_keywords,
+            sample_prompts=self.sample_prompts,
         )
 
     def matches_pattern(self, pattern_name: str) -> bool:

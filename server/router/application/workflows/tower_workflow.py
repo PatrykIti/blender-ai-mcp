@@ -50,6 +50,43 @@ class TowerWorkflow(BaseWorkflow):
             "post",
         ]
 
+    @property
+    def sample_prompts(self) -> List[str]:
+        """Sample prompts for LaBSE semantic matching.
+
+        Includes variations in multiple languages for cross-lingual matching.
+        """
+        return [
+            # English
+            "create a tower",
+            "model a pillar",
+            "build a tall column",
+            "make an obelisk shape",
+            "design a minaret",
+            "create a chimney structure",
+            "build a vertical post",
+            "I want to make a tall narrow building",
+            "create a tapered tower structure",
+            # Polish
+            "stwórz wieżę",
+            "zrób filar",
+            "zbuduj kolumnę",
+            "modeluj obelisk",
+            "stwórz komin",
+            # German
+            "erstelle einen Turm",
+            "modelliere eine Säule",
+            "baue einen Obelisk",
+            # French
+            "créer une tour",
+            "modéliser un pilier",
+            "construire une colonne",
+            # Spanish
+            "crear una torre",
+            "modelar un pilar",
+            "construir un obelisco",
+        ]
+
     def get_steps(self, params: Optional[Dict[str, Any]] = None) -> List[WorkflowStep]:
         """Generate workflow steps with optional parameter customization.
 

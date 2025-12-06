@@ -53,6 +53,41 @@ class PhoneWorkflow(BaseWorkflow):
             "device",
         ]
 
+    @property
+    def sample_prompts(self) -> List[str]:
+        """Sample prompts for LaBSE semantic matching.
+
+        Includes variations in multiple languages for cross-lingual matching.
+        LaBSE supports 109 languages including Polish, German, French, etc.
+        """
+        return [
+            # English
+            "create a smartphone",
+            "model a phone",
+            "make a tablet device",
+            "build a mobile phone shape",
+            "I want to create an iPhone model",
+            "design a rectangular phone with rounded corners",
+            "create a device with screen",
+            # Polish
+            "stwórz telefon",
+            "zrób smartfon",
+            "modeluj tablet",
+            "zbuduj kształt telefonu komórkowego",
+            # German
+            "erstelle ein Smartphone",
+            "modelliere ein Handy",
+            "baue ein Tablet",
+            # French
+            "créer un smartphone",
+            "modéliser un téléphone",
+            "construire une tablette",
+            # Spanish
+            "crear un teléfono inteligente",
+            "modelar un móvil",
+            "construir una tableta",
+        ]
+
     def get_steps(self, params: Optional[Dict[str, Any]] = None) -> List[WorkflowStep]:
         """Generate workflow steps with optional parameter customization.
 

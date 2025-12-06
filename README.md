@@ -506,6 +506,9 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Error Firewall** | Blocks/fixes invalid operations before they crash |
 | **100% Offline** | No external API calls - LaBSE runs locally (~1.8GB RAM) |
 | **Multilingual** | LaBSE supports 109 languages for intent classification |
+| **Semantic Matching** | 📋 *Planned (TASK-046)* - Match workflows by meaning, not just keywords |
+| **Generalization** | 📋 *Planned (TASK-046)* - Use similar workflow when exact match missing |
+| **Feedback Learning** | 📋 *Planned (TASK-046)* - Improve matching from user corrections |
 
 #### Example: LLM sends mesh tool in wrong mode
 
@@ -525,6 +528,21 @@ Router outputs:
   5. system_set_mode(mode="OBJECT")
 
 Result: Screen cutout created instead of crash!
+```
+
+#### Planned: Semantic Workflow Matching (TASK-046)
+
+```
+User: "zrób krzesło" (make a chair)
+
+Current behavior:
+  → No "krzesło" keyword → No workflow match
+
+After TASK-046:
+  → LaBSE semantic similarity search
+  → Found: table_workflow (0.72), tower_workflow (0.45)
+  → Uses table_workflow with inherited proportions
+  → Chair has proper leg ratios from table, vertical proportions from tower
 ```
 
 #### Configuration Presets

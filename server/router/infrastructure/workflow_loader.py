@@ -188,6 +188,7 @@ class WorkflowLoader:
             steps=steps,
             trigger_pattern=data.get("trigger_pattern"),
             trigger_keywords=data.get("trigger_keywords", []),
+            sample_prompts=data.get("sample_prompts", []),
             category=data.get("category", "custom"),
             author=data.get("author", "user"),
             version=data.get("version", "1.0.0"),
@@ -300,6 +301,14 @@ class WorkflowLoader:
             "version": "1.0.0",
             "trigger_pattern": None,  # Optional: pattern name to trigger
             "trigger_keywords": ["keyword1", "keyword2"],
+            "sample_prompts": [
+                # English prompts for LaBSE semantic matching
+                "create my object",
+                "build my thing",
+                # Multilingual prompts (LaBSE supports 109 languages)
+                "stwórz mój obiekt",  # Polish
+                "erstelle mein Objekt",  # German
+            ],
             "steps": [
                 {
                     "tool": "modeling_create_primitive",

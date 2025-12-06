@@ -51,6 +51,40 @@ class ScreenCutoutWorkflow(BaseWorkflow):
             "monitor",
         ]
 
+    @property
+    def sample_prompts(self) -> List[str]:
+        """Sample prompts for LaBSE semantic matching.
+
+        Includes variations in multiple languages for cross-lingual matching.
+        """
+        return [
+            # English
+            "add a screen cutout",
+            "create a display area",
+            "make an inset for the screen",
+            "add a button recess",
+            "create a panel indentation",
+            "make a display hole",
+            "add monitor screen area",
+            "inset the face for a screen",
+            # Polish
+            "dodaj wycięcie na ekran",
+            "stwórz obszar wyświetlacza",
+            "zrób wgłębienie na przycisk",
+            # German
+            "Bildschirmaussparung hinzufügen",
+            "Display-Bereich erstellen",
+            "Taste einsetzen",
+            # French
+            "ajouter une découpe d'écran",
+            "créer une zone d'affichage",
+            "faire un enfoncement pour bouton",
+            # Spanish
+            "agregar recorte de pantalla",
+            "crear área de visualización",
+            "hacer un hueco para botón",
+        ]
+
     def get_steps(self, params: Optional[Dict[str, Any]] = None) -> List[WorkflowStep]:
         """Generate workflow steps with optional parameter customization.
 

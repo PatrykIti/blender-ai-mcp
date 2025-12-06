@@ -52,6 +52,10 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **Error Firewall** | Block invalid operations | ✅ Done |
 | **Intent Classifier** | Offline intent matching (LaBSE) | ✅ Done |
 | **SupervisorRouter** | Main orchestrator | ✅ Done |
+| **WorkflowIntentClassifier** | Semantic workflow matching (LaBSE) | 📋 Planned |
+| **SemanticWorkflowMatcher** | Matching + generalization | 📋 Planned |
+| **ProportionInheritance** | Cross-workflow rule inheritance | 📋 Planned |
+| **FeedbackCollector** | Learning from user feedback | 📋 Planned |
 
 ---
 
@@ -181,6 +185,58 @@ RouterConfig:
     bevel_max_ratio: 0.5
     subdivide_max_cuts: 6
 ```
+
+---
+
+## Semantic Generalization (TASK-046)
+
+> **Status:** 📋 Planned | [Task Details](../_TASKS/TASK-046_Router_Semantic_Generalization.md)
+
+Extends Router with semantic workflow matching using LaBSE embeddings.
+
+### Problem
+
+```python
+# Current: keyword matching only
+user: "zrób krzesło"  # (make a chair)
+result: None  # No "chair" keyword in any workflow
+```
+
+### Solution
+
+```python
+# After TASK-046: semantic similarity
+user: "zrób krzesło"
+result: [
+    ("table_workflow", 0.72),   # Chair has legs like table
+    ("tower_workflow", 0.45),   # Vertical structure
+]
+# Router uses table_workflow proportions for legs, etc.
+```
+
+### New Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **WorkflowIntentClassifier** | LaBSE embeddings for workflows | `classifier/workflow_intent_classifier.py` |
+| **SemanticWorkflowMatcher** | Match + generalize workflows | `matcher/semantic_workflow_matcher.py` |
+| **ProportionInheritance** | Inherit rules from similar workflows | `inheritance/proportion_inheritance.py` |
+| **FeedbackCollector** | Learn from user corrections | `learning/feedback_collector.py` |
+
+### Key Features
+
+1. **Semantic Matching** - Find workflows by meaning, not just keywords
+2. **Generalization** - Use similar workflow when exact match missing
+3. **Proportion Inheritance** - Combine rules from multiple workflows
+4. **Multilingual Support** - LaBSE supports 109 languages
+5. **Feedback Learning** - Improve matching over time
+
+### Implementation Docs
+
+- [28-workflow-intent-classifier.md](./IMPLEMENTATION/28-workflow-intent-classifier.md)
+- [29-semantic-workflow-matcher.md](./IMPLEMENTATION/29-semantic-workflow-matcher.md)
+- [30-proportion-inheritance.md](./IMPLEMENTATION/30-proportion-inheritance.md)
+- [31-feedback-learning.md](./IMPLEMENTATION/31-feedback-learning.md)
 
 ---
 

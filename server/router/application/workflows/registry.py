@@ -480,6 +480,7 @@ class WorkflowRegistry:
                 "type": "builtin",
                 "trigger_pattern": workflow.trigger_pattern,
                 "trigger_keywords": workflow.trigger_keywords,
+                "sample_prompts": workflow.sample_prompts,
                 "step_count": len(workflow.get_steps()),
             }
 
@@ -495,6 +496,7 @@ class WorkflowRegistry:
                 "version": definition.version,
                 "trigger_pattern": definition.trigger_pattern,
                 "trigger_keywords": definition.trigger_keywords,
+                "sample_prompts": definition.sample_prompts,
                 "step_count": len(definition.steps),
             }
 

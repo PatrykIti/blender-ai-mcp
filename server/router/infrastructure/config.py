@@ -23,6 +23,9 @@ class RouterConfig:
         embedding_threshold: Minimum confidence for intent classification.
         bevel_max_ratio: Maximum bevel width as ratio of smallest dimension.
         subdivide_max_cuts: Maximum subdivision cuts allowed.
+        workflow_similarity_threshold: Minimum similarity for semantic workflow match.
+        generalization_threshold: Minimum similarity for workflow generalization.
+        enable_generalization: Enable workflow generalization for unknown objects.
     """
 
     # Correction settings
@@ -43,6 +46,11 @@ class RouterConfig:
     bevel_max_ratio: float = 0.5
     subdivide_max_cuts: int = 6
 
+    # Semantic workflow matching thresholds (TASK-046)
+    workflow_similarity_threshold: float = 0.5  # Min for direct semantic match
+    generalization_threshold: float = 0.3  # Min for generalization
+    enable_generalization: bool = True  # Enable workflow generalization
+
     # Advanced settings
     cache_scene_context: bool = True
     cache_ttl_seconds: float = 1.0
@@ -62,6 +70,9 @@ class RouterConfig:
             "embedding_threshold": self.embedding_threshold,
             "bevel_max_ratio": self.bevel_max_ratio,
             "subdivide_max_cuts": self.subdivide_max_cuts,
+            "workflow_similarity_threshold": self.workflow_similarity_threshold,
+            "generalization_threshold": self.generalization_threshold,
+            "enable_generalization": self.enable_generalization,
             "cache_scene_context": self.cache_scene_context,
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "max_workflow_steps": self.max_workflow_steps,
