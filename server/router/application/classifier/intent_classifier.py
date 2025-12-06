@@ -55,6 +55,7 @@ class IntentClassifier(IIntentClassifier):
         config: Optional[RouterConfig] = None,
         vector_store: Optional[IVectorStore] = None,
         model_name: str = MODEL_NAME,
+        model: Optional[Any] = None,
     ):
         """Initialize intent classifier.
 
@@ -62,11 +63,12 @@ class IntentClassifier(IIntentClassifier):
             config: Router configuration (uses defaults if None).
             vector_store: Vector store for embeddings (creates LanceVectorStore if None).
             model_name: Sentence transformer model name.
+            model: Pre-loaded SentenceTransformer model (shared via DI).
         """
         self._config = config or RouterConfig()
         self._vector_store = vector_store
         self._model_name = model_name
-        self._model: Optional[Any] = None
+        self._model: Optional[Any] = model  # Use injected model or load later
         self._tool_texts: Dict[str, List[str]] = {}
         self._is_loaded = False
 

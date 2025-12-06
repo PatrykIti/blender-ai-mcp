@@ -122,12 +122,92 @@ def get_armature_handler() -> IArmatureTool:
 
 # --- Router Supervisor ---
 
+# Shared instances for router components (TASK-048)
+_labse_model_instance = None
+_vector_store_instance = None
+_intent_classifier_instance = None
+_workflow_classifier_instance = None
 _router_instance = None
+
+
+def get_labse_model():
+    """Provider for shared LaBSE model (~1.8GB RAM).
+
+    Singleton - shared between IntentClassifier and WorkflowIntentClassifier.
+    """
+    global _labse_model_instance
+    if _labse_model_instance is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            import logging
+            logging.info("Loading shared LaBSE model...")
+            _labse_model_instance = SentenceTransformer("sentence-transformers/LaBSE")
+            logging.info("Shared LaBSE model loaded")
+        except ImportError:
+            import logging
+            logging.warning("sentence-transformers not installed, LaBSE model unavailable")
+            return None
+    return _labse_model_instance
+
+
+def get_vector_store():
+    """Provider for shared LanceVectorStore.
+
+    Singleton - shared between all classifiers.
+    """
+    global _vector_store_instance
+    if _vector_store_instance is None:
+        from server.router.infrastructure.vector_store.lance_store import LanceVectorStore
+        _vector_store_instance = LanceVectorStore()
+    return _vector_store_instance
+
+
+def get_router_config():
+    """Provider for RouterConfig."""
+    from server.router.infrastructure.config import RouterConfig
+    config = get_config()
+    return RouterConfig(log_decisions=config.ROUTER_LOG_DECISIONS)
+
+
+def get_intent_classifier():
+    """Provider for IntentClassifier (tool classification).
+
+    Singleton - uses shared LaBSE model and vector store.
+    """
+    global _intent_classifier_instance
+    if _intent_classifier_instance is None:
+        from server.router.application.classifier.intent_classifier import IntentClassifier
+        _intent_classifier_instance = IntentClassifier(
+            config=get_router_config(),
+            vector_store=get_vector_store(),
+            model=get_labse_model(),
+        )
+    return _intent_classifier_instance
+
+
+def get_workflow_classifier():
+    """Provider for WorkflowIntentClassifier (workflow classification).
+
+    Singleton - uses shared LaBSE model and vector store.
+    """
+    global _workflow_classifier_instance
+    if _workflow_classifier_instance is None:
+        from server.router.application.classifier.workflow_intent_classifier import (
+            WorkflowIntentClassifier,
+        )
+        _workflow_classifier_instance = WorkflowIntentClassifier(
+            config=get_router_config(),
+            vector_store=get_vector_store(),
+            model=get_labse_model(),
+        )
+    return _workflow_classifier_instance
+
 
 def get_router():
     """Provider for SupervisorRouter. Singleton with lazy initialization.
 
     Returns None if router is disabled in config.
+    Uses shared classifiers via DI (TASK-048).
     """
     global _router_instance
     config = get_config()
@@ -137,15 +217,13 @@ def get_router():
 
     if _router_instance is None:
         from server.router.application.router import SupervisorRouter
-        from server.router.infrastructure.config import RouterConfig
         from server.router.infrastructure.metadata_loader import MetadataLoader
 
-        router_config = RouterConfig(
-            log_decisions=config.ROUTER_LOG_DECISIONS,
-        )
         _router_instance = SupervisorRouter(
-            config=router_config,
+            config=get_router_config(),
             rpc_client=get_rpc_client(),
+            classifier=get_intent_classifier(),
+            workflow_classifier=get_workflow_classifier(),
         )
 
         # Load tool metadata for intent classification

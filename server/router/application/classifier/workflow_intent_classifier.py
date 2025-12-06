@@ -62,6 +62,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         config: Optional[RouterConfig] = None,
         vector_store: Optional[IVectorStore] = None,
         model_name: str = MODEL_NAME,
+        model: Optional[Any] = None,
     ):
         """Initialize workflow classifier.
 
@@ -69,11 +70,12 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             config: Router configuration.
             vector_store: Vector store for embeddings (creates LanceVectorStore if None).
             model_name: Sentence transformer model name.
+            model: Pre-loaded SentenceTransformer model (shared via DI).
         """
         self._config = config or RouterConfig()
         self._vector_store = vector_store
         self._model_name = model_name
-        self._model: Optional[Any] = None
+        self._model: Optional[Any] = model  # Use injected model or load later
         self._workflow_texts: Dict[str, List[str]] = {}
         self._is_loaded = False
 
