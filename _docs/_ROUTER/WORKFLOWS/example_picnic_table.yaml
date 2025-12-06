@@ -457,3 +457,25 @@ steps:
       name: "Picnic_Table"
       type: ORIGIN_GEOMETRY
     description: Center origin on geometry
+
+  # ============================================
+  # SECTION 10: MATERIAL
+  # Extracted from original Sketchfab model
+  # Material.001 - warm wood color
+  # RGB: [0.661, 0.24, 0.02] = orangey-brown wood
+  # Roughness: 0.985 (very matte, like unfinished wood)
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "PicnicTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material (extracted from original model)
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "Picnic_Table"
+    description: Assign wood material to picnic table
