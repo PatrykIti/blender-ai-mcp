@@ -9,8 +9,9 @@ class TestMeshSelectTargetedMega:
     def setup_method(self):
         self.mock_ctx = MagicMock()
 
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_by_index")
-    def test_action_by_index_routes_correctly(self, mock_select_by_index):
+    def test_action_by_index_routes_correctly(self, mock_select_by_index, mock_router_enabled):
         """Test action='by_index' routes to _mesh_select_by_index."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -28,7 +29,8 @@ class TestMeshSelectTargetedMega:
         )
         assert result == "Selected by index"
 
-    def test_action_by_index_missing_indices_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_action_by_index_missing_indices_returns_error(self, mock_router_enabled):
         """Test action='by_index' without indices returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -37,8 +39,9 @@ class TestMeshSelectTargetedMega:
         assert "Error" in result
         assert "indices" in result
 
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_loop")
-    def test_action_loop_routes_correctly(self, mock_select_loop):
+    def test_action_loop_routes_correctly(self, mock_select_loop, mock_router_enabled):
         """Test action='loop' routes to _mesh_select_loop."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -52,7 +55,8 @@ class TestMeshSelectTargetedMega:
         mock_select_loop.assert_called_once_with(self.mock_ctx, 5)
         assert result == "Loop selected"
 
-    def test_action_loop_missing_edge_index_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_action_loop_missing_edge_index_returns_error(self, mock_router_enabled):
         """Test action='loop' without edge_index returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -61,8 +65,9 @@ class TestMeshSelectTargetedMega:
         assert "Error" in result
         assert "edge_index" in result
 
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_ring")
-    def test_action_ring_routes_correctly(self, mock_select_ring):
+    def test_action_ring_routes_correctly(self, mock_select_ring, mock_router_enabled):
         """Test action='ring' routes to _mesh_select_ring."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -76,7 +81,8 @@ class TestMeshSelectTargetedMega:
         mock_select_ring.assert_called_once_with(self.mock_ctx, 3)
         assert result == "Ring selected"
 
-    def test_action_ring_missing_edge_index_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_action_ring_missing_edge_index_returns_error(self, mock_router_enabled):
         """Test action='ring' without edge_index returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -85,8 +91,9 @@ class TestMeshSelectTargetedMega:
         assert "Error" in result
         assert "edge_index" in result
 
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_by_location")
-    def test_action_by_location_routes_correctly(self, mock_select_by_location):
+    def test_action_by_location_routes_correctly(self, mock_select_by_location, mock_router_enabled):
         """Test action='by_location' routes to _mesh_select_by_location."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -105,7 +112,8 @@ class TestMeshSelectTargetedMega:
         )
         assert result == "Selected by location"
 
-    def test_action_by_location_missing_axis_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_action_by_location_missing_axis_returns_error(self, mock_router_enabled):
         """Test action='by_location' without axis returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -119,7 +127,8 @@ class TestMeshSelectTargetedMega:
         assert "Error" in result
         assert "axis" in result or "min_coord" in result or "max_coord" in result
 
-    def test_action_by_location_missing_coords_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_action_by_location_missing_coords_returns_error(self, mock_router_enabled):
         """Test action='by_location' without coords returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -131,7 +140,8 @@ class TestMeshSelectTargetedMega:
 
         assert "Error" in result
 
-    def test_invalid_action_returns_error(self):
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
+    def test_invalid_action_returns_error(self, mock_router_enabled):
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
@@ -144,8 +154,9 @@ class TestMeshSelectTargetedMega:
         assert "ring" in result
         assert "by_location" in result
 
+    @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_by_index")
-    def test_action_by_index_with_face_type(self, mock_select_by_index):
+    def test_action_by_index_with_face_type(self, mock_select_by_index, mock_router_enabled):
         """Test action='by_index' with element_type='FACE'."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
