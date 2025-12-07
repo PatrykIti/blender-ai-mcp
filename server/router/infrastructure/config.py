@@ -51,6 +51,10 @@ class RouterConfig:
     generalization_threshold: float = 0.3  # Min for generalization
     enable_generalization: bool = True  # Enable workflow generalization
 
+    # Workflow adaptation settings (TASK-051)
+    enable_workflow_adaptation: bool = True  # Enable confidence-based workflow adaptation
+    adaptation_semantic_threshold: float = 0.6  # Min similarity for optional step inclusion
+
     # Advanced settings
     cache_scene_context: bool = True
     cache_ttl_seconds: float = 1.0
@@ -73,6 +77,8 @@ class RouterConfig:
             "workflow_similarity_threshold": self.workflow_similarity_threshold,
             "generalization_threshold": self.generalization_threshold,
             "enable_generalization": self.enable_generalization,
+            "enable_workflow_adaptation": self.enable_workflow_adaptation,
+            "adaptation_semantic_threshold": self.adaptation_semantic_threshold,
             "cache_scene_context": self.cache_scene_context,
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "max_workflow_steps": self.max_workflow_steps,

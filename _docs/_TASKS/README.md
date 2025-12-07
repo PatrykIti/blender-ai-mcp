@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 task (~6 sub-tasks)
-- **In Progress:** 1
-- **Done:** 115
+- **In Progress:** 0
+- **Done:** 116
 
 ---
 

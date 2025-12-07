@@ -33,6 +33,8 @@ class MatchResult:
         workflow_name: Name of matched workflow (or None if no match).
         confidence: Confidence score (0.0 to 1.0).
         match_type: Type of match - exact, semantic, generalized, or none.
+        confidence_level: Confidence classification - HIGH, MEDIUM, LOW, NONE.
+        requires_adaptation: True if workflow should be adapted based on confidence.
         similar_workflows: List of similar workflows for generalization.
         applied_rules: List of rules applied from similar workflows.
         metadata: Additional metadata about the match.
@@ -41,6 +43,8 @@ class MatchResult:
     workflow_name: Optional[str] = None
     confidence: float = 0.0
     match_type: str = "none"  # exact, semantic, generalized, none, error
+    confidence_level: str = "NONE"  # HIGH, MEDIUM, LOW, NONE (TASK-051)
+    requires_adaptation: bool = False  # True if workflow should be adapted (TASK-051)
     similar_workflows: List[Tuple[str, float]] = field(default_factory=list)
     applied_rules: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -57,12 +61,22 @@ class MatchResult:
         """Check if match is generalized from similar workflows."""
         return self.match_type == "generalized"
 
+    def needs_adaptation(self) -> bool:
+        """Check if workflow needs adaptation based on confidence.
+
+        TASK-051: Only HIGH confidence matches get full workflow.
+        MEDIUM/LOW confidence matches require adaptation.
+        """
+        return self.requires_adaptation and self.confidence_level != "HIGH"
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
             "workflow_name": self.workflow_name,
             "confidence": self.confidence,
             "match_type": self.match_type,
+            "confidence_level": self.confidence_level,
+            "requires_adaptation": self.requires_adaptation,
             "similar_workflows": self.similar_workflows,
             "applied_rules": self.applied_rules,
             "metadata": self.metadata,
@@ -179,6 +193,8 @@ class SemanticWorkflowMatcher:
                 workflow_name=keyword_match,
                 confidence=1.0,
                 match_type="exact",
+                confidence_level="HIGH",
+                requires_adaptation=False,  # Exact matches don't need adaptation
                 metadata={"matched_by": "keyword"},
             )
 
@@ -189,24 +205,47 @@ class SemanticWorkflowMatcher:
                 workflow_name=pattern_match,
                 confidence=0.95,
                 match_type="exact",
+                confidence_level="HIGH",
+                requires_adaptation=False,  # Pattern matches don't need adaptation
                 metadata={"matched_by": "pattern"},
             )
 
-        # Step 3: Try semantic similarity
-        semantic_result = self._classifier.find_best_match(
-            prompt,
-            min_confidence=self._config.workflow_similarity_threshold,
-        )
-        if semantic_result:
-            name, score = semantic_result
+        # Step 3: Try semantic similarity with confidence levels (TASK-051)
+        confidence_result = self._classifier.find_best_match_with_confidence(prompt)
+        confidence_level = confidence_result.get("confidence_level", "NONE")
+        workflow_id = confidence_result.get("workflow_id")
+        score = confidence_result.get("score", 0.0)
+
+        # If we have a match (any confidence level except NONE with no workflow)
+        if workflow_id and confidence_level != "NONE":
             return MatchResult(
-                workflow_name=name,
+                workflow_name=workflow_id,
                 confidence=score,
                 match_type="semantic",
-                metadata={"matched_by": "embedding"},
+                confidence_level=confidence_level,
+                requires_adaptation=confidence_level != "HIGH",  # TASK-051
+                metadata={
+                    "matched_by": "embedding",
+                    "source_type": confidence_result.get("source_type"),
+                    "matched_text": confidence_result.get("matched_text"),
+                    "language_detected": confidence_result.get("language_detected"),
+                },
             )
 
-        # Step 4: Try generalization (if enabled)
+        # Step 4: Check fallback candidates for LOW confidence or NONE
+        fallback_candidates = confidence_result.get("fallback_candidates", [])
+        if fallback_candidates and self._config.enable_generalization:
+            # Use the best fallback candidate if above generalization threshold
+            best_fallback = fallback_candidates[0]
+            if best_fallback["score"] >= self._config.generalization_threshold:
+                similar = [
+                    (c["workflow_id"], c["score"])
+                    for c in fallback_candidates
+                    if c["score"] >= self._config.generalization_threshold
+                ]
+                return self._generalize(prompt, similar, context)
+
+        # Step 5: Try generalization (legacy fallback if enabled)
         if self._config.enable_generalization:
             similar = self._classifier.get_generalization_candidates(
                 prompt,
@@ -217,7 +256,7 @@ class SemanticWorkflowMatcher:
                 return self._generalize(prompt, similar, context)
 
         # No match found
-        return MatchResult(match_type="none")
+        return MatchResult(match_type="none", confidence_level="NONE")
 
     def _match_by_pattern(
         self,
@@ -276,10 +315,15 @@ class SemanticWorkflowMatcher:
         # (they're less certain than direct matches)
         generalized_confidence = base_score * 0.8
 
+        # Determine confidence level for generalized result (TASK-051)
+        confidence_level = self._classifier.get_confidence_level(generalized_confidence)
+
         return MatchResult(
             workflow_name=base_workflow,
             confidence=generalized_confidence,
             match_type="generalized",
+            confidence_level=confidence_level,
+            requires_adaptation=True,  # Generalized matches always need adaptation
             similar_workflows=similar_workflows,
             applied_rules=applied_rules,
             metadata={

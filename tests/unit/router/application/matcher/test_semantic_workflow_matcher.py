@@ -168,8 +168,20 @@ class TestSemanticWorkflowMatcher:
         """Test when no match found."""
         mock_registry.find_by_keywords.return_value = None
 
-        # Patch classifier to return no results
-        with patch.object(matcher._classifier, 'find_best_match', return_value=None):
+        # Patch classifier to return no results (TASK-051: use find_best_match_with_confidence)
+        with patch.object(
+            matcher._classifier,
+            'find_best_match_with_confidence',
+            return_value={
+                "workflow_id": None,
+                "score": 0.0,
+                "confidence_level": "NONE",
+                "source_type": None,
+                "matched_text": None,
+                "fallback_candidates": [],
+                "language_detected": "en",
+            }
+        ):
             with patch.object(matcher._classifier, 'get_generalization_candidates', return_value=[]):
                 result = matcher.match("create something unknown")
 
@@ -180,30 +192,60 @@ class TestSemanticWorkflowMatcher:
         """Test semantic similarity match."""
         mock_registry.find_by_keywords.return_value = None
 
-        # Patch classifier to return semantic match
+        # Patch classifier to return semantic match (TASK-051: use find_best_match_with_confidence)
         with patch.object(
             matcher._classifier,
-            'find_best_match',
-            return_value=("phone_workflow", 0.75)
+            'find_best_match_with_confidence',
+            return_value={
+                "workflow_id": "phone_workflow",
+                "score": 0.75,
+                "confidence_level": "MEDIUM",
+                "source_type": "sample_prompt",
+                "matched_text": "create a phone",
+                "fallback_candidates": [],
+                "language_detected": "en",
+            }
         ):
             result = matcher.match("make a mobile device")
 
         assert result.workflow_name == "phone_workflow"
         assert result.confidence == 0.75
         assert result.match_type == "semantic"
+        assert result.confidence_level == "MEDIUM"  # TASK-051
 
     def test_match_generalized(self, matcher, mock_registry):
         """Test generalized match from similar workflows."""
         mock_registry.find_by_keywords.return_value = None
 
         # Patch classifier - no semantic match but generalization candidates
-        with patch.object(matcher._classifier, 'find_best_match', return_value=None):
+        # (TASK-051: use find_best_match_with_confidence which returns fallback_candidates)
+        with patch.object(
+            matcher._classifier,
+            'find_best_match_with_confidence',
+            return_value={
+                "workflow_id": None,
+                "score": 0.0,
+                "confidence_level": "NONE",
+                "source_type": None,
+                "matched_text": None,
+                "fallback_candidates": [
+                    {"workflow_id": "table_workflow", "score": 0.72, "source_type": "sample_prompt"},
+                    {"workflow_id": "tower_workflow", "score": 0.45, "source_type": "keyword"},
+                ],
+                "language_detected": "en",
+            }
+        ):
             with patch.object(
                 matcher._classifier,
                 'get_generalization_candidates',
                 return_value=[("table_workflow", 0.72), ("tower_workflow", 0.45)],
             ):
-                result = matcher.match("create a chair")
+                with patch.object(
+                    matcher._classifier,
+                    'get_confidence_level',
+                    return_value="LOW",
+                ):
+                    result = matcher.match("create a chair")
 
         assert result.match_type == "generalized"
         assert result.workflow_name == "table_workflow"

@@ -289,6 +289,7 @@ steps:
   # SECTION 6: SIDE BENCHES - LEFT (2 planks)
   # Cube.012, 013 from model
   # Dimensions: 1.48 x 11.88 x 0.228
+  # OPTIONAL: These steps are skipped for LOW confidence matches
   # ============================================
 
   # Left bench inner plank (Cube.012)
@@ -297,6 +298,8 @@ steps:
       primitive_type: CUBE
       name: "BenchLeft_Inner"
     description: Create left bench inner plank
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   - tool: modeling_transform_object
     params:
@@ -304,6 +307,8 @@ steps:
       scale: [0.074, 0.594, 0.0114]
       location: [-0.747, -0.160, -0.081]
     description: "Left bench inner - closer to table"
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   # Left bench outer plank (Cube.013)
   - tool: modeling_create_primitive
@@ -311,6 +316,8 @@ steps:
       primitive_type: CUBE
       name: "BenchLeft_Outer"
     description: Create left bench outer plank
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   - tool: modeling_transform_object
     params:
@@ -318,11 +325,14 @@ steps:
       scale: [0.074, 0.594, 0.0114]
       location: [-0.898, -0.160, -0.081]
     description: "Left bench outer - edge of bench"
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   # ============================================
   # SECTION 7: SIDE BENCHES - RIGHT (2 planks)
   # Cube.014, 015 from model
   # Dimensions: 1.48 x 11.88 x 0.228
+  # OPTIONAL: These steps are skipped for LOW confidence matches
   # ============================================
 
   # Right bench outer plank (Cube.014)
@@ -331,6 +341,8 @@ steps:
       primitive_type: CUBE
       name: "BenchRight_Outer"
     description: Create right bench outer plank
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   - tool: modeling_transform_object
     params:
@@ -338,6 +350,8 @@ steps:
       scale: [0.074, 0.594, 0.0114]
       location: [0.918, -0.160, -0.081]
     description: "Right bench outer - edge of bench"
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   # Right bench inner plank (Cube.015)
   - tool: modeling_create_primitive
@@ -345,6 +359,8 @@ steps:
       primitive_type: CUBE
       name: "BenchRight_Inner"
     description: Create right bench inner plank
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   - tool: modeling_transform_object
     params:
@@ -352,11 +368,14 @@ steps:
       scale: [0.074, 0.594, 0.0114]
       location: [0.767, -0.160, -0.081]
     description: "Right bench inner - closer to table"
+    optional: true
+    tags: ["bench", "seating", "side"]
 
   # ============================================
   # SECTION 8: FRONT/BACK BENCHES (4 planks total)
   # Cube.018, 019 (back), Cube.020, 021 (front)
   # Dimensions: 11.88 x 1.49 x 0.228
+  # OPTIONAL: These steps are skipped for LOW confidence matches
   # ============================================
 
   # Back bench inner (Cube.018)
@@ -365,6 +384,8 @@ steps:
       primitive_type: CUBE
       name: "BenchBack_Inner"
     description: Create back bench inner plank
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   - tool: modeling_transform_object
     params:
@@ -372,6 +393,8 @@ steps:
       scale: [0.594, 0.074, 0.0114]
       location: [0.003, 0.569, -0.081]
     description: "Back bench inner - closer to table"
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   # Back bench outer (Cube.019)
   - tool: modeling_create_primitive
@@ -379,6 +402,8 @@ steps:
       primitive_type: CUBE
       name: "BenchBack_Outer"
     description: Create back bench outer plank
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   - tool: modeling_transform_object
     params:
@@ -386,6 +411,8 @@ steps:
       scale: [0.594, 0.074, 0.0114]
       location: [0.003, 0.720, -0.081]
     description: "Back bench outer - edge of bench"
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   # Front bench outer (Cube.020)
   - tool: modeling_create_primitive
@@ -393,6 +420,8 @@ steps:
       primitive_type: CUBE
       name: "BenchFront_Outer"
     description: Create front bench outer plank
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   - tool: modeling_transform_object
     params:
@@ -400,6 +429,8 @@ steps:
       scale: [0.594, 0.074, 0.0114]
       location: [0.004, -1.096, -0.081]
     description: "Front bench outer - edge of bench"
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   # Front bench inner (Cube.021)
   - tool: modeling_create_primitive
@@ -407,6 +438,8 @@ steps:
       primitive_type: CUBE
       name: "BenchFront_Inner"
     description: Create front bench inner plank
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   - tool: modeling_transform_object
     params:
@@ -414,6 +447,8 @@ steps:
       scale: [0.594, 0.074, 0.0114]
       location: [0.004, -0.945, -0.081]
     description: "Front bench inner - closer to table"
+    optional: true
+    tags: ["bench", "seating", "front_back"]
 
   # ============================================
   # SECTION 9: FINALIZE - Join all parts

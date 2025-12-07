@@ -222,6 +222,8 @@ class WorkflowLoader:
             params=data.get("params", {}),
             description=data.get("description"),
             condition=data.get("condition"),
+            optional=data.get("optional", False),
+            tags=data.get("tags", []),
         )
 
     def get_workflow(self, name: str) -> Optional[WorkflowDefinition]:
@@ -314,11 +316,15 @@ class WorkflowLoader:
                     "tool": "modeling_create_primitive",
                     "params": {"type": "CUBE"},
                     "description": "Create a cube",
+                    "optional": False,  # Core step - always executed
+                    "tags": [],
                 },
                 {
                     "tool": "system_set_mode",
                     "params": {"mode": "EDIT"},
                     "description": "Enter edit mode",
+                    "optional": True,  # Optional - skipped for LOW confidence
+                    "tags": ["edit", "mode"],
                 },
             ],
         }

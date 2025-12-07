@@ -11,12 +11,23 @@ from typing import Dict, Any, Optional, List
 
 @dataclass
 class WorkflowStep:
-    """Represents a single step in a workflow."""
+    """Represents a single step in a workflow.
+
+    Attributes:
+        tool: The MCP tool name to call.
+        params: Parameters to pass to the tool.
+        description: Human-readable description of the step.
+        condition: Optional condition expression for conditional execution.
+        optional: If True, step can be skipped for low-confidence matches.
+        tags: Semantic tags for filtering (e.g., ["bench", "seating"]).
+    """
 
     tool: str
     params: Dict[str, Any]
     description: Optional[str] = None
     condition: Optional[str] = None  # Optional condition expression
+    optional: bool = False  # Can be skipped for LOW confidence matches
+    tags: List[str] = field(default_factory=list)  # Semantic tags for filtering
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert step to dictionary representation."""
@@ -25,6 +36,8 @@ class WorkflowStep:
             "params": dict(self.params),
             "description": self.description,
             "condition": self.condition,
+            "optional": self.optional,
+            "tags": list(self.tags),
         }
 
 

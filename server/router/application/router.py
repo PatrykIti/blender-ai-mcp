@@ -23,6 +23,7 @@ from server.router.application.analyzers.geometry_pattern_detector import Geomet
 from server.router.application.engines.tool_correction_engine import ToolCorrectionEngine
 from server.router.application.engines.tool_override_engine import ToolOverrideEngine
 from server.router.application.engines.workflow_expansion_engine import WorkflowExpansionEngine
+from server.router.application.engines.workflow_adapter import WorkflowAdapter, AdaptationResult
 from server.router.application.engines.error_firewall import ErrorFirewall
 from server.router.application.classifier.intent_classifier import IntentClassifier
 from server.router.application.classifier.workflow_intent_classifier import (
@@ -135,6 +136,14 @@ class SupervisorRouter:
         self._proportion_inheritance = ProportionInheritance()
         self._semantic_initialized = False
         self._last_match_result: Optional[MatchResult] = None
+
+        # Workflow adaptation (TASK-051)
+        # Adapts workflow steps based on confidence level
+        self._workflow_adapter = WorkflowAdapter(
+            config=self.config,
+            classifier=workflow_classifier,
+        )
+        self._last_adaptation_result: Optional[AdaptationResult] = None
 
         # Feedback collection (TASK-046-6)
         self._feedback_collector = FeedbackCollector(auto_save=True)
@@ -453,6 +462,10 @@ class SupervisorRouter:
     ) -> Optional[List[CorrectedToolCall]]:
         """Expand a triggered workflow by name.
 
+        TASK-051: Now includes workflow adaptation based on confidence level.
+        If a match result exists with requires_adaptation=True, the workflow
+        steps will be filtered based on the confidence level.
+
         Args:
             workflow_name: Name of workflow to expand.
             params: Original tool parameters.
@@ -469,7 +482,52 @@ class SupervisorRouter:
         # Build evaluation context for $CALCULATE expressions (TASK-041-9)
         eval_context = self._build_eval_context(context, params)
 
-        # Expand workflow with context
+        # Check if workflow adaptation is needed (TASK-051)
+        should_adapt = (
+            self.config.enable_workflow_adaptation
+            and self._last_match_result is not None
+            and self._last_match_result.requires_adaptation
+        )
+
+        if should_adapt:
+            # Get workflow definition for adaptation
+            definition = registry.get_definition(workflow_name)
+            if definition:
+                # Adapt workflow based on confidence level
+                adapted_steps, adaptation_result = self._workflow_adapter.adapt(
+                    definition=definition,
+                    confidence_level=self._last_match_result.confidence_level,
+                    user_prompt=self._current_goal or "",
+                )
+                self._last_adaptation_result = adaptation_result
+
+                # Convert adapted steps to CorrectedToolCall list
+                calls = []
+                for step in adapted_steps:
+                    # Resolve params with eval_context
+                    resolved_params = dict(step.params)
+                    call = CorrectedToolCall(
+                        tool_name=step.tool,
+                        params=resolved_params,
+                        corrections_applied=[f"workflow:{workflow_name}"],
+                        is_injected=True,
+                    )
+                    calls.append(call)
+
+                if calls:
+                    self._processing_stats["workflows_expanded"] += 1
+                    self.logger.log_info(
+                        f"Adapted workflow '{workflow_name}': "
+                        f"{adaptation_result.original_step_count} -> {adaptation_result.adapted_step_count} steps "
+                        f"(confidence: {self._last_match_result.confidence_level}, "
+                        f"strategy: {adaptation_result.adaptation_strategy})"
+                    )
+                    # Clear pending workflow after expansion
+                    self._pending_workflow = None
+
+                return calls
+
+        # Standard expansion without adaptation
         calls = registry.expand_workflow(workflow_name, params, eval_context)
 
         if calls:
@@ -819,11 +877,22 @@ class SupervisorRouter:
             "correction_engine": True,
             "override_engine": True,
             "expansion_engine": True,
+            "workflow_adapter": True,  # TASK-051
             "firewall": True,
             "classifier": self.classifier.is_loaded(),
             "semantic_matcher": self._semantic_initialized,
             "proportion_inheritance": True,
         }
+
+    def get_last_adaptation_result(self) -> Optional[AdaptationResult]:
+        """Get last workflow adaptation result.
+
+        TASK-051: Returns information about the last workflow adaptation.
+
+        Returns:
+            AdaptationResult or None if no adaptation occurred.
+        """
+        return self._last_adaptation_result
 
     def get_config(self) -> RouterConfig:
         """Get current router configuration.
