@@ -17,6 +17,7 @@ from server.router.domain.interfaces.i_vector_store import (
     VectorNamespace,
     VectorRecord,
     SearchResult,
+    WeightedSearchResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -452,3 +453,218 @@ class LanceVectorStore(IVectorStore):
             True if store is operational.
         """
         return LANCEDB_AVAILABLE and not self._use_fallback
+
+    def search_workflows_weighted(
+        self,
+        query_vector: List[float],
+        query_language: str = "en",
+        top_k: int = 5,
+        min_score: float = 0.5,
+    ) -> List[WeightedSearchResult]:
+        """Search workflows with weighted scoring.
+
+        Returns best match per workflow using multi-embedding
+        with source weight and language boost.
+
+        Args:
+            query_vector: Query embedding vector (768D).
+            query_language: Detected language of query.
+            top_k: Number of workflows to return.
+            min_score: Minimum final score threshold.
+
+        Returns:
+            List of WeightedSearchResult sorted by final_score.
+        """
+        if self._use_fallback:
+            return self._search_workflows_weighted_fallback(
+                query_vector, query_language, top_k, min_score
+            )
+
+        try:
+            # Search with higher limit to get multiple embeddings per workflow
+            raw_results = (
+                self._table.search(query_vector)
+                .where(f"namespace = '{VectorNamespace.WORKFLOWS.value}'")
+                .limit(top_k * 20)  # Get more results for grouping
+                .to_list()
+            )
+
+            # Group by workflow_id, keep best match per workflow
+            workflow_matches: Dict[str, WeightedSearchResult] = {}
+
+            for row in raw_results:
+                # Extract workflow_id from metadata or id
+                metadata = {}
+                if row.get("metadata"):
+                    try:
+                        metadata = json.loads(row["metadata"])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+
+                workflow_id = metadata.get("workflow_id", row["id"])
+                source_type = metadata.get("source_type", "unknown")
+                source_weight = float(metadata.get("source_weight", 1.0))
+                text_language = metadata.get("language", "en")
+
+                # Calculate raw cosine similarity from distance
+                distance = row.get("_distance", 0)
+                raw_score = max(0.0, 1.0 - (distance / 2.0))
+
+                # Language boost
+                language_boost = 1.0 if text_language == query_language else 0.9
+
+                # Calculate final score
+                final_score = raw_score * source_weight * language_boost
+
+                # Keep best match per workflow
+                if (
+                    workflow_id not in workflow_matches
+                    or final_score > workflow_matches[workflow_id].final_score
+                ):
+                    workflow_matches[workflow_id] = WeightedSearchResult(
+                        workflow_id=workflow_id,
+                        raw_score=raw_score,
+                        source_weight=source_weight,
+                        language_boost=language_boost,
+                        final_score=final_score,
+                        matched_text=row.get("text", ""),
+                        source_type=source_type,
+                    )
+
+            # Sort by final score and filter
+            results = sorted(
+                workflow_matches.values(),
+                key=lambda x: x.final_score,
+                reverse=True,
+            )
+
+            # Apply minimum score filter
+            results = [r for r in results if r.final_score >= min_score]
+
+            return results[:top_k]
+
+        except Exception as e:
+            logger.error(f"Weighted search failed: {e}")
+            return self._search_workflows_weighted_fallback(
+                query_vector, query_language, top_k, min_score
+            )
+
+    def _search_workflows_weighted_fallback(
+        self,
+        query_vector: List[float],
+        query_language: str,
+        top_k: int,
+        min_score: float,
+    ) -> List[WeightedSearchResult]:
+        """Fallback weighted search using linear scan."""
+        try:
+            import numpy as np
+
+            query = np.array(query_vector)
+            query_norm = np.linalg.norm(query)
+            if query_norm > 0:
+                query = query / query_norm
+
+            workflow_matches: Dict[str, WeightedSearchResult] = {}
+
+            for record in self._fallback_store.values():
+                if record.namespace != VectorNamespace.WORKFLOWS:
+                    continue
+
+                # Extract metadata
+                workflow_id = record.metadata.get("workflow_id", record.id)
+                source_type = record.metadata.get("source_type", "unknown")
+                source_weight = float(record.metadata.get("source_weight", 1.0))
+                text_language = record.metadata.get("language", "en")
+
+                # Calculate cosine similarity
+                vec = np.array(record.vector)
+                vec_norm = np.linalg.norm(vec)
+                if vec_norm > 0:
+                    vec = vec / vec_norm
+
+                raw_score = float(np.dot(query, vec))
+
+                # Language boost
+                language_boost = 1.0 if text_language == query_language else 0.9
+
+                # Calculate final score
+                final_score = raw_score * source_weight * language_boost
+
+                # Keep best match per workflow
+                if (
+                    workflow_id not in workflow_matches
+                    or final_score > workflow_matches[workflow_id].final_score
+                ):
+                    workflow_matches[workflow_id] = WeightedSearchResult(
+                        workflow_id=workflow_id,
+                        raw_score=raw_score,
+                        source_weight=source_weight,
+                        language_boost=language_boost,
+                        final_score=final_score,
+                        matched_text=record.text,
+                        source_type=source_type,
+                    )
+
+            # Sort and filter
+            results = sorted(
+                workflow_matches.values(),
+                key=lambda x: x.final_score,
+                reverse=True,
+            )
+            results = [r for r in results if r.final_score >= min_score]
+
+            return results[:top_k]
+
+        except ImportError:
+            logger.error("NumPy not available for fallback search")
+            return []
+
+    def get_workflow_embedding_count(self) -> int:
+        """Get count of workflow embeddings (multiple per workflow).
+
+        Returns:
+            Total number of workflow embedding records.
+        """
+        return self.count(VectorNamespace.WORKFLOWS)
+
+    def get_unique_workflow_count(self) -> int:
+        """Get count of unique workflows.
+
+        Returns:
+            Number of distinct workflow_ids.
+        """
+        if self._use_fallback:
+            workflow_ids = set()
+            for record in self._fallback_store.values():
+                if record.namespace == VectorNamespace.WORKFLOWS:
+                    wf_id = record.metadata.get("workflow_id", record.id)
+                    workflow_ids.add(wf_id)
+            return len(workflow_ids)
+
+        try:
+            # Get all workflow records and extract unique workflow_ids
+            results = (
+                self._table.search()
+                .where(f"namespace = '{VectorNamespace.WORKFLOWS.value}'")
+                .select(["id", "metadata"])
+                .limit(10000)
+                .to_list()
+            )
+
+            workflow_ids = set()
+            for r in results:
+                metadata = {}
+                if r.get("metadata"):
+                    try:
+                        metadata = json.loads(r["metadata"])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                wf_id = metadata.get("workflow_id", r["id"])
+                workflow_ids.add(wf_id)
+
+            return len(workflow_ids)
+
+        except Exception as e:
+            logger.error(f"Failed to get unique workflow count: {e}")
+            return 0

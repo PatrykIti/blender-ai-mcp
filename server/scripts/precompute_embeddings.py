@@ -5,6 +5,7 @@ This script runs during Docker build to pre-populate the LanceDB
 vector store with tool embeddings, avoiding ~30s computation on every start.
 
 TASK-047: LanceDB Migration
+TASK-050-6: Updated for multi-embedding workflow support
 """
 
 import logging
@@ -68,12 +69,24 @@ def main():
     if workflows:
         # Get shared WorkflowIntentClassifier via DI (uses same LaBSE model)
         workflow_classifier = get_workflow_classifier()
+
+        # Clear existing workflow embeddings for fresh multi-embedding
+        workflow_classifier.clear_cache()
+
+        # Load workflows - now creates multi-embeddings (TASK-050)
         workflow_classifier.load_workflow_embeddings(workflows)
 
         wf_info = workflow_classifier.get_info()
+        num_workflows = wf_info.get("num_workflows", 0)
+        num_embeddings = wf_info.get("num_embeddings", 0)
+        avg_per_workflow = wf_info.get("embeddings_per_workflow", 0)
+
         logger.info(
-            f"Stored {wf_info.get('num_workflows', 0)} workflow embeddings in LanceDB"
+            f"Stored {num_embeddings} workflow embeddings "
+            f"({num_workflows} workflows, ~{avg_per_workflow} embeddings/workflow)"
         )
+        logger.info(f"  Multi-embedding enabled: {wf_info.get('multi_embedding_enabled', False)}")
+        logger.info(f"  Source weights: {wf_info.get('source_weights', {})}")
     else:
         logger.info("No workflows found to embed")
 

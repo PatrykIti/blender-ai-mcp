@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 task (~6 sub-tasks)
-- **In Progress:** 0 tasks
-- **Done:** 114
+- **In Progress:** 0
+- **Done:** 115
 
 ---
 
@@ -20,7 +20,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-*(No tasks currently in progress)*
+*No tasks in progress.*
 
 ---
 
@@ -28,6 +28,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-050](./TASK-050_Multi_Embedding_Workflow_System.md) | **Multi-Embedding Workflow System** | 🔴 High | 2025-12-07 |
 | [TASK-049](./TASK-049_Fix_ToolDispatcher_Mappings.md) | **Fix ToolDispatcher Mappings** | 🔴 High | 2025-12-07 |
 | [TASK-048](./TASK-048_Proper_DI_For_Classifiers_Shared_LaBSE_model.md) | **Proper DI for Classifiers + Shared LaBSE Model** | 🔴 High | 2025-12-07 |
 | [TASK-047](./TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md) | **LanceDB Vector Store Migration** | 🔴 High | 2025-12-06 |

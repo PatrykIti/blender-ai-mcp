@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [96](./96-2025-12-07-multi-embedding-workflow.md) | 2025-12-07 | **Multi-Embedding Workflow System (TASK-050)** | - |
 | [95](./95-2025-12-07-fix-dispatcher-mappings.md) | 2025-12-07 | **Fix ToolDispatcher Mappings (TASK-049)** | - |
 | [94](./94-2025-12-07-proper-di-shared-labse.md) | 2025-12-07 | **Proper DI for Classifiers + Shared LaBSE Model (TASK-048)** | - |
 | [93](./93-2025-12-06-lancedb-migration.md) | 2025-12-06 | **LanceDB Vector Store Migration (TASK-047)** | - |

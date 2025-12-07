@@ -5,6 +5,7 @@ Provides LLM access to manage the vector database for semantic workflow search.
 LanceDB-based vector storage with HNSW indexing for O(log N) search.
 
 TASK-047-5: Implementation of vector_db_manage MCP tool.
+TASK-050-7: Updated for multi-embedding workflow support.
 """
 
 import json
@@ -142,8 +143,23 @@ def vector_db_manage(
 
 
 def _action_stats(store) -> str:
-    """Get database statistics."""
+    """Get database statistics with multi-embedding info."""
     stats = store.get_stats()
+
+    # Add multi-embedding specific stats (TASK-050-7)
+    unique_workflows = store.get_unique_workflow_count()
+    total_embeddings = store.get_workflow_embedding_count()
+
+    stats["multi_embedding"] = {
+        "unique_workflows": unique_workflows,
+        "total_workflow_embeddings": total_embeddings,
+        "avg_embeddings_per_workflow": (
+            round(total_embeddings / unique_workflows, 1)
+            if unique_workflows > 0
+            else 0
+        ),
+    }
+
     return json.dumps(stats, indent=2)
 
 
@@ -175,7 +191,10 @@ def _action_search_test(
     top_k: int,
     threshold: float,
 ) -> str:
-    """Test semantic search with a query."""
+    """Test semantic search with a query.
+
+    TASK-050-7: Uses weighted search for workflows namespace.
+    """
     if not query:
         return json.dumps({"error": "query required for search_test"}, indent=2)
 
@@ -204,7 +223,51 @@ def _action_search_test(
             normalize_embeddings=True,
         )
 
-        # Search
+        # Use weighted search for workflows (TASK-050-7)
+        if namespace == "workflows":
+            from server.router.infrastructure.language_detector import detect_language
+
+            query_language = detect_language(query)
+
+            weighted_results = store.search_workflows_weighted(
+                query_vector=query_vector.tolist(),
+                query_language=query_language,
+                top_k=top_k,
+                min_score=threshold,
+            )
+
+            # Format weighted results
+            formatted = []
+            for r in weighted_results:
+                formatted.append(
+                    {
+                        "workflow_id": r.workflow_id,
+                        "final_score": round(r.final_score, 4),
+                        "raw_score": round(r.raw_score, 4),
+                        "source_type": r.source_type,
+                        "source_weight": r.source_weight,
+                        "language_boost": r.language_boost,
+                        "matched_text": (
+                            r.matched_text[:80] + "..."
+                            if len(r.matched_text) > 80
+                            else r.matched_text
+                        ),
+                    }
+                )
+
+            return json.dumps(
+                {
+                    "query": query,
+                    "namespace": namespace,
+                    "query_language": query_language,
+                    "search_type": "weighted_multi_embedding",
+                    "results": formatted,
+                    "count": len(formatted),
+                },
+                indent=2,
+            )
+
+        # Regular search for tools
         ns = VectorNamespace(namespace)
         results = store.search(
             query_vector=query_vector.tolist(),
@@ -228,6 +291,7 @@ def _action_search_test(
             {
                 "query": query,
                 "namespace": namespace,
+                "search_type": "standard",
                 "results": formatted,
                 "count": len(formatted),
             },
@@ -243,7 +307,10 @@ def _action_add_workflow(
     workflow_name: Optional[str],
     workflow_data: Optional[Dict[str, Any]],
 ) -> str:
-    """Add a workflow to the database."""
+    """Add a workflow to the database with multi-embedding.
+
+    TASK-050-7: Creates separate embeddings for each text source.
+    """
     if not workflow_name:
         return json.dumps({"error": "workflow_name required"}, indent=2)
 
@@ -268,58 +335,81 @@ def _action_add_workflow(
         )
 
     try:
-        # Build text from workflow data
-        texts = []
+        from server.router.infrastructure.language_detector import detect_language
+        from server.router.application.classifier.workflow_intent_classifier import (
+            SOURCE_WEIGHTS,
+        )
 
-        # Add description
+        records = []
+        texts_with_meta = []
+
+        # Sample prompts (weight 1.0)
+        for idx, prompt in enumerate(workflow_data.get("sample_prompts", [])):
+            texts_with_meta.append((prompt, "sample_prompt", SOURCE_WEIGHTS["sample_prompt"], idx))
+
+        # Trigger keywords (weight 0.8)
+        for idx, keyword in enumerate(workflow_data.get("trigger_keywords", [])):
+            texts_with_meta.append((keyword, "trigger_keyword", SOURCE_WEIGHTS["trigger_keyword"], idx))
+
+        # Workflow name (weight 0.5)
+        name_text = workflow_name.replace("_", " ")
+        texts_with_meta.append((name_text, "name", SOURCE_WEIGHTS["name"], 0))
+
+        # Description (weight 0.6)
         if "description" in workflow_data:
-            texts.append(workflow_data["description"])
+            texts_with_meta.append(
+                (workflow_data["description"], "description", SOURCE_WEIGHTS["description"], 0)
+            )
 
-        # Add sample prompts
-        if "sample_prompts" in workflow_data:
-            texts.extend(workflow_data["sample_prompts"])
-
-        # Add trigger keywords
-        if "trigger_keywords" in workflow_data:
-            texts.extend(workflow_data["trigger_keywords"])
-
-        # Add workflow name (spaces instead of underscores)
-        texts.append(workflow_name.replace("_", " "))
-
-        if not texts:
+        if not texts_with_meta:
             return json.dumps(
                 {"error": "No text content found in workflow_data"}, indent=2
             )
 
-        # Combine and encode
-        combined_text = " ".join(texts)
-        vector = model.encode(
-            combined_text,
-            convert_to_numpy=True,
-            normalize_embeddings=True,
-        )
+        # Create separate embedding for each text (multi-embedding)
+        category = workflow_data.get("category")
 
-        # Create record
-        record = VectorRecord(
-            id=workflow_name,
-            namespace=VectorNamespace.WORKFLOWS,
-            vector=vector.tolist(),
-            text=combined_text,
-            metadata={
-                "category": workflow_data.get("category"),
-                "trigger_keywords": workflow_data.get("trigger_keywords", []),
-            },
-        )
+        for text, source_type, weight, idx in texts_with_meta:
+            language = detect_language(text)
+            vector = model.encode(
+                text,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+            )
 
-        # Upsert
-        count = store.upsert([record])
+            record_id = f"{workflow_name}__{source_type}__{idx}"
+
+            record = VectorRecord(
+                id=record_id,
+                namespace=VectorNamespace.WORKFLOWS,
+                vector=vector.tolist(),
+                text=text,
+                metadata={
+                    "workflow_id": workflow_name,
+                    "source_type": source_type,
+                    "source_weight": weight,
+                    "language": language,
+                    "category": category,
+                },
+            )
+            records.append(record)
+
+        # Upsert all records
+        count = store.upsert(records)
 
         return json.dumps(
             {
                 "success": True,
                 "workflow_name": workflow_name,
-                "text_length": len(combined_text),
-                "records_added": count,
+                "multi_embedding": True,
+                "embeddings_created": len(records),
+                "records_upserted": count,
+                "source_breakdown": {
+                    "sample_prompts": len(workflow_data.get("sample_prompts", [])),
+                    "trigger_keywords": len(workflow_data.get("trigger_keywords", [])),
+                    "name": 1,
+                    "description": 1 if "description" in workflow_data else 0,
+                },
             },
             indent=2,
         )
@@ -333,7 +423,10 @@ def _action_remove(
     namespace: Optional[str],
     workflow_name: Optional[str],
 ) -> str:
-    """Remove a record from the database."""
+    """Remove a record from the database.
+
+    TASK-050-7: For workflows, removes all multi-embedding records.
+    """
     if not workflow_name:
         return json.dumps({"error": "workflow_name required for remove"}, indent=2)
 
@@ -343,6 +436,32 @@ def _action_remove(
         )
 
     ns = VectorNamespace(namespace)
+
+    # For workflows, find and delete all multi-embedding records
+    if namespace == "workflows":
+        all_ids = store.get_all_ids(ns)
+        ids_to_delete = [
+            id_ for id_ in all_ids
+            if id_ == workflow_name or id_.startswith(f"{workflow_name}__")
+        ]
+
+        if ids_to_delete:
+            count = store.delete(ids_to_delete, ns)
+        else:
+            count = 0
+
+        return json.dumps(
+            {
+                "success": count > 0,
+                "deleted_count": count,
+                "workflow_name": workflow_name,
+                "namespace": namespace,
+                "multi_embedding_records_deleted": len(ids_to_delete),
+            },
+            indent=2,
+        )
+
+    # For tools, simple delete
     count = store.delete([workflow_name], ns)
 
     return json.dumps(

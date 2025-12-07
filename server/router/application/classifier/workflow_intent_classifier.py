@@ -20,7 +20,27 @@ from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
     VectorNamespace,
     VectorRecord,
+    WeightedSearchResult,
+    WorkflowEmbeddingRecord,
 )
+from server.router.infrastructure.language_detector import detect_language
+
+# Source type weights for scoring
+SOURCE_WEIGHTS = {
+    "sample_prompt": 1.0,
+    "trigger_keyword": 0.8,
+    "description": 0.6,
+    "name": 0.5,
+}
+
+# TASK-050-5: Confidence levels and thresholds
+CONFIDENCE_THRESHOLDS = {
+    "HIGH": 0.90,      # >= 0.90: High confidence, direct match
+    "MEDIUM": 0.75,    # >= 0.75: Medium confidence, likely match
+    "LOW": 0.60,       # >= 0.60: Low confidence, possible match
+    "NONE": 0.0,       # < 0.60: No confidence, fallback to generalization
+}
+
 from server.router.infrastructure.config import RouterConfig
 
 logger = logging.getLogger(__name__)
@@ -146,12 +166,14 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             return
 
         # Check if vector store already has embeddings
+        # TASK-050-3: Compare unique workflows, not total records (multi-embedding)
         store = self._ensure_vector_store()
-        existing_count = store.count(VectorNamespace.WORKFLOWS)
+        unique_workflows = store.get_unique_workflow_count()
 
-        if existing_count >= len(self._workflow_texts):
+        if unique_workflows >= len(self._workflow_texts):
             logger.info(
-                f"Vector store already has {existing_count} workflow embeddings"
+                f"Vector store already has {unique_workflows} workflows "
+                f"({store.get_workflow_embedding_count()} total embeddings)"
             )
             # Still need to load model for query encoding
             if EMBEDDINGS_AVAILABLE:
@@ -175,7 +197,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         name: str,
         workflow: Any,
     ) -> List[str]:
-        """Extract texts from workflow for embedding.
+        """Extract texts from workflow for embedding (legacy method).
 
         Args:
             name: Workflow name.
@@ -184,33 +206,76 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         Returns:
             List of texts for embedding.
         """
-        texts = []
+        # Use new method and extract just texts
+        texts_with_meta = self._extract_texts_with_metadata(name, workflow)
+        return [text for text, _, _ in texts_with_meta]
 
-        # Get sample prompts (primary source)
+    def _extract_texts_with_metadata(
+        self,
+        name: str,
+        workflow: Any,
+    ) -> List[Tuple[str, str, float]]:
+        """Extract texts from workflow with source type and weight.
+
+        TASK-050-3: Multi-embedding support.
+
+        Args:
+            name: Workflow name.
+            workflow: Workflow object or definition dict.
+
+        Returns:
+            List of (text, source_type, weight) tuples.
+        """
+        texts_with_meta: List[Tuple[str, str, float]] = []
+
+        # Get sample prompts (highest weight - 1.0)
+        sample_prompts = []
         if hasattr(workflow, "sample_prompts"):
-            texts.extend(workflow.sample_prompts)
+            sample_prompts = workflow.sample_prompts
         elif isinstance(workflow, dict) and "sample_prompts" in workflow:
-            texts.extend(workflow["sample_prompts"])
+            sample_prompts = workflow["sample_prompts"]
 
-        # Get trigger keywords
+        for prompt in sample_prompts:
+            texts_with_meta.append(
+                (prompt, "sample_prompt", SOURCE_WEIGHTS["sample_prompt"])
+            )
+
+        # Get trigger keywords (weight 0.8)
+        trigger_keywords = []
         if hasattr(workflow, "trigger_keywords"):
-            texts.extend(workflow.trigger_keywords)
+            trigger_keywords = workflow.trigger_keywords
         elif isinstance(workflow, dict) and "trigger_keywords" in workflow:
-            texts.extend(workflow["trigger_keywords"])
+            trigger_keywords = workflow["trigger_keywords"]
 
-        # Add workflow name (replace underscores with spaces)
-        texts.append(name.replace("_", " "))
+        for keyword in trigger_keywords:
+            texts_with_meta.append(
+                (keyword, "trigger_keyword", SOURCE_WEIGHTS["trigger_keyword"])
+            )
 
-        # Add description
+        # Add workflow name (weight 0.5)
+        name_text = name.replace("_", " ")
+        texts_with_meta.append(
+            (name_text, "name", SOURCE_WEIGHTS["name"])
+        )
+
+        # Add description (weight 0.6)
+        description = None
         if hasattr(workflow, "description"):
-            texts.append(workflow.description)
+            description = workflow.description
         elif isinstance(workflow, dict) and "description" in workflow:
-            texts.append(workflow["description"])
+            description = workflow["description"]
 
-        return texts
+        if description:
+            texts_with_meta.append(
+                (description, "description", SOURCE_WEIGHTS["description"])
+            )
+
+        return texts_with_meta
 
     def _compute_and_store_embeddings(self, workflows: Dict[str, Any]) -> None:
         """Compute embeddings and store in LanceDB.
+
+        TASK-050-3: Multi-embedding - creates separate embedding for each text.
 
         Args:
             workflows: Workflow definitions for metadata extraction.
@@ -218,52 +283,70 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         if self._model is None:
             return
 
-        logger.info(f"Computing embeddings for {len(self._workflow_texts)} workflows")
+        logger.info(f"Computing multi-embeddings for {len(workflows)} workflows")
 
         store = self._ensure_vector_store()
-        records = []
+        records: List[VectorRecord] = []
+        total_embeddings = 0
 
-        for name, texts in self._workflow_texts.items():
+        for name, workflow in workflows.items():
             try:
-                # Combine all texts and encode
-                combined = " ".join(texts)
-                embedding = self._model.encode(
-                    combined,
-                    convert_to_numpy=True,
-                    normalize_embeddings=True,
-                    show_progress_bar=False,
-                )
+                # Extract texts with metadata
+                texts_with_meta = self._extract_texts_with_metadata(name, workflow)
 
-                # Extract metadata from workflow
-                workflow = workflows.get(name, {})
-                metadata = {}
-
+                # Extract workflow-level metadata
+                category = None
                 if hasattr(workflow, "category"):
-                    metadata["category"] = workflow.category
+                    category = workflow.category
                 elif isinstance(workflow, dict):
-                    metadata["category"] = workflow.get("category")
+                    category = workflow.get("category")
 
-                if hasattr(workflow, "trigger_keywords"):
-                    metadata["trigger_keywords"] = workflow.trigger_keywords
-                elif isinstance(workflow, dict):
-                    metadata["trigger_keywords"] = workflow.get("trigger_keywords", [])
+                # Create separate embedding for each text
+                for idx, (text, source_type, weight) in enumerate(texts_with_meta):
+                    # Detect language
+                    language = detect_language(text)
 
-                records.append(
-                    VectorRecord(
-                        id=name,
-                        namespace=VectorNamespace.WORKFLOWS,
-                        vector=embedding.tolist(),
-                        text=combined,
-                        metadata=metadata,
+                    # Compute embedding
+                    embedding = self._model.encode(
+                        text,
+                        convert_to_numpy=True,
+                        normalize_embeddings=True,
+                        show_progress_bar=False,
                     )
-                )
+
+                    # Create unique ID: workflow_name__source_type__index
+                    record_id = f"{name}__{source_type}__{idx}"
+
+                    # Build metadata for weighted search
+                    metadata = {
+                        "workflow_id": name,
+                        "source_type": source_type,
+                        "source_weight": weight,
+                        "language": language,
+                    }
+                    if category:
+                        metadata["category"] = category
+
+                    records.append(
+                        VectorRecord(
+                            id=record_id,
+                            namespace=VectorNamespace.WORKFLOWS,
+                            vector=embedding.tolist(),
+                            text=text,
+                            metadata=metadata,
+                        )
+                    )
+                    total_embeddings += 1
 
             except Exception as e:
-                logger.error(f"Failed to compute embedding for {name}: {e}")
+                logger.error(f"Failed to compute embeddings for {name}: {e}")
 
         if records:
             count = store.upsert(records)
-            logger.info(f"Stored {count} workflow embeddings in LanceDB")
+            logger.info(
+                f"Stored {count} workflow embeddings "
+                f"({total_embeddings} texts from {len(workflows)} workflows)"
+            )
 
     def _setup_tfidf_fallback(self) -> None:
         """Setup TF-IDF fallback when embeddings unavailable."""
@@ -340,11 +423,17 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         top_k: int,
         threshold: float,
     ) -> List[Tuple[str, float]]:
-        """Find similar workflows using LanceDB vector search."""
+        """Find similar workflows using LanceDB weighted vector search.
+
+        TASK-050-3/4: Uses multi-embedding with weighted scoring.
+        """
         if self._model is None:
             return []
 
         try:
+            # Detect query language for language boost
+            query_language = detect_language(prompt)
+
             # Get prompt embedding
             prompt_embedding = self._model.encode(
                 prompt,
@@ -353,19 +442,67 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
                 show_progress_bar=False,
             )
 
-            # Search using LanceDB
+            # Search using weighted multi-embedding search
+            store = self._ensure_vector_store()
+            results = store.search_workflows_weighted(
+                query_vector=prompt_embedding.tolist(),
+                query_language=query_language,
+                top_k=top_k,
+                min_score=threshold,
+            )
+
+            # Return workflow_id and final_score
+            return [(r.workflow_id, r.final_score) for r in results]
+
+        except Exception as e:
+            logger.error(f"Vector store weighted search failed: {e}")
+            # Fallback to legacy search
+            return self._find_similar_legacy(prompt, top_k, threshold)
+
+    def _find_similar_legacy(
+        self,
+        prompt: str,
+        top_k: int,
+        threshold: float,
+    ) -> List[Tuple[str, float]]:
+        """Legacy search using simple vector search (fallback)."""
+        if self._model is None:
+            return []
+
+        try:
+            prompt_embedding = self._model.encode(
+                prompt,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+                show_progress_bar=False,
+            )
+
             store = self._ensure_vector_store()
             results = store.search(
                 query_vector=prompt_embedding.tolist(),
                 namespace=VectorNamespace.WORKFLOWS,
-                top_k=top_k,
+                top_k=top_k * 3,  # Get more since we need to dedupe by workflow
                 threshold=threshold,
             )
 
-            return [(r.id, r.score) for r in results]
+            # Deduplicate by workflow_id (take best score per workflow)
+            workflow_scores: Dict[str, float] = {}
+            for r in results:
+                # Extract workflow_id from record ID or metadata
+                workflow_id = r.metadata.get("workflow_id", r.id.split("__")[0])
+                if workflow_id not in workflow_scores:
+                    workflow_scores[workflow_id] = r.score
+
+            # Sort by score and return top_k
+            sorted_results = sorted(
+                workflow_scores.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            return sorted_results[:top_k]
 
         except Exception as e:
-            logger.error(f"Vector store similarity search failed: {e}")
+            logger.error(f"Legacy vector search failed: {e}")
             return []
 
     def _find_similar_with_tfidf(
@@ -409,6 +546,122 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         """
         results = self.find_similar(prompt, top_k=1, threshold=min_confidence)
         return results[0] if results else None
+
+    def find_best_match_with_confidence(
+        self,
+        prompt: str,
+    ) -> Dict[str, Any]:
+        """Find best matching workflow with confidence level and fallback.
+
+        TASK-050-5: Returns detailed match result with confidence classification.
+
+        Confidence levels:
+        - HIGH (>= 0.90): Direct match, high confidence
+        - MEDIUM (>= 0.75): Likely match, medium confidence
+        - LOW (>= 0.60): Possible match, low confidence
+        - NONE (< 0.60): No match, use generalization fallback
+
+        Args:
+            prompt: User prompt.
+
+        Returns:
+            Dict with keys:
+            - workflow_id: Matched workflow name (or None)
+            - score: Final weighted score
+            - confidence_level: HIGH, MEDIUM, LOW, or NONE
+            - source_type: What matched (sample_prompt, trigger_keyword, etc.)
+            - matched_text: The text that matched
+            - fallback_candidates: List of generalization candidates if NONE
+            - language_detected: Detected query language
+        """
+        result = {
+            "workflow_id": None,
+            "score": 0.0,
+            "confidence_level": "NONE",
+            "source_type": None,
+            "matched_text": None,
+            "fallback_candidates": [],
+            "language_detected": "en",
+        }
+
+        if not self._is_loaded:
+            logger.warning("Classifier not loaded")
+            return result
+
+        # Detect language
+        query_language = detect_language(prompt)
+        result["language_detected"] = query_language
+
+        # Get weighted search results
+        if EMBEDDINGS_AVAILABLE and self._model is not None:
+            try:
+                prompt_embedding = self._model.encode(
+                    prompt,
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
+                )
+
+                store = self._ensure_vector_store()
+                weighted_results = store.search_workflows_weighted(
+                    query_vector=prompt_embedding.tolist(),
+                    query_language=query_language,
+                    top_k=5,  # Get multiple for fallback
+                    min_score=0.0,  # Get all for analysis
+                )
+
+                if weighted_results:
+                    best = weighted_results[0]
+                    result["workflow_id"] = best.workflow_id
+                    result["score"] = best.final_score
+                    result["source_type"] = best.source_type
+                    result["matched_text"] = best.matched_text
+
+                    # Classify confidence level
+                    if best.final_score >= CONFIDENCE_THRESHOLDS["HIGH"]:
+                        result["confidence_level"] = "HIGH"
+                    elif best.final_score >= CONFIDENCE_THRESHOLDS["MEDIUM"]:
+                        result["confidence_level"] = "MEDIUM"
+                    elif best.final_score >= CONFIDENCE_THRESHOLDS["LOW"]:
+                        result["confidence_level"] = "LOW"
+                    else:
+                        result["confidence_level"] = "NONE"
+                        result["workflow_id"] = None  # Not confident enough
+
+                    # Provide fallback candidates for LOW or NONE
+                    if result["confidence_level"] in ("LOW", "NONE"):
+                        result["fallback_candidates"] = [
+                            {
+                                "workflow_id": r.workflow_id,
+                                "score": r.final_score,
+                                "source_type": r.source_type,
+                            }
+                            for r in weighted_results[:3]
+                        ]
+
+            except Exception as e:
+                logger.error(f"Confidence match failed: {e}")
+
+        return result
+
+    def get_confidence_level(self, score: float) -> str:
+        """Get confidence level for a score.
+
+        TASK-050-5: Utility method to classify confidence.
+
+        Args:
+            score: Weighted similarity score (0.0 to 1.0).
+
+        Returns:
+            Confidence level: HIGH, MEDIUM, LOW, or NONE.
+        """
+        if score >= CONFIDENCE_THRESHOLDS["HIGH"]:
+            return "HIGH"
+        elif score >= CONFIDENCE_THRESHOLDS["MEDIUM"]:
+            return "MEDIUM"
+        elif score >= CONFIDENCE_THRESHOLDS["LOW"]:
+            return "LOW"
+        return "NONE"
 
     def get_generalization_candidates(
         self,
@@ -499,26 +752,42 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
     def get_info(self) -> Dict[str, Any]:
         """Get classifier information.
 
+        TASK-050-3: Updated for multi-embedding stats.
+
         Returns:
             Dictionary with classifier information.
         """
         store = self._ensure_vector_store()
         stats = store.get_stats()
 
+        # Get multi-embedding specific counts
+        unique_workflows = store.get_unique_workflow_count()
+        total_embeddings = store.get_workflow_embedding_count()
+
         return {
             "model_name": self._model_name,
             "embeddings_available": EMBEDDINGS_AVAILABLE,
             "model_loaded": self._model is not None,
-            "num_workflows": stats.get("workflows_count", 0),
+            "num_workflows": unique_workflows,
+            "num_embeddings": total_embeddings,
+            "embeddings_per_workflow": (
+                round(total_embeddings / unique_workflows, 1)
+                if unique_workflows > 0
+                else 0
+            ),
             "is_loaded": self._is_loaded,
             "using_fallback": (
                 self._is_loaded
                 and self._tfidf_vectorizer is not None
             ),
+            "multi_embedding_enabled": True,  # TASK-050-3
+            "source_weights": SOURCE_WEIGHTS,
             "vector_store": {
                 "type": "LanceDB",
                 "using_fallback": stats.get("using_fallback", False),
                 "total_records": stats.get("total_records", 0),
+                "workflows_count": unique_workflows,
+                "workflow_embeddings_count": total_embeddings,
             },
         }
 

@@ -78,6 +78,40 @@ class MockVectorStore(IVectorStore):
         """Set results to return from search."""
         self._search_results = results
 
+    def search_workflows_weighted(
+        self,
+        query_vector,
+        query_language="en",
+        top_k=5,
+        min_score=0.5,
+    ):
+        """Search workflows with weighted scoring (mock implementation)."""
+        from server.router.domain.interfaces.i_vector_store import WeightedSearchResult
+
+        results = []
+        for r in self._search_results[:top_k]:
+            results.append(
+                WeightedSearchResult(
+                    workflow_id=r.id,
+                    raw_score=r.score,
+                    source_weight=1.0,
+                    language_boost=1.0,
+                    final_score=r.score,
+                    matched_text=r.text,
+                    source_type="sample_prompt",
+                )
+            )
+        return results
+
+    def get_workflow_embedding_count(self):
+        """Get count of workflow embeddings."""
+        return self.count(VectorNamespace.WORKFLOWS)
+
+    def get_unique_workflow_count(self):
+        """Get count of unique workflows."""
+        # In mock, just count workflows namespace records
+        return self.count(VectorNamespace.WORKFLOWS)
+
 
 @pytest.fixture
 def mock_store():

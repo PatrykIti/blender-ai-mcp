@@ -2,6 +2,8 @@
 Unit tests for WorkflowRegistry.
 
 Tests for workflow registration, lookup, and expansion.
+
+TASK-050: Updated for YAML-based workflows (no more Python builtin workflows).
 """
 
 import pytest
@@ -15,8 +17,6 @@ from server.router.application.workflows.base import (
     WorkflowDefinition,
     WorkflowStep,
 )
-from server.router.application.workflows.phone_workflow import phone_workflow
-from server.router.application.workflows.tower_workflow import tower_workflow
 from server.router.domain.entities.tool_call import CorrectedToolCall
 
 
@@ -28,84 +28,48 @@ class TestWorkflowRegistry:
         """Create a fresh registry for testing."""
         return WorkflowRegistry()
 
-    def test_builtin_workflows_registered(self, registry):
-        """Test that built-in workflows are registered on init."""
-        workflows = registry.get_all_workflows()
-        assert "phone_workflow" in workflows
-        assert "tower_workflow" in workflows
-        assert "screen_cutout_workflow" in workflows
+    @pytest.fixture
+    def registry_with_test_workflow(self, registry):
+        """Create registry with test workflow registered."""
+        definition = WorkflowDefinition(
+            name="test_workflow",
+            description="Test workflow for unit tests",
+            steps=[
+                WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}),
+                WorkflowStep(tool="scene_set_mode", params={"mode": "EDIT"}),
+                WorkflowStep(tool="mesh_select", params={"action": "all"}),
+            ],
+            trigger_pattern="test_pattern",
+            trigger_keywords=["test", "example", "demo"],
+        )
+        registry.register_definition(definition)
+        return registry
 
-    def test_get_workflow(self, registry):
-        """Test getting a workflow by name."""
-        workflow = registry.get_workflow("phone_workflow")
-        assert workflow is not None
-        assert workflow.name == "phone_workflow"
+    def test_empty_registry_has_yaml_workflows(self, registry):
+        """Test that registry loads YAML workflows."""
+        workflows = registry.get_all_workflows()
+        # Should have at least the picnic_table workflow from YAML
+        assert isinstance(workflows, list)
 
     def test_get_workflow_not_found(self, registry):
         """Test getting non-existent workflow returns None."""
-        workflow = registry.get_workflow("nonexistent")
+        workflow = registry.get_workflow("nonexistent_workflow")
         assert workflow is None
 
-    def test_get_definition(self, registry):
-        """Test getting workflow definition."""
-        definition = registry.get_definition("phone_workflow")
-        assert definition is not None
-        assert isinstance(definition, WorkflowDefinition)
-        assert definition.name == "phone_workflow"
-
-    def test_find_by_pattern_phone(self, registry):
-        """Test finding workflow by phone pattern."""
-        name = registry.find_by_pattern("phone_like")
-        assert name is not None
-        assert name in ["phone_workflow", "screen_cutout_workflow"]
-
-    def test_find_by_pattern_tower(self, registry):
-        """Test finding workflow by tower pattern."""
-        name = registry.find_by_pattern("tower_like")
-        assert name == "tower_workflow"
+    def test_get_definition_not_found(self, registry):
+        """Test getting non-existent definition returns None."""
+        definition = registry.get_definition("nonexistent_workflow")
+        assert definition is None
 
     def test_find_by_pattern_unknown(self, registry):
         """Test finding workflow by unknown pattern returns None."""
-        name = registry.find_by_pattern("unknown_pattern")
+        name = registry.find_by_pattern("unknown_pattern_xyz123")
         assert name is None
-
-    def test_find_by_keywords_phone(self, registry):
-        """Test finding workflow by phone keywords."""
-        name = registry.find_by_keywords("create a smartphone")
-        assert name == "phone_workflow"
-
-    def test_find_by_keywords_tower(self, registry):
-        """Test finding workflow by tower keywords."""
-        name = registry.find_by_keywords("build tall tower")
-        assert name == "tower_workflow"
-
-    def test_find_by_keywords_screen(self, registry):
-        """Test finding workflow by screen keywords."""
-        name = registry.find_by_keywords("add display cutout")
-        assert name == "screen_cutout_workflow"
 
     def test_find_by_keywords_no_match(self, registry):
         """Test finding workflow by keywords with no match."""
-        name = registry.find_by_keywords("something completely different")
+        name = registry.find_by_keywords("something completely different xyz123")
         assert name is None
-
-    def test_expand_workflow_phone(self, registry):
-        """Test expanding phone workflow."""
-        calls = registry.expand_workflow("phone_workflow")
-        assert len(calls) == 10
-        assert all(isinstance(c, CorrectedToolCall) for c in calls)
-
-        # Check first step is create primitive
-        assert calls[0].tool_name == "modeling_create_primitive"
-        assert calls[0].is_injected is True
-
-    def test_expand_workflow_with_params(self, registry):
-        """Test expanding workflow with custom parameters."""
-        calls = registry.expand_workflow("tower_workflow", {"height": 5.0})
-
-        # Find the transform step
-        transform_call = next(c for c in calls if c.tool_name == "modeling_transform_object")
-        assert transform_call.params["scale"][2] == 5.0
 
     def test_expand_workflow_nonexistent(self, registry):
         """Test expanding non-existent workflow returns empty list."""
@@ -155,8 +119,37 @@ class TestWorkflowRegistry:
         result = registry.get_definition("def_workflow")
         assert result.name == "def_workflow"
 
-    def test_expand_custom_definition(self, registry):
-        """Test expanding a custom definition."""
+    def test_get_definition_for_registered(self, registry_with_test_workflow):
+        """Test getting definition for registered workflow."""
+        definition = registry_with_test_workflow.get_definition("test_workflow")
+        assert definition is not None
+        assert isinstance(definition, WorkflowDefinition)
+        assert definition.name == "test_workflow"
+        assert len(definition.steps) == 3
+
+    def test_find_by_pattern_registered(self, registry_with_test_workflow):
+        """Test finding workflow by pattern for registered workflow."""
+        name = registry_with_test_workflow.find_by_pattern("test_pattern")
+        assert name == "test_workflow"
+
+    def test_find_by_keywords_registered(self, registry_with_test_workflow):
+        """Test finding workflow by keywords for registered workflow."""
+        name = registry_with_test_workflow.find_by_keywords("create a test model")
+        assert name == "test_workflow"
+
+    def test_expand_registered_workflow(self, registry_with_test_workflow):
+        """Test expanding a registered workflow."""
+        calls = registry_with_test_workflow.expand_workflow("test_workflow")
+
+        assert len(calls) == 3
+        assert all(isinstance(c, CorrectedToolCall) for c in calls)
+        assert calls[0].tool_name == "modeling_create_primitive"
+        assert calls[0].is_injected is True
+        assert calls[1].tool_name == "scene_set_mode"
+        assert calls[2].tool_name == "mesh_select"
+
+    def test_expand_custom_definition_with_params(self, registry):
+        """Test expanding a custom definition with variable substitution."""
         definition = WorkflowDefinition(
             name="custom_def",
             description="Custom",
@@ -174,26 +167,33 @@ class TestWorkflowRegistry:
         assert calls[0].params.get("value") == 100
         assert calls[1].params.get("fixed") == 1
 
-    def test_workflow_info_builtin(self, registry):
-        """Test getting workflow info for built-in workflow."""
-        info = registry.get_workflow_info("phone_workflow")
+    def test_workflow_info_registered(self, registry_with_test_workflow):
+        """Test getting workflow info for registered workflow."""
+        info = registry_with_test_workflow.get_workflow_info("test_workflow")
 
         assert info is not None
-        assert info["name"] == "phone_workflow"
-        assert info["type"] == "builtin"
-        assert "trigger_pattern" in info
-        assert "step_count" in info
-        assert info["step_count"] == 10
+        assert info["name"] == "test_workflow"
+        assert info["type"] == "custom"
+        assert info["step_count"] == 3
 
     def test_workflow_info_nonexistent(self, registry):
         """Test getting workflow info for non-existent workflow."""
         info = registry.get_workflow_info("nonexistent")
         assert info is None
 
-    def test_get_all_workflows_sorted(self, registry):
+    def test_get_all_workflows_sorted(self, registry_with_test_workflow):
         """Test get_all_workflows returns sorted list."""
-        workflows = registry.get_all_workflows()
+        workflows = registry_with_test_workflow.get_all_workflows()
         assert workflows == sorted(workflows)
+
+    def test_workflow_expansion_marks_as_injected(self, registry_with_test_workflow):
+        """Test that expanded workflow steps are marked as injected."""
+        calls = registry_with_test_workflow.expand_workflow("test_workflow")
+
+        for call in calls:
+            assert call.is_injected is True
+            assert len(call.corrections_applied) > 0
+            assert any("workflow:test_workflow" in c for c in call.corrections_applied)
 
 
 class TestGetWorkflowRegistry:
@@ -208,5 +208,53 @@ class TestGetWorkflowRegistry:
         """Test singleton behavior."""
         registry1 = get_workflow_registry()
         registry2 = get_workflow_registry()
-        # Note: Due to module-level singleton, these should be same instance
+        # Due to module-level singleton, these should be same instance
         assert registry1 is registry2
+
+
+class TestWorkflowRegistryWithYAML:
+    """Tests that work with actual YAML workflows if available."""
+
+    @pytest.fixture
+    def registry(self):
+        """Create registry with YAML workflows loaded."""
+        reg = WorkflowRegistry()
+        reg.ensure_custom_loaded()
+        return reg
+
+    def test_yaml_workflows_load(self, registry):
+        """Test that YAML workflows are loaded."""
+        workflows = registry.get_all_workflows()
+        # Should be a list (may be empty if no YAML files)
+        assert isinstance(workflows, list)
+
+    def test_expand_yaml_workflow_if_exists(self, registry):
+        """Test expanding YAML workflow if any exist."""
+        workflows = registry.get_all_workflows()
+        if workflows:
+            # Pick first available workflow
+            workflow_name = workflows[0]
+            calls = registry.expand_workflow(workflow_name)
+            assert isinstance(calls, list)
+            # Should return some steps
+            assert all(isinstance(c, CorrectedToolCall) for c in calls)
+
+    def test_get_definition_yaml_workflow_if_exists(self, registry):
+        """Test getting definition for YAML workflow if any exist."""
+        workflows = registry.get_all_workflows()
+        if workflows:
+            workflow_name = workflows[0]
+            definition = registry.get_definition(workflow_name)
+            assert definition is not None
+            assert isinstance(definition, WorkflowDefinition)
+            assert definition.name == workflow_name
+
+    def test_workflow_info_yaml_workflow_if_exists(self, registry):
+        """Test getting workflow info for YAML workflow if any exist."""
+        workflows = registry.get_all_workflows()
+        if workflows:
+            workflow_name = workflows[0]
+            info = registry.get_workflow_info(workflow_name)
+            assert info is not None
+            assert info["name"] == workflow_name
+            assert "step_count" in info

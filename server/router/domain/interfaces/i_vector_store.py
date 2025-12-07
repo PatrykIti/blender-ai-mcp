@@ -44,6 +44,49 @@ class VectorRecord:
 
 
 @dataclass
+class WorkflowEmbeddingRecord(VectorRecord):
+    """Extended record for multi-embedding workflow storage.
+
+    Stores multiple embeddings per workflow with source metadata
+    for weighted scoring.
+
+    Attributes:
+        workflow_id: Parent workflow name (multiple records share this).
+        source_type: Origin of text (sample_prompt, trigger_keyword, description, name).
+        source_weight: Weight for scoring (1.0 for prompts, 0.8 for keywords, etc.).
+        language: Detected language code (en, pl, de, fr, etc.).
+    """
+
+    workflow_id: str = ""
+    source_type: str = "sample_prompt"  # sample_prompt | trigger_keyword | description | name
+    source_weight: float = 1.0
+    language: str = "en"
+
+
+@dataclass
+class WeightedSearchResult:
+    """Result from weighted workflow search.
+
+    Attributes:
+        workflow_id: Parent workflow identifier.
+        raw_score: Raw cosine similarity (0.0 to 1.0).
+        source_weight: Weight of matched text source.
+        language_boost: Language match boost (1.0 same, 0.9 different).
+        final_score: Combined weighted score.
+        matched_text: The text that matched best.
+        source_type: Type of source that matched.
+    """
+
+    workflow_id: str
+    raw_score: float
+    source_weight: float
+    language_boost: float
+    final_score: float
+    matched_text: str
+    source_type: str
+
+
+@dataclass
 class SearchResult:
     """Result from vector similarity search.
 
@@ -160,5 +203,54 @@ class IVectorStore(ABC):
 
         Returns:
             Number of records deleted.
+        """
+        pass
+
+    @abstractmethod
+    def search_workflows_weighted(
+        self,
+        query_vector: List[float],
+        query_language: str = "en",
+        top_k: int = 5,
+        min_score: float = 0.5,
+    ) -> List["WeightedSearchResult"]:
+        """Search workflows with weighted scoring.
+
+        Returns best match per workflow using multi-embedding
+        with source weight and language boost.
+
+        Scoring formula:
+            final_score = raw_cosine_score * source_weight * language_boost
+
+        Where:
+            - source_weight: 1.0 (prompt), 0.8 (keyword), 0.6 (desc), 0.5 (name)
+            - language_boost: 1.0 (same language), 0.9 (different)
+
+        Args:
+            query_vector: Query embedding vector (768D).
+            query_language: Detected language of query.
+            top_k: Number of workflows to return.
+            min_score: Minimum final score threshold.
+
+        Returns:
+            List of WeightedSearchResult sorted by final_score.
+        """
+        pass
+
+    @abstractmethod
+    def get_workflow_embedding_count(self) -> int:
+        """Get count of workflow embeddings (multiple per workflow).
+
+        Returns:
+            Total number of workflow embedding records.
+        """
+        pass
+
+    @abstractmethod
+    def get_unique_workflow_count(self) -> int:
+        """Get count of unique workflows.
+
+        Returns:
+            Number of distinct workflow_ids.
         """
         pass
