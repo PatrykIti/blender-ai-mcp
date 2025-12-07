@@ -192,6 +192,8 @@ class WorkflowLoader:
             category=data.get("category", "custom"),
             author=data.get("author", "user"),
             version=data.get("version", "1.0.0"),
+            defaults=data.get("defaults", {}),
+            modifiers=data.get("modifiers", {}),
         )
 
     def _parse_step(
@@ -311,6 +313,19 @@ class WorkflowLoader:
                 "stwórz mój obiekt",  # Polish
                 "erstelle mein Objekt",  # German
             ],
+            # Parametric variables (TASK-052)
+            "defaults": {
+                "my_variable": 1.0,
+                "another_var": 0.5,
+            },
+            "modifiers": {
+                "keyword phrase": {
+                    "my_variable": 2.0,
+                },
+                "inna fraza": {  # Polish
+                    "my_variable": 2.0,
+                },
+            },
             "steps": [
                 {
                     "tool": "modeling_create_primitive",
@@ -320,11 +335,13 @@ class WorkflowLoader:
                     "tags": [],
                 },
                 {
-                    "tool": "system_set_mode",
-                    "params": {"mode": "EDIT"},
-                    "description": "Enter edit mode",
-                    "optional": True,  # Optional - skipped for LOW confidence
-                    "tags": ["edit", "mode"],
+                    "tool": "modeling_transform_object",
+                    "params": {
+                        "scale": [1.0, "$my_variable", 1.0],  # $variable substitution
+                    },
+                    "description": "Transform with variable",
+                    "optional": False,
+                    "tags": [],
                 },
             ],
         }

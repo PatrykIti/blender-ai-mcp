@@ -2,15 +2,124 @@
 Workflow Expansion Engine Implementation.
 
 Transforms single tool calls into multi-step workflows.
+Supports parametric variable substitution (TASK-052).
 """
 
-from typing import Dict, Any, Optional, List
+import logging
+from typing import Dict, Any, Optional, List, Union
 
 from server.router.domain.interfaces.i_expansion_engine import IExpansionEngine
 from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.pattern import DetectedPattern
 from server.router.infrastructure.config import RouterConfig
+
+logger = logging.getLogger(__name__)
+
+
+def extract_modifiers(
+    prompt: str, workflow_modifiers: Dict[str, Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Extract variable overrides from user prompt based on workflow modifiers.
+
+    Scans the user prompt for keywords defined in workflow modifiers and
+    returns the corresponding variable overrides.
+
+    Args:
+        prompt: User prompt to scan for keywords.
+        workflow_modifiers: Dictionary mapping keywords to variable overrides.
+            Example: {"straight legs": {"leg_angle": 0}}
+
+    Returns:
+        Dictionary of variable overrides found in the prompt.
+        Later matches override earlier ones.
+
+    Example:
+        >>> modifiers = {"straight legs": {"angle": 0}, "angled": {"angle": 0.32}}
+        >>> extract_modifiers("table with straight legs", modifiers)
+        {"angle": 0}
+    """
+    overrides: Dict[str, Any] = {}
+    prompt_lower = prompt.lower()
+
+    for keyword, values in workflow_modifiers.items():
+        if keyword.lower() in prompt_lower:
+            overrides.update(values)
+            logger.debug(f"Modifier matched: '{keyword}' → {values}")
+
+    return overrides
+
+
+def substitute_variables(
+    params: Dict[str, Any], variables: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Replace $variable placeholders with actual values.
+
+    Handles both top-level string values and values within lists.
+    Variables are referenced with $ prefix (e.g., "$leg_angle").
+
+    Args:
+        params: Parameters dictionary with potential $variable references.
+        variables: Dictionary of variable names to values.
+
+    Returns:
+        New parameters dictionary with variables substituted.
+
+    Example:
+        >>> params = {"rotation": [0, "$angle", 0], "name": "Leg"}
+        >>> variables = {"angle": 0.32}
+        >>> substitute_variables(params, variables)
+        {"rotation": [0, 0.32, 0], "name": "Leg"}
+    """
+    result: Dict[str, Any] = {}
+
+    for key, value in params.items():
+        if isinstance(value, str) and value.startswith("$"):
+            # Direct $variable reference
+            var_name = value[1:]  # Remove $
+            if var_name in variables:
+                result[key] = variables[var_name]
+                logger.debug(f"Substituted ${var_name} → {variables[var_name]}")
+            else:
+                # Keep as-is if variable not found (might be $CALCULATE etc.)
+                result[key] = value
+        elif isinstance(value, list):
+            # Check list elements for $variable references
+            result[key] = _substitute_list(value, variables)
+        elif isinstance(value, dict):
+            # Recursively handle nested dicts
+            result[key] = substitute_variables(value, variables)
+        else:
+            result[key] = value
+
+    return result
+
+
+def _substitute_list(lst: List[Any], variables: Dict[str, Any]) -> List[Any]:
+    """Substitute variables in list elements.
+
+    Args:
+        lst: List with potential $variable references.
+        variables: Dictionary of variable names to values.
+
+    Returns:
+        New list with variables substituted.
+    """
+    result = []
+    for item in lst:
+        if isinstance(item, str) and item.startswith("$"):
+            var_name = item[1:]
+            if var_name in variables:
+                result.append(variables[var_name])
+            else:
+                result.append(item)
+        elif isinstance(item, list):
+            result.append(_substitute_list(item, variables))
+        elif isinstance(item, dict):
+            result.append(substitute_variables(item, variables))
+        else:
+            result.append(item)
+    return result
 
 
 class WorkflowExpansionEngine(IExpansionEngine):
@@ -132,12 +241,14 @@ class WorkflowExpansionEngine(IExpansionEngine):
         self,
         workflow_name: str,
         params: Dict[str, Any],
+        user_prompt: Optional[str] = None,
     ) -> List[CorrectedToolCall]:
         """Expand a named workflow with parameters.
 
         Args:
             workflow_name: Name of the workflow to expand.
             params: Parameters to pass to workflow steps.
+            user_prompt: Optional user prompt for modifier extraction (TASK-052).
 
         Returns:
             List of expanded tool calls.
@@ -145,7 +256,8 @@ class WorkflowExpansionEngine(IExpansionEngine):
         registry = self._get_registry()
 
         # Use registry's expand_workflow which handles both built-in and custom
-        calls = registry.expand_workflow(workflow_name, params)
+        # Pass user_prompt for TASK-052 modifier extraction
+        calls = registry.expand_workflow(workflow_name, params, user_prompt=user_prompt)
 
         # If registry returned calls, resolve any $param references
         if calls:

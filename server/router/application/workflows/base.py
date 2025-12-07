@@ -43,7 +43,21 @@ class WorkflowStep:
 
 @dataclass
 class WorkflowDefinition:
-    """Complete workflow definition."""
+    """Complete workflow definition.
+
+    Attributes:
+        name: Unique workflow identifier.
+        description: Human-readable description.
+        steps: List of workflow steps.
+        trigger_pattern: Pattern name that triggers this workflow.
+        trigger_keywords: Keywords that trigger this workflow.
+        sample_prompts: Sample prompts for LaBSE semantic matching.
+        category: Workflow category (e.g., "furniture", "architecture").
+        author: Author name.
+        version: Version string.
+        defaults: Default variable values for $variable substitution.
+        modifiers: Keyword → variable mappings for parametric adaptation.
+    """
 
     name: str
     description: str
@@ -54,10 +68,12 @@ class WorkflowDefinition:
     category: str = "general"
     author: str = "system"
     version: str = "1.0.0"
+    defaults: Dict[str, Any] = field(default_factory=dict)
+    modifiers: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert workflow to dictionary representation."""
-        return {
+        result = {
             "name": self.name,
             "description": self.description,
             "trigger_pattern": self.trigger_pattern,
@@ -68,6 +84,11 @@ class WorkflowDefinition:
             "version": self.version,
             "steps": [step.to_dict() for step in self.steps],
         }
+        if self.defaults:
+            result["defaults"] = dict(self.defaults)
+        if self.modifiers:
+            result["modifiers"] = {k: dict(v) for k, v in self.modifiers.items()}
+        return result
 
 
 class BaseWorkflow(ABC):

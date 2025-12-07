@@ -204,6 +204,7 @@ class WorkflowRegistry:
         workflow_name: str,
         params: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None,
+        user_prompt: Optional[str] = None,
     ) -> List[CorrectedToolCall]:
         """Expand a workflow into tool calls.
 
@@ -212,6 +213,7 @@ class WorkflowRegistry:
             params: Optional parameters to customize workflow.
             context: Optional context for expression evaluation.
                     Contains dimensions, proportions, mode, etc.
+            user_prompt: Optional user prompt for modifier extraction (TASK-052).
 
         Returns:
             List of tool calls to execute.
@@ -241,10 +243,69 @@ class WorkflowRegistry:
         # Try custom definition
         definition = self._custom_definitions.get(workflow_name)
         if definition:
-            steps = self._resolve_definition_params(definition.steps, params or {})
+            # Build variable context from defaults + modifiers (TASK-052)
+            variables = self._build_variables(definition, user_prompt)
+            # Merge with params (params override variables)
+            all_params = {**variables, **(params or {})}
+            steps = self._resolve_definition_params(definition.steps, all_params)
             return self._steps_to_calls(steps, workflow_name)
 
         return []
+
+    def _build_variables(
+        self,
+        definition: WorkflowDefinition,
+        user_prompt: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Build variable context from defaults and modifiers.
+
+        TASK-052: Parametric variable substitution.
+
+        Args:
+            definition: Workflow definition with defaults and modifiers.
+            user_prompt: User prompt to scan for modifier keywords.
+
+        Returns:
+            Dictionary of variable values.
+        """
+        # Start with defaults
+        variables = dict(definition.defaults) if definition.defaults else {}
+
+        # Apply modifiers from user prompt
+        if user_prompt and definition.modifiers:
+            overrides = self._extract_modifiers(user_prompt, definition.modifiers)
+            if overrides:
+                logger.info(f"Applied modifiers from prompt: {overrides}")
+                variables.update(overrides)
+
+        return variables
+
+    def _extract_modifiers(
+        self,
+        prompt: str,
+        modifiers: Dict[str, Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Extract variable overrides from user prompt.
+
+        TASK-052: Scans prompt for modifier keywords and returns matching
+        variable overrides.
+
+        Args:
+            prompt: User prompt to scan.
+            modifiers: Dictionary mapping keywords to variable overrides.
+
+        Returns:
+            Dictionary of variable overrides.
+        """
+        overrides: Dict[str, Any] = {}
+        prompt_lower = prompt.lower()
+
+        for keyword, values in modifiers.items():
+            if keyword.lower() in prompt_lower:
+                overrides.update(values)
+                logger.debug(f"Modifier matched: '{keyword}' → {values}")
+
+        return overrides
 
     def _build_condition_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Build context for condition evaluation.
