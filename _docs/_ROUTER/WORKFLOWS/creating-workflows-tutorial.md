@@ -335,9 +335,9 @@ params:
 
 ### 7.1 Problem: Zbyt Szczegółowe Workflow
 
-Wyobraź sobie workflow `picnic_table` z 49 krokami, który tworzy stół piknikowy z ławkami. Gdy użytkownik powie "prosty stół z 4 nogami", wykonanie pełnego workflow jest nadmierne.
+Wyobraź sobie workflow `picnic_table` z 49 krokami, który tworzy stół piknikowy z ławkami i ramą A-frame. Gdy użytkownik powie "prosty stół z 4 nogami", wykonanie pełnego workflow jest nadmierne.
 
-### 7.2 Rozwiązanie: Confidence-Based Adaptation
+### 7.2 Rozwiązanie: Confidence-Based Adaptation (TASK-051)
 
 Router automatycznie adaptuje workflow na podstawie poziomu dopasowania:
 
@@ -348,7 +348,31 @@ Router automatycznie adaptuje workflow na podstawie poziomu dopasowania:
 | **LOW** (≥0.60) | `CORE_ONLY` | Tylko CORE kroki |
 | **NONE** (<0.60) | `CORE_ONLY` | Tylko CORE (fallback) |
 
-### 7.3 Oznaczanie Kroków jako Opcjonalne
+### 7.3 Jak Działa Intent Classifier
+
+**WorkflowIntentClassifier** oblicza confidence na podstawie:
+
+1. **Semantic Similarity (LaBSE embeddings)** - porównuje prompt użytkownika z:
+   - `sample_prompts` z workflow YAML
+   - `description` workflow
+   - `trigger_keywords`
+
+2. **Thresholds dla poziomów confidence:**
+   ```python
+   HIGH_THRESHOLD = 0.90   # Bardzo wysoka pewność
+   MEDIUM_THRESHOLD = 0.75  # Umiarkowana pewność
+   LOW_THRESHOLD = 0.60     # Minimalna wymagana pewność
+   ```
+
+3. **Przykłady klasyfikacji:**
+   ```
+   "create a picnic table"           → 0.95 (HIGH)   - bezpośrednie dopasowanie
+   "make outdoor table with benches" → 0.82 (MEDIUM) - semantycznie podobne
+   "rectangular table with 4 legs"   → 0.65 (LOW)    - częściowe dopasowanie
+   "build a shelf"                   → 0.35 (NONE)   - brak dopasowania
+   ```
+
+### 7.4 Oznaczanie Kroków jako Opcjonalne
 
 Użyj `optional: true` i `tags` aby oznaczyć kroki, które mogą być pominięte:
 
@@ -372,9 +396,24 @@ steps:
     tags: ["bench", "seating", "side"]
 ```
 
-### 7.4 Jak Działają Tagi?
+### 7.5 Jak Działają Tagi przy MEDIUM Confidence?
 
-Przy **MEDIUM confidence** Router sprawdza czy tagi kroku pasują do promptu użytkownika:
+**WorkflowAdapter** filtruje opcjonalne kroki na podstawie tagów:
+
+```python
+# Algorytm filtrowania (pseudokod):
+for step in optional_steps:
+    # 1. Tag matching (fast, keyword-based)
+    if any(tag.lower() in user_prompt.lower() for tag in step.tags):
+        include_step(step)
+        continue
+
+    # 2. Semantic similarity fallback (dla kroków bez tagów)
+    if step.description and similarity(prompt, description) >= 0.6:
+        include_step(step)
+```
+
+**Przykłady filtrowania:**
 
 ```yaml
 # Prompt: "table with benches"
@@ -384,13 +423,18 @@ Przy **MEDIUM confidence** Router sprawdza czy tagi kroku pasują do promptu uż
 # Prompt: "simple table with 4 legs"
 # Step tags: ["bench", "seating"]
 # Wynik: Krok POMINIĘTY (żaden tag nie pasuje)
+
+# Prompt: "table with A-frame legs"
+# Step tags: ["a-frame", "structural"]
+# Wynik: Krok WŁĄCZONY (tag "a-frame" pasuje)
 ```
 
-### 7.5 Dobre Praktyki dla Tagów
+### 7.6 Dobre Praktyki dla Tagów
 
 ```yaml
 # DOBRZE - konkretne, przeszukiwalne tagi
 tags: ["bench", "seating", "side", "left"]
+tags: ["a-frame", "structural", "cross-support"]
 tags: ["handle", "grip", "ergonomic"]
 tags: ["decoration", "detail", "ornament"]
 
@@ -399,27 +443,50 @@ tags: ["extra", "optional"]  # Niespecyficzne
 tags: ["part"]               # Wszystko jest "part"
 ```
 
-### 7.6 Przykład: Stół Piknikowy z Adaptacją
+**Kategorie tagów rekomendowane:**
+
+| Kategoria | Przykładowe tagi | Zastosowanie |
+|-----------|------------------|--------------|
+| **Komponenty** | `bench`, `leg`, `shelf`, `drawer` | Główne części |
+| **Struktura** | `a-frame`, `cross-support`, `diagonal`, `brace` | Elementy konstrukcyjne |
+| **Pozycja** | `left`, `right`, `front`, `back`, `top`, `bottom` | Lokalizacja |
+| **Funkcja** | `seating`, `storage`, `decoration` | Przeznaczenie |
+| **Styl** | `ornate`, `minimal`, `modern`, `rustic` | Estetyka |
+
+### 7.7 Grupy Opcjonalnych Kroków
+
+Dla złożonych workflow, grupuj powiązane opcjonalne kroki za pomocą wspólnych tagów:
 
 ```yaml
-# picnic_table.yaml (uproszczony)
-name: picnic_table_workflow
-description: Stół piknikowy z opcjonalnymi ławkami
-
 steps:
-  # === CORE STEPS (zawsze wykonywane) ===
-
+  # === CORE: Zawsze wykonywane ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "TableTop" }
     description: Blat stołu
 
   - tool: modeling_create_primitive
-    params: { primitive_type: CUBE, name: "Leg1" }
-    description: Pierwsza noga
+    params: { primitive_type: CUBE, name: "Leg_FL" }
+    description: Noga przednia lewa
 
-  # ... więcej nóg ...
+  # ... pozostałe nogi ...
 
-  # === OPTIONAL STEPS (adaptowane przez confidence) ===
+  # === OPTIONAL GROUP 1: A-Frame supports ===
+  # Wspólne tagi: ["a-frame", "structural"]
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "CrossBeam_Front" }
+    description: Przednia poprzeczka A-frame
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "CrossBeam_Back" }
+    description: Tylna poprzeczka A-frame
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
+
+  # === OPTIONAL GROUP 2: Benches ===
+  # Wspólne tagi: ["bench", "seating"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchLeft" }
@@ -434,13 +501,127 @@ steps:
     tags: ["bench", "seating", "right"]
 ```
 
+### 7.8 Finalizacja z Adaptacją
+
+Sekcja finalizacji (join, rename, material) musi obsługiwać różne warianty:
+
+```yaml
+steps:
+  # ... kroki tworzące geometrię ...
+
+  # === FINALIZE: Wariant minimalny (CORE) ===
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "TableTop"
+        - "Leg_FL"
+        - "Leg_FR"
+        - "Leg_BL"
+        - "Leg_BR"
+    description: Join 5 podstawowych części stołu
+
+  - tool: scene_rename_object
+    params:
+      old_name: "Leg_BR"
+      new_name: "Table"
+    description: Nazwij obiekt "Table"
+
+  # === FINALIZE: Wariant z A-frame (dodaj gdy mamy a-frame) ===
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "Table"
+        - "CrossBeam_Front"
+        - "CrossBeam_Back"
+    description: Dołącz elementy A-frame do stołu
+    optional: true
+    tags: ["a-frame", "structural"]
+
+  # === FINALIZE: Wariant z ławkami (dodaj gdy mamy benches) ===
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "Table"
+        - "BenchLeft"
+        - "BenchRight"
+    description: Dołącz ławki do stołu
+    optional: true
+    tags: ["bench", "seating"]
+
+  - tool: scene_rename_object
+    params:
+      old_name: "BenchRight"
+      new_name: "Picnic_Table"
+    description: Nazwij pełny stół piknikowy
+    optional: true
+    tags: ["bench", "seating"]
+```
+
+### 7.9 Przykład: Stół Piknikowy z Pełną Adaptacją
+
+```yaml
+# picnic_table.yaml (uproszczony)
+name: picnic_table_workflow
+description: Stół piknikowy z opcjonalnymi ławkami i ramą A-frame
+
+sample_prompts:
+  - "create a picnic table"
+  - "make outdoor table with benches"
+  - "build a park table"
+
+steps:
+  # === CORE STEPS (zawsze wykonywane) ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "TableTop" }
+    description: Blat stołu
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "Leg_FL" }
+    description: Noga przednia lewa (może być skośna lub prosta)
+
+  # ... więcej nóg ...
+
+  # === OPTIONAL: A-Frame elements ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "CrossBeam" }
+    description: Poprzeczka łącząca nogi A-frame
+    optional: true
+    tags: ["a-frame", "structural", "cross-support"]
+
+  # === OPTIONAL: Bench elements ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "BenchLeft" }
+    description: Lewa ławka
+    optional: true
+    tags: ["bench", "seating", "left"]
+```
+
 **Wyniki adaptacji:**
 
 ```
-"create a picnic table"       → HIGH (0.92)  → 49 kroków (pełny workflow)
-"simple table with 4 legs"    → LOW (0.68)   → ~33 kroków (bez ławek)
-"table with benches"          → MEDIUM (0.78) → ~40 kroków (core + bench)
+"create a picnic table"       → HIGH (0.95)   → 57 kroków (pełny workflow)
+"table with A-frame legs"     → MEDIUM (0.78) → 45 kroków (core + a-frame)
+"table with benches"          → MEDIUM (0.80) → 48 kroków (core + benches)
+"simple table with 4 legs"    → LOW (0.65)    → 25 kroków (tylko core)
 ```
+
+### 7.10 Ograniczenia Obecnego Systemu
+
+**Co system MOŻE:**
+- Pomijać opcjonalne kroki na podstawie confidence
+- Filtrować kroki przez dopasowanie tagów
+- Wykonywać różne warianty finalizacji
+
+**Czego system NIE MOŻE (planowane w TASK-052):**
+- Dynamicznie zmieniać parametry (np. kąt nóg z 33° na 0°)
+- Generować nowe kroki na podstawie intencji
+- Adaptować geometrię do opisu użytkownika
+
+Obecnie workflow definiuje **statyczne parametry**. Jeśli użytkownik chce "proste nogi" zamiast "skośnych", system może tylko:
+1. Pominąć kroki związane z elementami A-frame
+2. Ale NIE może zmienić kąta obrotu nóg z 0.32 rad na 0
+
+To ograniczenie będzie rozwiązane w przyszłym zadaniu dotyczącym inteligentnej adaptacji parametrycznej (Option B).
 
 ---
 

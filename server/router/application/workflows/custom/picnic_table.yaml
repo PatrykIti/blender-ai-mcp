@@ -220,6 +220,7 @@ steps:
   # Cube.010, 011 from model
   # Dimensions: 17.39 x 0.21 x 1.07
   # These connect the A-frame legs horizontally
+  # OPTIONAL: Specific to A-frame leg structure
   # ============================================
 
   # Back crossbeam (Cube.010)
@@ -227,34 +228,43 @@ steps:
     params:
       primitive_type: CUBE
       name: "LegCrossBeam_Back"
-    description: Create back leg crossbeam
+    description: Create back leg crossbeam (A-frame support)
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Back"
       scale: [0.870, 0.011, 0.054]
       location: [0.010, 0.285, -0.142]
-    description: "Back crossbeam - connects back legs"
+    description: "Back crossbeam - connects back A-frame legs"
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
 
   # Front crossbeam (Cube.011)
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
       name: "LegCrossBeam_Front"
-    description: Create front leg crossbeam
+    description: Create front leg crossbeam (A-frame support)
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Front"
       scale: [0.870, 0.011, 0.054]
       location: [0.010, -0.602, -0.142]
-    description: "Front crossbeam - connects front legs"
+    description: "Front crossbeam - connects front A-frame legs"
+    optional: true
+    tags: ["a-frame", "cross-support", "structural"]
 
   # ============================================
   # SECTION 5: DIAGONAL SUPPORTS (2 vertical bars)
   # Cube.016, 017 from model
   # Dimensions: 0.22 x 17.39 x 1.07
   # These run diagonally supporting the structure
+  # OPTIONAL: Specific to A-frame leg structure
   # ============================================
 
   # Right diagonal support (Cube.016)
@@ -262,28 +272,36 @@ steps:
     params:
       primitive_type: CUBE
       name: "DiagonalSupport_R"
-    description: Create right diagonal support
+    description: Create right diagonal support (A-frame brace)
+    optional: true
+    tags: ["a-frame", "diagonal", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_R"
       scale: [0.011, 0.870, 0.054]
       location: [0.448, -0.187, -0.142]
-    description: "Right diagonal - runs front to back"
+    description: "Right diagonal - runs front to back (A-frame)"
+    optional: true
+    tags: ["a-frame", "diagonal", "structural"]
 
   # Left diagonal support (Cube.017)
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
       name: "DiagonalSupport_L"
-    description: Create left diagonal support
+    description: Create left diagonal support (A-frame brace)
+    optional: true
+    tags: ["a-frame", "diagonal", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_L"
       scale: [0.011, 0.870, 0.054]
       location: [-0.439, -0.188, -0.142]
-    description: "Left diagonal - runs front to back"
+    description: "Left diagonal - runs front to back (A-frame)"
+    optional: true
+    tags: ["a-frame", "diagonal", "structural"]
 
   # ============================================
   # SECTION 6: SIDE BENCHES - LEFT (2 planks)
@@ -452,10 +470,14 @@ steps:
 
   # ============================================
   # SECTION 9: FINALIZE - Join all parts
-  # Two versions: FULL (with benches) and CORE (table only)
+  # Three versions:
+  #   - MINIMAL: Simple table (planks + crossbeam + 4 legs)
+  #   - A-FRAME: Table with A-frame supports (adds crossbeams + diagonals)
+  #   - FULL: Complete picnic table (adds benches)
   # ============================================
 
-  # CORE FINALIZE: Table without benches (used when optional bench steps are skipped)
+  # MINIMAL FINALIZE: Simple table (used for CORE_ONLY adaptation)
+  # Only includes: 5 planks + 1 crossbeam + 4 legs = 10 parts
   - tool: modeling_join_objects
     params:
       object_names:
@@ -469,23 +491,40 @@ steps:
         - "Leg_FR"
         - "Leg_BL"
         - "Leg_BR"
-        - "LegCrossBeam_Back"
-        - "LegCrossBeam_Front"
-        - "DiagonalSupport_R"
-        - "DiagonalSupport_L"
-    description: Join 14 core table parts (no benches)
+    description: Join 10 minimal table parts (simple 4-leg table)
 
   - tool: scene_rename_object
     params:
-      old_name: "DiagonalSupport_L"
+      old_name: "Leg_BR"
       new_name: "Table"
-    description: Rename core table object
+    description: Rename minimal table object
 
   - tool: modeling_set_origin
     params:
       name: "Table"
       type: ORIGIN_GEOMETRY
     description: Center origin on table geometry
+
+  # A-FRAME FINALIZE: Join A-frame supports to table (only when A-frame steps are included)
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "Table"
+        - "LegCrossBeam_Back"
+        - "LegCrossBeam_Front"
+        - "DiagonalSupport_R"
+        - "DiagonalSupport_L"
+    description: Join A-frame supports to table (crossbeams + diagonals)
+    optional: true
+    tags: ["a-frame", "structural"]
+
+  - tool: modeling_set_origin
+    params:
+      name: "Table"
+      type: ORIGIN_GEOMETRY
+    description: Re-center origin after adding A-frame supports
+    optional: true
+    tags: ["a-frame", "structural"]
 
   # FULL FINALIZE: Picnic table with benches (only when benches are created)
   - tool: modeling_join_objects
