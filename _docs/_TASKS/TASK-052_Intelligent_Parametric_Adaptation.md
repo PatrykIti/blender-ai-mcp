@@ -324,3 +324,31 @@ steps:
 | **Capability** | Post-hoc param modification | Explicit $variable substitution |
 
 The simplified approach is sufficient for the current use cases and can be extended later if needed.
+
+---
+
+## Documentation Update Checklist
+
+After completing this task, update the following documentation files:
+
+### Required Updates
+
+| # | File | What to Update |
+|---|------|----------------|
+| 1 | `_docs/_TASKS/README.md` | Move TASK-052 to Done section, update statistics |
+| 2 | `_docs/_CHANGELOG/98-YYYY-MM-DD-parametric-variables.md` | Create new changelog entry |
+| 3 | `_docs/_CHANGELOG/README.md` | Add entry to index table |
+| 4 | `_docs/_TESTS/README.md` | Update test count if significant tests added |
+| 5 | `_docs/_ROUTER/IMPLEMENTATION/33-parametric-variables.md` | Create implementation doc |
+| 6 | `_docs/_ROUTER/IMPLEMENTATION/README.md` | Add entry for 33-parametric-variables |
+| 7 | `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md` | Add `defaults` + `modifiers` + `$variable` syntax |
+| 8 | `_docs/_ROUTER/WORKFLOWS/README.md` | Update schema reference, add modifiers section |
+| 9 | `_docs/_ROUTER/WORKFLOWS/yaml-workflow-guide.md` | Add parametric variables section |
+| 10 | `_docs/_ROUTER/WORKFLOWS/expression-reference.md` | Add `$variable` syntax reference |
+
+### Optional Updates
+
+| File | Condition |
+|------|-----------|
+| `_docs/_ROUTER/README.md` | If router capabilities summary needs update |
+| `README.md` | If main roadmap needs update |
