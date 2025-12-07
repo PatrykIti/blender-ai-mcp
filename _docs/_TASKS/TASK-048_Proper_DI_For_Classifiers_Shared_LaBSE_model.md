@@ -1,4 +1,12 @@
-# Plan: Proper DI for Classifiers + Shared LaBSE Model
+# TASK-048: Proper DI for Classifiers + Shared LaBSE Model
+
+| Field | Value |
+|-------|-------|
+| Status | ✅ Done |
+| Created | 2024-12-07 |
+| Completed | 2024-12-07 |
+| Priority | High |
+| Category | Performance / Architecture |
 
 ## Problem
 
@@ -193,10 +201,44 @@ DI Container (singleton instances)
 
 ### Kolejność implementacji
 
-1. Dodać `model` param do `intent_classifier.py` i `workflow_intent_classifier.py`
-2. Dodać 4 providery do `di.py` (model, store, 2x classifier)
-3. Zaktualizować `SemanticWorkflowMatcher` (przyjmuje classifier)
-4. Zaktualizować `SupervisorRouter` (przyjmuje workflow_classifier)
-5. Zaktualizować `get_router()` w DI
-6. Zaktualizować `precompute_embeddings.py` (używa DI)
-7. Zbudować Docker i przetestować `router_find_similar_workflows`
+1. ✅ Dodać `model` param do `intent_classifier.py` i `workflow_intent_classifier.py`
+2. ✅ Dodać 4 providery do `di.py` (model, store, 2x classifier)
+3. ✅ Zaktualizować `SemanticWorkflowMatcher` (przyjmuje classifier)
+4. ✅ Zaktualizować `SupervisorRouter` (przyjmuje workflow_classifier)
+5. ✅ Zaktualizować `get_router()` w DI
+6. ✅ Zaktualizować `precompute_embeddings.py` (używa DI)
+7. ✅ Zbudować Docker i przetestować `router_find_similar_workflows`
+
+---
+
+## Implementation Summary
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `server/infrastructure/di.py` | Added 4 providers: `get_labse_model()`, `get_vector_store()`, `get_intent_classifier()`, `get_workflow_classifier()`. Updated `get_router()` to inject both classifiers. |
+| `server/router/application/router.py` | Added `workflow_classifier` param to constructor. Passes it to `SemanticWorkflowMatcher`. |
+| `server/router/application/matcher/semantic_workflow_matcher.py` | Added `classifier` param to accept `WorkflowIntentClassifier` via DI. |
+| `server/router/application/classifier/intent_classifier.py` | Already had `model` param (done in TASK-047). |
+| `server/router/application/classifier/workflow_intent_classifier.py` | Already had `model` param (done in TASK-047). |
+| `server/scripts/precompute_embeddings.py` | Updated to use DI providers instead of creating own instances. |
+
+### Verification
+
+Docker build and runtime tests confirm:
+
+```
+LaBSE model is singleton: True
+Vector store is singleton: True
+Both classifiers use same model: True
+Both classifiers use same vector store: True
+Router uses DI intent classifier: True
+Router semantic matcher uses DI workflow classifier: True
+```
+
+### Performance Impact
+
+- **RAM savings: ~1.8GB** (one LaBSE model instead of two)
+- **Startup time**: Faster (embeddings loaded once, shared)
+- **Pre-computed embeddings**: Now properly used by all components

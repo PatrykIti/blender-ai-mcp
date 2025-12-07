@@ -59,6 +59,7 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **LanceVectorStore** | LanceDB vector database (TASK-047) | ✅ Done |
 | **IVectorStore** | Vector store interface (DIP compliance) | ✅ Done |
 | **PickleToLanceMigration** | Legacy pickle cache migration | ✅ Done |
+| **Shared LaBSE via DI** | Single model instance (~1.8GB RAM) (TASK-048) | ✅ Done |
 
 ---
 
