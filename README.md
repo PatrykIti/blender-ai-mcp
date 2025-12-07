@@ -510,6 +510,8 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Generalization** | Use similar workflow when exact match missing |
 | **Feedback Learning** | Improve matching from user corrections |
 | **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
+| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow (TASK-051) |
+| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params (TASK-052) |
 
 #### Example: LLM sends mesh tool in wrong mode
 
@@ -541,6 +543,35 @@ Router behavior:
   → Found: table_workflow (0.72), tower_workflow (0.45)
   → Uses table_workflow with inherited proportions
   → Chair has proper leg ratios from table, vertical proportions from tower
+```
+
+#### Parametric Variables (TASK-052)
+
+```yaml
+# In workflow YAML:
+defaults:
+  leg_angle: 0.32        # A-frame legs (default)
+
+modifiers:
+  "straight legs":
+    leg_angle: 0         # Override for vertical legs
+  "proste nogi":         # Polish support
+    leg_angle: 0
+
+steps:
+  - tool: modeling_transform_object
+    params:
+      rotation: [0, "$leg_angle", 0]  # Uses variable
+```
+
+```
+User: "table with straight legs"
+→ Modifier "straight legs" matches
+→ leg_angle = 0 (vertical legs instead of A-frame)
+
+User: "stół z proste nogi"
+→ Polish modifier matches
+→ Same result: vertical legs
 ```
 
 #### Configuration Presets
