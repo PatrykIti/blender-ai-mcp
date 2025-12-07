@@ -4,7 +4,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 task (~6 sub-tasks)
-- **In Progress:** 0
+- **In Progress:** 1
 - **Done:** 115
 
 ---
@@ -20,7 +20,9 @@ Task board for the project. Update statuses in markdown files.
 
 ## 🚧 In Progress
 
-*No tasks in progress.*
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-051](./TASK-051_Confidence_Based_Workflow_Adaptation.md) | **Confidence-Based Workflow Adaptation** | 🔴 High | WorkflowAdapter engine, optional steps, confidence levels |
 
 ---
 
