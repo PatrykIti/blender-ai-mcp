@@ -13,6 +13,7 @@ YAML workflows allow you to define sequences of Blender operations that execute 
 - **Smart defaults** - Auto-sized operations with `$AUTO_*` params
 - **Keyword triggering** - Automatic activation from user prompts
 - **Semantic matching** - LaBSE-powered multilingual prompt matching (TASK-046)
+- **Parametric variables** - `$variable` syntax with `defaults` and `modifiers` (TASK-052)
 
 ---
 
@@ -191,6 +192,127 @@ params:
   mode: "$mode"        # Current mode
   depth: "$depth"      # Object depth
 ```
+
+---
+
+## Parametric Variables (TASK-052)
+
+Define variable defaults and keyword-based modifiers for dynamic parameter adaptation.
+
+### Defaults Section
+
+Define default values for variables used in step params:
+
+```yaml
+defaults:
+  leg_angle: 0.32        # Default angle (A-frame)
+  table_height: 0.75     # Standard table height
+  leg_count: 4           # Number of legs
+```
+
+### Modifiers Section
+
+Map keywords/phrases to variable overrides:
+
+```yaml
+modifiers:
+  # English
+  "straight legs":
+    leg_angle: 0
+  "vertical legs":
+    leg_angle: 0
+  "angled legs":
+    leg_angle: 0.32
+
+  # Polish
+  "proste nogi":
+    leg_angle: 0
+  "skośne nogi":
+    leg_angle: 0.32
+
+  # Combined modifiers
+  "coffee table":
+    table_height: 0.45
+  "bar table":
+    table_height: 1.1
+```
+
+### Using Variables in Steps
+
+Reference variables with `$variable_name` syntax:
+
+```yaml
+steps:
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      rotation: [0, "$leg_angle", 0]      # Single variable
+      location: [0.5, 0.5, "$table_height"]  # Mixed with literals
+
+  - tool: modeling_transform_object
+    params:
+      scale: ["$leg_width", "$leg_width", "$leg_height"]  # Multiple variables
+```
+
+### Variable Resolution Order
+
+Variables are resolved in this order (later overrides earlier):
+
+1. **defaults** - Workflow-defined defaults
+2. **modifiers** - Keyword matches from user prompt
+3. **params** - Explicit parameters passed to expand_workflow()
+
+### Complete Example
+
+```yaml
+name: configurable_table_workflow
+description: Table with configurable leg angle
+
+defaults:
+  leg_angle_left: 0.32
+  leg_angle_right: -0.32
+  table_height: 0.75
+
+modifiers:
+  "straight legs":
+    leg_angle_left: 0
+    leg_angle_right: 0
+  "proste nogi":
+    leg_angle_left: 0
+    leg_angle_right: 0
+  "coffee table":
+    table_height: 0.45
+
+steps:
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableTop"
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableTop"
+      location: [0, 0, "$table_height"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      rotation: [0, "$leg_angle_left", 0]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FR"
+      rotation: [0, "$leg_angle_right", 0]
+```
+
+### Behavior Examples
+
+| User Prompt | Variables Applied |
+|-------------|-------------------|
+| "create a table" | defaults only: leg_angle_left=0.32 |
+| "table with straight legs" | modifier: leg_angle_left=0 |
+| "straight legs coffee table" | both modifiers: leg_angle=0, height=0.45 |
+| "stół z proste nogi" | Polish modifier: leg_angle=0 |
 
 ---
 

@@ -40,6 +40,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 30 | `30-proportion-inheritance.md` | Proportion Inheritance | TASK-046-4 | ✅ |
 | 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | ✅ |
 | 32 | `32-workflow-adapter.md` | Workflow Adapter | TASK-051 | ✅ |
+| 33 | `33-parametric-variables.md` | Parametric Variables | TASK-052 | ✅ |
 
 ---
 
@@ -97,6 +98,9 @@ Phase 8: Semantic Generalization (TASK-046) ✅
 
 Phase 9: Confidence-Based Adaptation (TASK-051) ✅
   └─ 32-workflow-adapter.md ✅ (TASK-051)
+
+Phase 10: Parametric Variables (TASK-052) ✅
+  └─ 33-parametric-variables.md ✅ (TASK-052)
 ```
 
 ---

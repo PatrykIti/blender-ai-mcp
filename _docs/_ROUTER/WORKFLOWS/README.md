@@ -326,6 +326,63 @@ Use these as templates for your own workflows!
 | `optional` | bool | No | If true, step can be skipped by WorkflowAdapter (TASK-051) |
 | `tags` | array | No | Tags for MEDIUM confidence filtering (TASK-051) |
 
+### Parametric Variables (TASK-052)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `defaults` | object | `{}` | Default variable values (e.g., `leg_angle: 0.32`) |
+| `modifiers` | object | `{}` | Keyword → variable override mappings |
+
+---
+
+## Parametric Workflow Variables (TASK-052)
+
+Workflows can define `defaults` and `modifiers` to adapt parameters based on user prompts:
+
+### Example
+
+```yaml
+name: picnic_table_workflow
+description: Picnic table with configurable legs
+
+defaults:
+  leg_angle_left: 0.32      # A-frame angle (default)
+  leg_angle_right: -0.32
+
+modifiers:
+  "straight legs":          # English
+    leg_angle_left: 0
+    leg_angle_right: 0
+  "proste nogi":            # Polish
+    leg_angle_left: 0
+    leg_angle_right: 0
+
+steps:
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      rotation: [0, "$leg_angle_left", 0]  # Variable reference
+```
+
+### Behavior
+
+| User Prompt | Result |
+|-------------|--------|
+| "create a table" | A-frame legs (defaults: 0.32 rad) |
+| "table with straight legs" | Vertical legs (modifier: 0 rad) |
+| "stół z proste nogi" | Vertical legs (Polish modifier) |
+
+### Variable Resolution Order
+
+1. **defaults** - Workflow-defined default values
+2. **modifiers** - Overrides from user prompt keywords
+3. **params** - Explicit parameters (highest priority)
+
+### See Also
+
+- [expression-reference.md](./expression-reference.md) - `$variable` syntax reference
+- [Implementation: 33-parametric-variables.md](../IMPLEMENTATION/33-parametric-variables.md)
+
 ---
 
 ## Confidence-Based Workflow Adaptation (TASK-051)

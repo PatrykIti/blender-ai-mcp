@@ -10,8 +10,10 @@ Complete reference for dynamic expressions in YAML workflows.
 |--------|---------|---------|
 | `$CALCULATE(...)` | ExpressionEvaluator | `$CALCULATE(width * 0.5)` |
 | `$AUTO_*` | ProportionResolver | `$AUTO_BEVEL` |
-| `$variable` | Simple lookup | `$depth` |
+| `$variable` | Variable substitution | `$depth`, `$leg_angle` |
 | `condition: "..."` | ConditionEvaluator | `current_mode != 'EDIT'` |
+
+> **Note:** `$variable` can reference both context values (dimensions) and parametric variables from `defaults`/`modifiers` (TASK-052).
 
 ---
 
@@ -204,7 +206,7 @@ condition: "active_object != 'Camera'"
 
 ## Simple $variable References
 
-Direct context value lookup.
+Direct context value lookup or parametric variable substitution (TASK-052).
 
 ### Usage
 
@@ -212,12 +214,47 @@ Direct context value lookup.
 params:
   depth: "$depth"        # Direct dimension
   current: "$mode"       # Current mode string
+  angle: "$leg_angle"    # Parametric variable (from defaults/modifiers)
 ```
 
 ### Behavior
 
-- If variable exists: returns its value
+- If variable exists in context: returns its value
+- If variable defined in `defaults`: returns default value
+- If variable overridden by `modifiers`: returns modifier value
 - If variable missing: returns original string (`$depth`)
+
+### Parametric Variables (TASK-052)
+
+When a workflow has `defaults` and `modifiers` sections, `$variable` references are resolved:
+
+```yaml
+defaults:
+  leg_angle: 0.32
+
+modifiers:
+  "straight legs":
+    leg_angle: 0
+
+steps:
+  - tool: modeling_transform_object
+    params:
+      rotation: [0, "$leg_angle", 0]  # Resolved from defaults or modifiers
+```
+
+**Resolution order:**
+1. `defaults` - Base values
+2. `modifiers` - Keyword-based overrides from user prompt
+3. `params` - Explicit parameters (highest priority)
+
+### Difference from $CALCULATE
+
+| Syntax | Purpose | Example |
+|--------|---------|---------|
+| `$variable` | Direct lookup | `"$leg_angle"` → `0.32` |
+| `$CALCULATE(...)` | Math expression | `"$CALCULATE(width * 0.5)"` → computed value |
+
+Use `$variable` for simple substitution, `$CALCULATE` when you need math operations.
 
 ---
 
