@@ -452,8 +452,10 @@ steps:
 
   # ============================================
   # SECTION 9: FINALIZE - Join all parts
+  # Two versions: FULL (with benches) and CORE (table only)
   # ============================================
 
+  # CORE FINALIZE: Table without benches (used when optional bench steps are skipped)
   - tool: modeling_join_objects
     params:
       object_names:
@@ -471,6 +473,25 @@ steps:
         - "LegCrossBeam_Front"
         - "DiagonalSupport_R"
         - "DiagonalSupport_L"
+    description: Join 14 core table parts (no benches)
+
+  - tool: scene_rename_object
+    params:
+      old_name: "DiagonalSupport_L"
+      new_name: "Table"
+    description: Rename core table object
+
+  - tool: modeling_set_origin
+    params:
+      name: "Table"
+      type: ORIGIN_GEOMETRY
+    description: Center origin on table geometry
+
+  # FULL FINALIZE: Picnic table with benches (only when benches are created)
+  - tool: modeling_join_objects
+    params:
+      object_names:
+        - "Table"
         - "BenchLeft_Inner"
         - "BenchLeft_Outer"
         - "BenchRight_Inner"
@@ -479,19 +500,25 @@ steps:
         - "BenchBack_Outer"
         - "BenchFront_Inner"
         - "BenchFront_Outer"
-    description: Join all 22 parts into single picnic table
+    description: Join table with all 8 bench parts
+    optional: true
+    tags: ["bench", "seating"]
 
   - tool: scene_rename_object
     params:
       old_name: "BenchFront_Outer"
       new_name: "Picnic_Table"
-    description: Rename final object
+    description: Rename to final picnic table name
+    optional: true
+    tags: ["bench", "seating"]
 
   - tool: modeling_set_origin
     params:
       name: "Picnic_Table"
       type: ORIGIN_GEOMETRY
-    description: Center origin on geometry
+    description: Center origin on full picnic table
+    optional: true
+    tags: ["bench", "seating"]
 
   # ============================================
   # SECTION 10: MATERIAL
@@ -509,8 +536,18 @@ steps:
       metallic: 0.0
     description: Create wood material (extracted from original model)
 
+  # Material for core table (when no benches)
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "Table"
+    description: Apply wood material to core table
+
+  # Material for full picnic table (with benches)
   - tool: material_assign
     params:
       material_name: "PicnicTable_Wood"
       object_name: "Picnic_Table"
     description: Assign wood material to picnic table
+    optional: true
+    tags: ["bench", "seating"]
