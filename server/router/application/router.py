@@ -501,15 +501,18 @@ class SupervisorRouter:
                 )
                 self._last_adaptation_result = adaptation_result
 
+                # Build variables from defaults + modifiers (TASK-052)
+                variables = self._build_variables(definition, self._current_goal or "")
+
                 # Convert adapted steps to CorrectedToolCall list
                 calls = []
-                for step in adapted_steps:
-                    # Resolve params with eval_context
-                    resolved_params = dict(step.params)
+                for i, step in enumerate(adapted_steps):
+                    # Resolve params with variables (TASK-052) and eval_context
+                    resolved_params = self._resolve_step_params(step.params, variables, eval_context)
                     call = CorrectedToolCall(
                         tool_name=step.tool,
                         params=resolved_params,
-                        corrections_applied=[f"workflow:{workflow_name}"],
+                        corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
                         is_injected=True,
                     )
                     calls.append(call)
@@ -527,8 +530,10 @@ class SupervisorRouter:
 
                 return calls
 
-        # Standard expansion without adaptation
-        calls = registry.expand_workflow(workflow_name, params, eval_context)
+        # Standard expansion without adaptation (TASK-052: pass user_prompt)
+        calls = registry.expand_workflow(
+            workflow_name, params, eval_context, user_prompt=self._current_goal or ""
+        )
 
         if calls:
             self._processing_stats["workflows_expanded"] += 1
@@ -592,6 +597,94 @@ class SupervisorRouter:
             eval_context["has_selection"] = context.topology.has_selection
 
         return eval_context
+
+    def _build_variables(
+        self,
+        definition: "WorkflowDefinition",
+        user_prompt: str,
+    ) -> Dict[str, Any]:
+        """Build variable context from defaults and modifiers.
+
+        TASK-052: Parametric variable substitution.
+
+        Args:
+            definition: Workflow definition with defaults and modifiers.
+            user_prompt: User prompt to scan for modifier keywords.
+
+        Returns:
+            Dictionary of variable values.
+        """
+        # Start with defaults
+        variables: Dict[str, Any] = {}
+        if definition.defaults:
+            variables = dict(definition.defaults)
+
+        # Apply modifiers from user prompt
+        if user_prompt and definition.modifiers:
+            prompt_lower = user_prompt.lower()
+            for keyword, values in definition.modifiers.items():
+                if keyword.lower() in prompt_lower:
+                    self.logger.log_info(f"Modifier matched: '{keyword}' → {values}")
+                    variables.update(values)
+
+        return variables
+
+    def _resolve_step_params(
+        self,
+        params: Dict[str, Any],
+        variables: Dict[str, Any],
+        eval_context: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Resolve step parameters with variable substitution.
+
+        TASK-052: Replaces $variable placeholders with values.
+
+        Args:
+            params: Step parameters with potential $variable references.
+            variables: Variable values from defaults/modifiers.
+            eval_context: Additional context (dimensions, etc.).
+
+        Returns:
+            Resolved parameters dictionary.
+        """
+        resolved: Dict[str, Any] = {}
+        all_vars = {**eval_context, **variables}
+
+        for key, value in params.items():
+            resolved[key] = self._resolve_single_value(value, all_vars)
+
+        return resolved
+
+    def _resolve_single_value(
+        self,
+        value: Any,
+        variables: Dict[str, Any],
+    ) -> Any:
+        """Resolve a single parameter value.
+
+        Args:
+            value: Value to resolve.
+            variables: Available variables.
+
+        Returns:
+            Resolved value.
+        """
+        if isinstance(value, list):
+            return [self._resolve_single_value(v, variables) for v in value]
+
+        if isinstance(value, dict):
+            return {k: self._resolve_single_value(v, variables) for k, v in value.items()}
+
+        if not isinstance(value, str):
+            return value
+
+        # Check for $variable reference (not $CALCULATE, not $AUTO_)
+        if value.startswith("$") and not value.startswith("$CALCULATE") and not value.startswith("$AUTO_"):
+            var_name = value[1:]
+            if var_name in variables:
+                return variables[var_name]
+
+        return value
 
     def _build_tool_sequence(
         self,
@@ -930,6 +1023,9 @@ class SupervisorRouter:
         """
         self._current_goal = goal
 
+        # Ensure semantic matcher is initialized (eager init on first goal)
+        self._ensure_semantic_initialized()
+
         # Step 1: Try exact keyword match
         from server.router.application.workflows.registry import get_workflow_registry
 
@@ -938,7 +1034,41 @@ class SupervisorRouter:
 
         if workflow_name:
             self._pending_workflow = workflow_name
-            self.logger.log_info(f"Goal '{goal}' matched workflow (keyword): {workflow_name}")
+
+            # TASK-051: Create MatchResult for keyword matches to enable adaptation
+            # Check if workflow has optional steps to determine adaptation need
+            definition = registry.get_definition(workflow_name)
+            has_optional = definition and any(s.optional for s in definition.steps)
+
+            # Keyword match = HIGH confidence by default, but check for "simple" modifiers
+            # that indicate user wants a simpler version
+            goal_lower = goal.lower()
+            wants_simple = any(kw in goal_lower for kw in [
+                "simple", "basic", "minimal", "just", "only", "plain",
+                "prosty", "podstawowy", "tylko"  # Polish
+            ])
+
+            if wants_simple and has_optional:
+                # User wants simple version - use LOW confidence to get core-only
+                confidence_level = "LOW"
+                requires_adaptation = True
+            else:
+                # Normal keyword match - HIGH confidence
+                confidence_level = "HIGH"
+                requires_adaptation = has_optional
+
+            self._last_match_result = MatchResult(
+                workflow_name=workflow_name,
+                confidence=1.0 if not wants_simple else 0.7,
+                match_type="keyword",
+                confidence_level=confidence_level,
+                requires_adaptation=requires_adaptation,
+            )
+
+            self.logger.log_info(
+                f"Goal '{goal}' matched workflow (keyword): {workflow_name} "
+                f"(confidence_level: {confidence_level})"
+            )
             return workflow_name
 
         # Step 2: Try semantic matching (TASK-046)

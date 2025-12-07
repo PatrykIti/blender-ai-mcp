@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [99](./99-2025-12-07-router-matching-fixes.md) | 2025-12-07 | **Router Matching & Parametric Variables Fixes** | - |
 | [98](./98-2025-12-07-parametric-variables.md) | 2025-12-07 | **Parametric Workflow Variables (TASK-052)** | - |
 | [97](./97-2025-12-07-confidence-based-workflow-adaptation.md) | 2025-12-07 | **Confidence-Based Workflow Adaptation (TASK-051)** | - |
 | [96](./96-2025-12-07-multi-embedding-workflow.md) | 2025-12-07 | **Multi-Embedding Workflow System (TASK-050)** | - |
