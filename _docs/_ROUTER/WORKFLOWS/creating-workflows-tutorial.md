@@ -12,9 +12,10 @@ Kompletny przewodnik krok po kroku do tworzenia własnych workflow YAML.
 4. [Krok 3: Definiowanie Kroków](#4-krok-3-definiowanie-kroków)
 5. [Krok 4: Dodawanie Warunków](#5-krok-4-dodawanie-warunków)
 6. [Krok 5: Dynamiczne Parametry](#6-krok-5-dynamiczne-parametry)
-7. [Krok 6: Testowanie](#7-krok-6-testowanie)
-8. [Kompletny Przykład](#8-kompletny-przykład)
-9. [Najczęstsze Błędy](#9-najczęstsze-błędy)
+7. [Krok 6: Opcjonalne Kroki i Adaptacja](#7-krok-6-opcjonalne-kroki-i-adaptacja)
+8. [Krok 7: Testowanie](#8-krok-7-testowanie)
+9. [Kompletny Przykład](#9-kompletny-przykład)
+10. [Najczęstsze Błędy](#10-najczęstsze-błędy)
 
 ---
 
@@ -330,7 +331,120 @@ params:
 
 ---
 
-## 7. Krok 6: Testowanie
+## 7. Krok 6: Opcjonalne Kroki i Adaptacja
+
+### 7.1 Problem: Zbyt Szczegółowe Workflow
+
+Wyobraź sobie workflow `picnic_table` z 49 krokami, który tworzy stół piknikowy z ławkami. Gdy użytkownik powie "prosty stół z 4 nogami", wykonanie pełnego workflow jest nadmierne.
+
+### 7.2 Rozwiązanie: Confidence-Based Adaptation
+
+Router automatycznie adaptuje workflow na podstawie poziomu dopasowania:
+
+| Confidence | Strategia | Zachowanie |
+|------------|-----------|------------|
+| **HIGH** (≥0.90) | `FULL` | Wykonaj WSZYSTKIE kroki |
+| **MEDIUM** (≥0.75) | `FILTERED` | Core + pasujące optional |
+| **LOW** (≥0.60) | `CORE_ONLY` | Tylko CORE kroki |
+| **NONE** (<0.60) | `CORE_ONLY` | Tylko CORE (fallback) |
+
+### 7.3 Oznaczanie Kroków jako Opcjonalne
+
+Użyj `optional: true` i `tags` aby oznaczyć kroki, które mogą być pominięte:
+
+```yaml
+steps:
+  # Krok podstawowy - zawsze wykonywany
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableTop"
+    description: Stwórz blat stołu
+    # optional: false  # Domyślna wartość, nie trzeba pisać
+
+  # Krok opcjonalny - może być pominięty przy niskim confidence
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchLeft"
+    description: Stwórz lewą ławkę
+    optional: true
+    tags: ["bench", "seating", "side"]
+```
+
+### 7.4 Jak Działają Tagi?
+
+Przy **MEDIUM confidence** Router sprawdza czy tagi kroku pasują do promptu użytkownika:
+
+```yaml
+# Prompt: "table with benches"
+# Step tags: ["bench", "seating"]
+# Wynik: Krok WŁĄCZONY (tag "bench" pasuje do "benches")
+
+# Prompt: "simple table with 4 legs"
+# Step tags: ["bench", "seating"]
+# Wynik: Krok POMINIĘTY (żaden tag nie pasuje)
+```
+
+### 7.5 Dobre Praktyki dla Tagów
+
+```yaml
+# DOBRZE - konkretne, przeszukiwalne tagi
+tags: ["bench", "seating", "side", "left"]
+tags: ["handle", "grip", "ergonomic"]
+tags: ["decoration", "detail", "ornament"]
+
+# ŹLE - zbyt ogólne
+tags: ["extra", "optional"]  # Niespecyficzne
+tags: ["part"]               # Wszystko jest "part"
+```
+
+### 7.6 Przykład: Stół Piknikowy z Adaptacją
+
+```yaml
+# picnic_table.yaml (uproszczony)
+name: picnic_table_workflow
+description: Stół piknikowy z opcjonalnymi ławkami
+
+steps:
+  # === CORE STEPS (zawsze wykonywane) ===
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "TableTop" }
+    description: Blat stołu
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "Leg1" }
+    description: Pierwsza noga
+
+  # ... więcej nóg ...
+
+  # === OPTIONAL STEPS (adaptowane przez confidence) ===
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "BenchLeft" }
+    description: Lewa ławka
+    optional: true
+    tags: ["bench", "seating", "left"]
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "BenchRight" }
+    description: Prawa ławka
+    optional: true
+    tags: ["bench", "seating", "right"]
+```
+
+**Wyniki adaptacji:**
+
+```
+"create a picnic table"       → HIGH (0.92)  → 49 kroków (pełny workflow)
+"simple table with 4 legs"    → LOW (0.68)   → ~33 kroków (bez ławek)
+"table with benches"          → MEDIUM (0.78) → ~40 kroków (core + bench)
+```
+
+---
+
+## 8. Krok 7: Testowanie
 
 ### 7.1 Walidacja Składni YAML
 
@@ -383,7 +497,7 @@ print(f"Znaleziono: {workflow}")
 
 ---
 
-## 8. Kompletny Przykład
+## 9. Kompletny Przykład
 
 ### 8.1 Workflow: Telefon z Ekranem
 
@@ -520,7 +634,7 @@ Workflow rozwinięty do 9 kroków:
 
 ---
 
-## 9. Najczęstsze Błędy
+## 10. Najczęstsze Błędy
 
 ### 9.1 Błędy Składni YAML
 

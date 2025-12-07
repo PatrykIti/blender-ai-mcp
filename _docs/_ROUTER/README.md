@@ -56,6 +56,7 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **SemanticWorkflowMatcher** | Matching + generalization | ✅ Done |
 | **ProportionInheritance** | Cross-workflow rule inheritance | ✅ Done |
 | **FeedbackCollector** | Learning from user feedback | ✅ Done |
+| **WorkflowAdapter** | Confidence-based workflow adaptation (TASK-051) | ✅ Done |
 | **LanceVectorStore** | LanceDB vector database (TASK-047) | ✅ Done |
 | **IVectorStore** | Vector store interface (DIP compliance) | ✅ Done |
 | **PickleToLanceMigration** | Legacy pickle cache migration | ✅ Done |
@@ -273,6 +274,52 @@ result: [
 - [29-semantic-workflow-matcher.md](./IMPLEMENTATION/29-semantic-workflow-matcher.md)
 - [30-proportion-inheritance.md](./IMPLEMENTATION/30-proportion-inheritance.md)
 - [31-feedback-learning.md](./IMPLEMENTATION/31-feedback-learning.md)
+
+---
+
+## Confidence-Based Workflow Adaptation (TASK-051)
+
+> **Status:** ✅ Done | [Task Details](../_TASKS/TASK-051_Confidence_Based_Workflow_Adaptation.md)
+
+Adapts workflow execution based on semantic match confidence level.
+
+### Problem
+
+```python
+# Router has confidence levels but doesn't use them
+user: "simple table with 4 legs"
+result: picnic_table_workflow (49 steps with benches)  # Too much!
+```
+
+### Solution
+
+```python
+# Adapt workflow based on confidence
+user: "simple table with 4 legs"
+confidence: LOW (0.68)
+result: picnic_table_workflow → 33 steps (benches skipped)
+```
+
+### Adaptation Strategies
+
+| Confidence | Strategy | Behavior |
+|------------|----------|----------|
+| **HIGH** (≥0.90) | `FULL` | Execute ALL steps |
+| **MEDIUM** (≥0.75) | `FILTERED` | Core + tag-matching optional |
+| **LOW** (≥0.60) | `CORE_ONLY` | Core steps only |
+| **NONE** (<0.60) | `CORE_ONLY` | Core steps only (fallback) |
+
+### New Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **WorkflowAdapter** | Adapts workflow steps by confidence | `engines/workflow_adapter.py` |
+| **WorkflowStep.optional** | Marks step as skippable | `workflows/base.py` |
+| **WorkflowStep.tags** | Tags for MEDIUM filtering | `workflows/base.py` |
+
+### Implementation Docs
+
+- [32-workflow-adapter.md](./IMPLEMENTATION/32-workflow-adapter.md)
 
 ---
 

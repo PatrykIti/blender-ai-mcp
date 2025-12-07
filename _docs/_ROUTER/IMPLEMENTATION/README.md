@@ -39,6 +39,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 29 | `29-semantic-workflow-matcher.md` | Semantic Workflow Matcher | TASK-046-3 | ✅ |
 | 30 | `30-proportion-inheritance.md` | Proportion Inheritance | TASK-046-4 | ✅ |
 | 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | ✅ |
+| 32 | `32-workflow-adapter.md` | Workflow Adapter | TASK-051 | ✅ |
 
 ---
 
@@ -93,6 +94,9 @@ Phase 8: Semantic Generalization (TASK-046) ✅
   ├─ 29-semantic-workflow-matcher.md ✅ (TASK-046-3)
   ├─ 30-proportion-inheritance.md ✅ (TASK-046-4)
   └─ 31-feedback-learning.md ✅ (TASK-046-6)
+
+Phase 9: Confidence-Based Adaptation (TASK-051) ✅
+  └─ 32-workflow-adapter.md ✅ (TASK-051)
 ```
 
 ---

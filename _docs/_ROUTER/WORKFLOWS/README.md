@@ -322,7 +322,52 @@ Use these as templates for your own workflows!
 | `tool` | string | Yes | Tool name to call |
 | `params` | object | Yes | Parameters for the tool |
 | `description` | string | No | Step description |
-| `condition` | string | No | Condition expression (future) |
+| `condition` | string | No | Condition expression |
+| `optional` | bool | No | If true, step can be skipped by WorkflowAdapter (TASK-051) |
+| `tags` | array | No | Tags for MEDIUM confidence filtering (TASK-051) |
+
+---
+
+## Confidence-Based Workflow Adaptation (TASK-051)
+
+The router adapts workflows based on match confidence level:
+
+| Confidence | Strategy | Behavior |
+|------------|----------|----------|
+| **HIGH** (≥0.90) | `FULL` | Execute ALL steps |
+| **MEDIUM** (≥0.75) | `FILTERED` | Core + tag-matching optional steps |
+| **LOW** (≥0.60) | `CORE_ONLY` | Core steps only (skip optional) |
+| **NONE** (<0.60) | `CORE_ONLY` | Core steps only (fallback) |
+
+### Marking Steps as Optional
+
+```yaml
+steps:
+  # Core step - always executed
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableTop"
+    optional: false  # Default
+
+  # Optional step - can be skipped based on confidence
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchLeft"
+    optional: true
+    tags: ["bench", "seating", "side"]
+```
+
+### Tag Matching (MEDIUM Confidence)
+
+When confidence is MEDIUM, optional steps are included if their tags match the user prompt:
+
+```yaml
+# User: "table with benches"
+# Step tags: ["bench", "seating"]
+# Result: Step included (tag "bench" matches prompt)
+```
 
 ---
 

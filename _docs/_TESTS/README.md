@@ -38,7 +38,7 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 662+ | ~3-4 seconds |
+| Unit Tests | 905+ | ~5-6 seconds |
 | E2E Tests | 142 | ~12 seconds |
 
 ## Test Coverage by Area
@@ -57,6 +57,7 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 | Baking | ✅ | ✅ |
 | System | ✅ | ✅ |
 | Curve | ✅ | 🔄 |
+| Router | ✅ | ✅ |
 
 ---
 
