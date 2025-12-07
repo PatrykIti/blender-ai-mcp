@@ -15,17 +15,21 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """Pre-compute and store tool embeddings."""
+    """Pre-compute and store tool embeddings.
+
+    Uses DI providers to ensure shared LaBSE model (~1.8GB RAM savings).
+    """
     logger.info("Pre-computing tool embeddings for Docker image...")
 
-    # Import after logging setup
-    from server.router.application.classifier.intent_classifier import IntentClassifier
-    from server.router.infrastructure.config import RouterConfig
+    # Import DI providers - they share the LaBSE model
+    from server.infrastructure.di import (
+        get_intent_classifier,
+        get_workflow_classifier,
+    )
     from server.router.infrastructure.metadata_loader import MetadataLoader
 
-    # Create classifier with default config
-    config = RouterConfig()
-    classifier = IntentClassifier(config=config)
+    # Get shared IntentClassifier via DI
+    classifier = get_intent_classifier()
 
     # Load tool metadata and compute embeddings
     loader = MetadataLoader()
@@ -62,11 +66,8 @@ def main():
                 workflows[name] = definition
 
     if workflows:
-        from server.router.application.classifier.workflow_intent_classifier import (
-            WorkflowIntentClassifier,
-        )
-
-        workflow_classifier = WorkflowIntentClassifier(config=config)
+        # Get shared WorkflowIntentClassifier via DI (uses same LaBSE model)
+        workflow_classifier = get_workflow_classifier()
         workflow_classifier.load_workflow_embeddings(workflows)
 
         wf_info = workflow_classifier.get_info()

@@ -97,16 +97,20 @@ class SemanticWorkflowMatcher:
         self,
         config: Optional[RouterConfig] = None,
         registry: Optional["WorkflowRegistry"] = None,
+        classifier: Optional[WorkflowIntentClassifier] = None,
     ):
         """Initialize matcher.
 
         Args:
             config: Router configuration.
             registry: Workflow registry (can be set later via initialize).
+            classifier: WorkflowIntentClassifier instance (injected via DI).
+                       If None, creates a new instance (fallback for tests).
         """
         self._config = config or RouterConfig()
         self._registry = registry
-        self._classifier = WorkflowIntentClassifier(config=self._config)
+        # Use injected classifier or create new (fallback for tests)
+        self._classifier = classifier or WorkflowIntentClassifier(config=self._config)
         self._is_initialized = False
 
     def initialize(self, registry: "WorkflowRegistry") -> None:

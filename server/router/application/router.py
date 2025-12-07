@@ -25,6 +25,9 @@ from server.router.application.engines.tool_override_engine import ToolOverrideE
 from server.router.application.engines.workflow_expansion_engine import WorkflowExpansionEngine
 from server.router.application.engines.error_firewall import ErrorFirewall
 from server.router.application.classifier.intent_classifier import IntentClassifier
+from server.router.application.classifier.workflow_intent_classifier import (
+    WorkflowIntentClassifier,
+)
 from server.router.application.triggerer.workflow_triggerer import WorkflowTriggerer
 from server.router.application.matcher.semantic_workflow_matcher import (
     SemanticWorkflowMatcher,
@@ -75,6 +78,7 @@ class SupervisorRouter:
         config: Optional[RouterConfig] = None,
         rpc_client: Optional[Any] = None,
         classifier: Optional[IntentClassifier] = None,
+        workflow_classifier: Optional[WorkflowIntentClassifier] = None,
     ):
         """Initialize supervisor router.
 
@@ -85,6 +89,9 @@ class SupervisorRouter:
                         If not provided, creates a new one.
                         Use this to share the LaBSE model (~1.8GB) between
                         multiple router instances in tests.
+            workflow_classifier: Optional shared WorkflowIntentClassifier instance.
+                        Injected via DI to share LaBSE model with IntentClassifier.
+                        Passed to SemanticWorkflowMatcher.
         """
         self.config = config or RouterConfig()
         self._rpc_client = rpc_client
@@ -120,7 +127,11 @@ class SupervisorRouter:
         self._pending_workflow: Optional[str] = None
 
         # Semantic workflow matching (TASK-046)
-        self._semantic_matcher = SemanticWorkflowMatcher(config=self.config)
+        # Pass workflow_classifier via DI to share LaBSE model (~1.8GB RAM savings)
+        self._semantic_matcher = SemanticWorkflowMatcher(
+            config=self.config,
+            classifier=workflow_classifier,
+        )
         self._proportion_inheritance = ProportionInheritance()
         self._semantic_initialized = False
         self._last_match_result: Optional[MatchResult] = None
