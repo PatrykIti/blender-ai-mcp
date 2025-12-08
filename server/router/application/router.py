@@ -34,6 +34,7 @@ from server.router.application.matcher.semantic_workflow_matcher import (
     SemanticWorkflowMatcher,
     MatchResult,
 )
+from server.router.domain.entities.ensemble import EnsembleResult
 from server.router.application.inheritance.proportion_inheritance import (
     ProportionInheritance,
 )
@@ -127,8 +128,9 @@ class SupervisorRouter:
         self._current_goal: Optional[str] = None
         self._pending_workflow: Optional[str] = None
 
-        # Semantic workflow matching (TASK-046)
+        # Semantic workflow matching (TASK-046) - KEEP for backward compatibility
         # Pass workflow_classifier via DI to share LaBSE model (~1.8GB RAM savings)
+        self._workflow_classifier = workflow_classifier
         self._semantic_matcher = SemanticWorkflowMatcher(
             config=self.config,
             classifier=workflow_classifier,
@@ -136,6 +138,12 @@ class SupervisorRouter:
         self._proportion_inheritance = ProportionInheritance()
         self._semantic_initialized = False
         self._last_match_result: Optional[MatchResult] = None
+
+        # Ensemble matching (TASK-053)
+        self._ensemble_matcher: Optional[Any] = None  # EnsembleMatcher, lazy init
+        self._last_ensemble_result: Optional[EnsembleResult] = None
+        self._pending_modifiers: Dict[str, Any] = {}  # Modifiers from ensemble
+        self._use_ensemble_matching: bool = True  # Feature flag
 
         # Workflow adaptation (TASK-051)
         # Adapts workflow steps based on confidence level
@@ -628,6 +636,64 @@ class SupervisorRouter:
                     variables.update(values)
 
         return variables
+
+    def _ensure_ensemble_initialized(self) -> bool:
+        """Ensure ensemble matcher is initialized.
+
+        Lazily initializes the ensemble matcher with all components.
+        TASK-053-9: New method for ensemble matching support.
+
+        Returns:
+            True if initialized successfully, False otherwise.
+        """
+        if self._ensemble_matcher is not None:
+            return True
+
+        try:
+            from server.router.application.workflows.registry import get_workflow_registry
+            from server.router.application.matcher.keyword_matcher import KeywordMatcher
+            from server.router.application.matcher.semantic_matcher import SemanticMatcher
+            from server.router.application.matcher.pattern_matcher import PatternMatcher
+            from server.router.application.matcher.modifier_extractor import ModifierExtractor
+            from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
+            from server.router.application.matcher.ensemble_matcher import EnsembleMatcher
+
+            registry = get_workflow_registry()
+            registry.ensure_custom_loaded()
+
+            # Create modifier extractor
+            modifier_extractor = ModifierExtractor(registry)
+
+            # Create matchers
+            keyword_matcher = KeywordMatcher(registry)
+            semantic_matcher = SemanticMatcher(
+                classifier=self._workflow_classifier,  # Reuse existing classifier
+                registry=registry,
+                config=self.config,
+            )
+            pattern_matcher = PatternMatcher(registry)
+
+            # Create aggregator
+            aggregator = EnsembleAggregator(modifier_extractor, self.config)
+
+            # Create ensemble matcher
+            self._ensemble_matcher = EnsembleMatcher(
+                keyword_matcher=keyword_matcher,
+                semantic_matcher=semantic_matcher,
+                pattern_matcher=pattern_matcher,
+                aggregator=aggregator,
+                config=self.config,
+            )
+
+            # Initialize semantic matcher with registry
+            self._ensemble_matcher.initialize(registry)
+
+            self.logger.log_info("Ensemble matcher initialized")
+            return True
+
+        except Exception as e:
+            self.logger.log_error("ensemble_init", str(e))
+            return False
 
     def _resolve_step_params(
         self,
