@@ -909,6 +909,48 @@ If LLM doesn't respond to parameter question:
 
 ---
 
+## ⚠️ Implementation Notes
+
+### Semantic Hints vs Modifiers Validation
+
+**Important:** When implementing TASK-055-4 (Workflow Schema Enhancement), add validation to ensure `semantic_hints` in parameters don't overlap with existing `modifiers` keywords.
+
+**Problem scenario:**
+```yaml
+modifiers:
+  "straight legs":           # Explicit YAML modifier
+    leg_angle_left: 0
+
+parameters:
+  leg_angle_left:
+    semantic_hints: ["straight", "legs"]  # ⚠️ Overlaps with modifier!
+```
+
+**Required validation in `WorkflowLoader`:**
+```python
+def _validate_no_hint_modifier_overlap(self, definition: WorkflowDefinition) -> None:
+    """Ensure semantic_hints don't overlap with modifier keywords."""
+    if not definition.modifiers or not definition.parameters:
+        return
+
+    modifier_keywords = set()
+    for keyword in definition.modifiers.keys():
+        # Tokenize modifier keywords
+        modifier_keywords.update(keyword.lower().split())
+
+    for param_name, schema in definition.parameters.items():
+        for hint in schema.semantic_hints:
+            if hint.lower() in modifier_keywords:
+                logger.warning(
+                    f"Workflow '{definition.name}': semantic_hint '{hint}' "
+                    f"overlaps with modifier keyword. YAML modifier will take priority."
+                )
+```
+
+**Rationale:** This avoids ambiguity about which resolution path (Tier 1 YAML vs Tier 3 LLM) should handle a given phrase. YAML modifiers always win, so overlapping hints would never trigger LLM interaction anyway.
+
+---
+
 ## Dependencies
 
 - TASK-053 (Ensemble Matcher) - Completed ✅
