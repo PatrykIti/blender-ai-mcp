@@ -2,11 +2,13 @@
 E2E tests for Interactive Parameter Resolution.
 
 TASK-055-7: Tests the complete parameter resolution flow:
-1. set_goal_interactive matches workflow and resolves parameters
+1. set_goal matches workflow and resolves parameters
 2. YAML modifiers are resolved (tier 1)
 3. Learned mappings are used (tier 2)
 4. Unresolved parameters are flagged for LLM input (tier 3)
-5. store_parameter stores resolved values for future use
+5. resolved_params stores values for future use
+
+TASK-055-FIX: Updated for unified router_set_goal interface.
 
 These tests run with mock router (no Blender connection required).
 """
@@ -424,13 +426,14 @@ class TestInteractiveParameterResolutionE2E:
 
         assert "Stored" in result
 
-        # Verify it was persisted
-        mappings = mock_store.list_mappings(
+        # Verify it was persisted by trying to find it
+        mapping = mock_store.find_mapping(
+            prompt="prostymi nogami",
             workflow_name="picnic_table",
             parameter_name="leg_angle_left",
         )
-        found = any(m.context == "prostymi nogami" for m in mappings)
-        assert found, "Stored mapping should be findable"
+        assert mapping is not None, "Stored mapping should be findable"
+        assert mapping.value == 0.0
 
     def test_store_invalid_value_rejected(
         self, mock_resolver, table_workflow_params

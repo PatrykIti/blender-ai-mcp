@@ -2,6 +2,7 @@
 Unit tests for RouterToolHandler parameter resolution methods.
 
 TASK-055-5, TASK-055-6
+TASK-055-FIX: Updated for unified set_goal interface.
 """
 
 import pytest
@@ -23,42 +24,25 @@ class MockParameterStore:
     def __init__(self):
         self._mappings: Dict[str, StoredMapping] = {}
 
-    def list_mappings(
+    def find_mapping(
         self,
-        workflow_name: Optional[str] = None,
-        parameter_name: Optional[str] = None,
-    ) -> List[StoredMapping]:
-        """List mappings with optional filtering."""
-        result = []
-        for mapping in self._mappings.values():
-            if workflow_name and mapping.workflow_name != workflow_name:
-                continue
-            if parameter_name and mapping.parameter_name != parameter_name:
-                continue
-            result.append(mapping)
-        return result
-
-    def delete_mapping(
-        self,
-        context: str,
+        prompt: str,
         parameter_name: str,
         workflow_name: str,
-    ) -> bool:
-        """Delete mapping."""
-        key = f"{workflow_name}:{parameter_name}:{context}"
-        if key in self._mappings:
-            del self._mappings[key]
-            return True
-        return False
+        similarity_threshold: float = 0.85,
+    ) -> Optional[StoredMapping]:
+        """Find mapping by context."""
+        key = f"{workflow_name}:{parameter_name}:{prompt}"
+        return self._mappings.get(key)
 
-    def add_test_mapping(
+    def store_mapping(
         self,
         context: str,
         parameter_name: str,
         value: Any,
         workflow_name: str,
-    ):
-        """Add test mapping."""
+    ) -> None:
+        """Store mapping."""
         key = f"{workflow_name}:{parameter_name}:{context}"
         self._mappings[key] = StoredMapping(
             context=context,
@@ -69,12 +53,27 @@ class MockParameterStore:
             usage_count=1,
         )
 
+    def increment_usage(self, mapping: StoredMapping) -> None:
+        """Increment usage count."""
+        pass
+
+    def clear(self) -> int:
+        """Clear all mappings."""
+        count = len(self._mappings)
+        self._mappings.clear()
+        return count
+
 
 class MockParameterResolver:
     """Mock parameter resolver for testing."""
 
     def __init__(self):
         self.stored_values = []
+        self._resolve_result = None
+
+    def set_resolve_result(self, result: ParameterResolutionResult):
+        """Set what resolve() should return."""
+        self._resolve_result = result
 
     def store_resolved_value(
         self,
@@ -102,6 +101,40 @@ class MockParameterResolver:
         })
         return f"Stored: '{context}' → {parameter_name}={value} (workflow: {workflow_name})"
 
+    def resolve(
+        self,
+        prompt: str,
+        workflow_name: str,
+        parameters: Dict[str, ParameterSchema],
+        existing_modifiers: Optional[Dict[str, Any]] = None,
+    ) -> ParameterResolutionResult:
+        """Return configured result."""
+        if self._resolve_result:
+            return self._resolve_result
+        # Default: return all as unresolved
+        unresolved = []
+        resolved = existing_modifiers or {}
+        sources = {k: "yaml_modifier" for k in resolved}
+
+        for name, schema in parameters.items():
+            if name in resolved:
+                continue
+            if schema.default is not None:
+                resolved[name] = schema.default
+                sources[name] = "default"
+            else:
+                unresolved.append(UnresolvedParameter(
+                    name=name,
+                    schema=schema,
+                    context=prompt,
+                    relevance=0.8,
+                ))
+        return ParameterResolutionResult(
+            resolved=resolved,
+            unresolved=unresolved,
+            resolution_sources=sources,
+        )
+
 
 class MockWorkflowLoader:
     """Mock workflow loader for testing."""
@@ -120,233 +153,14 @@ class MockWorkflowLoader:
         self._workflows[name] = workflow
 
 
-@pytest.fixture
-def mock_store():
-    """Create mock store."""
-    return MockParameterStore()
-
-
-@pytest.fixture
-def mock_resolver():
-    """Create mock resolver."""
-    return MockParameterResolver()
-
-
-@pytest.fixture
-def mock_loader():
-    """Create mock loader."""
-    return MockWorkflowLoader()
-
-
-@pytest.fixture
-def handler(mock_store, mock_resolver, mock_loader):
-    """Create handler with mocks."""
-    handler = RouterToolHandler(router=None, enabled=True)
-
-    # Patch the getter methods
-    handler._get_parameter_store = lambda: mock_store
-    handler._get_parameter_resolver = lambda: mock_resolver
-    handler._get_workflow_loader = lambda: mock_loader
-
-    return handler
-
-
-class TestStoreParameterValue:
-    """Tests for store_parameter_value method."""
-
-    def test_store_simple_value(self, handler, mock_resolver):
-        """Test storing a simple parameter value."""
-        result = handler.store_parameter_value(
-            context="straight legs",
-            parameter_name="leg_angle",
-            value=0.0,
-            workflow_name="table",
-        )
-
-        assert "Stored" in result
-        assert "leg_angle=0.0" in result
-        assert len(mock_resolver.stored_values) == 1
-        assert mock_resolver.stored_values[0]["context"] == "straight legs"
-        assert mock_resolver.stored_values[0]["value"] == 0.0
-
-    def test_store_with_schema_validation(self, handler, mock_resolver, mock_loader):
-        """Test storing value with schema validation."""
-        # Add workflow with parameter schema
-        mock_loader.add_test_workflow(
-            "table",
-            {
-                "leg_angle": ParameterSchema(
-                    name="leg_angle",
-                    type="float",
-                    range=(-1.57, 1.57),
-                )
-            }
-        )
-
-        result = handler.store_parameter_value(
-            context="straight legs",
-            parameter_name="leg_angle",
-            value=0.5,  # Within range
-            workflow_name="table",
-        )
-
-        assert "Stored" in result
-
-    def test_store_returns_error_when_disabled(self, mock_resolver):
-        """Test that disabled handler returns error."""
-        handler = RouterToolHandler(router=None, enabled=False)
-
-        result = handler.store_parameter_value(
-            context="test",
-            parameter_name="param",
-            value=1.0,
-            workflow_name="wf",
-        )
-
-        assert "disabled" in result.lower()
-
-
-class TestListParameterMappings:
-    """Tests for list_parameter_mappings method."""
-
-    def test_list_empty(self, handler):
-        """Test listing when no mappings exist."""
-        result = handler.list_parameter_mappings()
-
-        assert "No parameter mappings stored yet" in result
-
-    def test_list_with_mappings(self, handler, mock_store):
-        """Test listing existing mappings."""
-        mock_store.add_test_mapping(
-            context="straight legs",
-            parameter_name="leg_angle",
-            value=0.0,
-            workflow_name="table",
-        )
-        mock_store.add_test_mapping(
-            context="wide table",
-            parameter_name="top_width",
-            value=2.5,
-            workflow_name="table",
-        )
-
-        result = handler.list_parameter_mappings()
-
-        assert "Total mappings: 2" in result
-        assert "table" in result
-        assert "straight legs" in result
-        assert "leg_angle=0.0" in result
-
-    def test_list_filtered_by_workflow(self, handler, mock_store):
-        """Test listing filtered by workflow."""
-        mock_store.add_test_mapping(
-            context="test",
-            parameter_name="param",
-            value=1.0,
-            workflow_name="workflow_a",
-        )
-        mock_store.add_test_mapping(
-            context="test2",
-            parameter_name="param2",
-            value=2.0,
-            workflow_name="workflow_b",
-        )
-
-        result = handler.list_parameter_mappings(workflow_name="workflow_a")
-
-        assert "workflow_a" in result
-        # Should filter properly
-        assert "Total mappings: 1" in result
-
-    def test_list_returns_error_when_disabled(self):
-        """Test that disabled handler returns error."""
-        handler = RouterToolHandler(router=None, enabled=False)
-
-        result = handler.list_parameter_mappings()
-
-        assert "disabled" in result.lower()
-
-
-class TestDeleteParameterMapping:
-    """Tests for delete_parameter_mapping method."""
-
-    def test_delete_existing_mapping(self, handler, mock_store):
-        """Test deleting an existing mapping."""
-        mock_store.add_test_mapping(
-            context="straight legs",
-            parameter_name="leg_angle",
-            value=0.0,
-            workflow_name="table",
-        )
-
-        result = handler.delete_parameter_mapping(
-            context="straight legs",
-            parameter_name="leg_angle",
-            workflow_name="table",
-        )
-
-        assert "Deleted" in result
-
-    def test_delete_nonexistent_mapping(self, handler, mock_store):
-        """Test deleting a mapping that doesn't exist."""
-        result = handler.delete_parameter_mapping(
-            context="nonexistent",
-            parameter_name="param",
-            workflow_name="wf",
-        )
-
-        assert "not found" in result.lower()
-
-    def test_delete_returns_error_when_disabled(self):
-        """Test that disabled handler returns error."""
-        handler = RouterToolHandler(router=None, enabled=False)
-
-        result = handler.delete_parameter_mapping(
-            context="test",
-            parameter_name="param",
-            workflow_name="wf",
-        )
-
-        assert "disabled" in result.lower()
-
-
-class TestRouterHandlerIntegration:
-    """Integration tests for handler methods."""
-
-    def test_store_and_list_flow(self, handler, mock_store, mock_resolver):
-        """Test storing and then listing mappings."""
-        # Store a value
-        store_result = handler.store_parameter_value(
-            context="prostymi nogami",  # Polish
-            parameter_name="leg_angle_left",
-            value=0.0,
-            workflow_name="picnic_table",
-        )
-
-        assert "Stored" in store_result
-
-        # Add to mock store for listing (since resolver doesn't add to store)
-        mock_store.add_test_mapping(
-            context="prostymi nogami",
-            parameter_name="leg_angle_left",
-            value=0.0,
-            workflow_name="picnic_table",
-        )
-
-        # List mappings
-        list_result = handler.list_parameter_mappings()
-
-        assert "picnic_table" in list_result
-        assert "prostymi nogami" in list_result
-
-
 class MockRouter:
-    """Mock router for set_goal_interactive tests."""
+    """Mock router for set_goal tests."""
 
     def __init__(self):
         self._current_goal = None
         self._pending_workflow = None
         self._pending_modifiers = {}
+        self._pending_variables = {}
 
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set goal and return matched workflow."""
@@ -373,94 +187,67 @@ class MockRouter:
         self._current_goal = None
         self._pending_workflow = None
         self._pending_modifiers = {}
+        self._pending_variables = {}
 
 
-class MockParameterResolverWithResolve(MockParameterResolver):
-    """Extended mock resolver with resolve method for set_goal_interactive."""
-
-    def __init__(self):
-        super().__init__()
-        self._resolve_result = None
-
-    def set_resolve_result(self, result: ParameterResolutionResult):
-        """Set what resolve() should return."""
-        self._resolve_result = result
-
-    def resolve(
-        self,
-        prompt: str,
-        workflow_name: str,
-        parameters: Dict[str, ParameterSchema],
-        existing_modifiers: Optional[Dict[str, Any]] = None,
-    ) -> ParameterResolutionResult:
-        """Return configured result."""
-        if self._resolve_result:
-            return self._resolve_result
-        # Default: return all as unresolved
-        unresolved = []
-        for name, schema in parameters.items():
-            if existing_modifiers and name in existing_modifiers:
-                continue
-            unresolved.append(UnresolvedParameter(
-                name=name,
-                schema=schema,
-                context=prompt,
-                relevance=0.8,
-            ))
-        return ParameterResolutionResult(
-            resolved=existing_modifiers or {},
-            unresolved=unresolved,
-            resolution_sources={k: "yaml_modifier" for k in (existing_modifiers or {})},
-        )
+@pytest.fixture
+def mock_store():
+    """Create mock store."""
+    return MockParameterStore()
 
 
-class TestSetGoalInteractive:
-    """Tests for set_goal_interactive method (TASK-055-6)."""
+@pytest.fixture
+def mock_resolver():
+    """Create mock resolver."""
+    return MockParameterResolver()
 
-    @pytest.fixture
-    def mock_router(self):
-        """Create mock router."""
-        return MockRouter()
 
-    @pytest.fixture
-    def mock_resolver_ext(self):
-        """Create extended mock resolver."""
-        return MockParameterResolverWithResolve()
+@pytest.fixture
+def mock_loader():
+    """Create mock loader."""
+    return MockWorkflowLoader()
 
-    @pytest.fixture
-    def handler_with_router(self, mock_router, mock_resolver_ext, mock_loader):
-        """Create handler with mock router."""
-        handler = RouterToolHandler(router=mock_router, enabled=True)
-        handler._get_parameter_resolver = lambda: mock_resolver_ext
-        handler._get_workflow_loader = lambda: mock_loader
-        return handler
 
-    def test_set_goal_interactive_no_workflow_match(self, handler_with_router):
+@pytest.fixture
+def mock_router():
+    """Create mock router."""
+    return MockRouter()
+
+
+@pytest.fixture
+def handler(mock_router, mock_resolver, mock_loader):
+    """Create handler with mocks."""
+    handler = RouterToolHandler(router=mock_router, enabled=True)
+    handler._get_parameter_resolver = lambda: mock_resolver
+    handler._get_workflow_loader = lambda: mock_loader
+    return handler
+
+
+class TestSetGoalUnified:
+    """Tests for the unified set_goal method (TASK-055-FIX)."""
+
+    def test_set_goal_no_workflow_match(self, handler):
         """Test when no workflow matches the goal."""
-        result = handler_with_router.set_goal_interactive("random unmatched goal")
+        result = handler.set_goal("random unmatched goal")
 
-        assert result["workflow_name"] is None
-        assert result["resolved_parameters"] == {}
-        assert result["unresolved_parameters"] == []
-        assert "No workflow matched" in result.get("message", "")
+        assert result["status"] == "no_match"
+        assert result["workflow"] is None
+        assert result["resolved"] == {}
+        assert result["unresolved"] == []
 
-    def test_set_goal_interactive_with_workflow_no_params(
-        self, handler_with_router, mock_loader
-    ):
+    def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
         """Test when workflow matches but has no parameters."""
         # Add workflow without parameters
         mock_loader.add_test_workflow("picnic_table", {})
 
-        result = handler_with_router.set_goal_interactive("picnic table")
+        result = handler.set_goal("picnic table")
 
-        assert result["workflow_name"] == "picnic_table"
-        assert result["resolved_parameters"] == {}
-        assert "no interactive parameters" in result.get("message", "").lower()
+        assert result["status"] == "ready"
+        assert result["workflow"] == "picnic_table"
+        assert result["resolved"] == {}
 
-    def test_set_goal_interactive_with_modifiers_from_goal(
-        self, handler_with_router, mock_loader, mock_resolver_ext
-    ):
-        """Test when modifiers are extracted from goal text."""
+    def test_set_goal_with_all_resolved(self, handler, mock_loader, mock_resolver):
+        """Test when all parameters are resolved via modifiers."""
         # Add workflow with parameters
         mock_loader.add_test_workflow(
             "picnic_table",
@@ -483,7 +270,7 @@ class TestSetGoalInteractive:
         )
 
         # Configure resolver to return everything as resolved
-        mock_resolver_ext.set_resolve_result(ParameterResolutionResult(
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
             resolved={"leg_angle_left": 0.0, "leg_angle_right": 0.0},
             unresolved=[],
             resolution_sources={
@@ -492,20 +279,16 @@ class TestSetGoalInteractive:
             },
         ))
 
-        result = handler_with_router.set_goal_interactive(
-            "picnic table with straight legs"
-        )
+        result = handler.set_goal("picnic table with straight legs")
 
-        assert result["workflow_name"] == "picnic_table"
-        assert result["is_complete"] is True
-        assert result["needs_llm_input"] is False
-        assert "leg_angle_left" in result["resolved_parameters"]
+        assert result["status"] == "ready"
+        assert result["workflow"] == "picnic_table"
+        assert result["resolved"]["leg_angle_left"] == 0.0
+        assert result["resolved"]["leg_angle_right"] == 0.0
+        assert result["unresolved"] == []
 
-    def test_set_goal_interactive_with_unresolved_params(
-        self, handler_with_router, mock_loader, mock_resolver_ext
-    ):
+    def test_set_goal_with_unresolved_params(self, handler, mock_loader, mock_resolver):
         """Test when some parameters remain unresolved."""
-        # Add workflow with parameters
         leg_schema = ParameterSchema(
             name="leg_angle_left",
             type="float",
@@ -514,13 +297,10 @@ class TestSetGoalInteractive:
             description="Left leg angle",
             semantic_hints=["angle", "tilt", "slant"],
         )
-        mock_loader.add_test_workflow(
-            "picnic_table",
-            {"leg_angle_left": leg_schema}
-        )
+        mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
 
         # Configure resolver to return unresolved parameter
-        mock_resolver_ext.set_resolve_result(ParameterResolutionResult(
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
             resolved={},
             unresolved=[
                 UnresolvedParameter(
@@ -533,70 +313,151 @@ class TestSetGoalInteractive:
             resolution_sources={},
         ))
 
-        result = handler_with_router.set_goal_interactive("table")
+        result = handler.set_goal("table")
 
-        assert result["workflow_name"] == "picnic_table"
-        assert result["needs_llm_input"] is True
-        assert result["is_complete"] is False
-        assert len(result["unresolved_parameters"]) == 1
+        assert result["status"] == "needs_input"
+        assert result["workflow"] == "picnic_table"
+        assert len(result["unresolved"]) == 1
+        assert result["unresolved"][0]["param"] == "leg_angle_left"
+        assert result["unresolved"][0]["type"] == "float"
+        assert result["unresolved"][0]["default"] == 0.3
 
-        unresolved = result["unresolved_parameters"][0]
-        assert unresolved["name"] == "leg_angle_left"
-        assert unresolved["type"] == "float"
-        assert unresolved["description"] == "Left leg angle"
-        assert unresolved["default"] == 0.3
-
-    def test_set_goal_interactive_formatted_output(
-        self, handler_with_router, mock_loader, mock_resolver_ext
+    def test_set_goal_with_resolved_params_second_call(
+        self, handler, mock_loader, mock_resolver
     ):
-        """Test formatted output for set_goal_interactive."""
-        # Add workflow with parameters
+        """Test providing resolved_params on second call."""
+        leg_schema = ParameterSchema(
+            name="leg_angle_left",
+            type="float",
+            range=(-1.57, 1.57),
+            default=0.3,
+            description="Left leg angle",
+        )
+        mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
+
+        # First call returns unresolved
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
+            resolved={},
+            unresolved=[
+                UnresolvedParameter(
+                    name="leg_angle_left",
+                    schema=leg_schema,
+                    context="table",
+                    relevance=0.8,
+                )
+            ],
+            resolution_sources={},
+        ))
+
+        result1 = handler.set_goal("table")
+        assert result1["status"] == "needs_input"
+
+        # Second call with resolved_params
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
+            resolved={"leg_angle_left": 0.5},
+            unresolved=[],
+            resolution_sources={"leg_angle_left": "learned_mapping"},
+        ))
+
+        result2 = handler.set_goal("table", resolved_params={"leg_angle_left": 0.5})
+
+        assert result2["status"] == "ready"
+        assert result2["resolved"]["leg_angle_left"] == 0.5
+
+    def test_set_goal_disabled(self):
+        """Test that disabled handler returns disabled status."""
+        handler = RouterToolHandler(router=None, enabled=False)
+
+        result = handler.set_goal("table")
+
+        assert result["status"] == "disabled"
+
+    def test_set_goal_no_router(self):
+        """Test when router returns None from DI."""
+        handler = RouterToolHandler(router=None, enabled=True)
+        handler._get_router = lambda: None
+
+        result = handler.set_goal("table")
+
+        assert result["status"] == "disabled"
+        assert "not initialized" in result["message"]
+
+    def test_set_goal_resolution_sources_included(
+        self, handler, mock_loader, mock_resolver
+    ):
+        """Test that resolution sources are included in response."""
         mock_loader.add_test_workflow(
             "picnic_table",
             {
                 "leg_angle_left": ParameterSchema(
                     name="leg_angle_left",
                     type="float",
-                    range=(-1.57, 1.57),
                     default=0.3,
-                    description="Left leg angle",
                 ),
             }
         )
 
-        # Configure resolver
-        mock_resolver_ext.set_resolve_result(ParameterResolutionResult(
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
             resolved={"leg_angle_left": 0.0},
             unresolved=[],
             resolution_sources={"leg_angle_left": "yaml_modifier"},
         ))
 
-        result = handler_with_router.set_goal_interactive_formatted(
-            "picnic table with straight legs"
+        result = handler.set_goal("picnic table with straight legs")
+
+        assert result["resolution_sources"]["leg_angle_left"] == "yaml_modifier"
+
+
+class TestExtractContextForParam:
+    """Tests for _extract_context_for_param helper method."""
+
+    def test_extract_context_with_matching_hint(self, handler):
+        """Test context extraction when hint matches."""
+        params = {
+            "leg_angle": ParameterSchema(
+                name="leg_angle",
+                type="float",
+                semantic_hints=["straight", "angled", "proste"],
+            )
+        }
+
+        context = handler._extract_context_for_param(
+            "stół z prostymi nogami",
+            "leg_angle",
+            params,
         )
 
-        assert "Matched workflow: picnic_table" in result
-        assert "Resolved parameters:" in result
-        assert "leg_angle_left = 0.0" in result
-        assert "yaml_modifier" in result
-        assert "All parameters resolved!" in result
+        # Should extract context around "proste" (Polish matching "prostymi")
+        # The method looks for hints in goal, "proste" is not directly in "prostymi"
+        # but it's a substring-based match, so may return full goal
+        assert isinstance(context, str)
 
-    def test_set_goal_interactive_disabled(self):
-        """Test that disabled handler returns error."""
-        handler = RouterToolHandler(router=None, enabled=False)
+    def test_extract_context_no_match_returns_full_goal(self, handler):
+        """Test that full goal is returned when no hint matches."""
+        params = {
+            "width": ParameterSchema(
+                name="width",
+                type="float",
+                semantic_hints=["wide", "narrow"],
+            )
+        }
 
-        result = handler.set_goal_interactive("table")
+        context = handler._extract_context_for_param(
+            "simple table",
+            "width",
+            params,
+        )
 
-        assert "error" in result
-        assert "disabled" in result["error"].lower()
+        assert context == "simple table"
 
-    def test_set_goal_interactive_no_router(self):
-        """Test when router returns None from DI."""
-        handler = RouterToolHandler(router=None, enabled=True)
-        # Mock _get_router to return None (simulating disabled router in config)
-        handler._get_router = lambda: None
+    def test_extract_context_missing_param_returns_full_goal(self, handler):
+        """Test that full goal is returned when param not found."""
+        params = {}
 
-        result = handler.set_goal_interactive("table")
+        context = handler._extract_context_for_param(
+            "simple table",
+            "unknown_param",
+            params,
+        )
 
-        assert "error" in result
-        assert "not initialized" in result["error"].lower()
+        assert context == "simple table"

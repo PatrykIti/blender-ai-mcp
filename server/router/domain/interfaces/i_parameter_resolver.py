@@ -5,10 +5,11 @@ Abstract interfaces for parameter storage and resolution components
 that enable interactive LLM-driven parameter value discovery.
 
 TASK-055
+TASK-055-FIX: Simplified interface - removed list_mappings, delete_mapping
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from server.router.domain.entities.parameter import (
     ParameterResolutionResult,
@@ -22,6 +23,9 @@ class IParameterStore(ABC):
 
     Provides persistence layer for learned parameter mappings using
     LaBSE embeddings for semantic similarity search.
+
+    TASK-055-FIX: Simplified to core operations only.
+    Mappings are auto-managed through router_set_goal flow.
 
     Implementations should:
     - Store mappings with LaBSE embeddings for semantic retrieval
@@ -86,42 +90,6 @@ class IParameterStore(ABC):
 
         Args:
             mapping: The mapping that was used.
-        """
-        pass
-
-    @abstractmethod
-    def list_mappings(
-        self,
-        workflow_name: Optional[str] = None,
-        parameter_name: Optional[str] = None,
-    ) -> List[StoredMapping]:
-        """List stored mappings with optional filtering.
-
-        Args:
-            workflow_name: Filter by workflow name (None = all).
-            parameter_name: Filter by parameter name (None = all).
-
-        Returns:
-            List of stored mappings matching filters.
-        """
-        pass
-
-    @abstractmethod
-    def delete_mapping(
-        self,
-        context: str,
-        parameter_name: str,
-        workflow_name: str,
-    ) -> bool:
-        """Delete a specific stored mapping.
-
-        Args:
-            context: The context string of the mapping.
-            parameter_name: Parameter name.
-            workflow_name: Workflow name.
-
-        Returns:
-            True if mapping was deleted, False if not found.
         """
         pass
 

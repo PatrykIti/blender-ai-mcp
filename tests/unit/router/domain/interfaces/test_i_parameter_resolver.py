@@ -5,6 +5,7 @@ Tests that interfaces are properly defined as ABCs and cannot be
 instantiated directly.
 
 TASK-055-0
+TASK-055-FIX: Removed list_mappings and delete_mapping from interface.
 """
 
 import pytest
@@ -34,14 +35,19 @@ class TestIParameterStoreInterface:
             IParameterStore()
 
     def test_has_required_abstract_methods(self):
-        """Test that interface defines all required methods."""
+        """Test that interface defines all required methods.
+
+        TASK-055-FIX: Simplified to core operations only.
+        Removed list_mappings and delete_mapping.
+        """
         abstract_methods = IParameterStore.__abstractmethods__
 
         assert "find_mapping" in abstract_methods
         assert "store_mapping" in abstract_methods
         assert "increment_usage" in abstract_methods
-        assert "list_mappings" in abstract_methods
-        assert "delete_mapping" in abstract_methods
+        # TASK-055-FIX: Removed from interface
+        assert "list_mappings" not in abstract_methods
+        assert "delete_mapping" not in abstract_methods
 
     def test_concrete_implementation_must_implement_all_methods(self):
         """Test that concrete class must implement all abstract methods."""
@@ -55,7 +61,10 @@ class TestIParameterStoreInterface:
             IncompleteStore()
 
     def test_complete_implementation_can_be_instantiated(self):
-        """Test that complete implementation can be instantiated."""
+        """Test that complete implementation can be instantiated.
+
+        TASK-055-FIX: Simplified to core operations only.
+        """
 
         class CompleteStore(IParameterStore):
             def find_mapping(self, prompt, parameter_name, workflow_name, similarity_threshold=0.85):
@@ -66,12 +75,6 @@ class TestIParameterStoreInterface:
 
             def increment_usage(self, mapping):
                 pass
-
-            def list_mappings(self, workflow_name=None, parameter_name=None):
-                return []
-
-            def delete_mapping(self, context, parameter_name, workflow_name):
-                return False
 
         # Should not raise
         store = CompleteStore()

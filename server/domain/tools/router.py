@@ -6,6 +6,7 @@ These are meta-tools that control the router's behavior, not Blender operations.
 
 TASK-046: Extended with semantic matching methods.
 TASK-055: Extended with parameter resolution methods.
+TASK-055-FIX: Unified set_goal with resolved_params, removed separate parameter tools.
 """
 
 from abc import ABC, abstractmethod
@@ -28,14 +29,28 @@ class IRouterTool(ABC):
     """
 
     @abstractmethod
-    def set_goal(self, goal: str) -> str:
-        """Set current modeling goal.
+    def set_goal(
+        self,
+        goal: str,
+        resolved_params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Set current modeling goal with automatic parameter resolution.
+
+        TASK-055-FIX: Unified interface for goal setting and parameter resolution.
+        All interaction happens through this single method.
 
         Args:
-            goal: User's modeling goal (e.g., "smartphone", "table")
+            goal: User's modeling goal (e.g., "smartphone", "table with straight legs")
+            resolved_params: Optional dict of parameter values when answering Router questions
 
         Returns:
-            Confirmation message with matched workflow (if any).
+            Dict with:
+            - status: "ready" | "needs_input" | "no_match" | "disabled"
+            - workflow: matched workflow name (if any)
+            - resolved: dict of resolved parameter values
+            - unresolved: list of parameters needing input (when status="needs_input")
+            - resolution_sources: dict mapping param -> source
+            - message: human-readable status message
         """
         pass
 
@@ -153,85 +168,5 @@ class IRouterTool(ABC):
         """
         pass
 
-    # --- Parameter Resolution Methods (TASK-055) ---
-
-    @abstractmethod
-    def store_parameter_value(
-        self,
-        context: str,
-        parameter_name: str,
-        value: Any,
-        workflow_name: str,
-    ) -> str:
-        """Store a resolved parameter value for future reuse.
-
-        Called by LLM after resolving an unresolved parameter.
-        The value is validated against the parameter schema if available.
-
-        Args:
-            context: The natural language context that triggered this value
-                    (e.g., "straight legs", "wide table").
-            parameter_name: Name of the parameter being resolved.
-            value: The resolved value (must match parameter type/range).
-            workflow_name: Name of the workflow this parameter belongs to.
-
-        Returns:
-            Confirmation message or error message if validation fails.
-        """
-        pass
-
-    @abstractmethod
-    def list_parameter_mappings(
-        self,
-        workflow_name: Optional[str] = None,
-    ) -> str:
-        """List stored parameter mappings.
-
-        Args:
-            workflow_name: Optional filter by workflow name.
-
-        Returns:
-            Formatted list of stored mappings.
-        """
-        pass
-
-    @abstractmethod
-    def delete_parameter_mapping(
-        self,
-        context: str,
-        parameter_name: str,
-        workflow_name: str,
-    ) -> str:
-        """Delete a stored parameter mapping.
-
-        Args:
-            context: The context string of the mapping to delete.
-            parameter_name: Parameter name.
-            workflow_name: Workflow name.
-
-        Returns:
-            Confirmation or error message.
-        """
-        pass
-
-    @abstractmethod
-    def set_goal_interactive(
-        self,
-        goal: str,
-    ) -> Dict[str, Any]:
-        """Set goal with interactive parameter resolution.
-
-        Similar to set_goal, but returns detailed information about
-        unresolved parameters that need LLM/user input.
-
-        Args:
-            goal: User's modeling goal.
-
-        Returns:
-            Dictionary with:
-            - workflow_name: Matched workflow (or None)
-            - resolved_parameters: Parameters already resolved
-            - unresolved_parameters: Parameters needing LLM input
-            - resolution_sources: How each parameter was resolved
-        """
-        pass
+    # TASK-055-FIX: Removed separate parameter resolution methods.
+    # All parameter resolution now happens through set_goal with resolved_params argument.

@@ -9,56 +9,87 @@ Follows Clean Architecture pattern:
 - Handler implements Domain interface (IRouterTool)
 
 TASK-046: Extended with semantic matching tools.
-TASK-055: Extended with parameter resolution tools.
+TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 """
 
-from typing import List, Optional, Union
+import json
+from typing import Any, Dict, List, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.infrastructure.di import get_router_handler
 
 
 @mcp.tool()
-def router_set_goal(ctx: Context, goal: str) -> str:
+def router_set_goal(
+    ctx: Context,
+    goal: str,
+    resolved_params: Optional[Dict[str, Any]] = None,
+) -> str:
     """
     [SYSTEM][CRITICAL] Tell the Router what you're building.
 
     IMPORTANT: Call this FIRST before ANY modeling operation!
 
-    The Router Supervisor uses this to optimize your workflow automatically.
-    Without setting a goal, the router cannot help you with smart workflow
-    expansion and error prevention.
+    This is the ONLY tool needed for workflow interaction:
+    1. First call: Set goal, Router matches workflow and resolves parameters
+    2. If unresolved params exist: Returns questions for you to answer
+    3. Second call: Provide resolved_params dict, Router stores and executes
+
+    The Router uses a three-tier resolution system:
+    1. YAML modifiers (highest priority) - explicit mappings in workflow definition
+    2. Learned mappings (LaBSE) - semantic matches from previous interactions
+    3. Interactive (you provide) - when no match found
+
+    Learned mappings are stored automatically for future semantic reuse.
 
     Args:
-        goal: What you're creating. Be specific!
-              Examples: "smartphone", "wooden table", "medieval tower",
-                       "office chair", "sports car", "human face"
+        goal: What you're creating. Be specific with natural language modifiers!
+              Examples: "smartphone", "picnic table with straight legs",
+                       "stół z prostymi nogami", "medieval tower"
+        resolved_params: Optional dict of parameter values when answering Router questions.
+                        Use this on second call after receiving "needs_input" status.
+                        Example: {"leg_angle_left": 0, "leg_angle_right": 0}
 
     Returns:
-        Confirmation with matched workflow (if any).
+        JSON with:
+        - status: "ready" | "needs_input" | "no_match" | "disabled"
+        - workflow: matched workflow name
+        - resolved: dict of resolved parameter values with sources
+        - unresolved: list of parameters needing your input (when status="needs_input")
+        - message: human-readable next steps
 
-    Example workflow:
-        1. router_set_goal("smartphone")     # <- FIRST!
-        2. modeling_create_primitive("CUBE") # Router expands to phone workflow
-        3. ... router handles the rest automatically
+    Example - Simple case (all resolved):
+        router_set_goal("picnic table with straight legs")
+        -> {"status": "ready", "workflow": "picnic_table", "resolved": {...}}
 
-    Supported goal keywords (trigger workflows):
-        - phone, smartphone, tablet, mobile -> phone_workflow
-        - tower, pillar, column, obelisk -> tower_workflow
-        - table, desk, surface -> table_workflow
-        - house, building, home -> house_workflow
-        - chair, seat, stool -> chair_workflow
+    Example - Interactive case:
+        # Step 1: Set goal with unknown modifier
+        router_set_goal("stół z nogami pod kątem")
+        -> {"status": "needs_input", "unresolved": [{"param": "leg_angle_left", ...}]}
+
+        # Step 2: Provide values
+        router_set_goal("stół z nogami pod kątem", resolved_params={"leg_angle_left": 15})
+        -> {"status": "ready", "resolved": {"leg_angle_left": 15, ...}}
+
+        # Future: Similar prompts auto-resolve via LaBSE semantic matching
+        router_set_goal("stół z pochylonymi nogami")
+        -> {"status": "ready", ...}  # Learned from previous interaction
     """
     handler = get_router_handler()
-    result = handler.set_goal(goal)
+    result = handler.set_goal(goal, resolved_params)
 
-    # Log to context if workflow matched
-    if "Matched workflow:" in result:
-        ctx.info(f"[ROUTER] Goal set: {goal} -> workflow matched")
+    # Log to context
+    status = result.get("status", "unknown")
+    workflow = result.get("workflow")
+    if status == "ready":
+        ctx.info(f"[ROUTER] Goal set: {goal} -> workflow '{workflow}' ready")
+    elif status == "needs_input":
+        unresolved_count = len(result.get("unresolved", []))
+        ctx.info(f"[ROUTER] Goal set: {goal} -> {unresolved_count} params need input")
     else:
-        ctx.info(f"[ROUTER] Goal set: {goal} (no matching workflow)")
+        ctx.info(f"[ROUTER] Goal set: {goal} -> status: {status}")
 
-    return result
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 @mcp.tool()
@@ -184,182 +215,5 @@ def router_feedback(
     return result
 
 
-# --- Parameter Resolution Tools (TASK-055) ---
-
-
-@mcp.tool()
-def router_store_parameter(
-    ctx: Context,
-    context: str,
-    parameter_name: str,
-    value: Union[float, int, bool, str],
-    workflow_name: str,
-) -> str:
-    """
-    [SYSTEM][SAFE] Store a resolved parameter value for future reuse.
-
-    Use this tool after the LLM has resolved an unresolved parameter
-    to store the mapping for future similar prompts.
-
-    The router learns from these mappings using semantic similarity (LaBSE).
-    When a similar prompt is encountered in the future, the stored value
-    will be automatically reused.
-
-    Args:
-        context: The natural language phrase that triggered this value.
-                 Should be the relevant part of the user's prompt.
-                 Examples: "straight legs", "wide table", "nogi proste"
-        parameter_name: Name of the workflow parameter being resolved.
-                       Example: "leg_angle_left", "top_width"
-        value: The resolved value. Must match the parameter's type and range.
-               Example: 0.0 for straight legs, 2.5 for wide table
-        workflow_name: Name of the workflow this parameter belongs to.
-                      Example: "picnic_table"
-
-    Returns:
-        Confirmation message or error if validation fails.
-
-    Example:
-        # After user says "create a table with straight legs"
-        # and LLM decides leg_angle should be 0:
-        router_store_parameter(
-            context="straight legs",
-            parameter_name="leg_angle_left",
-            value=0.0,
-            workflow_name="picnic_table"
-        )
-    """
-    handler = get_router_handler()
-    result = handler.store_parameter_value(
-        context=context,
-        parameter_name=parameter_name,
-        value=value,
-        workflow_name=workflow_name,
-    )
-    ctx.info(f"[ROUTER] Parameter stored: {context} -> {parameter_name}={value}")
-    return result
-
-
-@mcp.tool()
-def router_list_parameters(
-    ctx: Context,
-    workflow_name: Optional[str] = None,
-) -> str:
-    """
-    [SYSTEM][SAFE][READ-ONLY] List stored parameter mappings.
-
-    Shows all learned parameter values that have been stored for reuse.
-    Useful for debugging or understanding what the router has learned.
-
-    Args:
-        workflow_name: Optional filter by workflow name.
-                      If not provided, shows all mappings.
-
-    Returns:
-        Formatted list of stored parameter mappings grouped by workflow.
-    """
-    handler = get_router_handler()
-    return handler.list_parameter_mappings(workflow_name=workflow_name)
-
-
-@mcp.tool()
-def router_delete_parameter(
-    ctx: Context,
-    context: str,
-    parameter_name: str,
-    workflow_name: str,
-) -> str:
-    """
-    [SYSTEM][DESTRUCTIVE] Delete a stored parameter mapping.
-
-    Use this to remove incorrect or outdated learned parameter values.
-
-    Args:
-        context: The context string of the mapping to delete.
-        parameter_name: Parameter name.
-        workflow_name: Workflow name.
-
-    Returns:
-        Confirmation or error message.
-
-    Example:
-        # Remove an incorrect mapping
-        router_delete_parameter(
-            context="straight legs",
-            parameter_name="leg_angle_left",
-            workflow_name="picnic_table"
-        )
-    """
-    handler = get_router_handler()
-    result = handler.delete_parameter_mapping(
-        context=context,
-        parameter_name=parameter_name,
-        workflow_name=workflow_name,
-    )
-    ctx.info(f"[ROUTER] Parameter mapping deleted: {context} -> {parameter_name}")
-    return result
-
-
-@mcp.tool()
-def router_set_goal_interactive(
-    ctx: Context,
-    goal: str,
-) -> str:
-    """
-    [SYSTEM][SAFE] Set modeling goal with interactive parameter resolution.
-
-    Enhanced version of router_set_goal that provides detailed feedback about
-    which parameters were resolved automatically and which need LLM input.
-
-    This tool uses a three-tier parameter resolution system:
-    1. YAML modifiers (highest priority) - from matched workflow definition
-    2. Learned mappings (LaBSE embeddings) - from previous LLM resolutions
-    3. Unresolved (needs LLM input) - for parameters not found in tiers 1 or 2
-
-    Use this tool when you want to:
-    - See exactly which parameters were auto-resolved
-    - Know which parameters need interactive input
-    - Understand the resolution source for each parameter
-
-    After receiving unresolved parameters, use router_store_parameter() to
-    provide values. These values will be learned for future similar prompts.
-
-    Args:
-        goal: The user's modeling goal. Be specific with natural language
-              modifiers (e.g., "picnic table with straight legs",
-              "wide dining table", "stół z prostymi nogami").
-
-    Returns:
-        Formatted string showing:
-        - Matched workflow name
-        - Resolved parameters with their sources
-        - Unresolved parameters that need LLM input with schemas
-
-    Example:
-        # User says: "create a picnic table with straight legs"
-        router_set_goal_interactive("picnic table with straight legs")
-
-        # Returns something like:
-        # Matched workflow: picnic_table
-        #
-        # Resolved parameters:
-        #   leg_angle_left = 0.0 (yaml_modifier)
-        #   leg_angle_right = 0.0 (yaml_modifier)
-        #
-        # All parameters resolved! Workflow is ready to execute.
-
-    See also:
-        - router_set_goal: Simple goal setting without parameter details
-        - router_store_parameter: Store resolved parameter values
-        - router_list_parameters: List all learned parameter mappings
-    """
-    handler = get_router_handler()
-    result = handler.set_goal_interactive_formatted(goal)
-
-    # Extract workflow name from result for logging
-    if "Matched workflow:" in result:
-        ctx.info(f"[ROUTER] Interactive goal set: {goal} (with parameter resolution)")
-    else:
-        ctx.info(f"[ROUTER] Interactive goal set: {goal} (no workflow matched)")
-
-    return result
+    # TASK-055-FIX: Removed separate parameter resolution tools.
+    # All parameter resolution now happens through router_set_goal with resolved_params argument.

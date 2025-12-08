@@ -350,20 +350,16 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace`, `query`, `workflow_name`, `workflow_data`, `top_k` | Manages LanceDB vector database for semantic workflow search. | ✅ Done |
-| `router_set_goal` | `goal` (str) | Sets modeling goal for Router Supervisor workflow optimization. | ✅ Done |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
-| `router_set_goal_interactive` | `goal` (str) | Sets goal with interactive parameter resolution. Shows resolved/unresolved params. | ✅ Done |
-| `router_store_parameter` | `context` (str), `parameter_name` (str), `value` (float/int/bool/str), `workflow_name` (str) | Stores LLM-resolved parameter value for future semantic reuse. | ✅ Done |
-| `router_list_parameters` | `workflow_name` (str, optional) | Lists stored parameter mappings, optionally filtered by workflow. | ✅ Done |
-| `router_delete_parameter` | `context` (str), `parameter_name` (str), `workflow_name` (str) | Deletes a stored parameter mapping. | ✅ Done |
 
 **Use Cases:**
 - Managing workflow embeddings in vector database
 - Testing semantic search queries
 - Migrating legacy pickle caches to LanceDB
 - Setting modeling goals for intelligent workflow expansion
-- Interactive parameter resolution for multilingual workflows (TASK-055)
+- Unified parameter resolution through single tool (TASK-055-FIX)
 
 ---
 

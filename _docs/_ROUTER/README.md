@@ -432,14 +432,11 @@ router: leg_angle_left = 0 (learned, similarity: 0.87)
 | **ParameterResolver** | Three-tier resolution logic | `resolver/parameter_resolver.py` |
 | **ParameterSchema** | Schema with semantic hints | `domain/entities/parameter.py` |
 
-### New MCP Tools
+### Unified MCP Interface (TASK-055-FIX)
 
 | Tool | Description |
 |------|-------------|
-| `router_store_parameter` | Store LLM-resolved value |
-| `router_list_parameters` | List stored mappings |
-| `router_delete_parameter` | Delete a mapping |
-| `router_set_goal_interactive` | Set goal with parameter details |
+| `router_set_goal(goal, resolved_params)` | Unified parameter resolution. Returns status, resolved/unresolved params. Call again with resolved_params to provide answers. Mappings auto-stored. |
 
 ### Thresholds
 

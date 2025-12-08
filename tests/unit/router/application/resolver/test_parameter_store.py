@@ -2,6 +2,7 @@
 Unit tests for ParameterStore.
 
 TASK-055-2
+TASK-055-FIX: Removed tests for deleted methods (list_mappings, delete_mapping, get_stats).
 """
 
 import pytest
@@ -383,103 +384,6 @@ class TestParameterStoreUsageTracking:
         assert mock_vector_store.count(VectorNamespace.PARAMETERS) == 1
 
 
-class TestParameterStoreListAndDelete:
-    """Tests for listing and deleting mappings."""
-
-    def test_list_all_mappings(self, parameter_store):
-        """Test listing all mappings."""
-        # Store some mappings
-        parameter_store.store_mapping(
-            context="context1",
-            parameter_name="param1",
-            value=1,
-            workflow_name="wf1",
-        )
-        parameter_store.store_mapping(
-            context="context2",
-            parameter_name="param2",
-            value=2,
-            workflow_name="wf2",
-        )
-
-        mappings = parameter_store.list_mappings()
-
-        assert len(mappings) == 2
-
-    def test_list_mappings_by_workflow(self, parameter_store):
-        """Test listing mappings filtered by workflow."""
-        parameter_store.store_mapping(
-            context="ctx1",
-            parameter_name="p1",
-            value=1,
-            workflow_name="table",
-        )
-        parameter_store.store_mapping(
-            context="ctx2",
-            parameter_name="p2",
-            value=2,
-            workflow_name="chair",
-        )
-
-        mappings = parameter_store.list_mappings(workflow_name="table")
-
-        # Note: Mock doesn't filter properly, real impl would return 1
-        assert len(mappings) >= 0  # Just verify no error
-
-    def test_delete_mapping(self, parameter_store, mock_vector_store):
-        """Test deleting a mapping."""
-        parameter_store.store_mapping(
-            context="to delete",
-            parameter_name="param",
-            value=1,
-            workflow_name="wf",
-        )
-
-        assert mock_vector_store.count(VectorNamespace.PARAMETERS) == 1
-
-        result = parameter_store.delete_mapping(
-            context="to delete",
-            parameter_name="param",
-            workflow_name="wf",
-        )
-
-        assert result is True
-        assert mock_vector_store.count(VectorNamespace.PARAMETERS) == 0
-
-    def test_delete_nonexistent_mapping(self, parameter_store):
-        """Test deleting a mapping that doesn't exist."""
-        result = parameter_store.delete_mapping(
-            context="nonexistent",
-            parameter_name="param",
-            workflow_name="wf",
-        )
-
-        assert result is False
-
-
-class TestParameterStoreStats:
-    """Tests for statistics."""
-
-    def test_get_stats_empty(self, parameter_store):
-        """Test stats with empty store."""
-        stats = parameter_store.get_stats()
-
-        assert stats["total_mappings"] == 0
-        assert stats["unique_workflows"] == 0
-        assert stats["unique_parameters"] == 0
-        assert stats["similarity_threshold"] == 0.85
-
-    def test_get_stats_with_data(self, parameter_store):
-        """Test stats with stored mappings."""
-        parameter_store.store_mapping("ctx1", "p1", 1, "wf1")
-        parameter_store.store_mapping("ctx2", "p2", 2, "wf1")
-        parameter_store.store_mapping("ctx3", "p1", 3, "wf2")
-
-        stats = parameter_store.get_stats()
-
-        assert stats["total_mappings"] == 3
-
-
 class TestParameterStoreClear:
     """Tests for clearing mappings."""
 
@@ -494,17 +398,6 @@ class TestParameterStoreClear:
 
         assert deleted == 2
         assert mock_vector_store.count(VectorNamespace.PARAMETERS) == 0
-
-    def test_clear_by_workflow(self, parameter_store, mock_vector_store):
-        """Test clearing mappings for specific workflow."""
-        parameter_store.store_mapping("ctx1", "p1", 1, "table")
-        parameter_store.store_mapping("ctx2", "p2", 2, "chair")
-
-        # Clear only table workflow
-        deleted = parameter_store.clear(workflow_name="table")
-
-        # Note: This depends on list_mappings filtering working correctly
-        # With mock, behavior may vary
 
 
 class TestParameterStoreRecordIdGeneration:
