@@ -37,6 +37,12 @@ from server.router.domain.entities.ensemble import (
     ModifierResult,
     EnsembleResult,
 )
+from server.router.domain.entities.parameter import (
+    ParameterSchema,
+    StoredMapping,
+    UnresolvedParameter,
+    ParameterResolutionResult,
+)
 
 __all__ = [
     # Tool Call
@@ -66,4 +72,9 @@ __all__ = [
     "MatcherResult",
     "ModifierResult",
     "EnsembleResult",
+    # Parameter Resolution (TASK-055)
+    "ParameterSchema",
+    "StoredMapping",
+    "UnresolvedParameter",
+    "ParameterResolutionResult",
 ]

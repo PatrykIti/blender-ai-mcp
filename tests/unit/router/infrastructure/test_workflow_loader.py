@@ -3,6 +3,7 @@ Unit tests for WorkflowLoader.
 
 Tests for loading custom workflows from YAML/JSON files.
 TASK-039-22
+TASK-055: Added tests for parameters section parsing.
 """
 
 import json
@@ -17,6 +18,7 @@ from server.router.infrastructure.workflow_loader import (
     get_workflow_loader,
 )
 from server.router.application.workflows.base import WorkflowDefinition
+from server.router.domain.entities.parameter import ParameterSchema
 
 
 class TestWorkflowLoader:
@@ -431,3 +433,394 @@ class TestRealCustomWorkflows:
 
         assert workflow.name == "chair_workflow"
         assert len(workflow.steps) > 5  # Chair has many steps
+
+
+class TestWorkflowLoaderParameters:
+    """TASK-055: Tests for parameters section parsing."""
+
+    @pytest.fixture
+    def temp_dir(self, tmp_path):
+        """Create a temporary directory for workflow files."""
+        return tmp_path
+
+    @pytest.fixture
+    def loader(self, temp_dir):
+        """Create a loader with temporary directory."""
+        return WorkflowLoader(workflows_dir=temp_dir)
+
+    def test_load_workflow_with_parameters(self, loader, temp_dir):
+        """Test loading workflow with parameters section."""
+        workflow_data = {
+            "name": "param_workflow",
+            "description": "Workflow with parameters",
+            "steps": [{"tool": "test_tool", "params": {"x": "$my_param"}}],
+            "defaults": {"my_param": 1.0},
+            "parameters": {
+                "my_param": {
+                    "type": "float",
+                    "range": [0.0, 10.0],
+                    "default": 1.0,
+                    "description": "A test parameter",
+                    "semantic_hints": ["size", "dimension"],
+                }
+            },
+        }
+
+        file_path = temp_dir / "param_workflow.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        assert workflow.name == "param_workflow"
+        assert "my_param" in workflow.parameters
+        assert isinstance(workflow.parameters["my_param"], ParameterSchema)
+        assert workflow.parameters["my_param"].type == "float"
+        assert workflow.parameters["my_param"].range == (0.0, 10.0)
+        assert workflow.parameters["my_param"].default == 1.0
+        assert workflow.parameters["my_param"].semantic_hints == ["size", "dimension"]
+
+    def test_load_workflow_multiple_parameters(self, loader, temp_dir):
+        """Test loading workflow with multiple parameters."""
+        workflow_data = {
+            "name": "multi_param",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "angle": {
+                    "type": "float",
+                    "range": [-3.14, 3.14],
+                    "default": 0.0,
+                    "description": "Rotation angle",
+                    "semantic_hints": ["rotation", "angle", "tilt"],
+                    "group": "angles",
+                },
+                "width": {
+                    "type": "float",
+                    "range": [0.1, 10.0],
+                    "default": 1.0,
+                    "description": "Object width",
+                    "semantic_hints": ["wide", "narrow", "size"],
+                },
+                "enabled": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Enable feature",
+                },
+            },
+        }
+
+        file_path = temp_dir / "multi.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        assert len(workflow.parameters) == 3
+        assert "angle" in workflow.parameters
+        assert "width" in workflow.parameters
+        assert "enabled" in workflow.parameters
+        assert workflow.parameters["angle"].group == "angles"
+        assert workflow.parameters["enabled"].type == "bool"
+
+    def test_load_workflow_without_parameters(self, loader, temp_dir):
+        """Test loading workflow without parameters section."""
+        workflow_data = {
+            "name": "no_params",
+            "steps": [{"tool": "t", "params": {}}],
+        }
+
+        file_path = temp_dir / "no_params.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        assert workflow.parameters == {}
+
+    def test_parameter_invalid_type(self, loader, temp_dir):
+        """Test that invalid parameter type raises error."""
+        workflow_data = {
+            "name": "invalid_type",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "bad_param": {
+                    "type": "invalid_type",
+                    "default": 1,
+                },
+            },
+        }
+
+        file_path = temp_dir / "invalid.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        with pytest.raises(WorkflowValidationError, match="Invalid parameter"):
+            loader.load_file(file_path)
+
+    def test_parameter_not_dict(self, loader, temp_dir):
+        """Test that non-dict parameter raises error."""
+        workflow_data = {
+            "name": "not_dict",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "bad_param": "not a dictionary",
+            },
+        }
+
+        file_path = temp_dir / "not_dict.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        with pytest.raises(WorkflowValidationError, match="must be a dictionary"):
+            loader.load_file(file_path)
+
+    def test_validate_parameters_valid(self, loader):
+        """Test validation of valid parameters section."""
+        data = {
+            "name": "valid",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "my_param": {
+                    "type": "float",
+                    "range": [0, 10],
+                    "default": 5,
+                    "semantic_hints": ["size"],
+                },
+            },
+        }
+
+        errors = loader.validate_workflow_data(data)
+        assert errors == []
+
+    def test_validate_parameters_invalid_type(self, loader):
+        """Test validation catches invalid parameter type."""
+        data = {
+            "name": "invalid",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "param": {"type": "invalid"},
+            },
+        }
+
+        errors = loader.validate_workflow_data(data)
+        assert any("invalid type" in e for e in errors)
+
+    def test_validate_parameters_invalid_range(self, loader):
+        """Test validation catches invalid range."""
+        data = {
+            "name": "invalid_range",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "param": {
+                    "type": "float",
+                    "range": [10, 0],  # min > max
+                },
+            },
+        }
+
+        errors = loader.validate_workflow_data(data)
+        assert any("min must be <= max" in e for e in errors)
+
+    def test_validate_parameters_range_wrong_format(self, loader):
+        """Test validation catches wrong range format."""
+        data = {
+            "name": "wrong_range",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "param": {
+                    "type": "float",
+                    "range": [1, 2, 3],  # Should be [min, max]
+                },
+            },
+        }
+
+        errors = loader.validate_workflow_data(data)
+        assert any("range must be [min, max]" in e for e in errors)
+
+    def test_validate_parameters_hints_not_list(self, loader):
+        """Test validation catches non-list semantic_hints."""
+        data = {
+            "name": "hints_string",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "param": {
+                    "type": "float",
+                    "semantic_hints": "not a list",
+                },
+            },
+        }
+
+        errors = loader.validate_workflow_data(data)
+        assert any("semantic_hints must be a list" in e for e in errors)
+
+    def test_workflow_template_includes_parameters(self, loader):
+        """Test that template includes parameters section."""
+        template = loader.create_workflow_template()
+
+        assert "parameters" in template
+        assert isinstance(template["parameters"], dict)
+        assert len(template["parameters"]) > 0
+
+        # Check a sample parameter
+        param = list(template["parameters"].values())[0]
+        assert "type" in param
+        assert "range" in param
+        assert "default" in param
+        assert "description" in param
+        assert "semantic_hints" in param
+
+    def test_workflow_to_dict_includes_parameters(self, loader, temp_dir):
+        """Test that workflow to_dict includes parameters."""
+        workflow_data = {
+            "name": "to_dict_test",
+            "steps": [{"tool": "t", "params": {}}],
+            "parameters": {
+                "test_param": {
+                    "type": "float",
+                    "range": [0, 1],
+                    "default": 0.5,
+                    "semantic_hints": ["test"],
+                },
+            },
+        }
+
+        file_path = temp_dir / "to_dict.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+        result = workflow.to_dict()
+
+        assert "parameters" in result
+        assert "test_param" in result["parameters"]
+        assert result["parameters"]["test_param"]["type"] == "float"
+
+    def test_yaml_with_parameters(self, loader, temp_dir):
+        """Test loading YAML workflow with parameters."""
+        pytest.importorskip("yaml")
+
+        yaml_content = """
+name: yaml_params
+description: YAML with parameters
+parameters:
+  leg_angle:
+    type: float
+    range: [-1.57, 1.57]
+    default: 0.32
+    description: Angle of table legs
+    semantic_hints:
+      - angle
+      - rotation
+      - nogi
+    group: angles
+steps:
+  - tool: test
+    params:
+      angle: "$leg_angle"
+"""
+        file_path = temp_dir / "params.yaml"
+        file_path.write_text(yaml_content)
+
+        workflow = loader.load_file(file_path)
+
+        assert "leg_angle" in workflow.parameters
+        assert workflow.parameters["leg_angle"].range == (-1.57, 1.57)
+        assert workflow.parameters["leg_angle"].group == "angles"
+        assert "nogi" in workflow.parameters["leg_angle"].semantic_hints
+
+
+class TestWorkflowLoaderHintsModifiersValidation:
+    """TASK-055: Tests for semantic hints vs modifiers validation."""
+
+    @pytest.fixture
+    def temp_dir(self, tmp_path):
+        """Create a temporary directory for workflow files."""
+        return tmp_path
+
+    @pytest.fixture
+    def loader(self, temp_dir):
+        """Create a loader with temporary directory."""
+        return WorkflowLoader(workflows_dir=temp_dir)
+
+    def test_no_warning_when_modifier_sets_param(self, loader, temp_dir, caplog):
+        """Test no warning when modifier explicitly sets parameter."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        workflow_data = {
+            "name": "explicit_modifier",
+            "steps": [{"tool": "t", "params": {}}],
+            "modifiers": {
+                "straight legs": {"leg_angle": 0},
+            },
+            "parameters": {
+                "leg_angle": {
+                    "type": "float",
+                    "range": [-1.57, 1.57],
+                    "default": 0.32,
+                    "semantic_hints": ["straight legs", "angle"],
+                },
+            },
+        }
+
+        file_path = temp_dir / "explicit.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        # Should succeed without warning
+        assert workflow is not None
+        # Debug message about modifier taking priority is expected
+        assert "modifier will take priority" in caplog.text
+
+    def test_warning_when_hint_matches_modifier_no_param(
+        self, loader, temp_dir, caplog
+    ):
+        """Test warning when hint matches modifier but modifier doesn't set param."""
+        import logging
+        caplog.set_level(logging.WARNING)
+
+        workflow_data = {
+            "name": "missing_mapping",
+            "steps": [{"tool": "t", "params": {}}],
+            "modifiers": {
+                "straight legs": {"other_param": 0},  # Doesn't set leg_angle
+            },
+            "parameters": {
+                "leg_angle": {
+                    "type": "float",
+                    "semantic_hints": ["straight legs"],
+                },
+            },
+        }
+
+        file_path = temp_dir / "missing.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        assert workflow is not None
+        assert "Consider adding explicit mapping" in caplog.text
+
+    def test_no_overlap_no_warning(self, loader, temp_dir, caplog):
+        """Test no warning when no overlap between hints and modifiers."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        workflow_data = {
+            "name": "no_overlap",
+            "steps": [{"tool": "t", "params": {}}],
+            "modifiers": {
+                "straight legs": {"leg_angle": 0},
+            },
+            "parameters": {
+                "width": {
+                    "type": "float",
+                    "semantic_hints": ["wide", "narrow"],  # No overlap
+                },
+            },
+        }
+
+        file_path = temp_dir / "no_overlap.json"
+        file_path.write_text(json.dumps(workflow_data))
+
+        workflow = loader.load_file(file_path)
+
+        assert workflow is not None
+        # No warnings about overlap
+        assert "Consider adding" not in caplog.text
+        assert "modifier will take priority" not in caplog.text

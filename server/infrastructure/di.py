@@ -248,6 +248,42 @@ def is_router_enabled() -> bool:
     return config.ROUTER_ENABLED
 
 
+# --- Parameter Resolution (TASK-055) ---
+
+_parameter_store_instance = None
+_parameter_resolver_instance = None
+
+
+def get_parameter_store():
+    """Provider for ParameterStore.
+
+    Singleton - uses shared LanceDB vector store for learned mappings.
+    """
+    global _parameter_store_instance
+    if _parameter_store_instance is None:
+        from server.router.application.resolver.parameter_store import ParameterStore
+        _parameter_store_instance = ParameterStore(
+            vector_store=get_vector_store(),
+            classifier=get_workflow_classifier(),
+        )
+    return _parameter_store_instance
+
+
+def get_parameter_resolver():
+    """Provider for ParameterResolver.
+
+    Singleton - uses shared classifier and store.
+    """
+    global _parameter_resolver_instance
+    if _parameter_resolver_instance is None:
+        from server.router.application.resolver.parameter_resolver import ParameterResolver
+        _parameter_resolver_instance = ParameterResolver(
+            classifier=get_workflow_classifier(),
+            store=get_parameter_store(),
+        )
+    return _parameter_resolver_instance
+
+
 # --- Router Handler ---
 
 _router_handler_instance = None

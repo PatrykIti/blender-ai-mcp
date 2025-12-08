@@ -282,10 +282,14 @@ Tools for managing the Router Supervisor's vector database and semantic workflow
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace` (tools/workflows), `query`, `workflow_name`, `workflow_data`, `top_k` | Manages vector database for semantic workflow search. Actions: stats (counts, size), list (IDs in namespace), search_test (semantic search), add_workflow (add embeddings), remove (delete record), rebuild (HNSW index), clear (namespace), migrate (legacy pickle caches). |
+| `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace` (tools/workflows/parameters), `query`, `workflow_name`, `workflow_data`, `top_k` | Manages vector database for semantic workflow search. Actions: stats (counts, size), list (IDs in namespace), search_test (semantic search), add_workflow (add embeddings), remove (delete record), rebuild (HNSW index), clear (namespace), migrate (legacy pickle caches). |
 | `router_set_goal` | `goal` (str) | Sets the modeling goal for Router Supervisor workflow optimization. |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
+| `router_set_goal_interactive` | `goal` (str) | Sets goal with interactive parameter resolution. Returns resolved params (with sources) and unresolved params (need LLM input). |
+| `router_store_parameter` | `context` (str), `parameter_name` (str), `value` (float/int/bool/str), `workflow_name` (str) | Stores LLM-resolved parameter value for future semantic reuse. |
+| `router_list_parameters` | `workflow_name` (str, optional) | Lists stored parameter mappings, optionally filtered by workflow. |
+| `router_delete_parameter` | `context` (str), `parameter_name` (str), `workflow_name` (str) | Deletes a stored parameter mapping. |
 
 ## 🛠 Key Components
 

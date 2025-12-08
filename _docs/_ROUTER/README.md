@@ -61,6 +61,8 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **IVectorStore** | Vector store interface (DIP compliance) | ✅ Done |
 | **PickleToLanceMigration** | Legacy pickle cache migration | ✅ Done |
 | **Shared LaBSE via DI** | Single model instance (~1.8GB RAM) (TASK-048) | ✅ Done |
+| **ParameterStore** | Learned parameter mappings via LaBSE (TASK-055) | ✅ Done |
+| **ParameterResolver** | Three-tier parameter resolution (TASK-055) | ✅ Done |
 
 ---
 
@@ -103,6 +105,9 @@ server/router/
 │   │   ├── condition_evaluator.py
 │   │   ├── expression_evaluator.py
 │   │   └── proportion_resolver.py
+│   ├── resolver/           # Parameter resolution (TASK-055)
+│   │   ├── parameter_store.py
+│   │   └── parameter_resolver.py
 │   ├── triggerer/          # Workflow triggering
 │   │   └── workflow_triggerer.py
 │   ├── workflows/          # Predefined workflows
@@ -378,6 +383,70 @@ IntentClassifier            WorkflowIntentClassifier
 ### Implementation Docs
 
 - [32-lance-vector-store.md](./IMPLEMENTATION/32-lance-vector-store.md)
+
+---
+
+---
+
+## Interactive Parameter Resolution (TASK-055)
+
+> **Status:** ✅ Done | [Task Details](../_TASKS/TASK-055_Interactive_Parameter_Resolution.md)
+
+Enables the Router to learn parameter values from LLM interactions and reuse them via semantic similarity.
+
+### Problem
+
+```python
+# Before: Every language variant must be manually defined in YAML
+modifiers:
+  "straight legs":
+    leg_angle_left: 0
+  "proste nogi":      # Polish variant needed
+    leg_angle_left: 0
+```
+
+### Solution
+
+```python
+# After: LLM provides value once, Router learns it
+user: "stół z prostymi nogami"  # First time - asks LLM
+router: leg_angle_left = ? → LLM responds: 0 → stored in LanceDB
+
+user: "table with vertical legs"  # Second time - auto-resolved
+router: leg_angle_left = 0 (learned, similarity: 0.87)
+```
+
+### Three-Tier Resolution
+
+| Tier | Source | Priority | Description |
+|------|--------|----------|-------------|
+| **1** | YAML Modifiers | Highest | Explicit mappings from workflow definition |
+| **2** | Learned Mappings | Medium | LaBSE semantic search in LanceDB |
+| **3** | LLM Interactive | Fallback | Ask LLM, store response for future |
+
+### New Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **ParameterStore** | LanceDB storage for learned mappings | `resolver/parameter_store.py` |
+| **ParameterResolver** | Three-tier resolution logic | `resolver/parameter_resolver.py` |
+| **ParameterSchema** | Schema with semantic hints | `domain/entities/parameter.py` |
+
+### New MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `router_store_parameter` | Store LLM-resolved value |
+| `router_list_parameters` | List stored mappings |
+| `router_delete_parameter` | Delete a mapping |
+| `router_set_goal_interactive` | Set goal with parameter details |
+
+### Thresholds
+
+| Threshold | Value | Purpose |
+|-----------|-------|---------|
+| `relevance_threshold` | 0.50 | "Prompt relates to parameter" |
+| `memory_threshold` | 0.85 | "Reuse stored mapping" |
 
 ---
 

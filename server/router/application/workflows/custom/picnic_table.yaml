@@ -78,6 +78,49 @@ modifiers:
     leg_angle_right: -0.32
 
 # ============================================================
+# TASK-055: PARAMETER SCHEMAS
+# Interactive parameter resolution via LLM feedback.
+# These schemas enable three-tier resolution:
+#   1. YAML modifiers (above) - highest priority
+#   2. Learned mappings - via LaBSE semantic memory
+#   3. LLM interaction - for unresolved parameters
+#
+# semantic_hints: Keywords for relevance matching (multilingual supported)
+# NOTE: Hints that match modifier keys are intentional - modifiers take priority
+# ============================================================
+
+parameters:
+  leg_angle_left:
+    type: float
+    range: [-1.57, 1.57]  # -90° to +90° in radians
+    default: 0.32
+    description: Rotation angle for left table legs (positive = lean right toward center)
+    semantic_hints:
+      - angle
+      - rotation
+      - legs
+      - left
+      - nogi        # Polish: legs
+      - kąt         # Polish: angle
+      - nachylenie  # Polish: tilt
+    group: leg_angles
+
+  leg_angle_right:
+    type: float
+    range: [-1.57, 1.57]  # -90° to +90° in radians
+    default: -0.32
+    description: Rotation angle for right table legs (negative = lean left toward center)
+    semantic_hints:
+      - angle
+      - rotation
+      - legs
+      - right
+      - nogi        # Polish: legs
+      - kąt         # Polish: angle
+      - nachylenie  # Polish: tilt
+    group: leg_angles
+
+# ============================================================
 # DIMENSIONS REFERENCE (from model analysis, normalized /10):
 #
 # Table planks (5x):     0.20 x 1.188 x 0.0228 (width x length x thickness)

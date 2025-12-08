@@ -353,12 +353,17 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `router_set_goal` | `goal` (str) | Sets modeling goal for Router Supervisor workflow optimization. | ✅ Done |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
+| `router_set_goal_interactive` | `goal` (str) | Sets goal with interactive parameter resolution. Shows resolved/unresolved params. | ✅ Done |
+| `router_store_parameter` | `context` (str), `parameter_name` (str), `value` (float/int/bool/str), `workflow_name` (str) | Stores LLM-resolved parameter value for future semantic reuse. | ✅ Done |
+| `router_list_parameters` | `workflow_name` (str, optional) | Lists stored parameter mappings, optionally filtered by workflow. | ✅ Done |
+| `router_delete_parameter` | `context` (str), `parameter_name` (str), `workflow_name` (str) | Deletes a stored parameter mapping. | ✅ Done |
 
 **Use Cases:**
 - Managing workflow embeddings in vector database
 - Testing semantic search queries
 - Migrating legacy pickle caches to LanceDB
 - Setting modeling goals for intelligent workflow expansion
+- Interactive parameter resolution for multilingual workflows (TASK-055)
 
 ---
 

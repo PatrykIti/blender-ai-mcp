@@ -5,6 +5,7 @@ Application layer handler for Router control tools.
 Implements IRouterTool interface.
 
 TASK-046: Extended with semantic matching methods.
+TASK-055: Extended with parameter resolution methods.
 """
 
 import json
@@ -347,5 +348,355 @@ class RouterToolHandler(IRouterTool):
             lines.append("Applied values (with dimensions):")
             for name, value in sorted(result["applied_values"].items()):
                 lines.append(f"  {name}: {value:.4f}")
+
+        return "\n".join(lines)
+
+    # --- Parameter Resolution Methods (TASK-055) ---
+
+    def _get_parameter_resolver(self):
+        """Get parameter resolver instance (lazy loading).
+
+        Returns:
+            ParameterResolver instance or None.
+        """
+        from server.infrastructure.di import get_parameter_resolver
+        return get_parameter_resolver()
+
+    def _get_parameter_store(self):
+        """Get parameter store instance (lazy loading).
+
+        Returns:
+            ParameterStore instance or None.
+        """
+        from server.infrastructure.di import get_parameter_store
+        return get_parameter_store()
+
+    def _get_workflow_loader(self):
+        """Get workflow loader instance (lazy loading).
+
+        Returns:
+            WorkflowLoader instance.
+        """
+        from server.router.infrastructure.workflow_loader import get_workflow_loader
+        return get_workflow_loader()
+
+    def store_parameter_value(
+        self,
+        context: str,
+        parameter_name: str,
+        value: Any,
+        workflow_name: str,
+    ) -> str:
+        """Store a resolved parameter value for future reuse.
+
+        Args:
+            context: The natural language context that triggered this value.
+            parameter_name: Name of the parameter being resolved.
+            value: The resolved value.
+            workflow_name: Name of the workflow this parameter belongs to.
+
+        Returns:
+            Confirmation message or error message if validation fails.
+        """
+        if not self._enabled:
+            return "Router is disabled. Parameter not stored."
+
+        resolver = self._get_parameter_resolver()
+        if resolver is None:
+            return "Parameter resolver not initialized."
+
+        # Try to get parameter schema for validation
+        schema = None
+        try:
+            loader = self._get_workflow_loader()
+            workflow = loader.get_workflow(workflow_name)
+            if workflow and workflow.parameters:
+                schema_data = workflow.parameters.get(parameter_name)
+                if schema_data:
+                    # Schema might be ParameterSchema or dict
+                    if hasattr(schema_data, "validate_value"):
+                        schema = schema_data
+                    else:
+                        from server.router.domain.entities.parameter import ParameterSchema
+                        schema = ParameterSchema.from_dict(
+                            {"name": parameter_name, **schema_data}
+                        )
+        except Exception:
+            # Continue without schema validation
+            pass
+
+        return resolver.store_resolved_value(
+            context=context,
+            parameter_name=parameter_name,
+            value=value,
+            workflow_name=workflow_name,
+            schema=schema,
+        )
+
+    def list_parameter_mappings(
+        self,
+        workflow_name: Optional[str] = None,
+    ) -> str:
+        """List stored parameter mappings.
+
+        Args:
+            workflow_name: Optional filter by workflow name.
+
+        Returns:
+            Formatted list of stored mappings.
+        """
+        if not self._enabled:
+            return "Router is disabled."
+
+        store = self._get_parameter_store()
+        if store is None:
+            return "Parameter store not initialized."
+
+        mappings = store.list_mappings(workflow_name=workflow_name)
+
+        if not mappings:
+            if workflow_name:
+                return f"No parameter mappings found for workflow '{workflow_name}'."
+            return "No parameter mappings stored yet."
+
+        lines = [
+            "=== Stored Parameter Mappings ===",
+            f"Total mappings: {len(mappings)}",
+            "",
+        ]
+
+        # Group by workflow
+        by_workflow: Dict[str, list] = {}
+        for mapping in mappings:
+            wf = mapping.workflow_name
+            if wf not in by_workflow:
+                by_workflow[wf] = []
+            by_workflow[wf].append(mapping)
+
+        for wf_name, wf_mappings in sorted(by_workflow.items()):
+            lines.append(f"Workflow: {wf_name}")
+            for m in wf_mappings:
+                lines.append(
+                    f"  '{m.context}' → {m.parameter_name}={m.value} "
+                    f"(used {m.usage_count}x)"
+                )
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def delete_parameter_mapping(
+        self,
+        context: str,
+        parameter_name: str,
+        workflow_name: str,
+    ) -> str:
+        """Delete a stored parameter mapping.
+
+        Args:
+            context: The context string of the mapping to delete.
+            parameter_name: Parameter name.
+            workflow_name: Workflow name.
+
+        Returns:
+            Confirmation or error message.
+        """
+        if not self._enabled:
+            return "Router is disabled."
+
+        store = self._get_parameter_store()
+        if store is None:
+            return "Parameter store not initialized."
+
+        success = store.delete_mapping(
+            context=context,
+            parameter_name=parameter_name,
+            workflow_name=workflow_name,
+        )
+
+        if success:
+            return (
+                f"Deleted mapping: '{context}' → {parameter_name} "
+                f"(workflow: {workflow_name})"
+            )
+        else:
+            return (
+                f"Mapping not found: '{context}' → {parameter_name} "
+                f"(workflow: {workflow_name})"
+            )
+
+    def set_goal_interactive(
+        self,
+        goal: str,
+    ) -> Dict[str, Any]:
+        """Set goal with interactive parameter resolution.
+
+        Similar to set_goal, but returns detailed information about
+        unresolved parameters that need LLM/user input.
+
+        TASK-055-6: This method:
+        1. Matches the goal to a workflow
+        2. Resolves parameters using the three-tier system
+        3. Returns unresolved parameters for LLM interaction
+
+        Args:
+            goal: User's modeling goal.
+
+        Returns:
+            Dictionary with workflow and parameter resolution info.
+        """
+        if not self._enabled:
+            return {
+                "error": "Router is disabled",
+                "workflow_name": None,
+                "resolved_parameters": {},
+                "unresolved_parameters": [],
+                "resolution_sources": {},
+            }
+
+        router = self._get_router()
+        if router is None:
+            return {
+                "error": "Router not initialized",
+                "workflow_name": None,
+                "resolved_parameters": {},
+                "unresolved_parameters": [],
+                "resolution_sources": {},
+            }
+
+        # Step 1: Set goal and get matched workflow
+        matched_workflow = router.set_current_goal(goal)
+
+        if not matched_workflow:
+            return {
+                "workflow_name": None,
+                "resolved_parameters": {},
+                "unresolved_parameters": [],
+                "resolution_sources": {},
+                "message": f"No workflow matched for goal: '{goal}'",
+            }
+
+        # Step 2: Get workflow definition and its parameters
+        loader = self._get_workflow_loader()
+        workflow = loader.get_workflow(matched_workflow)
+
+        if not workflow or not workflow.parameters:
+            # Workflow has no parameters - all resolved
+            return {
+                "workflow_name": matched_workflow,
+                "resolved_parameters": {},
+                "unresolved_parameters": [],
+                "resolution_sources": {},
+                "message": f"Workflow '{matched_workflow}' has no interactive parameters",
+            }
+
+        # Step 3: Get existing modifiers from ensemble matching
+        # Router stores modifiers in _pending_modifiers after set_current_goal
+        existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
+
+        # Step 4: Resolve parameters using three-tier system
+        resolver = self._get_parameter_resolver()
+        if resolver is None:
+            return {
+                "workflow_name": matched_workflow,
+                "resolved_parameters": existing_modifiers,
+                "unresolved_parameters": [],
+                "resolution_sources": {k: "yaml_modifier" for k in existing_modifiers},
+                "message": "Parameter resolver not available, using modifiers only",
+            }
+
+        # Convert workflow.parameters to ParameterSchema objects if needed
+        from server.router.domain.entities.parameter import ParameterSchema
+
+        param_schemas: Dict[str, ParameterSchema] = {}
+        for name, schema_data in workflow.parameters.items():
+            if hasattr(schema_data, "validate_value"):
+                # Already a ParameterSchema
+                param_schemas[name] = schema_data
+            else:
+                # Dict - convert to ParameterSchema
+                param_schemas[name] = ParameterSchema.from_dict(
+                    {"name": name, **schema_data}
+                )
+
+        # Resolve parameters
+        result = resolver.resolve(
+            prompt=goal,
+            workflow_name=matched_workflow,
+            parameters=param_schemas,
+            existing_modifiers=existing_modifiers,
+        )
+
+        # Format unresolved parameters for LLM
+        unresolved_list = []
+        for unresolved in result.unresolved:
+            unresolved_list.append({
+                "name": unresolved.name,
+                "type": unresolved.schema.type,
+                "description": unresolved.schema.description,
+                "range": list(unresolved.schema.range) if unresolved.schema.range else None,
+                "default": unresolved.schema.default,
+                "context": unresolved.context,
+                "relevance": unresolved.relevance,
+                "semantic_hints": unresolved.schema.semantic_hints,
+            })
+
+        return {
+            "workflow_name": matched_workflow,
+            "resolved_parameters": result.resolved,
+            "unresolved_parameters": unresolved_list,
+            "resolution_sources": result.resolution_sources,
+            "needs_llm_input": result.needs_llm_input,
+            "is_complete": result.is_complete,
+        }
+
+    def set_goal_interactive_formatted(
+        self,
+        goal: str,
+    ) -> str:
+        """Set goal with interactive parameter resolution (formatted output).
+
+        Args:
+            goal: User's modeling goal.
+
+        Returns:
+            Formatted string with resolution results.
+        """
+        result = self.set_goal_interactive(goal)
+
+        if "error" in result:
+            return result["error"]
+
+        lines = []
+
+        if result["workflow_name"]:
+            lines.append(f"Matched workflow: {result['workflow_name']}")
+            lines.append("")
+        else:
+            lines.append(f"No workflow matched for: '{goal}'")
+            return "\n".join(lines)
+
+        # Show resolved parameters
+        if result["resolved_parameters"]:
+            lines.append("Resolved parameters:")
+            for name, value in sorted(result["resolved_parameters"].items()):
+                source = result["resolution_sources"].get(name, "unknown")
+                lines.append(f"  {name} = {value} ({source})")
+            lines.append("")
+
+        # Show unresolved parameters
+        if result["unresolved_parameters"]:
+            lines.append("Unresolved parameters (need your input):")
+            for param in result["unresolved_parameters"]:
+                lines.append(f"  {param['name']}:")
+                lines.append(f"    Description: {param['description']}")
+                if param['range']:
+                    lines.append(f"    Range: {param['range'][0]} to {param['range'][1]}")
+                lines.append(f"    Default: {param['default']}")
+                lines.append(f"    Context: \"{param['context']}\"")
+                lines.append("")
+
+            lines.append("Use router_store_parameter() to provide values for these parameters.")
+        else:
+            lines.append("All parameters resolved! Workflow is ready to execute.")
 
         return "\n".join(lines)

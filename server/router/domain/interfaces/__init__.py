@@ -25,6 +25,10 @@ from server.router.domain.interfaces.matcher import (
     IMatcher,
     IModifierExtractor,
 )
+from server.router.domain.interfaces.i_parameter_resolver import (
+    IParameterStore,
+    IParameterResolver,
+)
 
 __all__ = [
     "IToolInterceptor",
@@ -45,4 +49,7 @@ __all__ = [
     # Ensemble Matcher (TASK-053)
     "IMatcher",
     "IModifierExtractor",
+    # Parameter Resolution (TASK-055)
+    "IParameterStore",
+    "IParameterResolver",
 ]

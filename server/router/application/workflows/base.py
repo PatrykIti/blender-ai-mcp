@@ -2,11 +2,16 @@
 Base Workflow Classes and Interfaces.
 
 Provides abstract base class for workflow definitions.
+
+TASK-055: Added parameters field for interactive parameter resolution.
 """
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from server.router.domain.entities.parameter import ParameterSchema
 
 
 @dataclass
@@ -57,6 +62,9 @@ class WorkflowDefinition:
         version: Version string.
         defaults: Default variable values for $variable substitution.
         modifiers: Keyword → variable mappings for parametric adaptation.
+        parameters: Parameter schemas for interactive LLM resolution (TASK-055).
+            Maps parameter names to ParameterSchema objects defining constraints,
+            semantic hints, and defaults for three-tier resolution.
     """
 
     name: str
@@ -70,6 +78,7 @@ class WorkflowDefinition:
     version: str = "1.0.0"
     defaults: Dict[str, Any] = field(default_factory=dict)
     modifiers: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    parameters: Dict[str, Any] = field(default_factory=dict)  # TASK-055: ParameterSchema dict
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert workflow to dictionary representation."""
@@ -88,6 +97,12 @@ class WorkflowDefinition:
             result["defaults"] = dict(self.defaults)
         if self.modifiers:
             result["modifiers"] = {k: dict(v) for k, v in self.modifiers.items()}
+        if self.parameters:
+            # Convert ParameterSchema objects to dicts if needed
+            result["parameters"] = {
+                k: (v.to_dict() if hasattr(v, "to_dict") else v)
+                for k, v in self.parameters.items()
+            }
         return result
 
 

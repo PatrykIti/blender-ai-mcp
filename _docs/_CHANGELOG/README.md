@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [100](./100-2025-12-08-interactive-parameter-resolution.md) | 2025-12-08 | **Interactive Parameter Resolution (TASK-055)** | - |
 | [99](./99-2025-12-07-router-matching-fixes.md) | 2025-12-07 | **Router Matching & Parametric Variables Fixes** | - |
 | [98](./98-2025-12-07-parametric-variables.md) | 2025-12-07 | **Parametric Workflow Variables (TASK-052)** | - |
 | [97](./97-2025-12-07-confidence-based-workflow-adaptation.md) | 2025-12-07 | **Confidence-Based Workflow Adaptation (TASK-051)** | - |

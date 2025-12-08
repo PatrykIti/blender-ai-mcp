@@ -3,6 +3,7 @@ Custom Workflow Loader.
 
 Loads workflow definitions from YAML/JSON files.
 TASK-039-22
+TASK-055: Added parameters section parsing and validation.
 """
 
 import json
@@ -19,6 +20,7 @@ except ImportError:
 
 
 from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+from server.router.domain.entities.parameter import ParameterSchema
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +184,13 @@ class WorkflowLoader:
                 + (f" in {source}" if source else "")
             )
 
+        # TASK-055: Parse parameters section
+        parameters = self._parse_parameters(data.get("parameters", {}), source)
+
+        # TASK-055: Validate semantic hints vs modifiers overlap
+        modifiers = data.get("modifiers", {})
+        self._validate_hints_modifiers_overlap(parameters, modifiers, source)
+
         return WorkflowDefinition(
             name=data["name"],
             description=data.get("description", ""),
@@ -193,8 +202,99 @@ class WorkflowLoader:
             author=data.get("author", "user"),
             version=data.get("version", "1.0.0"),
             defaults=data.get("defaults", {}),
-            modifiers=data.get("modifiers", {}),
+            modifiers=modifiers,
+            parameters=parameters,
         )
+
+    def _parse_parameters(
+        self,
+        data: Dict[str, Any],
+        source: Optional[Path] = None,
+    ) -> Dict[str, ParameterSchema]:
+        """Parse parameters section into ParameterSchema objects.
+
+        TASK-055: Parses the parameters section of a workflow YAML.
+
+        Args:
+            data: Raw parameters data from YAML.
+            source: Source file path for error messages.
+
+        Returns:
+            Dictionary mapping parameter names to ParameterSchema objects.
+
+        Raises:
+            WorkflowValidationError: If parameter validation fails.
+        """
+        parameters: Dict[str, ParameterSchema] = {}
+
+        for param_name, param_data in data.items():
+            if not isinstance(param_data, dict):
+                raise WorkflowValidationError(
+                    f"Parameter '{param_name}' must be a dictionary"
+                    + (f" in {source}" if source else "")
+                )
+
+            try:
+                # Add name to data for ParameterSchema.from_dict
+                param_data_with_name = {"name": param_name, **param_data}
+                schema = ParameterSchema.from_dict(param_data_with_name)
+                parameters[param_name] = schema
+            except (ValueError, KeyError) as e:
+                raise WorkflowValidationError(
+                    f"Invalid parameter '{param_name}': {e}"
+                    + (f" in {source}" if source else "")
+                )
+
+        return parameters
+
+    def _validate_hints_modifiers_overlap(
+        self,
+        parameters: Dict[str, ParameterSchema],
+        modifiers: Dict[str, Dict[str, Any]],
+        source: Optional[Path] = None,
+    ) -> None:
+        """Validate that semantic hints don't conflict with modifiers.
+
+        TASK-055: Implementation note - semantic_hints should NOT overlap with
+        modifier keys if they produce different values. This validation warns
+        about potential conflicts but doesn't fail (modifiers take priority).
+
+        Args:
+            parameters: Parsed parameter schemas.
+            modifiers: Modifier keyword mappings.
+            source: Source file path for log messages.
+        """
+        modifier_keys_lower = {k.lower() for k in modifiers.keys()}
+
+        for param_name, schema in parameters.items():
+            for hint in schema.semantic_hints:
+                hint_lower = hint.lower()
+                if hint_lower in modifier_keys_lower:
+                    # Find the matching modifier
+                    matching_modifier = None
+                    for mod_key in modifiers:
+                        if mod_key.lower() == hint_lower:
+                            matching_modifier = mod_key
+                            break
+
+                    if matching_modifier:
+                        mod_value = modifiers[matching_modifier].get(param_name)
+                        if mod_value is not None:
+                            # Modifier explicitly sets this parameter - this is intentional
+                            logger.debug(
+                                f"Parameter '{param_name}' has semantic_hint '{hint}' "
+                                f"matching modifier '{matching_modifier}' "
+                                f"(value={mod_value}) - modifier will take priority"
+                                + (f" in {source}" if source else "")
+                            )
+                        else:
+                            # Hint matches modifier key but modifier doesn't set this param
+                            logger.warning(
+                                f"Parameter '{param_name}' has semantic_hint '{hint}' "
+                                f"matching modifier '{matching_modifier}', but modifier "
+                                f"doesn't set '{param_name}'. Consider adding explicit mapping."
+                                + (f" in {source}" if source else "")
+                            )
 
     def _parse_step(
         self, data: Dict[str, Any], index: int, source: Optional[Path] = None
@@ -289,6 +389,47 @@ class WorkflowLoader:
             elif " " in name:
                 errors.append("Workflow name should not contain spaces (use underscores)")
 
+        # TASK-055: Validate parameters section
+        parameters = data.get("parameters", {})
+        if parameters:
+            if not isinstance(parameters, dict):
+                errors.append("'parameters' must be a dictionary")
+            else:
+                valid_types = {"float", "int", "bool", "string"}
+                for param_name, param_data in parameters.items():
+                    if not isinstance(param_data, dict):
+                        errors.append(
+                            f"Parameter '{param_name}': must be a dictionary"
+                        )
+                        continue
+
+                    # Validate type if specified
+                    param_type = param_data.get("type")
+                    if param_type and param_type not in valid_types:
+                        errors.append(
+                            f"Parameter '{param_name}': invalid type '{param_type}'. "
+                            f"Must be one of: {valid_types}"
+                        )
+
+                    # Validate range if specified
+                    param_range = param_data.get("range")
+                    if param_range:
+                        if not isinstance(param_range, (list, tuple)) or len(param_range) != 2:
+                            errors.append(
+                                f"Parameter '{param_name}': range must be [min, max]"
+                            )
+                        elif param_range[0] > param_range[1]:
+                            errors.append(
+                                f"Parameter '{param_name}': range min must be <= max"
+                            )
+
+                    # Validate semantic_hints if specified
+                    hints = param_data.get("semantic_hints")
+                    if hints and not isinstance(hints, list):
+                        errors.append(
+                            f"Parameter '{param_name}': semantic_hints must be a list"
+                        )
+
         return errors
 
     def create_workflow_template(self) -> Dict[str, Any]:
@@ -324,6 +465,25 @@ class WorkflowLoader:
                 },
                 "inna fraza": {  # Polish
                     "my_variable": 2.0,
+                },
+            },
+            # TASK-055: Interactive parameter resolution
+            # Parameters that can be interactively resolved via LLM
+            "parameters": {
+                "my_variable": {
+                    "type": "float",
+                    "range": [0.5, 3.0],
+                    "default": 1.0,
+                    "description": "Controls the Y-scale of the object",
+                    "semantic_hints": ["height", "tall", "short", "scale"],
+                    "group": "dimensions",
+                },
+                "another_var": {
+                    "type": "float",
+                    "range": [0.0, 1.0],
+                    "default": 0.5,
+                    "description": "Secondary adjustment factor",
+                    "semantic_hints": ["factor", "amount", "level"],
                 },
             },
             "steps": [

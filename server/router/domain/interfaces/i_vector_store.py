@@ -22,6 +22,7 @@ class VectorNamespace(Enum):
 
     TOOLS = "tools"
     WORKFLOWS = "workflows"
+    PARAMETERS = "parameters"  # TASK-055: Learned parameter mappings
 
 
 @dataclass
