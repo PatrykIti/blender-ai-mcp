@@ -109,14 +109,16 @@ class RouterToolHandler(IRouterTool):
         workflow = loader.get_workflow(matched_workflow)
 
         if not workflow or not workflow.parameters:
-            # Workflow has no parameters - ready to execute
+            # Workflow has no parameters - execute directly
+            execution_results = router.execute_pending_workflow({})
             return {
                 "status": "ready",
                 "workflow": matched_workflow,
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
-                "message": f"Workflow '{matched_workflow}' matched. No parameters to resolve.",
+                "executed": len(execution_results),
+                "message": f"Workflow '{matched_workflow}' executed ({len(execution_results)} tool calls).",
             }
 
         # Step 3: If resolved_params provided, store them first
@@ -140,14 +142,16 @@ class RouterToolHandler(IRouterTool):
         # Step 5: Resolve parameters using three-tier system
         resolver = self._get_parameter_resolver()
         if resolver is None:
-            # Fallback: use only YAML modifiers
+            # Fallback: use only YAML modifiers and execute
+            execution_results = router.execute_pending_workflow(existing_modifiers)
             return {
                 "status": "ready",
                 "workflow": matched_workflow,
                 "resolved": existing_modifiers,
                 "unresolved": [],
                 "resolution_sources": {k: "yaml_modifier" for k in existing_modifiers},
-                "message": "Parameter resolver not available, using modifiers only.",
+                "executed": len(execution_results),
+                "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
             }
 
         # Convert workflow.parameters to ParameterSchema objects if needed
@@ -191,8 +195,8 @@ class RouterToolHandler(IRouterTool):
                 "message": f"Workflow '{matched_workflow}' needs parameter input. Please provide values for unresolved parameters.",
             }
 
-        # Step 7: All resolved - store as pending variables for workflow execution
-        router._pending_variables = result.resolved
+        # Step 7: All resolved - execute workflow
+        execution_results = router.execute_pending_workflow(result.resolved)
 
         return {
             "status": "ready",
@@ -200,7 +204,8 @@ class RouterToolHandler(IRouterTool):
             "resolved": result.resolved,
             "unresolved": [],
             "resolution_sources": result.resolution_sources,
-            "message": f"Workflow '{matched_workflow}' ready with {len(result.resolved)} parameters resolved.",
+            "executed": len(execution_results),
+            "message": f"Workflow '{matched_workflow}' executed with {len(result.resolved)} parameters ({len(execution_results)} tool calls).",
         }
 
     def _extract_context_for_param(

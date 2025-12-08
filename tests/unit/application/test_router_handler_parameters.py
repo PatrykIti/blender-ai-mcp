@@ -183,6 +183,15 @@ class MockRouter:
     def get_pending_workflow(self) -> Optional[str]:
         return self._pending_workflow
 
+    def execute_pending_workflow(
+        self,
+        variables: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Execute pending workflow (mock - returns empty list)."""
+        # In mock, just return empty list to simulate successful execution
+        self.clear_goal()
+        return []
+
     def clear_goal(self):
         self._current_goal = None
         self._pending_workflow = None

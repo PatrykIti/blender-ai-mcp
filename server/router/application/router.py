@@ -1313,7 +1313,132 @@ class SupervisorRouter:
         """Clear current goal (after workflow completion)."""
         self._current_goal = None
         self._pending_workflow = None
+        self._pending_modifiers = {}
         self.logger.log_info("Goal cleared")
+
+    def execute_pending_workflow(
+        self,
+        variables: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Execute the pending workflow with resolved variables.
+
+        TASK-055-FIX: Direct workflow execution without requiring a tool call trigger.
+
+        Args:
+            variables: Optional dict of resolved parameter values.
+                      If not provided, uses _pending_modifiers from goal matching.
+
+        Returns:
+            List of executed tool calls with results.
+            Empty list if no pending workflow or execution fails.
+        """
+        if not self._pending_workflow:
+            self.logger.log_info("No pending workflow to execute")
+            return []
+
+        workflow_name = self._pending_workflow
+
+        # Merge variables: provided variables override pending modifiers
+        final_variables = dict(self._pending_modifiers) if self._pending_modifiers else {}
+        if variables:
+            final_variables.update(variables)
+
+        self.logger.log_info(
+            f"Executing workflow '{workflow_name}' with variables: {list(final_variables.keys())}"
+        )
+
+        # Get workflow definition
+        from server.router.application.workflows.registry import get_workflow_registry
+        registry = get_workflow_registry()
+        registry.ensure_custom_loaded()
+
+        definition = registry.get_definition(workflow_name)
+        if not definition:
+            self.logger.log_info(f"Workflow '{workflow_name}' not found in registry")
+            return []
+
+        # Get scene context
+        context = self._analyze_scene() if self._rpc_client else SceneContext()
+
+        # Build evaluation context
+        eval_context = self._build_eval_context(context, {})
+
+        # Check if adaptation needed
+        should_adapt = (
+            self.config.enable_workflow_adaptation
+            and self._last_match_result is not None
+            and self._last_match_result.requires_adaptation
+        )
+
+        if should_adapt:
+            # Adapt workflow based on confidence level
+            adapted_steps, adaptation_result = self._workflow_adapter.adapt(
+                definition=definition,
+                confidence_level=self._last_match_result.confidence_level,
+                user_prompt=self._current_goal or "",
+            )
+            self._last_adaptation_result = adaptation_result
+            steps_to_execute = adapted_steps
+        else:
+            steps_to_execute = definition.steps
+
+        # Expand workflow steps with variables
+        calls = registry.expand_workflow(
+            workflow_name,
+            final_variables,
+            user_prompt=self._current_goal,
+        )
+
+        if not calls:
+            self.logger.log_info(f"Workflow '{workflow_name}' produced no tool calls")
+            return []
+
+        # Execute each tool call via RPC
+        results = []
+        for call in calls:
+            tool_name = call.tool_name
+            params = call.params
+
+            # Convert MCP tool name to RPC command name
+            # e.g., "modeling_create_primitive" -> "modeling.create_primitive"
+            rpc_command = self._tool_name_to_rpc_command(tool_name)
+
+            # Execute via RPC client
+            if self._rpc_client:
+                try:
+                    result = self._rpc_client.send_request(rpc_command, params)
+                    results.append({
+                        "tool": tool_name,
+                        "params": params,
+                        "result": result,
+                        "success": True,
+                    })
+                except Exception as e:
+                    self.logger.log_info(f"Tool '{tool_name}' failed: {e}")
+                    results.append({
+                        "tool": tool_name,
+                        "params": params,
+                        "error": str(e),
+                        "success": False,
+                    })
+            else:
+                # No RPC client - just return the calls without execution
+                results.append({
+                    "tool": tool_name,
+                    "params": params,
+                    "success": True,
+                })
+
+        self._processing_stats["workflows_expanded"] += 1
+
+        # Clear goal after successful execution
+        self.clear_goal()
+
+        self.logger.log_info(
+            f"Workflow '{workflow_name}' executed: {len(results)} tool calls"
+        )
+
+        return results
 
     # --- Semantic Workflow Matching (TASK-046) ---
 
@@ -1572,3 +1697,23 @@ class SupervisorRouter:
             FeedbackCollector instance.
         """
         return self._feedback_collector
+
+    def _tool_name_to_rpc_command(self, tool_name: str) -> str:
+        """Convert MCP tool name to RPC command name.
+
+        MCP tools use underscores (e.g., "modeling_create_primitive")
+        while RPC commands use dots (e.g., "modeling.create_primitive").
+
+        The first underscore becomes a dot, the rest remain underscores.
+
+        Args:
+            tool_name: MCP tool name (e.g., "modeling_create_primitive")
+
+        Returns:
+            RPC command name (e.g., "modeling.create_primitive")
+        """
+        # Find the first underscore and replace it with a dot
+        if "_" in tool_name:
+            parts = tool_name.split("_", 1)  # Split only on first underscore
+            return f"{parts[0]}.{parts[1]}"
+        return tool_name
