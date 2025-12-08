@@ -2,6 +2,7 @@
 Tests for WorkflowAdapter engine.
 
 TASK-051: Confidence-Based Workflow Adaptation.
+TASK-053: EnsembleResult compatibility tests.
 """
 
 import pytest
@@ -13,6 +14,7 @@ from server.router.application.engines.workflow_adapter import (
 )
 from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
 from server.router.infrastructure.config import RouterConfig
+from server.router.domain.entities.ensemble import EnsembleResult
 
 
 @pytest.fixture
@@ -444,3 +446,104 @@ class TestWorkflowAdapterInfo:
         assert "config" in info
         assert info["semantic_threshold"] == 0.6
         assert info["has_classifier"] is False  # No classifier in fixture
+
+
+class TestWorkflowAdapterEnsembleResultCompatibility:
+    """Tests for TASK-053: EnsembleResult compatibility."""
+
+    def test_adapt_with_ensemble_result_high_confidence(self, adapter, sample_workflow):
+        """Test adapt() with EnsembleResult HIGH confidence.
+
+        Verifies that WorkflowAdapter works with EnsembleResult.confidence_level
+        in addition to MatchResult.confidence_level.
+        """
+        # Create EnsembleResult with HIGH confidence
+        ensemble_result = EnsembleResult(
+            workflow_name="picnic_table_workflow",
+            final_score=0.85,
+            confidence_level="HIGH",
+            modifiers={},
+            matcher_contributions={"keyword": 0.40, "semantic": 0.34, "pattern": 0.11},
+            requires_adaptation=False,
+        )
+
+        # Use confidence_level from EnsembleResult
+        steps, result = adapter.adapt(
+            definition=sample_workflow,
+            confidence_level=ensemble_result.confidence_level,
+            user_prompt="create picnic table with benches",
+        )
+
+        # HIGH confidence should include all steps
+        assert result.adaptation_strategy == "FULL"
+        assert len(steps) == len(sample_workflow.steps)
+
+    def test_adapt_with_ensemble_result_medium_confidence(self, adapter, sample_workflow):
+        """Test adapt() with EnsembleResult MEDIUM confidence."""
+        ensemble_result = EnsembleResult(
+            workflow_name="picnic_table_workflow",
+            final_score=0.55,
+            confidence_level="MEDIUM",
+            modifiers={},
+            matcher_contributions={"semantic": 0.34, "pattern": 0.21},
+            requires_adaptation=True,
+        )
+
+        steps, result = adapter.adapt(
+            definition=sample_workflow,
+            confidence_level=ensemble_result.confidence_level,
+            user_prompt="table with benches",
+        )
+
+        # MEDIUM confidence should filter optional steps by tags
+        assert result.adaptation_strategy == "FILTERED"
+        assert result.confidence_level == "MEDIUM"
+
+    def test_adapt_with_ensemble_result_low_confidence(self, adapter, sample_workflow):
+        """Test adapt() with EnsembleResult LOW confidence."""
+        ensemble_result = EnsembleResult(
+            workflow_name="picnic_table_workflow",
+            final_score=0.35,
+            confidence_level="LOW",
+            modifiers={"leg_style": "straight"},
+            matcher_contributions={"semantic": 0.35},
+            requires_adaptation=True,
+        )
+
+        steps, result = adapter.adapt(
+            definition=sample_workflow,
+            confidence_level=ensemble_result.confidence_level,
+            user_prompt="simple table",
+        )
+
+        # LOW confidence should only include core steps
+        assert result.adaptation_strategy == "CORE_ONLY"
+        assert all(not s.optional for s in steps)
+        assert result.confidence_level == "LOW"
+
+    def test_ensemble_result_modifiers_passed_separately(self, adapter, sample_workflow):
+        """Test that EnsembleResult.modifiers are handled separately.
+
+        WorkflowAdapter doesn't use modifiers - those are passed to
+        workflow expansion via _pending_modifiers. This test verifies
+        that adapt() works with EnsembleResult even though it ignores modifiers.
+        """
+        ensemble_result = EnsembleResult(
+            workflow_name="table_workflow",
+            final_score=0.40,
+            confidence_level="MEDIUM",
+            modifiers={"leg_style": "straight", "surface": "smooth"},  # Not used by adapter
+            matcher_contributions={"semantic": 0.336, "pattern": 0.064},
+            requires_adaptation=True,
+        )
+
+        # Adapter should work regardless of modifiers presence
+        steps, result = adapter.adapt(
+            definition=sample_workflow,
+            confidence_level=ensemble_result.confidence_level,
+            user_prompt="table with straight legs",
+        )
+
+        # Verify adapter completed successfully
+        assert isinstance(result, AdaptationResult)
+        assert result.confidence_level == "MEDIUM"

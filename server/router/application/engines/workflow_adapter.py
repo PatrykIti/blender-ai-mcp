@@ -3,6 +3,7 @@ Workflow Adaptation Engine.
 
 Adapts workflow steps based on confidence level.
 TASK-051: Confidence-Based Workflow Adaptation.
+TASK-053: Compatible with both MatchResult and EnsembleResult.
 
 Adaptation Strategy:
 - HIGH (≥0.90): Execute ALL steps (no adaptation)
@@ -17,6 +18,7 @@ from typing import List, Tuple, Optional, TYPE_CHECKING
 
 from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
 from server.router.infrastructure.config import RouterConfig
+from server.router.domain.entities.ensemble import EnsembleResult
 
 if TYPE_CHECKING:
     from server.router.application.classifier.workflow_intent_classifier import (
@@ -104,9 +106,14 @@ class WorkflowAdapter:
     ) -> Tuple[List[WorkflowStep], AdaptationResult]:
         """Adapt workflow steps based on confidence level.
 
+        TASK-053: Now works with both MatchResult (legacy) and
+        EnsembleResult (new ensemble matching).
+
         Args:
             definition: Full workflow definition.
             confidence_level: Match confidence level (HIGH, MEDIUM, LOW, NONE).
+                             Can come from MatchResult.confidence_level or
+                             EnsembleResult.confidence_level.
             user_prompt: Original user prompt for relevance filtering.
 
         Returns:
