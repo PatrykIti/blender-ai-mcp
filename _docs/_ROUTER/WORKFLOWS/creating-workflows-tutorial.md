@@ -703,27 +703,29 @@ parameters:
 
 2. **Literal matching** - czy hint dosłownie występuje w prompt
    ```
-   "stół z nogami pod kątem" zawiera "kąt" → relevance = 0.8
+   "table with angle" zawiera "angle" → relevance = 0.8
    ```
 
 3. **Semantic word matching (TASK-055)** - czy JAKIEKOLWIEK słowo w prompt jest semantycznie podobne do hint
    ```
-   "Tisch mit Beinen" → "Beinen" ↔ "nogi" = 0.679 → relevance = 0.75
+   "Tisch mit Beinen" → "Beinen" ↔ "legs" = 0.757 → relevance = 0.75
    ```
 
 ### 7b.5 Automatyczne Wsparcie Wielojęzyczne
 
-**Nie musisz dodawać hint'ów dla każdego języka!**
+**Wystarczą TYLKO angielskie hinty!**
 
-Dzięki **semantic word matching** z LaBSE, system automatycznie rozpoznaje powiązania między językami:
+Dzięki **semantic word matching** z LaBSE, system automatycznie rozpoznaje słowa z innych języków:
 
-| Język | Słowo w prompt | Dopasowanie do hint | Similarity |
-|-------|----------------|---------------------|------------|
-| German | "Beinen" | "nogi" (Polish) | 0.679 |
-| French | "pieds" | "legs" (English) | 0.939 |
-| Spanish | "piernas" | "legs" (English) | ~0.85 |
+| Język | Słowo w prompt | Dopasowanie do hint (EN) | Similarity |
+|-------|----------------|--------------------------|------------|
+| Polish | "kątem" | "angle" | 0.879 |
+| German | "Beinen" | "legs" | 0.757 |
+| French | "pieds" | "legs" | 0.939 |
+| Spanish | "ángulo" | "angle" | 0.959 |
+| Italian | "angolo" | "angle" | 0.935 |
 
-**Wystarczy dodać hinty w 2-3 językach** (np. English + Polish), a LaBSE automatycznie dopasuje inne języki.
+**Nie trzeba dodawać hintów dla każdego języka** - LaBSE automatycznie mapuje pojęcia cross-language.
 
 ### 7b.6 Thresholds
 
