@@ -723,3 +723,303 @@ class TestIntegration:
         tools = [r["tool"] for r in result]
         assert "system_set_mode" in tools
         assert "mesh_select" in tools
+
+
+# ==============================================================================
+# TASK-053 Ensemble Matching Tests
+# ==============================================================================
+
+
+class TestEnsembleMatcherInitialization:
+    """Tests for TASK-053-9: Ensemble matcher initialization."""
+
+    def test_ensemble_fields_initialized(self):
+        """Test that ensemble matching fields are initialized in SupervisorRouter."""
+        router = SupervisorRouter(config=RouterConfig())
+
+        # TASK-053-9: New ensemble matching fields
+        assert hasattr(router, '_ensemble_matcher')
+        assert hasattr(router, '_last_ensemble_result')
+        assert hasattr(router, '_pending_modifiers')
+        assert hasattr(router, '_use_ensemble_matching')
+
+        # Initial values
+        assert router._ensemble_matcher is None  # Lazy init
+        assert router._last_ensemble_result is None
+        assert router._pending_modifiers == {}
+        assert router._use_ensemble_matching is True  # Enabled by default
+
+    def test_ensure_ensemble_initialized_creates_components(self):
+        """Test _ensure_ensemble_initialized creates ensemble components."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True))
+
+        # Before initialization
+        assert router._ensemble_matcher is None
+
+        # Initialize
+        result = router._ensure_ensemble_initialized()
+
+        # Should succeed
+        assert result is True
+        assert router._ensemble_matcher is not None
+        assert router._ensemble_matcher.is_initialized() is True
+
+    def test_ensure_ensemble_initialized_with_disabled_flag(self):
+        """Test _ensure_ensemble_initialized respects config flag."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=False))
+
+        # Even with flag disabled, initialization should work
+        result = router._ensure_ensemble_initialized()
+        assert result is True
+
+    def test_ensure_ensemble_initialized_idempotent(self):
+        """Test _ensure_ensemble_initialized can be called multiple times."""
+        router = SupervisorRouter(config=RouterConfig())
+
+        # First call
+        router._ensure_ensemble_initialized()
+        matcher1 = router._ensemble_matcher
+
+        # Second call
+        router._ensure_ensemble_initialized()
+        matcher2 = router._ensemble_matcher
+
+        # Should return same instance
+        assert matcher1 is matcher2
+
+
+class TestSetCurrentGoalEnsemble:
+    """Tests for TASK-053-10: set_current_goal with ensemble matching."""
+
+    def test_set_goal_uses_ensemble_when_enabled(self):
+        """Test set_current_goal uses ensemble matching when enabled."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True))
+
+        # Mock ensemble matcher
+        mock_ensemble = MagicMock()
+        mock_ensemble.match.return_value = MagicMock(
+            workflow_name="table_workflow",
+            final_score=0.84,
+            confidence_level="HIGH",
+            modifiers={"leg_style": "straight"},
+            matcher_contributions={"semantic": 0.336, "keyword": 0.40},
+            requires_adaptation=False
+        )
+        router._ensemble_matcher = mock_ensemble
+        router._ensemble_matcher.is_initialized.return_value = True
+
+        # Set goal
+        result = router.set_current_goal("prosty stół z prostymi nogami")
+
+        # Should use ensemble matching
+        assert result == "table_workflow"
+        assert router._pending_workflow == "table_workflow"
+        assert router._pending_modifiers == {"leg_style": "straight"}
+        mock_ensemble.match.assert_called_once()
+
+    def test_set_goal_stores_ensemble_result(self):
+        """Test set_current_goal stores EnsembleResult."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True))
+
+        from server.router.domain.entities.ensemble import EnsembleResult
+
+        # Mock ensemble matcher
+        ensemble_result = EnsembleResult(
+            workflow_name="phone_workflow",
+            final_score=0.74,
+            confidence_level="HIGH",
+            modifiers={},
+            matcher_contributions={"keyword": 0.40, "semantic": 0.34},
+            requires_adaptation=False
+        )
+        mock_ensemble = MagicMock()
+        mock_ensemble.match.return_value = ensemble_result
+        router._ensemble_matcher = mock_ensemble
+        router._ensemble_matcher.is_initialized.return_value = True
+
+        # Set goal
+        router.set_current_goal("create phone")
+
+        # Should store result
+        assert router._last_ensemble_result is ensemble_result
+        assert router._last_ensemble_result.workflow_name == "phone_workflow"
+
+    def test_set_goal_creates_match_result_from_ensemble(self):
+        """Test set_current_goal creates MatchResult from EnsembleResult."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True))
+
+        # Mock ensemble matcher
+        mock_ensemble = MagicMock()
+        mock_ensemble.match.return_value = MagicMock(
+            workflow_name="table_workflow",
+            final_score=0.55,
+            confidence_level="MEDIUM",
+            modifiers={},
+            matcher_contributions={"semantic": 0.22, "keyword": 0.40},
+            requires_adaptation=True
+        )
+        router._ensemble_matcher = mock_ensemble
+        router._ensemble_matcher.is_initialized.return_value = True
+
+        # Set goal
+        router.set_current_goal("table")
+
+        # Should create MatchResult for backward compatibility
+        assert router._last_match_result is not None
+        assert router._last_match_result.workflow_name == "table_workflow"
+        assert router._last_match_result.confidence == 0.55
+        assert router._last_match_result.match_type == "ensemble"
+        assert router._last_match_result.confidence_level == "MEDIUM"
+        assert router._last_match_result.requires_adaptation is True
+
+
+class TestExpandTriggeredWorkflowWithModifiers:
+    """Tests for TASK-053-11: _expand_triggered_workflow uses _pending_modifiers."""
+
+    @patch('server.router.application.workflows.registry.get_workflow_registry')
+    def test_expand_uses_pending_modifiers_in_adaptation_path(self, mock_get_registry):
+        """Test _expand_triggered_workflow uses _pending_modifiers in adaptation path."""
+        router = SupervisorRouter(config=RouterConfig(
+            use_ensemble_matching=True,
+            enable_workflow_adaptation=True
+        ))
+
+        # Set up pending modifiers (from ensemble result)
+        router._pending_modifiers = {"leg_style": "straight", "surface": "smooth"}
+
+        # Set up last match result (triggers adaptation)
+        from server.router.application.matcher.semantic_workflow_matcher import MatchResult
+        router._last_match_result = MatchResult(
+            workflow_name="table_workflow",
+            confidence=0.35,
+            match_type="ensemble",
+            confidence_level="LOW",
+            requires_adaptation=True
+        )
+
+        # Mock workflow definition
+        from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+        definition = WorkflowDefinition(
+            name="table_workflow",
+            description="Table",
+            steps=[
+                WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False),
+            ],
+            defaults={"leg_style": "curved"}  # Will be overridden by pending_modifiers
+        )
+
+        # Mock registry
+        mock_registry = MagicMock()
+        mock_get_registry.return_value = mock_registry
+        mock_registry.get_definition.return_value = definition
+        mock_registry.ensure_custom_loaded.return_value = None
+
+        # Mock workflow adapter
+        from server.router.application.engines.workflow_adapter import AdaptationResult
+        router._workflow_adapter = MagicMock()
+        router._workflow_adapter.adapt.return_value = (
+            [WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False)],
+            AdaptationResult(
+                original_step_count=1,
+                adapted_step_count=1,
+                confidence_level="LOW",
+                adaptation_strategy="CORE_ONLY"
+            )
+        )
+
+        # Call _expand_triggered_workflow
+        context = SceneContext(mode="OBJECT", objects=[])
+        calls = router._expand_triggered_workflow("table_workflow", {}, context)
+
+        # Verify pending_modifiers were cleared after expansion
+        assert router._pending_modifiers == {}
+
+    @patch('server.router.application.workflows.registry.get_workflow_registry')
+    def test_expand_clears_pending_modifiers_after_expansion(self, mock_get_registry):
+        """Test _expand_triggered_workflow clears _pending_modifiers after use."""
+        router = SupervisorRouter(config=RouterConfig())
+
+        # Set up pending modifiers
+        router._pending_modifiers = {"leg_style": "straight"}
+        router._pending_workflow = "table_workflow"
+
+        # Mock registry
+        mock_registry = MagicMock()
+        mock_get_registry.return_value = mock_registry
+        mock_registry.expand_workflow.return_value = [
+            CorrectedToolCall(tool_name="modeling_create_primitive", params={}, corrections_applied=[], is_injected=True)
+        ]
+        mock_registry.ensure_custom_loaded.return_value = None
+
+        # Call standard expansion path
+        context = SceneContext(mode="OBJECT", objects=[])
+        calls = router._expand_triggered_workflow("table_workflow", {}, context)
+
+        # Verify pending_modifiers were cleared
+        assert router._pending_modifiers == {}
+        assert router._pending_workflow is None
+
+
+class TestRouterConfigEnsembleFields:
+    """Tests for TASK-053-12: RouterConfig ensemble fields."""
+
+    def test_config_has_ensemble_fields(self):
+        """Test RouterConfig has ensemble matching fields."""
+        config = RouterConfig()
+
+        # TASK-053-12: Ensemble matching fields
+        assert hasattr(config, 'use_ensemble_matching')
+        assert hasattr(config, 'keyword_weight')
+        assert hasattr(config, 'semantic_weight')
+        assert hasattr(config, 'pattern_weight')
+        assert hasattr(config, 'pattern_boost_factor')
+        assert hasattr(config, 'composition_threshold')
+        assert hasattr(config, 'enable_composition_mode')
+        assert hasattr(config, 'ensemble_high_threshold')
+        assert hasattr(config, 'ensemble_medium_threshold')
+
+    def test_config_ensemble_defaults(self):
+        """Test RouterConfig ensemble field defaults match spec."""
+        config = RouterConfig()
+
+        assert config.use_ensemble_matching is True
+        assert config.keyword_weight == 0.40
+        assert config.semantic_weight == 0.40
+        assert config.pattern_weight == 0.15
+        assert config.pattern_boost_factor == 1.3
+        assert config.composition_threshold == 0.15
+        assert config.enable_composition_mode is False
+        assert config.ensemble_high_threshold == 0.7
+        assert config.ensemble_medium_threshold == 0.4
+
+    def test_config_ensemble_fields_in_to_dict(self):
+        """Test RouterConfig.to_dict() includes ensemble fields."""
+        config = RouterConfig()
+        config_dict = config.to_dict()
+
+        assert 'use_ensemble_matching' in config_dict
+        assert 'keyword_weight' in config_dict
+        assert 'semantic_weight' in config_dict
+        assert 'pattern_weight' in config_dict
+        assert 'pattern_boost_factor' in config_dict
+        assert 'composition_threshold' in config_dict
+        assert 'enable_composition_mode' in config_dict
+        assert 'ensemble_high_threshold' in config_dict
+        assert 'ensemble_medium_threshold' in config_dict
+
+    def test_config_ensemble_fields_from_dict(self):
+        """Test RouterConfig.from_dict() restores ensemble fields."""
+        original = RouterConfig(
+            use_ensemble_matching=False,
+            keyword_weight=0.50,
+            semantic_weight=0.30,
+            pattern_weight=0.20
+        )
+
+        config_dict = original.to_dict()
+        restored = RouterConfig.from_dict(config_dict)
+
+        assert restored.use_ensemble_matching is False
+        assert restored.keyword_weight == 0.50
+        assert restored.semantic_weight == 0.30
+        assert restored.pattern_weight == 0.20
