@@ -32,6 +32,11 @@ from server.router.domain.entities.override_decision import (
     ReplacementTool,
     OverrideDecision,
 )
+from server.router.domain.entities.ensemble import (
+    MatcherResult,
+    ModifierResult,
+    EnsembleResult,
+)
 
 __all__ = [
     # Tool Call
@@ -57,4 +62,8 @@ __all__ = [
     "OverrideReason",
     "ReplacementTool",
     "OverrideDecision",
+    # Ensemble (TASK-053)
+    "MatcherResult",
+    "ModifierResult",
+    "EnsembleResult",
 ]

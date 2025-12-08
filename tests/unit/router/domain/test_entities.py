@@ -30,6 +30,10 @@ from server.router.domain.entities import (
     OverrideReason,
     ReplacementTool,
     OverrideDecision,
+    # Ensemble (TASK-053)
+    MatcherResult,
+    ModifierResult,
+    EnsembleResult,
 )
 
 
@@ -377,3 +381,265 @@ class TestOverrideDecision:
         )
         assert decision.is_workflow_expansion
         assert decision.workflow_name == "phone_workflow"
+
+
+class TestMatcherResult:
+    """Tests for MatcherResult entity (TASK-053-1)."""
+
+    def test_create_basic(self):
+        """Test basic creation."""
+        result = MatcherResult(
+            matcher_name="keyword",
+            workflow_name="picnic_table_workflow",
+            confidence=1.0,
+            weight=0.40,
+        )
+        assert result.matcher_name == "keyword"
+        assert result.workflow_name == "picnic_table_workflow"
+        assert result.confidence == 1.0
+        assert result.weight == 0.40
+
+    def test_create_no_match(self):
+        """Test creation with no match."""
+        result = MatcherResult(
+            matcher_name="semantic",
+            workflow_name=None,
+            confidence=0.0,
+            weight=0.40,
+        )
+        assert result.workflow_name is None
+        assert result.confidence == 0.0
+
+    def test_weighted_score(self):
+        """Test weighted score calculation."""
+        result = MatcherResult(
+            matcher_name="semantic",
+            workflow_name="table_workflow",
+            confidence=0.84,
+            weight=0.40,
+        )
+        assert result.weighted_score == pytest.approx(0.336, rel=1e-3)
+
+    def test_confidence_validation(self):
+        """Test confidence value validation."""
+        with pytest.raises(ValueError, match="Confidence must be between"):
+            MatcherResult(
+                matcher_name="test",
+                workflow_name="test",
+                confidence=1.5,  # Invalid
+                weight=0.5,
+            )
+
+    def test_weight_validation(self):
+        """Test weight value validation."""
+        with pytest.raises(ValueError, match="Weight must be between"):
+            MatcherResult(
+                matcher_name="test",
+                workflow_name="test",
+                confidence=0.5,
+                weight=1.5,  # Invalid
+            )
+
+    def test_to_dict(self):
+        """Test conversion to dictionary."""
+        result = MatcherResult(
+            matcher_name="pattern",
+            workflow_name="tower_workflow",
+            confidence=0.95,
+            weight=0.15,
+            metadata={"pattern": "tower_like"},
+        )
+        data = result.to_dict()
+        assert data["matcher_name"] == "pattern"
+        assert data["workflow_name"] == "tower_workflow"
+        assert data["confidence"] == 0.95
+        assert data["weighted_score"] == pytest.approx(0.1425, rel=1e-3)
+        assert data["metadata"]["pattern"] == "tower_like"
+
+
+class TestModifierResult:
+    """Tests for ModifierResult entity (TASK-053-1)."""
+
+    def test_create_with_modifiers(self):
+        """Test creation with modifiers."""
+        result = ModifierResult(
+            modifiers={"leg_angle_left": 0, "leg_angle_right": 0},
+            matched_keywords=["prosty", "proste nogi"],
+            confidence_map={"prosty": 1.0, "proste nogi": 1.0},
+        )
+        assert result.modifiers["leg_angle_left"] == 0
+        assert len(result.matched_keywords) == 2
+        assert result.has_modifiers()
+
+    def test_create_empty(self):
+        """Test creation with no modifiers."""
+        result = ModifierResult(
+            modifiers={},
+            matched_keywords=[],
+            confidence_map={},
+        )
+        assert not result.has_modifiers()
+        assert len(result.matched_keywords) == 0
+
+    def test_to_dict(self):
+        """Test conversion to dictionary."""
+        result = ModifierResult(
+            modifiers={"leg_angle_left": 0},
+            matched_keywords=["prosty"],
+            confidence_map={"prosty": 1.0},
+        )
+        data = result.to_dict()
+        assert data["modifiers"]["leg_angle_left"] == 0
+        assert data["matched_keywords"] == ["prosty"]
+        assert data["has_modifiers"] is True
+
+
+class TestEnsembleResult:
+    """Tests for EnsembleResult entity (TASK-053-1)."""
+
+    def test_create_basic(self):
+        """Test basic creation."""
+        result = EnsembleResult(
+            workflow_name="picnic_table_workflow",
+            final_score=0.768,
+            confidence_level="HIGH",
+            modifiers={"leg_angle_left": 0, "leg_angle_right": 0},
+            matcher_contributions={"keyword": 0.0, "semantic": 0.336, "pattern": 0.0},
+            requires_adaptation=False,
+        )
+        assert result.workflow_name == "picnic_table_workflow"
+        assert result.final_score == 0.768
+        assert result.confidence_level == "HIGH"
+        assert result.is_match()
+
+    def test_create_no_match(self):
+        """Test creation with no match."""
+        result = EnsembleResult(
+            workflow_name=None,
+            final_score=0.0,
+            confidence_level="NONE",
+            modifiers={},
+            matcher_contributions={},
+            requires_adaptation=False,
+        )
+        assert not result.is_match()
+        assert result.confidence_level == "NONE"
+
+    def test_confidence_alias(self):
+        """Test confidence property (backward compatibility)."""
+        result = EnsembleResult(
+            workflow_name="test_workflow",
+            final_score=0.85,
+            confidence_level="HIGH",
+            modifiers={},
+            matcher_contributions={"semantic": 0.34},
+            requires_adaptation=False,
+        )
+        # Backward compatibility with MatchResult.confidence
+        assert result.confidence == result.final_score
+        assert result.confidence == 0.85
+
+    def test_needs_adaptation(self):
+        """Test needs_adaptation logic."""
+        # HIGH confidence - no adaptation needed
+        result_high = EnsembleResult(
+            workflow_name="test",
+            final_score=0.8,
+            confidence_level="HIGH",
+            modifiers={},
+            matcher_contributions={},
+            requires_adaptation=True,
+        )
+        assert not result_high.needs_adaptation()
+
+        # MEDIUM confidence - adaptation needed
+        result_medium = EnsembleResult(
+            workflow_name="test",
+            final_score=0.5,
+            confidence_level="MEDIUM",
+            modifiers={},
+            matcher_contributions={},
+            requires_adaptation=True,
+        )
+        assert result_medium.needs_adaptation()
+
+    def test_composition_mode(self):
+        """Test composition mode."""
+        result = EnsembleResult(
+            workflow_name="table_workflow",
+            final_score=0.75,
+            confidence_level="HIGH",
+            modifiers={},
+            matcher_contributions={"semantic": 0.3, "keyword": 0.4},
+            requires_adaptation=False,
+            composition_mode=True,
+            extra_workflows=["chair_workflow"],
+        )
+        assert result.composition_mode
+        assert len(result.extra_workflows) == 1
+        assert result.extra_workflows[0] == "chair_workflow"
+
+    def test_confidence_level_validation(self):
+        """Test confidence level validation."""
+        with pytest.raises(ValueError, match="Confidence level must be one of"):
+            EnsembleResult(
+                workflow_name="test",
+                final_score=0.5,
+                confidence_level="INVALID",  # Invalid level
+                modifiers={},
+                matcher_contributions={},
+                requires_adaptation=False,
+            )
+
+    def test_final_score_validation(self):
+        """Test final score validation."""
+        with pytest.raises(ValueError, match="Final score must be"):
+            EnsembleResult(
+                workflow_name="test",
+                final_score=-0.1,  # Invalid negative score
+                confidence_level="LOW",
+                modifiers={},
+                matcher_contributions={},
+                requires_adaptation=False,
+            )
+
+    def test_has_modifiers(self):
+        """Test has_modifiers check."""
+        result_with = EnsembleResult(
+            workflow_name="test",
+            final_score=0.5,
+            confidence_level="MEDIUM",
+            modifiers={"angle": 0},
+            matcher_contributions={},
+            requires_adaptation=False,
+        )
+        assert result_with.has_modifiers()
+
+        result_without = EnsembleResult(
+            workflow_name="test",
+            final_score=0.5,
+            confidence_level="MEDIUM",
+            modifiers={},
+            matcher_contributions={},
+            requires_adaptation=False,
+        )
+        assert not result_without.has_modifiers()
+
+    def test_to_dict(self):
+        """Test conversion to dictionary."""
+        result = EnsembleResult(
+            workflow_name="picnic_table_workflow",
+            final_score=0.768,
+            confidence_level="HIGH",
+            modifiers={"leg_angle_left": 0},
+            matcher_contributions={"semantic": 0.336},
+            requires_adaptation=False,
+            composition_mode=False,
+            extra_workflows=[],
+        )
+        data = result.to_dict()
+        assert data["workflow_name"] == "picnic_table_workflow"
+        assert data["final_score"] == 0.768
+        assert data["confidence_level"] == "HIGH"
+        assert data["modifiers"]["leg_angle_left"] == 0
+        assert data["has_modifiers"] is True
