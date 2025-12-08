@@ -509,8 +509,16 @@ class SupervisorRouter:
                 )
                 self._last_adaptation_result = adaptation_result
 
-                # Build variables from defaults + modifiers (TASK-052)
-                variables = self._build_variables(definition, self._current_goal or "")
+                # Build variables from defaults + modifiers (TASK-052, TASK-053)
+                # TASK-053: Use modifiers from ensemble result if available
+                if self._pending_modifiers:
+                    variables = dict(self._pending_modifiers)
+                    self.logger.log_info(
+                        f"Using modifiers from ensemble result: {list(variables.keys())}"
+                    )
+                else:
+                    # Fallback: build variables from definition (legacy path)
+                    variables = self._build_variables(definition, self._current_goal or "")
 
                 # Convert adapted steps to CorrectedToolCall list
                 calls = []
@@ -533,14 +541,26 @@ class SupervisorRouter:
                         f"(confidence: {self._last_match_result.confidence_level}, "
                         f"strategy: {adaptation_result.adaptation_strategy})"
                     )
-                    # Clear pending workflow after expansion
+                    # Clear pending workflow and modifiers after expansion
                     self._pending_workflow = None
+                    self._pending_modifiers = {}
 
                 return calls
 
-        # Standard expansion without adaptation (TASK-052: pass user_prompt)
+        # Standard expansion without adaptation (TASK-052, TASK-053)
+        # TASK-053: Pass pending modifiers from ensemble result if available
+        if self._pending_modifiers:
+            # Merge original params with pending modifiers (modifiers override)
+            merged_params = {**(params or {}), **self._pending_modifiers}
+            self.logger.log_info(
+                f"Using modifiers from ensemble result: {list(self._pending_modifiers.keys())}"
+            )
+        else:
+            # Use original params (legacy path will extract modifiers from prompt)
+            merged_params = params
+
         calls = registry.expand_workflow(
-            workflow_name, params, eval_context, user_prompt=self._current_goal or ""
+            workflow_name, merged_params, eval_context, user_prompt=self._current_goal or ""
         )
 
         if calls:
@@ -548,8 +568,9 @@ class SupervisorRouter:
             self.logger.log_info(
                 f"Expanded workflow '{workflow_name}' to {len(calls)} steps"
             )
-            # Clear pending workflow after expansion
+            # Clear pending workflow and modifiers after expansion
             self._pending_workflow = None
+            self._pending_modifiers = {}
 
         return calls
 
