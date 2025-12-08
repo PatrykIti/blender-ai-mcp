@@ -682,15 +682,19 @@ class SupervisorRouter:
             registry = get_workflow_registry()
             registry.ensure_custom_loaded()
 
-            # Create modifier extractor
-            modifier_extractor = ModifierExtractor(registry)
+            # Ensure workflow classifier exists before creating matchers
+            if self._workflow_classifier is None:
+                self._workflow_classifier = WorkflowIntentClassifier(config=self.config)
+
+            # Create modifier extractor with LaBSE semantic matching
+            modifier_extractor = ModifierExtractor(
+                registry=registry,
+                classifier=self._workflow_classifier,  # Enable LaBSE multilingual matching
+                similarity_threshold=0.70,
+            )
 
             # Create matchers
             keyword_matcher = KeywordMatcher(registry)
-
-            # Ensure workflow classifier exists before creating semantic matcher
-            if self._workflow_classifier is None:
-                self._workflow_classifier = WorkflowIntentClassifier(config=self.config)
 
             semantic_matcher = SemanticMatcher(
                 classifier=self._workflow_classifier,  # Reuse existing classifier

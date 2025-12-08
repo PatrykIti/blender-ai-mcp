@@ -46,6 +46,12 @@ sample_prompts:
 # ============================================================
 # TASK-052: PARAMETRIC VARIABLES
 # Default values and keyword modifiers for adaptive leg configuration
+#
+# NOTE: Only English semantic keys are needed here.
+# LaBSE multilingual embeddings automatically match:
+#   - "prostymi nogami" (PL) → "straight legs" (EN)
+#   - "skośne nogi" (PL) → "angled legs" (EN)
+#   - "gerade Beine" (DE) → "straight legs" (EN)
 # ============================================================
 
 defaults:
@@ -55,37 +61,19 @@ defaults:
   leg_angle_right: -0.32    # Right legs: -18° (top leans toward center)
 
 modifiers:
-  # English keywords
+  # Straight/vertical legs (rotation = 0)
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
   "vertical legs":
     leg_angle_left: 0
     leg_angle_right: 0
-  "simple table":
-    leg_angle_left: 0
-    leg_angle_right: 0
-  "4 legs":
-    leg_angle_left: 0
-    leg_angle_right: 0
-  "a-frame":
-    leg_angle_left: 0.32
-    leg_angle_right: -0.32
+
+  # Angled/A-frame legs (rotation = ±0.32 rad)
   "angled legs":
     leg_angle_left: 0.32
     leg_angle_right: -0.32
-
-  # Polish keywords
-  "proste nogi":
-    leg_angle_left: 0
-    leg_angle_right: 0
-  "pionowe nogi":
-    leg_angle_left: 0
-    leg_angle_right: 0
-  "prosty stol":
-    leg_angle_left: 0
-    leg_angle_right: 0
-  "skosne nogi":
+  "a-frame legs":
     leg_angle_left: 0.32
     leg_angle_right: -0.32
 

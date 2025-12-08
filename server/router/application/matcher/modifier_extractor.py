@@ -15,6 +15,9 @@ from server.router.domain.entities.ensemble import ModifierResult
 
 if TYPE_CHECKING:
     from server.router.application.workflows.registry import WorkflowRegistry
+    from server.router.application.classifier.workflow_intent_classifier import (
+        WorkflowIntentClassifier,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +40,26 @@ class ModifierExtractor(IModifierExtractor):
         >>> print(result.matched_keywords)  # ["proste nogi"]
     """
 
-    def __init__(self, registry: "WorkflowRegistry"):
+    def __init__(
+        self,
+        registry: "WorkflowRegistry",
+        classifier: Optional["WorkflowIntentClassifier"] = None,
+        similarity_threshold: float = 0.70,
+    ):
         """Initialize modifier extractor.
 
         Args:
             registry: Workflow registry for accessing workflow definitions.
+            classifier: Optional LaBSE classifier for semantic matching.
+                If provided, uses semantic similarity instead of substring matching.
+                This enables multilingual modifier detection (e.g., "prostymi nogami"
+                matches "straight legs" via LaBSE embeddings).
+            similarity_threshold: Minimum similarity score for semantic match (0.0-1.0).
+                Default 0.70 provides good balance between precision and recall.
         """
         self._registry = registry
+        self._classifier = classifier
+        self._similarity_threshold = similarity_threshold
 
     def extract(self, prompt: str, workflow_name: str) -> ModifierResult:
         """Extract modifiers from prompt for given workflow.
@@ -90,11 +106,24 @@ class ModifierExtractor(IModifierExtractor):
             prompt_lower = prompt.lower()
 
             for keyword, values in definition.modifiers.items():
-                if keyword.lower() in prompt_lower:
-                    logger.debug(f"Modifier matched: '{keyword}' → {values}")
-                    modifiers.update(values)
-                    matched_keywords.append(keyword)
-                    confidence_map[keyword] = 1.0  # Exact match = full confidence
+                # Use semantic matching if classifier available (LaBSE multilingual)
+                if self._classifier is not None:
+                    similarity = self._classifier.similarity(keyword, prompt)
+                    if similarity >= self._similarity_threshold:
+                        logger.debug(
+                            f"Modifier semantic match: '{keyword}' → {values} "
+                            f"(similarity={similarity:.3f})"
+                        )
+                        modifiers.update(values)
+                        matched_keywords.append(keyword)
+                        confidence_map[keyword] = similarity
+                else:
+                    # Fallback: substring matching (backward compatibility)
+                    if keyword.lower() in prompt_lower:
+                        logger.debug(f"Modifier substring match: '{keyword}' → {values}")
+                        modifiers.update(values)
+                        matched_keywords.append(keyword)
+                        confidence_map[keyword] = 1.0  # Exact match = full confidence
 
         return ModifierResult(
             modifiers=modifiers,
