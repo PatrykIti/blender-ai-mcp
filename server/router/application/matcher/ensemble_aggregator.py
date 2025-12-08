@@ -144,8 +144,14 @@ class EnsembleAggregator:
         # CRITICAL: ALWAYS extract modifiers (this is the bug fix!)
         modifier_result = self._modifier_extractor.extract(prompt, best_workflow)
 
-        # Determine confidence level
-        confidence_level = self._determine_confidence_level(best_score, prompt)
+        # Calculate maximum possible score based on which matchers contributed
+        # This normalizes the score to account for single-matcher scenarios
+        max_possible_score = self._calculate_max_possible_score(best_contributions)
+
+        # Determine confidence level (normalized)
+        confidence_level = self._determine_confidence_level(
+            best_score, prompt, max_possible_score
+        )
 
         logger.info(
             f"Ensemble aggregation: {best_workflow} "
@@ -164,24 +170,67 @@ class EnsembleAggregator:
             extra_workflows=extra_workflows
         )
 
-    def _determine_confidence_level(self, score: float, prompt: str) -> str:
+    def _calculate_max_possible_score(self, contributions: Dict[str, float]) -> float:
+        """Calculate maximum possible score based on which matchers contributed.
+
+        When only semantic matcher contributes, max is 0.40 (not 0.95).
+        This allows proper normalization for single-matcher scenarios.
+
+        TASK-055-FIX: Critical for multilingual prompts where keyword matcher
+        may not fire due to language mismatch.
+
+        Args:
+            contributions: Dict of matcher_name -> weighted_score.
+
+        Returns:
+            Maximum possible score for the contributing matchers.
+
+        Example:
+            >>> # Only semantic matcher contributed
+            >>> contributions = {"semantic": 0.336}
+            >>> _calculate_max_possible_score(contributions)
+            0.40  # semantic weight = 0.40
+        """
+        # Standard weights
+        WEIGHTS = {
+            "keyword": 0.40,
+            "semantic": 0.40,
+            "pattern": 0.15 * self.PATTERN_BOOST,  # Include boost potential
+        }
+
+        max_score = 0.0
+        for matcher_name in contributions.keys():
+            max_score += WEIGHTS.get(matcher_name, 0.40)
+
+        return max_score if max_score > 0 else 0.95  # Fallback to full possible
+
+    def _determine_confidence_level(
+        self, score: float, prompt: str, max_possible_score: float = 0.95
+    ) -> str:
         """Determine confidence level from score and prompt analysis.
 
+        TASK-055-FIX: Now normalizes score relative to max_possible_score.
+        This fixes the bug where Polish prompts only matched semantic matcher
+        (max 0.40) but thresholds were calibrated for full score (0.95).
+
         Checks for "simple" keywords that force LOW confidence.
-        Uses score thresholds for HIGH/MEDIUM/LOW classification.
+        Uses NORMALIZED score thresholds for HIGH/MEDIUM/LOW classification.
 
         Args:
             score: Aggregated final score.
             prompt: User prompt to check for "simple" keywords.
+            max_possible_score: Maximum possible score from contributing matchers.
 
         Returns:
             Confidence level: HIGH, MEDIUM, LOW, or NONE.
 
         Example:
-            >>> aggregator._determine_confidence_level(0.75, "create table")
+            >>> # Semantic-only: 0.336 / 0.40 = 84% → HIGH
+            >>> aggregator._determine_confidence_level(0.336, "stół piknikowy", 0.40)
             "HIGH"
-            >>> aggregator._determine_confidence_level(0.75, "simple table")
-            "LOW"  # "simple" keyword forces LOW
+            >>> # With "simple" keyword → forced LOW
+            >>> aggregator._determine_confidence_level(0.336, "prosty stół", 0.40)
+            "LOW"
         """
         prompt_lower = prompt.lower()
 
@@ -192,11 +241,22 @@ class EnsembleAggregator:
             logger.debug("User wants simple version → forcing LOW confidence")
             return "LOW"
 
-        # Use configured thresholds from RouterConfig
-        # HIGH: score >= 0.7 (normalized), MEDIUM: >= 0.4, LOW: < 0.4
-        if score >= 0.7:
+        # TASK-055-FIX: Normalize score relative to max possible
+        # This fixes single-matcher scenarios (e.g., Polish prompt → semantic only)
+        normalized_score = score / max_possible_score if max_possible_score > 0 else 0.0
+
+        logger.debug(
+            f"Confidence calculation: raw={score:.3f}, max={max_possible_score:.3f}, "
+            f"normalized={normalized_score:.3f}"
+        )
+
+        # Use NORMALIZED thresholds
+        # HIGH: normalized >= 0.70 (e.g., 0.28/0.40 = 70%)
+        # MEDIUM: normalized >= 0.50 (e.g., 0.20/0.40 = 50%)
+        # LOW: normalized < 0.50
+        if normalized_score >= 0.70:
             return "HIGH"
-        elif score >= 0.4:
+        elif normalized_score >= 0.50:
             return "MEDIUM"
         else:
             return "LOW"

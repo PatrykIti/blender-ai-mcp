@@ -63,6 +63,12 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **Shared LaBSE via DI** | Single model instance (~1.8GB RAM) (TASK-048) | ✅ Done |
 | **ParameterStore** | Learned parameter mappings via LaBSE (TASK-055) | ✅ Done |
 | **ParameterResolver** | Three-tier parameter resolution (TASK-055) | ✅ Done |
+| **EnsembleMatcher** | Parallel multi-matcher orchestrator (TASK-053) | ✅ Done |
+| **EnsembleAggregator** | Weighted consensus aggregation (TASK-053) | ✅ Done |
+| **ModifierExtractor** | LaBSE semantic modifier matching (TASK-053) | ✅ Done |
+| **KeywordMatcher** | Trigger keyword matching (TASK-053) | ✅ Done |
+| **SemanticMatcher** | LaBSE workflow similarity (TASK-053) | ✅ Done |
+| **PatternMatcher** | Geometry pattern detection (TASK-053) | ✅ Done |
 
 ---
 
@@ -444,6 +450,116 @@ router: leg_angle_left = 0 (learned, similarity: 0.87)
 |-----------|-------|---------|
 | `relevance_threshold` | 0.50 | "Prompt relates to parameter" |
 | `memory_threshold` | 0.85 | "Reuse stored mapping" |
+
+---
+
+## Ensemble Matching System (TASK-053)
+
+> **Status:** ✅ Done | [Implementation Details](./IMPLEMENTATION/34-ensemble-matching-system.md)
+
+Replaces fallback-based matching with parallel ensemble of multiple matchers.
+
+### Architecture
+
+```
+User Prompt
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│  EnsembleMatcher.match() - WHICH workflow?          │
+│  ├─ KeywordMatcher  → workflow (0.40 weight)        │
+│  ├─ SemanticMatcher → workflow (0.40 weight)        │
+│  └─ PatternMatcher  → workflow (0.15 weight)        │
+│                                                     │
+│  EnsembleAggregator.aggregate()                     │
+│  → Weighted consensus → best_workflow               │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│  ModifierExtractor.extract() - WHICH params?        │
+│  ├─ Extract n-grams from prompt                     │
+│  ├─ LaBSE similarity vs YAML modifier keywords      │
+│  └─ Select BEST match (highest similarity)          │
+│                                                     │
+│  → modifiers = {leg_angle_left: 0, ...}             │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│  execute_pending_workflow()                         │
+│  ├─ final_variables = _pending_modifiers            │
+│  ├─ WorkflowAdapter filters steps (confidence)      │
+│  └─ Blender executes tool calls                     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Key Features
+
+1. **Parallel Matching** - 3 matchers run independently with weighted scores
+2. **LaBSE Modifier Extraction** - Multilingual modifier matching (109 languages)
+3. **Best Match Selection** - Only highest similarity modifier applied
+4. **Pattern Boost** - 1.3× score multiplier when geometry pattern matches
+
+### Components
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| **EnsembleMatcher** | Orchestrates parallel matchers | `matcher/ensemble_matcher.py` |
+| **EnsembleAggregator** | Weighted consensus + ModifierExtractor | `matcher/ensemble_aggregator.py` |
+| **ModifierExtractor** | LaBSE semantic modifier matching | `matcher/modifier_extractor.py` |
+| **KeywordMatcher** | Trigger keyword matching | `matcher/keyword_matcher.py` |
+| **SemanticMatcher** | LaBSE workflow similarity | `matcher/semantic_matcher.py` |
+| **PatternMatcher** | Geometry pattern detection | `matcher/pattern_matcher.py` |
+
+### Multilingual Example
+
+```python
+# Polish prompt automatically matches English YAML keyword
+prompt = "prosty stół z 4 prostymi nogami"
+result = extractor.extract(prompt, "picnic_table_workflow")
+# → "prostymi nogami" ↔ "straight legs" = 0.877 similarity
+# → modifiers = {leg_angle_left: 0, leg_angle_right: 0}
+```
+
+### Score Normalization (TASK-055-FIX)
+
+**Problem**: When only SemanticMatcher fires (e.g., Polish prompt without English keywords), the maximum possible score is `1.0 × 0.40 = 0.40`, which is exactly at the MEDIUM/LOW boundary.
+
+```
+Prompt: "utworz stol piknikowy" (Polish)
+
+KeywordMatcher:  0.0   (no English keywords matched)
+SemanticMatcher: 0.336 (0.84 × 0.40 weight)
+PatternMatcher:  0.0   (empty scene)
+─────────────────────────
+TOTAL:           0.336 → OLD: LOW → CORE_ONLY (25 steps, no benches!)
+```
+
+**Solution**: Normalize score relative to contributing matchers' maximum:
+
+```python
+# Old: absolute thresholds
+if score >= 0.7: return "HIGH"      # 0.336 < 0.7 → NO
+elif score >= 0.4: return "MEDIUM"  # 0.336 < 0.4 → NO
+else: return "LOW"                  # ← This won!
+
+# New: normalized thresholds
+max_possible = 0.40  # Only semantic matcher contributed
+normalized = 0.336 / 0.40 = 0.84 (84%)
+
+if normalized >= 0.70: return "HIGH"   # 0.84 >= 0.70 → YES!
+elif normalized >= 0.50: return "MEDIUM"
+else: return "LOW"
+```
+
+**Result**: Polish prompts now get fair confidence levels:
+
+| Prompt | Matchers | Raw | Max | Normalized | Old | New |
+|--------|----------|-----|-----|------------|-----|-----|
+| "utworz stol piknikowy" | semantic | 0.336 | 0.40 | 84% | LOW | **HIGH** |
+| "create picnic table" | keyword+semantic | 0.74 | 0.80 | 92% | HIGH | **HIGH** |
+| "prosty stol" | semantic | 0.30 | 0.40 | 75% | LOW | **LOW** (forced) |
 
 ---
 
