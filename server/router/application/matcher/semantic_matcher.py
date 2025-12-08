@@ -117,6 +117,11 @@ class SemanticMatcher(IMatcher):
         Uses LaBSE embeddings via WorkflowIntentClassifier.
         Does NOT check keywords (that's KeywordMatcher's responsibility).
 
+        TASK-055-FIX (Bug 4): Returns RAW scores without filtering by confidence_level.
+        Let EnsembleAggregator decide with normalized thresholds.
+        This fixes prompts with numbers like "stol z nogami pod katem 45 stopni"
+        which would otherwise be rejected due to lower semantic similarity.
+
         Args:
             prompt: User prompt/goal (e.g., "make a mobile device").
             context: Optional scene context (not used by semantic matcher).
@@ -148,12 +153,24 @@ class SemanticMatcher(IMatcher):
         score = result.get("score", 0.0)
         confidence_level = result.get("confidence_level", "NONE")
 
-        # Only return match if above threshold and not NONE
-        if workflow_id and confidence_level != "NONE":
+        # TASK-055-FIX (Bug 4): Return result regardless of confidence_level
+        # Let EnsembleAggregator decide with normalized thresholds
+        # If classifier set workflow_id to None due to threshold,
+        # get it from fallback_candidates
+        if workflow_id is None and score > 0 and result.get("fallback_candidates"):
+            best_fallback = result["fallback_candidates"][0]
+            workflow_id = best_fallback.get("workflow_id")
+            logger.debug(
+                f"SemanticMatcher: Using fallback candidate {workflow_id} "
+                f"(score={score:.3f}, level={confidence_level})"
+            )
+
+        # Return match if we have a workflow (regardless of confidence_level)
+        if workflow_id and score > 0:
             return MatcherResult(
                 matcher_name=self.name,
                 workflow_name=workflow_id,
-                confidence=score,
+                confidence=score,  # Raw score, let aggregator normalize
                 weight=self.weight,
                 metadata={
                     "confidence_level": confidence_level,
@@ -163,7 +180,7 @@ class SemanticMatcher(IMatcher):
                 }
             )
 
-        # No match above threshold
+        # No match at all (score is 0 or no candidates)
         return MatcherResult(
             matcher_name=self.name,
             workflow_name=None,

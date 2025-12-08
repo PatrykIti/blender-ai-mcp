@@ -4,7 +4,7 @@
 
 ## Summary
 
-Fixed three critical bugs in Router workflow execution discovered during Polish prompt testing.
+Fixed five critical bugs in Router workflow execution discovered during Polish and German prompt testing.
 
 ## Bugs Fixed
 
@@ -102,6 +102,158 @@ def _determine_confidence_level(self, score, prompt, max_possible_score):
 
 **File:** `server/router/application/matcher/ensemble_aggregator.py` (lines 173-262)
 
+### Bug 4: SemanticMatcher No-Match for Prompts with Numbers
+
+**Problem:** Prompt `"stol z nogami pod katem 45 stopni"` returned `no_match` even though workflow exists.
+
+**Root Cause:** `SemanticMatcher` filtered results before they reached `EnsembleAggregator`:
+
+```
+Flow (before fix):
+                                     Bug 4 HERE
+                                         ↓
+Prompt → Classifier.find_best_match_with_confidence() → score 0.587 < 0.60 → workflow_id=None
+              ↓
+         SemanticMatcher.match() → checks workflow_id → None → returns confidence=0.0
+              ↓
+         EnsembleAggregator → receives 0.0 → no normalization possible!
+                                 Bug 3 fix never sees the original score
+```
+
+Test results:
+```
+"stol z nogami pod katem 45 stopni" → score=0.587 (< 0.60 threshold → NONE → workflow_id=None)
+"stol z nogami pod katem" (no "45 stopni") → score=0.702 (>= 0.60 → LOW → matched!)
+```
+
+Adding numbers like "45 stopni" reduces LaBSE semantic similarity (adds "noise").
+
+**Fix:** Modified `SemanticMatcher.match()` to return RAW scores without filtering by `confidence_level`. Uses `fallback_candidates` when `workflow_id` is `None`:
+
+```python
+# TASK-055-FIX (Bug 4): Return result regardless of confidence_level
+# If classifier set workflow_id to None due to threshold,
+# get it from fallback_candidates
+if workflow_id is None and score > 0 and result.get("fallback_candidates"):
+    best_fallback = result["fallback_candidates"][0]
+    workflow_id = best_fallback.get("workflow_id")
+
+# Return match if we have a workflow (regardless of confidence_level)
+if workflow_id and score > 0:
+    return MatcherResult(
+        workflow_name=workflow_id,
+        confidence=score,  # Raw score, let aggregator normalize
+        ...
+    )
+```
+
+**Result:**
+
+| Prompt | Before Fix | After Fix |
+|--------|------------|-----------|
+| "stol z nogami pod katem 45 stopni" | `no_match` | `picnic_table_workflow` (MEDIUM) |
+| "stol z nogami pod katem" | `picnic_table_workflow` (HIGH) | `picnic_table_workflow` (HIGH) |
+
+**File:** `server/router/application/matcher/semantic_matcher.py` (lines 156-181)
+
+### Bug 5: Floating Point Precision Error (confidence > 1.0)
+
+**Problem:** Prompt `"erstelle einen Picknicktisch"` (German) threw validation error because confidence score was `1.0000000000000002`.
+
+**Root Cause:** IEEE 754 floating point precision causes scores like `1.0000000000000002` which fail strict `<= 1.0` validation in `MatcherResult.__post_init__()`.
+
+**Fix:** Added clamping for floating point precision issues before validation:
+
+```python
+def __post_init__(self):
+    """Validate field values and clamp for floating point precision."""
+    # Clamp confidence to handle floating point precision issues
+    if self.confidence > 1.0 and self.confidence < 1.0 + 1e-9:
+        object.__setattr__(self, 'confidence', 1.0)
+    elif self.confidence < 0.0 and self.confidence > -1e-9:
+        object.__setattr__(self, 'confidence', 0.0)
+
+    if not 0.0 <= self.confidence <= 1.0:
+        raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+```
+
+**Result:**
+
+| Prompt | Before Fix | After Fix |
+|--------|------------|-----------|
+| "erstelle einen Picknicktisch" | Error: `confidence > 1.0` | `picnic_table_workflow` (HIGH, 100%) |
+
+**File:** `server/router/domain/entities/ensemble.py` (lines 37-48)
+
+### Bug 6: Cross-Language Parameter Detection Not Working
+
+**Problem:** German prompt `"Tisch mit Beinen im 45 Grad Winkel"` should trigger interactive parameter input (X-legs) but used defaults instead.
+
+**Root Cause:** `ParameterResolver.calculate_relevance()` used two mechanisms:
+1. **LaBSE similarity** (threshold 0.5) - but cross-language scores were ~0.4
+2. **Literal matching** - only worked if exact hint word appeared in prompt
+
+Polish worked accidentally because "kąt" was in hints AND in prompt. German "Winkel" wasn't in hints.
+
+```
+German: "Tisch mit Beinen im 45 Grad Winkel"
+  LaBSE("Winkel", "angle") = 0.426 < 0.5 threshold → NOT relevant
+  Literal match: "angle" not in prompt → no boost
+  → Uses defaults, no interactive input ❌
+
+Polish: "stół z nogami pod kątem 45 stopni"
+  LaBSE("kąt", "angle") = 0.414 < 0.5 threshold → NOT relevant
+  Literal match: "kąt" IS in prompt AND in hints → boost to 0.8 ✅
+```
+
+**Fix:** Two changes to `ParameterResolver`:
+
+1. **Lowered `relevance_threshold`** from 0.5 to 0.4
+2. **Added semantic word matching** - checks if ANY word in prompt is semantically similar to ANY hint:
+
+```python
+# Semantic word matching (cross-language support)
+prompt_words = [w for w in prompt_lower.split() if len(w) > 2]
+for hint in schema.semantic_hints:
+    for word in prompt_words:
+        word_sim = self._classifier.similarity(word, hint)
+        if word_sim > 0.65:  # Higher threshold for single words
+            max_relevance = max(max_relevance, 0.75)
+            break
+```
+
+**Result:**
+
+| Language | Prompt | Before | After | Method |
+|----------|--------|--------|-------|--------|
+| German | "Tisch mit Beinen im 45 Grad Winkel" | 0.42 ❌ | **0.75 ✅** | "beinen" ↔ "nogi" = 0.679 |
+| French | "table avec pieds à 45 degrés" | 0.38 ❌ | **0.75 ✅** | "pieds" ↔ "legs" = 0.939 |
+| Polish | "stół z nogami pod kątem 45 stopni" | 0.80 ✅ | 0.80 ✅ | literal match |
+| English | "table with legs at 45 degree angle" | 0.80 ✅ | 0.80 ✅ | literal match |
+
+**Key insight:** No need to add hints for every language! LaBSE automatically matches:
+- German "Beinen" → Polish "nogi" (0.679)
+- French "pieds" → English "legs" (0.939)
+
+**File:** `server/router/application/resolver/parameter_resolver.py` (lines 49, 174-239)
+
+## German Language Test Results
+
+After all fixes, German prompts work correctly:
+
+| Prompt (German) | Translation | Workflow | Normalized | Confidence | Modifiers |
+|-----------------|-------------|----------|------------|------------|-----------|
+| `Picknicktisch` | picnic table | ✅ picnic_table_workflow | 72.91% | **HIGH** | default |
+| `erstelle einen Picknicktisch` | create a picnic table | ✅ picnic_table_workflow | 100.00% | **HIGH** | default |
+| `Tisch mit geraden Beinen` | table with straight legs | ✅ picnic_table_workflow | 67.31% | **MEDIUM** | **straight** ✅ |
+| `Tisch mit schrägen Beinen` | table with angled legs | ✅ picnic_table_workflow | 65.27% | **MEDIUM** | **angled** ✅ |
+| `Tisch mit Beinen im 45 Grad Winkel` | table with legs at 45° | ✅ picnic_table_workflow | 49.61% | **LOW** | default |
+| `einfacher Tisch` | simple table | ✅ picnic_table_workflow | 67.82% | **LOW** (forced) | default |
+
+**Key observations:**
+- LaBSE cross-language matching works: `"geraden Beinen"` (DE) → `"straight legs"` (EN)
+- `"einfacher"` (German for "simple") correctly triggers LOW confidence via SIMPLE_KEYWORDS
+
 ## Architecture Clarification
 
 ### Ensemble Matching Flow (TASK-053)
@@ -182,6 +334,8 @@ result = extractor.extract(prompt, "picnic_table_workflow")
 | `server/router/application/router.py` | Use DI for LaBSE model, bypass expand_workflow() |
 | `server/router/application/matcher/modifier_extractor.py` | Select only best semantic match |
 | `server/router/application/matcher/ensemble_aggregator.py` | Normalize confidence score relative to contributing matchers |
+| `server/router/application/matcher/semantic_matcher.py` | Return raw scores, use fallback_candidates |
+| `server/router/domain/entities/ensemble.py` | Clamp floating point precision in MatcherResult |
 
 ## Related Tasks
 

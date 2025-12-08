@@ -35,7 +35,13 @@ class MatcherResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        """Validate field values."""
+        """Validate field values and clamp for floating point precision."""
+        # Clamp confidence to handle floating point precision issues (e.g., 1.0000000000000002)
+        if self.confidence > 1.0 and self.confidence < 1.0 + 1e-9:
+            object.__setattr__(self, 'confidence', 1.0)
+        elif self.confidence < 0.0 and self.confidence > -1e-9:
+            object.__setattr__(self, 'confidence', 0.0)
+
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
         if not 0.0 <= self.weight <= 1.0:

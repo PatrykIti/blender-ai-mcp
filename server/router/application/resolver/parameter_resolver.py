@@ -46,7 +46,7 @@ class ParameterResolver(IParameterResolver):
         self,
         classifier: IWorkflowIntentClassifier,
         store: IParameterStore,
-        relevance_threshold: float = 0.5,
+        relevance_threshold: float = 0.4,  # TASK-055: Lowered for cross-language LaBSE
         memory_threshold: float = 0.85,
     ):
         """Initialize parameter resolver.
@@ -181,8 +181,15 @@ class ParameterResolver(IParameterResolver):
         Uses LaBSE similarity between prompt and:
         1. Parameter description
         2. Semantic hints
+        3. Semantic word matching (cross-language support)
 
         Returns the maximum similarity found.
+
+        TASK-055: Added semantic word matching for cross-language support.
+        Instead of only literal matching (e.g., "kąt" in prompt), we now also
+        check if ANY word in prompt is semantically similar to ANY hint.
+        This allows German "Winkel" to match English "angle" without adding
+        hints for every language.
 
         Args:
             prompt: User prompt.
@@ -200,17 +207,33 @@ class ParameterResolver(IParameterResolver):
             )
             max_relevance = max(max_relevance, desc_similarity)
 
-        # Check similarity with semantic hints
+        # Check similarity with semantic hints (full prompt vs hint)
         for hint in schema.semantic_hints:
             hint_similarity = self._classifier.similarity(prompt, hint)
             max_relevance = max(max_relevance, hint_similarity)
 
-        # Also check if any hint appears literally in prompt
+        # Literal matching (fast path) - if hint appears literally in prompt
         prompt_lower = prompt.lower()
         for hint in schema.semantic_hints:
             if hint.lower() in prompt_lower:
                 # Boost relevance if hint literally appears
                 max_relevance = max(max_relevance, 0.8)
+                return max_relevance  # Early exit - strong signal
+
+        # Semantic word matching (cross-language support)
+        # Check if any word in prompt is semantically similar to any hint
+        # This allows "Winkel" (DE) to match "angle" (EN) without explicit hints
+        prompt_words = [w for w in prompt_lower.split() if len(w) > 2]
+        for hint in schema.semantic_hints:
+            for word in prompt_words:
+                word_sim = self._classifier.similarity(word, hint)
+                if word_sim > 0.65:  # Higher threshold for single words
+                    max_relevance = max(max_relevance, 0.75)
+                    logger.debug(
+                        f"Semantic word match: '{word}' ↔ '{hint}' = {word_sim:.3f}"
+                    )
+                    break
+            if max_relevance >= 0.75:
                 break
 
         return max_relevance

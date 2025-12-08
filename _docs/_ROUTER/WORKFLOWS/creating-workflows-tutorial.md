@@ -621,7 +621,179 @@ Obecnie workflow definiuje **statyczne parametry**. Jeśli użytkownik chce "pro
 1. Pominąć kroki związane z elementami A-frame
 2. Ale NIE może zmienić kąta obrotu nóg z 0.32 rad na 0
 
-To ograniczenie będzie rozwiązane w przyszłym zadaniu dotyczącym inteligentnej adaptacji parametrycznej (Option B).
+To ograniczenie jest rozwiązane w TASK-055 przez **interaktywną rezolucję parametrów** (sekcja poniżej).
+
+---
+
+## 7b. Interaktywna Rezolucja Parametrów (TASK-055)
+
+### 7b.1 Przegląd
+
+System parametrów umożliwia **interaktywne pytanie użytkownika** o wartości, gdy prompt wspomina parametr ale nie podaje konkretnej wartości.
+
+**Przykład:**
+```
+Prompt: "stół z nogami pod kątem 45 stopni"
+
+System rozpoznaje:
+  - Workflow: picnic_table_workflow ✅
+  - Parametr "leg_angle" wspomniany ale wartość nieznana
+
+Reakcja:
+  → Oznacza parametr jako "unresolved"
+  → LLM pyta użytkownika: "Jaki kąt nóg? (zakres: -90° do +90°, domyślnie: 18°)"
+```
+
+### 7b.2 Trzy Poziomy Rezolucji
+
+System używa **trzech poziomów** do rozwiązywania parametrów:
+
+| Priorytet | Źródło | Opis |
+|-----------|--------|------|
+| 1. YAML modifiers | Najwyższy | Dopasowanie semantyczne do `modifiers` w workflow |
+| 2. Learned mappings | Średni | Zapamiętane mapowania z poprzednich interakcji |
+| 3. LLM interaction | Najniższy | Pytanie użytkownika gdy parametr wspomniany ale nieznany |
+
+### 7b.3 Definicja Parametrów w YAML
+
+```yaml
+# W pliku workflow.yaml
+
+# Wartości domyślne
+defaults:
+  leg_angle_left: 0.32
+  leg_angle_right: -0.32
+
+# Predefiniowane modyfikatory (priorytet 1)
+modifiers:
+  "straight legs":
+    leg_angle_left: 0
+    leg_angle_right: 0
+  "angled legs":
+    leg_angle_left: 0.32
+    leg_angle_right: -0.32
+
+# Schematy parametrów dla interaktywnej rezolucji (priorytet 3)
+parameters:
+  leg_angle_left:
+    name: leg_angle_left           # Wymagane
+    type: float                     # Typ: float, int, string, bool
+    range: [-1.57, 1.57]           # Zakres wartości (opcjonalne)
+    default: 0.32                   # Wartość domyślna
+    description: "Kąt obrotu lewych nóg stołu"
+    semantic_hints:                 # Słowa kluczowe do wykrywania
+      - angle
+      - rotation
+      - legs
+      - kąt         # Polish
+      - nogi        # Polish
+    group: leg_angles              # Grupa parametrów (opcjonalne)
+```
+
+### 7b.4 Jak Działają semantic_hints
+
+`semantic_hints` służą do wykrywania czy prompt **wspomina** dany parametr.
+
+**Trzy mechanizmy wykrywania:**
+
+1. **LaBSE similarity (pełny prompt)** - porównuje cały prompt z hint
+   ```
+   "table with legs at 45 degrees" ↔ "angle" = 0.42
+   ```
+
+2. **Literal matching** - czy hint dosłownie występuje w prompt
+   ```
+   "stół z nogami pod kątem" zawiera "kąt" → relevance = 0.8
+   ```
+
+3. **Semantic word matching (TASK-055)** - czy JAKIEKOLWIEK słowo w prompt jest semantycznie podobne do hint
+   ```
+   "Tisch mit Beinen" → "Beinen" ↔ "nogi" = 0.679 → relevance = 0.75
+   ```
+
+### 7b.5 Automatyczne Wsparcie Wielojęzyczne
+
+**Nie musisz dodawać hint'ów dla każdego języka!**
+
+Dzięki **semantic word matching** z LaBSE, system automatycznie rozpoznaje powiązania między językami:
+
+| Język | Słowo w prompt | Dopasowanie do hint | Similarity |
+|-------|----------------|---------------------|------------|
+| German | "Beinen" | "nogi" (Polish) | 0.679 |
+| French | "pieds" | "legs" (English) | 0.939 |
+| Spanish | "piernas" | "legs" (English) | ~0.85 |
+
+**Wystarczy dodać hinty w 2-3 językach** (np. English + Polish), a LaBSE automatycznie dopasuje inne języki.
+
+### 7b.6 Thresholds
+
+| Parametr | Wartość | Znaczenie |
+|----------|---------|-----------|
+| `relevance_threshold` | 0.4 | Min. similarity żeby uznać parametr za "wspomniany" |
+| `memory_threshold` | 0.85 | Min. similarity żeby użyć zapamiętanego mapowania |
+| Literal match boost | 0.8 | Relevance gdy hint dosłownie w prompt |
+| Semantic word threshold | 0.65 | Min. similarity dla pojedynczych słów |
+| Semantic word boost | 0.75 | Relevance gdy słowo semantycznie pasuje |
+
+### 7b.7 Przykład: Stół z Nogami pod Kątem X
+
+**Workflow YAML:**
+```yaml
+defaults:
+  leg_angle_left: 0.32
+
+modifiers:
+  "straight legs":
+    leg_angle_left: 0
+    leg_angle_right: 0
+
+parameters:
+  leg_angle_left:
+    name: leg_angle_left
+    type: float
+    range: [-1.57, 1.57]
+    default: 0.32
+    description: "Rotation angle for left table legs"
+    semantic_hints:
+      - angle
+      - rotation
+      - legs
+      - kąt
+      - nogi
+```
+
+**Scenariusze:**
+
+| Prompt | Rozwiązanie | Wynik |
+|--------|-------------|-------|
+| "create a picnic table" | defaults | leg_angle=0.32 |
+| "table with straight legs" | modifier match | leg_angle=0 |
+| "stół z prostymi nogami" | modifier match (LaBSE) | leg_angle=0 |
+| "table with legs at 45°" | **UNRESOLVED** → pytanie | LLM pyta użytkownika |
+| "Tisch mit Beinen im Winkel" | **UNRESOLVED** → pytanie | LLM pyta użytkownika |
+
+### 7b.8 Dobre Praktyki dla semantic_hints
+
+```yaml
+# DOBRZE - konkretne, wielojęzyczne
+semantic_hints:
+  - angle           # English
+  - rotation        # English
+  - legs            # English (LaBSE dopasuje French "pieds", German "Beine")
+  - kąt             # Polish (literal match)
+  - nogi            # Polish (LaBSE dopasuje German "Beinen")
+
+# ŹLE - zbyt ogólne
+semantic_hints:
+  - table           # Zbyt ogólne, zawsze pasuje
+  - create          # Nie dotyczy parametru
+```
+
+**Wskazówki:**
+1. Dodaj 3-5 konkretnych hint'ów per parametr
+2. Użyj English + jeden język słowiański (Polish) - LaBSE dobrze łączy rodziny językowe
+3. Unikaj zbyt ogólnych słów
+4. Hinty powinny być związane z **parametrem**, nie z workflow
 
 ---
 
