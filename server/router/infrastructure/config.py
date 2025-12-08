@@ -26,6 +26,15 @@ class RouterConfig:
         workflow_similarity_threshold: Minimum similarity for semantic workflow match.
         generalization_threshold: Minimum similarity for workflow generalization.
         enable_generalization: Enable workflow generalization for unknown objects.
+        use_ensemble_matching: Enable ensemble matching (TASK-053).
+        keyword_weight: Weight for keyword matcher in ensemble (TASK-053).
+        semantic_weight: Weight for semantic matcher in ensemble (TASK-053).
+        pattern_weight: Weight for pattern matcher in ensemble (TASK-053).
+        pattern_boost_factor: Boost multiplier when pattern matcher fires (TASK-053).
+        composition_threshold: Threshold for multi-workflow composition mode (TASK-053).
+        enable_composition_mode: Enable composition mode (future feature, TASK-053).
+        ensemble_high_threshold: Minimum score for HIGH confidence (TASK-053).
+        ensemble_medium_threshold: Minimum score for MEDIUM confidence (TASK-053).
     """
 
     # Correction settings
@@ -55,6 +64,17 @@ class RouterConfig:
     enable_workflow_adaptation: bool = True  # Enable confidence-based workflow adaptation
     adaptation_semantic_threshold: float = 0.6  # Min similarity for optional step inclusion
 
+    # Ensemble matching settings (TASK-053)
+    use_ensemble_matching: bool = True  # Enable ensemble matching
+    keyword_weight: float = 0.40  # Weight for keyword matcher
+    semantic_weight: float = 0.40  # Weight for semantic matcher
+    pattern_weight: float = 0.15  # Weight for pattern matcher
+    pattern_boost_factor: float = 1.3  # Boost when pattern matcher fires
+    composition_threshold: float = 0.15  # Threshold for multi-workflow mode
+    enable_composition_mode: bool = False  # Future feature
+    ensemble_high_threshold: float = 0.7  # Score >= this → HIGH confidence
+    ensemble_medium_threshold: float = 0.4  # Score >= this → MEDIUM confidence
+
     # Advanced settings
     cache_scene_context: bool = True
     cache_ttl_seconds: float = 1.0
@@ -79,6 +99,15 @@ class RouterConfig:
             "enable_generalization": self.enable_generalization,
             "enable_workflow_adaptation": self.enable_workflow_adaptation,
             "adaptation_semantic_threshold": self.adaptation_semantic_threshold,
+            "use_ensemble_matching": self.use_ensemble_matching,
+            "keyword_weight": self.keyword_weight,
+            "semantic_weight": self.semantic_weight,
+            "pattern_weight": self.pattern_weight,
+            "pattern_boost_factor": self.pattern_boost_factor,
+            "composition_threshold": self.composition_threshold,
+            "enable_composition_mode": self.enable_composition_mode,
+            "ensemble_high_threshold": self.ensemble_high_threshold,
+            "ensemble_medium_threshold": self.ensemble_medium_threshold,
             "cache_scene_context": self.cache_scene_context,
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "max_workflow_steps": self.max_workflow_steps,
