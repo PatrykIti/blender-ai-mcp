@@ -666,6 +666,11 @@ class SupervisorRouter:
 
             # Create matchers
             keyword_matcher = KeywordMatcher(registry)
+
+            # Ensure workflow classifier exists before creating semantic matcher
+            if self._workflow_classifier is None:
+                self._workflow_classifier = WorkflowIntentClassifier(config=self.config)
+
             semantic_matcher = SemanticMatcher(
                 classifier=self._workflow_classifier,  # Reuse existing classifier
                 registry=registry,
@@ -1076,10 +1081,8 @@ class SupervisorRouter:
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set current modeling goal and find matching workflow.
 
-        Uses a matching hierarchy:
-        1. Exact keyword match (fastest)
-        2. Semantic similarity match (LaBSE)
-        3. Generalization from similar workflows
+        Uses ensemble matching (TASK-053) if enabled, falls back to
+        legacy SemanticWorkflowMatcher for backward compatibility.
 
         Args:
             goal: User's modeling goal (e.g., "smartphone", "table")
@@ -1089,6 +1092,96 @@ class SupervisorRouter:
         """
         self._current_goal = goal
 
+        # Try ensemble matching first (TASK-053)
+        if self._use_ensemble_matching and self._ensure_ensemble_initialized():
+            return self._set_goal_ensemble(goal)
+
+        # Fallback to legacy matching
+        return self._set_goal_legacy(goal)
+
+    def _set_goal_ensemble(self, goal: str) -> Optional[str]:
+        """Set goal using ensemble matching (TASK-053).
+
+        Args:
+            goal: User's modeling goal.
+
+        Returns:
+            Name of matched workflow, or None.
+        """
+        # Get scene context for pattern matching
+        context = None
+        if self._rpc_client:
+            context = self._analyze_scene()
+            # Add detected pattern to context
+            pattern = self._detect_pattern(context)
+            if pattern:
+                # PatternMatcher expects context dict with detected_pattern key
+                # We need to pass SceneContext to match(), but add pattern info
+                pass  # Context already has pattern via _detect_pattern
+
+        # Run ensemble matching
+        result = self._ensemble_matcher.match(goal, context)
+
+        if result.workflow_name:
+            self._pending_workflow = result.workflow_name
+            self._last_ensemble_result = result
+            self._pending_modifiers = result.modifiers  # CRITICAL: Store modifiers
+
+            # Also store as MatchResult for WorkflowAdapter compatibility
+            self._last_match_result = MatchResult(
+                workflow_name=result.workflow_name,
+                confidence=result.final_score,
+                match_type="ensemble",
+                confidence_level=result.confidence_level,
+                requires_adaptation=result.requires_adaptation,
+                metadata={"matcher_contributions": result.matcher_contributions}
+            )
+
+            self.logger.log_info(
+                f"Goal '{goal}' matched workflow (ensemble): {result.workflow_name} "
+                f"(score: {result.final_score:.3f}, level: {result.confidence_level}, "
+                f"modifiers: {list(result.modifiers.keys())})"
+            )
+
+            # Record feedback for learning
+            self._feedback_collector.record_match(
+                prompt=goal,
+                matched_workflow=result.workflow_name,
+                confidence=result.final_score,
+                match_type="ensemble",
+                metadata={
+                    "matcher_contributions": result.matcher_contributions,
+                    "modifiers_applied": list(result.modifiers.keys()),
+                },
+            )
+
+            return result.workflow_name
+
+        # No match found
+        self._feedback_collector.record_match(
+            prompt=goal,
+            matched_workflow=None,
+            confidence=0.0,
+            match_type="none",
+        )
+
+        self._pending_workflow = None
+        self._pending_modifiers = {}
+        self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
+        return None
+
+    def _set_goal_legacy(self, goal: str) -> Optional[str]:
+        """Set goal using legacy matching (backward compatibility).
+
+        This is the original set_current_goal logic before TASK-053.
+        Kept for fallback if ensemble matching is disabled.
+
+        Args:
+            goal: User's modeling goal.
+
+        Returns:
+            Name of matched workflow, or None.
+        """
         # Ensure semantic matcher is initialized (eager init on first goal)
         self._ensure_semantic_initialized()
 
