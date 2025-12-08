@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks (~16 sub-tasks)
+- **To Do:** 2 tasks (~22 sub-tasks)
 - **In Progress:** 0
 - **Done:** 118
 
@@ -14,7 +14,7 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 10 sub-tasks: parallel matchers (keyword, semantic, pattern, tag) + weighted consensus |
+| [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 16 sub-tasks: parallel matchers (keyword, semantic, pattern) + weighted consensus + modifier extraction + router integration |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
 
 ---
