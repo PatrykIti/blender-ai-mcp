@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks (~30 sub-tasks)
+- **To Do:** 4 tasks (~36 sub-tasks)
 - **In Progress:** 0
 - **Done:** 119
 
@@ -14,6 +14,7 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-055-FIX](./TASK-055-FIX_Unified_Parameter_Resolution.md) | **Unified Parameter Resolution** | 🔴 High | 6 sub-tasks: merge 4 tools into single router_set_goal with resolved_params |
 | [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 16 sub-tasks: parallel matchers (keyword, semantic, pattern) + weighted consensus + modifier extraction + router integration |
 | [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 9 sub-tasks: weight normalization + telemetry/metrics + async parallel execution |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
