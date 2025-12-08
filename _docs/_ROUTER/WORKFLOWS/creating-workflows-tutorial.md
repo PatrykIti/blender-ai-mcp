@@ -676,17 +676,14 @@ modifiers:
 # Schematy parametrów dla interaktywnej rezolucji (priorytet 3)
 parameters:
   leg_angle_left:
-    name: leg_angle_left           # Wymagane
     type: float                     # Typ: float, int, string, bool
     range: [-1.57, 1.57]           # Zakres wartości (opcjonalne)
     default: 0.32                   # Wartość domyślna
-    description: "Kąt obrotu lewych nóg stołu"
-    semantic_hints:                 # Słowa kluczowe do wykrywania
-      - angle
-      - rotation
-      - legs
-      - kąt         # Polish
-      - nogi        # Polish
+    description: "Rotation angle for left table legs"
+    semantic_hints:                 # English keywords - LaBSE handles other languages
+      - angle      # Auto-matches: kąt (PL), Winkel (DE), ángulo (ES)
+      - legs       # Auto-matches: nogi (PL), Beinen (DE), pieds (FR)
+      - crossed    # Auto-matches: skrzyżowane (PL), croisé (FR)
     group: leg_angles              # Grupa parametrów (opcjonalne)
 ```
 
@@ -751,17 +748,14 @@ modifiers:
 
 parameters:
   leg_angle_left:
-    name: leg_angle_left
     type: float
     range: [-1.57, 1.57]
     default: 0.32
     description: "Rotation angle for left table legs"
     semantic_hints:
-      - angle
-      - rotation
-      - legs
-      - kąt
-      - nogi
+      - angle      # LaBSE matches: kątem (PL)=0.879, ángulo (ES)=0.959, angolo (IT)=0.935
+      - legs       # LaBSE matches: Beinen (DE)=0.757, pieds (FR)=0.939, nogi (PL)=0.967
+      - crossed    # LaBSE matches: skrzyżowane (PL)=0.855, croisés (FR)=0.887
 ```
 
 **Scenariusze:**
@@ -777,23 +771,21 @@ parameters:
 ### 7b.8 Dobre Praktyki dla semantic_hints
 
 ```yaml
-# DOBRZE - konkretne, wielojęzyczne
+# DOBRZE - tylko angielskie, konkretne
 semantic_hints:
-  - angle           # English
-  - rotation        # English
-  - legs            # English (LaBSE dopasuje French "pieds", German "Beine")
-  - kąt             # Polish (literal match)
-  - nogi            # Polish (LaBSE dopasuje German "Beinen")
+  - angle      # LaBSE automatycznie dopasuje: kąt, Winkel, ángulo, angolo
+  - legs       # LaBSE automatycznie dopasuje: nogi, Beinen, pieds, piernas
+  - crossed    # LaBSE automatycznie dopasuje: skrzyżowane, gekreuzt, croisé
 
 # ŹLE - zbyt ogólne
 semantic_hints:
-  - table           # Zbyt ogólne, zawsze pasuje
-  - create          # Nie dotyczy parametru
+  - table      # Zbyt ogólne, zawsze pasuje
+  - create     # Nie dotyczy parametru
 ```
 
 **Wskazówki:**
-1. Dodaj 3-5 konkretnych hint'ów per parametr
-2. Użyj English + jeden język słowiański (Polish) - LaBSE dobrze łączy rodziny językowe
+1. Użyj 2-4 konkretnych angielskich hint'ów per parametr
+2. LaBSE automatycznie dopasuje inne języki (nie dodawaj tłumaczeń!)
 3. Unikaj zbyt ogólnych słów
 4. Hinty powinny być związane z **parametrem**, nie z workflow
 
