@@ -684,7 +684,12 @@ class SupervisorRouter:
 
             # Ensure workflow classifier exists before creating matchers
             if self._workflow_classifier is None:
-                self._workflow_classifier = WorkflowIntentClassifier(config=self.config)
+                # Use shared LaBSE model from DI (singleton)
+                from server.infrastructure.di import get_labse_model
+                self._workflow_classifier = WorkflowIntentClassifier(
+                    config=self.config,
+                    model=get_labse_model(),
+                )
 
             # Create modifier extractor with LaBSE semantic matching
             modifier_extractor = ModifierExtractor(
@@ -1382,12 +1387,17 @@ class SupervisorRouter:
         else:
             steps_to_execute = definition.steps
 
-        # Expand workflow steps with variables
-        calls = registry.expand_workflow(
-            workflow_name,
-            final_variables,
-            user_prompt=self._current_goal,
-        )
+        # TASK-055-FIX: Expand adapted steps with ensemble modifiers
+        # Bug 1 fix: Use steps_to_execute (from WorkflowAdapter) instead of all steps
+        # Bug 2 fix: Don't pass user_prompt - final_variables already has _pending_modifiers
+        #            from EnsembleMatcher with LaBSE semantic matching
+
+        # Set up registry evaluators (required for _steps_to_calls conditions)
+        registry._evaluator.set_context({**eval_context, **final_variables})
+        registry._condition_evaluator.set_context(registry._build_condition_context(eval_context))
+
+        resolved_steps = registry._resolve_definition_params(steps_to_execute, final_variables)
+        calls = registry._steps_to_calls(resolved_steps, workflow_name)
 
         if not calls:
             self.logger.log_info(f"Workflow '{workflow_name}' produced no tool calls")

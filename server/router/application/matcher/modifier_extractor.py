@@ -61,6 +61,28 @@ class ModifierExtractor(IModifierExtractor):
         self._classifier = classifier
         self._similarity_threshold = similarity_threshold
 
+    def _extract_ngrams(self, text: str, min_n: int = 1, max_n: int = 3) -> List[str]:
+        """Extract n-grams from text for semantic matching.
+
+        Args:
+            text: Input text to extract n-grams from.
+            min_n: Minimum n-gram size (default 1 = single words).
+            max_n: Maximum n-gram size (default 3 = up to 3-word phrases).
+
+        Returns:
+            List of n-grams extracted from text.
+
+        Example:
+            >>> _extract_ngrams("prosty stół z nogami", min_n=1, max_n=2)
+            ["prosty", "stół", "z", "nogami", "prosty stół", "stół z", "z nogami"]
+        """
+        words = text.lower().split()
+        ngrams = []
+        for n in range(min_n, min(max_n + 1, len(words) + 1)):
+            for i in range(len(words) - n + 1):
+                ngrams.append(" ".join(words[i:i + n]))
+        return ngrams
+
     def extract(self, prompt: str, workflow_name: str) -> ModifierResult:
         """Extract modifiers from prompt for given workflow.
 
@@ -105,25 +127,47 @@ class ModifierExtractor(IModifierExtractor):
         if prompt and definition.modifiers:
             prompt_lower = prompt.lower()
 
-            for keyword, values in definition.modifiers.items():
-                # Use semantic matching if classifier available (LaBSE multilingual)
-                if self._classifier is not None:
-                    similarity = self._classifier.similarity(keyword, prompt)
-                    if similarity >= self._similarity_threshold:
-                        logger.debug(
-                            f"Modifier semantic match: '{keyword}' → {values} "
-                            f"(similarity={similarity:.3f})"
-                        )
-                        modifiers.update(values)
-                        matched_keywords.append(keyword)
-                        confidence_map[keyword] = similarity
-                else:
-                    # Fallback: substring matching (backward compatibility)
+            # First pass: find best semantic match for each modifier
+            semantic_matches: List[tuple] = []  # (keyword, values, similarity, ngram)
+
+            if self._classifier is not None:
+                ngrams = self._extract_ngrams(prompt)
+
+                for keyword, values in definition.modifiers.items():
+                    best_similarity = 0.0
+                    best_ngram = ""
+
+                    for ngram in ngrams:
+                        sim = self._classifier.similarity(keyword, ngram)
+                        if sim > best_similarity:
+                            best_similarity = sim
+                            best_ngram = ngram
+
+                    if best_similarity >= self._similarity_threshold:
+                        semantic_matches.append((keyword, values, best_similarity, best_ngram))
+
+            # Select ONLY the best semantic match (highest similarity wins)
+            if semantic_matches:
+                # Sort by similarity descending
+                semantic_matches.sort(key=lambda x: x[2], reverse=True)
+                best_keyword, best_values, best_sim, best_ngram = semantic_matches[0]
+
+                logger.info(
+                    f"Modifier semantic match: '{best_keyword}' ≈ '{best_ngram}' "
+                    f"→ {best_values} (similarity={best_sim:.3f})"
+                )
+                modifiers.update(best_values)
+                matched_keywords.append(best_keyword)
+                confidence_map[best_keyword] = best_sim
+            else:
+                # Fallback: substring matching (backward compatibility)
+                for keyword, values in definition.modifiers.items():
                     if keyword.lower() in prompt_lower:
                         logger.debug(f"Modifier substring match: '{keyword}' → {values}")
                         modifiers.update(values)
                         matched_keywords.append(keyword)
                         confidence_map[keyword] = 1.0  # Exact match = full confidence
+                        break  # Only apply first substring match
 
         return ModifierResult(
             modifiers=modifiers,
