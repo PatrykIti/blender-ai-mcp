@@ -19,6 +19,9 @@ from server.router.domain.interfaces import (
     IExpansionEngine,
     IFirewall,
     IIntentClassifier,
+    # Ensemble Matcher (TASK-053)
+    IMatcher,
+    IModifierExtractor,
 )
 from server.router.domain.entities import (
     InterceptedToolCall,
@@ -29,6 +32,9 @@ from server.router.domain.entities import (
     PatternMatchResult,
     OverrideDecision,
     FirewallResult,
+    # Ensemble (TASK-053)
+    MatcherResult,
+    ModifierResult,
 )
 
 
@@ -371,3 +377,132 @@ class TestIIntentClassifier:
         tool, confidence = classifier.predict("extrude")
         assert tool == "mesh_extrude"
         assert confidence > 0.5
+
+
+class TestIMatcher:
+    """Tests for IMatcher interface (TASK-053-2)."""
+
+    def test_is_abstract(self):
+        """Verify interface is abstract."""
+        assert issubclass(IMatcher, ABC)
+
+    def test_has_required_properties(self):
+        """Verify interface has all required properties."""
+        assert hasattr(IMatcher, "name")
+        assert hasattr(IMatcher, "weight")
+
+    def test_has_required_methods(self):
+        """Verify interface has all required methods."""
+        assert hasattr(IMatcher, "match")
+
+    def test_can_implement(self):
+        """Verify interface can be implemented."""
+
+        class MockMatcher(IMatcher):
+            @property
+            def name(self) -> str:
+                return "test_matcher"
+
+            @property
+            def weight(self) -> float:
+                return 0.40
+
+            def match(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> MatcherResult:
+                return MatcherResult(
+                    matcher_name=self.name,
+                    workflow_name="test_workflow",
+                    confidence=0.85,
+                    weight=self.weight,
+                )
+
+        matcher = MockMatcher()
+        assert matcher.name == "test_matcher"
+        assert matcher.weight == 0.40
+
+        result = matcher.match("create a test")
+        assert isinstance(result, MatcherResult)
+        assert result.matcher_name == "test_matcher"
+        assert result.workflow_name == "test_workflow"
+        assert result.confidence == 0.85
+
+    def test_can_implement_no_match(self):
+        """Verify interface can return no match."""
+
+        class MockMatcher(IMatcher):
+            @property
+            def name(self) -> str:
+                return "keyword"
+
+            @property
+            def weight(self) -> float:
+                return 0.40
+
+            def match(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> MatcherResult:
+                # No keyword match
+                return MatcherResult(
+                    matcher_name=self.name,
+                    workflow_name=None,
+                    confidence=0.0,
+                    weight=self.weight,
+                )
+
+        matcher = MockMatcher()
+        result = matcher.match("some prompt")
+        assert result.workflow_name is None
+        assert result.confidence == 0.0
+
+
+class TestIModifierExtractor:
+    """Tests for IModifierExtractor interface (TASK-053-2)."""
+
+    def test_is_abstract(self):
+        """Verify interface is abstract."""
+        assert issubclass(IModifierExtractor, ABC)
+
+    def test_has_required_methods(self):
+        """Verify interface has all required methods."""
+        assert hasattr(IModifierExtractor, "extract")
+
+    def test_can_implement(self):
+        """Verify interface can be implemented."""
+
+        class MockExtractor(IModifierExtractor):
+            def extract(self, prompt: str, workflow_name: str) -> ModifierResult:
+                # Simple mock: extract "straight" keyword
+                modifiers = {}
+                matched = []
+                confidence = {}
+
+                if "straight" in prompt.lower():
+                    modifiers = {"leg_angle_left": 0, "leg_angle_right": 0}
+                    matched = ["straight"]
+                    confidence = {"straight": 1.0}
+
+                return ModifierResult(
+                    modifiers=modifiers,
+                    matched_keywords=matched,
+                    confidence_map=confidence,
+                )
+
+        extractor = MockExtractor()
+        result = extractor.extract("create straight table", "picnic_table_workflow")
+        assert isinstance(result, ModifierResult)
+        assert result.modifiers["leg_angle_left"] == 0
+        assert "straight" in result.matched_keywords
+
+    def test_can_implement_no_modifiers(self):
+        """Verify interface can return no modifiers."""
+
+        class MockExtractor(IModifierExtractor):
+            def extract(self, prompt: str, workflow_name: str) -> ModifierResult:
+                # No modifiers found
+                return ModifierResult(
+                    modifiers={},
+                    matched_keywords=[],
+                    confidence_map={},
+                )
+
+        extractor = MockExtractor()
+        result = extractor.extract("create table", "picnic_table_workflow")
+        assert not result.has_modifiers()
+        assert len(result.matched_keywords) == 0

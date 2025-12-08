@@ -21,6 +21,10 @@ from server.router.domain.interfaces.i_vector_store import (
 from server.router.domain.interfaces.i_workflow_intent_classifier import (
     IWorkflowIntentClassifier,
 )
+from server.router.domain.interfaces.matcher import (
+    IMatcher,
+    IModifierExtractor,
+)
 
 __all__ = [
     "IToolInterceptor",
@@ -38,4 +42,7 @@ __all__ = [
     "SearchResult",
     # Workflow Intent Classifier (TASK-047)
     "IWorkflowIntentClassifier",
+    # Ensemble Matcher (TASK-053)
+    "IMatcher",
+    "IModifierExtractor",
 ]
