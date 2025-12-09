@@ -62,6 +62,7 @@ defaults:
 
   # Leg dimensions
   leg_length: 0.458         # Leg length (Z scale) - increase for X-shaped crossed legs
+  leg_top_stretch: 0.0      # Additional stretch at top of legs (0 = no stretch, 0.5 = extend top by 50%)
 
   # Table top dimensions
   table_length: 0.594       # Table length (Y axis) - controls plank length
@@ -124,6 +125,19 @@ parameters:
       - legs
       - long
       - tall
+    group: leg_dimensions
+
+  leg_top_stretch:
+    type: float
+    range: [0.0, 1.0]  # 0 = no stretch, 1.0 = double the top section
+    default: 0.0
+    description: Stretch factor for top portion of legs - extends upper part to reach table when angled
+    semantic_hints:
+      - stretch
+      - extend
+      - top
+      - upper
+      - legs
     group: leg_dimensions
 
   table_length:
@@ -284,9 +298,33 @@ steps:
     params:
       name: "Leg_FL"
       scale: [0.024, 0.024, "$leg_length"]
-      location: [-0.356, -0.636, -0.190]
+      location: ["$CALCULATE(-table_width * 0.580)", "$CALCULATE(-table_length * 1.071)", -0.190]
       rotation: [0, "$leg_angle_left", 0]
-    description: "Front-left leg - uses $leg_angle_left and $leg_length variables"
+    description: "Front-left leg - position scales with table dimensions"
+
+  # Lattice for elastic leg deformation
+  - tool: lattice_create
+    params:
+      name: "Lattice_Leg_FL"
+      target_object: "Leg_FL"
+      points_u: 2
+      points_v: 2
+      points_w: 3
+    description: "Create lattice for non-uniform leg stretch (2x2x3 control points)"
+
+  - tool: lattice_bind
+    params:
+      object_name: "Leg_FL"
+      lattice_name: "Lattice_Leg_FL"
+    description: "Bind leg to lattice for deformation"
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "Lattice_Leg_FL"
+      point_index: [4, 5, 6, 7]
+      offset: [0, 0, "$leg_top_stretch"]
+      relative: true
+    description: "Stretch top layer of lattice points (extends upper portion of leg)"
 
   # Front-right leg (Cube.008) - Y=-6.36
   - tool: modeling_create_primitive
@@ -299,9 +337,33 @@ steps:
     params:
       name: "Leg_FR"
       scale: [0.024, 0.024, "$leg_length"]
-      location: [0.370, -0.636, -0.190]
+      location: ["$CALCULATE(table_width * 0.603)", "$CALCULATE(-table_length * 1.071)", -0.190]
       rotation: [0, "$leg_angle_right", 0]
-    description: "Front-right leg - uses $leg_angle_right and $leg_length variables"
+    description: "Front-right leg - position scales with table dimensions"
+
+  # Lattice for elastic leg deformation
+  - tool: lattice_create
+    params:
+      name: "Lattice_Leg_FR"
+      target_object: "Leg_FR"
+      points_u: 2
+      points_v: 2
+      points_w: 3
+    description: "Create lattice for non-uniform leg stretch"
+
+  - tool: lattice_bind
+    params:
+      object_name: "Leg_FR"
+      lattice_name: "Lattice_Leg_FR"
+    description: "Bind leg to lattice"
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "Lattice_Leg_FR"
+      point_index: [4, 5, 6, 7]
+      offset: [0, 0, "$leg_top_stretch"]
+      relative: true
+    description: "Stretch top of leg"
 
   # Back-left leg (Cube.007) - Y=+3.18
   - tool: modeling_create_primitive
@@ -314,9 +376,33 @@ steps:
     params:
       name: "Leg_BL"
       scale: [0.024, 0.024, "$leg_length"]
-      location: [-0.356, 0.318, -0.190]
+      location: ["$CALCULATE(-table_width * 0.580)", "$CALCULATE(table_length * 0.535)", -0.190]
       rotation: [0, "$leg_angle_left", 0]
-    description: "Back-left leg - uses $leg_angle_left and $leg_length variables"
+    description: "Back-left leg - position scales with table dimensions"
+
+  # Lattice for elastic leg deformation
+  - tool: lattice_create
+    params:
+      name: "Lattice_Leg_BL"
+      target_object: "Leg_BL"
+      points_u: 2
+      points_v: 2
+      points_w: 3
+    description: "Create lattice for non-uniform leg stretch"
+
+  - tool: lattice_bind
+    params:
+      object_name: "Leg_BL"
+      lattice_name: "Lattice_Leg_BL"
+    description: "Bind leg to lattice"
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "Lattice_Leg_BL"
+      point_index: [4, 5, 6, 7]
+      offset: [0, 0, "$leg_top_stretch"]
+      relative: true
+    description: "Stretch top of leg"
 
   # Back-right leg (Cube.006) - Y=+3.18
   - tool: modeling_create_primitive
@@ -329,9 +415,9 @@ steps:
     params:
       name: "Leg_BR"
       scale: [0.024, 0.024, "$leg_length"]
-      location: [0.374, 0.318, -0.190]
+      location: ["$CALCULATE(table_width * 0.609)", "$CALCULATE(table_length * 0.535)", -0.190]
       rotation: [0, "$leg_angle_right", 0]
-    description: "Back-right leg - uses $leg_angle_right and $leg_length variables"
+    description: "Back-right leg - position scales with table dimensions"
 
   # ============================================
   # SECTION 4: LEG CROSS BEAMS (2 horizontal bars)
@@ -596,86 +682,89 @@ steps:
 
   # MINIMAL FINALIZE: Simple table (used for CORE_ONLY adaptation)
   # Only includes: 5 planks + 1 crossbeam + 4 legs = 10 parts
-  - tool: modeling_join_objects
-    params:
-      object_names:
-        - "TablePlank_1"
-        - "TablePlank_2"
-        - "TablePlank_3"
-        - "TablePlank_4"
-        - "TablePlank_5"
-        - "TableCrossBeam"
-        - "Leg_FL"
-        - "Leg_FR"
-        - "Leg_BL"
-        - "Leg_BR"
-    description: Join 10 minimal table parts (simple 4-leg table)
+  # COMMENTED OUT FOR DEBUGGING - keeps objects separate for analysis
+  # - tool: modeling_join_objects
+  #   params:
+  #     object_names:
+  #       - "TablePlank_1"
+  #       - "TablePlank_2"
+  #       - "TablePlank_3"
+  #       - "TablePlank_4"
+  #       - "TablePlank_5"
+  #       - "TableCrossBeam"
+  #       - "Leg_FL"
+  #       - "Leg_FR"
+  #       - "Leg_BL"
+  #       - "Leg_BR"
+  #   description: Join 10 minimal table parts (simple 4-leg table)
 
-  - tool: scene_rename_object
-    params:
-      old_name: "Leg_BR"
-      new_name: "Table"
-    description: Rename minimal table object
+  # - tool: scene_rename_object
+  #   params:
+  #     old_name: "Leg_BR"
+  #     new_name: "Table"
+  #   description: Rename minimal table object
 
-  - tool: modeling_set_origin
-    params:
-      name: "Table"
-      type: ORIGIN_GEOMETRY
-    description: Center origin on table geometry
+  # - tool: modeling_set_origin
+  #   params:
+  #     name: "Table"
+  #     type: ORIGIN_GEOMETRY
+  #   description: Center origin on table geometry
 
   # A-FRAME FINALIZE: Join A-frame supports to table (only when A-frame steps are included)
-  - tool: modeling_join_objects
-    params:
-      object_names:
-        - "Table"
-        - "LegCrossBeam_Back"
-        - "LegCrossBeam_Front"
-        - "DiagonalSupport_R"
-        - "DiagonalSupport_L"
-    description: Join A-frame supports to table (crossbeams + diagonals)
-    optional: true
-    tags: ["a-frame", "structural"]
+  # COMMENTED OUT FOR DEBUGGING
+  # - tool: modeling_join_objects
+  #   params:
+  #     object_names:
+  #       - "Table"
+  #       - "LegCrossBeam_Back"
+  #       - "LegCrossBeam_Front"
+  #       - "DiagonalSupport_R"
+  #       - "DiagonalSupport_L"
+  #   description: Join A-frame supports to table (crossbeams + diagonals)
+  #   optional: true
+  #   tags: ["a-frame", "structural"]
 
-  - tool: modeling_set_origin
-    params:
-      name: "Table"
-      type: ORIGIN_GEOMETRY
-    description: Re-center origin after adding A-frame supports
-    optional: true
-    tags: ["a-frame", "structural"]
+  # - tool: modeling_set_origin
+  #   params:
+  #     name: "Table"
+  #     type: ORIGIN_GEOMETRY
+  #   description: Re-center origin after adding A-frame supports
+  #   optional: true
+  #   tags: ["a-frame", "structural"]
 
   # FULL FINALIZE: Picnic table with benches (only when benches are created)
-  - tool: modeling_join_objects
-    params:
-      object_names:
-        - "Table"
-        - "BenchLeft_Inner"
-        - "BenchLeft_Outer"
-        - "BenchRight_Inner"
-        - "BenchRight_Outer"
-        - "BenchBack_Inner"
-        - "BenchBack_Outer"
-        - "BenchFront_Inner"
-        - "BenchFront_Outer"
-    description: Join table with all 8 bench parts
-    optional: true
-    tags: ["bench", "seating"]
+  # COMMENTED OUT FOR DEBUGGING
+  # - tool: modeling_join_objects
+  #   params:
+  #     object_names:
+  #       - "Table"
+  #       - "BenchLeft_Inner"
+  #       - "BenchLeft_Outer"
+  #       - "BenchRight_Inner"
+  #       - "BenchRight_Outer"
+  #       - "BenchBack_Inner"
+  #       - "BenchBack_Outer"
+  #       - "BenchFront_Inner"
+  #       - "BenchFront_Outer"
+  #   description: Join table with all 8 bench parts
+  #   optional: true
+  #   tags: ["bench", "seating"]
 
-  - tool: scene_rename_object
-    params:
-      old_name: "BenchFront_Outer"
-      new_name: "Picnic_Table"
-    description: Rename to final picnic table name
-    optional: true
-    tags: ["bench", "seating"]
+  # - tool: scene_rename_object
+  #   params:
+  #     old_name: "BenchFront_Outer"
+  #     new_name: "Picnic_Table"
+  #   description: Rename to final picnic table name
+  #   optional: true
+  #   tags: ["bench", "seating"]
 
-  - tool: modeling_set_origin
-    params:
-      name: "Picnic_Table"
-      type: ORIGIN_GEOMETRY
-    description: Center origin on full picnic table
-    optional: true
-    tags: ["bench", "seating"]
+  # - tool: modeling_set_origin
+  #   params:
+  #     name: "Picnic_Table"
+  #     type: ORIGIN_GEOMETRY
+  #   description: Center origin on full picnic table
+  #   optional: true
+  #   tags: ["bench", "seating"]
 
   # ============================================
   # SECTION 10: MATERIAL
