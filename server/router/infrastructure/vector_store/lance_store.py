@@ -99,7 +99,7 @@ class LanceVectorStore(IVectorStore):
                         pa.field("namespace", pa.string()),
                         pa.field("vector", pa.list_(pa.float32(), self.VECTOR_DIM)),
                         pa.field("text", pa.string()),
-                        pa.field("metadata", pa.string()),  # JSON string
+                        pa.field("metadata", pa.large_binary()),  # JSON as large_binary for json_extract
                     ]
                 )
                 self._table = self._db.create_table(self.TABLE_NAME, schema=schema)
@@ -126,7 +126,7 @@ class LanceVectorStore(IVectorStore):
                         "namespace": r.namespace.value,
                         "vector": r.vector,
                         "text": r.text,
-                        "metadata": json.dumps(r.metadata),
+                        "metadata": json.dumps(r.metadata).encode('utf-8'),  # Convert to bytes
                     }
                 )
 
@@ -170,26 +170,20 @@ class LanceVectorStore(IVectorStore):
             )
 
         try:
-            # Build WHERE clause for namespace filter
+            # Build WHERE clause for namespace filter only
             where = f"namespace = '{namespace.value}'"
 
-            # Add metadata filters if provided
-            if metadata_filter:
-                for key, value in metadata_filter.items():
-                    if isinstance(value, str):
-                        where += f" AND json_extract(metadata, '$.{key}') = '{value}'"
-                    else:
-                        where += f" AND json_extract(metadata, '$.{key}') = {value}"
-
-            # Execute search
+            # Execute search without metadata filters (filter in Python instead)
+            # Fetch more results to account for filtering
+            fetch_limit = top_k * 10 if metadata_filter else top_k
             results = (
                 self._table.search(query_vector)
                 .where(where)
-                .limit(top_k)
+                .limit(fetch_limit)
                 .to_list()
             )
 
-            # Convert to SearchResult
+            # Convert to SearchResult with Python-side metadata filtering
             output = []
             for r in results:
                 # LanceDB returns _distance (L2 squared for normalized vectors)
@@ -198,24 +192,47 @@ class LanceVectorStore(IVectorStore):
                 distance = r.get("_distance", 0)
                 score = max(0.0, 1.0 - (distance / 2.0))
 
-                if score >= threshold:
-                    metadata = {}
-                    if r.get("metadata"):
-                        try:
-                            metadata = json.loads(r["metadata"])
-                        except (json.JSONDecodeError, TypeError):
-                            pass
+                if score < threshold:
+                    continue
 
-                    output.append(
-                        SearchResult(
-                            id=r["id"],
-                            score=score,
-                            text=r.get("text", ""),
-                            metadata=metadata,
-                        )
+                # Parse metadata
+                metadata = {}
+                if r.get("metadata"):
+                    try:
+                        # Decode bytes to string, then parse JSON
+                        metadata_bytes = r["metadata"]
+                        if isinstance(metadata_bytes, bytes):
+                            metadata_str = metadata_bytes.decode('utf-8')
+                        else:
+                            metadata_str = metadata_bytes
+                        metadata = json.loads(metadata_str)
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        pass
+
+                # Apply Python-side metadata filtering
+                if metadata_filter:
+                    match = True
+                    for key, value in metadata_filter.items():
+                        if metadata.get(key) != value:
+                            match = False
+                            break
+                    if not match:
+                        continue  # Skip this result
+
+                output.append(
+                    SearchResult(
+                        id=r["id"],
+                        score=score,
+                        text=r.get("text", ""),
+                        metadata=metadata,
                     )
+                )
 
-            return output
+                # Stop if we have enough results
+                if len(output) >= top_k:
+                    break
+
+            return output[:top_k]
 
         except Exception as e:
             logger.error(f"Search failed: {e}")
@@ -497,8 +514,14 @@ class LanceVectorStore(IVectorStore):
                 metadata = {}
                 if row.get("metadata"):
                     try:
-                        metadata = json.loads(row["metadata"])
-                    except (json.JSONDecodeError, TypeError):
+                        # Decode bytes to string, then parse JSON
+                        metadata_bytes = row["metadata"]
+                        if isinstance(metadata_bytes, bytes):
+                            metadata_str = metadata_bytes.decode('utf-8')
+                        else:
+                            metadata_str = metadata_bytes
+                        metadata = json.loads(metadata_str)
+                    except (json.JSONDecodeError, TypeError, AttributeError):
                         pass
 
                 workflow_id = metadata.get("workflow_id", row["id"])
@@ -657,8 +680,14 @@ class LanceVectorStore(IVectorStore):
                 metadata = {}
                 if r.get("metadata"):
                     try:
-                        metadata = json.loads(r["metadata"])
-                    except (json.JSONDecodeError, TypeError):
+                        # Decode bytes to string, then parse JSON
+                        metadata_bytes = r["metadata"]
+                        if isinstance(metadata_bytes, bytes):
+                            metadata_str = metadata_bytes.decode('utf-8')
+                        else:
+                            metadata_str = metadata_bytes
+                        metadata = json.loads(metadata_str)
+                    except (json.JSONDecodeError, TypeError, AttributeError):
                         pass
                 wf_id = metadata.get("workflow_id", r["id"])
                 workflow_ids.add(wf_id)
