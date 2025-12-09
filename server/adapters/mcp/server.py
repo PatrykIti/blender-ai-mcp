@@ -28,14 +28,9 @@ def run():
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
 
+    # Log router status (lazy loading via DI on first tool use)
     if is_router_enabled():
-        logger.info("Router Supervisor ENABLED - initializing...")
-        router = get_router()
-        if router:
-            logger.info("Router Supervisor initialized - ready for LLM tool call processing")
-            logger.info(f"Router config: {router.get_config()}")
-        else:
-            logger.warning("Router enabled but failed to initialize")
+        logger.info("Router Supervisor ENABLED - lazy loading via DI")
     else:
         logger.info("Router Supervisor DISABLED - direct tool execution mode")
 

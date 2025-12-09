@@ -25,27 +25,28 @@ class RouterToolHandler(IRouterTool):
         _enabled: Whether router is enabled in config.
     """
 
-    def __init__(self, router=None, enabled: bool = True):
+    def __init__(
+        self,
+        router=None,
+        enabled: bool = True,
+        parameter_resolver=None,
+        workflow_loader=None,
+    ):
         """Initialize router handler.
 
+        Clean Architecture: All dependencies injected via constructor.
+        No lazy loading in Application layer.
+
         Args:
-            router: Optional SupervisorRouter instance.
-                   If not provided, will be obtained from DI.
+            router: SupervisorRouter instance (injected by DI).
             enabled: Whether router is enabled.
+            parameter_resolver: ParameterResolver instance (injected by DI).
+            workflow_loader: WorkflowLoader instance (injected by DI).
         """
         self._router = router
         self._enabled = enabled
-
-    def _get_router(self):
-        """Get router instance (lazy loading).
-
-        Returns:
-            SupervisorRouter instance or None.
-        """
-        if self._router is None:
-            from server.infrastructure.di import get_router
-            self._router = get_router()
-        return self._router
+        self._parameter_resolver = parameter_resolver
+        self._workflow_loader = workflow_loader
 
     def set_goal(
         self,
@@ -80,7 +81,7 @@ class RouterToolHandler(IRouterTool):
                 "message": "Router is disabled. Goal noted but no workflow optimization available.",
             }
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return {
                 "status": "disabled",
@@ -105,7 +106,7 @@ class RouterToolHandler(IRouterTool):
             }
 
         # Step 2: Get workflow definition and parameters
-        loader = self._get_workflow_loader()
+        loader = self._workflow_loader
         workflow = loader.get_workflow(matched_workflow)
 
         if not workflow or not workflow.parameters:
@@ -123,7 +124,7 @@ class RouterToolHandler(IRouterTool):
 
         # Step 3: If resolved_params provided, store them first
         if resolved_params:
-            resolver = self._get_parameter_resolver()
+            resolver = self._parameter_resolver
             if resolver:
                 for param_name, value in resolved_params.items():
                     # Extract context for this parameter from the goal
@@ -140,7 +141,7 @@ class RouterToolHandler(IRouterTool):
         existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
 
         # Step 5: Resolve parameters using three-tier system
-        resolver = self._get_parameter_resolver()
+        resolver = self._parameter_resolver
         if resolver is None:
             # Fallback: use only YAML modifiers and execute
             execution_results = router.execute_pending_workflow(existing_modifiers)
@@ -257,7 +258,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return "Router Supervisor is DISABLED.\nSet ROUTER_ENABLED=true to enable."
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return "Router not initialized."
 
@@ -294,7 +295,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return "Router is disabled."
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return "Router not initialized."
 
@@ -310,7 +311,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return None
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return None
 
@@ -325,7 +326,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return None
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return None
 
@@ -340,8 +341,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return False
 
-        router = self._get_router()
-        return router is not None
+        return self._router is not None
 
     # --- Semantic Matching Methods (TASK-046) ---
 
@@ -365,7 +365,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return []
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return []
 
@@ -390,7 +390,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return {"error": "Router is disabled"}
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return {"error": "Router not initialized"}
 
@@ -418,7 +418,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return "Router is disabled. Feedback not recorded."
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return "Router not initialized."
 
@@ -440,7 +440,7 @@ class RouterToolHandler(IRouterTool):
         if not self._enabled:
             return {"error": "Router is disabled"}
 
-        router = self._get_router()
+        router = self._router
         if router is None:
             return {"error": "Router not initialized"}
 
@@ -521,22 +521,3 @@ class RouterToolHandler(IRouterTool):
 
         return "\n".join(lines)
 
-    # --- Parameter Resolution Helpers (TASK-055-FIX) ---
-
-    def _get_parameter_resolver(self):
-        """Get parameter resolver instance (lazy loading).
-
-        Returns:
-            ParameterResolver instance or None.
-        """
-        from server.infrastructure.di import get_parameter_resolver
-        return get_parameter_resolver()
-
-    def _get_workflow_loader(self):
-        """Get workflow loader instance (lazy loading).
-
-        Returns:
-            WorkflowLoader instance.
-        """
-        from server.router.infrastructure.workflow_loader import get_workflow_loader
-        return get_workflow_loader()

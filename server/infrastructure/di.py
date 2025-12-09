@@ -32,6 +32,7 @@ from server.domain.tools.extraction import IExtractionTool
 from server.domain.tools.text import ITextTool
 from server.domain.tools.armature import IArmatureTool
 from server.infrastructure.config import get_config
+from server.router.infrastructure.workflow_loader import get_workflow_loader
 
 # --- Providers (Factory Functions) ---
 # Wzorzec "Singleton" realizowany przez zmienne modułu (lub lru_cache)
@@ -294,6 +295,10 @@ def get_router_handler() -> IRouterTool:
 
     Returns:
         RouterToolHandler instance.
+
+    Clean Architecture: All dependencies injected via DI.
+    Router, parameter resolver, and workflow loader are lazily initialized
+    on first access through their respective get_* functions.
     """
     global _router_handler_instance
     if _router_handler_instance is None:
@@ -301,6 +306,8 @@ def get_router_handler() -> IRouterTool:
         _router_handler_instance = RouterToolHandler(
             router=get_router() if config.ROUTER_ENABLED else None,
             enabled=config.ROUTER_ENABLED,
+            parameter_resolver=get_parameter_resolver() if config.ROUTER_ENABLED else None,
+            workflow_loader=get_workflow_loader() if config.ROUTER_ENABLED else None,
         )
     return _router_handler_instance
 
