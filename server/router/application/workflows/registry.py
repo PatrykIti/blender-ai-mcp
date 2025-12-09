@@ -238,7 +238,8 @@ class WorkflowRegistry:
         workflow = self._workflows.get(workflow_name)
         if workflow:
             steps = workflow.get_steps(params)
-            return self._steps_to_calls(steps, workflow_name)
+            # Pass params to enable condition evaluation with workflow parameters
+            return self._steps_to_calls(steps, workflow_name, workflow_params=params)
 
         # Try custom definition
         definition = self._custom_definitions.get(workflow_name)
@@ -247,8 +248,10 @@ class WorkflowRegistry:
             variables = self._build_variables(definition, user_prompt)
             # Merge with params (params override variables)
             all_params = {**variables, **(params or {})}
+
             steps = self._resolve_definition_params(definition.steps, all_params)
-            return self._steps_to_calls(steps, workflow_name)
+            # Pass all_params to enable condition evaluation with workflow parameters
+            return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
 
         return []
 
@@ -371,6 +374,7 @@ class WorkflowRegistry:
         self,
         steps: List[WorkflowStep],
         workflow_name: str,
+        workflow_params: Optional[Dict[str, Any]] = None,
     ) -> List[CorrectedToolCall]:
         """Convert workflow steps to corrected tool calls.
 
@@ -380,6 +384,8 @@ class WorkflowRegistry:
         Args:
             steps: Workflow steps.
             workflow_name: Name of the workflow.
+            workflow_params: Optional workflow parameters for condition evaluation.
+                Allows conditions to reference workflow variables (e.g., leg_angle_left).
 
         Returns:
             List of tool calls (skips steps where condition is False).
@@ -387,38 +393,48 @@ class WorkflowRegistry:
         calls = []
         skipped_count = 0
 
-        for i, step in enumerate(steps):
-            # Check condition if present (TASK-041-11)
-            if step.condition:
-                should_execute = self._condition_evaluator.evaluate(step.condition)
-                if not should_execute:
-                    logger.debug(
-                        f"Skipping workflow step {i+1} ({step.tool}): "
-                        f"condition '{step.condition}' not met"
-                    )
-                    skipped_count += 1
-                    continue
+        # Temporarily extend condition context with workflow params
+        original_context = self._condition_evaluator.get_context().copy()
+        if workflow_params:
+            extended_context = {**original_context, **workflow_params}
+            self._condition_evaluator.set_context(extended_context)
 
-            # Create tool call
-            call = CorrectedToolCall(
-                tool_name=step.tool,
-                params=dict(step.params),
-                corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
-                is_injected=True,
-            )
-            calls.append(call)
+        try:
+            for i, step in enumerate(steps):
+                # Check condition if present (TASK-041-11)
+                if step.condition:
+                    should_execute = self._condition_evaluator.evaluate(step.condition)
+                    if not should_execute:
+                        logger.debug(
+                            f"Skipping workflow step {i+1} ({step.tool}): "
+                            f"condition '{step.condition}' not met"
+                        )
+                        skipped_count += 1
+                        continue
 
-            # Simulate step effect on context (TASK-041-12)
-            # This allows subsequent conditions to see updated state
-            self._condition_evaluator.simulate_step_effect(step.tool, step.params)
+                # Create tool call
+                call = CorrectedToolCall(
+                    tool_name=step.tool,
+                    params=dict(step.params),
+                    corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
+                    is_injected=True,
+                )
+                calls.append(call)
 
-        if skipped_count > 0:
-            logger.info(
-                f"Workflow '{workflow_name}': {len(calls)} steps to execute, "
-                f"{skipped_count} skipped due to conditions"
-            )
+                # Simulate step effect on context (TASK-041-12)
+                # This allows subsequent conditions to see updated state
+                self._condition_evaluator.simulate_step_effect(step.tool, step.params)
 
-        return calls
+            if skipped_count > 0:
+                logger.info(
+                    f"Workflow '{workflow_name}': {len(calls)} steps to execute, "
+                    f"{skipped_count} skipped due to conditions"
+                )
+
+            return calls
+        finally:
+            # Restore original condition context (Clean Architecture: no side effects)
+            self._condition_evaluator.set_context(original_context)
 
     def _resolve_definition_params(
         self,

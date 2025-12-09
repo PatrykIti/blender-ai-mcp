@@ -103,6 +103,8 @@ condition: "selected_verts >= 4"     # Only if enough vertices
 
 ### Available Variables
 
+**Scene Context Variables:**
+
 | Variable | Type | Description |
 |----------|------|-------------|
 | `current_mode` | str | Current Blender mode |
@@ -112,6 +114,25 @@ condition: "selected_verts >= 4"     # Only if enough vertices
 | `selected_edges` | int | Selected edge count |
 | `selected_faces` | int | Selected face count |
 | `active_object` | str | Active object name |
+
+**Workflow Parameters (NEW):**
+
+All workflow parameters from `defaults` and `modifiers` are also available in conditions:
+
+```yaml
+defaults:
+  leg_angle_left: 0.32
+  leg_angle_right: -0.32
+
+steps:
+  - tool: mesh_transform_selected
+    params:
+      translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
+    # Access workflow parameters directly in conditions (no $ prefix)
+    condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
+```
+
+**Important:** Use bare variable names in conditions (`leg_angle_left`), not parameter syntax (`$leg_angle_left`).
 
 ### Context Simulation
 
@@ -313,6 +334,13 @@ steps:
     params:
       name: "Leg_FR"
       rotation: [0, "$leg_angle_right", 0]
+
+  # Optional step: only execute for X-shaped legs with high angles
+  - tool: mesh_transform_selected
+    params:
+      translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
+    description: "Stretch leg top for X-shaped configuration"
+    condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
 ```
 
 ### Behavior Examples
