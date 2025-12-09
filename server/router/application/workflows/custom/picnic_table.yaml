@@ -60,6 +60,13 @@ defaults:
   leg_angle_left: 0.32      # Left legs: +18° (top leans toward center)
   leg_angle_right: -0.32    # Right legs: -18° (top leans toward center)
 
+  # Leg dimensions
+  leg_length: 0.458         # Leg length (Z scale) - increase for X-shaped crossed legs
+
+  # Table top dimensions
+  table_length: 0.594       # Table length (Y axis) - controls plank length
+  table_width: 0.614        # Table width (X axis) - total width of 5 planks
+
 modifiers:
   # Straight/vertical legs (rotation = 0)
   "straight legs":
@@ -106,6 +113,45 @@ parameters:
       - crossed
     group: leg_angles
 
+  leg_length:
+    type: float
+    range: [0.3, 1.2]  # 0.3 = short legs, 1.2 = very long crossed legs
+    default: 0.458
+    description: Length of table legs (Z scale) - increase for deeper X-cross when legs are angled
+    semantic_hints:
+      - length
+      - height
+      - legs
+      - long
+      - tall
+    group: leg_dimensions
+
+  table_length:
+    type: float
+    range: [0.4, 2.0]  # 0.4 = short table, 2.0 = very long table
+    default: 0.594
+    description: Length of table top (Y axis) - controls how long the table planks are
+    semantic_hints:
+      - length
+      - long
+      - table
+      - top
+      - surface
+    group: table_dimensions
+
+  table_width:
+    type: float
+    range: [0.3, 1.5]  # 0.3 = narrow table, 1.5 = very wide table
+    default: 0.614
+    description: Width of table top (X axis) - controls how wide the table surface is
+    semantic_hints:
+      - width
+      - wide
+      - table
+      - top
+      - surface
+    group: table_dimensions
+
 # ============================================================
 # DIMENSIONS REFERENCE (from model analysis, normalized /10):
 #
@@ -141,9 +187,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_1"
-      scale: [0.100, 0.594, 0.0114]
-      location: [-0.198, -0.160, 0.254]
-    description: "Position plank 1 - center X=-1.984 from model"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 0.323)", -0.160, 0.254]
+    description: "Position plank 1 - leftmost plank, width scales with table_width"
 
   - tool: modeling_create_primitive
     params:
@@ -154,9 +200,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_2"
-      scale: [0.100, 0.594, 0.0114]
-      location: [-0.402, -0.160, 0.254]
-    description: "Position plank 2 - center X=-4.022 from model"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 0.655)", -0.160, 0.254]
+    description: "Position plank 2 - width scales with table_width"
 
   - tool: modeling_create_primitive
     params:
@@ -167,9 +213,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_3"
-      scale: [0.100, 0.594, 0.0114]
-      location: [0.006, -0.160, 0.254]
-    description: "Position plank 3 (center) - center X=0.063 from model"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: [0.010, -0.160, 0.254]
+    description: "Position plank 3 (center) - width scales with table_width"
 
   - tool: modeling_create_primitive
     params:
@@ -180,9 +226,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_4"
-      scale: [0.100, 0.594, 0.0114]
-      location: [0.210, -0.160, 0.254]
-    description: "Position plank 4 - center X=2.101 from model"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 0.342)", -0.160, 0.254]
+    description: "Position plank 4 - width scales with table_width"
 
   - tool: modeling_create_primitive
     params:
@@ -193,9 +239,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_5"
-      scale: [0.100, 0.594, 0.0114]
-      location: [0.414, -0.160, 0.254]
-    description: "Position plank 5 - center X=4.141 from model"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 0.674)", -0.160, 0.254]
+    description: "Position plank 5 (rightmost) - width scales with table_width"
 
   # ============================================
   # SECTION 2: TABLE TOP CROSS BEAM
@@ -213,9 +259,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TableCrossBeam"
-      scale: [0.399, 0.550, 0.0110]
+      scale: ["$CALCULATE(table_width * 0.65)", "$CALCULATE(table_length * 0.926)", 0.0110]
       location: [0.010, -0.160, 0.231]
-    description: "Position cross beam - sits just under table planks"
+    description: "Position cross beam - width and length scale with table dimensions"
 
   # ============================================
   # SECTION 3: A-FRAME LEGS (4 pieces)
@@ -237,10 +283,10 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "Leg_FL"
-      scale: [0.024, 0.024, 0.458]
+      scale: [0.024, 0.024, "$leg_length"]
       location: [-0.356, -0.636, -0.190]
       rotation: [0, "$leg_angle_left", 0]
-    description: "Front-left leg - uses $leg_angle_left variable"
+    description: "Front-left leg - uses $leg_angle_left and $leg_length variables"
 
   # Front-right leg (Cube.008) - Y=-6.36
   - tool: modeling_create_primitive
@@ -252,10 +298,10 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "Leg_FR"
-      scale: [0.024, 0.024, 0.458]
+      scale: [0.024, 0.024, "$leg_length"]
       location: [0.370, -0.636, -0.190]
       rotation: [0, "$leg_angle_right", 0]
-    description: "Front-right leg - uses $leg_angle_right variable"
+    description: "Front-right leg - uses $leg_angle_right and $leg_length variables"
 
   # Back-left leg (Cube.007) - Y=+3.18
   - tool: modeling_create_primitive
@@ -267,10 +313,10 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "Leg_BL"
-      scale: [0.024, 0.024, 0.458]
+      scale: [0.024, 0.024, "$leg_length"]
       location: [-0.356, 0.318, -0.190]
       rotation: [0, "$leg_angle_left", 0]
-    description: "Back-left leg - uses $leg_angle_left variable"
+    description: "Back-left leg - uses $leg_angle_left and $leg_length variables"
 
   # Back-right leg (Cube.006) - Y=+3.18
   - tool: modeling_create_primitive
@@ -282,10 +328,10 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "Leg_BR"
-      scale: [0.024, 0.024, 0.458]
+      scale: [0.024, 0.024, "$leg_length"]
       location: [0.374, 0.318, -0.190]
       rotation: [0, "$leg_angle_right", 0]
-    description: "Back-right leg - uses $leg_angle_right variable"
+    description: "Back-right leg - uses $leg_angle_right and $leg_length variables"
 
   # ============================================
   # SECTION 4: LEG CROSS BEAMS (2 horizontal bars)
@@ -307,9 +353,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Back"
-      scale: [0.870, 0.011, 0.054]
-      location: [0.010, 0.285, -0.142]
-    description: "Back crossbeam - connects back A-frame legs"
+      scale: ["$CALCULATE(table_width * 1.417)", 0.011, 0.054]
+      location: [0.010, "$CALCULATE(table_length * 0.480)", -0.142]
+    description: "Back crossbeam - width scales with table, position with length"
     optional: true
     tags: ["a-frame", "cross-support", "structural"]
 
@@ -325,9 +371,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Front"
-      scale: [0.870, 0.011, 0.054]
-      location: [0.010, -0.602, -0.142]
-    description: "Front crossbeam - connects front A-frame legs"
+      scale: ["$CALCULATE(table_width * 1.417)", 0.011, 0.054]
+      location: [0.010, "$CALCULATE(-table_length * 1.013)", -0.142]
+    description: "Front crossbeam - width scales with table, position with length"
     optional: true
     tags: ["a-frame", "cross-support", "structural"]
 
@@ -351,9 +397,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_R"
-      scale: [0.011, 0.870, 0.054]
-      location: [0.448, -0.187, -0.142]
-    description: "Right diagonal - runs front to back (A-frame)"
+      scale: [0.011, "$CALCULATE(table_length * 1.465)", 0.054]
+      location: ["$CALCULATE(table_width * 0.730)", -0.187, -0.142]
+    description: "Right diagonal - length scales with table_length, position with table_width"
     optional: true
     tags: ["a-frame", "diagonal", "structural"]
 
@@ -369,9 +415,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_L"
-      scale: [0.011, 0.870, 0.054]
-      location: [-0.439, -0.188, -0.142]
-    description: "Left diagonal - runs front to back (A-frame)"
+      scale: [0.011, "$CALCULATE(table_length * 1.465)", 0.054]
+      location: ["$CALCULATE(-table_width * 0.715)", -0.188, -0.142]
+    description: "Left diagonal - length scales with table_length, position with table_width"
     optional: true
     tags: ["a-frame", "diagonal", "structural"]
 
@@ -394,9 +440,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchLeft_Inner"
-      scale: [0.074, 0.594, 0.0114]
-      location: [-0.747, -0.160, -0.081]
-    description: "Left bench inner - closer to table"
+      scale: [0.074, "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 1.217)", -0.160, -0.081]
+    description: "Left bench inner - length scales with table, position with width"
     optional: true
     tags: ["bench", "seating", "side"]
 
@@ -412,9 +458,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchLeft_Outer"
-      scale: [0.074, 0.594, 0.0114]
-      location: [-0.898, -0.160, -0.081]
-    description: "Left bench outer - edge of bench"
+      scale: [0.074, "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 1.463)", -0.160, -0.081]
+    description: "Left bench outer - length scales with table, position with width"
     optional: true
     tags: ["bench", "seating", "side"]
 
@@ -437,9 +483,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchRight_Outer"
-      scale: [0.074, 0.594, 0.0114]
-      location: [0.918, -0.160, -0.081]
-    description: "Right bench outer - edge of bench"
+      scale: [0.074, "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 1.495)", -0.160, -0.081]
+    description: "Right bench outer - length scales with table, position with width"
     optional: true
     tags: ["bench", "seating", "side"]
 
@@ -455,9 +501,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchRight_Inner"
-      scale: [0.074, 0.594, 0.0114]
-      location: [0.767, -0.160, -0.081]
-    description: "Right bench inner - closer to table"
+      scale: [0.074, "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 1.249)", -0.160, -0.081]
+    description: "Right bench inner - length scales with table, position with width"
     optional: true
     tags: ["bench", "seating", "side"]
 
@@ -480,9 +526,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchBack_Inner"
-      scale: [0.594, 0.074, 0.0114]
-      location: [0.003, 0.569, -0.081]
-    description: "Back bench inner - closer to table"
+      scale: ["$table_length", 0.074, 0.0114]
+      location: [0.003, "$CALCULATE(table_length * 0.958)", -0.081]
+    description: "Back bench inner - width scales with table_length, position with table_length"
     optional: true
     tags: ["bench", "seating", "front_back"]
 
@@ -498,9 +544,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchBack_Outer"
-      scale: [0.594, 0.074, 0.0114]
-      location: [0.003, 0.720, -0.081]
-    description: "Back bench outer - edge of bench"
+      scale: ["$table_length", 0.074, 0.0114]
+      location: [0.003, "$CALCULATE(table_length * 1.212)", -0.081]
+    description: "Back bench outer - width scales with table_length, position with table_length"
     optional: true
     tags: ["bench", "seating", "front_back"]
 
@@ -516,9 +562,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchFront_Outer"
-      scale: [0.594, 0.074, 0.0114]
-      location: [0.004, -1.096, -0.081]
-    description: "Front bench outer - edge of bench"
+      scale: ["$table_length", 0.074, 0.0114]
+      location: [0.004, "$CALCULATE(-table_length * 1.845)", -0.081]
+    description: "Front bench outer - width scales with table_length, position with table_length"
     optional: true
     tags: ["bench", "seating", "front_back"]
 
@@ -534,9 +580,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "BenchFront_Inner"
-      scale: [0.594, 0.074, 0.0114]
-      location: [0.004, -0.945, -0.081]
-    description: "Front bench inner - closer to table"
+      scale: ["$table_length", 0.074, 0.0114]
+      location: [0.004, "$CALCULATE(-table_length * 1.591)", -0.081]
+    description: "Front bench inner - width scales with table_length, position with table_length"
     optional: true
     tags: ["bench", "seating", "front_back"]
 
