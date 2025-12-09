@@ -83,11 +83,48 @@ class ModifierExtractor(IModifierExtractor):
                 ngrams.append(" ".join(words[i:i + n]))
         return ngrams
 
+    def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
+        """Check if prompt contains negative signals.
+
+        TASK-055-FIX-2: Negative signals detection for semantic matching.
+        Rejects modifier match if prompt contains contradictory terms.
+
+        Args:
+            prompt: User prompt (e.g., "stół z nogami X")
+            negative_signals: List of contradictory terms from YAML
+
+        Returns:
+            True if any negative signal found in prompt.
+
+        Example:
+            >>> _has_negative_signals("stół z nogami X", ["X", "crossed"])
+            True  # "X" found in prompt
+            >>> _has_negative_signals("prosty stół", ["X", "crossed"])
+            False  # No negative signals
+        """
+        if not negative_signals:
+            return False
+
+        prompt_lower = prompt.lower()
+        prompt_words = set(prompt_lower.split())
+
+        for neg_word in negative_signals:
+            neg_lower = neg_word.lower()
+            # Check both substring and word boundary match
+            if neg_lower in prompt_words or neg_lower in prompt_lower:
+                logger.debug(f"Negative signal detected: '{neg_word}' in prompt")
+                return True
+
+        return False
+
     def extract(self, prompt: str, workflow_name: str) -> ModifierResult:
         """Extract modifiers from prompt for given workflow.
 
         Scans prompt for modifier keywords defined in workflow.modifiers.
-        Returns merged defaults + modifier overrides.
+        Returns ONLY matched modifiers (NOT defaults - those are handled by ParameterResolver).
+
+        TASK-055-FIX: Defaults are no longer included here. They're applied by
+        ParameterResolver in TIER 3 fallback, ensuring correct resolution_sources.
 
         Args:
             prompt: User prompt/goal (e.g., "proste nogi").
@@ -95,15 +132,15 @@ class ModifierExtractor(IModifierExtractor):
 
         Returns:
             ModifierResult with:
-            - modifiers: Dict of variable overrides (defaults + matched modifiers)
+            - modifiers: Dict of MATCHED modifier overrides (no defaults)
             - matched_keywords: List of keywords that matched
             - confidence_map: Dict mapping keywords to confidence (1.0 for exact match)
 
         Example:
-            >>> result = extractor.extract("proste nogi", "table_workflow")
-            >>> result.modifiers  # {"leg_style": "straight", ...defaults...}
-            >>> result.matched_keywords  # ["proste nogi"]
-            >>> result.confidence_map  # {"proste nogi": 1.0}
+            >>> result = extractor.extract("straight legs", "table_workflow")
+            >>> result.modifiers  # {"leg_angle_left": 0, "leg_angle_right": 0}
+            >>> result.matched_keywords  # ["straight legs"]
+            >>> result.confidence_map  # {"straight legs": 0.95}
         """
         # Get workflow definition
         definition = self._registry.get_definition(workflow_name)
@@ -115,10 +152,9 @@ class ModifierExtractor(IModifierExtractor):
                 confidence_map={}
             )
 
-        # Start with defaults
+        # TASK-055-FIX: Start with empty dict - defaults should be handled by ParameterResolver TIER 3
+        # Only include ACTUAL matched modifiers from YAML, not defaults
         modifiers = {}
-        if definition.defaults:
-            modifiers = dict(definition.defaults)
 
         # Extract modifier overrides
         matched_keywords = []
@@ -127,35 +163,70 @@ class ModifierExtractor(IModifierExtractor):
         if prompt and definition.modifiers:
             prompt_lower = prompt.lower()
 
-            # First pass: find best semantic match for each modifier
-            semantic_matches: List[tuple] = []  # (keyword, values, similarity, ngram)
+            # TASK-055-FIX-2: Multi-word semantic matching with negative signals
+            semantic_matches: List[tuple] = []  # (keyword, param_values, avg_sim, matched_words)
 
             if self._classifier is not None:
                 ngrams = self._extract_ngrams(prompt)
 
                 for keyword, values in definition.modifiers.items():
-                    best_similarity = 0.0
-                    best_ngram = ""
+                    keyword_words = keyword.lower().split()  # ["straight", "legs"]
 
-                    for ngram in ngrams:
-                        sim = self._classifier.similarity(keyword, ngram)
-                        if sim > best_similarity:
-                            best_similarity = sim
-                            best_ngram = ngram
+                    # Multi-word matching: count how many keyword words match
+                    matched_words = []  # [(kw_word, best_ngram, similarity), ...]
 
-                    if best_similarity >= self._similarity_threshold:
-                        semantic_matches.append((keyword, values, best_similarity, best_ngram))
+                    for kw_word in keyword_words:
+                        best_sim = 0.0
+                        best_ngram = ""
+
+                        for ngram in ngrams:
+                            sim = self._classifier.similarity(kw_word, ngram)
+                            if sim > best_sim:
+                                best_sim = sim
+                                best_ngram = ngram
+
+                        if best_sim >= 0.65:  # Per-word threshold (TASK-055-FIX-2)
+                            matched_words.append((kw_word, best_ngram, best_sim))
+                            logger.debug(
+                                f"Word match: '{kw_word}' ↔ '{best_ngram}' (sim={best_sim:.3f})"
+                            )
+
+                    # Require min(N, 2) words to match
+                    required_matches = min(len(keyword_words), 2)
+
+                    if len(matched_words) >= required_matches:
+                        # Calculate average similarity
+                        avg_sim = sum(m[2] for m in matched_words) / len(matched_words)
+
+                        # Check negative signals from YAML
+                        negative_signals = values.get("negative_signals", [])
+                        if self._has_negative_signals(prompt, negative_signals):
+                            logger.debug(
+                                f"Rejected '{keyword}': negative signals detected in prompt"
+                            )
+                            continue  # Skip this match
+
+                        # Extract actual parameter values (filter out negative_signals key)
+                        param_values = {k: v for k, v in values.items() if k != "negative_signals"}
+
+                        logger.info(
+                            f"Modifier match: '{keyword}' ({len(matched_words)}/{len(keyword_words)} words) "
+                            f"→ {param_values} (avg_sim={avg_sim:.3f})"
+                        )
+
+                        semantic_matches.append((keyword, param_values, avg_sim, matched_words))
+                    else:
+                        logger.debug(
+                            f"Insufficient word matches for '{keyword}': "
+                            f"{len(matched_words)}/{len(keyword_words)} (need {required_matches})"
+                        )
 
             # Select ONLY the best semantic match (highest similarity wins)
             if semantic_matches:
                 # Sort by similarity descending
                 semantic_matches.sort(key=lambda x: x[2], reverse=True)
-                best_keyword, best_values, best_sim, best_ngram = semantic_matches[0]
+                best_keyword, best_values, best_sim, best_matched_words = semantic_matches[0]
 
-                logger.info(
-                    f"Modifier semantic match: '{best_keyword}' ≈ '{best_ngram}' "
-                    f"→ {best_values} (similarity={best_sim:.3f})"
-                )
                 modifiers.update(best_values)
                 matched_keywords.append(best_keyword)
                 confidence_map[best_keyword] = best_sim
@@ -163,8 +234,10 @@ class ModifierExtractor(IModifierExtractor):
                 # Fallback: substring matching (backward compatibility)
                 for keyword, values in definition.modifiers.items():
                     if keyword.lower() in prompt_lower:
-                        logger.debug(f"Modifier substring match: '{keyword}' → {values}")
-                        modifiers.update(values)
+                        # Filter out negative_signals for substring match too
+                        param_values = {k: v for k, v in values.items() if k != "negative_signals"}
+                        logger.debug(f"Modifier substring match: '{keyword}' → {param_values}")
+                        modifiers.update(param_values)
                         matched_keywords.append(keyword)
                         confidence_map[keyword] = 1.0  # Exact match = full confidence
                         break  # Only apply first substring match

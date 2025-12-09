@@ -1,8 +1,36 @@
 # TASK-055: Interactive Parameter Resolution via LLM Feedback
 
-## Status: ✅ Done
+## Status: ✅ Done (with FIX-2 applied)
 ## Priority: 🔴 High
 ## Created: 2025-12-08
+## Updated: 2025-12-09 (FIX-2: Semantic Matching Improvements)
+
+---
+
+## Recent Fixes
+
+### FIX-2: Semantic Matching Improvements (2025-12-09) ✅
+
+**Problem**: "stół z nogami X" incorrectly matched "straight legs" YAML modifier because n-gram matching only required 1 word to match.
+
+**Solution**:
+1. **Multi-word matching**: Require min(N, 2) words to match for N-word modifiers
+2. **Negative signals**: YAML-defined contradictory terms that reject matches
+3. **Per-word threshold**: 0.65 (allows multilingual fuzzy matching)
+
+**Impact**:
+- ✅ "stół z nogami X" now correctly returns `needs_input`
+- ✅ "prosty stół z prostymi nogami" still matches "straight legs"
+
+See: **TASK-055-FIX-2_Semantic_Matching_Improvements.md**
+
+### FIX-1: Defaults Removal (2025-12-09) ✅
+
+**Problem**: ModifierExtractor included workflow defaults in modifiers dict, causing ParameterResolver TIER 1 to always win.
+
+**Solution**: Removed defaults from ModifierExtractor - now handled only in ParameterResolver TIER 3.
+
+See: **TASK-055-FIX_Unified_Parameter_Resolution.md**
 
 ---
 

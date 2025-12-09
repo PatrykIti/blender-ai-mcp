@@ -669,6 +669,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
+    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]  # TASK-055-FIX-2
   "angled legs":
     leg_angle_left: 0.32
     leg_angle_right: -0.32
@@ -745,6 +746,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
+    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]  # TASK-055-FIX-2
 
 parameters:
   leg_angle_left:

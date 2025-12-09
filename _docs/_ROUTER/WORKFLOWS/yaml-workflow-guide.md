@@ -219,6 +219,7 @@ modifiers:
   # English
   "straight legs":
     leg_angle: 0
+    negative_signals: ["X", "crossed", "angled", "diagonal"]  # TASK-055-FIX-2
   "vertical legs":
     leg_angle: 0
   "angled legs":
@@ -227,6 +228,7 @@ modifiers:
   # Polish
   "proste nogi":
     leg_angle: 0
+    negative_signals: ["X", "skrzyżowane", "skośne"]  # Polish contradictions
   "skośne nogi":
     leg_angle: 0.32
 
@@ -236,6 +238,14 @@ modifiers:
   "bar table":
     table_height: 1.1
 ```
+
+**Negative Signals (TASK-055-FIX-2)**: Optional list of contradictory terms that reject the match. If any term from `negative_signals` appears in the user prompt, the modifier is rejected even if semantic similarity is high.
+
+**Example**:
+- Prompt: "table with X-shaped legs" + modifier `"straight legs"`
+  - "X" is in `negative_signals` → Match rejected ❌
+- Prompt: "table with straight legs" + modifier `"straight legs"`
+  - No negative signals present → Match accepted ✅
 
 ### Using Variables in Steps
 

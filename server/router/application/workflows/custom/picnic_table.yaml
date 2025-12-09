@@ -65,17 +65,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-  "vertical legs":
-    leg_angle_left: 0
-    leg_angle_right: 0
-
-  # Angled/A-frame legs (rotation = ±0.32 rad)
-  "angled legs":
-    leg_angle_left: 0.32
-    leg_angle_right: -0.32
-  "a-frame legs":
-    leg_angle_left: 0.32
-    leg_angle_right: -0.32
+    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
 
 # ============================================================
 # TASK-055: PARAMETER SCHEMAS
