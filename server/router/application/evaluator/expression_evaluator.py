@@ -22,7 +22,7 @@ class ExpressionEvaluator:
 
     Supports:
     - Basic arithmetic: +, -, *, /, **, %
-    - Math functions: abs, min, max, round, floor, ceil, sqrt
+    - Math functions: abs, min, max, round, floor, ceil, sqrt, sin, cos
     - Variable references: width, height, depth, min_dim, max_dim, etc.
 
     Does NOT support:
@@ -34,9 +34,10 @@ class ExpressionEvaluator:
 
     Example:
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({"width": 2.0, "height": 4.0})
+        evaluator.set_context({"width": 2.0, "height": 4.0, "leg_angle_left": 1.0})
         result = evaluator.evaluate("width * 0.5")  # -> 1.0
         result = evaluator.resolve_param_value("$CALCULATE(height / width)")  # -> 2.0
+        result = evaluator.resolve_param_value("$CALCULATE(0.342 * sin(leg_angle_left))")  # -> ~0.287
     """
 
     # Allowed functions (whitelist)
@@ -48,6 +49,8 @@ class ExpressionEvaluator:
         "floor": math.floor,
         "ceil": math.ceil,
         "sqrt": math.sqrt,
+        "sin": math.sin,  # Trigonometry for leg stretch calculations
+        "cos": math.cos,  # Trigonometry for leg stretch calculations
     }
 
     # Pattern for $CALCULATE(...)

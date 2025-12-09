@@ -166,12 +166,15 @@ params:
   width: "$CALCULATE(min_dim * 0.05)"     # 5% of smallest dimension
   thickness: "$CALCULATE(width / 2)"      # Half of width
   segments: "$CALCULATE(3 + 2)"           # Simple math = 5
+  # Trigonometry for leg stretching
+  translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
 ```
 
 **Available Math Functions:**
 - `min()`, `max()`, `abs()`
 - `round()`, `floor()`, `ceil()`
 - `sqrt()`
+- `sin()`, `cos()` - Trigonometric functions (angles in radians)
 
 **Available Variables:**
 - `width`, `height`, `depth` - Object dimensions
