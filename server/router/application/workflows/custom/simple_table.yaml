@@ -1,0 +1,314 @@
+# Simple Table Workflow
+# Clean, minimal table with straight legs
+# No benches, no A-frame supports, no complex features
+# Perfect for: desk, dining table, work table
+
+name: simple_table_workflow
+description: Creates a simple table with straight legs and basic structure
+category: furniture
+author: blender-ai-mcp
+version: "1.0.0"
+
+trigger_keywords:
+  - simple table
+  - basic table
+  - desk
+  - dining table
+  - work table
+  - table with straight legs
+
+sample_prompts:
+  # English
+  - "create a simple table"
+  - "make a basic table with straight legs"
+  - "build a desk"
+  - "design a dining table"
+  - "create a work table"
+
+  # Polish
+  - "zrób prosty stół"
+  - "stwórz stół z prostymi nogami"
+  - "zrób biurko"
+  - "stwórz stół jadalny"
+
+  # German
+  - "erstelle einen einfachen Tisch"
+  - "baue einen Schreibtisch"
+
+# ============================================================
+# PARAMETRIC VARIABLES
+# Simple table only uses straight legs (angle = 0)
+# ============================================================
+
+defaults:
+  # Leg configuration - always straight for simple table
+  leg_angle_left: 0        # Straight vertical legs
+  leg_angle_right: 0       # Straight vertical legs
+
+  # Leg dimensions
+  leg_length: 0.75         # Standard table height
+  leg_offset_from_beam: 0.05  # Distance from crossbeam edge (5cm default - positions legs relative to support beam)
+
+  # Table top dimensions
+  table_length: 1.2        # Table length (Y axis)
+  table_width: 0.8         # Table width (X axis)
+
+# No modifiers needed - leg positioning is automatic based on crossbeam dimensions
+
+# ============================================================
+# PARAMETER SCHEMAS
+# Interactive parameter resolution
+# ============================================================
+
+parameters:
+  table_length:
+    type: float
+    range: [0.4, 2.5]
+    default: 1.2
+    description: Length of table top (Y axis) - how long the table is
+    semantic_hints:
+      - length
+      - long
+      - table
+      - size
+    group: table_dimensions
+
+  table_width:
+    type: float
+    range: [0.4, 1.5]
+    default: 0.8
+    description: Width of table top (X axis) - how wide the table is
+    semantic_hints:
+      - width
+      - wide
+      - table
+      - size
+    group: table_dimensions
+
+  leg_length:
+    type: float
+    range: [0.4, 1.2]
+    default: 0.75
+    description: Height of table legs (standard desk height is 0.75m)
+    semantic_hints:
+      - height
+      - tall
+      - legs
+      - high
+    group: leg_dimensions
+
+  leg_offset_from_beam:
+    type: float
+    range: [0.02, 0.15]
+    default: 0.05
+    description: Distance of legs from crossbeam edge (smaller = closer to beam edge, more stable)
+    semantic_hints:
+      - offset
+      - beam
+      - distance
+      - stable
+      - position
+    group: leg_dimensions
+
+# ============================================================
+# WORKFLOW STEPS
+# Minimal table: 5 planks + 1 crossbeam + 4 straight legs
+# ============================================================
+
+steps:
+  # ============================================
+  # SECTION 1: TABLE TOP (5 planks)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_1"
+    description: Create first table plank (leftmost)
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_1"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 0.323)", 0, "$CALCULATE(leg_length + 0.0114)"]
+    description: "Position plank 1 - leftmost plank"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_2"
+    description: Create second table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_2"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(-table_width * 0.655)", 0, "$CALCULATE(leg_length + 0.0114)"]
+    description: "Position plank 2"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_3"
+    description: Create center table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_3"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: [0, 0, "$CALCULATE(leg_length + 0.0114)"]
+    description: "Position plank 3 (center)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_4"
+    description: Create fourth table plank
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_4"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 0.342)", 0, "$CALCULATE(leg_length + 0.0114)"]
+    description: "Position plank 4"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_5"
+    description: Create fifth table plank (rightmost)
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_5"
+      scale: ["$CALCULATE(table_width / 5)", "$table_length", 0.0114]
+      location: ["$CALCULATE(table_width * 0.674)", 0, "$CALCULATE(leg_length + 0.0114)"]
+    description: "Position plank 5 (rightmost)"
+
+  # ============================================
+  # SECTION 2: TABLE TOP CROSS BEAM
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableCrossBeam"
+    description: Create table cross beam under planks
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableCrossBeam"
+      scale: ["$CALCULATE(table_width * 0.65)", "$CALCULATE(table_length * 0.926)", 0.0110]
+      location: [0, 0, "$CALCULATE(leg_length - 0.023)"]
+    description: "Position cross beam under table top"
+
+  # ============================================
+  # SECTION 3: STRAIGHT LEGS (4 pieces)
+  # No rotation, no stretching - simple vertical legs
+  # ============================================
+
+  # Front-left leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FL"
+    description: Create front-left leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam))", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Front-left leg - positioned relative to crossbeam edge"
+
+  # Front-right leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FR"
+    description: Create front-right leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FR"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam))", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Front-right leg - positioned relative to crossbeam edge"
+
+  # Back-left leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BL"
+    description: Create back-left leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BL"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Back-left leg - positioned relative to crossbeam edge"
+
+  # Back-right leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BR"
+    description: Create back-right leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BR"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Back-right leg - positioned relative to crossbeam edge"
+
+  # ============================================
+  # SECTION 4: MATERIAL
+  # Simple wood material - assigned to first plank only
+  # NOTE: Join step is commented out to preserve individual plank visibility
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "SimpleTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material
+
+  - tool: material_assign
+    params:
+      material_name: "SimpleTable_Wood"
+      object_name: "TablePlank_1"
+    description: Apply wood material to table (assigned to first plank as reference)
+
+  # ============================================
+  # OPTIONAL: JOIN ALL PARTS
+  # Uncomment to merge all parts into single object
+  # WARNING: Joining will merge separate planks into solid surface
+  # ============================================
+
+  # - tool: modeling_join_objects
+  #   params:
+  #     object_names: ["TablePlank_1", "TablePlank_2", "TablePlank_3", "TablePlank_4", "TablePlank_5", "TableCrossBeam", "Leg_FL", "Leg_FR", "Leg_BL", "Leg_BR"]
+  #   description: Join all table parts into single object
+  #   optional: true
+
+  # - tool: scene_rename_object
+  #   params:
+  #     old_name: "Leg_BR"
+  #     new_name: "SimpleTable"
+  #   description: Rename joined object to SimpleTable
+  #   optional: true
+
+  # - tool: material_assign
+  #   params:
+  #     material_name: "SimpleTable_Wood"
+  #     object_name: "SimpleTable"
+  #   description: Apply wood material to joined table
+  #   optional: true
