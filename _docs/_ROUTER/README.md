@@ -62,7 +62,7 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
 | **PickleToLanceMigration** | Legacy pickle cache migration | ✅ Done |
 | **Shared LaBSE via DI** | Single model instance (~1.8GB RAM) (TASK-048) | ✅ Done |
 | **ParameterStore** | Learned parameter mappings via LaBSE (TASK-055) | ✅ Done |
-| **ParameterResolver** | Three-tier parameter resolution (TASK-055) | ✅ Done |
+| **ParameterResolver** | Three-tier parameter resolution with hybrid context extraction (TASK-055, TASK-055-FIX-3) | ✅ Done |
 | **EnsembleMatcher** | Parallel multi-matcher orchestrator (TASK-053) | ✅ Done |
 | **EnsembleAggregator** | Weighted consensus aggregation (TASK-053) | ✅ Done |
 | **ModifierExtractor** | LaBSE semantic modifier matching (TASK-053) | ✅ Done |

@@ -398,9 +398,18 @@ class WorkflowRegistry:
         if workflow_params:
             extended_context = {**original_context, **workflow_params}
             self._condition_evaluator.set_context(extended_context)
+            logger.debug(
+                f"Extended condition context with workflow params: {list(workflow_params.keys())}"
+            )
 
         try:
             for i, step in enumerate(steps):
+                # DEBUG: Log step condition status
+                condition_display = f'"{step.condition}"' if step.condition else 'None'
+                logger.debug(
+                    f"Step {i+1} ({step.tool}): condition={condition_display}"
+                )
+
                 # Check condition if present (TASK-041-11)
                 if step.condition:
                     should_execute = self._condition_evaluator.evaluate(step.condition)

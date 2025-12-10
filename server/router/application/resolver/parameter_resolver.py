@@ -238,56 +238,185 @@ class ParameterResolver(IParameterResolver):
 
         return max_relevance
 
+    def _extract_sentence_context(
+        self,
+        prompt: str,
+        hint_idx: int,
+        hint: str,
+        max_length: int,
+    ) -> str:
+        """Extract complete sentences around hint position.
+
+        Includes:
+        - 1 sentence before hint (if exists)
+        - Sentence containing hint
+        - 1 sentence after hint (if exists)
+
+        TASK-055-FIX-3: Smart sentence extraction for better semantic context.
+
+        Args:
+            prompt: Full prompt text.
+            hint_idx: Character index where hint starts.
+            hint: Semantic hint string.
+            max_length: Maximum total context length.
+
+        Returns:
+            Extracted sentence context or empty string if extraction fails.
+        """
+        # Sentence boundary characters
+        SENTENCE_ENDINGS = {'.', '!', '?', '\n'}
+
+        # Find sentence containing hint
+        # Walk backwards to find sentence start
+        sent_start = hint_idx
+        for i in range(hint_idx - 1, -1, -1):
+            if prompt[i] in SENTENCE_ENDINGS:
+                sent_start = i + 1
+                break
+        else:
+            sent_start = 0  # Beginning of prompt
+
+        # Walk forwards to find sentence end
+        sent_end = hint_idx + len(hint)
+        for i in range(hint_idx + len(hint), len(prompt)):
+            if prompt[i] in SENTENCE_ENDINGS:
+                sent_end = i + 1
+                break
+        else:
+            sent_end = len(prompt)  # End of prompt
+
+        # Extract hint sentence
+        hint_sentence = prompt[sent_start:sent_end].strip()
+
+        # Try to include previous sentence
+        prev_start = 0
+        if sent_start > 0:
+            for i in range(sent_start - 2, -1, -1):
+                if prompt[i] in SENTENCE_ENDINGS:
+                    prev_start = i + 1
+                    break
+
+        # Try to include next sentence
+        next_end = len(prompt)
+        if sent_end < len(prompt):
+            for i in range(sent_end, len(prompt)):
+                if prompt[i] in SENTENCE_ENDINGS:
+                    next_end = i + 1
+                    break
+
+        # Build context: prev + hint + next
+        context_parts = []
+
+        if prev_start < sent_start:
+            prev_sentence = prompt[prev_start:sent_start].strip()
+            if prev_sentence:
+                context_parts.append(prev_sentence)
+
+        context_parts.append(hint_sentence)
+
+        if sent_end < next_end:
+            next_sentence = prompt[sent_end:next_end].strip()
+            if next_sentence:
+                context_parts.append(next_sentence)
+
+        context = " ".join(context_parts)
+
+        # Truncate if too long
+        if len(context) > max_length:
+            # Try to preserve hint by keeping middle portion
+            hint_pos_in_context = context.lower().find(hint.lower())
+            if hint_pos_in_context >= 0:
+                # Center around hint
+                half_length = max_length // 2
+                context_start = max(0, hint_pos_in_context - half_length)
+                context_end = min(
+                    len(context), hint_pos_in_context + len(hint) + half_length
+                )
+                context = context[context_start:context_end].strip()
+            else:
+                # Simple truncation
+                context = context[:max_length].strip()
+
+        return context
+
     def extract_context(
         self,
         prompt: str,
         schema: ParameterSchema,
+        max_context_length: int = 400,
     ) -> str:
-        """Extract relevant context from prompt for this parameter.
+        """Extract semantic context around hint using hybrid strategy.
 
-        Finds the most relevant phrase in the prompt that relates
-        to this parameter, using semantic hints.
+        TIER 1: Smart sentence extraction (complete sentences with hint)
+        TIER 2: Expanded window (200+ chars)
+        TIER 3: Full prompt (if ≤500 chars)
+
+        TASK-055-FIX-3: Fixes truncation bug that lost semantic info like "X-shaped".
+        Old implementation: 60 chars → New: 100-400 chars with sentence awareness.
 
         Args:
             prompt: Full user prompt.
             schema: Parameter schema with semantic hints.
+            max_context_length: Maximum context length (default 400).
 
         Returns:
-            Extracted context string (phrase or full prompt if no match).
+            Extracted context string containing semantic information around hint.
         """
-        prompt_lower = prompt.lower()
+        if not prompt:
+            return ""
+
+        # TIER 3: If prompt is short enough, use entire prompt
+        if len(prompt) <= 500:
+            logger.debug(
+                f"[TIER 3] Using full prompt as context (length={len(prompt)} ≤ 500)"
+            )
+            return prompt.strip()
 
         # Look for semantic hints in prompt
+        prompt_lower = prompt.lower()
         for hint in schema.semantic_hints:
             hint_lower = hint.lower()
-            if hint_lower in prompt_lower:
-                # Find the phrase containing this hint
-                idx = prompt_lower.find(hint_lower)
+            idx = prompt_lower.find(hint_lower)
 
-                # Extract surrounding context (up to 30 chars on each side)
-                # But respect word boundaries
-                start = max(0, idx - 30)
-                end = min(len(prompt), idx + len(hint) + 30)
+            if idx == -1:
+                continue  # Try next hint
 
-                # Adjust start to word boundary
-                while start > 0 and prompt[start - 1] not in " \t\n,.:;!?":
-                    start -= 1
+            # TIER 1: Smart sentence extraction
+            context = self._extract_sentence_context(
+                prompt, idx, hint, max_context_length
+            )
 
-                # Adjust end to word boundary
-                while end < len(prompt) and prompt[end] not in " \t\n,.:;!?":
-                    end += 1
+            if context and len(context) >= 100:  # Minimum viable context length
+                logger.debug(
+                    f"[TIER 1] Extracted sentence context for hint='{hint}' "
+                    f"(length={len(context)}): '{context[:50]}...{context[-50:]}'"
+                )
+                return context
 
-                context = prompt[start:end].strip()
+            # TIER 2: Expanded window fallback
+            logger.debug(
+                f"[TIER 2] Sentence extraction insufficient (len={len(context) if context else 0}), "
+                f"using expanded window for hint='{hint}'"
+            )
+            start = max(0, idx - 100)
+            end = min(len(prompt), idx + len(hint) + 100)
+            context = prompt[start:end].strip()
 
-                # Remove leading/trailing punctuation
-                context = re.sub(r"^[,.:;!?\s]+", "", context)
-                context = re.sub(r"[,.:;!?\s]+$", "", context)
+            # Remove leading/trailing punctuation
+            context = re.sub(r"^[,.:;!?\s]+", "", context)
+            context = re.sub(r"[,.:;!?\s]+$", "", context)
 
-                if context:
-                    return context
+            if len(context) > max_context_length:
+                # Truncate to max_context_length while preserving hint position
+                context = context[:max_context_length].strip()
 
-        # No hint found in prompt, try to extract relevant phrase
-        # by looking for keywords from description
+            logger.debug(
+                f"[TIER 2] Expanded window context (length={len(context)}): "
+                f"'{context[:50]}...{context[-50:]}'"
+            )
+            return context
+
+        # No hint found in any semantic hints, try description keywords
         if schema.description:
             # Extract nouns from description (simple approach)
             desc_words = set(
@@ -301,10 +430,20 @@ class ParameterResolver(IParameterResolver):
             for sentence in sentences:
                 sentence_lower = sentence.lower()
                 if any(word in sentence_lower for word in desc_words):
-                    return sentence.strip()
+                    context = sentence.strip()
+                    if len(context) <= max_context_length:
+                        logger.debug(
+                            f"[FALLBACK] Matched description keyword, "
+                            f"context (length={len(context)}): '{context[:50]}...'"
+                        )
+                        return context
 
-        # Fallback: return full prompt
-        return prompt
+        # Final fallback: return truncated full prompt
+        logger.debug(
+            f"[FALLBACK] No hints/keywords found, using truncated prompt "
+            f"(length={min(len(prompt), max_context_length)})"
+        )
+        return prompt[:max_context_length].strip()
 
     def store_resolved_value(
         self,

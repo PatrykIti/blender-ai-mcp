@@ -24,6 +24,7 @@ class WorkflowStep:
         description: Human-readable description of the step.
         condition: Optional condition expression for conditional execution.
         optional: If True, step can be skipped for low-confidence matches.
+        disable_adaptation: If True, skip semantic filtering (treat as core step).
         tags: Semantic tags for filtering (e.g., ["bench", "seating"]).
     """
 
@@ -32,6 +33,7 @@ class WorkflowStep:
     description: Optional[str] = None
     condition: Optional[str] = None  # Optional condition expression
     optional: bool = False  # Can be skipped for LOW confidence matches
+    disable_adaptation: bool = False  # TASK-055-FIX-5: Skip adaptation filtering
     tags: List[str] = field(default_factory=list)  # Semantic tags for filtering
 
     def to_dict(self) -> Dict[str, Any]:
@@ -42,6 +44,7 @@ class WorkflowStep:
             "description": self.description,
             "condition": self.condition,
             "optional": self.optional,
+            "disable_adaptation": self.disable_adaptation,
             "tags": list(self.tags),
         }
 

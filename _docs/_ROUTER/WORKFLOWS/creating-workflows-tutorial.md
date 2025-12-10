@@ -605,23 +605,73 @@ steps:
 "simple table with 4 legs"    → LOW (0.65)    → 25 kroków (tylko core)
 ```
 
-### 7.10 Ograniczenia Obecnego Systemu
+### 7.10 Per-Step Adaptation Control (TASK-055-FIX-5)
 
-**Co system MOŻE:**
-- Pomijać opcjonalne kroki na podstawie confidence
-- Filtrować kroki przez dopasowanie tagów
-- Wykonywać różne warianty finalizacji
+**Problem**: Konflikt między filtrowaniem semantycznym a warunkami matematycznymi.
 
-**Czego system NIE MOŻE (planowane w TASK-052):**
-- Dynamicznie zmieniać parametry (np. kąt nóg z 33° na 0°)
-- Generować nowe kroki na podstawie intencji
-- Adaptować geometrię do opisu użytkownika
+Dla MEDIUM confidence, WorkflowAdapter filtruje opcjonalne kroki przez dopasowanie tagów. Gdy krok jest kontrolowany przez **warunek matematyczny** (`leg_angle > 0.5`), filtrowanie semantyczne może go pominąć mimo że warunek jest spełniony.
 
-Obecnie workflow definiuje **statyczne parametry**. Jeśli użytkownik chce "proste nogi" zamiast "skośnych", system może tylko:
-1. Pominąć kroki związane z elementami A-frame
-2. Ale NIE może zmienić kąta obrotu nóg z 0.32 rad na 0
+**Przykład**:
+- Prompt: `"stół z nogami w X"` (Polski)
+- Tags: `["x-shaped", "crossed-legs"]` (Angielski)
+- Semantic matching: ❌ FAIL (Polski prompt nie pasuje do angielskich tagów)
+- Parametry: `leg_angle_left=1.0` (X-shaped)
+- Warunek: `leg_angle_left > 0.5` → **TRUE**
+- Wynik BEZ fix: Krok pominięty przez semantic filtering ❌
+- Wynik Z fix: Krok wykonany (warunek=True) ✅
 
-To ograniczenie jest rozwiązane w TASK-055 przez **interaktywną rezolucję parametrów** (sekcja poniżej).
+**Rozwiązanie**: Flaga `disable_adaptation`
+
+```yaml
+steps:
+  # Conditional step - controlled by mathematical condition
+  - tool: mesh_transform_selected
+    params:
+      translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
+    description: "Stretch leg top for X-shaped configuration"
+    condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
+    optional: true                # Documents: optional feature
+    disable_adaptation: true      # CRITICAL: Skip semantic filtering, use condition
+    tags: ["x-shaped", "crossed-legs", "leg-stretch"]
+```
+
+**Semantyka flag**:
+
+| Flaga | Znaczenie | Cel |
+|-------|-----------|-----|
+| `optional: true` | Krok jest opcjonalną funkcją | Dokumentacja/czytelność |
+| `disable_adaptation: true` | Pomiń filtrowanie semantyczne | Traktuj jako core step |
+| `condition` | Wyrażenie matematyczne | Kontrola wykonania w runtime |
+
+**Kiedy użyć `disable_adaptation: true`**:
+
+✅ **Użyj gdy**:
+- Krok kontrolowany przez warunek matematyczny (`leg_angle > 0.5`)
+- Workflow wielojęzyczny (tag matching zawodny)
+- Chcesz precyzyjnej kontroli przez condition, nie przez semantic matching
+
+❌ **Nie używaj gdy**:
+- Krok bazuje na tagach (benches, decorations) → użyj semantic filtering
+- Krok jest core → po prostu usuń `optional: true`
+
+**Przepływ adaptacji z `disable_adaptation`**:
+
+```
+MEDIUM confidence:
+1. Ensemble matcher sets requires_adaptation=True
+2. WorkflowAdapter separates:
+   - Core: not optional OR disable_adaptation=True → ALWAYS included
+   - Optional: optional=True AND disable_adaptation=False → Semantic filtering
+3. All steps with disable_adaptation=True passed to registry
+4. ConditionEvaluator evaluates conditions at runtime
+5. Only steps with condition=True execute
+```
+
+**Korzyści**:
+1. ✅ Matematyczna precyzja (condition) > semantyczna aproksymacja (tags)
+2. ✅ Wsparcie wielojęzyczne (brak zależności od tag matching)
+3. ✅ Jasna intencja w YAML
+4. ✅ Zachowana semantyka `optional` do dokumentacji
 
 ---
 

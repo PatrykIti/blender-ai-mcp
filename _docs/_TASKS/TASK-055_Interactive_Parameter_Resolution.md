@@ -1022,3 +1022,45 @@ def _validate_no_hint_modifier_overlap(self, definition: WorkflowDefinition) -> 
 | `server/adapters/mcp/areas/router.py` | MODIFY | Add `router_resolve_parameter` |
 | `tests/unit/router/**` | CREATE | Unit tests |
 | `tests/e2e/router/**` | CREATE | E2E tests |
+
+---
+
+## Bug Fixes and Improvements
+
+### TASK-055-FIX-3: Context Truncation Bug Fix (2025-12-09)
+
+**Problem**: ParameterStore truncated prompts to 60-char windows (30 chars before/after hint), losing critical semantic information like "X-shaped".
+
+**Example**:
+```python
+# BEFORE FIX
+prompt = "create a picnic table with X-shaped legs"
+stored_context = "ed legs picnic table"  # Lost "X-shaped"!
+search_similarity = 0.80 < threshold 0.85 → MISS ❌
+
+# AFTER FIX
+prompt = "create a picnic table with X-shaped legs"
+stored_context = "create a picnic table with X-shaped legs"  # Full sentence!
+search_similarity = 0.92 > threshold 0.85 → HIT ✅
+```
+
+**Solution**: Implemented hybrid 3-tier context extraction strategy:
+- **TIER 3**: Full prompt for short inputs (≤500 chars) - O(1) complexity
+- **TIER 1**: Smart sentence extraction using sentence boundaries - O(n) complexity
+- **TIER 2**: Expanded window (100 chars before + hint + 100 chars after) - O(1) fallback
+
+**Results**:
+- Context length: 60 chars → 100-400 chars
+- Similarity scores: ~0.80 → >0.85
+- Search recall: Significant improvement for learned mappings
+- All 20 unit tests passing ✅
+
+**Files Modified**:
+- `server/router/application/resolver/parameter_resolver.py` - New 3-tier extraction
+- `tests/unit/router/application/resolver/test_parameter_resolver_context.py` - 20 unit tests
+
+**Documentation**:
+- Implementation: `_docs/_ROUTER/IMPLEMENTATION/35-parameter-resolver.md`
+- Changelog: `_docs/_CHANGELOG/100-2025-12-09-parameter-context-extraction.md`
+
+**See**: `TASK-055-FIX-3_ParameterStore_Context_Truncation.md` for detailed implementation plan and rationale.

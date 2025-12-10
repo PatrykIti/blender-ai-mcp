@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [104](./104-2025-12-10-per-step-adaptation-control.md) | 2025-12-10 | **Per-Step Adaptation Control (TASK-055-FIX-5)** | - |
 | [103](./103-2025-12-09-router-semantic-matching-fix.md) | 2025-12-09 | **Router Semantic Matching Improvements (TASK-055-FIX-2)** | - |
 | [102](./102-2025-12-08-ensemble-modifier-fixes.md) | 2025-12-08 | **Ensemble Matching & Modifier Extraction Fixes** | - |
 | [101](./101-2025-12-08-unified-parameter-resolution.md) | 2025-12-08 | **Unified Parameter Resolution Interface (TASK-055-FIX)** | - |

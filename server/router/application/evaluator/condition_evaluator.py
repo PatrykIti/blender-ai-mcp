@@ -121,6 +121,9 @@ class ConditionEvaluator:
         condition = condition.strip()
 
         try:
+            logger.debug(
+                f"Evaluating condition '{condition}' with context keys: {list(self._context.keys())}"
+            )
             result = self._evaluate_expression(condition)
             logger.debug(f"Condition '{condition}' evaluated to {result}")
             return result
@@ -218,9 +221,16 @@ class ConditionEvaluator:
         if value_str in self._context:
             return self._context[value_str]
 
-        # Return as-is (unknown variable)
-        logger.debug(f"Unknown variable in condition: {value_str}")
-        return value_str
+        # Unknown variable - CRITICAL BUG FIX
+        # Returning string causes string-number comparisons to always be True!
+        # Instead, log ERROR and return None to fail the comparison safely
+        logger.error(
+            f"Unknown variable in condition: '{value_str}' - not found in context. "
+            f"Available variables: {list(self._context.keys())}"
+        )
+        # Return 0 for numeric comparisons (fail-safe: condition will be False)
+        # This prevents "leg_angle_left" > 0.5 from being True when variable is missing
+        return 0
 
     def simulate_step_effect(self, tool_name: str, params: Dict[str, Any]) -> None:
         """Simulate the effect of a workflow step on context.

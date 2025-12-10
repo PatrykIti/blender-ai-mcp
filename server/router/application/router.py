@@ -1394,10 +1394,13 @@ class SupervisorRouter:
 
         # Set up registry evaluators (required for _steps_to_calls conditions)
         registry._evaluator.set_context({**eval_context, **final_variables})
-        registry._condition_evaluator.set_context(registry._build_condition_context(eval_context))
+        # TASK-055-FIX-4: Extend condition context with final_variables (workflow parameters)
+        extended_context = {**registry._build_condition_context(eval_context), **final_variables}
+        registry._condition_evaluator.set_context(extended_context)
 
         resolved_steps = registry._resolve_definition_params(steps_to_execute, final_variables)
-        calls = registry._steps_to_calls(resolved_steps, workflow_name)
+        # TASK-055-FIX-4: Pass workflow_params to enable condition evaluation with workflow variables
+        calls = registry._steps_to_calls(resolved_steps, workflow_name, workflow_params=final_variables)
 
         if not calls:
             self.logger.log_info(f"Workflow '{workflow_name}' produced no tool calls")

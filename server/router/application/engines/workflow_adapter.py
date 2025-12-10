@@ -136,8 +136,9 @@ class WorkflowAdapter:
             return all_steps, result
 
         # Separate core and optional steps
-        core_steps = [s for s in all_steps if not s.optional]
-        optional_steps = [s for s in all_steps if s.optional]
+        # TASK-055-FIX-5: Steps with disable_adaptation=True are treated as core
+        core_steps = [s for s in all_steps if not s.optional or s.disable_adaptation]
+        optional_steps = [s for s in all_steps if s.optional and not s.disable_adaptation]
 
         # LOW or NONE confidence: core steps only
         if confidence_level in ("LOW", "NONE"):

@@ -69,6 +69,9 @@ Each step has:
     segments: 3
   description: Bevel edges   # Optional: human-readable description
   condition: "..."           # Optional: when to execute (see below)
+  optional: false            # Optional: can be skipped for low-confidence matches (default: false)
+  disable_adaptation: false  # Optional: skip semantic filtering (default: false)
+  tags: []                   # Optional: semantic tags for filtering (default: empty)
 ```
 
 ---
@@ -133,6 +136,39 @@ steps:
 ```
 
 **Important:** Use bare variable names in conditions (`leg_angle_left`), not parameter syntax (`$leg_angle_left`).
+
+### Conditional Steps with `disable_adaptation`
+
+**Problem**: For MEDIUM/LOW confidence, WorkflowAdapter filters optional steps semantically using tags/similarity. This conflicts with mathematical conditions.
+
+**Solution**: Use `disable_adaptation: true` to skip semantic filtering for condition-based steps:
+
+```yaml
+defaults:
+  leg_angle_left: 0.32
+  leg_angle_right: -0.32
+
+steps:
+  # Conditional leg stretching - controlled by mathematical condition
+  - tool: mesh_transform_selected
+    params:
+      translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
+    description: "Stretch leg top for X-shaped configuration"
+    condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
+    optional: true                # Documents this is an optional feature
+    disable_adaptation: true      # CRITICAL: Skip semantic filtering, use condition only
+    tags: ["x-shaped", "crossed-legs", "leg-stretch"]
+```
+
+**Field Meanings**:
+- `optional: true` → Documents step is an optional feature (for readability)
+- `disable_adaptation: true` → Treats step as **core** (always included), bypassing semantic filtering
+- `condition` → Mathematical evaluation at runtime determines execution
+
+**When to Use**:
+- ✅ Steps controlled by mathematical conditions (`leg_angle > 0.5`)
+- ✅ Multilingual workflows where tag matching is unreliable
+- ❌ Tag-based optional steps (benches, decorations) → use semantic filtering
 
 ### Context Simulation
 
