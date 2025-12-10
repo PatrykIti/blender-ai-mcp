@@ -12,9 +12,10 @@ Adaptation Strategy:
 - NONE (<0.60): Core steps only (fallback)
 """
 
+import dataclasses
 import logging
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, TYPE_CHECKING
+from typing import List, Tuple, Optional, Dict, Any, TYPE_CHECKING
 
 from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
 from server.router.infrastructure.config import RouterConfig
@@ -178,6 +179,96 @@ class WorkflowAdapter:
 
         return adapted_steps, result
 
+    def _extract_semantic_params(self, step: WorkflowStep) -> Dict[str, bool]:
+        """Extract custom boolean parameters as semantic filters.
+
+        TASK-055-FIX-6 Phase 2: Dynamically discover semantic filter parameters
+        that were added from YAML (beyond standard WorkflowStep fields).
+
+        Args:
+            step: Workflow step to extract semantic params from.
+
+        Returns:
+            Dictionary mapping parameter names to boolean values.
+            Only includes boolean parameters that are not standard fields.
+
+        Example:
+            Step with `add_bench: true` in YAML returns {"add_bench": True}
+        """
+        EXPLICIT_PARAMS = {
+            "tool", "params", "description", "condition",
+            "optional", "disable_adaptation", "tags", "_known_fields"
+        }
+
+        semantic = {}
+        for field in dataclasses.fields(step):
+            if field.name not in EXPLICIT_PARAMS:
+                value = getattr(step, field.name, None)
+                if isinstance(value, bool):
+                    semantic[field.name] = value
+
+        # Also check dynamic attributes (set via setattr, not in dataclass fields)
+        for attr_name in dir(step):
+            if (not attr_name.startswith("_") and
+                attr_name not in EXPLICIT_PARAMS and
+                not callable(getattr(step, attr_name)) and
+                attr_name not in {f.name for f in dataclasses.fields(step)}):
+                value = getattr(step, attr_name)
+                if isinstance(value, bool):
+                    semantic[attr_name] = value
+
+        return semantic
+
+    def _matches_semantic_params(
+        self,
+        semantic_params: Dict[str, bool],
+        user_prompt: str
+    ) -> bool:
+        """Check if user prompt matches semantic filter conditions.
+
+        TASK-055-FIX-6 Phase 2: Converts parameter names to keywords and checks
+        if they appear in user prompt.
+
+        Args:
+            semantic_params: Semantic filter parameters from step.
+            user_prompt: User's original prompt.
+
+        Returns:
+            True if any semantic filter matches, False otherwise.
+
+        Example:
+            semantic_params={"add_bench": True}, prompt="table with bench" → True
+            semantic_params={"add_bench": False}, prompt="simple table" → True
+            semantic_params={"add_bench": True}, prompt="simple table" → False
+        """
+        if not semantic_params:
+            return False
+
+        prompt_lower = user_prompt.lower()
+
+        for param_name, param_value in semantic_params.items():
+            # Convert snake_case to natural language: "add_bench" → "bench"
+            keyword = param_name.replace("add_", "").replace("include_", "").replace("_", " ")
+
+            if param_value:
+                # Step requires this feature - check if user mentions it
+                if keyword.lower() in prompt_lower:
+                    logger.debug(
+                        f"Semantic param match: '{param_name}={param_value}' "
+                        f"matches keyword '{keyword}' in prompt"
+                    )
+                    return True
+            else:
+                # Step excludes this feature - check if user doesn't mention it
+                if keyword.lower() not in prompt_lower:
+                    logger.debug(
+                        f"Semantic param match: '{param_name}={param_value}' "
+                        f"(keyword '{keyword}' not in prompt)"
+                    )
+                    return True
+
+        return False
+
     def _filter_by_relevance(
         self,
         optional_steps: List[WorkflowStep],
@@ -185,9 +276,10 @@ class WorkflowAdapter:
     ) -> List[WorkflowStep]:
         """Filter optional steps by relevance to user prompt.
 
-        Uses fallback strategy:
+        Uses multi-tier fallback strategy:
         1. Tag matching (fast, keyword-based)
-        2. Semantic similarity (slower, embedding-based)
+        2. Semantic filter parameters (TASK-055-FIX-6 Phase 2, custom YAML params)
+        3. Semantic similarity (slower, embedding-based)
 
         Args:
             optional_steps: List of optional workflow steps.
@@ -209,7 +301,17 @@ class WorkflowAdapter:
                     )
                     continue
 
-            # 2. Semantic similarity (fallback for steps without tags or no tag match)
+            # 2. Semantic filter parameters (TASK-055-FIX-6 Phase 2)
+            semantic_params = self._extract_semantic_params(step)
+            if semantic_params:
+                if self._matches_semantic_params(semantic_params, user_prompt):
+                    relevant.append(step)
+                    logger.debug(
+                        f"Step '{step.tool}' included by semantic param match: {semantic_params}"
+                    )
+                    continue
+
+            # 3. Semantic similarity (fallback for steps without tags or no tag match)
             if step.description and self._classifier:
                 try:
                     similarity = self._classifier.similarity(

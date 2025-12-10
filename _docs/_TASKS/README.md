@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 4 tasks (~36 sub-tasks)
 - **In Progress:** 0
-- **Done:** 119
+- **Done:** 120
 
 ---
 
@@ -31,6 +31,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-055-FIX-6](./TASK-055-FIX-6_Flexible_YAML_Parameter_Loading.md) | **Flexible YAML Parameter Loading with Semantic Extensions** | 🔴 Critical | 2025-12-10 |
 | [TASK-055](./TASK-055_Interactive_Parameter_Resolution.md) | **Interactive Parameter Resolution** | 🔴 High | 2025-12-08 |
 | [TASK-052](./TASK-052_Intelligent_Parametric_Adaptation.md) | **Parametric Workflow Variables** | 🔴 High | 2025-12-07 |
 | [TASK-051](./TASK-051_Confidence_Based_Workflow_Adaptation.md) | **Confidence-Based Workflow Adaptation** | 🔴 High | 2025-12-07 |

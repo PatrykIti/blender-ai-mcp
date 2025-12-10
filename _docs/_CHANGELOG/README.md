@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [105](./105-2025-12-10-flexible-yaml-parameter-loading.md) | 2025-12-10 | **Flexible YAML Parameter Loading with Semantic Extensions (TASK-055-FIX-6)** | - |
 | [104](./104-2025-12-10-per-step-adaptation-control.md) | 2025-12-10 | **Per-Step Adaptation Control (TASK-055-FIX-5)** | - |
 | [103](./103-2025-12-09-router-semantic-matching-fix.md) | 2025-12-09 | **Router Semantic Matching Improvements (TASK-055-FIX-2)** | - |
 | [102](./102-2025-12-08-ensemble-modifier-fixes.md) | 2025-12-08 | **Ensemble Matching & Modifier Extraction Fixes** | - |

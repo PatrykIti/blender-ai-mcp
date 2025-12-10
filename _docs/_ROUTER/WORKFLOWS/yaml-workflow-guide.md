@@ -170,6 +170,223 @@ steps:
 - ✅ Multilingual workflows where tag matching is unreliable
 - ❌ Tag-based optional steps (benches, decorations) → use semantic filtering
 
+### Custom Semantic Filter Parameters (Phase 2)
+
+> **Status:** ✅ Done (TASK-055-FIX-6 Phase 2) | Automatic parameter loading
+
+**What Are Semantic Filters?**
+
+You can add **custom boolean parameters** to workflow steps that act as semantic filters. Unlike explicit fields like `disable_adaptation` (which has hardcoded logic), semantic filters are automatically discovered and matched against user prompts.
+
+**Example:**
+
+```yaml
+steps:
+  # Core table structure (always included)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+    description: "Create table top"
+
+  # Optional bench (semantic filter)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+    description: "Create bench"
+    optional: true
+    add_bench: true  # SEMANTIC FILTER: included only if "bench" in prompt
+    tags: ["bench", "seating"]
+```
+
+**How It Works:**
+
+1. WorkflowLoader automatically detects `add_bench` as a custom parameter
+2. Sets it as a dynamic attribute on the WorkflowStep object
+3. WorkflowAdapter extracts it during filtering
+4. Converts parameter name to keyword: `add_bench` → `"bench"`
+5. Checks if keyword appears in user prompt
+
+**User Prompt Matching:**
+
+| User Prompt | `add_bench: true` | Result |
+|-------------|-------------------|--------|
+| "stół piknikowy" | ❌ No "bench" | Step skipped |
+| "stół piknikowy z ławką" | ✅ "ławką" matches | Step included |
+| "picnic table with bench" | ✅ "bench" matches | Step included |
+
+**Naming Conventions:**
+
+The adapter strips common prefixes and converts to natural language:
+
+| Parameter Name | Extracted Keyword | Matches |
+|----------------|-------------------|---------|
+| `add_bench` | "bench" | bench, ławka |
+| `include_stretchers` | "stretchers" | stretchers, rozpórki |
+| `decorative` | "decorative" | decorative, ozdobny |
+| `add_handles` | "handles" | handles, uchwyty |
+
+**Negative Matching:**
+
+Set a semantic filter to `false` to include step when feature is NOT mentioned:
+
+```yaml
+- tool: modeling_create_primitive
+  params:
+    primitive_type: CUBE
+  description: "Simple table without decorations"
+  optional: true
+  decorative: false  # Include only if "decorative" NOT in prompt
+```
+
+**Why `true`/`false`? Mutually Exclusive Variants**
+
+The boolean value determines **matching direction**, enabling mutually exclusive variants in a single workflow:
+
+```yaml
+steps:
+  # Core: always included
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "TableTop" }
+    description: "Create table top"
+
+  # Variant A: WITH bench (when user wants it)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "Bench" }
+    description: "Create bench"
+    optional: true
+    add_bench: true  # Include when "bench" IS in prompt
+
+  # Variant B: EXTRA support (when NO bench)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CYLINDER, name: "ExtraSupport" }
+    description: "Add extra support (no bench to provide stability)"
+    optional: true
+    add_bench: false  # Include when "bench" NOT in prompt
+```
+
+**Results:**
+
+| User Prompt | `add_bench: true` (Bench) | `add_bench: false` (Extra Support) |
+|-------------|---------------------------|-------------------------------------|
+| `"table"` | ❌ Skipped | ✅ Included (no bench → needs support) |
+| `"table with bench"` | ✅ Included | ❌ Skipped (has bench → no extra support needed) |
+
+**More Examples:**
+
+```yaml
+# Decorative vs Simple
+- tool: mesh_bevel
+  params: { width: 0.1 }
+  description: "Large bevel (decorative)"
+  optional: true
+  decorative: true  # Include when "decorative" in prompt
+
+- tool: mesh_bevel
+  params: { width: 0.01 }
+  description: "Small bevel (minimalist)"
+  optional: true
+  decorative: false  # Include when "decorative" NOT in prompt
+
+# With Handles vs Without
+- tool: modeling_create_primitive
+  params: { primitive_type: CYLINDER, name: "Handle" }
+  description: "Create handle"
+  optional: true
+  add_handles: true  # Include when "handles" in prompt
+
+- tool: mesh_bevel
+  params: { width: 0.05 }
+  description: "Round edges (instead of handles)"
+  optional: true
+  add_handles: false  # Include when "handles" NOT in prompt
+```
+
+**Complete Example:**
+
+```yaml
+name: picnic_table_workflow
+description: Picnic table with optional bench
+
+defaults:
+  leg_angle: 0.32
+
+steps:
+  # Core structure (always included)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Create table top"
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Create leg"
+
+  # Optional bench (semantic filter)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Create bench seat"
+    optional: true
+    add_bench: true
+    tags: ["bench", "seating"]
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Create bench leg"
+    optional: true
+    add_bench: true
+    tags: ["bench", "seating"]
+
+  # Optional stretchers (semantic filter)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CYLINDER }
+    description: "Add stretchers between legs"
+    optional: true
+    include_stretchers: true
+    tags: ["stretchers", "support"]
+```
+
+**Filtering Strategy (3 Tiers):**
+
+WorkflowAdapter uses a multi-tier fallback strategy for MEDIUM confidence:
+
+1. **Tag Matching** (fast) - Check if any `tags` appear in prompt
+2. **Semantic Filter Parameters** (Phase 2) - Check custom boolean params
+3. **Semantic Similarity** (slow) - Use LaBSE embeddings as fallback
+
+**When to Use:**
+
+| Feature Type | Use | Example |
+|--------------|-----|---------|
+| **Explicit fields** | Documented behavior with code logic | `disable_adaptation`, `optional`, `condition` |
+| **Semantic filters** | Workflow-specific features | `add_bench`, `include_stretchers`, `decorative` |
+| **Tags** | Fast keyword matching | `tags: ["bench", "seating"]` |
+
+**Best Practices:**
+
+```yaml
+# ✅ Good: Combine semantic filter with tags for reliability
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Create bench"
+  optional: true
+  add_bench: true        # Semantic filter
+  tags: ["bench"]        # Fallback tag matching
+
+# ❌ Bad: No tags, only semantic filter (less reliable)
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Create bench"
+  optional: true
+  add_bench: true        # What if parameter name changes?
+
+# ✅ Good: Use descriptive parameter names
+add_bench: true          # Clear: "bench" keyword
+include_handles: true    # Clear: "handles" keyword
+
+# ❌ Bad: Unclear parameter names
+feature_1: true          # Unclear: what keyword?
+enable_extra: true       # Unclear: what keyword?
+```
+
 ### Context Simulation
 
 The router simulates context changes during expansion:

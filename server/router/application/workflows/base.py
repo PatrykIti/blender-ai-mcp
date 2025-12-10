@@ -26,6 +26,10 @@ class WorkflowStep:
         optional: If True, step can be skipped for low-confidence matches.
         disable_adaptation: If True, skip semantic filtering (treat as core step).
         tags: Semantic tags for filtering (e.g., ["bench", "seating"]).
+
+    Dynamic Attributes (TASK-055-FIX-6 Phase 2):
+        Custom boolean parameters loaded from YAML are set as instance attributes.
+        These act as semantic filters (e.g., add_bench=True, include_stretchers=False).
     """
 
     tool: str
@@ -36,9 +40,24 @@ class WorkflowStep:
     disable_adaptation: bool = False  # TASK-055-FIX-5: Skip adaptation filtering
     tags: List[str] = field(default_factory=list)  # Semantic tags for filtering
 
+    def __post_init__(self):
+        """Post-initialization to store dynamic attribute names.
+
+        TASK-055-FIX-6: Track which attributes were dynamically added from YAML
+        (beyond the standard dataclass fields) for semantic filtering.
+        """
+        # Store known fields for introspection
+        self._known_fields = {
+            "tool", "params", "description", "condition",
+            "optional", "disable_adaptation", "tags"
+        }
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert step to dictionary representation."""
-        return {
+        """Convert step to dictionary representation.
+
+        Includes both standard fields and dynamic semantic filter attributes.
+        """
+        result = {
             "tool": self.tool,
             "params": dict(self.params),
             "description": self.description,
@@ -47,6 +66,16 @@ class WorkflowStep:
             "disable_adaptation": self.disable_adaptation,
             "tags": list(self.tags),
         }
+
+        # TASK-055-FIX-6: Include dynamic attributes
+        for attr_name in dir(self):
+            if (not attr_name.startswith("_") and
+                attr_name not in self._known_fields and
+                attr_name not in {"to_dict"} and
+                not callable(getattr(self, attr_name))):
+                result[attr_name] = getattr(self, attr_name)
+
+        return result
 
 
 @dataclass

@@ -6,6 +6,7 @@ TASK-039-22
 TASK-055: Added parameters section parsing and validation.
 """
 
+import dataclasses
 import json
 import logging
 from pathlib import Path
@@ -319,14 +320,34 @@ class WorkflowLoader:
                     + (f" from {source}" if source else "")
                 )
 
-        return WorkflowStep(
-            tool=data["tool"],
-            params=data.get("params", {}),
-            description=data.get("description"),
-            condition=data.get("condition"),
-            optional=data.get("optional", False),
-            tags=data.get("tags", []),
-        )
+        # TASK-055-FIX-6 Phase 1: Flexible YAML loading - dynamically extract all WorkflowStep fields
+        step_fields = {f.name: f for f in dataclasses.fields(WorkflowStep)}
+        step_data = {}
+
+        # Load each field from YAML if present, otherwise use dataclass default
+        for field_name, field_info in step_fields.items():
+            if field_name in data:
+                # Field present in YAML - use YAML value
+                step_data[field_name] = data[field_name]
+            elif field_info.default is not dataclasses.MISSING:
+                # Field missing from YAML - use dataclass default value
+                step_data[field_name] = field_info.default
+            elif field_info.default_factory is not dataclasses.MISSING:
+                # Field missing from YAML - use dataclass default_factory
+                step_data[field_name] = field_info.default_factory()
+
+        # Create WorkflowStep instance
+        step = WorkflowStep(**step_data)
+
+        # TASK-055-FIX-6 Phase 2: Dynamically add custom semantic filter attributes
+        known_fields = set(step_fields.keys())
+        for key, value in data.items():
+            if key not in known_fields:
+                # This is a custom parameter (e.g., add_bench, include_stretchers)
+                # Add it as a dynamic attribute for semantic filtering
+                setattr(step, key, value)
+
+        return step
 
     def get_workflow(self, name: str) -> Optional[WorkflowDefinition]:
         """Get a loaded workflow by name.

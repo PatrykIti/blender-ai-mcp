@@ -673,6 +673,315 @@ MEDIUM confidence:
 3. ✅ Jasna intencja w YAML
 4. ✅ Zachowana semantyka `optional` do dokumentacji
 
+### 7.11 Niestandardowe Parametry Semantyczne (TASK-055-FIX-6 Phase 2)
+
+**Problem**: Jak dodać własne filtry semantyczne specyficzne dla workflow bez modyfikowania kodu Router?
+
+**Rozwiązanie**: Parametry semantyczne - niestandardowe pola boolean w YAML, które automatycznie działają jako filtry.
+
+#### 7.11.1 Co To Są Parametry Semantyczne?
+
+**Parametry semantyczne** to dowolne pola boolean dodane do kroku workflow, które:
+1. Nie są jawnie udokumentowane w `WorkflowStep` (jak `disable_adaptation`, `optional`)
+2. Automatycznie wykrywane przez `WorkflowLoader`
+3. Mapowane na słowa kluczowe przez `WorkflowAdapter`
+4. Porównywane z prompt użytkownika
+
+**Przykład:**
+
+```yaml
+steps:
+  # Podstawowa struktura stołu (zawsze)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Stwórz blat stołu"
+
+  # Ławka (parametr semantyczny)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE }
+    description: "Stwórz ławkę"
+    optional: true
+    add_bench: true  # PARAMETR SEMANTYCZNY - wykrywa "bench"/"ławka" w prompt
+    tags: ["bench", "seating"]
+```
+
+#### 7.11.2 Jak To Działa
+
+1. **WorkflowLoader** wykrywa `add_bench` jako nieznane pole
+2. Dodaje je jako dynamiczny atrybut do `WorkflowStep` (via `setattr()`)
+3. **WorkflowAdapter** wyodrębnia parametry semantyczne:
+   - `add_bench` → słowo kluczowe: `"bench"`
+4. Sprawdza czy `"bench"` występuje w prompt użytkownika
+5. Jeśli TAK → krok włączony, jeśli NIE → krok pominięty
+
+**Konwersja nazw:**
+
+| Nazwa parametru | Wyodrębnione słowo | Dopasowanie |
+|-----------------|-------------------|-------------|
+| `add_bench` | `"bench"` | bench, ławka, банка |
+| `include_stretchers` | `"stretchers"` | stretchers, rozpórki |
+| `decorative` | `"decorative"` | decorative, ozdobny |
+| `add_handles` | `"handles"` | handles, uchwyty |
+
+System usuwa prefiksy `add_`, `include_` i zastępuje `_` spacjami.
+
+#### 7.11.3 Dopasowanie Pozytywne vs Negatywne
+
+**Pozytywne** (`true`) - Włącz krok jeśli słowo kluczowe **występuje** w prompt:
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Stwórz ławkę"
+  optional: true
+  add_bench: true  # Włącz TYLKO gdy "bench" w prompt
+  tags: ["bench"]
+```
+
+**Negatywne** (`false`) - Włącz krok jeśli słowo kluczowe **NIE występuje** w prompt:
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Prosty stół bez ozdób"
+  optional: true
+  decorative: false  # Włącz TYLKO gdy "decorative" NIE w prompt
+```
+
+**Po co `true`/`false`? Warianty Wzajemnie Wykluczające Się**
+
+Wartość boolean określa **kierunek dopasowania**, umożliwiając warianty wzajemnie wykluczające się w jednym workflow:
+
+```yaml
+steps:
+  # Core: zawsze wykonywane
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "TableTop" }
+    description: "Stwórz blat"
+
+  # Wariant A: Z ławką (gdy użytkownik chce)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "Bench" }
+    description: "Stwórz ławkę"
+    optional: true
+    add_bench: true  # Włącz gdy "bench" JEST w prompt
+
+  # Wariant B: Dodatkowe wsparcie (gdy BRAK ławki)
+  - tool: modeling_create_primitive
+    params: { primitive_type: CYLINDER, name: "ExtraSupport" }
+    description: "Dodaj dodatkowe wsparcie (bo nie ma ławki dla stabilności)"
+    optional: true
+    add_bench: false  # Włącz gdy "bench" NIE w prompt
+```
+
+**Wyniki:**
+
+| Prompt użytkownika | `add_bench: true` (Ławka) | `add_bench: false` (Dodatkowe wsparcie) |
+|--------------------|---------------------------|------------------------------------------|
+| `"stół"` | ❌ Pominięty | ✅ Włączony (brak ławki → potrzebne wsparcie) |
+| `"stół z ławką"` | ✅ Włączony | ❌ Pominięty (jest ławka → nie trzeba wsparcia) |
+
+**Więcej Przykładów:**
+
+```yaml
+# Ozdobny vs Prosty
+- tool: mesh_bevel
+  params: { width: 0.1 }
+  description: "Duże zaokrąglenia (ozdobne)"
+  optional: true
+  decorative: true  # Włącz gdy "decorative"/"ozdobny" w prompt
+
+- tool: mesh_bevel
+  params: { width: 0.01 }
+  description: "Małe zaokrąglenia (minimalistyczne)"
+  optional: true
+  decorative: false  # Włącz gdy "decorative" NIE w prompt
+
+# Z Uchwytami vs Bez
+- tool: modeling_create_primitive
+  params: { primitive_type: CYLINDER, name: "Handle" }
+  description: "Stwórz uchwyt"
+  optional: true
+  add_handles: true  # Włącz gdy "handles"/"uchwyty" w prompt
+
+- tool: mesh_bevel
+  params: { width: 0.05 }
+  description: "Zaokrągl krawędzie (zamiast uchwytów)"
+  optional: true
+  add_handles: false  # Włącz gdy "handles" NIE w prompt
+```
+
+**Kluczowe Zrozumienie:**
+
+Bez wartości `true`/`false` system nie wiedziałby czy:
+- Włączyć krok gdy słowo **występuje** (dopasowanie pozytywne)
+- Włączyć krok gdy słowo **NIE występuje** (dopasowanie negatywne)
+
+Dzięki `true`/`false`:
+- `true` = "Użytkownik chce tę funkcję" → włącz gdy słowo w prompt
+- `false` = "Użytkownik NIE chce tej funkcji" → włącz gdy słowa BRAK w prompt
+
+To umożliwia **warianty wzajemnie wykluczające się** (albo ławka, albo wsparcie, ale nie oba naraz) w ramach jednego workflow!
+
+#### 7.11.4 Przykłady Użycia
+
+**Przykład 1: Stół Piknikowy z Ławką**
+
+```yaml
+name: picnic_table_workflow
+description: Stół piknikowy z opcjonalną ławką
+
+defaults:
+  leg_angle: 0.32
+
+steps:
+  # === CORE (zawsze) ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "TableTop" }
+    description: "Blat stołu"
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "Leg_FL" }
+    description: "Noga stołu"
+
+  # === OPTIONAL: Bench (parametr semantyczny) ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "BenchSeat" }
+    description: "Siedzisko ławki"
+    optional: true
+    add_bench: true  # Filtr semantyczny
+    tags: ["bench", "seating"]
+
+  - tool: modeling_create_primitive
+    params: { primitive_type: CUBE, name: "BenchLeg" }
+    description: "Noga ławki"
+    optional: true
+    add_bench: true  # Filtr semantyczny
+    tags: ["bench"]
+
+  # === OPTIONAL: Rozpórki (parametr semantyczny) ===
+  - tool: modeling_create_primitive
+    params: { primitive_type: CYLINDER, name: "Stretcher" }
+    description: "Rozpórka między nogami"
+    optional: true
+    include_stretchers: true  # Filtr semantyczny
+    tags: ["stretchers", "support", "structural"]
+```
+
+**Wyniki dopasowania:**
+
+| Prompt użytkownika | Ławka włączona? | Rozpórki włączone? |
+|--------------------|-----------------|--------------------|
+| `"stół piknikowy"` | ❌ Nie | ❌ Nie |
+| `"stół piknikowy z ławką"` | ✅ Tak (`"ławką"`) | ❌ Nie |
+| `"picnic table with bench"` | ✅ Tak (`"bench"`) | ❌ Nie |
+| `"table with stretchers"` | ❌ Nie | ✅ Tak (`"stretchers"`) |
+| `"stół z ławką i rozpórkami"` | ✅ Tak (`"ławką"`) | ✅ Tak (`"rozpórkami"`) |
+
+#### 7.11.5 Strategia Filtrowania (3 Poziomy)
+
+WorkflowAdapter używa strategii wielopoziomowej dla MEDIUM confidence:
+
+```
+1. Tag matching (szybkie)
+   → Sprawdź czy któryś tag występuje w prompt
+
+2. Parametry semantyczne (Phase 2)
+   → Sprawdź niestandardowe pola boolean
+
+3. Semantic similarity (wolne, fallback)
+   → LaBSE embeddings dla description
+```
+
+**Przykład działania:**
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Stwórz ławkę do siedzenia"
+  optional: true
+  add_bench: true
+  tags: ["bench", "seating"]
+```
+
+**Prompt**: `"stół z ławką"`
+
+1. ✅ **Tag matching**: `"ławką"` nie pasuje do `"bench"` → SKIP
+2. ✅ **Parametr semantyczny**: `add_bench` → `"bench"` → mapuje `"ławką"` (LaBSE) → MATCH!
+3. ❌ **Semantic similarity**: NIE sprawdzone (już znaleziono match)
+
+#### 7.11.6 Dobre Praktyki
+
+**✅ DOBRZE - Kombinuj parametry semantyczne z tagami:**
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Stwórz ławkę"
+  optional: true
+  add_bench: true        # Parametr semantyczny (wielojęzyczny)
+  tags: ["bench"]        # Fallback tag matching
+```
+
+**❌ ŹLE - Tylko parametr semantyczny, bez tagów:**
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE }
+  description: "Stwórz ławkę"
+  optional: true
+  add_bench: true        # Co jeśli zmienię nazwę parametru?
+  # Brak tagów - mniej niezawodne
+```
+
+**✅ DOBRZE - Opisowe nazwy parametrów:**
+
+```yaml
+add_bench: true           # Jasne: szuka "bench"
+include_handles: true     # Jasne: szuka "handles"
+decorative: true          # Jasne: szuka "decorative"
+```
+
+**❌ ŹLE - Niejasne nazwy:**
+
+```yaml
+feature_1: true           # Niejasne: jakiego słowa szukać?
+enable_extra: true        # Niejasne: co to "extra"?
+has_option: true          # Niejasne: jaka opcja?
+```
+
+#### 7.11.7 Kiedy Użyć Parametrów Semantycznych
+
+| Feature | Użyj | Przykład |
+|---------|------|----------|
+| **Jawne pola** | Udokumentowane zachowanie z logiką w kodzie | `disable_adaptation`, `optional`, `condition` |
+| **Parametry semantyczne** | Filtry specyficzne dla workflow | `add_bench`, `include_stretchers`, `decorative` |
+| **Tagi** | Szybkie dopasowanie słów kluczowych | `tags: ["bench", "seating"]` |
+
+**Użyj parametrów semantycznych gdy:**
+
+✅ Chcesz dodać filtr specyficzny dla workflow bez zmiany kodu Router
+✅ Potrzebujesz wielojęzycznego dopasowania (LaBSE)
+✅ Nazwa parametru naturalnie mapuje na koncept (np. `add_bench` → `"bench"`)
+
+**Użyj tagów gdy:**
+
+✅ Potrzebujesz listy synonimów
+✅ Chcesz szybkiego dopasowania (bez LaBSE)
+✅ Masz wiele wariantów słów kluczowych (np. `["bench", "seat", "seating"]`)
+
+#### 7.11.8 Elastyczność Systemu
+
+**Automatyczne ładowanie** (TASK-055-FIX-6 Phase 1):
+- Wszystkie pola z `WorkflowStep` automatycznie ładowane z YAML
+- Nowe pola dodane do `WorkflowStep` → automatycznie wspierane
+- Brak ręcznej synchronizacji loader ↔ dataclass
+
+**Dynamiczne atrybuty** (TASK-055-FIX-6 Phase 2):
+- Nieznane pola YAML → dynamiczne atrybuty (`setattr()`)
+- Automatycznie wykrywane przez `WorkflowAdapter`
+- Nie trzeba modyfikować klasy `WorkflowStep`
+
 ---
 
 ## 7b. Interaktywna Rezolucja Parametrów (TASK-055)
