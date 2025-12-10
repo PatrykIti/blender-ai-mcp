@@ -47,13 +47,14 @@ defaults:
 
   # Leg dimensions
   leg_length: 0.75         # Standard table height
-  leg_offset_from_beam: 0.05  # Distance from crossbeam edge (5cm default - positions legs relative to support beam)
+  leg_offset_from_beam: 0.05  # Distance from crossbeam edge in X axis (width)
+  leg_offset_from_beam_lengthwise: 0.05  # Distance from crossbeam edge in Y axis (length)
 
   # Table top dimensions
   table_length: 1.2        # Table length (Y axis)
   table_width: 0.8         # Table width (X axis)
 
-# No modifiers needed - leg positioning is automatic based on crossbeam dimensions
+# No modifiers needed - leg positioning uses separate X/Y offset parameters for independent control
 
 # ============================================================
 # PARAMETER SCHEMAS
@@ -101,13 +102,28 @@ parameters:
     type: float
     range: [0.02, 0.15]
     default: 0.05
-    description: Distance of legs from crossbeam edge (smaller = closer to beam edge, more stable)
+    description: Distance of legs from crossbeam edge in X axis (width) - smaller = closer to beam edge, more stable
     semantic_hints:
       - offset
       - beam
       - distance
       - stable
       - position
+      - width
+    group: leg_dimensions
+
+  leg_offset_from_beam_lengthwise:
+    type: float
+    range: [0.02, 0.15]
+    default: 0.05
+    description: Distance of legs from crossbeam edge in Y axis (length) - smaller = closer to beam corners
+    semantic_hints:
+      - offset
+      - lengthwise
+      - length
+      - corner
+      - beam
+      - distance
     group: leg_dimensions
 
 # ============================================================
@@ -218,7 +234,7 @@ steps:
     params:
       name: "Leg_FL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam_lengthwise))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
     description: "Front-left leg - positioned relative to crossbeam edge"
 
@@ -233,7 +249,7 @@ steps:
     params:
       name: "Leg_FR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_from_beam_lengthwise))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
     description: "Front-right leg - positioned relative to crossbeam edge"
 
@@ -248,7 +264,7 @@ steps:
     params:
       name: "Leg_BL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_from_beam))", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam_lengthwise)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
     description: "Back-left leg - positioned relative to crossbeam edge"
 
@@ -263,7 +279,7 @@ steps:
     params:
       name: "Leg_BR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_from_beam)", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_from_beam_lengthwise)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
     description: "Back-right leg - positioned relative to crossbeam edge"
 
