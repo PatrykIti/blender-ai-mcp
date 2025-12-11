@@ -4,29 +4,108 @@
 **Category:** Router Supervisor Enhancement
 **Estimated Effort:** Medium
 **Dependencies:** TASK-053 (Ensemble Matcher System)
-**Status:** 🚨 **TO DO**
+**Status:** 🚧 **IN PROGRESS**
 
 ---
 
 ## Overview
 
-Enhance the Ensemble Matcher System (TASK-053) with three key improvements:
+Enhance the Ensemble Matcher System (TASK-053) with observability and performance improvements:
 
-1. **Normalized Weight System** - Ensure matcher weights sum to 1.0 for mathematically correct score aggregation
+1. **~~Normalized Weight System~~** - ✅ **Already Implemented in TASK-055-FIX Bug 3** (Score Normalization)
 2. **Ensemble Telemetry & Metrics** - Add comprehensive observability for matcher performance analysis
 3. **Async Parallel Execution** - Optimize matcher execution with asyncio for reduced latency
 
 **Why These Enhancements?**
 
 After TASK-053 implementation review, these improvements were identified:
-- Current weights (0.40 + 0.40 + 0.15 = 0.95) leave 5% undefined
+- ~~Current weights (0.40 + 0.40 + 0.15 = 0.95) leave 5% undefined~~ ✅ **SOLVED** - See TASK-055-FIX Bug 3
 - No visibility into individual matcher performance for debugging/tuning
 - Sequential execution could be optimized with async parallelism
 
 **Impact:**
-- Better mathematical foundation for score aggregation
-- Easier debugging and performance tuning
-- ~30-50% latency reduction for complex prompts
+- ~~Better mathematical foundation for score aggregation~~ ✅ **DONE** via score normalization
+- Easier debugging and performance tuning (telemetry)
+- ~30-50% latency reduction for complex prompts (async)
+
+**Related Tasks:**
+- [TASK-055-FIX](./TASK-055-FIX_Unified_Parameter_Resolution.md) Bug 3 - Score normalization fix
+- See `_docs/_CHANGELOG/102-2025-12-08-ensemble-modifier-fixes.md` for implementation details
+
+---
+
+## ✅ Score Normalization (TASK-055-FIX Bug 3) - Already Implemented
+
+**Original TASK-054-1 Proposal:** Create `WeightNormalizer` class to normalize weights to sum to 1.0:
+```python
+# Proposed approach (not implemented):
+weights = {"keyword": 0.40, "semantic": 0.40, "pattern": 0.15}  # Sum = 0.95
+normalized = {"keyword": 0.421, "semantic": 0.421, "pattern": 0.158}  # Sum = 1.0
+```
+
+**Actual Implementation (TASK-055-FIX Bug 3):** Different approach - normalize SCORES relative to contributing matchers:
+
+```python
+# server/router/application/matcher/ensemble_aggregator.py:173-262
+
+def _calculate_max_possible_score(self, contributions: Dict[str, float]) -> float:
+    """Calculate maximum possible score based on which matchers contributed.
+
+    When only semantic matcher contributes, max is 0.40 (not 0.95).
+    This allows proper normalization for single-matcher scenarios.
+
+    TASK-055-FIX: Critical for multilingual prompts where keyword matcher
+    may not fire due to language mismatch.
+    """
+    WEIGHTS = {
+        "keyword": 0.40,
+        "semantic": 0.40,
+        "pattern": 0.15 * self.PATTERN_BOOST,
+    }
+
+    max_score = 0.0
+    for matcher_name in contributions.keys():
+        max_score += WEIGHTS.get(matcher_name, 0.40)
+
+    return max_score if max_score > 0 else 0.95
+
+def _determine_confidence_level(
+    self, score: float, prompt: str, max_possible_score: float = 0.95
+) -> str:
+    """Determine confidence level from score and prompt analysis.
+
+    TASK-055-FIX: Now normalizes score relative to max_possible_score.
+    This fixes the bug where Polish prompts only matched semantic matcher
+    (max 0.40) but thresholds were calibrated for full score (0.95).
+    """
+    # TASK-055-FIX: Normalize score relative to max possible
+    normalized_score = score / max_possible_score if max_possible_score > 0 else 0.0
+
+    # Use NORMALIZED thresholds
+    # HIGH: normalized >= 0.70 (e.g., 0.28/0.40 = 70%)
+    # MEDIUM: normalized >= 0.50 (e.g., 0.20/0.40 = 50%)
+    if normalized_score >= 0.70:
+        return "HIGH"
+    elif normalized_score >= 0.50:
+        return "MEDIUM"
+    else:
+        return "LOW"
+```
+
+**Why This Approach is Better:**
+
+| Scenario | TASK-054-1 Proposal (Weight Norm) | TASK-055-FIX Implementation (Score Norm) |
+|----------|-----------------------------------|------------------------------------------|
+| Polish prompt (semantic only) | score = 0.336 / 1.0 = 33% → LOW | score = 0.336 / 0.40 = 84% → **HIGH** ✅ |
+| English prompt (all matchers) | score = 0.74 / 1.0 = 74% → HIGH | score = 0.74 / 0.80 = 92% → **HIGH** ✅ |
+| Cross-language support | ❌ Fails for single-matcher | ✅ Adapts to contributing matchers |
+
+**Conclusion:** TASK-054-1 (Weight Normalizer) is **NOT NEEDED** - the problem was already solved more elegantly through score normalization.
+
+**References:**
+- Implementation: `server/router/application/matcher/ensemble_aggregator.py:173-262`
+- Changelog: `_docs/_CHANGELOG/102-2025-12-08-ensemble-modifier-fixes.md` (Bug 3)
+- Tests: Polish prompt "utworz stol piknikowy" now returns HIGH confidence (was LOW before fix)
 
 ---
 
@@ -106,360 +185,46 @@ After TASK-053 implementation review, these improvements were identified:
 
 | Component | Location | Current State | TASK-054 Changes |
 |-----------|----------|---------------|------------------|
-| `EnsembleAggregator` | `server/router/application/matcher/ensemble_aggregator.py` | Hardcoded weights | Add `WeightNormalizer` |
-| `EnsembleMatcher` | `server/router/application/matcher/ensemble_matcher.py` | Sequential loop | Add async parallel |
-| `IMatcher` | `server/router/domain/interfaces/matcher.py` | Sync only | Add `match_async()` |
-| `RouterConfig` | `server/router/infrastructure/config.py` | Basic config | Add telemetry flags |
-| `RouterLogger` | `server/router/infrastructure/logger.py` | Basic logging | Add metrics collection |
+| `EnsembleAggregator` | `server/router/application/matcher/ensemble_aggregator.py` | ~~Hardcoded weights~~ Score normalization (TASK-055-FIX Bug 3) | ~~Add `WeightNormalizer`~~ ✅ Already done |
+| `EnsembleMatcher` | `server/router/application/matcher/ensemble_matcher.py` | Sequential loop | Add async parallel (TASK-054-2) |
+| `IMatcher` | `server/router/domain/interfaces/matcher.py` | Sync only | Add `match_async()` (TASK-054-2) |
+| `RouterConfig` | `server/router/infrastructure/config.py` | Basic config | Add telemetry flags (TASK-054-1) |
+| `RouterLogger` | `server/router/infrastructure/logger.py` | Basic logging | Add metrics collection (TASK-054-1) |
 
 ### New Files to Create
 
 | File | Content |
 |------|---------|
-| `server/router/application/matcher/weight_normalizer.py` | Weight normalization logic |
-| `server/router/application/matcher/ensemble_telemetry.py` | Telemetry collector |
-| `server/router/application/matcher/async_executor.py` | Async parallel executor |
-| `server/router/infrastructure/metrics.py` | Metrics storage and export |
-| `tests/unit/router/application/matcher/test_weight_normalizer.py` | Unit tests |
-| `tests/unit/router/application/matcher/test_ensemble_telemetry.py` | Unit tests |
-| `tests/unit/router/application/matcher/test_async_executor.py` | Unit tests |
+| ~~`server/router/application/matcher/weight_normalizer.py`~~ | ~~Weight normalization logic~~ ✅ NOT NEEDED |
+| `server/router/application/matcher/ensemble_telemetry.py` | Telemetry collector (TASK-054-1) |
+| `server/router/application/matcher/async_executor.py` | Async parallel executor (TASK-054-2) |
+| `server/router/infrastructure/metrics.py` | Metrics storage and export (TASK-054-1) |
+| ~~`tests/unit/router/application/matcher/test_weight_normalizer.py`~~ | ~~Unit tests~~ ✅ NOT NEEDED |
+| `tests/unit/router/application/matcher/test_ensemble_telemetry.py` | Unit tests (TASK-054-1) |
+| `tests/unit/router/application/matcher/test_async_executor.py` | Unit tests (TASK-054-2) |
 | `tests/unit/router/infrastructure/test_metrics.py` | Unit tests |
 
 ---
 
 ## Sub-Tasks
 
-### TASK-054-1: Weight Normalizer
+### ~~TASK-054-1: Weight Normalizer~~ ✅ **OBSOLETE** - Replaced by TASK-055-FIX Bug 3
 
-**Status:** 🚨 To Do
+**Status:** ✅ **NOT NEEDED** - Different solution implemented
 
-Create a weight normalization system that ensures all matcher weights sum to 1.0.
+**Original Goal:** Create `WeightNormalizer` class to normalize weights (0.40, 0.40, 0.15) to sum to 1.0.
 
-```python
-# server/router/application/matcher/weight_normalizer.py
+**What Was Actually Done (TASK-055-FIX Bug 3):**
+- Implemented **score normalization** instead of weight normalization
+- Normalizes final score relative to `max_possible_score` from contributing matchers
+- Solves the same problem (correct confidence levels) with better cross-language support
+- See section above for implementation details
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-@dataclass
-class NormalizedWeight:
-    """Normalized weight for a matcher.
-
-    Attributes:
-        matcher_name: Name of the matcher.
-        original_weight: Original configured weight.
-        normalized_weight: Weight after normalization (sums to 1.0 across all).
-        normalization_factor: Factor applied during normalization.
-    """
-    matcher_name: str
-    original_weight: float
-    normalized_weight: float
-    normalization_factor: float
-
-
-@dataclass
-class WeightConfiguration:
-    """Configuration for matcher weights.
-
-    Attributes:
-        weights: Dictionary mapping matcher names to weights.
-        normalize: Whether to auto-normalize weights to sum to 1.0.
-        validation_mode: How to handle invalid weights.
-    """
-    weights: Dict[str, float] = field(default_factory=lambda: {
-        "keyword": 0.40,
-        "semantic": 0.40,
-        "pattern": 0.15,
-    })
-    normalize: bool = True
-    validation_mode: str = "warn"  # "warn", "error", "silent"
-
-
-class WeightNormalizer:
-    """Normalizes matcher weights to ensure mathematical correctness.
-
-    Problem: TASK-053 defines weights as 0.40 + 0.40 + 0.15 = 0.95
-    This leaves 5% of the score undefined, which can cause:
-    - Inconsistent score comparisons across different prompts
-    - Maximum possible score of 0.95 instead of 1.0
-    - Difficulty interpreting absolute score values
-
-    Solution: Normalize weights so they sum to exactly 1.0
-
-    Example:
-        ```python
-        normalizer = WeightNormalizer()
-
-        weights = {"keyword": 0.40, "semantic": 0.40, "pattern": 0.15}
-        normalized = normalizer.normalize(weights)
-
-        # Result:
-        # {
-        #     "keyword": 0.4211,  # 0.40 / 0.95
-        #     "semantic": 0.4211, # 0.40 / 0.95
-        #     "pattern": 0.1579,  # 0.15 / 0.95
-        # }
-        # Sum = 1.0000
-        ```
-    """
-
-    # Minimum weight value (prevents division by zero)
-    MIN_WEIGHT = 0.001
-
-    # Maximum weight for single matcher (prevents dominance)
-    MAX_WEIGHT = 0.80
-
-    # Tolerance for sum validation
-    SUM_TOLERANCE = 0.0001
-
-    def __init__(self, config: Optional[WeightConfiguration] = None):
-        """Initialize normalizer.
-
-        Args:
-            config: Weight configuration. Uses defaults if not provided.
-        """
-        self._config = config or WeightConfiguration()
-        self._cached_weights: Optional[Dict[str, NormalizedWeight]] = None
-
-    def normalize(
-        self,
-        weights: Dict[str, float],
-        force: bool = False,
-    ) -> Dict[str, float]:
-        """Normalize weights to sum to 1.0.
-
-        Args:
-            weights: Dictionary of matcher_name → weight.
-            force: Force re-normalization even if cached.
-
-        Returns:
-            Dictionary of matcher_name → normalized_weight.
-
-        Raises:
-            ValueError: If weights contain invalid values (negative, zero, etc.)
-        """
-        # Validate input
-        self._validate_weights(weights)
-
-        # Check if normalization needed
-        total = sum(weights.values())
-
-        if abs(total - 1.0) < self.SUM_TOLERANCE:
-            logger.debug(f"Weights already normalized (sum={total:.6f})")
-            return dict(weights)
-
-        # Normalize
-        normalized: Dict[str, float] = {}
-        normalization_factor = 1.0 / total
-
-        for name, weight in weights.items():
-            normalized[name] = weight * normalization_factor
-
-        # Verify sum
-        new_total = sum(normalized.values())
-        if abs(new_total - 1.0) > self.SUM_TOLERANCE:
-            raise RuntimeError(
-                f"Normalization failed: expected sum=1.0, got {new_total:.6f}"
-            )
-
-        logger.info(
-            f"Normalized weights: {weights} → {normalized} "
-            f"(factor={normalization_factor:.4f})"
-        )
-
-        # Cache result
-        self._cached_weights = {
-            name: NormalizedWeight(
-                matcher_name=name,
-                original_weight=weights[name],
-                normalized_weight=normalized[name],
-                normalization_factor=normalization_factor,
-            )
-            for name in weights
-        }
-
-        return normalized
-
-    def get_normalized_weight(self, matcher_name: str) -> float:
-        """Get normalized weight for a specific matcher.
-
-        Args:
-            matcher_name: Name of the matcher.
-
-        Returns:
-            Normalized weight value.
-
-        Raises:
-            KeyError: If matcher not found in cached weights.
-        """
-        if self._cached_weights is None:
-            # Initialize with default weights
-            self.normalize(self._config.weights)
-
-        if matcher_name not in self._cached_weights:
-            raise KeyError(f"Unknown matcher: {matcher_name}")
-
-        return self._cached_weights[matcher_name].normalized_weight
-
-    def get_all_normalized(self) -> Dict[str, NormalizedWeight]:
-        """Get all normalized weight details.
-
-        Returns:
-            Dictionary of matcher_name → NormalizedWeight.
-        """
-        if self._cached_weights is None:
-            self.normalize(self._config.weights)
-
-        return dict(self._cached_weights)
-
-    def _validate_weights(self, weights: Dict[str, float]) -> None:
-        """Validate weight values.
-
-        Args:
-            weights: Weights to validate.
-
-        Raises:
-            ValueError: If weights are invalid.
-        """
-        if not weights:
-            raise ValueError("Weights dictionary cannot be empty")
-
-        for name, weight in weights.items():
-            if weight < 0:
-                raise ValueError(f"Weight for '{name}' is negative: {weight}")
-
-            if weight < self.MIN_WEIGHT:
-                msg = f"Weight for '{name}' is below minimum ({self.MIN_WEIGHT}): {weight}"
-                if self._config.validation_mode == "error":
-                    raise ValueError(msg)
-                elif self._config.validation_mode == "warn":
-                    logger.warning(msg)
-
-            if weight > self.MAX_WEIGHT:
-                msg = f"Weight for '{name}' exceeds maximum ({self.MAX_WEIGHT}): {weight}"
-                if self._config.validation_mode == "error":
-                    raise ValueError(msg)
-                elif self._config.validation_mode == "warn":
-                    logger.warning(msg)
-
-    def add_matcher(
-        self,
-        matcher_name: str,
-        weight: float,
-        redistribute: bool = True,
-    ) -> Dict[str, float]:
-        """Add a new matcher and optionally redistribute weights.
-
-        Args:
-            matcher_name: Name of new matcher.
-            weight: Desired weight for new matcher.
-            redistribute: If True, reduce existing weights proportionally.
-
-        Returns:
-            Updated normalized weights.
-        """
-        if self._cached_weights is None:
-            current = dict(self._config.weights)
-        else:
-            current = {
-                name: nw.original_weight
-                for name, nw in self._cached_weights.items()
-            }
-
-        if matcher_name in current:
-            raise ValueError(f"Matcher '{matcher_name}' already exists")
-
-        if redistribute:
-            # Reduce existing weights proportionally to make room
-            total_existing = sum(current.values())
-            new_total = total_existing + weight
-            reduction_factor = total_existing / new_total
-
-            for name in current:
-                current[name] *= reduction_factor
-
-        current[matcher_name] = weight
-
-        return self.normalize(current)
-
-    def remove_matcher(
-        self,
-        matcher_name: str,
-        redistribute: bool = True,
-    ) -> Dict[str, float]:
-        """Remove a matcher and optionally redistribute its weight.
-
-        Args:
-            matcher_name: Name of matcher to remove.
-            redistribute: If True, distribute removed weight to remaining matchers.
-
-        Returns:
-            Updated normalized weights.
-        """
-        if self._cached_weights is None:
-            current = dict(self._config.weights)
-        else:
-            current = {
-                name: nw.original_weight
-                for name, nw in self._cached_weights.items()
-            }
-
-        if matcher_name not in current:
-            raise KeyError(f"Matcher '{matcher_name}' not found")
-
-        removed_weight = current.pop(matcher_name)
-
-        if redistribute and current:
-            # Distribute removed weight proportionally
-            total_remaining = sum(current.values())
-            increase_factor = (total_remaining + removed_weight) / total_remaining
-
-            for name in current:
-                current[name] *= increase_factor
-
-        return self.normalize(current)
-
-    def get_info(self) -> Dict[str, any]:
-        """Get normalizer information.
-
-        Returns:
-            Dictionary with normalizer status and configuration.
-        """
-        return {
-            "config": {
-                "normalize": self._config.normalize,
-                "validation_mode": self._config.validation_mode,
-            },
-            "cached_weights": {
-                name: {
-                    "original": nw.original_weight,
-                    "normalized": nw.normalized_weight,
-                    "factor": nw.normalization_factor,
-                }
-                for name, nw in (self._cached_weights or {}).items()
-            },
-            "constants": {
-                "min_weight": self.MIN_WEIGHT,
-                "max_weight": self.MAX_WEIGHT,
-                "sum_tolerance": self.SUM_TOLERANCE,
-            },
-        }
-```
-
-**Implementation Checklist:**
-
-| Layer | File | What to Add |
-|-------|------|-------------|
-| Application | `server/router/application/matcher/weight_normalizer.py` | `WeightNormalizer`, `NormalizedWeight`, `WeightConfiguration` |
-| Tests | `tests/unit/router/application/matcher/test_weight_normalizer.py` | Unit tests for normalization |
+**Decision:** This sub-task is **cancelled** as the underlying issue was solved differently.
 
 ---
 
-### TASK-054-2: Ensemble Telemetry
+### TASK-054-1: Ensemble Telemetry (was TASK-054-2)
 
 **Status:** 🚨 To Do
 
@@ -469,12 +234,8 @@ Create a comprehensive telemetry system for monitoring ensemble matcher performa
 # server/router/application/matcher/ensemble_telemetry.py
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
-from collections import deque
-import threading
-import uuid
-import json
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -626,6 +387,41 @@ class TelemetryConfig:
     log_slow_traces: bool = True
     slow_threshold_ms: float = 100.0
     export_format: str = "json"
+
+
+class EnsembleTelemetry:
+    """Collects and manages ensemble matching telemetry.
+
+    Provides:
+    - Per-matcher timing and score tracking
+    - Trace history with rolling window
+    - Performance statistics and aggregations
+    - Export capabilities for analysis
+
+    Thread-safe for concurrent access.
+
+    Example:
+        ```python
+        telemetry = EnsembleTelemetry()
+
+        # Start trace
+        trace = telemetry.start_trace("create a table")
+
+        # Record matcher timing
+        with telemetry.time_matcher(trace, "semantic"):
+            result = semantic_matcher.match(prompt)
+
+        # Record matcher score
+        telemetry.record_score(trace, "semantic", result)
+
+        # Finalize trace
+        telemetry.finalize_trace(trace, ensemble_result)
+
+        # Get statistics
+        stats = telemetry.get_statistics()
+        ```
+    """
+
 
 
 class EnsembleTelemetry:
@@ -1086,7 +882,7 @@ class MatcherTimingContext:
 
 ---
 
-### TASK-054-3: Async Parallel Executor
+### TASK-054-2: Async Parallel Executor (was TASK-054-3)
 
 **Status:** 🚨 To Do
 
@@ -1548,7 +1344,7 @@ class AsyncParallelExecutor:
 
 ---
 
-### TASK-054-4: IMatcher Interface Extension
+### TASK-054-3: IMatcher Interface Extension (was TASK-054-4)
 
 **Status:** 🚨 To Do
 
@@ -1584,7 +1380,7 @@ class IMatcher(ABC):
     def weight(self) -> float:
         """Weight for score aggregation (0.0-1.0).
 
-        Note: TASK-054 uses WeightNormalizer to ensure weights sum to 1.0.
+        Note: TASK-055-FIX Bug 3 uses score normalization relative to contributing matchers.
         """
         pass
 
@@ -1646,7 +1442,7 @@ class IMatcher(ABC):
 
 ---
 
-### TASK-054-5: EnsembleMatcher Integration
+### TASK-054-4: EnsembleMatcher Integration (was TASK-054-5)
 
 **Status:** 🚨 To Do
 
@@ -1665,9 +1461,9 @@ from server.router.application.matcher.keyword_matcher import KeywordMatcher
 from server.router.application.matcher.semantic_matcher import SemanticMatcher
 from server.router.application.matcher.pattern_matcher import PatternMatcher
 from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
-from server.router.application.matcher.weight_normalizer import WeightNormalizer  # TASK-054
-from server.router.application.matcher.ensemble_telemetry import EnsembleTelemetry  # TASK-054
-from server.router.application.matcher.async_executor import AsyncParallelExecutor  # TASK-054
+# TASK-054 imports:
+from server.router.application.matcher.ensemble_telemetry import EnsembleTelemetry  # TASK-054-1
+from server.router.application.matcher.async_executor import AsyncParallelExecutor  # TASK-054-2
 from server.router.infrastructure.config import RouterConfig
 from server.router.infrastructure.logger import RouterLogger
 
@@ -1682,9 +1478,9 @@ class EnsembleMatcher:
 
     TASK-053: Core ensemble matching functionality.
     TASK-054: Enhanced with:
-        - WeightNormalizer for proper score aggregation
-        - EnsembleTelemetry for observability
-        - AsyncParallelExecutor for parallel execution
+        - ~~WeightNormalizer~~ ✅ NOT NEEDED - Score normalization in TASK-055-FIX Bug 3
+        - EnsembleTelemetry for observability (TASK-054-1)
+        - AsyncParallelExecutor for parallel execution (TASK-054-2)
     """
 
     def __init__(
@@ -1695,7 +1491,6 @@ class EnsembleMatcher:
         aggregator: EnsembleAggregator,
         config: Optional[RouterConfig] = None,
         # TASK-054 additions:
-        weight_normalizer: Optional[WeightNormalizer] = None,
         telemetry: Optional[EnsembleTelemetry] = None,
         async_executor: Optional[AsyncParallelExecutor] = None,
     ):
@@ -1707,9 +1502,8 @@ class EnsembleMatcher:
             pattern_matcher: Matcher for geometry pattern matching.
             aggregator: Aggregator for combining results.
             config: Router configuration.
-            weight_normalizer: TASK-054 weight normalizer.
-            telemetry: TASK-054 telemetry collector.
-            async_executor: TASK-054 async parallel executor.
+            telemetry: TASK-054-1 telemetry collector.
+            async_executor: TASK-054-2 async parallel executor.
         """
         self._matchers: List[IMatcher] = [
             keyword_matcher,
@@ -1722,31 +1516,13 @@ class EnsembleMatcher:
         self._is_initialized = False
 
         # TASK-054 components
-        self._weight_normalizer = weight_normalizer or WeightNormalizer()
         self._telemetry = telemetry or EnsembleTelemetry()
         self._async_executor = async_executor or AsyncParallelExecutor(
             telemetry=self._telemetry
         )
 
-        # Normalize weights on initialization
-        self._normalized_weights = self._normalize_matcher_weights()
-
-    def _normalize_matcher_weights(self) -> Dict[str, float]:
-        """Normalize matcher weights to sum to 1.0.
-
-        TASK-054: Ensures mathematical correctness of score aggregation.
-
-        Returns:
-            Dictionary of matcher_name → normalized_weight.
-        """
-        raw_weights = {m.name: m.weight for m in self._matchers}
-        normalized = self._weight_normalizer.normalize(raw_weights)
-
-        logger.info(
-            f"Matcher weights normalized: {raw_weights} → {normalized}"
-        )
-
-        return normalized
+    # NOTE: _normalize_matcher_weights() removed - score normalization now handled
+    # by EnsembleAggregator._calculate_max_possible_score() (TASK-055-FIX Bug 3)
 
     def match(
         self,
@@ -1894,7 +1670,6 @@ class EnsembleMatcher:
             ],
             "telemetry": self._telemetry.get_statistics(),
             "async_executor": self._async_executor.get_info(),
-            "weight_normalizer": self._weight_normalizer.get_info(),
         }
 
     def shutdown(self) -> None:
@@ -1910,12 +1685,12 @@ class EnsembleMatcher:
 
 | Layer | File | What to Add |
 |-------|------|-------------|
-| Application | `server/router/application/matcher/ensemble_matcher.py` | Integrate `WeightNormalizer`, `EnsembleTelemetry`, `AsyncParallelExecutor` |
+| Application | `server/router/application/matcher/ensemble_matcher.py` | Integrate ~~`WeightNormalizer`~~, `EnsembleTelemetry`, `AsyncParallelExecutor` |
 | Tests | `tests/unit/router/application/matcher/test_ensemble_matcher.py` | Update tests for TASK-054 features |
 
 ---
 
-### TASK-054-6: Configuration Updates
+### TASK-054-5: Configuration Updates (was TASK-054-6)
 
 **Status:** 🚨 To Do
 
@@ -1967,7 +1742,7 @@ class RouterConfig:
 
 ---
 
-### TASK-054-7: Metrics Export
+### TASK-054-6: Metrics Export (was TASK-054-7)
 
 **Status:** 🚨 To Do
 
@@ -2289,7 +2064,7 @@ def get_metrics_registry() -> MetricsRegistry:
 
 ---
 
-### TASK-054-8: Router Integration
+### TASK-054-7: Router Integration (was TASK-054-8)
 
 **Status:** 🚨 To Do
 
@@ -2325,9 +2100,6 @@ class SupervisorRouter:
             from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
             from server.router.application.matcher.ensemble_matcher import EnsembleMatcher
             # TASK-054 imports
-            from server.router.application.matcher.weight_normalizer import (
-                WeightNormalizer, WeightConfiguration
-            )
             from server.router.application.matcher.ensemble_telemetry import (
                 EnsembleTelemetry, TelemetryConfig
             )
@@ -2350,22 +2122,10 @@ class SupervisorRouter:
             )
             pattern_matcher = PatternMatcher(registry)
 
-            # Create aggregator
+            # Create aggregator (includes score normalization from TASK-055-FIX Bug 3)
             aggregator = EnsembleAggregator(modifier_extractor, self.config)
 
-            # TASK-054: Create weight normalizer
-            weight_config = WeightConfiguration(
-                weights={
-                    "keyword": self.config.keyword_weight,
-                    "semantic": self.config.semantic_weight,
-                    "pattern": self.config.pattern_weight,
-                },
-                normalize=self.config.normalize_weights,
-                validation_mode=self.config.weight_validation_mode,
-            )
-            weight_normalizer = WeightNormalizer(weight_config)
-
-            # TASK-054: Create telemetry
+            # TASK-054-1: Create telemetry
             telemetry_config = TelemetryConfig(
                 enabled=self.config.enable_ensemble_telemetry,
                 max_traces=self.config.telemetry_max_traces,
@@ -2376,7 +2136,7 @@ class SupervisorRouter:
             )
             telemetry = EnsembleTelemetry(telemetry_config)
 
-            # TASK-054: Create async executor
+            # TASK-054-2: Create async executor
             executor_config = ExecutorConfig(
                 max_workers=self.config.parallel_max_workers,
                 timeout_seconds=self.config.parallel_timeout_seconds,
@@ -2392,7 +2152,6 @@ class SupervisorRouter:
                 pattern_matcher=pattern_matcher,
                 aggregator=aggregator,
                 config=self.config,
-                weight_normalizer=weight_normalizer,
                 telemetry=telemetry,
                 async_executor=async_executor,
             )
@@ -2450,7 +2209,7 @@ class SupervisorRouter:
 
 ---
 
-### TASK-054-9: MCP Tools for Telemetry
+### TASK-054-8: MCP Tools for Telemetry (was TASK-054-9)
 
 **Status:** 🚨 To Do
 
@@ -2547,15 +2306,13 @@ def router_export_telemetry(
 ### New Files
 
 ```
-server/router/application/matcher/weight_normalizer.py
-server/router/application/matcher/ensemble_telemetry.py
-server/router/application/matcher/async_executor.py
-server/router/infrastructure/metrics.py
+server/router/application/matcher/ensemble_telemetry.py          # TASK-054-1
+server/router/application/matcher/async_executor.py              # TASK-054-2
+server/router/infrastructure/metrics.py                           # TASK-054-6
 
-tests/unit/router/application/matcher/test_weight_normalizer.py
-tests/unit/router/application/matcher/test_ensemble_telemetry.py
-tests/unit/router/application/matcher/test_async_executor.py
-tests/unit/router/infrastructure/test_metrics.py
+tests/unit/router/application/matcher/test_ensemble_telemetry.py # TASK-054-1
+tests/unit/router/application/matcher/test_async_executor.py     # TASK-054-2
+tests/unit/router/infrastructure/test_metrics.py                  # TASK-054-6
 ```
 
 ### Files to Modify
@@ -2572,15 +2329,18 @@ server/adapters/mcp/areas/router.py                     # Add telemetry tools
 
 ## Implementation Order
 
-1. **TASK-054-1**: Weight Normalizer (foundation)
-2. **TASK-054-2**: Ensemble Telemetry (observability)
-3. **TASK-054-3**: Async Parallel Executor (performance)
-4. **TASK-054-4**: IMatcher Interface Extension (async support)
-5. **TASK-054-6**: Configuration Updates
-6. **TASK-054-7**: Metrics Export
-7. **TASK-054-5**: EnsembleMatcher Integration
-8. **TASK-054-8**: Router Integration
-9. **TASK-054-9**: MCP Tools for Telemetry
+~~1. **TASK-054-1**: Weight Normalizer~~ ✅ NOT NEEDED - Replaced by TASK-055-FIX Bug 3
+
+**Remaining tasks** (renumbered):
+
+1. **TASK-054-1** (was 054-2): Ensemble Telemetry (observability)
+2. **TASK-054-2** (was 054-3): Async Parallel Executor (performance)
+3. **TASK-054-3** (was 054-4): IMatcher Interface Extension (async support)
+4. **TASK-054-4** (was 054-6): Configuration Updates
+5. **TASK-054-5** (was 054-7): Metrics Export
+6. **TASK-054-6** (was 054-5): EnsembleMatcher Integration
+7. **TASK-054-7** (was 054-8): Router Integration
+8. **TASK-054-8** (was 054-9): MCP Tools for Telemetry
 
 ---
 
@@ -2588,7 +2348,7 @@ server/adapters/mcp/areas/router.py                     # Add telemetry tools
 
 ### Unit Tests
 
-- [ ] `test_weight_normalizer.py` - Weight normalization logic
+- [ ] ~~`test_weight_normalizer.py`~~ ✅ NOT NEEDED
 - [ ] `test_ensemble_telemetry.py` - Telemetry collection and export
 - [ ] `test_async_executor.py` - Parallel execution
 - [ ] `test_metrics.py` - Metrics registry and export
@@ -2597,7 +2357,7 @@ server/adapters/mcp/areas/router.py                     # Add telemetry tools
 
 - [ ] `test_ensemble_with_telemetry.py` - Full pipeline with telemetry
 - [ ] `test_parallel_vs_sequential.py` - Performance comparison
-- [ ] `test_weight_normalization_e2e.py` - Score aggregation verification
+- [ ] ~~`test_weight_normalization_e2e.py`~~ ✅ NOT NEEDED - Score normalization already tested in TASK-055-FIX Bug 3
 
 ### Performance Tests
 
