@@ -258,3 +258,143 @@ class TestWorkflowRegistryWithYAML:
             assert info is not None
             assert info["name"] == workflow_name
             assert "step_count" in info
+
+    # TASK-055-FIX-7 Phase 0: Computed Parameters Integration Tests
+
+    def test_expand_workflow_with_computed_parameters(self, registry):
+        """Test workflow expansion with TASK-056-5 computed parameters."""
+        from server.router.domain.entities.parameter import ParameterSchema
+
+        # Create workflow with computed parameters
+        definition = WorkflowDefinition(
+            name="test_computed",
+            description="Test computed params",
+            steps=[
+                WorkflowStep(
+                    tool="modeling_create_primitive",
+                    params={
+                        "primitive_type": "CUBE",
+                        "name": "Plank",
+                    },
+                ),
+                WorkflowStep(
+                    tool="modeling_transform_object",
+                    params={
+                        "name": "Plank",
+                        "scale": ["$plank_actual_width", 1.0, 0.1],
+                    },
+                ),
+            ],
+            defaults={"table_width": 0.8, "plank_max_width": 0.10},
+            parameters={
+                "plank_count": ParameterSchema(
+                    name="plank_count",
+                    type="int",
+                    computed="ceil(table_width / plank_max_width)",
+                    depends_on=["table_width", "plank_max_width"],
+                ),
+                "plank_actual_width": ParameterSchema(
+                    name="plank_actual_width",
+                    type="float",
+                    computed="table_width / plank_count",
+                    depends_on=["table_width", "plank_count"],
+                ),
+            },
+        )
+        registry.register_definition(definition)
+
+        # Expand workflow
+        calls = registry.expand_workflow("test_computed")
+
+        # Verify workflow expanded
+        assert len(calls) == 2
+        assert calls[0].tool_name == "modeling_create_primitive"
+        assert calls[1].tool_name == "modeling_transform_object"
+
+        # Verify computed params were resolved
+        # table_width=0.8, plank_max_width=0.10
+        # plank_count = ceil(0.8 / 0.10) = ceil(8.0) = 8
+        # plank_actual_width = 0.8 / 8 = 0.1
+        assert calls[1].params["scale"][0] == 0.1
+
+    def test_expand_workflow_computed_params_circular_dependency(self, registry):
+        """Test graceful handling of circular dependency in computed params."""
+        from server.router.domain.entities.parameter import ParameterSchema
+
+        # Create workflow with circular dependency
+        definition = WorkflowDefinition(
+            name="test_circular",
+            description="Test circular dependency",
+            steps=[
+                WorkflowStep(
+                    tool="modeling_create_primitive",
+                    params={"primitive_type": "CUBE"},
+                )
+            ],
+            parameters={
+                "a": ParameterSchema(
+                    name="a",
+                    type="float",
+                    computed="b + 1",
+                    depends_on=["b"],
+                ),
+                "b": ParameterSchema(
+                    name="b",
+                    type="float",
+                    computed="a + 1",
+                    depends_on=["a"],
+                ),
+            },
+        )
+        registry.register_definition(definition)
+
+        # Should not crash - degrades gracefully
+        calls = registry.expand_workflow("test_circular")
+        assert len(calls) == 1  # Workflow still expands
+        assert calls[0].tool_name == "modeling_create_primitive"
+
+    def test_expand_workflow_computed_params_explicit_override(self, registry):
+        """Test that explicit params override computed params."""
+        from server.router.domain.entities.parameter import ParameterSchema
+
+        definition = WorkflowDefinition(
+            name="test_override",
+            description="Test computed param override",
+            steps=[
+                WorkflowStep(
+                    tool="modeling_create_primitive",
+                    params={
+                        "primitive_type": "CUBE",
+                        "name": "Test",
+                    },
+                ),
+                WorkflowStep(
+                    tool="modeling_transform_object",
+                    params={
+                        "name": "Test",
+                        "scale": ["$plank_count", 1.0, 1.0],
+                    },
+                ),
+            ],
+            defaults={"width": 0.8},
+            parameters={
+                "plank_count": ParameterSchema(
+                    name="plank_count",
+                    type="int",
+                    computed="ceil(width / 0.1)",
+                    depends_on=["width"],
+                )
+            },
+        )
+        registry.register_definition(definition)
+
+        # Expand with explicit override
+        calls = registry.expand_workflow("test_override", params={"plank_count": 10})
+
+        # Verify workflow expanded
+        assert len(calls) == 2
+
+        # Explicit param should override computed
+        # Without override: ceil(0.8 / 0.1) = 8
+        # With override: 10 (explicit value)
+        assert calls[1].params["scale"][0] == 10

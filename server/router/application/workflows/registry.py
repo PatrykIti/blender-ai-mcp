@@ -249,6 +249,43 @@ class WorkflowRegistry:
             # Merge with params (params override variables)
             all_params = {**variables, **(params or {})}
 
+
+            # TASK-055-FIX-7 Phase 0: Resolve computed parameters
+            if definition.parameters:
+                try:
+                    # Extract ParameterSchema objects that have computed expressions
+                    schemas = definition.parameters  # Dict[str, ParameterSchema]
+
+                    # Separate explicit params (from params arg) and base params (defaults + modifiers)
+                    explicit_params = params or {}
+                    base_params = {k: v for k, v in all_params.items() if k not in explicit_params}
+
+                    # Resolve computed parameters using all available params
+                    computed_values = self._evaluator.resolve_computed_parameters(
+                        schemas, all_params
+                    )
+
+                    # Merge: base_params < computed_values < explicit_params
+                    # Computed params override defaults but NOT explicit params
+                    all_params = {**base_params, **computed_values, **explicit_params}
+
+                    logger.debug(
+                        f"Resolved {len(computed_values)} computed parameters for "
+                        f"'{workflow_name}': {list(computed_values.keys())}"
+                    )
+                except ValueError as e:
+                    # Circular dependency or missing required variable
+                    logger.error(
+                        f"Computed parameter dependency error in '{workflow_name}': {e}"
+                    )
+                    # Continue without computed params - workflow may fail later with clearer error
+                except Exception as e:
+                    # Syntax error, unexpected exception
+                    logger.error(
+                        f"Unexpected error resolving computed parameters in '{workflow_name}': {e}"
+                    )
+                    # Continue without computed params
+
             steps = self._resolve_definition_params(definition.steps, all_params)
             # Pass all_params to enable condition evaluation with workflow parameters
             return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
