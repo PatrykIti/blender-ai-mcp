@@ -98,68 +98,6 @@ class TestWorkflowExpansionEngineInit:
         assert isinstance(workflows, list)
 
 
-class TestExpand:
-    """Tests for expand method."""
-
-    def test_expand_with_pattern_suggestion(self, engine_with_test_workflow, base_context, test_pattern):
-        """Test expansion when pattern suggests workflow."""
-        result = engine_with_test_workflow.expand(
-            "modeling_create_primitive",
-            {"type": "CUBE"},
-            base_context,
-            pattern=test_pattern,
-        )
-
-        assert result is not None
-        assert len(result) > 0
-
-    def test_expand_no_pattern(self, engine, base_context):
-        """Test no expansion without pattern."""
-        result = engine.expand(
-            "modeling_create_primitive",
-            {"type": "CUBE"},
-            base_context,
-            pattern=None,
-        )
-
-        assert result is None
-
-    def test_expand_pattern_no_workflow(self, engine, base_context):
-        """Test no expansion when pattern has no workflow."""
-        pattern = DetectedPattern(
-            pattern_type=PatternType.UNKNOWN,
-            confidence=0.5,
-            metadata={},
-            suggested_workflow=None,
-        )
-
-        result = engine.expand(
-            "modeling_create_primitive",
-            {},
-            base_context,
-            pattern=pattern,
-        )
-
-        assert result is None
-
-    def test_expand_disabled(self, engine_disabled, base_context):
-        """Test no expansion when disabled."""
-        pattern = DetectedPattern(
-            pattern_type=PatternType.PHONE_LIKE,
-            confidence=0.85,
-            metadata={},
-            suggested_workflow="any_workflow",
-        )
-        result = engine_disabled.expand(
-            "modeling_create_primitive",
-            {},
-            base_context,
-            pattern=pattern,
-        )
-
-        assert result is None
-
-
 class TestGetWorkflow:
     """Tests for get_workflow method."""
 
@@ -407,17 +345,6 @@ class TestRegistryWorkflows:
 
 class TestEdgeCases:
     """Tests for edge cases."""
-
-    def test_empty_params(self, engine_with_test_workflow, base_context, test_pattern):
-        """Test expansion with empty params."""
-        result = engine_with_test_workflow.expand(
-            "modeling_create_primitive",
-            {},
-            base_context,
-            pattern=test_pattern,
-        )
-
-        assert result is not None
 
     def test_workflow_with_empty_steps(self, engine):
         """Test workflow with no steps."""

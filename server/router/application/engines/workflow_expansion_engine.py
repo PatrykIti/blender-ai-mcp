@@ -149,37 +149,6 @@ class WorkflowExpansionEngine(IExpansionEngine):
             self._registry = get_workflow_registry()
         return self._registry
 
-    def expand(
-        self,
-        tool_name: str,
-        params: Dict[str, Any],
-        context: SceneContext,
-        pattern: Optional[DetectedPattern] = None,
-    ) -> Optional[List[CorrectedToolCall]]:
-        """Expand a tool call into a workflow if applicable.
-
-        Args:
-            tool_name: Name of the tool to potentially expand.
-            params: Original parameters.
-            context: Current scene context.
-            pattern: Detected geometry pattern (if any).
-
-        Returns:
-            List of expanded tool calls, or None if no expansion.
-        """
-        if not self._config.enable_workflow_expansion:
-            return None
-
-        registry = self._get_registry()
-
-        # Check if pattern suggests a workflow
-        if pattern and pattern.suggested_workflow:
-            workflow_name = pattern.suggested_workflow
-            if registry.get_definition(workflow_name):
-                return self.expand_workflow(workflow_name, params)
-
-        return None
-
     def get_workflow(self, workflow_name: str) -> Optional[List[Dict[str, Any]]]:
         """Get a workflow definition by name.
 

@@ -19,27 +19,6 @@ class IExpansionEngine(ABC):
     """
 
     @abstractmethod
-    def expand(
-        self,
-        tool_name: str,
-        params: Dict[str, Any],
-        context: SceneContext,
-        pattern: Optional[DetectedPattern] = None,
-    ) -> Optional[List[CorrectedToolCall]]:
-        """Expand a tool call into a workflow if applicable.
-
-        Args:
-            tool_name: Name of the tool to potentially expand.
-            params: Original parameters.
-            context: Current scene context.
-            pattern: Detected geometry pattern (if any).
-
-        Returns:
-            List of expanded tool calls, or None if no expansion.
-        """
-        pass
-
-    @abstractmethod
     def get_workflow(self, workflow_name: str) -> Optional[List[Dict[str, Any]]]:
         """Get a workflow definition by name.
 

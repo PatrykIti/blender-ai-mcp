@@ -215,8 +215,6 @@ class SupervisorRouter:
         expanded = None
         if triggered_workflow:
             expanded = self._expand_triggered_workflow(triggered_workflow, params, context)
-        elif not override_result:
-            expanded = self._expand_workflow(tool_name, params, context, pattern)
 
         # Step 8: Build final tool sequence
         final_tools = self._build_tool_sequence(
@@ -387,36 +385,6 @@ class SupervisorRouter:
             return replacement_calls
 
         return None
-
-    def _expand_workflow(
-        self,
-        tool_name: str,
-        params: Dict[str, Any],
-        context: SceneContext,
-        pattern: Optional[DetectedPattern],
-    ) -> Optional[List[CorrectedToolCall]]:
-        """Expand tool to workflow if applicable.
-
-        Args:
-            tool_name: Tool name.
-            params: Tool parameters.
-            context: Scene context.
-            pattern: Detected pattern.
-
-        Returns:
-            List of workflow steps or None.
-        """
-        if not self.config.enable_workflow_expansion:
-            return None
-
-        expanded = self.expansion_engine.expand(
-            tool_name, params, context, pattern
-        )
-
-        if expanded:
-            self._processing_stats["workflows_expanded"] += 1
-
-        return expanded
 
     def _check_workflow_trigger(
         self,
