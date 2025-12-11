@@ -1392,6 +1392,12 @@ class SupervisorRouter:
         # Bug 2 fix: Don't pass user_prompt - final_variables already has _pending_modifiers
         #            from EnsembleMatcher with LaBSE semantic matching
 
+        # TASK-055-FIX-7: Resolve computed parameters before workflow execution
+        # This ensures computed params like plank_count, plank_actual_width are calculated
+        final_variables = registry.resolve_computed_parameters_for_workflow(
+            workflow_name, final_variables
+        )
+
         # Set up registry evaluators (required for _steps_to_calls conditions)
         registry._evaluator.set_context({**eval_context, **final_variables})
         # TASK-055-FIX-4: Extend condition context with final_variables (workflow parameters)

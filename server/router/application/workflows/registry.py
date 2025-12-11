@@ -296,6 +296,56 @@ class WorkflowRegistry:
 
         return []
 
+    def resolve_computed_parameters_for_workflow(
+        self,
+        workflow_name: str,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Resolve computed parameters for a workflow.
+
+        Public method that can be called by router to resolve computed parameters
+        before workflow execution. This avoids code duplication between expand_workflow()
+        and router's execute_pending_workflow().
+
+        Args:
+            workflow_name: Name of the workflow.
+            params: Parameters to resolve (includes defaults, modifiers, explicit values).
+
+        Returns:
+            Dictionary with all parameters including resolved computed parameters.
+            Returns original params if workflow not found or no computed parameters.
+        """
+        definition = self._custom_definitions.get(workflow_name)
+        if not definition or not definition.parameters:
+            return params
+
+        try:
+            # Resolve computed parameters using provided params
+            computed_values = self._evaluator.resolve_computed_parameters(
+                definition.parameters, params
+            )
+
+            # Merge computed values into params (computed override defaults)
+            result = {**params, **computed_values}
+
+            logger.debug(
+                f"Resolved {len(computed_values)} computed parameters for "
+                f"'{workflow_name}': {list(computed_values.keys())}"
+            )
+
+            return result
+
+        except ValueError as e:
+            logger.error(
+                f"Computed parameter dependency error in '{workflow_name}': {e}"
+            )
+            return params  # Return original params on error
+        except Exception as e:
+            logger.error(
+                f"Unexpected error resolving computed parameters in '{workflow_name}': {e}"
+            )
+            return params  # Return original params on error
+
     def _build_variables(
         self,
         definition: WorkflowDefinition,
