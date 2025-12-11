@@ -291,24 +291,40 @@ class ParameterSchema:
     # NEW: Enum constraint
     enum: Optional[List[Any]] = None
 
-    def validate(self, value: Any) -> Tuple[bool, Optional[str]]:
-        """Validate value against schema constraints."""
+    def validate_value(self, value: Any) -> bool:
+        """Validate value against schema constraints.
+
+        Returns:
+            True if value is valid, False otherwise.
+        """
         # Type validation
-        if self.type == "float" and not isinstance(value, (int, float)):
-            return False, f"Expected float, got {type(value).__name__}"
+        if self.type == "float":
+            if not isinstance(value, (int, float)):
+                return False
+        elif self.type == "int":
+            if not isinstance(value, int) or isinstance(value, bool):
+                return False
+        elif self.type == "bool":
+            if not isinstance(value, bool):
+                return False
+        elif self.type == "string":
+            if not isinstance(value, str):
+                return False
 
         # Enum validation (NEW)
         if self.enum is not None and value not in self.enum:
-            return False, f"Value {value} not in allowed values: {self.enum}"
+            return False
 
         # Range validation
         if self.range is not None and self.type in ("float", "int"):
             min_val, max_val = self.range
             if not (min_val <= value <= max_val):
-                return False, f"Value {value} outside range [{min_val}, {max_val}]"
+                return False
 
-        return True, None
+        return True
 ```
+
+**Note**: Current code has `validate_value()` method (lines 59-88). We extend it to add enum validation.
 
 #### YAML Syntax
 
@@ -367,8 +383,7 @@ parameters:
 #### Acceptance Criteria
 
 - [ ] `enum` field added to ParameterSchema
-- [ ] Validation enforces enum constraints
-- [ ] Error messages include allowed values
+- [ ] `validate_value()` method enforces enum constraints
 - [ ] Workflow loader parses enum from YAML
 - [ ] Documentation updated with examples
 
@@ -385,7 +400,7 @@ Add step dependency resolution, timeout, and retry mechanisms.
 
 #### Implementation
 
-**File**: `server/router/domain/entities/base.py`
+**File**: `server/router/application/workflows/base.py`
 
 **Update WorkflowStep**:
 ```python
@@ -399,7 +414,7 @@ class WorkflowStep:
     disable_adaptation: bool = False
     tags: List[str] = field(default_factory=list)
 
-    # NEW: Execution control
+    # NEW: Execution control (TASK-056-4)
     id: Optional[str] = None                    # Unique step identifier
     depends_on: List[str] = field(default_factory=list)  # Step IDs this depends on
     timeout: Optional[float] = None             # Timeout in seconds
