@@ -197,9 +197,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_1"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width / 2)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 1 (leftmost) - width adapts to table_width"
+    description: "Position plank 1 (leftmost) - scale = dimensions/2 for cube"
 
   # Plank 2 (always present for plank_count >= 2)
   - tool: modeling_create_primitive
@@ -212,7 +212,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_2"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 1.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 2"
     condition: "plank_count >= 2"
@@ -228,7 +228,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_3"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 2.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 3"
     condition: "plank_count >= 3"
@@ -244,7 +244,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_4"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 3.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 4"
     condition: "plank_count >= 4"
@@ -260,7 +260,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_5"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 4.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 5"
     condition: "plank_count >= 5"
@@ -276,7 +276,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_6"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 5.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 6"
     condition: "plank_count >= 6"
@@ -292,7 +292,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_7"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 6.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 7"
     condition: "plank_count >= 7"
@@ -308,7 +308,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_8"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 7.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 8"
     condition: "plank_count >= 8"
@@ -324,7 +324,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_9"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 8.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 9"
     condition: "plank_count >= 9"
@@ -340,7 +340,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_10"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 9.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 10"
     condition: "plank_count >= 10"
@@ -356,7 +356,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_11"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 10.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 11"
     condition: "plank_count >= 11"
@@ -372,7 +372,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_12"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 11.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 12"
     condition: "plank_count >= 12"
@@ -388,7 +388,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_13"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 12.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 13"
     condition: "plank_count >= 13"
@@ -404,7 +404,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_14"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 13.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 14"
     condition: "plank_count >= 14"
@@ -420,7 +420,7 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TablePlank_15"
-      scale: ["$plank_actual_width", "$table_length", 0.0114]
+      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
       location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 14.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
     description: "Position plank 15 (rightmost)"
     condition: "plank_count >= 15"
@@ -438,9 +438,9 @@ steps:
   - tool: modeling_transform_object
     params:
       name: "TableCrossBeam"
-      scale: ["$CALCULATE(table_width * 0.65)", "$CALCULATE(table_length * 0.926)", 0.0110]
+      scale: ["$CALCULATE(table_width * 0.9 / 2)", "$CALCULATE(table_length * 0.926 / 2)", 0.0110]
       location: [0, 0, "$CALCULATE(leg_length - 0.023)"]
-    description: "Position cross beam under table top"
+    description: "Position cross beam under table top (90% of table width, scale = dimensions/2 for cube)"
 
   # ============================================
   # SECTION 3: STRAIGHT LEGS (4 pieces)
@@ -459,9 +459,9 @@ steps:
     params:
       name: "Leg_FL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_x))", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x))", "$CALCULATE(-(table_length / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Front-left leg - positioned using leg_offset_x and leg_offset_y"
+    description: "Front-left leg - positioned at table edge with offset"
 
   # Front-right leg
   - tool: modeling_create_primitive
@@ -474,9 +474,9 @@ steps:
     params:
       name: "Leg_FR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_x)", "$CALCULATE(-(table_length * 0.926 / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x)", "$CALCULATE(-(table_length / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Front-right leg - positioned using leg_offset_x and leg_offset_y"
+    description: "Front-right leg - positioned at table edge with offset"
 
   # Back-left leg
   - tool: modeling_create_primitive
@@ -489,9 +489,9 @@ steps:
     params:
       name: "Leg_BL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width * 0.65 / 2 - leg_offset_x))", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x))", "$CALCULATE(table_length / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Back-left leg - positioned using leg_offset_x and leg_offset_y"
+    description: "Back-left leg - positioned at table edge with offset"
 
   # Back-right leg
   - tool: modeling_create_primitive
@@ -504,9 +504,9 @@ steps:
     params:
       name: "Leg_BR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width * 0.65 / 2 - leg_offset_x)", "$CALCULATE(table_length * 0.926 / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x)", "$CALCULATE(table_length / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Back-right leg - positioned using leg_offset_x and leg_offset_y"
+    description: "Back-right leg - positioned at table edge with offset"
 
   # ============================================
   # SECTION 4: MATERIAL
