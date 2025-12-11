@@ -8,6 +8,22 @@
 
 ---
 
+## Overview
+
+This task has **two major components**:
+
+1. **Phase 0: Integrate Computed Parameters** (PREREQUISITE)
+   - Fix missing integration in `WorkflowRegistry.expand_workflow()`
+   - Enable TASK-056-5 computed parameters to work in YAML workflows
+   - Required for Phase 1-3 to function
+
+2. **Phase 1-3: Update simple_table.yaml** (MAIN TASK)
+   - Rename parameters to shorter names
+   - Add dynamic plank system with computed parameters
+   - Use TASK-056 features for clean, performant workflow
+
+---
+
 ## Problem Statement
 
 Current `simple_table.yaml` workflow has three limitations:
@@ -85,6 +101,322 @@ parameters:
 ---
 
 ## Implementation Plan
+
+### Phase 0: Integrate Computed Parameters into Workflow Execution (PREREQUISITE)
+
+**Problem**: `ExpressionEvaluator.resolve_computed_parameters()` is implemented (TASK-056-5) but **NOT called** during workflow execution.
+
+**Why This Phase is Critical**:
+Without Phase 0, computed parameters in YAML will be:
+- ✅ Loaded from YAML by `WorkflowLoader`
+- ✅ Stored in `WorkflowDefinition.parameters`
+- ❌ **IGNORED during workflow expansion** (never calculated!)
+- ❌ References like `$plank_actual_width` will fail (undefined variable)
+- ❌ Conditions like `plank_count >= N` will fail (undefined variable)
+
+**Current Flow** (BROKEN for computed params):
+```
+WorkflowRegistry.expand_workflow()
+  → _build_variables(definition, user_prompt)  # Builds defaults + modifiers
+  → all_params = {**variables, **params}
+  → _resolve_definition_params(steps, all_params)  # Resolves $variable and $CALCULATE()
+  → _steps_to_calls()
+```
+
+**Missing Step**: Computed parameters are never resolved! Even though they're loaded from YAML into `definition.parameters`, they're ignored during execution.
+
+---
+
+#### 0.1 Architecture Analysis
+
+**Clean Architecture Layers**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│ DOMAIN LAYER                                                │
+│ - ParameterSchema (has computed, depends_on fields)         │
+│ - WorkflowDefinition (has parameters: Dict[str, ParameterSchema]) │
+├─────────────────────────────────────────────────────────────┤
+│ APPLICATION LAYER                                           │
+│ - ExpressionEvaluator.resolve_computed_parameters()  ✅     │
+│ - WorkflowRegistry.expand_workflow()  ❌ (missing call)    │
+├─────────────────────────────────────────────────────────────┤
+│ INFRASTRUCTURE LAYER                                        │
+│ - WorkflowLoader (loads computed params from YAML)  ✅      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Issue**: Application layer has the method but doesn't use it!
+
+---
+
+#### 0.2 Implementation: Add Computed Parameter Resolution
+
+**File**: `server/router/application/workflows/registry.py`
+
+**Location**: Inside `expand_workflow()` method (line ~250), right after building `all_params`:
+
+```python
+def expand_workflow(
+    self,
+    workflow_name: str,
+    params: Optional[Dict[str, Any]] = None,
+    context: Optional[Dict[str, Any]] = None,
+    user_prompt: Optional[str] = None,
+) -> List[CorrectedToolCall]:
+    """Expand a workflow into tool calls."""
+    # ... existing code ...
+
+    # Try custom definition
+    definition = self._custom_definitions.get(workflow_name)
+    if definition:
+        # Build variable context from defaults + modifiers (TASK-052)
+        variables = self._build_variables(definition, user_prompt)
+        # Merge with params (params override variables)
+        all_params = {**variables, **(params or {})}
+
+        # NEW (TASK-055-FIX-7 Phase 0): Resolve computed parameters
+        if definition.parameters:
+            try:
+                # Extract ParameterSchema objects that have computed expressions
+                schemas = definition.parameters  # Dict[str, ParameterSchema]
+
+                # Resolve computed parameters in dependency order
+                computed_values = self._evaluator.resolve_computed_parameters(
+                    schemas, all_params
+                )
+
+                # Merge computed values back into all_params
+                # Computed params override defaults but NOT explicit params
+                all_params = {**all_params, **computed_values}
+
+                logger.debug(
+                    f"Resolved {len(computed_values)} computed parameters: "
+                    f"{list(computed_values.keys())}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to resolve computed parameters for {workflow_name}: {e}"
+                )
+                # Continue with non-computed params (degraded mode)
+
+        steps = self._resolve_definition_params(definition.steps, all_params)
+        return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
+
+    return []
+```
+
+**Why This Location?**:
+1. ✅ After defaults and modifiers are merged
+2. ✅ Before step parameter resolution (`$variable` substitution)
+3. ✅ Computed params can reference defaults, modifiers, and explicit params
+4. ✅ Results available for both conditions and step params
+
+---
+
+#### 0.3 Error Handling Strategy
+
+**Principle**: Degrade gracefully if computed parameter resolution fails.
+
+**Error Cases**:
+1. **Circular dependency**: Caught by `_topological_sort()` → raises `ValueError`
+2. **Unknown variable in expression**: Caught by `evaluate()` → returns `None`
+3. **Invalid expression syntax**: Caught by AST parser → raises `SyntaxError`
+
+**Handling**:
+```python
+try:
+    computed_values = self._evaluator.resolve_computed_parameters(schemas, all_params)
+    all_params = {**all_params, **computed_values}
+except ValueError as e:
+    # Circular dependency or missing required variable
+    logger.error(f"Computed parameter dependency error: {e}")
+    # Continue without computed params - workflow may fail later with clearer error
+except Exception as e:
+    # Syntax error, unexpected exception
+    logger.error(f"Unexpected error resolving computed parameters: {e}")
+    # Continue without computed params
+```
+
+**Why Graceful Degradation?**:
+- Computed parameters are **opt-in** (backward compatible)
+- Workflow without computed params should still work
+- Let workflow execution fail naturally if required param is missing
+- Easier to debug: clear error message about missing param vs obscure computed param error
+
+---
+
+#### 0.4 Testing Strategy
+
+**Unit Tests** (add to `tests/unit/router/application/workflows/test_registry.py`):
+
+```python
+def test_expand_workflow_with_computed_parameters():
+    """Test workflow expansion with TASK-056-5 computed parameters."""
+    registry = WorkflowRegistry()
+
+    # Create workflow with computed parameters
+    definition = WorkflowDefinition(
+        name="test_computed",
+        description="Test computed params",
+        steps=[
+            WorkflowStep(
+                tool="modeling_create_primitive",
+                params={"scale": ["$plank_actual_width", 1, 0.1]}
+            )
+        ],
+        defaults={"table_width": 0.8, "plank_max_width": 0.10},
+        parameters={
+            "plank_count": ParameterSchema(
+                name="plank_count",
+                type="int",
+                computed="ceil(table_width / plank_max_width)",
+                depends_on=["table_width", "plank_max_width"]
+            ),
+            "plank_actual_width": ParameterSchema(
+                name="plank_actual_width",
+                type="float",
+                computed="table_width / plank_count",
+                depends_on=["table_width", "plank_count"]
+            )
+        }
+    )
+    registry.register_definition(definition)
+
+    # Expand workflow
+    calls = registry.expand_workflow("test_computed")
+
+    # Verify computed params were resolved
+    assert len(calls) == 1
+    assert calls[0].params["scale"][0] == 0.1  # 0.8 / 8 = 0.1
+
+
+def test_expand_workflow_computed_params_circular_dependency():
+    """Test graceful handling of circular dependency."""
+    registry = WorkflowRegistry()
+
+    # Create workflow with circular dependency
+    definition = WorkflowDefinition(
+        name="test_circular",
+        description="Test circular dependency",
+        steps=[WorkflowStep(tool="test", params={})],
+        parameters={
+            "a": ParameterSchema(
+                name="a", type="float",
+                computed="b + 1", depends_on=["b"]
+            ),
+            "b": ParameterSchema(
+                name="b", type="float",
+                computed="a + 1", depends_on=["a"]
+            )
+        }
+    )
+    registry.register_definition(definition)
+
+    # Should not crash - degrades gracefully
+    calls = registry.expand_workflow("test_circular")
+    assert len(calls) == 1  # Workflow still expands
+
+
+def test_expand_workflow_computed_params_override():
+    """Test that explicit params override computed params."""
+    registry = WorkflowRegistry()
+
+    definition = WorkflowDefinition(
+        name="test_override",
+        description="Test computed param override",
+        steps=[WorkflowStep(tool="test", params={"count": "$plank_count"})],
+        defaults={"width": 0.8},
+        parameters={
+            "plank_count": ParameterSchema(
+                name="plank_count", type="int",
+                computed="ceil(width / 0.1)", depends_on=["width"]
+            )
+        }
+    )
+    registry.register_definition(definition)
+
+    # Expand with explicit override
+    calls = registry.expand_workflow("test_override", params={"plank_count": 10})
+
+    # Explicit param should override computed
+    assert calls[0].params["count"] == 10  # Not 8 (computed value)
+```
+
+**Integration Test** (manual verification with simple_table.yaml):
+
+```bash
+# Test that computed parameters work in real workflow
+ROUTER_ENABLED=true LOG_LEVEL=DEBUG poetry run python -c "
+from server.router.application.workflows.registry import get_workflow_registry
+
+registry = get_workflow_registry()
+registry.load_custom_workflows()
+
+# Expand simple_table with computed params
+calls = registry.expand_workflow('simple_table_workflow', params={'table_width': 0.83})
+
+# Check logs for computed param resolution
+# Should see: 'Resolved 2 computed parameters: [plank_count, plank_actual_width]'
+
+# Verify plank_count and plank_actual_width are available in steps
+print(f'Total calls: {len(calls)}')
+"
+```
+
+---
+
+#### 0.5 Clean Architecture Compliance
+
+**Layers Involved**:
+
+1. **Domain Layer** (entities):
+   - `ParameterSchema` - already has `computed`, `depends_on` fields ✅
+   - `WorkflowDefinition` - already has `parameters: Dict[str, ParameterSchema]` ✅
+
+2. **Application Layer** (business logic):
+   - `ExpressionEvaluator.resolve_computed_parameters()` - already implemented ✅
+   - `WorkflowRegistry.expand_workflow()` - **ADD CALL HERE** ⚠️
+
+3. **Infrastructure Layer** (frameworks):
+   - `WorkflowLoader` - already parses computed params from YAML ✅
+
+**Dependency Rule Check**:
+```
+Application → Domain ✅ (WorkflowRegistry uses ParameterSchema)
+Application → Infrastructure ❌ (WorkflowRegistry does NOT depend on WorkflowLoader)
+Infrastructure → Domain ✅ (WorkflowLoader creates ParameterSchema)
+```
+
+**No violations!** ✅
+
+---
+
+#### 0.6 Acceptance Criteria for Phase 0
+
+- [ ] `WorkflowRegistry.expand_workflow()` calls `resolve_computed_parameters()`
+- [ ] Computed parameters resolved in dependency order (topological sort)
+- [ ] Resolved values merged into `all_params` before step resolution
+- [ ] Explicit params override computed params
+- [ ] Graceful degradation on errors (logged, workflow continues)
+- [ ] Unit tests added for computed param resolution
+- [ ] Unit tests added for circular dependency handling
+- [ ] Unit tests added for explicit override behavior
+- [ ] Manual test with simple_table.yaml confirms computed params work
+- [ ] Debug logs show resolved computed parameters
+
+---
+
+#### 0.7 Files to Modify (Phase 0)
+
+1. **`server/router/application/workflows/registry.py`** (PRIMARY)
+   - Add computed parameter resolution in `expand_workflow()` (line ~250)
+   - ~15 lines of code
+
+2. **`tests/unit/router/application/workflows/test_registry.py`** (TESTS)
+   - Add 3 new test cases (computed params, circular dependency, override)
+   - ~100 lines of test code
+
+---
 
 ### Phase 1: Parameter Renaming
 
@@ -359,6 +691,19 @@ X = -table_width/2 + plank_width/2 + (plank_index - 1) * plank_width
 
 ## Acceptance Criteria
 
+### Phase 0: Computed Parameters Integration
+- [ ] `WorkflowRegistry.expand_workflow()` calls `resolve_computed_parameters()`
+- [ ] Computed parameters resolved in dependency order (topological sort)
+- [ ] Resolved values merged into `all_params` before step resolution
+- [ ] Explicit params override computed params
+- [ ] Graceful degradation on errors (logged, workflow continues)
+- [ ] Unit tests added for computed param resolution
+- [ ] Unit tests added for circular dependency handling
+- [ ] Unit tests added for explicit override behavior
+- [ ] Manual test with simple_table.yaml confirms computed params work
+- [ ] Debug logs show resolved computed parameters
+
+### Phase 1-3: simple_table.yaml Implementation
 - [ ] Parameters renamed: `leg_offset_x`, `leg_offset_y`
 - [ ] New parameter added: `plank_max_width` (default 0.10)
 - [ ] **NEW**: Computed parameters added: `plank_count`, `plank_actual_width` (TASK-056-5)
@@ -374,10 +719,23 @@ X = -table_width/2 + plank_width/2 + (plank_index - 1) * plank_width
 
 ## Estimated Changes
 
-- **Parameters section**: ~40 lines
+### Phase 0: Computed Parameters Integration
+- **`registry.py`**: ~15 lines (computed param resolution)
+- **`test_registry.py`**: ~100 lines (3 new unit tests)
+- **Total Phase 0**: ~115 lines
+
+### Phase 1-3: simple_table.yaml
+- **Parameters section**: ~60 lines (renamed params + 2 computed params)
 - **Planks section**: ~150 lines (15 × 10 lines per plank)
 - **Legs section**: 8 lines (4 legs × 2 parameters)
-- **Total**: ~200 lines
+- **Total Phase 1-3**: ~218 lines
+
+### Grand Total
+- **Code changes**: ~333 lines
+- **Estimated effort**:
+  - Phase 0: 2-3 hours (integration + tests)
+  - Phase 1-3: 2-3 hours (YAML updates)
+  - **Total**: 4-6 hours
 
 ---
 
@@ -400,6 +758,49 @@ X = -table_width/2 + plank_width/2 + (plank_index - 1) * plank_width
   - TASK-056-5: Computed parameters (`plank_count`, `plank_actual_width`)
 - TASK-052: Intelligent Parametric Adaptation (related concept)
 - TASK-051: Confidence-Based Workflow Adaptation (uses conditional execution)
+
+---
+
+---
+
+## Phase 0 Summary: Why Integration is Required
+
+**Discovery**: TASK-056-5 implemented `resolve_computed_parameters()` but never integrated it into workflow execution!
+
+**Impact Without Phase 0**:
+```yaml
+# This YAML loads successfully...
+parameters:
+  plank_count:
+    type: int
+    computed: "ceil(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+
+steps:
+  - tool: modeling_create_primitive
+    condition: "plank_count >= 2"  # ❌ ERROR: plank_count undefined!
+    params:
+      scale: ["$plank_actual_width", 1, 0.1]  # ❌ ERROR: undefined!
+```
+
+**Impact With Phase 0**:
+```yaml
+# Same YAML, but computed params are resolved during expansion!
+# plank_count = ceil(0.8 / 0.1) = 8
+# plank_actual_width = 0.8 / 8 = 0.1
+
+steps:
+  - tool: modeling_create_primitive
+    condition: "plank_count >= 2"  # ✅ Evaluates: 8 >= 2 = True
+    params:
+      scale: ["$plank_actual_width", 1, 0.1]  # ✅ Resolves: [0.1, 1, 0.1]
+```
+
+**Clean Architecture Compliance**:
+- Domain entities already have fields ✅
+- Application layer already has logic ✅
+- Missing: **Application layer doesn't call its own logic!** ❌
+- Fix: Add 15 lines to `WorkflowRegistry.expand_workflow()` ✅
 
 ---
 
