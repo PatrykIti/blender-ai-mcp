@@ -286,6 +286,10 @@ class WorkflowRegistry:
                     )
                     # Continue without computed params
 
+            # Set evaluator context with all resolved parameters (including computed)
+            # This allows $CALCULATE expressions to reference computed params
+            self._evaluator.set_context(all_params)
+
             steps = self._resolve_definition_params(definition.steps, all_params)
             # Pass all_params to enable condition evaluation with workflow parameters
             return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)

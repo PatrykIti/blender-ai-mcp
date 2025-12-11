@@ -1,10 +1,10 @@
 # TASK-055-FIX-7: Dynamic Plank System + Parameter Renaming for simple_table.yaml
 
-**Status**: 🚧 In Progress (Phase 0 ✅ Done, Phase 1-3 pending)
+**Status**: ✅ Done (Phase 0 ✅ Done, Phase 1-3 ✅ Done)
 **Priority**: Medium
-**Estimated Effort**: 3-4 hours (Phase 0: 1h ✅ Done, Phase 1-3: 2-3h remaining)
+**Estimated Effort**: 3-4 hours (Phase 0: 1h ✅ Done, Phase 1-3: 2h ✅ Done)
 **Dependencies**: TASK-055-FIX-6 (Flexible YAML Parameter Loading), TASK-056 (Workflow System Enhancements)
-**Updated**: 2025-12-11 (Phase 0 completed: Computed parameters integrated in WorkflowRegistry)
+**Updated**: 2025-12-11 (All phases completed: Computed parameters integrated + simple_table.yaml rewritten)
 
 ---
 
@@ -712,17 +712,18 @@ X = -table_width/2 + plank_width/2 + (plank_index - 1) * plank_width
 - [x] All 26 unit tests passing
 - [x] Debug logs show resolved computed parameters (registry.py:272-275)
 
-### Phase 1-3: simple_table.yaml Implementation
-- [ ] Parameters renamed: `leg_offset_x`, `leg_offset_y`
-- [ ] New parameter added: `plank_max_width` (default 0.10)
-- [ ] **NEW**: Computed parameters added: `plank_count`, `plank_actual_width` (TASK-056-5)
-- [ ] 15 conditional planks implemented with `condition: "plank_count >= N"`
-- [ ] Plank scale uses `$plank_actual_width` (computed parameter)
-- [ ] Plank width adapts to table width (fractional support)
-- [ ] All 4 leg formulas updated
-- [ ] Manual tests pass for 0.8m, 0.45m, 1.2m, 0.83m, 1.5m widths
-- [ ] Semantic hints updated for new parameter names
-- [ ] Verify computed parameters resolve correctly in dependency order
+### Phase 1-3: simple_table.yaml Implementation ✅ **COMPLETED**
+- [x] Parameters renamed: `leg_offset_x`, `leg_offset_y`
+- [x] New parameter added: `plank_max_width` (default 0.10)
+- [x] **NEW**: Computed parameters added: `plank_count`, `plank_actual_width` (TASK-056-5)
+- [x] 15 conditional planks implemented with `condition: "plank_count >= N"`
+- [x] Plank scale uses `$plank_actual_width` (computed parameter)
+- [x] Plank width adapts to table width (fractional support)
+- [x] All 4 leg formulas updated
+- [x] Tests pass for 0.8m (8 planks), 0.45m (5 planks), 1.2m (12 planks), 0.83m (9 planks)
+- [x] Semantic hints updated for new parameter names
+- [x] Computed parameters resolve correctly in dependency order
+- [x] Critical bug fixed: evaluator context not set (registry.py:289-291)
 
 ---
 
