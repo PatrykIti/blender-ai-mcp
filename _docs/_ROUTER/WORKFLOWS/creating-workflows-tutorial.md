@@ -208,6 +208,54 @@ condition: "selected_verts >= 4"
 # Operatory logiczne
 condition: "current_mode == 'EDIT' and has_selection"
 condition: "current_mode == 'OBJECT' or not has_selection"
+
+# Nawiasy (grupowanie) - TASK-056-2
+condition: "(leg_angle > 0.5 and has_selection) or (object_count >= 3)"
+condition: "not (leg_style == 'straight' or leg_angle == 0)"
+```
+
+### 5.2a Złożone Wyrażenia Logiczne (TASK-056-2)
+
+System warunków wspiera **nawiasy** do grupowania i prawidłową **kolejność operatorów**:
+
+**Kolejność operatorów** (od najwyższego do najniższego priorytetu):
+1. `()` - Nawiasy (grupowanie)
+2. `not` - Logiczne NIE
+3. `and` - Logiczne I
+4. `or` - Logiczne LUB
+
+**Przykłady:**
+
+```yaml
+# Zagnieżdżone nawiasy
+condition: "(leg_angle > 0.5 and has_selection) or (object_count >= 3 and current_mode == 'EDIT')"
+
+# NOT z nawiasami
+condition: "not (leg_style == 'straight' or (leg_angle < 0.1 and leg_angle > -0.1))"
+
+# Kolejność bez nawiasów (NOT > AND > OR)
+condition: "width > 1.0 and length > 1.0 and height > 0.5 or is_tall"
+# Ewaluuje się jako: ((width > 1.0 and length > 1.0) and height > 0.5) or is_tall
+
+# Wiele operacji AND/OR
+condition: "A and B or C and D"
+# Ewaluuje się jako: (A and B) or (C and D)
+
+# Złożone zagnieżdżone warunki
+condition: "((A or B) and (C or D)) or (E and not F)"
+```
+
+**Dobre praktyki:**
+
+```yaml
+# ✅ DOBRZE - nawiasy dla czytelności
+condition: "(leg_angle_left > 0.5) or (leg_angle_left < -0.5)"
+
+# ⚠️ Działa ale mniej czytelne - opiera się na kolejności
+condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
+
+# ✅ DOBRZE - zagnieżdżone warunki z jasnym grupowaniem
+condition: "(mode == 'EDIT' and has_selection) or (mode == 'OBJECT' and object_count > 0)"
 ```
 
 ### 5.3 Dostępne Zmienne
@@ -275,11 +323,42 @@ params:
 **Dostępne zmienne:**
 - `width`, `height`, `depth` - wymiary obiektu
 - `min_dim`, `max_dim` - min/max wymiarów
+- Wszystkie parametry z `defaults` i `modifiers`
 
-**Dostępne funkcje:**
-- `min()`, `max()`, `abs()`
-- `round()`, `floor()`, `ceil()`
-- `sqrt()`
+**Dostępne funkcje matematyczne** (TASK-056-1):
+
+| Kategoria | Funkcje | Opis |
+|-----------|---------|------|
+| **Podstawowe** | `abs()`, `min()`, `max()` | Wartość bezwzględna, minimum, maksimum |
+| **Zaokrąglanie** | `round()`, `floor()`, `ceil()`, `trunc()` | Zaokrąglenie, podłoga, sufit, obcięcie |
+| **Potęga/Pierwiastek** | `sqrt()`, `pow()`, `**` | Pierwiastek kwadratowy, potęga |
+| **Trygonometryczne** | `sin()`, `cos()`, `tan()` | Sinus, cosinus, tangens (radiany) |
+| **Odwrotne Tryg.** | `asin()`, `acos()`, `atan()`, `atan2()` | Arcus sinus, arcus cosinus, arcus tangens |
+| **Konwersja Kątów** | `degrees()`, `radians()` | Konwersja radiany↔stopnie |
+| **Logarytmiczne** | `log()`, `log10()`, `exp()` | Logarytm naturalny, logarytm dziesiętny, e^x |
+| **Zaawansowane** | `hypot()` | Przeciwprostokątna: sqrt(x² + y²) |
+
+**Przykłady użycia:**
+
+```yaml
+# Obliczenie kąta z wymiarów
+rotation: ["$CALCULATE(atan2(height, width))", 0, 0]
+
+# Skalowanie logarytmiczne
+scale: "$CALCULATE(log10(100))"  # = 2.0
+
+# Zanik wykładniczy
+alpha: "$CALCULATE(exp(-distance / falloff_radius))"
+
+# Przekątna (odległość po skosie)
+diagonal: "$CALCULATE(hypot(width, height))"
+
+# Konwersja stopni na radiany
+angle_rad: "$CALCULATE(radians(45))"  # = 0.785...
+
+# Tangens dla nachylenia
+slope: "$CALCULATE(tan(leg_angle))"
+```
 
 ### 6.3 Rozwiązanie 2: $AUTO_*
 
@@ -1427,15 +1506,215 @@ width: "$CALCULATE(width * 0.05)"
 
 ---
 
+## 11. Zaawansowane Funkcje Workflow (TASK-056)
+
+### 11.1 Walidacja Enum dla Parametrów (TASK-056-3)
+
+Ogranicz wartości parametrów do dyskretnych opcji:
+
+```yaml
+parameters:
+  table_style:
+    type: string
+    enum: ["modern", "rustic", "industrial", "traditional"]
+    default: "modern"
+    description: Styl konstrukcji stołu
+    semantic_hints: ["style", "design", "styl"]
+
+  detail_level:
+    type: string
+    enum: ["low", "medium", "high", "ultra"]
+    default: "medium"
+    description: Poziom detali siatki (wpływa na liczbę poligonów)
+
+  leg_count:
+    type: int
+    enum: [3, 4, 6, 8]
+    default: 4
+    description: Liczba nóg stołu
+```
+
+**Korzyści:**
+- Bezpieczeństwo typów: Nieprawidłowe wartości automatycznie odrzucane
+- Samodokumentujące: Jasne opcje dla użytkowników
+- Wsparcie LLM: LLM widzi prawidłowe opcje w schemacie
+
+**Walidacja:**
+- Sprawdzenie enum następuje **przed** walidacją zakresu
+- Wartość domyślna musi być w liście enum
+- Działa z każdym typem (string, int, float, bool)
+
+### 11.2 Parametry Obliczane (TASK-056-5)
+
+Definiuj parametry automatycznie obliczane z innych parametrów:
+
+```yaml
+parameters:
+  table_width:
+    type: float
+    default: 1.2
+    description: Szerokość stołu w metrach
+
+  plank_max_width:
+    type: float
+    default: 0.10
+    description: Maksymalna szerokość pojedynczej deski
+
+  # Obliczany: Liczba potrzebnych desek
+  plank_count:
+    type: int
+    computed: "ceil(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Liczba desek potrzebna do pokrycia szerokości stołu
+
+  # Obliczany: Rzeczywista szerokość deski (dopasowana do dokładnego dopasowania)
+  plank_actual_width:
+    type: float
+    computed: "table_width / plank_count"
+    depends_on: ["table_width", "plank_count"]
+    description: Rzeczywista szerokość każdej deski (dopasowana do dokładnego zmieszczenia)
+
+  # Obliczany: Współczynnik proporcji
+  aspect_ratio:
+    type: float
+    computed: "width / height"
+    depends_on: ["width", "height"]
+    description: Stosunek szerokości do wysokości
+
+  # Obliczany: Odległość po przekątnej
+  diagonal:
+    type: float
+    computed: "hypot(width, height)"
+    depends_on: ["width", "height"]
+    description: Odległość po przekątnej blatu stołu
+```
+
+**Jak to działa:**
+1. Router rozwiązuje parametry obliczane w **kolejności zależności** (sortowanie topologiczne)
+2. Każdy parametr obliczany ewaluuje swoje wyrażenie `computed`
+3. Wynik staje się dostępny dla zależnych parametrów
+4. Zależności cykliczne są wykrywane i odrzucane
+
+**Użycie w krokach:**
+
+```yaml
+steps:
+  # Użyj parametru obliczanego jak każdego innego
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      scale: ["$plank_actual_width", 1, 0.1]
+    description: "Stwórz deskę o dokładnej szerokości"
+
+  # Warunkowy krok na podstawie obliczonej wartości
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+    description: "Dodaj dodatkowe wsparcie dla szerokich stołów"
+    condition: "plank_count >= 12"
+```
+
+**Korzyści:**
+- Automatyczne obliczenia: Nie trzeba powtarzać formuł w krokach
+- Śledzenie zależności: Parametry rozwiązują się we właściwej kolejności
+- Dynamiczna adaptacja: Obliczone wartości dopasowują się do wymiarów wejściowych
+
+### 11.3 Zależności Kroków i Kontrola Wykonania (TASK-056-4)
+
+Kontroluj kolejność wykonania kroków i obsługę błędów:
+
+```yaml
+steps:
+  - id: "create_base"
+    tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Base"
+    description: Stwórz bazę stołu
+    timeout: 5.0                # Maksymalny czas wykonania (sekundy)
+    max_retries: 2              # Próby powtórzenia przy błędzie
+    retry_delay: 1.0            # Opóźnienie między próbami (sekundy)
+
+  - id: "scale_base"
+    tool: modeling_transform_object
+    depends_on: ["create_base"]  # Czekaj na zakończenie create_base
+    params:
+      name: "Base"
+      scale: [1, 2, 0.1]
+    description: Przeskaluj bazę do prawidłowych proporcji
+    on_failure: "abort"         # "skip", "abort", "continue"
+    priority: 10                # Wyższy priorytet = wykonaj wcześniej
+
+  - id: "add_legs"
+    tool: modeling_create_primitive
+    depends_on: ["scale_base"]  # Czekaj na scale_base
+    params:
+      primitive_type: CUBE
+      name: "Leg_1"
+    max_retries: 1
+    retry_delay: 0.5
+```
+
+**Pola:**
+
+| Pole | Typ | Opis |
+|------|-----|------|
+| `id` | string | Unikalny identyfikator kroku |
+| `depends_on` | list[string] | ID kroków, od których ten krok zależy |
+| `timeout` | float | Maksymalny czas wykonania (sekundy) |
+| `max_retries` | int | Liczba prób powtórzenia przy błędzie |
+| `retry_delay` | float | Opóźnienie między próbami |
+| `on_failure` | string | "skip", "abort", "continue" |
+| `priority` | int | Wyższy = wykonaj wcześniej |
+
+**Funkcje:**
+- **Rozwiązywanie zależności**: Kroki wykonują się we właściwej kolejności (sortowanie topologiczne)
+- **Wykrywanie zależności cyklicznych**: Odrzuca nieprawidłowe grafy zależności
+- **Wymuszanie timeout**: Zabija długo działające kroki
+- **Mechanizm retry**: Automatycznie powtarza nieudane kroki
+- **Sortowanie priorytetowe**: Kontrola kolejności wykonania dla niezależnych kroków
+
+**Przykłady użycia:**
+
+```yaml
+# Zapewnij utworzenie przed transformacją
+- id: "create"
+  tool: modeling_create_primitive
+  params: {primitive_type: CUBE}
+
+- id: "transform"
+  depends_on: ["create"]
+  tool: modeling_transform_object
+  params: {scale: [1, 2, 1]}
+
+# Retry przy błędzie (np. import z sieci)
+- tool: import_fbx
+  params: {filepath: "https://example.com/model.fbx"}
+  max_retries: 3
+  retry_delay: 2.0
+  timeout: 30.0
+  on_failure: "skip"
+```
+
+---
+
 ## Podsumowanie
 
 1. **Zaplanuj** - przetestuj ręcznie, zapisz kroki
 2. **Utwórz plik** - w `workflows/custom/nazwa.yaml`
 3. **Dodaj metadane** - name, description, trigger_keywords
 4. **Zdefiniuj kroki** - tool, params, description
-5. **Dodaj warunki** - `condition` dla odporności
-6. **Użyj dynamicznych parametrów** - `$AUTO_*` lub `$CALCULATE`
-7. **Przetestuj** - sprawdź ładowanie i rozwijanie
+5. **Dodaj warunki** - `condition` dla odporności (z nawiasami jeśli potrzeba)
+6. **Użyj dynamicznych parametrów** - `$AUTO_*` lub `$CALCULATE` (13+ funkcji)
+7. **Rozważ zaawansowane funkcje** - enum, computed params, dependencies (TASK-056)
+8. **Przetestuj** - sprawdź ładowanie i rozwijanie
+
+**Nowe w TASK-056:**
+- 13 nowych funkcji matematycznych (tan, atan2, log, exp, hypot, itd.)
+- Nawiasy w warunkach z prawidłową kolejnością operatorów
+- Walidacja enum dla parametrów
+- Parametry obliczane z automatycznym rozwiązywaniem zależności
+- Kontrola wykonania kroków (timeout, retry, dependencies)
 
 **Zobacz też:**
 - [yaml-workflow-guide.md](./yaml-workflow-guide.md) - Pełna dokumentacja składni

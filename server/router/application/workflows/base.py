@@ -27,6 +27,14 @@ class WorkflowStep:
         disable_adaptation: If True, skip semantic filtering (treat as core step).
         tags: Semantic tags for filtering (e.g., ["bench", "seating"]).
 
+        id: Optional unique identifier for this step (TASK-056-4).
+        depends_on: List of step IDs this step depends on (TASK-056-4).
+        timeout: Maximum execution time in seconds (TASK-056-4).
+        max_retries: Maximum number of retry attempts on failure (TASK-056-4).
+        retry_delay: Delay in seconds between retry attempts (TASK-056-4).
+        on_failure: Action on failure: "fail", "skip", "retry" (TASK-056-4).
+        priority: Execution priority for parallel steps (higher first) (TASK-056-4).
+
     Dynamic Attributes (TASK-055-FIX-6 Phase 2):
         Custom boolean parameters loaded from YAML are set as instance attributes.
         These act as semantic filters (e.g., add_bench=True, include_stretchers=False).
@@ -40,17 +48,50 @@ class WorkflowStep:
     disable_adaptation: bool = False  # TASK-055-FIX-5: Skip adaptation filtering
     tags: List[str] = field(default_factory=list)  # Semantic tags for filtering
 
+    # TASK-056-4: Execution control and dependencies
+    id: Optional[str] = None  # Unique step identifier
+    depends_on: List[str] = field(default_factory=list)  # Step ID dependencies
+    timeout: Optional[float] = None  # Timeout in seconds
+    max_retries: int = 0  # Number of retry attempts
+    retry_delay: float = 1.0  # Delay between retries in seconds
+    on_failure: str = "fail"  # "fail", "skip", "retry"
+    priority: int = 0  # Higher priority executes first in parallel scenarios
+
     def __post_init__(self):
-        """Post-initialization to store dynamic attribute names.
+        """Post-initialization to validate and store dynamic attribute names.
 
         TASK-055-FIX-6: Track which attributes were dynamically added from YAML
         (beyond the standard dataclass fields) for semantic filtering.
+
+        TASK-056-4: Validate execution control parameters.
         """
         # Store known fields for introspection
         self._known_fields = {
             "tool", "params", "description", "condition",
-            "optional", "disable_adaptation", "tags"
+            "optional", "disable_adaptation", "tags",
+            "id", "depends_on", "timeout", "max_retries",
+            "retry_delay", "on_failure", "priority"
         }
+
+        # TASK-056-4: Validate on_failure
+        valid_on_failure = {"fail", "skip", "retry"}
+        if self.on_failure not in valid_on_failure:
+            raise ValueError(
+                f"Invalid on_failure value '{self.on_failure}'. "
+                f"Must be one of: {valid_on_failure}"
+            )
+
+        # TASK-056-4: Validate timeout
+        if self.timeout is not None and self.timeout <= 0:
+            raise ValueError(f"Timeout must be positive, got: {self.timeout}")
+
+        # TASK-056-4: Validate max_retries
+        if self.max_retries < 0:
+            raise ValueError(f"max_retries must be non-negative, got: {self.max_retries}")
+
+        # TASK-056-4: Validate retry_delay
+        if self.retry_delay < 0:
+            raise ValueError(f"retry_delay must be non-negative, got: {self.retry_delay}")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert step to dictionary representation.
@@ -66,6 +107,22 @@ class WorkflowStep:
             "disable_adaptation": self.disable_adaptation,
             "tags": list(self.tags),
         }
+
+        # TASK-056-4: Include execution control fields
+        if self.id is not None:
+            result["id"] = self.id
+        if self.depends_on:
+            result["depends_on"] = list(self.depends_on)
+        if self.timeout is not None:
+            result["timeout"] = self.timeout
+        if self.max_retries > 0:
+            result["max_retries"] = self.max_retries
+        if self.retry_delay != 1.0:
+            result["retry_delay"] = self.retry_delay
+        if self.on_failure != "fail":
+            result["on_failure"] = self.on_failure
+        if self.priority != 0:
+            result["priority"] = self.priority
 
         # TASK-055-FIX-6: Include dynamic attributes
         for attr_name in dir(self):

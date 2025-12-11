@@ -28,6 +28,13 @@ class ConditionEvaluator:
     Supported operators:
     - Comparison: ==, !=, >, <, >=, <=
     - Logical: not (prefix), and, or
+    - Grouping: parentheses () with proper precedence (TASK-056-2)
+
+    Operator precedence (highest to lowest):
+    1. Parentheses ()
+    2. not
+    3. and
+    4. or
 
     Example:
         evaluator = ConditionEvaluator()
@@ -35,6 +42,8 @@ class ConditionEvaluator:
         evaluator.evaluate("current_mode != 'EDIT'")  # -> True
         evaluator.evaluate("has_selection")  # -> False
         evaluator.evaluate("not has_selection")  # -> True
+        evaluator.evaluate("(A and B) or (C and D)")  # -> with parentheses (TASK-056-2)
+        evaluator.evaluate("not (A or B)")  # -> negation with grouping (TASK-056-2)
     """
 
     # Comparison operators (order matters - check >= before >)
@@ -132,7 +141,75 @@ class ConditionEvaluator:
             return True  # Fail-open: execute step if condition can't be evaluated
 
     def _evaluate_expression(self, condition: str) -> bool:
-        """Evaluate a condition expression.
+        """Evaluate a condition expression with operator precedence.
+
+        Implements recursive descent parser:
+        - Precedence: () > not > and > or
+        - Supports nested parentheses
+        - Proper left-to-right evaluation
+
+        Args:
+            condition: Condition string.
+
+        Returns:
+            Boolean result.
+        """
+        condition = condition.strip()
+        return self._parse_or_expression(condition)
+
+    def _parse_or_expression(self, condition: str) -> bool:
+        """Parse OR expression (lowest precedence).
+
+        Args:
+            condition: Condition string.
+
+        Returns:
+            Boolean result.
+        """
+        parts = self._split_top_level(condition, " or ")
+        if len(parts) > 1:
+            # Evaluate left-to-right
+            result = self._parse_and_expression(parts[0])
+            for part in parts[1:]:
+                result = result or self._parse_and_expression(part)
+            return result
+        return self._parse_and_expression(condition)
+
+    def _parse_and_expression(self, condition: str) -> bool:
+        """Parse AND expression (higher precedence than OR).
+
+        Args:
+            condition: Condition string.
+
+        Returns:
+            Boolean result.
+        """
+        parts = self._split_top_level(condition, " and ")
+        if len(parts) > 1:
+            # Evaluate left-to-right
+            result = self._parse_not_expression(parts[0])
+            for part in parts[1:]:
+                result = result and self._parse_not_expression(part)
+            return result
+        return self._parse_not_expression(condition)
+
+    def _parse_not_expression(self, condition: str) -> bool:
+        """Parse NOT expression (highest precedence).
+
+        Args:
+            condition: Condition string.
+
+        Returns:
+            Boolean result.
+        """
+        condition = condition.strip()
+        if condition.startswith("not "):
+            inner = condition[4:].strip()
+            return not self._parse_not_expression(inner)
+        return self._parse_primary(condition)
+
+    def _parse_primary(self, condition: str) -> bool:
+        """Parse primary expression (comparisons, parentheses, literals).
 
         Args:
             condition: Condition string.
@@ -142,24 +219,11 @@ class ConditionEvaluator:
         """
         condition = condition.strip()
 
-        # Handle "not X" prefix
-        if condition.startswith("not "):
-            inner = condition[4:].strip()
-            return not self._evaluate_expression(inner)
-
-        # Handle "X and Y"
-        if " and " in condition:
-            parts = condition.split(" and ", 1)
-            left = self._evaluate_expression(parts[0].strip())
-            right = self._evaluate_expression(parts[1].strip())
-            return left and right
-
-        # Handle "X or Y"
-        if " or " in condition:
-            parts = condition.split(" or ", 1)
-            left = self._evaluate_expression(parts[0].strip())
-            right = self._evaluate_expression(parts[1].strip())
-            return left or right
+        # Handle parentheses
+        if condition.startswith("(") and condition.endswith(")"):
+            # Remove outer parentheses and re-evaluate
+            inner = condition[1:-1].strip()
+            return self._parse_or_expression(inner)
 
         # Handle comparisons
         for op, func in self.COMPARISONS:
@@ -182,6 +246,48 @@ class ConditionEvaluator:
 
         logger.warning(f"Could not parse condition: {condition}")
         return True  # Fail-open
+
+    def _split_top_level(self, condition: str, delimiter: str) -> list:
+        """Split condition on delimiter, respecting parentheses nesting.
+
+        Args:
+            condition: Condition string.
+            delimiter: Delimiter to split on (e.g., " or ", " and ").
+
+        Returns:
+            List of parts split by delimiter at top level only.
+        """
+        parts = []
+        current = []
+        depth = 0
+        i = 0
+        delim_len = len(delimiter)
+
+        while i < len(condition):
+            char = condition[i]
+
+            if char == "(":
+                depth += 1
+                current.append(char)
+                i += 1
+            elif char == ")":
+                depth -= 1
+                current.append(char)
+                i += 1
+            elif depth == 0 and condition[i:i + delim_len] == delimiter:
+                # Found delimiter at top level
+                parts.append("".join(current).strip())
+                current = []
+                i += delim_len
+            else:
+                current.append(char)
+                i += 1
+
+        # Add final part
+        if current:
+            parts.append("".join(current).strip())
+
+        return parts if len(parts) > 1 else [condition.strip()]
 
     def _resolve_value(self, value_str: str) -> Any:
         """Resolve a value from string representation.

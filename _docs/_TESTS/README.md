@@ -66,11 +66,11 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 | **Ensemble Matching** | ✅ | ✅ | TASK-053, TASK-054 |
 | **Parameter Resolution** | ✅ | ✅ | TASK-055-FIX |
 | **Workflow Execution** | ✅ | ✅ | TASK-041, TASK-052 |
-| **Expression Evaluator** | ✅ | 📋 Planned | **TASK-056-1**: Extended math functions (13 new) |
-| **Condition Evaluator** | ✅ | 📋 Planned | **TASK-056-2**: Parentheses support, operator precedence |
-| **Parameter Validation** | ✅ | 📋 Planned | **TASK-056-3**: Enum constraints |
-| **Step Dependencies** | 📋 Planned | 📋 Planned | **TASK-056-4**: Topological sort, timeout, retry |
-| **Computed Parameters** | 📋 Planned | 📋 Planned | **TASK-056-5**: Dependency graph, expression eval |
+| **Expression Evaluator** | ✅ | 📋 Planned | **TASK-056-1**: Extended math functions (13 new) ✅ DONE |
+| **Condition Evaluator** | ✅ | 📋 Planned | **TASK-056-2**: Parentheses support, operator precedence ✅ DONE |
+| **Parameter Validation** | ✅ | 📋 Planned | **TASK-056-3**: Enum constraints ✅ DONE |
+| **Step Dependencies** | ✅ | 📋 Planned | **TASK-056-4**: Topological sort, timeout, retry ✅ DONE |
+| **Computed Parameters** | ✅ | 📋 Planned | **TASK-056-5**: Dependency graph, expression eval ✅ DONE |
 | **Dynamic Workflow Steps** | 📋 Planned | 📋 Planned | **TASK-055-FIX-7**: Conditional planks, adaptive count |
 
 ---

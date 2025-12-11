@@ -23,6 +23,7 @@ class ParameterSchema:
         name: Parameter name (e.g., "leg_angle_left").
         type: Parameter type ("float", "int", "bool", "string").
         range: Optional min/max range for numeric types.
+        enum: Optional list of allowed values (TASK-056-3).
         default: Default value if not resolved.
         description: Human-readable description for LLM context.
         semantic_hints: Keywords that relate to this parameter for matching.
@@ -32,10 +33,15 @@ class ParameterSchema:
     name: str
     type: str  # "float", "int", "bool", "string"
     range: Optional[Tuple[float, float]] = None
+    enum: Optional[List[Any]] = None  # TASK-056-3: Allowed values
     default: Any = None
     description: str = ""
     semantic_hints: List[str] = field(default_factory=list)
     group: Optional[str] = None
+
+    # TASK-056-5: Computed parameters
+    computed: Optional[str] = None  # Expression to compute value from other params
+    depends_on: List[str] = field(default_factory=list)  # Parameters this depends on
 
     def __post_init__(self) -> None:
         """Validate parameter schema."""
@@ -56,6 +62,37 @@ class ParameterSchema:
                     f"Range min ({self.range[0]}) must be <= max ({self.range[1]})"
                 )
 
+        # TASK-056-3: Validate enum constraints
+        if self.enum is not None:
+            if not isinstance(self.enum, list):
+                raise ValueError(
+                    f"Enum must be a list of allowed values, got: {type(self.enum)}"
+                )
+            if len(self.enum) == 0:
+                raise ValueError("Enum list cannot be empty")
+
+            # Validate default is in enum if both specified
+            if self.default is not None and self.default not in self.enum:
+                raise ValueError(
+                    f"Default value '{self.default}' must be in enum: {self.enum}"
+                )
+
+        # TASK-056-5: Validate computed parameters
+        if self.computed is not None:
+            if not isinstance(self.computed, str):
+                raise ValueError(
+                    f"Computed expression must be a string, got: {type(self.computed)}"
+                )
+            if not self.computed.strip():
+                raise ValueError("Computed expression cannot be empty")
+
+            # Computed parameters shouldn't have default values
+            if self.default is not None:
+                raise ValueError(
+                    "Computed parameters cannot have default values "
+                    "(they are calculated from other parameters)"
+                )
+
     def validate_value(self, value: Any) -> bool:
         """Check if a value is valid for this parameter.
 
@@ -65,6 +102,12 @@ class ParameterSchema:
         Returns:
             True if value is valid, False otherwise.
         """
+        # TASK-056-3: Check enum constraint first (applies to all types)
+        if self.enum is not None:
+            if value not in self.enum:
+                return False
+
+        # Type-specific validation
         if self.type == "float":
             if not isinstance(value, (int, float)):
                 return False
@@ -93,10 +136,13 @@ class ParameterSchema:
             "name": self.name,
             "type": self.type,
             "range": list(self.range) if self.range else None,
+            "enum": self.enum,  # TASK-056-3
             "default": self.default,
             "description": self.description,
             "semantic_hints": self.semantic_hints,
             "group": self.group,
+            "computed": self.computed,  # TASK-056-5
+            "depends_on": self.depends_on,  # TASK-056-5
         }
 
     @classmethod
@@ -117,10 +163,13 @@ class ParameterSchema:
             name=data["name"],
             type=data.get("type", "float"),
             range=range_value,
+            enum=data.get("enum"),  # TASK-056-3
             default=data.get("default"),
             description=data.get("description", ""),
             semantic_hints=data.get("semantic_hints", []),
             group=data.get("group"),
+            computed=data.get("computed"),  # TASK-056-5
+            depends_on=data.get("depends_on", []),  # TASK-056-5
         )
 
 
@@ -215,6 +264,7 @@ class UnresolvedParameter:
             "context": self.context,
             "description": self.schema.description,
             "range": list(self.schema.range) if self.schema.range else None,
+            "enum": self.schema.enum,  # TASK-056-3
             "default": self.schema.default,
             "type": self.schema.type,
             "group": self.schema.group,

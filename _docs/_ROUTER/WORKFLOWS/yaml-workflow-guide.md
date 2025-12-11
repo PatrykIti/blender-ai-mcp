@@ -8,12 +8,17 @@ Complete guide to creating custom YAML workflows for the Router Supervisor.
 
 YAML workflows allow you to define sequences of Blender operations that execute automatically when triggered. Workflows support:
 
-- **Conditional steps** - Skip steps based on scene state
-- **Dynamic parameters** - Calculate values from object dimensions
+- **Conditional steps** - Skip steps based on scene state with parentheses support (TASK-056-2)
+- **Dynamic parameters** - Calculate values with 13+ math functions (TASK-056-1)
 - **Smart defaults** - Auto-sized operations with `$AUTO_*` params
 - **Keyword triggering** - Automatic activation from user prompts
 - **Semantic matching** - LaBSE-powered multilingual prompt matching (TASK-046)
 - **Parametric variables** - `$variable` syntax with `defaults` and `modifiers` (TASK-052)
+- **Enum validation** - Restrict parameters to discrete choices (TASK-056-3)
+- **Computed parameters** - Auto-calculate derived values (TASK-056-5)
+- **Step dependencies** - Control execution order with timeout/retry (TASK-056-4)
+
+> **New in TASK-056:** Advanced math functions (tan, atan2, log, exp, hypot), complex boolean expressions with parentheses, enum constraints, computed parameters, and step dependency management. See [Advanced Workflow Features](#advanced-workflow-features-task-056) for details.
 
 ---
 
@@ -103,6 +108,51 @@ condition: "selected_verts >= 4"     # Only if enough vertices
 | `not` | `not has_selection` | Negation |
 | `and` | `mode == 'EDIT' and has_selection` | Both true |
 | `or` | `mode == 'OBJECT' or count > 0` | Either true |
+| `()` | `(A and B) or C` | Grouping (parentheses) |
+
+### Complex Boolean Expressions (TASK-056-2)
+
+Conditions support **parentheses** for grouping and proper **operator precedence**:
+
+**Operator Precedence** (highest to lowest):
+1. `()` - Parentheses (grouping)
+2. `not` - Logical NOT
+3. `and` - Logical AND
+4. `or` - Logical OR
+
+**Examples:**
+
+```yaml
+# Nested parentheses
+condition: "(leg_angle > 0.5 and has_selection) or (object_count >= 3 and current_mode == 'EDIT')"
+
+# NOT with parentheses
+condition: "not (leg_style == 'straight' or (leg_angle < 0.1 and leg_angle > -0.1))"
+
+# Precedence without parentheses (NOT > AND > OR)
+condition: "width > 1.0 and length > 1.0 and height > 0.5 or is_tall"
+# Evaluates as: ((width > 1.0 and length > 1.0) and height > 0.5) or is_tall
+
+# Multiple AND/OR operations
+condition: "A and B or C and D"
+# Evaluates as: (A and B) or (C and D)
+
+# Complex nested conditions
+condition: "((A or B) and (C or D)) or (E and not F)"
+```
+
+**Best Practices:**
+
+```yaml
+# ✅ Good: Use parentheses for clarity
+condition: "(leg_angle_left > 0.5) or (leg_angle_left < -0.5)"
+
+# ⚠️ Works but less clear: Relies on precedence
+condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
+
+# ✅ Good: Nested conditions with clear grouping
+condition: "(mode == 'EDIT' and has_selection) or (mode == 'OBJECT' and object_count > 0)"
+```
 
 ### Available Variables
 
@@ -421,17 +471,51 @@ params:
   segments: "$CALCULATE(3 + 2)"           # Simple math = 5
   # Trigonometry for leg stretching
   translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
+  # Advanced: logarithmic scaling
+  scale_factor: "$CALCULATE(log10(object_count + 1))"
+  # Advanced: angle calculation
+  rotation: ["$CALCULATE(atan2(height, width))", 0, 0]
 ```
 
-**Available Math Functions:**
-- `min()`, `max()`, `abs()`
-- `round()`, `floor()`, `ceil()`
-- `sqrt()`
-- `sin()`, `cos()` - Trigonometric functions (angles in radians)
+**Available Math Functions** (TASK-056-1):
+
+| Category | Functions | Description |
+|----------|-----------|-------------|
+| **Basic** | `abs()`, `min()`, `max()` | Absolute value, minimum, maximum |
+| **Rounding** | `round()`, `floor()`, `ceil()`, `trunc()` | Round to integer, floor, ceiling, truncate |
+| **Power/Root** | `sqrt()`, `pow()`, `**` | Square root, power, exponentiation |
+| **Trigonometric** | `sin()`, `cos()`, `tan()` | Sine, cosine, tangent (radians) |
+| **Inverse Trig** | `asin()`, `acos()`, `atan()`, `atan2()` | Arc sine, arc cosine, arc tangent |
+| **Angle Conversion** | `degrees()`, `radians()` | Convert radians↔degrees |
+| **Logarithmic** | `log()`, `log10()`, `exp()` | Natural log, base-10 log, e^x |
+| **Advanced** | `hypot()` | Hypotenuse: sqrt(x² + y²) |
+
+**Usage Examples:**
+
+```yaml
+# Angle calculation from dimensions
+rotation: ["$CALCULATE(atan2(height, width))", 0, 0]
+
+# Logarithmic scaling
+scale: "$CALCULATE(log10(100))"  # = 2.0
+
+# Exponential decay
+alpha: "$CALCULATE(exp(-distance / falloff_radius))"
+
+# Hypotenuse for diagonal distance
+diagonal: "$CALCULATE(hypot(width, height))"
+
+# Convert degrees to radians
+angle_rad: "$CALCULATE(radians(45))"  # = 0.785...
+
+# Tangent for slope calculation
+slope: "$CALCULATE(tan(leg_angle))"
+```
 
 **Available Variables:**
 - `width`, `height`, `depth` - Object dimensions
 - `min_dim`, `max_dim` - Min/max of dimensions
+- Any workflow parameter from `defaults` or `modifiers`
 
 ### $AUTO_* Parameters
 
@@ -548,6 +632,200 @@ Variables are resolved in this order (later overrides earlier):
 1. **defaults** - Workflow-defined defaults
 2. **modifiers** - Keyword matches from user prompt
 3. **params** - Explicit parameters passed to expand_workflow()
+
+---
+
+## Advanced Workflow Features (TASK-056)
+
+### Enum Parameter Validation (TASK-056-3)
+
+Restrict parameter values to a discrete set of choices:
+
+```yaml
+parameters:
+  table_style:
+    type: string
+    enum: ["modern", "rustic", "industrial", "traditional"]
+    default: "modern"
+    description: Style of table construction
+    semantic_hints: ["style", "design"]
+
+  detail_level:
+    type: string
+    enum: ["low", "medium", "high", "ultra"]
+    default: "medium"
+    description: Mesh detail level (affects polygon count)
+
+  leg_count:
+    type: int
+    enum: [3, 4, 6, 8]
+    default: 4
+    description: Number of table legs
+```
+
+**Benefits:**
+- Type safety: Invalid values rejected automatically
+- Self-documenting: Clear choices for users
+- LLM guidance: LLM sees valid options in schema
+
+**Validation:**
+- Enum check happens **before** range validation
+- Default value must be in enum list
+- Works with any type (string, int, float, bool)
+
+### Computed Parameters (TASK-056-5)
+
+Define parameters that are automatically calculated from other parameters:
+
+```yaml
+parameters:
+  table_width:
+    type: float
+    default: 1.2
+    description: Table width in meters
+
+  plank_max_width:
+    type: float
+    default: 0.10
+    description: Maximum width of a single plank
+
+  # Computed: Number of planks needed
+  plank_count:
+    type: int
+    computed: "ceil(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Number of planks needed to span table width
+
+  # Computed: Actual plank width (adjusted to fit exactly)
+  plank_actual_width:
+    type: float
+    computed: "table_width / plank_count"
+    depends_on: ["table_width", "plank_count"]
+    description: Actual width of each plank (adjusted to fit)
+
+  # Computed: Aspect ratio
+  aspect_ratio:
+    type: float
+    computed: "width / height"
+    depends_on: ["width", "height"]
+    description: Width to height ratio
+
+  # Computed: Diagonal distance
+  diagonal:
+    type: float
+    computed: "hypot(width, height)"
+    depends_on: ["width", "height"]
+    description: Diagonal distance across table top
+```
+
+**How It Works:**
+1. Router resolves computed parameters in **dependency order** (topological sort)
+2. Each computed parameter evaluates its `computed` expression
+3. Result becomes available for dependent parameters
+4. Circular dependencies are detected and rejected
+
+**Usage in Steps:**
+
+```yaml
+steps:
+  # Use computed parameter like any other
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      scale: ["$plank_actual_width", 1, 0.1]
+    description: "Create plank with exact width"
+
+  # Conditional step based on computed value
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+    description: "Add extra support for wide tables"
+    condition: "plank_count >= 12"
+```
+
+**Benefits:**
+- Automatic calculations: No need to repeat formulas in steps
+- Dependency tracking: Parameters resolve in correct order
+- Dynamic adaptation: Computed values adjust to input dimensions
+
+### Step Dependencies and Execution Control (TASK-056-4)
+
+Control step execution order and error handling:
+
+```yaml
+steps:
+  - id: "create_base"
+    tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Base"
+    description: Create table base
+    timeout: 5.0                # Max execution time (seconds)
+    max_retries: 2              # Retry attempts on failure
+    retry_delay: 1.0            # Delay between retries (seconds)
+
+  - id: "scale_base"
+    tool: modeling_transform_object
+    depends_on: ["create_base"]  # Wait for create_base to complete
+    params:
+      name: "Base"
+      scale: [1, 2, 0.1]
+    description: Scale base to correct proportions
+    on_failure: "abort"         # "skip", "abort", "continue"
+    priority: 10                # Higher priority = execute earlier
+
+  - id: "add_legs"
+    tool: modeling_create_primitive
+    depends_on: ["scale_base"]  # Wait for scale_base
+    params:
+      primitive_type: CUBE
+      name: "Leg_1"
+    max_retries: 1
+    retry_delay: 0.5
+```
+
+**Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique step identifier |
+| `depends_on` | list[string] | Step IDs this depends on |
+| `timeout` | float | Max execution time (seconds) |
+| `max_retries` | int | Retry attempts on failure |
+| `retry_delay` | float | Delay between retries |
+| `on_failure` | string | "skip", "abort", "continue" |
+| `priority` | int | Higher = execute earlier |
+
+**Features:**
+- **Dependency resolution**: Steps execute in correct order (topological sort)
+- **Circular dependency detection**: Rejects invalid dependency graphs
+- **Timeout enforcement**: Kills long-running steps
+- **Retry mechanism**: Automatically retries failed steps
+- **Priority ordering**: Control execution order for independent steps
+
+**Use Cases:**
+
+```yaml
+# Ensure creation before transformation
+- id: "create"
+  tool: modeling_create_primitive
+  params: {primitive_type: CUBE}
+
+- id: "transform"
+  depends_on: ["create"]
+  tool: modeling_transform_object
+  params: {scale: [1, 2, 1]}
+
+# Retry on failure (e.g., import from network)
+- tool: import_fbx
+  params: {filepath: "https://example.com/model.fbx"}
+  max_retries: 3
+  retry_delay: 2.0
+  timeout: 30.0
+  on_failure: "skip"
+```
+
+---
 
 ### Complete Example
 

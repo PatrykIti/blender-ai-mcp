@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks (~24 sub-tasks)
+- **To Do:** 2 tasks (~19 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 122
+- **Done:** 123
 
 ---
 
@@ -14,7 +14,6 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-056](./TASK-056_Workflow_System_Enhancements.md) | **Workflow System Enhancements** | 🔴 High | 5 sub-tasks: extended math functions + parentheses support + enum validation + step dependencies + computed parameters |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
 | [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
@@ -33,6 +32,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-056](./TASK-056_Workflow_System_Enhancements.md) | **Workflow System Enhancements** | 🔴 High | 2025-12-11 |
 | [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 2025-12-11 |
 | [TASK-055-FIX](./TASK-055-FIX_Unified_Parameter_Resolution.md) | **Unified Parameter Resolution** | 🔴 High | 2025-12-11 |
 | [TASK-055-FIX-6](./TASK-055-FIX-6_Flexible_YAML_Parameter_Loading.md) | **Flexible YAML Parameter Loading with Semantic Extensions** | 🔴 Critical | 2025-12-10 |
