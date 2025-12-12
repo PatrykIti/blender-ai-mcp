@@ -8,6 +8,7 @@
 **Created**: 2025-12-12
 **Supersedes**: TASK-059 (kept as documentation reference)
 **Revised**: 2025-12-12 (Clean Architecture alignment + comprehensive review)
+**Revised**: 2025-12-12 (Code review - added critical implementation details)
 
 ---
 
@@ -1023,12 +1024,22 @@ class ExpressionEvaluator:
         self._unified.set_context(flat_context)
 
     def get_context(self) -> Dict[str, float]:
-        """Get current evaluation context.
+        """Get current evaluation context (numeric values only).
 
         Returns:
-            Copy of current context dictionary.
+            Copy of current context dictionary with only numeric values.
+            Strings are filtered out for backward compatibility.
         """
-        return self._unified.get_context()
+        ctx = self._unified.get_context()
+        return {k: v for k, v in ctx.items() if isinstance(v, (int, float))}
+
+    def update_context(self, updates: Dict[str, Any]) -> None:
+        """Update context with new values (merge).
+
+        Args:
+            updates: Dictionary with values to add/update.
+        """
+        self._unified.update_context(updates)
 
     def evaluate(self, expression: str) -> Optional[float]:
         """Evaluate a mathematical expression.
@@ -1508,6 +1519,232 @@ UnifiedEvaluator handles variables directly in `_eval_name()`:
 
 ---
 
+## Critical Implementation Details (Code Review 2025-12-12)
+
+### 1. Context Type Consistency
+
+**Problem**: Current `ExpressionEvaluator._context` is typed as `Dict[str, float]`, but `UnifiedEvaluator._context` needs `Dict[str, Any]` (to support strings).
+
+**Solution**:
+- `UnifiedEvaluator._context: Dict[str, Any]` - stores floats AND strings
+- `ExpressionEvaluator.get_context() -> Dict[str, float]` - filters out strings for backward compatibility
+- `ConditionEvaluator.get_context() -> Dict[str, Any]` - returns full context
+
+```python
+# ExpressionEvaluator wrapper
+def get_context(self) -> Dict[str, float]:
+    """Get current evaluation context (numeric values only)."""
+    ctx = self._unified.get_context()
+    return {k: v for k, v in ctx.items() if isinstance(v, (int, float))}
+```
+
+### 2. Missing `update_context()` in ExpressionEvaluator
+
+**Problem**: TASK-060 spec doesn't show `update_context()` in ExpressionEvaluator, but this method may be needed for consistency.
+
+**Solution**: Add to ExpressionEvaluator wrapper:
+```python
+def update_context(self, updates: Dict[str, Any]) -> None:
+    """Update context with new values (merge)."""
+    self._unified.update_context(updates)
+```
+
+### 3. `depends_on` None Check
+
+**Problem**: Current code doesn't handle `schema.depends_on = None` properly.
+
+**Current** (`expression_evaluator.py:387`):
+```python
+graph = {
+    name: (schema.depends_on if hasattr(schema, "depends_on") else [])
+    ...
+}
+```
+
+**Fixed** (in UnifiedEvaluator):
+```python
+graph = {
+    name: (schema.depends_on if hasattr(schema, "depends_on") and schema.depends_on else [])
+    ...
+}
+```
+
+### 4. WorkflowRegistry Integration Points
+
+**File**: `server/router/application/workflows/registry.py`
+
+The following methods interact with evaluators:
+
+| Method | Evaluator Used | Must Preserve |
+|--------|---------------|---------------|
+| `expand_workflow()` | All three | Context setup order |
+| `_build_condition_context()` | ConditionEvaluator | Context normalization |
+| `_resolve_single_value()` | ExpressionEvaluator | `$CALCULATE()` pattern |
+| `_steps_to_calls()` | ConditionEvaluator | `simulate_step_effect()` |
+
+**Critical**: `simulate_step_effect()` must modify the same context that `evaluate()` reads:
+```python
+# In ConditionEvaluator
+def simulate_step_effect(self, tool_name: str, params: Dict[str, Any]) -> None:
+    updates = {}
+    # ... build updates ...
+    if updates:
+        self._unified.update_context(updates)  # ← Must use unified's context
+```
+
+### 5. String Handling in Conditions
+
+**Current ConditionEvaluator** handles strings via `_resolve_value()` (lines 304-306):
+```python
+if (value_str.startswith("'") and value_str.endswith("'")) or \
+   (value_str.startswith('"') and value_str.endswith('"')):
+    return value_str[1:-1]
+```
+
+**UnifiedEvaluator** handles strings in `_eval_constant()`:
+```python
+if isinstance(value, str):
+    return value  # Return string for comparisons
+```
+
+**Key difference**: UnifiedEvaluator gets strings from AST (`ast.Constant` with `str` value), while ConditionEvaluator strips quotes manually.
+
+### 6. Unknown Variable Handling (Critical Bug Fix)
+
+**Current ConditionEvaluator** (`condition_evaluator.py:330-339`):
+```python
+# Return 0 for numeric comparisons (fail-safe: condition will be False)
+return 0
+```
+
+**UnifiedEvaluator** must maintain this behavior:
+```python
+def _eval_name(self, node: ast.Name) -> Any:
+    var_name = node.id
+    if var_name in self._context:
+        return self._context[var_name]
+    if var_name in ("True", "False"):
+        return 1.0 if var_name == "True" else 0.0
+    # CRITICAL: Raise for ExpressionEvaluator, but ConditionEvaluator catches and returns True
+    raise ValueError(f"Unknown variable: {var_name}")
+```
+
+**ConditionEvaluator wrapper** catches this:
+```python
+def evaluate(self, condition: str) -> bool:
+    try:
+        result = self._unified.evaluate_as_bool(condition)
+        return result
+    except Exception as e:
+        logger.warning(f"Condition evaluation failed: '{condition}' - {e}")
+        return True  # Fail-open
+```
+
+### 7. Test File Compatibility Matrix
+
+| Test File | Tests | Must Pass Unchanged |
+|-----------|-------|---------------------|
+| `test_expression_evaluator.py` | ~50 tests | ✅ Yes |
+| `test_expression_evaluator_extended.py` | ~40 tests | ✅ Yes |
+| `test_condition_evaluator.py` | ~60 tests | ✅ Yes |
+| `test_condition_evaluator_parentheses.py` | ~30 tests | ✅ Yes |
+| `test_proportion_resolver.py` | ~25 tests | ✅ Yes (unaffected) |
+
+**Run before AND after implementation**:
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/ -v --tb=short
+```
+
+### 8. Interface Pattern (follow IMatcher)
+
+Follow the pattern from `server/router/domain/interfaces/matcher.py`:
+
+```python
+# i_expression_evaluator.py
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional
+
+
+class IExpressionEvaluator(ABC):
+    """Abstract interface for expression evaluation.
+
+    Implementations:
+        - UnifiedEvaluator: Full AST-based implementation
+
+    Example:
+        evaluator: IExpressionEvaluator = UnifiedEvaluator()
+        evaluator.set_context({"width": 2.0, "mode": "EDIT"})
+        result = evaluator.evaluate("width > 1.0")  # -> 1.0
+    """
+
+    @abstractmethod
+    def set_context(self, context: Dict[str, Any]) -> None:
+        """Set variable context for evaluation."""
+        pass
+
+    @abstractmethod
+    def get_context(self) -> Dict[str, Any]:
+        """Get current evaluation context."""
+        pass
+
+    @abstractmethod
+    def update_context(self, updates: Dict[str, Any]) -> None:
+        """Update context with new values (merge)."""
+        pass
+
+    @abstractmethod
+    def get_variable(self, name: str) -> Optional[Any]:
+        """Get variable value from context."""
+        pass
+
+    @abstractmethod
+    def evaluate(self, expression: str) -> Any:
+        """Evaluate expression and return result."""
+        pass
+
+    @abstractmethod
+    def evaluate_safe(self, expression: str, default: Any = 0.0) -> Any:
+        """Evaluate expression with fallback on error."""
+        pass
+```
+
+### 9. Comparison with Floats (Edge Case)
+
+**Problem**: Float comparisons like `0.1 + 0.2 == 0.3` fail due to floating point precision.
+
+**Current behavior**: Both evaluators use exact comparison.
+
+**Decision**: Keep exact comparison (matches Python semantics). Document in workflow guidelines that floating point comparisons should use range checks:
+```yaml
+# Bad: 0.1 + 0.2 == 0.3  (may fail due to float precision)
+# Good: abs(result - 0.3) < 0.001
+```
+
+### 10. Boolean Short-Circuit Evaluation
+
+**UnifiedEvaluator** must implement proper short-circuit:
+
+```python
+def _eval_boolop(self, node: ast.BoolOp) -> float:
+    if isinstance(node.op, ast.And):
+        for value in node.values:
+            result = self._eval_node(value)
+            if not result:
+                return 0.0  # Short-circuit: first False
+        return 1.0
+
+    if isinstance(node.op, ast.Or):
+        for value in node.values:
+            result = self._eval_node(value)
+            if result:
+                return 1.0  # Short-circuit: first True
+        return 0.0
+```
+
+**Why it matters**: Expressions like `has_obj and obj.selected` should NOT evaluate `obj.selected` if `has_obj` is False.
+
+---
+
 ## Rollback Plan
 
 If issues arise after deployment:
@@ -1542,3 +1779,108 @@ If issues arise after deployment:
    - Add note about TASK-059 being superseded
 
 4. Create `_docs/_ROUTER/IMPLEMENTATION/XX-unified-evaluator.md`
+
+---
+
+## Implementation Order (Step-by-Step)
+
+**IMPORTANT**: Follow this exact order to maintain backward compatibility at each step.
+
+### Step 1: Run Baseline Tests
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/ -v --tb=short > baseline_tests.txt
+```
+Save output to compare later.
+
+### Step 2: Create Domain Interface
+1. Create `server/router/domain/interfaces/i_expression_evaluator.py`
+2. Update `server/router/domain/interfaces/__init__.py` (add export)
+3. Run tests → should pass (no functional change)
+
+### Step 3: Create UnifiedEvaluator
+1. Create `server/router/application/evaluator/unified_evaluator.py`
+2. Update `server/router/application/evaluator/__init__.py` (add export)
+3. Create `tests/unit/router/application/evaluator/test_unified_evaluator.py`
+4. Run tests → should pass (new tests only)
+
+### Step 4: Refactor ExpressionEvaluator
+1. Backup current implementation: `cp expression_evaluator.py expression_evaluator.py.bak`
+2. Refactor to wrapper
+3. Run tests → **ALL existing tests MUST pass**
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/test_expression_evaluator*.py -v
+```
+
+### Step 5: Refactor ConditionEvaluator
+1. Backup current implementation: `cp condition_evaluator.py condition_evaluator.py.bak`
+2. Refactor to wrapper
+3. Run tests → **ALL existing tests MUST pass**
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/test_condition_evaluator*.py -v
+```
+
+### Step 6: Integration Test
+```bash
+# Run ALL evaluator tests
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/ -v
+
+# Run workflow tests (uses evaluators)
+PYTHONPATH=. poetry run pytest tests/unit/router/application/workflows/ -v
+
+# Run full router tests
+PYTHONPATH=. poetry run pytest tests/unit/router/ -v
+```
+
+### Step 7: Manual E2E Test
+Test with actual workflow that uses conditions:
+```bash
+ROUTER_ENABLED=true poetry run python -c "
+from server.router.application.workflows.registry import WorkflowRegistry
+registry = WorkflowRegistry()
+registry.load_custom_workflows()
+
+# Test condition with math function (NEW capability)
+from server.router.application.evaluator import ConditionEvaluator
+ce = ConditionEvaluator()
+ce.set_context({'width': 2.5, 'mode': 'EDIT'})
+print('floor(width) > 2:', ce.evaluate('floor(width) > 2'))  # Should be True
+
+# Test ternary in $CALCULATE (NEW capability)
+from server.router.application.evaluator import ExpressionEvaluator
+ee = ExpressionEvaluator()
+ee.set_context({'count': 5, 'max_count': 7})
+print('ternary:', ee.evaluate('0.1 if count <= max_count else 0.05'))  # Should be 0.1
+"
+```
+
+### Step 8: Cleanup
+1. Remove backup files
+2. Delete old unused code
+3. Update documentation
+
+---
+
+## Quick Reference: What Changes vs What Stays
+
+### STAYS THE SAME (Backward Compatibility)
+- `ExpressionEvaluator` class name and location
+- `ConditionEvaluator` class name and location
+- All public method signatures
+- `$CALCULATE()` pattern matching
+- `$variable` pattern matching
+- Context flattening (dimensions → width/height/depth)
+- Fail-open behavior in ConditionEvaluator
+- `simulate_step_effect()` method
+
+### CHANGES (Internal)
+- Evaluation delegated to `UnifiedEvaluator`
+- Regex-based parsing → AST-based parsing (in UnifiedEvaluator)
+- Internal `_safe_eval()`, `_eval_node()` methods removed from ExpressionEvaluator
+- Internal `_parse_*()` methods removed from ConditionEvaluator
+
+### NEW CAPABILITIES
+- Math functions in conditions: `floor(width) > 5`
+- Ternary in `$CALCULATE`: `0.1 if x > 0 else 0.05`
+- Comparisons in `$CALCULATE`: `1 if width > 1.0 else 0`
+- Logical operators in `$CALCULATE`: `1 if a and b else 0`
+- `IExpressionEvaluator` interface in domain layer
