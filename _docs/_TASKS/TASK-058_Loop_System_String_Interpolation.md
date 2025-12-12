@@ -42,11 +42,22 @@ W momencie gdy workflow adaptacja jest włączona (`TASK-051`) router ma osobną
 | **Application/Evaluator** | `server/router/application/evaluator/unified_evaluator.py:45` | Whitelist funkcji + AST core (TASK-060) |
 | **Application/Workflows** | `server/router/application/workflows/registry.py:202` | `expand_workflow()` - główna ekspansja |
 | **Application/Workflows** | `server/router/application/workflows/registry.py:541` | `_resolve_definition_params()` / `$CALCULATE` + `$variable` |
+| **Application/Router** | `server/router/application/router.py:433` | `_expand_triggered_workflow()` - ścieżka adaptacji (TASK-051) |
 | **Application/Engines** | `server/router/application/engines/workflow_adapter.py` | `WorkflowAdapter` - filtrowanie optional steps |
 
 ---
 
 ## Propozycja Implementacji
+
+## Definition of Done (Akceptacja)
+
+- [ ] Włączona adaptacja (TASK-051) nie zmienia semantyki ekspansji: nadal działa computed params, `$CALCULATE(...)`, `$AUTO_*`, `condition` + `simulate_step_effect()` i loop expansion.
+- [ ] `loop` w YAML jest parsowany automatycznie przez `WorkflowLoader` (bez specjalnego kodu w loaderze).
+- [ ] LoopExpander rozwija kroki z `loop` do konkretnych kroków (inclusive range) i usuwa `loop` w krokach wynikowych.
+- [ ] LoopExpander podstawia `{i}` we wszystkich stringach: `params`, `description`, `condition`, `id`, `depends_on`.
+- [ ] `$CALCULATE(...)` może używać indeksu pętli przez `{i}` (np. `({i} - 0.5)`), a `condition` może używać `{i}` bez dodatkowego kontekstu.
+- [ ] `_resolve_definition_params()` nie gubi pól kroków ani dynamicznych atrybutów (TASK-055-FIX-6 Phase 2).
+- [ ] Dodane testy regresyjne dla adaptacji + testy unit dla loop expansion i substytucji placeholderów.
 
 ### FAZA 0: Naprawa adaptacji workflow (P0 - MUST)
 
@@ -737,7 +748,7 @@ tests/e2e/router/test_simple_table_with_loops.py
 
 ```yaml
 # ❌ NIE MOŻNA:
-name: "$FORMAT(Plank_$CALCULATE(i + 1))"
+name: "$FORMAT(Plank_$CALCULATE({i} + 1))"
 
 # ✅ MOŻNA (loop variable podstawiana przed $FORMAT):
 name: "$FORMAT(Plank_{i})"
@@ -824,6 +835,7 @@ resolved_steps.append(
 | `expand_workflow()` | 202-297 | 202-297 | ✅ Dokładnie |
 | `_resolve_definition_params()` | 539-632 | 541 | ✅ OK |
 | `_parse_step()` | 300-350 | 300-350 | ✅ OK |
+| `_expand_triggered_workflow()` (adaptacja) | - | `router.py:433-543` | ⚠️ Wymaga FAZA 0 |
 
 ### ✅ Zgodność z Clean Architecture
 
@@ -834,6 +846,23 @@ resolved_steps.append(
 | Separation of concerns | ✅ Transformacja danych oddzielona od I/O |
 
 ### 📝 Ilustracja Zmian
+
+#### Zmiana 0: Adaptacja nie omija registry pipeline (FAZA 0)
+
+**PRZED** (`router.py:_expand_triggered_workflow()`):
+- ręczne budowanie `CorrectedToolCall`,
+- brak `$CALCULATE/$AUTO_`, brak `condition`, brak `simulate_step_effect()`.
+
+**PO** (FAZA 0):
+```python
+calls = registry.expand_workflow(
+    workflow_name,
+    merged_params,
+    eval_context,
+    user_prompt=self._current_goal or "",
+    steps_override=adapted_steps,
+)
+```
 
 #### Zmiana 1: `_known_fields` w WorkflowStep
 
@@ -863,7 +892,7 @@ self._known_fields = {
 **PRZED** (`registry.py:289-295`):
 ```python
 # Set evaluator context with all resolved parameters
-self._evaluator.set_context(all_params)
+self._evaluator.set_context({**base_context, **all_params})
 
 steps = self._resolve_definition_params(definition.steps, all_params)
 return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
@@ -872,12 +901,14 @@ return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
 **PO** (TASK-058):
 ```python
 # Set evaluator context with all resolved parameters
-self._evaluator.set_context(all_params)
+self._evaluator.set_context({**base_context, **all_params})
+
+steps_source = steps_override if steps_override is not None else definition.steps
 
 # TASK-058: Expand loop steps BEFORE other processing
 expanded_steps = self._loop_expander.expand_loops(
-    definition.steps,
-    all_params  # Contains plank_count, etc.
+    steps_source,
+    {**base_context, **all_params}
 )
 
 steps = self._resolve_definition_params(expanded_steps, all_params)
