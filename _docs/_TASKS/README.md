@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks (~19 sub-tasks)
+- **To Do:** 3 tasks (~19 sub-tasks)
 - **In Progress:** 1 task
 - **Done:** 124
 
@@ -14,6 +14,7 @@ Task board for the project. Update statuses in markdown files.
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | 🔴 High | Loop parameter + $FORMAT() for simplified YAML workflows |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
 | [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
