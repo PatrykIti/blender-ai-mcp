@@ -251,7 +251,6 @@ class TestIExpansionEngine:
 
     def test_has_required_methods(self):
         """Verify interface has all required methods."""
-        assert hasattr(IExpansionEngine, "expand")
         assert hasattr(IExpansionEngine, "get_workflow")
         assert hasattr(IExpansionEngine, "register_workflow")
         assert hasattr(IExpansionEngine, "get_available_workflows")

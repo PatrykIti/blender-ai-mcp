@@ -186,11 +186,11 @@ See [TASK-039: Router Supervisor Implementation](../_TASKS/TASK-039_Router_Super
 
 ## Example: Router in Action
 
-**Scenario:** LLM sends `mesh_extrude` in OBJECT mode, no selection
+**Scenario:** LLM sends `mesh_extrude_region` in OBJECT mode, no selection
 
 ```python
 # LLM sends:
-tool_call("mesh_extrude", {"depth": 0.5})
+tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
 # Router detects:
 # - Mode: OBJECT (mesh tool needs EDIT)
@@ -200,9 +200,9 @@ tool_call("mesh_extrude", {"depth": 0.5})
 # Router outputs:
 [
     {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-    {"tool": "mesh_select", "params": {"action": "all", "mode": "FACE"}},
+    {"tool": "mesh_select", "params": {"action": "all"}},
     {"tool": "mesh_inset", "params": {"thickness": 0.03}},
-    {"tool": "mesh_extrude", "params": {"depth": -0.02}},
+    {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
     {"tool": "system_set_mode", "params": {"mode": "OBJECT"}}
 ]
 ```

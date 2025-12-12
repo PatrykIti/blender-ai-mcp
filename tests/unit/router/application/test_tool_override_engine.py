@@ -99,7 +99,7 @@ class TestCheckOverride:
         """Test no override when no pattern detected."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             base_context,
             pattern=None,
         )
@@ -110,7 +110,7 @@ class TestCheckOverride:
         """Test override triggered with phone pattern."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -134,7 +134,7 @@ class TestCheckOverride:
         """Test no override when tool doesn't match."""
         decision = engine.check_override(
             "mesh_bevel",
-            {"width": 0.1},
+            {"offset": 0.1},
             base_context,
             pattern=phone_pattern,
         )
@@ -145,7 +145,7 @@ class TestCheckOverride:
         """Test no override when pattern doesn't match."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             base_context,
             pattern=tower_pattern,  # extrude is for phone, not tower
         )
@@ -156,7 +156,7 @@ class TestCheckOverride:
         """Test that disabled overrides return no override."""
         decision = engine_disabled.check_override(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             base_context,
             pattern=phone_pattern,
         )
@@ -171,7 +171,7 @@ class TestOverrideDecisionContent:
         """Test phone override includes inset."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -183,7 +183,7 @@ class TestOverrideDecisionContent:
         """Test phone override includes extrude."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -219,7 +219,7 @@ class TestOverrideDecisionContent:
         """Test override decision has reasons."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -259,7 +259,7 @@ class TestRegisterRule:
 
         decision = engine.check_override(
             "mesh_bevel",
-            {"width": 0.1},
+            {"offset": 0.1},
             base_context,
             pattern=None,
         )
@@ -305,7 +305,7 @@ class TestRemoveRule:
 
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -338,7 +338,7 @@ class TestReplacementToolInheritance:
         """Test that inherit_params field is present."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -350,13 +350,13 @@ class TestReplacementToolInheritance:
         )
 
         assert extrude_tool is not None
-        assert "depth" in extrude_tool.inherit_params
+        assert "move" in extrude_tool.inherit_params
 
     def test_replacement_has_description(self, engine, base_context, phone_pattern):
         """Test that replacement tools have descriptions."""
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": -0.02},
+            {"move": [0.0, 0.0, -0.02]},
             base_context,
             pattern=phone_pattern,
         )
@@ -401,7 +401,7 @@ class TestEdgeCases:
 
         decision = engine.check_override(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             base_context,
             pattern=pattern,
         )

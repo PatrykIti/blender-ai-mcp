@@ -281,7 +281,7 @@ self.register_rule(
     trigger_pattern="phone_like",  # Pattern name
     replacement_tools=[
         {"tool_name": "mesh_inset", "params": {"thickness": 0.03}},
-        {"tool_name": "mesh_extrude_region", "inherit_params": ["depth"]},
+        {"tool_name": "mesh_extrude_region", "inherit_params": ["move"]},
     ],
 )
 ```

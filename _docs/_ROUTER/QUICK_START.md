@@ -53,7 +53,7 @@ router = SupervisorRouter(config=config, rpc_client=rpc_client)
 # LLM wants to extrude (but scene is in OBJECT mode, no selection)
 tools = router.process_llm_tool_call(
     tool_name="mesh_extrude_region",
-    params={"depth": 0.5},
+    params={"move": [0.0, 0.0, 0.5]},
     prompt="extrude the top face"
 )
 
@@ -61,7 +61,7 @@ tools = router.process_llm_tool_call(
 # [
 #     {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
 #     {"tool": "mesh_select", "params": {"action": "all"}},
-#     {"tool": "mesh_extrude_region", "params": {"depth": 0.5}}
+#     {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}}
 # ]
 ```
 
@@ -104,7 +104,7 @@ rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]}
 # LLM asks to extrude (for screen cutout)
 tools = router.process_llm_tool_call(
     "mesh_extrude_region",
-    {"depth": -0.02},
+    {"move": [0.0, 0.0, -0.02]},
     prompt="create screen cutout"
 )
 

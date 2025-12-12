@@ -69,10 +69,12 @@ class TestEnsembleAggregator:
         # Verify result
         assert ensemble.workflow_name == "table_workflow"
         assert ensemble.final_score == pytest.approx(0.336, rel=1e-3)  # 0.84 × 0.40
-        assert ensemble.confidence_level == "LOW"  # 0.336 < 0.4
+        # TASK-055-FIX: Confidence is normalized relative to contributing matchers.
+        # Semantic-only max possible score is 0.40 → 0.336/0.40 = 84% → HIGH.
+        assert ensemble.confidence_level == "HIGH"
         assert ensemble.modifiers == {"leg_style": "straight"}
         assert ensemble.matcher_contributions == {"semantic": pytest.approx(0.336, rel=1e-3)}
-        assert ensemble.requires_adaptation is True  # Not HIGH confidence
+        assert ensemble.requires_adaptation is False  # HIGH confidence
 
     def test_aggregate_multiple_matchers_same_workflow(self, aggregator, mock_modifier_extractor):
         """Test aggregate when multiple matchers agree on same workflow."""
@@ -124,7 +126,8 @@ class TestEnsembleAggregator:
         # With pattern boost: 0.3425 × 1.3 = 0.44525
         assert ensemble.workflow_name == "phone_workflow"
         assert ensemble.final_score == pytest.approx(0.44525, rel=1e-3)
-        assert ensemble.confidence_level == "MEDIUM"  # 0.44525 >= 0.4
+        # TASK-055-FIX: Confidence is normalized relative to contributing matchers.
+        assert ensemble.confidence_level == "HIGH"
 
     def test_aggregate_pattern_boost_selects_different_workflow(self, aggregator):
         """Test pattern boost can change which workflow wins."""
@@ -299,13 +302,13 @@ class TestEnsembleAggregator:
         assert ensemble_high.requires_adaptation is False
 
         # MEDIUM confidence -> requires_adaptation = True
-        # Need score >= 0.4 for MEDIUM: 1.0 * 0.40 = 0.40, 0.50 * 0.40 = 0.20, sum = 0.60
+        # Use semantic-only to avoid normalization against 0.80 (keyword+semantic).
         results_medium = [
-            MatcherResult("keyword", "table_workflow", 1.0, 0.40),
+            MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.50, 0.40),
             MatcherResult("pattern", None, 0.0, 0.15)
         ]
         ensemble_medium = aggregator.aggregate(results_medium, "create")
-        # Score: 0.40 + 0.20 = 0.60 (MEDIUM range: 0.4 <= score < 0.7)
+        # Score: 0.50 × 0.40 = 0.20; max=0.40 → 0.20/0.40 = 50% → MEDIUM
         assert ensemble_medium.confidence_level == "MEDIUM"
         assert ensemble_medium.requires_adaptation is True

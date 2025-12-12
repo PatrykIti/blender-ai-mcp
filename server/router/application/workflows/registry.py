@@ -218,21 +218,23 @@ class WorkflowRegistry:
         Returns:
             List of tool calls to execute.
         """
+        base_context: Dict[str, Any] = context or {}
+
         # Ensure custom workflows are loaded
         self.ensure_custom_loaded()
 
         # Set up evaluator context
-        eval_context = dict(context or {})
+        eval_context = dict(base_context)
         if params:
             eval_context.update(params)
         self._evaluator.set_context(eval_context)
 
         # Set up condition evaluator context (TASK-041-11)
-        condition_context = self._build_condition_context(context or {})
+        condition_context = self._build_condition_context(base_context)
         self._condition_evaluator.set_context(condition_context)
 
         # Set up proportion resolver (TASK-041-14)
-        self._setup_proportion_resolver(context or {})
+        self._setup_proportion_resolver(base_context)
 
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
@@ -288,7 +290,7 @@ class WorkflowRegistry:
 
             # Set evaluator context with all resolved parameters (including computed)
             # This allows $CALCULATE expressions to reference computed params
-            self._evaluator.set_context(all_params)
+            self._evaluator.set_context({**base_context, **all_params})
 
             steps = self._resolve_definition_params(definition.steps, all_params)
             # Pass all_params to enable condition evaluation with workflow parameters

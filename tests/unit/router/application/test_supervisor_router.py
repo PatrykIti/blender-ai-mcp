@@ -219,7 +219,7 @@ class TestBasicPipeline:
         with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
-                {"depth": 0.5},
+                {"move": [0.0, 0.0, 0.5]},
             )
 
         assert len(result) >= 1
@@ -231,7 +231,7 @@ class TestBasicPipeline:
         with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
-                {"depth": 0.5},
+                {"move": [0.0, 0.0, 0.5]},
             )
 
         # Should include mode switch
@@ -267,7 +267,7 @@ class TestBasicPipeline:
         with patch.object(router.analyzer, 'analyze', return_value=no_selection_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
-                {"depth": 0.5},
+                {"move": [0.0, 0.0, 0.5]},
             )
 
         # Should include selection
@@ -276,7 +276,7 @@ class TestBasicPipeline:
     def test_stats_increment(self, router, object_mode_context):
         """Test stats are incremented on processing."""
         with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
-            router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+            router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         stats = router.get_stats()
         assert stats["total_calls"] == 1
@@ -303,7 +303,7 @@ class TestOverrides:
             with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
                 result = router.process_llm_tool_call(
                     "mesh_extrude_region",
-                    {"depth": -0.02},
+                    {"move": [0.0, 0.0, -0.02]},
                 )
 
         # Should have override replacement tools
@@ -323,7 +323,7 @@ class TestOverrides:
             with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
                 result = router.process_llm_tool_call(
                     "mesh_extrude_region",
-                    {"depth": -0.02},
+                    {"move": [0.0, 0.0, -0.02]},
                 )
 
         # Should just have the original call (with mode/selection fixes)
@@ -411,7 +411,7 @@ class TestFirewall:
         with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_bevel",
-                {"width": 0.1, "segments": 2},
+                {"offset": 0.1, "segments": 2},
             )
 
         # Should include mode switch fix
@@ -425,7 +425,7 @@ class TestFirewall:
         with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_bevel",
-                {"width": 0.1, "segments": 2},
+                {"offset": 0.1, "segments": 2},
             )
 
         # Should pass through without firewall blocking
@@ -444,8 +444,8 @@ class TestBatchProcessing:
         """Test processing batch of tool calls."""
         with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
             result = router.process_batch([
-                {"tool": "mesh_extrude_region", "params": {"depth": 0.5}},
-                {"tool": "mesh_bevel", "params": {"width": 0.1}},
+                {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}},
+                {"tool": "mesh_bevel", "params": {"offset": 0.1}},
             ])
 
         assert len(result) >= 2
@@ -554,7 +554,7 @@ class TestStateManagement:
     def test_get_last_context(self, router, edit_mode_context):
         """Test getting last analyzed context."""
         with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
-            router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+            router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         last_context = router.get_last_context()
         assert last_context is not None
@@ -569,7 +569,7 @@ class TestStateManagement:
 
         with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
             with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
-                router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+                router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         last_pattern = router.get_last_pattern()
         assert last_pattern is not None
@@ -578,7 +578,7 @@ class TestStateManagement:
     def test_invalidate_cache(self, router, edit_mode_context):
         """Test cache invalidation."""
         with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
-            router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+            router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         router.invalidate_cache()
         assert router.get_last_context() is None
@@ -587,7 +587,7 @@ class TestStateManagement:
     def test_reset_stats(self, router, edit_mode_context):
         """Test stats reset."""
         with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
-            router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+            router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         router.reset_stats()
         stats = router.get_stats()
@@ -652,7 +652,7 @@ class TestIntegration:
         with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
-                {"depth": 0.5},
+                {"move": [0.0, 0.0, 0.5]},
             )
 
         # Should have:
@@ -716,7 +716,7 @@ class TestIntegration:
         with patch.object(router.analyzer, 'analyze', return_value=no_selection_object):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
-                {"depth": 0.5},
+                {"move": [0.0, 0.0, 0.5]},
             )
 
         # Should have mode switch and selection

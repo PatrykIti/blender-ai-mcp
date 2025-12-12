@@ -187,7 +187,7 @@ class TestModeSwitch:
         """Test that mesh tool in OBJECT mode adds mode switch."""
         corrected, pre_steps = engine.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             object_mode_context,
         )
 
@@ -227,7 +227,7 @@ class TestModeSwitch:
         """Test that mode switch respects config."""
         corrected, pre_steps = engine_no_auto.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             object_mode_context,
         )
 
@@ -242,7 +242,7 @@ class TestAutoSelection:
         """Test that extrude without selection adds select all."""
         corrected, pre_steps = engine.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             edit_mode_no_selection,
         )
 
@@ -255,7 +255,7 @@ class TestAutoSelection:
         """Test that bevel without selection adds select all."""
         corrected, pre_steps = engine.correct(
             "mesh_bevel",
-            {"width": 0.1},
+            {"offset": 0.1},
             edit_mode_no_selection,
         )
 
@@ -266,7 +266,7 @@ class TestAutoSelection:
         """Test that existing selection doesn't add select."""
         corrected, pre_steps = engine.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             edit_mode_context,
         )
 
@@ -277,7 +277,7 @@ class TestAutoSelection:
         """Test that auto selection respects config."""
         corrected, pre_steps = engine_no_auto.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             edit_mode_no_selection,
         )
 
@@ -288,33 +288,33 @@ class TestAutoSelection:
 class TestParameterClamping:
     """Tests for parameter clamping."""
 
-    def test_bevel_width_clamped_high(self, engine, edit_mode_context):
-        """Test that bevel width is clamped to max."""
+    def test_bevel_offset_clamped_high(self, engine, edit_mode_context):
+        """Test that bevel offset is clamped to max."""
         corrected, _ = engine.correct(
             "mesh_bevel",
-            {"width": 100.0, "segments": 3},
+            {"offset": 100.0, "segments": 3},
             edit_mode_context,
         )
 
         # Should be clamped based on dimension ratio
-        assert corrected.params["width"] < 100.0
-        assert any("clamp_width" in c for c in corrected.corrections_applied)
+        assert corrected.params["offset"] < 100.0
+        assert any("clamp_offset" in c for c in corrected.corrections_applied)
 
-    def test_bevel_width_clamped_low(self, engine, edit_mode_context):
-        """Test that bevel width is clamped to min."""
+    def test_bevel_offset_clamped_low(self, engine, edit_mode_context):
+        """Test that bevel offset is clamped to min."""
         corrected, _ = engine.correct(
             "mesh_bevel",
-            {"width": 0.0001, "segments": 3},
+            {"offset": 0.0001, "segments": 3},
             edit_mode_context,
         )
 
-        assert corrected.params["width"] >= 0.001
+        assert corrected.params["offset"] >= 0.001
 
     def test_bevel_segments_clamped(self, engine, edit_mode_context):
         """Test that bevel segments are clamped."""
         corrected, _ = engine.correct(
             "mesh_bevel",
-            {"width": 0.1, "segments": 50},
+            {"offset": 0.1, "segments": 50},
             edit_mode_context,
         )
 
@@ -332,25 +332,25 @@ class TestParameterClamping:
 
     def test_valid_params_unchanged(self, engine, edit_mode_context):
         """Test that valid params are not changed."""
-        original_params = {"width": 0.1, "segments": 3}
+        original_params = {"offset": 0.1, "segments": 3}
         corrected, _ = engine.correct(
             "mesh_bevel",
             original_params.copy(),
             edit_mode_context,
         )
 
-        assert corrected.params["width"] == 0.1
+        assert corrected.params["offset"] == 0.1
         assert corrected.params["segments"] == 3
 
     def test_clamping_disabled(self, engine_no_auto, edit_mode_context):
         """Test that clamping respects config."""
         corrected, _ = engine_no_auto.correct(
             "mesh_bevel",
-            {"width": 100.0, "segments": 50},
+            {"offset": 100.0, "segments": 50},
             edit_mode_context,
         )
 
-        assert corrected.params["width"] == 100.0
+        assert corrected.params["offset"] == 100.0
         assert corrected.params["segments"] == 50
 
 
@@ -369,7 +369,7 @@ class TestCorrectedToolCall:
 
     def test_preserves_original_params(self, engine, edit_mode_context):
         """Test that original params are preserved."""
-        original = {"width": 100.0, "segments": 50}
+        original = {"offset": 100.0, "segments": 50}
         corrected, _ = engine.correct(
             "mesh_bevel",
             original,
@@ -392,7 +392,7 @@ class TestCorrectedToolCall:
         """Test that pre-steps are marked as injected."""
         _, pre_steps = engine.correct(
             "mesh_extrude_region",
-            {"depth": 0.5},
+            {"move": [0.0, 0.0, 0.5]},
             object_mode_context,
         )
 
@@ -433,7 +433,7 @@ class TestClampParameters:
         """Test that clamp returns tuple of params and corrections."""
         params, corrections = engine.clamp_parameters(
             "mesh_bevel",
-            {"width": 0.1},
+            {"offset": 0.1},
             edit_mode_context,
         )
 
@@ -518,7 +518,7 @@ class TestParamLimitsConstant:
     def test_param_limits_has_bevel(self):
         """Test PARAM_LIMITS has bevel limits."""
         assert "mesh_bevel" in PARAM_LIMITS
-        assert "width" in PARAM_LIMITS["mesh_bevel"]
+        assert "offset" in PARAM_LIMITS["mesh_bevel"]
         assert "segments" in PARAM_LIMITS["mesh_bevel"]
 
     def test_param_limits_tuples(self):

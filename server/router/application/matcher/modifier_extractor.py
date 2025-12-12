@@ -167,6 +167,10 @@ class ModifierExtractor(IModifierExtractor):
             semantic_matches: List[tuple] = []  # (keyword, param_values, avg_sim, matched_words)
 
             if self._classifier is not None:
+                # Per-word threshold is slightly looser than the overall threshold,
+                # to allow multi-word modifiers to match naturally (e.g. 0.70 overall
+                # with 0.65 per-word).
+                per_word_threshold = max(0.0, self._similarity_threshold - 0.05)
                 ngrams = self._extract_ngrams(prompt)
 
                 for keyword, values in definition.modifiers.items():
@@ -185,7 +189,7 @@ class ModifierExtractor(IModifierExtractor):
                                 best_sim = sim
                                 best_ngram = ngram
 
-                        if best_sim >= 0.65:  # Per-word threshold (TASK-055-FIX-2)
+                        if best_sim >= per_word_threshold:
                             matched_words.append((kw_word, best_ngram, best_sim))
                             logger.debug(
                                 f"Word match: '{kw_word}' ↔ '{best_ngram}' (sim={best_sim:.3f})"
@@ -197,6 +201,13 @@ class ModifierExtractor(IModifierExtractor):
                     if len(matched_words) >= required_matches:
                         # Calculate average similarity
                         avg_sim = sum(m[2] for m in matched_words) / len(matched_words)
+
+                        if avg_sim < self._similarity_threshold:
+                            logger.debug(
+                                f"Rejected '{keyword}': avg similarity {avg_sim:.3f} "
+                                f"below threshold {self._similarity_threshold:.3f}"
+                            )
+                            continue
 
                         # Check negative signals from YAML
                         negative_signals = values.get("negative_signals", [])

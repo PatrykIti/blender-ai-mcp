@@ -84,9 +84,9 @@ class ErrorFirewall(IFirewall):
         self.register_rule(
             rule_name="bevel_too_large",
             tool_pattern="mesh_bevel",
-            condition="param:width > dimension_ratio:0.5",
+            condition="param:offset > dimension_ratio:0.5",
             action="modify",
-            fix_description="Clamp bevel width",
+            fix_description="Clamp bevel offset",
         )
 
         self.register_rule(
@@ -359,7 +359,7 @@ class ErrorFirewall(IFirewall):
             return len(context.objects) == 0
 
         if condition.startswith("param:"):
-            # param:width > dimension_ratio:0.5
+            # param:offset > dimension_ratio:0.5
             parts = condition.split()
             if len(parts) >= 3:
                 param_part = parts[0].replace("param:", "")

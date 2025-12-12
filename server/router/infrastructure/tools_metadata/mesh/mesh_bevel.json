@@ -12,17 +12,23 @@
     "add bevel to all edges"
   ],
   "parameters": {
-    "width": {
+    "offset": {
       "type": "float",
       "default": 0.1,
       "range": [0.001, 10.0],
-      "description": "Bevel width"
+      "description": "Bevel size (offset)"
     },
     "segments": {
       "type": "int",
       "default": 1,
       "range": [1, 10],
       "description": "Number of bevel segments"
+    },
+    "profile": {
+      "type": "float",
+      "default": 0.5,
+      "range": [0.0, 1.0],
+      "description": "Bevel profile shape (0.5 is round)"
     },
     "affect": {
       "type": "enum",
@@ -31,7 +37,7 @@
       "description": "What to bevel"
     }
   },
-  "related_tools": ["mesh_extrude", "mesh_inset", "mesh_select"],
+  "related_tools": ["mesh_extrude_region", "mesh_inset", "mesh_select"],
   "patterns": ["phone_like:edge_rounding", "box_like:chamfer"],
   "description": "Bevels selected edges or vertices to create rounded or chamfered edges."
 }

@@ -34,11 +34,11 @@ MODE_REQUIREMENTS: Dict[str, str] = {
 # Parameter limits for clamping
 PARAM_LIMITS: Dict[str, Dict[str, Tuple[float, float]]] = {
     "mesh_bevel": {
-        "width": (0.001, 10.0),
+        "offset": (0.001, 10.0),
         "segments": (1, 10),
     },
     "mesh_extrude_region": {
-        "depth": (-100.0, 100.0),
+        "move": (-100.0, 100.0),
     },
     "mesh_inset": {
         "thickness": (0.001, 10.0),
@@ -54,8 +54,8 @@ PARAM_LIMITS: Dict[str, Dict[str, Tuple[float, float]]] = {
         "ratio": (0.01, 1.0),
     },
     "mesh_smooth": {
-        "factor": (0.0, 2.0),
-        "repeat": (1, 100),
+        "factor": (0.0, 1.0),
+        "iterations": (1, 100),
     },
 }
 
@@ -181,16 +181,27 @@ class ToolCorrectionEngine(ICorrectionEngine):
         for param_name, (min_val, max_val) in tool_limits.items():
             if param_name in clamped:
                 original_value = clamped[param_name]
-                if isinstance(original_value, (int, float)):
-                    # Apply dimension-relative clamping for bevel
-                    if tool_name == "mesh_bevel" and param_name == "width":
-                        max_val = self._get_dimension_relative_max(
-                            context, self._config.bevel_max_ratio
-                        )
+                # Apply dimension-relative clamping for bevel
+                if tool_name == "mesh_bevel" and param_name == "offset":
+                    max_val = self._get_dimension_relative_max(
+                        context, self._config.bevel_max_ratio
+                    )
 
-                    # Clamp the value
+                if isinstance(original_value, (int, float)):
                     clamped_value = max(min_val, min(max_val, original_value))
                     if clamped_value != original_value:
+                        clamped[param_name] = clamped_value
+                        corrections.append(
+                            f"clamp_{param_name}:{original_value}->{clamped_value}"
+                        )
+                elif (
+                    isinstance(original_value, (list, tuple))
+                    and all(isinstance(v, (int, float)) for v in original_value)
+                ):
+                    clamped_value = [
+                        max(min_val, min(max_val, v)) for v in original_value
+                    ]
+                    if clamped_value != list(original_value):
                         clamped[param_name] = clamped_value
                         corrections.append(
                             f"clamp_{param_name}:{original_value}->{clamped_value}"

@@ -49,8 +49,8 @@ class ToolOverrideEngine(IOverrideEngine):
                 },
                 {
                     "tool_name": "mesh_extrude_region",
-                    "params": {"depth": -0.02},
-                    "inherit_params": ["depth"],
+                    "params": {"move": [0.0, 0.0, -0.02]},
+                    "inherit_params": ["move"],
                     "description": "Extrude inward for screen recess",
                 },
             ],
@@ -74,8 +74,8 @@ class ToolOverrideEngine(IOverrideEngine):
                 },
                 {
                     "tool_name": "mesh_select_targeted",
-                    "params": {"action": "by_location", "location": [0, 0, 1], "threshold": 0.1},
-                    "description": "Select top vertices",
+                    "params": {"action": "by_location", "axis": "Z", "min_coord": 0.0, "max_coord": 9999.0, "element_type": "VERT"},
+                    "description": "Select upper vertices",
                 },
                 {
                     "tool_name": "mesh_transform_selected",

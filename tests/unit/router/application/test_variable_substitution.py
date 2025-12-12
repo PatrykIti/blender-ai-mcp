@@ -425,7 +425,7 @@ class TestPicnicTableWorkflow:
         assert definition is not None
         assert definition.modifiers is not None
         assert "straight legs" in definition.modifiers
-        assert "proste nogi" in definition.modifiers
+        # YAML keeps semantic keys in English; multilingual prompts are handled via embeddings.
 
     def test_picnic_table_straight_legs_modifier(self, registry):
         """Test that 'straight legs' modifier sets angle to 0."""

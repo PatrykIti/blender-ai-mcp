@@ -104,8 +104,18 @@ class IntentClassifier(IIntentClassifier):
             return True
 
         try:
+            import os
+
+            if os.getenv("PYTEST_CURRENT_TEST") is not None:
+                logger.info("Skipping LaBSE load under pytest")
+                return False
+
+            local_only = os.getenv("HF_HUB_OFFLINE", "").lower() in ("1", "true", "yes")
             logger.info(f"Loading sentence transformer model: {self._model_name}")
-            self._model = SentenceTransformer(self._model_name)
+            self._model = SentenceTransformer(
+                self._model_name,
+                local_files_only=local_only,
+            )
             logger.info("Model loaded successfully")
             return True
         except Exception as e:

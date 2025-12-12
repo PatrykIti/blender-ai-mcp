@@ -60,7 +60,7 @@ router = SupervisorRouter(config=config, rpc_client=rpc_client)
 
 tools = router.process_llm_tool_call(
     tool_name="mesh_extrude_region",
-    params={"depth": 0.5},
+    params={"move": [0.0, 0.0, 0.5]},
     prompt="extrude the top face"
 )
 
@@ -68,7 +68,7 @@ tools = router.process_llm_tool_call(
 # [
 #     {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
 #     {"tool": "mesh_select", "params": {"action": "all"}},
-#     {"tool": "mesh_extrude_region", "params": {"depth": 0.5}}
+#     {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}}
 # ]
 ```
 

@@ -101,7 +101,7 @@ class TestCalculateExpressionEvaluation:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$CALCULATE(min_dim * 0.05)",
+                        "offset": "$CALCULATE(min_dim * 0.05)",
                         "segments": "$CALCULATE(3 + 2)",
                     },
                 ),
@@ -127,7 +127,7 @@ class TestCalculateExpressionEvaluation:
         calls = registry.expand_workflow("test_calculate", context=context)
 
         # min_dim * 0.05 = 0.5 * 0.05 = 0.025
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
         # 3 + 2 = 5
         assert calls[0].params["segments"] == pytest.approx(5.0)
         # width * 0.1 = 2.0 * 0.1 = 0.2
@@ -214,7 +214,7 @@ class TestAutoParameterResolution:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$AUTO_BEVEL",
+                        "offset": "$AUTO_BEVEL",
                     },
                 ),
                 WorkflowStep(
@@ -244,7 +244,7 @@ class TestAutoParameterResolution:
         calls = registry.expand_workflow("test_auto", context=context)
 
         # $AUTO_BEVEL = 5% of 0.5 = 0.025
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
         # $AUTO_INSET = 3% of 2.0 = 0.06
         assert calls[1].params["thickness"] == pytest.approx(0.06)
         # $AUTO_EXTRUDE_NEG = -10% of 0.5 = -0.05
@@ -257,7 +257,7 @@ class TestAutoParameterResolution:
         calls = registry.expand_workflow("test_auto", context={})
 
         # Without dimensions, params remain as $AUTO_* strings
-        assert calls[0].params["width"] == "$AUTO_BEVEL"
+        assert calls[0].params["offset"] == "$AUTO_BEVEL"
 
 
 class TestFullWorkflowPipeline:
@@ -325,7 +325,7 @@ class TestMixedParameterTypes:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$AUTO_BEVEL",      # AUTO
+                        "offset": "$AUTO_BEVEL",      # AUTO
                         "segments": 3,              # Literal
                     },
                     condition="current_mode == 'EDIT'",  # Condition
@@ -359,7 +359,7 @@ class TestMixedParameterTypes:
         calls = registry.expand_workflow("test_mixed", context=context)
 
         # Step 1: AUTO + literal (condition met)
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
         assert calls[0].params["segments"] == 3
 
         # Step 2: CALCULATE + AUTO
@@ -408,7 +408,7 @@ class TestContextSimulationInWorkflow:
                 ),
                 WorkflowStep(
                     tool="mesh_bevel",
-                    params={"width": 0.1},
+                    params={"offset": 0.1},
                 ),
             ],
             trigger_keywords=["test"],

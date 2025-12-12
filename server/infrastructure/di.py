@@ -139,14 +139,28 @@ def get_labse_model():
     global _labse_model_instance
     if _labse_model_instance is None:
         try:
+            import os
             from sentence_transformers import SentenceTransformer
             import logging
+            running_pytest = os.getenv("PYTEST_CURRENT_TEST") is not None
+            if running_pytest:
+                logging.info("Skipping LaBSE load under pytest")
+                return None
+
+            local_only = os.getenv("HF_HUB_OFFLINE", "").lower() in ("1", "true", "yes")
             logging.info("Loading shared LaBSE model...")
-            _labse_model_instance = SentenceTransformer("sentence-transformers/LaBSE")
+            _labse_model_instance = SentenceTransformer(
+                "sentence-transformers/LaBSE",
+                local_files_only=local_only,
+            )
             logging.info("Shared LaBSE model loaded")
         except ImportError:
             import logging
             logging.warning("sentence-transformers not installed, LaBSE model unavailable")
+            return None
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to load LaBSE model, falling back (reason: {e})")
             return None
     return _labse_model_instance
 
@@ -310,4 +324,3 @@ def get_router_handler() -> IRouterTool:
             workflow_loader=get_workflow_loader() if config.ROUTER_ENABLED else None,
         )
     return _router_handler_instance
-

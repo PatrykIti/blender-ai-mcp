@@ -47,8 +47,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("any prompt", "table_workflow")
 
-        # Should return defaults only
-        assert result.modifiers == {"default_value": 1.0}
+        # TASK-055-FIX: ModifierExtractor returns ONLY matched modifiers (no defaults).
+        assert result.modifiers == {}
         assert result.matched_keywords == []
         assert result.confidence_map == {}
 
@@ -65,8 +65,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("random text", "table_workflow")
 
-        # Should return defaults only
-        assert result.modifiers == {"leg_style": "default"}
+        # TASK-055-FIX: No matches -> empty modifiers (defaults handled elsewhere).
+        assert result.modifiers == {}
         assert result.matched_keywords == []
         assert result.confidence_map == {}
 
@@ -83,8 +83,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("proste nogi", "table_workflow")
 
-        # Should return defaults + modifier override
-        assert result.modifiers == {"leg_style": "straight", "height": 0.8}
+        # TASK-055-FIX: Only matched modifier values returned (no defaults).
+        assert result.modifiers == {"leg_style": "straight"}
         assert result.matched_keywords == ["proste nogi"]
         assert result.confidence_map == {"proste nogi": 1.0}
 
@@ -102,10 +102,10 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("wysoki stół z proste nogi", "table_workflow")
 
-        # Should return defaults + all modifier overrides
-        assert result.modifiers == {"leg_style": "straight", "height": 1.0, "surface": "wood"}
-        assert set(result.matched_keywords) == {"proste nogi", "wysoki"}
-        assert result.confidence_map == {"proste nogi": 1.0, "wysoki": 1.0}
+        # TASK-055-FIX: Substring fallback applies only the first matched keyword.
+        assert result.modifiers == {"leg_style": "straight"}
+        assert result.matched_keywords == ["proste nogi"]
+        assert result.confidence_map == {"proste nogi": 1.0}
 
     def test_extract_case_insensitive(self, extractor, mock_registry):
         """Test extract is case insensitive."""
@@ -135,8 +135,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("", "table_workflow")
 
-        # Should return defaults only
-        assert result.modifiers == {"leg_style": "default"}
+        # TASK-055-FIX: Empty prompt -> no matches -> empty modifiers.
+        assert result.modifiers == {}
         assert result.matched_keywords == []
         assert result.confidence_map == {}
 
@@ -168,7 +168,7 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("proste nogi", "table_workflow")
 
-        # Modifier should override both defaults
+        # TASK-055-FIX: Only matched modifier values returned (no defaults).
         assert result.modifiers == {"leg_style": "straight", "height": 0.9}
         assert result.matched_keywords == ["proste nogi"]
 
@@ -201,13 +201,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("proste nogi", "table_workflow")
 
-        # Should preserve all defaults and override only leg_style
-        assert result.modifiers == {
-            "leg_style": "straight",
-            "height": 0.8,
-            "width": 1.0,
-            "depth": 0.6
-        }
+        # TASK-055-FIX: Defaults are not included here; only matched modifiers returned.
+        assert result.modifiers == {"leg_style": "straight"}
 
     def test_extract_with_empty_modifiers_dict(self, extractor, mock_registry):
         """Test extract when modifiers dict is empty."""
@@ -219,8 +214,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("proste nogi", "table_workflow")
 
-        # Should return defaults only
-        assert result.modifiers == {"leg_style": "default"}
+        # No modifiers configured -> no matches -> empty modifiers.
+        assert result.modifiers == {}
         assert result.matched_keywords == []
         assert result.confidence_map == {}
 
@@ -237,8 +232,8 @@ class TestModifierExtractorSubstring:
 
         result = extractor.extract("proste nogi wysoki", "table_workflow")
 
-        # All matched keywords should have 1.0 confidence
-        assert result.confidence_map == {"proste nogi": 1.0, "wysoki": 1.0}
+        # TASK-055-FIX: Substring fallback stops at first match.
+        assert result.confidence_map == {"proste nogi": 1.0}
 
     def test_extract_result_structure(self, extractor, mock_registry):
         """Test that extract returns proper ModifierResult structure."""
@@ -301,13 +296,15 @@ class TestModifierExtractorSemantic:
         }
         mock_registry.get_definition.return_value = definition
 
-        # Mock LaBSE similarity: "prostymi nogami" is semantically similar to "straight legs"
-        def similarity_side_effect(keyword, prompt):
-            if keyword == "straight legs" and "prostymi nogami" in prompt:
-                return 0.78  # Above threshold
-            if keyword == "angled legs" and "prostymi nogami" in prompt:
-                return 0.35  # Below threshold
-            return 0.1
+        # Mock LaBSE similarity (per-word vs n-grams).
+        def similarity_side_effect(keyword_word, ngram):
+            if keyword_word == "straight" and ngram in {"prosty", "prostymi", "proste"}:
+                return 0.80
+            if keyword_word == "legs" and ngram in {"nogi", "nogami"}:
+                return 0.78
+            if keyword_word == "angled" and ngram in {"prosty", "prostymi", "proste"}:
+                return 0.20
+            return 0.05
 
         mock_classifier.similarity.side_effect = similarity_side_effect
 
@@ -317,8 +314,8 @@ class TestModifierExtractorSemantic:
 
         # Should match "straight legs" via semantic similarity
         assert result.modifiers == {"leg_angle": 0}
-        assert "straight legs" in result.matched_keywords
-        assert result.confidence_map["straight legs"] == 0.78
+        assert result.matched_keywords == ["straight legs"]
+        assert result.confidence_map["straight legs"] == pytest.approx(0.79, rel=1e-3)
 
     def test_semantic_match_german_to_english(
         self, extractor_with_classifier, mock_registry, mock_classifier
@@ -357,14 +354,14 @@ class TestModifierExtractorSemantic:
 
         result = extractor_with_classifier.extract("create a table", "table_workflow")
 
-        # Should return defaults only (no modifier match)
-        assert result.modifiers == {"leg_angle": 0.32}
+        # TASK-055-FIX: No modifier match -> empty modifiers (defaults handled elsewhere).
+        assert result.modifiers == {}
         assert result.matched_keywords == []
 
     def test_semantic_match_multiple_modifiers(
         self, extractor_with_classifier, mock_registry, mock_classifier
     ):
-        """Test matching multiple modifiers via semantic similarity."""
+        """Test that best semantic match wins (single modifier applied)."""
         definition = MagicMock()
         definition.defaults = {"leg_angle": 0.32, "height": 0.8}
         definition.modifiers = {
@@ -373,13 +370,17 @@ class TestModifierExtractorSemantic:
         }
         mock_registry.get_definition.return_value = definition
 
-        # Both keywords match
-        def similarity_side_effect(keyword, prompt):
-            if keyword == "straight legs":
+        # Both keywords can match; "tall table" has higher avg similarity and should win.
+        def similarity_side_effect(keyword_word, ngram):
+            if keyword_word == "straight" and ngram in {"prosty", "prostymi", "proste"}:
                 return 0.78
-            if keyword == "tall table":
-                return 0.82
-            return 0.1
+            if keyword_word == "legs" and ngram in {"nogi", "nogami"}:
+                return 0.78
+            if keyword_word == "tall" and ngram in {"wysoki", "wysoka", "wysokie"}:
+                return 0.86
+            if keyword_word == "table" and ngram in {"stół", "stol"}:
+                return 0.86
+            return 0.05
 
         mock_classifier.similarity.side_effect = similarity_side_effect
 
@@ -387,8 +388,8 @@ class TestModifierExtractorSemantic:
             "wysoki stół z prostymi nogami", "table_workflow"
         )
 
-        assert result.modifiers == {"leg_angle": 0, "height": 1.2}
-        assert set(result.matched_keywords) == {"straight legs", "tall table"}
+        assert result.modifiers == {"height": 1.2}
+        assert result.matched_keywords == ["tall table"]
 
     def test_semantic_confidence_reflects_similarity(
         self, extractor_with_classifier, mock_registry, mock_classifier
@@ -406,7 +407,7 @@ class TestModifierExtractorSemantic:
         result = extractor_with_classifier.extract("proste nogi", "table_workflow")
 
         # Confidence should be the similarity score, not 1.0
-        assert result.confidence_map["straight legs"] == 0.85
+        assert result.confidence_map["straight legs"] == pytest.approx(0.85, rel=1e-3)
 
     def test_semantic_custom_threshold(self, mock_registry, mock_classifier):
         """Test that custom threshold is respected."""
@@ -458,7 +459,7 @@ class TestModifierExtractorSemantic:
 
         result = extractor_with_classifier.extract("", "table_workflow")
 
-        # Empty prompt should return defaults (no modifiers checked)
-        assert result.modifiers == {"leg_angle": 0.32}
+        # TASK-055-FIX: Empty prompt -> no modifiers checked -> empty modifiers.
+        assert result.modifiers == {}
         assert result.matched_keywords == []
         mock_classifier.similarity.assert_not_called()

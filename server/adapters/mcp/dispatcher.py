@@ -193,6 +193,56 @@ class ToolDispatcher:
             "mesh_mirror": "mirror",
         })
 
+        # Mega-tools compatibility: Router emits these tool names.
+        def _mesh_select(
+            action: str,
+            boundary_mode: str = "EDGE",
+        ) -> str:
+            if action == "all":
+                return mesh.select_all(deselect=False)
+            if action == "none":
+                return mesh.select_all(deselect=True)
+            if action == "linked":
+                return mesh.select_linked()
+            if action == "more":
+                return mesh.select_more()
+            if action == "less":
+                return mesh.select_less()
+            if action == "boundary":
+                return mesh.select_boundary(mode=boundary_mode)
+            return f"Error: Unknown action '{action}'."
+
+        def _mesh_select_targeted(
+            action: str,
+            indices: Optional[list[int]] = None,
+            element_type: str = "VERT",
+            selection_mode: str = "SET",
+            edge_index: Optional[int] = None,
+            axis: Optional[str] = None,
+            min_coord: Optional[float] = None,
+            max_coord: Optional[float] = None,
+        ) -> str:
+            if action == "by_index":
+                if indices is None:
+                    return "Error: 'by_index' action requires 'indices'."
+                return mesh.select_by_index(indices, element_type, selection_mode)
+            if action == "loop":
+                if edge_index is None:
+                    return "Error: 'loop' action requires 'edge_index'."
+                return mesh.select_loop(edge_index)
+            if action == "ring":
+                if edge_index is None:
+                    return "Error: 'ring' action requires 'edge_index'."
+                return mesh.select_ring(edge_index)
+            if action == "by_location":
+                if axis is None or min_coord is None or max_coord is None:
+                    return "Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord'."
+                return mesh.select_by_location(axis, min_coord, max_coord, mode=element_type)
+            return f"Error: Unknown action '{action}'."
+
+        self._tool_map["mesh_select"] = _mesh_select
+        self._tool_map["mesh_select_targeted"] = _mesh_select_targeted
+
         # Material tools
         material = get_material_handler()
         self._safe_update(material, {

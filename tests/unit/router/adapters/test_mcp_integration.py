@@ -169,21 +169,21 @@ class TestAsyncExecutorWrapping:
     def test_wrap_executor_passthrough_disabled(self, disabled_integration, mock_executor):
         """Test passthrough when integration disabled."""
         wrapped = disabled_integration.wrap_tool_executor(mock_executor)
-        result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+        result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
         assert result == "Executed mesh_extrude_region"
 
     def test_wrap_executor_passthrough_bypassed(self, integration, mock_executor):
         """Test passthrough for bypassed tools."""
         integration.add_bypass_tool("mesh_extrude_region")
         wrapped = integration.wrap_tool_executor(mock_executor)
-        result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+        result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
         assert result == "Executed mesh_extrude_region"
 
     def test_wrap_executor_routes_through_router(self, integration, mock_executor, edit_mode_context):
         """Test that executor routes through router."""
         with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
-            result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+            result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             # Should execute at least the original tool
             assert "mesh_extrude_region" in result
 
@@ -191,7 +191,7 @@ class TestAsyncExecutorWrapping:
         """Test execution count increments."""
         with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
-            run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+            run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             assert integration._execution_count == 1
 
     def test_wrap_executor_error_fallback(self, integration, mock_executor):
@@ -199,7 +199,7 @@ class TestAsyncExecutorWrapping:
         # Cause router to fail
         with patch.object(integration.router, 'process_llm_tool_call', side_effect=Exception("Router error")):
             wrapped = integration.wrap_tool_executor(mock_executor)
-            result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+            result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             # Should fall back to original execution
             assert result == "Executed mesh_extrude_region"
             assert integration._error_count == 1
@@ -216,21 +216,21 @@ class TestSyncExecutorWrapping:
     def test_wrap_sync_passthrough_disabled(self, disabled_integration, mock_sync_executor):
         """Test passthrough when integration disabled."""
         wrapped = disabled_integration.wrap_sync_executor(mock_sync_executor)
-        result = wrapped("mesh_extrude_region", {"depth": 0.5})
+        result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         assert result == "Executed mesh_extrude_region"
 
     def test_wrap_sync_passthrough_bypassed(self, integration, mock_sync_executor):
         """Test passthrough for bypassed tools."""
         integration.add_bypass_tool("mesh_extrude_region")
         wrapped = integration.wrap_sync_executor(mock_sync_executor)
-        result = wrapped("mesh_extrude_region", {"depth": 0.5})
+        result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         assert result == "Executed mesh_extrude_region"
 
     def test_wrap_sync_routes_through_router(self, integration, mock_sync_executor, edit_mode_context):
         """Test that sync executor routes through router."""
         with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
             wrapped = integration.wrap_sync_executor(mock_sync_executor)
-            result = wrapped("mesh_extrude_region", {"depth": 0.5})
+            result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
             assert "mesh_extrude_region" in result
 
 
@@ -419,7 +419,7 @@ class TestIntegration:
 
         with patch.object(integration.router.analyzer, 'analyze', return_value=object_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
-            result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+            result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
 
         # Should have executed mode switch and selection
         assert "system_set_mode" in executed_tools
@@ -432,7 +432,7 @@ class TestIntegration:
 
         with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(failing_executor)
-            result = run_async(wrapped("mesh_extrude_region", {"depth": 0.5}))
+            result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
 
         # Should handle error gracefully
         assert "Error executing" in result

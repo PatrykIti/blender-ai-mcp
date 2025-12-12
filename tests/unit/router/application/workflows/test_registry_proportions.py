@@ -26,7 +26,7 @@ class TestRegistryProportionResolver:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$AUTO_BEVEL",
+                        "offset": "$AUTO_BEVEL",
                         "segments": 3,
                     },
                     description="Auto bevel",
@@ -62,7 +62,7 @@ class TestRegistryProportionResolver:
         assert len(calls) == 3
 
         # $AUTO_BEVEL = 5% of min(0.5) = 0.025
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
         assert calls[0].params["segments"] == 3
 
         # $AUTO_INSET = 3% of XY min(2.0) = 0.06
@@ -79,7 +79,7 @@ class TestRegistryProportionResolver:
         calls = registry.expand_workflow("test_auto_params", context={})
 
         # Params should remain as $AUTO_* strings
-        assert calls[0].params["width"] == "$AUTO_BEVEL"
+        assert calls[0].params["offset"] == "$AUTO_BEVEL"
         assert calls[1].params["thickness"] == "$AUTO_INSET"
         assert calls[2].params["move"][2] == "$AUTO_EXTRUDE_NEG"
 
@@ -96,7 +96,7 @@ class TestRegistryProportionResolver:
         calls = registry.expand_workflow("test_auto_params", context=context)
 
         # Should resolve same as dimensions array
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
 
 
 class TestMixedParameters:
@@ -116,7 +116,7 @@ class TestMixedParameters:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$AUTO_BEVEL",  # ProportionResolver
+                        "offset": "$AUTO_BEVEL",  # ProportionResolver
                         "segments": 3,  # Literal
                     },
                     description="Mixed params",
@@ -143,7 +143,7 @@ class TestMixedParameters:
         calls = registry.expand_workflow("test_mixed", context=context)
 
         # $AUTO_BEVEL = 5% of 0.5 = 0.025
-        assert calls[0].params["width"] == pytest.approx(0.025)
+        assert calls[0].params["offset"] == pytest.approx(0.025)
         assert calls[0].params["segments"] == 3
 
         # $CALCULATE(min_dim * 0.03) = 0.5 * 0.03 = 0.015
@@ -223,7 +223,7 @@ class TestRealWorldWorkflows:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "width": "$AUTO_BEVEL",
+                        "offset": "$AUTO_BEVEL",
                         "segments": 3,
                     },
                 ),
@@ -258,7 +258,7 @@ class TestRealWorldWorkflows:
         assert len(calls) == 6
 
         # Bevel: 5% of min(0.008) = 0.0004
-        assert calls[3].params["width"] == pytest.approx(0.0004)
+        assert calls[3].params["offset"] == pytest.approx(0.0004)
 
         # Inset: 3% of XY min(0.07) = 0.0021
         assert calls[4].params["thickness"] == pytest.approx(0.0021)

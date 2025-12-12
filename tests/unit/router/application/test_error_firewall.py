@@ -147,7 +147,7 @@ class TestValidateModeViolations:
 
     def test_mesh_in_object_mode_violation(self, firewall, object_mode_context):
         """Test that mesh tool in OBJECT mode triggers violation."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, object_mode_context)
 
         assert result.action != FirewallAction.BLOCK
@@ -182,7 +182,7 @@ class TestValidateSelectionViolations:
 
     def test_extrude_no_selection_violation(self, firewall, edit_mode_no_selection):
         """Test that extrude without selection triggers violation."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, edit_mode_no_selection)
 
         # Should auto-fix with select all
@@ -190,14 +190,14 @@ class TestValidateSelectionViolations:
 
     def test_extrude_with_selection_allowed(self, firewall, edit_mode_context):
         """Test that extrude with selection is allowed."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, edit_mode_context)
 
         assert result.action == FirewallAction.ALLOW
 
     def test_bevel_no_selection_violation(self, firewall, edit_mode_no_selection):
         """Test that bevel without selection triggers violation."""
-        call = make_tool_call("mesh_bevel", {"width": 0.1})
+        call = make_tool_call("mesh_bevel", {"offset": 0.1})
         result = firewall.validate(call, edit_mode_no_selection)
 
         assert len(result.violations) > 0
@@ -208,12 +208,12 @@ class TestValidateParameterViolations:
 
     def test_bevel_too_large_modified(self, firewall, edit_mode_context):
         """Test that large bevel width is modified."""
-        call = make_tool_call("mesh_bevel", {"width": 100.0})
+        call = make_tool_call("mesh_bevel", {"offset": 100.0})
         result = firewall.validate(call, edit_mode_context)
 
         # Should modify the parameter
         if result.modified_call:
-            assert result.modified_call["params"]["width"] < 100.0
+            assert result.modified_call["params"]["offset"] < 100.0
 
     def test_subdivide_too_many_cuts_modified(self, firewall, edit_mode_context):
         """Test that too many subdivide cuts is modified."""
@@ -247,7 +247,7 @@ class TestAutoFix:
 
     def test_auto_fix_mode_switch(self, firewall, object_mode_context):
         """Test that auto-fix adds mode switch."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, object_mode_context)
 
         if result.pre_steps:
@@ -260,7 +260,7 @@ class TestAutoFix:
 
     def test_auto_fix_selection(self, firewall, edit_mode_no_selection):
         """Test that auto-fix adds selection."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, edit_mode_no_selection)
 
         if result.pre_steps:
@@ -273,7 +273,7 @@ class TestAutoFix:
 
     def test_auto_fix_disabled(self, firewall_no_autofix, object_mode_context):
         """Test that auto-fix respects config."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall_no_autofix.validate(call, object_mode_context)
 
         # Should not have pre_steps for mode switch
@@ -287,7 +287,7 @@ class TestCanAutoFix:
 
     def test_can_fix_mode_violation(self, firewall, object_mode_context):
         """Test that mode violation can be auto-fixed."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.can_auto_fix(call, object_mode_context)
 
         assert result is True
@@ -314,7 +314,7 @@ class TestValidateSequence:
         """Test validating multiple calls."""
         calls = [
             make_tool_call("mesh_subdivide", {"number_cuts": 2}),
-            make_tool_call("mesh_bevel", {"width": 0.1}),
+            make_tool_call("mesh_bevel", {"offset": 0.1}),
             make_tool_call("mesh_smooth", {"factor": 0.5}),
         ]
 
@@ -386,7 +386,7 @@ class TestEnableDisableRule:
         """Test that disabled rule is not triggered."""
         firewall.disable_rule("mesh_in_object_mode")
 
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, object_mode_context)
 
         # Should not have mode violation since rule is disabled
@@ -473,7 +473,7 @@ class TestPatternMatching:
     def test_exact_pattern(self, firewall, edit_mode_no_selection):
         """Test exact pattern matching."""
         # mesh_extrude_region should match exactly
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, edit_mode_no_selection)
 
         assert len(result.violations) > 0
@@ -492,7 +492,7 @@ class TestConditionEvaluation:
 
     def test_no_selection_condition(self, firewall, edit_mode_no_selection):
         """Test no_selection condition."""
-        call = make_tool_call("mesh_extrude_region", {"depth": 0.5})
+        call = make_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
         result = firewall.validate(call, edit_mode_no_selection)
 
         assert len(result.violations) > 0

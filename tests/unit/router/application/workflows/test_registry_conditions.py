@@ -37,7 +37,7 @@ class TestRegistryConditionEvaluation:
                 ),
                 WorkflowStep(
                     tool="mesh_bevel",
-                    params={"width": 0.1, "segments": 3},
+                    params={"offset": 0.1, "segments": 3},
                     description="Bevel edges",
                 ),
             ],
@@ -116,18 +116,18 @@ class TestRegistryConditionEvaluation:
         """Test when no context provided.
 
         Behavior:
-        - "current_mode != 'EDIT'" - current_mode unknown, fails-open → True → executes
-        - "not has_selection" - has_selection unknown → inner fails-open → True → not True → False → skipped
+        - any condition with unknown vars fails-open → executes
         - no condition → executes
         """
         registry.register_definition(conditional_workflow)
 
         calls = registry.expand_workflow("test_conditional", context=None)
 
-        # 2 steps execute (mode switch and bevel), select is skipped
-        assert len(calls) == 2
+        # All 3 steps execute (fail-open on unknown variables)
+        assert len(calls) == 3
         assert calls[0].tool_name == "system_set_mode"
-        assert calls[1].tool_name == "mesh_bevel"
+        assert calls[1].tool_name == "mesh_select"
+        assert calls[2].tool_name == "mesh_bevel"
 
 
 class TestContextSimulation:
@@ -175,7 +175,7 @@ class TestContextSimulation:
                 # Step 5: Unconditional step
                 WorkflowStep(
                     tool="mesh_bevel",
-                    params={"width": 0.1},
+                    params={"offset": 0.1},
                     description="Bevel",
                 ),
             ],
