@@ -455,82 +455,23 @@ if definition:
 
 ---
 
-### FAZA 2: Conditional Expressions in $CALCULATE (P1 - High)
+### ~~FAZA 2: Conditional Expressions in $CALCULATE~~ → **TASK-059**
 
-#### 2.1 Ternary Expressions w $CALCULATE
-
-**Plik**: `server/router/application/evaluator/expression_evaluator.py:262-336`
-
-Rozszerzyć metodę `_eval_node()` (linia 262-336 w aktualnym kodzie) o obsługę `if...else` i porównań:
-
-```python
-def _eval_node(self, node: ast.AST) -> float:
-    """Recursively evaluate AST node.
-    ...
-    """
-    # ... existing cases (Constant, Num, BinOp, UnaryOp, Call, Name) ...
-
-    # TASK-058: IfExp (ternary expression)
-    # Expression: "0.10 if i <= plank_full_count else plank_remainder_width"
-    if isinstance(node, ast.IfExp):
-        test_result = self._eval_node(node.test)
-        if test_result:
-            return self._eval_node(node.body)
-        else:
-            return self._eval_node(node.orelse)
-
-    # TASK-058: Compare (for boolean expressions)
-    # Handles: ==, !=, <, <=, >, >=
-    if isinstance(node, ast.Compare):
-        left = self._eval_node(node.left)
-        for op, comparator in zip(node.ops, node.comparators):
-            right = self._eval_node(comparator)
-            if not self._compare_values(left, op, right):
-                return 0.0  # False
-            left = right
-        return 1.0  # True
-
-    raise ValueError(f"Unsupported AST node: {type(node).__name__}")
-```
-
-Dodać nową metodę pomocniczą `_compare_values()`:
-
-```python
-def _compare_values(self, left: float, op: ast.cmpop, right: float) -> bool:
-    """Compare two values using comparison operator.
-
-    TASK-058: Helper for ast.Compare evaluation.
-
-    Args:
-        left: Left operand.
-        op: Comparison operator AST node.
-        right: Right operand.
-
-    Returns:
-        Boolean result of comparison.
-
-    Raises:
-        ValueError: If comparison operator is not supported.
-    """
-    if isinstance(op, ast.Eq):
-        return left == right
-    elif isinstance(op, ast.NotEq):
-        return left != right
-    elif isinstance(op, ast.Lt):
-        return left < right
-    elif isinstance(op, ast.LtE):
-        return left <= right
-    elif isinstance(op, ast.Gt):
-        return left > right
-    elif isinstance(op, ast.GtE):
-        return left >= right
-    else:
-        raise ValueError(f"Unsupported comparison operator: {type(op).__name__}")
-```
+> **PRZENIESIONE**: Implementacja operatorów porównania (`<`, `<=`, `>`, `>=`, `==`, `!=`), operatorów logicznych (`and`, `or`, `not`) oraz ternary expressions (`x if cond else y`) została wydzielona do osobnego taska.
+>
+> **Zobacz**: [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
+>
+> TASK-059 zawiera:
+> - `ast.Compare` - operatory porównania
+> - `ast.BoolOp` - operatory logiczne (`and`, `or`)
+> - `ast.UnaryOp(ast.Not)` - negacja logiczna
+> - `ast.IfExp` - ternary expressions (`x if cond else y`)
+>
+> **Zależność**: TASK-058 (Loop System) może być implementowany niezależnie od TASK-059. Jednak pełna funkcjonalność (np. dynamiczne szerokości planków w pętli) wymaga obu tasków.
 
 ---
 
-### FAZA 3: Nested Loops (P2 - Medium)
+### FAZA 2: Nested Loops (P2 - Medium, Future)
 
 Dla 2D grids (telefon z przyciskami 3x4):
 
@@ -605,11 +546,9 @@ steps:
 | **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja w `expand_workflow()` | P0 |
 | **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
 
-### Faza 2 (Conditional Expressions)
+### ~~Faza 2 (Conditional Expressions)~~ → **TASK-059**
 
-| Warstwa | Plik | Zmiana | Priorytet |
-|---------|------|--------|-----------|
-| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `ast.IfExp`, `ast.Compare` w `_eval_node()`, dodać `_compare_values()` | P1 |
+> Przeniesione do [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
 
 ---
 
@@ -661,12 +600,9 @@ tests/e2e/router/test_simple_table_with_loops.py
 | 8 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
 | 9 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
 
-### Faza 2 - Conditional Expressions (opcjonalne)
+### ~~Faza 2 - Conditional Expressions~~ → **TASK-059**
 
-| Krok | Warstwa | Plik | Opis |
-|------|---------|------|------|
-| 10 | Application/Evaluator | `expression_evaluator.py` | Dodać `ast.IfExp` + `ast.Compare` + `_compare_values()` |
-| 11 | Tests | `test_expression_evaluator_conditionals.py` | Unit testy dla ternary expressions |
+> Przeniesione do [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
 
 ---
 
@@ -742,9 +678,9 @@ resolved_steps.append(
 | Unit tests (`LoopExpander`) | 20 min |
 | Unit tests (`$FORMAT`) | 10 min |
 | `simple_table.yaml` refaktor (opcjonalne) | 15 min |
-| **TOTAL Faza 1** | ~2h |
-| Faza 2: Conditional expressions | +30 min |
-| **TOTAL (wszystko)** | ~2.5h |
+| **TOTAL TASK-058** | **~2h** |
+
+> **Uwaga**: Conditional expressions (ternary, porównania, operatory logiczne) zostały przeniesione do **TASK-059** (~3-4h dodatkowego czasu).
 
 ---
 
@@ -859,3 +795,16 @@ Po dodaniu `loop: Optional[Dict[str, Any]] = None` do `WorkflowStep` dataclass, 
 | Kolejność implementacji | ✅ Sensowna |
 
 **TASK-058 jest w pełni zgodny z aktualnym kodem i może być implementowany bez modyfikacji planu.**
+
+---
+
+## Related Tasks
+
+| Task | Relacja | Opis |
+|------|---------|------|
+| **TASK-059** | **Uzupełnia** | Operatory porównania i logiczne dla `$CALCULATE` - wymagane dla pełnej funkcjonalności pętli z warunkami |
+| TASK-056-1 | Prerequisite | Extended Expression Evaluator (21 funkcji math) |
+| TASK-056-5 | Prerequisite | Computed Parameters |
+| TASK-055-FIX-8 | Documentation | Dokumentacja funkcji expression evaluator |
+
+> **Kolejność implementacji**: TASK-058 (Loop System) → TASK-059 (Logical Operators) → pełna funkcjonalność dynamicznych workflow

@@ -1,10 +1,11 @@
 # TASK-055-FIX-8: Computed Parameters Expression Functions Reference
 
-**Status**: ✅ Done
+**Status**: ⚠️ Partial (dokumentacja gotowa, ale odkryto brakującą implementację)
 **Priority**: P0 (Critical - Documentation for TASK-056-5)
-**Related**: TASK-056-5, TASK-056-1, TASK-055-FIX-6, TASK-055
+**Related**: TASK-056-5, TASK-056-1, TASK-055-FIX-6, TASK-055, **TASK-059** (brakujące operatory)
 **Created**: 2025-12-12
 **Completed**: 2025-12-12
+**Verified**: 2025-12-12 - odkryto brak implementacji operatorów porównania i logicznych
 
 ---
 
@@ -19,7 +20,7 @@ NameError: name 'int' is not defined
 ```
 
 **Root Cause**:
-- Expression evaluator has **limited function support** (only 13 math functions from TASK-056-1)
+- Expression evaluator has **limited function support** (only 21 math functions from TASK-056-1)
 - Common Python functions like `int()`, `str()`, `len()` are **NOT available**
 - No comprehensive documentation exists for workflow authors
 
@@ -35,7 +36,7 @@ NameError: name 'int' is not defined
 ### 1. Document Available Expression Functions
 
 Create authoritative reference listing:
-- All 13 supported math functions (from TASK-056-1)
+- All 21 supported math functions (from TASK-056-1)
 - Function categories (basic, rounding, trigonometric, etc.)
 - Usage examples for each function
 - Common pitfalls and NOT supported functions
@@ -59,15 +60,15 @@ Document common errors:
 
 ## Available Expression Functions
 
-### Complete Function Reference (13 Functions)
+### Complete Function Reference (21 Functions)
 
-Based on TASK-056-1 implementation (`server/router/infrastructure/expression_evaluator.py:60-72`):
+Based on TASK-056-1 implementation (`server/router/application/evaluator/expression_evaluator.py:49-81`):
 
 | Category | Functions | Description | Example Usage |
 |----------|-----------|-------------|---------------|
-| **Basic** | `abs()`, `min()`, `max()` | Absolute value, minimum, maximum | `abs(-5)` → `5`<br>`min(3, 7)` → `3`<br>`max(table_width, 0.5)` → larger value |
-| **Rounding** | `round()`, `floor()`, `ceil()`, `trunc()` | Round to integer, floor, ceiling, truncate | `floor(7.8)` → `7`<br>`ceil(7.2)` → `8`<br>`round(7.5)` → `8` |
-| **Power/Root** | `sqrt()`, `pow()`, `**` | Square root, power, exponentiation | `sqrt(16)` → `4.0`<br>`pow(2, 3)` → `8`<br>`2 ** 3` → `8` |
+| **Basic** | `abs()`, `min()`, `max()`, `round()` | Absolute value, minimum, maximum, round | `abs(-5)` → `5`<br>`min(3, 7)` → `3`<br>`max(table_width, 0.5)` → larger value |
+| **Rounding** | `floor()`, `ceil()`, `trunc()` | Floor, ceiling, truncate toward zero | `floor(7.8)` → `7`<br>`ceil(7.2)` → `8`<br>`trunc(-7.8)` → `-7` |
+| **Power/Root** | `sqrt()`, `pow()` | Square root, power | `sqrt(16)` → `4.0`<br>`pow(2, 3)` → `8` |
 | **Trigonometric** | `sin()`, `cos()`, `tan()` | Sine, cosine, tangent (radians) | `sin(radians(90))` → `1.0`<br>`cos(0)` → `1.0` |
 | **Inverse Trig** | `asin()`, `acos()`, `atan()`, `atan2()` | Arc sine, arc cosine, arc tangent | `degrees(atan2(1, 1))` → `45.0` |
 | **Angle Conversion** | `degrees()`, `radians()` | Convert radians↔degrees | `degrees(3.14159)` → `180.0`<br>`radians(180)` → `3.14159` |
@@ -76,14 +77,27 @@ Based on TASK-056-1 implementation (`server/router/infrastructure/expression_eva
 
 ### Available Operators
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `+`, `-`, `*`, `/` | Basic arithmetic | `table_width / 2` |
-| `**` | Exponentiation | `base_size ** 2` |
-| `//` | Floor division (integer result) | `table_width // plank_width` |
-| `%` | Modulo (remainder) | `table_width % plank_width` |
-| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons (return bool) | `width > 0.5` |
-| `and`, `or`, `not` | Logical operators | `width > 0.5 and height < 2.0` |
+#### ✅ Zaimplementowane (działają w `$CALCULATE`)
+
+| Operator | Description | Example | Status |
+|----------|-------------|---------|--------|
+| `+`, `-`, `*`, `/` | Basic arithmetic | `table_width / 2` | ✅ Działa |
+| `**` | Exponentiation | `base_size ** 2` | ✅ Działa |
+| `//` | Floor division (integer result) | `table_width // plank_width` | ✅ Działa |
+| `%` | Modulo (remainder) | `table_width % plank_width` | ✅ Działa |
+| `-` (unary) | Negation | `-width` | ✅ Działa |
+| `+` (unary) | Positive | `+width` | ✅ Działa |
+
+#### ❌ NIE zaimplementowane (wymagają TASK-059)
+
+| Operator | Description | Example | Status |
+|----------|-------------|---------|--------|
+| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons | `width > 0.5` | ❌ **Brak `ast.Compare`** |
+| `and`, `or` | Logical AND/OR | `width > 0.5 and height < 2.0` | ❌ **Brak `ast.BoolOp`** |
+| `not` | Logical NOT | `not is_large` | ❌ **Brak `ast.UnaryOp(ast.Not)`** |
+| `if...else` (ternary) | Conditional | `1 if width > 0.5 else 0` | ❌ **Brak `ast.IfExp`** |
+
+> **UWAGA**: Operatory porównania i logiczne są wymienione w dokumentacji, ale **NIE SĄ zaimplementowane** w `_eval_node()`. Wyrażenia typu `1 if condition else 0` **NIE DZIAŁAJĄ** w obecnej wersji! Zobacz TASK-059 dla implementacji.
 
 ---
 
@@ -116,7 +130,7 @@ plank_full_count:
   depends_on: ["table_width", "plank_max_width"]
 ```
 
-**CORRECT** (uses `floor()`):
+**CZĘŚCIOWO CORRECT** (uses `floor()` - działa, ale `1 if...else` wymaga TASK-059):
 ```yaml
 plank_full_count:
   type: int
@@ -126,28 +140,31 @@ plank_full_count:
 
 plank_remainder_width:
   type: float
-  computed: "table_width - (plank_full_count * plank_max_width)"
+  computed: "table_width - (plank_full_count * plank_max_width)"  # ✅ Works!
   depends_on: ["table_width", "plank_full_count", "plank_max_width"]
   description: "Width of narrow remainder plank (0 if none needed)"
 
 plank_has_remainder:
   type: int
-  computed: "1 if plank_remainder_width > 0.01 else 0"  # Boolean → int
+  computed: "1 if plank_remainder_width > 0.01 else 0"  # ❌ NIE DZIAŁA - wymaga TASK-059!
   depends_on: ["plank_remainder_width"]
   description: "Whether a remainder plank is needed (1=yes, 0=no)"
 
 plank_total_count:
   type: int
-  computed: "plank_full_count + plank_has_remainder"
+  computed: "plank_full_count + plank_has_remainder"  # ✅ Works (jeśli plank_has_remainder ma wartość)
   depends_on: ["plank_full_count", "plank_has_remainder"]
   description: "Total number of planks (full + remainder)"
 ```
 
-**Test Case**: 0.73m table width, 0.10m plank width
-- `plank_full_count = floor(0.73 / 0.10) = 7`
-- `plank_remainder_width = 0.73 - (7 * 0.10) = 0.03`
-- `plank_has_remainder = 1 if 0.03 > 0.01 else 0 = 1`
-- `plank_total_count = 7 + 1 = 8`
+> ⚠️ **UWAGA**: `plank_has_remainder` używa `1 if ... else 0` co **NIE DZIAŁA** bez TASK-059!
+> **Obejście**: Użyj stałej wartości `default: 1` lub oblicz inaczej.
+
+**Test Case** (docelowo po TASK-059): 0.73m table width, 0.10m plank width
+- `plank_full_count = floor(0.73 / 0.10) = 7` ✅
+- `plank_remainder_width = 0.73 - (7 * 0.10) = 0.03` ✅
+- `plank_has_remainder = 1 if 0.03 > 0.01 else 0 = 1` ❌ (wymaga TASK-059)
+- `plank_total_count = 7 + 1 = 8` ✅ (jeśli powyższe działa)
 
 ### Example 2: Angled Leg Constraints
 
@@ -187,22 +204,33 @@ diagonal_size:
 
 ### Example 4: Boolean to Int Conversion
 
+> ⚠️ **UWAGA**: Ten przykład wymaga TASK-059! Operatory porównania (`>`) i ternary (`if...else`) NIE SĄ obecnie zaimplementowane.
+
 **Goal**: Use boolean conditions as integer flags
 
 **WRONG** (boolean expressions don't work directly in steps):
 ```yaml
 add_stretchers:
   type: bool
-  computed: "table_width > 1.0"  # ❌ Returns True/False, not 0/1
+  computed: "table_width > 1.0"  # ❌ NIE DZIAŁA - brak ast.Compare
   depends_on: ["table_width"]
 ```
 
-**CORRECT** (convert to int):
+**DOCELOWO CORRECT** (po TASK-059):
 ```yaml
 add_stretchers:
   type: int
-  computed: "1 if table_width > 1.0 else 0"  # ✅ Returns 0 or 1
+  computed: "1 if table_width > 1.0 else 0"  # ❌ NIE DZIAŁA - brak ast.IfExp
   depends_on: ["table_width"]
+  description: "Whether to add stretchers (1=yes, 0=no)"
+```
+
+**OBECNE OBEJŚCIE** (do czasu TASK-059):
+```yaml
+# Użyj osobnego parametru lub condition w step zamiast computed
+add_stretchers:
+  type: int
+  default: 1  # Hardcoded value, brak dynamicznego warunku
   description: "Whether to add stretchers (1=yes, 0=no)"
 ```
 
@@ -225,15 +253,19 @@ computed: "trunc(value)"  # ✅ For rounding toward zero (handles negatives)
 
 ### Pitfall 2: Boolean Results in Numeric Context
 
+> ⚠️ **UWAGA**: Wymaga TASK-059!
+
 **Problem**:
 ```yaml
-computed: "width > height"  # ❌ Returns True/False (boolean)
+computed: "width > height"  # ❌ NIE DZIAŁA - brak ast.Compare w _eval_node()
 ```
 
-**Solution**:
+**Docelowe rozwiązanie** (po TASK-059):
 ```yaml
-computed: "1 if width > height else 0"  # ✅ Returns 0 or 1 (int)
+computed: "1 if width > height else 0"  # ❌ NIE DZIAŁA - brak ast.IfExp
 ```
+
+**Obecne obejście**: Użyj `condition` w workflow step zamiast computed parameter.
 
 ### Pitfall 3: String Operations
 
@@ -281,7 +313,7 @@ param_name:
 ```
 
 **Validation Checklist**:
-- ✅ Only uses 13 available functions (see table above)
+- ✅ Only uses 21 available functions (see table above)
 - ✅ No `int()`, `str()`, `len()`, `bool()` calls
 - ✅ Boolean expressions converted to `1 if ... else 0`
 - ✅ Dependencies listed in `depends_on` array
@@ -326,7 +358,7 @@ print(f"Has remainder: {plank_has_remainder}")  # Expected: 1
 ## Success Criteria
 
 ### Must Have (Phase 1)
-- ✅ All 13 available functions documented with examples
+- ✅ All 21 available functions documented with examples
 - ✅ Common pitfalls listed with solutions
 - ✅ Real-world workflow examples (fractional planks, angles, aspect ratio)
 - ✅ Clear error messages with fixes
@@ -334,7 +366,7 @@ print(f"Has remainder: {plank_has_remainder}")  # Expected: 1
 
 ### Nice to Have (Phase 2)
 - ✅ Interactive expression validator (web tool)
-- ✅ Unit tests for all 13 functions
+- ✅ Unit tests for all 21 functions
 - ✅ IDE autocomplete for workflow YAML files
 - ✅ Linter to catch unsupported function usage
 
@@ -353,42 +385,43 @@ print(f"Has remainder: {plank_has_remainder}")  # Expected: 1
 ## Files to Reference
 
 ### Expression Evaluator Implementation
-**File**: `server/router/infrastructure/expression_evaluator.py:60-72`
+**File**: `server/router/application/evaluator/expression_evaluator.py:49-81`
 
 ```python
-def _get_safe_math_context(self) -> Dict[str, Any]:
-    """Provide math functions for expressions."""
-    return {
-        # Basic
-        "abs": abs,
-        "min": min,
-        "max": max,
-        # Rounding
-        "round": round,
-        "floor": math.floor,
-        "ceil": math.ceil,
-        "trunc": math.trunc,
-        # Power/Root
-        "sqrt": math.sqrt,
-        "pow": pow,
-        # Trigonometric
-        "sin": math.sin,
-        "cos": math.cos,
-        "tan": math.tan,
-        "asin": math.asin,
-        "acos": math.acos,
-        "atan": math.atan,
-        "atan2": math.atan2,
-        # Angle conversion
-        "degrees": math.degrees,
-        "radians": math.radians,
-        # Logarithmic
-        "log": math.log,
-        "log10": math.log10,
-        "exp": math.exp,
-        # Advanced
-        "hypot": math.hypot,
-    }
+# Allowed functions (whitelist) - TASK-056-1: Extended with 13 new functions
+FUNCTIONS = {
+    # Basic functions
+    "abs": abs,
+    "min": min,
+    "max": max,
+    "round": round,
+    "floor": math.floor,
+    "ceil": math.ceil,
+    "sqrt": math.sqrt,
+    "trunc": math.trunc,  # TASK-056-1: Integer truncation
+
+    # Trigonometric functions (existing)
+    "sin": math.sin,
+    "cos": math.cos,
+
+    # Trigonometric functions (TASK-056-1: NEW)
+    "tan": math.tan,           # Tangent
+    "asin": math.asin,         # Arc sine (inverse sine)
+    "acos": math.acos,         # Arc cosine (inverse cosine)
+    "atan": math.atan,         # Arc tangent (inverse tangent)
+    "atan2": math.atan2,       # Two-argument arc tangent (handles quadrants)
+    "degrees": math.degrees,   # Convert radians to degrees
+    "radians": math.radians,   # Convert degrees to radians
+
+    # Logarithmic functions (TASK-056-1: NEW)
+    "log": math.log,           # Natural logarithm (base e)
+    "log10": math.log10,       # Base-10 logarithm
+    "exp": math.exp,           # e^x (exponential)
+
+    # Advanced functions (TASK-056-1: NEW)
+    "pow": pow,                # Power (alternative to ** operator)
+    "hypot": math.hypot,       # Hypotenuse: sqrt(x^2 + y^2 + ...)
+}
 ```
 
 ### Workflow Example
@@ -472,14 +505,105 @@ computed: "range(10)"           # ❌ NameError
 1. Consider adding `int()` wrapper in expression evaluator (wraps `floor()`)
 2. Add expression validator to workflow loader (fail early with helpful errors)
 3. Create IDE plugin for YAML workflow autocomplete
-4. Add unit tests for all 13 functions with workflow examples
+4. Add unit tests for all 21 functions with workflow examples
 
 ---
 
 ## Notes
 
 - This document is the **authoritative reference** for computed parameter expressions
-- All 13 functions come from Python's `math` module + built-ins `abs`, `min`, `max`, `round`, `pow`
+- All 21 functions come from Python's `math` module + built-ins `abs`, `min`, `max`, `round`, `pow`
 - Expression evaluator intentionally limits function set for **security** (no `eval()` vulnerabilities)
 - User feedback: *"za kazdym razem trzeba obraz budowa i restartowac kontener"* - remember to rebuild Docker image after YAML changes
 - Real bug fixed: `simple_table.yaml` used `int()` → changed to `floor()` → fractional plank system now works
+
+---
+
+## Weryfikacja Zgodności z Kodem (2024-12-12)
+
+### ✅ Poprawiona Ścieżka Pliku
+
+| Element | Poprzednio (BŁĘDNE) | Aktualne (POPRAWNE) |
+|---------|---------------------|---------------------|
+| Expression Evaluator | `server/router/infrastructure/expression_evaluator.py` | `server/router/application/evaluator/expression_evaluator.py` |
+
+### ✅ Poprawiona Liczba Funkcji
+
+| Element | Poprzednio | Aktualne |
+|---------|------------|----------|
+| Liczba funkcji | 13 | **21** |
+
+### ✅ Zweryfikowane Funkcje w Kodzie
+
+Funkcje z `expression_evaluator.py:49-81` (słownik `FUNCTIONS`):
+
+| Kategoria | Funkcje | Ilość |
+|-----------|---------|-------|
+| Basic | `abs`, `min`, `max`, `round` | 4 |
+| Rounding | `floor`, `ceil`, `trunc` | 3 |
+| Power/Root | `sqrt`, `pow` | 2 |
+| Trigonometric | `sin`, `cos`, `tan` | 3 |
+| Inverse Trig | `asin`, `acos`, `atan`, `atan2` | 4 |
+| Angle Conversion | `degrees`, `radians` | 2 |
+| Logarithmic | `log`, `log10`, `exp` | 3 |
+| Advanced | `hypot` | 1 |
+| **TOTAL** | | **21** |
+
+### ✅ Zweryfikowane Operatory w Kodzie
+
+Operatory z `expression_evaluator.py:289-297` (słownik `op_map` w `_eval_node()`):
+
+| Operator | AST Node | Linia |
+|----------|----------|-------|
+| `+` | `ast.Add` | 290 |
+| `-` | `ast.Sub` | 291 |
+| `*` | `ast.Mult` | 292 |
+| `/` | `ast.Div` | 293 |
+| `**` | `ast.Pow` | 294 |
+| `%` | `ast.Mod` | 295 |
+| `//` | `ast.FloorDiv` | 296 |
+
+### ❌ Brakująca Implementacja (wymaga TASK-059)
+
+W `_eval_node()` (linie 262-336) **NIE MA** obsługi:
+
+| AST Node | Operator | Wymagane dla | Status |
+|----------|----------|--------------|--------|
+| `ast.Compare` | `<`, `<=`, `>`, `>=`, `==`, `!=` | Porównania | ❌ **BRAK** |
+| `ast.BoolOp` | `and`, `or` | Operatory logiczne | ❌ **BRAK** |
+| `ast.UnaryOp(ast.Not)` | `not` | Negacja logiczna | ❌ **BRAK** |
+| `ast.IfExp` | `x if cond else y` | Ternary expressions | ❌ **BRAK** |
+
+**Konsekwencje**:
+- Wyrażenia typu `"1 if width > 0.5 else 0"` **NIE DZIAŁAJĄ**
+- Przykład `plank_has_remainder` w simple_table.yaml **NIE ZADZIAŁA**
+- Wszystkie "boolean to int" konwersje wymagają TASK-059
+
+### 🎯 Podsumowanie Weryfikacji
+
+| Kategoria | Status |
+|-----------|--------|
+| Ścieżka pliku | ✅ Poprawiona na `application/evaluator/` |
+| Liczba funkcji | ✅ Poprawiona na 21 |
+| Numery linii | ✅ Zaktualizowane (49-81) |
+| Kod przykładowy | ✅ Zaktualizowany do aktualnej implementacji |
+| Clean Architecture | ✅ Plik w prawidłowej warstwie (Application) |
+| **Operatory arytmetyczne** | ✅ **7 operatorów zaimplementowanych** |
+| **Operatory porównania** | ❌ **NIE zaimplementowane** |
+| **Operatory logiczne** | ❌ **NIE zaimplementowane** |
+| **Ternary expressions** | ❌ **NIE zaimplementowane** |
+
+---
+
+## TASK-059: Wymagana Implementacja
+
+Na podstawie tej weryfikacji, TASK-059 powinien dodać do `_eval_node()`:
+
+1. **`ast.Compare`** - operatory porównania (`<`, `<=`, `>`, `>=`, `==`, `!=`)
+2. **`ast.BoolOp`** - operatory logiczne (`and`, `or`)
+3. **`ast.UnaryOp(ast.Not)`** - negacja logiczna (`not`)
+4. **`ast.IfExp`** - ternary expressions (`x if cond else y`)
+
+Bez tego, przykłady z TASK-055-FIX-8 dotyczące "boolean to int conversion" **nie będą działać**.
+
+**TASK-055-FIX-8 został zweryfikowany. Dokumentacja poprawiona, ale wymaga TASK-059 dla pełnej funkcjonalności.**
