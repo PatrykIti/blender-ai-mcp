@@ -600,6 +600,7 @@ steps:
 | **Application/Workflows** | `server/router/application/workflows/base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep`, dodać `"loop"` do `_known_fields` | P0 |
 | **Infrastructure** | `server/router/infrastructure/workflow_loader.py` | Automatyczna obsługa `loop` przez istniejący `_parse_step()` (bez zmian) | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/loop_expander.py` | **NOWY PLIK**: `LoopExpander` class | P0 |
+| **Application/Evaluator** | `server/router/application/evaluator/__init__.py` | Dodać eksport `LoopExpander` do `__all__` | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `FORMAT_PATTERN`, `resolve_format()`, zmodyfikować `resolve_param_value()` | P0 |
 | **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja w `expand_workflow()` | P0 |
 | **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
@@ -653,18 +654,19 @@ tests/e2e/router/test_simple_table_with_loops.py
 | 1 | Application/Workflows | `base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep` + `_known_fields` |
 | 2 | Infrastructure | `workflow_loader.py` | Weryfikacja - pole `loop` parsowane automatycznie (bez zmian) |
 | 3 | Application/Evaluator | `loop_expander.py` | **NOWY PLIK** - `LoopExpander` class |
-| 4 | Application/Evaluator | `expression_evaluator.py` | Dodać `FORMAT_PATTERN` + `resolve_format()` + zmodyfikować `resolve_param_value()` |
-| 5 | Application/Workflows | `registry.py` | Import + instancja `_loop_expander` + integracja w `expand_workflow()` |
-| 6 | Tests | `test_loop_expander.py` | Unit testy dla `LoopExpander` |
-| 7 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
-| 8 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
+| 4 | Application/Evaluator | `__init__.py` | Dodać import i eksport `LoopExpander` do `__all__` |
+| 5 | Application/Evaluator | `expression_evaluator.py` | Dodać `FORMAT_PATTERN` + `resolve_format()` + zmodyfikować `resolve_param_value()` |
+| 6 | Application/Workflows | `registry.py` | Import + instancja `_loop_expander` + integracja w `expand_workflow()` |
+| 7 | Tests | `test_loop_expander.py` | Unit testy dla `LoopExpander` |
+| 8 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
+| 9 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
 
 ### Faza 2 - Conditional Expressions (opcjonalne)
 
 | Krok | Warstwa | Plik | Opis |
 |------|---------|------|------|
-| 9 | Application/Evaluator | `expression_evaluator.py` | Dodać `ast.IfExp` + `ast.Compare` + `_compare_values()` |
-| 10 | Tests | `test_expression_evaluator_conditionals.py` | Unit testy dla ternary expressions |
+| 10 | Application/Evaluator | `expression_evaluator.py` | Dodać `ast.IfExp` + `ast.Compare` + `_compare_values()` |
+| 11 | Tests | `test_expression_evaluator_conditionals.py` | Unit testy dla ternary expressions |
 
 ---
 
@@ -675,6 +677,55 @@ tests/e2e/router/test_simple_table_with_loops.py
 3. **LoopExpander lokalizacja**: `application/evaluator/` - logika transformacji danych (nie infrastructure)
 4. **Nested loops**: FAZA 3 (przyszłość) - podstawowe pętle w FAZA 1
 
+### `$FORMAT` vs `$CALCULATE` - różnice
+
+| Aspekt | `$CALCULATE(...)` | `$FORMAT(...)` |
+|--------|-------------------|----------------|
+| **Cel** | Obliczenia matematyczne | Interpolacja stringów |
+| **Zwraca** | `float` / `int` | `string` |
+| **Użycie** | `location`, `scale`, `rotation` | `name`, `material_name` |
+| **Przykład** | `$CALCULATE(width / 2)` → `0.4` | `$FORMAT(Plank_{i})` → `"Plank_3"` |
+| **Obsługuje** | Arytmetyka, funkcje math | Placeholder `{zmienna}` |
+
+**WAŻNE**: `$FORMAT` i `$CALCULATE` są **wzajemnie wykluczające się** - oba patterny matchują cały string (`^...$`). Nie można ich zagnieżdżać:
+
+```yaml
+# ❌ NIE MOŻNA:
+name: "$FORMAT(Plank_$CALCULATE(i + 1))"
+
+# ✅ MOŻNA (loop variable podstawiana przed $FORMAT):
+name: "$FORMAT(Plank_{i})"
+```
+
+Kolejność przetwarzania w pipeline:
+1. `LoopExpander` podstawia `{i}` → wartość (np. `3`)
+2. `ExpressionEvaluator.resolve_param_value()` sprawdza `$FORMAT` → zwraca string
+3. Lub sprawdza `$CALCULATE` → zwraca liczbę
+
+---
+
+## Znany Dług Techniczny
+
+### `_resolve_definition_params()` w registry.py (linia 570-577)
+
+Istniejąca metoda **nie przekazuje wszystkich pól** `WorkflowStep` przy tworzeniu resolved steps:
+
+```python
+# AKTUALNA IMPLEMENTACJA (registry.py:570-577):
+resolved_steps.append(
+    WorkflowStep(
+        tool=step.tool,
+        params=resolved_params,
+        description=step.description,
+        condition=step.condition,  # Tylko te 4 pola!
+    )
+)
+```
+
+**Brakujące pola**: `optional`, `disable_adaptation`, `tags`, `id`, `depends_on`, `timeout`, `max_retries`, `retry_delay`, `on_failure`, `priority`
+
+**Rekomendacja**: Przy okazji TASK-058 naprawić ten dług - metoda `_clone_step_with_loop_var()` w `LoopExpander` już poprawnie przekazuje wszystkie pola.
+
 ---
 
 ## Szacowany Czas Implementacji
@@ -684,11 +735,13 @@ tests/e2e/router/test_simple_table_with_loops.py
 | `WorkflowStep.loop` + `_known_fields` | 5 min |
 | Loop parsing verification | 0 min (automatyczne) |
 | `LoopExpander` class | 30 min |
+| `__init__.py` update | 2 min |
 | `$FORMAT` pattern + `resolve_format()` | 15 min |
 | Registry integration | 10 min |
+| Fix `_resolve_definition_params()` (dług techniczny) | 5 min |
 | Unit tests (`LoopExpander`) | 20 min |
 | Unit tests (`$FORMAT`) | 10 min |
 | `simple_table.yaml` refaktor (opcjonalne) | 15 min |
-| **TOTAL Faza 1** | ~1.5h |
+| **TOTAL Faza 1** | ~2h |
 | Faza 2: Conditional expressions | +30 min |
-| **TOTAL (wszystko)** | ~2h |
+| **TOTAL (wszystko)** | ~2.5h |
