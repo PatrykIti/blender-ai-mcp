@@ -254,16 +254,26 @@ def _eval_node(self, node: ast.AST) -> float:
     """
     # Constant (Python 3.8+)
     if isinstance(node, ast.Constant):
-        if isinstance(node.value, (int, float)):
-            return float(node.value)
-        # TASK-059: Handle boolean constants
+        # TASK-059: Handle boolean constants BEFORE int/float check
+        # (bool is subclass of int, so must check first)
         if isinstance(node.value, bool):
             return 1.0 if node.value else 0.0
+        if isinstance(node.value, (int, float)):
+            return float(node.value)
         raise ValueError(f"Invalid constant type: {type(node.value)}")
 
     # Num (Python 3.7 fallback)
     if isinstance(node, ast.Num):
         return float(node.n)
+
+    # NameConstant (Python 3.7 fallback for True/False/None)
+    # In Python 3.8+, these are ast.Constant, but 3.7 uses ast.NameConstant
+    if isinstance(node, ast.NameConstant):
+        if node.value is True:
+            return 1.0
+        if node.value is False:
+            return 0.0
+        raise ValueError(f"Invalid NameConstant: {node.value}")
 
     # Binary operation
     if isinstance(node, ast.BinOp):
@@ -377,6 +387,7 @@ Tests expression evaluator extensions for:
 - Chained comparisons (0 < x < 10)
 """
 
+import ast  # Required for TestCompareValuesHelper (ast.Eq, ast.Lt, etc.)
 import pytest
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 
@@ -657,6 +668,24 @@ class TestEdgeCases:
         result = evaluator.evaluate("1 if False else 0")
         assert result == 0.0
 
+    def test_boolean_literal_in_expression(self, evaluator):
+        """Test boolean literals in arithmetic context"""
+        # True should be 1.0, False should be 0.0
+        result = evaluator.evaluate("True + 1")
+        assert result == 2.0
+
+        result = evaluator.evaluate("False + 1")
+        assert result == 1.0
+
+    def test_direct_comparison_result(self, evaluator):
+        """Test that comparisons return 1.0/0.0 directly (not just in ternary)"""
+        # Direct comparison without ternary wrapper
+        result = evaluator.evaluate("(y > x) + 1")  # (1 > 0) = 1.0, + 1 = 2.0
+        assert result == 2.0
+
+        result = evaluator.evaluate("(x > y) + 1")  # (0 > 1) = 0.0, + 1 = 1.0
+        assert result == 1.0
+
 
 class TestCompareValuesHelper:
     """Direct tests for _compare_values helper method."""
@@ -688,6 +717,44 @@ class TestCompareValuesHelper:
     def test_gte(self, evaluator):
         assert evaluator._compare_values(5.0, ast.GtE(), 5.0) is True
         assert evaluator._compare_values(5.0, ast.GtE(), 3.0) is True
+
+
+class TestPython37Compatibility:
+    """Tests for Python 3.7 compatibility (ast.NameConstant fallback)."""
+
+    @pytest.fixture
+    def evaluator(self):
+        return ExpressionEvaluator()
+
+    def test_true_literal_works(self, evaluator):
+        """True literal should work regardless of Python version"""
+        result = evaluator.evaluate("1 + True")
+        assert result == 2.0
+
+    def test_false_literal_works(self, evaluator):
+        """False literal should work regardless of Python version"""
+        result = evaluator.evaluate("1 + False")
+        assert result == 1.0
+
+    def test_true_in_condition(self, evaluator):
+        """True as condition should return body"""
+        result = evaluator.evaluate("5 if True else 10")
+        assert result == 5.0
+
+    def test_false_in_condition(self, evaluator):
+        """False as condition should return orelse"""
+        result = evaluator.evaluate("5 if False else 10")
+        assert result == 10.0
+
+    def test_not_true(self, evaluator):
+        """not True should be 0.0"""
+        result = evaluator.evaluate("1 if not True else 0")
+        assert result == 0.0
+
+    def test_not_false(self, evaluator):
+        """not False should be 1.0"""
+        result = evaluator.evaluate("1 if not False else 0")
+        assert result == 1.0
 ```
 
 ---
@@ -700,7 +767,8 @@ class TestCompareValuesHelper:
 | `server/router/application/evaluator/expression_evaluator.py` | Extend `ast.UnaryOp` for `ast.Not` | 305-311 |
 | `server/router/application/evaluator/expression_evaluator.py` | Add `_compare_values()` helper method | NEW |
 | `server/router/application/evaluator/expression_evaluator.py` | Handle `True`/`False` in `ast.Name` | 329-334 |
-| `server/router/application/evaluator/expression_evaluator.py` | Handle `bool` in `ast.Constant` | 275-278 |
+| `server/router/application/evaluator/expression_evaluator.py` | Handle `bool` in `ast.Constant` (check BEFORE int/float!) | 275-278 |
+| `server/router/application/evaluator/expression_evaluator.py` | Add `ast.NameConstant` handler (Python 3.7 fallback) | NEW (after ast.Num) |
 
 ---
 
@@ -766,6 +834,68 @@ After implementation, update:
 - Boolean short-circuit evaluation improves performance for complex expressions
 - `True`/`False` as variable names supported for Python compatibility
 - This task completes the expression evaluator feature set started in TASK-056-1
+
+---
+
+## Important Implementation Notes
+
+### 1. Bool Check Order in `ast.Constant`
+
+**CRITICAL**: In Python, `bool` is a subclass of `int`. Therefore:
+```python
+isinstance(True, int)  # Returns True!
+isinstance(True, bool)  # Returns True
+```
+
+The `bool` check **MUST** come **BEFORE** the `int/float` check:
+```python
+# CORRECT:
+if isinstance(node.value, bool):      # Check bool FIRST
+    return 1.0 if node.value else 0.0
+if isinstance(node.value, (int, float)):
+    return float(node.value)
+
+# WRONG (will never reach bool branch):
+if isinstance(node.value, (int, float)):  # This catches bool too!
+    return float(node.value)
+if isinstance(node.value, bool):          # Never reached
+    return 1.0 if node.value else 0.0
+```
+
+### 2. Python 3.7 Compatibility (ast.NameConstant)
+
+In Python 3.7, `True`/`False`/`None` are represented as `ast.NameConstant`, not `ast.Constant`:
+```python
+# Python 3.7:
+ast.parse("True").body[0].value  # -> ast.NameConstant(value=True)
+
+# Python 3.8+:
+ast.parse("True").body[0].value  # -> ast.Constant(value=True)
+```
+
+Add handler for both to ensure compatibility.
+
+### 3. Relationship with `ConditionEvaluator`
+
+The codebase has two evaluators:
+- **`ExpressionEvaluator`**: AST-based, returns `float`, for `$CALCULATE()` expressions
+- **`ConditionEvaluator`**: String/regex-based, returns `bool`, for step conditions
+
+They serve different purposes:
+- `ExpressionEvaluator` is used in computed parameters (YAML `computed:` field)
+- `ConditionEvaluator` is used in workflow step conditions (YAML `condition:` field)
+
+This task extends `ExpressionEvaluator` only. `ConditionEvaluator` already has full boolean support.
+
+### 4. Test Import Requirements
+
+Tests for `_compare_values()` helper require `import ast` because they instantiate AST operator nodes directly:
+```python
+import ast  # Required!
+
+def test_eq(self, evaluator):
+    assert evaluator._compare_values(5.0, ast.Eq(), 5.0) is True
+```
 
 ---
 
