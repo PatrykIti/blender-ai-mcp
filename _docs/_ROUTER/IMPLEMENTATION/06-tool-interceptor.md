@@ -44,7 +44,7 @@ interceptor = ToolInterceptor(max_history=100)
 session_id = interceptor.start_session()
 
 # Intercept a call
-call = interceptor.intercept("mesh_extrude", {"depth": 1.0}, prompt="extrude up")
+call = interceptor.intercept("mesh_extrude_region", {"move": [0.0, 0.0, 1.0]}, prompt="extrude up")
 
 # Query history
 last = interceptor.get_last_call()

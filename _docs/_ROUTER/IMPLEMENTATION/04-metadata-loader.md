@@ -18,7 +18,7 @@ The MetadataLoader loads tool metadata from modular per-tool JSON files. This en
 server/router/infrastructure/tools_metadata/
 ├── _schema.json           # JSON Schema for validation
 ├── mesh/
-│   ├── mesh_extrude.json
+│   ├── mesh_extrude_region.json
 │   ├── mesh_bevel.json
 │   └── mesh_inset.json
 ├── modeling/
@@ -38,7 +38,7 @@ Each tool has a JSON file with this structure:
 
 ```json
 {
-  "tool_name": "mesh_extrude",
+  "tool_name": "mesh_extrude_region",
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
@@ -48,13 +48,14 @@ Each tool has a JSON file with this structure:
     "pull out the top face"
   ],
   "parameters": {
-    "value": {
-      "type": "float",
-      "default": 0.0,
-      "range": [-100.0, 100.0]
+    "move": {
+      "type": "list[float]",
+      "default": [0.0, 0.0, 0.0],
+      "range": [-100.0, 100.0],
+      "description": "Optional [x, y, z] move applied after extrusion."
     }
   },
-  "related_tools": ["mesh_inset", "mesh_bevel"],
+  "related_tools": ["mesh_inset", "mesh_bevel", "mesh_select"],
   "patterns": ["phone_like:screen_cutout"],
   "description": "Extrudes selected geometry."
 }
@@ -124,7 +125,7 @@ loader = MetadataLoader()
 metadata = loader.load_all()
 
 # Get specific tool
-extrude = loader.get_tool("mesh_extrude")
+extrude = loader.get_tool("mesh_extrude_region")
 print(extrude.mode_required)  # "EDIT"
 print(extrude.selection_required)  # True
 
@@ -160,7 +161,7 @@ Validation checks:
 ## Sample Metadata Files
 
 Created sample files for:
-- `mesh_extrude.json` - Edit mode, selection required
+- `mesh_extrude_region.json` - Edit mode, selection required
 - `mesh_bevel.json` - Edit mode, selection required
 - `mesh_inset.json` - Edit mode, selection required
 - `modeling_create_primitive.json` - Object mode

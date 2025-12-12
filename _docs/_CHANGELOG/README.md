@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [109](./109-2025-12-12-router-api-alignment-offline-guards.md) | 2025-12-12 | **Router API Alignment + Offline/Anti-Drift Guards (TASK-061)** | - |
+| [108](./108-2025-12-12-unified-expression-evaluator.md) | 2025-12-12 | **Unified Expression Evaluator (TASK-060)** | - |
 | [107](./107-2025-12-11-simple-table-dynamic-plank-system.md) | 2025-12-11 | **Dynamic Plank System for simple_table.yaml (TASK-055-FIX-7 Phase 1-3 Complete)** | - |
 | [106](./106-2025-12-11-computed-parameters-integration.md) | 2025-12-11 | **Computed Parameters Integration in WorkflowRegistry (TASK-055-FIX-7 Phase 0)** | - |
 | [105](./105-2025-12-10-flexible-yaml-parameter-loading.md) | 2025-12-10 | **Flexible YAML Parameter Loading with Semantic Extensions (TASK-055-FIX-6)** | - |

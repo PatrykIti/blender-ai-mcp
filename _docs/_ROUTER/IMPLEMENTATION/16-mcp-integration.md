@@ -34,7 +34,7 @@ async def original_executor(tool_name: str, params: dict) -> str:
 wrapped = integration.wrap_tool_executor(original_executor)
 
 # Now all calls go through router
-result = await wrapped("mesh_extrude_region", {"depth": 0.5})
+result = await wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 ```
 
 ### RouterMiddleware
@@ -99,7 +99,7 @@ integration = MCPRouterIntegration()
 wrapped = integration.wrap_tool_executor(my_executor)
 
 # Use wrapped executor
-result = await wrapped("mesh_bevel", {"width": 0.1})
+result = await wrapped("mesh_bevel", {"offset": 0.1})
 ```
 
 ### With Bypass

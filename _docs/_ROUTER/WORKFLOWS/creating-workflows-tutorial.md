@@ -120,7 +120,7 @@ steps:
 ```yaml
 - tool: mesh_bevel              # Nazwa narzędzia (wymagane)
   params:                       # Parametry (wymagane)
-    width: 0.05
+    offset: 0.05
     segments: 3
   description: Zaokrąglij krawędzie  # Opis (opcjonalne)
   condition: "has_selection"    # Warunek (opcjonalne)
@@ -301,7 +301,7 @@ steps:
 ```yaml
 # ŹLE - 0.05 działa dla 1m kostki, ale nie dla 10m lub 1cm
 params:
-  width: 0.05
+  offset: 0.05
 ```
 
 ### 6.2 Rozwiązanie 1: $CALCULATE
@@ -311,7 +311,7 @@ Oblicz wartość matematycznie:
 ```yaml
 params:
   # 5% najmniejszego wymiaru
-  width: "$CALCULATE(min_dim * 0.05)"
+  offset: "$CALCULATE(min_dim * 0.05)"
 
   # Średnia szerokości i wysokości
   size: "$CALCULATE((width + height) / 2)"
@@ -367,7 +367,7 @@ Gotowe predefiniowane wartości:
 ```yaml
 params:
   # Automatyczny bevel (5% min wymiaru)
-  width: "$AUTO_BEVEL"
+  offset: "$AUTO_BEVEL"
 
   # Automatyczny inset (3% min XY)
   thickness: "$AUTO_INSET"
@@ -398,8 +398,8 @@ Odwołanie do wartości z kontekstu:
 
 ```yaml
 params:
-  depth: "$depth"      # Głębokość obiektu
   mode: "$mode"        # Aktualny tryb
+  move: [0, 0, "$depth"]  # Z użyciem wymiarów obiektu
 ```
 
 ### 6.5 Kolejność Rozwiązywania
@@ -865,13 +865,13 @@ steps:
 ```yaml
 # Ozdobny vs Prosty
 - tool: mesh_bevel
-  params: { width: 0.1 }
+  params: { offset: 0.1 }
   description: "Duże zaokrąglenia (ozdobne)"
   optional: true
   decorative: true  # Włącz gdy "decorative"/"ozdobny" w prompt
 
 - tool: mesh_bevel
-  params: { width: 0.01 }
+  params: { offset: 0.01 }
   description: "Małe zaokrąglenia (minimalistyczne)"
   optional: true
   decorative: false  # Włącz gdy "decorative" NIE w prompt
@@ -884,7 +884,7 @@ steps:
   add_handles: true  # Włącz gdy "handles"/"uchwyty" w prompt
 
 - tool: mesh_bevel
-  params: { width: 0.05 }
+  params: { offset: 0.05 }
   description: "Zaokrągl krawędzie (zamiast uchwytów)"
   optional: true
   add_handles: false  # Włącz gdy "handles" NIE w prompt
@@ -1330,7 +1330,7 @@ steps:
 
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL"
+      offset: "$AUTO_BEVEL"
       segments: 3
     description: Zaokrąglij wszystkie krawędzie
 
@@ -1403,8 +1403,8 @@ Workflow rozwinięty do 9 kroków:
       mode: EDIT
   3. mesh_select
       action: all
-  4. mesh_bevel
-      width: 0.0004  # 5% z 8mm
+4. mesh_bevel
+      offset: 0.0004  # 5% z 8mm
       segments: 3
   5. mesh_select
       action: none
@@ -1428,11 +1428,11 @@ Workflow rozwinięty do 9 kroków:
 ```yaml
 # ŹLE - brak spacji po dwukropku
 params:
-  width:0.05
+  offset:0.05
 
 # DOBRZE
 params:
-  width: 0.05
+  offset: 0.05
 ```
 
 ```yaml
@@ -1440,13 +1440,13 @@ params:
 steps:
 - tool: mesh_bevel
 params:
-  width: 0.05
+  offset: 0.05
 
 # DOBRZE
 steps:
   - tool: mesh_bevel
     params:
-      width: 0.05
+      offset: 0.05
 ```
 
 ### 9.2 Błędy Warunków
@@ -1471,18 +1471,18 @@ condition: "current_mode != 'EDIT'"
 
 ```yaml
 # ŹLE - brak zamknięcia nawiasu
-width: "$CALCULATE(min_dim * 0.05"
+offset: "$CALCULATE(min_dim * 0.05"
 
 # DOBRZE
-width: "$CALCULATE(min_dim * 0.05)"
+offset: "$CALCULATE(min_dim * 0.05)"
 ```
 
 ```yaml
 # ŹLE - nieistniejąca zmienna
-width: "$CALCULATE(szerokość * 0.05)"
+offset: "$CALCULATE(szerokość * 0.05)"
 
 # DOBRZE (użyj angielskich nazw)
-width: "$CALCULATE(width * 0.05)"
+offset: "$CALCULATE(width * 0.05)"
 ```
 
 ### 9.4 Błędy Logiczne

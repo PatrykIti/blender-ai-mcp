@@ -34,8 +34,8 @@ The firewall can take different actions based on rule violations:
 "bevel_no_selection" → auto_fix (select all)
 
 # Parameter rules
-"bevel_too_large" → modify (clamp width)
-"subdivide_too_many" → modify (limit cuts to 6)
+"bevel_too_large" → modify (clamp offset)
+"subdivide_too_many" → modify (limit number_cuts to 6)
 
 # Object existence rules
 "delete_no_object" → block
@@ -84,7 +84,7 @@ Rules use a simple condition syntax:
 "mode != 'SCULPT'"          # Mode not equal
 "no_selection"              # No geometry selected
 "no_objects"                # Scene is empty
-"param:width > dimension_ratio:0.5"  # Parameter bounds
+"param:offset > dimension_ratio:0.5"  # Parameter bounds
 "param:number_cuts > 6"     # Parameter threshold
 ```
 

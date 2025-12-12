@@ -20,7 +20,7 @@ YAML workflows had static parameter values:
 steps:
   - tool: mesh_bevel
     params:
-      width: 0.05  # Hardcoded - doesn't adapt to object size
+      offset: 0.05  # Hardcoded - doesn't adapt to object size
 ```
 
 This doesn't work for different object sizes. A bevel of 0.05 looks good on a 1m cube but is invisible on a 10m cube.
@@ -35,7 +35,7 @@ Dynamic expressions that calculate values from scene context:
 steps:
   - tool: mesh_bevel
     params:
-      width: "$CALCULATE(min_dim * 0.05)"  # 5% of smallest dimension
+      offset: "$CALCULATE(min_dim * 0.05)"  # 5% of smallest dimension
 ```
 
 ---
@@ -348,7 +348,7 @@ steps:
 
   - tool: mesh_bevel
     params:
-      width: "$CALCULATE(min_dim * 0.05)"
+      offset: "$CALCULATE(min_dim * 0.05)"
       segments: 3
 
   - tool: mesh_inset

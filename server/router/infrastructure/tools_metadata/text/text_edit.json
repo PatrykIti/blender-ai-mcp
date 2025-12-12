@@ -7,7 +7,7 @@
   "sample_prompts": ["edit text", "change text content", "update text size"],
   "parameters": {
     "object_name": {"type": "string", "required": true},
-    "content": {"type": "string", "default": null},
+    "text": {"type": "string", "default": null},
     "size": {"type": "float", "default": null},
     "extrude": {"type": "float", "default": null},
     "bevel_depth": {"type": "float", "default": null},

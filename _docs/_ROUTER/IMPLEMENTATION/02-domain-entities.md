@@ -273,8 +273,8 @@ from server.router.domain.entities import (
 
 # Intercept LLM call
 original = InterceptedToolCall(
-    tool_name="mesh_extrude",
-    params={"value": 1.0},
+    tool_name="mesh_extrude_region",
+    params={"move": [0.0, 0.0, 1.0]},
     original_prompt="extrude the top face",
 )
 
@@ -288,13 +288,13 @@ sequence = ToolCallSequence(
         ),
         CorrectedToolCall(
             tool_name="mesh_select",
-            params={"action": "all", "mode": "FACE"},
+            params={"action": "all"},
             is_injected=True,
         ),
         CorrectedToolCall(
-            tool_name="mesh_extrude",
-            params={"value": 1.0},
-            original_tool_name="mesh_extrude",
+            tool_name="mesh_extrude_region",
+            params={"move": [0.0, 0.0, 1.0]},
+            original_tool_name="mesh_extrude_region",
         ),
     ],
     original_call=original,

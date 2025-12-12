@@ -78,10 +78,10 @@ def expand(
 Workflow steps can inherit parameters using `$` syntax:
 
 ```python
-{"tool": "mesh_bevel", "params": {"width": "$width", "segments": "$segments"}}
+{"tool": "mesh_bevel", "params": {"offset": "$offset", "segments": "$segments"}}
 ```
 
-This inherits `width` and `segments` from the original tool call parameters.
+This inherits `offset` and `segments` from the original tool call parameters.
 
 ## Configuration
 

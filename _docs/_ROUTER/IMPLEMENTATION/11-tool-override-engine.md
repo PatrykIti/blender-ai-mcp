@@ -23,7 +23,7 @@ The engine checks if a tool call matches any override rules and suggests replace
     "trigger_pattern": "phone_like",
     "replacement_tools": [
         {"tool_name": "mesh_inset", "params": {"thickness": 0.03}},
-        {"tool_name": "mesh_extrude_region", "params": {"depth": -0.02}},
+        {"tool_name": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
     ],
 }
 ```
@@ -77,7 +77,7 @@ Replacement tools can inherit parameters from the original call:
 ```python
 {
     "tool_name": "mesh_extrude_region",
-    "inherit_params": ["depth"],  # Inherit depth from original
+    "inherit_params": ["move"],  # Inherit move from original
 }
 ```
 

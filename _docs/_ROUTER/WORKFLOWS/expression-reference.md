@@ -324,9 +324,9 @@ The evaluator uses AST parsing (not `eval()`):
 
 ```yaml
 params:
-  width: "$CALCULATE(min_dim * 0.05)"
+  offset: "$CALCULATE(min_dim * 0.05)"
   # or simpler:
-  width: "$AUTO_BEVEL"
+  offset: "$AUTO_BEVEL"
 ```
 
 ### Screen Cutout
@@ -362,5 +362,5 @@ params:
 
 ```yaml
 params:
-  width: "$CALCULATE(max(min_dim * 0.05, 0.01))"  # At least 0.01
+  offset: "$CALCULATE(max(min_dim * 0.05, 0.01))"  # At least 0.01
 ```

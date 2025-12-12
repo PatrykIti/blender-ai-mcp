@@ -13,11 +13,17 @@
     "add a torus"
   ],
   "parameters": {
-    "type": {
+    "primitive_type": {
       "type": "enum",
       "options": ["CUBE", "SPHERE", "CYLINDER", "PLANE", "CONE", "TORUS", "ICOSPHERE"],
       "required": true,
       "description": "Type of primitive to create"
+    },
+    "radius": {
+      "type": "float",
+      "default": 1.0,
+      "range": [0.001, 1000.0],
+      "description": "Radius for sphere/cylinder/cone"
     },
     "size": {
       "type": "float",
@@ -29,9 +35,19 @@
       "type": "vector3",
       "default": [0.0, 0.0, 0.0],
       "description": "Location to place the primitive"
+    },
+    "rotation": {
+      "type": "vector3",
+      "default": [0.0, 0.0, 0.0],
+      "description": "Rotation in radians"
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "description": "Optional name for the new object"
     }
   },
-  "related_tools": ["modeling_transform", "modeling_add_modifier"],
+  "related_tools": ["modeling_transform_object", "modeling_add_modifier"],
   "patterns": [],
   "description": "Creates a primitive mesh object (cube, sphere, cylinder, etc.)."
 }

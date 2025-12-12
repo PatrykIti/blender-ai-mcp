@@ -51,10 +51,10 @@ router/
 
 [
   {
-    "name": "mesh_extrude",
+    "name": "mesh_extrude_region",
     "category": "mesh",
-    "keywords": ["extrude", "pull", "extend", "face", "depth"],
-    "description": "Extrudes selected mesh elements.",
+    "keywords": ["extrude", "pull", "extend", "face"],
+    "description": "Extrudes selected geometry and optionally moves it.",
     "sample_prompts": [
       "extrude face",
       "pull the face outward",
@@ -62,10 +62,10 @@ router/
     ]
   },
   {
-    "name": "modeling_add_cube",
+    "name": "modeling_create_primitive",
     "category": "modeling",
     "keywords": ["cube", "box", "primitive", "create cube"],
-    "description": "Adds a cube primitive.",
+    "description": "Creates a primitive object (Cube/Sphere/Cylinder/...).",
     "sample_prompts": [
       "add cube",
       "create a cube",
@@ -202,11 +202,11 @@ class Planner:
     def __init__(self):
         self.workflows = {
             "create_phone": [
-                "modeling_add_cube",
-                "transform_scale",
+                "modeling_create_primitive",
+                "modeling_transform_object",
                 "mesh_bevel",
                 "mesh_inset",
-                "mesh_extrude",
+                "mesh_extrude_region",
                 "material_assign"
             ]
         }
@@ -542,7 +542,7 @@ class ToolCorrectionEngine:
     def _needs_selection(self, tool_name: str) -> bool:
         """Check if tool requires selection."""
         selection_tools = [
-            "mesh_extrude", "mesh_bevel", "mesh_inset",
+            "mesh_extrude_region", "mesh_bevel", "mesh_inset",
             "mesh_delete", "mesh_duplicate", "mesh_transform"
         ]
         return any(tool_name.startswith(t) for t in selection_tools)
@@ -578,12 +578,12 @@ class ToolOverrideEngine:
         # Pattern: if LLM sends X in context Y, replace with Z
         "extrude_for_screen": {
             "trigger": lambda t, ctx: (
-                t == "mesh_extrude" and
+                t == "mesh_extrude_region" and
                 ctx.get("pattern") == "phone_like"
             ),
             "replacement": [
                 {"tool": "mesh_inset", "params": {"thickness": 0.03}},
-                {"tool": "mesh_extrude", "params": {"depth": -0.02}},
+                {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
             ],
             "reason": "Expanded extrude to screen cutout workflow"
         },
@@ -593,8 +593,8 @@ class ToolOverrideEngine:
                 ctx.get("pattern") == "tower_like"
             ),
             "replacement": [
-                {"tool": "mesh_subdivide", "params": {"cuts": 2}},
-                {"tool": "mesh_select_edge_loop", "params": {"index": -1}},
+                {"tool": "mesh_subdivide", "params": {"number_cuts": 2}},
+                {"tool": "mesh_select_targeted", "params": {"action": "loop", "edge_index": -1}},
                 {"tool": "mesh_transform_selected", "params": {"scale": [0.8, 0.8, 1.0]}},
             ],
             "reason": "Added taper to tower subdivision"
@@ -646,47 +646,47 @@ class WorkflowExpansionEngine:
     # Workflow templates
     WORKFLOWS = {
         "phone_workflow": [
-            {"tool": "modeling_create_primitive", "params": {"type": "CUBE"}},
-            {"tool": "modeling_transform", "params": {"scale": [0.4, 0.8, 0.05]}},
+            {"tool": "modeling_create_primitive", "params": {"primitive_type": "Cube"}},
+            {"tool": "modeling_transform_object", "params": {"name": "Cube", "scale": [0.4, 0.8, 0.05]}},
             {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_select", "params": {"action": "all", "mode": "EDGE"}},
-            {"tool": "mesh_bevel", "params": {"width": 0.02, "segments": 3}},
+            {"tool": "mesh_select", "params": {"action": "all"}},
+            {"tool": "mesh_bevel", "params": {"offset": 0.02, "segments": 3}},
             {"tool": "mesh_select", "params": {"action": "none"}},
-            {"tool": "mesh_select_face_by_location", "params": {"location": "top"}},
+            {"tool": "mesh_select_targeted", "params": {"action": "by_location", "axis": "Z", "min_coord": 0.0, "max_coord": 9999.0, "element_type": "FACE"}},
             {"tool": "mesh_inset", "params": {"thickness": 0.03}},
-            {"tool": "mesh_extrude", "params": {"depth": -0.02}},
+            {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
             {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
         ],
         "tower_workflow": [
-            {"tool": "modeling_create_primitive", "params": {"type": "CUBE"}},
-            {"tool": "modeling_transform", "params": {"scale": [0.3, 0.3, 2.0]}},
+            {"tool": "modeling_create_primitive", "params": {"primitive_type": "Cube"}},
+            {"tool": "modeling_transform_object", "params": {"name": "Cube", "scale": [0.3, 0.3, 2.0]}},
             {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_subdivide", "params": {"cuts": 3}},
-            {"tool": "mesh_select_edge_loop", "params": {"index": -1}},
+            {"tool": "mesh_subdivide", "params": {"number_cuts": 3}},
+            {"tool": "mesh_select_targeted", "params": {"action": "loop", "edge_index": -1}},
             {"tool": "mesh_transform_selected", "params": {"scale": [0.7, 0.7, 1.0]}},
             {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
         ],
         "screen_cutout_workflow": [
-            {"tool": "mesh_select_face_by_location", "params": {"location": "top"}},
+            {"tool": "mesh_select_targeted", "params": {"action": "by_location", "axis": "Z", "min_coord": 0.0, "max_coord": 9999.0, "element_type": "FACE"}},
             {"tool": "mesh_inset", "params": {"thickness": 0.05}},
-            {"tool": "mesh_extrude", "params": {"depth": -0.02}},
-            {"tool": "mesh_bevel", "params": {"width": 0.005, "segments": 2}},
+            {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
+            {"tool": "mesh_bevel", "params": {"offset": 0.005, "segments": 2}},
         ],
         "bevel_all_edges_workflow": [
             {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-            {"tool": "mesh_select", "params": {"action": "all", "mode": "EDGE"}},
-            {"tool": "mesh_bevel", "params": {"width": 0.02, "segments": 2}},
+            {"tool": "mesh_select", "params": {"action": "all"}},
+            {"tool": "mesh_bevel", "params": {"offset": 0.02, "segments": 2}},
             {"tool": "system_set_mode", "params": {"mode": "OBJECT"}},
         ]
     }
 
     # Expansion rules: single tool -> expanded workflow
     EXPANSION_RULES = {
-        "mesh_extrude": {
+        "mesh_extrude_region": {
             "condition": lambda ctx: ctx.get("no_selection", False),
             "expansion": [
-                {"tool": "mesh_select", "params": {"action": "all", "mode": "FACE"}},
-                {"tool": "mesh_extrude", "params": {"depth": "$depth"}},  # $ = inherit param
+                {"tool": "mesh_select", "params": {"action": "all"}},
+                {"tool": "mesh_extrude_region", "params": {"move": "$move"}},  # $ = inherit param
             ]
         }
     }
@@ -768,7 +768,7 @@ class ErrorFirewall:
         },
         "extrude_no_selection": {
             "check": lambda t, ctx: (
-                t == "mesh_extrude" and
+                t == "mesh_extrude_region" and
                 ctx.get("selection_count", 0) == 0
             ),
             "action": "auto_fix",
@@ -778,10 +778,10 @@ class ErrorFirewall:
         "bevel_too_large": {
             "check": lambda t, p, ctx: (
                 t == "mesh_bevel" and
-                p.get("width", 0) > ctx.get("min_dimension", 1) * 0.5
+                p.get("offset", 0) > ctx.get("min_dimension", 1) * 0.5
             ),
             "action": "modify",
-            "message": "Bevel width too large - clamping to safe value"
+            "message": "Bevel offset too large - clamping to safe value"
         },
         "delete_no_object": {
             "check": lambda t, ctx: (
@@ -1040,22 +1040,22 @@ router = SupervisorRouter(rpc_client)
 
 # Example 1: Process LLM tool call (supervisor mode)
 llm_tool_call = {
-    "tool": "mesh_extrude",
-    "params": {"depth": 0.5}
+    "tool": "mesh_extrude_region",
+    "params": {"move": [0.0, 0.0, 0.5]}
 }
 
 corrected_tools = router.process_llm_tool_call(
     tool_name=llm_tool_call["tool"],
     params=llm_tool_call["params"],
-    original_prompt="extrude the top face"
+    prompt="extrude the top face"
 )
 
 print("Tools to execute:", corrected_tools)
 # Output might be:
 # [
 #   {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
-#   {"tool": "mesh_select", "params": {"action": "all", "mode": "FACE"}},
-#   {"tool": "mesh_extrude", "params": {"depth": 0.5}}
+#   {"tool": "mesh_select", "params": {"action": "all"}},
+#   {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}}
 # ]
 
 # Example 2: Offline routing (no LLM)

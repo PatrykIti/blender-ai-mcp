@@ -253,7 +253,7 @@ class TestMyFeature:
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Action
-        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1})
+        tools = router.process_llm_tool_call("mesh_bevel", {"offset": 0.1})
 
         # Assert
         assert len(tools) > 0

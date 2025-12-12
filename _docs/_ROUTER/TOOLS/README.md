@@ -59,7 +59,7 @@ server/router/infrastructure/tools_metadata/{category}/{tool_name}.json
       "description": "What this parameter does"
     }
   },
-  "related_tools": ["mesh_extrude", "mesh_bevel"],
+  "related_tools": ["mesh_extrude_region", "mesh_bevel"],
   "patterns": ["phone_like:specific_use"],
   "description": "Human-readable description of what the tool does."
 }
@@ -114,11 +114,11 @@ server/router/infrastructure/tools_metadata/{category}/{tool_name}.json
     "add bevel to all edges"
   ],
   "parameters": {
-    "width": {
+    "offset": {
       "type": "float",
       "default": 0.1,
       "range": [0.001, 10.0],
-      "description": "Bevel width"
+      "description": "Bevel size (offset)"
     },
     "segments": {
       "type": "int",
@@ -133,7 +133,7 @@ server/router/infrastructure/tools_metadata/{category}/{tool_name}.json
       "description": "What to bevel"
     }
   },
-  "related_tools": ["mesh_extrude", "mesh_inset", "mesh_select"],
+  "related_tools": ["mesh_extrude_region", "mesh_inset", "mesh_select"],
   "patterns": ["phone_like:edge_rounding", "box_like:chamfer"],
   "description": "Bevels selected edges or vertices to create rounded or chamfered edges."
 }
@@ -250,7 +250,7 @@ self.register_rule(
         {
             "tool_name": "mesh_new_tool",
             "params": {},
-            "inherit_params": ["depth"],  # Inherit from original call
+            "inherit_params": ["offset"],  # Inherit from original call
             "description": "Main operation",
         },
     ],
@@ -275,7 +275,7 @@ Create workflow files if the tool is part of larger operations.
 
 ### Location
 ```
-server/router/infrastructure/workflows/{workflow_name}.yaml
+server/router/application/workflows/custom/{workflow_name}.yaml
 ```
 
 ### Workflow Structure

@@ -11,14 +11,7 @@
     "display scene contents",
     "list objects"
   ],
-  "parameters": {
-    "filter_type": {
-      "type": "enum",
-      "options": ["ALL", "MESH", "CURVE", "LIGHT", "CAMERA", "EMPTY"],
-      "default": "ALL",
-      "description": "Filter by object type"
-    }
-  },
+  "parameters": {},
   "related_tools": ["scene_inspect", "scene_delete_object"],
   "patterns": [],
   "description": "Lists all objects in the current Blender scene."

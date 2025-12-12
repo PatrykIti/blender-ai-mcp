@@ -212,7 +212,7 @@ from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.domain.entities.scene_context import SceneContext
 
 firewall = ErrorFirewall()
-tool = CorrectedToolCall(tool_name="mesh_extrude_region", params={"depth": 0.5})
+tool = CorrectedToolCall(tool_name="mesh_extrude_region", params={"move": [0.0, 0.0, 0.5]})
 context = SceneContext(mode="OBJECT")  # Wrong mode
 
 result = firewall.validate(tool, context)
@@ -352,7 +352,7 @@ config = RouterConfig(log_decisions=True)
 router = SupervisorRouter(config=config)
 
 # Process a call
-tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+tools = router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
 # Check stats
 stats = router.get_stats()

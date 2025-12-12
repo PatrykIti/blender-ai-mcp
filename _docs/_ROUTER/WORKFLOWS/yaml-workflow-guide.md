@@ -70,7 +70,7 @@ Each step has:
 ```yaml
 - tool: mesh_bevel           # Required: tool name
   params:                    # Required: tool parameters
-    width: 0.05
+    offset: 0.05
     segments: 3
   description: Bevel edges   # Optional: human-readable description
   condition: "..."           # Optional: when to execute (see below)
@@ -326,13 +326,13 @@ steps:
 ```yaml
 # Decorative vs Simple
 - tool: mesh_bevel
-  params: { width: 0.1 }
+  params: { offset: 0.1 }
   description: "Large bevel (decorative)"
   optional: true
   decorative: true  # Include when "decorative" in prompt
 
 - tool: mesh_bevel
-  params: { width: 0.01 }
+  params: { offset: 0.01 }
   description: "Small bevel (minimalist)"
   optional: true
   decorative: false  # Include when "decorative" NOT in prompt
@@ -345,7 +345,7 @@ steps:
   add_handles: true  # Include when "handles" in prompt
 
 - tool: mesh_bevel
-  params: { width: 0.05 }
+  params: { offset: 0.05 }
   description: "Round edges (instead of handles)"
   optional: true
   add_handles: false  # Include when "handles" NOT in prompt
@@ -466,8 +466,8 @@ Use `$CALCULATE(...)` for mathematical expressions:
 
 ```yaml
 params:
-  width: "$CALCULATE(min_dim * 0.05)"     # 5% of smallest dimension
-  thickness: "$CALCULATE(width / 2)"      # Half of width
+  offset: "$CALCULATE(min_dim * 0.05)"    # 5% of smallest dimension
+  thickness: "$CALCULATE(offset / 2)"     # Half of offset
   segments: "$CALCULATE(3 + 2)"           # Simple math = 5
   # Trigonometry for leg stretching
   translate: ["$CALCULATE(0.342 * sin(leg_angle_left))", 0, "$CALCULATE(0.342 * cos(leg_angle_left))"]
@@ -523,7 +523,7 @@ Smart defaults that adapt to object size:
 
 ```yaml
 params:
-  width: "$AUTO_BEVEL"      # 5% of smallest dimension
+  offset: "$AUTO_BEVEL"      # 5% of smallest dimension
   thickness: "$AUTO_INSET"  # 3% of XY smallest
   move: [0, 0, "$AUTO_EXTRUDE_NEG"]  # -10% of depth
 ```
@@ -929,7 +929,7 @@ steps:
   # 4. Bevel edges with auto size
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL"
+      offset: "$AUTO_BEVEL"
       segments: 3
     description: Round corners
 
@@ -1140,11 +1140,11 @@ steps:
 ```yaml
 # Good: Works for any object size
 params:
-  width: "$AUTO_BEVEL"
+  offset: "$AUTO_BEVEL"
 
 # Bad: Only works for ~1m objects
 params:
-  width: 0.05
+  offset: 0.05
 ```
 
 ### 3. Provide Descriptive Names
@@ -1170,7 +1170,7 @@ trigger_keywords:
 
 ```yaml
 - tool: mesh_bevel
-  params: { width: "$AUTO_BEVEL", segments: 3 }
+  params: { offset: "$AUTO_BEVEL", segments: 3 }
   description: Round edges for phone body  # Helps debugging
 ```
 

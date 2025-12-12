@@ -20,7 +20,7 @@ Hardcoded parameter values don't scale well:
 steps:
   - tool: mesh_bevel
     params:
-      width: 0.05  # Good for 1m cube, invisible on 10m cube, huge on 1cm cube
+      offset: 0.05  # Good for 1m cube, invisible on 10m cube, huge on 1cm cube
 ```
 
 Different object sizes need different values for the same operation.
@@ -35,7 +35,7 @@ Smart defaults that calculate values from object dimensions:
 steps:
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL"  # Always 5% of smallest dimension
+      offset: "$AUTO_BEVEL"  # Always 5% of smallest dimension
 ```
 
 ---
@@ -279,7 +279,7 @@ name: phone_auto
 steps:
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL"  # Adapts to phone thickness
+      offset: "$AUTO_BEVEL"  # Adapts to phone thickness
       segments: 3
 
   - tool: mesh_inset
@@ -298,7 +298,7 @@ name: table_auto
 steps:
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL_LARGE"  # More prominent bevel for furniture
+      offset: "$AUTO_BEVEL_LARGE"  # More prominent bevel for furniture
 
   - tool: mesh_extrude_region
     params:
@@ -311,7 +311,7 @@ steps:
 steps:
   - tool: mesh_bevel
     params:
-      width: "$AUTO_BEVEL"  # ProportionResolver
+      offset: "$AUTO_BEVEL"  # ProportionResolver
       segments: 3           # Literal
 
   - tool: mesh_inset

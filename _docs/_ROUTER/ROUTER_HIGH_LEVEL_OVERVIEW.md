@@ -122,34 +122,30 @@ User prompt (string)
 
 ## Metadata (tools definition)
 
-File: tools_metadata.json
+File: `server/router/infrastructure/tools_metadata/<category>/<tool>.json`
 
 Example:
 
-[
-  {
-    "name": "mesh_extrude",
-    "category": "mesh",
-    "keywords": ["extrude", "pull", "push", "face", "extend", "depth"],
-    "description": "Extrudes selected mesh elements along normals.",
-    "sample_prompts": [
-      "extrude face by 0.2",
-      "extend the face downward",
-      "pull the top face outwards"
-    ]
-  },
-  {
-    "name": "modeling_add_cube",
-    "category": "modeling",
-    "keywords": ["add cube", "create cube", "new box", "primitive cube"],
-    "description": "Creates a new cube mesh primitive.",
-    "sample_prompts": [
-      "create a 2x2x2 cube",
-      "add a cube",
-      "now add box"
-    ]
+```json
+{
+  "tool_name": "mesh_extrude_region",
+  "category": "mesh",
+  "keywords": ["extrude", "pull", "push", "face", "extend"],
+  "description": "Extrudes selected geometry and optionally moves it.",
+  "sample_prompts": [
+    "extrude face by 0.2",
+    "extend the face downward",
+    "pull the top face outwards"
+  ],
+  "parameters": {
+    "move": {
+      "type": "list[float]",
+      "default": [0.0, 0.0, 0.2],
+      "description": "Optional [x, y, z] move applied after extrusion."
+    }
   }
-]
+}
+```
 
 ------------------------------------------------------------
 
@@ -226,11 +222,11 @@ You can define workflows in YAML:
 
 intents:
   create_phone:
-    - modeling_add_cube
-    - transform_scale
+    - modeling_create_primitive
+    - modeling_transform_object
     - mesh_bevel
     - mesh_inset
-    - mesh_extrude
+    - mesh_extrude_region
     - material_assign
 
 Example: prompt "make a phone" → intent "create_phone" → above sequence of tools.
@@ -306,13 +302,13 @@ PHASE 7 – fine-tune thresholds, tests and fallback logic
 
 ```
 LLM generates:
-  tool_call("mesh_extrude", {"depth": 0.5})
+  tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
 Interceptor captures:
   {
     "source": "llm",
-    "tool": "mesh_extrude",
-    "params": {"depth": 0.5},
+    "tool": "mesh_extrude_region",
+    "params": {"move": [0.0, 0.0, 0.5]},
     "timestamp": "...",
     "context": {...}
   }
@@ -417,10 +413,10 @@ patterns = {
 ### 1. Parameter Correction
 ```python
 # LLM sends:
-mesh_extrude(depth=-5.0)  # negative depth, too large
+mesh_extrude_region(move=[0.0, 0.0, -5.0])  # too large magnitude
 
 # Router corrects:
-mesh_extrude(depth=0.5)   # reasonable positive value
+mesh_extrude_region(move=[0.0, 0.0, -0.5])  # clamped to reasonable value
 ```
 
 ### 2. Mode Correction
@@ -429,7 +425,7 @@ mesh_extrude(depth=0.5)   # reasonable positive value
 # Router adds:
 [
     system_set_mode("EDIT"),
-    mesh_extrude(depth=0.5),
+    mesh_extrude_region(move=[0.0, 0.0, 0.5]),
     system_set_mode("OBJECT")  # restore
 ]
 ```
@@ -439,8 +435,8 @@ mesh_extrude(depth=0.5)   # reasonable positive value
 # LLM sends extrude without selection
 # Router adds:
 [
-    mesh_select(action="all", mode="FACE"),
-    mesh_extrude(depth=0.5)
+    mesh_select(action="all"),
+    mesh_extrude_region(move=[0.0, 0.0, 0.5])
 ]
 ```
 
@@ -449,10 +445,10 @@ mesh_extrude(depth=0.5)   # reasonable positive value
 # LLM sends only extrude for screen cutout
 # Router expands to:
 [
-    mesh_select_face_by_location(location="top"),
+    mesh_select_targeted(action="by_location", axis="Z", min_coord=0.0, max_coord=9999.0, element_type="FACE"),
     mesh_inset(thickness=0.1),
-    mesh_extrude(depth=-0.05),
-    mesh_bevel(width=0.01, segments=2)
+    mesh_extrude_region(move=[0.0, 0.0, -0.05]),
+    mesh_bevel(offset=0.01, segments=2)
 ]
 ```
 
@@ -460,8 +456,8 @@ mesh_extrude(depth=0.5)   # reasonable positive value
 ```python
 # Parameter limits based on context
 corrections = {
-    "bevel_width": clamp(value, 0.001, bbox.min_dimension * 0.5),
-    "extrude_depth": clamp(value, -bbox.z, bbox.z * 2),
+    "bevel_offset": clamp(value, 0.001, bbox.min_dimension * 0.5),
+    "extrude_move_z": clamp(value, -bbox.z, bbox.z * 2),
     "subdivisions": clamp(value, 1, 6),
     "inset_thickness": clamp(value, 0.001, face_size * 0.4)
 }
@@ -478,39 +474,39 @@ corrections = {
 ### 1. Tool Replacement
 ```python
 # LLM uses wrong tool
-llm_call: mesh_subdivide(cuts=10)  # too many cuts
-override: mesh_subdivide(cuts=2)    # reasonable
+llm_call: mesh_subdivide(number_cuts=10)  # too many cuts
+override: mesh_subdivide(number_cuts=2)   # reasonable
 
 # Or complete replacement
-llm_call: mesh_extrude(depth=0.5)   # for screen
+llm_call: mesh_extrude_region(move=[0.0, 0.0, 0.5])   # for screen
 override: screen_cutout_workflow()   # better approach
 ```
 
 ### 2. Workflow Replacement
 ```python
 # LLM: single tool for complex task
-llm_call: mesh_bevel(width=0.1)
+llm_call: mesh_bevel(offset=0.1)
 
 # Router detects "phone" pattern, overrides with:
 override: [
-    mesh_select_edge_loop(loop="outer"),
-    mesh_bevel(width=0.02, segments=3),
+    mesh_select_targeted(action="loop", edge_index=0),  # requires a valid edge_index
+    mesh_bevel(offset=0.02, segments=3),
     mesh_select(action="none"),
-    mesh_select_face_by_location(location="top"),
+    mesh_select_targeted(action="by_location", axis="Z", min_coord=0.0, max_coord=9999.0, element_type="FACE"),
     mesh_inset(thickness=0.05),
-    mesh_extrude(depth=-0.02)
+    mesh_extrude_region(move=[0.0, 0.0, -0.02])
 ]
 ```
 
 ### 3. Complete Ignore
 ```python
 # LLM sends invalid tool for current state
-llm_call: mesh_extrude()  # but object has no faces selected
+llm_call: mesh_extrude_region()  # but object has no faces selected
 
 # Router ignores and generates own sequence
 override: [
-    mesh_select(action="all", mode="FACE"),
-    mesh_extrude(depth=0.5)
+    mesh_select(action="all"),
+    mesh_extrude_region(move=[0.0, 0.0, 0.5])
 ]
 ```
 
@@ -525,14 +521,14 @@ override: [
 ### Example 1: Simple Extrude → Full Face Operation
 ```python
 # Input (LLM)
-mesh_extrude(depth=0.4)
+mesh_extrude_region(move=[0.0, 0.0, 0.4])
 
 # Output (Router Expanded)
 [
-    mesh_select(action="all", mode="FACE"),
+    mesh_select(action="all"),
     mesh_inset(thickness=0.05),
-    mesh_extrude(depth=0.4),
-    mesh_bevel(width=0.01, segments=2)
+    mesh_extrude_region(move=[0.0, 0.0, 0.4]),
+    mesh_bevel(offset=0.01, segments=2)
 ]
 ```
 
@@ -546,12 +542,12 @@ mesh_extrude(depth=0.4)
     modeling_create_primitive(type="CUBE"),
     modeling_transform(scale=[0.4, 0.8, 0.05]),
     system_set_mode("EDIT"),
-    mesh_select(action="all", mode="EDGE"),
-    mesh_bevel(width=0.02, segments=3),
+    mesh_select(action="all"),
+    mesh_bevel(offset=0.02, segments=3),
     mesh_select(action="none"),
-    mesh_select_face_by_location(location="top"),
+    mesh_select_targeted(action="by_location", axis="Z", min_coord=0.0, max_coord=9999.0, element_type="FACE"),
     mesh_inset(thickness=0.03),
-    mesh_extrude(depth=-0.02),
+    mesh_extrude_region(move=[0.0, 0.0, -0.02]),
     system_set_mode("OBJECT"),
     material_create(name="PhoneBody", color=[0.1, 0.1, 0.1]),
     material_assign(object="Cube", material="PhoneBody")
@@ -565,10 +561,10 @@ mesh_extrude(depth=0.4)
 
 # Router expands based on pattern:
 [
-    mesh_subdivide(cuts=2),
-    mesh_select_edge_loop(loop="horizontal", index=1),
+    mesh_subdivide(number_cuts=2),
+    mesh_select_targeted(action="loop", edge_index=1),  # requires a valid edge_index
     mesh_transform_selected(scale=[1.2, 1.2, 1.0]),  # slight bulge
-    mesh_select_edge_loop(loop="horizontal", index=2),
+    mesh_select_targeted(action="loop", edge_index=2),  # requires a valid edge_index
     mesh_transform_selected(scale=[0.8, 0.8, 1.0]),  # taper top
 ]
 ```

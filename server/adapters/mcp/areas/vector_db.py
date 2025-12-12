@@ -10,6 +10,7 @@ TASK-050-7: Updated for multi-embedding workflow support.
 
 import json
 import logging
+import os
 from typing import Dict, Any, Optional, Literal, List
 
 from fastmcp import Context
@@ -39,13 +40,34 @@ def _get_store():
 
 
 def _get_embedding_model():
-    """Get the sentence transformer model for embeddings."""
-    try:
-        from sentence_transformers import SentenceTransformer
+    """Get the sentence transformer model for embeddings.
 
-        return SentenceTransformer("sentence-transformers/LaBSE")
-    except ImportError:
-        return None
+    Uses shared DI model provider to:
+    - avoid duplicate LaBSE loads (~1.8GB RAM),
+    - respect offline mode via HF_HUB_OFFLINE (local_files_only),
+    - avoid network/model downloads under pytest (PYTEST_CURRENT_TEST).
+    """
+    from server.infrastructure.di import get_labse_model
+
+    return get_labse_model()
+
+
+def _embedding_model_unavailable_error() -> Dict[str, str]:
+    if os.getenv("PYTEST_CURRENT_TEST") is not None:
+        return {
+            "error": "Embedding model disabled under pytest (PYTEST_CURRENT_TEST set).",
+        }
+
+    local_only = os.getenv("HF_HUB_OFFLINE", "").lower() in ("1", "true", "yes")
+    if local_only:
+        return {
+            "error": "HF_HUB_OFFLINE is enabled and LaBSE model is unavailable locally. "
+            "Cache/download the model first or disable HF_HUB_OFFLINE.",
+        }
+
+    return {
+        "error": "LaBSE embedding model unavailable (sentence-transformers not installed or model load failed).",
+    }
 
 
 @mcp.tool()
@@ -207,13 +229,7 @@ def _action_search_test(
     # Get embedding model
     model = _get_embedding_model()
     if model is None:
-        return json.dumps(
-            {
-                "error": "sentence-transformers not installed. "
-                "Cannot perform semantic search."
-            },
-            indent=2,
-        )
+        return json.dumps(_embedding_model_unavailable_error(), indent=2)
 
     try:
         # Encode query
@@ -326,13 +342,7 @@ def _action_add_workflow(
     # Get embedding model
     model = _get_embedding_model()
     if model is None:
-        return json.dumps(
-            {
-                "error": "sentence-transformers not installed. "
-                "Cannot generate embeddings."
-            },
-            indent=2,
-        )
+        return json.dumps(_embedding_model_unavailable_error(), indent=2)
 
     try:
         from server.router.infrastructure.language_detector import detect_language

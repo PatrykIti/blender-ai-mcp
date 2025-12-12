@@ -179,3 +179,48 @@ poetry run pytest tests/unit/router -q
 
 3) Offline mode spójnie w całym repo:
 - `vector_db_manage` też ładuje `SentenceTransformer("LaBSE")` bez `local_files_only`; warto ujednolicić z DI.
+
+---
+
+## Podsumowanie realizacji rekomendacji (2025-12-12)
+
+### 1) Doc sweep (`_docs/_ROUTER`)
+
+- Zrobiony globalny update przykładów workflow pod aktualne API:
+  - `mesh_bevel.width` → `mesh_bevel.offset`
+  - `mesh_extrude_region.depth` → `mesh_extrude_region.move`
+  - usunięcie legacy `mesh_extrude`
+- Najważniejsze pliki zaktualizowane w tej rundzie:
+  - `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md`
+  - `_docs/_ROUTER/WORKFLOWS/yaml-workflow-guide.md`
+  - `_docs/_ROUTER/WORKFLOWS/README.md`
+  - `_docs/_ROUTER/WORKFLOWS/expression-reference.md`
+
+### 2) Anti-drift guard (test/CI)
+
+- Dodany test: `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
+  - porównuje `server/adapters/mcp/areas/*.py` vs `server/router/infrastructure/tools_metadata/**/*.json`
+  - weryfikuje też stałe `tool_name="..."` emitowane przez router
+- Przy okazji naprawione realne drift-y wykryte przez test:
+  - `modeling_create_primitive`: `type` → `primitive_type`
+  - `scene_list_objects`: usunięty nieistniejący parametr `filter_type`
+  - `text_create`/`text_edit`: `content` → `text`
+
+### 3) Offline mode (vector_db_manage)
+
+- `server/adapters/mcp/areas/vector_db.py` używa teraz wspólnego `get_labse_model()` (DI), więc:
+  - pod pytestem nie próbuje ładować/pobierać LaBSE
+  - przy `HF_HUB_OFFLINE=1` używa local-only (bez sieci)
+  - zwraca czytelny błąd, gdy embeddings są niedostępne
+
+### Changelog
+
+- Dodane: `_docs/_CHANGELOG/109-2025-12-12-router-api-alignment-offline-guards.md`
+- Zaktualizowany indeks: `_docs/_CHANGELOG/README.md`
+
+### Walidacja
+
+```bash
+poetry run pytest tests/unit/router -q
+```
+Wynik: `1377 passed, 2 skipped`.

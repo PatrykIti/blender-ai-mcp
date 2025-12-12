@@ -239,7 +239,7 @@ router = SupervisorRouter(config=config, rpc_client=rpc_client)
 # Process tool call
 result = router.process_llm_tool_call(
     tool_name="mesh_extrude_region",
-    params={"depth": 0.5},
+    params={"move": [0.0, 0.0, 0.5]},
     prompt="extrude the top face",
 )
 
@@ -253,8 +253,8 @@ for tool in result:
 ```python
 # Process multiple calls
 result = router.process_batch([
-    {"tool": "mesh_extrude_region", "params": {"depth": 0.5}},
-    {"tool": "mesh_bevel", "params": {"width": 0.1}},
+    {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}},
+    {"tool": "mesh_bevel", "params": {"offset": 0.1}},
 ])
 ```
 
@@ -298,7 +298,7 @@ router.reset_stats()
 
 **Input:**
 ```python
-router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
+router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 ```
 
 **Context:** OBJECT mode, no selection
@@ -308,7 +308,7 @@ router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 [
     {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
     {"tool": "mesh_select", "params": {"action": "all"}},
-    {"tool": "mesh_extrude_region", "params": {"depth": 0.5}},
+    {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}},
 ]
 ```
 
@@ -316,7 +316,7 @@ router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 
 **Input:**
 ```python
-router.process_llm_tool_call("mesh_extrude_region", {"depth": -0.02})
+router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, -0.02]})
 ```
 
 **Context:** EDIT mode, phone_like pattern detected
@@ -325,7 +325,7 @@ router.process_llm_tool_call("mesh_extrude_region", {"depth": -0.02})
 ```python
 [
     {"tool": "mesh_inset", "params": {"thickness": 0.03}},
-    {"tool": "mesh_extrude_region", "params": {"depth": -0.02}},
+    {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, -0.02]}},
 ]
 ```
 

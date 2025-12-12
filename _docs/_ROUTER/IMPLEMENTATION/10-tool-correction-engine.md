@@ -51,7 +51,7 @@ Parameters are clamped to valid ranges to prevent errors:
 ```python
 PARAM_LIMITS = {
     "mesh_bevel": {
-        "width": (0.001, 10.0),
+        "offset": (0.001, 10.0),
         "segments": (1, 10),
     },
     "mesh_subdivide": {
@@ -97,7 +97,7 @@ RouterConfig(
     auto_mode_switch=True,    # Enable mode auto-switching
     auto_selection=True,      # Enable selection auto-fix
     clamp_parameters=True,    # Enable parameter clamping
-    bevel_max_ratio=0.5,      # Max bevel width relative to dimension
+    bevel_max_ratio=0.5,      # Max bevel offset relative to dimension
 )
 ```
 

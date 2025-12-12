@@ -241,7 +241,7 @@ steps:
 ```yaml
 params:
   # 5% of smallest dimension
-  width: "$CALCULATE(min_dim * 0.05)"
+  offset: "$CALCULATE(min_dim * 0.05)"
 
   # Average of width and height
   size: "$CALCULATE((width + height) / 2)"
@@ -252,7 +252,7 @@ params:
 ```yaml
 params:
   # Auto-sized bevel (5% of min dim)
-  width: "$AUTO_BEVEL"
+  offset: "$AUTO_BEVEL"
 
   # Auto-sized inset (3% of XY min)
   thickness: "$AUTO_INSET"
@@ -276,8 +276,8 @@ params:
 
 ```yaml
 params:
-  width: "$width"        # From context
-  depth: "$depth"
+  mode: "$mode"            # From context
+  move: [0, 0, "$depth"]   # From object dimensions
 ```
 
 ---
@@ -288,8 +288,8 @@ The following example workflows are included in `server/router/application/workf
 
 | File | Description |
 |------|-------------|
-| `example_table.yaml` | Table with 4 legs (YAML format) |
-| `example_chair.json` | Chair with back support (JSON format) |
+| `simple_table.yaml` | Simple table (YAML format) |
+| `picnic_table.yaml` | Picnic table with optional bench (YAML format) |
 
 Use these as templates for your own workflows!
 

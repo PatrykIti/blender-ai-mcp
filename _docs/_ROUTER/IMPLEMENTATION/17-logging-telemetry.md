@@ -108,9 +108,9 @@ from server.router.infrastructure.logger import RouterLogger
 logger = RouterLogger()
 
 # Log events
-logger.log_intercept("mesh_extrude", {"depth": 0.5}, prompt="extrude top")
-logger.log_correction("mesh_extrude", ["mode_switch"], [...])
-logger.log_firewall("mesh_extrude", "allow", "Valid operation")
+logger.log_intercept("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}, prompt="extrude top")
+logger.log_correction("mesh_extrude_region", ["mode_switch"], [...])
+logger.log_firewall("mesh_extrude_region", "allow", "Valid operation")
 ```
 
 ### Session Tracking
