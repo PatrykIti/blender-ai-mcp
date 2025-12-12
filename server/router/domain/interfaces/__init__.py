@@ -29,6 +29,9 @@ from server.router.domain.interfaces.i_parameter_resolver import (
     IParameterStore,
     IParameterResolver,
 )
+from server.router.domain.interfaces.i_expression_evaluator import (
+    IExpressionEvaluator,
+)
 
 __all__ = [
     "IToolInterceptor",
@@ -52,4 +55,6 @@ __all__ = [
     # Parameter Resolution (TASK-055)
     "IParameterStore",
     "IParameterResolver",
+    # Expression Evaluator (TASK-060)
+    "IExpressionEvaluator",
 ]
