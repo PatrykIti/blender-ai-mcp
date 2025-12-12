@@ -9,6 +9,7 @@ Complete reference for dynamic expressions in YAML workflows.
 | Syntax | Handler | Example |
 |--------|---------|---------|
 | `$CALCULATE(...)` | ExpressionEvaluator | `$CALCULATE(width * 0.5)` |
+| `computed: "..."` | UnifiedEvaluator | `computed: "ceil(table_width / plank_max_width)"` |
 | `$AUTO_*` | ProportionResolver | `$AUTO_BEVEL` |
 | `$variable` | Variable substitution | `$depth`, `$leg_angle` |
 | `condition: "..."` | ConditionEvaluator | `current_mode != 'EDIT'` |
@@ -34,17 +35,55 @@ Safe mathematical expression evaluator.
 | `//` | `10 // 3` | `3` |
 | `-x` | `-5` | `-5` |
 
+### Comparison Operators (TASK-060)
+
+Comparisons evaluate to `1.0` (true) / `0.0` (false) in `$CALCULATE(...)`:
+
+| Operator | Example | Result |
+|----------|---------|--------|
+| `==` | `mode == 'EDIT'` | `1.0` or `0.0` |
+| `!=` | `mode != 'EDIT'` | `1.0` or `0.0` |
+| `>` | `width > 1.0` | `1.0` or `0.0` |
+| `<` | `width < 1.0` | `1.0` or `0.0` |
+| `>=` | `width >= 1.0` | `1.0` or `0.0` |
+| `<=` | `width <= 1.0` | `1.0` or `0.0` |
+
+Chained comparisons are supported:
+```yaml
+"$CALCULATE(0 < x < 10)"
+```
+
+### Logical Operators (TASK-060)
+
+Logical operators evaluate to `1.0` / `0.0` in `$CALCULATE(...)`:
+
+| Operator | Example | Result |
+|----------|---------|--------|
+| `not` | `not has_selection` | `1.0` / `0.0` |
+| `and` | `A and B` | `1.0` / `0.0` |
+| `or` | `A or B` | `1.0` / `0.0` |
+
+### Ternary Expressions (TASK-060)
+
+```yaml
+"$CALCULATE(0.05 if width > 1.0 else 0.02)"
+"$CALCULATE(2 if (object_count > 0 and has_selection) else 1)"
+```
+
 ### Math Functions
 
-| Function | Example | Result |
-|----------|---------|--------|
-| `abs(x)` | `abs(-5)` | `5` |
-| `min(a, b, ...)` | `min(3, 1, 4)` | `1` |
-| `max(a, b, ...)` | `max(3, 1, 4)` | `4` |
-| `round(x)` | `round(3.7)` | `4` |
-| `floor(x)` | `floor(3.7)` | `3` |
-| `ceil(x)` | `ceil(3.2)` | `4` |
-| `sqrt(x)` | `sqrt(9)` | `3` |
+Supported functions (whitelist):
+
+| Category | Functions | Description |
+|----------|-----------|-------------|
+| **Basic** | `abs()`, `min()`, `max()` | Absolute value, minimum, maximum |
+| **Rounding** | `round()`, `floor()`, `ceil()`, `trunc()` | Round, floor, ceiling, truncate |
+| **Power/Root** | `sqrt()`, `pow()`, `**` | Square root, power |
+| **Trigonometric** | `sin()`, `cos()`, `tan()` | Sine, cosine, tangent (radians) |
+| **Inverse Trig** | `asin()`, `acos()`, `atan()`, `atan2()` | Arc functions |
+| **Angle Conversion** | `degrees()`, `radians()` | Convert radians↔degrees |
+| **Logarithmic** | `log()`, `log10()`, `exp()` | Natural log, base-10 log, e^x |
+| **Advanced** | `hypot()` | Hypotenuse: sqrt(x² + y²) |
 
 ### Context Variables
 
@@ -140,16 +179,25 @@ params:
 
 Boolean expressions for step conditions.
 
+### Math Functions in Conditions (TASK-060)
+
+Conditions support the same function whitelist:
+
+```yaml
+condition: "floor(table_width / plank_width) > 5"
+condition: "sqrt(width * width + depth * depth) < 2.0"
+```
+
 ### Comparison Operators
 
 | Operator | Example | True When |
 |----------|---------|-----------|
-| `==` | `mode == 'EDIT'` | Equal |
-| `!=` | `mode != 'EDIT'` | Not equal |
-| `>` | `count > 0` | Greater |
-| `<` | `count < 10` | Less |
-| `>=` | `count >= 5` | Greater or equal |
-| `<=` | `count <= 5` | Less or equal |
+| `==` | `current_mode == 'EDIT'` | Equal |
+| `!=` | `current_mode != 'EDIT'` | Not equal |
+| `>` | `object_count > 0` | Greater |
+| `<` | `object_count < 10` | Less |
+| `>=` | `object_count >= 5` | Greater or equal |
+| `<=` | `object_count <= 5` | Less or equal |
 
 ### Logical Operators
 
@@ -262,10 +310,11 @@ Use `$variable` for simple substitution, `$CALCULATE` when you need math operati
 
 When expanding workflows, parameters are resolved in this order:
 
-1. **$CALCULATE(...)** - ExpressionEvaluator
-2. **$AUTO_*** - ProportionResolver
-3. **$variable** - Context lookup
-4. **Literal** - Pass through unchanged
+1. **computed params** - Topological sort + expression evaluation (`computed: "..."`)
+2. **$CALCULATE(...)** - ExpressionEvaluator
+3. **$AUTO_*** - ProportionResolver
+4. **$variable** - Context lookup
+5. **Literal** - Pass through unchanged
 
 ---
 
@@ -276,9 +325,9 @@ When expanding workflows, parameters are resolved in this order:
 | Situation | Behavior |
 |-----------|----------|
 | Invalid syntax | Returns original string |
-| Unknown variable | Returns `None` |
-| Division by zero | Returns `None` |
-| Blocked operation | Returns `None` |
+| Unknown variable | Returns original string |
+| Division by zero | Returns original string |
+| Blocked operation | Returns original string |
 
 ### $AUTO_* Errors
 
@@ -313,6 +362,7 @@ The evaluator uses AST parsing (not `eval()`):
 
 **Allowed:**
 - Arithmetic operators
+- Comparisons, logic, ternary (TASK-060)
 - Whitelisted math functions only
 - Context variable references
 

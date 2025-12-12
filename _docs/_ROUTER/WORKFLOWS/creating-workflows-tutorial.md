@@ -205,6 +205,9 @@ condition: "not has_selection"
 condition: "object_count > 0"
 condition: "selected_verts >= 4"
 
+# Funkcje matematyczne w warunkach - TASK-060
+condition: "floor(table_width / plank_width) > 5"
+
 # Operatory logiczne
 condition: "current_mode == 'EDIT' and has_selection"
 condition: "current_mode == 'OBJECT' or not has_selection"
@@ -255,7 +258,7 @@ condition: "(leg_angle_left > 0.5) or (leg_angle_left < -0.5)"
 condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
 
 # ✅ DOBRZE - zagnieżdżone warunki z jasnym grupowaniem
-condition: "(mode == 'EDIT' and has_selection) or (mode == 'OBJECT' and object_count > 0)"
+condition: "(current_mode == 'EDIT' and has_selection) or (current_mode == 'OBJECT' and object_count > 0)"
 ```
 
 ### 5.3 Dostępne Zmienne
@@ -318,6 +321,21 @@ params:
 
   # Zaokrąglone
   count: "$CALCULATE(round(depth * 10))"
+```
+
+**Nowe w TASK-060:** `$CALCULATE(...)` wspiera też operatory porównania, logiczne i wyrażenia ternarne.
+Porównania/warunki w `$CALCULATE(...)` zwracają `1.0` (true) / `0.0` (false):
+
+```yaml
+params:
+  # Flaga liczbowa z warunku
+  has_objects: "$CALCULATE(object_count > 0)"
+
+  # Wyrażenie ternarne
+  bevel: "$CALCULATE(0.05 if width > 1.0 else 0.02)"
+
+  # Logika + ternary
+  detail: "$CALCULATE(2 if (object_count > 0 and has_selection) else 1)"
 ```
 
 **Dostępne zmienne:**
@@ -1705,16 +1723,20 @@ steps:
 3. **Dodaj metadane** - name, description, trigger_keywords
 4. **Zdefiniuj kroki** - tool, params, description
 5. **Dodaj warunki** - `condition` dla odporności (z nawiasami jeśli potrzeba)
-6. **Użyj dynamicznych parametrów** - `$AUTO_*` lub `$CALCULATE` (13+ funkcji)
+6. **Użyj dynamicznych parametrów** - `$AUTO_*` lub `$CALCULATE`
 7. **Rozważ zaawansowane funkcje** - enum, computed params, dependencies (TASK-056)
 8. **Przetestuj** - sprawdź ładowanie i rozwijanie
 
 **Nowe w TASK-056:**
-- 13 nowych funkcji matematycznych (tan, atan2, log, exp, hypot, itd.)
+- Rozszerzone funkcje matematyczne (tan, atan2, log, exp, hypot, itd.)
 - Nawiasy w warunkach z prawidłową kolejnością operatorów
 - Walidacja enum dla parametrów
 - Parametry obliczane z automatycznym rozwiązywaniem zależności
 - Kontrola wykonania kroków (timeout, retry, dependencies)
+
+**Nowe w TASK-060:**
+- Funkcje matematyczne w `condition` (np. `floor()`, `sqrt()`)
+- Operatory porównania/logiczne i ternary w `$CALCULATE(...)`
 
 **Zobacz też:**
 - [yaml-workflow-guide.md](./yaml-workflow-guide.md) - Pełna dokumentacja składni

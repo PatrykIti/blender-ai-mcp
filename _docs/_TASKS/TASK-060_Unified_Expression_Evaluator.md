@@ -1,6 +1,6 @@
 # TASK-060: Unified Expression Evaluator
 
-**Status**: TODO
+**Status**: ✅ Done (implemented + tested)
 **Priority**: P0 (Critical - Pre-launch architecture cleanup)
 **Estimated Effort**: 8-10 hours
 **Dependencies**: None (replaces TASK-059)
@@ -162,9 +162,13 @@ server/router/
    condition: "sqrt(width * width + depth * depth) < 2.0"
    ```
 
-7. **Ternary in $CALCULATE**:
+7. **Ternary in expressions**:
    ```yaml
-   computed: "$CALCULATE(0.10 if i <= plank_full_count else plank_remainder_width)"
+   # In computed parameters:
+   computed: "0.10 if i <= plank_full_count else plank_remainder_width"
+
+   # In step parameters:
+   some_value: "$CALCULATE(0.10 if i <= plank_full_count else plank_remainder_width)"
    ```
 
 8. **Consistent error messages** across both wrappers
@@ -1428,34 +1432,34 @@ Test integration with WorkflowRegistry:
 ## Migration Checklist
 
 ### Before Implementation
-- [ ] Run all existing evaluator tests, capture output
-- [ ] Read `expression_evaluator.py` thoroughly (466 lines)
-- [ ] Read `condition_evaluator.py` thoroughly (383 lines)
-- [ ] Understand `WorkflowRegistry` integration points
+- [x] Run all existing evaluator tests, capture output
+- [x] Read `expression_evaluator.py` thoroughly (466 lines)
+- [x] Read `condition_evaluator.py` thoroughly (383 lines)
+- [x] Understand `WorkflowRegistry` integration points
 
 ### Implementation
-- [ ] Phase 1: Create `i_expression_evaluator.py`
-- [ ] Phase 2: Create `unified_evaluator.py`
-- [ ] Phase 3: Refactor `expression_evaluator.py`
-- [ ] Phase 4: Refactor `condition_evaluator.py`
-- [ ] Phase 5: Update `__init__.py` and domain interfaces
-- [ ] Phase 6: Write `test_unified_evaluator.py`
-- [ ] Phase 7: Verify all existing tests pass
-- [ ] Phase 8: Write integration tests
+- [x] Phase 1: Create `i_expression_evaluator.py`
+- [x] Phase 2: Create `unified_evaluator.py`
+- [x] Phase 3: Refactor `expression_evaluator.py`
+- [x] Phase 4: Refactor `condition_evaluator.py`
+- [x] Phase 5: Update `__init__.py` and domain interfaces
+- [x] Phase 6: Write `test_unified_evaluator.py`
+- [x] Phase 7: Verify all existing tests pass
+- [x] Phase 8: Write integration tests
 
 ### Verification
-- [ ] All existing tests pass (backward compatibility)
-- [ ] All new tests pass
-- [ ] Manual test: `condition: "floor(width) > 5"` works
-- [ ] Manual test: `mode == 'EDIT'` works in conditions
-- [ ] Manual test: `$CALCULATE(x if y > 0 else z)` works
-- [ ] Manual test: simple_table workflow with computed params works
+- [x] All existing tests pass (backward compatibility)
+- [x] All new tests pass
+- [x] Manual test: `condition: "floor(width) > 5"` works
+- [x] Manual test: `mode == 'EDIT'` works in conditions
+- [x] Manual test: `$CALCULATE(x if y > 0 else z)` works
+- [x] Manual test: simple_table workflow with computed params works
 
 ### Documentation
-- [ ] Update TASK-059 header: "⚠️ SUPERSEDED by TASK-060"
+- [x] Update TASK-059 header: "⚠️ SUPERSEDED by TASK-060"
 - [ ] Update TASK-055-FIX-8 with new operators
-- [ ] Create changelog entry
-- [ ] Create `_docs/_ROUTER/IMPLEMENTATION/XX-unified-evaluator.md`
+- [x] Create changelog entry
+- [x] Create `_docs/_ROUTER/IMPLEMENTATION/36-unified-evaluator.md`
 
 ---
 
@@ -1463,28 +1467,28 @@ Test integration with WorkflowRegistry:
 
 ### Must Pass (P0)
 
-- [ ] `IExpressionEvaluator` interface exists in domain layer
-- [ ] `UnifiedEvaluator` implements `IExpressionEvaluator`
-- [ ] All 21 math functions work in UnifiedEvaluator
-- [ ] All arithmetic operators work: `+`, `-`, `*`, `/`, `//`, `%`, `**`
-- [ ] All comparison operators work: `<`, `<=`, `>`, `>=`, `==`, `!=`
-- [ ] All logical operators work: `and`, `or`, `not`
-- [ ] Ternary expressions work: `x if condition else y`
-- [ ] Chained comparisons work: `0 < x < 10`
-- [ ] String comparisons work: `mode == 'EDIT'`
-- [ ] `$CALCULATE()` pattern still works (backward compatible)
-- [ ] `$variable` pattern still works (backward compatible)
-- [ ] Condition fail-open behavior preserved (returns True on error)
-- [ ] `simulate_step_effect()` preserved in ConditionEvaluator
-- [ ] `resolve_computed_parameters()` works with dependencies
-- [ ] **All 5 existing test files pass unchanged**
+- [x] `IExpressionEvaluator` interface exists in domain layer
+- [x] `UnifiedEvaluator` implements `IExpressionEvaluator`
+- [x] All 21 math functions work in UnifiedEvaluator
+- [x] All arithmetic operators work: `+`, `-`, `*`, `/`, `//`, `%`, `**`
+- [x] All comparison operators work: `<`, `<=`, `>`, `>=`, `==`, `!=`
+- [x] All logical operators work: `and`, `or`, `not`
+- [x] Ternary expressions work: `x if condition else y`
+- [x] Chained comparisons work: `0 < x < 10`
+- [x] String comparisons work: `mode == 'EDIT'`
+- [x] `$CALCULATE()` pattern still works (backward compatible)
+- [x] `$variable` pattern still works (backward compatible)
+- [x] Condition fail-open behavior preserved (returns True on error)
+- [x] `simulate_step_effect()` preserved in ConditionEvaluator
+- [x] `resolve_computed_parameters()` works with dependencies
+- [x] **All 5 existing test files pass unchanged**
 
 ### New Capabilities (P1)
 
-- [ ] Math functions work in conditions: `floor(width) > 5`
-- [ ] `evaluate_as_bool()` method available
-- [ ] `evaluate_as_float()` method available
-- [ ] `evaluate_safe()` method available
+- [x] Math functions work in conditions: `floor(width) > 5`
+- [x] `evaluate_as_bool()` method available
+- [x] `evaluate_as_float()` method available
+- [x] `evaluate_safe()` method available
 
 ---
 

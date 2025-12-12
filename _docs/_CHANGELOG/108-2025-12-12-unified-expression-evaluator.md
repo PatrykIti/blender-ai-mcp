@@ -9,7 +9,7 @@
 
 ## Overview
 
-Consolidates two separate evaluators (ExpressionEvaluator and ConditionEvaluator) into a single, well-architected **UnifiedEvaluator**. This prevents technical debt and enables new capabilities like math functions in conditions and ternary expressions in `$CALCULATE()`.
+Consolidates two separate evaluators (ExpressionEvaluator and ConditionEvaluator) into a single, well-architected **UnifiedEvaluator**. This prevents technical debt and enables new capabilities like math functions in conditions and ternary expressions (in `$CALCULATE()` and computed parameters).
 
 ### Key Design Goals Achieved
 - Single AST-based evaluation core replacing regex-based ConditionEvaluator
@@ -128,7 +128,10 @@ condition: "ceil(count / 2) == 3"
 ### Ternary in $CALCULATE
 ```yaml
 # Now possible (was NOT supported before TASK-060)
-computed: "$CALCULATE(0.10 if i <= plank_full_count else plank_remainder_width)"
+# In computed parameters (no $CALCULATE wrapper)
+computed: "0.10 if i <= plank_full_count else plank_remainder_width"
+
+# In step parameters
 value: "$CALCULATE(1 if width > 1.0 else 0)"
 ```
 

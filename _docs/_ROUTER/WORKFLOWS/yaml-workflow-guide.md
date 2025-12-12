@@ -8,8 +8,8 @@ Complete guide to creating custom YAML workflows for the Router Supervisor.
 
 YAML workflows allow you to define sequences of Blender operations that execute automatically when triggered. Workflows support:
 
-- **Conditional steps** - Skip steps based on scene state with parentheses support (TASK-056-2)
-- **Dynamic parameters** - Calculate values with 13+ math functions (TASK-056-1)
+- **Conditional steps** - Skip steps based on scene state (parentheses + math functions) (TASK-056-2, TASK-060)
+- **Dynamic parameters** - Calculate values with `$CALCULATE(...)` (TASK-056-1, TASK-060)
 - **Smart defaults** - Auto-sized operations with `$AUTO_*` params
 - **Keyword triggering** - Automatic activation from user prompts
 - **Semantic matching** - LaBSE-powered multilingual prompt matching (TASK-046)
@@ -19,6 +19,8 @@ YAML workflows allow you to define sequences of Blender operations that execute 
 - **Step dependencies** - Control execution order with timeout/retry (TASK-056-4)
 
 > **New in TASK-056:** Advanced math functions (tan, atan2, log, exp, hypot), complex boolean expressions with parentheses, enum constraints, computed parameters, and step dependency management. See [Advanced Workflow Features](#advanced-workflow-features-task-056) for details.
+>
+> **New in TASK-060:** Unified expression evaluator (math functions in `condition` + comparisons/logic/ternary in `$CALCULATE(...)`).
 
 ---
 
@@ -99,16 +101,25 @@ condition: "selected_verts >= 4"     # Only if enough vertices
 
 | Operator | Example | Description |
 |----------|---------|-------------|
-| `==` | `mode == 'EDIT'` | Equal |
-| `!=` | `mode != 'EDIT'` | Not equal |
-| `>` | `count > 0` | Greater than |
-| `<` | `count < 10` | Less than |
-| `>=` | `count >= 5` | Greater or equal |
-| `<=` | `count <= 5` | Less or equal |
+| `==` | `current_mode == 'EDIT'` | Equal |
+| `!=` | `current_mode != 'EDIT'` | Not equal |
+| `>` | `object_count > 0` | Greater than |
+| `<` | `object_count < 10` | Less than |
+| `>=` | `object_count >= 5` | Greater or equal |
+| `<=` | `object_count <= 5` | Less or equal |
 | `not` | `not has_selection` | Negation |
-| `and` | `mode == 'EDIT' and has_selection` | Both true |
-| `or` | `mode == 'OBJECT' or count > 0` | Either true |
+| `and` | `current_mode == 'EDIT' and has_selection` | Both true |
+| `or` | `current_mode == 'OBJECT' or object_count > 0` | Either true |
 | `()` | `(A and B) or C` | Grouping (parentheses) |
+
+### Math Functions in Conditions (TASK-060)
+
+Conditions support the same whitelisted math functions as `$CALCULATE(...)`:
+
+```yaml
+condition: "floor(table_width / plank_width) > 5"
+condition: "sqrt(width * width + depth * depth) < 2.0"
+```
 
 ### Complex Boolean Expressions (TASK-056-2)
 
@@ -151,7 +162,7 @@ condition: "(leg_angle_left > 0.5) or (leg_angle_left < -0.5)"
 condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
 
 # ✅ Good: Nested conditions with clear grouping
-condition: "(mode == 'EDIT' and has_selection) or (mode == 'OBJECT' and object_count > 0)"
+condition: "(current_mode == 'EDIT' and has_selection) or (current_mode == 'OBJECT' and object_count > 0)"
 ```
 
 ### Available Variables
@@ -475,6 +486,21 @@ params:
   scale_factor: "$CALCULATE(log10(object_count + 1))"
   # Advanced: angle calculation
   rotation: ["$CALCULATE(atan2(height, width))", 0, 0]
+```
+
+**New in TASK-060:** `$CALCULATE(...)` also supports comparisons, logical operators, and ternary expressions.
+Comparisons/logic evaluate to `1.0` (true) / `0.0` (false):
+
+```yaml
+params:
+  # Numeric flag from condition
+  has_objects: "$CALCULATE(object_count > 0)"
+
+  # Ternary expression
+  bevel: "$CALCULATE(0.05 if width > 1.0 else 0.02)"
+
+  # Logic + ternary combined
+  detail: "$CALCULATE(2 if (object_count > 0 and has_selection) else 1)"
 ```
 
 **Available Math Functions** (TASK-056-1):
