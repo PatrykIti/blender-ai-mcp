@@ -1,11 +1,25 @@
 # TASK-059: Expression Evaluator - Logical & Comparison Operators
 
-**Status**: TODO
+**Status**: ⚠️ SUPERSEDED by TASK-060
 **Priority**: P1 (High - Required for full computed parameter support)
 **Estimated Effort**: 3-4 hours
 **Dependencies**: TASK-056-1 (Expression Evaluator Extended Functions)
 **Related**: TASK-055-FIX-8 (Documentation), TASK-058 (Loop System)
 **Created**: 2025-12-12
+**Superseded**: 2025-12-12 - See TASK-060 (Unified Expression Evaluator)
+
+---
+
+> **⚠️ NOTICE**: This task has been superseded by **TASK-060: Unified Expression Evaluator**.
+>
+> TASK-060 implements the same functionality but with better architecture:
+> - Single `UnifiedEvaluator` core instead of duplicating logic
+> - `ExpressionEvaluator` and `ConditionEvaluator` become thin wrappers
+> - Math functions now work in conditions (bonus feature)
+> - Easier to extend for future contributors
+>
+> **This document is kept as implementation reference** - the code examples and tests
+> are still valid and used in TASK-060.
 
 ---
 
