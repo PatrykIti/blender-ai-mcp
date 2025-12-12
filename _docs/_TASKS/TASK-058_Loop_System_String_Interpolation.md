@@ -20,16 +20,16 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
     └── _steps_to_calls()             # Walidacja condition, → CorrectedToolCall[]
 ```
 
-### Kluczowe Pliki
+### Kluczowe Pliki (Clean Architecture)
 
-| Plik | Rola |
-|------|------|
-| `base.py` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
-| `workflow_loader.py:300-350` | `_parse_step()` - parsowanie YAML → WorkflowStep |
-| `expression_evaluator.py` | `$CALCULATE`, 13 funkcji math, context variables |
-| `registry.py:202-297` | `expand_workflow()` - główna ekspansja |
-| `registry.py:539-578` | `_resolve_definition_params()` - substitution |
-| `workflow_adapter.py` | Filtrowanie optional steps |
+| Warstwa | Plik | Rola |
+|---------|------|------|
+| **Application/Workflows** | `server/router/application/workflows/base.py` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
+| **Infrastructure** | `server/router/infrastructure/workflow_loader.py:300-350` | `_parse_step()` - parsowanie YAML → WorkflowStep |
+| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | `$CALCULATE`, 21 funkcji math, context variables |
+| **Application/Workflows** | `server/router/application/workflows/registry.py:202-297` | `expand_workflow()` - główna ekspansja |
+| **Application/Workflows** | `server/router/application/workflows/registry.py:539-632` | `_resolve_definition_params()`, `_resolve_single_value()` |
+| **Application/Engines** | `server/router/application/engines/workflow_adapter.py` | `WorkflowAdapter` - filtrowanie optional steps |
 
 ---
 
@@ -41,13 +41,26 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
 
 **Plik**: `server/router/application/workflows/base.py`
 
+Dodać nowe pole do dataclass `WorkflowStep` (po linii 58):
+
 ```python
 @dataclass
 class WorkflowStep:
-    # ... existing fields ...
+    # ... existing fields (tool, params, description, condition, optional, etc.) ...
 
-    # TASK-057: Loop parameter for step repetition
-    loop: Optional[Dict[str, Any]] = None  # NEW
+    # TASK-058: Loop parameter for step repetition
+    loop: Optional[Dict[str, Any]] = None
+```
+
+**WAŻNE**: Dodać `"loop"` do `_known_fields` w `__post_init__()` (linia 69-74):
+```python
+self._known_fields = {
+    "tool", "params", "description", "condition",
+    "optional", "disable_adaptation", "tags",
+    "id", "depends_on", "timeout", "max_retries",
+    "retry_delay", "on_failure", "priority",
+    "loop"  # TASK-058: NEW
+}
 ```
 
 **Loop Schema**:
@@ -59,29 +72,75 @@ loop:
   range: [1, 15]                   # Static range [start, end]
 ```
 
-#### 1.2 LoopExpander w workflow_loader.py
+#### 1.2 LoopExpander - NOWY PLIK (Application Layer)
 
-**Plik**: `server/router/infrastructure/workflow_loader.py`
+**Plik**: `server/router/application/evaluator/loop_expander.py` (NEW FILE)
 
-Nowa klasa/metoda do ekspansji loop steps:
+> **Clean Architecture**: `LoopExpander` to logika aplikacyjna (transformacja danych),
+> więc należy do warstwy `application/evaluator/` obok `expression_evaluator.py`.
 
 ```python
-class LoopExpander:
-    """Expands loop steps into multiple concrete steps."""
+"""
+Loop Expander for Workflow Steps.
 
-    def __init__(self, evaluator: ExpressionEvaluator):
-        self._evaluator = evaluator
+Expands loop steps into multiple concrete steps.
+TASK-058: Loop System for Workflows.
+"""
+
+import copy
+import logging
+import re
+from typing import Dict, Any, List, Tuple, Optional
+
+from server.router.application.workflows.base import WorkflowStep
+from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
+
+logger = logging.getLogger(__name__)
+
+
+class LoopExpander:
+    """Expands loop steps into multiple concrete steps.
+
+    Handles:
+    - Static ranges: [1, 15]
+    - Dynamic ranges: "1..plank_count" (resolved from context)
+    - Loop variable injection into step params and description
+    """
+
+    # Pattern for range expression: "start..end" where start/end can be int or variable
+    RANGE_PATTERN = re.compile(r"^(\d+|[a-zA-Z_][a-zA-Z0-9_]*)\.\.(\d+|[a-zA-Z_][a-zA-Z0-9_]*)$")
+
+    def __init__(self, evaluator: Optional[ExpressionEvaluator] = None):
+        """Initialize loop expander.
+
+        Args:
+            evaluator: ExpressionEvaluator for resolving range expressions.
+                      If None, creates new instance.
+        """
+        self._evaluator = evaluator or ExpressionEvaluator()
 
     def expand_loops(
         self,
         steps: List[WorkflowStep],
         context: Dict[str, Any]
     ) -> List[WorkflowStep]:
-        """Expand all loop steps into concrete steps."""
+        """Expand all loop steps into concrete steps.
+
+        Args:
+            steps: List of workflow steps (may contain loop steps).
+            context: Variable context for range resolution.
+
+        Returns:
+            List of expanded steps (loop steps replaced with multiple concrete steps).
+        """
         expanded = []
         for step in steps:
             if step.loop:
-                expanded.extend(self._expand_single_loop(step, context))
+                loop_steps = self._expand_single_loop(step, context)
+                expanded.extend(loop_steps)
+                logger.debug(
+                    f"Expanded loop step '{step.tool}' into {len(loop_steps)} steps"
+                )
             else:
                 expanded.append(step)
         return expanded
@@ -91,42 +150,224 @@ class LoopExpander:
         step: WorkflowStep,
         context: Dict[str, Any]
     ) -> List[WorkflowStep]:
-        """Expand single loop step."""
+        """Expand single loop step into multiple concrete steps.
+
+        Args:
+            step: Workflow step with loop configuration.
+            context: Variable context for range resolution.
+
+        Returns:
+            List of expanded steps.
+
+        Raises:
+            ValueError: If loop configuration is invalid.
+        """
         loop_config = step.loop
-        var_name = loop_config["variable"]
+        if not loop_config:
+            return [step]
+
+        # Extract loop variable name
+        var_name = loop_config.get("variable")
+        if not var_name:
+            raise ValueError(f"Loop step missing 'variable' in loop config: {step.tool}")
 
         # Resolve range
-        range_spec = loop_config["range"]
-        if isinstance(range_spec, str):
-            # "1..plank_count" or "0..15"
-            start, end = self._parse_range_expression(range_spec, context)
-        else:
-            # [1, 15]
-            start, end = range_spec[0], range_spec[1]
+        range_spec = loop_config.get("range")
+        if range_spec is None:
+            raise ValueError(f"Loop step missing 'range' in loop config: {step.tool}")
 
-        # Generate steps
+        start, end = self._resolve_range(range_spec, context)
+
+        # Generate expanded steps
         expanded = []
         for i in range(int(start), int(end) + 1):
-            # Clone step with loop variable injected
+            # Create loop context with current iteration variable
             loop_context = {**context, var_name: i}
-            new_step = self._clone_step_with_context(step, loop_context, var_name, i)
+            new_step = self._clone_step_with_loop_var(step, var_name, i, loop_context)
             expanded.append(new_step)
 
         return expanded
+
+    def _resolve_range(
+        self,
+        range_spec: Any,
+        context: Dict[str, Any]
+    ) -> Tuple[int, int]:
+        """Resolve range specification to (start, end) tuple.
+
+        Args:
+            range_spec: Range as [start, end] list or "start..end" string.
+            context: Variable context for expression resolution.
+
+        Returns:
+            Tuple of (start, end) integers.
+
+        Raises:
+            ValueError: If range specification is invalid.
+        """
+        # Static range: [1, 15]
+        if isinstance(range_spec, (list, tuple)):
+            if len(range_spec) != 2:
+                raise ValueError(f"Range list must have exactly 2 elements: {range_spec}")
+            return int(range_spec[0]), int(range_spec[1])
+
+        # Dynamic range: "1..plank_count" or "0..15"
+        if isinstance(range_spec, str):
+            match = self.RANGE_PATTERN.match(range_spec)
+            if not match:
+                raise ValueError(f"Invalid range expression: {range_spec}")
+
+            start_str, end_str = match.groups()
+
+            # Resolve start
+            if start_str.isdigit():
+                start = int(start_str)
+            elif start_str in context:
+                start = int(context[start_str])
+            else:
+                raise ValueError(f"Unknown variable in range start: {start_str}")
+
+            # Resolve end
+            if end_str.isdigit():
+                end = int(end_str)
+            elif end_str in context:
+                end = int(context[end_str])
+            else:
+                raise ValueError(f"Unknown variable in range end: {end_str}")
+
+            return start, end
+
+        raise ValueError(f"Unsupported range type: {type(range_spec)}")
+
+    def _clone_step_with_loop_var(
+        self,
+        step: WorkflowStep,
+        var_name: str,
+        var_value: int,
+        loop_context: Dict[str, Any]
+    ) -> WorkflowStep:
+        """Clone step with loop variable substituted.
+
+        Args:
+            step: Original step to clone.
+            var_name: Loop variable name (e.g., "i").
+            var_value: Current loop iteration value.
+            loop_context: Full context including loop variable.
+
+        Returns:
+            New WorkflowStep with loop variable substituted in params.
+        """
+        # Deep copy params to avoid mutating original
+        new_params = self._substitute_loop_var_in_params(
+            copy.deepcopy(step.params),
+            var_name,
+            var_value
+        )
+
+        # Substitute in description if present
+        new_description = step.description
+        if new_description:
+            new_description = new_description.replace(f"{{{var_name}}}", str(var_value))
+
+        # Create new step WITHOUT loop (expanded step is concrete)
+        return WorkflowStep(
+            tool=step.tool,
+            params=new_params,
+            description=new_description,
+            condition=step.condition,
+            optional=step.optional,
+            disable_adaptation=step.disable_adaptation,
+            tags=list(step.tags),
+            id=f"{step.id}_{var_value}" if step.id else None,
+            depends_on=list(step.depends_on),
+            timeout=step.timeout,
+            max_retries=step.max_retries,
+            retry_delay=step.retry_delay,
+            on_failure=step.on_failure,
+            priority=step.priority,
+            loop=None  # Expanded step has no loop
+        )
+
+    def _substitute_loop_var_in_params(
+        self,
+        params: Dict[str, Any],
+        var_name: str,
+        var_value: int
+    ) -> Dict[str, Any]:
+        """Substitute loop variable in params (recursive).
+
+        Handles {var_name} placeholders in string values.
+
+        Args:
+            params: Parameters dictionary.
+            var_name: Loop variable name.
+            var_value: Current loop iteration value.
+
+        Returns:
+            New params dict with substituted values.
+        """
+        result = {}
+        for key, value in params.items():
+            result[key] = self._substitute_in_value(value, var_name, var_value)
+        return result
+
+    def _substitute_in_value(
+        self,
+        value: Any,
+        var_name: str,
+        var_value: int
+    ) -> Any:
+        """Substitute loop variable in a single value.
+
+        Args:
+            value: Value to process.
+            var_name: Loop variable name.
+            var_value: Current loop iteration value.
+
+        Returns:
+            Processed value with substitutions.
+        """
+        if isinstance(value, str):
+            # Replace {i} with actual value
+            return value.replace(f"{{{var_name}}}", str(var_value))
+        elif isinstance(value, list):
+            return [self._substitute_in_value(v, var_name, var_value) for v in value]
+        elif isinstance(value, dict):
+            return {k: self._substitute_in_value(v, var_name, var_value) for k, v in value.items()}
+        else:
+            return value
 ```
 
 #### 1.3 String Interpolation: `$FORMAT(...)`
 
 **Plik**: `server/router/application/evaluator/expression_evaluator.py`
 
-Dodać nowy pattern i metodę:
+Dodać nowy pattern (po linii 87) i metodę:
 
 ```python
-# New pattern
+# Pattern for $FORMAT(...) string interpolation (TASK-058)
 FORMAT_PATTERN = re.compile(r"^\$FORMAT\((.+)\)$")
+```
 
+Dodać nową metodę w klasie `ExpressionEvaluator`:
+
+```python
 def resolve_format(self, template: str) -> str:
-    """Resolve $FORMAT(Plank_{i}) to concrete string."""
+    """Resolve $FORMAT(Plank_{i}) to concrete string.
+
+    TASK-058: String interpolation for loop-generated names.
+
+    Args:
+        template: String with $FORMAT(...) wrapper.
+
+    Returns:
+        Resolved string with {var} placeholders replaced,
+        or original string if not a $FORMAT expression.
+
+    Example:
+        context = {"i": 3}
+        resolve_format("$FORMAT(Plank_{i})") -> "Plank_3"
+    """
     match = self.FORMAT_PATTERN.match(template)
     if not match:
         return template
@@ -140,57 +381,151 @@ def resolve_format(self, template: str) -> str:
     return result
 ```
 
+**WAŻNE**: Zmodyfikować `resolve_param_value()` (po linii 186) aby obsługiwał `$FORMAT`:
+
+```python
+def resolve_param_value(self, value: Any) -> Any:
+    """Resolve a parameter value, evaluating $CALCULATE or $FORMAT if present.
+    ...
+    """
+    if not isinstance(value, str):
+        return value
+
+    # Check for $FORMAT(...) - TASK-058
+    format_match = self.FORMAT_PATTERN.match(value)
+    if format_match:
+        return self.resolve_format(value)
+
+    # Check for $CALCULATE(...)
+    calc_match = self.CALCULATE_PATTERN.match(value)
+    # ... rest of existing code ...
+```
+
 #### 1.4 Integracja w WorkflowRegistry
 
 **Plik**: `server/router/application/workflows/registry.py`
 
-W `expand_workflow()` przed `_steps_to_calls()`:
+**Krok 1**: Dodać import na początku pliku (po linii 20):
 
 ```python
-def expand_workflow(self, ...):
-    # ... existing code ...
+from server.router.application.evaluator.loop_expander import LoopExpander
+```
 
-    # TASK-057: Expand loop steps BEFORE other processing
-    if definition:
-        loop_expander = LoopExpander(self._evaluator)
-        expanded_steps = loop_expander.expand_loops(
-            definition.steps,
-            all_params  # Contains plank_count, etc.
-        )
-        steps = self._resolve_definition_params(expanded_steps, all_params)
-        return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
+**Krok 2**: Dodać `_loop_expander` w `__init__()` (po linii 41):
+
+```python
+def __init__(self):
+    """Initialize registry with workflows from YAML/JSON files."""
+    self._workflows: Dict[str, BaseWorkflow] = {}
+    self._custom_definitions: Dict[str, WorkflowDefinition] = {}
+    self._custom_loaded: bool = False
+    self._evaluator = ExpressionEvaluator()
+    self._condition_evaluator = ConditionEvaluator()
+    self._proportion_resolver = ProportionResolver()
+    self._loop_expander = LoopExpander(self._evaluator)  # TASK-058: NEW
+```
+
+**Krok 3**: W `expand_workflow()` (linia ~291-295) dodać loop expansion PRZED `_resolve_definition_params()`:
+
+```python
+# Try custom definition
+definition = self._custom_definitions.get(workflow_name)
+if definition:
+    # Build variable context from defaults + modifiers (TASK-052)
+    variables = self._build_variables(definition, user_prompt)
+    # Merge with params (params override variables)
+    all_params = {**variables, **(params or {})}
+
+    # TASK-055-FIX-7 Phase 0: Resolve computed parameters
+    if definition.parameters:
+        # ... existing computed params code ...
+
+    # Set evaluator context with all resolved parameters
+    self._evaluator.set_context(all_params)
+
+    # TASK-058: Expand loop steps BEFORE other processing
+    expanded_steps = self._loop_expander.expand_loops(
+        definition.steps,
+        all_params  # Contains plank_count, etc.
+    )
+
+    steps = self._resolve_definition_params(expanded_steps, all_params)
+    return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
 ```
 
 ---
 
-### FAZA 2: Conditional Functions (P1 - High)
+### FAZA 2: Conditional Expressions in $CALCULATE (P1 - High)
 
-#### 2.1 Piecewise Expression w $CALCULATE
+#### 2.1 Ternary Expressions w $CALCULATE
 
-Rozszerzyć `expression_evaluator.py` o obsługę `if...else`:
+**Plik**: `server/router/application/evaluator/expression_evaluator.py`
+
+Rozszerzyć metodę `_eval_node()` (linia 262-336) o obsługę `if...else` i porównań:
 
 ```python
-# Expression: "0.10 if i <= plank_full_count else plank_remainder_width"
 def _eval_node(self, node: ast.AST) -> float:
-    # ... existing cases ...
+    """Recursively evaluate AST node.
+    ...
+    """
+    # ... existing cases (Constant, Num, BinOp, UnaryOp, Call, Name) ...
 
-    # NEW: IfExp (ternary)
+    # TASK-058: IfExp (ternary expression)
+    # Expression: "0.10 if i <= plank_full_count else plank_remainder_width"
     if isinstance(node, ast.IfExp):
-        test = self._eval_node(node.test)
-        if test:
+        test_result = self._eval_node(node.test)
+        if test_result:
             return self._eval_node(node.body)
         else:
             return self._eval_node(node.orelse)
 
-    # NEW: Compare (for boolean expressions in IfExp)
+    # TASK-058: Compare (for boolean expressions)
+    # Handles: ==, !=, <, <=, >, >=
     if isinstance(node, ast.Compare):
         left = self._eval_node(node.left)
         for op, comparator in zip(node.ops, node.comparators):
             right = self._eval_node(comparator)
-            if not self._compare(left, op, right):
+            if not self._compare_values(left, op, right):
                 return 0.0  # False
             left = right
         return 1.0  # True
+
+    raise ValueError(f"Unsupported AST node: {type(node).__name__}")
+```
+
+Dodać nową metodę pomocniczą `_compare_values()`:
+
+```python
+def _compare_values(self, left: float, op: ast.cmpop, right: float) -> bool:
+    """Compare two values using comparison operator.
+
+    TASK-058: Helper for ast.Compare evaluation.
+
+    Args:
+        left: Left operand.
+        op: Comparison operator AST node.
+        right: Right operand.
+
+    Returns:
+        Boolean result of comparison.
+
+    Raises:
+        ValueError: If comparison operator is not supported.
+    """
+    if isinstance(op, ast.Eq):
+        return left == right
+    elif isinstance(op, ast.NotEq):
+        return left != right
+    elif isinstance(op, ast.Lt):
+        return left < right
+    elif isinstance(op, ast.LtE):
+        return left <= right
+    elif isinstance(op, ast.Gt):
+        return left > right
+    elif isinstance(op, ast.GtE):
+        return left >= right
+    else:
+        raise ValueError(f"Unsupported comparison operator: {type(op).__name__}")
 ```
 
 ---
@@ -256,37 +591,46 @@ steps:
 
 ---
 
-## Pliki Do Modyfikacji
+## Pliki Do Modyfikacji (Clean Architecture)
 
 ### Faza 1 (Loop + String Interpolation)
 
-| Plik | Zmiana | Priorytet |
-|------|--------|-----------|
-| `base.py:18-58` | Dodać `loop: Optional[Dict]` do WorkflowStep | P0 |
-| `workflow_loader.py` | Dodać obsługę `loop` w `_parse_step()` | P0 |
-| `workflow_loader.py` | NOWY: `LoopExpander` class | P0 |
-| `expression_evaluator.py` | Dodać `$FORMAT()` pattern i metodę | P0 |
-| `registry.py:202-297` | Integracja `LoopExpander` w `expand_workflow()` | P0 |
-| `simple_table.yaml` | Przepisać na loop syntax | P0 |
+| Warstwa | Plik | Zmiana | Priorytet |
+|---------|------|--------|-----------|
+| **Application/Workflows** | `server/router/application/workflows/base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep`, dodać `"loop"` do `_known_fields` | P0 |
+| **Infrastructure** | `server/router/infrastructure/workflow_loader.py` | Automatyczna obsługa `loop` przez istniejący `_parse_step()` (bez zmian) | P0 |
+| **Application/Evaluator** | `server/router/application/evaluator/loop_expander.py` | **NOWY PLIK**: `LoopExpander` class | P0 |
+| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `FORMAT_PATTERN`, `resolve_format()`, zmodyfikować `resolve_param_value()` | P0 |
+| **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja w `expand_workflow()` | P0 |
+| **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
 
-### Faza 2 (Conditional Functions)
+### Faza 2 (Conditional Expressions)
 
-| Plik | Zmiana | Priorytet |
-|------|--------|-----------|
-| `expression_evaluator.py:262-336` | Dodać `ast.IfExp` i `ast.Compare` w `_eval_node()` | P1 |
+| Warstwa | Plik | Zmiana | Priorytet |
+|---------|------|--------|-----------|
+| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `ast.IfExp`, `ast.Compare` w `_eval_node()`, dodać `_compare_values()` | P1 |
 
 ---
 
-## Testy
+## Testy (Clean Architecture)
 
 ### Unit Tests
 
 ```
-tests/unit/router/infrastructure/test_loop_expander.py
+tests/unit/router/application/evaluator/test_loop_expander.py
 - test_expand_static_range
 - test_expand_computed_range
-- test_format_string_interpolation
-- test_nested_loops (FAZA 3)
+- test_expand_dynamic_range_with_variables
+- test_format_string_interpolation_in_params
+- test_no_loop_passthrough
+- test_invalid_loop_config_raises_error
+- test_nested_loops (FAZA 3 - skip dla teraz)
+
+tests/unit/router/application/evaluator/test_expression_evaluator_format.py
+- test_format_pattern_simple
+- test_format_pattern_multiple_vars
+- test_format_not_matched_returns_original
+- test_resolve_param_value_with_format
 ```
 
 ### E2E Tests
@@ -295,90 +639,41 @@ tests/unit/router/infrastructure/test_loop_expander.py
 tests/e2e/router/test_simple_table_with_loops.py
 - test_table_with_8_planks_via_loop
 - test_table_width_0_73m_fractional_planks
+- test_loop_expansion_in_registry
 ```
 
 ---
 
-## Kolejność Implementacji
+## Kolejność Implementacji (Clean Architecture)
 
-1. **WorkflowStep.loop field** - base.py
-2. **Loop loading** - workflow_loader.py `_parse_step()`
-3. **LoopExpander class** - workflow_loader.py (new)
-4. **$FORMAT pattern** - expression_evaluator.py
-5. **Integration** - registry.py `expand_workflow()`
-6. **Tests** - unit + e2e
-7. **simple_table.yaml refactor** - use loop syntax
-8. **Documentation** - TASK-057 doc update
+### Faza 1 - Core Loop System
+
+| Krok | Warstwa | Plik | Opis |
+|------|---------|------|------|
+| 1 | Application/Workflows | `base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep` + `_known_fields` |
+| 2 | Infrastructure | `workflow_loader.py` | Weryfikacja - pole `loop` parsowane automatycznie (bez zmian) |
+| 3 | Application/Evaluator | `loop_expander.py` | **NOWY PLIK** - `LoopExpander` class |
+| 4 | Application/Evaluator | `expression_evaluator.py` | Dodać `FORMAT_PATTERN` + `resolve_format()` + zmodyfikować `resolve_param_value()` |
+| 5 | Application/Workflows | `registry.py` | Import + instancja `_loop_expander` + integracja w `expand_workflow()` |
+| 6 | Tests | `test_loop_expander.py` | Unit testy dla `LoopExpander` |
+| 7 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
+| 8 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
+
+### Faza 2 - Conditional Expressions (opcjonalne)
+
+| Krok | Warstwa | Plik | Opis |
+|------|---------|------|------|
+| 9 | Application/Evaluator | `expression_evaluator.py` | Dodać `ast.IfExp` + `ast.Compare` + `_compare_values()` |
+| 10 | Tests | `test_expression_evaluator_conditionals.py` | Unit testy dla ternary expressions |
 
 ---
 
-## Decyzje (Bez Pytań - Implementacja Domyślna)
+## Decyzje Architektoniczne
 
 1. **Loop range syntax**: `"1..plank_count"` - spójna z innymi DSL, czytelna
 2. **String interpolation**: `$FORMAT(Plank_{i})` - spójna z istniejącym `$CALCULATE()`
-3. **Nested loops**: FAZA 1 tylko - podstawowe pętle, rozszerzenie w przyszłości jeśli potrzebne
-
----
-
-## Kolejność Implementacji (Szczegółowa)
-
-### Krok 1: WorkflowStep.loop field
-**Plik**: `server/router/application/workflows/base.py`
-```python
-@dataclass
-class WorkflowStep:
-    # ... existing fields ...
-    loop: Optional[Dict[str, Any]] = None  # TASK-058: Loop parameter
-```
-
-### Krok 2: Loop parsing w workflow_loader.py
-**Plik**: `server/router/infrastructure/workflow_loader.py`
-- Metoda `_parse_step()` już automatycznie obsłuży nowe pole dzięki TASK-055-FIX-6
-- Weryfikacja: pole `loop` będzie parsowane z YAML automatycznie
-
-### Krok 3: LoopExpander class
-**Plik**: `server/router/infrastructure/loop_expander.py` (NEW FILE)
-```python
-class LoopExpander:
-    def __init__(self, evaluator: ExpressionEvaluator):
-        self._evaluator = evaluator
-
-    def expand_loops(self, steps: List[WorkflowStep], context: Dict) -> List[WorkflowStep]:
-        # Expand all loop steps
-
-    def _expand_single_loop(self, step: WorkflowStep, context: Dict) -> List[WorkflowStep]:
-        # Parse range, generate steps with loop variable
-
-    def _parse_range_expression(self, range_spec: str, context: Dict) -> Tuple[int, int]:
-        # Handle "1..plank_count" or "1..15"
-```
-
-### Krok 4: $FORMAT pattern w expression_evaluator.py
-**Plik**: `server/router/application/evaluator/expression_evaluator.py`
-```python
-FORMAT_PATTERN = re.compile(r"^\$FORMAT\((.+)\)$")
-
-def resolve_format(self, template: str, context: Dict) -> str:
-    """Resolve $FORMAT(Plank_{i}) with context variables."""
-```
-
-### Krok 5: Integracja w registry.py
-**Plik**: `server/router/application/workflows/registry.py`
-- W `expand_workflow()` dodać `LoopExpander.expand_loops()` PRZED `_steps_to_calls()`
-
-### Krok 6: Unit Tests
-**Plik**: `tests/unit/router/infrastructure/test_loop_expander.py` (NEW FILE)
-- test_expand_static_range
-- test_expand_computed_range
-- test_format_string_interpolation
-- test_no_loop_passthrough
-
-### Krok 7: Refaktor simple_table.yaml
-**Plik**: `server/router/application/workflows/custom/simple_table.yaml`
-- Zastąpić 15 powtarzających się kroków jednym krokiem z `loop`
-
-### Krok 8: Dokumentacja TASK-058
-**Plik**: `_docs/_TASKS/TASK-058_Loop_System_String_Interpolation.md` (NEW FILE)
+3. **LoopExpander lokalizacja**: `application/evaluator/` - logika transformacji danych (nie infrastructure)
+4. **Nested loops**: FAZA 3 (przyszłość) - podstawowe pętle w FAZA 1
 
 ---
 
@@ -386,12 +681,14 @@ def resolve_format(self, template: str, context: Dict) -> str:
 
 | Krok | Czas |
 |------|------|
-| WorkflowStep.loop | 5 min |
-| Loop parsing | 0 min (automatyczne) |
-| LoopExpander class | 30 min |
-| $FORMAT pattern | 15 min |
+| `WorkflowStep.loop` + `_known_fields` | 5 min |
+| Loop parsing verification | 0 min (automatyczne) |
+| `LoopExpander` class | 30 min |
+| `$FORMAT` pattern + `resolve_format()` | 15 min |
 | Registry integration | 10 min |
-| Unit tests | 20 min |
-| simple_table.yaml refaktor | 15 min |
-| Dokumentacja | 10 min |
-| **TOTAL** | ~2h |
+| Unit tests (`LoopExpander`) | 20 min |
+| Unit tests (`$FORMAT`) | 10 min |
+| `simple_table.yaml` refaktor (opcjonalne) | 15 min |
+| **TOTAL Faza 1** | ~1.5h |
+| Faza 2: Conditional expressions | +30 min |
+| **TOTAL (wszystko)** | ~2h |
