@@ -7,7 +7,7 @@
 **Related**: TASK-059 (superseded), TASK-055-FIX-8 (documentation), TASK-058 (loop system)
 **Created**: 2025-12-12
 **Supersedes**: TASK-059 (kept as documentation reference)
-**Revised**: 2025-12-12 (Clean Architecture alignment)
+**Revised**: 2025-12-12 (Clean Architecture alignment + comprehensive review)
 
 ---
 
@@ -15,12 +15,12 @@
 
 Before public launch (Blender forums, Reddit), consolidate two separate evaluators into a single, well-architected **Unified Evaluator**. This prevents technical debt and makes the system easier to extend by future contributors.
 
-**Key Changes from Original TASK-060:**
-- Added domain interface `IExpressionEvaluator` (Clean Architecture)
-- Proper string/numeric type handling (Any return type, not just float)
-- Preserved `simulate_step_effect()` as separate concern
-- Added `resolve_computed_parameters()` to core
-- Enhanced backward compatibility testing strategy
+**Key Design Goals:**
+- Single AST-based evaluation core replacing regex-based ConditionEvaluator
+- Domain interface `IExpressionEvaluator` (Clean Architecture compliance)
+- Full backward compatibility with existing workflows
+- Enable math functions in conditions (new capability)
+- Support comparison and logical operators in `$CALCULATE()`
 
 ---
 
@@ -30,64 +30,86 @@ Before public launch (Blender forums, Reddit), consolidate two separate evaluato
 
 ```
 server/router/application/evaluator/
-├── expression_evaluator.py   # AST-based, returns float
-│   ├── Math: +, -, *, /, floor(), sin()
-│   ├── Comparisons: ❌ NOT SUPPORTED
+├── expression_evaluator.py   # AST-based, returns Optional[float]
+│   ├── Math: +, -, *, /, floor(), sin(), etc. (21 functions)
+│   ├── Comparisons: ❌ NOT SUPPORTED (ValueError: Unsupported AST node)
 │   └── Logic: ❌ NOT SUPPORTED
 │
-└── condition_evaluator.py    # Regex-based, returns bool
+└── condition_evaluator.py    # Regex/recursive descent, returns bool
     ├── Math: ❌ NOT SUPPORTED
     ├── Comparisons: ==, !=, <, <=, >, >=
     └── Logic: and, or, not
 ```
 
-### Problems
+### Current Architecture Issues
 
-| Issue | Impact |
-|-------|--------|
-| **Two parsers** | Regex parser has edge cases, AST is more robust |
-| **No math in conditions** | `condition: "floor(width) > 5"` doesn't work |
-| **Duplicated logic** | Comparison operators would be in two places |
-| **Inconsistent behavior** | Risk of `>` working differently in each |
-| **Hard to extend** | New contributors must understand two systems |
-| **Maintenance burden** | Bug fixes needed in two places |
+| Issue | Impact | Location |
+|-------|--------|----------|
+| **Two parsers** | Regex parser in ConditionEvaluator has edge cases | `condition_evaluator.py:229-248` |
+| **No math in conditions** | `condition: "floor(width) > 5"` fails | `condition_evaluator.py:_parse_primary()` |
+| **Duplicated potential** | Adding comparisons to ExpressionEvaluator duplicates logic | TASK-059 approach |
+| **Inconsistent behavior** | Risk of `>` working differently in each evaluator | N/A currently |
+| **No domain interface** | Unlike other router components, evaluators lack interface | `domain/interfaces/` |
+| **Variable substitution** | ExpressionEvaluator uses regex substitution before AST | `expression_evaluator.py:243-251` |
 
-### Why Now?
+### Evidence from Codebase
 
-- Public launch imminent (Blender forums, Reddit)
-- New developers will join the project
-- Technical debt is cheaper to fix now than later
-- TASK-059 would add more code to the wrong architecture
+**ExpressionEvaluator** (`expression_evaluator.py:262-336`):
+- `_eval_node()` handles: `ast.Constant`, `ast.Num`, `ast.BinOp`, `ast.UnaryOp`, `ast.Call`, `ast.Name`
+- **Missing**: `ast.Compare`, `ast.BoolOp`, `ast.IfExp`
+- Uses regex for variable substitution (lines 243-251) - fragile
+
+**ConditionEvaluator** (`condition_evaluator.py:143-248`):
+- Uses recursive descent parser (`_parse_or_expression` → `_parse_and_expression` → etc.)
+- String-based comparison (lines 229-235)
+- Has critical bug fix for unknown variables (lines 330-339)
+
+### Why Fix Now?
+
+1. **TASK-059** would add comparison/logic to ExpressionEvaluator, creating MORE code in wrong architecture
+2. **Public launch imminent** - new contributors need clean codebase
+3. **Technical debt cheaper now** than after more workflows depend on current system
+4. **Enables future features** - loop system (TASK-058) needs ternary in `$CALCULATE`
 
 ---
 
-## Solution: Unified Evaluator
+## Solution Architecture
 
-### Target Architecture
+### Target Structure (Clean Architecture)
 
 ```
 server/router/
 ├── domain/
 │   └── interfaces/
-│       └── i_expression_evaluator.py   # NEW: Domain interface
+│       ├── __init__.py                     # Export IExpressionEvaluator
+│       └── i_expression_evaluator.py       # NEW: Domain interface
 │
 └── application/
     └── evaluator/
-        ├── __init__.py                  # Updated exports
-        ├── unified_evaluator.py         # NEW: Core AST-based evaluator
-        ├── expression_evaluator.py      # Wrapper: $CALCULATE() → float
-        ├── condition_evaluator.py       # Wrapper: condition → bool
-        └── proportion_resolver.py       # Unchanged
+        ├── __init__.py                     # Export all evaluators
+        ├── unified_evaluator.py            # NEW: Core AST-based evaluator
+        ├── expression_evaluator.py         # REFACTORED: Wrapper for $CALCULATE
+        ├── condition_evaluator.py          # REFACTORED: Wrapper for conditions
+        └── proportion_resolver.py          # UNCHANGED
 ```
 
 ### Design Principles
 
-1. **Dependency Inversion**: UnifiedEvaluator implements `IExpressionEvaluator` interface
-2. **Single Source of Truth**: One AST parser for all evaluation
+1. **Dependency Inversion (DIP)**: UnifiedEvaluator implements `IExpressionEvaluator` interface
+2. **Single Source of Truth**: One AST parser for ALL evaluation (math, comparisons, logic)
 3. **Composition over Inheritance**: Wrappers delegate to UnifiedEvaluator
-4. **Backward Compatibility**: Existing YAML workflows work unchanged
-5. **Type Safety**: Core returns `Any` (float/string), wrappers enforce contracts
-6. **Separation of Concerns**: `simulate_step_effect()` stays in ConditionEvaluator
+4. **Backward Compatibility**: All existing tests pass without modification
+5. **Type Safety**: Core returns `Any`, wrappers enforce type contracts (`float` / `bool`)
+6. **Separation of Concerns**: `simulate_step_effect()` stays in ConditionEvaluator (workflow logic)
+
+### Component Responsibilities
+
+| Component | Input | Output | Responsibility |
+|-----------|-------|--------|----------------|
+| **UnifiedEvaluator** | Expression string | `Any` (float/str) | AST-based evaluation core |
+| **ExpressionEvaluator** | `$CALCULATE(...)` | `Optional[float]` | Pattern matching, context flattening |
+| **ConditionEvaluator** | Condition string | `bool` | Fail-open, step simulation |
+| **ProportionResolver** | `$AUTO_*` | `float`/`list` | Dimension-relative calculations |
 
 ---
 
@@ -97,44 +119,54 @@ server/router/
 
 1. **Domain Interface** `IExpressionEvaluator`:
    - Abstract contract for expression evaluation
-   - Allows future alternative implementations
-   - Enables dependency injection in tests
+   - Methods: `set_context()`, `get_context()`, `update_context()`, `get_variable()`, `evaluate()`, `evaluate_safe()`
+   - Enables dependency injection in tests and future implementations
 
 2. **UnifiedEvaluator** with full feature set:
-   - All 21 math functions (from TASK-056-1)
-   - All arithmetic operators: `+`, `-`, `*`, `/`, `//`, `%`, `**`
-   - All comparison operators: `<`, `<=`, `>`, `>=`, `==`, `!=`
-   - All logical operators: `and`, `or`, `not`
-   - Ternary expressions: `x if condition else y`
-   - Chained comparisons: `0 < x < 10`
-   - Variable references from context
+   - **Arithmetic**: `+`, `-`, `*`, `/`, `//`, `%`, `**`
+   - **Math functions**: All 21 from TASK-056-1 (abs, min, max, floor, ceil, sqrt, sin, cos, tan, etc.)
+   - **Comparisons**: `<`, `<=`, `>`, `>=`, `==`, `!=`
+   - **Logic**: `and`, `or`, `not`
+   - **Ternary**: `x if condition else y`
+   - **Chained comparisons**: `0 < x < 10`
    - **String comparisons**: `mode == 'EDIT'`
-   - **Computed parameter resolution** with topological sort
+   - **Computed parameters**: `resolve_computed_parameters()` with topological sort
+   - **Helper methods**: `evaluate_as_bool()`, `evaluate_as_float()`
 
-3. **ExpressionEvaluator** wrapper:
-   - `$CALCULATE(...)` pattern matching
-   - `$variable` references
-   - Returns `float`
-   - Full backward compatibility
-   - Delegates to UnifiedEvaluator
+3. **ExpressionEvaluator** wrapper (backward compatible):
+   - `$CALCULATE(...)` pattern matching (unchanged)
+   - `$variable` references (unchanged)
+   - Context flattening: `dimensions` → `width/height/depth`, `proportions` → `proportions_*`
+   - Returns `Optional[float]` (unchanged)
+   - **Delegates to UnifiedEvaluator** internally
 
-4. **ConditionEvaluator** wrapper:
-   - Returns `bool`
-   - Fail-open behavior (returns `True` on error)
-   - Full backward compatibility with existing conditions
-   - **Preserves `simulate_step_effect()`** (step context simulation)
-   - Delegates to UnifiedEvaluator
+4. **ConditionEvaluator** wrapper (backward compatible):
+   - Returns `bool` (unchanged)
+   - Fail-open behavior: returns `True` on error (unchanged)
+   - **Preserves `simulate_step_effect()`** - workflow-specific logic stays here
+   - `set_context_from_scene()` method (unchanged)
+   - **Delegates to UnifiedEvaluator** for evaluation
 
-5. **All existing tests pass** without modification
+5. **All existing tests pass** without ANY modification:
+   - `test_expression_evaluator.py` (344 lines)
+   - `test_expression_evaluator_extended.py` (TASK-056-1)
+   - `test_condition_evaluator.py` (383 lines)
+   - `test_condition_evaluator_parentheses.py` (TASK-056-2)
 
-### Nice to Have (P1)
+### Nice to Have (P1) - Enabled by This Refactor
 
-6. **Math in conditions**:
+6. **Math functions in conditions**:
    ```yaml
    condition: "floor(table_width / plank_width) > 5"
+   condition: "sqrt(width * width + depth * depth) < 2.0"
    ```
 
-7. **Consistent error messages** across both wrappers
+7. **Ternary in $CALCULATE**:
+   ```yaml
+   computed: "$CALCULATE(0.10 if i <= plank_full_count else plank_remainder_width)"
+   ```
+
+8. **Consistent error messages** across both wrappers
 
 ---
 
@@ -149,6 +181,7 @@ server/router/
 Expression Evaluator Interface.
 
 TASK-060: Domain interface for expression evaluation.
+Defines contract for safe expression evaluation used by workflow system.
 """
 
 from abc import ABC, abstractmethod
@@ -158,11 +191,16 @@ from typing import Dict, Any, Optional
 class IExpressionEvaluator(ABC):
     """Abstract interface for expression evaluation.
 
-    Defines contract for safe expression evaluation used by workflow system.
     Supports mathematical expressions, comparisons, and logical operations.
+    All implementations must provide safe evaluation without arbitrary code execution.
 
     Implementations:
         - UnifiedEvaluator: Full AST-based implementation
+
+    Example:
+        evaluator: IExpressionEvaluator = UnifiedEvaluator()
+        evaluator.set_context({"width": 2.0, "mode": "EDIT"})
+        result = evaluator.evaluate("width > 1.0")  # -> 1.0
     """
 
     @abstractmethod
@@ -171,6 +209,7 @@ class IExpressionEvaluator(ABC):
 
         Args:
             context: Dictionary with variable values.
+                     Supports: int, float, bool, str values.
         """
         pass
 
@@ -185,7 +224,7 @@ class IExpressionEvaluator(ABC):
 
     @abstractmethod
     def update_context(self, updates: Dict[str, Any]) -> None:
-        """Update context with new values.
+        """Update context with new values (merge).
 
         Args:
             updates: Dictionary with values to add/update.
@@ -212,11 +251,13 @@ class IExpressionEvaluator(ABC):
             expression: Expression string to evaluate.
 
         Returns:
-            Evaluated value (float for math, bool-as-float for comparisons).
+            Evaluated value:
+            - float for arithmetic expressions
+            - float (1.0/0.0) for comparisons/logic (represents True/False)
+            - str only in string literal contexts
 
         Raises:
-            ValueError: If expression is invalid.
-            SyntaxError: If expression has invalid syntax.
+            ValueError: If expression is invalid or uses disallowed constructs.
         """
         pass
 
@@ -236,11 +277,17 @@ class IExpressionEvaluator(ABC):
 
 **Update**: `server/router/domain/interfaces/__init__.py`
 
+Add to existing exports:
 ```python
-# Add to existing exports:
 from server.router.domain.interfaces.i_expression_evaluator import (
     IExpressionEvaluator,
 )
+
+__all__ = [
+    # ... existing exports ...
+    # Expression Evaluator (TASK-060)
+    "IExpressionEvaluator",
+]
 ```
 
 ---
@@ -248,6 +295,8 @@ from server.router.domain.interfaces.i_expression_evaluator import (
 ### Phase 2: Create UnifiedEvaluator (Core Implementation)
 
 **File**: `server/router/application/evaluator/unified_evaluator.py`
+
+Key implementation details:
 
 ```python
 """
@@ -263,7 +312,7 @@ import ast
 import math
 import operator
 import logging
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 
 from server.router.domain.interfaces.i_expression_evaluator import IExpressionEvaluator
 
@@ -278,34 +327,19 @@ class UnifiedEvaluator(IExpressionEvaluator):
     - Comparisons: float (1.0 for True, 0.0 for False)
     - String literals: str (for string comparisons)
 
-    Used internally by ExpressionEvaluator and ConditionEvaluator.
-
     Supports:
     - Arithmetic: +, -, *, /, //, %, **
-    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc.
+    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc. (21 total)
     - Comparisons: <, <=, >, >=, ==, !=
-    - Logic: and, or, not
-    - Ternary: x if condition else y
     - Chained comparisons: 0 < x < 10
+    - Logic: and, or, not (with short-circuit evaluation)
+    - Ternary: x if condition else y
     - String comparisons: mode == 'EDIT'
 
-    Example:
-        evaluator = UnifiedEvaluator()
-        evaluator.set_context({"width": 2.0, "height": 4.0, "mode": "EDIT"})
-
-        # Math
-        evaluator.evaluate("width * 0.5")  # -> 1.0
-        evaluator.evaluate("floor(height / width)")  # -> 2.0
-
-        # Comparisons (return 1.0 for True, 0.0 for False)
-        evaluator.evaluate("width > 1.0")  # -> 1.0
-        evaluator.evaluate("mode == 'EDIT'")  # -> 1.0
-
-        # Logic
-        evaluator.evaluate("width > 1.0 and height < 5.0")  # -> 1.0
-
-        # Ternary
-        evaluator.evaluate("10 if width > 1.0 else 5")  # -> 10.0
+    Security:
+    - AST-based parsing (no eval/exec)
+    - Function whitelist only
+    - No attribute access, subscripting, or imports
     """
 
     # Allowed functions (whitelist) - from TASK-056-1
@@ -319,7 +353,6 @@ class UnifiedEvaluator(IExpressionEvaluator):
         "ceil": math.ceil,
         "sqrt": math.sqrt,
         "trunc": math.trunc,
-
         # Trigonometric functions
         "sin": math.sin,
         "cos": math.cos,
@@ -330,18 +363,16 @@ class UnifiedEvaluator(IExpressionEvaluator):
         "atan2": math.atan2,
         "degrees": math.degrees,
         "radians": math.radians,
-
         # Logarithmic functions
         "log": math.log,
         "log10": math.log10,
         "exp": math.exp,
-
         # Advanced functions
         "pow": pow,
         "hypot": math.hypot,
     }
 
-    # Binary operators
+    # Binary operators mapping
     BINARY_OPS: Dict[type, Any] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
@@ -352,7 +383,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
         ast.Pow: operator.pow,
     }
 
-    # Comparison operators
+    # Comparison operators mapping
     COMPARE_OPS: Dict[type, Any] = {
         ast.Eq: operator.eq,
         ast.NotEq: operator.ne,
@@ -374,17 +405,16 @@ class UnifiedEvaluator(IExpressionEvaluator):
                      Supports: int, float, bool, str values.
         """
         self._context = {}
-
         for key, value in context.items():
             if isinstance(value, bool):
-                # bool before int (bool is subclass of int)
-                # Store as float for arithmetic compatibility
+                # CRITICAL: Check bool BEFORE int (bool is subclass of int)
                 self._context[key] = 1.0 if value else 0.0
             elif isinstance(value, (int, float)):
                 self._context[key] = float(value)
             elif isinstance(value, str):
                 # Store strings for comparison (e.g., mode == 'EDIT')
                 self._context[key] = value
+            # Ignore other types (lists, dicts, etc.)
 
     def update_context(self, updates: Dict[str, Any]) -> None:
         """Update context with new values.
@@ -426,11 +456,10 @@ class UnifiedEvaluator(IExpressionEvaluator):
             expression: Expression string to evaluate.
 
         Returns:
-            Evaluated value (float for math, string for string literals).
+            Evaluated value (float for math, str for string literals).
 
         Raises:
             ValueError: If expression is invalid or uses disallowed constructs.
-            SyntaxError: If expression has invalid Python syntax.
         """
         if not expression or not expression.strip():
             raise ValueError("Empty expression")
@@ -493,6 +522,16 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
     def _eval_node(self, node: ast.AST) -> Any:
         """Recursively evaluate AST node.
+
+        Handles:
+        - Constants (ast.Constant, ast.Num, ast.Str, ast.NameConstant)
+        - Binary operations (ast.BinOp)
+        - Unary operations (ast.UnaryOp) including 'not'
+        - Comparisons (ast.Compare) including chained
+        - Boolean operations (ast.BoolOp) with short-circuit
+        - Ternary expressions (ast.IfExp)
+        - Function calls (ast.Call) - whitelist only
+        - Variable references (ast.Name)
 
         Args:
             node: AST node to evaluate.
@@ -571,7 +610,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
         Raises:
             ValueError: If constant type is not supported.
         """
-        # Check bool BEFORE int (bool is subclass of int)
+        # CRITICAL: Check bool BEFORE int (bool is subclass of int)
         if isinstance(value, bool):
             return 1.0 if value else 0.0
         if isinstance(value, (int, float)):
@@ -590,7 +629,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
             Result of binary operation.
 
         Raises:
-            ValueError: If operator is not supported.
+            ValueError: If operator is not supported or operands are strings.
         """
         left = self._eval_node(node.left)
         right = self._eval_node(node.right)
@@ -732,9 +771,11 @@ class UnifiedEvaluator(IExpressionEvaluator):
         args = [self._eval_node(arg) for arg in node.args]
 
         # Ensure all args are numeric for math functions
-        for i, arg in enumerate(args):
+        for arg in args:
             if isinstance(arg, str):
-                raise ValueError(f"Function '{func_name}' requires numeric arguments, got string")
+                raise ValueError(
+                    f"Function '{func_name}' requires numeric arguments, got string"
+                )
 
         return float(self.FUNCTIONS[func_name](*args))
 
@@ -764,7 +805,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
         raise ValueError(f"Unknown variable: {var_name}")
 
-    # === Computed Parameters (from ExpressionEvaluator) ===
+    # === Computed Parameters (preserved from ExpressionEvaluator) ===
 
     def resolve_computed_parameters(
         self,
@@ -785,20 +826,6 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
         Raises:
             ValueError: If circular dependency detected or evaluation fails.
-
-        Example:
-            schemas = {
-                "width": ParameterSchema(name="width", type="float"),
-                "plank_full_count": ParameterSchema(
-                    name="plank_full_count",
-                    type="int",
-                    computed="floor(width / plank_max_width)",
-                    depends_on=["width", "plank_max_width"]
-                )
-            }
-            context = {"width": 0.73, "plank_max_width": 0.10}
-            result = evaluator.resolve_computed_parameters(schemas, context)
-            # result = {"width": 0.73, "plank_max_width": 0.10, "plank_full_count": 7.0}
         """
         resolved = dict(context)
 
@@ -891,22 +918,28 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
 **File**: `server/router/application/evaluator/expression_evaluator.py`
 
-Keep the public API identical, but delegate to UnifiedEvaluator internally.
+Key changes:
+- Remove internal `_safe_eval()`, `_eval_node()` methods
+- Add `self._unified = UnifiedEvaluator()`
+- Delegate `evaluate()` to `self._unified.evaluate_as_float()`
+- Keep ALL context flattening logic (dimensions, proportions)
+- Keep ALL pattern matching (`$CALCULATE`, `$variable`)
+- Keep `FUNCTIONS` as class attribute (backward compatibility)
 
 ```python
 """
 Expression Evaluator.
 
-Wrapper for UnifiedEvaluator that handles $CALCULATE() expressions.
-Maintains backward compatibility with existing workflow YAML files.
+Safe expression evaluator for workflow parameters.
+Supports $CALCULATE(...) expressions with arithmetic and math functions.
 
 TASK-041-7: Original implementation
-TASK-060: Refactored to use UnifiedEvaluator as core.
+TASK-060: Refactored to delegate to UnifiedEvaluator.
 """
 
 import re
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 
@@ -914,20 +947,15 @@ logger = logging.getLogger(__name__)
 
 
 class ExpressionEvaluator:
-    """Expression evaluator for $CALCULATE() and $variable references.
+    """Safe expression evaluator for workflow parameters.
 
     This is a wrapper around UnifiedEvaluator that provides:
     - $CALCULATE(...) pattern matching
     - $variable direct references
+    - Context flattening (dimensions → width/height/depth)
     - Backward-compatible API
 
-    Example:
-        evaluator = ExpressionEvaluator()
-        evaluator.set_context({"width": 2.0, "height": 4.0})
-
-        result = evaluator.resolve_param_value("$CALCULATE(width * 0.5)")  # -> 1.0
-        result = evaluator.resolve_param_value("$width")  # -> 2.0
-        result = evaluator.resolve_param_value("$CALCULATE(1 if width > 1 else 0)")  # -> 1.0
+    TASK-060: Now delegates evaluation to UnifiedEvaluator.
     """
 
     # Pattern for $CALCULATE(...)
@@ -936,7 +964,7 @@ class ExpressionEvaluator:
     # Pattern for simple $variable reference
     VARIABLE_PATTERN = re.compile(r"^\$([a-zA-Z_][a-zA-Z0-9_]*)$")
 
-    # Expose FUNCTIONS for backward compatibility
+    # Expose FUNCTIONS for backward compatibility (some code checks this)
     FUNCTIONS = UnifiedEvaluator.FUNCTIONS
 
     def __init__(self):
@@ -947,15 +975,17 @@ class ExpressionEvaluator:
         """Set variable context for evaluation.
 
         Args:
-            context: Dict with variable values.
+            context: Dict with variable values (dimensions, proportions, etc.)
 
-        Handles special keys:
-            - dimensions: List[float] of [x, y, z] -> extracts width/height/depth
-            - proportions: Dict -> flattens to proportions_* keys
+        Expected keys:
+            - dimensions: List[float] of [x, y, z]
+            - width, height, depth: Individual dimensions
+            - min_dim, max_dim: Min/max of dimensions
+            - proportions: Dict with aspect ratios
         """
-        flat_context = {}
+        flat_context: Dict[str, Any] = {}
 
-        # Extract dimensions
+        # Flatten context for easy access
         if "dimensions" in context:
             dims = context["dimensions"]
             if isinstance(dims, (list, tuple)) and len(dims) >= 3:
@@ -980,7 +1010,7 @@ class ExpressionEvaluator:
                     elif isinstance(value, bool):
                         flat_context[f"proportions_{key}"] = 1.0 if value else 0.0
 
-        # Pass through all other values
+        # Allow any numeric/string values from context
         for key, value in context.items():
             if key not in flat_context:
                 if isinstance(value, (int, float)):
@@ -1080,7 +1110,7 @@ class ExpressionEvaluator:
     ) -> Dict[str, Any]:
         """Resolve all computed parameters in dependency order.
 
-        TASK-056-5: Delegates to UnifiedEvaluator.resolve_computed_parameters().
+        TASK-056-5: Delegates to UnifiedEvaluator.
 
         Args:
             schemas: Dictionary of parameter name -> ParameterSchema.
@@ -1101,15 +1131,23 @@ class ExpressionEvaluator:
 
 **File**: `server/router/application/evaluator/condition_evaluator.py`
 
+Key changes:
+- Remove internal parser methods (`_parse_or_expression`, etc.)
+- Remove `COMPARISONS` list
+- Add `self._unified = UnifiedEvaluator()`
+- Delegate `evaluate()` to `self._unified.evaluate_as_bool()`
+- **KEEP** `simulate_step_effect()` - this is workflow logic, not evaluation
+- **KEEP** `set_context_from_scene()` - this is adapter logic
+
 ```python
 """
 Condition Evaluator.
 
-Wrapper for UnifiedEvaluator that evaluates boolean conditions for workflow steps.
-Maintains backward compatibility with existing workflow YAML files.
+Evaluates boolean conditions for workflow step execution.
+Supports comparisons, boolean variables, and logical operators.
 
 TASK-041-10: Original implementation
-TASK-060: Refactored to use UnifiedEvaluator as core.
+TASK-060: Refactored to delegate to UnifiedEvaluator.
 """
 
 import logging
@@ -1124,25 +1162,23 @@ class ConditionEvaluator:
     """Evaluates boolean conditions for workflow step execution.
 
     This is a wrapper around UnifiedEvaluator that provides:
-    - Boolean return type (converts float to bool)
+    - Boolean return type (converts result to bool)
     - Fail-open behavior (returns True on error)
-    - Backward-compatible API
     - Step effect simulation (simulate_step_effect)
+    - SceneContext adapter (set_context_from_scene)
+
+    TASK-060: Now delegates evaluation to UnifiedEvaluator.
+    NEW capabilities:
+    - Math functions in conditions: "floor(width) > 5"
+    - Ternary expressions: "1 if has_selection else 0"
 
     Supported conditions:
-    - Comparisons: "width > 1.0", "mode == 'EDIT'", "count != 0"
-    - Logic: "width > 1.0 and height < 2.0", "not has_selection"
-    - Math in conditions: "floor(width / 0.1) > 5" (NEW in TASK-060)
-    - Ternary: "1 if is_large else 0"
-
-    Example:
-        evaluator = ConditionEvaluator()
-        evaluator.set_context({"mode": "OBJECT", "width": 1.5})
-
-        evaluator.evaluate("mode == 'OBJECT'")  # -> True
-        evaluator.evaluate("width > 1.0")  # -> True
-        evaluator.evaluate("width > 1.0 and mode == 'EDIT'")  # -> False
-        evaluator.evaluate("floor(width) > 0")  # -> True (NEW)
+    - "current_mode != 'EDIT'"
+    - "has_selection"
+    - "not has_selection"
+    - "object_count > 0"
+    - "width > 1.0 and height < 2.0"
+    - "floor(table_width / plank_width) > 5"  # NEW in TASK-060
     """
 
     def __init__(self):
@@ -1154,6 +1190,13 @@ class ConditionEvaluator:
 
         Args:
             context: Dictionary with variable values.
+
+        Expected keys:
+        - current_mode: str (e.g., "OBJECT", "EDIT", "SCULPT")
+        - has_selection: bool
+        - object_count: int
+        - active_object: str (object name)
+        - selected_verts, selected_edges, selected_faces: int
         """
         self._unified.set_context(context)
 
@@ -1163,7 +1206,7 @@ class ConditionEvaluator:
         Args:
             scene_context: SceneContext instance.
         """
-        context = {
+        context: Dict[str, Any] = {
             "current_mode": scene_context.mode,
             "has_selection": scene_context.has_selection,
             "object_count": len(scene_context.objects) if scene_context.objects else 0,
@@ -1216,32 +1259,35 @@ class ConditionEvaluator:
                 f"Evaluating condition '{condition}' with context keys: "
                 f"{list(self._unified.get_context().keys())}"
             )
-
             result = self._unified.evaluate_as_bool(condition)
-
             logger.debug(f"Condition '{condition}' evaluated to {result}")
             return result
-
         except Exception as e:
             logger.warning(f"Condition evaluation failed: '{condition}' - {e}")
-            return True  # Fail-open
+            return True  # Fail-open: execute step if condition can't be evaluated
 
     def simulate_step_effect(self, tool_name: str, params: Dict[str, Any]) -> None:
         """Simulate the effect of a workflow step on context.
 
         Updates the context to reflect what would happen after
-        executing a tool. Used for conditional step evaluation.
+        executing a tool. Used for conditional step evaluation
+        within a workflow.
 
-        This method is NOT delegated to UnifiedEvaluator because it's
-        workflow-specific logic, not expression evaluation logic.
+        NOTE: This method is NOT delegated to UnifiedEvaluator because
+        it's workflow-specific logic, not expression evaluation logic.
 
         Args:
             tool_name: Name of the tool being executed.
             params: Tool parameters.
         """
-        updates = {}
+        updates: Dict[str, Any] = {}
 
-        if tool_name in ("system_set_mode", "scene_set_mode"):
+        if tool_name == "system_set_mode":
+            mode = params.get("mode")
+            if mode:
+                updates["current_mode"] = mode
+
+        elif tool_name == "scene_set_mode":
             mode = params.get("mode")
             if mode:
                 updates["current_mode"] = mode
@@ -1254,16 +1300,19 @@ class ConditionEvaluator:
                 updates["has_selection"] = False
 
         elif tool_name == "mesh_select_targeted":
+            # Targeted selection typically results in some selection
             updates["has_selection"] = True
 
         elif tool_name == "modeling_create_primitive":
-            current = self._unified.get_context().get("object_count", 0)
-            updates["object_count"] = current + 1
+            # Creating an object increases object count
+            current_count = self._unified.get_context().get("object_count", 0)
+            updates["object_count"] = current_count + 1
 
         elif tool_name == "scene_delete_object":
-            current = self._unified.get_context().get("object_count", 0)
-            if current > 0:
-                updates["object_count"] = current - 1
+            # Deleting an object decreases object count
+            current_count = self._unified.get_context().get("object_count", 0)
+            if current_count > 0:
+                updates["object_count"] = current_count - 1
 
         if updates:
             self._unified.update_context(updates)
@@ -1271,7 +1320,7 @@ class ConditionEvaluator:
 
 ---
 
-### Phase 5: Update `__init__.py`
+### Phase 5: Update Module Exports
 
 **File**: `server/router/application/evaluator/__init__.py`
 
@@ -1308,81 +1357,45 @@ __all__ = [
 
 **File**: `tests/unit/router/application/evaluator/test_unified_evaluator.py`
 
-Create comprehensive tests covering:
+Test categories based on TASK-059 specification:
 
-1. **Arithmetic Operations**
-   - All operators: `+`, `-`, `*`, `/`, `//`, `%`, `**`
-   - Operator precedence
-   - Parentheses grouping
+1. **Arithmetic Operations** - From existing `test_expression_evaluator.py`
+2. **Math Functions** - All 21 functions
+3. **Comparison Operators** - `<`, `<=`, `>`, `>=`, `==`, `!=`
+4. **Chained Comparisons** - `0 < x < 10`
+5. **Logical Operators** - `and`, `or`, `not` with precedence
+6. **Ternary Expressions** - `x if condition else y`
+7. **String Comparisons** - `mode == 'EDIT'`
+8. **Boolean Literals** - `True`, `False`
+9. **Context Management** - `set_context`, `update_context`, `get_variable`
+10. **Computed Parameters** - topological sort, circular dependency
+11. **Error Handling** - empty, syntax, unknown vars, type errors
+12. **Security** - no imports, no eval/exec, no attribute access
 
-2. **Math Functions**
-   - All 21 functions from TASK-056-1
-   - Nested function calls
-   - Error handling for invalid arguments
+### Phase 7: Backward Compatibility (CRITICAL)
 
-3. **Comparison Operators**
-   - All operators: `<`, `<=`, `>`, `>=`, `==`, `!=`
-   - Chained comparisons: `0 < x < 10`
-   - String comparisons: `mode == 'EDIT'`
-   - Mixed type comparisons (error cases)
+**All existing tests MUST pass without modification:**
 
-4. **Logical Operators**
-   - `and`, `or`, `not`
-   - Operator precedence: `not` > `and` > `or`
-   - Short-circuit evaluation
-   - Combined with comparisons
+```bash
+# Run before AND after implementation
+PYTHONPATH=. poetry run pytest tests/unit/router/application/evaluator/ -v
+```
 
-5. **Ternary Expressions**
-   - Simple ternary: `x if cond else y`
-   - Nested ternary
-   - With comparisons and logic
-
-6. **Boolean Literals**
-   - `True`, `False` as literals
-   - Boolean in arithmetic context
-   - `not True`, `not False`
-
-7. **Context Management**
-   - `set_context()` with various types
-   - `update_context()` merging
-   - `get_variable()` retrieval
-   - Unknown variable handling
-
-8. **Computed Parameters**
-   - `resolve_computed_parameters()` with dependencies
-   - Topological sort
-   - Circular dependency detection
-
-9. **Error Handling**
-   - Empty expressions
-   - Syntax errors
-   - Unknown variables
-   - Disallowed functions
-   - Type errors (string in arithmetic)
-
-10. **Security**
-    - No imports
-    - No eval/exec
-    - No attribute access
-    - No subscript access
-
-### Phase 7: Backward Compatibility Tests
-
-**CRITICAL**: All existing tests MUST pass without modification:
-
-- `tests/unit/router/application/evaluator/test_expression_evaluator.py`
-- `tests/unit/router/application/evaluator/test_expression_evaluator_extended.py`
-- `tests/unit/router/application/evaluator/test_condition_evaluator.py`
-- `tests/unit/router/application/evaluator/test_condition_evaluator_parentheses.py`
+Files that must pass unchanged:
+- `test_expression_evaluator.py`
+- `test_expression_evaluator_extended.py`
+- `test_condition_evaluator.py`
+- `test_condition_evaluator_parentheses.py`
+- `test_proportion_resolver.py` (should be unaffected)
 
 ### Phase 8: Integration Tests
 
 **File**: `tests/unit/router/application/evaluator/test_unified_integration.py`
 
-Test integration with:
-- WorkflowRegistry parameter resolution
-- Condition evaluation in workflow steps
-- Computed parameters in real workflows
+Test integration with WorkflowRegistry:
+- `expand_workflow()` with conditions
+- `resolve_computed_parameters_for_workflow()`
+- Math functions in workflow conditions
 
 ---
 
@@ -1391,12 +1404,12 @@ Test integration with:
 | File | Action | Description |
 |------|--------|-------------|
 | `server/router/domain/interfaces/i_expression_evaluator.py` | **CREATE** | Domain interface |
-| `server/router/domain/interfaces/__init__.py` | **MODIFY** | Export interface |
+| `server/router/domain/interfaces/__init__.py` | **MODIFY** | Export IExpressionEvaluator |
 | `server/router/application/evaluator/unified_evaluator.py` | **CREATE** | Core AST-based evaluator |
-| `server/router/application/evaluator/expression_evaluator.py` | **MODIFY** | Refactor to use UnifiedEvaluator |
-| `server/router/application/evaluator/condition_evaluator.py` | **MODIFY** | Refactor to use UnifiedEvaluator |
+| `server/router/application/evaluator/expression_evaluator.py` | **MODIFY** | Delegate to UnifiedEvaluator |
+| `server/router/application/evaluator/condition_evaluator.py` | **MODIFY** | Delegate to UnifiedEvaluator |
 | `server/router/application/evaluator/__init__.py` | **MODIFY** | Export UnifiedEvaluator |
-| `tests/unit/router/application/evaluator/test_unified_evaluator.py` | **CREATE** | Core tests |
+| `tests/unit/router/application/evaluator/test_unified_evaluator.py` | **CREATE** | Core unit tests |
 | `tests/unit/router/application/evaluator/test_unified_integration.py` | **CREATE** | Integration tests |
 
 ---
@@ -1404,17 +1417,17 @@ Test integration with:
 ## Migration Checklist
 
 ### Before Implementation
-- [ ] Read existing `expression_evaluator.py` thoroughly
-- [ ] Read existing `condition_evaluator.py` thoroughly
-- [ ] Run all existing tests, ensure they pass
-- [ ] Create snapshot of test results
+- [ ] Run all existing evaluator tests, capture output
+- [ ] Read `expression_evaluator.py` thoroughly (466 lines)
+- [ ] Read `condition_evaluator.py` thoroughly (383 lines)
+- [ ] Understand `WorkflowRegistry` integration points
 
 ### Implementation
-- [ ] Phase 1: Create `i_expression_evaluator.py` interface
+- [ ] Phase 1: Create `i_expression_evaluator.py`
 - [ ] Phase 2: Create `unified_evaluator.py`
 - [ ] Phase 3: Refactor `expression_evaluator.py`
 - [ ] Phase 4: Refactor `condition_evaluator.py`
-- [ ] Phase 5: Update `__init__.py`
+- [ ] Phase 5: Update `__init__.py` and domain interfaces
 - [ ] Phase 6: Write `test_unified_evaluator.py`
 - [ ] Phase 7: Verify all existing tests pass
 - [ ] Phase 8: Write integration tests
@@ -1422,57 +1435,45 @@ Test integration with:
 ### Verification
 - [ ] All existing tests pass (backward compatibility)
 - [ ] All new tests pass
-- [ ] Manual test with real workflow YAML
-- [ ] Test math in conditions: `condition: "floor(width) > 5"`
-- [ ] Test string comparisons: `condition: "mode == 'EDIT'"`
-- [ ] Test ternary in $CALCULATE: `$CALCULATE(x if y > 0 else z)`
+- [ ] Manual test: `condition: "floor(width) > 5"` works
+- [ ] Manual test: `mode == 'EDIT'` works in conditions
+- [ ] Manual test: `$CALCULATE(x if y > 0 else z)` works
+- [ ] Manual test: simple_table workflow with computed params works
 
 ### Documentation
-- [ ] Update TASK-059 status to "Superseded by TASK-060"
-- [ ] Update TASK-055-FIX-8 with new capabilities
+- [ ] Update TASK-059 header: "⚠️ SUPERSEDED by TASK-060"
+- [ ] Update TASK-055-FIX-8 with new operators
 - [ ] Create changelog entry
-- [ ] Update `_docs/_ROUTER/IMPLEMENTATION/25-expression-evaluator.md`
-- [ ] Update `_docs/_ROUTER/IMPLEMENTATION/26-condition-evaluator.md`
+- [ ] Create `_docs/_ROUTER/IMPLEMENTATION/XX-unified-evaluator.md`
 
 ---
 
 ## Acceptance Criteria
 
-### Must Pass
-- [ ] Domain interface `IExpressionEvaluator` exists
-- [ ] UnifiedEvaluator implements interface
-- [ ] All 21 math functions work
+### Must Pass (P0)
+
+- [ ] `IExpressionEvaluator` interface exists in domain layer
+- [ ] `UnifiedEvaluator` implements `IExpressionEvaluator`
+- [ ] All 21 math functions work in UnifiedEvaluator
 - [ ] All arithmetic operators work: `+`, `-`, `*`, `/`, `//`, `%`, `**`
 - [ ] All comparison operators work: `<`, `<=`, `>`, `>=`, `==`, `!=`
 - [ ] All logical operators work: `and`, `or`, `not`
 - [ ] Ternary expressions work: `x if condition else y`
 - [ ] Chained comparisons work: `0 < x < 10`
 - [ ] String comparisons work: `mode == 'EDIT'`
-- [ ] `$CALCULATE()` pattern still works
-- [ ] `$variable` pattern still works
-- [ ] Condition fail-open behavior preserved
-- [ ] `simulate_step_effect()` preserved
-- [ ] `resolve_computed_parameters()` works
-- [ ] All existing tests pass unchanged
+- [ ] `$CALCULATE()` pattern still works (backward compatible)
+- [ ] `$variable` pattern still works (backward compatible)
+- [ ] Condition fail-open behavior preserved (returns True on error)
+- [ ] `simulate_step_effect()` preserved in ConditionEvaluator
+- [ ] `resolve_computed_parameters()` works with dependencies
+- [ ] **All 5 existing test files pass unchanged**
 
-### New Capabilities
+### New Capabilities (P1)
+
 - [ ] Math functions work in conditions: `floor(width) > 5`
-- [ ] `evaluate_safe()` method available
 - [ ] `evaluate_as_bool()` method available
 - [ ] `evaluate_as_float()` method available
-
----
-
-## Rollback Plan
-
-If issues arise after deployment:
-
-1. Revert to previous `expression_evaluator.py` and `condition_evaluator.py`
-2. Remove `unified_evaluator.py`
-3. Remove `i_expression_evaluator.py`
-4. Revert `__init__.py`
-
-The old code is self-contained, so rollback is straightforward.
+- [ ] `evaluate_safe()` method available
 
 ---
 
@@ -1480,91 +1481,64 @@ The old code is self-contained, so rollback is straightforward.
 
 ### Why Domain Interface?
 
-1. **Clean Architecture Compliance**: All major router components have domain interfaces
-2. **Testability**: Allows mocking evaluator in unit tests
-3. **Future Extensions**: Could have alternative implementations (e.g., cached evaluator)
-4. **Dependency Inversion**: High-level modules don't depend on concrete implementation
+1. **Clean Architecture Compliance**: All other router components have interfaces (`IInterceptor`, `ISceneAnalyzer`, `IMatcher`, etc.)
+2. **Dependency Inversion**: High-level modules depend on abstractions
+3. **Testability**: Allows mocking evaluator in unit tests
+4. **Extensibility**: Could have cached evaluator, remote evaluator, etc.
 
-### Why `Any` Return Type in Core?
+### Why `Any` Return Type in UnifiedEvaluator?
 
-1. **String Comparisons**: Need to return strings for `mode == 'EDIT'` to work
-2. **Type Safety at Wrapper Level**: ExpressionEvaluator enforces float, ConditionEvaluator enforces bool
-3. **Flexibility**: Ternary expressions can return different types in different branches
+1. **String Comparisons**: Need to pass strings for `mode == 'EDIT'`
+2. **Type Safety at Wrapper Level**: ExpressionEvaluator enforces `float`, ConditionEvaluator enforces `bool`
+3. **Ternary Flexibility**: Different branches can return different types
 
 ### Why Keep `simulate_step_effect()` in ConditionEvaluator?
 
 1. **Separation of Concerns**: Step simulation is workflow logic, not expression evaluation
-2. **Single Responsibility**: UnifiedEvaluator handles math/logic, not workflow state
-3. **Backward Compatibility**: No changes needed to WorkflowRegistry
+2. **Single Responsibility**: UnifiedEvaluator handles math/logic only
+3. **Backward Compatibility**: WorkflowRegistry calls it on ConditionEvaluator
 
-### Why Topological Sort in UnifiedEvaluator?
+### Why No Regex Variable Substitution?
 
-1. **Computed Parameters**: Required for $CALCULATE dependencies
-2. **Code Reuse**: Both ExpressionEvaluator and potential future uses benefit
-3. **Centralized Logic**: Algorithm in one place, not duplicated
+Current ExpressionEvaluator uses regex to replace variables before AST parsing (lines 243-251).
+UnifiedEvaluator handles variables directly in `_eval_name()`:
+- More robust (no edge cases with variable names containing others)
+- Cleaner code
+- Direct context lookup
 
 ---
 
-## Notes
+## Rollback Plan
 
-- TASK-059 remains as documentation reference for the logical operators implementation details
-- UnifiedEvaluator returns `Any` (float or string); wrappers enforce type contracts
-- `bool` is checked before `int` in `_eval_constant()` (bool is subclass of int)
-- Python 3.7 compatibility maintained via `ast.Num`, `ast.Str`, `ast.NameConstant`
-- Security maintained via AST node whitelist (no eval, exec, imports)
-- `simulate_step_effect()` stays in ConditionEvaluator (workflow-specific logic)
+If issues arise after deployment:
+
+1. `git revert` the TASK-060 commit
+2. Old code is self-contained, rollback is straightforward
+3. Domain interface can be left (no harm)
 
 ---
 
 ## Related Tasks
 
-- **TASK-059**: Superseded - kept as implementation reference
+- **TASK-059**: Superseded - kept as implementation reference for test cases
 - **TASK-055-FIX-8**: Documentation to update after completion
-- **TASK-056-1**: Extended math functions (already in FUNCTIONS dict)
-- **TASK-056-5**: Computed parameter dependencies (integrated into UnifiedEvaluator)
-- **TASK-058**: Loop system (will benefit from ternary support)
+- **TASK-056-1**: Extended math functions (21 functions in FUNCTIONS dict)
+- **TASK-056-5**: Computed parameter dependencies (topological sort)
+- **TASK-058**: Loop system (will benefit from ternary in $CALCULATE)
 
 ---
 
-## Post-Implementation
+## Post-Implementation Checklist
 
-After TASK-060 is complete:
-
-1. Update TASK-059 header:
+1. Update `_docs/_TASKS/TASK-059_Expression_Evaluator_Logical_Operators.md`:
    ```markdown
    **Status**: ⚠️ SUPERSEDED by TASK-060
    ```
 
-2. Update TASK-055-FIX-8:
-   - Mark comparison operators as ✅
-   - Mark logical operators as ✅
-   - Mark ternary expressions as ✅
-   - Add note about math in conditions
+2. Create `_docs/_CHANGELOG/XX-2025-12-XX-unified-evaluator.md`
 
-3. Create changelog:
-   ```markdown
-   # 2025-12-XX: Unified Expression Evaluator (TASK-060)
+3. Update `_docs/_TASKS/README.md`:
+   - Move TASK-060 to Done section
+   - Add note about TASK-059 being superseded
 
-   ## Added
-   - `IExpressionEvaluator` domain interface (Clean Architecture)
-   - `UnifiedEvaluator` as single source of truth for expression evaluation
-   - Comparison operators in $CALCULATE: <, <=, >, >=, ==, !=
-   - Logical operators in $CALCULATE: and, or, not
-   - Ternary expressions: x if condition else y
-   - Chained comparisons: 0 < x < 10
-   - Math functions in workflow conditions
-
-   ## Changed
-   - ExpressionEvaluator now delegates to UnifiedEvaluator
-   - ConditionEvaluator now delegates to UnifiedEvaluator
-
-   ## Preserved
-   - Full backward compatibility with existing workflows
-   - simulate_step_effect() for workflow state simulation
-   - Fail-open behavior in ConditionEvaluator
-   ```
-
-4. Update Router documentation:
-   - `_docs/_ROUTER/IMPLEMENTATION/25-expression-evaluator.md`
-   - `_docs/_ROUTER/IMPLEMENTATION/26-condition-evaluator.md`
-   - Add new doc: `_docs/_ROUTER/IMPLEMENTATION/XX-unified-evaluator.md`
+4. Create `_docs/_ROUTER/IMPLEMENTATION/XX-unified-evaluator.md`
