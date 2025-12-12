@@ -24,9 +24,9 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
 
 | Warstwa | Plik | Rola |
 |---------|------|------|
-| **Application/Workflows** | `server/router/application/workflows/base.py` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
+| **Application/Workflows** | `server/router/application/workflows/base.py:17-95` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
 | **Infrastructure** | `server/router/infrastructure/workflow_loader.py:300-350` | `_parse_step()` - parsowanie YAML → WorkflowStep |
-| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | `$CALCULATE`, 21 funkcji math, context variables |
+| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py:83-87` | `$CALCULATE`, 21 funkcji math, context variables |
 | **Application/Workflows** | `server/router/application/workflows/registry.py:202-297` | `expand_workflow()` - główna ekspansja |
 | **Application/Workflows** | `server/router/application/workflows/registry.py:539-632` | `_resolve_definition_params()`, `_resolve_single_value()` |
 | **Application/Engines** | `server/router/application/engines/workflow_adapter.py` | `WorkflowAdapter` - filtrowanie optional steps |
@@ -39,9 +39,9 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
 
 #### 1.1 Nowy `loop` Parameter w WorkflowStep
 
-**Plik**: `server/router/application/workflows/base.py`
+**Plik**: `server/router/application/workflows/base.py:17-95`
 
-Dodać nowe pole do dataclass `WorkflowStep` (po linii 58):
+Dodać nowe pole do dataclass `WorkflowStep` (po linii 58, przed `def __post_init__`):
 
 ```python
 @dataclass
@@ -52,7 +52,7 @@ class WorkflowStep:
     loop: Optional[Dict[str, Any]] = None
 ```
 
-**WAŻNE**: Dodać `"loop"` do `_known_fields` w `__post_init__()` (linia 69-74):
+**WAŻNE**: Dodać `"loop"` do `_known_fields` w `__post_init__()` (linia 69-74 w aktualnym kodzie):
 ```python
 self._known_fields = {
     "tool", "params", "description", "condition",
@@ -340,9 +340,9 @@ class LoopExpander:
 
 #### 1.3 String Interpolation: `$FORMAT(...)`
 
-**Plik**: `server/router/application/evaluator/expression_evaluator.py`
+**Plik**: `server/router/application/evaluator/expression_evaluator.py:83-87`
 
-Dodać nowy pattern (po linii 87) i metodę:
+Dodać nowy pattern (po linii 87, obok `CALCULATE_PATTERN` i `VARIABLE_PATTERN`) i metodę:
 
 ```python
 # Pattern for $FORMAT(...) string interpolation (TASK-058)
@@ -381,7 +381,7 @@ def resolve_format(self, template: str) -> str:
     return result
 ```
 
-**WAŻNE**: Zmodyfikować `resolve_param_value()` (po linii 186) aby obsługiwał `$FORMAT`:
+**WAŻNE**: Zmodyfikować `resolve_param_value()` (linia 168-205 w aktualnym kodzie) aby obsługiwał `$FORMAT`:
 
 ```python
 def resolve_param_value(self, value: Any) -> Any:
@@ -403,15 +403,15 @@ def resolve_param_value(self, value: Any) -> Any:
 
 #### 1.4 Integracja w WorkflowRegistry
 
-**Plik**: `server/router/application/workflows/registry.py`
+**Plik**: `server/router/application/workflows/registry.py:34-41`
 
-**Krok 1**: Dodać import na początku pliku (po linii 20):
+**Krok 1**: Dodać import na początku pliku (po linii 22, obok innych importów z evaluator):
 
 ```python
 from server.router.application.evaluator.loop_expander import LoopExpander
 ```
 
-**Krok 2**: Dodać `_loop_expander` w `__init__()` (po linii 41):
+**Krok 2**: Dodać `_loop_expander` w `__init__()` (linia 34-41 w aktualnym kodzie, po linii 41):
 
 ```python
 def __init__(self):
@@ -425,7 +425,7 @@ def __init__(self):
     self._loop_expander = LoopExpander(self._evaluator)  # TASK-058: NEW
 ```
 
-**Krok 3**: W `expand_workflow()` (linia ~291-295) dodać loop expansion PRZED `_resolve_definition_params()`:
+**Krok 3**: W `expand_workflow()` (linia 289-295 w aktualnym kodzie) dodać loop expansion PRZED `_resolve_definition_params()`:
 
 ```python
 # Try custom definition
@@ -459,9 +459,9 @@ if definition:
 
 #### 2.1 Ternary Expressions w $CALCULATE
 
-**Plik**: `server/router/application/evaluator/expression_evaluator.py`
+**Plik**: `server/router/application/evaluator/expression_evaluator.py:262-336`
 
-Rozszerzyć metodę `_eval_node()` (linia 262-336) o obsługę `if...else` i porównań:
+Rozszerzyć metodę `_eval_node()` (linia 262-336 w aktualnym kodzie) o obsługę `if...else` i porównań:
 
 ```python
 def _eval_node(self, node: ast.AST) -> float:
@@ -706,7 +706,7 @@ Kolejność przetwarzania w pipeline:
 
 ## Znany Dług Techniczny
 
-### `_resolve_definition_params()` w registry.py (linia 570-577)
+### `_resolve_definition_params()` w registry.py (linia 539-579)
 
 Istniejąca metoda **nie przekazuje wszystkich pól** `WorkflowStep` przy tworzeniu resolved steps:
 
