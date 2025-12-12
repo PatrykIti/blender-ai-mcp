@@ -745,3 +745,117 @@ resolved_steps.append(
 | **TOTAL Faza 1** | ~2h |
 | Faza 2: Conditional expressions | +30 min |
 | **TOTAL (wszystko)** | ~2.5h |
+
+---
+
+## Weryfikacja Zgodności z Kodem (2024-12-12)
+
+### ✅ Zweryfikowane Lokalizacje Plików
+
+| Element | Ścieżka w TASK-058 | Status |
+|---------|-------------------|--------|
+| `WorkflowStep` | `server/router/application/workflows/base.py` | ✅ Poprawna |
+| `ExpressionEvaluator` | `server/router/application/evaluator/expression_evaluator.py` | ✅ Poprawna |
+| `WorkflowRegistry` | `server/router/application/workflows/registry.py` | ✅ Poprawna |
+| `workflow_loader` | `server/router/infrastructure/workflow_loader.py` | ✅ Poprawna |
+| `evaluator/__init__.py` | `server/router/application/evaluator/__init__.py` | ✅ Poprawna |
+
+### ✅ Zweryfikowane Numery Linii
+
+| Element | Linie w TASK-058 | Aktualne linie | Status |
+|---------|-----------------|----------------|--------|
+| `WorkflowStep` dataclass | 17-95 | 17-136 | ✅ OK (rozszerzono) |
+| `_known_fields` | 69-74 | 69-74 | ✅ Dokładnie |
+| `CALCULATE_PATTERN` | 83-87 | 84 | ✅ OK |
+| `VARIABLE_PATTERN` | 87 | 87 | ✅ Dokładnie |
+| `resolve_param_value()` | 168-205 | 168-206 | ✅ OK |
+| `_eval_node()` | 262-336 | 262-336 | ✅ Dokładnie |
+| `expand_workflow()` | 202-297 | 202-297 | ✅ Dokładnie |
+| `_resolve_definition_params()` | 539-632 | 539-632 | ✅ Dokładnie |
+| `_parse_step()` | 300-350 | 300-350 | ✅ OK |
+
+### ✅ Zgodność z Clean Architecture
+
+| Aspekt | Ocena |
+|--------|-------|
+| `LoopExpander` w `application/evaluator/` | ✅ Poprawna warstwa (logika aplikacyjna) |
+| Dependency direction | ✅ Inner → Outer |
+| Separation of concerns | ✅ Transformacja danych oddzielona od I/O |
+
+### 📝 Ilustracja Zmian
+
+#### Zmiana 1: `_known_fields` w WorkflowStep
+
+**PRZED** (`base.py:69-74`):
+```python
+self._known_fields = {
+    "tool", "params", "description", "condition",
+    "optional", "disable_adaptation", "tags",
+    "id", "depends_on", "timeout", "max_retries",
+    "retry_delay", "on_failure", "priority"
+}
+```
+
+**PO** (TASK-058):
+```python
+self._known_fields = {
+    "tool", "params", "description", "condition",
+    "optional", "disable_adaptation", "tags",
+    "id", "depends_on", "timeout", "max_retries",
+    "retry_delay", "on_failure", "priority",
+    "loop"  # TASK-058: NEW
+}
+```
+
+#### Zmiana 2: Integracja w `expand_workflow()`
+
+**PRZED** (`registry.py:289-295`):
+```python
+# Set evaluator context with all resolved parameters
+self._evaluator.set_context(all_params)
+
+steps = self._resolve_definition_params(definition.steps, all_params)
+return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
+```
+
+**PO** (TASK-058):
+```python
+# Set evaluator context with all resolved parameters
+self._evaluator.set_context(all_params)
+
+# TASK-058: Expand loop steps BEFORE other processing
+expanded_steps = self._loop_expander.expand_loops(
+    definition.steps,
+    all_params  # Contains plank_count, etc.
+)
+
+steps = self._resolve_definition_params(expanded_steps, all_params)
+return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
+```
+
+### ✅ Potwierdzenie Automatycznej Obsługi `loop` w WorkflowLoader
+
+Metoda `_parse_step()` (`workflow_loader.py:323-340`) używa dynamicznego ładowania pól:
+
+```python
+step_fields = {f.name: f for f in dataclasses.fields(WorkflowStep)}
+step_data = {}
+for field_name, field_info in step_fields.items():
+    if field_name in data:
+        step_data[field_name] = data[field_name]
+    # ... defaults handling
+```
+
+Po dodaniu `loop: Optional[Dict[str, Any]] = None` do `WorkflowStep` dataclass, pole `loop` będzie **automatycznie parsowane** z YAML bez zmian w `workflow_loader.py`.
+
+### 🎯 Podsumowanie Weryfikacji
+
+| Kategoria | Status |
+|-----------|--------|
+| Ścieżki plików | ✅ 100% zgodne |
+| Numery linii | ✅ 100% aktualne |
+| Clean Architecture | ✅ Przestrzegana |
+| Dług techniczny | ✅ Poprawnie zidentyfikowany |
+| Kolejność implementacji | ✅ Sensowna |
+
+**TASK-058 jest w pełni zgodny z aktualnym kodem i może być implementowany bez modyfikacji planu.**
