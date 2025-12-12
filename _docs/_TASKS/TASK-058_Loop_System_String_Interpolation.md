@@ -2,7 +2,67 @@
 
 ## Overview
 
-Rozszerzenie systemu workflow o **loop parameter** i **string interpolation** aby upraszczać złożone YAML definicje (jak `simple_table.yaml` z 15 powtarzającymi się plankami).
+Rozszerzenie systemu workflow o **loops** i **string interpolation** tak, aby nawet złożone workflow (meble/urządzenia/makiety) dało się opisać krótko i parametrycznie (np. `simple_table.yaml` bez 15 ręcznie powielonych desek).
+
+Kluczowe założenie: **nic nie może “omijać pipeline”** (szczególnie adaptacja z TASK-051). Loops/interpolacja muszą działać identycznie w ścieżce standardowej i adaptacyjnej.
+
+---
+
+## Założenia DSL (TASK-058)
+
+### 1) String interpolation: `{var}` (MUST)
+
+- Placeholdery `{var}` są podmieniane w **każdym stringu workflow**: `params`, `description`, `condition`, `id`, `depends_on` (+ opcjonalnie w dynamic attrs).
+- Interpolacja jest uruchamiana **przed** `$CALCULATE/$AUTO_/$variable` i przed ewaluacją `condition`, dzięki czemu `{i}` może pojawić się wewnątrz `$CALCULATE(...)` i `condition`.
+- Interpolacja jest wspólna dla loopów i “normalnych” kroków (to nie jest tylko feature pętli).
+- Escaping: `{{` i `}}` oznaczają literalne `{` i `}` (bez interpolacji).
+- Brak `$FORMAT(...)` w core DSL. Jedna składnia `{var}` upraszcza authoring i automatycznie wspiera nested loops.
+
+### 2) Loops: `loop` (MUST)
+
+Loop jest konfigurowany na poziomie kroku (`WorkflowStep.loop`) i rozwijany przez `LoopExpander`.
+
+Obsługiwane warianty:
+
+**A. Pojedyncza zmienna:**
+```yaml
+loop:
+  variable: i
+  range: "1..plank_count"   # inclusive
+```
+
+**B. Nested loops (wiele zmiennych, cross‑product):**
+```yaml
+loop:
+  variables: [row, col]
+  ranges: ["0..3", "0..4"]
+```
+
+**C. Iteracja po wartościach (opcjonalnie, ale bardzo przydatne):**
+```yaml
+loop:
+  variable: side
+  values: ["L", "R"]
+```
+
+### 3) Kolejność wykonania w pętli: `loop.group` (MUST)
+
+Domyślnie loop ekspanduje “krok po kroku” (najpierw cały loop dla kroku A, potem cały loop dla kroku B).
+
+Żeby uzyskać poprawną kolejność per‑iteracja (np. `create_i → transform_i → edit_i`), kroki mogą mieć wspólny:
+```yaml
+loop:
+  group: planks
+  variable: i
+  range: "1..plank_count"
+```
+
+`LoopExpander` interleavuje (zipuje) ekspansję *kolejnych, sąsiadujących* kroków o tym samym `loop.group` i tej samej przestrzeni iteracji.
+
+### 4) Bezpieczniki (MUST)
+
+- `LoopExpander` ma limit maksymalnej liczby wygenerowanych kroków (ochrona przed przypadkowym `1..100000`).
+- Interpolacja jest strict: jeśli w stringu występuje `{var}`, a `var` nie istnieje w kontekście → błąd (żeby uniknąć “fail‑open” w `condition`).
 
 ## Architektura Obecnie
 
@@ -16,6 +76,7 @@ WorkflowLoader._parse_step()          # Parsuje YAML → WorkflowStep
 WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
     ├── _build_variables()            # defaults + modifiers
     ├── resolve_computed_parameters() # TASK-056-5 (computed params)
+    ├── LoopExpander.expand()         # TASK-058 (loop expansion + {var} interpolation)
     ├── _resolve_definition_params()  # $variable, $CALCULATE substitution
     └── _steps_to_calls()             # Walidacja condition, → CorrectedToolCall[]
 ```
@@ -51,13 +112,16 @@ W momencie gdy workflow adaptacja jest włączona (`TASK-051`) router ma osobną
 
 ## Definition of Done (Akceptacja)
 
-- [ ] Włączona adaptacja (TASK-051) nie zmienia semantyki ekspansji: nadal działa computed params, `$CALCULATE(...)`, `$AUTO_*`, `condition` + `simulate_step_effect()` i loop expansion.
-- [ ] `loop` w YAML jest parsowany automatycznie przez `WorkflowLoader` (bez specjalnego kodu w loaderze).
-- [ ] LoopExpander rozwija kroki z `loop` do konkretnych kroków (inclusive range) i usuwa `loop` w krokach wynikowych.
-- [ ] LoopExpander podstawia `{i}` we wszystkich stringach: `params`, `description`, `condition`, `id`, `depends_on`.
-- [ ] `$CALCULATE(...)` może używać indeksu pętli przez `{i}` (np. `({i} - 0.5)`), a `condition` może używać `{i}` bez dodatkowego kontekstu.
-- [ ] `_resolve_definition_params()` nie gubi pól kroków ani dynamicznych atrybutów (TASK-055-FIX-6 Phase 2).
-- [ ] Dodane testy regresyjne dla adaptacji + testy unit dla loop expansion i substytucji placeholderów.
+- [ ] Adaptacja (TASK-051) nie omija pipeline: computed params, `$CALCULATE`, `$AUTO_*`, `condition` + `simulate_step_effect()` oraz loops/interpolacja działają identycznie jak bez adaptacji.
+- [ ] `WorkflowRegistry.expand_workflow()` przyjmuje `steps_override` i wykorzystuje je jako źródło kroków (wspólna ścieżka dla adaptacji).
+- [ ] `loop` w YAML jest parsowany automatycznie przez `WorkflowLoader` (bez zmian w loaderze).
+- [ ] `LoopExpander` wspiera: `range` (inclusive), `values`, nested loops (`variables`+`ranges`) oraz `loop.group` (interleaving).
+- [ ] String interpolation `{var}` działa w: `params`, `description`, `condition`, `id`, `depends_on` (+ dynamic attrs jeśli są typu str/list/dict).
+- [ ] Interpolacja jest uruchamiana przed `$CALCULATE/$AUTO_/$variable` i przed ewaluacją `condition`.
+- [ ] Loop expansion usuwa `loop` w krokach wynikowych (kroki po ekspansji są “konkretne”).
+- [ ] `_resolve_definition_params()` zachowuje wszystkie pola `WorkflowStep` oraz dynamiczne atrybuty (nie gubi: `optional/tags/disable_adaptation/id/depends_on/...`).
+- [ ] Limit maksymalnej liczby wygenerowanych kroków + błąd dla nieznanych placeholderów `{var}`.
+- [ ] Testy: regresja adaptacji + unit testy loopów/interpolacji (+ test interleaving).
 
 ### FAZA 0: Naprawa adaptacji workflow (P0 - MUST)
 
@@ -109,7 +173,7 @@ calls = registry.expand_workflow(
 
 **Akceptacja:** workflow z adaptacją ma identyczne wsparcie dla `$CALCULATE/$AUTO_/computed/condition` jak bez adaptacji (różni się tylko listą kroków).
 
-### FAZA 1: Loop Expansion (P0 - Critical)
+### FAZA 1: Loops + String Interpolation (P0 - Critical)
 
 #### 1.1 Nowy `loop` Parameter w WorkflowStep
 
@@ -140,16 +204,26 @@ self._known_fields = {
 **Loop Schema**:
 ```yaml
 loop:
-  variable: "i"                    # Loop variable name
-  range: "1..plank_count"          # Range expression (computed at runtime)
-  # LUB:
-  range: [1, 15]                   # Static range [start, end]
+  # A) Single variable range (inclusive)
+  variable: i
+  range: "1..plank_count"          # start/end mogą być liczbami, nazwami lub wyrażeniami
+  # range: [1, 15]                 # alternatywnie: static [start, end]
+
+  # (opcjonalnie) C) Iteracja po liście wartości (zamiast range)
+  # values: ["L", "R"]
+
+  # (opcjonalnie) Interleaving kolejnych kroków o tej samej pętli
+  # group: "planks"
+
+  # B) Nested loops (zamiast variable/range):
+  # variables: [row, col]
+  # ranges: ["0..(rows - 1)", "0..(cols - 1)"]
 ```
 
 **Użycie zmiennej pętli w parametrach/warunkach (MUST):**
 
-- LoopExpander robi **podstawienie placeholderów** w stringach: `{i}` → `3`
-- Żeby użyć indeksu pętli w `$CALCULATE(...)` lub `condition`, używaj zawsze **`{i}`**, nie gołego `i`.
+- LoopExpander robi **podstawienie placeholderów** w stringach: `{i}` → `3` (analogicznie `{row}`, `{col}`, `{side}`, itd.).
+- Żeby użyć zmiennej pętli w `$CALCULATE(...)` lub `condition`, używaj zawsze **`{var}`**, nie gołego `var`.
 
 Przykłady:
 ```yaml
@@ -175,327 +249,147 @@ To jest krytyczne, bo bez dodatkowej logiki “wstrzykiwania i do kontekstu eval
 
 ```python
 """
-Loop Expander for Workflow Steps.
+LoopExpander (TASK-058).
 
-Expands loop steps into multiple concrete steps.
-TASK-058: Loop System for Workflows.
+Odpowiada za:
+- ekspansję loopów (range/values, single + nested)
+- string interpolation `{var}` (strict, z escapingiem {{ }})
+- interleaving kroków z tym samym loop.group
+- zachowanie pól WorkflowStep + dynamic attrs
 """
 
-import copy
+import dataclasses
+import itertools
 import logging
 import re
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 from server.router.application.workflows.base import WorkflowStep
+
 logger = logging.getLogger(__name__)
 
 
 class LoopExpander:
-    """Expands loop steps into multiple concrete steps.
+    def __init__(self, max_expanded_steps: int = 2000):
+        self._max_expanded_steps = max_expanded_steps
+        self._evaluator = UnifiedEvaluator()
 
-    Handles:
-    - Static ranges: [1, 15]
-    - Dynamic ranges: "1..plank_count" (resolved from context)
-    - Loop variable injection into step params and description
-    """
+    def expand(self, steps: List[WorkflowStep], context: Dict[str, Any]) -> List[WorkflowStep]:
+        """Expand loops + interpolate `{var}`.
 
-    # Pattern for range expression: "start..end" where start/end can be int or variable
-    RANGE_PATTERN = re.compile(r"^(\d+|[a-zA-Z_][a-zA-Z0-9_]*)\.\.(\d+|[a-zA-Z_][a-zA-Z0-9_]*)$")
-
-    def expand_loops(
-        self,
-        steps: List[WorkflowStep],
-        context: Dict[str, Any]
-    ) -> List[WorkflowStep]:
-        """Expand all loop steps into concrete steps.
-
-        Args:
-            steps: List of workflow steps (may contain loop steps).
-            context: Variable context for range resolution.
-
-        Returns:
-            List of expanded steps (loop steps replaced with multiple concrete steps).
+        - Kroki bez loop: tylko interpolacja.
+        - Kroki z loop bez group: ekspansja “krok po kroku”.
+        - Kroki z tym samym loop.group (kolejne, sąsiadujące): interleaving per iteracja.
         """
-        expanded = []
-        for step in steps:
-            if step.loop:
-                loop_steps = self._expand_single_loop(step, context)
-                expanded.extend(loop_steps)
-                logger.debug(
-                    f"Expanded loop step '{step.tool}' into {len(loop_steps)} steps"
-                )
-            else:
-                expanded.append(step)
+        expanded: List[WorkflowStep] = []
+        i = 0
+        while i < len(steps):
+            step = steps[i]
+            loop_cfg = step.loop or {}
+
+            group = loop_cfg.get("group")
+            if group:
+                block = self._consume_group_block(steps, i)
+                expanded.extend(self._expand_group_block(block, context))
+                i += len(block)
+                continue
+
+            expanded.extend(self._expand_step(step, context))
+            i += 1
+
+        if len(expanded) > self._max_expanded_steps:
+            raise ValueError(
+                f"Loop expansion produced {len(expanded)} steps "
+                f"(limit={self._max_expanded_steps})."
+            )
         return expanded
 
-    def _expand_single_loop(
-        self,
-        step: WorkflowStep,
-        context: Dict[str, Any]
-    ) -> List[WorkflowStep]:
-        """Expand single loop step into multiple concrete steps.
+    def _expand_group_block(self, steps: Sequence[WorkflowStep], ctx: Dict[str, Any]) -> List[WorkflowStep]:
+        # 1) zweryfikuj, że wszystkie kroki mają kompatybilny loop “iteration space”
+        # 2) wygeneruj wszystkie iteracje (iter contexts)
+        # 3) dla każdej iteracji: emituj kroki w kolejności z YAML (zip/interleave)
+        ...
 
-        Args:
-            step: Workflow step with loop configuration.
-            context: Variable context for range resolution.
+    def _expand_step(self, step: WorkflowStep, ctx: Dict[str, Any]) -> List[WorkflowStep]:
+        if not step.loop:
+            return [self._interpolate_step(step, ctx)]
 
-        Returns:
-            List of expanded steps.
+        out: List[WorkflowStep] = []
+        for iter_ctx in self._iter_loop_contexts(step.loop, ctx):
+            concrete = self._clone_step(step, loop=None)
+            out.append(self._interpolate_step(concrete, iter_ctx))
+        return out
 
-        Raises:
-            ValueError: If loop configuration is invalid.
-        """
-        loop_config = step.loop
-        if not loop_config:
-            return [step]
+    def _iter_loop_contexts(self, loop_cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
+        # Single variable + range
+        if "variable" in loop_cfg and "range" in loop_cfg:
+            var = loop_cfg["variable"]
+            for v in self._resolve_range(loop_cfg["range"], ctx):
+                yield {**ctx, var: v}
+            return
 
-        # Extract loop variable name
-        var_name = loop_config.get("variable")
-        if not var_name:
-            raise ValueError(f"Loop step missing 'variable' in loop config: {step.tool}")
+        # Single variable + values
+        if "variable" in loop_cfg and "values" in loop_cfg:
+            var = loop_cfg["variable"]
+            for v in loop_cfg["values"]:
+                yield {**ctx, var: v}
+            return
 
-        # Resolve range
-        range_spec = loop_config.get("range")
-        if range_spec is None:
-            raise ValueError(f"Loop step missing 'range' in loop config: {step.tool}")
+        # Nested loops
+        if "variables" in loop_cfg and "ranges" in loop_cfg:
+            vars_ = list(loop_cfg["variables"])
+            ranges = [list(self._resolve_range(r, ctx)) for r in loop_cfg["ranges"]]
+            for combo in itertools.product(*ranges):
+                yield {**ctx, **dict(zip(vars_, combo))}
+            return
 
-        start, end = self._resolve_range(range_spec, context)
+        raise ValueError(f"Invalid loop config: {loop_cfg}")
 
-        # Generate expanded steps
-        expanded = []
-        for i in range(int(start), int(end) + 1):
-            # Create loop context with current iteration variable
-            loop_context = {**context, var_name: i}
-            new_step = self._clone_step_with_loop_var(step, var_name, i, loop_context)
-            expanded.append(new_step)
+    def _resolve_range(self, range_spec: Any, ctx: Dict[str, Any]) -> range:
+        # [start, end]
+        if isinstance(range_spec, (list, tuple)) and len(range_spec) == 2:
+            start, end = range_spec
+            return range(int(start), int(end) + 1)
 
-        return expanded
+        # "start..end" (inclusive) — start/end mogą być wyrażeniami
+        if isinstance(range_spec, str) and ".." in range_spec:
+            start_expr, end_expr = [p.strip() for p in range_spec.split("..", 1)]
+            start = self._eval_int(start_expr, ctx)
+            end = self._eval_int(end_expr, ctx)
+            return range(start, end + 1)
 
-    def _resolve_range(
-        self,
-        range_spec: Any,
-        context: Dict[str, Any]
-    ) -> Tuple[int, int]:
-        """Resolve range specification to (start, end) tuple.
+        raise ValueError(f"Invalid range spec: {range_spec}")
 
-        Args:
-            range_spec: Range as [start, end] list or "start..end" string.
-            context: Variable context for expression resolution.
+    def _eval_int(self, expr: str, ctx: Dict[str, Any]) -> int:
+        self._evaluator.set_context(ctx)
+        return int(self._evaluator.evaluate_as_float(expr))
 
-        Returns:
-            Tuple of (start, end) integers.
+    def _interpolate_step(self, step: WorkflowStep, ctx: Dict[str, Any]) -> WorkflowStep:
+        # Interpoluje: params/description/condition/id/depends_on + (opcjonalnie) dynamic attrs.
+        ...
 
-        Raises:
-            ValueError: If range specification is invalid.
-        """
-        # Static range: [1, 15]
-        if isinstance(range_spec, (list, tuple)):
-            if len(range_spec) != 2:
-                raise ValueError(f"Range list must have exactly 2 elements: {range_spec}")
-            return int(range_spec[0]), int(range_spec[1])
+    def _clone_step(self, step: WorkflowStep, **overrides: Any) -> WorkflowStep:
+        # Klonuje wszystkie pola dataclass + przenosi dynamic attrs.
+        data = dataclasses.asdict(step)
+        data.update(overrides)
+        cloned = WorkflowStep(**{k: v for k, v in data.items() if k != "_known_fields"})
 
-        # Dynamic range: "1..plank_count" or "0..15"
-        if isinstance(range_spec, str):
-            match = self.RANGE_PATTERN.match(range_spec)
-            if not match:
-                raise ValueError(f"Invalid range expression: {range_spec}")
-
-            start_str, end_str = match.groups()
-
-            # Resolve start
-            if start_str.isdigit():
-                start = int(start_str)
-            elif start_str in context:
-                start = int(context[start_str])
-            else:
-                raise ValueError(f"Unknown variable in range start: {start_str}")
-
-            # Resolve end
-            if end_str.isdigit():
-                end = int(end_str)
-            elif end_str in context:
-                end = int(context[end_str])
-            else:
-                raise ValueError(f"Unknown variable in range end: {end_str}")
-
-            return start, end
-
-        raise ValueError(f"Unsupported range type: {type(range_spec)}")
-
-    def _clone_step_with_loop_var(
-        self,
-        step: WorkflowStep,
-        var_name: str,
-        var_value: int,
-        loop_context: Dict[str, Any]
-    ) -> WorkflowStep:
-        """Clone step with loop variable substituted.
-
-        Args:
-            step: Original step to clone.
-            var_name: Loop variable name (e.g., "i").
-            var_value: Current loop iteration value.
-            loop_context: Full context including loop variable.
-
-        Returns:
-            New WorkflowStep with loop variable substituted in params.
-        """
-        # Deep copy params to avoid mutating original
-        new_params = self._substitute_loop_var_in_params(
-            copy.deepcopy(step.params),
-            var_name,
-            var_value
-        )
-
-        # Substitute in description/condition if present
-        new_description = step.description
-        if new_description:
-            new_description = new_description.replace(f"{{{var_name}}}", str(var_value))
-
-        new_condition = step.condition
-        if new_condition:
-            new_condition = new_condition.replace(f"{{{var_name}}}", str(var_value))
-
-        # Create new step WITHOUT loop (expanded step is concrete)
-        new_step = WorkflowStep(
-            tool=step.tool,
-            params=new_params,
-            description=new_description,
-            condition=new_condition,
-            optional=step.optional,
-            disable_adaptation=step.disable_adaptation,
-            tags=list(step.tags),
-            id=f"{step.id}_{var_value}" if step.id else None,
-            depends_on=list(step.depends_on),
-            timeout=step.timeout,
-            max_retries=step.max_retries,
-            retry_delay=step.retry_delay,
-            on_failure=step.on_failure,
-            priority=step.priority,
-            loop=None  # Expanded step has no loop
-        )
-
-        # IMPORTANT: Preserve dynamic attributes (TASK-055-FIX-6 Phase 2)
-        # e.g. add_bench/include_stretchers flags used for semantic filtering.
-        # (Implementation: copy non-private attrs that are not dataclass fields.)
-
-        return new_step
-
-    def _substitute_loop_var_in_params(
-        self,
-        params: Dict[str, Any],
-        var_name: str,
-        var_value: int
-    ) -> Dict[str, Any]:
-        """Substitute loop variable in params (recursive).
-
-        Handles {var_name} placeholders in string values.
-
-        Args:
-            params: Parameters dictionary.
-            var_name: Loop variable name.
-            var_value: Current loop iteration value.
-
-        Returns:
-            New params dict with substituted values.
-        """
-        result = {}
-        for key, value in params.items():
-            result[key] = self._substitute_in_value(value, var_name, var_value)
-        return result
-
-    def _substitute_in_value(
-        self,
-        value: Any,
-        var_name: str,
-        var_value: int
-    ) -> Any:
-        """Substitute loop variable in a single value.
-
-        Args:
-            value: Value to process.
-            var_name: Loop variable name.
-            var_value: Current loop iteration value.
-
-        Returns:
-            Processed value with substitutions.
-        """
-        if isinstance(value, str):
-            # Replace {i} with actual value
-            return value.replace(f"{{{var_name}}}", str(var_value))
-        elif isinstance(value, list):
-            return [self._substitute_in_value(v, var_name, var_value) for v in value]
-        elif isinstance(value, dict):
-            return {k: self._substitute_in_value(v, var_name, var_value) for k, v in value.items()}
-        else:
-            return value
+        # TODO: copy dynamic attrs (TASK-055-FIX-6 Phase 2)
+        return cloned
 ```
 
-#### 1.3 String Interpolation: `$FORMAT(...)`
+#### 1.3 String interpolation: `{var}` (P0)
 
-> **UWAGA (Scope):** `$FORMAT(...)` jest opcjonalnym “sugar” dla czytelności.
-> Loop system działa też bez `$FORMAT` (wystarczy zwykły string z `{i}`), bo LoopExpander i tak podstawia `{i}` w parametrach.
+W TASK-058 **nie** dodajemy `$FORMAT(...)` — trzymamy jedną składnię `{var}`.
 
-**Plik**: `server/router/application/evaluator/expression_evaluator.py:57-60`
+Implementacja: interpolacja jest częścią `LoopExpander.expand()` (działa dla kroków w pętli i poza pętlą).
 
-Dodać nowy pattern (obok `CALCULATE_PATTERN` i `VARIABLE_PATTERN`) i metodę:
-
-```python
-# Pattern for $FORMAT(...) string interpolation (TASK-058)
-FORMAT_PATTERN = re.compile(r"^\$FORMAT\((.+)\)$")
-```
-
-Dodać nową metodę w klasie `ExpressionEvaluator`:
-
-```python
-def resolve_format(self, template: str) -> str:
-    """Resolve $FORMAT(Plank_{i}) to concrete string.
-
-    TASK-058: String interpolation for loop-generated names.
-
-    Args:
-        template: String with $FORMAT(...) wrapper.
-
-    Returns:
-        Resolved string with {var} placeholders replaced,
-        or original string if not a $FORMAT expression.
-
-    Example:
-        context = {"i": 3}
-        resolve_format("$FORMAT(Plank_{i})") -> "Plank_3"
-    """
-    match = self.FORMAT_PATTERN.match(template)
-    if not match:
-        return template
-
-    format_str = match.group(1)
-    # Replace {var} with current evaluator context (TASK-060: stored in UnifiedEvaluator)
-    result = format_str
-    for var_name, value in self._unified.get_context().items():
-        result = result.replace(f"{{{var_name}}}", str(value))
-
-    return result
-```
-
-**WAŻNE**: Zmodyfikować `resolve_param_value()` (linia 168-205 w aktualnym kodzie) aby obsługiwał `$FORMAT`:
-
-```python
-def resolve_param_value(self, value: Any) -> Any:
-    """Resolve a parameter value, evaluating $CALCULATE or $FORMAT if present.
-    ...
-    """
-    if not isinstance(value, str):
-        return value
-
-    # Check for $FORMAT(...) - TASK-058
-    format_match = self.FORMAT_PATTERN.match(value)
-    if format_match:
-        return self.resolve_format(value)
-
-    # Check for $CALCULATE(...)
-    calc_match = self.CALCULATE_PATTERN.match(value)
-    # ... rest of existing code ...
-```
+Wymagania:
+- wspiera escaping `{{`/`}}`,
+- działa rekurencyjnie w `params` (list/dict),
+- działa w `description`, `condition`, `id`, `depends_on`,
+- jest strict: nieznany `{var}` → `ValueError`.
 
 #### 1.4 Integracja w WorkflowRegistry
 
@@ -541,8 +435,8 @@ if definition:
     # Set evaluator context with all resolved parameters
     self._evaluator.set_context({**base_context, **all_params})
 
-    # TASK-058: Expand loop steps BEFORE other processing
-    expanded_steps = self._loop_expander.expand_loops(
+    # TASK-058: Loop expansion + {var} interpolation BEFORE other processing
+    expanded_steps = self._loop_expander.expand(
         steps_source,
         {**base_context, **all_params}  # Includes plank_count + any other context
     )
@@ -570,14 +464,20 @@ To zamyka “split brain” pomiędzy ścieżką standardową i adaptacyjną.
 
 ---
 
-### FAZA 2: Nested Loops (P2 - Medium, Future)
+### Nested Loops (P0 - część FAZY 1)
 
-Dla 2D grids (telefon z przyciskami 3x4):
+Nested loops są częścią core funkcjonalności (nie “future”), bo znacząco skracają workflow dla gridów (np. okna w elewacji, klawisze telefonu, moduły regału).
 
+Przykład (grid 3x4):
 ```yaml
-loop:
-  variables: ["row", "col"]
-  ranges: ["0..3", "0..4"]
+- tool: modeling_create_primitive
+  params:
+    name: "Button_{row}_{col}"
+  loop:
+    variables: [row, col]
+    ranges: ["0..(rows - 1)", "0..(cols - 1)"]
+    group: buttons
+  description: "Create button r={row}, c={col}"
 ```
 
 ---
@@ -616,6 +516,7 @@ steps:
     loop:
       variable: "i"
       range: "1..plank_count"
+      group: "planks"
     description: "Create table plank {i}"
 
   - tool: modeling_transform_object
@@ -626,8 +527,11 @@ steps:
     loop:
       variable: "i"
       range: "1..plank_count"
+      group: "planks"
     description: "Position plank {i}"
 ```
+
+> **Tip (czytelność):** powtarzające się `loop:` łatwo skrócić YAML anchorami (`&`/`*`) i `<<` merge (PyYAML `safe_load` to wspiera).
 
 ---
 
@@ -648,10 +552,12 @@ steps:
 | **Infrastructure** | `server/router/infrastructure/workflow_loader.py` | Automatyczna obsługa `loop` przez istniejący `_parse_step()` (bez zmian) | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/loop_expander.py` | **NOWY PLIK**: `LoopExpander` class | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/__init__.py` | Dodać eksport `LoopExpander` do `__all__` | P0 |
-| **Application/Evaluator (opcjonalnie)** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `$FORMAT(...)` (sugar) jeśli chcemy dodatkową składnię — nie wymagane do loopów | P1 |
 | **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja loop expansion w `expand_workflow()` (dla custom + `steps_override`) | P0 |
 | **Application/Workflows** | `server/router/application/workflows/registry.py` | Naprawić `_resolve_definition_params()` żeby nie gubić pól kroku (optional/tags/depends_on/loop/dynamic attrs) | P0 |
 | **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
+| **Docs** | `_docs/_ROUTER/WORKFLOWS/yaml-workflow-guide.md` | Dodać sekcję Loops + `{var}` interpolation | P0 |
+| **Docs** | `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md` | Dodać sekcję Loops + przykład refaktoru | P0 |
+| **Docs** | `_docs/_ROUTER/WORKFLOWS/expression-reference.md` | Dodać `{var}` interpolation + kolejność pipeline | P0 |
 
 ### ✅ Conditional Expressions (już dostępne)
 
@@ -671,13 +577,14 @@ tests/unit/router/application/workflows/test_workflow_adaptation_pipeline.py
 
 tests/unit/router/application/evaluator/test_loop_expander.py
 - test_expand_static_range
-- test_expand_computed_range
-- test_expand_dynamic_range_with_variables
-- test_substitutes_loop_var_in_params_condition_description
-- test_substitutes_loop_var_inside_calculate_expression
+- test_expand_dynamic_range_expressions
+- test_expand_values_list
+- test_expand_nested_loops_cross_product
+- test_interleaves_grouped_loops
+- test_substitutes_placeholders_in_params_condition_description_id_depends_on
+- test_substitutes_placeholders_inside_calculate_expression
 - test_no_loop_passthrough
 - test_invalid_loop_config_raises_error
-- test_nested_loops (FAZA 3 - skip dla teraz)
 ```
 
 ### E2E Tests
@@ -709,17 +616,11 @@ tests/e2e/router/test_simple_table_with_loops.py
 | 2 | Infrastructure | `workflow_loader.py` | Weryfikacja - pole `loop` parsowane automatycznie (bez zmian) |
 | 3 | Application/Evaluator | `loop_expander.py` | **NOWY PLIK** - `LoopExpander` class |
 | 4 | Application/Evaluator | `__init__.py` | Dodać import i eksport `LoopExpander` do `__all__` |
-| 5 | Application/Workflows | `registry.py` | Integracja: loop expansion przed `_resolve_definition_params()` (także dla `steps_override`) |
+| 5 | Application/Workflows | `registry.py` | Integracja: loop expansion + `{var}` interpolation przed `_resolve_definition_params()` (także dla `steps_override`) |
 | 6 | Application/Workflows | `registry.py` | Naprawa `_resolve_definition_params()` (nie gubić pól/dynamic attrs) |
-| 7 | Tests | `test_loop_expander.py` | Unit testy dla loop + substytucji `{i}` |
+| 7 | Tests | `test_loop_expander.py` | Unit testy: range/values/nested/group + `{var}` interpolation |
 | 8 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
-
-### Faza 1b (Opcjonalnie) - `$FORMAT(...)` (P1)
-
-| Krok | Warstwa | Plik | Opis |
-|------|---------|------|------|
-| 1b.1 | Application/Evaluator | `expression_evaluator.py` | Dodać `$FORMAT(...)` jako helper do stringów (nie wymagane do loopów) |
-| 1b.2 | Tests | (opcjonalnie) | Unit testy dla `$FORMAT(...)` jeśli dodamy tę składnię |
+| 9 | Docs | `_docs/_ROUTER/WORKFLOWS/*.md` | Dodać Loops + `{var}` interpolation do guideów |
 
 ### ✅ Faza 2 - Conditional Expressions (zamknięte przez TASK-060)
 
@@ -729,38 +630,17 @@ tests/e2e/router/test_simple_table_with_loops.py
 
 ## Decyzje Architektoniczne
 
-1. **Loop range syntax**: `"1..plank_count"` - spójna z innymi DSL, czytelna
-2. **String interpolation (MUST)**: placeholder `{i}` podstawiany przez LoopExpander (działa też w `$CALCULATE(...)` i `condition`)
-3. **LoopExpander lokalizacja**: `application/evaluator/` - logika transformacji danych (nie infrastructure)
-4. **Nested loops**: FAZA 3 (przyszłość) - podstawowe pętle w FAZA 1
+1. **Jedna interpolacja**: `{var}` dla wszystkich stringów (bez `$FORMAT`).
+2. **Loops w core**: single + nested loops oraz `values`.
+3. **Kolejność per‑iteracja**: `loop.group` umożliwia interleaving bez nowych “block nodes”.
+4. **LoopExpander lokalizacja**: `application/evaluator/` (transformacja danych, bez I/O).
+5. **Strict interpolation + limity**: zapobiega “cichym” błędom i eksplozjom liczby kroków.
 
-### `$FORMAT` vs `$CALCULATE` - różnice
-
-| Aspekt | `$CALCULATE(...)` | `$FORMAT(...)` |
-|--------|-------------------|----------------|
-| **Cel** | Obliczenia matematyczne | Interpolacja stringów |
-| **Zwraca** | `float` / `int` | `string` |
-| **Użycie** | `location`, `scale`, `rotation` | `name`, `material_name` |
-| **Przykład** | `$CALCULATE(width / 2)` → `0.4` | `$FORMAT(Plank_{i})` → `"Plank_3"` |
-| **Obsługuje** | Arytmetyka, funkcje math | Placeholder `{zmienna}` |
-
-**WAŻNE**: `$FORMAT` i `$CALCULATE` są **wzajemnie wykluczające się** - oba patterny matchują cały string (`^...$`). Nie można ich zagnieżdżać:
-
-```yaml
-# ❌ NIE MOŻNA:
-name: "$FORMAT(Plank_$CALCULATE({i} + 1))"
-
-# ✅ MOŻNA (loop variable podstawiana przed $FORMAT):
-name: "$FORMAT(Plank_{i})"
-```
-
-Kolejność przetwarzania w pipeline:
-1. `LoopExpander` podstawia `{i}` → wartość (np. `3`)
-2. `WorkflowRegistry._resolve_definition_params()` odpala rozwiązywanie parametrów:
-   - `$CALCULATE(...)`
-   - `$AUTO_*`
-   - `$variable`
-   - (opcjonalnie) `$FORMAT(...)` jeśli dodamy tę składnię
+Kolejność przetwarzania w pipeline (custom workflows):
+1. computed params (TASK-056-5)
+2. `LoopExpander.expand()` (loop expansion + `{var}` interpolation)
+3. `_resolve_definition_params()` (`$CALCULATE`, `$AUTO_*`, `$variable`)
+4. `_steps_to_calls()` (`condition` + `simulate_step_effect()`)
 
 ---
 
@@ -784,7 +664,7 @@ resolved_steps.append(
 
 **Brakujące pola**: `optional`, `disable_adaptation`, `tags`, `id`, `depends_on`, `timeout`, `max_retries`, `retry_delay`, `on_failure`, `priority`
 
-**Rekomendacja**: Przy okazji TASK-058 naprawić ten dług - metoda `_clone_step_with_loop_var()` w `LoopExpander` już poprawnie przekazuje wszystkie pola.
+**Rekomendacja**: Przy okazji TASK-058 naprawić ten dług przez wspólny helper klonowania kroku (np. `_clone_step(step, **overrides)`), który kopiuje wszystkie pola dataclass + dynamic attrs; użyć go w `LoopExpander` i w `_resolve_definition_params()`.
 
 ---
 
@@ -795,15 +675,14 @@ resolved_steps.append(
 | FAZA 0: Adaptacja używa registry pipeline | 10-20 min |
 | `WorkflowStep.loop` + `_known_fields` | 5 min |
 | Loop parsing verification | 0 min (automatyczne) |
-| `LoopExpander` class | 30 min |
+| `LoopExpander` class (nested + group + strict interpolation) | 45-60 min |
 | `__init__.py` update | 2 min |
 | Registry integration | 10 min |
 | Fix `_resolve_definition_params()` (dług techniczny) | 5 min |
 | Unit tests (`LoopExpander`) | 20 min |
 | `simple_table.yaml` refaktor (opcjonalne) | 15 min |
-| **TOTAL TASK-058 (bez `$FORMAT`)** | **~1.5-2h** |
-
-> `$FORMAT(...)` to dodatkowe ~25 min (kod + testy) jeśli chcemy tę składnię.
+| Aktualizacja docs (_docs/_ROUTER/WORKFLOWS/*) | 20-30 min |
+| **TOTAL TASK-058** | **~2-3h** |
 
 > **Uwaga**: Conditional expressions (ternary, porównania, operatory logiczne) są już dostępne po **TASK-060**, więc nie zwiększają scope TASK-058.
 
@@ -905,8 +784,8 @@ self._evaluator.set_context({**base_context, **all_params})
 
 steps_source = steps_override if steps_override is not None else definition.steps
 
-# TASK-058: Expand loop steps BEFORE other processing
-expanded_steps = self._loop_expander.expand_loops(
+# TASK-058: Loop expansion + {var} interpolation BEFORE other processing
+expanded_steps = self._loop_expander.expand(
     steps_source,
     {**base_context, **all_params}
 )

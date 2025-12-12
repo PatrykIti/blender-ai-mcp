@@ -8,6 +8,7 @@ Complete reference for dynamic expressions in YAML workflows.
 
 | Syntax | Handler | Example |
 |--------|---------|---------|
+| `{var}` | LoopExpander | `name: "Plank_{i}"` |
 | `$CALCULATE(...)` | ExpressionEvaluator | `$CALCULATE(width * 0.5)` |
 | `computed: "..."` | UnifiedEvaluator | `computed: "ceil(table_width / plank_max_width)"` |
 | `$AUTO_*` | ProportionResolver | `$AUTO_BEVEL` |
@@ -17,6 +18,30 @@ Complete reference for dynamic expressions in YAML workflows.
 > **Note:** `$variable` can reference both context values (dimensions) and parametric variables from `defaults`/`modifiers` (TASK-052).
 
 ---
+
+## String Interpolation `{var}` (TASK-058)
+
+String interpolation runs before `$CALCULATE/$AUTO_/$variable` resolution and before condition evaluation.
+
+Where it works:
+- `params` (recursively in lists/dicts)
+- `description`
+- `condition`
+- `id`, `depends_on`
+
+Rules:
+- `{var}` is replaced with the current value from the workflow context (including loop variables like `i`, `row`, `col`).
+- Escaping: `{{` and `}}` produce literal `{` and `}`.
+
+Examples:
+```yaml
+params:
+  name: "TablePlank_{i}"
+  location: ["$CALCULATE(-table_width/2 + plank_actual_width * ({i} - 0.5))", 0, 0]
+
+condition: "{i} <= plank_count"
+description: "Create plank {i} of {plank_count}"
+```
 
 ## $CALCULATE Expressions
 

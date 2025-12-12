@@ -14,6 +14,7 @@ YAML workflows allow you to define sequences of Blender operations that execute 
 - **Keyword triggering** - Automatic activation from user prompts
 - **Semantic matching** - LaBSE-powered multilingual prompt matching (TASK-046)
 - **Parametric variables** - `$variable` syntax with `defaults` and `modifiers` (TASK-052)
+- **Loops + string interpolation** - Repeat steps + build names with `{var}` (TASK-058)
 - **Enum validation** - Restrict parameters to discrete choices (TASK-056-3)
 - **Computed parameters** - Auto-calculate derived values (TASK-056-5)
 - **Step dependencies** - Control execution order with timeout/retry (TASK-056-4)
@@ -660,6 +661,75 @@ Variables are resolved in this order (later overrides earlier):
 3. **params** - Explicit parameters passed to expand_workflow()
 
 ---
+
+## Loops & String Interpolation (TASK-058)
+
+Loops let you generate repeated steps (e.g. planks, windows, buttons) without copy/paste. String interpolation `{var}` lets you build names/conditions/descriptions that include loop indices and parameters.
+
+### String Interpolation: `{var}`
+
+- Works in any workflow string: `params`, `description`, `condition`, `id`, `depends_on`.
+- Runs before `$CALCULATE/$AUTO_/$variable` and before condition evaluation, so you can safely use `{i}` inside `$CALCULATE(...)` and `condition`.
+- Escaping: use `{{` and `}}` for literal braces.
+
+Example:
+```yaml
+params:
+  name: "Plank_{i}"
+description: "Create plank {i} of {plank_count}"
+condition: "{i} <= plank_count"
+```
+
+### Loops: `loop`
+
+**Single variable range (inclusive):**
+```yaml
+loop:
+  variable: i
+  range: "1..plank_count"
+```
+
+**Nested loops (cross-product):**
+```yaml
+loop:
+  variables: [row, col]
+  ranges: ["0..(rows - 1)", "0..(cols - 1)"]
+```
+
+**Iterate over explicit values:**
+```yaml
+loop:
+  variable: side
+  values: ["L", "R"]
+```
+
+### Ordering: `loop.group` (interleaving)
+
+By default, each step expands independently (all `create_*` first, then all `transform_*`). For correct per‑iteration ordering, set the same `loop.group` on adjacent steps:
+```yaml
+- tool: modeling_create_primitive
+  params: { name: "TablePlank_{i}", primitive_type: CUBE }
+  loop: { group: planks, variable: i, range: "1..plank_count" }
+
+- tool: modeling_transform_object
+  params:
+    name: "TablePlank_{i}"
+    location: ["$CALCULATE(-table_width/2 + plank_actual_width * ({i} - 0.5))", 0, 0]
+  loop: { group: planks, variable: i, range: "1..plank_count" }
+```
+
+### YAML Tip: Anchors + Merge (`&` / `*` / `<<`)
+
+To keep workflows short, reuse common loop config:
+```yaml
+plank_loop: &plank_loop
+  loop: { group: planks, variable: i, range: "1..plank_count" }
+
+steps:
+  - tool: modeling_create_primitive
+    <<: *plank_loop
+    params: { primitive_type: CUBE, name: "TablePlank_{i}" }
+```
 
 ## Advanced Workflow Features (TASK-056)
 

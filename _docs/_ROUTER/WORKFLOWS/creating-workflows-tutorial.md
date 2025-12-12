@@ -12,6 +12,7 @@ Kompletny przewodnik krok po kroku do tworzenia własnych workflow YAML.
 4. [Krok 3: Definiowanie Kroków](#4-krok-3-definiowanie-kroków)
 5. [Krok 4: Dodawanie Warunków](#5-krok-4-dodawanie-warunków)
 6. [Krok 5: Dynamiczne Parametry](#6-krok-5-dynamiczne-parametry)
+6b. [Loops i interpolacja stringow (TASK-058)](#6b-loops-i-interpolacja-stringow-task-058)
 7. [Krok 6: Opcjonalne Kroki i Adaptacja](#7-krok-6-opcjonalne-kroki-i-adaptacja)
 8. [Krok 7: Testowanie](#8-krok-7-testowanie)
 9. [Kompletny Przykład](#9-kompletny-przykład)
@@ -422,11 +423,63 @@ params:
 
 ### 6.5 Kolejność Rozwiązywania
 
+0. `{var}` - interpolacja stringów (TASK-058; tylko w stringach)
 1. `$CALCULATE(...)` - najpierw wyrażenia matematyczne
 2. `$AUTO_*` - potem predefiniowane wartości
 3. `$zmienna` - na końcu proste zmienne
 
 ---
+
+## 6b. Loops i interpolacja stringow (TASK-058)
+
+Gdy workflow ma wiele powtarzalnych elementów (np. deski blatu, okna w elewacji, przyciski w telefonie), ręczne kopiowanie kroków szybko robi się nieczytelne. Rozwiązaniem są **loops** + **string interpolation**.
+
+### 6b.1 Interpolacja `{var}`
+
+W stringach możesz używać placeholderów `{var}` (np. `{i}`, `{row}`, `{col}`), które zostaną podstawione przed obliczeniami `$CALCULATE(...)` i przed ewaluacją `condition`:
+
+```yaml
+params:
+  name: "TablePlank_{i}"
+condition: "{i} <= plank_count"
+description: "Create plank {i} of {plank_count}"
+```
+
+Escaping: `{{` i `}}` oznaczają literalne `{` i `}`.
+
+### 6b.2 Loop na kroku
+
+Najprostsza pętla (inclusive range):
+```yaml
+loop:
+  variable: i
+  range: "1..plank_count"
+```
+
+Nested loops (grid):
+```yaml
+loop:
+  variables: [row, col]
+  ranges: ["0..(rows - 1)", "0..(cols - 1)"]
+```
+
+### 6b.3 Kolejnosc krokow: `loop.group` (interleaving)
+
+Jeśli chcesz wykonać kroki “per iteracja” (np. `create_i → transform_i`), ustaw to samo `loop.group` na kolejnych krokach:
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE, name: "TablePlank_{i}" }
+  loop: { group: planks, variable: i, range: "1..plank_count" }
+
+- tool: modeling_transform_object
+  params:
+    name: "TablePlank_{i}"
+    location: ["$CALCULATE(-table_width/2 + plank_actual_width * ({i} - 0.5))", 0, 0]
+  loop: { group: planks, variable: i, range: "1..plank_count" }
+```
+
+Tip: dla krótszego YAML używaj anchorów i `<<` merge (PyYAML `safe_load` to wspiera).
 
 ## 7. Krok 6: Opcjonalne Kroki i Adaptacja
 
