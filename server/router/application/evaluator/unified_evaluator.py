@@ -232,14 +232,14 @@ class UnifiedEvaluator(IExpressionEvaluator):
         """Recursively evaluate AST node.
 
         Handles:
-        - Constants (ast.Constant, ast.Num, ast.Str, ast.NameConstant)
-        - Binary operations (ast.BinOp)
-        - Unary operations (ast.UnaryOp) including 'not'
-        - Comparisons (ast.Compare) including chained
-        - Boolean operations (ast.BoolOp) with short-circuit
-        - Ternary expressions (ast.IfExp)
-        - Function calls (ast.Call) - whitelist only
-        - Variable references (ast.Name)
+        - Constants (ast.Constant) - numbers, strings, booleans
+        - Binary operations (ast.BinOp) - +, -, *, /, //, %, **
+        - Unary operations (ast.UnaryOp) - -, +, not
+        - Comparisons (ast.Compare) - <, <=, >, >=, ==, != (including chained)
+        - Boolean operations (ast.BoolOp) - and, or (with short-circuit)
+        - Ternary expressions (ast.IfExp) - x if cond else y
+        - Function calls (ast.Call) - whitelist only (22 math functions)
+        - Variable references (ast.Name) - from context
 
         Args:
             node: AST node to evaluate.
@@ -252,25 +252,9 @@ class UnifiedEvaluator(IExpressionEvaluator):
         """
         # === Constants ===
 
-        # Constant (Python 3.8+)
+        # Constant (Python 3.8+) - handles numbers, strings, booleans, None
         if isinstance(node, ast.Constant):
             return self._eval_constant(node.value)
-
-        # Num (Python 3.7 fallback)
-        if isinstance(node, ast.Num):
-            return float(node.n)
-
-        # Str (Python 3.7 fallback for string literals)
-        if isinstance(node, ast.Str):
-            return node.s
-
-        # NameConstant (Python 3.7 fallback for True/False/None)
-        if isinstance(node, ast.NameConstant):
-            if node.value is True:
-                return 1.0
-            if node.value is False:
-                return 0.0
-            raise ValueError(f"Invalid NameConstant: {node.value}")
 
         # === Operations ===
 

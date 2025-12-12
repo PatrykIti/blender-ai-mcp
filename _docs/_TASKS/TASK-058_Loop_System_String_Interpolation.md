@@ -20,6 +20,18 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
     └── _steps_to_calls()             # Walidacja condition, → CorrectedToolCall[]
 ```
 
+### ⚠️ Krytyczne: Adaptacja (TASK-051) obecnie omija pipeline
+
+W momencie gdy workflow adaptacja jest włączona (`TASK-051`) router ma osobną ścieżkę, która **nie** używa `WorkflowRegistry.expand_workflow()` i przez to omija kluczowe elementy pipeline.
+
+**Obecne zachowanie (BUG):** `server/router/application/router.py:_expand_triggered_workflow()` w gałęzi `should_adapt == True`:
+- nie uruchamia computed params (`resolve_computed_parameters()` w registry),
+- nie rozwiązuje `$CALCULATE(...)` i `$AUTO_*`,
+- nie odpala `condition` + `simulate_step_effect()` (czyli conditional steps przestają działać),
+- tym samym będzie też omijać loop system z TASK-058.
+
+**Wymóg TASK-058:** adaptacja ma być tylko filtrem kroków (core vs optional), a **reszta** ekspansji musi iść tą samą ścieżką co standardowa ekspansja w registry.
+
 ### Kluczowe Pliki (Clean Architecture)
 
 | Warstwa | Plik | Rola |
@@ -35,6 +47,56 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
 ---
 
 ## Propozycja Implementacji
+
+### FAZA 0: Naprawa adaptacji workflow (P0 - MUST)
+
+**Cel:** Niezależnie od tego czy adaptacja jest włączona, workflow powinno przechodzić przez **ten sam** pipeline ekspansji co standard (`WorkflowRegistry.expand_workflow()`), żeby nie psuć:
+- `condition` + symulacji kontekstu,
+- `$CALCULATE(...)` / `$AUTO_*`,
+- computed params,
+- loopów (TASK-058).
+
+#### 0.1 Zasada
+
+1. Router wybiera `adapted_steps` (to jest jedyna logika adaptacji).
+2. Następnie deleguje “całą resztę” (computed params, loop expansion, param resolution, condition evaluation) do `WorkflowRegistry`.
+
+#### 0.2 Minimalna zmiana w API registry (rekomendowane)
+
+Dodać opcjonalny parametr do `WorkflowRegistry.expand_workflow()`:
+
+```python
+def expand_workflow(
+    self,
+    workflow_name: str,
+    params: Optional[Dict[str, Any]] = None,
+    context: Optional[Dict[str, Any]] = None,
+    user_prompt: Optional[str] = None,
+    steps_override: Optional[List[WorkflowStep]] = None,  # TASK-058/TASK-051: NEW
+) -> List[CorrectedToolCall]:
+    ...
+```
+
+W gałęzi “custom definition” używać:
+```python
+steps_source = steps_override if steps_override is not None else definition.steps
+```
+
+#### 0.3 Zmiana w router (TASK-051)
+
+W gałęzi `should_adapt == True` w `server/router/application/router.py:_expand_triggered_workflow()` usunąć ręczne budowanie `CorrectedToolCall` i zastąpić je:
+
+```python
+calls = registry.expand_workflow(
+    workflow_name,
+    merged_params,
+    eval_context,
+    user_prompt=self._current_goal or "",
+    steps_override=adapted_steps,  # <<<< klucz
+)
+```
+
+**Akceptacja:** workflow z adaptacją ma identyczne wsparcie dla `$CALCULATE/$AUTO_/computed/condition` jak bez adaptacji (różni się tylko listą kroków).
 
 ### FAZA 1: Loop Expansion (P0 - Critical)
 
@@ -73,6 +135,26 @@ loop:
   range: [1, 15]                   # Static range [start, end]
 ```
 
+**Użycie zmiennej pętli w parametrach/warunkach (MUST):**
+
+- LoopExpander robi **podstawienie placeholderów** w stringach: `{i}` → `3`
+- Żeby użyć indeksu pętli w `$CALCULATE(...)` lub `condition`, używaj zawsze **`{i}`**, nie gołego `i`.
+
+Przykłady:
+```yaml
+params:
+  name: "TablePlank_{i}"  # rekomendowane (bez $FORMAT)
+  location:
+    - "$CALCULATE(-table_width/2 + plank_actual_width * ({i} - 0.5))"
+    - 0
+    - "$CALCULATE(leg_length + 0.0114)"
+
+condition: "{i} <= plank_count"
+description: "Create plank {i}"
+```
+
+To jest krytyczne, bo bez dodatkowej logiki “wstrzykiwania i do kontekstu evaluatora” wyrażenie z samym `i` nie zadziała.
+
 #### 1.2 LoopExpander - NOWY PLIK (Application Layer)
 
 **Plik**: `server/router/application/evaluator/loop_expander.py` (NEW FILE)
@@ -94,8 +176,6 @@ import re
 from typing import Dict, Any, List, Tuple, Optional
 
 from server.router.application.workflows.base import WorkflowStep
-from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
-
 logger = logging.getLogger(__name__)
 
 
@@ -110,15 +190,6 @@ class LoopExpander:
 
     # Pattern for range expression: "start..end" where start/end can be int or variable
     RANGE_PATTERN = re.compile(r"^(\d+|[a-zA-Z_][a-zA-Z0-9_]*)\.\.(\d+|[a-zA-Z_][a-zA-Z0-9_]*)$")
-
-    def __init__(self, evaluator: Optional[ExpressionEvaluator] = None):
-        """Initialize loop expander.
-
-        Args:
-            evaluator: ExpressionEvaluator for resolving range expressions.
-                      If None, creates new instance.
-        """
-        self._evaluator = evaluator or ExpressionEvaluator()
 
     def expand_loops(
         self,
@@ -265,17 +336,21 @@ class LoopExpander:
             var_value
         )
 
-        # Substitute in description if present
+        # Substitute in description/condition if present
         new_description = step.description
         if new_description:
             new_description = new_description.replace(f"{{{var_name}}}", str(var_value))
 
+        new_condition = step.condition
+        if new_condition:
+            new_condition = new_condition.replace(f"{{{var_name}}}", str(var_value))
+
         # Create new step WITHOUT loop (expanded step is concrete)
-        return WorkflowStep(
+        new_step = WorkflowStep(
             tool=step.tool,
             params=new_params,
             description=new_description,
-            condition=step.condition,
+            condition=new_condition,
             optional=step.optional,
             disable_adaptation=step.disable_adaptation,
             tags=list(step.tags),
@@ -288,6 +363,12 @@ class LoopExpander:
             priority=step.priority,
             loop=None  # Expanded step has no loop
         )
+
+        # IMPORTANT: Preserve dynamic attributes (TASK-055-FIX-6 Phase 2)
+        # e.g. add_bench/include_stretchers flags used for semantic filtering.
+        # (Implementation: copy non-private attrs that are not dataclass fields.)
+
+        return new_step
 
     def _substitute_loop_var_in_params(
         self,
@@ -340,6 +421,9 @@ class LoopExpander:
 ```
 
 #### 1.3 String Interpolation: `$FORMAT(...)`
+
+> **UWAGA (Scope):** `$FORMAT(...)` jest opcjonalnym “sugar” dla czytelności.
+> Loop system działa też bez `$FORMAT` (wystarczy zwykły string z `{i}`), bo LoopExpander i tak podstawia `{i}` w parametrach.
 
 **Plik**: `server/router/application/evaluator/expression_evaluator.py:57-60`
 
@@ -423,7 +507,7 @@ def __init__(self):
     self._evaluator = ExpressionEvaluator()
     self._condition_evaluator = ConditionEvaluator()
     self._proportion_resolver = ProportionResolver()
-    self._loop_expander = LoopExpander(self._evaluator)  # TASK-058: NEW
+    self._loop_expander = LoopExpander()  # TASK-058: NEW
 ```
 
 **Krok 3**: W `expand_workflow()` (linia 289-295 w aktualnym kodzie) dodać loop expansion PRZED `_resolve_definition_params()`:
@@ -432,6 +516,8 @@ def __init__(self):
 # Try custom definition
 definition = self._custom_definitions.get(workflow_name)
 if definition:
+    steps_source = steps_override if steps_override is not None else definition.steps
+
     # Build variable context from defaults + modifiers (TASK-052)
     variables = self._build_variables(definition, user_prompt)
     # Merge with params (params override variables)
@@ -442,17 +528,25 @@ if definition:
         # ... existing computed params code ...
 
     # Set evaluator context with all resolved parameters
-    self._evaluator.set_context(all_params)
+    self._evaluator.set_context({**base_context, **all_params})
 
     # TASK-058: Expand loop steps BEFORE other processing
     expanded_steps = self._loop_expander.expand_loops(
-        definition.steps,
-        all_params  # Contains plank_count, etc.
+        steps_source,
+        {**base_context, **all_params}  # Includes plank_count + any other context
     )
 
     steps = self._resolve_definition_params(expanded_steps, all_params)
     return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
 ```
+
+#### 1.5 Integracja loopów + param resolution z adaptacją (TASK-051)
+
+Po wdrożeniu **FAZA 0** (steps_override), loop system będzie działał automatycznie także w adaptacji:
+- adaptacja wybiera `adapted_steps`,
+- registry robi: computed params → loop expansion → param resolution → `condition` + simulation.
+
+To zamyka “split brain” pomiędzy ścieżką standardową i adaptacyjną.
 
 ---
 
@@ -507,7 +601,7 @@ steps:
   # All planks via loop
   - tool: modeling_create_primitive
     params:
-      name: "$FORMAT(TablePlank_{i})"
+      name: "TablePlank_{i}"  # Rekomendowane (LoopExpander podstawi {i})
     loop:
       variable: "i"
       range: "1..plank_count"
@@ -515,9 +609,9 @@ steps:
 
   - tool: modeling_transform_object
     params:
-      name: "$FORMAT(TablePlank_{i})"
+      name: "TablePlank_{i}"
       scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width/2 + plank_actual_width * (i - 0.5))", 0, "$CALCULATE(leg_length + 0.0114)"]
+      location: ["$CALCULATE(-table_width/2 + plank_actual_width * ({i} - 0.5))", 0, "$CALCULATE(leg_length + 0.0114)"]
     loop:
       variable: "i"
       range: "1..plank_count"
@@ -528,16 +622,24 @@ steps:
 
 ## Pliki Do Modyfikacji (Clean Architecture)
 
+### Faza 0 (Adaptacja nie omija pipeline - TASK-051)
+
+| Warstwa | Plik | Zmiana | Priorytet |
+|---------|------|--------|-----------|
+| **Application/Workflows** | `server/router/application/workflows/registry.py` | Dodać `steps_override` do `expand_workflow()` i użyć jako źródło kroków dla custom workflows | P0 |
+| **Application/Router** | `server/router/application/router.py` | W adaptacji wywołać `registry.expand_workflow(..., steps_override=adapted_steps)` zamiast ręcznie budować tool calle | P0 |
+
 ### Faza 1 (Loop + String Interpolation)
 
 | Warstwa | Plik | Zmiana | Priorytet |
 |---------|------|--------|-----------|
-| **Application/Workflows** | `server/router/application/workflows/base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep`, dodać `"loop"` do `_known_fields` | P0 |
+| **Application/Workflows** | `server/router/application/workflows/base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep`, dodać `"loop"` do `_known_fields`, uwzględnić `loop` w `to_dict()` | P0 |
 | **Infrastructure** | `server/router/infrastructure/workflow_loader.py` | Automatyczna obsługa `loop` przez istniejący `_parse_step()` (bez zmian) | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/loop_expander.py` | **NOWY PLIK**: `LoopExpander` class | P0 |
 | **Application/Evaluator** | `server/router/application/evaluator/__init__.py` | Dodać eksport `LoopExpander` do `__all__` | P0 |
-| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `FORMAT_PATTERN`, `resolve_format()`, zmodyfikować `resolve_param_value()` | P0 |
-| **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja w `expand_workflow()` | P0 |
+| **Application/Evaluator (opcjonalnie)** | `server/router/application/evaluator/expression_evaluator.py` | Dodać `$FORMAT(...)` (sugar) jeśli chcemy dodatkową składnię — nie wymagane do loopów | P1 |
+| **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja loop expansion w `expand_workflow()` (dla custom + `steps_override`) | P0 |
+| **Application/Workflows** | `server/router/application/workflows/registry.py` | Naprawić `_resolve_definition_params()` żeby nie gubić pól kroku (optional/tags/depends_on/loop/dynamic attrs) | P0 |
 | **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
 
 ### ✅ Conditional Expressions (już dostępne)
@@ -551,20 +653,20 @@ steps:
 ### Unit Tests
 
 ```
+tests/unit/router/application/workflows/test_workflow_adaptation_pipeline.py
+- test_adaptation_uses_registry_pipeline_resolves_calculate_and_auto
+- test_adaptation_respects_condition_and_simulation
+- test_adaptation_supports_steps_override
+
 tests/unit/router/application/evaluator/test_loop_expander.py
 - test_expand_static_range
 - test_expand_computed_range
 - test_expand_dynamic_range_with_variables
-- test_format_string_interpolation_in_params
+- test_substitutes_loop_var_in_params_condition_description
+- test_substitutes_loop_var_inside_calculate_expression
 - test_no_loop_passthrough
 - test_invalid_loop_config_raises_error
 - test_nested_loops (FAZA 3 - skip dla teraz)
-
-tests/unit/router/application/evaluator/test_expression_evaluator_format.py
-- test_format_pattern_simple
-- test_format_pattern_multiple_vars
-- test_format_not_matched_returns_original
-- test_resolve_param_value_with_format
 ```
 
 ### E2E Tests
@@ -580,19 +682,33 @@ tests/e2e/router/test_simple_table_with_loops.py
 
 ## Kolejność Implementacji (Clean Architecture)
 
-### Faza 1 - Core Loop System
+### Faza 0 - Naprawa adaptacji (P0)
 
 | Krok | Warstwa | Plik | Opis |
 |------|---------|------|------|
-| 1 | Application/Workflows | `base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep` + `_known_fields` |
+| 0.1 | Application/Workflows | `registry.py` | Dodać `steps_override` do `expand_workflow()` i użyć jako źródło kroków |
+| 0.2 | Application/Router | `router.py` | Adaptacja ma delegować do `registry.expand_workflow(..., steps_override=adapted_steps)` |
+| 0.3 | Tests | `test_workflow_adaptation_pipeline.py` | Regression testy na: `$CALCULATE/$AUTO_`, `condition`, symulację kontekstu |
+
+### Faza 1 - Core Loop System (P0)
+
+| Krok | Warstwa | Plik | Opis |
+|------|---------|------|------|
+| 1 | Application/Workflows | `base.py` | Dodać `loop: Optional[Dict]` do `WorkflowStep` + `_known_fields` + `to_dict()` |
 | 2 | Infrastructure | `workflow_loader.py` | Weryfikacja - pole `loop` parsowane automatycznie (bez zmian) |
 | 3 | Application/Evaluator | `loop_expander.py` | **NOWY PLIK** - `LoopExpander` class |
 | 4 | Application/Evaluator | `__init__.py` | Dodać import i eksport `LoopExpander` do `__all__` |
-| 5 | Application/Evaluator | `expression_evaluator.py` | Dodać `FORMAT_PATTERN` + `resolve_format()` + zmodyfikować `resolve_param_value()` |
-| 6 | Application/Workflows | `registry.py` | Import + instancja `_loop_expander` + integracja w `expand_workflow()` |
-| 7 | Tests | `test_loop_expander.py` | Unit testy dla `LoopExpander` |
-| 8 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
-| 9 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
+| 5 | Application/Workflows | `registry.py` | Integracja: loop expansion przed `_resolve_definition_params()` (także dla `steps_override`) |
+| 6 | Application/Workflows | `registry.py` | Naprawa `_resolve_definition_params()` (nie gubić pól/dynamic attrs) |
+| 7 | Tests | `test_loop_expander.py` | Unit testy dla loop + substytucji `{i}` |
+| 8 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
+
+### Faza 1b (Opcjonalnie) - `$FORMAT(...)` (P1)
+
+| Krok | Warstwa | Plik | Opis |
+|------|---------|------|------|
+| 1b.1 | Application/Evaluator | `expression_evaluator.py` | Dodać `$FORMAT(...)` jako helper do stringów (nie wymagane do loopów) |
+| 1b.2 | Tests | (opcjonalnie) | Unit testy dla `$FORMAT(...)` jeśli dodamy tę składnię |
 
 ### ✅ Faza 2 - Conditional Expressions (zamknięte przez TASK-060)
 
@@ -603,7 +719,7 @@ tests/e2e/router/test_simple_table_with_loops.py
 ## Decyzje Architektoniczne
 
 1. **Loop range syntax**: `"1..plank_count"` - spójna z innymi DSL, czytelna
-2. **String interpolation**: `$FORMAT(Plank_{i})` - spójna z istniejącym `$CALCULATE()`
+2. **String interpolation (MUST)**: placeholder `{i}` podstawiany przez LoopExpander (działa też w `$CALCULATE(...)` i `condition`)
 3. **LoopExpander lokalizacja**: `application/evaluator/` - logika transformacji danych (nie infrastructure)
 4. **Nested loops**: FAZA 3 (przyszłość) - podstawowe pętle w FAZA 1
 
@@ -629,8 +745,11 @@ name: "$FORMAT(Plank_{i})"
 
 Kolejność przetwarzania w pipeline:
 1. `LoopExpander` podstawia `{i}` → wartość (np. `3`)
-2. `ExpressionEvaluator.resolve_param_value()` sprawdza `$FORMAT` → zwraca string
-3. Lub sprawdza `$CALCULATE` → zwraca liczbę
+2. `WorkflowRegistry._resolve_definition_params()` odpala rozwiązywanie parametrów:
+   - `$CALCULATE(...)`
+   - `$AUTO_*`
+   - `$variable`
+   - (opcjonalnie) `$FORMAT(...)` jeśli dodamy tę składnię
 
 ---
 
@@ -662,17 +781,18 @@ resolved_steps.append(
 
 | Krok | Czas |
 |------|------|
+| FAZA 0: Adaptacja używa registry pipeline | 10-20 min |
 | `WorkflowStep.loop` + `_known_fields` | 5 min |
 | Loop parsing verification | 0 min (automatyczne) |
 | `LoopExpander` class | 30 min |
 | `__init__.py` update | 2 min |
-| `$FORMAT` pattern + `resolve_format()` | 15 min |
 | Registry integration | 10 min |
 | Fix `_resolve_definition_params()` (dług techniczny) | 5 min |
 | Unit tests (`LoopExpander`) | 20 min |
-| Unit tests (`$FORMAT`) | 10 min |
 | `simple_table.yaml` refaktor (opcjonalne) | 15 min |
-| **TOTAL TASK-058** | **~2h** |
+| **TOTAL TASK-058 (bez `$FORMAT`)** | **~1.5-2h** |
+
+> `$FORMAT(...)` to dodatkowe ~25 min (kod + testy) jeśli chcemy tę składnię.
 
 > **Uwaga**: Conditional expressions (ternary, porównania, operatory logiczne) są już dostępne po **TASK-060**, więc nie zwiększają scope TASK-058.
 
@@ -687,6 +807,7 @@ resolved_steps.append(
 | `WorkflowStep` | `server/router/application/workflows/base.py` | ✅ Poprawna |
 | `ExpressionEvaluator` | `server/router/application/evaluator/expression_evaluator.py` | ✅ Poprawna |
 | `WorkflowRegistry` | `server/router/application/workflows/registry.py` | ✅ Poprawna |
+| `Router` (adaptacja) | `server/router/application/router.py` | ✅ Do poprawki (FAZA 0) |
 | `workflow_loader` | `server/router/infrastructure/workflow_loader.py` | ✅ Poprawna |
 | `evaluator/__init__.py` | `server/router/application/evaluator/__init__.py` | ✅ Poprawna |
 

@@ -151,7 +151,7 @@ exec('...')
 open('/etc/passwd')
 ```
 
-The evaluator uses Python's `ast.literal_eval` principles with a restricted node whitelist.
+The evaluator uses AST-based parsing with a restricted node whitelist (no eval/exec).
 
 ---
 

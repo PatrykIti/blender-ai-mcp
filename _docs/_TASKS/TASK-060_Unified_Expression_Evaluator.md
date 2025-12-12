@@ -1457,7 +1457,7 @@ Test integration with WorkflowRegistry:
 
 ### Documentation
 - [x] Update TASK-059 header: "⚠️ SUPERSEDED by TASK-060"
-- [ ] Update TASK-055-FIX-8 with new operators
+- [x] Update TASK-055-FIX-8 with new operators
 - [x] Create changelog entry
 - [x] Create `_docs/_ROUTER/IMPLEMENTATION/36-unified-evaluator.md`
 
