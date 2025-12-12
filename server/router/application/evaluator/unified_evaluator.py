@@ -28,7 +28,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
     Supports:
     - Arithmetic: +, -, *, /, //, %, **
-    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc. (21 total)
+    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc. (22 total)
     - Comparisons: <, <=, >, >=, ==, !=
     - Chained comparisons: 0 < x < 10
     - Logic: and, or, not (with short-circuit evaluation)

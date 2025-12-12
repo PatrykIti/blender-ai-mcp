@@ -55,7 +55,7 @@ class IExpressionEvaluator(ABC):
 
 Core AST-based evaluator supporting:
 - **Arithmetic**: `+`, `-`, `*`, `/`, `//`, `%`, `**`
-- **Math functions**: 21 functions (abs, min, max, floor, ceil, sqrt, sin, cos, tan, etc.)
+- **Math functions**: 22 functions (abs, min, max, floor, ceil, sqrt, sin, cos, tan, etc.)
 - **Comparisons**: `<`, `<=`, `>`, `>=`, `==`, `!=`
 - **Chained comparisons**: `0 < x < 10`
 - **Logic**: `and`, `or`, `not` (with short-circuit evaluation)
@@ -159,7 +159,7 @@ All 279 existing tests pass without modification:
 
 Test categories:
 - Arithmetic operations
-- Math functions (all 21)
+- Math functions (all 22)
 - Comparison operators
 - Chained comparisons
 - Logical operators with precedence
@@ -210,5 +210,5 @@ Test categories:
 
 - **TASK-059**: Superseded by TASK-060 (kept as documentation reference)
 - **TASK-055-FIX-8**: Documentation updated
-- **TASK-056-1**: Extended math functions (21 functions)
+- **TASK-056-1**: Extended math functions (22 functions)
 - **TASK-056-5**: Computed parameter dependencies

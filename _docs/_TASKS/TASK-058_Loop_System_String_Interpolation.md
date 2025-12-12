@@ -24,11 +24,12 @@ WorkflowRegistry.expand_workflow()    # Główna metoda ekspansji
 
 | Warstwa | Plik | Rola |
 |---------|------|------|
-| **Application/Workflows** | `server/router/application/workflows/base.py:17-95` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
-| **Infrastructure** | `server/router/infrastructure/workflow_loader.py:300-350` | `_parse_step()` - parsowanie YAML → WorkflowStep |
-| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py:83-87` | `$CALCULATE`, 21 funkcji math, context variables |
-| **Application/Workflows** | `server/router/application/workflows/registry.py:202-297` | `expand_workflow()` - główna ekspansja |
-| **Application/Workflows** | `server/router/application/workflows/registry.py:539-632` | `_resolve_definition_params()`, `_resolve_single_value()` |
+| **Application/Workflows** | `server/router/application/workflows/base.py:17-136` | `WorkflowStep` dataclass (pola: tool, params, condition, loop?) |
+| **Infrastructure** | `server/router/infrastructure/workflow_loader.py:300` | `_parse_step()` - parsowanie YAML → WorkflowStep |
+| **Application/Evaluator** | `server/router/application/evaluator/expression_evaluator.py:57-60` | `$CALCULATE` patterns + `$variable` |
+| **Application/Evaluator** | `server/router/application/evaluator/unified_evaluator.py:45` | Whitelist funkcji + AST core (TASK-060) |
+| **Application/Workflows** | `server/router/application/workflows/registry.py:202` | `expand_workflow()` - główna ekspansja |
+| **Application/Workflows** | `server/router/application/workflows/registry.py:541` | `_resolve_definition_params()` / `$CALCULATE` + `$variable` |
 | **Application/Engines** | `server/router/application/engines/workflow_adapter.py` | `WorkflowAdapter` - filtrowanie optional steps |
 
 ---
@@ -340,9 +341,9 @@ class LoopExpander:
 
 #### 1.3 String Interpolation: `$FORMAT(...)`
 
-**Plik**: `server/router/application/evaluator/expression_evaluator.py:83-87`
+**Plik**: `server/router/application/evaluator/expression_evaluator.py:57-60`
 
-Dodać nowy pattern (po linii 87, obok `CALCULATE_PATTERN` i `VARIABLE_PATTERN`) i metodę:
+Dodać nowy pattern (obok `CALCULATE_PATTERN` i `VARIABLE_PATTERN`) i metodę:
 
 ```python
 # Pattern for $FORMAT(...) string interpolation (TASK-058)
@@ -373,9 +374,9 @@ def resolve_format(self, template: str) -> str:
         return template
 
     format_str = match.group(1)
-    # Replace {var} with context values
+    # Replace {var} with current evaluator context (TASK-060: stored in UnifiedEvaluator)
     result = format_str
-    for var_name, value in self._context.items():
+    for var_name, value in self._unified.get_context().items():
         result = result.replace(f"{{{var_name}}}", str(value))
 
     return result
@@ -455,19 +456,12 @@ if definition:
 
 ---
 
-### ~~FAZA 2: Conditional Expressions in $CALCULATE~~ → **TASK-059**
+### ✅ Conditional Expressions w `$CALCULATE(...)` (Zrobione w TASK-060)
 
-> **PRZENIESIONE**: Implementacja operatorów porównania (`<`, `<=`, `>`, `>=`, `==`, `!=`), operatorów logicznych (`and`, `or`, `not`) oraz ternary expressions (`x if cond else y`) została wydzielona do osobnego taska.
+> **Zaimplementowane**: Operatory porównania (`<`, `<=`, `>`, `>=`, `==`, `!=`), operatory logiczne (`and`, `or`, `not`) oraz ternary expressions (`x if cond else y`) są dostępne po **TASK-060: Unified Expression Evaluator**.
 >
-> **Zobacz**: [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
->
-> TASK-059 zawiera:
-> - `ast.Compare` - operatory porównania
-> - `ast.BoolOp` - operatory logiczne (`and`, `or`)
-> - `ast.UnaryOp(ast.Not)` - negacja logiczna
-> - `ast.IfExp` - ternary expressions (`x if cond else y`)
->
-> **Zależność**: TASK-058 (Loop System) może być implementowany niezależnie od TASK-059. Jednak pełna funkcjonalność (np. dynamiczne szerokości planków w pętli) wymaga obu tasków.
+> **Uwaga historyczna**: wcześniej było to wydzielone do TASK-059, ale TASK-059 jest oznaczony jako superseded przez TASK-060 i pozostaje tylko jako referencja:
+> [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
 
 ---
 
@@ -546,9 +540,9 @@ steps:
 | **Application/Workflows** | `server/router/application/workflows/registry.py` | Import `LoopExpander`, dodać `_loop_expander`, integracja w `expand_workflow()` | P0 |
 | **Custom Workflows** | `server/router/application/workflows/custom/simple_table.yaml` | Przepisać na loop syntax (opcjonalne w Fazie 1) | P0 |
 
-### ~~Faza 2 (Conditional Expressions)~~ → **TASK-059**
+### ✅ Conditional Expressions (już dostępne)
 
-> Przeniesione do [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
+> Funkcjonalność porównań/logiki/ternary w `$CALCULATE(...)` jest dostępna po TASK-060. W ramach TASK-058 nie trzeba tu nic implementować.
 
 ---
 
@@ -600,9 +594,9 @@ tests/e2e/router/test_simple_table_with_loops.py
 | 8 | Tests | `test_expression_evaluator_format.py` | Unit testy dla `$FORMAT` |
 | 9 | Custom Workflows | `simple_table.yaml` | Refaktor na loop syntax (opcjonalnie) |
 
-### ~~Faza 2 - Conditional Expressions~~ → **TASK-059**
+### ✅ Faza 2 - Conditional Expressions (zamknięte przez TASK-060)
 
-> Przeniesione do [TASK-059: Expression Evaluator - Logical & Comparison Operators](./TASK-059_Expression_Evaluator_Logical_Operators.md)
+> Brak prac w TASK-058 (zrobione w TASK-060).
 
 ---
 
@@ -680,11 +674,11 @@ resolved_steps.append(
 | `simple_table.yaml` refaktor (opcjonalne) | 15 min |
 | **TOTAL TASK-058** | **~2h** |
 
-> **Uwaga**: Conditional expressions (ternary, porównania, operatory logiczne) zostały przeniesione do **TASK-059** (~3-4h dodatkowego czasu).
+> **Uwaga**: Conditional expressions (ternary, porównania, operatory logiczne) są już dostępne po **TASK-060**, więc nie zwiększają scope TASK-058.
 
 ---
 
-## Weryfikacja Zgodności z Kodem (2024-12-12)
+## Weryfikacja Zgodności z Kodem (2025-12-12)
 
 ### ✅ Zweryfikowane Lokalizacje Plików
 
@@ -702,12 +696,12 @@ resolved_steps.append(
 |---------|-----------------|----------------|--------|
 | `WorkflowStep` dataclass | 17-95 | 17-136 | ✅ OK (rozszerzono) |
 | `_known_fields` | 69-74 | 69-74 | ✅ Dokładnie |
-| `CALCULATE_PATTERN` | 83-87 | 84 | ✅ OK |
-| `VARIABLE_PATTERN` | 87 | 87 | ✅ Dokładnie |
-| `resolve_param_value()` | 168-205 | 168-206 | ✅ OK |
-| `_eval_node()` | 262-336 | 262-336 | ✅ Dokładnie |
+| `CALCULATE_PATTERN` | 83-87 | 57 | ✅ OK |
+| `VARIABLE_PATTERN` | 87 | 60 | ✅ OK |
+| `resolve_param_value()` | 168-205 | 158-191 | ✅ OK |
+| `_eval_node()` | 262-336 | `unified_evaluator.py:231` | ✅ Przeniesione w TASK-060 |
 | `expand_workflow()` | 202-297 | 202-297 | ✅ Dokładnie |
-| `_resolve_definition_params()` | 539-632 | 539-632 | ✅ Dokładnie |
+| `_resolve_definition_params()` | 539-632 | 541 | ✅ OK |
 | `_parse_step()` | 300-350 | 300-350 | ✅ OK |
 
 ### ✅ Zgodność z Clean Architecture
@@ -789,12 +783,12 @@ Po dodaniu `loop: Optional[Dict[str, Any]] = None` do `WorkflowStep` dataclass, 
 | Kategoria | Status |
 |-----------|--------|
 | Ścieżki plików | ✅ 100% zgodne |
-| Numery linii | ✅ 100% aktualne |
+| Numery linii | ✅ Zaktualizowane po TASK-060 |
 | Clean Architecture | ✅ Przestrzegana |
 | Dług techniczny | ✅ Poprawnie zidentyfikowany |
 | Kolejność implementacji | ✅ Sensowna |
 
-**TASK-058 jest w pełni zgodny z aktualnym kodem i może być implementowany bez modyfikacji planu.**
+**TASK-058 jest zgodny z aktualnym kodem po TASK-060 i może być implementowany bez zmian w architekturze.**
 
 ---
 
@@ -802,9 +796,10 @@ Po dodaniu `loop: Optional[Dict[str, Any]] = None` do `WorkflowStep` dataclass, 
 
 | Task | Relacja | Opis |
 |------|---------|------|
-| **TASK-059** | **Uzupełnia** | Operatory porównania i logiczne dla `$CALCULATE` - wymagane dla pełnej funkcjonalności pętli z warunkami |
-| TASK-056-1 | Prerequisite | Extended Expression Evaluator (21 funkcji math) |
+| **TASK-060** | **Odblokowuje** | Porównania/logika/ternary w `$CALCULATE` + math w `condition` (już zaimplementowane) |
+| TASK-059 | Superseded | Pozostawiony jako referencja (zastąpiony przez TASK-060) |
+| TASK-056-1 | Prerequisite | Extended Expression Evaluator (22 funkcje math) |
 | TASK-056-5 | Prerequisite | Computed Parameters |
 | TASK-055-FIX-8 | Documentation | Dokumentacja funkcji expression evaluator |
 
-> **Kolejność implementacji**: TASK-058 (Loop System) → TASK-059 (Logical Operators) → pełna funkcjonalność dynamicznych workflow
+> **Kolejność implementacji**: TASK-060 (✅) → TASK-058 (Loop System) → pełna funkcjonalność dynamicznych workflow

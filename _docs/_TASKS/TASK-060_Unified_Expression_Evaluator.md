@@ -32,7 +32,7 @@ Before public launch (Blender forums, Reddit), consolidate two separate evaluato
 ```
 server/router/application/evaluator/
 ├── expression_evaluator.py   # AST-based, returns Optional[float]
-│   ├── Math: +, -, *, /, floor(), sin(), etc. (21 functions)
+│   ├── Math: +, -, *, /, floor(), sin(), etc. (22 functions)
 │   ├── Comparisons: ❌ NOT SUPPORTED (ValueError: Unsupported AST node)
 │   └── Logic: ❌ NOT SUPPORTED
 │
@@ -125,7 +125,7 @@ server/router/
 
 2. **UnifiedEvaluator** with full feature set:
    - **Arithmetic**: `+`, `-`, `*`, `/`, `//`, `%`, `**`
-   - **Math functions**: All 21 from TASK-056-1 (abs, min, max, floor, ceil, sqrt, sin, cos, tan, etc.)
+   - **Math functions**: All 22 from TASK-056-1 (abs, min, max, floor, ceil, sqrt, sin, cos, tan, etc.)
    - **Comparisons**: `<`, `<=`, `>`, `>=`, `==`, `!=`
    - **Logic**: `and`, `or`, `not`
    - **Ternary**: `x if condition else y`
@@ -334,7 +334,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
     Supports:
     - Arithmetic: +, -, *, /, //, %, **
-    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc. (21 total)
+    - Math functions: abs, min, max, floor, ceil, sqrt, sin, cos, etc. (22 total)
     - Comparisons: <, <=, >, >=, ==, !=
     - Chained comparisons: 0 < x < 10
     - Logic: and, or, not (with short-circuit evaluation)
@@ -1375,7 +1375,7 @@ __all__ = [
 Test categories based on TASK-059 specification:
 
 1. **Arithmetic Operations** - From existing `test_expression_evaluator.py`
-2. **Math Functions** - All 21 functions
+2. **Math Functions** - All 22 functions
 3. **Comparison Operators** - `<`, `<=`, `>`, `>=`, `==`, `!=`
 4. **Chained Comparisons** - `0 < x < 10`
 5. **Logical Operators** - `and`, `or`, `not` with precedence
@@ -1469,7 +1469,7 @@ Test integration with WorkflowRegistry:
 
 - [x] `IExpressionEvaluator` interface exists in domain layer
 - [x] `UnifiedEvaluator` implements `IExpressionEvaluator`
-- [x] All 21 math functions work in UnifiedEvaluator
+- [x] All 22 math functions work in UnifiedEvaluator
 - [x] All arithmetic operators work: `+`, `-`, `*`, `/`, `//`, `%`, `**`
 - [x] All comparison operators work: `<`, `<=`, `>`, `>=`, `==`, `!=`
 - [x] All logical operators work: `and`, `or`, `not`
@@ -1763,7 +1763,7 @@ If issues arise after deployment:
 
 - **TASK-059**: Superseded - kept as implementation reference for test cases
 - **TASK-055-FIX-8**: Documentation to update after completion
-- **TASK-056-1**: Extended math functions (21 functions in FUNCTIONS dict)
+- **TASK-056-1**: Extended math functions (22 functions in FUNCTIONS dict)
 - **TASK-056-5**: Computed parameter dependencies (topological sort)
 - **TASK-058**: Loop system (will benefit from ternary in $CALCULATE)
 
@@ -1888,7 +1888,7 @@ def _topological_sort(self, graph: Dict[str, list]) -> list:
 FUNCTIONS = {
     "abs": abs,
     "min": min,
-    # ... all 21 functions
+    # ... all 22 functions
 }  # ~30 lines - DELETE (but keep as `FUNCTIONS = UnifiedEvaluator.FUNCTIONS`)
 ```
 

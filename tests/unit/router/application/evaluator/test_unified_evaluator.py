@@ -106,7 +106,7 @@ class TestArithmeticOperations:
 
 
 class TestMathFunctions:
-    """Test all 21 math functions."""
+    """Test all 22 math functions."""
 
     @pytest.fixture
     def evaluator(self):

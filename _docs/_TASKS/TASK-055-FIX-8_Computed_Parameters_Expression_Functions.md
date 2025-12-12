@@ -1,11 +1,11 @@
 # TASK-055-FIX-8: Computed Parameters Expression Functions Reference
 
-**Status**: ⚠️ Partial (dokumentacja gotowa, ale odkryto brakującą implementację)
+**Status**: ✅ Done (updated after TASK-060)
 **Priority**: P0 (Critical - Documentation for TASK-056-5)
-**Related**: TASK-056-5, TASK-056-1, TASK-055-FIX-6, TASK-055, **TASK-059** (brakujące operatory)
+**Related**: TASK-056-5, TASK-056-1, TASK-055-FIX-6, TASK-055, **TASK-060** (supersedes TASK-059)
 **Created**: 2025-12-12
 **Completed**: 2025-12-12
-**Verified**: 2025-12-12 - odkryto brak implementacji operatorów porównania i logicznych
+**Verified**: 2025-12-12 - updated after TASK-060 (comparisons/logic/ternary supported)
 
 ---
 
@@ -20,7 +20,7 @@ NameError: name 'int' is not defined
 ```
 
 **Root Cause**:
-- Expression evaluator has **limited function support** (only 21 math functions from TASK-056-1)
+- Expression evaluator has **limited function support** (only 22 whitelisted math functions from TASK-056-1)
 - Common Python functions like `int()`, `str()`, `len()` are **NOT available**
 - No comprehensive documentation exists for workflow authors
 
@@ -36,7 +36,7 @@ NameError: name 'int' is not defined
 ### 1. Document Available Expression Functions
 
 Create authoritative reference listing:
-- All 21 supported math functions (from TASK-056-1)
+- All 22 supported math functions (from TASK-056-1)
 - Function categories (basic, rounding, trigonometric, etc.)
 - Usage examples for each function
 - Common pitfalls and NOT supported functions
@@ -60,9 +60,9 @@ Document common errors:
 
 ## Available Expression Functions
 
-### Complete Function Reference (21 Functions)
+### Complete Function Reference (22 Functions)
 
-Based on TASK-056-1 implementation (`server/router/application/evaluator/expression_evaluator.py:49-81`):
+Based on `UnifiedEvaluator.FUNCTIONS` (exported via `ExpressionEvaluator.FUNCTIONS`) from TASK-056-1 / TASK-060:
 
 | Category | Functions | Description | Example Usage |
 |----------|-----------|-------------|---------------|
@@ -77,7 +77,7 @@ Based on TASK-056-1 implementation (`server/router/application/evaluator/express
 
 ### Available Operators
 
-#### ✅ Zaimplementowane (działają w `$CALCULATE`)
+#### ✅ Zaimplementowane (działają w computed i w `$CALCULATE(...)` - TASK-060)
 
 | Operator | Description | Example | Status |
 |----------|-------------|---------|--------|
@@ -87,17 +87,12 @@ Based on TASK-056-1 implementation (`server/router/application/evaluator/express
 | `%` | Modulo (remainder) | `table_width % plank_width` | ✅ Działa |
 | `-` (unary) | Negation | `-width` | ✅ Działa |
 | `+` (unary) | Positive | `+width` | ✅ Działa |
+| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons | `width > 0.5` | ✅ Działa |
+| `and`, `or` | Logical AND/OR | `width > 0.5 and height < 2.0` | ✅ Działa |
+| `not` | Logical NOT | `not has_selection` | ✅ Działa |
+| `x if cond else y` | Ternary expression | `0.10 if i <= plank_full_count else plank_remainder_width` | ✅ Działa |
 
-#### ❌ NIE zaimplementowane (wymagają TASK-059)
-
-| Operator | Description | Example | Status |
-|----------|-------------|---------|--------|
-| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons | `width > 0.5` | ❌ **Brak `ast.Compare`** |
-| `and`, `or` | Logical AND/OR | `width > 0.5 and height < 2.0` | ❌ **Brak `ast.BoolOp`** |
-| `not` | Logical NOT | `not is_large` | ❌ **Brak `ast.UnaryOp(ast.Not)`** |
-| `if...else` (ternary) | Conditional | `1 if width > 0.5 else 0` | ❌ **Brak `ast.IfExp`** |
-
-> **UWAGA**: Operatory porównania i logiczne są wymienione w dokumentacji, ale **NIE SĄ zaimplementowane** w `_eval_node()`. Wyrażenia typu `1 if condition else 0` **NIE DZIAŁAJĄ** w obecnej wersji! Zobacz TASK-059 dla implementacji.
+> **Note:** Comparisons and logical operators evaluate to `1.0` (true) / `0.0` (false) for numeric contexts.
 
 ---
 
@@ -130,7 +125,7 @@ plank_full_count:
   depends_on: ["table_width", "plank_max_width"]
 ```
 
-**CZĘŚCIOWO CORRECT** (uses `floor()` - działa, ale `1 if...else` wymaga TASK-059):
+**CORRECT** (TASK-060: comparisons + ternary supported):
 ```yaml
 plank_full_count:
   type: int
@@ -146,7 +141,7 @@ plank_remainder_width:
 
 plank_has_remainder:
   type: int
-  computed: "1 if plank_remainder_width > 0.01 else 0"  # ❌ NIE DZIAŁA - wymaga TASK-059!
+  computed: "1 if plank_remainder_width > 0.01 else 0"  # ✅ Works (returns 1.0/0.0)
   depends_on: ["plank_remainder_width"]
   description: "Whether a remainder plank is needed (1=yes, 0=no)"
 
@@ -157,14 +152,11 @@ plank_total_count:
   description: "Total number of planks (full + remainder)"
 ```
 
-> ⚠️ **UWAGA**: `plank_has_remainder` używa `1 if ... else 0` co **NIE DZIAŁA** bez TASK-059!
-> **Obejście**: Użyj stałej wartości `default: 1` lub oblicz inaczej.
-
-**Test Case** (docelowo po TASK-059): 0.73m table width, 0.10m plank width
+**Test Case**: 0.73m table width, 0.10m plank width
 - `plank_full_count = floor(0.73 / 0.10) = 7` ✅
 - `plank_remainder_width = 0.73 - (7 * 0.10) = 0.03` ✅
-- `plank_has_remainder = 1 if 0.03 > 0.01 else 0 = 1` ❌ (wymaga TASK-059)
-- `plank_total_count = 7 + 1 = 8` ✅ (jeśli powyższe działa)
+- `plank_has_remainder = 1 if 0.03 > 0.01 else 0 = 1` ✅
+- `plank_total_count = 7 + 1 = 8` ✅
 
 ### Example 2: Angled Leg Constraints
 
@@ -202,36 +194,25 @@ diagonal_size:
   description: "Screen diagonal in meters (Pythagorean theorem)"
 ```
 
-### Example 4: Boolean to Int Conversion
+### Example 4: Boolean to Int Conversion (TASK-060)
 
-> ⚠️ **UWAGA**: Ten przykład wymaga TASK-059! Operatory porównania (`>`) i ternary (`if...else`) NIE SĄ obecnie zaimplementowane.
+**Goal**: Use boolean conditions as numeric flags (comparisons/logical ops return `1.0` / `0.0`)
 
-**Goal**: Use boolean conditions as integer flags
-
-**WRONG** (boolean expressions don't work directly in steps):
-```yaml
-add_stretchers:
-  type: bool
-  computed: "table_width > 1.0"  # ❌ NIE DZIAŁA - brak ast.Compare
-  depends_on: ["table_width"]
-```
-
-**DOCELOWO CORRECT** (po TASK-059):
 ```yaml
 add_stretchers:
   type: int
-  computed: "1 if table_width > 1.0 else 0"  # ❌ NIE DZIAŁA - brak ast.IfExp
+  computed: "table_width > 1.0"  # ✅ -> 1.0 or 0.0
   depends_on: ["table_width"]
   description: "Whether to add stretchers (1=yes, 0=no)"
 ```
 
-**OBECNE OBEJŚCIE** (do czasu TASK-059):
+**Ternary variant** (useful for custom numeric values):
+
 ```yaml
-# Użyj osobnego parametru lub condition w step zamiast computed
-add_stretchers:
+detail_level:
   type: int
-  default: 1  # Hardcoded value, brak dynamicznego warunku
-  description: "Whether to add stretchers (1=yes, 0=no)"
+  computed: "2 if table_width > 1.0 else 1"
+  depends_on: ["table_width"]
 ```
 
 ---
@@ -253,19 +234,17 @@ computed: "trunc(value)"  # ✅ For rounding toward zero (handles negatives)
 
 ### Pitfall 2: Boolean Results in Numeric Context
 
-> ⚠️ **UWAGA**: Wymaga TASK-059!
+**Note**: Comparisons and logical operators return `1.0` / `0.0` (numeric).
 
-**Problem**:
+**Example**:
 ```yaml
-computed: "width > height"  # ❌ NIE DZIAŁA - brak ast.Compare w _eval_node()
+computed: "width > height"  # ✅ -> 1.0 or 0.0
 ```
 
-**Docelowe rozwiązanie** (po TASK-059):
+**If you need custom values**:
 ```yaml
-computed: "1 if width > height else 0"  # ❌ NIE DZIAŁA - brak ast.IfExp
+computed: "10 if width > height else 0"
 ```
-
-**Obecne obejście**: Użyj `condition` w workflow step zamiast computed parameter.
 
 ### Pitfall 3: String Operations
 
@@ -313,7 +292,7 @@ param_name:
 ```
 
 **Validation Checklist**:
-- ✅ Only uses 21 available functions (see table above)
+- ✅ Only uses 22 available functions (see table above)
 - ✅ No `int()`, `str()`, `len()`, `bool()` calls
 - ✅ Boolean expressions converted to `1 if ... else 0`
 - ✅ Dependencies listed in `depends_on` array
@@ -358,7 +337,7 @@ print(f"Has remainder: {plank_has_remainder}")  # Expected: 1
 ## Success Criteria
 
 ### Must Have (Phase 1)
-- ✅ All 21 available functions documented with examples
+- ✅ All 22 available functions documented with examples
 - ✅ Common pitfalls listed with solutions
 - ✅ Real-world workflow examples (fractional planks, angles, aspect ratio)
 - ✅ Clear error messages with fixes
@@ -366,7 +345,7 @@ print(f"Has remainder: {plank_has_remainder}")  # Expected: 1
 
 ### Nice to Have (Phase 2)
 - ✅ Interactive expression validator (web tool)
-- ✅ Unit tests for all 21 functions
+- ✅ Unit tests for all 22 functions
 - ✅ IDE autocomplete for workflow YAML files
 - ✅ Linter to catch unsupported function usage
 
@@ -505,37 +484,40 @@ computed: "range(10)"           # ❌ NameError
 1. Consider adding `int()` wrapper in expression evaluator (wraps `floor()`)
 2. Add expression validator to workflow loader (fail early with helpful errors)
 3. Create IDE plugin for YAML workflow autocomplete
-4. Add unit tests for all 21 functions with workflow examples
+4. Add unit tests for all 22 functions with workflow examples
 
 ---
 
 ## Notes
 
 - This document is the **authoritative reference** for computed parameter expressions
-- All 21 functions come from Python's `math` module + built-ins `abs`, `min`, `max`, `round`, `pow`
+- All 22 functions come from Python's `math` module + built-ins `abs`, `min`, `max`, `round`, `pow`
 - Expression evaluator intentionally limits function set for **security** (no `eval()` vulnerabilities)
 - User feedback: *"za kazdym razem trzeba obraz budowa i restartowac kontener"* - remember to rebuild Docker image after YAML changes
 - Real bug fixed: `simple_table.yaml` used `int()` → changed to `floor()` → fractional plank system now works
 
 ---
 
-## Weryfikacja Zgodności z Kodem (2024-12-12)
+## Weryfikacja Zgodności z Kodem (2025-12-12)
 
-### ✅ Poprawiona Ścieżka Pliku
+### ✅ Źródło Prawdy w Kodzie (po TASK-060)
 
-| Element | Poprzednio (BŁĘDNE) | Aktualne (POPRAWNE) |
-|---------|---------------------|---------------------|
-| Expression Evaluator | `server/router/infrastructure/expression_evaluator.py` | `server/router/application/evaluator/expression_evaluator.py` |
+| Element | Lokalizacja | Uwagi |
+|---------|-------------|-------|
+| Core evaluator | `server/router/application/evaluator/unified_evaluator.py` | `UnifiedEvaluator` (AST core) |
+| Math whitelist | `server/router/application/evaluator/unified_evaluator.py:45` | `UnifiedEvaluator.FUNCTIONS` (22 funkcje) |
+| `$CALCULATE(...)` wrapper | `server/router/application/evaluator/expression_evaluator.py` | Deleguje do `UnifiedEvaluator` |
+| Computed params | `server/router/application/evaluator/unified_evaluator.py:522` | `resolve_computed_parameters()` |
 
-### ✅ Poprawiona Liczba Funkcji
+### ✅ Zweryfikowana Liczba Funkcji
 
-| Element | Poprzednio | Aktualne |
-|---------|------------|----------|
-| Liczba funkcji | 13 | **21** |
+| Element | Aktualne |
+|---------|----------|
+| Liczba funkcji math | **22** (`UnifiedEvaluator.FUNCTIONS`) |
 
 ### ✅ Zweryfikowane Funkcje w Kodzie
 
-Funkcje z `expression_evaluator.py:49-81` (słownik `FUNCTIONS`):
+Funkcje z `UnifiedEvaluator.FUNCTIONS` (`unified_evaluator.py:45`):
 
 | Kategoria | Funkcje | Ilość |
 |-----------|---------|-------|
@@ -547,63 +529,34 @@ Funkcje z `expression_evaluator.py:49-81` (słownik `FUNCTIONS`):
 | Angle Conversion | `degrees`, `radians` | 2 |
 | Logarithmic | `log`, `log10`, `exp` | 3 |
 | Advanced | `hypot` | 1 |
-| **TOTAL** | | **21** |
+| **TOTAL** | | **22** |
 
-### ✅ Zweryfikowane Operatory w Kodzie
+### ✅ Zweryfikowane Operatory / AST Nodes (TASK-060)
 
-Operatory z `expression_evaluator.py:289-297` (słownik `op_map` w `_eval_node()`):
+Operatory są zaimplementowane w `UnifiedEvaluator`:
+- `BINARY_OPS` (`unified_evaluator.py:75`) - arytmetyka
+- `COMPARE_OPS` (`unified_evaluator.py:86`) - porównania
+- `_eval_boolop()` (`unified_evaluator.py:414`) - `and`/`or`
+- `_eval_unaryop()` (`unified_evaluator.py:357`) - w tym `not`
+- `_eval_ifexp()` (`unified_evaluator.py:444`) - ternary
 
-| Operator | AST Node | Linia |
-|----------|----------|-------|
-| `+` | `ast.Add` | 290 |
-| `-` | `ast.Sub` | 291 |
-| `*` | `ast.Mult` | 292 |
-| `/` | `ast.Div` | 293 |
-| `**` | `ast.Pow` | 294 |
-| `%` | `ast.Mod` | 295 |
-| `//` | `ast.FloorDiv` | 296 |
-
-### ❌ Brakująca Implementacja (wymaga TASK-059)
-
-W `_eval_node()` (linie 262-336) **NIE MA** obsługi:
-
-| AST Node | Operator | Wymagane dla | Status |
-|----------|----------|--------------|--------|
-| `ast.Compare` | `<`, `<=`, `>`, `>=`, `==`, `!=` | Porównania | ❌ **BRAK** |
-| `ast.BoolOp` | `and`, `or` | Operatory logiczne | ❌ **BRAK** |
-| `ast.UnaryOp(ast.Not)` | `not` | Negacja logiczna | ❌ **BRAK** |
-| `ast.IfExp` | `x if cond else y` | Ternary expressions | ❌ **BRAK** |
-
-**Konsekwencje**:
-- Wyrażenia typu `"1 if width > 0.5 else 0"` **NIE DZIAŁAJĄ**
-- Przykład `plank_has_remainder` w simple_table.yaml **NIE ZADZIAŁA**
-- Wszystkie "boolean to int" konwersje wymagają TASK-059
+| AST Node | Operator | Status |
+|----------|----------|--------|
+| `ast.BinOp` | `+`, `-`, `*`, `/`, `//`, `%`, `**` | ✅ |
+| `ast.UnaryOp` | `-x`, `+x`, `not x` | ✅ |
+| `ast.Compare` | `<`, `<=`, `>`, `>=`, `==`, `!=` | ✅ |
+| `ast.BoolOp` | `and`, `or` | ✅ |
+| `ast.IfExp` | `x if cond else y` | ✅ |
 
 ### 🎯 Podsumowanie Weryfikacji
 
 | Kategoria | Status |
 |-----------|--------|
-| Ścieżka pliku | ✅ Poprawiona na `application/evaluator/` |
-| Liczba funkcji | ✅ Poprawiona na 21 |
-| Numery linii | ✅ Zaktualizowane (49-81) |
-| Kod przykładowy | ✅ Zaktualizowany do aktualnej implementacji |
-| Clean Architecture | ✅ Plik w prawidłowej warstwie (Application) |
-| **Operatory arytmetyczne** | ✅ **7 operatorów zaimplementowanych** |
-| **Operatory porównania** | ❌ **NIE zaimplementowane** |
-| **Operatory logiczne** | ❌ **NIE zaimplementowane** |
-| **Ternary expressions** | ❌ **NIE zaimplementowane** |
+| Ścieżka plików | ✅ `application/evaluator/` |
+| Liczba funkcji | ✅ 22 |
+| Operatory arytmetyczne | ✅ |
+| Operatory porównania | ✅ (TASK-060) |
+| Operatory logiczne | ✅ (TASK-060) |
+| Ternary expressions | ✅ (TASK-060) |
 
----
-
-## TASK-059: Wymagana Implementacja
-
-Na podstawie tej weryfikacji, TASK-059 powinien dodać do `_eval_node()`:
-
-1. **`ast.Compare`** - operatory porównania (`<`, `<=`, `>`, `>=`, `==`, `!=`)
-2. **`ast.BoolOp`** - operatory logiczne (`and`, `or`)
-3. **`ast.UnaryOp(ast.Not)`** - negacja logiczna (`not`)
-4. **`ast.IfExp`** - ternary expressions (`x if cond else y`)
-
-Bez tego, przykłady z TASK-055-FIX-8 dotyczące "boolean to int conversion" **nie będą działać**.
-
-**TASK-055-FIX-8 został zweryfikowany. Dokumentacja poprawiona, ale wymaga TASK-059 dla pełnej funkcjonalności.**
+`TASK-059` nie jest wymagany — został zastąpiony przez `TASK-060`.

@@ -13,7 +13,7 @@ The **UnifiedEvaluator** consolidates two separate evaluation systems into a sin
 ExpressionEvaluator (466 lines)    ConditionEvaluator (383 lines)
 ├── _safe_eval() with ast.parse     ├── COMPARISONS list
 ├── _eval_node() recursive          ├── _parse_or_expression()
-├── Math functions (21)             ├── _parse_and_expression()
+├── Math functions (22)             ├── _parse_and_expression()
 └── $CALCULATE pattern              ├── _parse_not_expression()
                                     ├── _parse_primary()
                                     └── Regex-based parsing
@@ -26,7 +26,7 @@ ExpressionEvaluator (466 lines)    ConditionEvaluator (383 lines)
 │  ┌────────────────────────────────────────────────────┐  │
 │  │                   AST Core                          │  │
 │  │  - Arithmetic: + - * / // % **                     │  │
-│  │  - Math: 21 functions (abs, min, max, sin, etc.)   │  │
+│  │  - Math: 22 functions (abs, min, max, sin, etc.)   │  │
 │  │  - Comparisons: < <= > >= == !=                    │  │
 │  │  - Chained: 0 < x < 10                             │  │
 │  │  - Logic: and, or, not                             │  │
@@ -130,7 +130,7 @@ not a               # -> logical negation
 x if condition else y
 ```
 
-### Math Functions (21)
+### Math Functions (22)
 
 | Category | Functions |
 |----------|-----------|
@@ -163,14 +163,18 @@ The evaluator uses Python's `ast.literal_eval` principles with a restricted node
 - `$CALCULATE(expr)` pattern matching
 - `$variable` direct references
 - Context flattening (`dimensions` → `width`, `height`, `depth`)
-- `process_expression()` entry point
+- Recursive parameter resolution (`resolve_params()` + `resolve_param_value()`)
+- Delegation for computed parameters (`resolve_computed_parameters()`)
 
 ### Delegation
 
 ```python
-def _evaluate_expression(self, expr: str) -> float:
+def evaluate(self, expression: str) -> Optional[float]:
     """Delegate to UnifiedEvaluator."""
-    return self._unified.evaluate_as_float(expr)
+    try:
+        return self._unified.evaluate_as_float(expression)
+    except Exception:
+        return None
 ```
 
 ---
@@ -269,7 +273,7 @@ parameters:
 | Test Category | Coverage |
 |---------------|----------|
 | Arithmetic | `+`, `-`, `*`, `/`, `//`, `%`, `**` |
-| Math functions | All 21 functions |
+| Math functions | All 22 functions |
 | Comparisons | `<`, `<=`, `>`, `>=`, `==`, `!=` |
 | Chained comparisons | `0 < x < 10` |
 | Logical operators | `and`, `or`, `not` with precedence |
