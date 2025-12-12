@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 3 tasks (~19 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 124
+- **Done:** 125
 
 ---
 
@@ -33,6 +33,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-060](./TASK-060_Unified_Expression_Evaluator.md) | **Unified Expression Evaluator** | 🔴 High | 2025-12-12 |
 | [TASK-057](./TASK-057_Remove_Old_Pattern_Expansion_Path.md) | **Remove Old Pattern-Based Expansion Path** | 🟡 Medium | 2025-12-11 |
 | [TASK-056](./TASK-056_Workflow_System_Enhancements.md) | **Workflow System Enhancements** | 🔴 High | 2025-12-11 |
 | [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 2025-12-11 |

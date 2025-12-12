@@ -41,6 +41,9 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | ✅ |
 | 32 | `32-workflow-adapter.md` | Workflow Adapter | TASK-051 | ✅ |
 | 33 | `33-parametric-variables.md` | Parametric Variables | TASK-052 | ✅ |
+| 34 | `34-ensemble-matching-system.md` | Ensemble Matching | TASK-053 | ✅ |
+| 35 | `35-parameter-resolver.md` | Parameter Resolver | TASK-055 | ✅ |
+| 36 | `36-unified-evaluator.md` | Unified Evaluator | TASK-060 | ✅ |
 
 ---
 
@@ -101,6 +104,15 @@ Phase 9: Confidence-Based Adaptation (TASK-051) ✅
 
 Phase 10: Parametric Variables (TASK-052) ✅
   └─ 33-parametric-variables.md ✅ (TASK-052)
+
+Phase 11: Ensemble Matching (TASK-053) ✅
+  └─ 34-ensemble-matching-system.md ✅ (TASK-053)
+
+Phase 12: Parameter Resolution (TASK-055) ✅
+  └─ 35-parameter-resolver.md ✅ (TASK-055)
+
+Phase 13: Unified Evaluator (TASK-060) ✅
+  └─ 36-unified-evaluator.md ✅ (TASK-060)
 ```
 
 ---
