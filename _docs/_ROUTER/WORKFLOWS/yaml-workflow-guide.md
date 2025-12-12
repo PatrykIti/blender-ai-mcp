@@ -671,6 +671,7 @@ Loops let you generate repeated steps (e.g. planks, windows, buttons) without co
 - Works in any workflow string: `params`, `description`, `condition`, `id`, `depends_on`.
 - Runs before `$CALCULATE/$AUTO_/$variable` and before condition evaluation, so you can safely use `{i}` inside `$CALCULATE(...)` and `condition`.
 - Escaping: use `{{` and `}}` for literal braces.
+- Unknown placeholders (e.g. `{typo}`) fail workflow expansion (strict mode).
 
 Example:
 ```yaml

@@ -32,6 +32,7 @@ Where it works:
 Rules:
 - `{var}` is replaced with the current value from the workflow context (including loop variables like `i`, `row`, `col`).
 - Escaping: `{{` and `}}` produce literal `{` and `}`.
+- Unknown placeholders fail workflow expansion (strict mode).
 
 Examples:
 ```yaml
