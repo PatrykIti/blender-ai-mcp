@@ -1854,9 +1854,157 @@ print('ternary:', ee.evaluate('0.1 if count <= max_count else 0.05'))  # Should 
 ```
 
 ### Step 8: Cleanup
-1. Remove backup files
-2. Delete old unused code
+1. Remove backup files (`.bak`)
+2. Verify no dead code remains
 3. Update documentation
+
+---
+
+## Code to Remove (After Refactoring)
+
+### ExpressionEvaluator - REMOVE these methods/imports:
+
+```python
+# REMOVE from imports:
+import ast
+import math
+import operator
+
+# REMOVE these methods entirely (moved to UnifiedEvaluator):
+def _safe_eval(self, expression: str) -> float:
+    """..."""  # ~35 lines - DELETE
+
+def _eval_node(self, node: ast.AST) -> float:
+    """..."""  # ~75 lines - DELETE
+
+def _topological_sort(self, graph: Dict[str, list]) -> list:
+    """..."""  # ~30 lines - DELETE
+
+# REMOVE class attribute (will reference UnifiedEvaluator.FUNCTIONS instead):
+FUNCTIONS = {
+    "abs": abs,
+    "min": min,
+    # ... all 21 functions
+}  # ~30 lines - DELETE (but keep as `FUNCTIONS = UnifiedEvaluator.FUNCTIONS`)
+```
+
+**Lines to remove from `expression_evaluator.py`**: ~170 lines (out of 466)
+
+### ConditionEvaluator - REMOVE these methods/imports:
+
+```python
+# REMOVE from imports:
+import re  # (if no longer needed after removing regex parsing)
+
+# REMOVE class attribute:
+COMPARISONS = [
+    (">=", lambda a, b: a >= b),
+    # ...
+]  # ~8 lines - DELETE
+
+# REMOVE these methods entirely (moved to UnifiedEvaluator):
+def _evaluate_expression(self, condition: str) -> bool:
+    """..."""  # ~15 lines - DELETE
+
+def _parse_or_expression(self, condition: str) -> bool:
+    """..."""  # ~15 lines - DELETE
+
+def _parse_and_expression(self, condition: str) -> bool:
+    """..."""  # ~15 lines - DELETE
+
+def _parse_not_expression(self, condition: str) -> bool:
+    """..."""  # ~10 lines - DELETE
+
+def _parse_primary(self, condition: str) -> bool:
+    """..."""  # ~40 lines - DELETE
+
+def _split_top_level(self, condition: str, delimiter: str) -> list:
+    """..."""  # ~30 lines - DELETE
+
+def _resolve_value(self, value_str: str) -> Any:
+    """..."""  # ~50 lines - DELETE
+```
+
+**Lines to remove from `condition_evaluator.py`**: ~185 lines (out of 383)
+
+### Summary of Removals
+
+| File | Current Lines | Remove | Final Lines |
+|------|---------------|--------|-------------|
+| `expression_evaluator.py` | 466 | ~170 | ~150 |
+| `condition_evaluator.py` | 383 | ~185 | ~100 |
+| **Total removed** | | **~355** | |
+| `unified_evaluator.py` | N/A | N/A | ~450 (NEW) |
+
+**Net change**: +~100 lines, but with:
+- Single source of truth for AST evaluation
+- Full feature set (comparisons + logic in both evaluators)
+- Domain interface for testability
+- No code duplication
+
+### Final File Structure After Refactoring
+
+```
+server/router/
+├── domain/
+│   └── interfaces/
+│       ├── __init__.py                     # +1 export: IExpressionEvaluator
+│       └── i_expression_evaluator.py       # NEW: ~80 lines
+│
+└── application/
+    └── evaluator/
+        ├── __init__.py                     # +1 export: UnifiedEvaluator
+        ├── unified_evaluator.py            # NEW: ~450 lines (core AST engine)
+        ├── expression_evaluator.py         # REFACTORED: ~150 lines (was 466)
+        ├── condition_evaluator.py          # REFACTORED: ~100 lines (was 383)
+        └── proportion_resolver.py          # UNCHANGED: 309 lines
+```
+
+### Final ExpressionEvaluator Structure (~150 lines)
+
+```python
+"""Expression Evaluator - Wrapper for $CALCULATE() expressions."""
+
+import re
+import logging
+from typing import Dict, Any, Optional
+
+from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
+
+class ExpressionEvaluator:
+    CALCULATE_PATTERN = re.compile(...)
+    VARIABLE_PATTERN = re.compile(...)
+    FUNCTIONS = UnifiedEvaluator.FUNCTIONS  # Reference, not copy
+
+    def __init__(self): ...
+    def set_context(self, context): ...      # Context flattening logic KEPT
+    def get_context(self): ...
+    def update_context(self, updates): ...
+    def evaluate(self, expression): ...      # Delegates to _unified
+    def resolve_param_value(self, value): ...
+    def resolve_params(self, params): ...
+    def resolve_computed_parameters(...): ...  # Delegates to _unified
+```
+
+### Final ConditionEvaluator Structure (~100 lines)
+
+```python
+"""Condition Evaluator - Wrapper for boolean conditions."""
+
+import logging
+from typing import Dict, Any
+
+from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
+
+class ConditionEvaluator:
+    def __init__(self): ...
+    def set_context(self, context): ...
+    def set_context_from_scene(self, scene_context): ...  # KEPT (adapter logic)
+    def get_context(self): ...
+    def update_context(self, updates): ...
+    def evaluate(self, condition): ...           # Delegates to _unified + fail-open
+    def simulate_step_effect(self, tool, params): ...  # KEPT (workflow logic)
+```
 
 ---
 
