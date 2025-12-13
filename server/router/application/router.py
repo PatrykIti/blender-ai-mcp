@@ -1352,26 +1352,20 @@ class SupervisorRouter:
         else:
             steps_to_execute = definition.steps
 
-        # TASK-055-FIX: Expand adapted steps with ensemble modifiers
-        # Bug 1 fix: Use steps_to_execute (from WorkflowAdapter) instead of all steps
-        # Bug 2 fix: Don't pass user_prompt - final_variables already has _pending_modifiers
-        #            from EnsembleMatcher with LaBSE semantic matching
-
-        # TASK-055-FIX-7: Resolve computed parameters before workflow execution
-        # This ensures computed params like plank_count, plank_actual_width are calculated
-        final_variables = registry.resolve_computed_parameters_for_workflow(
-            workflow_name, final_variables
+        # IMPORTANT: Run expansion through the WorkflowRegistry pipeline.
+        #
+        # This ensures computed params, loops + `{var}` interpolation (TASK-058),
+        # $CALCULATE/$AUTO_ resolution, and condition evaluation behave identically
+        # to the standard (non-pending) expansion path.
+        #
+        # We pass steps_override so adaptation affects only step selection, not the pipeline.
+        calls = registry.expand_workflow(
+            workflow_name,
+            final_variables,
+            eval_context,
+            user_prompt=None,  # final_variables already includes pending modifiers
+            steps_override=steps_to_execute,
         )
-
-        # Set up registry evaluators (required for _steps_to_calls conditions)
-        registry._evaluator.set_context({**eval_context, **final_variables})
-        # TASK-055-FIX-4: Extend condition context with final_variables (workflow parameters)
-        extended_context = {**registry._build_condition_context(eval_context), **final_variables}
-        registry._condition_evaluator.set_context(extended_context)
-
-        resolved_steps = registry._resolve_definition_params(steps_to_execute, final_variables)
-        # TASK-055-FIX-4: Pass workflow_params to enable condition evaluation with workflow variables
-        calls = registry._steps_to_calls(resolved_steps, workflow_name, workflow_params=final_variables)
 
         if not calls:
             self.logger.log_info(f"Workflow '{workflow_name}' produced no tool calls")
