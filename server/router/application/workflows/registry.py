@@ -225,14 +225,20 @@ class WorkflowRegistry:
             List of tool calls to execute.
         """
         base_context: Dict[str, Any] = context or {}
+        # Treat explicit `None` values as "not provided" to avoid accidentally
+        # overriding defaults/computed params (e.g. computed params often have
+        # schema.default=None and should be computed, not passed through).
+        sanitized_params: Dict[str, Any] = {
+            k: v for k, v in (params or {}).items() if v is not None
+        }
 
         # Ensure custom workflows are loaded
         self.ensure_custom_loaded()
 
         # Set up evaluator context
         eval_context = dict(base_context)
-        if params:
-            eval_context.update(params)
+        if sanitized_params:
+            eval_context.update(sanitized_params)
         self._evaluator.set_context(eval_context)
 
         # Set up condition evaluator context (TASK-041-11)
@@ -245,9 +251,9 @@ class WorkflowRegistry:
         # Try built-in workflow first
         workflow = self._workflows.get(workflow_name)
         if workflow:
-            steps = workflow.get_steps(params)
+            steps = workflow.get_steps(sanitized_params if params else None)
             # Pass params to enable condition evaluation with workflow parameters
-            return self._steps_to_calls(steps, workflow_name, workflow_params=params)
+            return self._steps_to_calls(steps, workflow_name, workflow_params=sanitized_params if params else None)
 
         # Try custom definition
         definition = self._custom_definitions.get(workflow_name)
@@ -257,7 +263,7 @@ class WorkflowRegistry:
             # Build variable context from defaults + modifiers (TASK-052)
             variables = self._build_variables(definition, user_prompt)
             # Merge with params (params override variables)
-            all_params = {**variables, **(params or {})}
+            all_params = {**variables, **sanitized_params}
 
 
             # TASK-055-FIX-7 Phase 0: Resolve computed parameters
@@ -267,7 +273,7 @@ class WorkflowRegistry:
                     schemas = definition.parameters  # Dict[str, ParameterSchema]
 
                     # Separate explicit params (from params arg) and base params (defaults + modifiers)
-                    explicit_params = params or {}
+                    explicit_params = sanitized_params
                     base_params = {k: v for k, v in all_params.items() if k not in explicit_params}
 
                     # Resolve computed parameters using all available params
@@ -334,15 +340,16 @@ class WorkflowRegistry:
         definition = self._custom_definitions.get(workflow_name)
         if not definition or not definition.parameters:
             return params
+        sanitized_params: Dict[str, Any] = {k: v for k, v in params.items() if v is not None}
 
         try:
             # Resolve computed parameters using provided params
             computed_values = self._evaluator.resolve_computed_parameters(
-                definition.parameters, params
+                definition.parameters, sanitized_params
             )
 
             # Merge computed values into params (computed override defaults)
-            result = {**params, **computed_values}
+            result = {**sanitized_params, **computed_values}
 
             logger.debug(
                 f"Resolved {len(computed_values)} computed parameters for "
@@ -355,12 +362,12 @@ class WorkflowRegistry:
             logger.error(
                 f"Computed parameter dependency error in '{workflow_name}': {e}"
             )
-            return params  # Return original params on error
+            return sanitized_params  # Return sanitized params on error
         except Exception as e:
             logger.error(
                 f"Unexpected error resolving computed parameters in '{workflow_name}': {e}"
             )
-            return params  # Return original params on error
+            return sanitized_params  # Return sanitized params on error
 
     def _build_variables(
         self,

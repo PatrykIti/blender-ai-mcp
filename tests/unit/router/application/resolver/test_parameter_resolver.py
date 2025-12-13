@@ -350,6 +350,32 @@ class TestParameterResolverTier3:
         assert result.resolved["top_width"] == 1.5
         assert result.resolution_sources["top_width"] == "default"
 
+    def test_computed_param_not_defaulted_to_none_when_irrelevant(
+        self, resolver, mock_classifier
+    ):
+        """Computed params should be deferred (not set to default=None)."""
+        mock_classifier._default_similarity = 0.2
+
+        computed_schema = ParameterSchema(
+            name="plank_full_count",
+            type="int",
+            computed="floor(table_width / plank_max_width)",
+            depends_on=["table_width", "plank_max_width"],
+            description="Number of full-width planks",
+        )
+
+        result = resolver.resolve(
+            prompt="simple table",
+            workflow_name="simple_table_workflow",
+            parameters={"plank_full_count": computed_schema},
+            existing_modifiers={},
+        )
+
+        assert result.is_complete
+        assert result.resolved == {}
+        assert result.unresolved == []
+        assert "plank_full_count" not in result.resolution_sources
+
 
 class TestParameterResolverRelevance:
     """Tests for relevance calculation."""

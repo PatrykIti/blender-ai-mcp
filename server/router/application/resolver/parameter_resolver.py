@@ -130,6 +130,36 @@ class ParameterResolver(IParameterResolver):
                 )
                 continue
 
+            # TASK-056-5: Computed parameters should NOT fall back to default=None.
+            #
+            # They are meant to be derived later by the workflow execution pipeline.
+            # If we set them to default (typically None), we end up explicitly passing
+            # `param=None` into expansion, which can override computed values and
+            # break $CALCULATE expressions (e.g. Unknown variable).
+            if schema.computed:
+                # Optional: allow interactive override only if the prompt clearly relates
+                # to this param; otherwise defer to computation.
+                relevance = self.calculate_relevance(prompt, schema)
+                if relevance > self._relevance_threshold:
+                    context = self.extract_context(prompt, schema)
+                    unresolved.append(
+                        UnresolvedParameter(
+                            name=param_name,
+                            schema=schema,
+                            context=context,
+                            relevance=relevance,
+                        )
+                    )
+                    logger.debug(
+                        f"TIER 3: {param_name} UNRESOLVED (computed param override) "
+                        f"(relevance={relevance:.3f}, context='{context}')"
+                    )
+                else:
+                    logger.debug(
+                        f"TIER 3: {param_name} deferred (computed param, relevance={relevance:.3f} < threshold)"
+                    )
+                continue
+
             # TIER 3: Check if prompt relates to this parameter
             relevance = self.calculate_relevance(prompt, schema)
 

@@ -499,3 +499,35 @@ class TestWorkflowRegistryWithYAML:
         # Without override: ceil(0.8 / 0.1) = 8
         # With override: 10 (explicit value)
         assert calls[1].params["scale"][0] == 10
+
+    def test_expand_workflow_ignores_none_explicit_params(self, registry):
+        """None values should not override defaults/computed params."""
+        from server.router.domain.entities.parameter import ParameterSchema
+
+        definition = WorkflowDefinition(
+            name="test_none_explicit",
+            description="Test None explicit params",
+            steps=[
+                WorkflowStep(
+                    tool="modeling_transform_object",
+                    params={
+                        "name": "Obj",
+                        "scale": ["$CALCULATE(a)", 1.0, 1.0],
+                    },
+                ),
+            ],
+            parameters={
+                "a": ParameterSchema(
+                    name="a",
+                    type="float",
+                    computed="x + 1",
+                    depends_on=["x"],
+                ),
+            },
+        )
+        registry.register_definition(definition)
+
+        calls = registry.expand_workflow("test_none_explicit", params={"x": 1.0, "a": None})
+
+        assert len(calls) == 1
+        assert calls[0].params["scale"][0] == 2.0
