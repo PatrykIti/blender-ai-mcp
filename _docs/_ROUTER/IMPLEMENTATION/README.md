@@ -44,6 +44,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 34 | `34-ensemble-matching-system.md` | Ensemble Matching | TASK-053 | ✅ |
 | 35 | `35-parameter-resolver.md` | Parameter Resolver | TASK-055 | ✅ |
 | 36 | `36-unified-evaluator.md` | Unified Evaluator | TASK-060 | ✅ |
+| 37 | `37-loop-expander.md` | Loop Expander | TASK-058 | ✅ |
 
 ---
 

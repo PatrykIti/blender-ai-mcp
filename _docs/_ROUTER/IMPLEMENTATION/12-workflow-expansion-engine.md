@@ -1,99 +1,78 @@
 # 12. Workflow Expansion Engine
 
+> **Task:** TASK-039-13 (+ YAML workflow integration) | **Status:** ✅ Current  
+> **Layer:** Application (`server/router/application/engines/`)
+
+---
+
 ## Overview
 
-The Workflow Expansion Engine (`WorkflowExpansionEngine`) transforms single tool calls into multi-step workflows based on detected patterns.
+`WorkflowExpansionEngine` is an application-level facade that exposes workflow expansion via the domain `IExpansionEngine` interface.
+
+In the current architecture, workflows are sourced from `WorkflowRegistry` (YAML/JSON or programmatic definitions), and the registry is responsible for the full expansion pipeline:
+
+- computed params
+- loops + `{var}` interpolation
+- `$CALCULATE(...)` / `$AUTO_*` / `$variable`
+- `condition` evaluation + context simulation
+
+So the expansion engine primarily delegates to the registry and provides convenience helpers.
+
+---
 
 ## File Location
 
-```
-server/router/application/engines/workflow_expansion_engine.py
-```
+`server/router/application/engines/workflow_expansion_engine.py`
 
-## Core Functionality
+---
 
-### Predefined Workflows
+## Responsibilities
 
-The engine includes several predefined workflows:
+1. **Expose registry workflows via `IExpansionEngine`**
+   - `get_workflow()`, `get_available_workflows()`, `register_workflow()`
+2. **Expand a named workflow into tool calls**
+   - delegates to `WorkflowRegistry.expand_workflow(...)`
+3. **Legacy/simple parameter inheritance**
+   - resolves `$param` strings in expanded calls using the original tool call params (kept for compatibility)
 
-```python
-PREDEFINED_WORKFLOWS = {
-    "phone_workflow": {
-        "description": "Complete phone/tablet modeling workflow",
-        "trigger_pattern": "phone_like",
-        "trigger_keywords": ["phone", "smartphone", "tablet", "mobile"],
-        "steps": [
-            {"tool": "modeling_create_primitive", "params": {"type": "CUBE"}},
-            {"tool": "modeling_transform_object", "params": {"scale": [0.4, 0.8, 0.05]}},
-            # ... 10 steps total
-        ],
-    },
-    "tower_workflow": { ... },
-    "screen_cutout_workflow": { ... },
-    "bevel_all_edges_workflow": { ... },
-}
-```
-
-### Workflow Expansion
-
-When a pattern suggests a workflow, the engine expands it:
-
-```python
-result = engine.expand(
-    tool_name="modeling_create_primitive",
-    params={"type": "CUBE"},
-    context=scene_context,
-    pattern=detected_pattern,  # Has suggested_workflow="phone_workflow"
-)
-# Returns list of 10 CorrectedToolCall objects
-```
+---
 
 ## API
 
-### expand()
-
-Main expansion method:
-
 ```python
-def expand(
-    self,
-    tool_name: str,
-    params: Dict[str, Any],
-    context: SceneContext,
-    pattern: Optional[DetectedPattern] = None,
-) -> Optional[List[CorrectedToolCall]]:
+class WorkflowExpansionEngine(IExpansionEngine):
+    def get_workflow(self, workflow_name: str) -> Optional[List[Dict[str, Any]]]: ...
+    def register_workflow(self, name: str, steps: List[Dict[str, Any]], ...) -> None: ...
+    def get_available_workflows(self) -> List[str]: ...
+
+    def expand_workflow(
+        self,
+        workflow_name: str,
+        params: Dict[str, Any],
+        user_prompt: Optional[str] = None,
+    ) -> List[CorrectedToolCall]: ...
 ```
 
-### Workflow Management
+Notes:
 
-- `get_workflow(workflow_name)` - Get workflow steps
-- `register_workflow(name, steps, trigger_pattern, trigger_keywords)` - Add custom workflow
-- `get_available_workflows()` - List all workflows
-- `expand_workflow(workflow_name, params)` - Expand specific workflow
-- `get_workflow_for_pattern(pattern)` - Find workflow for pattern
-- `get_workflow_for_keywords(keywords)` - Find workflow for keywords
+- `user_prompt` is passed through to the registry so prompt modifiers can be applied (TASK-052).
+- Scene context (`dimensions`, `mode`, etc.) is handled where the router calls into the registry directly.
 
-## Parameter Inheritance
-
-Workflow steps can inherit parameters using `$` syntax:
-
-```python
-{"tool": "mesh_bevel", "params": {"offset": "$offset", "segments": "$segments"}}
-```
-
-This inherits `offset` and `segments` from the original tool call parameters.
+---
 
 ## Configuration
 
-Controlled via `RouterConfig`:
+`RouterConfig.enable_workflow_expansion` controls whether workflows should be expanded by the router.
 
-```python
-RouterConfig(
-    enable_workflow_expansion=True,  # Enable workflow expansion
-)
-```
+---
 
-## Test Coverage
+## Tests
 
 - `tests/unit/router/application/test_workflow_expansion_engine.py`
-- 40 tests covering workflow expansion
+
+---
+
+## See Also
+
+- `21-workflow-registry.md` (canonical workflow expansion pipeline)
+- `22-custom-workflow-loader.md` (YAML/JSON loading)

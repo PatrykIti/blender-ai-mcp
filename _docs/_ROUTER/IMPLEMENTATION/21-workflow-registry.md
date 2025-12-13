@@ -1,93 +1,99 @@
-# Workflow Registry
+# 21. Workflow Registry
+
+> **Task:** TASK-039-20 (+ subsequent workflow pipeline tasks) | **Status:** ✅ Active/Current  
+> **Layer:** Application (`server/router/application/workflows/`)
+
+---
 
 ## Overview
 
-Central registry for all available workflows, providing unified access and lookup methods.
+`WorkflowRegistry` is the central access point for workflows:
 
-**Task:** TASK-039-20 (Pattern Library)
+- stores workflow definitions (YAML/JSON via `WorkflowLoader`, or programmatic registration),
+- provides lookup (pattern / keywords),
+- expands a workflow into `CorrectedToolCall[]` using a **single canonical pipeline**.
+
+This pipeline is used for both:
+
+- normal expansion, and
+- adaptation (TASK-051) via `steps_override` (TASK-058), so adaptation does not bypass computed params / loops / conditions.
+
+---
+
+## File Location
+
+`server/router/application/workflows/registry.py`
+
+---
 
 ## Interface
 
 ```python
 class WorkflowRegistry:
-    def __init__(self): ...
     def register_workflow(self, workflow: BaseWorkflow) -> None: ...
     def register_definition(self, definition: WorkflowDefinition) -> None: ...
-    def get_workflow(self, name: str) -> Optional[BaseWorkflow]: ...
+
     def get_definition(self, name: str) -> Optional[WorkflowDefinition]: ...
     def get_all_workflows(self) -> List[str]: ...
+
     def find_by_pattern(self, pattern_name: str) -> Optional[str]: ...
     def find_by_keywords(self, text: str) -> Optional[str]: ...
-    def expand_workflow(self, name: str, params: Optional[Dict] = None) -> List[CorrectedToolCall]: ...
-    def get_workflow_info(self, name: str) -> Optional[Dict]: ...
+
+    def expand_workflow(
+        self,
+        workflow_name: str,
+        params: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
+        user_prompt: Optional[str] = None,
+        steps_override: Optional[List[WorkflowStep]] = None,  # TASK-058/TASK-051
+    ) -> List[CorrectedToolCall]: ...
 ```
 
-## Implementation
+---
 
-Location: `server/router/application/workflows/registry.py`
+## Expansion Pipeline (Custom YAML Workflows)
 
-### Features
+For custom workflow definitions, the registry applies the pipeline below:
 
-1. **Built-in Workflow Registration**
-   - Automatically registers phone, tower, and screen_cutout workflows
+1. **Build variables** (defaults + prompt modifiers) (TASK-052)
+2. **Merge explicit params** (explicit overrides variables)
+3. **Resolve computed parameters** (`parameters.*.computed`) (TASK-056-5)
+4. **Loop expansion + `{var}` interpolation** (TASK-058)
+5. **Resolve step params** (`$CALCULATE(...)`, `$AUTO_*`, `$variable`)
+6. **Evaluate `condition` + simulate step effects** (TASK-041-11/12)
+7. **Return `CorrectedToolCall[]`**
 
-2. **Pattern-Based Lookup**
-   - Find workflows by detected geometry pattern
+### `steps_override` (TASK-058/TASK-051)
 
-3. **Keyword-Based Lookup**
-   - Find workflows by natural language keywords
+`steps_override` changes only the step source:
 
-4. **Workflow Expansion**
-   - Convert workflow to list of tool calls
-   - Support parameter substitution
+- `definition.steps` → normal execution
+- `steps_override` → adaptation execution
 
-5. **Custom Workflow Support**
-   - Register custom workflow classes
-   - Register workflow definitions
+Everything else in the pipeline stays identical (computed params, loops, conditions, etc.).
 
-## Usage
+This is the key fix that prevents adaptation from bypassing critical workflow logic.
 
-```python
-from server.router.application.workflows import get_workflow_registry
+---
 
-registry = get_workflow_registry()
+## Key Components Used by Registry
 
-# Get all workflows
-names = registry.get_all_workflows()
-# ["phone_workflow", "screen_cutout_workflow", "tower_workflow"]
+- `ExpressionEvaluator` – `$CALCULATE(...)` + computed params resolution
+- `ProportionResolver` – `$AUTO_*` parameters
+- `ConditionEvaluator` – `condition` evaluation + context simulation
+- `LoopExpander` – loops + `{var}` interpolation (TASK-058)
 
-# Find by pattern
-workflow_name = registry.find_by_pattern("phone_like")
-# "phone_workflow" or "screen_cutout_workflow"
-
-# Find by keywords
-workflow_name = registry.find_by_keywords("create a tall tower")
-# "tower_workflow"
-
-# Expand to tool calls
-calls = registry.expand_workflow("phone_workflow")
-# [CorrectedToolCall(...), CorrectedToolCall(...), ...]
-
-# Get workflow info
-info = registry.get_workflow_info("phone_workflow")
-# {"name": "phone_workflow", "type": "builtin", "step_count": 10, ...}
-```
-
-## Singleton Access
-
-```python
-from server.router.application.workflows import get_workflow_registry
-
-# Always returns the same instance
-registry = get_workflow_registry()
-```
+---
 
 ## Tests
 
 - `tests/unit/router/application/workflows/test_registry.py`
+- `tests/unit/router/application/test_supervisor_router.py` (adaptation path integration)
+
+---
 
 ## See Also
 
-- [Phone Workflow](./18-phone-workflow.md)
-- [Tower Workflow](./19-tower-workflow.md)
-- [Custom Workflow Loader](./22-custom-workflow-loader.md)
+- `22-custom-workflow-loader.md`
+- `32-workflow-adapter.md`
+- `37-loop-expander.md`

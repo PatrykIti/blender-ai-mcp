@@ -68,9 +68,10 @@ class ISupervisorRouter(ABC):
 │         │            - Pattern-based tool replacement               │
 │         │            - Context-aware substitution                   │
 │         ▼                                                            │
-│  6. EXPAND ────────► Transform to workflow if needed                │
-│         │            - Single tool → multi-step workflow            │
-│         │            - Parameter inheritance ($param syntax)        │
+│  6. EXPAND ────────► Expand workflow if needed                      │
+│         │            - (Optional) adapt step list (TASK-051)         │
+│         │            - Registry pipeline: computed → loops → resolve │
+│         │              → condition + simulation (TASK-058)           │
 │         ▼                                                            │
 │  7. FIREWALL ──────► Validate each tool                             │
 │         │            - Block invalid operations                     │

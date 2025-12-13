@@ -1,263 +1,135 @@
-# 32. Workflow Adapter
+# 32. Workflow Adapter (Confidence-Based Step Selection)
 
-> **Task:** TASK-051 | **Status:** ✅ Done | **Date:** 2025-12-07
+> **Task:** TASK-051 | **Status:** ✅ Done (with TASK-058 pipeline alignment)  
+> **Layer:** Application (`server/router/application/engines/`)
 
 ---
 
 ## Overview
 
-`WorkflowAdapter` adapts workflow execution based on semantic match confidence level. When a workflow is triggered but the match confidence is not HIGH, the adapter filters optional steps to create a more appropriate execution plan.
+`WorkflowAdapter` selects an appropriate subset of workflow steps when the router is not fully confident about the workflow match.
 
-**Problem:** Router has confidence levels but doesn't use them. A "simple table with 4 legs" prompt triggers `picnic_table_workflow` with all 49 steps including benches.
+It is intentionally an **early step-selection filter**:
 
-**Solution:** Adapt workflow steps based on confidence:
-- **HIGH** → Execute all steps
-- **MEDIUM** → Execute core + tag-matching optional steps
-- **LOW/NONE** → Execute only core steps
+- It does **not** evaluate `condition`.
+- It does **not** run `$CALCULATE`, `$AUTO_*`, computed params, or loops.
 
----
-
-## Interface
-
-```python
-# server/router/domain/interfaces/i_workflow_adapter.py
-
-from abc import ABC, abstractmethod
-from typing import List, Tuple
-from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
-
-class IWorkflowAdapter(ABC):
-    """Interface for workflow adaptation based on confidence."""
-
-    @abstractmethod
-    def adapt(
-        self,
-        definition: WorkflowDefinition,
-        confidence_level: str,
-        user_prompt: str,
-    ) -> Tuple[List[WorkflowStep], "AdaptationResult"]:
-        """Adapt workflow steps based on confidence level."""
-        pass
-
-    @abstractmethod
-    def should_adapt(
-        self,
-        definition: WorkflowDefinition,
-        confidence_level: str,
-    ) -> bool:
-        """Check if workflow needs adaptation."""
-        pass
-```
+After TASK-058, adaptation no longer bypasses the registry pipeline: the adapter only returns `adapted_steps`, and the registry handles the full expansion pipeline.
 
 ---
 
-## Implementation
+## File Location
 
-### WorkflowStep Extensions
+`server/router/application/engines/workflow_adapter.py`
 
-```python
-# server/router/application/workflows/base.py
+---
 
-@dataclass
-class WorkflowStep:
-    tool: str
-    params: Dict[str, Any]
-    description: Optional[str] = None
-    condition: Optional[str] = None
-    optional: bool = False          # NEW: Can be skipped
-    tags: List[str] = field(default_factory=list)  # NEW: For filtering
+## Core Concepts
+
+### Core vs Optional Steps
+
+- **Core step**: `optional: false` OR `disable_adaptation: true`
+- **Optional step**: `optional: true` AND `disable_adaptation: false`
+
+`disable_adaptation: true` forces the step to be treated as core (never removed by adaptation).
+
+### Confidence Levels
+
+The adapter operates on discrete confidence levels (`HIGH`, `MEDIUM`, `LOW`, `NONE`) produced by matchers / ensemble matching.
+
+Strategy:
+
+- `HIGH` → **FULL** (no filtering)
+- `MEDIUM` → **FILTERED** (core + relevant optional)
+- `LOW` / `NONE` → **CORE_ONLY** (core only)
+
+---
+
+## Relevance Filtering (MEDIUM)
+
+For `MEDIUM`, optional steps are included if they match the prompt via a 3-tier strategy:
+
+1. **Tag match** (`step.tags` keyword hit in prompt)
+2. **Semantic filter parameters** (custom boolean attrs like `add_bench: true`)
+3. **Semantic similarity** fallback (if a classifier is available)
+
+This keeps workflows compact while still allowing prompt-driven extras.
+
+---
+
+## Integration with Workflow Expansion (TASK-058 Fix)
+
+### Before (buggy behavior)
+
+Adaptation used to build tool calls manually, which bypassed:
+
+- computed params
+- `$CALCULATE` / `$AUTO_*`
+- `condition` evaluation + context simulation
+- loops + `{var}` interpolation
+
+### After (correct behavior)
+
+In `SupervisorRouter._expand_triggered_workflow()`:
+
+1. `WorkflowAdapter.adapt()` returns `adapted_steps`
+2. Router delegates to the canonical registry pipeline:
+
+`registry.expand_workflow(..., steps_override=adapted_steps)`
+
+So the only difference between adapted and non-adapted execution is the step list; the pipeline stays identical.
+
+---
+
+## Authoring Guidance
+
+### Prompt-driven optional features → use `optional: true` + tags
+
+```yaml
+- tool: modeling_create_primitive
+  params: { primitive_type: CUBE, name: "BenchLeft" }
+  description: "Create bench"
+  optional: true
+  tags: ["bench", "seating"]
 ```
 
-### WorkflowAdapter Engine
+### Parameter-driven branching → prefer `condition` and bypass adaptation if needed
 
-```python
-# server/router/application/engines/workflow_adapter.py
+If the decision is deterministic (math/params), avoid semantic filtering:
 
-@dataclass
-class AdaptationResult:
-    """Result of workflow adaptation."""
-    original_step_count: int
-    adapted_step_count: int
-    skipped_steps: List[str]
-    confidence_level: str
-    strategy: str  # "FULL", "FILTERED", "CORE_ONLY"
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "original_step_count": self.original_step_count,
-            "adapted_step_count": self.adapted_step_count,
-            "skipped_count": len(self.skipped_steps),
-            "skipped_steps": self.skipped_steps,
-            "confidence_level": self.confidence_level,
-            "strategy": self.strategy,
-        }
-
-
-class WorkflowAdapter:
-    """Adapts workflows based on match confidence."""
-
-    def __init__(
-        self,
-        classifier: Optional[WorkflowIntentClassifier] = None,
-        semantic_threshold: float = 0.6,
-    ):
-        self._classifier = classifier
-        self._semantic_threshold = semantic_threshold
-
-    def adapt(
-        self,
-        definition: WorkflowDefinition,
-        confidence_level: str,
-        user_prompt: str,
-    ) -> Tuple[List[WorkflowStep], AdaptationResult]:
-        """Adapt workflow steps based on confidence level."""
-        all_steps = definition.steps
-
-        # HIGH confidence = execute everything
-        if confidence_level == "HIGH":
-            return self._full_execution(all_steps, confidence_level)
-
-        # Separate core and optional steps
-        core_steps = [s for s in all_steps if not s.optional]
-        optional_steps = [s for s in all_steps if s.optional]
-
-        # LOW/NONE = core only
-        if confidence_level in ("LOW", "NONE"):
-            return self._core_only(core_steps, optional_steps, confidence_level)
-
-        # MEDIUM = core + filtered optional
-        if confidence_level == "MEDIUM":
-            relevant = self._filter_by_relevance(optional_steps, user_prompt)
-            return self._filtered_execution(
-                core_steps, relevant, optional_steps, confidence_level
-            )
-
-        # Fallback
-        return self._full_execution(all_steps, confidence_level)
-
-    def _filter_by_relevance(
-        self,
-        steps: List[WorkflowStep],
-        prompt: str
-    ) -> List[WorkflowStep]:
-        """Filter optional steps by tag matching or semantic similarity."""
-        relevant = []
-        prompt_lower = prompt.lower()
-
-        for step in steps:
-            # 1. Tag matching (fast)
-            if step.tags and any(tag.lower() in prompt_lower for tag in step.tags):
-                relevant.append(step)
-                continue
-
-            # 2. Semantic similarity (fallback for steps without tags)
-            if step.description and self._classifier:
-                similarity = self._classifier.similarity(prompt, step.description)
-                if similarity >= self._semantic_threshold:
-                    relevant.append(step)
-
-        return relevant
-
-    def should_adapt(
-        self,
-        definition: WorkflowDefinition,
-        confidence_level: str,
-    ) -> bool:
-        """Check if workflow needs adaptation."""
-        if confidence_level == "HIGH":
-            return False
-
-        # Check if there are optional steps to filter
-        has_optional = any(s.optional for s in definition.steps)
-        return has_optional
+```yaml
+- tool: mesh_transform_selected
+  params:
+    translate: ["$CALCULATE(0.1 if leg_style == 'x' else 0)", 0, 0]
+  description: "Stretch leg top for X-frame"
+  optional: true
+  disable_adaptation: true
+  condition: "leg_style == 'x'"
 ```
 
 ---
 
 ## Configuration
 
-```python
-# server/router/infrastructure/config.py
+`RouterConfig`:
 
-@dataclass
-class RouterConfig:
-    # ... existing config ...
-
-    # Workflow Adaptation (TASK-051)
-    enable_workflow_adaptation: bool = True
-    adaptation_semantic_threshold: float = 0.6
-```
+- `enable_workflow_adaptation`
+- `adaptation_semantic_threshold`
 
 ---
 
-## Integration with Router
+## Tests
 
-```python
-# server/router/application/router.py
-
-class SupervisorRouter:
-    def __init__(self, config: RouterConfig, ...):
-        # ... existing init ...
-
-        # Initialize WorkflowAdapter
-        self._workflow_adapter = WorkflowAdapter(
-            classifier=self._workflow_classifier,
-            semantic_threshold=config.adaptation_semantic_threshold,
-        )
-
-    def _expand_triggered_workflow(
-        self,
-        workflow_name: str,
-        match_result: MatchResult,
-        context: Dict[str, Any],
-    ) -> List[InterceptedToolCall]:
-        """Expand workflow with optional adaptation."""
-        definition = self._workflow_registry.get_definition(workflow_name)
-
-        # Adapt if needed
-        if (
-            self.config.enable_workflow_adaptation
-            and match_result.requires_adaptation
-            and self._workflow_adapter.should_adapt(definition, match_result.confidence_level)
-        ):
-            adapted_steps, result = self._workflow_adapter.adapt(
-                definition,
-                match_result.confidence_level,
-                match_result.user_prompt or "",
-            )
-            # Use adapted steps for expansion
-            definition = WorkflowDefinition(
-                name=definition.name,
-                description=definition.description,
-                steps=adapted_steps,
-                # ... other fields ...
-            )
-
-        # Continue with normal expansion
-        return self._workflow_expansion_engine.expand(definition, context)
-```
+- Unit tests: `tests/unit/router/application/test_workflow_adapter.py`
+- Integration coverage: `tests/unit/router/application/test_supervisor_router.py`
 
 ---
 
-## YAML Workflow Example
+## See Also
 
-```yaml
-# picnic_table.yaml
-name: picnic_table_workflow
-description: Picnic table with optional benches
-
-steps:
-  # Core steps (always executed)
-  - tool: modeling_create_primitive
-    params: { primitive_type: CUBE, name: "TableTop" }
-    description: Create table top
-
-  - tool: modeling_create_primitive
-    params: { primitive_type: CUBE, name: "Leg1" }
-    description: Create first leg
-
-  # Optional steps (filtered by confidence)
-  - tool: modeling_create_primitive
+- `21-workflow-registry.md` (canonical pipeline + `steps_override`)
+- `37-loop-expander.md` (loops + `{var}` interpolation)
+- `_docs/_ROUTER/WORKFLOWS/workflow-execution-pipeline.md` (two-filter mental model)
     params: { primitive_type: CUBE, name: "BenchLeft" }
     description: Create left bench
     optional: true
