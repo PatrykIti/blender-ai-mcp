@@ -3,16 +3,16 @@
 # No benches, no A-frame supports, no complex features
 # Perfect for: desk, dining table, work table
 #
-# TASK-055-FIX-7: Dynamic Plank System with Computed Parameters
+# TASK-055-FIX-7 + TASK-058: Dynamic Plank System with Computed Parameters + Loops
 # - Plank count adapts to table width (max 0.10m per plank)
-# - Fractional support: last planks can be narrower
-# - Uses TASK-056-5 computed parameters for clean, efficient YAML
+# - Full planks + last remainder plank (e.g. 0.73m = 7x0.10m + 1x0.03m)
+# - Uses TASK-056-5 computed parameters + TASK-058 loop expansion
 
 name: simple_table_workflow
 description: Creates a simple table with straight legs and adaptive plank count
 category: furniture
 author: blender-ai-mcp
-version: "2.0.0"
+version: "3.0.0"
 
 trigger_keywords:
   - simple table
@@ -122,27 +122,30 @@ parameters:
     type: float
     range: [0.02, 0.15]
     default: 0.05
-    description: Distance of legs from crossbeam edge in X axis (width) - smaller = more stable
+    description: Inset of leg outer face from tabletop edge in X axis (width)
     semantic_hints:
       - offset
-      - beam
+      - inset
       - distance
       - stable
       - position
       - width
+      - corner
+      - edge
     group: leg_dimensions
 
   leg_offset_y:
     type: float
     range: [0.02, 0.15]
     default: 0.05
-    description: Distance of legs from crossbeam edge in Y axis (length) - smaller = closer to corners
+    description: Inset of leg outer face from tabletop edge in Y axis (length)
     semantic_hints:
       - offset
+      - inset
       - lengthwise
       - length
       - corner
-      - beam
+      - edge
       - distance
     group: leg_dimensions
 
@@ -164,283 +167,172 @@ parameters:
   # Auto-calculated from user parameters
   # ==========================================
 
+  plank_full_count:
+    type: int
+    computed: "floor(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Number of full-width planks (each = plank_max_width)
+
+  plank_remainder_width_raw:
+    type: float
+    computed: "table_width - (plank_full_count * plank_max_width)"
+    depends_on: ["table_width", "plank_full_count", "plank_max_width"]
+    description: Raw remainder width (may be ~0 due to floating point)
+
+  plank_remainder_width:
+    type: float
+    computed: "max(plank_remainder_width_raw, 0)"
+    depends_on: ["plank_remainder_width_raw"]
+    description: Width of the last remainder plank (0 if not needed)
+
+  plank_has_remainder:
+    type: int
+    computed: "1 if plank_remainder_width > 0.000001 else 0"
+    depends_on: ["plank_remainder_width"]
+    description: Whether a remainder plank is needed (1=yes, 0=no)
+
   plank_count:
     type: int
-    computed: "ceil(table_width / plank_max_width)"
-    depends_on: ["table_width", "plank_max_width"]
-    description: Number of planks needed (auto-calculated based on table width and max plank width)
-
-  plank_actual_width:
-    type: float
-    computed: "table_width / plank_count"
-    depends_on: ["table_width", "plank_count"]
-    description: Actual width of each plank (adapted to fit table width exactly)
+    computed: "plank_full_count + plank_has_remainder"
+    depends_on: ["plank_full_count", "plank_has_remainder"]
+    description: Total number of tabletop planks (full + remainder)
 
 # ============================================================
 # WORKFLOW STEPS
-# Dynamic table: up to 15 planks (conditional) + 1 crossbeam + 4 straight legs
+# Dynamic tabletop planks + underside support frame + 4 straight legs
 # ============================================================
 
 steps:
   # ============================================
-  # SECTION 1: TABLE TOP (up to 15 planks)
-  # TASK-055-FIX-7: Conditional planks based on table width
-  # ============================================
-
-  # Plank 1 (always present)
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_1"
-    description: Create table plank 1
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_1"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width / 2)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 1 (leftmost) - scale = dimensions/2 for cube"
-
-  # Plank 2 (always present for plank_count >= 2)
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_2"
-    description: Create table plank 2
-    condition: "plank_count >= 2"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_2"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 1.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 2"
-    condition: "plank_count >= 2"
-
-  # Plank 3
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_3"
-    description: Create table plank 3
-    condition: "plank_count >= 3"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_3"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 2.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 3"
-    condition: "plank_count >= 3"
-
-  # Plank 4
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_4"
-    description: Create table plank 4
-    condition: "plank_count >= 4"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_4"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 3.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 4"
-    condition: "plank_count >= 4"
-
-  # Plank 5
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_5"
-    description: Create table plank 5
-    condition: "plank_count >= 5"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_5"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 4.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 5"
-    condition: "plank_count >= 5"
-
-  # Plank 6
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_6"
-    description: Create table plank 6
-    condition: "plank_count >= 6"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_6"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 5.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 6"
-    condition: "plank_count >= 6"
-
-  # Plank 7
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_7"
-    description: Create table plank 7
-    condition: "plank_count >= 7"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_7"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 6.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 7"
-    condition: "plank_count >= 7"
-
-  # Plank 8
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_8"
-    description: Create table plank 8
-    condition: "plank_count >= 8"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_8"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 7.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 8"
-    condition: "plank_count >= 8"
-
-  # Plank 9
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_9"
-    description: Create table plank 9
-    condition: "plank_count >= 9"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_9"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 8.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 9"
-    condition: "plank_count >= 9"
-
-  # Plank 10
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_10"
-    description: Create table plank 10
-    condition: "plank_count >= 10"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_10"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 9.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 10"
-    condition: "plank_count >= 10"
-
-  # Plank 11
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_11"
-    description: Create table plank 11
-    condition: "plank_count >= 11"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_11"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 10.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 11"
-    condition: "plank_count >= 11"
-
-  # Plank 12
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_12"
-    description: Create table plank 12
-    condition: "plank_count >= 12"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_12"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 11.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 12"
-    condition: "plank_count >= 12"
-
-  # Plank 13
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_13"
-    description: Create table plank 13
-    condition: "plank_count >= 13"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_13"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 12.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 13"
-    condition: "plank_count >= 13"
-
-  # Plank 14
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_14"
-    description: Create table plank 14
-    condition: "plank_count >= 14"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_14"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 13.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 14"
-    condition: "plank_count >= 14"
-
-  # Plank 15
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "TablePlank_15"
-    description: Create table plank 15
-    condition: "plank_count >= 15"
-
-  - tool: modeling_transform_object
-    params:
-      name: "TablePlank_15"
-      scale: ["$CALCULATE(plank_actual_width / 2)", "$CALCULATE(table_length / 2)", 0.0114]
-      location: ["$CALCULATE(-table_width / 2 + plank_actual_width * 14.5)", 0, "$CALCULATE(leg_length + 0.0114)"]
-    description: "Position plank 15 (rightmost)"
-    condition: "plank_count >= 15"
-
-  # ============================================
-  # SECTION 2: TABLE TOP CROSS BEAM
+  # SECTION 1: TABLE TOP (dynamic planks)
+  # Full planks + remainder plank (if needed)
   # ============================================
 
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
-      name: "TableCrossBeam"
-    description: Create table cross beam under planks
+      name: "TablePlank_{i}"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Create table plank {i}"
 
   - tool: modeling_transform_object
     params:
-      name: "TableCrossBeam"
-      scale: ["$CALCULATE(table_width * 0.9 / 2)", "$CALCULATE(table_length * 0.926 / 2)", 0.0110]
-      location: [0, 0, "$CALCULATE(leg_length - 0.023)"]
-    description: "Position cross beam under table top (90% of table width, scale = dimensions/2 for cube)"
+      name: "TablePlank_{i}"
+      scale:
+        - "$CALCULATE((plank_max_width if {i} <= plank_full_count else plank_remainder_width) / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE((-table_width / 2 + plank_max_width * ({i} - 0.5)) if {i} <= plank_full_count else (-table_width / 2 + plank_max_width * plank_full_count + plank_remainder_width / 2))"
+        - 0
+        - "$CALCULATE(leg_length + 0.0114)"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Position plank {i} (scale = dimensions/2 for cube)"
+
+  # ============================================
+  # SECTION 2: UNDERSIDE SUPPORT FRAME (podbitka)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Front"
+    description: Create front support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Front"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position front support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Back"
+    description: Create back support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Back"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position back support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Left"
+    description: Create left support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Left"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position left support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Right"
+    description: Create right support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Right"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position right support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Middle"
+    description: Create middle support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Middle"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position middle support plank"
 
   # ============================================
   # SECTION 3: STRAIGHT LEGS (4 pieces)
@@ -459,9 +351,9 @@ steps:
     params:
       name: "Leg_FL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x))", "$CALCULATE(-(table_length / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))", "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Front-left leg - positioned at table edge with offset"
+    description: "Front-left leg - inset from corner by leg_offset_x/leg_offset_y"
 
   # Front-right leg
   - tool: modeling_create_primitive
@@ -474,9 +366,9 @@ steps:
     params:
       name: "Leg_FR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width / 2 - leg_offset_x)", "$CALCULATE(-(table_length / 2 - leg_offset_y))", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x - 0.04)", "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Front-right leg - positioned at table edge with offset"
+    description: "Front-right leg - inset from corner by leg_offset_x/leg_offset_y"
 
   # Back-left leg
   - tool: modeling_create_primitive
@@ -489,9 +381,9 @@ steps:
     params:
       name: "Leg_BL"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x))", "$CALCULATE(table_length / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))", "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Back-left leg - positioned at table edge with offset"
+    description: "Back-left leg - inset from corner by leg_offset_x/leg_offset_y"
 
   # Back-right leg
   - tool: modeling_create_primitive
@@ -504,9 +396,9 @@ steps:
     params:
       name: "Leg_BR"
       scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
-      location: ["$CALCULATE(table_width / 2 - leg_offset_x)", "$CALCULATE(table_length / 2 - leg_offset_y)", "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x - 0.04)", "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)", "$CALCULATE(leg_length / 2)"]
       rotation: [0, 0, 0]
-    description: "Back-right leg - positioned at table edge with offset"
+    description: "Back-right leg - inset from corner by leg_offset_x/leg_offset_y"
 
   # ============================================
   # SECTION 4: MATERIAL
@@ -536,7 +428,8 @@ steps:
 
   # - tool: modeling_join_objects
   #   params:
-  #     object_names: ["TablePlank_1", "TablePlank_2", "TablePlank_3", "TablePlank_4", "TablePlank_5", "TablePlank_6", "TablePlank_7", "TablePlank_8", "TablePlank_9", "TablePlank_10", "TablePlank_11", "TablePlank_12", "TablePlank_13", "TablePlank_14", "TablePlank_15", "TableCrossBeam", "Leg_FL", "Leg_FR", "Leg_BL", "Leg_BR"]
+  #     # NOTE: tabletop planks are dynamic (loop), so you must list them explicitly here.
+  #     object_names: ["TablePlank_1", "TableSupport_Front", "TableSupport_Back", "TableSupport_Left", "TableSupport_Right", "TableSupport_Middle", "Leg_FL", "Leg_FR", "Leg_BL", "Leg_BR"]
   #   description: Join all table parts into single object
   #   optional: true
 

@@ -13,7 +13,7 @@ For custom YAML workflows, the processing order is:
 1. **(Optional) Adaptation step selection** (TASK-051)  
    Filters the workflow *step list* based on confidence level and prompt relevance.
 2. **Computed parameters** (TASK-056-5)  
-   Resolves `parameters.*.computed` (e.g. `plank_count`, `plank_actual_width`).
+   Resolves `parameters.*.computed` (e.g. `plank_count`, `plank_full_count`, `plank_remainder_width`).
 3. **Loop expansion + `{var}` interpolation** (TASK-058)  
    Expands steps with `loop:` and interpolates `{var}` in workflow strings (also outside loops).
 4. **Parameter resolution**  
@@ -178,4 +178,3 @@ Notes:
 - `condition` is a **runtime filter** (deterministic logic).
 - If you need param-based branching, prefer `condition` and consider `disable_adaptation: true`.
 - Loops/interpolation happen before `$CALCULATE` and before `condition`, so you can safely use `{i}` inside both.
-
