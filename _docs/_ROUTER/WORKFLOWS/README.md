@@ -20,14 +20,15 @@ Predefined workflow definitions for common modeling patterns.
 | [yaml-workflow-guide.md](./yaml-workflow-guide.md) | Kompletny przewodnik po składni YAML |
 | [expression-reference.md](./expression-reference.md) | Referencja wyrażeń ($CALCULATE, $AUTO_*, warunki) |
 | [workflow-execution-pipeline.md](./workflow-execution-pipeline.md) | Jak workflow staje się tool callami (adaptacja vs condition, pętle) |
+| [custom-workflows.md](./custom-workflows.md) | Gdzie dodać workflow i jak działa pipeline (skrót) |
 
 ### Wbudowane Workflow
 
 | Workflow | Pattern | Steps | Task |
 |----------|---------|-------|------|
-| [phone-workflow.md](./phone-workflow.md) | `phone_like` | 10 | TASK-039-19 |
-| [tower-workflow.md](./tower-workflow.md) | `tower_like` | 5-8 | TASK-039-20 |
-| [screen-cutout-workflow.md](./screen-cutout-workflow.md) | Sub-workflow | 3-4 | TASK-039-21 |
+| [Phone Workflow](../IMPLEMENTATION/18-phone-workflow.md) | `phone_like` | 10 | TASK-039-19 |
+| [Tower Workflow](../IMPLEMENTATION/19-tower-workflow.md) | `tower_like` | 5-8 | TASK-039-20 |
+| [Screen Cutout Workflow](../IMPLEMENTATION/20-screen-cutout-workflow.md) | Sub-workflow | 3-4 | TASK-039-21 |
 | [custom-workflows.md](./custom-workflows.md) | User-defined | - | TASK-039-22 |
 
 ---

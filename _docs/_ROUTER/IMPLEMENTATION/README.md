@@ -114,6 +114,9 @@ Phase 12: Parameter Resolution (TASK-055) ✅
 
 Phase 13: Unified Evaluator (TASK-060) ✅
   └─ 36-unified-evaluator.md ✅ (TASK-060)
+
+Phase 14: Loops & Interpolation (TASK-058) ✅
+  └─ 37-loop-expander.md ✅ (TASK-058)
 ```
 
 ---
