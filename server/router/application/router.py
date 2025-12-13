@@ -477,29 +477,26 @@ class SupervisorRouter:
                 )
                 self._last_adaptation_result = adaptation_result
 
-                # Build variables from defaults + modifiers (TASK-052, TASK-053)
-                # TASK-053: Use modifiers from ensemble result if available
+                # TASK-058/TASK-051: Adaptation must NOT bypass registry pipeline.
+                # Only the step list is filtered; computed params, loops, $CALCULATE/$AUTO_ and
+                # condition evaluation run through the standard WorkflowRegistry path.
+
+                # Merge original params with pending modifiers (modifiers override)
                 if self._pending_modifiers:
-                    variables = dict(self._pending_modifiers)
+                    merged_params = {**(params or {}), **self._pending_modifiers}
                     self.logger.log_info(
-                        f"Using modifiers from ensemble result: {list(variables.keys())}"
+                        f"Using modifiers from ensemble result: {list(self._pending_modifiers.keys())}"
                     )
                 else:
-                    # Fallback: build variables from definition (legacy path)
-                    variables = self._build_variables(definition, self._current_goal or "")
+                    merged_params = params
 
-                # Convert adapted steps to CorrectedToolCall list
-                calls = []
-                for i, step in enumerate(adapted_steps):
-                    # Resolve params with variables (TASK-052) and eval_context
-                    resolved_params = self._resolve_step_params(step.params, variables, eval_context)
-                    call = CorrectedToolCall(
-                        tool_name=step.tool,
-                        params=resolved_params,
-                        corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
-                        is_injected=True,
-                    )
-                    calls.append(call)
+                calls = registry.expand_workflow(
+                    workflow_name,
+                    merged_params,
+                    eval_context,
+                    user_prompt=self._current_goal or "",
+                    steps_override=adapted_steps,
+                )
 
                 if calls:
                     self._processing_stats["workflows_expanded"] += 1

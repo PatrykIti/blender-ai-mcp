@@ -226,10 +226,12 @@ def mock_router():
 @pytest.fixture
 def handler(mock_router, mock_resolver, mock_loader):
     """Create handler with mocks."""
-    handler = RouterToolHandler(router=mock_router, enabled=True)
-    handler._get_parameter_resolver = lambda: mock_resolver
-    handler._get_workflow_loader = lambda: mock_loader
-    return handler
+    return RouterToolHandler(
+        router=mock_router,
+        enabled=True,
+        parameter_resolver=mock_resolver,
+        workflow_loader=mock_loader,
+    )
 
 
 class TestSetGoalUnified:

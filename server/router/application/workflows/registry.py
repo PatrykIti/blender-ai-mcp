@@ -12,6 +12,7 @@ TASK-041-12: Added context simulation during expansion
 TASK-041-14: Added ProportionResolver integration
 """
 
+import dataclasses
 import logging
 from typing import Dict, Any, Optional, List
 
@@ -20,6 +21,7 @@ from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
 from server.router.application.evaluator.proportion_resolver import ProportionResolver
+from server.router.application.evaluator.loop_expander import LoopExpander
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,7 @@ class WorkflowRegistry:
         self._evaluator = ExpressionEvaluator()
         self._condition_evaluator = ConditionEvaluator()
         self._proportion_resolver = ProportionResolver()
+        self._loop_expander = LoopExpander()  # TASK-058: loops + {var} interpolation
 
     def _register_builtin(self, workflow: BaseWorkflow) -> None:
         """Register a built-in workflow.
@@ -205,6 +208,7 @@ class WorkflowRegistry:
         params: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None,
         user_prompt: Optional[str] = None,
+        steps_override: Optional[List[WorkflowStep]] = None,  # TASK-058/TASK-051
     ) -> List[CorrectedToolCall]:
         """Expand a workflow into tool calls.
 
@@ -214,6 +218,8 @@ class WorkflowRegistry:
             context: Optional context for expression evaluation.
                     Contains dimensions, proportions, mode, etc.
             user_prompt: Optional user prompt for modifier extraction (TASK-052).
+            steps_override: Optional explicit steps to expand instead of the workflow definition.
+                Used for adaptation (TASK-051) so the rest of the pipeline stays identical.
 
         Returns:
             List of tool calls to execute.
@@ -246,6 +252,8 @@ class WorkflowRegistry:
         # Try custom definition
         definition = self._custom_definitions.get(workflow_name)
         if definition:
+            steps_source = steps_override if steps_override is not None else definition.steps
+
             # Build variable context from defaults + modifiers (TASK-052)
             variables = self._build_variables(definition, user_prompt)
             # Merge with params (params override variables)
@@ -292,7 +300,13 @@ class WorkflowRegistry:
             # This allows $CALCULATE expressions to reference computed params
             self._evaluator.set_context({**base_context, **all_params})
 
-            steps = self._resolve_definition_params(definition.steps, all_params)
+            # TASK-058: Loop expansion + {var} interpolation BEFORE other processing
+            expanded_steps = self._loop_expander.expand(
+                list(steps_source),
+                {**base_context, **all_params},
+            )
+
+            steps = self._resolve_definition_params(expanded_steps, all_params)
             # Pass all_params to enable condition evaluation with workflow parameters
             return self._steps_to_calls(steps, workflow_name, workflow_params=all_params)
 
@@ -556,7 +570,8 @@ class WorkflowRegistry:
         Returns:
             Steps with resolved parameters.
         """
-        resolved_steps = []
+        resolved_steps: List[WorkflowStep] = []
+        step_field_names = {f.name for f in dataclasses.fields(WorkflowStep)}
 
         for step in steps:
             resolved_params = {}
@@ -569,14 +584,19 @@ class WorkflowRegistry:
                     # Keep non-variable values as-is
                     resolved_params[key] = value
 
-            resolved_steps.append(
-                WorkflowStep(
-                    tool=step.tool,
-                    params=resolved_params,
-                    description=step.description,
-                    condition=step.condition,
-                )
-            )
+            data: Dict[str, Any] = {name: getattr(step, name) for name in step_field_names}
+            data["params"] = resolved_params
+            cloned = WorkflowStep(**data)
+
+            # Preserve dynamic attrs (TASK-055-FIX-6 Phase 2)
+            for attr_name, attr_value in step.__dict__.items():
+                if attr_name.startswith("_"):
+                    continue
+                if attr_name in step_field_names:
+                    continue
+                setattr(cloned, attr_name, attr_value)
+
+            resolved_steps.append(cloned)
 
         return resolved_steps
 

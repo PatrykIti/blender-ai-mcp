@@ -34,6 +34,7 @@ class WorkflowStep:
         retry_delay: Delay in seconds between retry attempts (TASK-056-4).
         on_failure: Action on failure: "fail", "skip", "retry" (TASK-056-4).
         priority: Execution priority for parallel steps (higher first) (TASK-056-4).
+        loop: Optional loop configuration for step repetition (TASK-058).
 
     Dynamic Attributes (TASK-055-FIX-6 Phase 2):
         Custom boolean parameters loaded from YAML are set as instance attributes.
@@ -57,6 +58,9 @@ class WorkflowStep:
     on_failure: str = "fail"  # "fail", "skip", "retry"
     priority: int = 0  # Higher priority executes first in parallel scenarios
 
+    # TASK-058: Loop parameter for step repetition
+    loop: Optional[Dict[str, Any]] = None
+
     def __post_init__(self):
         """Post-initialization to validate and store dynamic attribute names.
 
@@ -70,7 +74,8 @@ class WorkflowStep:
             "tool", "params", "description", "condition",
             "optional", "disable_adaptation", "tags",
             "id", "depends_on", "timeout", "max_retries",
-            "retry_delay", "on_failure", "priority"
+            "retry_delay", "on_failure", "priority",
+            "loop",
         }
 
         # TASK-056-4: Validate on_failure
@@ -123,6 +128,10 @@ class WorkflowStep:
             result["on_failure"] = self.on_failure
         if self.priority != 0:
             result["priority"] = self.priority
+
+        # TASK-058: Include loop configuration
+        if self.loop is not None:
+            result["loop"] = self.loop
 
         # TASK-055-FIX-6: Include dynamic attributes
         for attr_name in dir(self):

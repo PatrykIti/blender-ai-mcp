@@ -195,6 +195,107 @@ class TestWorkflowRegistry:
             assert len(call.corrections_applied) > 0
             assert any("workflow:test_workflow" in c for c in call.corrections_applied)
 
+    def test_expand_workflow_with_loops_and_interpolation_before_calculate(self, registry):
+        """Test TASK-058: loops + {var} interpolation runs before $CALCULATE."""
+        definition = WorkflowDefinition(
+            name="test_loop_calc",
+            description="Test loop + calculate",
+            steps=[
+                WorkflowStep(
+                    tool="tool_a",
+                    params={"value": "$CALCULATE({i} + base)"},
+                    loop={"group": "g", "variable": "i", "range": "1..count"},
+                ),
+                WorkflowStep(
+                    tool="tool_b",
+                    params={"value": "$CALCULATE({i} * 2)"},
+                    loop={"group": "g", "variable": "i", "range": "1..count"},
+                ),
+            ],
+            defaults={"count": 3, "base": 10},
+        )
+        registry.register_definition(definition)
+
+        calls = registry.expand_workflow("test_loop_calc")
+
+        assert [c.tool_name for c in calls] == [
+            "tool_a",
+            "tool_b",
+            "tool_a",
+            "tool_b",
+            "tool_a",
+            "tool_b",
+        ]
+        assert calls[0].params["value"] == pytest.approx(11.0)
+        assert calls[1].params["value"] == pytest.approx(2.0)
+        assert calls[2].params["value"] == pytest.approx(12.0)
+        assert calls[3].params["value"] == pytest.approx(4.0)
+        assert calls[4].params["value"] == pytest.approx(13.0)
+        assert calls[5].params["value"] == pytest.approx(6.0)
+
+    def test_expand_workflow_steps_override_is_used(self, registry):
+        """Test TASK-058/TASK-051: steps_override drives expansion source steps."""
+        definition = WorkflowDefinition(
+            name="test_steps_override",
+            description="Test steps_override",
+            steps=[
+                WorkflowStep(tool="tool_a", params={"x": 1}),
+            ],
+        )
+        registry.register_definition(definition)
+
+        override_steps = [
+            WorkflowStep(tool="tool_b", params={"x": 2}),
+        ]
+
+        calls = registry.expand_workflow("test_steps_override", steps_override=override_steps)
+
+        assert len(calls) == 1
+        assert calls[0].tool_name == "tool_b"
+        assert calls[0].params["x"] == 2
+
+    def test_resolve_definition_params_preserves_fields_and_dynamic_attrs(self, registry):
+        """Test TASK-058: _resolve_definition_params preserves WorkflowStep metadata."""
+        step = WorkflowStep(
+            tool="tool_a",
+            params={"value": "$x"},
+            description="desc",
+            condition="x > 0",
+            optional=True,
+            disable_adaptation=True,
+            tags=["tag1"],
+            id="step_1",
+            depends_on=["step_0"],
+            timeout=1.5,
+            max_retries=2,
+            retry_delay=0.5,
+            on_failure="retry",
+            priority=7,
+        )
+        setattr(step, "custom_flag", True)
+        setattr(step, "custom_label", "hello")
+
+        resolved = registry._resolve_definition_params([step], {"x": 42})
+
+        assert len(resolved) == 1
+        out = resolved[0]
+        assert out.tool == "tool_a"
+        assert out.params["value"] == 42
+        assert out.description == "desc"
+        assert out.condition == "x > 0"
+        assert out.optional is True
+        assert out.disable_adaptation is True
+        assert out.tags == ["tag1"]
+        assert out.id == "step_1"
+        assert out.depends_on == ["step_0"]
+        assert out.timeout == 1.5
+        assert out.max_retries == 2
+        assert out.retry_delay == 0.5
+        assert out.on_failure == "retry"
+        assert out.priority == 7
+        assert getattr(out, "custom_flag") is True
+        assert getattr(out, "custom_label") == "hello"
+
 
 class TestGetWorkflowRegistry:
     """Tests for get_workflow_registry singleton."""

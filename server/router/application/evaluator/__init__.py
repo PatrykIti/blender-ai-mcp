@@ -19,10 +19,14 @@ from server.router.application.evaluator.condition_evaluator import (
 from server.router.application.evaluator.proportion_resolver import (
     ProportionResolver,
 )
+from server.router.application.evaluator.loop_expander import (
+    LoopExpander,
+)
 
 __all__ = [
     "UnifiedEvaluator",
     "ExpressionEvaluator",
     "ConditionEvaluator",
     "ProportionResolver",
+    "LoopExpander",
 ]

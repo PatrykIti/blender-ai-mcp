@@ -913,12 +913,23 @@ class TestExpandTriggeredWorkflowWithModifiers:
         mock_get_registry.return_value = mock_registry
         mock_registry.get_definition.return_value = definition
         mock_registry.ensure_custom_loaded.return_value = None
+        mock_registry.expand_workflow.return_value = [
+            CorrectedToolCall(
+                tool_name="modeling_create_primitive",
+                params={},
+                corrections_applied=[],
+                is_injected=True,
+            )
+        ]
 
         # Mock workflow adapter
         from server.router.application.engines.workflow_adapter import AdaptationResult
         router._workflow_adapter = MagicMock()
+        adapted_steps = [
+            WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False)
+        ]
         router._workflow_adapter.adapt.return_value = (
-            [WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False)],
+            adapted_steps,
             AdaptationResult(
                 original_step_count=1,
                 adapted_step_count=1,
@@ -929,7 +940,16 @@ class TestExpandTriggeredWorkflowWithModifiers:
 
         # Call _expand_triggered_workflow
         context = SceneContext(mode="OBJECT", objects=[])
+        expected_params = {"leg_style": "straight", "surface": "smooth"}
         calls = router._expand_triggered_workflow("table_workflow", {}, context)
+
+        mock_registry.expand_workflow.assert_called_once()
+        args, kwargs = mock_registry.expand_workflow.call_args
+        assert args[0] == "table_workflow"
+        assert args[1] == expected_params
+        assert isinstance(args[2], dict)
+        assert args[2].get("mode") == "OBJECT"
+        assert kwargs["steps_override"] == adapted_steps
 
         # Verify pending_modifiers were cleared after expansion
         assert router._pending_modifiers == {}
