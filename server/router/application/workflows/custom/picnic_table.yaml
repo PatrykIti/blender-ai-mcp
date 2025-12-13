@@ -1,0 +1,555 @@
+# Picnic Table Workflow
+# Parametric picnic table with attached benches and A-frame legs.
+# Inspired by _docs/_ROUTER/WORKFLOWS/table.yaml but centered and sized in meters
+# (table_length/table_width are full dimensions, not half-scales).
+
+name: picnic_table_workflow
+description: Creates a classic picnic table with attached benches and A-frame legs
+category: furniture
+author: blender-ai-mcp
+version: "3.0.0"
+
+trigger_pattern: table_like
+trigger_keywords:
+  - picnic table
+  - outdoor picnic table
+  - garden picnic table
+  - table with benches
+  - stół piknikowy
+  - stol piknikowy
+  - stół ogrodowy z ławkami
+  - stol ogrodowy z lawkami
+  - stół z ławkami
+  - stol z lawkami
+
+sample_prompts:
+  # English
+  - "create a picnic table"
+  - "make an outdoor table with benches"
+  - "build a garden picnic table"
+
+  # Polish
+  - "zrób stół piknikowy"
+  - "stwórz stół ogrodowy z ławkami"
+  - "zbuduj stół z ławkami"
+
+defaults:
+  # Table top dimensions (meters)
+  table_length: 1.6
+  table_width: 0.75
+
+  # Height (meters)
+  leg_length: 0.75
+
+  # A-frame leg angles (radians)
+  # Default: mild inward lean (~18°), like classic picnic A-frame.
+  leg_angle_left: 0.32
+  leg_angle_right: -0.32
+
+  # Leg placement offsets (meters)
+  leg_offset_x: 0.05
+  leg_offset_y: 0.10
+
+  # Table plank configuration (meters)
+  plank_max_width: 0.12
+
+  # Bench configuration (meters)
+  bench_gap: 0.10
+  bench_width: 0.28
+  bench_height: 0.45
+  bench_plank_count: 2
+
+modifiers:
+  # Straight/vertical legs
+  "straight legs":
+    leg_angle_left: 0
+    leg_angle_right: 0
+    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+
+  # Crossed legs (strong angle) - mostly for experimentation
+  "X-shaped legs":
+    leg_angle_left: 1.0
+    leg_angle_right: -1.0
+    negative_signals: ["straight", "vertical", "proste", "pionowe"]
+
+  "crossed legs":
+    leg_angle_left: 1.0
+    leg_angle_right: -1.0
+    negative_signals: ["straight", "vertical", "proste", "pionowe"]
+
+parameters:
+  # ==========================================
+  # USER PARAMETERS
+  # ==========================================
+
+  table_length:
+    type: float
+    range: [0.8, 3.0]
+    default: 1.6
+    description: Length of table top (Y axis) - how long the picnic table is
+    semantic_hints: [length, long, table, picnic]
+    group: table_dimensions
+
+  table_width:
+    type: float
+    range: [0.5, 1.5]
+    default: 0.75
+    description: Width of table top (X axis) - how wide the picnic table is
+    semantic_hints: [width, wide, table, picnic]
+    group: table_dimensions
+
+  leg_length:
+    type: float
+    range: [0.55, 1.2]
+    default: 0.75
+    description: Height of table (distance from ground to tabletop underside)
+    semantic_hints: [height, tall, legs, picnic]
+    group: leg_dimensions
+
+  leg_angle_left:
+    type: float
+    range: [-1.2, 1.2]
+    default: 0.32
+    description: Rotation angle for left legs (radians)
+    semantic_hints: [angle, legs, a-frame, lean]
+    group: leg_angles
+
+  leg_angle_right:
+    type: float
+    range: [-1.2, 1.2]
+    default: -0.32
+    description: Rotation angle for right legs (radians)
+    semantic_hints: [angle, legs, a-frame, lean]
+    group: leg_angles
+
+  leg_offset_x:
+    type: float
+    range: [0.02, 0.20]
+    default: 0.05
+    description: Inset of leg outer face from tabletop edge in X axis (width)
+    semantic_hints: [offset, inset, distance, width, corner, edge]
+    group: leg_dimensions
+
+  leg_offset_y:
+    type: float
+    range: [0.05, 0.40]
+    default: 0.10
+    description: Inset of legs from tabletop edge in Y axis (length)
+    semantic_hints: [offset, inset, distance, length, corner, edge]
+    group: leg_dimensions
+
+  plank_max_width:
+    type: float
+    range: [0.08, 0.20]
+    default: 0.12
+    description: Maximum width per tabletop plank
+    semantic_hints: [plank, width, board, wood]
+    group: plank_configuration
+
+  bench_gap:
+    type: float
+    range: [0.05, 0.30]
+    default: 0.10
+    description: Gap between tabletop edge and bench inner edge (per side)
+    semantic_hints: [bench, gap, distance, seating]
+    group: bench_dimensions
+
+  bench_width:
+    type: float
+    range: [0.18, 0.50]
+    default: 0.28
+    description: Total bench seat width (per side)
+    semantic_hints: [bench, width, seating]
+    group: bench_dimensions
+
+  bench_height:
+    type: float
+    range: [0.30, 0.60]
+    default: 0.45
+    description: Bench seat height (distance from ground to bench underside)
+    semantic_hints: [bench, height, seating]
+    group: bench_dimensions
+
+  bench_plank_count:
+    type: int
+    range: [1, 4]
+    default: 2
+    description: Number of planks per bench seat (per side)
+    semantic_hints: [bench, planks, boards]
+    group: bench_dimensions
+
+  # ==========================================
+  # COMPUTED PARAMETERS (table planks)
+  # ==========================================
+
+  plank_full_count:
+    type: int
+    computed: "floor(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Number of full-width planks (each = plank_max_width)
+
+  plank_remainder_width_raw:
+    type: float
+    computed: "table_width - (plank_full_count * plank_max_width)"
+    depends_on: ["table_width", "plank_full_count", "plank_max_width"]
+    description: Raw remainder width (may be ~0 due to floating point)
+
+  plank_remainder_width:
+    type: float
+    computed: "max(plank_remainder_width_raw, 0)"
+    depends_on: ["plank_remainder_width_raw"]
+    description: Width of the last remainder plank (0 if not needed)
+
+  plank_has_remainder:
+    type: int
+    computed: "1 if plank_remainder_width > 0.000001 else 0"
+    depends_on: ["plank_remainder_width"]
+    description: Whether a remainder plank is needed (1=yes, 0=no)
+
+  plank_count:
+    type: int
+    computed: "plank_full_count + plank_has_remainder"
+    depends_on: ["plank_full_count", "plank_has_remainder"]
+    description: Total number of tabletop planks (full + remainder)
+
+  # ==========================================
+  # COMPUTED PARAMETERS (benches + legs)
+  # ==========================================
+
+  bench_plank_width:
+    type: float
+    computed: "bench_width / bench_plank_count"
+    depends_on: ["bench_width", "bench_plank_count"]
+    description: Bench plank width (per plank)
+
+  leg_scale_z_left:
+    type: float
+    computed: "leg_length / (2 * max(cos(leg_angle_left), 0.1))"
+    depends_on: ["leg_length", "leg_angle_left"]
+    description: Cube Z scale so rotated left leg reaches tabletop height
+
+  leg_scale_z_right:
+    type: float
+    computed: "leg_length / (2 * max(cos(leg_angle_right), 0.1))"
+    depends_on: ["leg_length", "leg_angle_right"]
+    description: Cube Z scale so rotated right leg reaches tabletop height
+
+steps:
+  # ============================================
+  # SECTION 1: TABLE TOP (dynamic planks)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_{i}"
+    loop:
+      group: "table_planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Create tabletop plank {i}"
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_{i}"
+      scale:
+        - "$CALCULATE((plank_max_width if {i} <= plank_full_count else plank_remainder_width) / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE((-table_width / 2 + plank_max_width * ({i} - 0.5)) if {i} <= plank_full_count else (-table_width / 2 + plank_max_width * plank_full_count + plank_remainder_width / 2))"
+        - 0
+        - "$CALCULATE(leg_length + 0.0114)"
+    loop:
+      group: "table_planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Position tabletop plank {i}"
+
+  # ============================================
+  # SECTION 2: UNDERSIDE SUPPORT FRAME (basic)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Front"
+    description: Create front support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Front"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position front support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Back"
+    description: Create back support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Back"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position back support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Left"
+    description: Create left support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Left"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position left support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Right"
+    description: Create right support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Right"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position right support (fits between legs)"
+
+  # ============================================
+  # SECTION 3: BENCHES (2 sides, N planks each)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchLeft_{i}"
+    loop:
+      group: "bench_left"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: "Create left bench plank {i}"
+    tags: ["bench", "seating", "left"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchLeft_{i}"
+      scale:
+        - "$CALCULATE(bench_plank_width / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE(-(table_width / 2 + bench_gap) - (bench_plank_width * ({i} - 0.5)))"
+        - 0
+        - "$CALCULATE(bench_height + 0.0114)"
+    loop:
+      group: "bench_left"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: "Position left bench plank {i}"
+    tags: ["bench", "seating", "left"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchRight_{i}"
+    loop:
+      group: "bench_right"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: "Create right bench plank {i}"
+    tags: ["bench", "seating", "right"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchRight_{i}"
+      scale:
+        - "$CALCULATE(bench_plank_width / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE((table_width / 2 + bench_gap) + (bench_plank_width * ({i} - 0.5)))"
+        - 0
+        - "$CALCULATE(bench_height + 0.0114)"
+    loop:
+      group: "bench_right"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: "Position right bench plank {i}"
+    tags: ["bench", "seating", "right"]
+
+  # ============================================
+  # SECTION 4: A-FRAME LEGS (4 pieces)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FL"
+    description: Create front-left leg
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      scale: [0.04, 0.04, "$leg_scale_z_left"]
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length / 2)"
+      rotation: [0, "$leg_angle_left", 0]
+    description: "Position front-left leg (A-frame)"
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FR"
+    description: Create front-right leg
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FR"
+      scale: [0.04, 0.04, "$leg_scale_z_right"]
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length / 2)"
+      rotation: [0, "$leg_angle_right", 0]
+    description: "Position front-right leg (A-frame)"
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BL"
+    description: Create back-left leg
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BL"
+      scale: [0.04, 0.04, "$leg_scale_z_left"]
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length / 2)"
+      rotation: [0, "$leg_angle_left", 0]
+    description: "Position back-left leg (A-frame)"
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BR"
+    description: Create back-right leg
+    tags: ["legs", "a-frame"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BR"
+      scale: [0.04, 0.04, "$leg_scale_z_right"]
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length / 2)"
+      rotation: [0, "$leg_angle_right", 0]
+    description: "Position back-right leg (A-frame)"
+    tags: ["legs", "a-frame"]
+
+  # Optional cross braces near mid-height (helps readability)
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "LegBrace_Front"
+    description: Create front leg brace
+    optional: true
+    tags: ["legs", "brace", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "LegBrace_Front"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.03
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(bench_height / 2)"
+    description: "Position front brace between legs"
+    optional: true
+    tags: ["legs", "brace", "structural"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "LegBrace_Back"
+    description: Create back leg brace
+    optional: true
+    tags: ["legs", "brace", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "LegBrace_Back"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.03
+      location:
+        - 0
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(bench_height / 2)"
+    description: "Position back brace between legs"
+    optional: true
+    tags: ["legs", "brace", "structural"]
+
+  # ============================================
+  # SECTION 5: MATERIAL
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "PicnicTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "TablePlank_1"
+    description: Apply wood material (assigned to first plank as reference)
+
