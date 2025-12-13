@@ -483,6 +483,10 @@ Tip: dla krótszego YAML używaj anchorów i `<<` merge (PyYAML `safe_load` to w
 
 ## 7. Krok 6: Opcjonalne Kroki i Adaptacja
 
+> **English deep dive:** For a precise explanation of how adaptation (TASK-051) and `condition` interact (two filters),
+> plus the full expansion order (computed params → loops/interpolation → `$CALCULATE/$AUTO_/$variable` → `condition`),
+> see: [workflow-execution-pipeline.md](./workflow-execution-pipeline.md).
+
 ### 7.1 Problem: Zbyt Szczegółowe Workflow
 
 Wyobraź sobie workflow `picnic_table` z 49 krokami, który tworzy stół piknikowy z ławkami i ramą A-frame. Gdy użytkownik powie "prosty stół z 4 nogami", wykonanie pełnego workflow jest nadmierne.

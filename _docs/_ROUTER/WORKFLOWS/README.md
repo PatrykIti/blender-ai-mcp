@@ -19,6 +19,7 @@ Predefined workflow definitions for common modeling patterns.
 | [creating-workflows-tutorial.md](./creating-workflows-tutorial.md) | **Tutorial: Tworzenie workflow od podstaw** |
 | [yaml-workflow-guide.md](./yaml-workflow-guide.md) | Kompletny przewodnik po składni YAML |
 | [expression-reference.md](./expression-reference.md) | Referencja wyrażeń ($CALCULATE, $AUTO_*, warunki) |
+| [workflow-execution-pipeline.md](./workflow-execution-pipeline.md) | Jak workflow staje się tool callami (adaptacja vs condition, pętle) |
 
 ### Wbudowane Workflow
 

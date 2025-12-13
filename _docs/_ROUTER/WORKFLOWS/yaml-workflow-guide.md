@@ -19,6 +19,10 @@ YAML workflows allow you to define sequences of Blender operations that execute 
 - **Computed parameters** - Auto-calculate derived values (TASK-056-5)
 - **Step dependencies** - Control execution order with timeout/retry (TASK-056-4)
 
+For the end-to-end processing order (computed params → loops/interpolation → `$CALCULATE/$AUTO_/$variable` → `condition`),
+and how adaptation (TASK-051) interacts with `condition`, see:
+[workflow-execution-pipeline.md](./workflow-execution-pipeline.md).
+
 > **New in TASK-056:** Advanced math functions (tan, atan2, log, exp, hypot), complex boolean expressions with parentheses, enum constraints, computed parameters, and step dependency management. See [Advanced Workflow Features](#advanced-workflow-features-task-056) for details.
 >
 > **New in TASK-060:** Unified expression evaluator (math functions in `condition` + comparisons/logic/ternary in `$CALCULATE(...)`).
