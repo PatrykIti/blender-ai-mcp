@@ -288,15 +288,33 @@ parameters:
 
   support_z:
     type: float
-    computed: "bench_height / 2"
-    depends_on: ["bench_height"]
-    description: Z height for lower supports/braces
+    computed: "bench_height - 0.03 if bench_layout != 'none' else (leg_length * 0.3)"
+    depends_on: ["bench_height", "bench_layout", "leg_length"]
+    description: Z center for supports/braces (at bench underside when benches exist)
 
   bench_outer_edge_x:
     type: float
     computed: "table_width / 2 + bench_gap + bench_width"
     depends_on: ["table_width", "bench_gap", "bench_width"]
     description: Half-width from center to outer edge of side benches (used for end benches)
+
+  bench_support_center_x:
+    type: float
+    computed: "table_width / 2 + bench_gap + bench_width / 2"
+    depends_on: ["table_width", "bench_gap", "bench_width"]
+    description: X centerline for side bench supports (positive)
+
+  bench_support_y_half:
+    type: float
+    computed: "table_length / 2 + (bench_end_gap + bench_end_width) if bench_layout == 'all' else table_length / 2"
+    depends_on: ["table_length", "bench_layout", "bench_end_gap", "bench_end_width"]
+    description: Half-length of side support beams along Y (covers end benches when present)
+
+  a_frame_crossbeam_half_x:
+    type: float
+    computed: "bench_outer_edge_x if bench_layout != 'none' else leg_frame_x"
+    depends_on: ["bench_outer_edge_x", "bench_layout", "leg_frame_x"]
+    description: Half-length of A-frame crossbeams (extends to benches when present)
 
   leg_scale_z_left:
     type: float
@@ -668,16 +686,16 @@ steps:
       primitive_type: CUBE
       name: "LegCrossBeam_Front"
     description: Create front leg crossbeam (A-frame support)
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Front"
-      scale: ["$leg_frame_x", 0.03, 0.03]
+      scale: ["$a_frame_crossbeam_half_x", 0.03, 0.03]
       location: [0, "$CALCULATE(-leg_frame_y)", "$support_z"]
     description: "Position front crossbeam (between front legs)"
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_create_primitive
@@ -685,16 +703,16 @@ steps:
       primitive_type: CUBE
       name: "LegCrossBeam_Back"
     description: Create back leg crossbeam (A-frame support)
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "LegCrossBeam_Back"
-      scale: ["$leg_frame_x", 0.03, 0.03]
+      scale: ["$a_frame_crossbeam_half_x", 0.03, 0.03]
       location: [0, "$leg_frame_y", "$support_z"]
     description: "Position back crossbeam (between back legs)"
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_create_primitive
@@ -702,16 +720,16 @@ steps:
       primitive_type: CUBE
       name: "DiagonalSupport_R"
     description: Create right diagonal support (A-frame brace)
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "diagonal", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_R"
-      scale: [0.03, "$leg_frame_y", 0.03]
-      location: ["$CALCULATE(table_width / 2 + bench_gap / 2)", 0, "$support_z"]
-    description: "Position right support (connects front/back crossbeams)"
-    condition: "include_a_frame_supports"
+      scale: [0.03, "$bench_support_y_half", 0.03]
+      location: ["$bench_support_center_x", 0, "$support_z"]
+    description: "Position right bench support beam (supports seating planks)"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "diagonal", "structural"]
 
   - tool: modeling_create_primitive
@@ -719,16 +737,16 @@ steps:
       primitive_type: CUBE
       name: "DiagonalSupport_L"
     description: Create left diagonal support (A-frame brace)
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "diagonal", "structural"]
 
   - tool: modeling_transform_object
     params:
       name: "DiagonalSupport_L"
-      scale: [0.03, "$leg_frame_y", 0.03]
-      location: ["$CALCULATE(-(table_width / 2 + bench_gap / 2))", 0, "$support_z"]
-    description: "Position left support (connects front/back crossbeams)"
-    condition: "include_a_frame_supports"
+      scale: [0.03, "$bench_support_y_half", 0.03]
+      location: ["$CALCULATE(-bench_support_center_x)", 0, "$support_z"]
+    description: "Position left bench support beam (supports seating planks)"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
     tags: ["a-frame", "diagonal", "structural"]
 
   # ============================================
@@ -832,4 +850,4 @@ steps:
         - "DiagonalSupport_L"
         - "DiagonalSupport_R"
     description: Apply wood material to A-frame supports
-    condition: "include_a_frame_supports"
+    condition: "include_a_frame_supports or bench_layout != 'none'"
