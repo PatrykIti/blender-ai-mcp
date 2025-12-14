@@ -41,6 +41,9 @@ defaults:
   # Height (meters)
   leg_length: 0.75
 
+  # Structural supports
+  include_a_frame_supports: true
+
   # A-frame leg angles (radians)
   # Default: mild inward lean (~18°), like classic picnic A-frame.
   leg_angle_left: 0.32
@@ -54,10 +57,14 @@ defaults:
   plank_max_width: 0.12
 
   # Bench configuration (meters)
+  bench_layout: "all"      # all | sides | none
   bench_gap: 0.10
   bench_width: 0.28
   bench_height: 0.45
   bench_plank_count: 2
+  bench_end_gap: 0.10
+  bench_end_width: 0.28
+  bench_end_plank_count: 2
 
 modifiers:
   # Straight/vertical legs
@@ -178,6 +185,45 @@ parameters:
     semantic_hints: [bench, planks, boards]
     group: bench_dimensions
 
+  bench_layout:
+    type: string
+    enum: ["all", "sides", "none"]
+    default: "all"
+    description: Bench layout (all = sides + front/back, sides = left/right only, none = no benches)
+    semantic_hints: [bench, benches, seating, layout, around, sides, none]
+    group: bench_dimensions
+
+  bench_end_gap:
+    type: float
+    range: [0.05, 0.40]
+    default: 0.10
+    description: Gap between tabletop edge and end benches (front/back)
+    semantic_hints: [bench, gap, end, front, back]
+    group: bench_dimensions
+
+  bench_end_width:
+    type: float
+    range: [0.18, 0.60]
+    default: 0.28
+    description: Total depth of front/back benches (how far they extend outward)
+    semantic_hints: [bench, width, depth, end, front, back]
+    group: bench_dimensions
+
+  bench_end_plank_count:
+    type: int
+    range: [1, 4]
+    default: 2
+    description: Number of planks per end bench (front/back)
+    semantic_hints: [bench, planks, boards, end]
+    group: bench_dimensions
+
+  include_a_frame_supports:
+    type: bool
+    default: true
+    description: Add A-frame structural supports (crossbeams + diagonal braces)
+    semantic_hints: [support, brace, structural, a-frame, diagonal, crossbeam]
+    group: supports
+
   # ==========================================
   # COMPUTED PARAMETERS (table planks)
   # ==========================================
@@ -221,6 +267,36 @@ parameters:
     computed: "bench_width / bench_plank_count"
     depends_on: ["bench_width", "bench_plank_count"]
     description: Bench plank width (per plank)
+
+  bench_end_plank_width:
+    type: float
+    computed: "bench_end_width / bench_end_plank_count"
+    depends_on: ["bench_end_width", "bench_end_plank_count"]
+    description: End bench plank width (per plank)
+
+  leg_frame_x:
+    type: float
+    computed: "max(table_width / 2 - leg_offset_x - 0.04, 0.02)"
+    depends_on: ["table_width", "leg_offset_x"]
+    description: X position of leg frames from center (positive)
+
+  leg_frame_y:
+    type: float
+    computed: "max(table_length / 2 - leg_offset_y - 0.04, 0.02)"
+    depends_on: ["table_length", "leg_offset_y"]
+    description: Y position of leg frames from center (positive)
+
+  support_z:
+    type: float
+    computed: "bench_height / 2"
+    depends_on: ["bench_height"]
+    description: Z height for lower supports/braces
+
+  bench_outer_edge_x:
+    type: float
+    computed: "table_width / 2 + bench_gap + bench_width"
+    depends_on: ["table_width", "bench_gap", "bench_width"]
+    description: Half-width from center to outer edge of side benches (used for end benches)
 
   leg_scale_z_left:
     type: float
@@ -280,12 +356,12 @@ steps:
     params:
       name: "TableSupport_Front"
       scale:
-        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - "$leg_frame_x"
         - 0.03
         - 0.01
       location:
         - 0
-        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(-leg_frame_y)"
         - "$CALCULATE(leg_length - 0.01)"
     description: "Position front support (fits between legs)"
 
@@ -299,12 +375,12 @@ steps:
     params:
       name: "TableSupport_Back"
       scale:
-        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - "$leg_frame_x"
         - 0.03
         - 0.01
       location:
         - 0
-        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$leg_frame_y"
         - "$CALCULATE(leg_length - 0.01)"
     description: "Position back support (fits between legs)"
 
@@ -319,10 +395,10 @@ steps:
       name: "TableSupport_Left"
       scale:
         - 0.03
-        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - "$leg_frame_y"
         - 0.01
       location:
-        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - "$CALCULATE(-leg_frame_x)"
         - 0
         - "$CALCULATE(leg_length - 0.01)"
     description: "Position left support (fits between legs)"
@@ -338,16 +414,39 @@ steps:
       name: "TableSupport_Right"
       scale:
         - 0.03
-        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - "$leg_frame_y"
         - 0.01
       location:
-        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - "$leg_frame_x"
         - 0
         - "$CALCULATE(leg_length - 0.01)"
     description: "Position right support (fits between legs)"
 
   # ============================================
-  # SECTION 3: BENCHES (2 sides, N planks each)
+  # SECTION 3: TABLE CROSS BEAM (under planks)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableCrossBeam"
+    description: Create table cross beam under planks
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableCrossBeam"
+      scale:
+        - "$CALCULATE(table_width * 0.325)"   # (table_width * 0.65) / 2
+        - "$CALCULATE(table_length * 0.45)"  # (table_length * 0.90) / 2
+        - 0.01
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(leg_length - 0.03)"
+    description: "Position cross beam under tabletop (scales with table size)"
+
+  # ============================================
+  # SECTION 4: BENCHES - SIDES (left/right)
   # ============================================
 
   - tool: modeling_create_primitive
@@ -359,6 +458,7 @@ steps:
       variable: "i"
       range: "1..bench_plank_count"
     description: "Create left bench plank {i}"
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
     tags: ["bench", "seating", "left"]
 
   - tool: modeling_transform_object
@@ -377,6 +477,7 @@ steps:
       variable: "i"
       range: "1..bench_plank_count"
     description: "Position left bench plank {i}"
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
     tags: ["bench", "seating", "left"]
 
   - tool: modeling_create_primitive
@@ -388,6 +489,7 @@ steps:
       variable: "i"
       range: "1..bench_plank_count"
     description: "Create right bench plank {i}"
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
     tags: ["bench", "seating", "right"]
 
   - tool: modeling_transform_object
@@ -406,10 +508,78 @@ steps:
       variable: "i"
       range: "1..bench_plank_count"
     description: "Position right bench plank {i}"
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
     tags: ["bench", "seating", "right"]
 
   # ============================================
-  # SECTION 4: A-FRAME LEGS (4 pieces)
+  # SECTION 5: BENCHES - FRONT/BACK (end benches)
+  # Only when bench_layout == 'all'
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchFront_{i}"
+    loop:
+      group: "bench_front"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: "Create front bench plank {i}"
+    condition: "bench_layout == 'all'"
+    tags: ["bench", "seating", "front"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchFront_{i}"
+      scale:
+        - "$bench_outer_edge_x"
+        - "$CALCULATE(bench_end_plank_width / 2)"
+        - 0.0114
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 + bench_end_gap) - (bench_end_plank_width * ({i} - 0.5)))"
+        - "$CALCULATE(bench_height + 0.0114)"
+    loop:
+      group: "bench_front"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: "Position front bench plank {i}"
+    condition: "bench_layout == 'all'"
+    tags: ["bench", "seating", "front"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "BenchBack_{i}"
+    loop:
+      group: "bench_back"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: "Create back bench plank {i}"
+    condition: "bench_layout == 'all'"
+    tags: ["bench", "seating", "back"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "BenchBack_{i}"
+      scale:
+        - "$bench_outer_edge_x"
+        - "$CALCULATE(bench_end_plank_width / 2)"
+        - 0.0114
+      location:
+        - 0
+        - "$CALCULATE((table_length / 2 + bench_end_gap) + (bench_end_plank_width * ({i} - 0.5)))"
+        - "$CALCULATE(bench_height + 0.0114)"
+    loop:
+      group: "bench_back"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: "Position back bench plank {i}"
+    condition: "bench_layout == 'all'"
+    tags: ["bench", "seating", "back"]
+
+  # ============================================
+  # SECTION 6: A-FRAME LEGS (4 pieces)
   # ============================================
 
   - tool: modeling_create_primitive
@@ -424,8 +594,8 @@ steps:
       name: "Leg_FL"
       scale: [0.04, 0.04, "$leg_scale_z_left"]
       location:
-        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
-        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(-leg_frame_x)"
+        - "$CALCULATE(-leg_frame_y)"
         - "$CALCULATE(leg_length / 2)"
       rotation: [0, "$leg_angle_left", 0]
     description: "Position front-left leg (A-frame)"
@@ -443,8 +613,8 @@ steps:
       name: "Leg_FR"
       scale: [0.04, 0.04, "$leg_scale_z_right"]
       location:
-        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
-        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$leg_frame_x"
+        - "$CALCULATE(-leg_frame_y)"
         - "$CALCULATE(leg_length / 2)"
       rotation: [0, "$leg_angle_right", 0]
     description: "Position front-right leg (A-frame)"
@@ -462,8 +632,8 @@ steps:
       name: "Leg_BL"
       scale: [0.04, 0.04, "$leg_scale_z_left"]
       location:
-        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
-        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(-leg_frame_x)"
+        - "$leg_frame_y"
         - "$CALCULATE(leg_length / 2)"
       rotation: [0, "$leg_angle_left", 0]
     description: "Position back-left leg (A-frame)"
@@ -481,62 +651,88 @@ steps:
       name: "Leg_BR"
       scale: [0.04, 0.04, "$leg_scale_z_right"]
       location:
-        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
-        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$leg_frame_x"
+        - "$leg_frame_y"
         - "$CALCULATE(leg_length / 2)"
       rotation: [0, "$leg_angle_right", 0]
     description: "Position back-right leg (A-frame)"
     tags: ["legs", "a-frame"]
 
-  # Optional cross braces near mid-height (helps readability)
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: CUBE
-      name: "LegBrace_Front"
-    description: Create front leg brace
-    optional: true
-    tags: ["legs", "brace", "structural"]
-
-  - tool: modeling_transform_object
-    params:
-      name: "LegBrace_Front"
-      scale:
-        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
-        - 0.03
-        - 0.03
-      location:
-        - 0
-        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
-        - "$CALCULATE(bench_height / 2)"
-    description: "Position front brace between legs"
-    optional: true
-    tags: ["legs", "brace", "structural"]
+  # ============================================
+  # SECTION 7: A-FRAME SUPPORTS (crossbeams + braces)
+  # Mirrors the structural elements from _docs/_ROUTER/WORKFLOWS/table.yaml
+  # ============================================
 
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
-      name: "LegBrace_Back"
-    description: Create back leg brace
-    optional: true
-    tags: ["legs", "brace", "structural"]
+      name: "LegCrossBeam_Front"
+    description: Create front leg crossbeam (A-frame support)
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_transform_object
     params:
-      name: "LegBrace_Back"
-      scale:
-        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
-        - 0.03
-        - 0.03
-      location:
-        - 0
-        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
-        - "$CALCULATE(bench_height / 2)"
-    description: "Position back brace between legs"
-    optional: true
-    tags: ["legs", "brace", "structural"]
+      name: "LegCrossBeam_Front"
+      scale: ["$leg_frame_x", 0.03, 0.03]
+      location: [0, "$CALCULATE(-leg_frame_y)", "$support_z"]
+    description: "Position front crossbeam (between front legs)"
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "cross-support", "structural"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "LegCrossBeam_Back"
+    description: Create back leg crossbeam (A-frame support)
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "cross-support", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "LegCrossBeam_Back"
+      scale: ["$leg_frame_x", 0.03, 0.03]
+      location: [0, "$leg_frame_y", "$support_z"]
+    description: "Position back crossbeam (between back legs)"
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "cross-support", "structural"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "DiagonalSupport_R"
+    description: Create right diagonal support (A-frame brace)
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "diagonal", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "DiagonalSupport_R"
+      scale: [0.03, "$leg_frame_y", 0.03]
+      location: ["$CALCULATE(table_width / 2 + bench_gap / 2)", 0, "$support_z"]
+    description: "Position right support (connects front/back crossbeams)"
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "diagonal", "structural"]
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "DiagonalSupport_L"
+    description: Create left diagonal support (A-frame brace)
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "diagonal", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "DiagonalSupport_L"
+      scale: [0.03, "$leg_frame_y", 0.03]
+      location: ["$CALCULATE(-(table_width / 2 + bench_gap / 2))", 0, "$support_z"]
+    description: "Position left support (connects front/back crossbeams)"
+    condition: "include_a_frame_supports"
+    tags: ["a-frame", "diagonal", "structural"]
 
   # ============================================
-  # SECTION 5: MATERIAL
+  # SECTION 8: MATERIAL
   # ============================================
 
   - tool: material_create
@@ -550,6 +746,90 @@ steps:
   - tool: material_assign
     params:
       material_name: "PicnicTable_Wood"
-      object_name: "TablePlank_1"
-    description: Apply wood material (assigned to first plank as reference)
+      object_name: "TablePlank_{i}"
+    loop:
+      group: "mat_table_planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: Apply wood material to tabletop plank {i}
 
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values:
+        - "TableSupport_Front"
+        - "TableSupport_Back"
+        - "TableSupport_Left"
+        - "TableSupport_Right"
+        - "TableCrossBeam"
+    description: Apply wood material to table supports
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values: ["Leg_FL", "Leg_FR", "Leg_BL", "Leg_BR"]
+    description: Apply wood material to legs
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "BenchLeft_{i}"
+    loop:
+      group: "mat_bench_left"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: Apply wood material to left bench plank {i}
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "BenchRight_{i}"
+    loop:
+      group: "mat_bench_right"
+      variable: "i"
+      range: "1..bench_plank_count"
+    description: Apply wood material to right bench plank {i}
+    condition: "bench_layout == 'sides' or bench_layout == 'all'"
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "BenchFront_{i}"
+    loop:
+      group: "mat_bench_front"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: Apply wood material to front bench plank {i}
+    condition: "bench_layout == 'all'"
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "BenchBack_{i}"
+    loop:
+      group: "mat_bench_back"
+      variable: "i"
+      range: "1..bench_end_plank_count"
+    description: Apply wood material to back bench plank {i}
+    condition: "bench_layout == 'all'"
+
+  - tool: material_assign
+    params:
+      material_name: "PicnicTable_Wood"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values:
+        - "LegCrossBeam_Front"
+        - "LegCrossBeam_Back"
+        - "DiagonalSupport_L"
+        - "DiagonalSupport_R"
+    description: Apply wood material to A-frame supports
+    condition: "include_a_frame_supports"
