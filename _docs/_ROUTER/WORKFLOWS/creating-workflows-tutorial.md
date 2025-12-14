@@ -1618,6 +1618,8 @@ parameters:
 - Sprawdzenie enum następuje **przed** walidacją zakresu
 - Wartość domyślna musi być w liście enum
 - Działa z każdym typem (string, int, float, bool)
+- Dla `type: string` router normalizuje input (trim + case-insensitive), np. `"Sides"` → `"sides"`
+- Gdy parametr jest `unresolved`, `router_set_goal` zwraca listę `enum` w odpowiedzi (żeby LLM/caller mógł wybrać poprawną wartość)
 
 ### 11.2 Parametry Obliczane (TASK-056-5)
 
@@ -1669,6 +1671,11 @@ parameters:
 2. Każdy parametr obliczany ewaluuje swoje wyrażenie `computed`
 3. Wynik staje się dostępny dla zależnych parametrów
 4. Zależności cykliczne są wykrywane i odrzucane
+
+**Uwaga (interaktywna rezolucja + learned mappings):**
+- Parametry z `computed: "..."` są traktowane jako wewnętrzne wyniki i **nie** są pytane jako `unresolved`.
+- Computed params są ignorowane przez learned mappings (żeby nie “uczyć się” wartości wyliczanych i uniknąć dryfu).
+- Jeśli naprawdę chcesz nadpisać computed value (advanced), przekaż ją jawnie przez `resolved_params` albo YAML `modifiers`.
 
 **Użycie w krokach:**
 

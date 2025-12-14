@@ -773,6 +773,8 @@ parameters:
 - Enum check happens **before** range validation
 - Default value must be in enum list
 - Works with any type (string, int, float, bool)
+- For `type: string`, router input is normalized (trimmed + case-insensitive)
+- When a parameter is `unresolved`, `router_set_goal` returns `enum` options in the response so the caller/LLM can pick a valid value
 
 ### Computed Parameters (TASK-056-5)
 
@@ -824,6 +826,11 @@ parameters:
 2. Each computed parameter evaluates its `computed` expression
 3. Result becomes available for dependent parameters
 4. Circular dependencies are detected and rejected
+
+**Important (interactive resolution + learned mappings):**
+- Parameters with `computed: "..."` are treated as internal outputs and are **not** requested as interactive `unresolved` inputs.
+- Computed parameters are also ignored by learned mappings to avoid stale/drifting values.
+- If you truly need to override a computed value (advanced), pass it explicitly via `resolved_params` or a YAML modifier.
 
 **Usage in Steps:**
 

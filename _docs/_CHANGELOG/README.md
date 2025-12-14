@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [110](./110-2025-12-14-picnic-table-supports-enum-computed-params.md) | 2025-12-14 | **Picnic Table Supports + Enum/Computed Param Robustness** | - |
 | [109](./109-2025-12-12-router-api-alignment-offline-guards.md) | 2025-12-12 | **Router API Alignment + Offline/Anti-Drift Guards (TASK-061)** | - |
 | [108](./108-2025-12-12-unified-expression-evaluator.md) | 2025-12-12 | **Unified Expression Evaluator (TASK-060)** | - |
 | [107](./107-2025-12-11-simple-table-dynamic-plank-system.md) | 2025-12-11 | **Dynamic Plank System for simple_table.yaml (TASK-055-FIX-7 Phase 1-3 Complete)** | - |
