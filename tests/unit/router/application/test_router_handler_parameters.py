@@ -333,6 +333,88 @@ class TestSetGoalUnified:
         assert result["unresolved"][0]["type"] == "float"
         assert result["unresolved"][0]["default"] == 0.3
 
+    def test_set_goal_includes_enum_in_unresolved(self, handler, mock_loader, mock_resolver):
+        """Enum constraints should be returned to the caller for string parameters."""
+        layout_schema = ParameterSchema(
+            name="bench_layout",
+            type="string",
+            enum=["all", "sides", "none"],
+            default="all",
+            description="Bench layout",
+            semantic_hints=["bench", "layout", "sides"],
+        )
+        mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
+
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
+            resolved={},
+            unresolved=[
+                UnresolvedParameter(
+                    name="bench_layout",
+                    schema=layout_schema,
+                    context="table",
+                    relevance=0.8,
+                )
+            ],
+            resolution_sources={},
+        ))
+
+        result = handler.set_goal("table")
+
+        assert result["status"] == "needs_input"
+        assert result["unresolved"][0]["param"] == "bench_layout"
+        assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
+
+    def test_set_goal_invalid_enum_value_returns_needs_input(
+        self, handler, mock_loader, mock_resolver
+    ):
+        """Invalid enum values should be reported instead of silently ignored."""
+        layout_schema = ParameterSchema(
+            name="bench_layout",
+            type="string",
+            enum=["all", "sides", "none"],
+            default="all",
+            description="Bench layout",
+        )
+        mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
+
+        # Resolver would otherwise consider everything resolved
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
+            resolved={"bench_layout": "all"},
+            unresolved=[],
+            resolution_sources={"bench_layout": "default"},
+        ))
+
+        result = handler.set_goal("table", resolved_params={"bench_layout": "side-only"})
+
+        assert result["status"] == "needs_input"
+        assert result["unresolved"][0]["param"] == "bench_layout"
+        assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
+        assert "Invalid value" in result["unresolved"][0]["error"]
+
+    def test_set_goal_enum_value_is_case_insensitive(
+        self, handler, mock_loader, mock_resolver
+    ):
+        """String enum inputs should accept case-insensitive user values."""
+        layout_schema = ParameterSchema(
+            name="bench_layout",
+            type="string",
+            enum=["all", "sides", "none"],
+            default="all",
+            description="Bench layout",
+        )
+        mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
+
+        mock_resolver.set_resolve_result(ParameterResolutionResult(
+            resolved={"bench_layout": "sides"},
+            unresolved=[],
+            resolution_sources={"bench_layout": "user"},
+        ))
+
+        result = handler.set_goal("table", resolved_params={"bench_layout": "Sides"})
+
+        assert result["status"] == "ready"
+        assert result["resolved"]["bench_layout"] == "sides"
+
     def test_set_goal_with_resolved_params_second_call(
         self, handler, mock_loader, mock_resolver
     ):

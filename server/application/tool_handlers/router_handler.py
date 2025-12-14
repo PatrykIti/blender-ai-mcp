@@ -9,7 +9,7 @@ TASK-055: Extended with parameter resolution methods.
 """
 
 import json
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Union
 
 from server.domain.tools.router import IRouterTool
 
@@ -122,39 +122,6 @@ class RouterToolHandler(IRouterTool):
                 "message": f"Workflow '{matched_workflow}' executed ({len(execution_results)} tool calls).",
             }
 
-        # Step 3: If resolved_params provided, store them first
-        if resolved_params:
-            resolver = self._parameter_resolver
-            if resolver:
-                for param_name, value in resolved_params.items():
-                    # Extract context for this parameter from the goal
-                    context = self._extract_context_for_param(goal, param_name, workflow.parameters)
-                    resolver.store_resolved_value(
-                        context=context,
-                        parameter_name=param_name,
-                        value=value,
-                        workflow_name=matched_workflow,
-                        schema=workflow.parameters.get(param_name),
-                    )
-
-        # Step 4: Get existing modifiers from ensemble matching
-        existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
-
-        # Step 5: Resolve parameters using three-tier system
-        resolver = self._parameter_resolver
-        if resolver is None:
-            # Fallback: use only YAML modifiers and execute
-            execution_results = router.execute_pending_workflow(existing_modifiers)
-            return {
-                "status": "ready",
-                "workflow": matched_workflow,
-                "resolved": existing_modifiers,
-                "unresolved": [],
-                "resolution_sources": {k: "yaml_modifier" for k in existing_modifiers},
-                "executed": len(execution_results),
-                "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
-            }
-
         # Convert workflow.parameters to ParameterSchema objects if needed
         from server.router.domain.entities.parameter import ParameterSchema
 
@@ -165,16 +132,149 @@ class RouterToolHandler(IRouterTool):
             else:
                 param_schemas[name] = ParameterSchema.from_dict({"name": name, **schema_data})
 
+        # Step 3: If resolved_params provided, validate + normalize and store them
+        explicit_params: Dict[str, Any] = {}
+        invalid_params: List[Dict[str, Any]] = []
+
+        def _coerce_value(raw: Any, schema: ParameterSchema) -> Any:
+            """Best-effort coercion for tool inputs (mainly enums and manual strings)."""
+            if schema.type == "string":
+                if not isinstance(raw, str):
+                    return raw
+                value = raw.strip()
+                if (
+                    (value.startswith('"') and value.endswith('"'))
+                    or (value.startswith("'") and value.endswith("'"))
+                ):
+                    value = value[1:-1].strip()
+                if schema.enum and all(isinstance(v, str) for v in schema.enum):
+                    enum_map = {v.strip().lower(): v for v in schema.enum}
+                    key = value.strip().lower()
+                    if key in enum_map:
+                        value = enum_map[key]
+                return value
+
+            if schema.type == "float" and isinstance(raw, str):
+                try:
+                    return float(raw.strip())
+                except ValueError:
+                    return raw
+
+            if schema.type == "int" and isinstance(raw, str):
+                try:
+                    stripped = raw.strip()
+                    # Allow "2.0" as int=2
+                    as_float = float(stripped)
+                    if as_float.is_integer():
+                        return int(as_float)
+                    return raw
+                except ValueError:
+                    return raw
+
+            if schema.type == "bool" and isinstance(raw, str):
+                normalized = raw.strip().lower()
+                if normalized in {"true", "1", "yes", "y", "tak"}:
+                    return True
+                if normalized in {"false", "0", "no", "n", "nie"}:
+                    return False
+                return raw
+
+            return raw
+
+        if resolved_params:
+            for param_name, raw_value in resolved_params.items():
+                schema = param_schemas.get(param_name)
+                if schema is None:
+                    invalid_params.append(
+                        {
+                            "param": param_name,
+                            "error": f"Unknown parameter '{param_name}' for workflow '{matched_workflow}'",
+                        }
+                    )
+                    continue
+
+                value = _coerce_value(raw_value, schema)
+                if not schema.validate_value(value):
+                    invalid_params.append(
+                        {
+                            "param": param_name,
+                            "type": schema.type,
+                            "description": schema.description,
+                            "range": list(schema.range) if schema.range else None,
+                            "enum": schema.enum,
+                            "default": schema.default,
+                            "context": self._extract_context_for_param(goal, param_name, workflow.parameters),
+                            "semantic_hints": schema.semantic_hints,
+                            "error": f"Invalid value: {raw_value!r}",
+                        }
+                    )
+                    continue
+
+                explicit_params[param_name] = value
+
+            resolver = self._parameter_resolver
+            if resolver and explicit_params:
+                for param_name, value in explicit_params.items():
+                    schema = param_schemas.get(param_name)
+                    if schema is not None and schema.computed:
+                        continue
+                    context = self._extract_context_for_param(goal, param_name, workflow.parameters)
+                    resolver.store_resolved_value(
+                        context=context,
+                        parameter_name=param_name,
+                        value=value,
+                        workflow_name=matched_workflow,
+                        schema=schema,
+                    )
+
+        # Step 4: Get existing modifiers from ensemble matching
+        existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
+        merged_modifiers = {**explicit_params, **existing_modifiers} if explicit_params else existing_modifiers
+
+        # Step 5: Resolve parameters using three-tier system
+        resolver = self._parameter_resolver
+        if resolver is None:
+            # Fallback: use only YAML modifiers and execute
+            if invalid_params:
+                return {
+                    "status": "needs_input",
+                    "workflow": matched_workflow,
+                    "resolved": {},
+                    "unresolved": invalid_params,
+                    "resolution_sources": {},
+                    "message": "Some provided parameter values are invalid. Please correct them and try again.",
+                }
+
+            execution_results = router.execute_pending_workflow(merged_modifiers)
+            return {
+                "status": "ready",
+                "workflow": matched_workflow,
+                "resolved": merged_modifiers,
+                "unresolved": [],
+                "resolution_sources": {
+                    **{k: "yaml_modifier" for k in existing_modifiers},
+                    **{k: "user" for k in (explicit_params or {}) if k not in existing_modifiers},
+                },
+                "executed": len(execution_results),
+                "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
+            }
+
         # Resolve parameters
         result = resolver.resolve(
             prompt=goal,
             workflow_name=matched_workflow,
             parameters=param_schemas,
-            existing_modifiers=existing_modifiers,
+            existing_modifiers=merged_modifiers,
         )
 
+        resolution_sources = dict(result.resolution_sources)
+        # Mark user-provided explicit params distinctly (unless overridden by YAML modifiers)
+        for param_name in explicit_params:
+            if param_name not in existing_modifiers:
+                resolution_sources[param_name] = "user"
+
         # Step 6: Check if we need more input
-        if result.needs_llm_input:
+        if result.needs_llm_input or invalid_params:
             unresolved_list = []
             for unresolved in result.unresolved:
                 unresolved_list.append({
@@ -182,18 +282,29 @@ class RouterToolHandler(IRouterTool):
                     "type": unresolved.schema.type,
                     "description": unresolved.schema.description,
                     "range": list(unresolved.schema.range) if unresolved.schema.range else None,
+                    "enum": unresolved.schema.enum,
                     "default": unresolved.schema.default,
                     "context": unresolved.context,
                     "semantic_hints": unresolved.schema.semantic_hints,
                 })
+
+            if invalid_params:
+                # Put invalid inputs at the front, avoid duplicates
+                invalid_names = {item.get("param") for item in invalid_params}
+                unresolved_list = [u for u in unresolved_list if u.get("param") not in invalid_names]
+                unresolved_list = invalid_params + unresolved_list
 
             return {
                 "status": "needs_input",
                 "workflow": matched_workflow,
                 "resolved": result.resolved,
                 "unresolved": unresolved_list,
-                "resolution_sources": result.resolution_sources,
-                "message": f"Workflow '{matched_workflow}' needs parameter input. Please provide values for unresolved parameters.",
+                "resolution_sources": resolution_sources,
+                "message": (
+                    "Some provided parameter values are invalid. Please correct them and try again."
+                    if invalid_params
+                    else f"Workflow '{matched_workflow}' needs parameter input. Please provide values for unresolved parameters."
+                ),
             }
 
         # Step 7: All resolved - execute workflow
@@ -204,7 +315,7 @@ class RouterToolHandler(IRouterTool):
             "workflow": matched_workflow,
             "resolved": result.resolved,
             "unresolved": [],
-            "resolution_sources": result.resolution_sources,
+            "resolution_sources": resolution_sources,
             "executed": len(execution_results),
             "message": f"Workflow '{matched_workflow}' executed with {len(result.resolved)} parameters ({len(execution_results)} tool calls).",
         }
@@ -520,4 +631,3 @@ class RouterToolHandler(IRouterTool):
                 lines.append(f"  {name}: {value:.4f}")
 
         return "\n".join(lines)
-

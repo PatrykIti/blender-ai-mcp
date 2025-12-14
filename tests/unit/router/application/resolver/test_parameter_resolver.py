@@ -376,6 +376,57 @@ class TestParameterResolverTier3:
         assert result.unresolved == []
         assert "plank_full_count" not in result.resolution_sources
 
+    def test_computed_param_ignores_learned_mapping(self, resolver, mock_store):
+        """Computed params should not be pulled from learned mappings (can become stale)."""
+        mock_store.add_mapping(
+            context="cached",
+            parameter_name="plank_full_count",
+            value=999,
+            workflow_name="simple_table_workflow",
+            similarity=0.99,
+        )
+
+        computed_schema = ParameterSchema(
+            name="plank_full_count",
+            type="int",
+            computed="floor(table_width / plank_max_width)",
+            depends_on=["table_width", "plank_max_width"],
+            description="Number of full-width planks",
+        )
+
+        result = resolver.resolve(
+            prompt="simple table",
+            workflow_name="simple_table_workflow",
+            parameters={"plank_full_count": computed_schema},
+            existing_modifiers={},
+        )
+
+        assert result.is_complete
+        assert result.resolved == {}
+        assert result.unresolved == []
+        assert mock_store._increment_calls == 0
+
+    def test_computed_param_allows_explicit_override(self, resolver):
+        """Computed params can still be explicitly provided via Tier 1 modifiers."""
+        computed_schema = ParameterSchema(
+            name="plank_full_count",
+            type="int",
+            computed="floor(table_width / plank_max_width)",
+            depends_on=["table_width", "plank_max_width"],
+            description="Number of full-width planks",
+        )
+
+        result = resolver.resolve(
+            prompt="simple table",
+            workflow_name="simple_table_workflow",
+            parameters={"plank_full_count": computed_schema},
+            existing_modifiers={"plank_full_count": 5},
+        )
+
+        assert result.is_complete
+        assert result.resolved["plank_full_count"] == 5
+        assert result.resolution_sources["plank_full_count"] == "yaml_modifier"
+
 
 class TestParameterResolverRelevance:
     """Tests for relevance calculation."""

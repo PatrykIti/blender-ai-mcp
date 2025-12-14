@@ -111,6 +111,18 @@ class ParameterResolver(IParameterResolver):
                 )
                 continue
 
+            # TASK-056-5: Computed parameters are internal by default.
+            #
+            # - They should be computed during workflow expansion.
+            # - They should NOT be resolved from learned mappings (stale) or defaults.
+            # - They should never be requested as interactive input.
+            #
+            # Users can still override them explicitly via Tier 1 (modifiers/resolved_params),
+            # but we avoid persisting/reusing them automatically.
+            if schema.computed:
+                logger.debug(f"TIER 3: {param_name} deferred (computed param)")
+                continue
+
             # TIER 2: Check learned mappings (from previous LLM interactions)
             stored_mapping = self._store.find_mapping(
                 prompt=prompt,
@@ -128,36 +140,6 @@ class ParameterResolver(IParameterResolver):
                     f"TIER 2: {param_name}={stored_mapping.value} "
                     f"(learned, similarity={stored_mapping.similarity:.3f})"
                 )
-                continue
-
-            # TASK-056-5: Computed parameters should NOT fall back to default=None.
-            #
-            # They are meant to be derived later by the workflow execution pipeline.
-            # If we set them to default (typically None), we end up explicitly passing
-            # `param=None` into expansion, which can override computed values and
-            # break $CALCULATE expressions (e.g. Unknown variable).
-            if schema.computed:
-                # Optional: allow interactive override only if the prompt clearly relates
-                # to this param; otherwise defer to computation.
-                relevance = self.calculate_relevance(prompt, schema)
-                if relevance > self._relevance_threshold:
-                    context = self.extract_context(prompt, schema)
-                    unresolved.append(
-                        UnresolvedParameter(
-                            name=param_name,
-                            schema=schema,
-                            context=context,
-                            relevance=relevance,
-                        )
-                    )
-                    logger.debug(
-                        f"TIER 3: {param_name} UNRESOLVED (computed param override) "
-                        f"(relevance={relevance:.3f}, context='{context}')"
-                    )
-                else:
-                    logger.debug(
-                        f"TIER 3: {param_name} deferred (computed param, relevance={relevance:.3f} < threshold)"
-                    )
                 continue
 
             # TIER 3: Check if prompt relates to this parameter
