@@ -80,7 +80,34 @@ class ModelingHandler:
              raise ValueError(f"Could not create modifier '{modifier_type}': {str(e)}")
         
         if properties:
+            # Special-case pointer properties that commonly arrive as names (strings)
+            # from the MCP server.
+            #
+            # BooleanModifier.object expects a bpy.types.Object, but callers often
+            # provide an object name. Support both `object` and `object_name`.
+            if modifier_type_upper == "BOOLEAN" and "object_name" in properties and "object" not in properties:
+                properties = dict(properties)
+                properties["object"] = properties.pop("object_name")
+
             for prop, value in properties.items():
+                if modifier_type_upper == "BOOLEAN" and prop == "object":
+                    if value is None:
+                        continue
+                    if isinstance(value, str):
+                        target_obj = bpy.data.objects.get(value)
+                        if target_obj is None:
+                            raise ValueError(
+                                f"Boolean modifier target object '{value}' not found"
+                            )
+                        mod.object = target_obj
+                    else:
+                        # Allow callers to pass an actual object reference.
+                        try:
+                            mod.object = value
+                        except Exception as e:
+                            raise ValueError(f"Could not set Boolean modifier object: {e}")
+                    continue
+
                 if hasattr(mod, prop):
                     try:
                         setattr(mod, prop, value)

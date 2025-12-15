@@ -71,6 +71,62 @@ class TestModelingTools:
         assert mod_mock.levels == 2
         assert result["modifier"] == "Subdiv"
 
+    def test_add_modifier_boolean_object_by_name(self):
+        # Setup
+        cutter = MagicMock()
+        cutter.name = "Cutter"
+        self.objects_mock["Cutter"] = cutter
+
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        # When
+        result = self.handler.add_modifier(
+            "Cube",
+            "boolean",
+            {"operation": "DIFFERENCE", "object": "Cutter", "solver": "EXACT"},
+        )
+
+        # Then
+        self.cube.modifiers.new.assert_called_with(name="boolean", type="BOOLEAN")
+        assert mod_mock.object == cutter
+        assert result["modifier"] == "BOOLEAN"
+
+    def test_add_modifier_boolean_object_name_alias(self):
+        # Setup
+        cutter = MagicMock()
+        cutter.name = "Cutter"
+        self.objects_mock["Cutter"] = cutter
+
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        # When
+        result = self.handler.add_modifier(
+            "Cube",
+            "BOOLEAN",
+            {"operation": "DIFFERENCE", "object_name": "Cutter", "solver": "EXACT"},
+        )
+
+        # Then
+        self.cube.modifiers.new.assert_called_with(name="BOOLEAN", type="BOOLEAN")
+        assert mod_mock.object == cutter
+        assert result["modifier"] == "BOOLEAN"
+
+    def test_add_modifier_boolean_object_missing_raises(self):
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        with pytest.raises(ValueError, match="Boolean modifier target object 'Missing' not found"):
+            self.handler.add_modifier(
+                "Cube",
+                "BOOLEAN",
+                {"operation": "DIFFERENCE", "object": "Missing", "solver": "EXACT"},
+            )
+
     def test_apply_modifier(self):
         # Setup: Ensure the object has a modifier mock
         mod_name = "MirrorMod"
@@ -683,4 +739,3 @@ class TestSkinModifierTools:
 
         with pytest.raises(ValueError, match="out of range"):
             self.handler.skin_set_radius(object_name="Artery", vertex_index=10)
-

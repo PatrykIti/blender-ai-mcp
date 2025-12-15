@@ -25,7 +25,7 @@
     "properties": {
       "type": "dict",
       "default": null,
-      "description": "Modifier properties to set"
+      "description": "Modifier properties to set. For BOOLEAN, set the target via {\"object\": \"CutterObjectName\"} (alias: \"object_name\")."
     }
   },
   "related_tools": ["modeling_apply_modifier", "modeling_list_modifiers"],

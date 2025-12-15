@@ -1,10 +1,11 @@
 # TASK-062: Fix `modeling_add_modifier` BOOLEAN object reference handling
 
-**Status:** 🚨 To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Category:** Modeling Tools / Bug Fix  
 **Estimated Effort:** Small  
 **Created:** 2025-12-15  
+**Completed:** 2025-12-15  
 **Dependencies:** None
 
 ---
@@ -103,4 +104,3 @@ Optional extension (future): implement a generic resolver for RNA pointer proper
 | `_docs/TOOLS/MODELING_TOOLS_ARCHITECTURE.md` | Add an explicit BOOLEAN example for `properties.object` |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Align any boolean examples / expectations (if present) |
 | `_docs/_CHANGELOG/*` | Add entry describing the fix and user‑visible behavior |
-

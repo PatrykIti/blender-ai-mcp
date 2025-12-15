@@ -95,6 +95,8 @@ def modeling_add_modifier(
         name: Object name.
         modifier_type: Type of modifier (e.g., 'SUBSURF', 'BEVEL', 'MIRROR', 'BOOLEAN').
         properties: Dictionary of modifier properties to set (e.g., {'levels': 2}). Can be a dict or string '{"levels": 2}'.
+            BOOLEAN note: to set the cutter/target object, pass `{"object": "<ObjectName>"}` (or alias `object_name`)
+            where the value is the name of an existing Blender object.
     """
     def execute():
         handler = get_modeling_handler()

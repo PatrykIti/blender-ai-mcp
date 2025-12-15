@@ -103,7 +103,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
-| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier (e.g., Bevel, Subsurf) to an object. | ✅ Done |
+| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |

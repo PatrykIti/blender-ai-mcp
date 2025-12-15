@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 6 tasks (~30 sub-tasks)
+- **To Do:** 5 tasks (~26 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 125
+- **Done:** 126
 
 ---
 
@@ -22,7 +22,6 @@ Task board for the project. Update statuses in markdown files.
 ### Tooling Reliability & UX
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-062](./TASK-062_Modeling_Add_Modifier_Boolean_Object_Reference.md) | **`modeling_add_modifier` BOOLEAN: object by name** | 🔴 High | Resolve `properties.object`/`object_name` to a Blender Object |
 | [TASK-063](./TASK-063_Router_Auto_Selection_Preservation.md) | **Router: preserve edit selection** | 🔴 High | Avoid stale `has_selection` causing destructive auto-select-all |
 | [TASK-064](./TASK-064_Flexible_List_Parameter_Parsing.md) | **Flexible vector/color params** | 🟡 Medium | Accept both list + string `"[...]"` for common params |
 
@@ -40,6 +39,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-062](./TASK-062_Modeling_Add_Modifier_Boolean_Object_Reference.md) | **`modeling_add_modifier` BOOLEAN: object by name** | 🔴 High | 2025-12-15 |
 | [TASK-060](./TASK-060_Unified_Expression_Evaluator.md) | **Unified Expression Evaluator** | 🔴 High | 2025-12-12 |
 | [TASK-057](./TASK-057_Remove_Old_Pattern_Expansion_Path.md) | **Remove Old Pattern-Based Expansion Path** | 🟡 Medium | 2025-12-11 |
 | [TASK-056](./TASK-056_Workflow_System_Enhancements.md) | **Workflow System Enhancements** | 🔴 High | 2025-12-11 |

@@ -46,7 +46,7 @@ Example:
 # 3. modeling_add_modifier ✅ Done
 Adds a non-destructive modifier to an object.
 
-Example:
+Example (Bevel):
 ```json
 {
   "tool": "modeling_add_modifier",
@@ -56,6 +56,22 @@ Example:
     "properties": {
       "width": 0.05,
       "segments": 3
+    }
+  }
+}
+```
+
+Example (Boolean Difference): set `properties.object` to the **name** of an existing cutter object.
+```json
+{
+  "tool": "modeling_add_modifier",
+  "args": {
+    "name": "Well_Outer",
+    "modifier_type": "BOOLEAN",
+    "properties": {
+      "operation": "DIFFERENCE",
+      "solver": "EXACT",
+      "object": "Well_Cutter"
     }
   }
 }
