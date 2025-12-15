@@ -7,27 +7,27 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Utworzyć lekki tool `scene_context` dla szybkich zapytań o stan sceny (używany przed prawie każdą operacją).
+Create a lightweight tool `scene_context` for quick queries about the scene state (used before almost every operation).
 
 ---
 
-## 📋 Zastępuje (unregister @mcp.tool())
+## 📋 Replaces (unregister @mcp.tool())
 
-| Oryginalny Tool | Action |
-|-----------------|--------|
+| Original Tool | Action |
+|---------------|--------|
 | `scene_get_mode` | `"mode"` |
 | `scene_list_selection` | `"selection"` |
 
-**NIE zastępuje (osobne narzędzia):**
+**NOT replaced (separate tools):**
 - `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` → TASK-020-5
 
-**Oszczędność:** 2 tools → 1 tool (-1 definition dla LLM)
+**Savings:** 2 tools → 1 tool (-1 definition for LLM)
 
 ---
 
-## 🔧 Sygnatura
+## 🔧 Signature
 
 ```python
 from typing import Literal
@@ -56,32 +56,32 @@ def scene_context(
 
 ---
 
-## 📁 Pliki do modyfikacji
+## 📁 Files to modify
 
-| Plik | Zmiany |
-|------|--------|
-| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_context`. Usuń `@mcp.tool()` z 2 funkcji (zachowaj same funkcje). |
+| File | Changes |
+|------|---------|
+| `server/adapters/mcp/areas/scene.py` | Add `scene_context`. Remove `@mcp.tool()` from 2 functions (keep the functions themselves). |
 
 ---
 
-## 🧪 Testy
+## 🧪 Tests
 
-- **Zachowaj:** Istniejące testy dla oryginalnych funkcji (testują logikę wewnętrzną)
-- **Dodaj:** `tests/test_scene_context_mega.py` - testy dla unified tool
+- **Keep:** Existing tests for the original functions (test internal logic)
+- **Add:** `tests/test_scene_context_mega.py` - tests for the unified tool
 
 ---
 
 ## ✅ Deliverables
 
-- [ ] Implementacja `scene_context` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 2 zastąpionych funkcji
-- [ ] Testy dla `scene_context`
-- [ ] Aktualizacja dokumentacji
+- [ ] Implementation of `scene_context` with routing to the original functions
+- [ ] Removal of `@mcp.tool()` from the 2 replaced functions
+- [ ] Tests for `scene_context`
+- [ ] Documentation update
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimation
 
-- **Nowe linie kodu:** ~25 (routing + docstring)
-- **Modyfikacje:** ~2 (usunięcie dekoratorów)
-- **Testy:** ~15 linii
+- **New lines of code:** ~25 (routing + docstring)
+- **Modifications:** ~2 (removal of decorators)
+- **Tests:** ~15 lines

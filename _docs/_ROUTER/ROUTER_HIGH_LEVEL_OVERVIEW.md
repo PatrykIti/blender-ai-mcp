@@ -201,14 +201,14 @@ Why LaBSE:
 - Best cross-lingual semantic matching (Google Research)
 - Single model for all languages - no translation step needed
 - Handles slang, abbreviations, non-standard phrases
-- "wyciągnij ścianę" ≈ "extrude the face" ≈ "Fläche extrudieren"
+- "pull the wall" ≈ "extrude the face" ≈ "extrude face"
 
 Usage:
 ```python
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer('sentence-transformers/LaBSE')
-embedding = model.encode("stwórz kostkę 2x2x2")
+embedding = model.encode("create a 2x2x2 cube")
 # → matches "create a 2x2x2 cube" semantically
 ```
 

@@ -42,7 +42,7 @@ context = prompt[start:end].strip()  # Only 60 chars total!
 
 ## User Decision: Hybrid Approach
 
-User requested: **"a mozna hybryde? wieksze okienko plus smart extraction czy sie nie oplaca?"**
+User requested: **"and maybe a hybrid? larger window plus smart extraction or is it not worth it?"**
 
 Combine:
 1. **Larger window**: Increase from 60 chars to 200-400 chars total
@@ -332,8 +332,8 @@ Search: "X-shaped legs picnic table" → similarity 0.88 > 0.85 → HIT ✅
 4. ✅ Create comprehensive unit tests for all tiers
 5. ✅ Test with real prompts from production logs:
    - "create a picnic table with X-shaped legs"
-   - "prosty stół z prostymi nogami"
-   - "stół piknikowy"
+   - "simple table with straight legs"
+   - "picnic table"
 6. ✅ Rebuild Docker image with fix
 7. ✅ Validate with "X-shaped legs picnic table" → should find learned mapping
 8. ✅ Monitor similarity scores in production - expect >0.85 for similar prompts
@@ -454,7 +454,7 @@ The router uses a 3-tier strategy to extract optimal context:
 
 Good context extraction enables:
 - **Better semantic search**: LaBSE can match similar prompts even with different wording
-- **Multilingual support**: "X-shaped legs" matches "nogi X" via semantic similarity
+- **Multilingual support**: "X-shaped legs" matches "X-shaped legs" in other languages via semantic similarity
 - **Modifier preservation**: Critical descriptors like "straight", "angled", "X-shaped" are retained
 - **Higher recall**: More prompts find learned mappings (similarity >0.85)
 

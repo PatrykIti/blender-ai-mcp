@@ -362,17 +362,17 @@ def _filter_by_relevance(
 
 ### 2. `/docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md`
 
-**Added New Section**: 7.11 "Niestandardowe Parametry Semantyczne (TASK-055-FIX-6 Phase 2)"
+**Added New Section**: 7.11 "Custom Semantic Parameters (TASK-055-FIX-6 Phase 2)"
 
-**Key Content** (Polish tutorial):
-- Co to są parametry semantyczne
-- Jak to działa (WorkflowLoader → WorkflowAdapter)
-- Konwersja nazw parametrów
-- Dopasowanie pozytywne vs negatywne
-- Przykłady użycia (stół piknikowy z ławką)
-- Strategia filtrowania (3 poziomy)
-- Dobre praktyki
-- Elastyczność systemu
+**Key Content**:
+- What semantic parameters are
+- How it works (WorkflowLoader → WorkflowAdapter)
+- Parameter name conversion
+- Positive vs negative matching
+- Usage examples (picnic table with bench)
+- Filtering strategy (3 levels)
+- Best practices
+- System flexibility
 
 ### 3. `/docs/_TASKS/TASK-055-FIX-6_Flexible_YAML_Parameter_Loading.md`
 
@@ -483,7 +483,7 @@ include_stretchers: true  # Include when "stretchers"/"rozpórki" in prompt
 
 ### Test Case 1: X-shaped legs (TASK-055-FIX-5)
 ```python
-router_set_goal("stół z nogami w X")
+router_set_goal("table with X-shaped legs")
 # Provide: leg_angle_left=1.0, leg_angle_right=-1.0
 # Expected: 67 tool calls ✅
 # Verify: disable_adaptation=true loaded and respected
@@ -491,27 +491,27 @@ router_set_goal("stół z nogami w X")
 
 ### Test Case 2: Picnic table default
 ```python
-router_set_goal("stół piknikowy")
+router_set_goal("picnic table")
 # Provide: leg_angle_left=0.32, leg_angle_right=-0.32
 # Expected: 47 tool calls ✅
 ```
 
 ### Test Case 3: Straight legs
 ```python
-router_set_goal("stół z prostymi nogami")
+router_set_goal("table with straight legs")
 # Provide: leg_angle_left=0, leg_angle_right=0
 # Expected: 22 tool calls ✅
 ```
 
 ### Test Case 4: Semantic filter - bench
 ```python
-router_set_goal("stół piknikowy z ławką")
+router_set_goal("picnic table with bench")
 # Expected: Bench steps included (add_bench=true match)
 ```
 
 ### Test Case 5: Semantic filter - no bench
 ```python
-router_set_goal("stół piknikowy")
+router_set_goal("picnic table")
 # Expected: Bench steps skipped (add_bench=true no match)
 ```
 

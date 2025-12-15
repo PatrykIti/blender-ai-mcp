@@ -59,7 +59,7 @@ trigger_keywords:                     # Optional: keywords to trigger
 sample_prompts:                       # Optional: LaBSE semantic matching (TASK-046)
   - "create a table"
   - "make a desk"
-  - "zrób stół"                       # Polish - LaBSE supports 109 languages
+  - "make a table"                    # Polish - LaBSE supports 109 languages
 
 steps:                                # Required: list of tool calls
   - tool: modeling_create_primitive
@@ -276,8 +276,8 @@ steps:
 
 | User Prompt | `add_bench: true` | Result |
 |-------------|-------------------|--------|
-| "stół piknikowy" | ❌ No "bench" | Step skipped |
-| "stół piknikowy z ławką" | ✅ "ławką" matches | Step included |
+| "picnic table" | ❌ No "bench" | Step skipped |
+| "picnic table with bench" | ✅ "bench" matches | Step included |
 | "picnic table with bench" | ✅ "bench" matches | Step included |
 
 **Naming Conventions:**
@@ -286,10 +286,10 @@ The adapter strips common prefixes and converts to natural language:
 
 | Parameter Name | Extracted Keyword | Matches |
 |----------------|-------------------|---------|
-| `add_bench` | "bench" | bench, ławka |
-| `include_stretchers` | "stretchers" | stretchers, rozpórki |
-| `decorative` | "decorative" | decorative, ozdobny |
-| `add_handles` | "handles" | handles, uchwyty |
+| `add_bench` | "bench" | bench, bench (translated) |
+| `include_stretchers` | "stretchers" | stretchers, braces |
+| `decorative` | "decorative" | decorative |
+| `add_handles` | "handles" | handles |
 
 **Negative Matching:**
 
@@ -617,11 +617,11 @@ modifiers:
   "angled legs":
     leg_angle: 0.32
 
-  # Polish
-  "proste nogi":
+  # Polish (translated)
+  "straight legs (polish)":
     leg_angle: 0
-    negative_signals: ["X", "skrzyżowane", "skośne"]  # Polish contradictions
-  "skośne nogi":
+    negative_signals: ["X", "crossed", "angled"]  # Polish contradictions
+  "angled legs (polish)":
     leg_angle: 0.32
 
   # Combined modifiers
@@ -950,7 +950,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-  "proste nogi":
+  "straight legs (polish)":
     leg_angle_left: 0
     leg_angle_right: 0
   "coffee table":
@@ -992,7 +992,7 @@ steps:
 | "create a table" | defaults only: leg_angle_left=0.32 |
 | "table with straight legs" | modifier: leg_angle_left=0 |
 | "straight legs coffee table" | both modifiers: leg_angle=0, height=0.45 |
-| "stół z proste nogi" | Polish modifier: leg_angle=0 |
+| "table with straight legs" | Polish modifier translated: leg_angle=0 |
 
 ---
 
@@ -1127,15 +1127,15 @@ sample_prompts:
   - "model a mobile device"
   - "build a cellphone"
 
-  # Polish (LaBSE understands meaning)
-  - "zrób telefon"
-  - "stwórz smartfon"
+  # Polish (translated examples)
+  - "make a phone"
+  - "create a smartphone"
 
-  # German
-  - "erstelle ein Handy"
+  # German (translated example)
+  - "create a phone"
 
-  # Spanish
-  - "crear un teléfono móvil"
+  # Spanish (translated example)
+  - "create a mobile phone"
 ```
 
 ### How It Works
@@ -1180,11 +1180,11 @@ LaBSE supports 109 languages. Add prompts in any language:
 sample_prompts:
   # No need to translate all - LaBSE understands cross-lingual
   - "create a chair"      # English
-  - "zrób krzesło"        # Polish
-  - "créer une chaise"    # French
-  - "Stuhl erstellen"     # German
-  - "создать стул"        # Russian
-  - "椅子を作る"           # Japanese
+  - "make a chair"        # Polish (translated)
+  - "create a chair"    # French (translated)
+  - "create a chair"     # German (translated)
+  - "create a chair"        # Russian (translated)
+  - "create a chair"           # Japanese (translated)
 ```
 
 ### Complete Example with Sample Prompts
@@ -1209,14 +1209,14 @@ sample_prompts:
   - "build a simple stool"
   - "design an office chair"
 
-  # Polish
-  - "zrób krzesło"
-  - "stwórz fotel"
-  - "zaprojektuj taboret"
+  # Polish (translated)
+  - "make a chair"
+  - "create an armchair"
+  - "design a stool"
 
-  # German
-  - "erstelle einen Stuhl"
-  - "baue einen Hocker"
+  # German (translated)
+  - "create a chair"
+  - "build a stool"
 
 steps:
   - tool: modeling_create_primitive

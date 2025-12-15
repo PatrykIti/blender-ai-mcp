@@ -7,28 +7,28 @@
 ---
 
 ## Problem
-Router ma zbudowane komponenty (confidence levels, `find_best_match_with_confidence()`, feedback learning), ale **nie są połączone**:
-1. `find_best_match_with_confidence()` istnieje ale nigdy nie jest wywoływane
-2. Confidence levels (HIGH≥0.90, MEDIUM≥0.75, LOW≥0.60) zdefiniowane ale nieużywane
-3. "simple table with 4 legs" → wykonuje PEŁNY picnic_table_workflow z ławkami
-4. Feedback learning zbiera dane ale ich nie używa
+The router has built components (confidence levels, `find_best_match_with_confidence()`, feedback learning), but **they are not connected**:
+1. `find_best_match_with_confidence()` exists but is never called
+2. Confidence levels (HIGH≥0.90, MEDIUM≥0.75, LOW≥0.60) defined but unused
+3. "simple table with 4 legs" → executes the FULL picnic_table_workflow with benches
+4. Feedback learning collects data but does not use it
 
-## Rozwiązanie: Workflow Adaptation Engine
+## Solution: Workflow Adaptation Engine
 
-### Koncepcja
+### Concept
 ```
 Confidence Level → Adaptation Strategy
 ─────────────────────────────────────────
-HIGH (≥0.90)   → Wykonaj WSZYSTKIE kroki
-MEDIUM (≥0.75) → Core + semantycznie pasujące optional
-LOW (≥0.60)    → Tylko CORE steps (skip optional)
-NONE (<0.60)   → Tylko CORE steps (fallback)
+HIGH (≥0.90)   → Execute ALL steps
+MEDIUM (≥0.75) → Core + semantically relevant optional
+LOW (≥0.60)    → Only CORE steps (skip optional)
+NONE (<0.60)   → Only CORE steps (fallback)
 ```
 
-### Zmiany w plikach
+### Changes in files
 
 #### 1. `server/router/application/workflows/base.py`
-Dodaj pola `optional` i `tags` do `WorkflowStep`:
+Add `optional` and `tags` fields to `WorkflowStep`:
 ```python
 @dataclass
 class WorkflowStep:
@@ -41,14 +41,14 @@ class WorkflowStep:
 ```
 
 #### 2. `server/router/infrastructure/workflow_loader.py`
-Update `_parse_step()` aby parsować nowe pola z YAML.
+Update `_parse_step()` to parse the new fields from YAML.
 
 #### 3. `server/router/application/workflows/custom/picnic_table.yaml`
-Oznacz 16 kroków bench-related jako `optional: true, tags: ["bench", "seating"]`:
-- BenchLeft_Inner/Outer (4 kroki)
-- BenchRight_Inner/Outer (4 kroki)
-- BenchBack_Inner/Outer (4 kroki)
-- BenchFront_Inner/Outer (4 kroki)
+Mark 16 bench-related steps as `optional: true, tags: ["bench", "seating"]`:
+- BenchLeft_Inner/Outer (4 steps)
+- BenchRight_Inner/Outer (4 steps)
+- BenchBack_Inner/Outer (4 steps)
+- BenchFront_Inner/Outer (4 steps)
 
 #### 4. `server/router/application/matcher/semantic_workflow_matcher.py`
 Update `MatchResult` dataclass:
@@ -60,10 +60,10 @@ class MatchResult:
     requires_adaptation: bool = False  # NEW
 ```
 
-W `match()` zamień `find_best_match()` na `find_best_match_with_confidence()`.
+In `match()` replace `find_best_match()` with `find_best_match_with_confidence()`.
 
 #### 5. NEW: `server/router/application/engines/workflow_adapter.py`
-Nowy engine (~230 linii):
+New engine (~230 lines):
 ```python
 class WorkflowAdapter:
     def adapt(
@@ -86,14 +86,14 @@ class WorkflowAdapter:
             return core_steps + relevant
 
     def _filter_by_relevance(self, steps, prompt) -> List[WorkflowStep]:
-        """Fallback: najpierw tag matching, potem semantic similarity."""
+        """Fallback: first tag matching, then semantic similarity."""
         relevant = []
         for step in steps:
-            # 1. Tag matching (szybkie)
+            # 1. Tag matching (fast)
             if step.tags and any(tag.lower() in prompt.lower() for tag in step.tags):
                 relevant.append(step)
                 continue
-            # 2. Semantic similarity (fallback dla kroków bez tagów)
+            # 2. Semantic similarity (fallback for steps without tags)
             if step.description and self._classifier:
                 sim = self._classifier.similarity(prompt, step.description)
                 if sim >= self._semantic_threshold:
@@ -102,7 +102,7 @@ class WorkflowAdapter:
 ```
 
 #### 6. `server/router/application/router.py`
-W `_expand_triggered_workflow()` dodaj:
+In `_expand_triggered_workflow()` add:
 ```python
 if self.config.enable_workflow_adaptation and match_result.requires_adaptation:
     adapted_steps, result = self._workflow_adapter.adapt(
@@ -116,34 +116,34 @@ enable_workflow_adaptation: bool = True
 adaptation_semantic_threshold: float = 0.6
 ```
 
-### Kolejność implementacji
-1. ✅ `base.py` - dodaj pola do WorkflowStep
-2. ✅ `workflow_loader.py` - parsuj nowe pola
-3. ✅ `picnic_table.yaml` - oznacz optional steps
-4. ✅ `semantic_workflow_matcher.py` - użyj find_best_match_with_confidence
-5. ✅ `workflow_adapter.py` - nowy engine
-6. ✅ `config.py` - nowe opcje
-7. ✅ `router.py` - integracja adaptera
-8. ✅ Testy
-9. ✅ Dokumentacja
+### Implementation order
+1. ✅ `base.py` - add `optional` and `tags` fields to WorkflowStep
+2. ✅ `workflow_loader.py` - parse new fields
+3. ✅ `picnic_table.yaml` - mark 16 bench steps as optional
+4. ✅ `semantic_workflow_matcher.py` - use find_best_match_with_confidence
+5. ✅ `workflow_adapter.py` - new engine
+6. ✅ `config.py` - new config options
+7. ✅ `router.py` - adapter integration
+8. ✅ Tests
+9. ✅ Documentation
 10. ✅ Rebuild Docker image
 
-### Oczekiwany rezultat
+### Expected result
 ```
-"create a picnic table" → HIGH (0.92) → 49 kroków (pełny workflow)
-"simple table with 4 legs" → LOW (0.72) → ~33 kroków (bez ławek)
-"table with benches" → MEDIUM (0.78) → ~40 kroków (core + bench)
+"create a picnic table" → HIGH (0.92) → 49 steps (full workflow)
+"simple table with 4 legs" → LOW (0.72) → ~33 steps (without benches)
+"table with benches" → MEDIUM (0.78) → ~40 steps (core + bench)
 ```
 
 ---
 
-## Implementacja
+## Implementation
 
-### Nowe pliki
-- `server/router/application/engines/workflow_adapter.py` (~230 linii)
-- `tests/unit/router/application/test_workflow_adapter.py` (~450 linii, 20 testów)
+### New files
+- `server/router/application/engines/workflow_adapter.py` (~230 lines)
+- `tests/unit/router/application/test_workflow_adapter.py` (~450 lines, 20 tests)
 
-### Zmodyfikowane pliki
+### Modified files
 - `server/router/application/workflows/base.py`
 - `server/router/infrastructure/workflow_loader.py`
 - `server/router/application/workflows/custom/picnic_table.yaml`
@@ -155,15 +155,15 @@ adaptation_semantic_threshold: float = 0.6
 
 ---
 
-## Testy
+## Tests
 
-### Nowe testy jednostkowe
+### New unit tests
 
-| Plik | Opis |
-|------|------|
-| `tests/unit/router/application/test_workflow_adapter.py` | **NOWY** - 20 testów WorkflowAdapter |
+| File | Description |
+|------|-------------|
+| `tests/unit/router/application/test_workflow_adapter.py` | **NEW** - 20 tests for WorkflowAdapter |
 
-**Testy zaimplementowane:**
+**Implemented tests:**
 ```python
 - test_high_confidence_returns_all_steps() ✅
 - test_high_confidence_result_metadata() ✅
@@ -187,51 +187,51 @@ adaptation_semantic_threshold: float = 0.6
 - test_get_info_returns_config() ✅
 ```
 
-### Aktualizacja istniejących testów
+### Update existing tests
 
-| Plik | Zmiany |
-|------|--------|
-| `tests/unit/router/application/matcher/test_semantic_workflow_matcher.py` | Zaktualizowano testy dla `find_best_match_with_confidence()` |
+| File | Changes |
+|------|---------|
+| `tests/unit/router/application/matcher/test_semantic_workflow_matcher.py` | Updated tests for `find_best_match_with_confidence()` |
 
 ---
 
-## Dokumentacja
+## Documentation
 
 ### Router Documentation
 
-| Plik | Zmiany |
-|------|--------|
-| `_docs/_ROUTER/README.md` | Dodano sekcję "WorkflowAdapter" do listy komponentów |
-| `_docs/_ROUTER/IMPLEMENTATION/README.md` | Dodano `32-workflow-adapter.md` do listy |
-| `_docs/_ROUTER/IMPLEMENTATION/32-workflow-adapter.md` | **NOWY** - dokumentacja WorkflowAdapter |
+| File | Changes |
+|------|---------|
+| `_docs/_ROUTER/README.md` | Added "WorkflowAdapter" section to components list |
+| `_docs/_ROUTER/IMPLEMENTATION/README.md` | Added `32-workflow-adapter.md` to the list |
+| `_docs/_ROUTER/IMPLEMENTATION/32-workflow-adapter.md` | **NEW** - WorkflowAdapter documentation |
 
 ### Workflow Documentation
 
-| Plik | Zmiany |
-|------|--------|
-| `_docs/_ROUTER/WORKFLOWS/README.md` | Dodano sekcję o `optional` i `tags` w definicjach workflow |
-| `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md` | Dodano sekcję o optional steps i adaptacji |
+| File | Changes |
+|------|---------|
+| `_docs/_ROUTER/WORKFLOWS/README.md` | Added section about `optional` and `tags` in workflow definitions |
+| `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md` | Added section about optional steps and adaptation |
 
 ### Changelog
 
-| Plik | Zmiany |
-|------|--------|
-| `_docs/_CHANGELOG/README.md` | Dodano wpis dla TASK-051 |
-| `_docs/_CHANGELOG/97-2025-12-07-confidence-based-workflow-adaptation.md` | **NOWY** - changelog entry |
+| File | Changes |
+|------|---------|
+| `_docs/_CHANGELOG/README.md` | Added entry for TASK-051 |
+| `_docs/_CHANGELOG/97-2025-12-07-confidence-based-workflow-adaptation.md` | **NEW** - changelog entry |
 
 ---
 
 ## Checklist
 
-- [x] 1. `base.py` - dodaj pola `optional` i `tags` do WorkflowStep
-- [x] 2. `workflow_loader.py` - parsuj nowe pola z YAML
-- [x] 3. `picnic_table.yaml` - oznacz 16 bench steps jako optional
-- [x] 4. `semantic_workflow_matcher.py` - użyj `find_best_match_with_confidence()`
-- [x] 5. `workflow_adapter.py` - nowy engine
-- [x] 6. `config.py` - nowe opcje konfiguracyjne
-- [x] 7. `router.py` - integracja adaptera
-- [x] 8. Testy jednostkowe
-- [x] 9. Dokumentacja
+- [x] 1. `base.py` - add `optional` and `tags` fields to WorkflowStep
+- [x] 2. `workflow_loader.py` - parse new fields from YAML
+- [x] 3. `picnic_table.yaml` - mark 16 bench steps as optional
+- [x] 4. `semantic_workflow_matcher.py` - use `find_best_match_with_confidence()`
+- [x] 5. `workflow_adapter.py` - new engine
+- [x] 6. `config.py` - new configuration options
+- [x] 7. `router.py` - integrate adapter
+- [x] 8. Unit tests
+- [x] 9. Documentation
 - [x] 10. Rebuild Docker image
 
 ---

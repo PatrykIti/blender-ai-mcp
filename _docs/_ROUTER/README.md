@@ -246,7 +246,7 @@ Extends Router with semantic workflow matching using LaBSE embeddings.
 
 ```python
 # Current: keyword matching only
-user: "zrób krzesło"  # (make a chair)
+user: "make a chair"
 result: None  # No "chair" keyword in any workflow
 ```
 
@@ -254,7 +254,7 @@ result: None  # No "chair" keyword in any workflow
 
 ```python
 # After TASK-046: semantic similarity
-user: "zrób krzesło"
+user: "make a chair"
 result: [
     ("table_workflow", 0.72),   # Chair has legs like table
     ("tower_workflow", 0.45),   # Vertical structure
@@ -415,7 +415,7 @@ modifiers:
 
 ```python
 # After: LLM provides value once, Router learns it
-user: "stół z prostymi nogami"  # First time - asks LLM
+user: "table with straight legs"  # First time - asks LLM
 router: leg_angle_left = ? → LLM responds: 0 → stored in LanceDB
 
 user: "table with vertical legs"  # Second time - auto-resolved
@@ -516,7 +516,7 @@ User Prompt
 
 ```python
 # Polish prompt automatically matches English YAML keyword
-prompt = "prosty stół z 4 prostymi nogami"
+prompt = "simple table with 4 straight legs"
 result = extractor.extract(prompt, "picnic_table_workflow")
 # → "prostymi nogami" ↔ "straight legs" = 0.877 similarity
 # → modifiers = {leg_angle_left: 0, leg_angle_right: 0}
@@ -527,7 +527,7 @@ result = extractor.extract(prompt, "picnic_table_workflow")
 **Problem**: When only SemanticMatcher fires (e.g., Polish prompt without English keywords), the maximum possible score is `1.0 × 0.40 = 0.40`, which is exactly at the MEDIUM/LOW boundary.
 
 ```
-Prompt: "utworz stol piknikowy" (Polish)
+Prompt: "create picnic table" (Polish)
 
 KeywordMatcher:  0.0   (no English keywords matched)
 SemanticMatcher: 0.336 (0.84 × 0.40 weight)
@@ -557,9 +557,9 @@ else: return "LOW"
 
 | Prompt | Matchers | Raw | Max | Normalized | Old | New |
 |--------|----------|-----|-----|------------|-----|-----|
-| "utworz stol piknikowy" | semantic | 0.336 | 0.40 | 84% | LOW | **HIGH** |
+| "create picnic table" | semantic | 0.336 | 0.40 | 84% | LOW | **HIGH** |
 | "create picnic table" | keyword+semantic | 0.74 | 0.80 | 92% | HIGH | **HIGH** |
-| "prosty stol" | semantic | 0.30 | 0.40 | 75% | LOW | **LOW** (forced) |
+| "simple table" | semantic | 0.30 | 0.40 | 75% | LOW | **LOW** (forced) |
 
 ---
 

@@ -51,7 +51,7 @@ class FeedbackCollector:
 ```
 ~/.blender-mcp/feedback.jsonl
 
-{"timestamp": "2024-01-15T10:30:00", "prompt": "zrób krzesło", "matched_workflow": "table_workflow", "match_confidence": 0.72, "match_type": "generalized", "user_correction": null, "was_helpful": null, "metadata": {}}
+{"timestamp": "2024-01-15T10:30:00", "prompt": "make a chair", "matched_workflow": "table_workflow", "match_confidence": 0.72, "match_type": "generalized", "user_correction": null, "was_helpful": null, "metadata": {}}
 {"timestamp": "2024-01-15T10:35:00", "prompt": "create a chair", "matched_workflow": "table_workflow", "match_confidence": 0.68, "match_type": "semantic", "user_correction": "chair_workflow", "was_helpful": false, "metadata": {}}
 ```
 
@@ -136,11 +136,11 @@ def test_get_new_sample_prompts():
 
     # Record same correction 3 times
     for _ in range(3):
-        collector.record_correction("zrób fotel", None, "chair_workflow")
+        collector.record_correction("make an armchair", None, "chair_workflow")
 
     prompts = collector.get_new_sample_prompts("chair_workflow", min_corrections=3)
 
-    assert "zrób fotel" in prompts
+    assert "make an armchair" in prompts
 
 def test_get_statistics():
     collector = FeedbackCollector(storage_path=tmp_path / "feedback.jsonl")

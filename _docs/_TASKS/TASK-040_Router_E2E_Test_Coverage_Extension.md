@@ -10,20 +10,20 @@
 
 ## Overview
 
-Rozszerzyć pokrycie testów E2E routera, aby weryfikować wszystkie zaimplementowane funkcje i scenariusze projektowe. Obecne 38 testów pokrywa podstawowe scenariusze, ale brakuje testów dla kluczowych funkcji jak Error Firewall blocking, Tool Override, Intent Classifier i edge cases.
+Extend the router E2E test coverage to verify all implemented features and design scenarios. The current 38 tests cover basic scenarios, but tests are missing for key features like Error Firewall blocking, Tool Override, Intent Classifier and edge cases.
 
-**Cel:** Zwiększyć liczbę testów E2E z 38 do ~56, pokrywając wszystkie zaimplementowane komponenty routera.
+**Goal:** Increase the number of E2E tests from 38 to ~56, covering all implemented router components.
 
 ---
 
-## Analiza luk w pokryciu
+## Coverage gap analysis
 
-### Zaimplementowane komponenty vs Testy
+### Implemented components vs Tests
 
-| Komponent | Zaimplementowane funkcje | Przetestowane | Brakujące |
+| Component | Implemented functions | Tested | Missing |
 |-----------|-------------------------|---------------|-----------|
-| **Error Firewall** | 8 reguł | 5 | 3 |
-| **Tool Override** | 2 reguły | 0 | 2 |
+| **Error Firewall** | 8 rules | 5 | 3 |
+| **Tool Override** | 2 rules | 0 | 2 |
 | **Intent Classifier** | PL/EN + LaBSE | 1 | 3 |
 | **Edge Cases** | - | 0 | 5 |
 | **Dynamic Params** | - | 0 | 2 |
@@ -32,26 +32,26 @@ Rozszerzyć pokrycie testów E2E routera, aby weryfikować wszystkie zaimplement
 
 ## Phase 1: Error Firewall Tests
 
-### TASK-040-1: Test blokowania operacji
+### TASK-040-1: Test blocking operations
 
 **Priority:** 🔴 High
 **File:** `tests/e2e/router/test_error_firewall.py`
 
-Testowanie reguł blokujących (action=block):
+Test blocking rules (action=block):
 
 ```python
 class TestFirewallBlocking:
     def test_delete_on_empty_scene_is_blocked(self, router, rpc_client, clean_scene):
-        """Firewall blokuje delete gdy brak obiektów."""
+        """Firewall blocks delete when there are no objects."""
         # Scene is empty, try to delete
         tools = router.process_llm_tool_call("scene_delete_object", {"name": "NonExistent"})
         # Should be blocked or return error
 ```
 
-**Testy:**
-- `test_delete_on_empty_scene_is_blocked` - reguła `delete_no_object`
+**Tests:**
+- `test_delete_on_empty_scene_is_blocked` - rule `delete_no_object`
 
-### TASK-040-2: Test auto-naprawy trybu
+### TASK-040-2: Auto-fix mode test
 
 **Priority:** 🔴 High
 **File:** `tests/e2e/router/test_error_firewall.py`
@@ -59,17 +59,17 @@ class TestFirewallBlocking:
 ```python
 class TestFirewallModeAutoFix:
     def test_sculpt_tool_in_object_mode_adds_mode_switch(self, router, rpc_client, clean_scene):
-        """Firewall dodaje przełączenie do SCULPT mode."""
+        """Firewall adds a switch to SCULPT mode."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         tools = router.process_llm_tool_call("sculpt_draw", {"strength": 0.5})
         tool_names = [t["tool"] for t in tools]
         assert "system_set_mode" in tool_names
 ```
 
-**Testy:**
-- `test_sculpt_tool_in_object_mode_adds_mode_switch` - reguła `sculpt_in_wrong_mode`
+**Tests:**
+- `test_sculpt_tool_in_object_mode_adds_mode_switch` - rule `sculpt_in_wrong_mode`
 
-### TASK-040-3: Test auto-naprawy selekcji
+### TASK-040-3: Selection auto-fix test
 
 **Priority:** 🔴 High
 **File:** `tests/e2e/router/test_error_firewall.py`
@@ -77,7 +77,7 @@ class TestFirewallModeAutoFix:
 ```python
 class TestFirewallSelectionAutoFix:
     def test_bevel_without_selection_adds_select_all(self, router, rpc_client, clean_scene):
-        """Firewall dodaje selekcję przed bevel."""
+        """Firewall adds selection before bevel."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "none"})
@@ -87,14 +87,14 @@ class TestFirewallSelectionAutoFix:
         assert any("select" in name for name in tool_names)
 ```
 
-**Testy:**
-- `test_bevel_without_selection_adds_select_all` - reguła `bevel_no_selection`
+**Tests:**
+- `test_bevel_without_selection_adds_select_all` - rule `bevel_no_selection`
 
 ---
 
 ## Phase 2: Tool Override Tests
 
-### TASK-040-4: Test override dla wzorca phone
+### TASK-040-4: Override test for phone pattern
 
 **Priority:** 🔴 High
 **File:** `tests/e2e/router/test_tool_override.py`
@@ -102,7 +102,7 @@ class TestFirewallSelectionAutoFix:
 ```python
 class TestPatternBasedOverride:
     def test_extrude_on_phone_pattern_adds_inset(self, router, rpc_client, clean_scene):
-        """Override: extrude na phone → inset + extrude."""
+        """Override: extrude on phone → inset + extrude."""
         # Create phone-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]})
@@ -120,17 +120,17 @@ class TestPatternBasedOverride:
         assert "mesh_inset" in tool_names or len(tools) > 1
 ```
 
-**Testy:**
-- `test_extrude_on_phone_pattern_adds_inset` - reguła `extrude_for_screen`
+**Tests:**
+- `test_extrude_on_phone_pattern_adds_inset` - rule `extrude_for_screen`
 
-### TASK-040-5: Test override dla wzorca tower
+### TASK-040-5: Override test for tower pattern
 
 **Priority:** 🔴 High
 **File:** `tests/e2e/router/test_tool_override.py`
 
 ```python
     def test_subdivide_on_tower_pattern_adds_taper(self, router, rpc_client, clean_scene):
-        """Override: subdivide na tower → subdivide + taper."""
+        """Override: subdivide on tower → subdivide + taper."""
         # Create tower-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {"scale": [0.3, 0.3, 2.0]})
@@ -147,14 +147,14 @@ class TestPatternBasedOverride:
         assert len(tools) >= 2  # At least subdivide + taper
 ```
 
-**Testy:**
-- `test_subdivide_on_tower_pattern_adds_taper` - reguła `subdivide_tower`
+**Tests:**
+- `test_subdivide_on_tower_pattern_adds_taper` - rule `subdivide_tower`
 
 ---
 
 ## Phase 3: Intent Classifier Tests
 
-### TASK-040-6: Test klasyfikacji wielojęzycznej
+### TASK-040-6: Multilingual classification test
 
 **Priority:** 🟡 Medium
 **File:** `tests/e2e/router/test_intent_classifier.py`
@@ -162,7 +162,7 @@ class TestPatternBasedOverride:
 ```python
 class TestMultilingualClassification:
     def test_polish_prompt_classification(self, router):
-        """Klasyfikacja polskiego prompta."""
+        """Classification of Polish prompt."""
         # Test that Polish prompts are correctly classified
         tools = router.process_llm_tool_call(
             "mesh_extrude_region",
@@ -172,7 +172,7 @@ class TestMultilingualClassification:
         assert len(tools) > 0
 
     def test_english_prompt_classification(self, router):
-        """Klasyfikacja angielskiego prompta."""
+        """Classification of English prompt."""
         tools = router.process_llm_tool_call(
             "mesh_bevel",
             {"width": 0.1},
@@ -181,7 +181,7 @@ class TestMultilingualClassification:
         assert len(tools) > 0
 
     def test_unknown_prompt_fallback(self, router):
-        """Nieznany prompt używa fallback."""
+        """Unknown prompt uses fallback."""
         tools = router.process_llm_tool_call(
             "mesh_subdivide",
             {"number_cuts": 2},
@@ -195,7 +195,7 @@ class TestMultilingualClassification:
 
 ## Phase 4: Edge Cases Tests
 
-### TASK-040-7: Test przypadków brzegowych
+### TASK-040-7: Edge cases tests
 
 **Priority:** 🟡 Medium
 **File:** `tests/e2e/router/test_edge_cases.py`
@@ -203,14 +203,14 @@ class TestMultilingualClassification:
 ```python
 class TestEdgeCases:
     def test_operation_without_active_object(self, router, rpc_client, clean_scene):
-        """Router obsługuje brak aktywnego obiektu."""
+        """Router handles lack of active object."""
         # Empty scene, no active object
         tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
         # Should not crash, may return empty or error
         assert isinstance(tools, list)
 
     def test_operation_with_multiple_selected(self, router, rpc_client, clean_scene):
-        """Router obsługuje wiele zaznaczonych obiektów."""
+        """Router handles multiple selected objects."""
         # Create multiple objects
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "SPHERE"})
@@ -222,14 +222,14 @@ class TestEdgeCases:
         assert isinstance(tools, list)
 ```
 
-### TASK-040-8: Test obsługi błędów workflow
+### TASK-040-8: Test workflow error handling
 
 **Priority:** 🟡 Medium
 **File:** `tests/e2e/router/test_edge_cases.py`
 
 ```python
     def test_workflow_with_failing_step_continues(self, router, rpc_client, clean_scene):
-        """Workflow kontynuuje mimo błędu w jednym kroku."""
+        """Workflow continues despite an error in one step."""
         # This is already partially tested in test_workflow_continues_on_non_fatal_error
         # Extend with more specific scenarios
 ```
@@ -238,7 +238,7 @@ class TestEdgeCases:
 
 ## Phase 5: Dynamic Parameters Tests
 
-### TASK-040-9: Test parametrów dynamicznych
+### TASK-040-9: Dynamic parameters test
 
 **Priority:** 🟢 Low
 **File:** `tests/e2e/router/test_dynamic_params.py`
@@ -246,7 +246,7 @@ class TestEdgeCases:
 ```python
 class TestDynamicParameters:
     def test_bevel_width_scales_with_object_size(self, router, rpc_client, clean_scene):
-        """Bevel width jest proporcjonalny do rozmiaru obiektu."""
+        """Bevel width is proportional to object size."""
         # Create small object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {"scale": [0.1, 0.1, 0.1]})
@@ -260,7 +260,7 @@ class TestDynamicParameters:
             assert bevel_tool["params"]["width"] < 1.0
 
     def test_extrude_depth_reasonable_for_dimensions(self, router, rpc_client, clean_scene):
-        """Extrude depth jest rozsądny względem wymiarów."""
+        """Extrude depth is reasonable relative to dimensions."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
         rpc_client.send_request("modeling.transform_object", {"scale": [0.05, 0.05, 0.05]})
 
@@ -272,23 +272,23 @@ class TestDynamicParameters:
 
 ## Phase 6: Configuration Tests
 
-### TASK-040-10: Test wyłączania funkcji routera
+### TASK-040-10: Test disabling router features
 
 **Priority:** 🟢 Low
-**File:** `tests/e2e/router/test_full_pipeline.py` (rozszerzenie)
+**File:** `tests/e2e/router/test_full_pipeline.py` (extension)
 
 ```python
 class TestRouterConfiguration:
     # Already exists: test_disabled_mode_switch, test_disabled_workflow_expansion
 
     def test_disabled_firewall(self, rpc_client, clean_scene, shared_classifier):
-        """Router z wyłączonym firewall."""
+        """Router with firewall disabled."""
         config = RouterConfig(enable_firewall=False)
         router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
         # Firewall rules should not apply
 
     def test_disabled_overrides(self, rpc_client, clean_scene, shared_classifier):
-        """Router z wyłączonymi override."""
+        """Router with overrides disabled."""
         config = RouterConfig(enable_overrides=False)
         router = SupervisorRouter(config=config, rpc_client=rpc_client, classifier=shared_classifier)
         # Override rules should not apply
@@ -296,9 +296,9 @@ class TestRouterConfiguration:
 
 ---
 
-## Pliki do utworzenia/modyfikacji
+## Files to create/modify
 
-| Plik | Akcja | Estymowane testy |
+| File | Action | Estimated tests |
 |------|-------|------------------|
 | `tests/e2e/router/test_error_firewall.py` | CREATE | 5 |
 | `tests/e2e/router/test_tool_override.py` | CREATE | 4 |
@@ -307,8 +307,8 @@ class TestRouterConfiguration:
 | `tests/e2e/router/test_dynamic_params.py` | CREATE | 3 |
 | `tests/e2e/router/test_full_pipeline.py` | MODIFY | +2 |
 
-**Szacowana liczba nowych testów:** ~22
-**Po implementacji:** ~60 testów E2E dla routera
+**Estimated number of new tests:** ~22
+**After implementation:** ~60 E2E tests for the router
 
 ---
 

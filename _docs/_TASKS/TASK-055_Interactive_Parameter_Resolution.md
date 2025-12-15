@@ -11,7 +11,7 @@
 
 ### FIX-2: Semantic Matching Improvements (2025-12-09) ✅
 
-**Problem**: "stół z nogami X" incorrectly matched "straight legs" YAML modifier because n-gram matching only required 1 word to match.
+**Problem**: "table with legs X" incorrectly matched "straight legs" YAML modifier because n-gram matching only required 1 word to match.
 
 **Solution**:
 1. **Multi-word matching**: Require min(N, 2) words to match for N-word modifiers
@@ -19,8 +19,8 @@
 3. **Per-word threshold**: 0.65 (allows multilingual fuzzy matching)
 
 **Impact**:
-- ✅ "stół z nogami X" now correctly returns `needs_input`
-- ✅ "prosty stół z prostymi nogami" still matches "straight legs"
+- ✅ "table with legs X" now correctly returns `needs_input`
+- ✅ "simple table with straight legs" still matches "straight legs"
 
 See: **TASK-055-FIX-2_Semantic_Matching_Improvements.md**
 
@@ -71,17 +71,17 @@ Router asks LLM for unknown parameter values and stores the answers in a **seman
 
 ```
 Resolution Priority:
-┌─────────────────────────────────────────────────────────────┐
-│  1. ModifierExtractor.extract()    ← Explicit YAML         │
-│     ↓ FOUND → USE IT (done!)                                │
-│     ↓ NOT FOUND                                             │
-│  2. ParameterStore.find_mapping()  ← Learned from LLM      │
-│     ↓ FOUND → USE IT (done!)                                │
-│     ↓ NOT FOUND                                             │
-│  3. Ask LLM via "needs_parameter_input" response           │
-│     ↓ LLM responds                                          │
-│  4. Store in ParameterStore for future                      │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  1. ModifierExtractor.extract()    ← Explicit YAML                    │
+│     ↓ FOUND → USE IT (done!)                                              │
+│     ↓ NOT FOUND                                                           │
+│  2. ParameterStore.find_mapping()  ← Learned from LLM                   │
+│     ↓ FOUND → USE IT (done!)                                              │
+│     ↓ NOT FOUND                                                           │
+│  3. Ask LLM via "needs_parameter_input" response                         │
+│     ↓ LLM responds                                                        │
+│  4. Store in ParameterStore for future                                    │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Example scenarios:**
@@ -471,7 +471,7 @@ parameters:
     range: [-1.57, 1.57]
     default: 0.32
     description: "rotation angle for left table legs"
-    semantic_hints: ["angle", "rotation", "tilt", "lean", "straight", "vertical", "nogi", "pochylenie"]
+    semantic_hints: ["angle", "rotation", "tilt", "lean", "straight", "vertical", "legs", "tilt"]
     group: leg_angles  # Grouped with leg_angle_right
 
   leg_angle_right:
@@ -725,8 +725,8 @@ class TestParameterResolutionE2E:
 
     def test_first_time_needs_llm_input(self, router):
         """First time with unknown phrase should ask LLM."""
-        # "prostymi nogami" not in YAML modifiers, not learned yet
-        result = router.set_goal_interactive("prosty stół z prostymi nogami")
+        # "with straight legs" not in YAML modifiers, not learned yet
+        result = router.set_goal_interactive("simple table with straight legs")
 
         assert result["status"] == "needs_parameter_input"
         assert len(result["questions"]) > 0
@@ -737,14 +737,14 @@ class TestParameterResolutionE2E:
         """After LLM provides value, similar prompts auto-resolve."""
         # First: simulate LLM response
         router.store_parameter_mapping(
-            context="prostymi nogami",
+            context="with straight legs",
             parameter_name="leg_angle_left",
             value=0,
             workflow_name="picnic_table"
         )
 
         # Second: similar prompt should auto-resolve
-        result = router.set_goal_interactive("stół z prostymi nogami")
+        result = router.set_goal_interactive("table with straight legs")
 
         assert result["status"] == "ready"
         assert result["variables"]["leg_angle_left"] == 0
@@ -780,7 +780,7 @@ class TestParameterResolutionE2E:
             value=0
         )
 
-        result = router.set_goal_interactive("stół z prostymi nogami")
+        result = router.set_goal_interactive("table with straight legs")
 
         assert result["status"] == "ready"
         assert result["variables"]["leg_angle_left"] == 0
@@ -912,7 +912,7 @@ STEP 3: Store LLM Response (when router_resolve_parameter() called)
 ### Grouped Parameters (e.g., leg angles)
 
 ```python
-# Rule: Plural form + no side indicator = apply to both
+# Rule: Plural form + no side indicator = apply to all grouped parameters.
 if is_plural(phrase) and not has_side_indicator(phrase):
     # "proste nogi", "straight legs", "nogi bez pochylenia"
     apply_to_all_related_parameters(value)

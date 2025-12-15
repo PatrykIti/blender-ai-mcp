@@ -651,7 +651,7 @@ Create 15 plank pairs (30 steps total):
 ROUTER_ENABLED=true poetry run python -c "
 from server.router.application.router import SupervisorRouter
 router = SupervisorRouter()
-result = router.set_goal('prosty stół 0.8m szerokości')
+result = router.set_goal('simple table 0.8m wide')
 print(result)
 "
 ```

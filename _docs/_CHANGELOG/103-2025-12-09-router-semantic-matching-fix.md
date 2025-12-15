@@ -9,24 +9,24 @@
 
 ## Problem
 
-"stół z nogami X" (table with X-shaped legs) incorrectly matched "straight legs" YAML modifier, returning `yaml_modifier` with `leg_angle=0` instead of triggering `needs_input` for LLM interaction.
+"table with legs X" (table with X-shaped legs) incorrectly matched "straight legs" YAML modifier, returning `yaml_modifier` with `leg_angle=0` instead of triggering `needs_input` for LLM interaction.
 
 ### Root Cause
 
 N-gram matching in `ModifierExtractor` was too lenient - it only required **1 word** to match for multi-word modifiers:
 
 ```
-Prompt: "stół z nogami X"
+Prompt: "table with legs X"
 YAML modifier: "straight legs"
 
 Current behavior:
-- N-gram "nogami" → "straight legs" = 0.739 similarity (> 0.70 threshold)
+- N-gram "legs" → "straight legs" = 0.739 similarity (> 0.70 threshold)
 - MATCH ✅ (WRONG!)
 - Only "legs" matched, "straight" ignored
 - Result: leg_angle=0 (yaml_modifier)
 
 Expected behavior:
-- "nogami" matches "legs" ✅
+- "legs" matches "legs" ✅
 - "X" does NOT match "straight" ❌
 - Only 1/2 words match → REJECT
 - Result: status="needs_input"
@@ -62,13 +62,13 @@ else:
 **Per-word threshold**: `0.65` (allows multilingual fuzzy matching while maintaining precision)
 
 **Examples**:
-- ✅ **"prosty stół z prostymi nogami"** + `"straight legs"`:
+- ✅ **"simple table with straight legs"** + `"straight legs"`:
   - "prosty" ↔ "straight" = 0.85 ✅
   - "nogami" ↔ "legs" = 0.92 ✅
   - 2/2 words match → **ACCEPTED**
 
-- ❌ **"stół z nogami X"** + `"straight legs"`:
-  - "nogami" ↔ "legs" = 0.92 ✅
+- ❌ **"table with legs X"** + `"straight legs"`:
+  - "legs" ↔ "legs" = 0.92 ✅
   - No match for "straight" (best: "X" = 0.35 < 0.65)
   - 1/2 words match → **REJECTED** (needs 2)
 
@@ -82,7 +82,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+    negative_signals: ["X", "crossed", "angled", "diagonal", "slanted", "crossed"]
 ```
 
 **Implementation**:
@@ -100,10 +100,10 @@ def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
 ```
 
 **Examples**:
-- ❌ **"stół z nogami X"** + `"straight legs"`:
+- ❌ **"table with legs X"** + `"straight legs"`:
   - "X" is in `negative_signals` → **REJECTED**
 
-- ✅ **"prosty stół"** + `"straight legs"`:
+- ✅ **"simple table"** + `"straight legs"`:
   - No negative signals present → **ACCEPTED**
 
 ---
@@ -119,7 +119,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+    negative_signals: ["X", "crossed", "angled", "diagonal", "slanted", "crossed"]
 ```
 
 ### 2. `modifier_extractor.py` (lines 86-243)
@@ -147,9 +147,9 @@ def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
 
 ### Correctness Improvements
 
-- ✅ **"stół z nogami X"** now correctly returns `status: "needs_input"` (was: `yaml_modifier`)
-- ✅ **"prosty stół z prostymi nogami"** still matches `"straight legs"` (leg_angle=0)
-- ✅ **"stół piknikowy"** uses defaults (leg_angle=±0.32) - no match to "straight legs"
+- ✅ **"table with legs X"** now correctly returns `status: "needs_input"` (was: `yaml_modifier`)
+- ✅ **"simple table with straight legs"** still matches `"straight legs"` (leg_angle=0)
+- ✅ **"picnic table"** uses defaults (leg_angle=±0.32) - no match to "straight legs"
 
 ### Semantic Precision
 
@@ -161,7 +161,7 @@ def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
 
 New DEBUG logs:
 ```
-DEBUG: Word match: 'nogami' ↔ 'legs' (sim=0.919)
+DEBUG: Word match: 'legs' ↔ 'legs' (sim=0.919)
 DEBUG: Insufficient word matches for 'straight legs': 1/2 (need 2)
 ```
 
@@ -193,7 +193,7 @@ INFO: Modifier match: 'straight legs' (2/2 words) → {leg_angle_left: 0, leg_an
 
 ### Manual Tests (via Docker)
 
-**Test 1**: "stół z nogami X" ✅
+**Test 1**: "table with legs X" ✅
 ```json
 {
   "status": "needs_input",
@@ -201,7 +201,7 @@ INFO: Modifier match: 'straight legs' (2/2 words) → {leg_angle_left: 0, leg_an
 }
 ```
 
-**Test 2**: "prosty stół z prostymi nogami" ✅
+**Test 2**: "simple table with straight legs" ✅
 ```json
 {
   "status": "ready",
@@ -210,7 +210,7 @@ INFO: Modifier match: 'straight legs' (2/2 words) → {leg_angle_left: 0, leg_an
 }
 ```
 
-**Test 3**: "stół piknikowy" ✅
+**Test 3**: "picnic table" ✅
 ```json
 {
   "status": "ready",

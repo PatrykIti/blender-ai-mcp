@@ -10,16 +10,16 @@
 
 ## Overview
 
-Rozszerzenie Router Supervisor o semantyczne uogólnianie za pomocą LaBSE. Obecnie LaBSE jest używany tylko do dopasowywania **tooli** - ten task rozszerza to na **workflow**, umożliwiając:
+Extension of the Router Supervisor with semantic generalization using LaBSE. Currently LaBSE is used only for matching **tools** - this task extends it to **workflows**, enabling:
 
-1. Semantyczne dopasowanie workflow (nie tylko keyword matching)
-2. Uogólnianie między workflow (np. "krzesło" → "table_workflow" gdy brak chair_workflow)
-3. Łączenie wiedzy z wielu workflow dla nieznanych obiektów
-4. Uczenie się z feedback'u użytkownika
+1. Semantic matching of workflows (not just keyword matching)
+2. Generalization between workflows (e.g., "chair" → "table_workflow" when chair_workflow is missing)
+3. Combining knowledge from multiple workflows for unknown objects
+4. Learning from user feedback
 
 **Problem:**
 ```python
-# TERAZ - proste keyword matching
+# NOW - simple keyword matching
 def find_by_keywords(self, text: str) -> Optional[str]:
     text_lower = text.lower()
     for name, workflow in self._workflows.items():
@@ -27,18 +27,18 @@ def find_by_keywords(self, text: str) -> Optional[str]:
             return name
     return None
 
-# User: "zrób krzesło"
-# Result: None (brak "chair" w keywords żadnego workflow)
+# User: "make a chair"
+# Result: None (no "chair" in keywords of any workflow)
 ```
 
-**Cel:**
+**Goal:**
 ```python
-# PO IMPLEMENTACJI - semantic similarity
+# AFTER IMPLEMENTATION - semantic similarity
 def find_by_similarity(self, text: str, threshold: float = 0.5) -> List[Tuple[str, float]]:
-    # LaBSE rozumie semantykę
+    # LaBSE understands semantics
     return [
-        ("table_workflow", 0.72),   # krzesło ma nogi jak stół
-        ("tower_workflow", 0.45),   # pionowa struktura
+        ("table_workflow", 0.72),   # chair has legs like table
+        ("tower_workflow", 0.45),   # vertical structure
     ]
 ```
 
@@ -90,9 +90,9 @@ def find_by_similarity(self, text: str, threshold: float = 0.5) -> List[Tuple[st
 
 **Status:** ✅ Done
 
-Dodanie `sample_prompts` do workflow (analogicznie do tooli).
+Add `sample_prompts` to workflows (analogous to tools).
 
-**Zmiana w BaseWorkflow:**
+**Change in BaseWorkflow:**
 
 ```python
 # server/router/application/workflows/base.py
@@ -115,7 +115,7 @@ class BaseWorkflow(ABC):
         return []
 ```
 
-**Zmiana w PhoneWorkflow:**
+**Change in PhoneWorkflow:**
 
 ```python
 # server/router/application/workflows/phone_workflow.py
@@ -138,9 +138,9 @@ class PhoneWorkflow(BaseWorkflow):
             "design a cellphone",
 
             # Polish (LaBSE supports 109 languages)
-            "zrób telefon",
-            "stwórz smartfon",
-            "zaprojektuj tablet",
+            "make a phone",
+            "create a smartphone",
+            "design a tablet",
 
             # German
             "erstelle ein Handy",
@@ -150,7 +150,7 @@ class PhoneWorkflow(BaseWorkflow):
         ]
 ```
 
-**Zmiana w TowerWorkflow:**
+**Change in TowerWorkflow:**
 
 ```python
 # server/router/application/workflows/tower_workflow.py
@@ -166,13 +166,13 @@ class TowerWorkflow(BaseWorkflow):
             "design a skyscraper",
 
             # Polish
-            "zrób wieżę",
-            "stwórz kolumnę",
-            "zaprojektuj filar",
+            "make a tower",
+            "create a column",
+            "design a pillar",
         ]
 ```
 
-**Zmiana w WorkflowDefinition (YAML):**
+**Change in WorkflowDefinition (YAML):**
 
 ```python
 # server/router/application/workflows/base.py
@@ -189,7 +189,7 @@ class WorkflowDefinition:
     # ...
 ```
 
-**Zmiana w WorkflowLoader (YAML parsing):**
+**Change in WorkflowLoader (YAML parsing):**
 
 ```python
 # server/router/infrastructure/workflow_loader.py
@@ -220,8 +220,8 @@ sample_prompts:
   - "create a chair"
   - "make a seat"
   - "model a stool"
-  - "zrób krzesło"
-  - "stwórz fotel"
+  - "make a chair"
+  - "create an armchair"
 
 steps:
   - tool: modeling_create_primitive
@@ -247,9 +247,9 @@ steps:
 
 **Status:** ✅ Done
 
-Nowy komponent klasyfikujący prompty do workflow za pomocą LaBSE.
+New component classifying prompts to workflows using LaBSE.
 
-**Nowy plik:**
+**New file:**
 
 ```python
 # server/router/application/classifier/workflow_intent_classifier.py
@@ -527,9 +527,9 @@ class WorkflowIntentClassifier:
 
 **Status:** ✅ Done
 
-Komponent łączący workflow matching z generalizacją.
+Component combining workflow matching with generalization.
 
-**Nowy plik:**
+**New file:**
 
 ```python
 # server/router/application/matcher/semantic_workflow_matcher.py
@@ -732,7 +732,7 @@ class SemanticWorkflowMatcher:
         return self._classifier.find_similar(prompt, top_k=top_k)
 ```
 
-**Konfiguracja:**
+**Configuration:**
 
 ```python
 # server/router/infrastructure/config.py
@@ -762,9 +762,9 @@ class RouterConfig:
 
 **Status:** ✅ Done
 
-Dziedziczenie proporcji między podobnymi workflow.
+Proportion inheritance between similar workflows.
 
-**Nowy plik:**
+**New file:**
 
 ```python
 # server/router/application/inheritance/proportion_inheritance.py
@@ -812,8 +812,11 @@ class InheritedProportions:
     def to_dict(self) -> Dict[str, float]:
         """Convert to simple dict for parameter substitution."""
         return {name: rule.value for name, rule in self.rules.items()}
+```
 
+(continued)
 
+```python
 class ProportionInheritance:
     """Inherits and combines proportion rules from workflows.
 
@@ -994,9 +997,9 @@ class ProportionInheritance:
 
 **Status:** ✅ Done
 
-Integracja wszystkich nowych komponentów z głównym routerem.
+Integration of all new components with the main router.
 
-**Zmiany w SupervisorRouter:**
+**Changes in SupervisorRouter:**
 
 ```python
 # server/router/application/router.py
@@ -1159,9 +1162,9 @@ class SupervisorRouter:
 
 **Status:** ✅ Done
 
-System uczenia się z feedback'u użytkownika.
+System for learning from user feedback.
 
-**Nowy plik:**
+**New file:**
 
 ```python
 # server/router/application/learning/feedback_collector.py
@@ -1372,9 +1375,9 @@ class FeedbackCollector:
 
 **Status:** ✅ Done
 
-Nowe MCP tools do eksploracji semantic matching (debugging/development).
+New MCP tools for exploring semantic matching (debugging/development).
 
-**Nowy plik:**
+**New file:**
 
 ```python
 # server/adapters/mcp/areas/router_tools.py
@@ -1621,8 +1624,8 @@ tests/e2e/router/test_semantic_matching.py
 After implementation:
 
 ```python
-# User: "zrób krzesło" (no chair_workflow exists)
-matcher.match("zrób krzesło")
+# User: "make a chair" (no chair_workflow exists)
+matcher.match("make a chair")
 # → MatchResult(
 #     workflow_name="table_workflow",
 #     confidence=0.72,

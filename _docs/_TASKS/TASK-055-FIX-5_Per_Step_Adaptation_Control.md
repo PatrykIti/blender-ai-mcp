@@ -9,7 +9,7 @@
 
 ## Problem
 
-WorkflowAdapter filtruje optional steps semantycznie dla MEDIUM/LOW confidence, co powoduje że conditional steps są pomijane mimo że parametry spełniają `condition`.
+WorkflowAdapter semantically filters optional steps for MEDIUM/LOW confidence, which causes conditional steps to be skipped even though the parameters satisfy `condition`.
 
 ### Current Behavior
 
@@ -28,7 +28,7 @@ relevant_optional = self._filter_by_relevance(optional_steps, user_prompt)
 ```
 
 **Problem**:
-- User prompt: `"stół z nogami w X"` (Polish)
+- User prompt: `"table with X-shaped legs"`
 - Step tags: `["x-shaped", "crossed-legs", "leg-stretch"]` (English)
 - Semantic matching FAILS → 0 relevant optional steps
 - Result: 22 tool calls instead of 67 ❌
@@ -203,7 +203,7 @@ Add `disable_adaptation: true` to **20 conditional leg stretching steps**:
 ## Testing
 
 ### Test Case 1: X-Shaped Legs
-**Prompt**: `"stół z nogami w X"`
+**Prompt**: `"table with X-shaped legs"`
 **Parameters**: `leg_angle_left: 1.0, leg_angle_right: -1.0`
 
 **Expected**:
@@ -213,7 +213,7 @@ Add `disable_adaptation: true` to **20 conditional leg stretching steps**:
 - **Result**: 67 tool calls ✅
 
 ### Test Case 2: Picnic Table Default
-**Prompt**: `"stół piknikowy"`
+**Prompt**: `"picnic table"`
 **Parameters**: `leg_angle_left: 0.32, leg_angle_right: -0.32`
 
 **Expected**:
@@ -223,7 +223,7 @@ Add `disable_adaptation: true` to **20 conditional leg stretching steps**:
 - **Result**: 47 tool calls ✅ (22 core + 25 non-conditional optional)
 
 ### Test Case 3: Straight Legs
-**Prompt**: `"stół z prostymi nogami"`
+**Prompt**: `"table with straight legs"`
 **Parameters**: `leg_angle_left: 0, leg_angle_right: 0`
 
 **Expected**:

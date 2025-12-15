@@ -33,11 +33,11 @@ Static parameters in workflow:
 
 ### Concept
 
-Prosta rozbudowa istniejącego systemu `$CALCULATE` / `$AUTO_*`:
+Simple extension of the existing `$CALCULATE` / `$AUTO_*` system:
 
-1. **Workflow YAML** definiuje zmienne z wartościami domyślnymi
-2. **Keyword modifiers** mapują frazy użytkownika na wartości zmiennych
-3. **Substitution** podmienia `$variable` na wartość podczas expansion
+1. **Workflow YAML** defines variables with default values
+2. **Keyword modifiers** map user phrases to variable values
+3. **Substitution** replaces `$variable` with the value during expansion
 
 ### Architecture
 
@@ -129,7 +129,7 @@ def extract_modifiers(prompt: str, workflow_modifiers: Dict) -> Dict[str, Any]:
 
 ### 3. Variable Substitution (extend existing)
 
-Już mamy `ExpressionEvaluator` dla `$CALCULATE`. Wystarczy dodać:
+We already have `ExpressionEvaluator` for `$CALCULATE`. It's enough to add:
 
 ```python
 def substitute_variables(params: Dict, variables: Dict) -> Dict:
@@ -300,7 +300,7 @@ steps:
 ## Success Criteria
 
 1. **Functional:**
-   - "straight legs" → rotation = 0 dla wszystkich nóg
+   - "straight legs" → rotation = 0 for all legs
    - "proste nogi" → rotation = 0 (Polish support)
    - Default (no modifier) → A-frame legs (0.32 rad)
 

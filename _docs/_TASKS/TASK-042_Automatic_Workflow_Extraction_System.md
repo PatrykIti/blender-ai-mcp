@@ -1,20 +1,20 @@
 # Plan: Automatic Workflow Extraction System
 
-## Podsumowanie
+## Summary
 
-System automatycznej ekstrakcji workflow z modeli 3D dla blender-ai-mcp. Analizuje istniejące modele 3D i generuje definicje workflow YAML kompatybilne z Router Supervisor.
+System for automatic workflow extraction from 3D models for blender-ai-mcp. Analyzes existing 3D models and generates YAML workflow definitions compatible with Router Supervisor.
 
-**Cel**: Import 3D model → Analiza struktury → Generowanie YAML workflow → Rejestracja w Router
+**Goal**: Import 3D model → Analyze structure → Generate YAML workflow → Register in Router
 
-### Decyzje użytkownika:
-- **Scope**: Pełna implementacja (wszystkie 6 faz włącznie z LLM Vision)
+### User decisions:
+- **Scope**: Full implementation (all 6 phases including LLM Vision)
 - **Output**: `server/router/application/workflows/custom/`
-- **Metoda**: Hybrid (Rule-based + heurystyki + LLM Vision)
-- **POC**: 5 modeli na początek do walidacji podejścia
+- **Method**: Hybrid (Rule-based + heuristics + LLM Vision)
+- **POC**: 5 models initially for approach validation
 
 ---
 
-## 1. Architektura
+## 1. Architecture
 
 ```
 +-----------------------------------------------------------------------------+
@@ -44,7 +44,7 @@ System automatycznej ekstrakcji workflow z modeli 3D dla blender-ai-mcp. Analizu
 +-----------------------------------------------------------------------------+
 ```
 
-### Struktura katalogów (Clean Architecture)
+### Directory structure (Clean Architecture)
 
 ```
 server/router/
@@ -83,20 +83,20 @@ blender_addon/application/handlers/
 
 ---
 
-## 2. Fazy implementacji
+## 2. Implementation phases
 
 ### Phase 1: Model Import and Basic Analysis (POC Foundation) ✅ COMPLETE
-**Czas**: 2-3 dni | **Status**: ✅ Done via TASK-044
+**Time**: 2-3 days | **Status**: ✅ Done via TASK-044
 
-**Implementacja**: TASK-044 Extraction Analysis Tools
+**Implementation**: TASK-044 Extraction Analysis Tools
 
-**Pliki utworzone**:
+**Files created**:
 - `server/domain/tools/extraction.py` - IExtractionTool interface
 - `server/application/tool_handlers/extraction_handler.py` - RPC bridge
 - `server/adapters/mcp/areas/extraction.py` - MCP tool definitions
 - `blender_addon/application/handlers/extraction.py` - bmesh implementation
 
-**MCP Tools dostępne**:
+**MCP Tools available**:
 | Tool | Status |
 |------|--------|
 | `extraction_deep_topology` | ✅ Implemented |
@@ -119,9 +119,9 @@ blender_addon/application/handlers/
 **Tests**: 27 unit tests + 22 E2E tests (15 passed, 7 skipped without Blender)
 
 ### Phase 2: Structure Decomposition
-**Czas**: 3-4 dni
+**Time**: 3-4 days
 
-**Pliki do utworzenia**:
+**Files to create**:
 - `server/router/domain/entities/model_component.py`
 - `server/router/domain/interfaces/i_structure_decomposer.py`
 - `server/router/application/extraction/structure_decomposer.py`
@@ -133,9 +133,9 @@ blender_addon/application/handlers/
 4. Detect symmetric pairs
 
 ### Phase 3: Operation Mapping
-**Czas**: 3-4 dni
+**Time**: 3-4 days
 
-**Pliki do utworzenia**:
+**Files to create**:
 - `server/router/domain/entities/reconstruction_step.py`
 - `server/router/application/extraction/operation_mapper.py`
 
@@ -149,9 +149,9 @@ blender_addon/application/handlers/
 3. Order operations logically
 
 ### Phase 4: Workflow Generation
-**Czas**: 2-3 dni
+**Time**: 2-3 days
 
-**Pliki do utworzenia**:
+**Files to create**:
 - `server/router/domain/interfaces/i_workflow_generator.py`
 - `server/router/application/extraction/workflow_generator.py`
 - `server/router/infrastructure/extraction_config.py`
@@ -163,13 +163,13 @@ blender_addon/application/handlers/
 4. Validate against WorkflowLoader schema
 
 ### Phase 5: Router Integration
-**Czas**: 2 dni
+**Time**: 2 days
 
-**Pliki do modyfikacji**:
+**Files to modify**:
 - `server/router/application/workflows/registry.py`
 - `server/router/application/analyzers/geometry_pattern_detector.py`
 
-**Pliki do utworzenia**:
+**Files to create**:
 - `server/router/adapters/extraction_cli.py`
 
 **Deliverables**:
@@ -178,9 +178,9 @@ blender_addon/application/handlers/
 3. CLI interface for batch extraction
 
 ### Phase 6: LLM Vision Enhancement (Optional)
-**Czas**: 2-3 dni
+**Time**: 2-3 days
 
-**Pliki do utworzenia**:
+**Files to create**:
 - `server/router/application/extraction_vision/renderer.py`
 - `server/router/application/extraction_vision/semantic_analyzer.py`
 
@@ -191,7 +191,7 @@ blender_addon/application/handlers/
 
 ---
 
-## 3. Kluczowe struktury danych
+## 3. Key data structures
 
 ### ExtractedModel
 
@@ -242,11 +242,11 @@ class ReconstructionStep:
 
 ---
 
-## 4. Algorytmy heurystyczne
+## 4. Heuristic algorithms
 
 ### Base Primitive Detection
 
-| Primitive | Heurystyki |
+| Primitive | Heuristics |
 |-----------|------------|
 | CUBE | 8 vertices, cubic proportions, 6 faces |
 | CYLINDER | Circular cross-section, >12 vertices, uniform Z |
@@ -264,7 +264,7 @@ class ReconstructionStep:
 
 ---
 
-## 5. Nowe komendy RPC
+## 5. New RPC commands
 
 | Command | Description |
 |---------|-------------|
@@ -292,7 +292,7 @@ python -m server.router.adapters.extraction_cli validate phone_workflow.yaml
 
 ---
 
-## 7. Metryki sukcesu (POC)
+## 7. Success metrics (POC)
 
 | Metric | Target |
 |--------|--------|
@@ -305,52 +305,52 @@ python -m server.router.adapters.extraction_cli validate phone_workflow.yaml
 
 ---
 
-## 8. Pliki do przeczytania przed implementacją
+## 8. Files to read before implementation
 
-1. `server/router/application/analyzers/proportion_calculator.py` - wzorzec kalkulacji
-2. `server/router/infrastructure/workflow_loader.py` - format YAML workflow
+1. `server/router/application/analyzers/proportion_calculator.py` - pattern of calculation
+2. `server/router/infrastructure/workflow_loader.py` - YAML workflow format
 3. `server/router/application/workflows/base.py` - BaseWorkflow class
-4. `blender_addon/application/handlers/scene.py` - istniejące operacje na scenie
-5. `server/router/application/analyzers/geometry_pattern_detector.py` - detekcja wzorców
+4. `blender_addon/application/handlers/scene.py` - existing scene operations
+5. `server/router/application/analyzers/geometry_pattern_detector.py` - pattern detection
 
 ---
 
-## 9. Ryzyka i mitigacje
+## 9. Risks and mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| Kompleksowe modele dają błędne operacje | Start od prostych prymitywów, iteruj heurystyki |
-| Niskie confidence w mapowaniu operacji | Włącz confidence scores, pozwól na manual review |
-| Wygenerowane workflow nie działają | Waliduj przez WorkflowLoader, testuj wykonanie |
-| Wolne przetwarzanie dużych modeli | Timeout, chunk processing |
+| Complex models produce incorrect operations | Start from simple primitives, iterate heuristics |
+| Low confidence in operation mapping | Enable confidence scores, allow manual review |
+| Generated workflows do not work | Validate via WorkflowLoader, test execution |
+| Slow processing of large models | Timeout, chunk processing |
 
 ---
 
-## 10. Dostępne narzędzia (TASK-043 Complete)
+## 10. Available tools (TASK-043 Complete)
 
-### Scene Utility Tools (gotowe do użycia)
-Narzędzia z TASK-043 są dostępne i mogą wspomóc workflow extraction:
+### Scene Utility Tools (ready to use)
+Tools from TASK-043 are available and can assist workflow extraction:
 
-| Narzędzie | Zastosowanie w Extraction |
+| Tool | Use in Extraction |
 |-----------|--------------------------|
-| `scene_isolate_object` | Izolacja komponentów do analizy (Phase 2) |
-| `scene_camera_focus` | Fokus na komponencie dla LLM Vision (Phase 6) |
-| `scene_camera_orbit` | Renderowanie z różnych kątów (Phase 6) |
-| `scene_rename_object` | Nadawanie nazw wykrytym komponentom |
-| `scene_hide_object` | Ukrywanie części podczas analizy |
+| `scene_isolate_object` | Isolation of components for analysis (Phase 2) |
+| `scene_camera_focus` | Focus on component for LLM Vision (Phase 6) |
+| `scene_camera_orbit` | Rendering from various angles (Phase 6) |
+| `scene_rename_object` | Naming detected components |
+| `scene_hide_object` | Hiding parts during analysis |
 
 ---
 
-## 11. Status Router (weryfikacja)
+## 11. Router status (verification)
 
-### ✅ Poprawnie połączone:
-- Pipeline 10-kroków działa
-- 129 użyć `route_tool_call()` w narzędziach MCP
-- Workflow Python i YAML działają
-- Pattern detection działa
-- Intent classifier działa
-- Error firewall działa
+### ✅ Properly connected:
+- 10-step pipeline works
+- 129 uses of `route_tool_call()` in MCP tools
+- Workflow Python and YAML work
+- Pattern detection works
+- Intent classifier works
+- Error firewall works
 
-### ⚠️ Do uzupełnienia:
-- Rozszerzenie biblioteki workflow (cel tego projektu)
-- Testy WorkflowTriggerer
+### ⚠️ To be completed:
+- Extension of the workflow library (goal of this project)
+- Tests for WorkflowTriggerer

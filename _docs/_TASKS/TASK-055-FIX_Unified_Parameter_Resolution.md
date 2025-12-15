@@ -21,9 +21,7 @@ TASK-055 was implemented with **4 separate MCP tools**:
 
 This breaks context and forces the LLM to juggle multiple tools. The user specified that:
 
-> "przez tego toola jednego miala przechodzic konwersacja.. bo inaczej bedziemy tracili kontekst"
-
-(The conversation should go through one tool, otherwise we lose context)
+> "the conversation should go through one tool, otherwise we will lose context"
 
 ## Solution
 
@@ -42,7 +40,7 @@ def router_set_goal(
 ### Flow 1: All Parameters Resolved (Happy Path)
 
 ```
-User: router_set_goal("prosty stół z 4 prostymi nogami")
+User: router_set_goal("simple table with 4 straight legs")
        ↓
 Router:
   1. Matches picnic_table_workflow
@@ -60,7 +58,7 @@ Returns: {
 ### Flow 2: Unresolved Parameters (Interactive)
 
 ```
-User: router_set_goal("stół z nogami pod kątem")
+User: router_set_goal("table with angled legs")
        ↓
 Router:
   1. Matches picnic_table_workflow
@@ -72,16 +70,16 @@ Returns: {
     "workflow": "picnic_table_workflow",
     "unresolved": [{
         "param": "leg_angle_left",
-        "description": "Kąt lewych nóg (0=proste)",
+        "description": "Angle of left legs (0=straight)",
         "range": [0, 45],
         "default": 0.32
     }]
 }
        ↓
-User: router_set_goal("stół z nogami pod kątem", resolved_params={"leg_angle_left": 15})
+User: router_set_goal("table with angled legs", resolved_params={"leg_angle_left": 15})
        ↓
 Router:
-  1. Stores mapping "nogami pod kątem" → leg_angle_left=15 (LanceDB)
+  1. Stores mapping "legs at an angle" → leg_angle_left=15 (LanceDB)
   2. Executes workflow with leg_angle_left=15
        ↓
 Returns: {
@@ -95,11 +93,11 @@ Returns: {
 ### Flow 3: Future Semantic Matching
 
 ```
-User: router_set_goal("stół z pochylonymi nogami")
+User: router_set_goal("table with tilted legs")
        ↓
 Router:
   1. Matches picnic_table_workflow
-  2. LaBSE finds similarity: "pochylonymi nogami" ≈ "nogami pod kątem" (0.87)
+  2. LaBSE finds similarity: "tilted legs" ≈ "legs at an angle" (0.87)
   3. Uses stored value: leg_angle_left=15
   4. Executes workflow
        ↓
@@ -151,15 +149,15 @@ def router_set_goal(
 
     Example:
         # Step 1: Set goal
-        router_set_goal("stół z prostymi nogami")
+        router_set_goal("table with straight legs")
         → {"status": "ready", "workflow": "picnic_table", ...}
 
         # Or if unresolved:
-        router_set_goal("stół z nogami pod kątem")
+        router_set_goal("table with legs at an angle")
         → {"status": "needs_input", "unresolved": [...]}
 
         # Step 2: Provide values
-        router_set_goal("stół z nogami pod kątem", resolved_params={"leg_angle": 15})
+        router_set_goal("table with legs at an angle", resolved_params={"leg_angle": 15})
         → {"status": "ready", ...}
     """
 ```
@@ -343,12 +341,12 @@ def test_set_goal_with_resolved_params():
     handler = RouterToolHandler()
 
     # First call - returns needs_input
-    result1 = handler.set_goal("stół z nogami pod kątem")
+    result1 = handler.set_goal("table with legs at an angle")
     assert result1["status"] == "needs_input"
 
     # Second call - with resolved_params
     result2 = handler.set_goal(
-        "stół z nogami pod kątem",
+        "table with legs at an angle",
         resolved_params={"leg_angle_left": 15}
     )
     assert result2["status"] == "ready"
@@ -359,10 +357,10 @@ def test_stored_mapping_auto_resolves():
     handler = RouterToolHandler()
 
     # First: provide value
-    handler.set_goal("stół z pochylonymi nogami", resolved_params={"leg_angle": 15})
+    handler.set_goal("table with tilted legs", resolved_params={"leg_angle": 15})
 
     # Second: similar prompt auto-resolves
-    result = handler.set_goal("stół z skośnymi nogami")  # Similar meaning
+    result = handler.set_goal("table with slanted legs")  # Similar meaning
     assert result["status"] == "ready"
     assert result["resolution_sources"]["leg_angle"] == "learned"
 ```

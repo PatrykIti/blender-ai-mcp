@@ -4,7 +4,7 @@
 # Structure: Table with 5 planks + 4 benches (2 planks each side) + A-frame legs + supports
 #
 # TASK-052: Supports parametric variables for leg angles
-# Use "straight legs" or "proste nogi" for vertical legs (rotation = 0)
+# Use "straight legs" for vertical legs (rotation = 0)
 # Default: A-frame legs with 18° angle (rotation = 0.32 rad)
 
 name: picnic_table_workflow
@@ -33,15 +33,15 @@ sample_prompts:
   - "make a simple table with 4 legs"
 
   # Polish
-  - "zrob stol piknikowy"
-  - "stworz stol ogrodowy z lawkami"
-  - "zrob stol z prostymi nogami"
+  - "make a picnic table"
+  - "create a garden table with benches"
+  - "make a table with straight legs"
 
   # German
-  - "erstelle einen Picknicktisch"
+  - "create a picnic table"
 
   # French
-  - "creer une table de pique-nique"
+  - "create a picnic table"
 
 # ============================================================
 # TASK-052: PARAMETRIC VARIABLES
@@ -73,18 +73,18 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+    negative_signals: ["X", "crossed", "angled", "diagonal", "angled", "crossed"]
 
   # X-shaped crossed legs (rotation = 1.0/-1.0 rad with stretch)
   "X-shaped legs":
     leg_angle_left: 1.0
     leg_angle_right: -1.0
-    negative_signals: ["straight", "vertical", "proste", "pionowe"]
+    negative_signals: ["straight", "vertical", "straight", "vertical"]
 
   "crossed legs":
     leg_angle_left: 1.0
     leg_angle_right: -1.0
-    negative_signals: ["straight", "vertical", "proste", "pionowe"]
+    negative_signals: ["straight", "vertical", "straight", "vertical"]
 
 # ============================================================
 # TASK-055: PARAMETER SCHEMAS

@@ -77,20 +77,20 @@ Based on `UnifiedEvaluator.FUNCTIONS` (exported via `ExpressionEvaluator.FUNCTIO
 
 ### Available Operators
 
-#### ✅ Zaimplementowane (działają w computed i w `$CALCULATE(...)` - TASK-060)
+#### ✅ Implemented (work in computed and in `$CALCULATE(...)` - TASK-060)
 
 | Operator | Description | Example | Status |
 |----------|-------------|---------|--------|
-| `+`, `-`, `*`, `/` | Basic arithmetic | `table_width / 2` | ✅ Działa |
-| `**` | Exponentiation | `base_size ** 2` | ✅ Działa |
-| `//` | Floor division (integer result) | `table_width // plank_width` | ✅ Działa |
-| `%` | Modulo (remainder) | `table_width % plank_width` | ✅ Działa |
-| `-` (unary) | Negation | `-width` | ✅ Działa |
-| `+` (unary) | Positive | `+width` | ✅ Działa |
-| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons | `width > 0.5` | ✅ Działa |
-| `and`, `or` | Logical AND/OR | `width > 0.5 and height < 2.0` | ✅ Działa |
-| `not` | Logical NOT | `not has_selection` | ✅ Działa |
-| `x if cond else y` | Ternary expression | `0.10 if i <= plank_full_count else plank_remainder_width` | ✅ Działa |
+| `+`, `-`, `*`, `/` | Basic arithmetic | `table_width / 2` | ✅ Works |
+| `**` | Exponentiation | `base_size ** 2` | ✅ Works |
+| `//` | Floor division (integer result) | `table_width // plank_width` | ✅ Works |
+| `%` | Modulo (remainder) | `table_width % plank_width` | ✅ Works |
+| `-` (unary) | Negation | `-width` | ✅ Works |
+| `+` (unary) | Positive | `+width` | ✅ Works |
+| `<`, `<=`, `>`, `>=`, `==`, `!=` | Comparisons | `width > 0.5` | ✅ Works |
+| `and`, `or` | Logical AND/OR | `width > 0.5 and height < 2.0` | ✅ Works |
+| `not` | Logical NOT | `not has_selection` | ✅ Works |
+| `x if cond else y` | Ternary expression | `0.10 if i <= plank_full_count else plank_remainder_width` | ✅ Works |
 
 > **Note:** Comparisons and logical operators evaluate to `1.0` (true) / `0.0` (false) for numeric contexts.
 
@@ -147,7 +147,7 @@ plank_has_remainder:
 
 plank_total_count:
   type: int
-  computed: "plank_full_count + plank_has_remainder"  # ✅ Works (jeśli plank_has_remainder ma wartość)
+  computed: "plank_full_count + plank_has_remainder"  # ✅ Works (if plank_has_remainder has a value)
   depends_on: ["plank_full_count", "plank_has_remainder"]
   description: "Total number of planks (full + remainder)"
 ```
@@ -493,33 +493,33 @@ computed: "range(10)"           # ❌ NameError
 - This document is the **authoritative reference** for computed parameter expressions
 - All 22 functions come from Python's `math` module + built-ins `abs`, `min`, `max`, `round`, `pow`
 - Expression evaluator intentionally limits function set for **security** (no `eval()` vulnerabilities)
-- User feedback: *"za kazdym razem trzeba obraz budowa i restartowac kontener"* - remember to rebuild Docker image after YAML changes
+- User feedback: *"every time you have to build the image and restart the container"* - remember to rebuild Docker image after YAML changes
 - Real bug fixed: `simple_table.yaml` used `int()` → changed to `floor()` → fractional plank system now works
 
 ---
 
-## Weryfikacja Zgodności z Kodem (2025-12-12)
+## Code Conformance Verification (2025-12-12)
 
-### ✅ Źródło Prawdy w Kodzie (po TASK-060)
+### ✅ Source of Truth in Code (after TASK-060)
 
-| Element | Lokalizacja | Uwagi |
-|---------|-------------|-------|
+| Element | Location | Notes |
+|---------|----------|-------|
 | Core evaluator | `server/router/application/evaluator/unified_evaluator.py` | `UnifiedEvaluator` (AST core) |
-| Math whitelist | `server/router/application/evaluator/unified_evaluator.py:45` | `UnifiedEvaluator.FUNCTIONS` (22 funkcje) |
-| `$CALCULATE(...)` wrapper | `server/router/application/evaluator/expression_evaluator.py` | Deleguje do `UnifiedEvaluator` |
+| Math whitelist | `server/router/application/evaluator/unified_evaluator.py:45` | `UnifiedEvaluator.FUNCTIONS` (22 functions) |
+| `$CALCULATE(...)` wrapper | `server/router/application/evaluator/expression_evaluator.py` | Delegates to `UnifiedEvaluator` |
 | Computed params | `server/router/application/evaluator/unified_evaluator.py:522` | `resolve_computed_parameters()` |
 
-### ✅ Zweryfikowana Liczba Funkcji
+### ✅ Verified Function Count
 
-| Element | Aktualne |
-|---------|----------|
-| Liczba funkcji math | **22** (`UnifiedEvaluator.FUNCTIONS`) |
+| Element | Current |
+|---------|---------|
+| Number of math functions | **22** (`UnifiedEvaluator.FUNCTIONS`) |
 
-### ✅ Zweryfikowane Funkcje w Kodzie
+### ✅ Verified Functions in Code
 
-Funkcje z `UnifiedEvaluator.FUNCTIONS` (`unified_evaluator.py:45`):
+Functions from `UnifiedEvaluator.FUNCTIONS` (`unified_evaluator.py:45`):
 
-| Kategoria | Funkcje | Ilość |
+| Category | Functions | Count |
 |-----------|---------|-------|
 | Basic | `abs`, `min`, `max`, `round` | 4 |
 | Rounding | `floor`, `ceil`, `trunc` | 3 |
@@ -531,13 +531,13 @@ Funkcje z `UnifiedEvaluator.FUNCTIONS` (`unified_evaluator.py:45`):
 | Advanced | `hypot` | 1 |
 | **TOTAL** | | **22** |
 
-### ✅ Zweryfikowane Operatory / AST Nodes (TASK-060)
+### ✅ Verified Operators / AST Nodes (TASK-060)
 
-Operatory są zaimplementowane w `UnifiedEvaluator`:
-- `BINARY_OPS` (`unified_evaluator.py:75`) - arytmetyka
-- `COMPARE_OPS` (`unified_evaluator.py:86`) - porównania
+Operators are implemented in `UnifiedEvaluator`:
+- `BINARY_OPS` (`unified_evaluator.py:75`) - arithmetic
+- `COMPARE_OPS` (`unified_evaluator.py:86`) - comparisons
 - `_eval_boolop()` (`unified_evaluator.py:414`) - `and`/`or`
-- `_eval_unaryop()` (`unified_evaluator.py:357`) - w tym `not`
+- `_eval_unaryop()` (`unified_evaluator.py:357`) - including `not`
 - `_eval_ifexp()` (`unified_evaluator.py:444`) - ternary
 
 | AST Node | Operator | Status |
@@ -548,15 +548,15 @@ Operatory są zaimplementowane w `UnifiedEvaluator`:
 | `ast.BoolOp` | `and`, `or` | ✅ |
 | `ast.IfExp` | `x if cond else y` | ✅ |
 
-### 🎯 Podsumowanie Weryfikacji
+### 🎯 Summary of Verification
 
-| Kategoria | Status |
+| Category | Status |
 |-----------|--------|
-| Ścieżka plików | ✅ `application/evaluator/` |
-| Liczba funkcji | ✅ 22 |
-| Operatory arytmetyczne | ✅ |
-| Operatory porównania | ✅ (TASK-060) |
-| Operatory logiczne | ✅ (TASK-060) |
+| File paths | ✅ `application/evaluator/` |
+| Number of functions | ✅ 22 |
+| Arithmetic operators | ✅ |
+| Comparison operators | ✅ (TASK-060) |
+| Logical operators | ✅ (TASK-060) |
 | Ternary expressions | ✅ (TASK-060) |
 
-`TASK-059` nie jest wymagany — został zastąpiony przez `TASK-060`.
+`TASK-059` is not required — it was superseded by `TASK-060`.

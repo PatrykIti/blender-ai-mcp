@@ -11,7 +11,7 @@ The Ensemble Matching System replaces the fallback-based `SemanticWorkflowMatche
 ## Architecture
 
 ```
-User Prompt: "prosty stół z 4 prostymi nogami"
+User Prompt: "simple table with 4 straight legs"
                         │
                         ▼
 ┌───────────────────────────────────────────────────────────────────┐
@@ -49,12 +49,12 @@ User Prompt: "prosty stół z 4 prostymi nogami"
 │            ModifierExtractor.extract(prompt, best_workflow)       │
 │                                                                   │
 │  1. Extract n-grams from prompt:                                  │
-│     ["prosty", "stół", "prostymi", "nogami", "prosty stół", ...]  │
+│     ["simple", "table", "straight", "legs", "simple table", ...]  │
 │                                                                   │
 │  2. For each modifier keyword in YAML:                            │
-│     "straight legs" ↔ "prostymi" = 0.65                           │
-│     "straight legs" ↔ "nogami"   = 0.42                           │
-│     "straight legs" ↔ "prostymi nogami" = 0.877 ← BEST!           │
+│     "straight legs" ↔ "straight" = 0.65                           │
+│     "straight legs" ↔ "legs"   = 0.42                             │
+│     "straight legs" ↔ "straight legs" = 0.877 ← BEST!             │
 │                                                                   │
 │  3. Collect all matches above threshold (0.70):                   │
 │     [("straight legs", 0.877), ("vertical legs", 0.811), ...]     │
@@ -174,7 +174,7 @@ Matches workflow trigger keywords from YAML definitions:
 trigger_keywords:
   - "table"
   - "picnic"
-  - "stół"  # Polish
+  - "table"  # Polish
 ```
 
 #### SemanticMatcher
@@ -329,8 +329,8 @@ def execute_pending_workflow(self, variables: Optional[Dict] = None):
 
 LaBSE (Language-Agnostic BERT Sentence Embeddings) supports 109 languages natively. This enables:
 
-- Polish: `"prostymi nogami"` → `"straight legs"` (0.877 similarity)
-- German: `"gerade Beine"` → `"straight legs"`
+- Polish: `"straight legs"` → `"straight legs"` (0.877 similarity)
+- German: `"straight legs"` → `"straight legs"`
 - No need to add translations to YAML modifiers
 
 ### Example
@@ -348,7 +348,7 @@ modifiers:
 
 ```python
 # Polish prompt automatically matches English keyword
-prompt = "prosty stół z 4 prostymi nogami"
+prompt = "simple table with 4 straight legs"
 result = extractor.extract(prompt, "picnic_table_workflow")
 # → modifiers = {leg_angle_left: 0, leg_angle_right: 0}
 # → matched_keywords = ["straight legs"]
@@ -377,7 +377,7 @@ classifier = WorkflowIntentClassifier(config=config, model=get_labse_model())
 extractor = ModifierExtractor(registry=registry, classifier=classifier)
 
 # Test
-result = extractor.extract("prosty stół z 4 prostymi nogami", "picnic_table_workflow")
+result = extractor.extract("simple table with 4 straight legs", "picnic_table_workflow")
 assert result.modifiers["leg_angle_left"] == 0
 assert "straight legs" in result.matched_keywords
 ```

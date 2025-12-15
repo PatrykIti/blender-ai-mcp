@@ -11,11 +11,11 @@
 
 ## Overview
 
-Replace the current fallback-based matching system with an **Ensemble Matcher** that runs all matchers in parallel and aggregates results using weighted consensus. This fixes the critical bug where parametric modifiers (e.g., "proste nogi") are not applied when semantic matcher wins over keyword matcher.
+Replace the current fallback-based matching system with an **Ensemble Matcher** that runs all matchers in parallel and aggregates results using weighted consensus. This fixes the critical bug where parametric modifiers (e.g., "straight legs") are not applied when semantic matcher wins over keyword matcher.
 
 **Current Problem:**
 ```
-User: "prosty stół z prostymi nogami"
+User: "simple table with straight legs"
 → Semantic match (84.3%) wins
 → Modifiers from keyword matcher NOT extracted
 → Legs are angled instead of straight (0°)
@@ -141,13 +141,13 @@ if pattern_confidence > 0:
 ### Example
 
 ```
-User: "prosty stół z prostymi nogami"
+User: "simple table with straight legs"
 
 Matcher Results:
   keyword:  picnic_table_workflow (0.0)  - no exact keyword match
   semantic: picnic_table_workflow (0.84)
   pattern:  None (0.0)
-  modifier: ["prosty", "proste nogi"] extracted
+  modifier: ["simple", "straight legs"] extracted
 
 Aggregation:
   picnic_table_workflow = 0.0×0.40 + 0.84×0.40 + 0.0×0.15 = 0.336
@@ -685,7 +685,7 @@ class ModifierExtractor(IModifierExtractor):
     - WorkflowRegistry._extract_modifiers()
 
     This extractor ALWAYS runs, regardless of which matcher wins.
-    Ensures modifiers like "proste nogi" are always applied.
+    Ensures modifiers like "straight legs" are always applied.
     """
 
     def __init__(self, registry: "WorkflowRegistry"):
@@ -703,7 +703,7 @@ class ModifierExtractor(IModifierExtractor):
         Returns all matching variable overrides.
 
         Args:
-            prompt: User prompt (e.g., "prosty stół z prostymi nogami").
+            prompt: User prompt (e.g., "simple table with straight legs").
             workflow_name: Target workflow to check modifiers for.
 
         Returns:
@@ -1600,7 +1600,7 @@ If prompt contains "simple", "basic", "minimal", etc., force `confidence_level =
 ### E2E Tests
 
 - [ ] `test_ensemble_matching.py` - Full pipeline tests
-- [ ] Test: "prosty stół z prostymi nogami" → modifiers applied
+- [ ] Test: "simple table with straight legs" → modifiers applied
 - [ ] Test: "simple table with 4 legs" → CORE_ONLY + straight legs
 - [ ] Test: "picnic table" → FULL workflow
 - [ ] Test: Multi-language prompts (Polish, German, etc.)
@@ -1691,7 +1691,7 @@ tests/unit/router/domain/test_interfaces.py                              # Add t
 ### Phase 4: Testing & Verification
 - Run all existing tests (should pass)
 - Run new ensemble tests
-- Verify bug fix: "prosty stół z prostymi nogami" → modifiers applied
+- Verify bug fix: "simple table with straight legs" → modifiers applied
 
 ### Phase 5: Cleanup (After Verification)
 - Optional: Deprecate `SemanticWorkflowMatcher` methods
@@ -1701,7 +1701,7 @@ tests/unit/router/domain/test_interfaces.py                              # Add t
 
 ## Success Criteria
 
-1. **Bug Fixed**: "prosty stół z prostymi nogami" produces straight legs (0°)
+1. **Bug Fixed**: "simple table with straight legs" produces straight legs (0°)
 2. **Modifiers Always Applied**: Regardless of which matcher wins
 3. **Weighted Scoring**: All matchers contribute to final decision
 4. **Backward Compatible**: Existing workflows work unchanged

@@ -6,23 +6,23 @@ Predefined workflow definitions for common modeling patterns.
 
 ## Quick Start
 
-**Chcesz stworzyć własny workflow?** → [creating-workflows-tutorial.md](./creating-workflows-tutorial.md)
+**Want to create your own workflow?** → [creating-workflows-tutorial.md](./creating-workflows-tutorial.md)
 
 ---
 
 ## Index
 
-### Dokumentacja
+### Documentation
 
-| Dokument | Opis |
-|----------|------|
-| [creating-workflows-tutorial.md](./creating-workflows-tutorial.md) | **Tutorial: Tworzenie workflow od podstaw** |
-| [yaml-workflow-guide.md](./yaml-workflow-guide.md) | Kompletny przewodnik po składni YAML |
-| [expression-reference.md](./expression-reference.md) | Referencja wyrażeń ($CALCULATE, $AUTO_*, warunki) |
-| [workflow-execution-pipeline.md](./workflow-execution-pipeline.md) | Jak workflow staje się tool callami (adaptacja vs condition, pętle) |
-| [custom-workflows.md](./custom-workflows.md) | Gdzie dodać workflow i jak działa pipeline (skrót) |
+| Document | Description |
+|----------|-------------|
+| [creating-workflows-tutorial.md](./creating-workflows-tutorial.md) | **Tutorial: Creating a workflow from scratch** |
+| [yaml-workflow-guide.md](./yaml-workflow-guide.md) | Complete guide to YAML syntax |
+| [expression-reference.md](./expression-reference.md) | Expression reference ($CALCULATE, $AUTO_*, conditions) |
+| [workflow-execution-pipeline.md](./workflow-execution-pipeline.md) | How a workflow becomes tool calls (adaptation vs condition, loops) |
+| [custom-workflows.md](./custom-workflows.md) | Where to add a workflow and how the pipeline works (summary) |
 
-### Wbudowane Workflow
+### Built-in Workflows
 
 | Workflow | Pattern | Steps | Task |
 |----------|---------|-------|------|
@@ -355,7 +355,7 @@ modifiers:
   "straight legs":          # English
     leg_angle_left: 0
     leg_angle_right: 0
-  "proste nogi":            # Polish
+  "straight legs (Polish)":
     leg_angle_left: 0
     leg_angle_right: 0
 
@@ -372,7 +372,7 @@ steps:
 |-------------|--------|
 | "create a table" | A-frame legs (defaults: 0.32 rad) |
 | "table with straight legs" | Vertical legs (modifier: 0 rad) |
-| "stół z proste nogi" | Vertical legs (Polish modifier) |
+| "table with straight legs" | Vertical legs (Polish modifier) |
 
 ### Variable Resolution Order
 

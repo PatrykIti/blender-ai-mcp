@@ -1,112 +1,112 @@
-# Tutorial: Tworzenie Workflow od Podstaw
+# Tutorial: Creating a Workflow from Scratch
 
-Kompletny przewodnik krok po kroku do tworzenia własnych workflow YAML.
-
----
-
-## Spis Treści
-
-1. [Przegląd](#1-przegląd)
-2. [Krok 1: Planowanie Workflow](#2-krok-1-planowanie-workflow)
-3. [Krok 2: Tworzenie Pliku YAML](#3-krok-2-tworzenie-pliku-yaml)
-4. [Krok 3: Definiowanie Kroków](#4-krok-3-definiowanie-kroków)
-5. [Krok 4: Dodawanie Warunków](#5-krok-4-dodawanie-warunków)
-6. [Krok 5: Dynamiczne Parametry](#6-krok-5-dynamiczne-parametry)
-6b. [Loops i interpolacja stringow (TASK-058)](#6b-loops-i-interpolacja-stringow-task-058)
-7. [Krok 6: Opcjonalne Kroki i Adaptacja](#7-krok-6-opcjonalne-kroki-i-adaptacja)
-8. [Krok 7: Testowanie](#8-krok-7-testowanie)
-9. [Kompletny Przykład](#9-kompletny-przykład)
-10. [Najczęstsze Błędy](#10-najczęstsze-błędy)
+Complete step-by-step guide to creating your own YAML workflows.
 
 ---
 
-## 1. Przegląd
+## Table of Contents
 
-Workflow to sekwencja operacji Blendera zapisana w pliku YAML/JSON, która wykonuje się automatycznie. Zamiast ręcznie wywoływać 10+ narzędzi, użytkownik mówi "stwórz telefon" i workflow robi resztę.
-
-**Co workflow może zawierać:**
-- Sekwencję kroków (tool calls)
-- Warunki wykonania kroków (`condition`)
-- Dynamiczne parametry (`$CALCULATE`, `$AUTO_*`)
-- Triggery (słowa kluczowe, wzorce geometrii)
-
----
-
-## 2. Krok 1: Planowanie Workflow
-
-### 2.1 Zdefiniuj Cel
-
-Zanim napiszesz kod, odpowiedz:
-1. **Co ma powstać?** - np. "telefon z ekranem"
-2. **Jakie kroki są potrzebne?** - lista operacji w Blenderze
-3. **Co powinno być konfigurowalne?** - rozmiary, proporcje
-
-### 2.2 Przetestuj Ręcznie
-
-Wykonaj workflow ręcznie w Blenderze i zapisz:
-- Jakie narzędzia użyłeś
-- W jakiej kolejności
-- Jakie parametry ustawiłeś
-
-### 2.3 Przykład: Telefon
-
-```
-Cel: Telefon z zaokrąglonymi krawędziami i wgłębionym ekranem
-
-Kroki:
-1. Stwórz kostkę
-2. Przejdź do trybu Edit
-3. Zaznacz wszystko
-4. Bevel na krawędziach (zaokrąglenie rogów)
-5. Zaznacz górną ścianę
-6. Inset (ramka ekranu)
-7. Extrude w dół (wgłębienie ekranu)
-8. Wróć do trybu Object
-```
+1. [Overview](#1-overview)
+2. [Step 1: Planning the Workflow](#2-step-1-planning-the-workflow)
+3. [Step 2: Creating the YAML File](#3-step-2-creating-the-yaml-file)
+4. [Step 3: Defining Steps](#4-step-3-defining-steps)
+5. [Step 4: Adding Conditions](#5-step-4-adding-conditions)
+6. [Step 5: Dynamic Parameters](#6-step-5-dynamic-parameters)
+6b. [Loops and String Interpolation (TASK-058)](#6b-loops-and-string-interpolation-task-058)
+7. [Step 6: Optional Steps and Adaptation](#7-step-6-optional-steps-and-adaptation)
+8. [Step 7: Testing](#8-step-7-testing)
+9. [Complete Example](#9-complete-example)
+10. [Common Errors](#10-common-errors)
 
 ---
 
-## 3. Krok 2: Tworzenie Pliku YAML
+## 1. Overview
 
-### 3.1 Lokalizacja
+A workflow is a sequence of Blender operations saved in a YAML/JSON file that runs automatically. Instead of manually invoking 10+ tools, the user says "create a phone" and the workflow does the rest.
 
-Utwórz plik w:
+What a workflow can contain:
+- A sequence of steps (tool calls)
+- Conditions for step execution (`condition`)
+- Dynamic parameters (`$CALCULATE`, `$AUTO_*`)
+- Triggers (keywords, geometry patterns)
+
+---
+
+## 2. Step 1: Planning the Workflow
+
+### 2.1 Define the Goal
+
+Before you write code, answer:
+1. What should be created? - e.g., "phone with a screen"
+2. What steps are needed? - list of Blender operations
+3. What should be configurable? - sizes, proportions
+
+### 2.2 Test Manually
+
+Run the workflow manually in Blender and record:
+- Which tools you used
+- In what order
+- What parameters you set
+
+### 2.3 Example: Phone
+
 ```
-server/router/application/workflows/custom/moj_workflow.yaml
+Goal: Phone with rounded edges and an inset screen
+
+Steps:
+1. Create a cube
+2. Switch to Edit mode
+3. Select all
+4. Bevel the edges (round corners)
+5. Select the top face
+6. Inset (screen frame)
+7. Extrude down (screen inset)
+8. Return to Object mode
 ```
 
-### 3.2 Podstawowa Struktura
+---
+
+## 3. Step 2: Creating the YAML File
+
+### 3.1 Location
+
+Create a file at:
+```
+server/router/application/workflows/custom/my_workflow.yaml
+```
+
+### 3.2 Basic Structure
 
 ```yaml
-# moj_workflow.yaml
+# my_workflow.yaml
 
-# === METADANE (wymagane) ===
-name: moj_workflow                    # Unikalna nazwa (snake_case)
-description: Opis co robi workflow    # Co workflow tworzy
+# === METADATA (required) ===
+name: my_workflow                    # Unique name (snake_case)
+description: Description of what the workflow does    # What the workflow creates
 
-# === METADANE (opcjonalne) ===
-category: moja_kategoria              # Kategoria (np. furniture, electronics)
-author: Twoje Imię                    # Autor
-version: "1.0"                        # Wersja
+# === METADATA (optional) ===
+category: my_category                # Category (e.g., furniture, electronics)
+author: Your Name                      # Author
+version: "1.0"                        # Version
 
-# === TRIGGERY (opcjonalne) ===
-trigger_pattern: box_pattern          # Wzorzec geometrii do wykrycia
-trigger_keywords:                     # Słowa kluczowe aktywujące workflow
-  - telefon
+# === TRIGGERS (optional) ===
+trigger_pattern: box_pattern          # Geometry pattern to detect
+trigger_keywords:                     # Keywords that trigger the workflow
+  - phone
   - smartphone
-  - komórka
+  - cell phone
 
-# === KROKI (wymagane) ===
+# === STEPS (required) ===
 steps:
-  - tool: nazwa_narzedzia
+  - tool: tool_name
     params:
-      parametr1: wartosc1
-    description: Co robi ten krok
+      param1: value1
+    description: What this step does
 ```
 
-### 3.3 Nazewnictwo
+### 3.3 Naming Conventions
 
-| Element | Konwencja | Przykład |
+| Element | Convention | Example |
 |---------|-----------|----------|
 | name | snake_case | `phone_workflow` |
 | tool | snake_case | `modeling_create_primitive` |
@@ -114,157 +114,157 @@ steps:
 
 ---
 
-## 4. Krok 3: Definiowanie Kroków
+## 4. Step 3: Defining Steps
 
-### 4.1 Struktura Kroku
+### 4.1 Step Structure
 
 ```yaml
-- tool: mesh_bevel              # Nazwa narzędzia (wymagane)
-  params:                       # Parametry (wymagane)
+- tool: mesh_bevel              # Tool name (required)
+  params:                       # Parameters (required)
     offset: 0.05
     segments: 3
-  description: Zaokrąglij krawędzie  # Opis (opcjonalne)
-  condition: "has_selection"    # Warunek (opcjonalne)
+  description: Round the edges  # Description (optional)
+  condition: "has_selection"    # Condition (optional)
 ```
 
-### 4.2 Znajdowanie Nazw Narzędzi
+### 4.2 Finding Tool Names
 
-Sprawdź `_docs/AVAILABLE_TOOLS_SUMMARY.md` lub użyj:
+Check `_docs/AVAILABLE_TOOLS_SUMMARY.md` or use:
 
 ```bash
 grep -r "def " server/adapters/mcp/areas/ | grep "@mcp.tool"
 ```
 
-### 4.3 Typowe Narzędzia
+### 4.3 Common Tools
 
-| Kategoria | Narzędzie | Co robi |
+| Category | Tool | What it does |
 |-----------|-----------|---------|
-| **Tworzenie** | `modeling_create_primitive` | Tworzy kostkę, kulę, itp. |
-| **Transformacja** | `modeling_transform_object` | Skaluje, przesuwa, obraca |
-| **Tryb** | `system_set_mode` | Zmienia tryb (OBJECT/EDIT) |
-| **Zaznaczanie** | `mesh_select` | Zaznacza geometrię |
-| **Zaznaczanie** | `mesh_select_targeted` | Zaznacza po indeksie |
-| **Edycja** | `mesh_bevel` | Zaokrągla krawędzie |
-| **Edycja** | `mesh_inset` | Wstawia ścianę w ścianę |
-| **Edycja** | `mesh_extrude_region` | Wyciąga geometrię |
+| **Creation** | `modeling_create_primitive` | Creates a cube, sphere, etc. |
+| **Transformation** | `modeling_transform_object` | Scales, moves, rotates |
+| **Mode** | `system_set_mode` | Changes mode (OBJECT/EDIT) |
+| **Selection** | `mesh_select` | Selects geometry |
+| **Selection** | `mesh_select_targeted` | Selects by index |
+| **Edit** | `mesh_bevel` | Bevels edges |
+| **Edit** | `mesh_inset` | Insets a face |
+| **Edit** | `mesh_extrude_region` | Extrudes geometry |
 
-### 4.4 Przykład: Pierwsze 3 Kroki Telefonu
+### 4.4 Example: First 3 Steps of the Phone
 
 ```yaml
 steps:
-  # Krok 1: Stwórz kostkę
+  # Step 1: Create a cube
   - tool: modeling_create_primitive
     params:
       type: CUBE
-    description: Stwórz bazową kostkę
+    description: Create the base cube
 
-  # Krok 2: Przejdź do trybu Edit
+  # Step 2: Switch to Edit mode
   - tool: system_set_mode
     params:
       mode: EDIT
-    description: Wejdź w tryb edycji
+    description: Enter edit mode
 
-  # Krok 3: Zaznacz wszystko
+  # Step 3: Select all
   - tool: mesh_select
     params:
       action: all
-    description: Zaznacz całą geometrię
+    description: Select all geometry
 ```
 
 ---
 
-## 5. Krok 4: Dodawanie Warunków
+## 5. Step 4: Adding Conditions
 
-Warunki (`condition`) pozwalają pomijać kroki, gdy nie są potrzebne.
+Conditions (`condition`) allow skipping steps when they are not needed.
 
-### 5.1 Po co Warunki?
+### 5.1 Why Conditions?
 
 ```yaml
-# BEZ warunku - błąd jeśli już w trybie EDIT
+# WITHOUT condition - error if already in EDIT mode
 - tool: system_set_mode
   params: { mode: EDIT }
 
-# Z warunkiem - pomija jeśli już w EDIT
+# WITH condition - skip if already in EDIT
 - tool: system_set_mode
   params: { mode: EDIT }
   condition: "current_mode != 'EDIT'"
 ```
 
-### 5.2 Składnia Warunków
+### 5.2 Condition Syntax
 
 ```yaml
-# Porównania stringów
+# String comparisons
 condition: "current_mode == 'EDIT'"
 condition: "current_mode != 'OBJECT'"
 condition: "active_object == 'Cube'"
 
-# Zmienne boolean
+# Boolean variables
 condition: "has_selection"
 condition: "not has_selection"
 
-# Porównania liczbowe
+# Numeric comparisons
 condition: "object_count > 0"
 condition: "selected_verts >= 4"
 
-# Funkcje matematyczne w warunkach - TASK-060
+# Math functions in conditions - TASK-060
 condition: "floor(table_width / plank_width) > 5"
 
-# Operatory logiczne
+# Logical operators
 condition: "current_mode == 'EDIT' and has_selection"
 condition: "current_mode == 'OBJECT' or not has_selection"
 
-# Nawiasy (grupowanie) - TASK-056-2
+# Parentheses (grouping) - TASK-056-2
 condition: "(leg_angle > 0.5 and has_selection) or (object_count >= 3)"
 condition: "not (leg_style == 'straight' or leg_angle == 0)"
 ```
 
-### 5.2a Złożone Wyrażenia Logiczne (TASK-056-2)
+### 5.2a Complex Logical Expressions (TASK-056-2)
 
-System warunków wspiera **nawiasy** do grupowania i prawidłową **kolejność operatorów**:
+The condition system supports **parentheses** for grouping and correct **operator precedence**:
 
-**Kolejność operatorów** (od najwyższego do najniższego priorytetu):
-1. `()` - Nawiasy (grupowanie)
-2. `not` - Logiczne NIE
-3. `and` - Logiczne I
-4. `or` - Logiczne LUB
+Operator precedence (from highest to lowest):
+1. `()` - Parentheses (grouping)
+2. `not` - Logical NOT
+3. `and` - Logical AND
+4. `or` - Logical OR
 
-**Przykłady:**
+Examples:
 
 ```yaml
-# Zagnieżdżone nawiasy
+# Nested parentheses
 condition: "(leg_angle > 0.5 and has_selection) or (object_count >= 3 and current_mode == 'EDIT')"
 
-# NOT z nawiasami
+# NOT with parentheses
 condition: "not (leg_style == 'straight' or (leg_angle < 0.1 and leg_angle > -0.1))"
 
-# Kolejność bez nawiasów (NOT > AND > OR)
+# Precedence without parentheses (NOT > AND > OR)
 condition: "width > 1.0 and length > 1.0 and height > 0.5 or is_tall"
-# Ewaluuje się jako: ((width > 1.0 and length > 1.0) and height > 0.5) or is_tall
+# Evaluates as: ((width > 1.0 and length > 1.0) and height > 0.5) or is_tall
 
-# Wiele operacji AND/OR
+# Multiple AND/OR
 condition: "A and B or C and D"
-# Ewaluuje się jako: (A and B) or (C and D)
+# Evaluates as: (A and B) or (C and D)
 
-# Złożone zagnieżdżone warunki
+# Complex nested conditions
 condition: "((A or B) and (C or D)) or (E and not F)"
 ```
 
-**Dobre praktyki:**
+Best practices:
 
 ```yaml
-# ✅ DOBRZE - nawiasy dla czytelności
+# ✅ GOOD - parentheses for readability
 condition: "(leg_angle_left > 0.5) or (leg_angle_left < -0.5)"
 
-# ⚠️ Działa ale mniej czytelne - opiera się na kolejności
+# ⚠️ Works but less readable - relies on precedence
 condition: "leg_angle_left > 0.5 or leg_angle_left < -0.5"
 
-# ✅ DOBRZE - zagnieżdżone warunki z jasnym grupowaniem
+# ✅ GOOD - nested conditions with clear grouping
 condition: "(current_mode == 'EDIT' and has_selection) or (current_mode == 'OBJECT' and object_count > 0)"
 ```
 
-### 5.3 Dostępne Zmienne
+### 5.3 Available Variables
 
-| Zmienna | Typ | Przykład |
+| Variable | Type | Example |
 |---------|-----|----------|
 | `current_mode` | str | `'OBJECT'`, `'EDIT'`, `'SCULPT'` |
 | `has_selection` | bool | `True`, `False` |
@@ -274,23 +274,23 @@ condition: "(current_mode == 'EDIT' and has_selection) or (current_mode == 'OBJE
 | `selected_faces` | int | `0`, `6` |
 | `active_object` | str | `'Cube'`, `'Sphere'` |
 
-### 5.4 Symulacja Kontekstu
+### 5.4 Context Simulation
 
-Router symuluje zmiany kontekstu podczas rozwijania workflow:
+The router simulates context changes while expanding the workflow:
 
 ```yaml
 steps:
-  # Krok 1: Zmień tryb (wykona się)
+  # Step 1: Change mode (will execute)
   - tool: system_set_mode
     params: { mode: EDIT }
     condition: "current_mode != 'EDIT'"
 
-  # Krok 2: Zaznacz (wykona się)
+  # Step 2: Select (will execute)
   - tool: mesh_select
     params: { action: all }
     condition: "not has_selection"
 
-  # Krok 3: Kolejna zmiana trybu (POMINIE - symulacja mówi, że już EDIT)
+  # Step 3: Another mode change (SKIPPED - simulation says already EDIT)
   - tool: system_set_mode
     params: { mode: EDIT }
     condition: "current_mode != 'EDIT'"
@@ -298,145 +298,145 @@ steps:
 
 ---
 
-## 6. Krok 5: Dynamiczne Parametry
+## 6. Step 5: Dynamic Parameters
 
-### 6.1 Problem ze Statycznymi Wartościami
+### 6.1 Problem with Static Values
 
 ```yaml
-# ŹLE - 0.05 działa dla 1m kostki, ale nie dla 10m lub 1cm
+# BAD - 0.05 works for a 1m cube, but not for 10m or 1cm
 params:
   offset: 0.05
 ```
 
-### 6.2 Rozwiązanie 1: $CALCULATE
+### 6.2 Solution 1: $CALCULATE
 
-Oblicz wartość matematycznie:
+Compute values mathematically:
 
 ```yaml
 params:
-  # 5% najmniejszego wymiaru
+  # 5% of the smallest dimension
   offset: "$CALCULATE(min_dim * 0.05)"
 
-  # Średnia szerokości i wysokości
+  # Average of width and height
   size: "$CALCULATE((width + height) / 2)"
 
-  # Zaokrąglone
+  # Rounded
   count: "$CALCULATE(round(depth * 10))"
 ```
 
-**Nowe w TASK-060:** `$CALCULATE(...)` wspiera też operatory porównania, logiczne i wyrażenia ternarne.
-Porównania/warunki w `$CALCULATE(...)` zwracają `1.0` (true) / `0.0` (false):
+New in TASK-060: `$CALCULATE(...)` also supports comparison operators, logical operators, and ternary expressions.
+Comparisons/conditions in `$CALCULATE(...)` return `1.0` (true) / `0.0` (false):
 
 ```yaml
 params:
-  # Flaga liczbowa z warunku
+  # Numeric flag from a condition
   has_objects: "$CALCULATE(object_count > 0)"
 
-  # Wyrażenie ternarne
+  # Ternary expression
   bevel: "$CALCULATE(0.05 if width > 1.0 else 0.02)"
 
-  # Logika + ternary
+  # Logic + ternary
   detail: "$CALCULATE(2 if (object_count > 0 and has_selection) else 1)"
 ```
 
-**Dostępne zmienne:**
-- `width`, `height`, `depth` - wymiary obiektu
-- `min_dim`, `max_dim` - min/max wymiarów
-- Wszystkie parametry z `defaults` i `modifiers`
+Available variables:
+- `width`, `height`, `depth` - object dimensions
+- `min_dim`, `max_dim` - min/max dimensions
+- All parameters from `defaults` and `modifiers`
 
-**Dostępne funkcje matematyczne** (TASK-056-1):
+Available math functions (TASK-056-1):
 
-| Kategoria | Funkcje | Opis |
+| Category | Functions | Description |
 |-----------|---------|------|
-| **Podstawowe** | `abs()`, `min()`, `max()` | Wartość bezwzględna, minimum, maksimum |
-| **Zaokrąglanie** | `round()`, `floor()`, `ceil()`, `trunc()` | Zaokrąglenie, podłoga, sufit, obcięcie |
-| **Potęga/Pierwiastek** | `sqrt()`, `pow()`, `**` | Pierwiastek kwadratowy, potęga |
-| **Trygonometryczne** | `sin()`, `cos()`, `tan()` | Sinus, cosinus, tangens (radiany) |
-| **Odwrotne Tryg.** | `asin()`, `acos()`, `atan()`, `atan2()` | Arcus sinus, arcus cosinus, arcus tangens |
-| **Konwersja Kątów** | `degrees()`, `radians()` | Konwersja radiany↔stopnie |
-| **Logarytmiczne** | `log()`, `log10()`, `exp()` | Logarytm naturalny, logarytm dziesiętny, e^x |
-| **Zaawansowane** | `hypot()` | Przeciwprostokątna: sqrt(x² + y²) |
+| **Basic** | `abs()`, `min()`, `max()` | Absolute value, minimum, maximum |
+| **Rounding** | `round()`, `floor()`, `ceil()`, `trunc()` | Round, floor, ceil, truncate |
+| **Power/Root** | `sqrt()`, `pow()`, `**` | Square root, power |
+| **Trigonometric** | `sin()`, `cos()`, `tan()` | Sine, cosine, tangent (radians) |
+| **Inverse Trig** | `asin()`, `acos()`, `atan()`, `atan2()` | Arcus sine, arcus cosine, arcus tangent |
+| **Angle Conversion** | `degrees()`, `radians()` | Convert radians↔degrees |
+| **Logarithmic** | `log()`, `log10()`, `exp()` | Natural log, base-10 log, e^x |
+| **Advanced** | `hypot()` | Hypotenuse: sqrt(x² + y²) |
 
-**Przykłady użycia:**
+Usage examples:
 
 ```yaml
-# Obliczenie kąta z wymiarów
+# Compute rotation angle from dimensions
 rotation: ["$CALCULATE(atan2(height, width))", 0, 0]
 
-# Skalowanie logarytmiczne
+# Logarithmic scaling
 scale: "$CALCULATE(log10(100))"  # = 2.0
 
-# Zanik wykładniczy
+# Exponential decay
 alpha: "$CALCULATE(exp(-distance / falloff_radius))"
 
-# Przekątna (odległość po skosie)
+# Diagonal (hypotenuse)
 diagonal: "$CALCULATE(hypot(width, height))"
 
-# Konwersja stopni na radiany
+# Degrees to radians
 angle_rad: "$CALCULATE(radians(45))"  # = 0.785...
 
-# Tangens dla nachylenia
+# Tangent for slope
 slope: "$CALCULATE(tan(leg_angle))"
 ```
 
-### 6.3 Rozwiązanie 2: $AUTO_*
+### 6.3 Solution 2: $AUTO_*
 
-Gotowe predefiniowane wartości:
+Ready-made predefined values:
 
 ```yaml
 params:
-  # Automatyczny bevel (5% min wymiaru)
+  # Automatic bevel (5% of min dimension)
   offset: "$AUTO_BEVEL"
 
-  # Automatyczny inset (3% min XY)
+  # Automatic inset (3% of min XY)
   thickness: "$AUTO_INSET"
 
-  # Automatyczne wgłębienie (10% głębokości w dół)
+  # Automatic extrude (10% depth down)
   move: [0, 0, "$AUTO_EXTRUDE_NEG"]
 ```
 
-**Pełna lista $AUTO_*:**
+Full list of $AUTO_*:
 
-| Parametr | Wzór | Opis |
+| Parameter | Formula | Description |
 |----------|------|------|
-| `$AUTO_BEVEL` | `min * 5%` | Standardowy bevel |
-| `$AUTO_BEVEL_SMALL` | `min * 2%` | Mały bevel |
-| `$AUTO_BEVEL_LARGE` | `min * 10%` | Duży bevel |
-| `$AUTO_INSET` | `XY_min * 3%` | Standardowy inset |
-| `$AUTO_INSET_THICK` | `XY_min * 5%` | Gruby inset |
-| `$AUTO_EXTRUDE` | `Z * 10%` | Extrude w górę |
-| `$AUTO_EXTRUDE_NEG` | `Z * -10%` | Extrude w dół |
-| `$AUTO_EXTRUDE_DEEP` | `Z * 20%` | Głęboki extrude |
-| `$AUTO_SCREEN_DEPTH` | `Z * 50%` | Głębokość ekranu |
-| `$AUTO_SCREEN_DEPTH_NEG` | `Z * -50%` | Wgłębienie ekranu |
-| `$AUTO_SCALE_SMALL` | `[80%, 80%, 80%]` | Zmniejsz do 80% |
+| `$AUTO_BEVEL` | `min * 5%` | Standard bevel |
+| `$AUTO_BEVEL_SMALL` | `min * 2%` | Small bevel |
+| `$AUTO_BEVEL_LARGE` | `min * 10%` | Large bevel |
+| `$AUTO_INSET` | `XY_min * 3%` | Standard inset |
+| `$AUTO_INSET_THICK` | `XY_min * 5%` | Thick inset |
+| `$AUTO_EXTRUDE` | `Z * 10%` | Extrude up |
+| `$AUTO_EXTRUDE_NEG` | `Z * -10%` | Extrude down |
+| `$AUTO_EXTRUDE_DEEP` | `Z * 20%` | Deep extrude |
+| `$AUTO_SCREEN_DEPTH` | `Z * 50%` | Screen depth |
+| `$AUTO_SCREEN_DEPTH_NEG` | `Z * -50%` | Screen inset |
+| `$AUTO_SCALE_SMALL` | `[80%, 80%, 80%]` | Scale down to 80% |
 
-### 6.4 Rozwiązanie 3: Proste Zmienne
+### 6.4 Solution 3: Simple Variables
 
-Odwołanie do wartości z kontekstu:
+Reference values from the context:
 
 ```yaml
 params:
-  mode: "$mode"        # Aktualny tryb
-  move: [0, 0, "$depth"]  # Z użyciem wymiarów obiektu
+  mode: "$mode"        # Current mode
+  move: [0, 0, "$depth"]  # Using object dimensions
 ```
 
-### 6.5 Kolejność Rozwiązywania
+### 6.5 Resolution Order
 
-0. `{var}` - interpolacja stringów (TASK-058; tylko w stringach)
-1. `$CALCULATE(...)` - najpierw wyrażenia matematyczne
-2. `$AUTO_*` - potem predefiniowane wartości
-3. `$zmienna` - na końcu proste zmienne
+0. `{var}` - string interpolation (TASK-058; only inside strings)
+1. `$CALCULATE(...)` - evaluate math expressions first
+2. `$AUTO_*` - then predefined values
+3. `$variable` - finally simple variables
 
 ---
 
-## 6b. Loops i interpolacja stringow (TASK-058)
+## 6b. Loops and String Interpolation (TASK-058)
 
-Gdy workflow ma wiele powtarzalnych elementów (np. deski blatu, okna w elewacji, przyciski w telefonie), ręczne kopiowanie kroków szybko robi się nieczytelne. Rozwiązaniem są **loops** + **string interpolation**.
+When a workflow has many repetitive elements (e.g., countertop planks, windows in a facade, buttons on a phone), manually copying steps becomes unreadable. The solution is **loops** + **string interpolation**.
 
-### 6b.1 Interpolacja `{var}`
+### 6b.1 Interpolation `{var}`
 
-W stringach możesz używać placeholderów `{var}` (np. `{i}`, `{row}`, `{col}`), które zostaną podstawione przed obliczeniami `$CALCULATE(...)` i przed ewaluacją `condition`:
+In strings you can use placeholders `{var}` (e.g., `{i}`, `{row}`, `{col}`) that will be substituted before `$CALCULATE(...)` evaluations and before `condition` evaluation:
 
 ```yaml
 params:
@@ -445,11 +445,11 @@ condition: "{i} <= plank_count"
 description: "Create plank {i} of {plank_count}"
 ```
 
-Escaping: `{{` i `}}` oznaczają literalne `{` i `}`.
+Escaping: `{{` and `}}` represent literal `{` and `}`.
 
-### 6b.2 Loop na kroku
+### 6b.2 Loop on a Step
 
-Najprostsza pętla (inclusive range):
+The simplest loop (inclusive range):
 ```yaml
 loop:
   variable: i
@@ -463,9 +463,9 @@ loop:
   ranges: ["0..(rows - 1)", "0..(cols - 1)"]
 ```
 
-### 6b.3 Kolejnosc krokow: `loop.group` (interleaving)
+### 6b.3 Step Order: `loop.group` (interleaving)
 
-Jeśli chcesz wykonać kroki “per iteracja” (np. `create_i → transform_i`), ustaw to samo `loop.group` na kolejnych krokach:
+If you want steps executed "per iteration" (e.g., `create_i → transform_i`), set the same `loop.group` on successive steps:
 
 ```yaml
 - tool: modeling_create_primitive
@@ -479,191 +479,191 @@ Jeśli chcesz wykonać kroki “per iteracja” (np. `create_i → transform_i`)
   loop: { group: planks, variable: i, range: "1..plank_count" }
 ```
 
-Tip: dla krótszego YAML używaj anchorów i `<<` merge (PyYAML `safe_load` to wspiera).
+Tip: for shorter YAML use anchors and `<<` merge (PyYAML `safe_load` supports this).
 
-## 7. Krok 6: Opcjonalne Kroki i Adaptacja
+## 7. Step 6: Optional Steps and Adaptation
 
-> **English deep dive:** For a precise explanation of how adaptation (TASK-051) and `condition` interact (two filters),
+> English deep dive: For a precise explanation of how adaptation (TASK-051) and `condition` interact (two filters),
 > plus the full expansion order (computed params → loops/interpolation → `$CALCULATE/$AUTO_/$variable` → `condition`),
 > see: [workflow-execution-pipeline.md](./workflow-execution-pipeline.md).
 
-### 7.1 Problem: Zbyt Szczegółowe Workflow
+### 7.1 Problem: Overly Detailed Workflow
 
-Wyobraź sobie workflow `picnic_table` z 49 krokami, który tworzy stół piknikowy z ławkami i ramą A-frame. Gdy użytkownik powie "prosty stół z 4 nogami", wykonanie pełnego workflow jest nadmierne.
+Imagine a `picnic_table` workflow with 49 steps that creates a picnic table with benches and an A-frame. When a user says "simple table with 4 legs", running the full workflow is excessive.
 
-### 7.2 Rozwiązanie: Confidence-Based Adaptation (TASK-051)
+### 7.2 Solution: Confidence-Based Adaptation (TASK-051)
 
-Router automatycznie adaptuje workflow na podstawie poziomu dopasowania:
+The router automatically adapts the workflow based on matching confidence:
 
-| Confidence | Strategia | Zachowanie |
+| Confidence | Strategy | Behavior |
 |------------|-----------|------------|
-| **HIGH** (≥0.90) | `FULL` | Wykonaj WSZYSTKIE kroki |
-| **MEDIUM** (≥0.75) | `FILTERED` | Core + pasujące optional |
-| **LOW** (≥0.60) | `CORE_ONLY` | Tylko CORE kroki |
-| **NONE** (<0.60) | `CORE_ONLY` | Tylko CORE (fallback) |
+| **HIGH** (≥0.90) | `FULL` | Execute ALL steps |
+| **MEDIUM** (≥0.75) | `FILTERED` | Core + matching optional steps |
+| **LOW** (≥0.60) | `CORE_ONLY` | Only CORE steps |
+| **NONE** (<0.60) | `CORE_ONLY` | Only CORE (fallback) |
 
-### 7.3 Jak Działa Intent Classifier
+### 7.3 How the Intent Classifier Works
 
-**WorkflowIntentClassifier** oblicza confidence na podstawie:
+**WorkflowIntentClassifier** computes confidence based on:
 
-1. **Semantic Similarity (LaBSE embeddings)** - porównuje prompt użytkownika z:
-   - `sample_prompts` z workflow YAML
-   - `description` workflow
+1. **Semantic Similarity (LaBSE embeddings)** - compares the user prompt to:
+   - `sample_prompts` from the workflow YAML
+   - `description` of the workflow
    - `trigger_keywords`
 
-2. **Thresholds dla poziomów confidence:**
+2. **Thresholds for confidence levels:**
    ```python
-   HIGH_THRESHOLD = 0.90   # Bardzo wysoka pewność
-   MEDIUM_THRESHOLD = 0.75  # Umiarkowana pewność
-   LOW_THRESHOLD = 0.60     # Minimalna wymagana pewność
+   HIGH_THRESHOLD = 0.90   # Very high confidence
+   MEDIUM_THRESHOLD = 0.75  # Moderate confidence
+   LOW_THRESHOLD = 0.60     # Minimum required confidence
    ```
 
-3. **Przykłady klasyfikacji:**
+3. **Classification examples:**
    ```
-   "create a picnic table"           → 0.95 (HIGH)   - bezpośrednie dopasowanie
-   "make outdoor table with benches" → 0.82 (MEDIUM) - semantycznie podobne
-   "rectangular table with 4 legs"   → 0.65 (LOW)    - częściowe dopasowanie
-   "build a shelf"                   → 0.35 (NONE)   - brak dopasowania
+   "create a picnic table"           → 0.95 (HIGH)   - direct match
+   "make outdoor table with benches" → 0.82 (MEDIUM) - semantically similar
+   "rectangular table with 4 legs"   → 0.65 (LOW)    - partial match
+   "build a shelf"                   → 0.35 (NONE)   - no match
    ```
 
-### 7.4 Oznaczanie Kroków jako Opcjonalne
+### 7.4 Marking Steps as Optional
 
-Użyj `optional: true` i `tags` aby oznaczyć kroki, które mogą być pominięte:
+Use `optional: true` and `tags` to mark steps that can be skipped:
 
 ```yaml
 steps:
-  # Krok podstawowy - zawsze wykonywany
+  # Core step - always executed
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
       name: "TableTop"
-    description: Stwórz blat stołu
-    # optional: false  # Domyślna wartość, nie trzeba pisać
+    description: Create the tabletop
+    # optional: false  # Default, no need to specify
 
-  # Krok opcjonalny - może być pominięty przy niskim confidence
+  # Optional step - may be skipped at low confidence
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
       name: "BenchLeft"
-    description: Stwórz lewą ławkę
+    description: Create the left bench
     optional: true
     tags: ["bench", "seating", "side"]
 ```
 
-### 7.5 Jak Działają Tagi przy MEDIUM Confidence?
+### 7.5 How Tags Work at MEDIUM Confidence
 
-**WorkflowAdapter** filtruje opcjonalne kroki na podstawie tagów:
+**WorkflowAdapter** filters optional steps based on tags:
 
 ```python
-# Algorytm filtrowania (pseudokod):
+# Filtering algorithm (pseudocode):
 for step in optional_steps:
     # 1. Tag matching (fast, keyword-based)
     if any(tag.lower() in user_prompt.lower() for tag in step.tags):
         include_step(step)
         continue
 
-    # 2. Semantic similarity fallback (dla kroków bez tagów)
+    # 2. Semantic similarity fallback (for steps without tags)
     if step.description and similarity(prompt, description) >= 0.6:
         include_step(step)
 ```
 
-**Przykłady filtrowania:**
+Filtering examples:
 
 ```yaml
 # Prompt: "table with benches"
 # Step tags: ["bench", "seating"]
-# Wynik: Krok WŁĄCZONY (tag "bench" pasuje do "benches")
+# Result: Step INCLUDED (tag "bench" matches "benches")
 
 # Prompt: "simple table with 4 legs"
 # Step tags: ["bench", "seating"]
-# Wynik: Krok POMINIĘTY (żaden tag nie pasuje)
+# Result: Step SKIPPED (no tag matches)
 
 # Prompt: "table with A-frame legs"
 # Step tags: ["a-frame", "structural"]
-# Wynik: Krok WŁĄCZONY (tag "a-frame" pasuje)
+# Result: Step INCLUDED (tag "a-frame" matches)
 ```
 
-### 7.6 Dobre Praktyki dla Tagów
+### 7.6 Tag Best Practices
 
 ```yaml
-# DOBRZE - konkretne, przeszukiwalne tagi
+# GOOD - specific, searchable tags
 tags: ["bench", "seating", "side", "left"]
 tags: ["a-frame", "structural", "cross-support"]
 tags: ["handle", "grip", "ergonomic"]
 tags: ["decoration", "detail", "ornament"]
 
-# ŹLE - zbyt ogólne
-tags: ["extra", "optional"]  # Niespecyficzne
-tags: ["part"]               # Wszystko jest "part"
+# BAD - too generic
+tags: ["extra", "optional"]  # Non-specific
+tags: ["part"]               # Everything is a "part"
 ```
 
-**Kategorie tagów rekomendowane:**
+Recommended tag categories:
 
-| Kategoria | Przykładowe tagi | Zastosowanie |
+| Category | Example tags | Use |
 |-----------|------------------|--------------|
-| **Komponenty** | `bench`, `leg`, `shelf`, `drawer` | Główne części |
-| **Struktura** | `a-frame`, `cross-support`, `diagonal`, `brace` | Elementy konstrukcyjne |
-| **Pozycja** | `left`, `right`, `front`, `back`, `top`, `bottom` | Lokalizacja |
-| **Funkcja** | `seating`, `storage`, `decoration` | Przeznaczenie |
-| **Styl** | `ornate`, `minimal`, `modern`, `rustic` | Estetyka |
+| **Components** | `bench`, `leg`, `shelf`, `drawer` | Main parts |
+| **Structure** | `a-frame`, `cross-support`, `diagonal`, `brace` | Structural elements |
+| **Position** | `left`, `right`, `front`, `back`, `top`, `bottom` | Location |
+| **Function** | `seating`, `storage`, `decoration` | Purpose |
+| **Style** | `ornate`, `minimal`, `modern`, `rustic` | Aesthetics |
 
-### 7.7 Grupy Opcjonalnych Kroków
+### 7.7 Groups of Optional Steps
 
-Dla złożonych workflow, grupuj powiązane opcjonalne kroki za pomocą wspólnych tagów:
+For complex workflows, group related optional steps using shared tags:
 
 ```yaml
 steps:
-  # === CORE: Zawsze wykonywane ===
+  # === CORE: Always executed ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "TableTop" }
-    description: Blat stołu
+    description: Table top
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "Leg_FL" }
-    description: Noga przednia lewa
+    description: Front-left leg
 
-  # ... pozostałe nogi ...
+  # ... other legs ...
 
   # === OPTIONAL GROUP 1: A-Frame supports ===
-  # Wspólne tagi: ["a-frame", "structural"]
+  # Shared tags: ["a-frame", "structural"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "CrossBeam_Front" }
-    description: Przednia poprzeczka A-frame
+    description: Front crossbeam for A-frame
     optional: true
     tags: ["a-frame", "cross-support", "structural"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "CrossBeam_Back" }
-    description: Tylna poprzeczka A-frame
+    description: Back crossbeam for A-frame
     optional: true
     tags: ["a-frame", "cross-support", "structural"]
 
   # === OPTIONAL GROUP 2: Benches ===
-  # Wspólne tagi: ["bench", "seating"]
+  # Shared tags: ["bench", "seating"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchLeft" }
-    description: Lewa ławka
+    description: Left bench
     optional: true
     tags: ["bench", "seating", "left"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchRight" }
-    description: Prawa ławka
+    description: Right bench
     optional: true
     tags: ["bench", "seating", "right"]
 ```
 
-### 7.8 Finalizacja z Adaptacją
+### 7.8 Finalization with Adaptation
 
-Sekcja finalizacji (join, rename, material) musi obsługiwać różne warianty:
+Finalization steps (join, rename, material) must handle different variants:
 
 ```yaml
 steps:
-  # ... kroki tworzące geometrię ...
+  # ... steps that create geometry ...
 
-  # === FINALIZE: Wariant minimalny (CORE) ===
+  # === FINALIZE: Minimal variant (CORE) ===
   - tool: modeling_join_objects
     params:
       object_names:
@@ -672,33 +672,33 @@ steps:
         - "Leg_FR"
         - "Leg_BL"
         - "Leg_BR"
-    description: Join 5 podstawowych części stołu
+    description: Join 5 basic table parts
 
   - tool: scene_rename_object
     params:
       old_name: "Leg_BR"
       new_name: "Table"
-    description: Nazwij obiekt "Table"
+    description: Rename object to "Table"
 
-  # === FINALIZE: Wariant z A-frame (dodaj gdy mamy a-frame) ===
+  # === FINALIZE: A-frame variant (add when we have a-frame) ===
   - tool: modeling_join_objects
     params:
       object_names:
         - "Table"
         - "CrossBeam_Front"
         - "CrossBeam_Back"
-    description: Dołącz elementy A-frame do stołu
+    description: Attach A-frame elements to the table
     optional: true
     tags: ["a-frame", "structural"]
 
-  # === FINALIZE: Wariant z ławkami (dodaj gdy mamy benches) ===
+  # === FINALIZE: Benches variant (add when we have benches) ===
   - tool: modeling_join_objects
     params:
       object_names:
         - "Table"
         - "BenchLeft"
         - "BenchRight"
-    description: Dołącz ławki do stołu
+    description: Attach benches to the table
     optional: true
     tags: ["bench", "seating"]
 
@@ -706,17 +706,17 @@ steps:
     params:
       old_name: "BenchRight"
       new_name: "Picnic_Table"
-    description: Nazwij pełny stół piknikowy
+    description: Rename the full picnic table
     optional: true
     tags: ["bench", "seating"]
 ```
 
-### 7.9 Przykład: Stół Piknikowy z Pełną Adaptacją
+### 7.9 Example: Picnic Table with Full Adaptation
 
 ```yaml
-# picnic_table.yaml (uproszczony)
+# picnic_table.yaml (simplified)
 name: picnic_table_workflow
-description: Stół piknikowy z opcjonalnymi ławkami i ramą A-frame
+description: Picnic table with optional benches and A-frame
 
 sample_prompts:
   - "create a picnic table"
@@ -724,57 +724,57 @@ sample_prompts:
   - "build a park table"
 
 steps:
-  # === CORE STEPS (zawsze wykonywane) ===
+  # === CORE STEPS (always executed) ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "TableTop" }
-    description: Blat stołu
+    description: Table top
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "Leg_FL" }
-    description: Noga przednia lewa (może być skośna lub prosta)
+    description: Front-left leg (may be slanted or straight)
 
-  # ... więcej nóg ...
+  # ... more legs ...
 
   # === OPTIONAL: A-Frame elements ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "CrossBeam" }
-    description: Poprzeczka łącząca nogi A-frame
+    description: Crossbeam connecting A-frame legs
     optional: true
     tags: ["a-frame", "structural", "cross-support"]
 
   # === OPTIONAL: Bench elements ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchLeft" }
-    description: Lewa ławka
+    description: Left bench
     optional: true
     tags: ["bench", "seating", "left"]
 ```
 
-**Wyniki adaptacji:**
+Adaptation results:
 
 ```
-"create a picnic table"       → HIGH (0.95)   → 57 kroków (pełny workflow)
-"table with A-frame legs"     → MEDIUM (0.78) → 45 kroków (core + a-frame)
-"table with benches"          → MEDIUM (0.80) → 48 kroków (core + benches)
-"simple table with 4 legs"    → LOW (0.65)    → 25 kroków (tylko core)
+"create a picnic table"       → HIGH (0.95)   → 57 steps (full workflow)
+"table with A-frame legs"     → MEDIUM (0.78) → 45 steps (core + a-frame)
+"table with benches"          → MEDIUM (0.80) → 48 steps (core + benches)
+"simple table with 4 legs"    → LOW (0.65)    → 25 steps (core only)
 ```
 
 ### 7.10 Per-Step Adaptation Control (TASK-055-FIX-5)
 
-**Problem**: Konflikt między filtrowaniem semantycznym a warunkami matematycznymi.
+Problem: Conflict between semantic filtering and mathematical conditions.
 
-Dla MEDIUM confidence, WorkflowAdapter filtruje opcjonalne kroki przez dopasowanie tagów. Gdy krok jest kontrolowany przez **warunek matematyczny** (`leg_angle > 0.5`), filtrowanie semantyczne może go pominąć mimo że warunek jest spełniony.
+For MEDIUM confidence, WorkflowAdapter filters optional steps by tag matching. When a step is governed by a **mathematical condition** (`leg_angle > 0.5`), semantic filtering may skip it even though the condition is true.
 
-**Przykład**:
-- Prompt: `"stół z nogami w X"` (Polski)
-- Tags: `["x-shaped", "crossed-legs"]` (Angielski)
-- Semantic matching: ❌ FAIL (Polski prompt nie pasuje do angielskich tagów)
-- Parametry: `leg_angle_left=1.0` (X-shaped)
-- Warunek: `leg_angle_left > 0.5` → **TRUE**
-- Wynik BEZ fix: Krok pominięty przez semantic filtering ❌
-- Wynik Z fix: Krok wykonany (warunek=True) ✅
+Example:
+- Prompt: `"stół z nogami w X"` (Polish)
+- Tags: `["x-shaped", "crossed-legs"]` (English)
+- Semantic matching: ❌ FAIL (Polish prompt doesn't match English tags)
+- Parameters: `leg_angle_left=1.0` (X-shaped)
+- Condition: `leg_angle_left > 0.5` → **TRUE**
+- Result WITHOUT fix: Step skipped by semantic filtering ❌
+- Result WITH fix: Step executed (condition=True) ✅
 
-**Rozwiązanie**: Flaga `disable_adaptation`
+Solution: `disable_adaptation` flag
 
 ```yaml
 steps:
@@ -789,26 +789,26 @@ steps:
     tags: ["x-shaped", "crossed-legs", "leg-stretch"]
 ```
 
-**Semantyka flag**:
+Flag semantics:
 
-| Flaga | Znaczenie | Cel |
+| Flag | Meaning | Purpose |
 |-------|-----------|-----|
-| `optional: true` | Krok jest opcjonalną funkcją | Dokumentacja/czytelność |
-| `disable_adaptation: true` | Pomiń filtrowanie semantyczne | Traktuj jako core step |
-| `condition` | Wyrażenie matematyczne | Kontrola wykonania w runtime |
+| `optional: true` | Step is an optional feature | Documentation/readability |
+| `disable_adaptation: true` | Skip semantic filtering | Treat as core step |
+| `condition` | Mathematical expression | Control execution at runtime |
 
-**Kiedy użyć `disable_adaptation: true`**:
+When to use `disable_adaptation: true`:
 
-✅ **Użyj gdy**:
-- Krok kontrolowany przez warunek matematyczny (`leg_angle > 0.5`)
-- Workflow wielojęzyczny (tag matching zawodny)
-- Chcesz precyzyjnej kontroli przez condition, nie przez semantic matching
+✅ Use when:
+- The step is controlled by a mathematical condition (`leg_angle > 0.5`)
+- The workflow is multilingual (tag matching fails)
+- You want precise control via condition, not semantic matching
 
-❌ **Nie używaj gdy**:
-- Krok bazuje na tagach (benches, decorations) → użyj semantic filtering
-- Krok jest core → po prostu usuń `optional: true`
+❌ Don't use when:
+- The step is tag-based (benches, decorations) → use semantic filtering
+- The step is core → simply remove `optional: true`
 
-**Przepływ adaptacji z `disable_adaptation`**:
+Adaptation flow with `disable_adaptation`:
 
 ```
 MEDIUM confidence:
@@ -821,363 +821,361 @@ MEDIUM confidence:
 5. Only steps with condition=True execute
 ```
 
-**Korzyści**:
-1. ✅ Matematyczna precyzja (condition) > semantyczna aproksymacja (tags)
-2. ✅ Wsparcie wielojęzyczne (brak zależności od tag matching)
-3. ✅ Jasna intencja w YAML
-4. ✅ Zachowana semantyka `optional` do dokumentacji
+Benefits:
+1. ✅ Mathematical precision (condition) > semantic approximation (tags)
+2. ✅ Multilingual support (no dependency on tag matching)
+3. ✅ Clear intent in YAML
+4. ✅ `optional` semantics preserved for documentation
 
-### 7.11 Niestandardowe Parametry Semantyczne (TASK-055-FIX-6 Phase 2)
+### 7.11 Custom Semantic Parameters (TASK-055-FIX-6 Phase 2)
 
-**Problem**: Jak dodać własne filtry semantyczne specyficzne dla workflow bez modyfikowania kodu Router?
+Problem: How to add custom semantic filters specific to a workflow without modifying the Router code?
 
-**Rozwiązanie**: Parametry semantyczne - niestandardowe pola boolean w YAML, które automatycznie działają jako filtry.
+Solution: Semantic parameters - custom boolean fields in YAML that automatically act as filters.
 
-#### 7.11.1 Co To Są Parametry Semantyczne?
+#### 7.11.1 What Are Semantic Parameters?
 
-**Parametry semantyczne** to dowolne pola boolean dodane do kroku workflow, które:
-1. Nie są jawnie udokumentowane w `WorkflowStep` (jak `disable_adaptation`, `optional`)
-2. Automatycznie wykrywane przez `WorkflowLoader`
-3. Mapowane na słowa kluczowe przez `WorkflowAdapter`
-4. Porównywane z prompt użytkownika
+Semantic parameters are any boolean fields added to a workflow step that:
+1. Are not explicitly documented in `WorkflowStep` (like `disable_adaptation`, `optional`)
+2. Are automatically detected by `WorkflowLoader`
+3. Are mapped to keywords by `WorkflowAdapter`
+4. Are compared against the user prompt
 
-**Przykład:**
+Example:
 
 ```yaml
 steps:
-  # Podstawowa struktura stołu (zawsze)
+  # Basic table structure (always)
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE }
-    description: "Stwórz blat stołu"
+    description: "Create the tabletop"
 
-  # Ławka (parametr semantyczny)
+  # Bench (semantic parameter)
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE }
-    description: "Stwórz ławkę"
+    description: "Create a bench"
     optional: true
-    add_bench: true  # PARAMETR SEMANTYCZNY - wykrywa "bench"/"ławka" w prompt
+    add_bench: true  # SEMANTIC PARAMETER - detects "bench"/"ławka" in the prompt
     tags: ["bench", "seating"]
 ```
 
-#### 7.11.2 Jak To Działa
+#### 7.11.2 How It Works
 
-1. **WorkflowLoader** wykrywa `add_bench` jako nieznane pole
-2. Dodaje je jako dynamiczny atrybut do `WorkflowStep` (via `setattr()`)
-3. **WorkflowAdapter** wyodrębnia parametry semantyczne:
-   - `add_bench` → słowo kluczowe: `"bench"`
-4. Sprawdza czy `"bench"` występuje w prompt użytkownika
-5. Jeśli TAK → krok włączony, jeśli NIE → krok pominięty
+1. **WorkflowLoader** detects `add_bench` as an unknown field
+2. It adds it as a dynamic attribute to `WorkflowStep` (via `setattr()`)
+3. **WorkflowAdapter** extracts semantic parameters:
+   - `add_bench` → keyword: `"bench"`
+4. It checks whether `"bench"` appears in the user prompt
+5. If YES → include the step; if NO → skip the step
 
-**Konwersja nazw:**
+Name conversion:
 
-| Nazwa parametru | Wyodrębnione słowo | Dopasowanie |
+| Parameter name | Extracted word | Matching |
 |-----------------|-------------------|-------------|
 | `add_bench` | `"bench"` | bench, ławka, банка |
 | `include_stretchers` | `"stretchers"` | stretchers, rozpórki |
 | `decorative` | `"decorative"` | decorative, ozdobny |
 | `add_handles` | `"handles"` | handles, uchwyty |
 
-System usuwa prefiksy `add_`, `include_` i zastępuje `_` spacjami.
+The system strips prefixes `add_`, `include_` and replaces `_` with spaces.
 
-#### 7.11.3 Dopasowanie Pozytywne vs Negatywne
+#### 7.11.3 Positive vs Negative Matching
 
-**Pozytywne** (`true`) - Włącz krok jeśli słowo kluczowe **występuje** w prompt:
+Positive (`true`) - Enable the step if the keyword **appears** in the prompt:
 
 ```yaml
 - tool: modeling_create_primitive
   params: { primitive_type: CUBE }
-  description: "Stwórz ławkę"
+  description: "Create a bench"
   optional: true
-  add_bench: true  # Włącz TYLKO gdy "bench" w prompt
+  add_bench: true  # Enable ONLY when "bench" in prompt
   tags: ["bench"]
 ```
 
-**Negatywne** (`false`) - Włącz krok jeśli słowo kluczowe **NIE występuje** w prompt:
+Negative (`false`) - Enable the step if the keyword **does NOT appear** in the prompt:
 
 ```yaml
 - tool: modeling_create_primitive
   params: { primitive_type: CUBE }
-  description: "Prosty stół bez ozdób"
+  description: "Simple table without decoration"
   optional: true
-  decorative: false  # Włącz TYLKO gdy "decorative" NIE w prompt
+  decorative: false  # Enable ONLY when "decorative" NOT in prompt
 ```
 
-**Po co `true`/`false`? Warianty Wzajemnie Wykluczające Się**
+Why `true`/`false`? Mutually exclusive variants
 
-Wartość boolean określa **kierunek dopasowania**, umożliwiając warianty wzajemnie wykluczające się w jednym workflow:
+The boolean value indicates the direction of matching, allowing mutually exclusive variants in one workflow:
 
 ```yaml
 steps:
-  # Core: zawsze wykonywane
+  # Core: always executed
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "TableTop" }
-    description: "Stwórz blat"
+    description: "Create the tabletop"
 
-  # Wariant A: Z ławką (gdy użytkownik chce)
+  # Variant A: With bench (when user wants)
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "Bench" }
-    description: "Stwórz ławkę"
+    description: "Create a bench"
     optional: true
-    add_bench: true  # Włącz gdy "bench" JEST w prompt
+    add_bench: true  # Enable when "bench" IS in prompt
 
-  # Wariant B: Dodatkowe wsparcie (gdy BRAK ławki)
+  # Variant B: Extra support (when NO bench)
   - tool: modeling_create_primitive
     params: { primitive_type: CYLINDER, name: "ExtraSupport" }
-    description: "Dodaj dodatkowe wsparcie (bo nie ma ławki dla stabilności)"
+    description: "Add extra support (because there is no bench for stability)"
     optional: true
-    add_bench: false  # Włącz gdy "bench" NIE w prompt
+    add_bench: false  # Enable when "bench" is NOT in prompt
 ```
 
-**Wyniki:**
+Results:
 
-| Prompt użytkownika | `add_bench: true` (Ławka) | `add_bench: false` (Dodatkowe wsparcie) |
+| User prompt | `add_bench: true` (Bench) | `add_bench: false` (Extra support) |
 |--------------------|---------------------------|------------------------------------------|
-| `"stół"` | ❌ Pominięty | ✅ Włączony (brak ławki → potrzebne wsparcie) |
-| `"stół z ławką"` | ✅ Włączony | ❌ Pominięty (jest ławka → nie trzeba wsparcia) |
+| `"table"` | ❌ Skipped | ✅ Included (no bench → needs support) |
+| `"table with bench"` | ✅ Included | ❌ Skipped (bench present → no extra support) |
 
-**Więcej Przykładów:**
+More examples:
 
 ```yaml
-# Ozdobny vs Prosty
+# Decorative vs Simple
 - tool: mesh_bevel
   params: { offset: 0.1 }
-  description: "Duże zaokrąglenia (ozdobne)"
+  description: "Large bevels (decorative)"
   optional: true
-  decorative: true  # Włącz gdy "decorative"/"ozdobny" w prompt
+  decorative: true  # Enable when "decorative"/"ozdobny" in prompt
 
 - tool: mesh_bevel
   params: { offset: 0.01 }
-  description: "Małe zaokrąglenia (minimalistyczne)"
+  description: "Small bevels (minimalist)"
   optional: true
-  decorative: false  # Włącz gdy "decorative" NIE w prompt
+  decorative: false  # Enable when "decorative" NOT in prompt
 
-# Z Uchwytami vs Bez
+# With Handles vs Without
 - tool: modeling_create_primitive
   params: { primitive_type: CYLINDER, name: "Handle" }
-  description: "Stwórz uchwyt"
+  description: "Create a handle"
   optional: true
-  add_handles: true  # Włącz gdy "handles"/"uchwyty" w prompt
+  add_handles: true  # Enable when "handles"/"uchwyty" in prompt
 
 - tool: mesh_bevel
   params: { offset: 0.05 }
-  description: "Zaokrągl krawędzie (zamiast uchwytów)"
+  description: "Bevel edges (instead of handles)"
   optional: true
-  add_handles: false  # Włącz gdy "handles" NIE w prompt
+  add_handles: false  # Enable when "handles" NOT in prompt
 ```
 
-**Kluczowe Zrozumienie:**
+Key understanding:
 
-Bez wartości `true`/`false` system nie wiedziałby czy:
-- Włączyć krok gdy słowo **występuje** (dopasowanie pozytywne)
-- Włączyć krok gdy słowo **NIE występuje** (dopasowanie negatywne)
+Without `true`/`false` the system wouldn't know whether to:
+- Enable the step when the word **appears** (positive match)
+- Enable the step when the word **does NOT appear** (negative match)
 
-Dzięki `true`/`false`:
-- `true` = "Użytkownik chce tę funkcję" → włącz gdy słowo w prompt
-- `false` = "Użytkownik NIE chce tej funkcji" → włącz gdy słowa BRAK w prompt
+With `true`/`false`:
+- `true` = "User wants this feature" → enable when the word is in the prompt
+- `false` = "User does NOT want this feature" → enable when the word is ABSENT in the prompt
 
-To umożliwia **warianty wzajemnie wykluczające się** (albo ławka, albo wsparcie, ale nie oba naraz) w ramach jednego workflow!
+This enables **mutually exclusive variants** (either bench or support, but not both) within one workflow.
 
-#### 7.11.4 Przykłady Użycia
+#### 7.11.4 Usage Examples
 
-**Przykład 1: Stół Piknikowy z Ławką**
+Example 1: Picnic Table with Bench
 
 ```yaml
 name: picnic_table_workflow
-description: Stół piknikowy z opcjonalną ławką
+description: Picnic table with optional bench
 
 defaults:
   leg_angle: 0.32
 
 steps:
-  # === CORE (zawsze) ===
+  # === CORE (always) ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "TableTop" }
-    description: "Blat stołu"
+    description: "Table top"
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "Leg_FL" }
-    description: "Noga stołu"
+    description: "Table leg"
 
-  # === OPTIONAL: Bench (parametr semantyczny) ===
+  # === OPTIONAL: Bench (semantic parameter) ===
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchSeat" }
-    description: "Siedzisko ławki"
+    description: "Bench seat"
     optional: true
-    add_bench: true  # Filtr semantyczny
+    add_bench: true  # Semantic filter
     tags: ["bench", "seating"]
 
   - tool: modeling_create_primitive
     params: { primitive_type: CUBE, name: "BenchLeg" }
-    description: "Noga ławki"
+    description: "Bench leg"
     optional: true
-    add_bench: true  # Filtr semantyczny
+    add_bench: true  # Semantic filter
     tags: ["bench"]
 
-  # === OPTIONAL: Rozpórki (parametr semantyczny) ===
+  # === OPTIONAL: Stretchers (semantic parameter) ===
   - tool: modeling_create_primitive
     params: { primitive_type: CYLINDER, name: "Stretcher" }
-    description: "Rozpórka między nogami"
+    description: "Stretcher between legs"
     optional: true
-    include_stretchers: true  # Filtr semantyczny
+    include_stretchers: true  # Semantic filter
     tags: ["stretchers", "support", "structural"]
 ```
 
-**Wyniki dopasowania:**
+Matching results:
 
-| Prompt użytkownika | Ławka włączona? | Rozpórki włączone? |
+| User prompt | Bench enabled? | Stretchers enabled? |
 |--------------------|-----------------|--------------------|
-| `"stół piknikowy"` | ❌ Nie | ❌ Nie |
-| `"stół piknikowy z ławką"` | ✅ Tak (`"ławką"`) | ❌ Nie |
-| `"picnic table with bench"` | ✅ Tak (`"bench"`) | ❌ Nie |
-| `"table with stretchers"` | ❌ Nie | ✅ Tak (`"stretchers"`) |
-| `"stół z ławką i rozpórkami"` | ✅ Tak (`"ławką"`) | ✅ Tak (`"rozpórkami"`) |
+| `"picnic table"` | ❌ No | ❌ No |
+| `"picnic table with bench"` | ✅ Yes (`"ławką"`) | ❌ No |
+| `"picnic table with bench"` | ✅ Yes (`"bench"`) | ❌ No |
+| `"table with stretchers"` | ❌ No | ✅ Yes (`"stretchers"`) |
+| `"table with bench and stretchers"` | ✅ Yes | ✅ Yes |
 
-#### 7.11.5 Strategia Filtrowania (3 Poziomy)
+#### 7.11.5 Filtering Strategy (3 Levels)
 
-WorkflowAdapter używa strategii wielopoziomowej dla MEDIUM confidence:
+WorkflowAdapter uses a multi-level strategy for MEDIUM confidence:
 
 ```
-1. Tag matching (szybkie)
-   → Sprawdź czy któryś tag występuje w prompt
+1. Tag matching (fast)
+   → Check if any tag appears in the prompt
 
-2. Parametry semantyczne (Phase 2)
-   → Sprawdź niestandardowe pola boolean
+2. Semantic parameters (Phase 2)
+   → Check custom boolean fields
 
-3. Semantic similarity (wolne, fallback)
-   → LaBSE embeddings dla description
+3. Semantic similarity (slow, fallback)
+   → LaBSE embeddings on description
 ```
 
-**Przykład działania:**
+Example:
 
 ```yaml
 - tool: modeling_create_primitive
   params: { primitive_type: CUBE }
-  description: "Stwórz ławkę do siedzenia"
+  description: "Create a bench for seating"
   optional: true
   add_bench: true
   tags: ["bench", "seating"]
 ```
 
-**Prompt**: `"stół z ławką"`
+Prompt: `"stół z ławką"`
 
-1. ✅ **Tag matching**: `"ławką"` nie pasuje do `"bench"` → SKIP
-2. ✅ **Parametr semantyczny**: `add_bench` → `"bench"` → mapuje `"ławką"` (LaBSE) → MATCH!
-3. ❌ **Semantic similarity**: NIE sprawdzone (już znaleziono match)
+1. ✅ **Tag matching**: `"ławką"` does not match `"bench"` → SKIP
+2. ✅ **Semantic parameter**: `add_bench` → `"bench"` → maps `"ławką"` (LaBSE) → MATCH!
+3. ❌ **Semantic similarity**: NOT checked (match already found)
 
-#### 7.11.6 Dobre Praktyki
+#### 7.11.6 Best Practices
 
-**✅ DOBRZE - Kombinuj parametry semantyczne z tagami:**
+✅ GOOD - Combine semantic parameters with tags:
 
 ```yaml
 - tool: modeling_create_primitive
   params: { primitive_type: CUBE }
-  description: "Stwórz ławkę"
+  description: "Create a bench"
   optional: true
-  add_bench: true        # Parametr semantyczny (wielojęzyczny)
+  add_bench: true        # Semantic parameter (multilingual)
   tags: ["bench"]        # Fallback tag matching
 ```
 
-**❌ ŹLE - Tylko parametr semantyczny, bez tagów:**
+❌ BAD - Only semantic parameter, no tags:
 
 ```yaml
 - tool: modeling_create_primitive
   params: { primitive_type: CUBE }
-  description: "Stwórz ławkę"
+  description: "Create a bench"
   optional: true
-  add_bench: true        # Co jeśli zmienię nazwę parametru?
-  # Brak tagów - mniej niezawodne
+  add_bench: true        # What if I change the parameter name?
+  # No tags - less reliable
 ```
 
-**✅ DOBRZE - Opisowe nazwy parametrów:**
+✅ GOOD - Descriptive parameter names:
 
 ```yaml
-add_bench: true           # Jasne: szuka "bench"
-include_handles: true     # Jasne: szuka "handles"
-decorative: true          # Jasne: szuka "decorative"
+add_bench: true           # Clear: looks for "bench"
+include_handles: true     # Clear: looks for "handles"
+decorative: true          # Clear: looks for "decorative"
 ```
 
-**❌ ŹLE - Niejasne nazwy:**
+❌ BAD - Ambiguous names:
 
 ```yaml
-feature_1: true           # Niejasne: jakiego słowa szukać?
-enable_extra: true        # Niejasne: co to "extra"?
-has_option: true          # Niejasne: jaka opcja?
+feature_1: true           # Ambiguous: what word is it looking for?
+enable_extra: true        # Ambiguous: what's "extra"?
+has_option: true          # Ambiguous: which option?
 ```
 
-#### 7.11.7 Kiedy Użyć Parametrów Semantycznych
+#### 7.11.7 When to Use Semantic Parameters
 
-| Feature | Użyj | Przykład |
+| Feature | Use for | Example |
 |---------|------|----------|
-| **Jawne pola** | Udokumentowane zachowanie z logiką w kodzie | `disable_adaptation`, `optional`, `condition` |
-| **Parametry semantyczne** | Filtry specyficzne dla workflow | `add_bench`, `include_stretchers`, `decorative` |
-| **Tagi** | Szybkie dopasowanie słów kluczowych | `tags: ["bench", "seating"]` |
+| **Explicit fields** | Documented behavior with logic in code | `disable_adaptation`, `optional`, `condition` |
+| **Semantic parameters** | Workflow-specific filters | `add_bench`, `include_stretchers`, `decorative` |
+| **Tags** | Quick keyword matching | `tags: ["bench", "seating"]` |
 
-**Użyj parametrów semantycznych gdy:**
+Use semantic parameters when:
+✅ You want a workflow-specific filter without changing Router code
+✅ You need multilingual matching (LaBSE)
+✅ The parameter name naturally maps to a concept (e.g., `add_bench` → `"bench"`)
 
-✅ Chcesz dodać filtr specyficzny dla workflow bez zmiany kodu Router
-✅ Potrzebujesz wielojęzycznego dopasowania (LaBSE)
-✅ Nazwa parametru naturalnie mapuje na koncept (np. `add_bench` → `"bench"`)
+Use tags when:
+✅ You need a list of synonyms
+✅ You want fast matching (no LaBSE)
+✅ You have many word variants (e.g., `["bench", "seat", "seating"]`)
 
-**Użyj tagów gdy:**
+#### 7.11.8 System Flexibility
 
-✅ Potrzebujesz listy synonimów
-✅ Chcesz szybkiego dopasowania (bez LaBSE)
-✅ Masz wiele wariantów słów kluczowych (np. `["bench", "seat", "seating"]`)
+Automatic loading (TASK-055-FIX-6 Phase 1):
+- All `WorkflowStep` fields are loaded automatically from YAML
+- New fields added to `WorkflowStep` → automatically supported
+- No manual loader ↔ dataclass sync required
 
-#### 7.11.8 Elastyczność Systemu
-
-**Automatyczne ładowanie** (TASK-055-FIX-6 Phase 1):
-- Wszystkie pola z `WorkflowStep` automatycznie ładowane z YAML
-- Nowe pola dodane do `WorkflowStep` → automatycznie wspierane
-- Brak ręcznej synchronizacji loader ↔ dataclass
-
-**Dynamiczne atrybuty** (TASK-055-FIX-6 Phase 2):
-- Nieznane pola YAML → dynamiczne atrybuty (`setattr()`)
-- Automatycznie wykrywane przez `WorkflowAdapter`
-- Nie trzeba modyfikować klasy `WorkflowStep`
+Dynamic attributes (TASK-055-FIX-6 Phase 2):
+- Unknown YAML fields → dynamic attributes (`setattr()`)
+- Automatically detected by `WorkflowAdapter`
+- No need to modify the `WorkflowStep` class
 
 ---
 
-## 7b. Interaktywna Rezolucja Parametrów (TASK-055)
+## 7b. Interactive Parameter Resolution (TASK-055)
 
-### 7b.1 Przegląd
+### 7b.1 Overview
 
-System parametrów umożliwia **interaktywne pytanie użytkownika** o wartości, gdy prompt wspomina parametr ale nie podaje konkretnej wartości.
+The parameter system supports **interactive questioning** the user for values when the prompt mentions a parameter but does not provide an explicit value.
 
-**Przykład:**
+Example:
 ```
-Prompt: "stół z nogami pod kątem 45 stopni"
+Prompt: "table with legs at 45 degrees"
 
-System rozpoznaje:
+The system recognizes:
   - Workflow: picnic_table_workflow ✅
-  - Parametr "leg_angle" wspomniany ale wartość nieznana
+  - Parameter "leg_angle" mentioned but value unknown
 
-Reakcja:
-  → Oznacza parametr jako "unresolved"
-  → LLM pyta użytkownika: "Jaki kąt nóg? (zakres: -90° do +90°, domyślnie: 18°)"
+Reaction:
+  → Mark the parameter as "unresolved"
+  → LLM asks the user: "What angle for the legs? (range: -90° to +90°, default: 18°)"
 ```
 
-### 7b.2 Trzy Poziomy Rezolucji
+### 7b.2 Three Levels of Resolution
 
-System używa **trzech poziomów** do rozwiązywania parametrów:
+The system uses **three levels** to resolve parameters:
 
-| Priorytet | Źródło | Opis |
+| Priority | Source | Description |
 |-----------|--------|------|
-| 1. YAML modifiers | Najwyższy | Dopasowanie semantyczne do `modifiers` w workflow |
-| 2. Learned mappings | Średni | Zapamiętane mapowania z poprzednich interakcji |
-| 3. LLM interaction | Najniższy | Pytanie użytkownika gdy parametr wspomniany ale nieznany |
+| 1. YAML modifiers | Highest | Semantic match to `modifiers` in the workflow |
+| 2. Learned mappings | Medium | Remembered mappings from past interactions |
+| 3. LLM interaction | Lowest | Ask the user when parameter is mentioned but unknown |
 
-### 7b.3 Definicja Parametrów w YAML
+### 7b.3 Parameter Definition in YAML
 
 ```yaml
-# W pliku workflow.yaml
+# In the workflow.yaml file
 
-# Wartości domyślne
+# Default values
 defaults:
   leg_angle_left: 0.32
   leg_angle_right: -0.32
 
-# Predefiniowane modyfikatory (priorytet 1)
+# Predefined modifiers (priority 1)
 modifiers:
   "straight legs":
     leg_angle_left: 0
@@ -1187,48 +1185,48 @@ modifiers:
     leg_angle_left: 0.32
     leg_angle_right: -0.32
 
-# Schematy parametrów dla interaktywnej rezolucji (priorytet 3)
+# Parameter schemas for interactive resolution (priority 3)
 parameters:
   leg_angle_left:
-    type: float                     # Typ: float, int, string, bool
-    range: [-1.57, 1.57]           # Zakres wartości (opcjonalne)
-    default: 0.32                   # Wartość domyślna
+    type: float                     # Type: float, int, string, bool
+    range: [-1.57, 1.57]           # Value range (optional)
+    default: 0.32                   # Default value
     description: "Rotation angle for left table legs"
     semantic_hints:                 # English keywords - LaBSE handles other languages
       - angle      # Auto-matches: kąt (PL), Winkel (DE), ángulo (ES)
       - legs       # Auto-matches: nogi (PL), Beinen (DE), pieds (FR)
       - crossed    # Auto-matches: skrzyżowane (PL), croisé (FR)
-    group: leg_angles              # Grupa parametrów (opcjonalne)
+    group: leg_angles              # Parameter group (optional)
 ```
 
-### 7b.4 Jak Działają semantic_hints
+### 7b.4 How semantic_hints Work
 
-`semantic_hints` służą do wykrywania czy prompt **wspomina** dany parametr.
+`semantic_hints` are used to detect whether the prompt **mentions** a parameter.
 
-**Trzy mechanizmy wykrywania:**
+Three detection mechanisms:
 
-1. **LaBSE similarity (pełny prompt)** - porównuje cały prompt z hint
+1. **LaBSE similarity (whole prompt)** - compares the entire prompt to the hint
    ```
    "table with legs at 45 degrees" ↔ "angle" = 0.42
    ```
 
-2. **Literal matching** - czy hint dosłownie występuje w prompt
+2. **Literal matching** - whether the hint literally appears in the prompt
    ```
-   "table with angle" zawiera "angle" → relevance = 0.8
+   "table with angle" contains "angle" → relevance = 0.8
    ```
 
-3. **Semantic word matching (TASK-055)** - czy JAKIEKOLWIEK słowo w prompt jest semantycznie podobne do hint
+3. **Semantic word matching (TASK-055)** - whether ANY word in the prompt is semantically similar to the hint
    ```
    "Tisch mit Beinen" → "Beinen" ↔ "legs" = 0.757 → relevance = 0.75
    ```
 
-### 7b.5 Automatyczne Wsparcie Wielojęzyczne
+### 7b.5 Automatic Multilingual Support
 
-**Wystarczą TYLKO angielskie hinty!**
+ONLY English hints are required!
 
-Dzięki **semantic word matching** z LaBSE, system automatycznie rozpoznaje słowa z innych języków:
+Thanks to **semantic word matching** with LaBSE, the system automatically recognizes words from other languages:
 
-| Język | Słowo w prompt | Dopasowanie do hint (EN) | Similarity |
+| Language | Word in prompt | Match to hint (EN) | Similarity |
 |-------|----------------|--------------------------|------------|
 | Polish | "kątem" | "angle" | 0.879 |
 | German | "Beinen" | "legs" | 0.757 |
@@ -1236,21 +1234,21 @@ Dzięki **semantic word matching** z LaBSE, system automatycznie rozpoznaje sło
 | Spanish | "ángulo" | "angle" | 0.959 |
 | Italian | "angolo" | "angle" | 0.935 |
 
-**Nie trzeba dodawać hintów dla każdego języka** - LaBSE automatycznie mapuje pojęcia cross-language.
+You do not need to add hints for every language - LaBSE automatically maps concepts cross-language.
 
 ### 7b.6 Thresholds
 
-| Parametr | Wartość | Znaczenie |
+| Parameter | Value | Meaning |
 |----------|---------|-----------|
-| `relevance_threshold` | 0.4 | Min. similarity żeby uznać parametr za "wspomniany" |
-| `memory_threshold` | 0.85 | Min. similarity żeby użyć zapamiętanego mapowania |
-| Literal match boost | 0.8 | Relevance gdy hint dosłownie w prompt |
-| Semantic word threshold | 0.65 | Min. similarity dla pojedynczych słów |
-| Semantic word boost | 0.75 | Relevance gdy słowo semantycznie pasuje |
+| `relevance_threshold` | 0.4 | Min. similarity to consider a parameter "mentioned" |
+| `memory_threshold` | 0.85 | Min. similarity to use a remembered mapping |
+| Literal match boost | 0.8 | Relevance when hint literally appears in prompt |
+| Semantic word threshold | 0.65 | Min. similarity for single-word matches |
+| Semantic word boost | 0.75 | Relevance when a word semantically matches |
 
-### 7b.7 Przykład: Stół z Nogami pod Kątem X
+### 7b.7 Example: Table with Legs at Angle X
 
-**Workflow YAML:**
+Workflow YAML:
 ```yaml
 defaults:
   leg_angle_left: 0.32
@@ -1273,49 +1271,49 @@ parameters:
       - crossed    # LaBSE matches: skrzyżowane (PL)=0.855, croisés (FR)=0.887
 ```
 
-**Scenariusze:**
+Scenarios:
 
-| Prompt | Rozwiązanie | Wynik |
+| Prompt | Resolution | Result |
 |--------|-------------|-------|
 | "create a picnic table" | defaults | leg_angle=0.32 |
 | "table with straight legs" | modifier match | leg_angle=0 |
 | "stół z prostymi nogami" | modifier match (LaBSE) | leg_angle=0 |
-| "table with legs at 45°" | **UNRESOLVED** → pytanie | LLM pyta użytkownika |
-| "Tisch mit Beinen im Winkel" | **UNRESOLVED** → pytanie | LLM pyta użytkownika |
+| "table with legs at 45°" | **UNRESOLVED** → ask | LLM asks the user |
+| "Tisch mit Beinen im Winkel" | **UNRESOLVED** → ask | LLM asks the user |
 
-### 7b.8 Dobre Praktyki dla semantic_hints
+### 7b.8 Best Practices for semantic_hints
 
 ```yaml
-# DOBRZE - tylko angielskie, konkretne
+# GOOD - English only, specific
 semantic_hints:
-  - angle      # LaBSE automatycznie dopasuje: kąt, Winkel, ángulo, angolo
-  - legs       # LaBSE automatycznie dopasuje: nogi, Beinen, pieds, piernas
-  - crossed    # LaBSE automatycznie dopasuje: skrzyżowane, gekreuzt, croisé
+  - angle      # LaBSE will match: kąt, Winkel, ángulo, angolo
+  - legs       # LaBSE will match: nogi, Beinen, pieds, piernas
+  - crossed    # LaBSE will match: skrzyżowane, gekreuzt, croisé
 
-# ŹLE - zbyt ogólne
+# BAD - too general
 semantic_hints:
-  - table      # Zbyt ogólne, zawsze pasuje
-  - create     # Nie dotyczy parametru
+  - table      # Too general, always matches
+  - create     # Not relevant to a parameter
 ```
 
-**Wskazówki:**
-1. Użyj 2-4 konkretnych angielskich hint'ów per parametr
-2. LaBSE automatycznie dopasuje inne języki (nie dodawaj tłumaczeń!)
-3. Unikaj zbyt ogólnych słów
-4. Hinty powinny być związane z **parametrem**, nie z workflow
+Tips:
+1. Use 2-4 specific English hints per parameter
+2. LaBSE automatically matches other languages (do not add translations)
+3. Avoid overly general words
+4. Hints should relate to the **parameter**, not the workflow
 
 ---
 
-## 8. Krok 7: Testowanie
+## 8. Step 7: Testing
 
-### 7.1 Walidacja Składni YAML
+### 7.1 YAML Syntax Validation
 
 ```bash
-# Sprawdź składnię YAML
-python -c "import yaml; yaml.safe_load(open('server/router/application/workflows/custom/moj_workflow.yaml'))"
+# Check YAML syntax
+python -c "import yaml; yaml.safe_load(open('server/router/application/workflows/custom/my_workflow.yaml'))"
 ```
 
-### 7.2 Test Ładowania
+### 7.2 Load Test
 
 ```python
 from server.router.application.workflows.registry import WorkflowRegistry
@@ -1323,20 +1321,20 @@ from server.router.application.workflows.registry import WorkflowRegistry
 registry = WorkflowRegistry()
 registry.load_custom_workflows()
 
-# Sprawdź czy workflow się załadował
+# Check if workflow loaded
 print(registry.get_all_workflows())
 
-# Pobierz definicję
-definition = registry.get_definition("moj_workflow")
+# Get the definition
+definition = registry.get_definition("my_workflow")
 print(definition)
 ```
 
-### 7.3 Test Rozwijania
+### 7.3 Expansion Test
 
 ```python
-# Rozwiń workflow z kontekstem
+# Expand the workflow with context
 calls = registry.expand_workflow(
-    "moj_workflow",
+    "my_workflow",
     context={
         "dimensions": [2.0, 4.0, 0.5],
         "mode": "OBJECT",
@@ -1344,88 +1342,88 @@ calls = registry.expand_workflow(
     }
 )
 
-# Sprawdź wynik
+# Inspect the result
 for call in calls:
     print(f"{call.tool_name}: {call.params}")
 ```
 
-### 7.4 Test Triggerów
+### 7.4 Trigger Test
 
 ```python
-# Test dopasowania słów kluczowych
-workflow = registry.find_by_keywords("stwórz telefon")
-print(f"Znaleziono: {workflow}")
+# Test keyword matching
+workflow = registry.find_by_keywords("create a phone")
+print(f"Found: {workflow}")
 ```
 
 ---
 
-## 9. Kompletny Przykład
+## 9. Complete Example
 
-### 8.1 Workflow: Telefon z Ekranem
+### 8.1 Workflow: Phone with Screen
 
 ```yaml
 # server/router/application/workflows/custom/phone_complete.yaml
 
 name: phone_complete
-description: Telefon z zaokrąglonymi rogami i wgłębionym ekranem
+description: Phone with rounded corners and an inset screen
 category: electronics
 author: BlenderAI
 version: "2.0"
 
 trigger_keywords:
-  - telefon
+  - phone
   - smartphone
-  - komórka
+  - cell phone
   - iphone
   - android
 
 steps:
-  # === FAZA 1: Tworzenie bazowej geometrii ===
+  # === PHASE 1: Create base geometry ===
 
   - tool: modeling_create_primitive
     params:
       type: CUBE
-    description: Stwórz bazową kostkę dla telefonu
+    description: Create the base cube for the phone
 
-  # === FAZA 2: Przejście do trybu Edit ===
+  # === PHASE 2: Switch to Edit mode ===
 
   - tool: system_set_mode
     params:
       mode: EDIT
-    description: Wejdź w tryb edycji
+    description: Enter edit mode
     condition: "current_mode != 'EDIT'"
 
-  # === FAZA 3: Zaznaczanie i edycja ===
+  # === PHASE 3: Selection and editing ===
 
   - tool: mesh_select
     params:
       action: all
-    description: Zaznacz całą geometrię
+    description: Select all geometry
     condition: "not has_selection"
 
   - tool: mesh_bevel
     params:
       offset: "$AUTO_BEVEL"
       segments: 3
-    description: Zaokrąglij wszystkie krawędzie
+    description: Bevel all edges
 
-  # === FAZA 4: Tworzenie ekranu ===
+  # === PHASE 4: Create the screen ===
 
   - tool: mesh_select
     params:
       action: none
-    description: Odznacz wszystko
+    description: Deselect everything
 
   - tool: mesh_select_targeted
     params:
       mode: FACE
       indices: [5]
-    description: Zaznacz górną ścianę (ekran)
+    description: Select the top face (screen)
 
   - tool: mesh_inset
     params:
       thickness: "$AUTO_INSET"
-    description: Stwórz ramkę ekranu
+    description: Create the screen frame
 
   - tool: mesh_extrude_region
     params:
@@ -1433,18 +1431,18 @@ steps:
         - 0
         - 0
         - "$AUTO_SCREEN_DEPTH_NEG"
-    description: Wgłęb ekran
+    description: Inset the screen
 
-  # === FAZA 5: Finalizacja ===
+  # === PHASE 5: Finalization ===
 
   - tool: system_set_mode
     params:
       mode: OBJECT
-    description: Wróć do trybu Object
+    description: Return to Object mode
     condition: "current_mode != 'OBJECT'"
 ```
 
-### 8.2 Test Workflow
+### 8.2 Workflow Test
 
 ```python
 from server.router.application.workflows.registry import WorkflowRegistry
@@ -1452,7 +1450,7 @@ from server.router.application.workflows.registry import WorkflowRegistry
 registry = WorkflowRegistry()
 registry.load_custom_workflows()
 
-# Rozwiń z wymiarami telefonu (7cm x 15cm x 8mm)
+# Expand with phone dimensions (7cm x 15cm x 8mm)
 calls = registry.expand_workflow(
     "phone_complete",
     context={
@@ -1462,16 +1460,16 @@ calls = registry.expand_workflow(
     }
 )
 
-print(f"Workflow rozwinięty do {len(calls)} kroków:")
+print(f"Workflow expanded to {len(calls)} steps:")
 for i, call in enumerate(calls, 1):
     print(f"  {i}. {call.tool_name}")
     for k, v in call.params.items():
         print(f"      {k}: {v}")
 ```
 
-**Oczekiwany wynik:**
+Expected result:
 ```
-Workflow rozwinięty do 9 kroków:
+Workflow expanded to 9 steps:
   1. modeling_create_primitive
       type: CUBE
   2. system_set_mode
@@ -1479,7 +1477,7 @@ Workflow rozwinięty do 9 kroków:
   3. mesh_select
       action: all
 4. mesh_bevel
-      offset: 0.0004  # 5% z 8mm
+      offset: 0.0004  # 5% of 8mm
       segments: 3
   5. mesh_select
       action: none
@@ -1487,88 +1485,88 @@ Workflow rozwinięty do 9 kroków:
       mode: FACE
       indices: [5]
   7. mesh_inset
-      thickness: 0.0021  # 3% z 7cm
+      thickness: 0.0021  # 3% of 7cm
   8. mesh_extrude_region
-      move: [0, 0, -0.004]  # 50% z 8mm w dół
+      move: [0, 0, -0.004]  # 50% of 8mm down
   9. system_set_mode
       mode: OBJECT
 ```
 
 ---
 
-## 10. Najczęstsze Błędy
+## 10. Common Errors
 
-### 9.1 Błędy Składni YAML
+### 9.1 YAML Syntax Errors
 
 ```yaml
-# ŹLE - brak spacji po dwukropku
+# BAD - missing space after colon
 params:
   offset:0.05
 
-# DOBRZE
+# GOOD
 params:
   offset: 0.05
 ```
 
 ```yaml
-# ŹLE - nieprawidłowe wcięcie
+# BAD - incorrect indentation
 steps:
 - tool: mesh_bevel
 params:
   offset: 0.05
 
-# DOBRZE
+# GOOD
 steps:
   - tool: mesh_bevel
     params:
       offset: 0.05
 ```
 
-### 9.2 Błędy Warunków
+### 9.2 Condition Errors
 
 ```yaml
-# ŹLE - brak cudzysłowów w stringu
+# BAD - missing quotes in string
 condition: current_mode != EDIT
 
-# DOBRZE
+# GOOD
 condition: "current_mode != 'EDIT'"
 ```
 
 ```yaml
-# ŹLE - literówka w nazwie zmiennej
+# BAD - typo in variable name
 condition: "curent_mode != 'EDIT'"
 
-# DOBRZE
+# GOOD
 condition: "current_mode != 'EDIT'"
 ```
 
-### 9.3 Błędy $CALCULATE
+### 9.3 $CALCULATE Errors
 
 ```yaml
-# ŹLE - brak zamknięcia nawiasu
+# BAD - missing closing parenthesis
 offset: "$CALCULATE(min_dim * 0.05"
 
-# DOBRZE
+# GOOD
 offset: "$CALCULATE(min_dim * 0.05)"
 ```
 
 ```yaml
-# ŹLE - nieistniejąca zmienna
+# BAD - non-existent variable
 offset: "$CALCULATE(szerokość * 0.05)"
 
-# DOBRZE (użyj angielskich nazw)
+# GOOD (use English names)
 offset: "$CALCULATE(width * 0.05)"
 ```
 
-### 9.4 Błędy Logiczne
+### 9.4 Logical Errors
 
 ```yaml
-# ŹLE - extrude bez zaznaczenia
+# BAD - extrude without selection
 - tool: mesh_extrude_region
   params:
     move: [0, 0, 1]
 
-# DOBRZE - najpierw zaznacz
+# GOOD - select first
 - tool: mesh_select
   params:
     action: all
@@ -1581,11 +1579,11 @@ offset: "$CALCULATE(width * 0.05)"
 
 ---
 
-## 11. Zaawansowane Funkcje Workflow (TASK-056)
+## 11. Advanced Workflow Features (TASK-056)
 
-### 11.1 Walidacja Enum dla Parametrów (TASK-056-3)
+### 11.1 Enum Validation for Parameters (TASK-056-3)
 
-Ogranicz wartości parametrów do dyskretnych opcji:
+Restrict parameter values to discrete options:
 
 ```yaml
 parameters:
@@ -1593,117 +1591,117 @@ parameters:
     type: string
     enum: ["modern", "rustic", "industrial", "traditional"]
     default: "modern"
-    description: Styl konstrukcji stołu
+    description: Construction style of the table
     semantic_hints: ["style", "design", "styl"]
 
   detail_level:
     type: string
     enum: ["low", "medium", "high", "ultra"]
     default: "medium"
-    description: Poziom detali siatki (wpływa na liczbę poligonów)
+    description: Mesh detail level (affects polygon count)
 
   leg_count:
     type: int
     enum: [3, 4, 6, 8]
     default: 4
-    description: Liczba nóg stołu
+    description: Number of table legs
 ```
 
-**Korzyści:**
-- Bezpieczeństwo typów: Nieprawidłowe wartości automatycznie odrzucane
-- Samodokumentujące: Jasne opcje dla użytkowników
-- Wsparcie LLM: LLM widzi prawidłowe opcje w schemacie
+Benefits:
+- Type safety: Invalid values are rejected automatically
+- Self-documenting: Clear options for users
+- LLM support: LLM sees valid options in the schema
 
-**Walidacja:**
-- Sprawdzenie enum następuje **przed** walidacją zakresu
-- Wartość domyślna musi być w liście enum
-- Działa z każdym typem (string, int, float, bool)
-- Dla `type: string` router normalizuje input (trim + case-insensitive), np. `"Sides"` → `"sides"`
-- Gdy parametr jest `unresolved`, `router_set_goal` zwraca listę `enum` w odpowiedzi (żeby LLM/caller mógł wybrać poprawną wartość)
+Validation:
+- Enum check happens **before** range validation
+- Default value must be in the enum list
+- Works with any type (string, int, float, bool)
+- For `type: string` the router normalizes input (trim + case-insensitive), e.g., `"Sides"` → `"sides"`
+- When a parameter is `unresolved`, `router_set_goal` returns the `enum` list in the response (so LLM/caller can choose a valid value)
 
-### 11.2 Parametry Obliczane (TASK-056-5)
+### 11.2 Computed Parameters (TASK-056-5)
 
-Definiuj parametry automatycznie obliczane z innych parametrów:
+Define parameters computed from other parameters:
 
 ```yaml
 parameters:
   table_width:
     type: float
     default: 1.2
-    description: Szerokość stołu w metrach
+    description: Table width in meters
 
   plank_max_width:
     type: float
     default: 0.10
-    description: Maksymalna szerokość pojedynczej deski
+    description: Maximum width of a single plank
 
-  # Obliczany: Liczba potrzebnych desek
+  # Computed: Number of planks needed
   plank_count:
     type: int
     computed: "ceil(table_width / plank_max_width)"
     depends_on: ["table_width", "plank_max_width"]
-    description: Liczba desek potrzebna do pokrycia szerokości stołu
+    description: Number of planks needed to cover the table width
 
-  # Obliczany: Rzeczywista szerokość deski (dopasowana do dokładnego dopasowania)
+  # Computed: Actual plank width (adjusted to fit exactly)
   plank_actual_width:
     type: float
     computed: "table_width / plank_count"
     depends_on: ["table_width", "plank_count"]
-    description: Rzeczywista szerokość każdej deski (dopasowana do dokładnego zmieszczenia)
+    description: Actual width of each plank (adjusted to fit exactly)
 
-  # Obliczany: Współczynnik proporcji
+  # Computed: Aspect ratio
   aspect_ratio:
     type: float
     computed: "width / height"
     depends_on: ["width", "height"]
-    description: Stosunek szerokości do wysokości
+    description: Width-to-height ratio
 
-  # Obliczany: Odległość po przekątnej
+  # Computed: Diagonal distance
   diagonal:
     type: float
     computed: "hypot(width, height)"
     depends_on: ["width", "height"]
-    description: Odległość po przekątnej blatu stołu
+    description: Diagonal distance of the tabletop
 ```
 
-**Jak to działa:**
-1. Router rozwiązuje parametry obliczane w **kolejności zależności** (sortowanie topologiczne)
-2. Każdy parametr obliczany ewaluuje swoje wyrażenie `computed`
-3. Wynik staje się dostępny dla zależnych parametrów
-4. Zależności cykliczne są wykrywane i odrzucane
+How it works:
+1. The router resolves computed parameters in **dependency order** (topological sort)
+2. Each computed parameter evaluates its `computed` expression
+3. The result becomes available to dependent parameters
+4. Cyclic dependencies are detected and rejected
 
-**Uwaga (interaktywna rezolucja + learned mappings):**
-- Parametry z `computed: "..."` są traktowane jako wewnętrzne wyniki i **nie** są pytane jako `unresolved`.
-- Computed params są ignorowane przez learned mappings (żeby nie “uczyć się” wartości wyliczanych i uniknąć dryfu).
-- Jeśli naprawdę chcesz nadpisać computed value (advanced), przekaż ją jawnie przez `resolved_params` albo YAML `modifiers`.
+Note (interactive resolution + learned mappings):
+- Parameters with `computed: "..."` are treated as internal results and **are not** asked as `unresolved`.
+- Computed params are ignored by learned mappings (so you don't "learn" computed values and avoid drift).
+- If you really want to override a computed value (advanced), pass it explicitly via `resolved_params` or YAML `modifiers`.
 
-**Użycie w krokach:**
+Usage in steps:
 
 ```yaml
 steps:
-  # Użyj parametru obliczanego jak każdego innego
+  # Use a computed parameter like any other
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
       scale: ["$plank_actual_width", 1, 0.1]
-    description: "Stwórz deskę o dokładnej szerokości"
+    description: "Create a plank with exact width"
 
-  # Warunkowy krok na podstawie obliczonej wartości
+  # Conditional step based on a computed value
   - tool: modeling_create_primitive
     params:
       primitive_type: CUBE
-    description: "Dodaj dodatkowe wsparcie dla szerokich stołów"
+    description: "Add extra support for wide tables"
     condition: "plank_count >= 12"
 ```
 
-**Korzyści:**
-- Automatyczne obliczenia: Nie trzeba powtarzać formuł w krokach
-- Śledzenie zależności: Parametry rozwiązują się we właściwej kolejności
-- Dynamiczna adaptacja: Obliczone wartości dopasowują się do wymiarów wejściowych
+Benefits:
+- Automatic calculations: No need to repeat formulas in steps
+- Dependency tracking: Parameters resolve in correct order
+- Dynamic adaptation: Computed values adjust to input dimensions
 
-### 11.3 Zależności Kroków i Kontrola Wykonania (TASK-056-4)
+### 11.3 Step Dependencies and Execution Control (TASK-056-4)
 
-Kontroluj kolejność wykonania kroków i obsługę błędów:
+Control step execution order and error handling:
 
 ```yaml
 steps:
@@ -1712,24 +1710,24 @@ steps:
     params:
       primitive_type: CUBE
       name: "Base"
-    description: Stwórz bazę stołu
-    timeout: 5.0                # Maksymalny czas wykonania (sekundy)
-    max_retries: 2              # Próby powtórzenia przy błędzie
-    retry_delay: 1.0            # Opóźnienie między próbami (sekundy)
+    description: Create the table base
+    timeout: 5.0                # Max execution time (seconds)
+    max_retries: 2              # Retry attempts on error
+    retry_delay: 1.0            # Delay between retries (seconds)
 
   - id: "scale_base"
     tool: modeling_transform_object
-    depends_on: ["create_base"]  # Czekaj na zakończenie create_base
+    depends_on: ["create_base"]  # Wait for create_base to finish
     params:
       name: "Base"
       scale: [1, 2, 0.1]
-    description: Przeskaluj bazę do prawidłowych proporcji
+    description: Scale the base to correct proportions
     on_failure: "abort"         # "skip", "abort", "continue"
-    priority: 10                # Wyższy priorytet = wykonaj wcześniej
+    priority: 10                # Higher priority = execute earlier
 
   - id: "add_legs"
     tool: modeling_create_primitive
-    depends_on: ["scale_base"]  # Czekaj na scale_base
+    depends_on: ["scale_base"]  # Wait for scale_base
     params:
       primitive_type: CUBE
       name: "Leg_1"
@@ -1737,29 +1735,29 @@ steps:
     retry_delay: 0.5
 ```
 
-**Pola:**
+Fields:
 
-| Pole | Typ | Opis |
+| Field | Type | Description |
 |------|-----|------|
-| `id` | string | Unikalny identyfikator kroku |
-| `depends_on` | list[string] | ID kroków, od których ten krok zależy |
-| `timeout` | float | Maksymalny czas wykonania (sekundy) |
-| `max_retries` | int | Liczba prób powtórzenia przy błędzie |
-| `retry_delay` | float | Opóźnienie między próbami |
+| `id` | string | Unique step identifier |
+| `depends_on` | list[string] | IDs of steps this step depends on |
+| `timeout` | float | Max execution time (seconds) |
+| `max_retries` | int | Number of retry attempts on error |
+| `retry_delay` | float | Delay between retries |
 | `on_failure` | string | "skip", "abort", "continue" |
-| `priority` | int | Wyższy = wykonaj wcześniej |
+| `priority` | int | Higher = execute earlier |
 
-**Funkcje:**
-- **Rozwiązywanie zależności**: Kroki wykonują się we właściwej kolejności (sortowanie topologiczne)
-- **Wykrywanie zależności cyklicznych**: Odrzuca nieprawidłowe grafy zależności
-- **Wymuszanie timeout**: Zabija długo działające kroki
-- **Mechanizm retry**: Automatycznie powtarza nieudane kroki
-- **Sortowanie priorytetowe**: Kontrola kolejności wykonania dla niezależnych kroków
+Features:
+- **Dependency resolution**: Steps execute in the correct order (topological sorting)
+- **Cycle detection**: Rejects invalid cyclic dependency graphs
+- **Timeout enforcement**: Kills long-running steps
+- **Retry mechanism**: Automatically retries failed steps
+- **Priority scheduling**: Control execution order for independent steps
 
-**Przykłady użycia:**
+Usage examples:
 
 ```yaml
-# Zapewnij utworzenie przed transformacją
+# Ensure creation before transformation
 - id: "create"
   tool: modeling_create_primitive
   params: {primitive_type: CUBE}
@@ -1769,7 +1767,7 @@ steps:
   tool: modeling_transform_object
   params: {scale: [1, 2, 1]}
 
-# Retry przy błędzie (np. import z sieci)
+# Retry on failure (e.g., network import)
 - tool: import_fbx
   params: {filepath: "https://example.com/model.fbx"}
   max_retries: 3
@@ -1780,28 +1778,28 @@ steps:
 
 ---
 
-## Podsumowanie
+## Summary
 
-1. **Zaplanuj** - przetestuj ręcznie, zapisz kroki
-2. **Utwórz plik** - w `workflows/custom/nazwa.yaml`
-3. **Dodaj metadane** - name, description, trigger_keywords
-4. **Zdefiniuj kroki** - tool, params, description
-5. **Dodaj warunki** - `condition` dla odporności (z nawiasami jeśli potrzeba)
-6. **Użyj dynamicznych parametrów** - `$AUTO_*` lub `$CALCULATE`
-7. **Rozważ zaawansowane funkcje** - enum, computed params, dependencies (TASK-056)
-8. **Przetestuj** - sprawdź ładowanie i rozwijanie
+1. Plan - test manually, write down steps
+2. Create the file - in `workflows/custom/name.yaml`
+3. Add metadata - name, description, trigger_keywords
+4. Define steps - tool, params, description
+5. Add conditions - `condition` for robustness (use parentheses when needed)
+6. Use dynamic parameters - `$AUTO_*` or `$CALCULATE`
+7. Consider advanced features - enum, computed params, dependencies (TASK-056)
+8. Test - check loading and expansion
 
-**Nowe w TASK-056:**
-- Rozszerzone funkcje matematyczne (tan, atan2, log, exp, hypot, itd.)
-- Nawiasy w warunkach z prawidłową kolejnością operatorów
-- Walidacja enum dla parametrów
-- Parametry obliczane z automatycznym rozwiązywaniem zależności
-- Kontrola wykonania kroków (timeout, retry, dependencies)
+New in TASK-056:
+- Extended math functions (tan, atan2, log, exp, hypot, etc.)
+- Parentheses in conditions with correct operator precedence
+- Enum validation for parameters
+- Computed parameters with automatic dependency resolution
+- Execution control (timeout, retry, dependencies)
 
-**Nowe w TASK-060:**
-- Funkcje matematyczne w `condition` (np. `floor()`, `sqrt()`)
-- Operatory porównania/logiczne i ternary w `$CALCULATE(...)`
+New in TASK-060:
+- Math functions in `condition` (e.g., `floor()`, `sqrt()`)
+- Comparison/logical operators and ternary in `$CALCULATE(...)`
 
-**Zobacz też:**
-- [yaml-workflow-guide.md](./yaml-workflow-guide.md) - Pełna dokumentacja składni
-- [expression-reference.md](./expression-reference.md) - Referencja wyrażeń
+See also:
+- [yaml-workflow-guide.md](./yaml-workflow-guide.md) - Full syntax documentation
+- [expression-reference.md](./expression-reference.md) - Expression reference

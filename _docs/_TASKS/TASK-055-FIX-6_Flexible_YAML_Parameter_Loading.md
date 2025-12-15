@@ -214,7 +214,7 @@ Rebuild Docker image and test:
 
 **Test Case 1: X-shaped legs**
 ```python
-router_set_goal("stół z nogami w X")
+router_set_goal("table with X-shaped legs")
 # Provide: leg_angle_left=1.0, leg_angle_right=-1.0
 ```
 - Expected: 67 tool calls ✅
@@ -222,14 +222,14 @@ router_set_goal("stół z nogami w X")
 
 **Test Case 2: Picnic table default**
 ```python
-router_set_goal("stół piknikowy")
+router_set_goal("picnic table")
 # Provide: leg_angle_left=0.32, leg_angle_right=-0.32
 ```
 - Expected: 47 tool calls ✅
 
 **Test Case 3: Straight legs**
 ```python
-router_set_goal("stół z prostymi nogami")
+router_set_goal("table with straight legs")
 # Provide: leg_angle_left=0, leg_angle_right=0
 ```
 - Expected: 22 tool calls ✅
@@ -315,8 +315,8 @@ steps:
 ```
 
 **User Prompts**:
-1. `"stół piknikowy"` → `add_bench: false` (default) → bench step skipped
-2. `"stół piknikowy z ławką"` → semantic match on "ławką" → bench step included
+1. `"picnic table"` → `add_bench: false` (default) → bench step skipped
+2. `"picnic table with bench"` → semantic match on "bench" → bench step included
 3. `"picnic table with bench"` → semantic match on "bench" → bench step included
 
 **How It Works**:
@@ -375,6 +375,6 @@ steps:
 
 - Phase 1 is a **bug fix** (critical)
 - Phase 2 is a **feature enhancement** (nice to have)
-- User explicitly requested flexible approach: *"elastyczna zeby parsowac wszystkie parametry z yaml"*
-- User wants semantic handling for custom params: *"reszta ma byc traktowana semantycznie"*
+- User explicitly requested flexible approach: *"flexible to parse all parameters from YAML"*
+- User wants semantic handling for custom params: *"the rest should be treated semantically"*
 - Example use case: `add_bench: false` to skip bench steps when not requested

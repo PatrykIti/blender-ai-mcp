@@ -130,7 +130,7 @@ result = router_set_goal("table", resolved_params={"leg_angle": 0})
 # → Mapping auto-stored for future semantic reuse
 
 # Future calls - semantic match
-result = router_set_goal("stół z prostymi nogami")  # Polish
+result = router_set_goal("table with straight legs")
 # Returns: {"status": "ready", "resolved": {"leg_angle": 0}}
 # → LaBSE found similar context, reused stored value
 ```

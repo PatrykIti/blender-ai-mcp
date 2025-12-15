@@ -7,26 +7,26 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Utworzyć zunifikowany tool `mesh_select_targeted` dla precyzyjnych operacji selekcji (wymagających dodatkowych parametrów).
+Create a unified tool `mesh_select_targeted` for precise selection operations (requiring additional parameters).
 
 ---
 
-## 📋 Zastępuje (unregister @mcp.tool())
+## 📋 Replaces (unregister @mcp.tool())
 
-| Oryginalny Tool | Action |
-|-----------------|--------|
+| Original Tool | Action |
+|---------------|--------|
 | `mesh_select_by_index` | `"by_index"` |
 | `mesh_select_loop` | `"loop"` |
 | `mesh_select_ring` | `"ring"` |
 | `mesh_select_by_location` | `"by_location"` |
 
-**Oszczędność:** 4 tools → 1 tool (-3 definitions dla LLM)
+**Savings:** 4 tools → 1 tool (-3 definitions for LLM)
 
 ---
 
-## 🔧 Sygnatura
+## 🔧 Signature
 
 ```python
 from typing import List, Literal, Optional
@@ -71,32 +71,32 @@ def mesh_select_targeted(
 
 ---
 
-## 📁 Pliki do modyfikacji
+## 📁 Files to modify
 
-| Plik | Zmiany |
-|------|--------|
-| `server/adapters/mcp/areas/mesh.py` | Dodaj `mesh_select_targeted`. Usuń `@mcp.tool()` z 4 funkcji (zachowaj same funkcje). |
+| File | Changes |
+|------|---------|
+| `server/adapters/mcp/areas/mesh.py` | Add `mesh_select_targeted`. Remove `@mcp.tool()` from the 4 functions (keep the functions themselves). |
 
 ---
 
-## 🧪 Testy
+## 🧪 Tests
 
-- **Zachowaj:** Istniejące testy dla oryginalnych funkcji (testują logikę wewnętrzną)
-- **Dodaj:** `tests/test_mesh_select_targeted_mega.py` - testy dla unified tool
+- **Keep:** Existing tests for the original functions (testing internal logic)
+- **Add:** `tests/test_mesh_select_targeted_mega.py` - tests for the unified tool
 
 ---
 
 ## ✅ Deliverables
 
-- [ ] Implementacja `mesh_select_targeted` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 4 zastąpionych funkcji
-- [ ] Testy dla `mesh_select_targeted`
-- [ ] Aktualizacja dokumentacji
+- [ ] Implement `mesh_select_targeted` with routing to the original functions
+- [ ] Remove `@mcp.tool()` from the 4 replaced functions
+- [ ] Tests for `mesh_select_targeted`
+- [ ] Update documentation
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimate
 
-- **Nowe linie kodu:** ~50 (routing + docstring)
-- **Modyfikacje:** ~4 (usunięcie dekoratorów)
-- **Testy:** ~35 linii
+- **New lines of code:** ~50 (routing + docstring)
+- **Modifications:** ~4 (removal of decorators)
+- **Tests:** ~35 lines

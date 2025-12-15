@@ -17,7 +17,7 @@ Added `disable_adaptation` flag to WorkflowStep to allow per-step control over s
 WorkflowAdapter was filtering optional steps semantically for MEDIUM confidence, which caused conditional steps with mathematical conditions to be skipped even when conditions evaluated to True.
 
 **Example Bug**:
-- Prompt: `"stół z nogami w X"` (Polish: "table with X-shaped legs")
+- Prompt: `"table with X-shaped legs"`
 - Workflow: `picnic_table_workflow` with 20 conditional leg-stretching steps
 - Condition: `leg_angle_left > 0.5 or leg_angle_left < -0.5`
 - Parameters resolved: `leg_angle_left=1.0, leg_angle_right=-1.0` (X-shaped)
@@ -155,7 +155,7 @@ Added `disable_adaptation: true` to **20 conditional leg-stretching steps**:
 ## Test Results
 
 ### Test Case 1: X-Shaped Legs ✅
-**Prompt**: `"stół z nogami w X"`
+**Prompt**: `"table with X-shaped legs"`
 **Parameters**: `leg_angle_left: 1.0, leg_angle_right: -1.0`
 
 **Expected**: 67 tool calls (conditional steps execute)
@@ -166,7 +166,7 @@ Added `disable_adaptation: true` to **20 conditional leg-stretching steps**:
 **Result**: ✅ 67 tool calls
 
 ### Test Case 2: Picnic Table Default ✅
-**Prompt**: `"stół piknikowy"`
+**Prompt**: `"picnic table"`
 **Parameters**: `leg_angle_left: 0.32, leg_angle_right: -0.32`
 
 **Expected**: 47 tool calls (conditional steps skipped by condition)
@@ -177,7 +177,7 @@ Added `disable_adaptation: true` to **20 conditional leg-stretching steps**:
 **Result**: ✅ 47 tool calls
 
 ### Test Case 3: Straight Legs ✅
-**Prompt**: `"stół z prostymi nogami"`
+**Prompt**: `"table with straight legs"`
 **Parameters**: `leg_angle_left: 0, leg_angle_right: 0`
 
 **Expected**: 22 tool calls (conditional steps skipped by condition)

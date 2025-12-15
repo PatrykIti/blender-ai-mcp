@@ -195,16 +195,16 @@ router = SupervisorRouter()
 
 # Test cases:
 # 1. Default (0.8m) → 8 planks × 0.10m each
-result = router.set_goal('prosty stół 0.8m szerokości')
+result = router.set_goal('simple table 0.8m wide')
 
 # 2. Narrow (0.45m) → 5 planks × 0.09m each (fractional)
-result = router.set_goal('stół 0.45m szerokości')
+result = router.set_goal('table 0.45m wide')
 
 # 3. Wide (1.2m) → 12 planks × 0.10m each
-result = router.set_goal('stół 1.2m szerokości')
+result = router.set_goal('table 1.2m wide')
 
 # 4. Fractional (0.83m) → 9 planks × 0.0922m each
-result = router.set_goal('stół 0.83m szerokości')
+result = router.set_goal('table 0.83m wide')
 "
 ```
 

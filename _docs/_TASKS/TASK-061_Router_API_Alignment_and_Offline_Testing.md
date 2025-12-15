@@ -1,196 +1,196 @@
-# TASK-061: Router – zgodność API MCP, mega-tools, offline/test stability
+# TASK-061: Router – MCP API alignment, mega-tools, offline/test stability
 
-**Status**: ✅ DONE (zmiany w repo, bez PR)
-**Priority**: P1
-**Created**: 2025-12-12
+**Status**: ✅ DONE (changes in repo, no PR)  
+**Priority**: P1  
+**Created**: 2025-12-12  
 **Related**: TASK-049 (dispatcher mapping), TASK-048 (DI/LaBSE), TASK-041 (workflows), TASK-055-FIX (ensemble/modifiers)
 
 ---
 
-## Cel
+## Goal
 
-Szybki sanity-check routera (Supervisor Layer) pod kątem:
-- spójności z faktycznym API narzędzi MCP,
-- wykonywalności „mega-tools” (`mesh_select*`) przez dispatcher,
-- stabilności testów/offline (bez pobierania LaBSE/HF w pytest).
+Quick sanity-check of the router (Supervisor Layer) regarding:
+- consistency with the actual MCP tools API,
+- executability of the “mega-tools” (`mesh_select*`) by the dispatcher,
+- stability of tests/offline (no LaBSE/HF downloads in pytest).
 
-## Dlaczego to ważne
+## Why this matters
 
-Router jest „supervisorem” nad tool-callami LLM. Jeśli router:
-- emituje tool-calle niezgodne z MCP (złe nazwy tooli/parametrów),
-- opiera się o metadata, które nie odpowiadają realnym toolom,
-- albo w testach dotyka sieci / pobiera modele,
+The router is a “supervisor” over LLM tool-calls. If the router:
+- emits tool-calls incompatible with MCP (wrong tool/parameter names),
+- relies on metadata that do not match real tools,
+- or in tests touches the network / downloads models,
 
-to cała warstwa „bezpieczeństwa” działa pozornie: wygląda dobrze na papierze, ale realnie nie da się jej wykonać lub jest niestabilna w CI/offline.
+then the whole “safety” layer works only seemingly: it looks good on paper, but in practice it cannot be executed or is unstable in CI/offline.
 
 ---
 
-## Spostrzeżenia (co było nie tak)
+## Observations (what was wrong)
 
-### 1) Drift API: Router/docs vs realne narzędzia MCP
+### 1) API drift: Router/docs vs real MCP tools
 
-W kilku miejscach router (engines + przykłady w `_docs/_ROUTER`) używał starych nazw parametrów / narzędzi:
-- `mesh_bevel.width` vs aktualne `mesh_bevel.offset`
-- `mesh_extrude_region.depth` vs aktualne `mesh_extrude_region.move`
-- przykłady z `mesh_extrude` (narzędzie nie istnieje w MCP; jest `mesh_extrude_region`)
-- override reguły dla `mesh_select_targeted` używały nieistniejących parametrów (`location`/`threshold`) zamiast `axis/min_coord/max_coord/...`
+In several places the router (engines + examples in `_docs/_ROUTER`) used old parameter / tool names:
+- `mesh_bevel.width` vs current `mesh_bevel.offset`
+- `mesh_extrude_region.depth` vs current `mesh_extrude_region.move`
+- examples with `mesh_extrude` (tool does not exist in MCP; there is `mesh_extrude_region`)
+- override rules for `mesh_select_targeted` used non-existent parameters (`location`/`threshold`) instead of `axis/min_coord/max_coord/...`
 
-Efekt: router mógł generować tool-calle, których serwer nie potrafił wykonać (albo które nie miały sensu).
+Effect: the router could generate tool-calls that the server could not execute (or that made no sense).
 
-### 2) Router emitował mega-tools, których dispatcher nie mapował
+### 2) Router emitted mega-tools that the dispatcher did not map
 
-Router w auto-fixach i workflowach używa `mesh_select` / `mesh_select_targeted`, ale dispatcher miał mapowania głównie dla legacy nazw (`mesh_select_all`, itd.). W praktyce część „napraw” routera była niewykonywalna.
+The router in auto-fixes and workflows used `mesh_select` / `mesh_select_targeted`, but the dispatcher had mappings mainly for legacy names (`mesh_select_all`, etc.). In practice some of the router’s “fixes” were not executable.
 
 ### 3) Metadata drift (tools_metadata)
 
-`server/router/infrastructure/tools_metadata/*` zawierało definicje niezsynchronizowane z realnym MCP:
-- param `width` w `mesh_bevel.json` (powinno być `offset`)
-- referencje do nieistniejącego narzędzia `mesh_extrude` (JSON + część docs)
+`server/router/infrastructure/tools_metadata/*` contained definitions not synchronized with the real MCP:
+- param `width` in `mesh_bevel.json` (should be `offset`)
+- references to non-existent tool `mesh_extrude` (JSON + some docs)
 
-To jest naturalny „drift” jeśli metadata są utrzymywane ręcznie.
+This is a natural “drift” when metadata are maintained manually.
 
-### 4) Testy wieszały się (LaBSE / sieć)
+### 4) Tests hung (LaBSE / network)
 
-`test_supervisor_router.py` potrafił zawieszać się przez lazy init ensemble matchera, który w tle próbował ładować `SentenceTransformer("LaBSE")` (co pod restricted network prowadzi do prób downloadu/timeoutów).
+`test_supervisor_router.py` could hang due to lazy init of the ensemble matcher, which in the background tried to load `SentenceTransformer("LaBSE")` (under restricted network this leads to download attempts/timeouts).
 
-Wniosek: testy unit nie mogą zależeć od pobierania dużych modeli ani od internetu.
+Conclusion: unit tests must not depend on downloading large models or on the internet.
 
 ### 5) Workflow source of truth: docs vs runtime
 
-W repo są pełne workflow YAML w `_docs/_ROUTER/WORKFLOWS/*`, ale runtime loader ładuje tylko z `server/router/application/workflows/custom/*.yaml`.
+The repo contains full workflow YAMLs in `_docs/_ROUTER/WORKFLOWS/*`, but the runtime loader only loads from `server/router/application/workflows/custom/*.yaml`.
 
-Efekt uboczny: testy (i użytkownicy) mogą zakładać istnienie workflowów z docs, których runtime w ogóle nie widzi.
-
----
-
-## Decyzja projektowa
-
-Zamiast dodawać aliasy/kompatybilność wsteczną w routerze (np. akceptować `depth` i mapować na `move`), wybrano:
-- **uściślenie routera do aktualnego API MCP**,
-- oraz aktualizację najbardziej istotnych docs/testów.
-
-Powód: router jest warstwą „supervisora” – powinien emitować dokładnie to, co MCP potrafi wykonać; aliasowanie w supervisorze łatwo ukrywa drift i utrudnia wykrywanie regresji.
+Side effect: tests (and users) may assume existence of workflows from docs that the runtime does not see at all.
 
 ---
 
-## Co zostało poprawione (co + dlaczego + gdzie)
+## Design decision
 
-Poniżej lista zmian z uzasadnieniem. (Ścieżki odnoszą się do workspace.)
+Instead of adding aliases/backward compatibility in the router (e.g. accept `depth` and map to `move`), we chose:
+- to tighten the router to the current MCP API,
+- and to update the most important docs/tests.
 
-### Runtime / kod serwera
+Reason: the router is a “supervisor” layer — it should emit exactly what MCP can execute; aliasing in the supervisor easily hides drift and makes detecting regressions harder.
+
+---
+
+## What was fixed (what + why + where)
+
+Below is a list of changes with justification. (Paths refer to the workspace.)
+
+### Runtime / server code
 
 - `server/adapters/mcp/dispatcher.py`
-  - **Co:** dodane mapowania dla mega-tools `mesh_select` i `mesh_select_targeted`.
-  - **Dlaczego:** router w auto-fixach generuje `mesh_select*`; bez mapowania dispatcher nie potrafił tego wykonać → poprawki routera były „martwe”.
+  - What: added mappings for mega-tools `mesh_select` and `mesh_select_targeted`.
+  - Why: the router generates `mesh_select*` in auto-fixes; without mapping the dispatcher could not execute them → router fixes were “dead”.
 
 - `server/router/application/engines/tool_correction_engine.py`
-  - **Co:** ujednolicenie limitów parametrów do aktualnych nazw (`mesh_bevel.offset`, `mesh_extrude_region.move`), clamping wektorów/list (clamp per komponent).
-  - **Dlaczego:** router clampował/naprawiał parametry w starym formacie (`width`, `depth`), a `move` jest wektorem (wymaga innego clampa).
+  - What: unified parameter limits to current names (`mesh_bevel.offset`, `mesh_extrude_region.move`), clamping of vectors/lists (clamp per component).
+  - Why: the router clamped/fixed parameters in the old format (`width`, `depth`), and `move` is a vector (requires different clamping).
 
 - `server/router/application/engines/error_firewall.py`
-  - **Co:** reguła bevel działa na `offset` zamiast `width`.
-  - **Dlaczego:** firewall ma blokować realnie niebezpieczne parametry, a nie parametry, których MCP nie zna.
+  - What: bevel rule operates on `offset` instead of `width`.
+  - Why: firewall should block realistically dangerous parameters, not parameters unknown to MCP.
 
 - `server/router/application/engines/tool_override_engine.py`
-  - **Co:** poprawione override’y pod poprawne sygnatury MCP:
-    - phone-like: `mesh_extrude_region.move` zamiast `depth`
-    - tower-like: poprawne parametry `mesh_select_targeted` (`axis/min_coord/max_coord/...`)
-  - **Dlaczego:** override engine ma generować sekwencje wykonywalne; wcześniej część override’ów była niepoprawna semantycznie.
+  - What: fixed overrides to correct MCP signatures:
+    - phone-like: `mesh_extrude_region.move` instead of `depth`
+    - tower-like: correct parameters for `mesh_select_targeted` (`axis/min_coord/max_coord/...`)
+  - Why: override engine must generate executable sequences; previously some overrides were semantically incorrect.
 
 - `server/router/infrastructure/tools_metadata/mesh/mesh_bevel.json`
-  - **Co:** `width`→`offset`, dodanie `profile`, aktualizacja opisów/related_tools.
-  - **Dlaczego:** metadata są wejściem do klasyfikatora i docs; drift powoduje błędne podpowiedzi i błędne embeddingi.
+  - What: `width`→`offset`, added `profile`, updated descriptions/related_tools.
+  - Why: metadata feed the classifier and docs; drift causes incorrect suggestions and wrong embeddings.
 
 - `server/router/infrastructure/tools_metadata/mesh/mesh_inset.json`
-  - **Co:** usunięcie nieistniejącego parametru `use_boundary`.
-  - **Dlaczego:** nie można dokumentować/klasyfikować parametrów, których MCP tool nie przyjmuje.
+  - What: removed non-existent parameter `use_boundary`.
+  - Why: you cannot document/classify parameters that the MCP tool does not accept.
 
 - `server/router/infrastructure/tools_metadata/mesh/mesh_extrude.json`
-  - **Co:** usunięte.
-  - **Dlaczego:** narzędzie `mesh_extrude` nie istnieje w MCP; utrzymywanie tej definicji generowało fałszywe ścieżki i drift w docs.
+  - What: removed.
+  - Why: the `mesh_extrude` tool does not exist in MCP; keeping this definition generated false paths and drift in docs.
 
 - `server/infrastructure/di.py`
-  - **Co:** pod pytestem LaBSE nie jest ładowany; w trybie offline (`HF_HUB_OFFLINE`) używane jest `local_files_only`.
-  - **Dlaczego:** testy unit nie mogą próbować pobierać modeli (restricted network) – powodowało timeout/hang.
+  - What: under pytest LaBSE is not loaded; in offline mode (`HF_HUB_OFFLINE`) `local_files_only` is used.
+  - Why: unit tests must not try to download models (restricted network) – it caused timeouts/hangs.
 
 - `server/router/application/classifier/intent_classifier.py`
 - `server/router/application/classifier/workflow_intent_classifier.py`
-  - **Co:** analogiczne zabezpieczenie jak wyżej (pytest skip + `local_files_only`).
-  - **Dlaczego:** nawet jeśli DI zwróci `None`, klasyfikator potrafił próbować pobrać model w swojej ścieżce `_load_model()`.
+  - What: analogous safeguard as above (pytest skip + `local_files_only`).
+  - Why: even if DI returns `None`, the classifier could still try to download a model in its `_load_model()` path.
 
 - `server/router/application/matcher/modifier_extractor.py`
-  - **Co:** semantic matching respektuje `similarity_threshold` także na poziomie avg similarity; per-word threshold wyprowadzony z `similarity_threshold`.
-  - **Dlaczego:** zachowanie miało być konfigurowalne przez `similarity_threshold`; wcześniej było częściowo „zahardkodowane”.
+  - What: semantic matching respects `similarity_threshold` also on the avg similarity level; per-word threshold derived from `similarity_threshold`.
+  - Why: behavior was intended to be configurable via `similarity_threshold`; previously it was partially hardcoded.
 
 - `server/router/application/workflows/registry.py`
-  - **Co:** przy custom workflowach `$CALCULATE(...)` widzi również `dimensions` z kontekstu (nie gubimy kontekstu przy resetowaniu evaluator context).
-  - **Dlaczego:** bez tego `min_dim` było „Unknown variable”, mimo że workflow miał kontekst `dimensions`.
+  - What: for custom workflows `$CALCULATE(...)` also sees `dimensions` from context (we do not lose context when resetting evaluator context).
+  - Why: without this `min_dim` was “Unknown variable”, even though the workflow had `dimensions` in context.
 
 - `server/router/application/workflows/custom/picnic_table.yaml`
-  - **Co:** dodany minimalny `picnic_table_workflow` z defaultami i modyfikatorem `"straight legs"` oraz użyciem `$leg_angle_*` w krokach.
-  - **Dlaczego:** testy/feature zakładają istnienie workflow w runtime loaderze; workflow z `_docs/_ROUTER/WORKFLOWS` nie jest automatycznie ładowany przez aplikację.
+  - What: added a minimal `picnic_table_workflow` with defaults and a modifier `"straight legs"` and usage of `$leg_angle_*` in steps.
+  - Why: tests/feature assume existence of a runtime-loadable workflow; workflows in `_docs/_ROUTER/WORKFLOWS` are not automatically loaded by the application.
 
-### Docs (najbardziej „frontowe”)
+### Docs (the most “front-facing”)
 
 - `_docs/_ROUTER/QUICK_START.md`, `_docs/_ROUTER/API.md`
-  - **Co:** przykłady `mesh_extrude_region` przepisane na `move` zamiast `depth`.
-  - **Dlaczego:** Quick Start/API to pierwsze miejsca, z których ludzie kopiują przykłady.
+  - What: examples for `mesh_extrude_region` rewritten to use `move` instead of `depth`.
+  - Why: Quick Start/API are the first places people copy examples from.
 
 - `_docs/_ROUTER/README.md`
-  - **Co:** scenariusz „extrude” przepisany z `mesh_extrude(depth)` na `mesh_extrude_region(move)` i usunięcie nieistniejącego `mode: FACE` w `mesh_select`.
-  - **Dlaczego:** README ma opisywać działający flow i realne parametry.
+  - What: “extrude” scenario rewritten from `mesh_extrude(depth)` to `mesh_extrude_region(move)` and removal of non-existent `mode: FACE` in `mesh_select`.
+  - Why: README should describe working flows and real parameters.
 
 - `_docs/_ROUTER/PATTERNS.md`
-  - **Co:** `inherit_params: ["depth"]` → `inherit_params: ["move"]` w przykładzie override.
-  - **Dlaczego:** spójność z aktualnym API.
+  - What: `inherit_params: ["depth"]` → `inherit_params: ["move"]` in an override example.
+  - Why: consistency with the current API.
 
-### Testy
+### Tests
 
-Zaktualizowane zostały testy routera i workflow systemu tak, aby:
-- używały aktualnych nazw parametrów (`offset`, `move`),
-- odzwierciedlały aktualne zachowanie ensemble/modifier extractor (normalizacja confidence, „modifiers only”),
-- oraz nie zakładały obecności workflowów wyłącznie w `_docs`.
+Router and workflow system tests were updated to:
+- use current parameter names (`offset`, `move`),
+- reflect current behavior of the ensemble/modifier extractor (confidence normalization, “modifiers only”),
+- and not assume presence of workflows only in `_docs`.
 
 ---
 
-## Walidacja / jak sprawdzić
+## Validation / how to check
 
-Polecenia:
+Commands:
 ```bash
 poetry run pytest tests/unit/router -q
 ```
 
 ---
 
-## Ryzyka / uwagi kompatybilności
+## Risks / compatibility notes
 
-- Jeśli jakiś zewnętrzny klient nadal wysyła `mesh_bevel.width` lub `mesh_extrude_region.depth`, to nie jest to kompatybilne z aktualnym MCP API (to drift po stronie klienta). Router nie powinien tego „maskować” bez wyraźnej polityki kompatybilności.
+- If some external client still sends `mesh_bevel.width` or `mesh_extrude_region.depth`, that is not compatible with the current MCP API (that is drift on the client side). The router should not “mask” this without an explicit compatibility policy.
 
 ---
 
-## Rekomendacje (następne kroki)
+## Recommendations (next steps)
 
-1) Doc sweep: `_docs/_ROUTER` nadal ma dużo referencji do `mesh_extrude`/`depth`/`width` (np. `ROUTER_HIGH_LEVEL_OVERVIEW.md`, część `IMPLEMENTATION/*`). Warto zrobić globalny update i/lub generator.
+1) Doc sweep: `_docs/_ROUTER` still has many references to `mesh_extrude`/`depth`/`width` (e.g. `ROUTER_HIGH_LEVEL_OVERVIEW.md`, some `IMPLEMENTATION/*`). It's worth doing a global update and/or a generator.
 
 2) Anti-drift guard:
-- dodać prosty test/skrypt CI porównujący:
-  - tool signatures w `server/adapters/mcp/areas/*` vs `server/router/infrastructure/tools_metadata/*`
-  - oraz sanity-check, że router nie emituje nieistniejących tool names.
+- add a simple test/script in CI comparing:
+  - tool signatures in `server/adapters/mcp/areas/*` vs `server/router/infrastructure/tools_metadata/*`
+  - and a sanity-check that the router does not emit non-existent tool names.
 
-3) Offline mode spójnie w całym repo:
-- `vector_db_manage` też ładuje `SentenceTransformer("LaBSE")` bez `local_files_only`; warto ujednolicić z DI.
+3) Offline mode consistently across the repo:
+- `vector_db_manage` also loads `SentenceTransformer("LaBSE")` without `local_files_only`; unify it with DI.
 
 ---
 
-## Podsumowanie realizacji rekomendacji (2025-12-12)
+## Summary of implemented recommendations (2025-12-12)
 
 ### 1) Doc sweep (`_docs/_ROUTER`)
 
-- Zrobiony globalny update przykładów workflow pod aktualne API:
+- Global update of workflow examples to current API:
   - `mesh_bevel.width` → `mesh_bevel.offset`
   - `mesh_extrude_region.depth` → `mesh_extrude_region.move`
-  - usunięcie legacy `mesh_extrude`
-- Najważniejsze pliki zaktualizowane w tej rundzie:
+  - removal of legacy `mesh_extrude`
+- Most important files updated in this round:
   - `_docs/_ROUTER/WORKFLOWS/creating-workflows-tutorial.md`
   - `_docs/_ROUTER/WORKFLOWS/yaml-workflow-guide.md`
   - `_docs/_ROUTER/WORKFLOWS/README.md`
@@ -198,29 +198,29 @@ poetry run pytest tests/unit/router -q
 
 ### 2) Anti-drift guard (test/CI)
 
-- Dodany test: `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
-  - porównuje `server/adapters/mcp/areas/*.py` vs `server/router/infrastructure/tools_metadata/**/*.json`
-  - weryfikuje też stałe `tool_name="..."` emitowane przez router
-- Przy okazji naprawione realne drift-y wykryte przez test:
+- Added test: `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
+  - compares `server/adapters/mcp/areas/*.py` vs `server/router/infrastructure/tools_metadata/**/*.json`
+  - also verifies constants `tool_name="..."` emitted by the router
+- Along the way fixed real drifts detected by the test:
   - `modeling_create_primitive`: `type` → `primitive_type`
-  - `scene_list_objects`: usunięty nieistniejący parametr `filter_type`
+  - `scene_list_objects`: removed non-existent parameter `filter_type`
   - `text_create`/`text_edit`: `content` → `text`
 
 ### 3) Offline mode (vector_db_manage)
 
-- `server/adapters/mcp/areas/vector_db.py` używa teraz wspólnego `get_labse_model()` (DI), więc:
-  - pod pytestem nie próbuje ładować/pobierać LaBSE
-  - przy `HF_HUB_OFFLINE=1` używa local-only (bez sieci)
-  - zwraca czytelny błąd, gdy embeddings są niedostępne
+- `server/adapters/mcp/areas/vector_db.py` now uses a shared `get_labse_model()` (DI), so:
+  - under pytest it does not try to load/download LaBSE
+  - with `HF_HUB_OFFLINE=1` it uses local-only (no network)
+  - returns a clear error when embeddings are unavailable
 
 ### Changelog
 
-- Dodane: `_docs/_CHANGELOG/109-2025-12-12-router-api-alignment-offline-guards.md`
-- Zaktualizowany indeks: `_docs/_CHANGELOG/README.md`
+- Added: `_docs/_CHANGELOG/109-2025-12-12-router-api-alignment-offline-guards.md`
+- Updated index: `_docs/_CHANGELOG/README.md`
 
-### Walidacja
+### Validation
 
 ```bash
 poetry run pytest tests/unit/router -q
 ```
-Wynik: `1377 passed, 2 skipped`.
+Result: `1377 passed, 2 skipped`.

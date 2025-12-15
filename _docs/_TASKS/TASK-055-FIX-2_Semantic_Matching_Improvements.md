@@ -10,7 +10,7 @@
 
 ## Problem Statement
 
-After FIX-1 (removing defaults from ModifierExtractor), "stół z nogami X" still incorrectly matches "straight legs" YAML modifier instead of triggering `needs_input`.
+After FIX-1 (removing defaults from ModifierExtractor), "table with legs X" still incorrectly matches "straight legs" YAML modifier instead of triggering `needs_input`.
 
 ### Root Cause
 
@@ -18,16 +18,16 @@ After FIX-1 (removing defaults from ModifierExtractor), "stół z nogami X" stil
 
 **Example failure**:
 ```
-Prompt: "stół z nogami X"
+Prompt: "table with legs X"
 YAML modifier: "straight legs"
 
 Current behavior:
-- N-gram "nogami" → "straight legs" = 0.739 similarity (> 0.70 threshold)
+- N-gram "legs" → "straight legs" = 0.739 similarity (> 0.70 threshold)
 - MATCH ✅ (WRONG!)
 - Result: leg_angle=0 (yaml_modifier)
 
 Expected behavior:
-- "nogami" matches "legs" ✅
+- "legs" matches "legs" ✅
 - "X" does NOT match "straight" ❌
 - Only 1/2 words match → REJECT
 - Result: status="needs_input"
@@ -48,13 +48,13 @@ Expected behavior:
 - Require min(2, N) words to match before accepting
 
 **Examples**:
-- ✅ "prosty stół z prostymi nogami" + "straight legs":
-  - "prosty" ↔ "straight" = 0.85 ✅
-  - "nogami" ↔ "legs" = 0.92 ✅
+- ✅ "straight table with straight legs" + "straight legs":
+  - "straight" ↔ "straight" = 0.85 ✅
+  - "legs" ↔ "legs" = 0.92 ✅
   - 2/2 words match → **PASS**
 
-- ❌ "stół z nogami X" + "straight legs":
-  - "nogami" ↔ "legs" = 0.92 ✅
+- ❌ "table with legs X" + "straight legs":
+  - "legs" ↔ "legs" = 0.92 ✅
   - No match for "straight" (best: "X" = 0.35 < 0.65)
   - 1/2 words match → **FAIL**
 
@@ -73,14 +73,14 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+    negative_signals: ["X", "crossed", "angled", "diagonal", "slanted", "crossed"]
 ```
 
 **Examples**:
-- ❌ "stół z nogami X" + "straight legs":
+- ❌ "table with legs X" + "straight legs":
   - "X" is in `negative_signals` → **REJECTED**
 
-- ✅ "prosty stół" + "straight legs":
+- ✅ "straight table" + "straight legs":
   - No negative signals present → **ACCEPTED**
 
 ---
@@ -130,7 +130,7 @@ modifiers:
   "straight legs":
     leg_angle_left: 0
     leg_angle_right: 0
-    negative_signals: ["X", "crossed", "angled", "diagonal", "skośne", "skrzyżowane"]
+    negative_signals: ["X", "crossed", "angled", "diagonal", "slanted", "crossed"]
 ```
 
 #### 2. ModifierExtractor Update (modifier_extractor.py)
@@ -141,7 +141,7 @@ def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
     """Check if prompt contains negative signals.
 
     Args:
-        prompt: User prompt (e.g., "stół z nogami X")
+        prompt: User prompt (e.g., "table with legs X")
         negative_signals: List of contradictory terms from YAML
 
     Returns:
@@ -225,32 +225,32 @@ if self._classifier is not None:
 
 ## Testing Plan
 
-### Test Case 1: "stół z nogami X" (Should NOT match)
+### Test Case 1: "table with legs X" (Should NOT match)
 
 **Expected behavior**:
 ```
-DEBUG: Word match: 'nogami' ↔ 'legs' (sim=0.919)
+DEBUG: Word match: 'legs' ↔ 'legs' (sim=0.919)
 DEBUG: Insufficient word matches for 'straight legs': 1/2 (need 2)
 Result: status="needs_input"
 ```
 
-### Test Case 2: "prosty stół z prostymi nogami" (Should match)
+### Test Case 2: "straight table with straight legs" (Should match)
 
 **Expected behavior**:
 ```
-DEBUG: Word match: 'prosty' ↔ 'straight' (sim=0.850)
-DEBUG: Word match: 'nogami' ↔ 'legs' (sim=0.919)
+DEBUG: Word match: 'straight' ↔ 'straight' (sim=0.850)
+DEBUG: Word match: 'legs' ↔ 'legs' (sim=0.919)
 INFO: Modifier match: 'straight legs' (2/2 words) → {leg_angle_left: 0, leg_angle_right: 0} (avg_sim=0.885)
 Result: status="ready", leg_angle_left=0, leg_angle_right=0 (yaml_modifier)
 ```
 
 ### Test Case 3: Edge case with negative signal
 
-**Prompt**: "stół z krzyżowanymi nogami" (table with crossed legs)
+**Prompt**: "table with crossed legs" (table with crossed legs)
 
 **Expected behavior**:
 ```
-DEBUG: Word match: 'nogami' ↔ 'legs' (sim=0.919)
+DEBUG: Word match: 'legs' ↔ 'legs' (sim=0.919)
 DEBUG: Insufficient word matches for 'straight legs': 1/2 (need 2)
 Result: status="needs_input"
 ```
@@ -301,7 +301,7 @@ Result: Match rejected
 
 ## Problem
 
-"stół z nogami X" incorrectly matched "straight legs" YAML modifier because n-gram matching only required 1 word to match instead of requiring multi-word alignment.
+"table with legs X" incorrectly matched "straight legs" YAML modifier because n-gram matching only required 1 word to match instead of requiring multi-word alignment.
 
 ## Solution
 
@@ -316,8 +316,8 @@ Result: Match rejected
 
 ## Impact
 
-- ✅ "stół z nogami X" now correctly returns `needs_input`
-- ✅ "prosty stół z prostymi nogami" still matches "straight legs"
+- ✅ "table with legs X" now correctly returns `needs_input`
+- ✅ "straight table with straight legs" still matches "straight legs"
 - 🎯 Improved semantic precision for TASK-055 Interactive Parameter Resolution
 ```
 
@@ -325,8 +325,8 @@ Result: Match rejected
 
 ## Success Criteria
 
-- [ ] "stół z nogami X" returns `status: "needs_input"` ✅
-- [ ] "prosty stół z prostymi nogami" returns `yaml_modifier` with leg_angle=0 ✅
+- [ ] "table with legs X" returns `status: "needs_input"` ✅
+- [ ] "straight table with straight legs" returns `yaml_modifier` with leg_angle=0 ✅
 - [ ] DEBUG logs show word-level matching details ✅
 - [ ] Negative signals correctly reject matches ✅
 - [ ] Docker rebuild successful ✅
@@ -346,8 +346,8 @@ Result: Match rejected
 ## Notes
 
 - **Per-word threshold (0.65)**: Chosen based on analysis of LaBSE similarity scores
-  - "nogami" → "legs" = 0.85+ (clear match)
-  - "straight" → "prosty" = 0.75+ (clear match)
+  - "legs" → "legs" = 0.85+ (clear match)
+  - "straight" → "straight" = 0.75+ (clear match)
   - "X" → "straight" = 0.35 (clear non-match)
   - 0.65 provides safety margin
 

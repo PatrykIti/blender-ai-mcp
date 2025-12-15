@@ -135,21 +135,21 @@ docker run -d \
 
 **Test 1 - X-shaped legs**:
 ```python
-mcp__blender-mcp-server__router_set_goal(goal="stół z nogami w X")
+mcp__blender-mcp-server__router_set_goal(goal="table with X-shaped legs")
 ```
 - Expected: 67 tool calls
 - Expected: Legs stretched to reach table top
 
 **Test 2 - Picnic table**:
 ```python
-mcp__blender-mcp-server__router_set_goal(goal="stół piknikowy")
+mcp__blender-mcp-server__router_set_goal(goal="picnic table")
 ```
 - Expected: 47 tool calls
 - Expected: Legs NOT stretched (angled but correct length)
 
 **Test 3 - Straight legs**:
 ```python
-mcp__blender-mcp-server__router_set_goal(goal="stół z prostymi nogami")
+mcp__blender-mcp-server__router_set_goal(goal="table with straight legs")
 ```
 - Expected: 22 tool calls
 - Expected: Legs NOT stretched (vertical and correct length)
