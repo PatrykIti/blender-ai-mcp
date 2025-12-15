@@ -55,10 +55,10 @@ Creates a new PBR material with Principled BSDF shader.
 
 Args:
 - name: str (required) - Material name
-- base_color: List[float] (optional) - RGBA color [0-1], default [0.8, 0.8, 0.8, 1.0]
+- base_color: List[float] or string "[r,g,b,a]" (optional) - RGBA color [0-1], default [0.8, 0.8, 0.8, 1.0]
 - metallic: float (optional) - Metallic value 0-1, default 0.0
 - roughness: float (optional) - Roughness value 0-1, default 0.5
-- emission_color: List[float] (optional) - Emission RGB [0-1]
+- emission_color: List[float] or string "[r,g,b]" (optional) - Emission RGB [0-1]
 - emission_strength: float (optional) - Emission strength, default 0.0
 - alpha: float (optional) - Alpha/opacity 0-1, default 1.0
 

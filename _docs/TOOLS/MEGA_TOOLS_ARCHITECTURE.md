@@ -257,6 +257,8 @@ Simple selection operations for mesh geometry.
 
 **Tag:** `[EDIT MODE][SELECTION-BASED][SAFE]`
 
+**Tip:** For predictable results with selection-based `mesh_*` tools (extrude/bevel/etc.), make the selection explicitly with `mesh_select` / `mesh_select_targeted`. Router `auto_selection` only selects-all when the Edit Mode selection is empty and does not override an existing selection.
+
 ## Actions
 
 | Action | Parameters | Description |

@@ -164,14 +164,14 @@ class SceneContext:
     @property
     def has_selection(self) -> bool:
         """Check if anything is selected."""
-        if self.mode == "EDIT" and self.topology:
+        if self.mode.startswith("EDIT") and self.topology:
             return self.topology.has_selection
         return len(self.selected_objects) > 0
 
     @property
     def is_edit_mode(self) -> bool:
         """Check if in edit mode."""
-        return self.mode == "EDIT"
+        return self.mode.startswith("EDIT")
 
     @property
     def is_object_mode(self) -> bool:

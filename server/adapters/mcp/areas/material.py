@@ -1,7 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_material_handler
 
 
@@ -45,7 +46,7 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
 
             ctx.info(f"Listed {len(materials)} materials")
             return "\n".join(lines)
-        except RuntimeError as e:
+        except (RuntimeError, ValueError) as e:
             return str(e)
 
     return route_tool_call(
@@ -111,10 +112,10 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
 def material_create(
     ctx: Context,
     name: str,
-    base_color: Optional[List[float]] = None,
+    base_color: Union[str, List[float], None] = None,
     metallic: float = 0.0,
     roughness: float = 0.5,
-    emission_color: Optional[List[float]] = None,
+    emission_color: Union[str, List[float], None] = None,
     emission_strength: float = 0.0,
     alpha: float = 1.0,
 ) -> str:
@@ -125,28 +126,30 @@ def material_create(
 
     Args:
         name: Material name
-        base_color: RGBA color [0-1] (default: [0.8, 0.8, 0.8, 1.0])
+        base_color: RGBA color [0-1] (default: [0.8, 0.8, 0.8, 1.0]). Accepts list or string "[r,g,b,a]".
         metallic: Metallic value 0-1
         roughness: Roughness value 0-1
-        emission_color: Emission RGB [0-1]
+        emission_color: Emission RGB [0-1]. Accepts list or string "[r,g,b]".
         emission_strength: Emission strength
         alpha: Alpha/opacity 0-1
     """
     def execute():
         handler = get_material_handler()
         try:
+            parsed_base_color = parse_coordinate(base_color)
+            parsed_emission_color = parse_coordinate(emission_color)
             result = handler.create_material(
                 name=name,
-                base_color=base_color,
+                base_color=parsed_base_color,
                 metallic=metallic,
                 roughness=roughness,
-                emission_color=emission_color,
+                emission_color=parsed_emission_color,
                 emission_strength=emission_strength,
                 alpha=alpha,
             )
             ctx.info(f"Created material '{name}'")
             return result
-        except RuntimeError as e:
+        except (RuntimeError, ValueError) as e:
             return str(e)
 
     return route_tool_call(

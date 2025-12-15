@@ -1028,9 +1028,9 @@ def mesh_remesh_voxel(
 @mcp.tool()
 def mesh_transform_selected(
     ctx: Context,
-    translate: Optional[List[float]] = None,
-    rotate: Optional[List[float]] = None,
-    scale: Optional[List[float]] = None,
+    translate: Union[str, List[float], None] = None,
+    rotate: Union[str, List[float], None] = None,
+    scale: Union[str, List[float], None] = None,
     pivot: Literal["MEDIAN_POINT", "BOUNDING_BOX_CENTER", "CURSOR", "INDIVIDUAL_ORIGINS", "ACTIVE_ELEMENT"] = "MEDIAN_POINT"
 ) -> str:
     """
@@ -1040,9 +1040,9 @@ def mesh_transform_selected(
     Workflow: BEFORE → mesh_select_* | AFTER → mesh_merge_by_distance
 
     Args:
-        translate: Translation vector [x, y, z]. Moves geometry.
-        rotate: Rotation in radians [x, y, z]. Rotates around pivot.
-        scale: Scale factors [x, y, z]. Scales from pivot.
+        translate: Translation vector [x, y, z]. Moves geometry. Accepts list or string "[x, y, z]".
+        rotate: Rotation in radians [x, y, z]. Rotates around pivot. Accepts list or string "[x, y, z]".
+        scale: Scale factors [x, y, z]. Scales from pivot. Accepts list or string "[x, y, z]".
         pivot: Pivot point for rotation/scale.
             - MEDIAN_POINT: Center of selection (default)
             - BOUNDING_BOX_CENTER: Center of bounding box
@@ -1056,10 +1056,19 @@ def mesh_transform_selected(
         mesh_transform_selected(scale=[2, 2, 1]) -> Double size in X and Y
         mesh_transform_selected(translate=[1, 0, 0], pivot="CURSOR") -> Move relative to cursor
     """
+    def execute():
+        try:
+            parsed_translate = parse_coordinate(translate)
+            parsed_rotate = parse_coordinate(rotate)
+            parsed_scale = parse_coordinate(scale)
+            return get_mesh_handler().transform_selected(parsed_translate, parsed_rotate, parsed_scale, pivot)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
     return route_tool_call(
         tool_name="mesh_transform_selected",
         params={"translate": translate, "rotate": rotate, "scale": scale, "pivot": pivot},
-        direct_executor=lambda: get_mesh_handler().transform_selected(translate, rotate, scale, pivot)
+        direct_executor=execute
     )
 
 

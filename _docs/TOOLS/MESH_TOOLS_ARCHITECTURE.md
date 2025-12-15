@@ -787,9 +787,9 @@ Transforms selected geometry (move/rotate/scale).
 **Priority:** 🔴 CRITICAL - Unlocks ~80% of modeling tasks
 
 Args:
-- translate: [x, y, z] (optional) - Translation vector
-- rotate: [x, y, z] (optional) - Rotation in radians per axis
-- scale: [x, y, z] (optional) - Scale factors
+- translate: [x, y, z] or string "[x, y, z]" (optional) - Translation vector
+- rotate: [x, y, z] or string "[x, y, z]" (optional) - Rotation in radians per axis
+- scale: [x, y, z] or string "[x, y, z]" (optional) - Scale factors
 - pivot: str ('MEDIAN_POINT', 'BOUNDING_BOX_CENTER', 'CURSOR', 'INDIVIDUAL_ORIGINS', 'ACTIVE_ELEMENT')
 
 Example:

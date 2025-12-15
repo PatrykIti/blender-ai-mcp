@@ -207,6 +207,8 @@ tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 ]
 ```
 
+**Note:** `auto_selection` only injects `mesh_select(action="all")` when the **Edit Mode selection is empty**. Existing selections are preserved.
+
 **Result:** Instead of crashing, Router fixes the issues and creates a proper screen cutout!
 
 ---

@@ -1,10 +1,11 @@
 # TASK-064: Flexible parsing for list/vector parameters (string `"[...]"` + list)
 
-**Status:** 🚨 To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Category:** MCP API / UX Consistency  
 **Estimated Effort:** Small  
 **Created:** 2025-12-15  
+**Completed:** 2025-12-15  
 **Dependencies:** TASK-011-* (docstring standardization), TASK-061 (API alignment)
 
 ---
@@ -43,20 +44,18 @@ Then (optional) audit other tools for similar mismatches.
 
 ## Acceptance Criteria
 
-- [ ] Both `scale=[1,1,0.5]` and `scale="[1,1,0.5]"` work for `mesh_transform_selected`.
-- [ ] Both `base_color=[..., ..., ..., ...]` and `base_color="[..., ..., ..., ...]"` work for `material_create`.
-- [ ] Docs + router metadata reflect the accepted forms consistently.
+- [x] Both `scale=[1,1,0.5]` and `scale="[1,1,0.5]"` work for `mesh_transform_selected`.
+- [x] Both `base_color=[..., ..., ..., ...]` and `base_color="[..., ..., ..., ...]"` work for `material_create`.
+- [x] Docs + router metadata reflect the accepted forms consistently.
 
 ---
 
 ## Implementation Checklist
 
-- [ ] Update `mesh_transform_selected` tool signature to accept string + list and parse it.
-- [ ] Update `material_create` tool signature to accept string + list and parse it.
-- [ ] Add unit tests for parsing in:
-  - [ ] `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py` (if metadata types change)
-  - [ ] plus a focused unit test for `parse_coordinate` / `material_create` param parsing.
-- [ ] Update router tools metadata for affected tools (type descriptions/examples).
+- [x] Update `mesh_transform_selected` tool signature to accept string + list and parse it.
+- [x] Update `material_create` tool signature to accept string + list and parse it.
+- [x] Add focused unit tests for MCP parsing.
+- [x] Update router tools metadata for affected tools (type descriptions/examples).
 - [ ] Audit other tools with list-only params and decide whether to standardize them too.
 
 ---
@@ -84,4 +83,3 @@ Then (optional) audit other tools for similar mismatches.
 | `_docs/TOOLS/MESH_TOOLS_ARCHITECTURE.md` | Clarify accepted forms for `mesh_transform_selected` |
 | `_docs/TOOLS/MATERIAL_TOOLS_ARCHITECTURE.md` | Clarify accepted forms for `material_create` |
 | `_docs/_CHANGELOG/*` | Add entry describing API/UX improvement |
-

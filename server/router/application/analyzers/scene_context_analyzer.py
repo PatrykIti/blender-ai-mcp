@@ -64,9 +64,55 @@ class SceneContextAnalyzer(ISceneAnalyzer):
         # Check cache first
         cached = self.get_cached()
         if cached is not None:
-            # If specific object requested and matches cache, return cache
+            # If specific object requested and matches cache, return cache (but refresh hot state)
             if object_name is None or object_name == cached.active_object:
-                return cached
+                if self._rpc_client is None:
+                    return cached
+
+                mode_data = self._get_mode_data_rpc()
+                raw_mode = mode_data.get("mode", cached.mode)
+                mode = self._normalize_mode(raw_mode)
+                active_object = mode_data.get("active_object") or cached.active_object
+
+                # If active object changed within TTL, rebuild instead of returning stale cache.
+                if object_name is None and cached.active_object and active_object and active_object != cached.active_object:
+                    cached = None
+                else:
+                    selected_objects = mode_data.get("selected_object_names", cached.selected_objects)
+
+                    if object_name:
+                        active_object = object_name
+
+                    cached.mode = mode
+                    cached.active_object = active_object
+                    cached.selected_objects = selected_objects
+
+                    # Selection is hot data in EDIT mode and should not be cached.
+                    if mode == "EDIT":
+                        selection_data = self._get_selection_rpc()
+                        selected_verts = selection_data.get("edit_mode_vertex_count")
+                        selected_edges = selection_data.get("edit_mode_edge_count")
+                        selected_faces = selection_data.get("edit_mode_face_count")
+
+                        if selected_verts is not None or selected_edges is not None or selected_faces is not None:
+                            if cached.topology is None:
+                                cached.topology = TopologyInfo(
+                                    vertices=0,
+                                    edges=0,
+                                    faces=0,
+                                    triangles=0,
+                                    selected_verts=int(selected_verts or 0),
+                                    selected_edges=int(selected_edges or 0),
+                                    selected_faces=int(selected_faces or 0),
+                                )
+                            else:
+                                cached.topology.selected_verts = int(selected_verts or 0)
+                                cached.topology.selected_edges = int(selected_edges or 0)
+                                cached.topology.selected_faces = int(selected_faces or 0)
+                    else:
+                        cached.topology = None
+
+                    return cached
 
         # Build context from RPC calls
         context = self._build_context(object_name)
@@ -112,7 +158,7 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             response = self._rpc_client.send_request("scene.get_mode", {})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
-                return response.result.get("mode", "OBJECT")
+                return self._normalize_mode(response.result.get("mode", "OBJECT"))
             return "OBJECT"
         except Exception:
             return "OBJECT"
@@ -169,7 +215,8 @@ class SceneContextAnalyzer(ISceneAnalyzer):
         try:
             # Get mode and active object from get_mode (includes active_object)
             mode_data = self._get_mode_data_rpc()
-            mode = mode_data.get("mode", "OBJECT")
+            raw_mode = mode_data.get("mode", "OBJECT")
+            mode = self._normalize_mode(raw_mode)
             active_object = mode_data.get("active_object")
             # Note: addon uses "selected_object_names" not "selected_objects"
             selected_objects = mode_data.get("selected_object_names", [])
@@ -207,8 +254,9 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
             # Get topology for active mesh object in EDIT mode
             topology = None
-            if active_object and mode.startswith("EDIT"):
-                topology = self._get_topology_rpc(active_object)
+            if active_object and mode == "EDIT":
+                selection_data = self._get_selection_rpc()
+                topology = self._get_topology_rpc(active_object, selection_data)
 
             # Calculate proportions for active object
             proportions = None
@@ -247,10 +295,21 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             logging.error(f"SceneContextAnalyzer._build_context failed: {e}", exc_info=True)
             return SceneContext.empty()
 
+    @staticmethod
+    def _normalize_mode(mode: Any) -> str:
+        """Normalize Blender mode strings (e.g. EDIT_MESH -> EDIT)."""
+        if not isinstance(mode, str) or not mode:
+            return "OBJECT"
+
+        if mode.startswith("EDIT"):
+            return "EDIT"
+
+        return mode
+
     def _get_mode_rpc(self) -> str:
         """Get mode string via RPC."""
         data = self._get_mode_data_rpc()
-        return data.get("mode", "OBJECT")
+        return self._normalize_mode(data.get("mode", "OBJECT"))
 
     def _get_mode_data_rpc(self) -> Dict[str, Any]:
         """Get full mode data via RPC (includes active_object, selected_object_names)."""
@@ -292,7 +351,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
         except Exception:
             return {}
 
-    def _get_topology_rpc(self, object_name: str) -> Optional[TopologyInfo]:
+    def _get_topology_rpc(
+        self,
+        object_name: str,
+        selection_data: Optional[Dict[str, Any]] = None,
+    ) -> Optional[TopologyInfo]:
         """Get mesh topology via RPC."""
         try:
             response = self._rpc_client.send_request(
@@ -302,14 +365,29 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 result = response.result
+
+                vertices = result.get("vertices", result.get("vertex_count", 0))
+                edges = result.get("edges", result.get("edge_count", 0))
+                faces = result.get("faces", result.get("face_count", 0))
+                triangles = result.get("triangles", result.get("triangle_count", 0))
+
+                selected_verts = result.get("selected_verts", 0)
+                selected_edges = result.get("selected_edges", 0)
+                selected_faces = result.get("selected_faces", 0)
+
+                if selection_data:
+                    selected_verts = selection_data.get("edit_mode_vertex_count", selected_verts) or 0
+                    selected_edges = selection_data.get("edit_mode_edge_count", selected_edges) or 0
+                    selected_faces = selection_data.get("edit_mode_face_count", selected_faces) or 0
+
                 return TopologyInfo(
-                    vertices=result.get("vertices", 0),
-                    edges=result.get("edges", 0),
-                    faces=result.get("faces", 0),
-                    triangles=result.get("triangles", 0),
-                    selected_verts=result.get("selected_verts", 0),
-                    selected_edges=result.get("selected_edges", 0),
-                    selected_faces=result.get("selected_faces", 0),
+                    vertices=int(vertices or 0),
+                    edges=int(edges or 0),
+                    faces=int(faces or 0),
+                    triangles=int(triangles or 0),
+                    selected_verts=int(selected_verts or 0),
+                    selected_edges=int(selected_edges or 0),
+                    selected_faces=int(selected_faces or 0),
                 )
             return None
         except Exception:

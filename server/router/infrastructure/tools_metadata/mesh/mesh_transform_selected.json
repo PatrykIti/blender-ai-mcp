@@ -13,19 +13,19 @@
   ],
   "parameters": {
     "translate": {
-      "type": "list[float]",
+      "type": "list[float] | string",
       "default": null,
-      "description": "Translation vector [x, y, z]"
+      "description": "Translation vector [x, y, z]. Accepts list or string \"[x, y, z]\""
     },
     "rotate": {
-      "type": "list[float]",
+      "type": "list[float] | string",
       "default": null,
-      "description": "Rotation in radians [x, y, z]"
+      "description": "Rotation in radians [x, y, z]. Accepts list or string \"[x, y, z]\""
     },
     "scale": {
-      "type": "list[float]",
+      "type": "list[float] | string",
       "default": null,
-      "description": "Scale factors [x, y, z]"
+      "description": "Scale factors [x, y, z]. Accepts list or string \"[x, y, z]\""
     },
     "pivot": {
       "type": "enum",

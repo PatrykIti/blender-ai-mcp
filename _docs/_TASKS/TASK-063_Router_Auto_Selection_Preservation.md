@@ -1,10 +1,11 @@
 # TASK-063: Router – prevent destructive `auto_select_all` for selection‑based mesh tools
 
-**Status:** 🚨 To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Category:** Router / Safety / UX  
 **Estimated Effort:** Medium  
 **Created:** 2025-12-15  
+**Completed:** 2025-12-15  
 **Dependencies:** TASK-039 (Router Supervisor), TASK-061 (API alignment)
 
 ---
@@ -94,4 +95,3 @@ Optional: introduce a router config knob (`auto_select_strategy: never|if_empty|
 | `_docs/_ROUTER/README.md` | Describe non‑destructive selection behavior |
 | `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Recommend explicit selection calls; note selection preservation |
 | `_docs/_CHANGELOG/*` | Add entry describing behavioral change |
-

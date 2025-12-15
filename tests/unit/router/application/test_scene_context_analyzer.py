@@ -313,9 +313,10 @@ class TestSceneContextAnalyzerCacheUpdate:
         first_call_count = mock_rpc.send_request.call_count
         assert first_call_count == 4  # 4 RPC method calls
 
-        # Second call - should use cache
+        # Second call - should use cache but still refresh hot state (mode/selection)
         context2 = analyzer.analyze()
-        assert mock_rpc.send_request.call_count == first_call_count  # No additional calls
+        assert mock_rpc.send_request.call_count == first_call_count + 1  # + scene.get_mode hot refresh
+        assert context2 is context1
 
     def test_analyze_refreshes_expired_cache(self):
         """Test that analyze refreshes expired cache."""
@@ -350,3 +351,47 @@ class TestSceneContextAnalyzerCacheUpdate:
         analyzer.analyze()
 
         assert mock_rpc.send_request.call_count == first_call_count * 2  # 8 calls total
+
+    def test_cached_edit_mode_refreshes_selection_counts(self):
+        """Cached EDIT mode contexts should refresh selection counts to avoid stale has_selection."""
+        mock_rpc = MagicMock()
+
+        def mock_send_request(method, params=None):
+            if method == "scene.get_mode":
+                return make_rpc_response({
+                    "mode": "EDIT_MESH",
+                    "active_object": "Cube",
+                    "selected_object_names": ["Cube"],
+                })
+            if method == "scene.list_selection":
+                return make_rpc_response({
+                    "mode": "EDIT_MESH",
+                    "selected_object_names": ["Cube"],
+                    "edit_mode_vertex_count": 4,
+                    "edit_mode_edge_count": 0,
+                    "edit_mode_face_count": 0,
+                })
+            return make_rpc_response({})
+
+        mock_rpc.send_request.side_effect = mock_send_request
+        analyzer = SceneContextAnalyzer(rpc_client=mock_rpc, cache_ttl=10.0)
+
+        # Seed cache with stale selection counts
+        analyzer._cached_context = SceneContext(
+            mode="EDIT",
+            active_object="Cube",
+            selected_objects=["Cube"],
+            objects=[],
+            topology=TopologyInfo(vertices=0, edges=0, faces=0, selected_verts=0, selected_edges=0, selected_faces=0),
+            materials=[],
+        )
+        analyzer._cache_timestamp = datetime.now()
+
+        context = analyzer.analyze()
+
+        assert context.mode == "EDIT"
+        assert context.active_object == "Cube"
+        assert context.topology is not None
+        assert context.topology.selected_verts == 4
+        assert context.has_selection is True
+        assert mock_rpc.send_request.call_count == 2  # get_mode + list_selection
