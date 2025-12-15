@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [113](./113-2025-12-15-flexible-vector-param-parsing.md) | 2025-12-15 | **Flexible vector/color params accept string/list (TASK-064)** | - |
 | [112](./112-2025-12-15-router-edit-selection-preservation.md) | 2025-12-15 | **Router preserves Edit Mode selection (TASK-063)** | - |
 | [111](./111-2025-12-15-modeling-add-modifier-boolean-object-name.md) | 2025-12-15 | **modeling_add_modifier BOOLEAN supports object name (TASK-062)** | - |
 | [110](./110-2025-12-14-picnic-table-supports-enum-computed-params.md) | 2025-12-14 | **Picnic Table Supports + Enum/Computed Param Robustness** | - |
