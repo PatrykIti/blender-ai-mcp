@@ -25,6 +25,7 @@ RULES (important)
 - Put all objects into a single collection: Well.
 - Low-poly: no subdivision, minimal segments (cylinders usually 6–8 sides).
 - Max 3 materials: Stone / Wood / Metal (simple colors; no textures unless needed).
+- Stability: build each major part once and then refine; do not repeatedly delete/recreate the stone rim.
 
 STRUCTURE
 1) Stone rim (OCTAGON)
@@ -84,5 +85,5 @@ CRITICAL: these elements MUST NOT be omitted
 OUTPUT / REPORT
 - At the end, provide a short YES/NO checklist for the “CRITICAL” section.
 - List all objects and approximate tri count per object and total (target 1000–1500).
-- If you exceed the budget: simplify roof/rope/bucket, but do NOT remove critical elements.
+- If you exceed the budget: simplify roof/rope/bucket, but do NOT remove critical elements. Do not rebuild the whole asset just to hit the budget.
 ```
