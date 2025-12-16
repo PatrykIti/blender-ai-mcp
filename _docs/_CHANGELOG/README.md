@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [115](./115-2025-12-16-mcp-ctx-info-async-bridge.md) | 2025-12-16 | **Fix unawaited Context.info() warnings in MCP tool adapters** | - |
+| [114](./114-2025-12-16-addon-auto-undo-push.md) | 2025-12-16 | **Addon auto-undo push for granular system_undo** | - |
 | [113](./113-2025-12-15-flexible-vector-param-parsing.md) | 2025-12-15 | **Flexible vector/color params accept string/list (TASK-064)** | - |
 | [112](./112-2025-12-15-router-edit-selection-preservation.md) | 2025-12-15 | **Router preserves Edit Mode selection (TASK-063)** | - |
 | [111](./111-2025-12-15-modeling-add-modifier-boolean-object-name.md) | 2025-12-15 | **modeling_add_modifier BOOLEAN supports object name (TASK-062)** | - |

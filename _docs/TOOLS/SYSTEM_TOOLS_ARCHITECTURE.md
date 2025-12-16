@@ -110,6 +110,11 @@ system_undo(steps: int = 1) -> str
 - Graceful handling when undo history is exhausted
 - Returns descriptive message about undone operations
 
+**Undo Granularity (Addon):**
+- Undo granularity depends on Blender’s internal undo stack.
+- The Blender addon best-effort inserts an undo boundary after successful **mutating** MCP/RPC commands to keep `system_undo(steps=1)` closer to “undo the last tool call”.
+- To disable automatic undo boundaries, set `BLENDER_AI_MCP_AUTO_UNDO_PUSH=0` before starting Blender.
+
 **Example:**
 ```python
 # Undo last operation
