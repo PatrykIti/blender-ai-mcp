@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_collection_handler
 
@@ -51,7 +52,7 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
                     obj_list = ", ".join(col["objects"])
                     lines.append(f"      Objects: {obj_list}")
 
-            ctx.info(f"Listed {len(collections)} collections")
+            ctx_info(ctx, f"Listed {len(collections)} collections")
             return "\n".join(lines)
         except RuntimeError as e:
             return str(e)
@@ -117,7 +118,7 @@ def collection_list_objects(
                     f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}"
                 )
 
-            ctx.info(f"Listed {object_count} objects from collection '{collection_name}'")
+            ctx_info(ctx, f"Listed {object_count} objects from collection '{collection_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             msg = str(e)
@@ -175,7 +176,7 @@ def collection_manage(
                 parent_name=parent_name,
                 object_name=object_name,
             )
-            ctx.info(f"collection_manage({action}): {result}")
+            ctx_info(ctx, f"collection_manage({action}): {result}")
             return result
         except RuntimeError as e:
             msg = str(e)

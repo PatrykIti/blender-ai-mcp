@@ -1,6 +1,7 @@
 from typing import List, Literal, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_mesh_handler
@@ -460,7 +461,7 @@ def mesh_list_groups(
             if note:
                 lines.append(f"\nNote: {note}")
 
-            ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
+            ctx_info(ctx, f"Listed {count} {g_type} groups for '{obj_name}'")
             return "\n".join(lines)
 
         except RuntimeError as e:

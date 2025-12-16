@@ -16,6 +16,7 @@ import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.infrastructure.di import get_router_handler
 
 
@@ -82,12 +83,12 @@ def router_set_goal(
     status = result.get("status", "unknown")
     workflow = result.get("workflow")
     if status == "ready":
-        ctx.info(f"[ROUTER] Goal set: {goal} -> workflow '{workflow}' ready")
+        ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> workflow '{workflow}' ready")
     elif status == "needs_input":
         unresolved_count = len(result.get("unresolved", []))
-        ctx.info(f"[ROUTER] Goal set: {goal} -> {unresolved_count} params need input")
+        ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> {unresolved_count} params need input")
     else:
-        ctx.info(f"[ROUTER] Goal set: {goal} -> status: {status}")
+        ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> status: {status}")
 
     return json.dumps(result, indent=2, ensure_ascii=False)
 
@@ -117,7 +118,7 @@ def router_clear_goal(ctx: Context) -> str:
     """
     handler = get_router_handler()
     result = handler.clear_goal()
-    ctx.info("[ROUTER] Goal cleared")
+    ctx_info(ctx, "[ROUTER] Goal cleared")
     return result
 
 
@@ -211,7 +212,7 @@ def router_feedback(
     """
     handler = get_router_handler()
     result = handler.record_feedback(prompt, correct_workflow)
-    ctx.info(f"[ROUTER] Feedback recorded: {prompt[:30]}... -> {correct_workflow}")
+    ctx_info(ctx, f"[ROUTER] Feedback recorded: {prompt[:30]}... -> {correct_workflow}")
     return result
 
 

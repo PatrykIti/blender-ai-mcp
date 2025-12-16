@@ -5,6 +5,7 @@ import queue
 import time
 import traceback
 import struct
+import os
 from typing import Dict, Any
 
 # Try importing bpy, but allow running outside blender for testing
@@ -15,6 +16,94 @@ except ImportError:
 
 HOST = "0.0.0.0" # Listen on all interfaces within container
 PORT = 8765
+
+# If enabled, the addon will push an explicit undo step after each mutating RPC command.
+# This makes `system_undo(steps=1)` behave more like "undo the last MCP tool call"
+# instead of undoing a large batch of changes.
+#
+# Disable by setting: BLENDER_AI_MCP_AUTO_UNDO_PUSH=0
+AUTO_UNDO_PUSH = os.environ.get("BLENDER_AI_MCP_AUTO_UNDO_PUSH", "1") not in ("0", "false", "False")
+
+_NO_UNDO_PUSH_CMDS = {
+    "ping",
+    # System tools that manage undo/redo or files should not create new undo steps.
+    "system.undo",
+    "system.redo",
+    "system.snapshot",
+    "system.save_file",
+    "system.new_file",
+    "system.purge_orphans",
+    "system.set_mode",
+    # Scene/context inspection and viewport utilities (no geometry changes expected).
+    "scene.list_objects",
+    "scene.get_mode",
+    "scene.list_selection",
+    "scene.snapshot_state",
+    "scene.get_viewport",
+    "scene.get_custom_properties",
+    "scene.get_hierarchy",
+    "scene.get_bounding_box",
+    "scene.get_origin_info",
+    "scene.camera_orbit",
+    "scene.camera_focus",
+    "scene.isolate_object",
+    "scene.hide_object",
+    "scene.show_all_objects",
+    "scene.set_active_object",
+    "scene.set_mode",
+    # Selection-only helpers (avoid polluting undo history).
+    "mesh.select_all",
+    "mesh.select_none",
+    "mesh.select_linked",
+    "mesh.select_more",
+    "mesh.select_less",
+    "mesh.select_boundary",
+    "mesh.select_by_index",
+    "mesh.select_loop",
+    "mesh.select_ring",
+    "mesh.select_by_location",
+    "mesh.set_proportional_edit",
+}
+
+_NO_UNDO_PUSH_PREFIXES = (
+    # Read-only inspections
+    "scene.inspect_",
+    "collection.list",
+    "collection.list_objects",
+    "material.list",
+    "material.inspect_nodes",
+    "uv.list_maps",
+    "mesh.get_vertex_data",
+    "mesh.list_groups",
+    # Pure output generation (no scene edits expected)
+    "export.",
+    "baking.",
+    "extraction.",
+)
+
+
+def _should_push_undo(cmd: str) -> bool:
+    if not AUTO_UNDO_PUSH:
+        return False
+    if not cmd:
+        return False
+    if cmd in _NO_UNDO_PUSH_CMDS:
+        return False
+    for prefix in _NO_UNDO_PUSH_PREFIXES:
+        if cmd.startswith(prefix):
+            return False
+    return True
+
+
+def _safe_undo_push(message: str) -> None:
+    if not bpy:
+        return
+    # Blender may reject undo operations in some contexts (e.g., background mode).
+    # Undo push is best-effort and must never break the RPC call.
+    try:
+        bpy.ops.ed.undo_push(message=message)
+    except Exception:
+        pass
 
 def send_msg(sock, msg):
     # Prefix each message with a 4-byte length (network byte order)
@@ -148,6 +237,8 @@ class BlenderRpcServer:
             try:
                 if cmd in self.command_registry:
                     res = self.command_registry[cmd](**args)
+                    if _should_push_undo(cmd):
+                        _safe_undo_push(f"MCP: {cmd}")
                     result_queue.put({"status": "ok", "result": res})
                 else:
                     result_queue.put({"status": "error", "error": f"Unknown command: {cmd}"})

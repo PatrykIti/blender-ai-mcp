@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_system_handler
 
@@ -42,7 +43,7 @@ def export_glb(
                 export_materials=export_materials,
                 apply_modifiers=apply_modifiers,
             )
-            ctx.info(f"Exported GLB to: {filepath}")
+            ctx_info(ctx, f"Exported GLB to: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -88,7 +89,7 @@ def export_fbx(
                 apply_modifiers=apply_modifiers,
                 mesh_smooth_type=mesh_smooth_type,
             )
-            ctx.info(f"Exported FBX to: {filepath}")
+            ctx_info(ctx, f"Exported FBX to: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -140,7 +141,7 @@ def export_obj(
                 export_normals=export_normals,
                 triangulate=triangulate,
             )
-            ctx.info(f"Exported OBJ to: {filepath}")
+            ctx_info(ctx, f"Exported OBJ to: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -192,7 +193,7 @@ def import_obj(
                 forward_axis=forward_axis,
                 up_axis=up_axis,
             )
-            ctx.info(f"Imported OBJ from: {filepath}")
+            ctx_info(ctx, f"Imported OBJ from: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -241,7 +242,7 @@ def import_fbx(
                 automatic_bone_orientation=automatic_bone_orientation,
                 global_scale=global_scale,
             )
-            ctx.info(f"Imported FBX from: {filepath}")
+            ctx_info(ctx, f"Imported FBX from: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -284,7 +285,7 @@ def import_glb(
                 merge_vertices=merge_vertices,
                 import_shading=import_shading,
             )
-            ctx.info(f"Imported GLB/GLTF from: {filepath}")
+            ctx_info(ctx, f"Imported GLB/GLTF from: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)
@@ -339,7 +340,7 @@ def import_image_as_plane(
                 shader=shader,
                 use_transparency=use_transparency,
             )
-            ctx.info(f"Imported image as plane from: {filepath}")
+            ctx_info(ctx, f"Imported image as plane from: {filepath}")
             return result
         except RuntimeError as e:
             return str(e)

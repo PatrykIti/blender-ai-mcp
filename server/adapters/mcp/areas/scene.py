@@ -4,6 +4,7 @@ from typing import List, Literal, Optional, Union
 from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_scene_handler
@@ -22,7 +23,7 @@ def scene_list_objects(ctx: Context) -> str:
         handler = get_scene_handler()
         try:
             result = handler.list_objects()
-            ctx.info(f"Listed {len(result)} objects")
+            ctx_info(ctx, f"Listed {len(result)} objects")
             return str(result)
         except RuntimeError as e:
             return str(e)
@@ -460,7 +461,7 @@ def scene_snapshot_state(
                 f"Full snapshot (JSON):\n{json.dumps(snapshot, indent=2)}"
             )
 
-            ctx.info(f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
+            ctx_info(ctx, f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
             return summary
         except RuntimeError as e:
             return str(e)
@@ -545,7 +546,7 @@ def scene_compare_snapshot(
             lines.append("")
 
         summary = "\n".join(lines)
-        ctx.info(f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
+        ctx_info(ctx, f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
         return summary
 
     return route_tool_call(
@@ -618,7 +619,7 @@ def _scene_inspect_material_slots(
         lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
 
         summary = "\n".join(lines)
-        ctx.info(f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
+        ctx_info(ctx, f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
         return summary
     except RuntimeError as e:
         return str(e)
@@ -733,7 +734,7 @@ def _scene_inspect_modifiers(
                 lines.append(f"  - {name} ({mtype}){detail_str}{flag_str}")
             lines.append("")
             
-        ctx.info(f"Inspected modifiers: {mod_count} on {obj_count} objects")
+        ctx_info(ctx, f"Inspected modifiers: {mod_count} on {obj_count} objects")
         return "\n".join(lines)
     except RuntimeError as e:
         return str(e)
@@ -1146,7 +1147,7 @@ def scene_get_custom_properties(
                 lines.append(f"  • {key}: {value}")
 
             lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
-            ctx.info(f"Retrieved {count} custom properties from '{object_name}'")
+            ctx_info(ctx, f"Retrieved {count} custom properties from '{object_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             return str(e)
@@ -1261,7 +1262,7 @@ def scene_get_hierarchy(
                 format_tree(roots)
 
             lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
-            ctx.info(f"Retrieved hierarchy for {object_name or 'full scene'}")
+            ctx_info(ctx, f"Retrieved hierarchy for {object_name or 'full scene'}")
             return "\n".join(lines)
         except RuntimeError as e:
             return str(e)
@@ -1316,7 +1317,7 @@ def scene_get_bounding_box(
             ]
 
             lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
-            ctx.info(f"Retrieved bounding box for '{object_name}'")
+            ctx_info(ctx, f"Retrieved bounding box for '{object_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             return str(e)
@@ -1372,7 +1373,7 @@ def scene_get_origin_info(
                     lines.append(f"      - {sug}")
 
             lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
-            ctx.info(f"Retrieved origin info for '{object_name}'")
+            ctx_info(ctx, f"Retrieved origin info for '{object_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             return str(e)

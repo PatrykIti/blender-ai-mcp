@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_material_handler
@@ -44,7 +45,7 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
                     rgb = mat["base_color"]
                     lines.append(f"      Color: RGB{rgb}, Roughness: {mat.get('roughness', 'N/A')}, Metallic: {mat.get('metallic', 'N/A')}")
 
-            ctx.info(f"Listed {len(materials)} materials")
+            ctx_info(ctx, f"Listed {len(materials)} materials")
             return "\n".join(lines)
         except (RuntimeError, ValueError) as e:
             return str(e)
@@ -93,7 +94,7 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
                 if "note" in slot:
                     lines.append(f"      Note: {slot['note']}")
 
-            ctx.info(f"Listed {slot_count} material slots for '{object_name}'")
+            ctx_info(ctx, f"Listed {slot_count} material slots for '{object_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             msg = str(e)
@@ -147,7 +148,7 @@ def material_create(
                 emission_strength=emission_strength,
                 alpha=alpha,
             )
-            ctx.info(f"Created material '{name}'")
+            ctx_info(ctx, f"Created material '{name}'")
             return result
         except (RuntimeError, ValueError) as e:
             return str(e)
@@ -198,7 +199,7 @@ def material_assign(
                 slot_index=slot_index,
                 assign_to_selection=assign_to_selection,
             )
-            ctx.info(f"Assigned material '{material_name}'")
+            ctx_info(ctx, f"Assigned material '{material_name}'")
             return result
         except RuntimeError as e:
             msg = str(e)
@@ -257,7 +258,7 @@ def material_set_params(
                 emission_strength=emission_strength,
                 alpha=alpha,
             )
-            ctx.info(f"Updated parameters for '{material_name}'")
+            ctx_info(ctx, f"Updated parameters for '{material_name}'")
             return result
         except RuntimeError as e:
             msg = str(e)
@@ -310,7 +311,7 @@ def material_set_texture(
                 input_name=input_name,
                 color_space=color_space,
             )
-            ctx.info(f"Connected texture to '{input_name}' on '{material_name}'")
+            ctx_info(ctx, f"Connected texture to '{input_name}' on '{material_name}'")
             return result
         except RuntimeError as e:
             msg = str(e)
@@ -398,7 +399,7 @@ def material_inspect_nodes(
                         to_socket = conn.get("to_socket", "?")
                         lines.append(f"  {from_node}.{from_socket} → {to_node}.{to_socket}")
 
-            ctx.info(f"Inspected nodes for material '{material_name}'")
+            ctx_info(ctx, f"Inspected nodes for material '{material_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             msg = str(e)

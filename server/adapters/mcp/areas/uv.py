@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_uv_handler
 
@@ -66,7 +67,7 @@ def uv_list_maps(
                     else:
                         lines.append(f"      Islands: (not implemented)")
 
-            ctx.info(f"Listed {uv_map_count} UV maps for '{obj_name}'")
+            ctx_info(ctx, f"Listed {uv_map_count} UV maps for '{obj_name}'")
             return "\n".join(lines)
         except RuntimeError as e:
             msg = str(e)
@@ -119,7 +120,7 @@ def uv_unwrap(
                 island_margin=island_margin,
                 scale_to_bounds=scale_to_bounds,
             )
-            ctx.info(f"UV unwrap completed using {method}")
+            ctx_info(ctx, f"UV unwrap completed using {method}")
             return result
         except RuntimeError as e:
             msg = str(e)
@@ -167,7 +168,7 @@ def uv_pack_islands(
                 rotate=rotate,
                 scale=scale,
             )
-            ctx.info("UV islands packed")
+            ctx_info(ctx, "UV islands packed")
             return result
         except RuntimeError as e:
             msg = str(e)
@@ -209,7 +210,7 @@ def uv_create_seam(
                 object_name=object_name,
                 action=action,
             )
-            ctx.info(f"UV seam {action} completed")
+            ctx_info(ctx, f"UV seam {action} completed")
             return result
         except RuntimeError as e:
             msg = str(e)

@@ -8,6 +8,7 @@ import json
 from typing import List, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_extraction_handler
 
@@ -39,7 +40,7 @@ def extraction_deep_topology(
         handler = get_extraction_handler()
         try:
             result = handler.deep_topology(object_name=object_name)
-            ctx.info(f"Deep topology analysis completed for '{object_name}'")
+            ctx_info(ctx, f"Deep topology analysis completed for '{object_name}'")
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -85,7 +86,7 @@ def extraction_component_separate(
                 min_vertex_count=min_vertex_count
             )
             component_count = result.get("component_count", 0)
-            ctx.info(f"Separated '{object_name}' into {component_count} components")
+            ctx_info(ctx, f"Separated '{object_name}' into {component_count} components")
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -141,10 +142,10 @@ def extraction_detect_symmetry(
                 symmetries.append("Z")
 
             if symmetries:
-                ctx.info(f"Detected symmetry on axes: {', '.join(symmetries)}")
+                ctx_info(ctx, f"Detected symmetry on axes: {', '.join(symmetries)}")
             else:
-                ctx.info("No symmetry detected")
-
+                ctx_info(ctx, "No symmetry detected")
+            
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -186,7 +187,7 @@ def extraction_edge_loop_analysis(
         try:
             result = handler.edge_loop_analysis(object_name=object_name)
             loop_count = result.get("total_edge_loops", 0)
-            ctx.info(f"Analyzed {loop_count} edge loops in '{object_name}'")
+            ctx_info(ctx, f"Analyzed {loop_count} edge loops in '{object_name}'")
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -237,7 +238,7 @@ def extraction_face_group_analysis(
                 angle_threshold=angle_threshold
             )
             group_count = len(result.get("face_groups", []))
-            ctx.info(f"Analyzed {group_count} face groups in '{object_name}'")
+            ctx_info(ctx, f"Analyzed {group_count} face groups in '{object_name}'")
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -292,7 +293,7 @@ def extraction_render_angles(
                 output_dir=output_dir
             )
             render_count = len(result.get("renders", []))
-            ctx.info(f"Rendered {render_count} views of '{object_name}'")
+            ctx_info(ctx, f"Rendered {render_count} views of '{object_name}'")
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
