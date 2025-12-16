@@ -139,6 +139,7 @@ class TestModelingTools:
         
         self.cube.modifiers.__contains__.side_effect = contains_side_effect
         self.cube.modifiers.__getitem__.side_effect = lambda k: mock_modifier if k == mod_name else KeyError(k)
+        self.cube.modifiers.get.side_effect = lambda k, default=None: mock_modifier if k == mod_name else default
         
         # Mock iteration for case-insensitive search fallback
         self.cube.modifiers.__iter__.return_value = [mock_modifier]
@@ -154,6 +155,29 @@ class TestModelingTools:
         self.mock_bpy.ops.object.modifier_apply.assert_called_with(modifier=mod_name)
         assert result['applied_modifier'] == mod_name
         assert result['object'] == "Cube"
+
+    def test_apply_modifier_enables_disabled_modifier(self):
+        # Setup: Modifier exists but is disabled in viewport/render
+        mod_name = "Bevel"
+        mock_modifier = MagicMock()
+        mock_modifier.name = mod_name
+        mock_modifier.show_viewport = False
+        mock_modifier.show_render = False
+
+        self.cube.modifiers.__contains__.side_effect = lambda k: k == mod_name
+        self.cube.modifiers.__iter__.return_value = [mock_modifier]
+        self.cube.modifiers.get.side_effect = lambda k, default=None: mock_modifier if k == mod_name else default
+
+        self.mock_bpy.ops.object.modifier_apply = MagicMock()
+
+        # When
+        result = self.handler.apply_modifier("Cube", mod_name)
+
+        # Then
+        assert mock_modifier.show_viewport is True
+        assert mock_modifier.show_render is True
+        self.mock_bpy.ops.object.modifier_apply.assert_called_with(modifier=mod_name)
+        assert result["applied_modifier"] == mod_name
 
     def test_apply_modifier_case_insensitive(self):
         # Setup: Modifier is named "BEVEL", request is for "bevel"
