@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Poetry
 RUN pip install poetry
 
-# Copy only requirements to cache them in docker layer
-COPY pyproject.toml poetry.lock* /app/
+# Copy metadata needed by Poetry (it validates referenced files)
+COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
 
 # Config poetry to not use virtualenvs (we are in docker)
 RUN poetry config virtualenvs.create false
