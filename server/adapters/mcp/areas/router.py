@@ -53,7 +53,7 @@ def router_set_goal(
 
     Returns:
         JSON with:
-        - status: "ready" | "needs_input" | "no_match" | "disabled"
+        - status: "ready" | "needs_input" | "no_match" | "disabled" | "error"
         - workflow: matched workflow name
         - resolved: dict of resolved parameter values with sources
         - unresolved: list of parameters needing your input (when status="needs_input")

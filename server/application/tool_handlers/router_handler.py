@@ -64,11 +64,12 @@ class RouterToolHandler(IRouterTool):
 
         Returns:
             Dict with:
-            - status: "ready" | "needs_input" | "no_match" | "disabled"
+            - status: "ready" | "needs_input" | "no_match" | "disabled" | "error"
             - workflow: matched workflow name (if any)
             - resolved: dict of resolved parameter values
             - unresolved: list of parameters needing input (when status="needs_input")
             - resolution_sources: dict mapping param -> source ("yaml_modifier", "learned", "default")
+            - error: dict with error details (when status="error")
             - message: human-readable status message
         """
         if not self._enabled:
@@ -93,7 +94,22 @@ class RouterToolHandler(IRouterTool):
             }
 
         # Step 1: Match workflow
-        matched_workflow = router.set_current_goal(goal)
+        try:
+            matched_workflow = router.set_current_goal(goal)
+        except Exception as e:
+            return {
+                "status": "error",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "error": {
+                    "type": type(e).__name__,
+                    "details": str(e),
+                    "stage": "workflow_match",
+                },
+                "message": f"Router error while matching workflow: {e}",
+            }
 
         if not matched_workflow:
             return {

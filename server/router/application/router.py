@@ -143,7 +143,7 @@ class SupervisorRouter:
         self._ensemble_matcher: Optional[Any] = None  # EnsembleMatcher, lazy init
         self._last_ensemble_result: Optional[EnsembleResult] = None
         self._pending_modifiers: Dict[str, Any] = {}  # Modifiers from ensemble
-        self._use_ensemble_matching: bool = True  # Feature flag
+        self._last_ensemble_init_error: Optional[str] = None
 
         # Workflow adaptation (TASK-051)
         # Adapts workflow steps based on confidence level
@@ -688,11 +688,14 @@ class SupervisorRouter:
             # Initialize semantic matcher with registry
             self._ensemble_matcher.initialize(registry)
 
+            self._last_ensemble_init_error = None
             self.logger.log_info("Ensemble matcher initialized")
             return True
 
         except Exception as e:
-            self.logger.log_error("ensemble_init", str(e))
+            details = f"{type(e).__name__}: {e}"
+            self._last_ensemble_init_error = details
+            self.logger.log_error("ensemble_init", details)
             return False
 
     def _resolve_step_params(
@@ -1076,8 +1079,10 @@ class SupervisorRouter:
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set current modeling goal and find matching workflow.
 
-        Uses ensemble matching (TASK-053) if enabled, falls back to
-        legacy SemanticWorkflowMatcher for backward compatibility.
+        Uses ensemble matching (TASK-053). Legacy goal matching fallback
+        has been removed: if the ensemble matcher cannot be initialized,
+        this method raises an exception and the caller is expected to return
+        a structured error response.
 
         Args:
             goal: User's modeling goal (e.g., "smartphone", "table")
@@ -1087,12 +1092,33 @@ class SupervisorRouter:
         """
         self._current_goal = goal
 
-        # Try ensemble matching first (TASK-053)
-        if self._use_ensemble_matching and self._ensure_ensemble_initialized():
-            return self._set_goal_ensemble(goal)
+        if not self.config.use_ensemble_matching:
+            msg = (
+                "Ensemble matching is disabled (RouterConfig.use_ensemble_matching=False). "
+                "Legacy goal matching fallback has been removed."
+            )
+            self._pending_workflow = None
+            self._pending_modifiers = {}
+            self._last_match_result = MatchResult(
+                match_type="error",
+                confidence_level="NONE",
+                metadata={"error": msg},
+            )
+            raise RuntimeError(msg)
 
-        # Fallback to legacy matching
-        return self._set_goal_legacy(goal)
+        if not self._ensure_ensemble_initialized():
+            details = self._last_ensemble_init_error or "Unknown error"
+            msg = f"Ensemble matcher initialization failed: {details}"
+            self._pending_workflow = None
+            self._pending_modifiers = {}
+            self._last_match_result = MatchResult(
+                match_type="error",
+                confidence_level="NONE",
+                metadata={"error": msg},
+            )
+            raise RuntimeError(msg)
+
+        return self._set_goal_ensemble(goal)
 
     def _set_goal_ensemble(self, goal: str) -> Optional[str]:
         """Set goal using ensemble matching (TASK-053).
@@ -1162,104 +1188,6 @@ class SupervisorRouter:
 
         self._pending_workflow = None
         self._pending_modifiers = {}
-        self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
-        return None
-
-    def _set_goal_legacy(self, goal: str) -> Optional[str]:
-        """Set goal using legacy matching (backward compatibility).
-
-        This is the original set_current_goal logic before TASK-053.
-        Kept for fallback if ensemble matching is disabled.
-
-        Args:
-            goal: User's modeling goal.
-
-        Returns:
-            Name of matched workflow, or None.
-        """
-        # Ensure semantic matcher is initialized (eager init on first goal)
-        self._ensure_semantic_initialized()
-
-        # Step 1: Try exact keyword match
-        from server.router.application.workflows.registry import get_workflow_registry
-
-        registry = get_workflow_registry()
-        workflow_name = registry.find_by_keywords(goal)
-
-        if workflow_name:
-            self._pending_workflow = workflow_name
-
-            # TASK-051: Create MatchResult for keyword matches to enable adaptation
-            # Check if workflow has optional steps to determine adaptation need
-            definition = registry.get_definition(workflow_name)
-            has_optional = definition and any(s.optional for s in definition.steps)
-
-            # Keyword match = HIGH confidence by default, but check for "simple" modifiers
-            # that indicate user wants a simpler version
-            goal_lower = goal.lower()
-            wants_simple = any(kw in goal_lower for kw in [
-                "simple", "basic", "minimal", "just", "only", "plain",
-                "prosty", "podstawowy", "tylko"  # Polish
-            ])
-
-            if wants_simple and has_optional:
-                # User wants simple version - use LOW confidence to get core-only
-                confidence_level = "LOW"
-                requires_adaptation = True
-            else:
-                # Normal keyword match - HIGH confidence
-                confidence_level = "HIGH"
-                requires_adaptation = has_optional
-
-            self._last_match_result = MatchResult(
-                workflow_name=workflow_name,
-                confidence=1.0 if not wants_simple else 0.7,
-                match_type="keyword",
-                confidence_level=confidence_level,
-                requires_adaptation=requires_adaptation,
-            )
-
-            self.logger.log_info(
-                f"Goal '{goal}' matched workflow (keyword): {workflow_name} "
-                f"(confidence_level: {confidence_level})"
-            )
-            return workflow_name
-
-        # Step 2: Try semantic matching (TASK-046)
-        if self.config.enable_generalization:
-            match_result = self.match_workflow_semantic(goal)
-
-            if match_result.is_match():
-                self._pending_workflow = match_result.workflow_name
-                self._last_match_result = match_result
-
-                self.logger.log_info(
-                    f"Goal '{goal}' matched workflow ({match_result.match_type}): "
-                    f"{match_result.workflow_name} (confidence: {match_result.confidence:.1%})"
-                )
-
-                # Record feedback for learning
-                self._feedback_collector.record_match(
-                    prompt=goal,
-                    matched_workflow=match_result.workflow_name,
-                    confidence=match_result.confidence,
-                    match_type=match_result.match_type,
-                    metadata={
-                        "similar_workflows": match_result.similar_workflows,
-                    },
-                )
-
-                return match_result.workflow_name
-
-        # No match - record for learning
-        self._feedback_collector.record_match(
-            prompt=goal,
-            matched_workflow=None,
-            confidence=0.0,
-            match_type="none",
-        )
-
-        self._pending_workflow = None
         self.logger.log_info(f"Goal '{goal}' set (no matching workflow)")
         return None
 

@@ -257,6 +257,26 @@ class TestSetGoalUnified:
         assert result["workflow"] == "picnic_table"
         assert result["resolved"] == {}
 
+    def test_set_goal_returns_error_on_router_exception(self, mock_resolver, mock_loader):
+        """Handler returns status=error when router.set_current_goal raises."""
+        exploding_router = MagicMock()
+        exploding_router.set_current_goal.side_effect = RuntimeError("boom")
+
+        exploding_handler = RouterToolHandler(
+            router=exploding_router,
+            enabled=True,
+            parameter_resolver=mock_resolver,
+            workflow_loader=mock_loader,
+        )
+
+        result = exploding_handler.set_goal("table")
+
+        assert result["status"] == "error"
+        assert result["workflow"] is None
+        assert result["error"]["type"] == "RuntimeError"
+        assert result["error"]["stage"] == "workflow_match"
+        assert "boom" in result["error"]["details"]
+
     def test_set_goal_with_all_resolved(self, handler, mock_loader, mock_resolver):
         """Test when all parameters are resolved via modifiers."""
         # Add workflow with parameters

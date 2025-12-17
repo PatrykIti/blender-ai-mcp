@@ -444,7 +444,7 @@ router: leg_angle_left = 0 (learned, similarity: 0.87)
 
 | Tool | Description |
 |------|-------------|
-| `router_set_goal(goal, resolved_params)` | Unified parameter resolution. Returns status, resolved/unresolved params. Call again with resolved_params to provide answers. Mappings auto-stored. |
+| `router_set_goal(goal, resolved_params)` | Unified parameter resolution. Returns status (ready/needs_input/no_match/disabled/error), resolved/unresolved params. Call again with resolved_params to provide answers. Mappings auto-stored. |
 
 ### Thresholds
 

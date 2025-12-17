@@ -45,7 +45,7 @@ class IRouterTool(ABC):
 
         Returns:
             Dict with:
-            - status: "ready" | "needs_input" | "no_match" | "disabled"
+            - status: "ready" | "needs_input" | "no_match" | "disabled" | "error"
             - workflow: matched workflow name (if any)
             - resolved: dict of resolved parameter values
             - unresolved: list of parameters needing input (when status="needs_input")

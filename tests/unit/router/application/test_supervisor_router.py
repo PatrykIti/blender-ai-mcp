@@ -872,6 +872,16 @@ class TestSetCurrentGoalEnsemble:
         assert router._last_match_result.confidence_level == "MEDIUM"
         assert router._last_match_result.requires_adaptation is True
 
+    def test_set_goal_raises_when_ensemble_init_fails(self):
+        """Ensemble-only: set_current_goal raises when ensemble init fails."""
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True))
+
+        router._last_ensemble_init_error = "boom"
+        router._ensure_ensemble_initialized = MagicMock(return_value=False)
+
+        with pytest.raises(RuntimeError, match="Ensemble matcher initialization failed: boom"):
+            router.set_current_goal("table")
+
 
 class TestExpandTriggeredWorkflowWithModifiers:
     """Tests for TASK-053-11: _expand_triggered_workflow uses _pending_modifiers."""

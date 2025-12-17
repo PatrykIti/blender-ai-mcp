@@ -28,17 +28,19 @@ WORKFLOW SELECTION (MANDATORY)
 3) Set goal (ALWAYS)
    - router_set_goal(goal="<user prompt including modifiers>")
 
-4) Handle Router response
-   - If status == "needs_input":
-       * Ask the user the missing questions (use any enum/options returned by Router).
-       * Call router_set_goal(goal, resolved_params={...}) with the user answers.
-       * Repeat until status == "ready".
-   - If status == "ready":
-       * Proceed with modeling. Prefer minimal/high-level tool calls and let Router expand/correct them.
-   - If status == "no_match" or "disabled":
-       * Ask the user whether to:
-           A) continue in MANUAL mode (use the “Manual Modeling Prompt”), or
-           B) add/create a new workflow (out of scope unless user requests).
+   4) Handle Router response
+       - If status == "needs_input":
+           * Ask the user the missing questions (use any enum/options returned by Router).
+           * Call router_set_goal(goal, resolved_params={...}) with the user answers.
+           * Repeat until status == "ready".
+       - If status == "ready":
+           * Proceed with modeling. Prefer minimal/high-level tool calls and let Router expand/correct them.
+       - If status == "no_match" or "disabled":
+           * Ask the user whether to:
+               A) continue in MANUAL mode (use the “Manual Modeling Prompt”), or
+               B) add/create a new workflow (out of scope unless user requests).
+       - If status == "error":
+           * Stop and surface the error message (Router malfunction). Ask user to open a GitHub issue with logs/stack trace.
 
 RELIABILITY (STILL REQUIRED)
 - Even with Router corrections, verify major milestones:

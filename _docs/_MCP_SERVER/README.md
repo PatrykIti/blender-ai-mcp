@@ -289,7 +289,7 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match/disabled/error), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 

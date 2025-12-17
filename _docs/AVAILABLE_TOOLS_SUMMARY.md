@@ -350,7 +350,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists/searches/inspects workflow definitions without executing them. | ✅ Done |
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match/disabled/error), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
 
