@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 4 tasks (~22 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 130
+- **Done:** 131
 
 ---
 
@@ -33,6 +33,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-067](./TASK-067_Update_Root_README_MCP_Client_Configs.md) | **Update Root README MCP Client Configs (Collapsible + Codex CLI)** | 🟡 Medium | 2025-12-17 |
 | [TASK-066](./TASK-066_Remove_Legacy_Goal_Matching_Fallback.md) | **Remove Legacy Goal Matching Fallback (Ensemble-Only)** | 🔴 High | 2025-12-17 |
 | [TASK-065](./TASK-065_Workflow_Catalog_Tool.md) | **Workflow Catalog Tool (replace vector_db_manage)** | 🟡 Medium | 2025-12-17 |
 | [TASK-064](./TASK-064_Flexible_List_Parameter_Parsing.md) | **Flexible vector/color params** | 🟡 Medium | 2025-12-15 |
