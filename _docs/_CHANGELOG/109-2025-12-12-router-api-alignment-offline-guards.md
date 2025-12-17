@@ -6,6 +6,8 @@
 
 ---
 
+> **Note (2025-12-17):** The MCP tool `vector_db_manage` referenced below was later removed and replaced by `workflow_catalog` (read-only workflow browsing/search/inspection).
+
 ## Summary
 
 Aligned Router (Supervisor) + tool metadata with the real MCP tool API, stabilized offline/unit-test behavior around LaBSE loading, and added a regression guard that fails fast when metadata drifts from MCP tool signatures.
@@ -67,4 +69,3 @@ Aligned Router (Supervisor) + tool metadata with the real MCP tool API, stabiliz
 ```bash
 poetry run pytest tests/unit/router -q
 ```
-

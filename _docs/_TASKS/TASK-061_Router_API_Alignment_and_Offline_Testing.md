@@ -7,6 +7,8 @@
 
 ---
 
+> **Note (2025-12-17):** The MCP tool `vector_db_manage` was removed and replaced by `workflow_catalog` (read-only workflow browsing/search/inspection). This task remains as historical context for the LanceDB/LaBSE integration.
+
 ## Goal
 
 Quick sanity-check of the router (Supervisor Layer) regarding:

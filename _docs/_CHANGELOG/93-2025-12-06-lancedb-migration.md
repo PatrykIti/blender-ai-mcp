@@ -6,6 +6,8 @@
 
 ---
 
+> **Note (2025-12-17):** The MCP tool `vector_db_manage` mentioned in this changelog was later removed and replaced by `workflow_catalog` (read-only workflow browsing/search/inspection). The LanceDB migration itself remains unchanged.
+
 ## Summary
 
 Replaced pickle-based embedding caches with LanceDB - an embedded vector database optimized for semantic search. This migration improves search performance from O(N) to O(log N) and adds metadata filtering capabilities.

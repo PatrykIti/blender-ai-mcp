@@ -792,7 +792,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
-        "vector_db_manage",
+        "workflow_catalog",
         "router_set_goal",
         "router_get_status",
         "router_clear_goal"
@@ -967,7 +967,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
-        "vector_db_manage",
+        "workflow_catalog",
         "router_set_goal",
         "router_get_status",
         "router_clear_goal"

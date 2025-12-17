@@ -344,20 +344,18 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
-## 🤖 Router Tools (`router_*`, `vector_db_*`)
-*Tools for managing the Router Supervisor and its vector database.*
+## 🤖 Workflow Catalog & Router Tools (`workflow_catalog`, `router_*`)
+*Tools for browsing workflows (read-only) and controlling the Router Supervisor.*
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
-| `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace`, `query`, `workflow_name`, `workflow_data`, `top_k` | Manages LanceDB vector database for semantic workflow search. | ✅ Done |
+| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists/searches/inspects workflow definitions without executing them. | ✅ Done |
 | `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
 
 **Use Cases:**
-- Managing workflow embeddings in vector database
-- Testing semantic search queries
-- Migrating legacy pickle caches to LanceDB
+- Preview/search similar workflows and inspect their steps
 - Setting modeling goals for intelligent workflow expansion
 - Unified parameter resolution through single tool (TASK-055-FIX)
 

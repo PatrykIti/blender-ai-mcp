@@ -20,7 +20,9 @@ WORKFLOW SELECTION (MANDATORY)
    - If a goal is already set, ask the user whether to continue it or router_clear_goal() and start fresh.
 
 2) Optional: preview likely matches (if available in your client)
-   - vector_db_manage(action="search_test", namespace="workflows", query="<user prompt>", top_k=5, threshold=0.0)
+   - workflow_catalog(action="search", query="<user prompt>", top_k=5, threshold=0.0)
+   - If you want to inspect steps without executing anything:
+       * workflow_catalog(action="get", workflow_name="<workflow_name>")
    - Use this only as a hint; Router is the source of truth.
 
 3) Set goal (ALWAYS)

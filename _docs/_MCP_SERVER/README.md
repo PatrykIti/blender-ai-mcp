@@ -277,12 +277,18 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042). Enables 
 | `extraction_face_group_analysis` | `object_name`, `normal_tolerance`, `height_tolerance` | Analyzes face groups by normal direction, height levels, and inset/extrusion pattern detection. |
 | `extraction_render_angles` | `object_name`, `output_dir`, `resolution`, `angles` | Multi-angle renders (front, back, left, right, top, iso) for LLM Vision semantic analysis. |
 
-### Router Tools
-Tools for managing the Router Supervisor's vector database and semantic workflow matching.
+### Workflow Catalog Tools
+Read-only tools for browsing and inspecting workflow definitions (no execution).
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `vector_db_manage` | `action` (stats/list/search_test/add_workflow/remove/rebuild/clear/migrate), `namespace` (tools/workflows/parameters), `query`, `workflow_name`, `workflow_data`, `top_k` | Manages vector database for semantic workflow search. Actions: stats (counts, size), list (IDs in namespace), search_test (semantic search), add_workflow (add embeddings), remove (delete record), rebuild (HNSW index), clear (namespace), migrate (legacy pickle caches). |
+| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists workflows, searches similar workflows, and returns workflow definitions (including steps) without executing them. |
+
+### Router Tools
+Tools for managing the Router Supervisor and executing matched workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
 | `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |

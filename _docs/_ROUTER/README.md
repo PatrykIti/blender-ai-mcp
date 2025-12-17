@@ -386,7 +386,7 @@ IntentClassifier            WorkflowIntentClassifier
 | **IVectorStore** | Domain interface for vector storage | `domain/interfaces/i_vector_store.py` |
 | **LanceVectorStore** | LanceDB implementation | `infrastructure/vector_store/lance_store.py` |
 | **PickleToLanceMigration** | Migrate legacy pickle caches | `infrastructure/vector_store/migrations.py` |
-| **vector_db_manage** | MCP tool for vector DB management | `server/adapters/mcp/areas/vector_db.py` |
+| **workflow_catalog** | MCP tool for workflow browsing (read-only) | `server/adapters/mcp/areas/workflow_catalog.py` |
 
 ### Implementation Docs
 

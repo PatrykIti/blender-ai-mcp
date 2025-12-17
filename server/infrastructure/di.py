@@ -15,6 +15,9 @@ from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 from server.application.tool_handlers.text_handler import TextToolHandler
 from server.application.tool_handlers.armature_handler import ArmatureToolHandler
+from server.application.tool_handlers.workflow_catalog_handler import (
+    WorkflowCatalogToolHandler,
+)
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 from server.domain.tools.modeling import IModelingTool
@@ -31,6 +34,7 @@ from server.domain.tools.router import IRouterTool
 from server.domain.tools.extraction import IExtractionTool
 from server.domain.tools.text import ITextTool
 from server.domain.tools.armature import IArmatureTool
+from server.domain.tools.workflow_catalog import IWorkflowCatalogTool
 from server.infrastructure.config import get_config
 from server.router.infrastructure.workflow_loader import get_workflow_loader
 
@@ -324,3 +328,19 @@ def get_router_handler() -> IRouterTool:
             workflow_loader=get_workflow_loader() if config.ROUTER_ENABLED else None,
         )
     return _router_handler_instance
+
+
+# --- Workflow Catalog Handler (read-only workflow introspection) ---
+
+_workflow_catalog_handler_instance = None
+
+
+def get_workflow_catalog_handler() -> IWorkflowCatalogTool:
+    """Provider for IWorkflowCatalogTool. Singleton with lazy initialization."""
+    global _workflow_catalog_handler_instance
+    if _workflow_catalog_handler_instance is None:
+        _workflow_catalog_handler_instance = WorkflowCatalogToolHandler(
+            workflow_loader=get_workflow_loader(),
+            workflow_classifier=get_workflow_classifier(),
+        )
+    return _workflow_catalog_handler_instance

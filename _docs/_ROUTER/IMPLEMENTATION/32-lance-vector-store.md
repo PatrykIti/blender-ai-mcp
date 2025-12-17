@@ -235,33 +235,27 @@ class PickleToLanceMigration:
 
 ## MCP Tool
 
-### vector_db_manage
+### workflow_catalog
 
 ```python
-# server/adapters/mcp/areas/vector_db.py
+# server/adapters/mcp/areas/workflow_catalog.py
 
 @mcp.tool()
-def vector_db_manage(
+def workflow_catalog(
     ctx: Context,
-    action: Literal["stats", "list", "search_test", "add_workflow", "remove", "rebuild", "clear", "migrate"],
-    namespace: Optional[Literal["tools", "workflows"]] = None,
-    query: Optional[str] = None,
+    action: Literal["list", "get", "search"],
     workflow_name: Optional[str] = None,
-    workflow_data: Optional[Dict[str, Any]] = None,
+    query: Optional[str] = None,
     top_k: int = 5,
+    threshold: float = 0.0,
 ) -> str:
     """
-    [SYSTEM][SAFE] Manage vector database for semantic workflow search.
+    [SYSTEM][SAFE][READ-ONLY] Browse and search workflow definitions (no execution).
 
     Actions:
-        - stats: Database statistics (counts, size, path)
-        - list: List all workflow/tool IDs in namespace
-        - search_test: Test semantic search with query
-        - add_workflow: Add workflow embeddings to DB
-        - remove: Remove workflow/tool from DB
-        - rebuild: Rebuild HNSW search index
-        - clear: Clear all records in namespace
-        - migrate: Migrate legacy pickle caches
+      - list: List available workflows with summary metadata
+      - get: Get a workflow definition (including steps) by name
+      - search: Find workflows similar to a query (semantic when available)
     """
 ```
 

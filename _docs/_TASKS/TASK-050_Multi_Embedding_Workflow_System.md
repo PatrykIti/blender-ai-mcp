@@ -8,6 +8,8 @@
 
 ---
 
+> **Note (2025-12-17):** The public MCP admin tool `vector_db_manage` referenced in some examples was removed and replaced by `workflow_catalog` (read-only workflow browsing/search/inspection). The multi-embedding strategy still applies via `WorkflowIntentClassifier` and `IVectorStore`.
+
 ## Overview
 
 The current workflow embedding system combines all sample prompts, keywords, and descriptions into a single embedding per workflow. This "averaging" effect dilutes semantic similarity scores, resulting in poor matching (e.g., 0.68 for exact phrase match instead of ~1.0).

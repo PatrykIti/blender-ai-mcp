@@ -8,6 +8,8 @@
 
 ---
 
+> **Note (2025-12-17):** The MCP tool `vector_db_manage` described in this task was removed and replaced by `workflow_catalog` (read-only workflow browsing/search/inspection). The LanceDB/IVectorStore design remains valid; only the public MCP surface changed.
+
 ## Overview
 
 Replace the pickle-based embedding cache in Router Supervisor with LanceDB - an embedded vector database.
