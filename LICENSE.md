@@ -5,196 +5,120 @@ Business Source License 1.1
 Licensor:             Patryk Ciechański (PatrykIti)
 Licensed Work:        blender-ai-mcp
                       The Licensed Work is © 2024–2025 Patryk Ciechański
-Additional Use Grant: See below
+
+Additional Use Grant:
+
+You may make Production Use of the Licensed Work, provided that such
+Production Use:
+
+  (a) is not for the purpose of operating a Competing Offering (defined below);
+      and
+
+  (b) is not by or for a Large Entity (defined below), unless you have a
+      separate commercial license from the Licensor.
+
+This Additional Use Grant applies only to Production Use. It does not limit
+any rights for non-production use granted by this License.
+
+Definitions used in this Additional Use Grant:
+
+  - "Production Use" means use of the Licensed Work in production, including
+    internal business operations or providing services to third parties, other
+    than evaluation, development, testing, or personal experimentation.
+
+  - "Competing Offering" means a product or service whose primary purpose is
+    to provide AI-driven control, automation, or inspection of Blender through
+    an MCP server or a materially similar tool-calling interface, where the
+    product or service is offered to third parties as a substitute for the
+    Licensed Work.
+
+  - "Large Entity" means any entity that:
+      (i) has annual revenue exceeding USD $10,000,000; or
+      (ii) employs more than 100 people; or
+      (iii) is publicly traded; or
+      (iv) is owned by, or acting on behalf of, a publicly traded company.
+
+Commercial licensing:
+
+If you need rights beyond this Additional Use Grant (including Production Use
+by a Large Entity, or Production Use for a Competing Offering), contact:
+patryk.ciechanski@patrykiti.pl
+
 Change Date:          2029-12-01
-Change License:       Apache License 2.0
+Change License:       Apache License, Version 2.0 (see LICENSE-APACHE-2.0.txt)
 
 ==============================================================================
-ADDITIONAL USE GRANT
+BUSINESS SOURCE LICENSE 1.1 TEXT (UNMODIFIED)
 ==============================================================================
 
-This Additional Use Grant supplements the Business Source License 1.1.
+Business Source License 1.1
 
-Except as described under "Restricted Use", the Licensor grants you permission
-to use, modify, embed, distribute, and commercially exploit this software,
-subject to the conditions of the BSL 1.1.
+License text copyright © 2017 MariaDB Corporation Ab, All Rights Reserved.
+"Business Source License" is a trademark of MariaDB Corporation Ab.
 
-You may use the Licensed Work for any purpose **provided it is not a
-Competing Offering** as defined below.
+Terms
 
--------------------------------------------------------------------------------
-DEFINITION: "Competing Offering"
--------------------------------------------------------------------------------
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited
+production use.
 
-A “Competing Offering” means any software, product, hosted service, tool,
-framework, or API that:
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work under this
+License, whichever comes first, the Licensor hereby grants you rights under
+the terms of the Change License, and the rights granted in the paragraph
+above terminate.
 
-(a) provides AI-driven manipulation, generation, control, automation, or
-    inspection of Blender scenes, objects, meshes, geometry, rendering
-    operations, or Blender’s internal state; AND
+If your use of the Licensed Work does not comply with the requirements
+currently in effect as described in this License, you must purchase a
+commercial license from the Licensor, its affiliated entities, or authorized
+resellers, or you must refrain from using the Licensed Work.
 
-(b) is marketed, positioned, or reasonably understood by users as an
-    alternative, replacement, or substitute for the “blender-ai-mcp”
-    system, including but not limited to: “Blender MCP Server”, “AI agent
-    interface for Blender”, “AI control layer for Blender”, or similar
-    terminology; AND
+All copies of the original and modified Licensed Work, and derivative works
+of the Licensed Work, are subject to this License. This License applies
+separately for each version of the Licensed Work and the Change Date may vary
+for each version of the Licensed Work released by Licensor.
 
-(c) targets the same user base, market segment, or technical purpose as the
-    Licensed Work; AND
+You must conspicuously display this License on each original or modified copy
+of the Licensed Work. If you receive the Licensed Work in original or
+modified form from a third party, the terms and conditions set forth in this
+License apply to your use of that work.
 
-(d) is offered commercially (one-time, subscription, SaaS, bundled,
-    marketplace listing, or enterprise distribution), OR is developed,
-    operated, or distributed by an entity meeting the criteria in the
-    Revenue Threshold section.
+Any use of the Licensed Work in violation of this License will automatically
+terminate your rights under this License for the current and all other
+versions of the Licensed Work.
 
-Any use that meets all four criteria (a)-(d) is strictly prohibited without a
-separate commercial license.
+This License does not grant you any right in any trademark or logo of
+Licensor or its affiliates (provided that you may use a trademark or logo of
+Licensor as expressly required by this License).
 
--------------------------------------------------------------------------------
-PERMITTED USES
--------------------------------------------------------------------------------
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON
+AN “AS IS” BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS,
+EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND
+TITLE.
 
-The following uses are explicitly permitted:
+MariaDB hereby grants you permission to use this License’s text to license
+your works, and to refer to it using the trademark “Business Source License”,
+as long as you comply with the Covenants of Licensor below.
 
-- Use in personal projects of any size  
-- Internal use within an organization (any size), provided it is not a
-  Competing Offering  
-- Use in commercial products, tools, or pipelines that *utilize* the Licensed
-  Work but do not compete with it  
-- Use in games, applications, pipelines, research, academic work, and
-  non-competitive AI tools  
-- Creation of tutorials, courses, technical blog posts, or educational content  
-- Modification, extension, and distribution of modified versions, provided the
-  license remains intact  
-- Consulting, implementation services, or integration work using this software  
-- Forking the repository for experimentation or learning  
-- Development of MCP systems for other software (e.g., Maya, Unreal, Unity)
+Covenants of Licensor
 
--------------------------------------------------------------------------------
-RESTRICTED USES
--------------------------------------------------------------------------------
+In consideration of the right to use this License’s text and the “Business
+Source License” name and trademark, Licensor covenants to MariaDB, and to all
+other recipients of the licensed work to be provided by Licensor:
 
-Without a separate commercial license from the Licensor, you MAY NOT:
+1. To specify as the Change License the GPL Version 2.0 or any later version,
+   or a license that is compatible with GPL Version 2.0 or a later version,
+   where “compatible” means that software provided under the Change License can
+   be included in a program with software provided under GPL Version 2.0 or a
+   later version. Licensor may specify additional Change Licenses without
+   limitation.
 
-- Offer any Competing Offering as defined above  
-- Provide a hosted service, SaaS, cloud offering, or subscription that exposes
-  or wraps the Licensed Work  
-- Rebrand and commercialize the Licensed Work or substantial derivative works  
-- Publish commercial plugins, bundles, or integrations whose primary purpose
-  is to replicate the Licensed Work’s function as a Blender MCP server  
-- Sublicense the software under permissive terms (MIT, Apache, BSD, etc.)  
-- Remove or modify this license  
-- Use legal or structural mechanisms to circumvent licensing restrictions  
+2. To either: (a) specify an additional grant of rights to use that does not
+   impose any additional restriction on the right granted in this License, as
+   the Additional Use Grant; or (b) insert the text “None”.
 
--------------------------------------------------------------------------------
-REVENUE THRESHOLD
--------------------------------------------------------------------------------
+3. To specify a Change Date.
 
-A separate commercial license is required if the Licensed Work is used by an
-entity that:
-
-- has annual revenue exceeding USD $10 million, OR  
-- employs more than 100 people, OR  
-- is publicly traded, OR  
-- is owned by, or acting on behalf of, a publicly traded company
-
-This requirement does not apply to individual contributors acting in a
-personal capacity.
-
--------------------------------------------------------------------------------
-CONTRIBUTOR TERMS
--------------------------------------------------------------------------------
-
-By submitting contributions to this repository, you agree that:
-
-1. Your contributions are your original work.  
-2. You grant the Licensor (PatrykIti) a perpetual, worldwide, non-exclusive,
-   royalty-free license to use, modify, and distribute the contribution as part
-   of the Licensed Work.  
-3. Your contributions are licensed under this same BSL 1.1 license until the
-   Change Date.  
-4. You retain full copyright ownership over your contribution.  
-
-This clause ensures compatibility with future license changes and preserves the
-ability to distribute unified releases of the project.
-
--------------------------------------------------------------------------------
-FAMOUS CLONER PROTECTION
--------------------------------------------------------------------------------
-
-If you are:
-
-- a developer or public figure with a large distribution audience  
-  (e.g., GitHub projects exceeding 10,000 stars or social media > 50,000
-  followers), OR  
-- an organization with established commercial reach, OR  
-- an author of competing tooling in this domain
-
-you must obtain written permission before creating any derivative that could be
-considered competitive or that may materially affect the visibility or
-marketability of the Licensed Work.
-
-Promotional use, contributions, collaborations, or non-competitive use remain
-fully allowed.
-
--------------------------------------------------------------------------------
-ANTI-CIRCUMVENTION
--------------------------------------------------------------------------------
-
-You may not:
-
-- Remove or alter this license text  
-- Repackage the Licensed Work under a different license  
-- Sublicense to third parties in a manner that circumvents these terms  
-- Use corporate structuring or intermediaries to bypass restrictions  
-
--------------------------------------------------------------------------------
-AUTOMATIC CONVERSION
--------------------------------------------------------------------------------
-
-On the Change Date (2029-12-01), this License automatically converts to:
-
-    Apache License 2.0
-
-From that date forward, all restrictions described in this License terminate,
-and the Licensed Work becomes fully open source under Apache 2.0.
-
-No action from the user is required.
-
--------------------------------------------------------------------------------
-COMMERCIAL LICENSE OPTIONS
--------------------------------------------------------------------------------
-
-Commercial licenses are available for entities requiring unrestricted use:
-
-Indicative pricing:
-- Small business (<50 employees):     USD $5,000 / year  
-- Medium business (50–500 employees): USD $25,000 / year  
-- Enterprise (>500 employees):        Custom pricing  
-- High-profile developers / large public forks: Custom terms  
-
-Commercial licenses provide:
-- Right to create Competing Offerings  
-- Removal of all usage restrictions  
-- Support options  
-- Optional custom feature development  
-- Legal indemnity  
-
-Contact: patryk.ciechanski@patrykiti.pl
-
--------------------------------------------------------------------------------
-DISCLAIMER
--------------------------------------------------------------------------------
-
-This software is provided “AS IS”, without warranty of any kind.  
-For warranty and liability terms, refer to the Apache 2.0 license (effective
-after the Change Date).
-
-For the full Business Source License 1.1 template, see:
-https://mariadb.com/bsl11/
-
-In the event of a conflict, this Additional Use Grant prevails.
-
--------------------------------------------------------------------------------
-END OF LICENSE
-------------------------------------------------------------------------------
+4. Not to modify this License in any other way.

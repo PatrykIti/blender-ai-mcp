@@ -1,6 +1,6 @@
 # blender-ai-mcp
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: BUSL-1.1](https://img.shields.io/badge/License-BUSL--1.1-lightgrey.svg)](./LICENSE.md)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
@@ -1284,3 +1284,5 @@ with a custom Additional Use Grant authored by Patryk Ciechański (PatrykIti).
 The license automatically converts to **Apache 2.0** on 2029-12-01.
 
 For the full license text, see: [LICENSE](./LICENSE.md)
+
+Change License text (Apache 2.0): [LICENSE-APACHE-2.0.txt](./LICENSE-APACHE-2.0.txt)
