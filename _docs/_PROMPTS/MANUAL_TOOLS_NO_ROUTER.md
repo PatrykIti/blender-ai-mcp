@@ -59,6 +59,15 @@ RELIABILITY PROTOCOL (MANDATORY)
        * scene_get_bounding_box(object_name=..., world_space=True)
        * scene_get_origin_info(object_name=...) when pivot/origin matters
    - If placement depends on other objects: query THEIR bounding boxes too and compare.
+   - Geometry sanity checks (avoid silent “looks wrong” failures):
+       * Ensure no object has a near-zero dimension on any axis (e.g., Dimensions contain 0.0 or < 1e-4) unless it is intentionally a plane.
+       * Avoid scaling any axis to 0.0 (this creates degenerate meshes like “flat rings”).
+       * For parts that must be round/cylindrical (rollers, axles, ropes, metal rods): do a silhouette check:
+           - scene_isolate_object(object_name=...)
+           - scene_get_viewport(shading="SOLID", focus_target=..., output_mode="IMAGE") OR extraction_render_angles(object_name=...)
+           - If the top view reads as a square/box: rebuild/replace with a cylinder (6–12 sides depending on style/budget).
+           - scene_show_all_objects() after the check
+       * For ropes/wraps: run scene_inspect(action="topology", object_name=..., detailed=True) and fix if non-manifold edges appear unintentionally.
    - If you took a baseline snapshot: take a new snapshot and compare:
        * after = scene_snapshot_state(...)
        * diff = scene_compare_snapshot(baseline_snapshot=baseline, target_snapshot=after)

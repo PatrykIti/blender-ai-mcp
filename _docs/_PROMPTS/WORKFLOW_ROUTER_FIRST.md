@@ -43,6 +43,11 @@ RELIABILITY (STILL REQUIRED)
    * scene_list_objects()
    * scene_inspect(action="object", object_name=...)
    * scene_get_bounding_box(object_name=..., world_space=True)
+- For shape-critical parts (round vs boxy, holes/openings, clearances), do quick visual QA using visibility tools:
+   * scene_isolate_object(object_name=...)
+   * scene_get_viewport(shading="SOLID", focus_target=..., output_mode="IMAGE") or extraction_render_angles(object_name=...)
+   * scene_show_all_objects() after checks
+- If something “looks wrong”, prefer fixing the existing part in-place rather than rebuilding the whole asset.
 - Use scene snapshots around risky/destructive steps (apply modifiers, remesh, big deletes) and undo on unexpected diffs.
 
 WRAP-UP
@@ -56,4 +61,3 @@ WRAP-UP
 - “smartphone with rounded corners”
 - “medieval tower with battlements”
 - “simple table with straight legs”
-
