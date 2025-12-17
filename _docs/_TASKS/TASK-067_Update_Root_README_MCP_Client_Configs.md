@@ -7,7 +7,10 @@
 
 ## Objective
 
-Improve `README.md` so MCP client configuration snippets are easy to find and don’t dominate the page.
+Improve `README.md` so:
+- MCP client configuration snippets are easy to find and don’t dominate the page
+- Router onboarding is clearer (workflow-first flow + `status: "error"` visibility)
+- The Router section doesn’t conflict with global test counts
 
 ## Changes
 
@@ -21,7 +24,7 @@ Wrap each “MCP client config” block in `<details>` so the page is scannable:
 - GitHub Copilot CLI config
 
 ### 2) Add Codex CLI configuration section
-```
+```toml
 [mcp_servers.blender-ai-mcp]
 command = "docker"
 # Optional
@@ -203,16 +206,25 @@ enabled_tools = [
       ]
 ```
 
+### 3) Clarify workflow-first Router usage in root README
+
 **File:** `README.md`
 
-Add a new collapsible section describing Codex CLI configuration:
-- Config path: `~/.codex/config.toml`
-- Example block: `[mcp_servers.blender-ai-mcp]` with `command`, `args`, `env`, `enabled_tools`
-- Notes about Docker networking (`host.docker.internal` vs `--network host`) and `/tmp` volume mapping.
+Add a short “Workflow-First Quick Start” showing:
+- Optional workflow discovery via `workflow_catalog(action="search", ...)`
+- Mandatory `router_set_goal(goal=...)`
+- Response handling for `ready` / `needs_input` / `no_match` / `error`
+
+### 4) Resolve confusing test-count messaging
+
+**File:** `README.md`
+
+The Router section previously used hard-coded test counts that drifted from the global testing section.
+Update it to reference the **🧪 Testing** section for up-to-date numbers instead of repeating stale counts.
+Also remove hard-coded counts from the testing section and add `--collect-only` commands to show current totals.
 
 ## Acceptance Criteria
 
 - [x] `README.md` configuration snippets are collapsed by default.
 - [x] Codex CLI configuration is documented with a working TOML example.
 - [x] No behavioral changes to the server — documentation only.
-

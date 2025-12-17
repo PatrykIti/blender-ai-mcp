@@ -50,26 +50,34 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
 
 ## 🧪 Testing
 
-**Unit Tests** (662+ tests, ~3-4s, no Blender required):
+**Unit Tests** (no Blender required):
 ```bash
 PYTHONPATH=. poetry run pytest tests/unit/ -v
 ```
+To see the current unit test count:
+```bash
+poetry run pytest tests/unit --collect-only
+```
 
-**E2E Tests** (142 tests, ~12s, requires Blender):
+**E2E Tests** (requires Blender):
 ```bash
 # Automated: build → install addon → start Blender → run tests → cleanup
 python3 scripts/run_e2e_tests.py
 ```
+To see the current E2E test count:
+```bash
+poetry run pytest tests/e2e --collect-only
+```
 
-| Type | Count | Coverage |
-|------|-------|----------|
-| Unit Tests | 662+ | All tool handlers |
-| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
+| Type | Coverage |
+|------|----------|
+| Unit Tests | All tool handlers |
+| E2E Tests | Blender addon integration (Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt, Router) |
 
 See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
 
 <details>
-<summary>📋 Latest E2E Test Results (click to expand)</summary>
+<summary>📋 Example E2E Test Output (click to expand)</summary>
 
 ```
 ============================= test session starts ==============================
@@ -479,7 +487,7 @@ Skeletal rigging and animation.
 
 Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
-**Status:** ✅ **Complete** | All 6 Phases Done | **450+ unit tests** | **74 E2E tests**
+**Status:** ✅ **Complete** | All 6 Phases Done | Test counts vary — see **🧪 Testing** for up-to-date numbers
 
 > **Documentation:** See [`_docs/_ROUTER/`](_docs/_ROUTER/) for full documentation including [Quick Start](_docs/_ROUTER/QUICK_START.md), [Configuration](_docs/_ROUTER/CONFIGURATION.md), [Patterns](_docs/_ROUTER/PATTERNS.md), and [API Reference](_docs/_ROUTER/API.md).
 
@@ -492,7 +500,7 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Phase 3: Engines** | Tool correction, Tool override, Workflow expansion, Error firewall, Intent classifier (LaBSE) | ✅ |
 | **Phase 4: Integration** | SupervisorRouter orchestrator, MCP integration, Logging & telemetry | ✅ |
 | **Phase 5: Workflows** | Phone workflow, Tower workflow, Screen cutout workflow, Custom YAML workflows | ✅ |
-| **Phase 6: Testing & Docs** | E2E test suite (74 tests), Complete documentation (6 guides) | ✅ |
+| **Phase 6: Testing & Docs** | E2E test suite (see 🧪 Testing), Complete documentation (6 guides) | ✅ |
 
 #### Key Features
 
@@ -512,6 +520,24 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
 | **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow (TASK-051) |
 | **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params (TASK-052) |
+
+#### Workflow-First Quick Start (recommended)
+
+Use this when you want the LLM to **prefer existing YAML workflows** and only fall back to manual tool-calling when no workflow matches.
+
+```text
+1) Optional: preview likely workflow matches (read-only)
+   workflow_catalog(action="search", query="<your prompt>", top_k=5, threshold=0.0)
+
+2) Set the goal (mandatory)
+   router_set_goal(goal="<your prompt including modifiers>")
+
+3) Handle Router response
+   - status == "needs_input": call router_set_goal(goal, resolved_params={...})
+   - status == "ready": proceed (workflow executes / expands into tool calls)
+   - status == "no_match": switch to manual tool-calling
+   - status == "error": router malfunction (fail-fast). Check logs and open a GitHub issue.
+```
 
 #### Example: LLM sends mesh tool in wrong mode
 
