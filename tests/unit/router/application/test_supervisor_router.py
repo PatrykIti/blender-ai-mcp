@@ -741,13 +741,13 @@ class TestEnsembleMatcherInitialization:
         assert hasattr(router, '_ensemble_matcher')
         assert hasattr(router, '_last_ensemble_result')
         assert hasattr(router, '_pending_modifiers')
-        assert hasattr(router, '_use_ensemble_matching')
+        assert hasattr(router, '_last_ensemble_init_error')
 
         # Initial values
         assert router._ensemble_matcher is None  # Lazy init
         assert router._last_ensemble_result is None
         assert router._pending_modifiers == {}
-        assert router._use_ensemble_matching is True  # Enabled by default
+        assert router._last_ensemble_init_error is None
 
     def test_ensure_ensemble_initialized_creates_components(self):
         """Test _ensure_ensemble_initialized creates ensemble components."""
