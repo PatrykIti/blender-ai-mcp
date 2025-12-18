@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: BUSL-1.1
 
 """
-Router Domain Layer.
+Server Adapters Layer.
 
-Contains entities and interfaces with no external dependencies.
+Author: Patryk Ciechański (PatrykIti)
 """
+
+__author__ = "Patryk Ciechański"

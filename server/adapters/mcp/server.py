@@ -1,3 +1,12 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
+"""
+MCP server entrypoint.
+
+Author: Patryk Ciechański (PatrykIti)
+"""
+
 import logging
 import signal
 import sys

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
 bl_info = {
     "name": "Blender AI MCP",
     "author": "Patryk Ciechański",
@@ -7,6 +10,8 @@ bl_info = {
     "description": "RPC Server for AI MCP Control. GitHub: https://github.com/PatrykIti/blender-ai-mcp",
     "category": "System",
 }
+
+__author__ = bl_info["author"]
 
 try:
     import bpy

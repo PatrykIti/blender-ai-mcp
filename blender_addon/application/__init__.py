@@ -2,12 +2,9 @@
 # SPDX-License-Identifier: BUSL-1.1
 
 """
-FastMCP instance initialization.
+Blender Addon Application Layer.
 
 Author: Patryk Ciechański (PatrykIti)
 """
 
-from fastmcp import FastMCP
-
-# Initialize MCP Server instance
-mcp = FastMCP("blender-ai-mcp")
+__author__ = "Patryk Ciechański"
