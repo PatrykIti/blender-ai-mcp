@@ -1,0 +1,21 @@
+{
+  "tool_name": "text_edit",
+  "category": "text",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["text", "edit", "modify", "change", "update", "content"],
+  "sample_prompts": ["edit text", "change text content", "update text size"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "text": {"type": "string", "default": null},
+    "size": {"type": "float", "default": null},
+    "extrude": {"type": "float", "default": null},
+    "bevel_depth": {"type": "float", "default": null},
+    "bevel_resolution": {"type": "int", "default": null},
+    "align_x": {"type": "enum", "options": ["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"], "default": null},
+    "align_y": {"type": "enum", "options": ["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"], "default": null}
+  },
+  "related_tools": ["text_create", "text_to_mesh"],
+  "patterns": [],
+  "description": "Modifies an existing text object's content and properties."
+}

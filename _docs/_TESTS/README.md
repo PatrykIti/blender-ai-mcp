@@ -38,7 +38,7 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 662+ | ~3-4 seconds |
+| Unit Tests | 905+ | ~5-6 seconds |
 | E2E Tests | 142 | ~12 seconds |
 
 ## Test Coverage by Area
@@ -57,6 +57,21 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 | Baking | ✅ | ✅ |
 | System | ✅ | ✅ |
 | Curve | ✅ | 🔄 |
+| Router | ✅ | ✅ |
+
+### Router & Workflow Subsystems
+
+| Subsystem | Unit Tests | E2E Tests | Related Tasks |
+|-----------|------------|-----------|---------------|
+| **Ensemble Matching** | ✅ | ✅ | TASK-053, TASK-054 |
+| **Parameter Resolution** | ✅ | ✅ | TASK-055-FIX |
+| **Workflow Execution** | ✅ | ✅ | TASK-041, TASK-052 |
+| **Expression Evaluator** | ✅ | 📋 Planned | **TASK-056-1**: Extended math functions (13 new) ✅ DONE |
+| **Condition Evaluator** | ✅ | 📋 Planned | **TASK-056-2**: Parentheses support, operator precedence ✅ DONE |
+| **Parameter Validation** | ✅ | 📋 Planned | **TASK-056-3**: Enum constraints ✅ DONE |
+| **Step Dependencies** | ✅ | 📋 Planned | **TASK-056-4**: Topological sort, timeout, retry ✅ DONE |
+| **Computed Parameters** | ✅ | 📋 Planned | **TASK-056-5**: Dependency graph, expression eval ✅ DONE |
+| **Dynamic Workflow Steps** | 📋 Planned | 📋 Planned | **TASK-055-FIX-7**: Conditional planks, adaptive count |
 
 ---
 
@@ -138,6 +153,76 @@ GitHub Actions run **only unit tests** (no Blender available in CI):
 
 ---
 
+## Upcoming Test Requirements
+
+### TASK-056: Workflow System Enhancements
+
+**New Unit Tests Required:**
+
+```
+tests/unit/router/application/evaluator/
+├── test_expression_evaluator_extended.py   # TASK-056-1: 13 new math functions
+├── test_condition_evaluator_parentheses.py # TASK-056-2: Parentheses & precedence
+└── test_parameter_validation_enum.py       # TASK-056-3: Enum constraints
+
+tests/unit/router/infrastructure/
+├── test_dependency_resolver.py             # TASK-056-4: Step dependencies
+└── test_computed_parameters.py             # TASK-056-5: Computed param resolution
+```
+
+**Test Coverage Goals:**
+- Expression evaluator: Each new function (tan, atan2, log, exp, etc.)
+- Condition evaluator: Operator precedence `not` > `and` > `or`, nested parentheses
+- Parameter validation: Enum constraints, rejection of invalid values
+- Dependency resolver: Graph construction, circular dependency detection
+- Computed parameters: Evaluation order, dependency tracking
+
+**E2E Integration Tests:**
+- Workflow loading with new features
+- End-to-end execution with dependencies
+- Error handling and retry logic
+- Complex boolean conditions in real workflows
+
+### TASK-055-FIX-7: Dynamic Plank System
+
+**Manual Verification Required:**
+
+```bash
+# Test simple_table.yaml with different widths
+ROUTER_ENABLED=true poetry run python -c "
+from server.router.application.router import SupervisorRouter
+router = SupervisorRouter()
+
+# Test cases:
+# 1. Default (0.8m) → 8 planks × 0.10m each
+result = router.set_goal('simple table 0.8m wide')
+
+# 2. Narrow (0.45m) → 5 planks × 0.09m each (fractional)
+result = router.set_goal('table 0.45m wide')
+
+# 3. Wide (1.2m) → 12 planks × 0.10m each
+result = router.set_goal('table 1.2m wide')
+
+# 4. Fractional (0.83m) → 9 planks × 0.0922m each
+result = router.set_goal('table 0.83m wide')
+"
+```
+
+**Visual Verification:**
+- Use `scene_get_viewport` to verify plank count and spacing
+- Check plank width adapts correctly (`table_width / ceil(table_width / 0.10)`)
+- Verify no gaps or overlaps in table top
+- Confirm fractional widths work correctly
+
+**Acceptance Criteria:**
+- Parameter names: `leg_offset_x`, `leg_offset_y` (not old verbose names)
+- New parameter: `plank_max_width` (default 0.10)
+- 15 conditional planks with `condition: "ceil(table_width / plank_max_width) >= N"`
+- Plank count adapts to table width dynamically
+- No visual artifacts in generated tables
+
+---
+
 ## Documentation
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Detailed test architecture, patterns, and guidelines
@@ -146,3 +231,5 @@ GitHub Actions run **only unit tests** (no Blender available in CI):
 ## See Also
 
 - [TASK-028: E2E Testing Infrastructure](../_TASKS/TASK-028_E2E_Testing_Infrastructure.md)
+- [TASK-056: Workflow System Enhancements](../_TASKS/TASK-056_Workflow_System_Enhancements.md)
+- [TASK-055-FIX-7: Dynamic Plank System](../_TASKS/TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md)

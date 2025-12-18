@@ -58,6 +58,11 @@ Technical details.
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
+| `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
+| `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
+| `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
+| `scene.get_bounding_box` | `get_bounding_box` | Gets bounding box corners in world/local space. |
+| `scene.get_origin_info` | `get_origin_info` | Gets origin (pivot point) information for an object. |
 
 ### Collection (`application/handlers/collection.py`)
 
@@ -77,6 +82,7 @@ Technical details.
 | `material.assign` | `assign_material` | Assigns material to object or selected faces. |
 | `material.set_params` | `set_material_params` | Modifies existing material parameters. |
 | `material.set_texture` | `set_material_texture` | Binds image texture to material input. |
+| `material.inspect_nodes` | `inspect_nodes` | Inspects material shader node graph with connections. |
 
 ### UV (`application/handlers/uv.py`)
 
@@ -196,6 +202,11 @@ Technical details.
 | `mesh.split` | `split` | Splits selection from mesh (disconnects without separating). |
 | `mesh.edge_split` | `edge_split` | Splits mesh at selected edges (creates seams). |
 | `mesh.set_proportional_edit` | `set_proportional_edit` | Configures proportional editing mode. |
+| `mesh.symmetrize` | `symmetrize` | Makes mesh symmetric by mirroring one side to the other. |
+| `mesh.grid_fill` | `grid_fill` | Fills boundary with a grid of quads. |
+| `mesh.poke_faces` | `poke_faces` | Pokes selected faces (adds vertex at center). |
+| `mesh.beautify_fill` | `beautify_fill` | Rearranges triangles to more uniform triangulation. |
+| `mesh.mirror` | `mirror` | Mirrors selected geometry within the same object. |
 
 
 ### Curve (`application/handlers/curve.py`)
@@ -204,6 +215,15 @@ Technical details.
 |-------------|----------------|-------------|
 | `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
 | `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
+
+
+### Text (`application/handlers/text.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `text.create` | `create` | Creates 3D text object with optional extrusion and bevel. |
+| `text.edit` | `edit` | Edits text object content and properties. |
+| `text.to_mesh` | `to_mesh` | Converts text to mesh for game export. |
 
 
 ### Sculpt (`application/handlers/sculpt.py`)
@@ -273,4 +293,18 @@ Technical details.
 | `lattice.create` | `lattice_create` | Creates lattice object, auto-fits to target bounds. |
 | `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
 | `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
+
+
+### Extraction (`application/handlers/extraction.py`)
+
+Analysis tools for the Automatic Workflow Extraction System (TASK-042).
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `extraction.deep_topology` | `deep_topology` | Deep topology analysis with base primitive and feature detection. |
+| `extraction.component_separate` | `component_separate` | Separates mesh into loose parts for individual analysis. |
+| `extraction.detect_symmetry` | `detect_symmetry` | Detects X/Y/Z symmetry planes using KDTree with confidence scores. |
+| `extraction.edge_loop_analysis` | `edge_loop_analysis` | Analyzes edge loops, boundary/manifold/non-manifold edges. |
+| `extraction.face_group_analysis` | `face_group_analysis` | Analyzes face groups by normal direction and height levels. |
+| `extraction.render_angles` | `render_angles` | Multi-angle renders for LLM Vision semantic analysis. |
 

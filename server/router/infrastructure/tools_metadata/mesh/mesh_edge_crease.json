@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_edge_crease",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["crease", "sharp", "subdivision", "hard edge", "subsurf"],
+  "sample_prompts": [
+    "set edge crease",
+    "make edges sharp for subdivision",
+    "add crease to edges",
+    "control subdivision sharpness"
+  ],
+  "parameters": {
+    "crease_value": {
+      "type": "float",
+      "default": 1.0,
+      "range": [0.0, 1.0],
+      "description": "Crease weight (0=smooth, 1=sharp)"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "modeling_add_modifier", "mesh_bevel_weight"],
+  "patterns": ["phone_like:sharp_edges", "tower_like:sharp_corners"],
+  "description": "Sets crease weight on selected edges for Subdivision Surface control."
+}

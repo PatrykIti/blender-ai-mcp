@@ -1,0 +1,25 @@
+{
+  "tool_name": "mesh_flatten",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["flatten", "align", "plane", "flat", "level"],
+  "sample_prompts": [
+    "flatten the vertices",
+    "make it flat on X axis",
+    "align vertices to plane",
+    "level the selection",
+    "flatten along Z"
+  ],
+  "parameters": {
+    "axis": {
+      "type": "enum",
+      "options": ["X", "Y", "Z"],
+      "required": true,
+      "description": "Axis to flatten along"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_transform_selected"],
+  "patterns": [],
+  "description": "Flattens selected vertices to a plane perpendicular to chosen axis."
+}

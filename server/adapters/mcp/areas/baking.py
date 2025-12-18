@@ -8,6 +8,7 @@ from typing import Optional
 from fastmcp import Context
 
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_baking_handler
 
 
@@ -52,15 +53,26 @@ def bake_normal_map(
     - Self-bake: bake_normal_map("LowPoly_Mesh", "/tmp/normal.png")
     - High-to-low: bake_normal_map("LowPoly", "/tmp/normal.png", high_poly_source="HighPoly_Sculpt")
     """
-    handler = get_baking_handler()
-    return handler.bake_normal_map(
-        object_name=object_name,
-        output_path=output_path,
-        resolution=resolution,
-        high_poly_source=high_poly_source,
-        cage_extrusion=cage_extrusion,
-        margin=margin,
-        normal_space=normal_space
+    return route_tool_call(
+        tool_name="bake_normal_map",
+        params={
+            "object_name": object_name,
+            "output_path": output_path,
+            "resolution": resolution,
+            "high_poly_source": high_poly_source,
+            "cage_extrusion": cage_extrusion,
+            "margin": margin,
+            "normal_space": normal_space
+        },
+        direct_executor=lambda: get_baking_handler().bake_normal_map(
+            object_name=object_name,
+            output_path=output_path,
+            resolution=resolution,
+            high_poly_source=high_poly_source,
+            cage_extrusion=cage_extrusion,
+            margin=margin,
+            normal_space=normal_space
+        )
     )
 
 
@@ -98,14 +110,24 @@ def bake_ao(
 
     Tip: For clean AO, ensure mesh has no overlapping geometry.
     """
-    handler = get_baking_handler()
-    return handler.bake_ao(
-        object_name=object_name,
-        output_path=output_path,
-        resolution=resolution,
-        samples=samples,
-        distance=distance,
-        margin=margin
+    return route_tool_call(
+        tool_name="bake_ao",
+        params={
+            "object_name": object_name,
+            "output_path": output_path,
+            "resolution": resolution,
+            "samples": samples,
+            "distance": distance,
+            "margin": margin
+        },
+        direct_executor=lambda: get_baking_handler().bake_ao(
+            object_name=object_name,
+            output_path=output_path,
+            resolution=resolution,
+            samples=samples,
+            distance=distance,
+            margin=margin
+        )
     )
 
 
@@ -144,16 +166,28 @@ def bake_combined(
 
     Note: Ensure scene has proper lighting setup before baking.
     """
-    handler = get_baking_handler()
-    return handler.bake_combined(
-        object_name=object_name,
-        output_path=output_path,
-        resolution=resolution,
-        samples=samples,
-        margin=margin,
-        use_pass_direct=use_pass_direct,
-        use_pass_indirect=use_pass_indirect,
-        use_pass_color=use_pass_color
+    return route_tool_call(
+        tool_name="bake_combined",
+        params={
+            "object_name": object_name,
+            "output_path": output_path,
+            "resolution": resolution,
+            "samples": samples,
+            "margin": margin,
+            "use_pass_direct": use_pass_direct,
+            "use_pass_indirect": use_pass_indirect,
+            "use_pass_color": use_pass_color
+        },
+        direct_executor=lambda: get_baking_handler().bake_combined(
+            object_name=object_name,
+            output_path=output_path,
+            resolution=resolution,
+            samples=samples,
+            margin=margin,
+            use_pass_direct=use_pass_direct,
+            use_pass_indirect=use_pass_indirect,
+            use_pass_color=use_pass_color
+        )
     )
 
 
@@ -184,10 +218,18 @@ def bake_diffuse(
 
     Note: Only captures color, not lighting. For full appearance use bake_combined.
     """
-    handler = get_baking_handler()
-    return handler.bake_diffuse(
-        object_name=object_name,
-        output_path=output_path,
-        resolution=resolution,
-        margin=margin
+    return route_tool_call(
+        tool_name="bake_diffuse",
+        params={
+            "object_name": object_name,
+            "output_path": output_path,
+            "resolution": resolution,
+            "margin": margin
+        },
+        direct_executor=lambda: get_baking_handler().bake_diffuse(
+            object_name=object_name,
+            output_path=output_path,
+            resolution=resolution,
+            margin=margin
+        )
     )

@@ -1,0 +1,19 @@
+{
+  "tool_name": "armature_add_bone",
+  "category": "armature",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["bone", "add", "armature", "skeleton", "rig", "hierarchy", "parent"],
+  "sample_prompts": ["add bone to armature", "create new bone", "add child bone", "extend skeleton"],
+  "parameters": {
+    "armature_name": {"type": "string", "required": true},
+    "bone_name": {"type": "string", "required": true},
+    "head": {"type": "vector3", "required": true},
+    "tail": {"type": "vector3", "required": true},
+    "parent_bone": {"type": "string", "default": null},
+    "use_connect": {"type": "bool", "default": false}
+  },
+  "related_tools": ["armature_create", "armature_bind"],
+  "patterns": ["character_rig", "bone_chain"],
+  "description": "Adds bone to armature with optional parenting."
+}

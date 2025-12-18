@@ -1,0 +1,28 @@
+{
+  "tool_name": "mesh_create_vertex_group",
+  "category": "mesh",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["vertex group", "create group", "weight paint", "armature", "deformation"],
+  "sample_prompts": [
+    "create a vertex group",
+    "add new vertex group",
+    "create group for arm",
+    "make vertex group named head"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the mesh object"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name for the new vertex group"
+    }
+  },
+  "related_tools": ["mesh_assign_to_group", "mesh_remove_from_group", "mesh_list_groups"],
+  "patterns": [],
+  "description": "Creates a new vertex group on a mesh object."
+}

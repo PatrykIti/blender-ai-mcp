@@ -1,0 +1,22 @@
+{
+  "tool_name": "extraction_render_angles",
+  "category": "extraction",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["render", "angles", "views", "screenshot", "image", "LLM vision", "extraction"],
+  "sample_prompts": [
+    "render from multiple angles",
+    "take screenshots of the model",
+    "render views for analysis",
+    "create reference images"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "required": true, "description": "Object to render"},
+    "angles": {"type": "array", "required": false, "default": ["front", "back", "left", "right", "top", "iso"], "description": "Angles to render"},
+    "resolution": {"type": "integer", "required": false, "default": 512, "description": "Image resolution"},
+    "output_dir": {"type": "string", "required": false, "default": "/tmp/extraction_renders", "description": "Output directory"}
+  },
+  "related_tools": ["scene_get_viewport", "scene_camera_orbit", "scene_camera_focus"],
+  "patterns": [],
+  "description": "Renders object from multiple angles for LLM Vision analysis."
+}

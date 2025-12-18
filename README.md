@@ -1,6 +1,6 @@
 # blender-ai-mcp
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: BUSL-1.1](https://img.shields.io/badge/License-BUSL--1.1-lightgrey.svg)](./LICENSE.md)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
@@ -38,6 +38,72 @@ Most AI solutions for Blender rely on asking the LLM to "write a Python script".
 
 ---
 
+## 🏗️ Architecture
+
+This project uses a split-architecture design:
+1.  **MCP Server (Python/FastMCP)**: Handles AI communication.
+2.  **Blender Addon (Python/bpy)**: Executes 3D operations.
+
+Communication happens via **JSON-RPC over TCP sockets**.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
+
+## 🧪 Testing
+
+**Unit Tests** (no Blender required):
+```bash
+PYTHONPATH=. poetry run pytest tests/unit/ -v
+```
+To see the current unit test count:
+```bash
+poetry run pytest tests/unit --collect-only
+```
+
+**E2E Tests** (requires Blender):
+```bash
+# Automated: build → install addon → start Blender → run tests → cleanup
+python3 scripts/run_e2e_tests.py
+```
+To see the current E2E test count:
+```bash
+poetry run pytest tests/e2e --collect-only
+```
+
+| Type | Coverage |
+|------|----------|
+| Unit Tests | All tool handlers |
+| E2E Tests | Blender addon integration (Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt, Router) |
+
+See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
+
+<details>
+<summary>📋 Example E2E Test Output (click to expand)</summary>
+
+```
+============================= test session starts ==============================
+platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
+collected 142 items
+
+tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
+tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
+tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
+
+============================= 142 passed in 12.25s =============================
+```
+
+</details>
+
+---
+
 ## 🗺️ Roadmap & Capabilities
 
 > **Legend:** ✅ Done | 🚧 To Do
@@ -66,6 +132,17 @@ Object Mode operations for scene management and inspection.
 | `scene_inspect_material_slots` | Material slot assignments | ✅ |
 | `scene_inspect_mesh_topology` | Topology stats | ✅ |
 | `scene_inspect_modifiers` | Modifier stack info | ✅ |
+| `scene_rename_object` | Rename object by name | ✅ |
+| `scene_hide_object` | Hide/show object in viewport | ✅ |
+| `scene_show_all_objects` | Show all hidden objects | ✅ |
+| `scene_isolate_object` | Isolate object (hide all others) | ✅ |
+| `scene_camera_orbit` | Orbit viewport around target | ✅ |
+| `scene_camera_focus` | Focus viewport on object | ✅ |
+| `scene_get_custom_properties` | Get object metadata/custom properties | ✅ |
+| `scene_set_custom_property` | Set/delete custom property on object | ✅ |
+| `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
+| `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
+| `scene_get_origin_info` | Get origin/pivot point info | ✅ |
 
 ---
 
@@ -95,8 +172,9 @@ Object Mode operations for creating and transforming objects.
 #### Text Objects
 | Tool | Description | Status |
 |------|-------------|--------|
-| `text_create` | Create 3D text object | 🚧 |
-| `text_edit` | Modify text content and properties | 🚧 |
+| `text_create` | Create 3D text object | ✅ |
+| `text_edit` | Modify text content and properties | ✅ |
+| `text_to_mesh` | Convert text to mesh for export | ✅ |
 
 #### Skin Modifier (Tubular Structures)
 | Tool | Description | Status |
@@ -203,10 +281,11 @@ Edit Mode operations for geometry manipulation.
 #### Symmetry & Fill
 | Tool | Description | Status |
 |------|-------------|--------|
-| `mesh_symmetrize` | Make mesh symmetric | 🚧 |
-| `mesh_grid_fill` | Fill boundary with quad grid | 🚧 |
-| `mesh_poke_faces` | Poke faces (add center vertex) | 🚧 |
-| `mesh_beautify_fill` | Rearrange triangles uniformly | 🚧 |
+| `mesh_symmetrize` | Make mesh symmetric | ✅ |
+| `mesh_grid_fill` | Fill boundary with quad grid | ✅ |
+| `mesh_poke_faces` | Poke faces (add center vertex) | ✅ |
+| `mesh_beautify_fill` | Rearrange triangles uniformly | ✅ |
+| `mesh_mirror` | Mirror selected geometry | ✅ |
 | `mesh_set_proportional_edit` | Enable soft selection falloff | ✅ |
 
 ---
@@ -246,6 +325,7 @@ Material creation and assignment.
 | `material_assign` | Assign to objects/faces | ✅ |
 | `material_set_params` | Adjust roughness, metallic, etc. | ✅ |
 | `material_set_texture` | Bind image textures | ✅ |
+| `material_inspect_nodes` | Inspect shader node graph | ✅ |
 
 ---
 
@@ -315,6 +395,21 @@ Texture baking for game dev workflows.
 
 ---
 
+### Extraction Tools (`extraction_*`)
+
+Analysis tools for the Automatic Workflow Extraction System. Enables deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `extraction_deep_topology` | Deep topology analysis with feature detection | ✅ |
+| `extraction_component_separate` | Separate mesh into loose parts | ✅ |
+| `extraction_detect_symmetry` | Detect X/Y/Z symmetry planes | ✅ |
+| `extraction_edge_loop_analysis` | Analyze edge loops and patterns | ✅ |
+| `extraction_face_group_analysis` | Analyze face groups by normal/height | ✅ |
+| `extraction_render_angles` | Multi-angle renders for LLM Vision | ✅ |
+
+---
+
 ### Metaball Tools (`metaball_*`)
 
 Organic blob primitives for medical/biological modeling.
@@ -376,74 +471,76 @@ Organic shaping and sculpt workflows.
 
 ### Armature Tools (`armature_*`)
 
-Skeletal rigging and animation (future).
+Skeletal rigging and animation.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `armature_create` | Create armature with initial bone | 🚧 |
-| `armature_add_bone` | Add bone to armature | 🚧 |
-| `armature_bind` | Bind mesh to armature (auto weights) | 🚧 |
-| `armature_pose_bone` | Pose armature bone | 🚧 |
-| `weight_paint_assign` | Assign weights to vertex group | 🚧 |
+| `armature_create` | Create armature with initial bone | ✅ |
+| `armature_add_bone` | Add bone to armature | ✅ |
+| `armature_bind` | Bind mesh to armature (auto weights) | ✅ |
+| `armature_pose_bone` | Pose armature bone | ✅ |
+| `armature_weight_paint_assign` | Assign weights to vertex group | ✅ |
 
 ---
 
-### 🤖 Router Supervisor (Planned)
+### 🤖 Router Supervisor ✅
 
 Intelligent Router acting as **supervisor over LLM tool calls** - not just an "intent matcher". Intercepts, corrects, expands, and overrides tool calls before execution.
 
-#### Phase 1: Foundation & Infrastructure
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Router Directory Structure | Clean Architecture package structure | 🚧 |
-| Domain Entities | InterceptedToolCall, SceneContext, Pattern | 🚧 |
-| Domain Interfaces | Abstract interfaces for all components | 🚧 |
-| Metadata Loader | Tool definitions from JSON | 🚧 |
-| Configuration System | Router behavior settings | 🚧 |
+**Status:** ✅ **Complete** | All 6 Phases Done | Test counts vary — see **🧪 Testing** for up-to-date numbers
 
-#### Phase 2: Scene Analysis
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Tool Interceptor | Capture all LLM tool calls | 🚧 |
-| Scene Context Analyzer | Read Blender state via RPC | 🚧 |
-| Geometry Pattern Detector | Detect tower/phone/table patterns | 🚧 |
-| Proportion Calculator | Calculate aspect ratios, is_flat, is_tall | 🚧 |
+> **Documentation:** See [`_docs/_ROUTER/`](_docs/_ROUTER/) for full documentation including [Quick Start](_docs/_ROUTER/QUICK_START.md), [Configuration](_docs/_ROUTER/CONFIGURATION.md), [Patterns](_docs/_ROUTER/PATTERNS.md), and [API Reference](_docs/_ROUTER/API.md).
 
-#### Phase 3: Tool Processing Engines
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Tool Correction Engine | Fix params, mode, selection | 🚧 |
-| Tool Override Engine | Replace with better alternatives | 🚧 |
-| Workflow Expansion Engine | 1 tool → N tools | 🚧 |
-| Error Firewall | Block/fix invalid operations | 🚧 |
-| Intent Classifier (TF-IDF) | Offline intent matching | 🚧 |
+#### All Phases Complete ✅
 
-#### Phase 4: Integration
-| Component | Description | Status |
-|-----------|-------------|--------|
-| SupervisorRouter | Main orchestrator | 🚧 |
-| MCP Integration | Hook into tool execution | 🚧 |
-| Logging & Telemetry | Decision logging | 🚧 |
+| Phase | Components | Status |
+|-------|------------|--------|
+| **Phase 1: Foundation** | Directory structure, Domain entities, Interfaces, Metadata loader (119 JSON files), Config | ✅ |
+| **Phase 2: Analysis** | Tool interceptor, Scene context analyzer, Geometry pattern detector, Proportion calculator | ✅ |
+| **Phase 3: Engines** | Tool correction, Tool override, Workflow expansion, Error firewall, Intent classifier (LaBSE) | ✅ |
+| **Phase 4: Integration** | SupervisorRouter orchestrator, MCP integration, Logging & telemetry | ✅ |
+| **Phase 5: Workflows** | Phone workflow, Tower workflow, Screen cutout workflow, Custom YAML workflows | ✅ |
+| **Phase 6: Testing & Docs** | E2E test suite (see 🧪 Testing), Complete documentation (6 guides) | ✅ |
 
-#### Phase 5: Workflows & Patterns
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Phone Workflow | Complete phone modeling sequence | 🚧 |
-| Tower Workflow | Pillar/column with taper | 🚧 |
-| Screen Cutout Workflow | Display inset sub-workflow | 🚧 |
-| Custom Workflow System | YAML-defined workflows | 🚧 |
+#### Key Features
 
-**Key Features:**
-- **LLM Supervisor** - Intercepts and corrects LLM tool calls before execution
-- **Scene-Aware** - Analyzes Blender state to make informed decisions
-- **Pattern Detection** - Recognizes tower, phone, table structures
-- **Auto-Correction** - Fixes mode, selection, parameter errors
-- **Workflow Expansion** - Single tool → complete workflow
-- **Error Firewall** - Blocks invalid operations before they crash
-- **100% Offline** - No external API calls for core routing
-- **Multilingual** - LaBSE supports 109 languages (optional)
+| Feature | Description |
+|---------|-------------|
+| **LLM Supervisor** | Intercepts and corrects LLM tool calls before execution |
+| **Scene-Aware** | Analyzes Blender state via RPC for informed decisions |
+| **Pattern Detection** | Recognizes 9 patterns: tower, phone, table, pillar, wheel, box, sphere, cylinder |
+| **Auto-Correction** | Fixes mode violations, missing selection, invalid parameters |
+| **Workflow Expansion** | Single tool → complete multi-step workflow |
+| **Error Firewall** | Blocks/fixes invalid operations before they crash |
+| **100% Offline** | No external API calls - LaBSE runs locally (~1.8GB RAM) |
+| **Multilingual** | LaBSE supports 109 languages for intent classification |
+| **Semantic Matching** | Match workflows by meaning, not just keywords (LaBSE embeddings) |
+| **Generalization** | Use similar workflow when exact match missing |
+| **Feedback Learning** | Improve matching from user corrections |
+| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
+| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow (TASK-051) |
+| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params (TASK-052) |
 
-**Example: LLM sends mesh tool in wrong mode**
+#### Workflow-First Quick Start (recommended)
+
+Use this when you want the LLM to **prefer existing YAML workflows** and only fall back to manual tool-calling when no workflow matches.
+
+```text
+1) Optional: preview likely workflow matches (read-only)
+   workflow_catalog(action="search", query="<your prompt>", top_k=5, threshold=0.0)
+
+2) Set the goal (mandatory)
+   router_set_goal(goal="<your prompt including modifiers>")
+
+3) Handle Router response
+   - status == "needs_input": call router_set_goal(goal, resolved_params={...})
+   - status == "ready": proceed (workflow executes / expands into tool calls)
+   - status == "no_match": switch to manual tool-calling
+   - status == "error": router malfunction (fail-fast). Check logs and open a GitHub issue.
+```
+
+#### Example: LLM sends mesh tool in wrong mode
+
 ```
 LLM: mesh_extrude(depth=0.5)  # In OBJECT mode, no selection
 
@@ -460,6 +557,62 @@ Router outputs:
   5. system_set_mode(mode="OBJECT")
 
 Result: Screen cutout created instead of crash!
+```
+
+#### Semantic Workflow Matching
+
+```
+User: "zrób krzesło" (make a chair)
+
+Router behavior:
+  → LaBSE semantic similarity search
+  → Found: table_workflow (0.72), tower_workflow (0.45)
+  → Uses table_workflow with inherited proportions
+  → Chair has proper leg ratios from table, vertical proportions from tower
+```
+
+#### Parametric Variables (TASK-052)
+
+```yaml
+# In workflow YAML:
+defaults:
+  leg_angle: 0.32        # A-frame legs (default)
+
+modifiers:
+  "straight legs":
+    leg_angle: 0         # Override for vertical legs
+  "proste nogi":         # Polish support
+    leg_angle: 0
+
+steps:
+  - tool: modeling_transform_object
+    params:
+      rotation: [0, "$leg_angle", 0]  # Uses variable
+```
+
+```
+User: "table with straight legs"
+→ Modifier "straight legs" matches
+→ leg_angle = 0 (vertical legs instead of A-frame)
+
+User: "stół z proste nogi"
+→ Polish modifier matches
+→ Same result: vertical legs
+```
+
+#### Configuration Presets
+
+```python
+from server.router.infrastructure.config import RouterConfig
+
+# Default (recommended)
+config = RouterConfig()
+
+# Strict mode (no auto-fixes)
+config = RouterConfig(auto_mode_switch=False, auto_selection=False)
+
+# Performance mode (longer cache)
+config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ```
 
 ---
@@ -495,13 +648,13 @@ Result: Screen cutout created instead of crash!
 3. Click **Install...** and select the zip file.
 4. Enable the addon. It will start a local server on port `8765`.
 
-### 2. Configure your MCP Client (Cline / Claude Code)
+### 2. Configure your MCP Client (Cline / Claude Code / Codex CLI)
 
 We recommend using Docker to run the MCP Server.
 
-**Cline Configuration (`cline_mcp_settings.json`):**
+<details>
+<summary><strong>Cline / Claude Code — <code>cline_mcp_settings.json</code> (macOS/Windows)</strong></summary>
 
-**For macOS/Windows:**
 ```json
 {
   "mcpServers": {
@@ -528,6 +681,17 @@ We recommend using Docker to run the MCP Server.
         "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
+        "scene_rename_object",
+        "scene_hide_object",
+        "scene_show_all_objects",
+        "scene_isolate_object",
+        "scene_camera_orbit",
+        "scene_camera_focus",
+        "scene_get_custom_properties",
+        "scene_set_custom_property",
+        "scene_get_hierarchy",
+        "scene_get_bounding_box",
+        "scene_get_origin_info",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -537,6 +701,7 @@ We recommend using Docker to run the MCP Server.
         "material_assign",
         "material_set_params",
         "material_set_texture",
+        "material_inspect_nodes",
         "uv_list_maps",
         "uv_unwrap",
         "uv_pack_islands",
@@ -593,8 +758,16 @@ We recommend using Docker to run the MCP Server.
         "mesh_rip",
         "mesh_split",
         "mesh_edge_split",
+        "mesh_symmetrize",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "text_create",
+        "text_edit",
+        "text_to_mesh",
         "export_glb",
         "export_fbx",
         "export_obj",
@@ -616,6 +789,9 @@ We recommend using Docker to run the MCP Server.
         "metaball_to_mesh",
         "skin_create_skeleton",
         "skin_set_radius",
+        "lattice_create",
+        "lattice_bind",
+        "lattice_edit_point",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -630,14 +806,33 @@ We recommend using Docker to run the MCP Server.
         "import_obj",
         "import_fbx",
         "import_glb",
-        "import_image_as_plane"
+        "import_image_as_plane",
+        "extraction_deep_topology",
+        "extraction_component_separate",
+        "extraction_detect_symmetry",
+        "extraction_edge_loop_analysis",
+        "extraction_face_group_analysis",
+        "extraction_render_angles",
+        "armature_create",
+        "armature_add_bone",
+        "armature_bind",
+        "armature_pose_bone",
+        "armature_weight_paint_assign",
+        "workflow_catalog",
+        "router_set_goal",
+        "router_get_status",
+        "router_clear_goal"
       ]
     }
   }
 }
 ```
 
-**For Linux:**
+</details>
+
+<details>
+<summary><strong>Cline / Claude Code — <code>cline_mcp_settings.json</code> (Linux)</strong></summary>
+
 ```json
 {
   "mcpServers": {
@@ -665,6 +860,17 @@ We recommend using Docker to run the MCP Server.
         "scene_inspect",
         "scene_snapshot_state",
         "scene_compare_snapshot",
+        "scene_rename_object",
+        "scene_hide_object",
+        "scene_show_all_objects",
+        "scene_isolate_object",
+        "scene_camera_orbit",
+        "scene_camera_focus",
+        "scene_get_custom_properties",
+        "scene_set_custom_property",
+        "scene_get_hierarchy",
+        "scene_get_bounding_box",
+        "scene_get_origin_info",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -674,6 +880,7 @@ We recommend using Docker to run the MCP Server.
         "material_assign",
         "material_set_params",
         "material_set_texture",
+        "material_inspect_nodes",
         "uv_list_maps",
         "uv_unwrap",
         "uv_pack_islands",
@@ -730,8 +937,16 @@ We recommend using Docker to run the MCP Server.
         "mesh_rip",
         "mesh_split",
         "mesh_edge_split",
+        "mesh_symmetrize",
+        "mesh_grid_fill",
+        "mesh_poke_faces",
+        "mesh_beautify_fill",
+        "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "text_create",
+        "text_edit",
+        "text_to_mesh",
         "export_glb",
         "export_fbx",
         "export_obj",
@@ -753,6 +968,9 @@ We recommend using Docker to run the MCP Server.
         "metaball_to_mesh",
         "skin_create_skeleton",
         "skin_set_radius",
+        "lattice_create",
+        "lattice_bind",
+        "lattice_edit_point",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -767,14 +985,33 @@ We recommend using Docker to run the MCP Server.
         "import_obj",
         "import_fbx",
         "import_glb",
-        "import_image_as_plane"
+        "import_image_as_plane",
+        "extraction_deep_topology",
+        "extraction_component_separate",
+        "extraction_detect_symmetry",
+        "extraction_edge_loop_analysis",
+        "extraction_face_group_analysis",
+        "extraction_render_angles",
+        "armature_create",
+        "armature_add_bone",
+        "armature_bind",
+        "armature_pose_bone",
+        "armature_weight_paint_assign",
+        "workflow_catalog",
+        "router_set_goal",
+        "router_get_status",
+        "router_clear_goal"
       ]
     }
   }
 }
 ```
 
-**For GitHub Copilot CLI:**
+</details>
+
+<details>
+<summary><strong>GitHub Copilot CLI</strong></summary>
+
 Copilot uses a slightly different config structure. Ensure you map the temp directory properly if you want file outputs.
 
 ```json
@@ -803,6 +1040,199 @@ Copilot uses a slightly different config structure. Ensure you map the temp dire
   }
 }
 ```
+
+</details>
+
+<details>
+<summary><strong>Codex CLI — <code>~/.codex/config.toml</code></strong></summary>
+
+Create/update `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.blender-ai-mcp]
+command = "docker"
+# Optional
+args = [
+  "run",
+  "-i",
+  "-v",
+  "/tmp:/tmp",
+  "-e",
+  "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+  "-e",
+  "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+  "-e",
+  "ROUTER_ENABLED=true",
+  "-e",
+  "LOG_LEVEL=DEBUG",
+  "-e",
+  "BLENDER_RPC_HOST=host.docker.internal",
+  "blender-ai-mcp:latest"
+]
+
+# Optional: propagate additional env vars to the MCP server.
+# A default whitelist of env vars will be propagated to the MCP server.
+# https://github.com/openai/codex/blob/main/codex-rs/rmcp-client/src/utils.rs#L82
+env = {}
+
+enabled_tools = [
+  "scene_list_objects",
+  "scene_delete_object",
+  "scene_clean_scene",
+  "scene_duplicate_object",
+  "scene_set_active_object",
+  "scene_get_viewport",
+  "scene_set_mode",
+  "scene_context",
+  "scene_create",
+  "scene_inspect",
+  "scene_snapshot_state",
+  "scene_compare_snapshot",
+  "scene_rename_object",
+  "scene_hide_object",
+  "scene_show_all_objects",
+  "scene_isolate_object",
+  "scene_camera_orbit",
+  "scene_camera_focus",
+  "scene_get_custom_properties",
+  "scene_set_custom_property",
+  "scene_get_hierarchy",
+  "scene_get_bounding_box",
+  "scene_get_origin_info",
+  "collection_list",
+  "collection_list_objects",
+  "collection_manage",
+  "material_list",
+  "material_list_by_object",
+  "material_create",
+  "material_assign",
+  "material_set_params",
+  "material_set_texture",
+  "material_inspect_nodes",
+  "uv_list_maps",
+  "uv_unwrap",
+  "uv_pack_islands",
+  "uv_create_seam",
+  "modeling_create_primitive",
+  "modeling_transform_object",
+  "modeling_add_modifier",
+  "modeling_apply_modifier",
+  "modeling_convert_to_mesh",
+  "modeling_join_objects",
+  "modeling_separate_object",
+  "modeling_set_origin",
+  "modeling_list_modifiers",
+  "mesh_select",
+  "mesh_select_targeted",
+  "mesh_delete_selected",
+  "mesh_extrude_region",
+  "mesh_fill_holes",
+  "mesh_bevel",
+  "mesh_loop_cut",
+  "mesh_inset",
+  "mesh_boolean",
+  "mesh_merge_by_distance",
+  "mesh_subdivide",
+  "mesh_smooth",
+  "mesh_flatten",
+  "mesh_list_groups",
+  "mesh_get_vertex_data",
+  "mesh_randomize",
+  "mesh_shrink_fatten",
+  "mesh_create_vertex_group",
+  "mesh_assign_to_group",
+  "mesh_remove_from_group",
+  "mesh_bisect",
+  "mesh_edge_slide",
+  "mesh_vert_slide",
+  "mesh_triangulate",
+  "mesh_remesh_voxel",
+  "mesh_transform_selected",
+  "mesh_bridge_edge_loops",
+  "mesh_duplicate_selected",
+  "mesh_spin",
+  "mesh_screw",
+  "mesh_add_vertex",
+  "mesh_add_edge_face",
+  "mesh_edge_crease",
+  "mesh_bevel_weight",
+  "mesh_mark_sharp",
+  "mesh_dissolve",
+  "mesh_tris_to_quads",
+  "mesh_normals_make_consistent",
+  "mesh_decimate",
+  "mesh_knife_project",
+  "mesh_rip",
+  "mesh_split",
+  "mesh_edge_split",
+  "mesh_symmetrize",
+  "mesh_grid_fill",
+  "mesh_poke_faces",
+  "mesh_beautify_fill",
+  "mesh_mirror",
+  "curve_create",
+  "curve_to_mesh",
+  "text_create",
+  "text_edit",
+  "text_to_mesh",
+  "export_glb",
+  "export_fbx",
+  "export_obj",
+  "sculpt_auto",
+  "sculpt_brush_smooth",
+  "sculpt_brush_grab",
+  "sculpt_brush_crease",
+  "sculpt_brush_clay",
+  "sculpt_brush_inflate",
+  "sculpt_brush_blob",
+  "sculpt_brush_snake_hook",
+  "sculpt_brush_draw",
+  "sculpt_brush_pinch",
+  "sculpt_enable_dyntopo",
+  "sculpt_disable_dyntopo",
+  "sculpt_dyntopo_flood_fill",
+  "metaball_create",
+  "metaball_add_element",
+  "metaball_to_mesh",
+  "skin_create_skeleton",
+  "skin_set_radius",
+  "lattice_create",
+  "lattice_bind",
+  "lattice_edit_point",
+  "mesh_set_proportional_edit",
+  "system_set_mode",
+  "system_undo",
+  "system_redo",
+  "system_save_file",
+  "system_new_file",
+  "system_snapshot",
+  "bake_normal_map",
+  "bake_ao",
+  "bake_combined",
+  "bake_diffuse",
+  "import_obj",
+  "import_fbx",
+  "import_glb",
+  "import_image_as_plane",
+  "extraction_deep_topology",
+  "extraction_component_separate",
+  "extraction_detect_symmetry",
+  "extraction_edge_loop_analysis",
+  "extraction_face_group_analysis",
+  "extraction_render_angles",
+  "armature_create",
+  "armature_add_bone",
+  "armature_bind",
+  "armature_pose_bone",
+  "armature_weight_paint_assign",
+  "workflow_catalog",
+  "router_set_goal",
+  "router_get_status",
+  "router_clear_goal"
+]
+```
+
+</details>
 
 **⚠️ Important Network Configuration:**
 *   **macOS/Windows:** Use `host.docker.internal` (as shown in the first config). The `--network host` option does NOT work on Docker Desktop for Mac/Windows.
@@ -837,64 +1267,6 @@ docker run -i --rm \
 
 ---
 
-## 🏗️ Architecture
-
-This project uses a split-architecture design:
-1.  **MCP Server (Python/FastMCP)**: Handles AI communication.
-2.  **Blender Addon (Python/bpy)**: Executes 3D operations.
-
-Communication happens via **JSON-RPC over TCP sockets**.
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
-
-## 🧪 Testing
-
-**Unit Tests** (662+ tests, ~3-4s, no Blender required):
-```bash
-PYTHONPATH=. poetry run pytest tests/unit/ -v
-```
-
-**E2E Tests** (142 tests, ~12s, requires Blender):
-```bash
-# Automated: build → install addon → start Blender → run tests → cleanup
-python3 scripts/run_e2e_tests.py
-```
-
-| Type | Count | Coverage |
-|------|-------|----------|
-| Unit Tests | 662+ | All tool handlers |
-| E2E Tests | 142 | Scene, Mesh, Material, UV, Export, Import, Baking, System, Sculpt |
-
-See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing documentation.
-
-<details>
-<summary>📋 Latest E2E Test Results (click to expand)</summary>
-
-```
-============================= test session starts ==============================
-platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
-collected 142 items
-
-tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
-tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
-tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-
-============================= 142 passed in 12.25s =============================
-```
-
-</details>
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our Clean Architecture standards before submitting a Pull Request.
@@ -912,3 +1284,5 @@ with a custom Additional Use Grant authored by Patryk Ciechański (PatrykIti).
 The license automatically converts to **Apache 2.0** on 2029-12-01.
 
 For the full license text, see: [LICENSE](./LICENSE.md)
+
+Change License text (Apache 2.0): [LICENSE-APACHE-2.0.txt](./LICENSE-APACHE-2.0.txt)

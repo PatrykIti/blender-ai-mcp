@@ -1,0 +1,28 @@
+{
+  "tool_name": "mesh_tris_to_quads",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["tris to quads", "triangles", "quads", "convert", "cleanup", "import"],
+  "sample_prompts": [
+    "convert triangles to quads",
+    "cleanup triangulated mesh",
+    "make quads from triangles",
+    "fix imported mesh"
+  ],
+  "parameters": {
+    "face_threshold": {
+      "type": "float",
+      "default": 40.0,
+      "description": "Max angle between face normals (degrees)"
+    },
+    "shape_threshold": {
+      "type": "float",
+      "default": 40.0,
+      "description": "Max shape difference (degrees)"
+    }
+  },
+  "related_tools": ["mesh_triangulate", "mesh_dissolve", "import_obj"],
+  "patterns": [],
+  "description": "Converts triangles to quads where possible."
+}

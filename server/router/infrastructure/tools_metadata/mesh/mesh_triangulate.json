@@ -1,0 +1,17 @@
+{
+  "tool_name": "mesh_triangulate",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["triangulate", "triangles", "tris", "game export", "convert"],
+  "sample_prompts": [
+    "triangulate the mesh",
+    "convert to triangles",
+    "make all faces triangles",
+    "prepare for game export"
+  ],
+  "parameters": {},
+  "related_tools": ["mesh_tris_to_quads", "export_fbx", "export_glb"],
+  "patterns": [],
+  "description": "Converts selected faces to triangles for game engine export."
+}

@@ -1,0 +1,18 @@
+{
+  "tool_name": "sculpt_brush_grab",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "grab", "pull", "move"],
+  "sample_prompts": ["grab geometry", "pull surface", "move vertices"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "from_location": {"type": "array", "default": null},
+    "to_location": {"type": "array", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_brush_smooth", "sculpt_brush_snake_hook"],
+  "patterns": [],
+  "description": "Grabs and moves geometry from one location to another."
+}

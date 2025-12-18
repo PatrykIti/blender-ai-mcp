@@ -1,0 +1,15 @@
+{
+  "tool_name": "system_save_file",
+  "category": "system",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["save", "file", "blend", "checkpoint"],
+  "sample_prompts": ["save the file", "save to path", "save project", "save blend"],
+  "parameters": {
+    "filepath": {"type": "string", "default": null},
+    "compress": {"type": "bool", "default": true}
+  },
+  "related_tools": ["system_new_file", "system_snapshot"],
+  "patterns": [],
+  "description": "Saves the current Blender file."
+}

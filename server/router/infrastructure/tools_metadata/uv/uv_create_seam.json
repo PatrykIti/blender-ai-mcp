@@ -1,0 +1,15 @@
+{
+  "tool_name": "uv_create_seam",
+  "category": "uv",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["seam", "uv", "mark", "clear", "edge"],
+  "sample_prompts": ["mark uv seam", "create seam", "clear seam", "mark edge as seam"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "action": {"type": "enum", "options": ["mark", "clear"], "default": "mark"}
+  },
+  "related_tools": ["uv_unwrap", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Marks or clears UV seams on selected edges."
+}

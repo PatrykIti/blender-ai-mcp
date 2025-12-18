@@ -1,0 +1,31 @@
+{
+  "tool_name": "mesh_smooth",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["smooth", "soften", "laplacian", "relax", "organic"],
+  "sample_prompts": [
+    "smooth the vertices",
+    "soften the mesh",
+    "relax the geometry",
+    "smooth selected faces",
+    "make it smoother"
+  ],
+  "parameters": {
+    "iterations": {
+      "type": "int",
+      "default": 1,
+      "range": [1, 100],
+      "description": "Number of smoothing passes"
+    },
+    "factor": {
+      "type": "float",
+      "default": 0.5,
+      "range": [0.0, 1.0],
+      "description": "Smoothing strength"
+    }
+  },
+  "related_tools": ["mesh_subdivide", "mesh_bevel", "mesh_extrude_region"],
+  "patterns": [],
+  "description": "Smooths selected vertices using Laplacian smoothing."
+}

@@ -1,0 +1,16 @@
+{
+  "tool_name": "armature_bind",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bind", "armature", "mesh", "skinning", "weights", "deform", "rig"],
+  "sample_prompts": ["bind mesh to armature", "skin mesh to skeleton", "attach mesh to rig", "add automatic weights"],
+  "parameters": {
+    "mesh_name": {"type": "string", "required": true},
+    "armature_name": {"type": "string", "required": true},
+    "bind_type": {"type": "enum", "options": ["AUTO", "ENVELOPE", "EMPTY"], "default": "AUTO"}
+  },
+  "related_tools": ["armature_create", "armature_pose_bone", "armature_weight_paint_assign"],
+  "patterns": ["character_rig", "mesh_deformation"],
+  "description": "Binds mesh to armature with automatic weight calculation."
+}

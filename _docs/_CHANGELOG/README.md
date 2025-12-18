@@ -6,6 +6,65 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [115](./115-2025-12-16-mcp-ctx-info-async-bridge.md) | 2025-12-16 | **Fix unawaited Context.info() warnings in MCP tool adapters** | - |
+| [114](./114-2025-12-16-addon-auto-undo-push.md) | 2025-12-16 | **Addon auto-undo push for granular system_undo** | - |
+| [113](./113-2025-12-15-flexible-vector-param-parsing.md) | 2025-12-15 | **Flexible vector/color params accept string/list (TASK-064)** | - |
+| [112](./112-2025-12-15-router-edit-selection-preservation.md) | 2025-12-15 | **Router preserves Edit Mode selection (TASK-063)** | - |
+| [111](./111-2025-12-15-modeling-add-modifier-boolean-object-name.md) | 2025-12-15 | **modeling_add_modifier BOOLEAN supports object name (TASK-062)** | - |
+| [110](./110-2025-12-14-picnic-table-supports-enum-computed-params.md) | 2025-12-14 | **Picnic Table Supports + Enum/Computed Param Robustness** | - |
+| [109](./109-2025-12-12-router-api-alignment-offline-guards.md) | 2025-12-12 | **Router API Alignment + Offline/Anti-Drift Guards (TASK-061)** | - |
+| [108](./108-2025-12-12-unified-expression-evaluator.md) | 2025-12-12 | **Unified Expression Evaluator (TASK-060)** | - |
+| [107](./107-2025-12-11-simple-table-dynamic-plank-system.md) | 2025-12-11 | **Dynamic Plank System for simple_table.yaml (TASK-055-FIX-7 Phase 1-3 Complete)** | - |
+| [106](./106-2025-12-11-computed-parameters-integration.md) | 2025-12-11 | **Computed Parameters Integration in WorkflowRegistry (TASK-055-FIX-7 Phase 0)** | - |
+| [105](./105-2025-12-10-flexible-yaml-parameter-loading.md) | 2025-12-10 | **Flexible YAML Parameter Loading with Semantic Extensions (TASK-055-FIX-6)** | - |
+| [104](./104-2025-12-10-per-step-adaptation-control.md) | 2025-12-10 | **Per-Step Adaptation Control (TASK-055-FIX-5)** | - |
+| [103](./103-2025-12-09-router-semantic-matching-fix.md) | 2025-12-09 | **Router Semantic Matching Improvements (TASK-055-FIX-2)** | - |
+| [102](./102-2025-12-08-ensemble-modifier-fixes.md) | 2025-12-08 | **Ensemble Matching & Modifier Extraction Fixes** | - |
+| [101](./101-2025-12-08-unified-parameter-resolution.md) | 2025-12-08 | **Unified Parameter Resolution Interface (TASK-055-FIX)** | - |
+| [100](./100-2025-12-08-interactive-parameter-resolution.md) | 2025-12-08 | **Interactive Parameter Resolution (TASK-055)** *(superseded by 101)* | - |
+| [99](./99-2025-12-07-router-matching-fixes.md) | 2025-12-07 | **Router Matching & Parametric Variables Fixes** | - |
+| [98](./98-2025-12-07-parametric-variables.md) | 2025-12-07 | **Parametric Workflow Variables (TASK-052)** | - |
+| [97](./97-2025-12-07-confidence-based-workflow-adaptation.md) | 2025-12-07 | **Confidence-Based Workflow Adaptation (TASK-051)** | - |
+| [96](./96-2025-12-07-multi-embedding-workflow.md) | 2025-12-07 | **Multi-Embedding Workflow System (TASK-050)** | - |
+| [95](./95-2025-12-07-fix-dispatcher-mappings.md) | 2025-12-07 | **Fix ToolDispatcher Mappings (TASK-049)** | - |
+| [94](./94-2025-12-07-proper-di-shared-labse.md) | 2025-12-07 | **Proper DI for Classifiers + Shared LaBSE Model (TASK-048)** | - |
+| [93](./93-2025-12-06-lancedb-migration.md) | 2025-12-06 | **LanceDB Vector Store Migration (TASK-047)** | - |
+| [91](./91-2025-12-05-armature-rigging-tools.md) | 2025-12-05 | **Armature & Rigging Tools (TASK-037)** | 1.31.0 |
+| [90](./90-2025-12-04-text-tools.md) | 2025-12-04 | **Text & Annotations Tools (TASK-034)** | 1.30.0 |
+| [89](./89-2025-12-04-task-044-extraction-analysis-tools.md) | 2025-12-04 | **Extraction Analysis Tools (TASK-044)** | 1.29.0 |
+| [88](./88-2025-12-03-task-041-p5-testing-documentation.md) | 2025-12-03 | **Testing & Documentation (TASK-041 P5 Complete)** | - |
+| [87](./87-2025-12-03-task-041-p4-proportion-resolver.md) | 2025-12-03 | **Proportion Resolver (TASK-041 P4)** | - |
+| [86](./86-2025-12-03-task-041-p3-condition-evaluator.md) | 2025-12-03 | **Condition Evaluator (TASK-041 P3)** | - |
+| [85](./85-2025-12-03-task-041-p2-expression-evaluator.md) | 2025-12-03 | **Expression Evaluator (TASK-041 P2)** | - |
+| [84](./84-2025-12-02-task-041-p1-workflow-triggerer.md) | 2025-12-02 | **WorkflowTriggerer Integration (TASK-041 P1)** | - |
+| [83](./83-2025-12-02-task-041-router-clean-architecture.md) | 2025-12-02 | **Router Clean Architecture & YAML Integration (TASK-041 Phase -1, P0)** | - |
+| [82](./82-2025-12-02-task-041-yaml-workflow-integration.md) | 2025-12-02 | **TASK-041 Created: Router YAML Workflow Integration** | - |
+| [81](./81-2025-12-02-router-mcp-tools-integration.md) | 2025-12-02 | **Router MCP Tools Integration (119 tools wrapped)** | - |
+| [80](./80-2025-12-02-router-documentation-complete.md) | 2025-12-02 | **Router Documentation Complete (TASK-039-24)** | - |
+| [79](./79-2025-12-02-router-e2e-coverage-extension.md) | 2025-12-02 | **Router E2E Test Coverage Extension (TASK-040)** | - |
+| [78](./78-2025-12-02-router-e2e-test-fixes.md) | 2025-12-02 | **Router E2E Test Fixes (TASK-039)** | - |
+| [77](./77-2025-12-01-router-e2e-tests.md) | 2025-12-01 | **Router E2E Test Suite (TASK-039-23)** | - |
+| [76](./76-2025-12-01-router-workflow-system.md) | 2025-12-01 | **Router Workflow System (TASK-039-20,22)** | - |
+| [75](./75-2025-12-01-router-screen-cutout-workflow.md) | 2025-12-01 | **Router Screen Cutout Workflow (TASK-039-21)** | - |
+| [74](./74-2025-12-01-router-tower-workflow.md) | 2025-12-01 | **Router Tower Workflow (TASK-039-20)** | - |
+| [73](./73-2025-12-01-router-phone-workflow.md) | 2025-12-01 | **Router Phone Workflow (TASK-039-19)** | - |
+| [72](./72-2025-12-01-router-logging-telemetry.md) | 2025-12-01 | **Router Logging & Telemetry (TASK-039-18)** | - |
+| [71](./71-2025-12-01-router-mcp-integration.md) | 2025-12-01 | **Router MCP Integration (TASK-039-17)** | - |
+| [70](./70-2025-12-01-router-supervisor-router.md) | 2025-12-01 | **Router SupervisorRouter Core (TASK-039-16)** | - |
+| [69](./69-2025-12-01-router-intent-classifier.md) | 2025-12-01 | **Router Intent Classifier (TASK-039-15)** | - |
+| [68](./68-2025-12-01-router-error-firewall.md) | 2025-12-01 | **Router Error Firewall (TASK-039-14)** | - |
+| [67](./67-2025-12-01-router-workflow-expansion-engine.md) | 2025-12-01 | **Router Workflow Expansion Engine (TASK-039-13)** | - |
+| [66](./66-2025-12-01-router-tool-override-engine.md) | 2025-12-01 | **Router Tool Override Engine (TASK-039-12)** | - |
+| [65](./65-2025-12-01-router-tool-correction-engine.md) | 2025-12-01 | **Router Tool Correction Engine (TASK-039-10,11)** | - |
+| [64](./64-2025-12-01-router-proportion-calculator.md) | 2025-12-01 | **Router Proportion Calculator (TASK-039-9)** | - |
+| [63](./63-2025-12-01-router-geometry-pattern-detector.md) | 2025-12-01 | **Router Geometry Pattern Detector (TASK-039-8)** | - |
+| [62](./62-2025-12-01-router-scene-context-analyzer.md) | 2025-12-01 | **Router Scene Context Analyzer (TASK-039-7)** | - |
+| [61](./61-2025-12-01-router-tool-interceptor.md) | 2025-12-01 | **Router Tool Interceptor (TASK-039-6)** | - |
+| [60](./60-2025-12-01-router-configuration.md) | 2025-12-01 | **Router Configuration (TASK-039-5)** | - |
+| [59](./59-2025-12-01-router-metadata-loader.md) | 2025-12-01 | **Router Metadata Loader (TASK-039-4)** | - |
+| [58](./58-2025-12-01-router-domain-interfaces.md) | 2025-12-01 | **Router Domain Interfaces (TASK-039-3)** | - |
+| [57](./57-2025-12-01-router-domain-entities.md) | 2025-12-01 | **Router Domain Entities (TASK-039-2)** | - |
+| [56](./56-2025-12-01-router-directory-structure.md) | 2025-12-01 | **Router Directory Structure (TASK-039-1)** | - |
 | [55](./55-2025-11-30-lattice-deformation.md) | 2025-11-30 | **Lattice Deformation Tools (TASK-033)** | 1.28.0 |
 | [54](./54-2025-11-30-organic-modeling-tools.md) | 2025-11-30 | **Organic Modeling Tools (TASK-038)** | 1.27.0 |
 | [53](./53-2025-11-30-import-tools.md) | 2025-11-30 | **Import Tools (TASK-035)** | 1.26.0 |

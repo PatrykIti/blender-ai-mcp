@@ -1,0 +1,41 @@
+{
+  "tool_name": "mesh_randomize",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["randomize", "noise", "displace", "organic", "variation", "irregular"],
+  "sample_prompts": [
+    "randomize vertex positions",
+    "add noise to mesh",
+    "make surface irregular",
+    "add organic variation",
+    "displace vertices randomly"
+  ],
+  "parameters": {
+    "amount": {
+      "type": "float",
+      "default": 0.1,
+      "description": "Maximum displacement amount"
+    },
+    "uniform": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 1.0],
+      "description": "Uniform random displacement factor"
+    },
+    "normal": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 1.0],
+      "description": "Normal-based displacement factor"
+    },
+    "seed": {
+      "type": "int",
+      "default": 0,
+      "description": "Random seed for reproducible results"
+    }
+  },
+  "related_tools": ["mesh_smooth", "mesh_select"],
+  "patterns": [],
+  "description": "Randomizes vertex positions for organic surfaces."
+}

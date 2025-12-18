@@ -1,0 +1,18 @@
+{
+  "tool_name": "import_image_as_plane",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["import", "image", "plane", "reference", "texture", "decal"],
+  "sample_prompts": ["import image as plane", "add reference image", "create image plane"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "name": {"type": "string", "default": null},
+    "location": {"type": "array", "default": null},
+    "size": {"type": "float", "default": 1.0},
+    "shader": {"type": "enum", "options": ["PRINCIPLED", "SHADELESS", "EMISSION"], "default": "PRINCIPLED"}
+  },
+  "related_tools": ["material_create", "scene_list_objects"],
+  "patterns": [],
+  "description": "Imports image file as a textured plane."
+}

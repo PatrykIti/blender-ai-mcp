@@ -3,6 +3,7 @@ from typing import List, Literal, Optional
 from fastmcp import Context
 
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_sculpt_handler
 
 
@@ -50,18 +51,11 @@ def sculpt_auto(
         sculpt_auto(operation="inflate", strength=0.3) -> Gentle inflation
         sculpt_auto(operation="flatten", use_symmetry=False) -> Flatten without symmetry
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.auto_sculpt(
-            object_name=object_name,
-            operation=operation,
-            strength=strength,
-            iterations=iterations,
-            use_symmetry=use_symmetry,
-            symmetry_axis=symmetry_axis,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_auto",
+        params={"operation": operation, "object_name": object_name, "strength": strength, "iterations": iterations, "use_symmetry": use_symmetry, "symmetry_axis": symmetry_axis},
+        direct_executor=lambda: get_sculpt_handler().auto_sculpt(object_name=object_name, operation=operation, strength=strength, iterations=iterations, use_symmetry=use_symmetry, symmetry_axis=symmetry_axis)
+    )
 
 
 @mcp.tool()
@@ -90,16 +84,11 @@ def sculpt_brush_smooth(
         sculpt_brush_smooth(radius=0.2, strength=0.8) -> High-strength smooth brush
         sculpt_brush_smooth(location=[0, 0, 1], radius=0.15) -> Smooth at specific location
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_smooth(
-            object_name=object_name,
-            location=location,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_smooth",
+        params={"object_name": object_name, "location": location, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_smooth(object_name=object_name, location=location, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -129,17 +118,11 @@ def sculpt_brush_grab(
     Examples:
         sculpt_brush_grab(from_location=[0,0,0], to_location=[0,0,0.5], radius=0.2)
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_grab(
-            object_name=object_name,
-            from_location=from_location,
-            to_location=to_location,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_grab",
+        params={"object_name": object_name, "from_location": from_location, "to_location": to_location, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_grab(object_name=object_name, from_location=from_location, to_location=to_location, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -172,17 +155,11 @@ def sculpt_brush_crease(
         sculpt_brush_crease(location=[0,0,1], radius=0.05, strength=0.8) -> Sharp crease
         sculpt_brush_crease(pinch=0.9) -> Very sharp pinched crease
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_crease(
-            object_name=object_name,
-            location=location,
-            radius=radius,
-            strength=strength,
-            pinch=pinch,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_crease",
+        params={"object_name": object_name, "location": location, "radius": radius, "strength": strength, "pinch": pinch},
+        direct_executor=lambda: get_sculpt_handler().brush_crease(object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch)
+    )
 
 
 # ==============================================================================
@@ -213,15 +190,11 @@ def sculpt_brush_clay(
     Examples:
         sculpt_brush_clay(radius=0.2, strength=0.6) -> Build up material
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_clay(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_clay",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_clay(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -247,15 +220,11 @@ def sculpt_brush_inflate(
     Examples:
         sculpt_brush_inflate(radius=0.15, strength=0.4) -> Gentle inflation
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_inflate(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_inflate",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_inflate(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -281,15 +250,11 @@ def sculpt_brush_blob(
     Examples:
         sculpt_brush_blob(radius=0.1, strength=0.5) -> Create organic bumps
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_blob(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_blob",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_blob(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 # ==============================================================================
@@ -320,15 +285,11 @@ def sculpt_brush_snake_hook(
     Examples:
         sculpt_brush_snake_hook(radius=0.08, strength=0.7) -> Pull tendrils
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_snake_hook(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_snake_hook",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_snake_hook(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -354,15 +315,11 @@ def sculpt_brush_draw(
     Examples:
         sculpt_brush_draw(radius=0.1, strength=0.5) -> General sculpting
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_draw(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_draw",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_draw(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 @mcp.tool()
@@ -388,15 +345,11 @@ def sculpt_brush_pinch(
     Examples:
         sculpt_brush_pinch(radius=0.05, strength=0.6) -> Create sharp folds
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.brush_pinch(
-            object_name=object_name,
-            radius=radius,
-            strength=strength,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_brush_pinch",
+        params={"object_name": object_name, "radius": radius, "strength": strength},
+        direct_executor=lambda: get_sculpt_handler().brush_pinch(object_name=object_name, radius=radius, strength=strength)
+    )
 
 
 # ==============================================================================
@@ -440,16 +393,11 @@ def sculpt_enable_dyntopo(
         sculpt_enable_dyntopo(detail_mode="RELATIVE", detail_size=8) -> Higher detail
         sculpt_enable_dyntopo(detail_mode="CONSTANT", detail_size=0.05) -> Fixed detail
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.enable_dyntopo(
-            object_name=object_name,
-            detail_mode=detail_mode,
-            detail_size=detail_size,
-            use_smooth_shading=use_smooth_shading,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_enable_dyntopo",
+        params={"object_name": object_name, "detail_mode": detail_mode, "detail_size": detail_size, "use_smooth_shading": use_smooth_shading},
+        direct_executor=lambda: get_sculpt_handler().enable_dyntopo(object_name=object_name, detail_mode=detail_mode, detail_size=detail_size, use_smooth_shading=use_smooth_shading)
+    )
 
 
 @mcp.tool()
@@ -470,13 +418,11 @@ def sculpt_disable_dyntopo(
     Examples:
         sculpt_disable_dyntopo() -> Turn off dyntopo for active object
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.disable_dyntopo(
-            object_name=object_name,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_disable_dyntopo",
+        params={"object_name": object_name},
+        direct_executor=lambda: get_sculpt_handler().disable_dyntopo(object_name=object_name)
+    )
 
 
 @mcp.tool()
@@ -497,10 +443,8 @@ def sculpt_dyntopo_flood_fill(
     Examples:
         sculpt_dyntopo_flood_fill() -> Apply detail to entire mesh
     """
-    handler = get_sculpt_handler()
-    try:
-        return handler.dyntopo_flood_fill(
-            object_name=object_name,
-        )
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="sculpt_dyntopo_flood_fill",
+        params={"object_name": object_name},
+        direct_executor=lambda: get_sculpt_handler().dyntopo_flood_fill(object_name=object_name)
+    )

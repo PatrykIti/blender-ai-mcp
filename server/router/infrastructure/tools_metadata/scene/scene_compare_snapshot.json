@@ -1,0 +1,16 @@
+{
+  "tool_name": "scene_compare_snapshot",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["compare", "diff", "snapshot", "changes"],
+  "sample_prompts": ["compare snapshots", "show what changed", "diff scene states", "find differences"],
+  "parameters": {
+    "baseline_snapshot": {"type": "string", "required": true},
+    "target_snapshot": {"type": "string", "required": true},
+    "ignore_minor_transforms": {"type": "float", "default": 0.0}
+  },
+  "related_tools": ["scene_snapshot_state"],
+  "patterns": [],
+  "description": "Compares two scene snapshots and returns differences."
+}

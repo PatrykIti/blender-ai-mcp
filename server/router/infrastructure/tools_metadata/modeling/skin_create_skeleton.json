@@ -1,0 +1,38 @@
+{
+  "tool_name": "skin_create_skeleton",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["skin", "skeleton", "armature", "tube", "branch", "vessel"],
+  "sample_prompts": [
+    "create skin skeleton",
+    "make branching structure",
+    "create tube skeleton",
+    "make blood vessel structure"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "default": "Skeleton",
+      "description": "Name for skeleton object"
+    },
+    "vertices": {
+      "type": "list[list[float]]",
+      "default": null,
+      "description": "List of vertex positions [[x,y,z], ...]"
+    },
+    "edges": {
+      "type": "list[list[int]]",
+      "default": null,
+      "description": "List of edge connections [[v1, v2], ...]"
+    },
+    "location": {
+      "type": "list[float]",
+      "default": null,
+      "description": "World position"
+    }
+  },
+  "related_tools": ["skin_set_radius", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Creates skeleton mesh for Skin modifier tubular geometry."
+}

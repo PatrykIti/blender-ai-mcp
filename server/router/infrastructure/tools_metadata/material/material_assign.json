@@ -1,0 +1,17 @@
+{
+  "tool_name": "material_assign",
+  "category": "material",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["assign", "material", "apply", "set"],
+  "sample_prompts": ["assign material to object", "apply material to cube", "set material on mesh"],
+  "parameters": {
+    "material_name": {"type": "string", "required": true},
+    "object_name": {"type": "string", "default": null},
+    "slot_index": {"type": "int", "default": null},
+    "assign_to_selection": {"type": "bool", "default": false}
+  },
+  "related_tools": ["material_create", "material_list"],
+  "patterns": [],
+  "description": "Assigns material to object or selected faces."
+}

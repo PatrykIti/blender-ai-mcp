@@ -1,0 +1,18 @@
+{
+  "tool_name": "material_set_params",
+  "category": "material",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["set", "material", "params", "color", "roughness", "metallic"],
+  "sample_prompts": ["change material color", "set roughness", "make material metallic", "update material"],
+  "parameters": {
+    "material_name": {"type": "string", "required": true},
+    "base_color": {"type": "array", "default": null},
+    "metallic": {"type": "float", "default": null, "range": [0.0, 1.0]},
+    "roughness": {"type": "float", "default": null, "range": [0.0, 1.0]},
+    "alpha": {"type": "float", "default": null, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["material_create", "material_list"],
+  "patterns": [],
+  "description": "Modifies parameters of an existing material."
+}

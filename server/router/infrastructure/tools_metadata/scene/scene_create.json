@@ -1,0 +1,17 @@
+{
+  "tool_name": "scene_create",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["create", "light", "camera", "empty", "sun", "point", "spot", "area"],
+  "sample_prompts": ["create a light", "add a camera", "create empty object", "add sun light"],
+  "parameters": {
+    "action": {"type": "enum", "options": ["light", "camera", "empty"], "required": true},
+    "location": {"type": "array", "default": [0.0, 0.0, 0.0]},
+    "light_type": {"type": "enum", "options": ["POINT", "SUN", "SPOT", "AREA"], "default": "POINT"},
+    "energy": {"type": "float", "default": 1000.0}
+  },
+  "related_tools": ["scene_get_viewport", "modeling_create_primitive"],
+  "patterns": [],
+  "description": "Creates scene helper objects (lights, cameras, empties)."
+}

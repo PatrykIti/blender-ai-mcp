@@ -1,0 +1,29 @@
+{
+  "tool_name": "mesh_get_vertex_data",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["vertex", "data", "positions", "coordinates", "inspect", "analyze"],
+  "sample_prompts": [
+    "get vertex positions",
+    "show vertex data",
+    "analyze mesh vertices",
+    "what are the vertex coordinates",
+    "inspect vertex positions"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected vertices"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "mesh_transform_selected"],
+  "patterns": [],
+  "description": "Returns vertex positions and selection states for programmatic analysis."
+}

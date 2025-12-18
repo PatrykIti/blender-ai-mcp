@@ -1,0 +1,20 @@
+{
+  "tool_name": "scene_rename_object",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["rename", "name", "change name", "relabel", "object"],
+  "sample_prompts": [
+    "rename the object",
+    "change the name of Cube to Box",
+    "relabel this object",
+    "rename Cube.001 to MainBody"
+  ],
+  "parameters": {
+    "old_name": {"type": "string", "required": true, "description": "Current name of the object"},
+    "new_name": {"type": "string", "required": true, "description": "New name for the object"}
+  },
+  "related_tools": ["scene_list_objects", "scene_set_active_object"],
+  "patterns": [],
+  "description": "Renames an object in the scene."
+}

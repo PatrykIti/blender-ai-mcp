@@ -1,0 +1,45 @@
+{
+  "tool_name": "mesh_screw",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["screw", "spiral", "helix", "thread", "spring", "coil"],
+  "sample_prompts": [
+    "create a spiral",
+    "make a screw thread",
+    "create helix geometry",
+    "make a spring shape",
+    "screw the profile"
+  ],
+  "parameters": {
+    "steps": {
+      "type": "int",
+      "default": 12,
+      "description": "Number of steps per turn"
+    },
+    "turns": {
+      "type": "int",
+      "default": 1,
+      "description": "Number of complete rotations"
+    },
+    "axis": {
+      "type": "enum",
+      "options": ["X", "Y", "Z"],
+      "default": "Z",
+      "description": "Axis to screw around"
+    },
+    "center": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Center point"
+    },
+    "offset": {
+      "type": "float",
+      "default": 0.0,
+      "description": "Distance per turn (thread pitch)"
+    }
+  },
+  "related_tools": ["mesh_spin", "mesh_merge_by_distance"],
+  "patterns": [],
+  "description": "Creates spiral/screw/helical geometry."
+}

@@ -1,0 +1,40 @@
+{
+  "tool_name": "mesh_dissolve",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["dissolve", "cleanup", "remove edges", "simplify", "reduce", "limited dissolve"],
+  "sample_prompts": [
+    "dissolve selected edges",
+    "cleanup flat geometry",
+    "limited dissolve",
+    "simplify mesh",
+    "remove unnecessary edges"
+  ],
+  "parameters": {
+    "dissolve_type": {
+      "type": "enum",
+      "options": ["verts", "edges", "faces", "limited"],
+      "default": "limited",
+      "description": "Type of dissolve operation"
+    },
+    "angle_limit": {
+      "type": "float",
+      "default": 5.0,
+      "description": "Max angle for limited dissolve (degrees)"
+    },
+    "use_face_split": {
+      "type": "bool",
+      "default": false,
+      "description": "Split off non-planar faces"
+    },
+    "use_boundary_tear": {
+      "type": "bool",
+      "default": false,
+      "description": "Split off boundary vertices"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_decimate", "mesh_tris_to_quads"],
+  "patterns": [],
+  "description": "Dissolves geometry while preserving shape for cleanup."
+}

@@ -1,0 +1,18 @@
+{
+  "tool_name": "armature_pose_bone",
+  "category": "armature",
+  "mode_required": "POSE",
+  "selection_required": false,
+  "keywords": ["pose", "bone", "rotate", "move", "scale", "animation", "transform"],
+  "sample_prompts": ["pose bone", "rotate bone", "move bone", "set bone position", "bend arm"],
+  "parameters": {
+    "armature_name": {"type": "string", "required": true},
+    "bone_name": {"type": "string", "required": true},
+    "rotation": {"type": "vector3", "default": null},
+    "location": {"type": "vector3", "default": null},
+    "scale": {"type": "vector3", "default": null}
+  },
+  "related_tools": ["armature_bind", "armature_create"],
+  "patterns": ["character_animation", "pose"],
+  "description": "Poses armature bone with rotation, location, or scale."
+}

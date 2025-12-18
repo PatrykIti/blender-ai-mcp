@@ -1,0 +1,17 @@
+{
+  "tool_name": "import_fbx",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["import", "fbx", "load", "autodesk", "game"],
+  "sample_prompts": ["import fbx file", "load fbx", "import from unity"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "use_custom_normals": {"type": "bool", "default": true},
+    "use_image_search": {"type": "bool", "default": true},
+    "global_scale": {"type": "float", "default": 1.0}
+  },
+  "related_tools": ["import_obj", "import_glb", "export_fbx"],
+  "patterns": [],
+  "description": "Imports FBX file into the scene."
+}

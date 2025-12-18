@@ -7,26 +7,26 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Utworzyć zunifikowany tool `scene_inspect` dla głębokiej inspekcji obiektów i sceny (używany okazjonalnie do analizy).
+Create a unified tool `scene_inspect` for deep inspection of objects and the scene (used occasionally for analysis).
 
 ---
 
-## 📋 Zastępuje (unregister @mcp.tool())
+## 📋 Replaces (unregister @mcp.tool())
 
-| Oryginalny Tool | Action |
-|-----------------|--------|
+| Original Tool | Action |
+|---------------|--------|
 | `scene_inspect_object` | `"object"` |
 | `scene_inspect_mesh_topology` | `"topology"` |
 | `scene_inspect_modifiers` | `"modifiers"` |
 | `scene_inspect_material_slots` | `"materials"` |
 
-**Oszczędność:** 4 tools → 1 tool (-3 definitions dla LLM)
+**Savings:** 4 tools → 1 tool (-3 definitions for LLM)
 
 ---
 
-## 🔧 Sygnatura
+## 🔧 Signature
 
 ```python
 from typing import Literal, Optional
@@ -65,32 +65,32 @@ def scene_inspect(
 
 ---
 
-## 📁 Pliki do modyfikacji
+## 📁 Files to modify
 
-| Plik | Zmiany |
+| File | Changes |
 |------|--------|
-| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_inspect`. Usuń `@mcp.tool()` z 4 funkcji (zachowaj same funkcje). |
+| `server/adapters/mcp/areas/scene.py` | Add `scene_inspect`. Remove `@mcp.tool()` from 4 functions (keep the functions themselves). |
 
 ---
 
-## 🧪 Testy
+## 🧪 Tests
 
-- **Zachowaj:** Istniejące testy dla oryginalnych funkcji (testują logikę wewnętrzną)
-- **Dodaj:** `tests/test_scene_inspect_mega.py` - testy dla unified tool
+- **Keep:** Existing tests for the original functions (testing internal logic)
+- **Add:** `tests/test_scene_inspect_mega.py` - tests for the unified tool
 
 ---
 
 ## ✅ Deliverables
 
-- [ ] Implementacja `scene_inspect` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 4 zastąpionych funkcji
-- [ ] Testy dla `scene_inspect`
-- [ ] Aktualizacja dokumentacji
+- [ ] Implementation of `scene_inspect` with routing to the original functions
+- [ ] Removal of `@mcp.tool()` from the 4 replaced functions
+- [ ] Tests for `scene_inspect`
+- [ ] Documentation update
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimation
 
-- **Nowe linie kodu:** ~45 (routing + docstring)
-- **Modyfikacje:** ~4 (usunięcie dekoratorów)
-- **Testy:** ~30 linii
+- **New lines of code:** ~45 (routing + docstring)
+- **Modifications:** ~4 (removal of decorators)
+- **Tests:** ~30 lines

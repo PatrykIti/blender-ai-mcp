@@ -1,0 +1,18 @@
+{
+  "tool_name": "export_fbx",
+  "category": "system",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["export", "fbx", "game", "unity", "unreal", "autodesk"],
+  "sample_prompts": ["export as fbx", "save as fbx file", "export for unity", "export for unreal"],
+  "parameters": {
+    "filepath": {"type": "string", "required": true},
+    "export_selected": {"type": "bool", "default": false},
+    "export_animations": {"type": "bool", "default": true},
+    "apply_modifiers": {"type": "bool", "default": true},
+    "mesh_smooth_type": {"type": "enum", "options": ["OFF", "FACE", "EDGE"], "default": "FACE"}
+  },
+  "related_tools": ["export_glb", "export_obj", "scene_list_objects"],
+  "patterns": [],
+  "description": "Exports scene or selected objects to FBX format."
+}

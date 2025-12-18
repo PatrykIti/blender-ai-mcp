@@ -1,0 +1,20 @@
+{
+  "tool_name": "lattice_create",
+  "category": "lattice",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["lattice", "deform", "cage", "bend", "taper"],
+  "sample_prompts": ["create a lattice", "add lattice deformer", "make deformation cage"],
+  "parameters": {
+    "name": {"type": "string", "default": "Lattice"},
+    "target_object": {"type": "string", "default": null},
+    "location": {"type": "array", "default": null},
+    "points_u": {"type": "int", "default": 2, "range": [2, 64]},
+    "points_v": {"type": "int", "default": 2, "range": [2, 64]},
+    "points_w": {"type": "int", "default": 2, "range": [2, 64]},
+    "interpolation": {"type": "string", "default": "KEY_LINEAR"}
+  },
+  "related_tools": ["lattice_bind", "lattice_edit_point"],
+  "patterns": ["tower_like:taper"],
+  "description": "Creates a lattice object for non-destructive deformation."
+}

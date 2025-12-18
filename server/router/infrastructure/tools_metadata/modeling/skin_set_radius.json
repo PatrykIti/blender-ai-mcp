@@ -1,0 +1,38 @@
+{
+  "tool_name": "skin_set_radius",
+  "category": "modeling",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["skin", "radius", "thickness", "tube"],
+  "sample_prompts": [
+    "set skin radius",
+    "change tube thickness",
+    "adjust skin size",
+    "make tube thinner"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of object with skin modifier"
+    },
+    "vertex_index": {
+      "type": "int",
+      "default": null,
+      "description": "Specific vertex index (null = all)"
+    },
+    "radius_x": {
+      "type": "float",
+      "default": 0.25,
+      "description": "X radius for elliptical cross-section"
+    },
+    "radius_y": {
+      "type": "float",
+      "default": 0.25,
+      "description": "Y radius for elliptical cross-section"
+    }
+  },
+  "related_tools": ["skin_create_skeleton", "modeling_apply_modifier"],
+  "patterns": [],
+  "description": "Sets skin radius at vertices for varying tube thickness."
+}

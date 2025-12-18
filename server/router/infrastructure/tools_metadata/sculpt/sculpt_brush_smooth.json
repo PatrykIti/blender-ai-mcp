@@ -1,0 +1,17 @@
+{
+  "tool_name": "sculpt_brush_smooth",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "brush", "smooth", "soften"],
+  "sample_prompts": ["use smooth brush", "smooth at location", "soften surface"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "location": {"type": "array", "default": null},
+    "radius": {"type": "float", "default": 0.1},
+    "strength": {"type": "float", "default": 0.5}
+  },
+  "related_tools": ["sculpt_auto", "sculpt_brush_grab"],
+  "patterns": [],
+  "description": "Applies smooth brush at specified location."
+}

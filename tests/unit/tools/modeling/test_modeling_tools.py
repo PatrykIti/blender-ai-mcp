@@ -71,6 +71,62 @@ class TestModelingTools:
         assert mod_mock.levels == 2
         assert result["modifier"] == "Subdiv"
 
+    def test_add_modifier_boolean_object_by_name(self):
+        # Setup
+        cutter = MagicMock()
+        cutter.name = "Cutter"
+        self.objects_mock["Cutter"] = cutter
+
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        # When
+        result = self.handler.add_modifier(
+            "Cube",
+            "boolean",
+            {"operation": "DIFFERENCE", "object": "Cutter", "solver": "EXACT"},
+        )
+
+        # Then
+        self.cube.modifiers.new.assert_called_with(name="boolean", type="BOOLEAN")
+        assert mod_mock.object == cutter
+        assert result["modifier"] == "BOOLEAN"
+
+    def test_add_modifier_boolean_object_name_alias(self):
+        # Setup
+        cutter = MagicMock()
+        cutter.name = "Cutter"
+        self.objects_mock["Cutter"] = cutter
+
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        # When
+        result = self.handler.add_modifier(
+            "Cube",
+            "BOOLEAN",
+            {"operation": "DIFFERENCE", "object_name": "Cutter", "solver": "EXACT"},
+        )
+
+        # Then
+        self.cube.modifiers.new.assert_called_with(name="BOOLEAN", type="BOOLEAN")
+        assert mod_mock.object == cutter
+        assert result["modifier"] == "BOOLEAN"
+
+    def test_add_modifier_boolean_object_missing_raises(self):
+        mod_mock = MagicMock()
+        mod_mock.name = "BOOLEAN"
+        self.cube.modifiers.new.return_value = mod_mock
+
+        with pytest.raises(ValueError, match="Boolean modifier target object 'Missing' not found"):
+            self.handler.add_modifier(
+                "Cube",
+                "BOOLEAN",
+                {"operation": "DIFFERENCE", "object": "Missing", "solver": "EXACT"},
+            )
+
     def test_apply_modifier(self):
         # Setup: Ensure the object has a modifier mock
         mod_name = "MirrorMod"
@@ -83,6 +139,7 @@ class TestModelingTools:
         
         self.cube.modifiers.__contains__.side_effect = contains_side_effect
         self.cube.modifiers.__getitem__.side_effect = lambda k: mock_modifier if k == mod_name else KeyError(k)
+        self.cube.modifiers.get.side_effect = lambda k, default=None: mock_modifier if k == mod_name else default
         
         # Mock iteration for case-insensitive search fallback
         self.cube.modifiers.__iter__.return_value = [mock_modifier]
@@ -98,6 +155,29 @@ class TestModelingTools:
         self.mock_bpy.ops.object.modifier_apply.assert_called_with(modifier=mod_name)
         assert result['applied_modifier'] == mod_name
         assert result['object'] == "Cube"
+
+    def test_apply_modifier_enables_disabled_modifier(self):
+        # Setup: Modifier exists but is disabled in viewport/render
+        mod_name = "Bevel"
+        mock_modifier = MagicMock()
+        mock_modifier.name = mod_name
+        mock_modifier.show_viewport = False
+        mock_modifier.show_render = False
+
+        self.cube.modifiers.__contains__.side_effect = lambda k: k == mod_name
+        self.cube.modifiers.__iter__.return_value = [mock_modifier]
+        self.cube.modifiers.get.side_effect = lambda k, default=None: mock_modifier if k == mod_name else default
+
+        self.mock_bpy.ops.object.modifier_apply = MagicMock()
+
+        # When
+        result = self.handler.apply_modifier("Cube", mod_name)
+
+        # Then
+        assert mock_modifier.show_viewport is True
+        assert mock_modifier.show_render is True
+        self.mock_bpy.ops.object.modifier_apply.assert_called_with(modifier=mod_name)
+        assert result["applied_modifier"] == mod_name
 
     def test_apply_modifier_case_insensitive(self):
         # Setup: Modifier is named "BEVEL", request is for "bevel"
@@ -683,4 +763,3 @@ class TestSkinModifierTools:
 
         with pytest.raises(ValueError, match="out of range"):
             self.handler.skin_set_radius(object_name="Artery", vertex_index=10)
-

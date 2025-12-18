@@ -1,0 +1,17 @@
+{
+  "tool_name": "material_set_texture",
+  "category": "material",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["texture", "material", "image", "map", "diffuse", "normal"],
+  "sample_prompts": ["add texture to material", "set diffuse texture", "apply normal map", "bind texture"],
+  "parameters": {
+    "material_name": {"type": "string", "required": true},
+    "texture_path": {"type": "string", "required": true},
+    "input_name": {"type": "string", "default": "Base Color"},
+    "color_space": {"type": "string", "default": "sRGB"}
+  },
+  "related_tools": ["material_create", "material_set_params"],
+  "patterns": [],
+  "description": "Binds image texture to material input."
+}

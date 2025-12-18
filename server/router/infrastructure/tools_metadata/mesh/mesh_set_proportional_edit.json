@@ -1,0 +1,40 @@
+{
+  "tool_name": "mesh_set_proportional_edit",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["proportional", "falloff", "soft selection", "influence", "organic"],
+  "sample_prompts": [
+    "enable proportional editing",
+    "set proportional falloff",
+    "turn on soft selection",
+    "disable proportional edit",
+    "smooth falloff"
+  ],
+  "parameters": {
+    "enabled": {
+      "type": "bool",
+      "default": true,
+      "description": "Enable or disable proportional editing"
+    },
+    "falloff_type": {
+      "type": "enum",
+      "options": ["SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM"],
+      "default": "SMOOTH",
+      "description": "Falloff curve type"
+    },
+    "size": {
+      "type": "float",
+      "default": 1.0,
+      "description": "Radius of influence"
+    },
+    "use_connected": {
+      "type": "bool",
+      "default": false,
+      "description": "Only affect connected geometry"
+    }
+  },
+  "related_tools": ["mesh_transform_selected", "mesh_smooth"],
+  "patterns": [],
+  "description": "Configures proportional editing mode for soft transforms."
+}

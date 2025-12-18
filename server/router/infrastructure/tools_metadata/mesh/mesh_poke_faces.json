@@ -1,0 +1,36 @@
+{
+  "tool_name": "mesh_poke_faces",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["poke", "poke faces", "spike", "fan", "triangulate center", "vertex center"],
+  "sample_prompts": [
+    "poke the selected faces",
+    "add vertex at face center",
+    "create spikes on the faces",
+    "poke faces outward",
+    "triangulate faces with center vertex"
+  ],
+  "parameters": {
+    "offset": {
+      "type": "float",
+      "default": 0.0,
+      "range": [-10.0, 10.0],
+      "description": "Distance to push center vertex outward (negative = inward)"
+    },
+    "use_relative_offset": {
+      "type": "bool",
+      "default": false,
+      "description": "Scale offset by face size"
+    },
+    "center_mode": {
+      "type": "enum",
+      "options": ["MEDIAN", "MEDIAN_WEIGHTED", "BOUNDS"],
+      "default": "MEDIAN_WEIGHTED",
+      "description": "How to calculate face center"
+    }
+  },
+  "related_tools": ["mesh_inset", "mesh_extrude_region", "mesh_triangulate"],
+  "patterns": [],
+  "description": "Pokes selected faces by adding vertex at center, creating triangle fan."
+}

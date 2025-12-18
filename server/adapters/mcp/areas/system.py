@@ -1,6 +1,8 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_system_handler
 
 
@@ -31,19 +33,26 @@ def export_glb(
         export_materials: Include materials and textures
         apply_modifiers: Apply modifiers before export
     """
-    handler = get_system_handler()
-    try:
-        result = handler.export_glb(
-            filepath=filepath,
-            export_selected=export_selected,
-            export_animations=export_animations,
-            export_materials=export_materials,
-            apply_modifiers=apply_modifiers,
-        )
-        ctx.info(f"Exported GLB to: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.export_glb(
+                filepath=filepath,
+                export_selected=export_selected,
+                export_animations=export_animations,
+                export_materials=export_materials,
+                apply_modifiers=apply_modifiers,
+            )
+            ctx_info(ctx, f"Exported GLB to: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="export_glb",
+        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "export_materials": export_materials, "apply_modifiers": apply_modifiers},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -70,19 +79,26 @@ def export_fbx(
         apply_modifiers: Apply modifiers before export
         mesh_smooth_type: Smoothing export method (OFF, FACE, EDGE)
     """
-    handler = get_system_handler()
-    try:
-        result = handler.export_fbx(
-            filepath=filepath,
-            export_selected=export_selected,
-            export_animations=export_animations,
-            apply_modifiers=apply_modifiers,
-            mesh_smooth_type=mesh_smooth_type,
-        )
-        ctx.info(f"Exported FBX to: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.export_fbx(
+                filepath=filepath,
+                export_selected=export_selected,
+                export_animations=export_animations,
+                apply_modifiers=apply_modifiers,
+                mesh_smooth_type=mesh_smooth_type,
+            )
+            ctx_info(ctx, f"Exported FBX to: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="export_fbx",
+        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "apply_modifiers": apply_modifiers, "mesh_smooth_type": mesh_smooth_type},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -113,21 +129,28 @@ def export_obj(
         export_normals: Include vertex normals
         triangulate: Convert quads/ngons to triangles
     """
-    handler = get_system_handler()
-    try:
-        result = handler.export_obj(
-            filepath=filepath,
-            export_selected=export_selected,
-            apply_modifiers=apply_modifiers,
-            export_materials=export_materials,
-            export_uvs=export_uvs,
-            export_normals=export_normals,
-            triangulate=triangulate,
-        )
-        ctx.info(f"Exported OBJ to: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.export_obj(
+                filepath=filepath,
+                export_selected=export_selected,
+                apply_modifiers=apply_modifiers,
+                export_materials=export_materials,
+                export_uvs=export_uvs,
+                export_normals=export_normals,
+                triangulate=triangulate,
+            )
+            ctx_info(ctx, f"Exported OBJ to: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="export_obj",
+        params={"filepath": filepath, "export_selected": export_selected, "apply_modifiers": apply_modifiers, "export_materials": export_materials, "export_uvs": export_uvs, "export_normals": export_normals, "triangulate": triangulate},
+        direct_executor=execute
+    )
 
 
 # === Import Tools ===
@@ -159,20 +182,27 @@ def import_obj(
         forward_axis: Forward axis in Blender (NEGATIVE_Z = -Z forward, standard for most apps)
         up_axis: Up axis in Blender (Y = Y-up standard)
     """
-    handler = get_system_handler()
-    try:
-        result = handler.import_obj(
-            filepath=filepath,
-            use_split_objects=use_split_objects,
-            use_split_groups=use_split_groups,
-            global_scale=global_scale,
-            forward_axis=forward_axis,
-            up_axis=up_axis,
-        )
-        ctx.info(f"Imported OBJ from: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.import_obj(
+                filepath=filepath,
+                use_split_objects=use_split_objects,
+                use_split_groups=use_split_groups,
+                global_scale=global_scale,
+                forward_axis=forward_axis,
+                up_axis=up_axis,
+            )
+            ctx_info(ctx, f"Imported OBJ from: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="import_obj",
+        params={"filepath": filepath, "use_split_objects": use_split_objects, "use_split_groups": use_split_groups, "global_scale": global_scale, "forward_axis": forward_axis, "up_axis": up_axis},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -201,20 +231,27 @@ def import_fbx(
         automatic_bone_orientation: Auto-orient bones to Blender conventions
         global_scale: Scale factor for imported geometry (1.0 = original size)
     """
-    handler = get_system_handler()
-    try:
-        result = handler.import_fbx(
-            filepath=filepath,
-            use_custom_normals=use_custom_normals,
-            use_image_search=use_image_search,
-            ignore_leaf_bones=ignore_leaf_bones,
-            automatic_bone_orientation=automatic_bone_orientation,
-            global_scale=global_scale,
-        )
-        ctx.info(f"Imported FBX from: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.import_fbx(
+                filepath=filepath,
+                use_custom_normals=use_custom_normals,
+                use_image_search=use_image_search,
+                ignore_leaf_bones=ignore_leaf_bones,
+                automatic_bone_orientation=automatic_bone_orientation,
+                global_scale=global_scale,
+            )
+            ctx_info(ctx, f"Imported FBX from: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="import_fbx",
+        params={"filepath": filepath, "use_custom_normals": use_custom_normals, "use_image_search": use_image_search, "ignore_leaf_bones": ignore_leaf_bones, "automatic_bone_orientation": automatic_bone_orientation, "global_scale": global_scale},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -239,18 +276,25 @@ def import_glb(
         merge_vertices: Merge duplicate vertices (may break UV seams)
         import_shading: How to handle shading (NORMALS = use file normals, FLAT, SMOOTH)
     """
-    handler = get_system_handler()
-    try:
-        result = handler.import_glb(
-            filepath=filepath,
-            import_pack_images=import_pack_images,
-            merge_vertices=merge_vertices,
-            import_shading=import_shading,
-        )
-        ctx.info(f"Imported GLB/GLTF from: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.import_glb(
+                filepath=filepath,
+                import_pack_images=import_pack_images,
+                merge_vertices=merge_vertices,
+                import_shading=import_shading,
+            )
+            ctx_info(ctx, f"Imported GLB/GLTF from: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="import_glb",
+        params={"filepath": filepath, "import_pack_images": import_pack_images, "merge_vertices": merge_vertices, "import_shading": import_shading},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -284,21 +328,28 @@ def import_image_as_plane(
         shader: Material shader type (PRINCIPLED = PBR, SHADELESS = unlit, EMISSION = glowing)
         use_transparency: Use alpha channel for transparency (PNG with alpha)
     """
-    handler = get_system_handler()
-    try:
-        result = handler.import_image_as_plane(
-            filepath=filepath,
-            name=name,
-            location=location,
-            size=size,
-            align_axis=align_axis,
-            shader=shader,
-            use_transparency=use_transparency,
-        )
-        ctx.info(f"Imported image as plane from: {filepath}")
-        return result
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_system_handler()
+        try:
+            result = handler.import_image_as_plane(
+                filepath=filepath,
+                name=name,
+                location=location,
+                size=size,
+                align_axis=align_axis,
+                shader=shader,
+                use_transparency=use_transparency,
+            )
+            ctx_info(ctx, f"Imported image as plane from: {filepath}")
+            return result
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="import_image_as_plane",
+        params={"filepath": filepath, "name": name, "location": location, "size": size, "align_axis": align_axis, "shader": shader, "use_transparency": use_transparency},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -326,11 +377,11 @@ def system_set_mode(
         object_name: Object to set mode for (default: active object). If provided,
                     the object will be set as active before mode switch.
     """
-    handler = get_system_handler()
-    try:
-        return handler.set_mode(mode, object_name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_set_mode",
+        params={"mode": mode, "object_name": object_name},
+        direct_executor=lambda: get_system_handler().set_mode(mode, object_name)
+    )
 
 
 @mcp.tool()
@@ -346,11 +397,11 @@ def system_undo(ctx: Context, steps: int = 1) -> str:
     Args:
         steps: Number of steps to undo (default: 1, max: 10)
     """
-    handler = get_system_handler()
-    try:
-        return handler.undo(steps)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_undo",
+        params={"steps": steps},
+        direct_executor=lambda: get_system_handler().undo(steps)
+    )
 
 
 @mcp.tool()
@@ -366,11 +417,11 @@ def system_redo(ctx: Context, steps: int = 1) -> str:
     Args:
         steps: Number of steps to redo (default: 1, max: 10)
     """
-    handler = get_system_handler()
-    try:
-        return handler.redo(steps)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_redo",
+        params={"steps": steps},
+        direct_executor=lambda: get_system_handler().redo(steps)
+    )
 
 
 @mcp.tool()
@@ -394,11 +445,11 @@ def system_save_file(
         filepath: Path to save (default: current file path, or temp if unsaved)
         compress: Compress .blend file (default: True)
     """
-    handler = get_system_handler()
-    try:
-        return handler.save_file(filepath, compress)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_save_file",
+        params={"filepath": filepath, "compress": compress},
+        direct_executor=lambda: get_system_handler().save_file(filepath, compress)
+    )
 
 
 @mcp.tool()
@@ -413,11 +464,11 @@ def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     Args:
         load_ui: Load UI layout from startup file (default: False)
     """
-    handler = get_system_handler()
-    try:
-        return handler.new_file(load_ui)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_new_file",
+        params={"load_ui": load_ui},
+        direct_executor=lambda: get_system_handler().new_file(load_ui)
+    )
 
 
 @mcp.tool()
@@ -449,8 +500,8 @@ def system_snapshot(
         action: Operation to perform
         name: Snapshot name (required for restore/delete, optional for save)
     """
-    handler = get_system_handler()
-    try:
-        return handler.snapshot(action, name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="system_snapshot",
+        params={"action": action, "name": name},
+        direct_executor=lambda: get_system_handler().snapshot(action, name)
+    )

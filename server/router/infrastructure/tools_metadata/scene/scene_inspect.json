@@ -1,0 +1,16 @@
+{
+  "tool_name": "scene_inspect",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object"],
+  "sample_prompts": ["inspect the cube", "analyze mesh topology", "show modifiers on object"],
+  "parameters": {
+    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials"], "required": true},
+    "object_name": {"type": "string", "default": null},
+    "detailed": {"type": "bool", "default": false}
+  },
+  "related_tools": ["scene_list_objects", "scene_context"],
+  "patterns": [],
+  "description": "Detailed inspection of objects, topology, modifiers, and materials."
+}

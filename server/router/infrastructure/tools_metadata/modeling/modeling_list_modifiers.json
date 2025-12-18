@@ -1,0 +1,23 @@
+{
+  "tool_name": "modeling_list_modifiers",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["list", "modifiers", "show", "inspect"],
+  "sample_prompts": [
+    "list modifiers",
+    "show object modifiers",
+    "what modifiers are on cube",
+    "inspect modifier stack"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object"
+    }
+  },
+  "related_tools": ["modeling_add_modifier", "modeling_apply_modifier"],
+  "patterns": [],
+  "description": "Lists all modifiers on an object."
+}

@@ -1,0 +1,14 @@
+{
+  "tool_name": "sculpt_dyntopo_flood_fill",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["dyntopo", "flood", "fill", "detail", "uniform"],
+  "sample_prompts": ["flood fill detail", "uniform dyntopo", "apply detail to entire mesh"],
+  "parameters": {
+    "object_name": {"type": "string", "default": null}
+  },
+  "related_tools": ["sculpt_enable_dyntopo"],
+  "patterns": [],
+  "description": "Applies current detail level to entire mesh."
+}

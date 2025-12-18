@@ -1,0 +1,23 @@
+{
+  "tool_name": "mesh_vert_slide",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["vertex slide", "slide", "move vertex", "edge"],
+  "sample_prompts": [
+    "slide the vertex",
+    "move vertex along edge",
+    "slide vertices along connected edges"
+  ],
+  "parameters": {
+    "value": {
+      "type": "float",
+      "default": 0.0,
+      "range": [-1.0, 1.0],
+      "description": "Slide amount relative to connected edge"
+    }
+  },
+  "related_tools": ["mesh_edge_slide", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Slides selected vertices along connected edges."
+}

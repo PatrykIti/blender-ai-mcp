@@ -1,0 +1,19 @@
+{
+  "tool_name": "sculpt_auto",
+  "category": "sculpt",
+  "mode_required": "SCULPT",
+  "selection_required": false,
+  "keywords": ["sculpt", "smooth", "inflate", "flatten", "sharpen", "auto"],
+  "sample_prompts": ["smooth the mesh", "inflate the surface", "flatten areas", "sharpen details"],
+  "parameters": {
+    "operation": {"type": "enum", "options": ["smooth", "inflate", "flatten", "sharpen"], "default": "smooth"},
+    "object_name": {"type": "string", "default": null},
+    "strength": {"type": "float", "default": 0.5, "range": [0.0, 1.0]},
+    "iterations": {"type": "int", "default": 1},
+    "use_symmetry": {"type": "bool", "default": true},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_enable_dyntopo", "mesh_remesh_voxel"],
+  "patterns": [],
+  "description": "High-level sculpt operation applied to entire mesh."
+}

@@ -27,6 +27,9 @@ try:
     from .application.handlers.sculpt import SculptHandler
     from .application.handlers.baking import BakingHandler
     from .application.handlers.lattice import LatticeHandler
+    from .application.handlers.extraction import ExtractionHandler
+    from .application.handlers.text import TextHandler
+    from .application.handlers.armature import ArmatureHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -39,6 +42,9 @@ except ImportError:
     SculptHandler = None
     BakingHandler = None
     LatticeHandler = None
+    ExtractionHandler = None
+    TextHandler = None
+    ArmatureHandler = None
 
 
 def register():
@@ -57,6 +63,9 @@ def register():
         sculpt_handler = SculptHandler()
         baking_handler = BakingHandler()
         lattice_handler = LatticeHandler()
+        extraction_handler = ExtractionHandler()
+        text_handler = TextHandler()
+        armature_handler = ArmatureHandler()
 
         # --- Register RPC Handlers ---
         # Scene
@@ -77,7 +86,20 @@ def register():
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
         rpc_server.register_handler("scene.set_mode", scene_handler.set_mode)
-        
+        # TASK-043: Scene Utility Tools
+        rpc_server.register_handler("scene.rename_object", scene_handler.rename_object)
+        rpc_server.register_handler("scene.hide_object", scene_handler.hide_object)
+        rpc_server.register_handler("scene.show_all_objects", scene_handler.show_all_objects)
+        rpc_server.register_handler("scene.isolate_object", scene_handler.isolate_object)
+        rpc_server.register_handler("scene.camera_orbit", scene_handler.camera_orbit)
+        rpc_server.register_handler("scene.camera_focus", scene_handler.camera_focus)
+        # TASK-045: Object Inspection Tools
+        rpc_server.register_handler("scene.get_custom_properties", scene_handler.get_custom_properties)
+        rpc_server.register_handler("scene.set_custom_property", scene_handler.set_custom_property)
+        rpc_server.register_handler("scene.get_hierarchy", scene_handler.get_hierarchy)
+        rpc_server.register_handler("scene.get_bounding_box", scene_handler.get_bounding_box)
+        rpc_server.register_handler("scene.get_origin_info", scene_handler.get_origin_info)
+
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
         rpc_server.register_handler("modeling.transform_object", modeling_handler.transform_object)
@@ -139,6 +161,8 @@ def register():
         rpc_server.register_handler("material.assign", material_handler.assign_material)
         rpc_server.register_handler("material.set_params", material_handler.set_material_params)
         rpc_server.register_handler("material.set_texture", material_handler.set_material_texture)
+        # TASK-045-6: material_inspect_nodes
+        rpc_server.register_handler("material.inspect_nodes", material_handler.inspect_nodes)
 
         # UV
         rpc_server.register_handler("uv.list_maps", uv_handler.list_maps)
@@ -172,6 +196,7 @@ def register():
         rpc_server.register_handler("system.save_file", system_handler.save_file)
         rpc_server.register_handler("system.new_file", system_handler.new_file)
         rpc_server.register_handler("system.snapshot", system_handler.snapshot)
+        rpc_server.register_handler("system.purge_orphans", system_handler.purge_orphans)
 
         # TASK-027: Sculpting Tools
         rpc_server.register_handler("sculpt.auto", sculpt_handler.auto_sculpt)
@@ -218,6 +243,13 @@ def register():
         rpc_server.register_handler("mesh.split", mesh_handler.split)
         rpc_server.register_handler("mesh.edge_split", mesh_handler.edge_split)
 
+        # TASK-036: Symmetry & Advanced Fill
+        rpc_server.register_handler("mesh.symmetrize", mesh_handler.symmetrize)
+        rpc_server.register_handler("mesh.grid_fill", mesh_handler.grid_fill)
+        rpc_server.register_handler("mesh.poke_faces", mesh_handler.poke_faces)
+        rpc_server.register_handler("mesh.beautify_fill", mesh_handler.beautify_fill)
+        rpc_server.register_handler("mesh.mirror", mesh_handler.mirror)
+
         # TASK-031: Baking Tools
         rpc_server.register_handler("baking.normal_map", baking_handler.bake_normal_map)
         rpc_server.register_handler("baking.ao", baking_handler.bake_ao)
@@ -234,6 +266,26 @@ def register():
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
         rpc_server.register_handler("lattice.bind", lattice_handler.lattice_bind)
         rpc_server.register_handler("lattice.edit_point", lattice_handler.lattice_edit_point)
+
+        # TASK-044: Extraction Analysis Tools
+        rpc_server.register_handler("extraction.deep_topology", extraction_handler.deep_topology)
+        rpc_server.register_handler("extraction.component_separate", extraction_handler.component_separate)
+        rpc_server.register_handler("extraction.detect_symmetry", extraction_handler.detect_symmetry)
+        rpc_server.register_handler("extraction.edge_loop_analysis", extraction_handler.edge_loop_analysis)
+        rpc_server.register_handler("extraction.face_group_analysis", extraction_handler.face_group_analysis)
+        rpc_server.register_handler("extraction.render_angles", extraction_handler.render_angles)
+
+        # TASK-034: Text & Annotations
+        rpc_server.register_handler("text.create", text_handler.create)
+        rpc_server.register_handler("text.edit", text_handler.edit)
+        rpc_server.register_handler("text.to_mesh", text_handler.to_mesh)
+
+        # TASK-037: Armature & Rigging
+        rpc_server.register_handler("armature.create", armature_handler.create)
+        rpc_server.register_handler("armature.add_bone", armature_handler.add_bone)
+        rpc_server.register_handler("armature.bind", armature_handler.bind)
+        rpc_server.register_handler("armature.pose_bone", armature_handler.pose_bone)
+        rpc_server.register_handler("armature.weight_paint_assign", armature_handler.weight_paint_assign)
 
         rpc_server.start()
     else:

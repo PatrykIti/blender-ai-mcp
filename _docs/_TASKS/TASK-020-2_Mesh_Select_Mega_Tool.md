@@ -7,31 +7,31 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Utworzyć zunifikowany tool `mesh_select` dla prostych operacji selekcji (bez dodatkowych parametrów).
+Create a unified tool `mesh_select` for simple selection operations (without additional parameters).
 
 ---
 
-## 📋 Zastępuje (unregister @mcp.tool())
+## 📋 Replaces (unregister @mcp.tool())
 
-| Oryginalny Tool | Action |
-|-----------------|--------|
+| Original Tool | Action |
+|---------------|--------|
 | `mesh_select_all` | `"all"` / `"none"` |
 | `mesh_select_linked` | `"linked"` |
 | `mesh_select_more` | `"more"` |
 | `mesh_select_less` | `"less"` |
 | `mesh_select_boundary` | `"boundary"` |
 
-**NIE zastępuje (osobne narzędzia):**
-- `mesh_get_vertex_data` - READ-ONLY tool zwracający dane
+**DOES NOT replace (separate tools):**
+- `mesh_get_vertex_data` - READ-ONLY tool returning data
 - `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` → TASK-020-4
 
-**Oszczędność:** 5 tools → 1 tool (-4 definitions dla LLM)
+**Savings:** 5 tools → 1 tool (-4 definitions for LLM)
 
 ---
 
-## 🔧 Sygnatura
+## 🔧 Signature
 
 ```python
 from typing import Literal
@@ -67,32 +67,32 @@ def mesh_select(
 
 ---
 
-## 📁 Pliki do modyfikacji
+## 📁 Files to modify
 
-| Plik | Zmiany |
+| File | Changes |
 |------|--------|
-| `server/adapters/mcp/areas/mesh.py` | Dodaj `mesh_select`. Usuń `@mcp.tool()` z 5 funkcji (zachowaj same funkcje). |
+| `server/adapters/mcp/areas/mesh.py` | Add `mesh_select`. Remove `@mcp.tool()` from 5 functions (keep the functions themselves). |
 
 ---
 
-## 🧪 Testy
+## 🧪 Tests
 
-- **Zachowaj:** Istniejące testy dla oryginalnych funkcji (testują logikę wewnętrzną)
-- **Dodaj:** `tests/test_mesh_select_mega.py` - testy dla unified tool
+- **Keep:** Existing tests for the original functions (test internal logic)
+- **Add:** `tests/test_mesh_select_mega.py` - tests for the unified tool
 
 ---
 
 ## ✅ Deliverables
 
-- [ ] Implementacja `mesh_select` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 5 zastąpionych funkcji
-- [ ] Testy dla `mesh_select`
-- [ ] Aktualizacja dokumentacji
+- [ ] Implementation of `mesh_select` routing to the original functions
+- [ ] Removal of `@mcp.tool()` from the 5 replaced functions
+- [ ] Tests for `mesh_select`
+- [ ] Documentation update
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimation
 
-- **Nowe linie kodu:** ~40 (routing + docstring)
-- **Modyfikacje:** ~5 (usunięcie dekoratorów)
-- **Testy:** ~25 linii
+- **New lines of code:** ~40 (routing + docstring)
+- **Modifications:** ~5 (removal of decorators)
+- **Tests:** ~25 lines

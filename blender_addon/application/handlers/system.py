@@ -214,6 +214,44 @@ class SystemHandler:
         bpy.ops.wm.read_homefile(load_ui=load_ui)
         return "Created new file (scene reset to startup)"
 
+    def purge_orphans(self):
+        """Purge all orphan data-blocks to free memory.
+
+        Removes unused meshes, materials, textures, etc. that have no users.
+        Useful for cleaning up after multiple object deletions.
+
+        Returns:
+            Dict with counts of purged data-blocks by type.
+        """
+        # Count before purge
+        counts_before = {
+            "meshes": len(bpy.data.meshes),
+            "materials": len(bpy.data.materials),
+            "textures": len(bpy.data.textures),
+            "images": len(bpy.data.images),
+        }
+
+        # Purge orphans (recursive to get all levels)
+        bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
+        # Count after purge
+        counts_after = {
+            "meshes": len(bpy.data.meshes),
+            "materials": len(bpy.data.materials),
+            "textures": len(bpy.data.textures),
+            "images": len(bpy.data.images),
+        }
+
+        purged = {
+            "meshes": counts_before["meshes"] - counts_after["meshes"],
+            "materials": counts_before["materials"] - counts_after["materials"],
+            "textures": counts_before["textures"] - counts_after["textures"],
+            "images": counts_before["images"] - counts_after["images"],
+        }
+        total = sum(purged.values())
+
+        return {"purged": purged, "total": total}
+
     def snapshot(self, action, name=None):
         """Manage quick save/restore checkpoints.
 

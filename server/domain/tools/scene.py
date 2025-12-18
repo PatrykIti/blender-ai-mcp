@@ -86,3 +86,71 @@ class ISceneTool(ABC):
     def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
         """Audits modifier stacks for a specific object or the entire scene."""
         pass
+
+    # TASK-043: Scene Utility Tools
+    @abstractmethod
+    def rename_object(self, old_name: str, new_name: str) -> str:
+        """Renames an object in the scene."""
+        pass
+
+    @abstractmethod
+    def hide_object(self, object_name: str, hide: bool = True, hide_render: bool = False) -> str:
+        """Hides or shows an object in the viewport and/or render."""
+        pass
+
+    @abstractmethod
+    def show_all_objects(self, include_render: bool = False) -> str:
+        """Shows all hidden objects in the scene."""
+        pass
+
+    @abstractmethod
+    def isolate_object(self, object_names: List[str]) -> str:
+        """Isolates object(s) by hiding all others."""
+        pass
+
+    @abstractmethod
+    def camera_orbit(self, angle_horizontal: float = 0.0, angle_vertical: float = 0.0,
+                     target_object: Optional[str] = None, target_point: Optional[List[float]] = None) -> str:
+        """Orbits viewport camera around target."""
+        pass
+
+    @abstractmethod
+    def camera_focus(self, object_name: str, zoom_factor: float = 1.0) -> str:
+        """Focuses viewport camera on object."""
+        pass
+
+    # TASK-045: Object Inspection Tools
+    @abstractmethod
+    def get_custom_properties(self, object_name: str) -> Dict[str, Any]:
+        """Gets custom properties (metadata) from an object."""
+        pass
+
+    @abstractmethod
+    def set_custom_property(
+        self,
+        object_name: str,
+        property_name: str,
+        property_value: Any,
+        delete: bool = False
+    ) -> str:
+        """Sets or deletes a custom property on an object."""
+        pass
+
+    @abstractmethod
+    def get_hierarchy(
+        self,
+        object_name: Optional[str] = None,
+        include_transforms: bool = False
+    ) -> Dict[str, Any]:
+        """Gets parent-child hierarchy for objects."""
+        pass
+
+    @abstractmethod
+    def get_bounding_box(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
+        """Gets bounding box corners for an object."""
+        pass
+
+    @abstractmethod
+    def get_origin_info(self, object_name: str) -> Dict[str, Any]:
+        """Gets origin (pivot point) information for an object."""
+        pass

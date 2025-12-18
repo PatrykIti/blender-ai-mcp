@@ -1,0 +1,23 @@
+{
+  "tool_name": "text_create",
+  "category": "text",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["text", "create", "font", "3d", "label", "sign", "annotation", "title"],
+  "sample_prompts": ["create text", "add 3d text", "make a sign", "create title"],
+  "parameters": {
+    "text": {"type": "string", "default": "Text"},
+    "location": {"type": "list", "default": [0, 0, 0]},
+    "font": {"type": "string", "default": null},
+    "size": {"type": "float", "default": 1.0},
+    "extrude": {"type": "float", "default": 0.0},
+    "bevel_depth": {"type": "float", "default": 0.0},
+    "bevel_resolution": {"type": "int", "default": 0},
+    "align_x": {"type": "enum", "options": ["LEFT", "CENTER", "RIGHT", "JUSTIFY", "FLUSH"], "default": "LEFT"},
+    "align_y": {"type": "enum", "options": ["TOP", "TOP_BASELINE", "CENTER", "BOTTOM_BASELINE", "BOTTOM"], "default": "BOTTOM_BASELINE"},
+    "name": {"type": "string", "default": "Text"}
+  },
+  "related_tools": ["text_edit", "text_to_mesh"],
+  "patterns": [],
+  "description": "Creates a 3D text object with optional extrusion and bevel."
+}

@@ -1,0 +1,14 @@
+{
+  "tool_name": "system_redo",
+  "category": "system",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["redo", "forward", "restore", "repeat"],
+  "sample_prompts": ["redo last action", "restore undone change", "redo 2 steps"],
+  "parameters": {
+    "steps": {"type": "int", "default": 1, "range": [1, 10]}
+  },
+  "related_tools": ["system_undo", "system_snapshot"],
+  "patterns": [],
+  "description": "Redoes previously undone operation(s)."
+}

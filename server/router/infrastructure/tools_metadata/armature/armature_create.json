@@ -1,0 +1,17 @@
+{
+  "tool_name": "armature_create",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["armature", "skeleton", "rig", "bone", "create", "animation"],
+  "sample_prompts": ["create armature", "add skeleton", "create rig", "add bone structure"],
+  "parameters": {
+    "name": {"type": "string", "default": "Armature"},
+    "location": {"type": "vector3", "default": null},
+    "bone_name": {"type": "string", "default": "Bone"},
+    "bone_length": {"type": "float", "default": 1.0, "range": [0.01, 100]}
+  },
+  "related_tools": ["armature_add_bone", "armature_bind"],
+  "patterns": ["character_rig", "mechanical_rig"],
+  "description": "Creates armature with initial bone for skeletal animation."
+}

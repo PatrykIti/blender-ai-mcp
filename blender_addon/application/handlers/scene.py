@@ -772,7 +772,7 @@ class SceneHandler:
             "modifier_count": 0,
             "objects": []
         }
-        
+
         objects_to_check = []
         if object_name:
             if object_name not in bpy.data.objects:
@@ -781,19 +781,19 @@ class SceneHandler:
         else:
             # Deterministic order
             objects_to_check = sorted(bpy.context.scene.objects, key=lambda o: o.name)
-            
+
         for obj in objects_to_check:
             # Skip objects that don't support modifiers (e.g. Empty, Light)
             if not hasattr(obj, "modifiers") or len(obj.modifiers) == 0:
                 continue
-                
+
             modifiers = []
             for mod in obj.modifiers:
                 # Check visibility (viewport or render)
                 is_enabled = mod.show_viewport or mod.show_render
                 if not include_disabled and not is_enabled:
                     continue
-                    
+
                 mod_info = {
                     "name": mod.name,
                     "type": mod.type,
@@ -801,7 +801,7 @@ class SceneHandler:
                     "show_viewport": mod.show_viewport,
                     "show_render": mod.show_render,
                 }
-                
+
                 # Extract key properties based on type
                 if mod.type == 'SUBSURF':
                     mod_info["levels"] = mod.levels
@@ -824,9 +824,9 @@ class SceneHandler:
                 elif mod.type == 'SOLIDIFY':
                     mod_info["thickness"] = mod.thickness
                     mod_info["offset"] = mod.offset
-                
+
                 modifiers.append(mod_info)
-                
+
             if modifiers:
                 result["objects"].append({
                     "name": obj.name,
@@ -834,5 +834,359 @@ class SceneHandler:
                 })
                 result["modifier_count"] += len(modifiers)
                 result["object_count"] += 1
-                
+
         return result
+
+    # TASK-043: Scene Utility Tools
+    def rename_object(self, old_name, new_name):
+        """Renames an object in the scene."""
+        obj = bpy.data.objects.get(old_name)
+        if obj is None:
+            raise ValueError(f"Object '{old_name}' not found")
+
+        obj.name = new_name
+        # Note: Blender may add suffix if name already exists
+        actual_name = obj.name
+
+        if actual_name != new_name:
+            return f"Renamed '{old_name}' to '{actual_name}' (suffix added due to name collision)"
+        return f"Renamed '{old_name}' to '{actual_name}'"
+
+    def hide_object(self, object_name, hide=True, hide_render=False):
+        """Hides or shows an object in the viewport and/or render."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj.hide_viewport = hide
+        if hide_render:
+            obj.hide_render = hide
+
+        state = "hidden" if hide else "visible"
+        render_state = " (also in render)" if hide_render else ""
+        return f"Object '{object_name}' is now {state}{render_state}"
+
+    def show_all_objects(self, include_render=False):
+        """Shows all hidden objects in the scene."""
+        count = 0
+        for obj in bpy.data.objects:
+            if obj.hide_viewport:
+                obj.hide_viewport = False
+                count += 1
+            if include_render and obj.hide_render:
+                obj.hide_render = False
+
+        render_note = " (including render visibility)" if include_render else ""
+        return f"Made {count} objects visible{render_note}"
+
+    def isolate_object(self, object_names):
+        """Isolates object(s) by hiding all others."""
+        # Validate all requested objects exist
+        keep_visible = set(object_names)
+        for name in keep_visible:
+            if name not in bpy.data.objects:
+                raise ValueError(f"Object '{name}' not found")
+
+        hidden_count = 0
+        for obj in bpy.data.objects:
+            if obj.name not in keep_visible:
+                if not obj.hide_viewport:
+                    obj.hide_viewport = True
+                    hidden_count += 1
+            else:
+                # Ensure isolated objects are visible
+                obj.hide_viewport = False
+
+        return f"Isolated {len(keep_visible)} object(s), hid {hidden_count} others"
+
+    def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
+        """Orbits viewport camera around target."""
+        from mathutils import Matrix, Vector, Euler
+
+        # Get orbit center
+        if target_object:
+            obj = bpy.data.objects.get(target_object)
+            if not obj:
+                raise ValueError(f"Object '{target_object}' not found")
+            center = obj.location.copy()
+        elif target_point:
+            center = Vector(target_point)
+        else:
+            center = Vector((0, 0, 0))
+
+        # Find 3D viewport
+        view_area = None
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                view_area = area
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        rv3d = space.region_3d
+                        break
+                break
+
+        if not rv3d:
+            return "No 3D viewport found. Camera orbit requires an active 3D view."
+
+        # Convert degrees to radians
+        h_rad = math.radians(angle_horizontal)
+        v_rad = math.radians(angle_vertical)
+
+        # Apply rotation to view
+        # Horizontal rotation (around Z axis)
+        rot_h = Matrix.Rotation(h_rad, 4, 'Z')
+        # Vertical rotation (around local X axis)
+        rot_v = Matrix.Rotation(v_rad, 4, 'X')
+
+        # Combine rotations with existing view rotation
+        rv3d.view_rotation = rv3d.view_rotation @ rot_h.to_quaternion()
+        rv3d.view_rotation = rv3d.view_rotation @ rot_v.to_quaternion()
+
+        # Set pivot point
+        rv3d.view_location = center
+
+        return f"Orbited viewport by {angle_horizontal}° horizontal, {angle_vertical}° vertical around {list(center)}"
+
+    def camera_focus(self, object_name, zoom_factor=1.0):
+        """Focuses viewport camera on object."""
+        from mathutils import Vector
+
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Find 3D viewport
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        rv3d = space.region_3d
+                        break
+                break
+
+        if not rv3d:
+            return "No 3D viewport found. Camera focus requires an active 3D view."
+
+        # Calculate object center and size from bounding box
+        if obj.type == 'MESH' and obj.data:
+            # Get world-space bounding box
+            bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+            center = sum(bbox_corners, Vector()) / 8
+
+            # Calculate bounding sphere radius
+            max_dist = max((corner - center).length for corner in bbox_corners)
+            view_distance = max_dist * 2.5  # Add margin for framing
+        else:
+            # For non-mesh objects, use location and a default distance
+            center = obj.location.copy()
+            view_distance = 5.0
+
+        # Set view location to object center
+        rv3d.view_location = center
+
+        # Set view distance (apply zoom factor)
+        rv3d.view_distance = view_distance / zoom_factor
+
+        # Also select the object for consistency
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        return f"Focused on '{object_name}' with zoom factor {zoom_factor}"
+
+    # TASK-045: Object Inspection Tools
+    def get_custom_properties(self, object_name):
+        """Gets custom properties (metadata) from an object."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        properties = {}
+        try:
+            for key in obj.keys():
+                # Skip internal properties (start with underscore)
+                if key.startswith("_"):
+                    continue
+                value = obj.get(key)
+                # Convert to JSON-serializable types
+                if isinstance(value, (int, float, str, bool)):
+                    properties[key] = value
+                elif hasattr(value, '__iter__') and not isinstance(value, str):
+                    # Convert vectors/arrays to lists
+                    try:
+                        properties[key] = list(value)
+                    except Exception:
+                        properties[key] = str(value)
+                else:
+                    properties[key] = str(value)
+        except Exception as e:
+            raise ValueError(f"Failed to read custom properties: {e}")
+
+        return {
+            "object_name": object_name,
+            "property_count": len(properties),
+            "properties": properties
+        }
+
+    def set_custom_property(self, object_name, property_name, property_value, delete=False):
+        """Sets or deletes a custom property on an object."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        if delete:
+            if property_name in obj.keys():
+                del obj[property_name]
+                return f"Deleted property '{property_name}' from '{object_name}'"
+            else:
+                return f"Property '{property_name}' not found on '{object_name}'"
+
+        # Set the property
+        obj[property_name] = property_value
+        return f"Set property '{property_name}' = {property_value} on '{object_name}'"
+
+    def get_hierarchy(self, object_name=None, include_transforms=False):
+        """Gets parent-child hierarchy for objects."""
+        def build_hierarchy(obj, include_transforms):
+            """Recursively builds hierarchy dict for an object."""
+            node = {
+                "name": obj.name,
+                "type": obj.type,
+                "children": []
+            }
+
+            if include_transforms:
+                node["location"] = self._vec_to_list(obj.location)
+                node["rotation"] = self._vec_to_list(obj.rotation_euler)
+                node["scale"] = self._vec_to_list(obj.scale)
+
+            # Find children
+            for child in obj.children:
+                node["children"].append(build_hierarchy(child, include_transforms))
+
+            return node
+
+        if object_name:
+            # Get hierarchy for specific object
+            obj = bpy.data.objects.get(object_name)
+            if obj is None:
+                raise ValueError(f"Object '{object_name}' not found")
+
+            # Build hierarchy from this object down
+            hierarchy = build_hierarchy(obj, include_transforms)
+
+            # Also include parent chain
+            parent_chain = []
+            current = obj.parent
+            while current:
+                parent_chain.append(current.name)
+                current = current.parent
+
+            return {
+                "root": hierarchy,
+                "parent_chain": parent_chain
+            }
+        else:
+            # Get all root objects (no parent)
+            roots = []
+            for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+                if obj.parent is None:
+                    roots.append(build_hierarchy(obj, include_transforms))
+
+            return {
+                "root_count": len(roots),
+                "hierarchy": roots
+            }
+
+    def get_bounding_box(self, object_name, world_space=True):
+        """Gets bounding box corners for an object."""
+        from mathutils import Vector
+
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Get bounding box corners
+        bbox = obj.bound_box
+
+        if world_space:
+            # Transform to world space
+            corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
+        else:
+            corners = [Vector(corner) for corner in bbox]
+
+        # Calculate min/max
+        min_corner = [
+            min(c[0] for c in corners),
+            min(c[1] for c in corners),
+            min(c[2] for c in corners)
+        ]
+        max_corner = [
+            max(c[0] for c in corners),
+            max(c[1] for c in corners),
+            max(c[2] for c in corners)
+        ]
+
+        # Calculate center and dimensions
+        center = [
+            (min_corner[0] + max_corner[0]) / 2,
+            (min_corner[1] + max_corner[1]) / 2,
+            (min_corner[2] + max_corner[2]) / 2
+        ]
+        dimensions = [
+            max_corner[0] - min_corner[0],
+            max_corner[1] - min_corner[1],
+            max_corner[2] - min_corner[2]
+        ]
+
+        return {
+            "object_name": object_name,
+            "world_space": world_space,
+            "min": [round(v, 4) for v in min_corner],
+            "max": [round(v, 4) for v in max_corner],
+            "center": [round(v, 4) for v in center],
+            "dimensions": [round(v, 4) for v in dimensions],
+            "corners": [[round(c, 4) for c in corner] for corner in corners]
+        }
+
+    def get_origin_info(self, object_name):
+        """Gets origin (pivot point) information for an object."""
+        from mathutils import Vector
+
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        # Origin is at obj.location in world space
+        origin = obj.location.copy()
+
+        # Calculate bounding box center for comparison
+        bbox = obj.bound_box
+        corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
+        bbox_center = sum(corners, Vector()) / 8
+
+        # Calculate offset from bbox center
+        offset_from_center = origin - bbox_center
+
+        # Determine origin type (approximate)
+        origin_type = "CUSTOM"
+        offset_magnitude = offset_from_center.length
+
+        if offset_magnitude < 0.001:
+            origin_type = "CENTER"
+        else:
+            # Check if at bottom center
+            min_z = min(c[2] for c in corners)
+            if abs(origin[2] - min_z) < 0.001 and abs(offset_from_center[0]) < 0.001 and abs(offset_from_center[1]) < 0.001:
+                origin_type = "BOTTOM_CENTER"
+
+        return {
+            "object_name": object_name,
+            "origin_world": [round(v, 4) for v in origin],
+            "bbox_center": [round(v, 4) for v in bbox_center],
+            "offset_from_center": [round(v, 4) for v in offset_from_center],
+            "estimated_type": origin_type
+        }

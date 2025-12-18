@@ -1,0 +1,29 @@
+{
+  "tool_name": "mesh_list_groups",
+  "category": "mesh",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "groups", "vertex groups", "face groups", "weight"],
+  "sample_prompts": [
+    "list vertex groups",
+    "show groups on mesh",
+    "what vertex groups exist",
+    "list face maps"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the mesh object"
+    },
+    "group_type": {
+      "type": "enum",
+      "options": ["VERTEX", "FACE"],
+      "default": "VERTEX",
+      "description": "Type of groups to list"
+    }
+  },
+  "related_tools": ["mesh_create_vertex_group", "mesh_assign_to_group"],
+  "patterns": [],
+  "description": "Lists vertex or face groups defined on a mesh object."
+}

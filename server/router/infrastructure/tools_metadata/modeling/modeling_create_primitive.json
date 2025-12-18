@@ -1,0 +1,53 @@
+{
+  "tool_name": "modeling_create_primitive",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["create", "add", "primitive", "cube", "sphere", "cylinder", "plane", "cone", "torus"],
+  "sample_prompts": [
+    "create a cube",
+    "add a sphere",
+    "make a cylinder",
+    "add a plane",
+    "create a cone at the origin",
+    "add a torus"
+  ],
+  "parameters": {
+    "primitive_type": {
+      "type": "enum",
+      "options": ["CUBE", "SPHERE", "CYLINDER", "PLANE", "CONE", "TORUS", "ICOSPHERE"],
+      "required": true,
+      "description": "Type of primitive to create"
+    },
+    "radius": {
+      "type": "float",
+      "default": 1.0,
+      "range": [0.001, 1000.0],
+      "description": "Radius for sphere/cylinder/cone"
+    },
+    "size": {
+      "type": "float",
+      "default": 2.0,
+      "range": [0.001, 1000.0],
+      "description": "Size of the primitive"
+    },
+    "location": {
+      "type": "vector3",
+      "default": [0.0, 0.0, 0.0],
+      "description": "Location to place the primitive"
+    },
+    "rotation": {
+      "type": "vector3",
+      "default": [0.0, 0.0, 0.0],
+      "description": "Rotation in radians"
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "description": "Optional name for the new object"
+    }
+  },
+  "related_tools": ["modeling_transform_object", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Creates a primitive mesh object (cube, sphere, cylinder, etc.)."
+}

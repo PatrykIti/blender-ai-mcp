@@ -1,0 +1,14 @@
+{
+  "tool_name": "collection_list",
+  "category": "collection",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "collections", "hierarchy", "groups"],
+  "sample_prompts": ["list collections", "show all collections", "what collections exist"],
+  "parameters": {
+    "include_objects": {"type": "bool", "default": false}
+  },
+  "related_tools": ["collection_list_objects", "collection_manage"],
+  "patterns": [],
+  "description": "Lists all collections with hierarchy information."
+}

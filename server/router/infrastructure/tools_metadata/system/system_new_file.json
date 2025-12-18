@@ -1,0 +1,14 @@
+{
+  "tool_name": "system_new_file",
+  "category": "system",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["new", "file", "fresh", "start", "clear"],
+  "sample_prompts": ["create new file", "start fresh", "new project", "new blend"],
+  "parameters": {
+    "load_ui": {"type": "bool", "default": false}
+  },
+  "related_tools": ["system_save_file", "scene_clean_scene"],
+  "patterns": [],
+  "description": "Creates a new Blender file (clears current scene)."
+}

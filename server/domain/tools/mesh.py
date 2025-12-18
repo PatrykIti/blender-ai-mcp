@@ -343,3 +343,52 @@ class IMeshTool(ABC):
             Success message.
         """
         pass
+
+    # TASK-036-1: Mesh Symmetrize Tool
+    @abstractmethod
+    def symmetrize(
+        self,
+        direction: str = "NEGATIVE_X",
+        threshold: float = 0.0001
+    ) -> str:
+        """Makes mesh symmetric by mirroring one side to the other."""
+        pass
+
+    # TASK-036-2: Mesh Grid Fill Tool
+    @abstractmethod
+    def grid_fill(
+        self,
+        span: int = 1,
+        offset: int = 0,
+        use_interp_simple: bool = False
+    ) -> str:
+        """Fills boundary with a grid of quads."""
+        pass
+
+    # TASK-036-3: Mesh Poke Faces Tool
+    @abstractmethod
+    def poke_faces(
+        self,
+        offset: float = 0.0,
+        use_relative_offset: bool = False,
+        center_mode: str = "MEDIAN_WEIGHTED"
+    ) -> str:
+        """Pokes selected faces (adds vertex at center, creating triangles)."""
+        pass
+
+    # TASK-036-4: Mesh Beautify Fill Tool
+    @abstractmethod
+    def beautify_fill(self, angle_limit: float = 180.0) -> str:
+        """Rearranges triangles to more uniform/aesthetic pattern."""
+        pass
+
+    # TASK-036-5: Mesh Mirror Tool
+    @abstractmethod
+    def mirror(
+        self,
+        axis: str = "X",
+        use_mirror_merge: bool = True,
+        merge_threshold: float = 0.001
+    ) -> str:
+        """Mirrors selected geometry within the same object."""
+        pass

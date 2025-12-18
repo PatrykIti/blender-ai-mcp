@@ -1,0 +1,14 @@
+{
+  "tool_name": "scene_get_custom_properties",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["custom", "properties", "metadata", "tags", "annotations", "get", "read"],
+  "sample_prompts": ["get custom properties", "show object metadata", "what tags are on this object"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true}
+  },
+  "related_tools": ["scene_set_custom_property", "scene_inspect"],
+  "patterns": [],
+  "description": "Gets custom properties (metadata) from an object."
+}

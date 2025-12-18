@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_edge_slide",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["edge slide", "slide", "move edge", "topology", "reposition"],
+  "sample_prompts": [
+    "slide the edge",
+    "move edge along topology",
+    "slide selected edges",
+    "reposition edge loop"
+  ],
+  "parameters": {
+    "value": {
+      "type": "float",
+      "default": 0.0,
+      "range": [-1.0, 1.0],
+      "description": "Slide amount relative to adjacent edges"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "mesh_smooth"],
+  "patterns": [],
+  "description": "Slides selected edges along mesh topology."
+}

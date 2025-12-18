@@ -39,6 +39,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |
+| `scene_get_custom_properties` | `object_name` | Gets custom properties (metadata) from an object. | ✅ Done |
+| `scene_set_custom_property` | `object_name`, `property_name`, `property_value`, `delete` | Sets or deletes a custom property on an object. | ✅ Done |
+| `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
+| `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
+| `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
@@ -71,10 +76,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `material_list` | `include_unassigned` (bool) | Lists all materials with shader parameters (Principled BSDF) and object assignment counts. | ✅ Done |
 | `material_list_by_object` | `object_name` (str), `include_indices` (bool) | Lists material slots for a specific object. | ✅ Done |
-| `material_create` | `name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Creates new PBR material with Principled BSDF shader. | ✅ Done |
+| `material_create` | `name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Creates new PBR material (colors accept list or string `"[...]"`). | ✅ Done |
 | `material_assign` | `material_name`, `object_name`, `slot_index`, `assign_to_selection` | Assigns material to object or selected faces (Edit Mode). | ✅ Done |
 | `material_set_params` | `material_name`, `base_color`, `metallic`, `roughness`, etc. | Modifies existing material parameters. | ✅ Done |
 | `material_set_texture` | `material_name`, `texture_path`, `input_name`, `color_space` | Binds image texture to material input (supports Normal maps). | ✅ Done |
+| `material_inspect_nodes` | `material_name`, `include_connections` | Inspects material shader node graph, returns nodes with types, inputs, and connections. | ✅ Done |
 
 ---
 
@@ -97,7 +103,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
-| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier (e.g., Bevel, Subsurf) to an object. | ✅ Done |
+| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
@@ -159,7 +165,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_vert_slide` | `value` | Slides selected vertices along connected edges. | ✅ Done |
 | `mesh_triangulate` | *none* | Converts selected faces to triangles. | ✅ Done |
 | `mesh_remesh_voxel` | `voxel_size`, `adaptivity` | Remeshes object using Voxel algorithm (Object Mode). | ✅ Done |
-| `mesh_transform_selected` | `translate`, `rotate`, `scale`, `pivot` | Transforms selected geometry (move/rotate/scale). 🔴 CRITICAL | ✅ Done |
+| `mesh_transform_selected` | `translate`, `rotate`, `scale`, `pivot` | Transforms selected geometry (move/rotate/scale). Vectors accept list or string `"[...]"`. 🔴 CRITICAL | ✅ Done |
 | `mesh_bridge_edge_loops` | `number_cuts`, `interpolation`, `smoothness`, `twist` | Bridges two edge loops with faces. | ✅ Done |
 | `mesh_duplicate_selected` | `translate` | Duplicates selected geometry within the same mesh. | ✅ Done |
 | `mesh_spin` | `steps`, `angle`, `axis`, `center`, `dupli` | Spins/lathes selected geometry around an axis. | ✅ Done |
@@ -178,6 +184,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). | ✅ Done |
 | `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). | ✅ Done |
 | `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. | ✅ Done |
+| `mesh_symmetrize` | `direction`, `threshold` | Makes mesh symmetric by mirroring one side to the other. | ✅ Done |
+| `mesh_grid_fill` | `span`, `offset`, `use_interp_simple` | Fills boundary with a grid of quads (superior to triangle fill). | ✅ Done |
+| `mesh_poke_faces` | `offset`, `use_relative_offset`, `center_mode` | Pokes faces (adds vertex at center, creates triangle fan). | ✅ Done |
+| `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
+| `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
@@ -199,6 +210,23 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
 | `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
+
+---
+
+## 🔤 Text Tools (`text_`)
+*Tools for 3D typography and text annotations.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `text_create` | `text`, `name`, `location`, `font`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Creates a 3D text object with optional extrusion and bevel. | ✅ Done |
+| `text_edit` | `object_name`, `text`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Edits existing text object content and properties. | ✅ Done |
+| `text_to_mesh` | `object_name`, `keep_original` | Converts text object to mesh for game export and editing. | ✅ Done |
+
+**Use Cases:**
+- 3D logos and signage
+- Architectural dimension annotations
+- Product labels and branding
+- Game UI elements (3D text)
 
 ---
 
@@ -274,6 +302,62 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `import_fbx` | `filepath`, `use_custom_normals`, `use_image_search`, `ignore_leaf_bones`, `automatic_bone_orientation`, `global_scale` | Imports FBX file (geometry, materials, animations). | ✅ Done |
 | `import_glb` | `filepath`, `import_pack_images`, `merge_vertices`, `import_shading` | Imports GLB/GLTF file (PBR materials, animations). | ✅ Done |
 | `import_image_as_plane` | `filepath`, `name`, `location`, `size`, `align_axis`, `shader`, `use_transparency` | Imports image as textured plane (reference images, blueprints). | ✅ Done |
+
+---
+
+## 🔍 Extraction Tools (`extraction_`)
+*Specialized analysis tools for the Automatic Workflow Extraction System (TASK-042).*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `extraction_deep_topology` | `object_name` (str) | Deep topology analysis: vertex/edge/face counts, feature detection (bevels, insets, extrusions), base primitive estimation. | ✅ Done |
+| `extraction_component_separate` | `object_name` (str), `min_vertex_count` (int) | Separates mesh into loose parts (components) for individual analysis. | ✅ Done |
+| `extraction_detect_symmetry` | `object_name` (str), `tolerance` (float) | Detects symmetry planes (X/Y/Z) using KDTree matching with confidence scores. | ✅ Done |
+| `extraction_edge_loop_analysis` | `object_name` (str) | Analyzes edge loops: parallel groups, chamfer detection, support loop candidates. | ✅ Done |
+| `extraction_face_group_analysis` | `object_name` (str), `angle_threshold` (float) | Analyzes face groups by normal, height levels, inset/extrusion detection. | ✅ Done |
+| `extraction_render_angles` | `object_name` (str), `angles` (list), `resolution` (int), `output_dir` (str) | Renders object from multiple angles (front, back, left, right, top, iso) for LLM Vision analysis. | ✅ Done |
+
+**Use Cases:**
+- Analyzing imported 3D models for workflow extraction
+- Detecting mesh features (bevels, insets, extrusions)
+- Component separation and symmetry detection
+- Multi-angle rendering for LLM-based semantic analysis
+
+---
+
+## 🦴 Armature Tools (`armature_`)
+*Skeletal animation and rigging tools for character/mechanical animation.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `armature_create` | `name`, `location`, `bone_name`, `bone_length` | Creates armature with initial bone for rigging. | ✅ Done |
+| `armature_add_bone` | `armature_name`, `bone_name`, `head`, `tail`, `parent_bone`, `use_connect` | Adds new bone to existing armature with optional parenting. | ✅ Done |
+| `armature_bind` | `mesh_name`, `armature_name`, `bind_type` (AUTO/ENVELOPE/EMPTY) | Binds mesh to armature with automatic weight calculation. | ✅ Done |
+| `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses armature bone (rotation/location/scale in Pose Mode). | ✅ Done |
+| `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` (REPLACE/ADD/SUBTRACT) | Assigns weights to selected vertices for manual rigging. | ✅ Done |
+
+**Use Cases:**
+- Character rigging for games/film
+- Mechanical rigs (robot arms, machines)
+- Procedural animation setups
+- Weight painting for precise deformation control
+
+---
+
+## 🤖 Workflow Catalog & Router Tools (`workflow_catalog`, `router_*`)
+*Tools for browsing workflows (read-only) and controlling the Router Supervisor.*
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists/searches/inspects workflow definitions without executing them. | ✅ Done |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match/disabled/error), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
+| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
+| `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
+
+**Use Cases:**
+- Preview/search similar workflows and inspect their steps
+- Setting modeling goals for intelligent workflow expansion
+- Unified parameter resolution through single tool (TASK-055-FIX)
 
 ---
 

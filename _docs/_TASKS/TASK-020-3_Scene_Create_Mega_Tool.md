@@ -7,28 +7,28 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Utworzyć zunifikowany tool `scene_create` dla tworzenia obiektów pomocniczych sceny (światła, kamery, empty).
+Create a unified tool `scene_create` for creating scene helper objects (lights, cameras, empties).
 
 ---
 
-## 📋 Zastępuje (unregister @mcp.tool())
+## 📋 Replaces (unregister @mcp.tool())
 
-| Oryginalny Tool | Action | Plik |
-|-----------------|--------|------|
+| Original Tool | Action | File |
+|---------------|--------|------|
 | `scene_create_light` | `"light"` | scene.py |
 | `scene_create_camera` | `"camera"` | scene.py |
 | `scene_create_empty` | `"empty"` | scene.py |
 
-**NIE zastępuje (zostaje osobno):**
-- `modeling_create_primitive` - najczęściej używany tool, warto zachować bezpośredni dostęp
+**Does NOT replace (remains separate):**
+- `modeling_create_primitive` - the most frequently used tool, it's worth keeping direct access
 
-**Oszczędność:** 3 tools → 1 tool (-2 definitions dla LLM)
+**Savings:** 3 tools → 1 tool (-2 definitions for LLM)
 
 ---
 
-## 🔧 Sygnatura
+## 🔧 Signature
 
 ```python
 from typing import List, Literal, Optional, Union
@@ -78,32 +78,32 @@ def scene_create(
 
 ---
 
-## 📁 Pliki do modyfikacji
+## 📁 Files to modify
 
-| Plik | Zmiany |
+| File | Changes |
 |------|--------|
-| `server/adapters/mcp/areas/scene.py` | Dodaj `scene_create`. Usuń `@mcp.tool()` z 3 funkcji (zachowaj same funkcje). |
+| `server/adapters/mcp/areas/scene.py` | Add `scene_create`. Remove `@mcp.tool()` from 3 functions (keep the functions themselves). |
 
 ---
 
-## 🧪 Testy
+## 🧪 Tests
 
-- **Zachowaj:** Istniejące testy dla oryginalnych funkcji (testują logikę wewnętrzną)
-- **Dodaj:** `tests/test_scene_create_mega.py` - testy dla unified tool
+- **Keep:** Existing tests for original functions (test internal logic)
+- **Add:** `tests/test_scene_create_mega.py` - tests for the unified tool
 
 ---
 
 ## ✅ Deliverables
 
-- [ ] Implementacja `scene_create` z routing do oryginalnych funkcji
-- [ ] Usunięcie `@mcp.tool()` z 3 zastąpionych funkcji
-- [ ] Testy dla `scene_create`
-- [ ] Aktualizacja dokumentacji
+- [ ] Implementation of `scene_create` with routing to the original functions
+- [ ] Removal of `@mcp.tool()` from the 3 replaced functions
+- [ ] Tests for `scene_create`
+- [ ] Documentation update
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimate
 
-- **Nowe linie kodu:** ~45 (routing + docstring)
-- **Modyfikacje:** ~3 (usunięcie dekoratorów)
-- **Testy:** ~30 linii
+- **New lines of code:** ~45 (routing + docstring)
+- **Modifications:** ~3 (removal of decorators)
+- **Tests:** ~30 lines

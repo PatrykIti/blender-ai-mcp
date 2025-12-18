@@ -1,0 +1,15 @@
+{
+  "tool_name": "material_inspect_nodes",
+  "category": "material",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["nodes", "shader", "graph", "inspect", "material", "connections", "links"],
+  "sample_prompts": ["show material nodes", "inspect shader graph", "what nodes does material have"],
+  "parameters": {
+    "material_name": {"type": "string", "required": true},
+    "include_connections": {"type": "bool", "default": true}
+  },
+  "related_tools": ["material_list", "material_set_texture", "material_set_params"],
+  "patterns": [],
+  "description": "Inspects material shader node graph."
+}

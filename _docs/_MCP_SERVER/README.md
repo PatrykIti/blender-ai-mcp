@@ -62,6 +62,11 @@ Managing objects at the scene level.
 | `scene_snapshot_state` | `include_mesh_stats` (bool), `include_materials` (bool) | Captures a structured JSON snapshot of scene state with SHA256 hash for change detection. |
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
+| `scene_get_custom_properties` | `object_name` (str) | Gets custom properties (metadata) from an object. Returns object_name, property_count, and properties dict. |
+| `scene_set_custom_property` | `object_name` (str), `property_name` (str), `property_value` (str/int/float/bool), `delete` (bool) | Sets or deletes a custom property on an object. |
+| `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
+| `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
+| `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
 
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 
@@ -85,6 +90,7 @@ Material and shader management.
 | `material_assign` | `material_name`, `object_name`, `slot_index`, `assign_to_selection` | Assigns material to object or selected faces (Edit Mode). |
 | `material_set_params` | `material_name`, `base_color`, `metallic`, `roughness`, `emission_color`, `emission_strength`, `alpha` | Modifies existing material parameters. |
 | `material_set_texture` | `material_name`, `texture_path`, `input_name`, `color_space` | Binds image texture to material input (supports Normal maps). |
+| `material_inspect_nodes` | `material_name` (str), `include_connections` (bool) | Inspects material shader node graph, returns nodes with types, inputs, outputs, and connections. |
 
 ### UV Tools
 Texture coordinate mapping operations.
@@ -163,6 +169,11 @@ Low-level geometry manipulation.
 | `mesh_split` | *none* | Splits selection from mesh (disconnects without separating). |
 | `mesh_edge_split` | *none* | Splits mesh at selected edges (creates seams). |
 | `mesh_set_proportional_edit` | `enabled`, `falloff_type`, `size`, `use_connected` | Configures proportional editing mode for organic deformations. |
+| `mesh_symmetrize` | `direction`, `threshold` | Makes mesh symmetric by mirroring one side to the other. |
+| `mesh_grid_fill` | `span`, `offset`, `use_interp_simple` | Fills boundary with a grid of quads (superior to triangle fill). |
+| `mesh_poke_faces` | `offset`, `use_relative_offset`, `center_mode` | Pokes faces (adds vertex at center, creates triangle fan). |
+| `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. |
+| `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. |
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
@@ -173,6 +184,15 @@ Curve creation and conversion.
 |-----------|-----------|-------------|
 | `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
 | `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
+
+### Text Tools
+3D typography and text annotations.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `text_create` | `text`, `name`, `location`, `font`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Creates 3D text object with optional extrusion and bevel. |
+| `text_edit` | `object_name`, `text`, `size`, `extrude`, `bevel_depth`, `bevel_resolution`, `align_x`, `align_y` | Edits existing text object content and properties. |
+| `text_to_mesh` | `object_name`, `keep_original` | Converts text to mesh for game export and editing. |
 
 ### Sculpt Tools
 Sculpt Mode operations for organic shape manipulation.
@@ -244,6 +264,34 @@ Texture baking operations using Cycles renderer. Critical for game development w
 | `bake_ao` | `object_name`, `output_path`, `resolution`, `samples`, `distance`, `margin` | Bakes ambient occlusion map with configurable samples. |
 | `bake_combined` | `object_name`, `output_path`, `resolution`, `samples`, `margin`, `use_pass_direct`, `use_pass_indirect`, `use_pass_color` | Bakes full render (material + lighting) to texture. |
 | `bake_diffuse` | `object_name`, `output_path`, `resolution`, `margin` | Bakes diffuse/albedo color only (no lighting). |
+
+### Extraction Tools
+Analysis tools for the Automatic Workflow Extraction System (TASK-042). Enables deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `extraction_deep_topology` | `object_name`, `include_feature_detection` | Deep topology analysis with base primitive detection (CUBE/PLANE/CYLINDER/SPHERE/CUSTOM) and feature detection (bevels, insets, extrusions). |
+| `extraction_component_separate` | `object_name`, `analyze_components` | Separates mesh into loose parts for individual analysis. Returns component bounding boxes and centroids. |
+| `extraction_detect_symmetry` | `object_name`, `tolerance`, `axes` | Detects X/Y/Z symmetry planes using KDTree with confidence scores (0.0-1.0). |
+| `extraction_edge_loop_analysis` | `object_name`, `include_parallel_detection` | Analyzes edge loops, boundary/manifold/non-manifold edges, parallel loop groups, and chamfer edge detection. |
+| `extraction_face_group_analysis` | `object_name`, `normal_tolerance`, `height_tolerance` | Analyzes face groups by normal direction, height levels, and inset/extrusion pattern detection. |
+| `extraction_render_angles` | `object_name`, `output_dir`, `resolution`, `angles` | Multi-angle renders (front, back, left, right, top, iso) for LLM Vision semantic analysis. |
+
+### Workflow Catalog Tools
+Read-only tools for browsing and inspecting workflow definitions (no execution).
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists workflows, searches similar workflows, and returns workflow definitions (including steps) without executing them. |
+
+### Router Tools
+Tools for managing the Router Supervisor and executing matched workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match/disabled/error), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
+| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
+| `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components
 

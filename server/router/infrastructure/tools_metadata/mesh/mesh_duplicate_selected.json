@@ -1,0 +1,23 @@
+{
+  "tool_name": "mesh_duplicate_selected",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["duplicate", "copy", "clone", "geometry"],
+  "sample_prompts": [
+    "duplicate selected geometry",
+    "copy the selection",
+    "clone selected faces",
+    "duplicate and move"
+  ],
+  "parameters": {
+    "translate": {
+      "type": "list[float]",
+      "default": null,
+      "description": "Optional offset [x, y, z] for duplicated geometry"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_transform_selected"],
+  "patterns": [],
+  "description": "Duplicates selected geometry within the same mesh."
+}

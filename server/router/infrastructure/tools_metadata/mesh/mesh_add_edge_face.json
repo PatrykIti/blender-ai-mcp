@@ -1,0 +1,17 @@
+{
+  "tool_name": "mesh_add_edge_face",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["add edge", "add face", "create face", "connect", "fill"],
+  "sample_prompts": [
+    "create edge between vertices",
+    "add face from vertices",
+    "connect selected vertices",
+    "fill with face"
+  ],
+  "parameters": {},
+  "related_tools": ["mesh_add_vertex", "mesh_fill_holes", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Creates an edge (2 vertices) or face (3+ vertices) from selection."
+}

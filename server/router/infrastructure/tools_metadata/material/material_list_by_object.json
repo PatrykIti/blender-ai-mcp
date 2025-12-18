@@ -1,0 +1,15 @@
+{
+  "tool_name": "material_list_by_object",
+  "category": "material",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "materials", "object", "slots"],
+  "sample_prompts": ["list materials on cube", "show object materials", "what material is on object"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "include_indices": {"type": "bool", "default": false}
+  },
+  "related_tools": ["material_list", "material_assign"],
+  "patterns": [],
+  "description": "Lists material slots for a given object."
+}

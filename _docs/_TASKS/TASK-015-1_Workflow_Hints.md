@@ -1,4 +1,4 @@
-# TASK-015-1: Workflow Hints dla MCP Tools
+# TASK-015-1: Workflow Hints for MCP Tools
 
 **Status:** ✅ Done
 **Priority:** 🟡 Medium
@@ -7,9 +7,9 @@
 
 ---
 
-## 🎯 Cel
+## 🎯 Goal
 
-Dodać zwięzłe workflow hints (2-3 linie) do docstringów wszystkich 49 narzędzi MCP, aby AI lepiej rozumiało jak łączyć narzędzia w scenariusze.
+Add concise workflow hints (2-3 lines) to the docstrings of all 49 MCP tools so the AI better understands how to chain tools in scenarios.
 
 ---
 
@@ -21,9 +21,9 @@ Dodać zwięzłe workflow hints (2-3 linie) do docstringów wszystkich 49 narzę
 
 ---
 
-## 📁 Pliki do modyfikacji (6)
+## 📁 Files to modify (6)
 
-| Plik | Narzędzia |
+| File | Tools |
 |------|-----------|
 | `server/adapters/mcp/areas/mesh.py` | 22 |
 | `server/adapters/mcp/areas/modeling.py` | 8 |
@@ -32,7 +32,7 @@ Dodać zwięzłe workflow hints (2-3 linie) do docstringów wszystkich 49 narzę
 | `server/adapters/mcp/areas/collection.py` | 2 |
 | `server/adapters/mcp/areas/uv.py` | 1 |
 
-**Razem:** 52 docstringi (49 narzędzi + 3 aliasy)
+**Total:** 52 docstrings (49 tools + 3 aliases)
 
 ---
 
@@ -134,9 +134,9 @@ Dodać zwięzłe workflow hints (2-3 linie) do docstringów wszystkich 49 narzę
 
 ---
 
-## 📝 Przykład zmiany docstringa
+## 📝 Example of docstring change
 
-### PRZED:
+### BEFORE:
 ```python
 @mcp.tool()
 def mesh_fill_holes(ctx: Context) -> str:
@@ -151,7 +151,7 @@ def mesh_fill_holes(ctx: Context) -> str:
     """
 ```
 
-### PO:
+### AFTER:
 ```python
 @mcp.tool()
 def mesh_fill_holes(ctx: Context) -> str:
@@ -172,19 +172,19 @@ def mesh_fill_holes(ctx: Context) -> str:
 
 ## ✅ Deliverables
 
-- [x] Dodać workflow hints do `mesh.py` (22 narzędzia)
-- [x] Dodać workflow hints do `modeling.py` (8 narzędzi)
-- [x] Dodać workflow hints do `scene.py` (17 narzędzi)
-- [x] Dodać workflow hints do `material.py` (2 narzędzia)
-- [x] Dodać workflow hints do `collection.py` (2 narzędzia)
-- [x] Dodać workflow hints do `uv.py` (1 narzędzie)
-- [x] Commit z wszystkimi zmianami
+- [x] Add workflow hints to `mesh.py` (22 tools)
+- [x] Add workflow hints to `modeling.py` (8 tools)
+- [x] Add workflow hints to `scene.py` (17 tools)
+- [x] Add workflow hints to `material.py` (2 tools)
+- [x] Add workflow hints to `collection.py` (2 tools)
+- [x] Add workflow hints to `uv.py` (1 tool)
+- [x] Commit with all changes
 
 ---
 
-## 📊 Estymacja
+## 📊 Estimation
 
-- **Docstringi do edycji:** ~52
-- **Pliki do modyfikacji:** 6
+- **Docstrings to edit:** ~52
+- **Files to modify:** 6
 - **Commit:** 1 (docs: add workflow hints to all MCP tools)
-- **Testy:** Brak (tylko dokumentacja)
+- **Tests:** None (documentation only)

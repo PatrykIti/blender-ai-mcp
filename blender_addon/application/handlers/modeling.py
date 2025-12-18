@@ -80,7 +80,34 @@ class ModelingHandler:
              raise ValueError(f"Could not create modifier '{modifier_type}': {str(e)}")
         
         if properties:
+            # Special-case pointer properties that commonly arrive as names (strings)
+            # from the MCP server.
+            #
+            # BooleanModifier.object expects a bpy.types.Object, but callers often
+            # provide an object name. Support both `object` and `object_name`.
+            if modifier_type_upper == "BOOLEAN" and "object_name" in properties and "object" not in properties:
+                properties = dict(properties)
+                properties["object"] = properties.pop("object_name")
+
             for prop, value in properties.items():
+                if modifier_type_upper == "BOOLEAN" and prop == "object":
+                    if value is None:
+                        continue
+                    if isinstance(value, str):
+                        target_obj = bpy.data.objects.get(value)
+                        if target_obj is None:
+                            raise ValueError(
+                                f"Boolean modifier target object '{value}' not found"
+                            )
+                        mod.object = target_obj
+                    else:
+                        # Allow callers to pass an actual object reference.
+                        try:
+                            mod.object = value
+                        except Exception as e:
+                            raise ValueError(f"Could not set Boolean modifier object: {e}")
+                    continue
+
                 if hasattr(mod, prop):
                     try:
                         setattr(mod, prop, value)
@@ -118,8 +145,26 @@ class ModelingHandler:
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
+
+        # Ensure we're in Object Mode (modifier_apply is an Object Mode operator).
+        try:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        except Exception:
+            pass
+
+        # Blender refuses to apply disabled modifiers ("Modifier is disabled, skipping apply").
+        # If the modifier is disabled in viewport/render, enable it before applying.
+        mod = obj.modifiers.get(target_modifier_name)
+        if mod is not None:
+            if hasattr(mod, "show_viewport") and not mod.show_viewport:
+                mod.show_viewport = True
+            if hasattr(mod, "show_render") and not mod.show_render:
+                mod.show_render = True
         
-        bpy.ops.object.modifier_apply(modifier=target_modifier_name)
+        try:
+            bpy.ops.object.modifier_apply(modifier=target_modifier_name)
+        except RuntimeError as e:
+            raise ValueError(str(e))
         
         return {"applied_modifier": target_modifier_name, "object": name}
 

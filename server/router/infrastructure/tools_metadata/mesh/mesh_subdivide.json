@@ -1,0 +1,30 @@
+{
+  "tool_name": "mesh_subdivide",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["subdivide", "subdivision", "add detail", "increase resolution", "more polygons"],
+  "sample_prompts": [
+    "subdivide the mesh",
+    "add more detail",
+    "increase polygon count",
+    "subdivide selected faces",
+    "make geometry denser"
+  ],
+  "parameters": {
+    "number_cuts": {
+      "type": "int",
+      "default": 1,
+      "description": "Number of subdivision cuts"
+    },
+    "smoothness": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 1.0],
+      "description": "Smoothness factor"
+    }
+  },
+  "related_tools": ["mesh_smooth", "mesh_loop_cut"],
+  "patterns": [],
+  "description": "Subdivides selected geometry to add more detail."
+}

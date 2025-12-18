@@ -1,0 +1,30 @@
+{
+  "tool_name": "mesh_remesh_voxel",
+  "category": "mesh",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["remesh", "voxel", "retopology", "uniform", "cleanup", "sculpt"],
+  "sample_prompts": [
+    "remesh the object",
+    "voxel remesh",
+    "create uniform topology",
+    "cleanup mesh topology",
+    "prepare for sculpting"
+  ],
+  "parameters": {
+    "voxel_size": {
+      "type": "float",
+      "default": 0.1,
+      "description": "Size of voxels (smaller = more detail)"
+    },
+    "adaptivity": {
+      "type": "float",
+      "default": 0.0,
+      "range": [0.0, 1.0],
+      "description": "Reduces polygons in flat areas"
+    }
+  },
+  "related_tools": ["mesh_boolean", "modeling_join_objects", "sculpt_enable_dyntopo"],
+  "patterns": [],
+  "description": "Remeshes object using Voxel algorithm for uniform topology."
+}

@@ -1,0 +1,31 @@
+{
+  "tool_name": "mesh_symmetrize",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["symmetry", "symmetric", "mirror", "symmetrize", "left right", "copy side"],
+  "sample_prompts": [
+    "make the mesh symmetric",
+    "mirror the left side to the right",
+    "symmetrize the character",
+    "make it symmetrical",
+    "copy one side to the other"
+  ],
+  "parameters": {
+    "direction": {
+      "type": "enum",
+      "options": ["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"],
+      "default": "NEGATIVE_X",
+      "description": "Which side to copy FROM and TO"
+    },
+    "threshold": {
+      "type": "float",
+      "default": 0.0001,
+      "range": [0.0, 0.01],
+      "description": "Distance threshold for merging mirrored vertices"
+    }
+  },
+  "related_tools": ["mesh_mirror", "modeling_add_modifier"],
+  "patterns": [],
+  "description": "Makes mesh symmetric by mirroring one side to the other."
+}

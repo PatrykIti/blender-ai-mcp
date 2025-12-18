@@ -1,0 +1,28 @@
+{
+  "tool_name": "modeling_apply_modifier",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["apply", "modifier", "bake", "permanent"],
+  "sample_prompts": [
+    "apply the modifier",
+    "bake the subdivision",
+    "make modifier permanent",
+    "apply mirror modifier"
+  ],
+  "parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Object name"
+    },
+    "modifier_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the modifier to apply"
+    }
+  },
+  "related_tools": ["modeling_add_modifier", "modeling_list_modifiers"],
+  "patterns": [],
+  "description": "Applies a modifier, making its changes permanent."
+}

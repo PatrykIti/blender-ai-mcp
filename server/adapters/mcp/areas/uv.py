@@ -1,6 +1,8 @@
 from typing import Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_uv_handler
 
 @mcp.tool()
@@ -21,56 +23,63 @@ def uv_list_maps(
         object_name: Name of the mesh object to query
         include_island_counts: If True, includes UV loop counts (island counts not yet implemented)
     """
-    handler = get_uv_handler()
-    try:
-        result = handler.list_maps(
-            object_name=object_name,
-            include_island_counts=include_island_counts
-        )
+    def execute():
+        handler = get_uv_handler()
+        try:
+            result = handler.list_maps(
+                object_name=object_name,
+                include_island_counts=include_island_counts
+            )
 
-        obj_name = result.get("object_name")
-        uv_map_count = result.get("uv_map_count", 0)
-        uv_maps = result.get("uv_maps", [])
+            obj_name = result.get("object_name")
+            uv_map_count = result.get("uv_map_count", 0)
+            uv_maps = result.get("uv_maps", [])
 
-        if uv_map_count == 0:
-            return f"Object '{obj_name}' has no UV maps."
+            if uv_map_count == 0:
+                return f"Object '{obj_name}' has no UV maps."
 
-        lines = [
-            f"Object: {obj_name}",
-            f"UV Maps ({uv_map_count}):"
-        ]
+            lines = [
+                f"Object: {obj_name}",
+                f"UV Maps ({uv_map_count}):"
+            ]
 
-        for uv_map in uv_maps:
-            name = uv_map.get("name")
-            is_active = uv_map.get("is_active", False)
-            is_active_render = uv_map.get("is_active_render", False)
+            for uv_map in uv_maps:
+                name = uv_map.get("name")
+                is_active = uv_map.get("is_active", False)
+                is_active_render = uv_map.get("is_active_render", False)
 
-            flags = []
-            if is_active:
-                flags.append("active")
-            if is_active_render:
-                flags.append("active_render")
+                flags = []
+                if is_active:
+                    flags.append("active")
+                if is_active_render:
+                    flags.append("active_render")
 
-            flag_str = f" [{', '.join(flags)}]" if flags else ""
-            lines.append(f"  - {name}{flag_str}")
+                flag_str = f" [{', '.join(flags)}]" if flags else ""
+                lines.append(f"  - {name}{flag_str}")
 
-            if include_island_counts:
-                uv_loop_count = uv_map.get("uv_loop_count")
-                island_count = uv_map.get("island_count")
-                if uv_loop_count is not None:
-                    lines.append(f"      UV loops: {uv_loop_count}")
-                if island_count is not None:
-                    lines.append(f"      Islands: {island_count}")
-                else:
-                    lines.append(f"      Islands: (not implemented)")
+                if include_island_counts:
+                    uv_loop_count = uv_map.get("uv_loop_count")
+                    island_count = uv_map.get("island_count")
+                    if uv_loop_count is not None:
+                        lines.append(f"      UV loops: {uv_loop_count}")
+                    if island_count is not None:
+                        lines.append(f"      Islands: {island_count}")
+                    else:
+                        lines.append(f"      Islands: (not implemented)")
 
-        ctx.info(f"Listed {uv_map_count} UV maps for '{obj_name}'")
-        return "\n".join(lines)
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower() or "not a MESH" in msg:
-            return f"{msg}. Use scene_list_objects to verify the object name and type."
-        return msg
+            ctx_info(ctx, f"Listed {uv_map_count} UV maps for '{obj_name}'")
+            return "\n".join(lines)
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower() or "not a MESH" in msg:
+                return f"{msg}. Use scene_list_objects to verify the object name and type."
+            return msg
+
+    return route_tool_call(
+        tool_name="uv_list_maps",
+        params={"object_name": object_name, "include_island_counts": include_island_counts},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -101,24 +110,31 @@ def uv_unwrap(
         island_margin: Space between UV islands (0.0-1.0)
         scale_to_bounds: Scale UVs to fill 0-1 space
     """
-    handler = get_uv_handler()
-    try:
-        result = handler.unwrap(
-            object_name=object_name,
-            method=method,
-            angle_limit=angle_limit,
-            island_margin=island_margin,
-            scale_to_bounds=scale_to_bounds,
-        )
-        ctx.info(f"UV unwrap completed using {method}")
-        return result
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use scene_list_objects to verify the object name."
-        if "not a mesh" in msg.lower():
-            return f"{msg}. UV operations only work on mesh objects."
-        return msg
+    def execute():
+        handler = get_uv_handler()
+        try:
+            result = handler.unwrap(
+                object_name=object_name,
+                method=method,
+                angle_limit=angle_limit,
+                island_margin=island_margin,
+                scale_to_bounds=scale_to_bounds,
+            )
+            ctx_info(ctx, f"UV unwrap completed using {method}")
+            return result
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use scene_list_objects to verify the object name."
+            if "not a mesh" in msg.lower():
+                return f"{msg}. UV operations only work on mesh objects."
+            return msg
+
+    return route_tool_call(
+        tool_name="uv_unwrap",
+        params={"object_name": object_name, "method": method, "angle_limit": angle_limit, "island_margin": island_margin, "scale_to_bounds": scale_to_bounds},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -143,23 +159,30 @@ def uv_pack_islands(
         rotate: Allow rotation for better packing
         scale: Allow scaling islands to fill space
     """
-    handler = get_uv_handler()
-    try:
-        result = handler.pack_islands(
-            object_name=object_name,
-            margin=margin,
-            rotate=rotate,
-            scale=scale,
-        )
-        ctx.info("UV islands packed")
-        return result
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use scene_list_objects to verify the object name."
-        if "not a mesh" in msg.lower():
-            return f"{msg}. UV operations only work on mesh objects."
-        return msg
+    def execute():
+        handler = get_uv_handler()
+        try:
+            result = handler.pack_islands(
+                object_name=object_name,
+                margin=margin,
+                rotate=rotate,
+                scale=scale,
+            )
+            ctx_info(ctx, "UV islands packed")
+            return result
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use scene_list_objects to verify the object name."
+            if "not a mesh" in msg.lower():
+                return f"{msg}. UV operations only work on mesh objects."
+            return msg
+
+    return route_tool_call(
+        tool_name="uv_pack_islands",
+        params={"object_name": object_name, "margin": margin, "rotate": rotate, "scale": scale},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -180,18 +203,25 @@ def uv_create_seam(
         object_name: Target object (default: active object)
         action: 'mark' to add seams, 'clear' to remove seams from selected edges
     """
-    handler = get_uv_handler()
-    try:
-        result = handler.create_seam(
-            object_name=object_name,
-            action=action,
-        )
-        ctx.info(f"UV seam {action} completed")
-        return result
-    except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use scene_list_objects to verify the object name."
-        if "not a mesh" in msg.lower():
-            return f"{msg}. UV operations only work on mesh objects."
-        return msg
+    def execute():
+        handler = get_uv_handler()
+        try:
+            result = handler.create_seam(
+                object_name=object_name,
+                action=action,
+            )
+            ctx_info(ctx, f"UV seam {action} completed")
+            return result
+        except RuntimeError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                return f"{msg}. Use scene_list_objects to verify the object name."
+            if "not a mesh" in msg.lower():
+                return f"{msg}. UV operations only work on mesh objects."
+            return msg
+
+    return route_tool_call(
+        tool_name="uv_create_seam",
+        params={"object_name": object_name, "action": action},
+        direct_executor=execute
+    )

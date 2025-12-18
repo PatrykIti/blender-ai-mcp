@@ -1,0 +1,20 @@
+{
+  "tool_name": "scene_isolate_object",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["isolate", "solo", "focus", "local view", "hide others", "show only"],
+  "sample_prompts": [
+    "isolate the cube",
+    "show only this object",
+    "hide everything except the body",
+    "solo the selected object",
+    "focus on just the head"
+  ],
+  "parameters": {
+    "object_name": {"type": "string_or_list", "required": true, "description": "Name or list of names to keep visible (all others hidden)"}
+  },
+  "related_tools": ["scene_hide_object", "scene_show_all_objects", "scene_camera_focus"],
+  "patterns": [],
+  "description": "Isolates object(s) by hiding all others."
+}

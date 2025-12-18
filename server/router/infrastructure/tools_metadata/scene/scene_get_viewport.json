@@ -1,0 +1,17 @@
+{
+  "tool_name": "scene_get_viewport",
+  "category": "scene",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["viewport", "render", "preview", "image", "screenshot", "visual"],
+  "sample_prompts": ["show me the viewport", "render a preview", "take a screenshot", "show the scene"],
+  "parameters": {
+    "width": {"type": "int", "default": 1024},
+    "height": {"type": "int", "default": 768},
+    "shading": {"type": "enum", "options": ["WIREFRAME", "SOLID", "MATERIAL", "RENDERED"], "default": "SOLID"},
+    "output_mode": {"type": "enum", "options": ["IMAGE", "BASE64", "FILE", "MARKDOWN"], "default": "IMAGE"}
+  },
+  "related_tools": ["scene_create"],
+  "patterns": [],
+  "description": "Gets a visual preview of the scene (viewport render)."
+}

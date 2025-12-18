@@ -1,0 +1,448 @@
+# Simple Table Workflow
+# Clean, minimal table with straight legs
+# No benches, no A-frame supports, no complex features
+# Perfect for: desk, dining table, work table
+#
+# TASK-055-FIX-7 + TASK-058: Dynamic Plank System with Computed Parameters + Loops
+# - Plank count adapts to table width (max 0.10m per plank)
+# - Full planks + last remainder plank (e.g. 0.73m = 7x0.10m + 1x0.03m)
+# - Uses TASK-056-5 computed parameters + TASK-058 loop expansion
+
+name: simple_table_workflow
+description: Creates a simple table with straight legs and adaptive plank count
+category: furniture
+author: blender-ai-mcp
+version: "3.0.0"
+
+trigger_keywords:
+  - simple table
+  - basic table
+  - desk
+  - dining table
+  - work table
+  - table with straight legs
+  - prosty stół
+  - stół z prostymi nogami
+
+sample_prompts:
+  # English
+  - "create a simple table"
+  - "make a basic table with straight legs"
+  - "build a desk"
+  - "design a dining table"
+  - "create a work table"
+  - "make a table 0.8m wide"
+  - "create a narrow table 0.45m wide"
+  - "build a wide table 1.2m"
+
+  # Polish
+  - "zrób prosty stół"
+  - "stwórz stół z prostymi nogami"
+  - "zrób biurko"
+  - "stwórz stół jadalny"
+  - "zrób stół szerokości 0.8m"
+  - "stwórz wąski stół 0.45m"
+  - "zbuduj szeroki stół 1.2m"
+
+  # German
+  - "erstelle einen einfachen Tisch"
+  - "baue einen Schreibtisch"
+
+# ============================================================
+# PARAMETRIC VARIABLES
+# Simple table only uses straight legs (angle = 0)
+# ============================================================
+
+defaults:
+  # Leg configuration - always straight for simple table
+  leg_angle_left: 0        # Straight vertical legs
+  leg_angle_right: 0       # Straight vertical legs
+
+  # Leg dimensions
+  leg_length: 0.75         # Standard table height
+  leg_offset_x: 0.05       # TASK-055-FIX-7: Renamed from leg_offset_from_beam
+  leg_offset_y: 0.05       # TASK-055-FIX-7: Renamed from leg_offset_from_beam_lengthwise
+
+  # Table top dimensions
+  table_length: 1.2        # Table length (Y axis)
+  table_width: 0.8         # Table width (X axis)
+
+  # Plank configuration (TASK-055-FIX-7)
+  plank_max_width: 0.10    # Maximum width per plank (10cm realistic wood)
+
+# No modifiers needed - simple table always has straight legs
+
+# ============================================================
+# PARAMETER SCHEMAS
+# Interactive parameter resolution with computed parameters
+# ============================================================
+
+parameters:
+  # ==========================================
+  # USER-SPECIFIED PARAMETERS
+  # ==========================================
+
+  table_length:
+    type: float
+    range: [0.4, 2.5]
+    default: 1.2
+    description: Length of table top (Y axis) - how long the table is
+    semantic_hints:
+      - length
+      - long
+      - table
+      - size
+    group: table_dimensions
+
+  table_width:
+    type: float
+    range: [0.4, 1.5]
+    default: 0.8
+    description: Width of table top (X axis) - how wide the table is
+    semantic_hints:
+      - width
+      - wide
+      - table
+      - size
+    group: table_dimensions
+
+  leg_length:
+    type: float
+    range: [0.4, 1.2]
+    default: 0.75
+    description: Height of table legs (standard desk height is 0.75m)
+    semantic_hints:
+      - height
+      - tall
+      - legs
+      - high
+    group: leg_dimensions
+
+  leg_offset_x:
+    type: float
+    range: [0.02, 0.15]
+    default: 0.05
+    description: Inset of leg outer face from tabletop edge in X axis (width)
+    semantic_hints:
+      - offset
+      - inset
+      - distance
+      - stable
+      - position
+      - width
+      - corner
+      - edge
+    group: leg_dimensions
+
+  leg_offset_y:
+    type: float
+    range: [0.02, 0.15]
+    default: 0.05
+    description: Inset of leg outer face from tabletop edge in Y axis (length)
+    semantic_hints:
+      - offset
+      - inset
+      - lengthwise
+      - length
+      - corner
+      - edge
+      - distance
+    group: leg_dimensions
+
+  plank_max_width:
+    type: float
+    range: [0.05, 0.15]
+    default: 0.10
+    description: Maximum width per plank (default 0.10m = 10cm realistic wood plank)
+    semantic_hints:
+      - plank
+      - width
+      - max
+      - board
+      - wood
+    group: plank_configuration
+
+  # ==========================================
+  # COMPUTED PARAMETERS (TASK-056-5)
+  # Auto-calculated from user parameters
+  # ==========================================
+
+  plank_full_count:
+    type: int
+    computed: "floor(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Number of full-width planks (each = plank_max_width)
+
+  plank_remainder_width_raw:
+    type: float
+    computed: "table_width - (plank_full_count * plank_max_width)"
+    depends_on: ["table_width", "plank_full_count", "plank_max_width"]
+    description: Raw remainder width (may be ~0 due to floating point)
+
+  plank_remainder_width:
+    type: float
+    computed: "max(plank_remainder_width_raw, 0)"
+    depends_on: ["plank_remainder_width_raw"]
+    description: Width of the last remainder plank (0 if not needed)
+
+  plank_has_remainder:
+    type: int
+    computed: "1 if plank_remainder_width > 0.000001 else 0"
+    depends_on: ["plank_remainder_width"]
+    description: Whether a remainder plank is needed (1=yes, 0=no)
+
+  plank_count:
+    type: int
+    computed: "plank_full_count + plank_has_remainder"
+    depends_on: ["plank_full_count", "plank_has_remainder"]
+    description: Total number of tabletop planks (full + remainder)
+
+# ============================================================
+# WORKFLOW STEPS
+# Dynamic tabletop planks + underside support frame + 4 straight legs
+# ============================================================
+
+steps:
+  # ============================================
+  # SECTION 1: TABLE TOP (dynamic planks)
+  # Full planks + remainder plank (if needed)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_{i}"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Create table plank {i}"
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_{i}"
+      scale:
+        - "$CALCULATE((plank_max_width if {i} <= plank_full_count else plank_remainder_width) / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE((-table_width / 2 + plank_max_width * ({i} - 0.5)) if {i} <= plank_full_count else (-table_width / 2 + plank_max_width * plank_full_count + plank_remainder_width / 2))"
+        - 0
+        - "$CALCULATE(leg_length + 0.0114)"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Position plank {i} (scale = dimensions/2 for cube)"
+
+  # ============================================
+  # SECTION 2: UNDERSIDE SUPPORT FRAME (podbitka)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Front"
+    description: Create front support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Front"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position front support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Back"
+    description: Create back support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Back"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position back support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Left"
+    description: Create left support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Left"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position left support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Right"
+    description: Create right support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Right"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position right support plank (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Middle"
+    description: Create middle support plank under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Middle"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position middle support plank"
+
+  # ============================================
+  # SECTION 3: STRAIGHT LEGS (4 pieces)
+  # No rotation, no stretching - simple vertical legs
+  # TASK-055-FIX-7: Updated to use leg_offset_x and leg_offset_y
+  # ============================================
+
+  # Front-left leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FL"
+    description: Create front-left leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FL"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))", "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Front-left leg - inset from corner by leg_offset_x/leg_offset_y"
+
+  # Front-right leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_FR"
+    description: Create front-right leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_FR"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x - 0.04)", "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Front-right leg - inset from corner by leg_offset_x/leg_offset_y"
+
+  # Back-left leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BL"
+    description: Create back-left leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BL"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))", "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Back-left leg - inset from corner by leg_offset_x/leg_offset_y"
+
+  # Back-right leg
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "Leg_BR"
+    description: Create back-right leg
+
+  - tool: modeling_transform_object
+    params:
+      name: "Leg_BR"
+      scale: [0.04, 0.04, "$CALCULATE(leg_length / 2)"]
+      location: ["$CALCULATE(table_width / 2 - leg_offset_x - 0.04)", "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, 0, 0]
+    description: "Back-right leg - inset from corner by leg_offset_x/leg_offset_y"
+
+  # ============================================
+  # SECTION 4: MATERIAL
+  # Simple wood material - assigned to first plank only
+  # NOTE: Join step is commented out to preserve individual plank visibility
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "SimpleTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material
+
+  - tool: material_assign
+    params:
+      material_name: "SimpleTable_Wood"
+      object_name: "TablePlank_1"
+    description: Apply wood material to table (assigned to first plank as reference)
+
+  # ============================================
+  # OPTIONAL: JOIN ALL PARTS
+  # Uncomment to merge all parts into single object
+  # WARNING: Joining will merge separate planks into solid surface
+  # ============================================
+
+  # - tool: modeling_join_objects
+  #   params:
+  #     # NOTE: tabletop planks are dynamic (loop), so you must list them explicitly here.
+  #     object_names: ["TablePlank_1", "TableSupport_Front", "TableSupport_Back", "TableSupport_Left", "TableSupport_Right", "TableSupport_Middle", "Leg_FL", "Leg_FR", "Leg_BL", "Leg_BR"]
+  #   description: Join all table parts into single object
+  #   optional: true
+
+  # - tool: scene_rename_object
+  #   params:
+  #     old_name: "Leg_BR"
+  #     new_name: "SimpleTable"
+  #   description: Rename joined object to SimpleTable
+  #   optional: true
+
+  # - tool: material_assign
+  #   params:
+  #     material_name: "SimpleTable_Wood"
+  #     object_name: "SimpleTable"
+  #   description: Apply wood material to joined table
+  #   optional: true

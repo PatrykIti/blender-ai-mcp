@@ -1,0 +1,390 @@
+# X-Leg Table Workflow
+# Clean, parametric table with X-shaped legs (crossed beams at each end)
+# Based on leg concepts from _docs/_ROUTER/WORKFLOWS/table.yaml
+# Uses the same adaptive plank system as simple_table_workflow (computed params + loops)
+
+name: x_leg_table_workflow
+description: Creates a table with X-shaped legs and adaptive plank count
+category: furniture
+author: blender-ai-mcp
+version: "3.0.0"
+
+trigger_keywords:
+  - x-leg table
+  - x legs table
+  - table with x legs
+  - table with x-shaped legs
+  - crossed legs table
+  - table with crossed legs
+  - stół z nogami x
+  - stół z nogami w kształcie x
+  - stół z nogami w ksztalcie x
+  - stół z nogami w literę x
+  - stol z nogami x
+  - stół z skrzyżowanymi nogami
+  - stół ze skrzyżowanymi nogami
+
+sample_prompts:
+  # English
+  - "create a table with X-shaped legs"
+  - "make a table with crossed legs"
+  - "build an x-leg dining table"
+
+  # Polish
+  - "zrób stół z nogami w kształcie litery X"
+  - "stwórz stół ze skrzyżowanymi nogami"
+
+defaults:
+  # Table top dimensions (meters)
+  table_length: 1.2
+  table_width: 0.8
+
+  # Leg height and offsets (meters)
+  leg_length: 0.75
+  leg_offset_x: 0.05
+  leg_offset_y: 0.05
+
+  # Plank configuration (meters)
+  plank_max_width: 0.10
+
+parameters:
+  # ==========================================
+  # USER PARAMETERS
+  # ==========================================
+
+  table_length:
+    type: float
+    range: [0.4, 2.5]
+    default: 1.2
+    description: Length of table top (Y axis) - how long the table is
+    semantic_hints: [length, long, table, size]
+    group: table_dimensions
+
+  table_width:
+    type: float
+    range: [0.4, 1.5]
+    default: 0.8
+    description: Width of table top (X axis) - how wide the table is
+    semantic_hints: [width, wide, table, size]
+    group: table_dimensions
+
+  leg_length:
+    type: float
+    range: [0.4, 1.2]
+    default: 0.75
+    description: Height of table (distance from ground to tabletop underside)
+    semantic_hints: [height, tall, legs, high]
+    group: leg_dimensions
+
+  leg_offset_x:
+    type: float
+    range: [0.02, 0.20]
+    default: 0.05
+    description: Inset of X-leg endpoints from tabletop edge in X axis (width)
+    semantic_hints: [offset, inset, distance, width, corner, edge]
+    group: leg_dimensions
+
+  leg_offset_y:
+    type: float
+    range: [0.02, 0.30]
+    default: 0.05
+    description: Inset of X-leg frames from tabletop edge in Y axis (length)
+    semantic_hints: [offset, inset, distance, length, corner, edge]
+    group: leg_dimensions
+
+  plank_max_width:
+    type: float
+    range: [0.05, 0.15]
+    default: 0.10
+    description: Maximum width per plank (default 0.10m = 10cm)
+    semantic_hints: [plank, width, max, board, wood]
+    group: plank_configuration
+
+  # ==========================================
+  # COMPUTED PARAMETERS (planks)
+  # ==========================================
+
+  plank_full_count:
+    type: int
+    computed: "floor(table_width / plank_max_width)"
+    depends_on: ["table_width", "plank_max_width"]
+    description: Number of full-width planks (each = plank_max_width)
+
+  plank_remainder_width_raw:
+    type: float
+    computed: "table_width - (plank_full_count * plank_max_width)"
+    depends_on: ["table_width", "plank_full_count", "plank_max_width"]
+    description: Raw remainder width (may be ~0 due to floating point)
+
+  plank_remainder_width:
+    type: float
+    computed: "max(plank_remainder_width_raw, 0)"
+    depends_on: ["plank_remainder_width_raw"]
+    description: Width of the last remainder plank (0 if not needed)
+
+  plank_has_remainder:
+    type: int
+    computed: "1 if plank_remainder_width > 0.000001 else 0"
+    depends_on: ["plank_remainder_width"]
+    description: Whether a remainder plank is needed (1=yes, 0=no)
+
+  plank_count:
+    type: int
+    computed: "plank_full_count + plank_has_remainder"
+    depends_on: ["plank_full_count", "plank_has_remainder"]
+    description: Total number of tabletop planks (full + remainder)
+
+  # ==========================================
+  # COMPUTED PARAMETERS (X legs)
+  # ==========================================
+
+  x_leg_inner_half_width:
+    type: float
+    computed: "max(table_width / 2 - leg_offset_x - 0.04, 0.02)"
+    depends_on: ["table_width", "leg_offset_x"]
+    description: Half-width from center to X-leg endpoint (keeps legs inside tabletop)
+
+  x_leg_frame_y:
+    type: float
+    computed: "max(table_length / 2 - leg_offset_y - 0.04, 0.02)"
+    depends_on: ["table_length", "leg_offset_y"]
+    description: Half-distance from center to each X-leg frame (front/back)
+
+  x_leg_angle:
+    type: float
+    computed: "atan2(table_width - 2 * (leg_offset_x + 0.04), leg_length)"
+    depends_on: ["table_width", "leg_offset_x", "leg_length"]
+    description: Rotation angle for X-leg beams (radians)
+
+  x_leg_beam_half_length:
+    type: float
+    computed: "sqrt(pow(x_leg_inner_half_width, 2) + pow(leg_length / 2, 2))"
+    depends_on: ["x_leg_inner_half_width", "leg_length"]
+    description: Beam half-length so endpoints land at ground and tabletop
+
+steps:
+  # ============================================
+  # SECTION 1: TABLE TOP (dynamic planks)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TablePlank_{i}"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Create table plank {i}"
+
+  - tool: modeling_transform_object
+    params:
+      name: "TablePlank_{i}"
+      scale:
+        - "$CALCULATE((plank_max_width if {i} <= plank_full_count else plank_remainder_width) / 2)"
+        - "$CALCULATE(table_length / 2)"
+        - 0.0114
+      location:
+        - "$CALCULATE((-table_width / 2 + plank_max_width * ({i} - 0.5)) if {i} <= plank_full_count else (-table_width / 2 + plank_max_width * plank_full_count + plank_remainder_width / 2))"
+        - 0
+        - "$CALCULATE(leg_length + 0.0114)"
+    loop:
+      group: "planks"
+      variable: "i"
+      range: "1..plank_count"
+    description: "Position plank {i} (scale = dimensions/2 for cube)"
+
+  # ============================================
+  # SECTION 2: UNDERSIDE SUPPORT FRAME
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Front"
+    description: Create front support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Front"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(-(table_length / 2 - leg_offset_y - 0.04))"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position front support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Back"
+    description: Create back support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Back"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - "$CALCULATE(table_length / 2 - leg_offset_y - 0.04)"
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position back support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Left"
+    description: Create left support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Left"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(-(table_width / 2 - leg_offset_x - 0.04))"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position left support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Right"
+    description: Create right support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Right"
+      scale:
+        - 0.03
+        - "$CALCULATE((table_length - 2 * (leg_offset_y + 0.04)) / 2)"
+        - 0.01
+      location:
+        - "$CALCULATE(table_width / 2 - leg_offset_x - 0.04)"
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position right support (fits between legs)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "TableSupport_Middle"
+    description: Create middle support under table top
+
+  - tool: modeling_transform_object
+    params:
+      name: "TableSupport_Middle"
+      scale:
+        - "$CALCULATE((table_width - 2 * (leg_offset_x + 0.04)) / 2)"
+        - 0.03
+        - 0.01
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(leg_length - 0.01)"
+    description: "Position middle support"
+
+  # ============================================
+  # SECTION 3: X-SHAPED LEGS (2 frames, 4 beams)
+  # ============================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "XLeg_Front_A"
+    description: Create front X-leg beam A
+
+  - tool: modeling_transform_object
+    params:
+      name: "XLeg_Front_A"
+      scale: [0.04, 0.04, "$x_leg_beam_half_length"]
+      location: [0, "$CALCULATE(-x_leg_frame_y)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, "$x_leg_angle", 0]
+    description: "Position front X-leg beam A (bottom-left to top-right)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "XLeg_Front_B"
+    description: Create front X-leg beam B
+
+  - tool: modeling_transform_object
+    params:
+      name: "XLeg_Front_B"
+      scale: [0.04, 0.04, "$x_leg_beam_half_length"]
+      location: [0, "$CALCULATE(-x_leg_frame_y)", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, "$CALCULATE(-x_leg_angle)", 0]
+    description: "Position front X-leg beam B (bottom-right to top-left)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "XLeg_Back_A"
+    description: Create back X-leg beam A
+
+  - tool: modeling_transform_object
+    params:
+      name: "XLeg_Back_A"
+      scale: [0.04, 0.04, "$x_leg_beam_half_length"]
+      location: [0, "$x_leg_frame_y", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, "$x_leg_angle", 0]
+    description: "Position back X-leg beam A (bottom-left to top-right)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "XLeg_Back_B"
+    description: Create back X-leg beam B
+
+  - tool: modeling_transform_object
+    params:
+      name: "XLeg_Back_B"
+      scale: [0.04, 0.04, "$x_leg_beam_half_length"]
+      location: [0, "$x_leg_frame_y", "$CALCULATE(leg_length / 2)"]
+      rotation: [0, "$CALCULATE(-x_leg_angle)", 0]
+    description: "Position back X-leg beam B (bottom-right to top-left)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "XLegStretcher_Mid"
+    description: Create mid stretcher between X frames
+    optional: true
+    tags: ["stretcher", "structural"]
+
+  - tool: modeling_transform_object
+    params:
+      name: "XLegStretcher_Mid"
+      scale: [0.04, "$x_leg_frame_y", 0.04]
+      location: [0, 0, "$CALCULATE(leg_length / 2)"]
+    description: "Position mid stretcher (connects front/back frames)"
+    optional: true
+    tags: ["stretcher", "structural"]
+
+  # ============================================
+  # SECTION 4: MATERIAL
+  # ============================================
+
+  - tool: material_create
+    params:
+      name: "XLegTable_Wood"
+      base_color: [0.661, 0.24, 0.02, 1.0]
+      roughness: 0.985
+      metallic: 0.0
+    description: Create wood material
+
+  - tool: material_assign
+    params:
+      material_name: "XLegTable_Wood"
+      object_name: "TablePlank_1"
+    description: Apply wood material (assigned to first plank as reference)
+

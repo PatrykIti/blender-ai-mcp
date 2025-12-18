@@ -1,0 +1,27 @@
+{
+  "tool_name": "mesh_remove_from_group",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["remove", "vertex group", "unassign", "delete from group"],
+  "sample_prompts": [
+    "remove from vertex group",
+    "unassign vertices from group",
+    "remove selection from head group"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the mesh object"
+    },
+    "group_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the vertex group"
+    }
+  },
+  "related_tools": ["mesh_assign_to_group", "mesh_create_vertex_group"],
+  "patterns": [],
+  "description": "Removes selected vertices from a vertex group."
+}

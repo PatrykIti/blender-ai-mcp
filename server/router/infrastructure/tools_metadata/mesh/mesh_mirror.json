@@ -1,0 +1,36 @@
+{
+  "tool_name": "mesh_mirror",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["mirror", "flip", "reflect", "mirror geometry", "duplicate mirror"],
+  "sample_prompts": [
+    "mirror the selection",
+    "flip the selected geometry",
+    "mirror across X axis",
+    "reflect the geometry",
+    "create a mirrored copy"
+  ],
+  "parameters": {
+    "axis": {
+      "type": "enum",
+      "options": ["X", "Y", "Z"],
+      "default": "X",
+      "description": "Axis to mirror across"
+    },
+    "use_mirror_merge": {
+      "type": "bool",
+      "default": true,
+      "description": "Merge vertices at mirror plane"
+    },
+    "merge_threshold": {
+      "type": "float",
+      "default": 0.001,
+      "range": [0.0, 1.0],
+      "description": "Distance for merging mirrored vertices"
+    }
+  },
+  "related_tools": ["mesh_symmetrize", "modeling_add_modifier", "mesh_duplicate_selected"],
+  "patterns": [],
+  "description": "Mirrors selected geometry within the same object."
+}

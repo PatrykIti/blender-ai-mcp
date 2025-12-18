@@ -1,9 +1,10 @@
-# TASK-037: Armature & Rigging (Future)
+# TASK-037: Armature & Rigging ✅
 
 **Priority:** 🟢 Low (Future)
 **Category:** Animation / Rigging
 **Estimated Effort:** High
 **Dependencies:** TASK-017 (Vertex Groups)
+**Status:** ✅ Done
 
 ---
 
@@ -25,7 +26,7 @@ Armature and rigging tools enable **skeletal animation** - essential for charact
 
 ### TASK-037-1: armature_create
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Creates an armature object with initial bone.
 
@@ -60,7 +61,7 @@ armature.data.bones[0].name = bone_name
 
 ### TASK-037-2: armature_add_bone
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Adds a new bone to existing armature.
 
@@ -107,7 +108,7 @@ bpy.ops.object.mode_set(mode='OBJECT')
 
 ### TASK-037-3: armature_bind
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Binds mesh to armature (automatic weights).
 
@@ -154,9 +155,9 @@ else:
 
 ---
 
-### TASK-037-4: armature_pose_bone (Optional)
+### TASK-037-4: armature_pose_bone
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Poses a bone (rotation/location).
 
@@ -195,9 +196,9 @@ if scale:
 
 ---
 
-### TASK-037-5: weight_paint_assign (Optional)
+### TASK-037-5: armature_weight_paint_assign
 
-**Status:** 🚧 To Do (Future)
+**Status:** ✅ Done
 
 Assigns weights to vertex group (for manual rigging).
 
@@ -243,7 +244,102 @@ Start simple, expand based on user demand.
 
 ## Testing Requirements
 
-- [ ] Unit tests with mocked armature operations
-- [ ] E2E test: Create armature → add bones → bind mesh → pose → verify deformation
-- [ ] Test automatic weights on simple mesh (cube)
-- [ ] Test manual weight assignment workflow
+- [x] Unit tests with mocked armature operations
+- [x] E2E test: Create armature → add bones → bind mesh → pose → verify deformation
+- [x] Test automatic weights on simple mesh (cube)
+- [x] Test manual weight assignment workflow
+
+---
+
+## Router Integration
+
+For each tool, create metadata JSON file in `server/router/infrastructure/tools_metadata/armature/`:
+
+### Example: armature_create.json
+
+```json
+{
+  "tool_name": "armature_create",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["armature", "skeleton", "bone", "rig", "rigging"],
+  "sample_prompts": [
+    "create an armature",
+    "add skeleton for rigging",
+    "create bones for the character"
+  ],
+  "parameters": {
+    "name": {"type": "string", "default": "Armature"},
+    "bone_name": {"type": "string", "default": "Bone"},
+    "bone_length": {"type": "float", "default": 1.0, "range": [0.01, 100.0]}
+  },
+  "related_tools": ["armature_add_bone", "armature_bind"],
+  "patterns": [],
+  "description": "Creates an armature object with initial bone for rigging."
+}
+```
+
+### Example: armature_bind.json
+
+```json
+{
+  "tool_name": "armature_bind",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bind", "parent", "skin", "weight", "deform", "rig"],
+  "sample_prompts": [
+    "bind the mesh to the armature",
+    "attach skeleton to character",
+    "apply automatic weights"
+  ],
+  "parameters": {
+    "mesh_name": {"type": "string", "description": "Mesh to bind"},
+    "armature_name": {"type": "string", "description": "Armature to bind to"},
+    "bind_type": {
+      "type": "enum",
+      "options": ["AUTO", "ENVELOPE", "EMPTY"],
+      "default": "AUTO"
+    }
+  },
+  "related_tools": ["armature_create", "armature_pose_bone", "mesh_create_vertex_group"],
+  "patterns": [],
+  "description": "Binds mesh to armature with automatic weight calculation."
+}
+```
+
+---
+
+## Implementation Checklist (per tool)
+
+Each tool requires implementation in **4 layers** + infrastructure:
+
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/armature.py` | `@abstractmethod def tool_name(...)` (NEW FILE) |
+| Application | `server/application/tool_handlers/armature_handler.py` | `def tool_name(...)` RPC call (NEW FILE) |
+| Adapter | `server/adapters/mcp/areas/armature.py` | `@mcp.tool() def armature_tool_name(...)` (NEW FILE) |
+| Addon | `blender_addon/application/handlers/armature.py` | `def tool_name(...)` with bpy (NEW FILE) |
+| Addon Init | `blender_addon/__init__.py` | Register RPC handler `armature.tool_name` |
+| Dispatcher | `server/adapters/mcp/dispatcher.py` | Add `get_armature_handler()` + tool mappings |
+| DI Provider | `server/infrastructure/di.py` | Add `get_armature_handler()` (NEW) |
+| Router Metadata | `server/router/infrastructure/tools_metadata/armature/armature_tool_name.json` | Tool metadata (NEW DIR) |
+| Unit Tests | `tests/unit/tools/armature/test_tool_name.py` | Handler tests (NEW DIR) |
+| E2E Tests | `tests/e2e/tools/armature/test_tool_name.py` | Full integration tests (NEW DIR) |
+
+---
+
+## Documentation Updates Required
+
+After implementing these tools, update:
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-037_Armature_Rigging.md` | Mark sub-tasks as ✅ Done |
+| `_docs/_TASKS/README.md` | Move task to Done section |
+| `_docs/_CHANGELOG/{NN}-{date}-armature-tools.md` | Create changelog entry |
+| `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
+| `_docs/_ADDON/README.md` | Add RPC commands to handler table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
+| `README.md` | Update roadmap checkboxes, add to autoApprove lists |

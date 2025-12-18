@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_lattice_handler
 
@@ -47,20 +48,35 @@ def lattice_create(
         lattice_create(name="TowerLattice", target_object="Tower", points_w=4)
         lattice_create(name="BendLattice", points_u=2, points_v=2, points_w=6)
     """
-    handler = get_lattice_handler()
-    try:
-        parsed_location = parse_coordinate(location)
-        return handler.lattice_create(
-            name=name,
-            target_object=target_object,
-            location=parsed_location,
-            points_u=points_u,
-            points_v=points_v,
-            points_w=points_w,
-            interpolation=interpolation,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_lattice_handler()
+        try:
+            parsed_location = parse_coordinate(location)
+            return handler.lattice_create(
+                name=name,
+                target_object=target_object,
+                location=parsed_location,
+                points_u=points_u,
+                points_v=points_v,
+                points_w=points_w,
+                interpolation=interpolation,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="lattice_create",
+        params={
+            "name": name,
+            "target_object": target_object,
+            "location": location,
+            "points_u": points_u,
+            "points_v": points_v,
+            "points_w": points_w,
+            "interpolation": interpolation
+        },
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -90,15 +106,26 @@ def lattice_bind(
         lattice_bind(object_name="Tower", lattice_name="TowerLattice")
         lattice_bind(object_name="Character", lattice_name="BendLattice", vertex_group="Torso")
     """
-    handler = get_lattice_handler()
-    try:
-        return handler.lattice_bind(
-            object_name=object_name,
-            lattice_name=lattice_name,
-            vertex_group=vertex_group,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_lattice_handler()
+        try:
+            return handler.lattice_bind(
+                object_name=object_name,
+                lattice_name=lattice_name,
+                vertex_group=vertex_group,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="lattice_bind",
+        params={
+            "object_name": object_name,
+            "lattice_name": lattice_name,
+            "vertex_group": vertex_group
+        },
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -133,14 +160,26 @@ def lattice_edit_point(
         lattice_edit_point("TowerLattice", point_index=[12,13,14,15], offset=[-0.3,-0.3,0])
         lattice_edit_point("BendLattice", point_index=7, offset=[0,0,0.5])
     """
-    handler = get_lattice_handler()
-    try:
-        parsed_offset = parse_coordinate(offset)
-        return handler.lattice_edit_point(
-            lattice_name=lattice_name,
-            point_index=point_index,
-            offset=parsed_offset,
-            relative=relative,
-        )
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        handler = get_lattice_handler()
+        try:
+            parsed_offset = parse_coordinate(offset)
+            return handler.lattice_edit_point(
+                lattice_name=lattice_name,
+                point_index=point_index,
+                offset=parsed_offset,
+                relative=relative,
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="lattice_edit_point",
+        params={
+            "lattice_name": lattice_name,
+            "point_index": point_index,
+            "offset": offset,
+            "relative": relative
+        },
+        direct_executor=execute
+    )

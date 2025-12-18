@@ -1,0 +1,19 @@
+{
+  "tool_name": "extraction_edge_loop_analysis",
+  "category": "extraction",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["edge loops", "bevel", "subdivision", "chamfer", "support loops", "extraction"],
+  "sample_prompts": [
+    "analyze edge loops",
+    "detect bevels",
+    "find support loops",
+    "check for chamfered edges"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "required": true, "description": "Object to analyze"}
+  },
+  "related_tools": ["extraction_deep_topology", "extraction_face_group_analysis", "mesh_bevel"],
+  "patterns": [],
+  "description": "Analyzes edge loops to detect bevels, subdivisions, and support loops."
+}

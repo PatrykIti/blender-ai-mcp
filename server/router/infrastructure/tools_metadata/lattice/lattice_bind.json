@@ -1,0 +1,16 @@
+{
+  "tool_name": "lattice_bind",
+  "category": "lattice",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["lattice", "bind", "deform", "modifier"],
+  "sample_prompts": ["bind to lattice", "attach lattice deformer", "connect lattice"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "lattice_name": {"type": "string", "required": true},
+    "vertex_group": {"type": "string", "default": null}
+  },
+  "related_tools": ["lattice_create", "lattice_edit_point"],
+  "patterns": [],
+  "description": "Binds an object to a lattice deformer."
+}

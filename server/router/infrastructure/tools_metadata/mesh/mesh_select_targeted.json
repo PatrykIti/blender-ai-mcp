@@ -1,0 +1,58 @@
+{
+  "tool_name": "mesh_select_targeted",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["select", "index", "loop", "ring", "location", "by index", "edge loop", "edge ring", "coordinate"],
+  "sample_prompts": [
+    "select vertices by index",
+    "select edge loop",
+    "select edge ring",
+    "select vertices by location",
+    "select faces at position",
+    "select vertex 0, 1, 2"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": ["by_index", "loop", "ring", "by_location"],
+      "required": true,
+      "description": "Selection action type"
+    },
+    "indices": {
+      "type": "list[int]",
+      "required": false,
+      "description": "List of indices for by_index action"
+    },
+    "element_type": {
+      "type": "enum",
+      "options": ["VERT", "EDGE", "FACE"],
+      "default": "VERT",
+      "description": "Type of element to select"
+    },
+    "edge_index": {
+      "type": "int",
+      "required": false,
+      "description": "Edge index for loop/ring selection"
+    },
+    "axis": {
+      "type": "enum",
+      "options": ["X", "Y", "Z"],
+      "required": false,
+      "description": "Axis for location-based selection"
+    },
+    "min_coord": {
+      "type": "float",
+      "required": false,
+      "description": "Minimum coordinate for location selection"
+    },
+    "max_coord": {
+      "type": "float",
+      "required": false,
+      "description": "Maximum coordinate for location selection"
+    }
+  },
+  "related_tools": ["mesh_select", "mesh_get_vertex_data", "mesh_extrude_region"],
+  "patterns": [],
+  "description": "Targeted selection operations for mesh geometry by index, loop, ring, or location."
+}

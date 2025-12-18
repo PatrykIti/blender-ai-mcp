@@ -1,0 +1,16 @@
+{
+  "tool_name": "collection_list_objects",
+  "category": "collection",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["list", "objects", "collection", "contents"],
+  "sample_prompts": ["list objects in collection", "show collection contents", "what is in collection"],
+  "parameters": {
+    "collection_name": {"type": "string", "required": true},
+    "recursive": {"type": "bool", "default": true},
+    "include_hidden": {"type": "bool", "default": false}
+  },
+  "related_tools": ["collection_list", "collection_manage"],
+  "patterns": [],
+  "description": "Lists objects inside a collection."
+}

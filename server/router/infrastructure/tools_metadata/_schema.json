@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tool_metadata_schema",
+  "title": "Tool Metadata Schema",
+  "description": "Schema for individual tool metadata JSON files",
+  "type": "object",
+  "required": ["tool_name", "category", "mode_required"],
+  "properties": {
+    "tool_name": {
+      "type": "string",
+      "description": "Unique tool identifier (e.g., mesh_extrude)",
+      "pattern": "^[a-z]+_[a-z_]+$"
+    },
+    "category": {
+      "type": "string",
+      "description": "Tool category/area",
+      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking", "armature"]
+    },
+    "mode_required": {
+      "type": "string",
+      "description": "Blender mode required for this tool",
+      "enum": ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE", "ANY"]
+    },
+    "selection_required": {
+      "type": "boolean",
+      "description": "Whether tool requires geometry selection",
+      "default": false
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Keywords for intent matching",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "sample_prompts": {
+      "type": "array",
+      "description": "Example prompts for this tool (used for classifier training)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameter definitions with types and ranges",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["string", "int", "float", "bool", "enum", "array", "vector3"]
+          },
+          "default": {},
+          "range": {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "options": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "related_tools": {
+      "type": "array",
+      "description": "Tools often used together with this one",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "description": "Geometry patterns this tool is associated with",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable tool description"
+    }
+  }
+}

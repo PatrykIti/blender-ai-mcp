@@ -1,0 +1,14 @@
+{
+  "tool_name": "system_undo",
+  "category": "system",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["undo", "revert", "back", "cancel", "mistake"],
+  "sample_prompts": ["undo last action", "revert changes", "go back", "undo 3 steps"],
+  "parameters": {
+    "steps": {"type": "int", "default": 1, "range": [1, 10]}
+  },
+  "related_tools": ["system_redo", "system_snapshot"],
+  "patterns": [],
+  "description": "Undoes the last operation(s)."
+}

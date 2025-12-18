@@ -1,0 +1,15 @@
+{
+  "tool_name": "scene_duplicate_object",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["duplicate", "copy", "clone", "object"],
+  "sample_prompts": ["duplicate the cube", "copy object", "clone the mesh"],
+  "parameters": {
+    "name": {"type": "string", "required": true, "description": "Name of the object to duplicate"},
+    "translation": {"type": "array", "default": null, "description": "Optional offset [x, y, z]"}
+  },
+  "related_tools": ["scene_list_objects", "modeling_transform_object"],
+  "patterns": [],
+  "description": "Duplicates an object with optional translation offset."
+}

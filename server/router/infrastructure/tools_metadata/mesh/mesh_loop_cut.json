@@ -1,0 +1,29 @@
+{
+  "tool_name": "mesh_loop_cut",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["loop cut", "subdivide", "cut", "add edges", "edge loops", "topology"],
+  "sample_prompts": [
+    "add a loop cut",
+    "subdivide the edge",
+    "add more edge loops",
+    "cut the mesh",
+    "add 3 loop cuts"
+  ],
+  "parameters": {
+    "number_cuts": {
+      "type": "int",
+      "default": 1,
+      "description": "Number of cuts to make"
+    },
+    "smoothness": {
+      "type": "float",
+      "default": 0.0,
+      "description": "Smoothness of the subdivision"
+    }
+  },
+  "related_tools": ["mesh_select_targeted", "mesh_subdivide", "mesh_bevel"],
+  "patterns": ["phone_like:button_placement"],
+  "description": "Adds cuts to mesh geometry using subdivide on selected edges."
+}

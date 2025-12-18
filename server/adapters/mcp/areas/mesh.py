@@ -1,6 +1,8 @@
 from typing import List, Literal, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_mesh_handler
 
@@ -30,20 +32,27 @@ def mesh_select(
         mesh_select(action="linked")
         mesh_select(action="boundary", boundary_mode="EDGE")
     """
-    if action == "all":
-        return _mesh_select_all(ctx, deselect=False)
-    elif action == "none":
-        return _mesh_select_all(ctx, deselect=True)
-    elif action == "linked":
-        return _mesh_select_linked(ctx)
-    elif action == "more":
-        return _mesh_select_more(ctx)
-    elif action == "less":
-        return _mesh_select_less(ctx)
-    elif action == "boundary":
-        return _mesh_select_boundary(ctx, mode=boundary_mode)
-    else:
-        return f"Unknown action '{action}'. Valid actions: all, none, linked, more, less, boundary"
+    def execute():
+        if action == "all":
+            return _mesh_select_all(ctx, deselect=False)
+        elif action == "none":
+            return _mesh_select_all(ctx, deselect=True)
+        elif action == "linked":
+            return _mesh_select_linked(ctx)
+        elif action == "more":
+            return _mesh_select_more(ctx)
+        elif action == "less":
+            return _mesh_select_less(ctx)
+        elif action == "boundary":
+            return _mesh_select_boundary(ctx, mode=boundary_mode)
+        else:
+            return f"Unknown action '{action}'. Valid actions: all, none, linked, more, less, boundary"
+
+    return route_tool_call(
+        tool_name="mesh_select",
+        params={"action": action, "boundary_mode": boundary_mode},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -80,24 +89,40 @@ def mesh_select_targeted(
         mesh_select_targeted(action="by_location", axis="Z", min_coord=0.5, max_coord=2.0)
         mesh_select_targeted(action="by_location", axis="X", min_coord=-1.0, max_coord=0.0, element_type="FACE")
     """
-    if action == "by_index":
-        if indices is None:
-            return "Error: 'by_index' action requires 'indices' parameter (list of integers)."
-        return _mesh_select_by_index(ctx, indices, element_type, selection_mode)
-    elif action == "loop":
-        if edge_index is None:
-            return "Error: 'loop' action requires 'edge_index' parameter (integer)."
-        return _mesh_select_loop(ctx, edge_index)
-    elif action == "ring":
-        if edge_index is None:
-            return "Error: 'ring' action requires 'edge_index' parameter (integer)."
-        return _mesh_select_ring(ctx, edge_index)
-    elif action == "by_location":
-        if axis is None or min_coord is None or max_coord is None:
-            return "Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord' parameters."
-        return _mesh_select_by_location(ctx, axis, min_coord, max_coord, element_type)
-    else:
-        return f"Unknown action '{action}'. Valid actions: by_index, loop, ring, by_location"
+    def execute():
+        if action == "by_index":
+            if indices is None:
+                return "Error: 'by_index' action requires 'indices' parameter (list of integers)."
+            return _mesh_select_by_index(ctx, indices, element_type, selection_mode)
+        elif action == "loop":
+            if edge_index is None:
+                return "Error: 'loop' action requires 'edge_index' parameter (integer)."
+            return _mesh_select_loop(ctx, edge_index)
+        elif action == "ring":
+            if edge_index is None:
+                return "Error: 'ring' action requires 'edge_index' parameter (integer)."
+            return _mesh_select_ring(ctx, edge_index)
+        elif action == "by_location":
+            if axis is None or min_coord is None or max_coord is None:
+                return "Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord' parameters."
+            return _mesh_select_by_location(ctx, axis, min_coord, max_coord, element_type)
+        else:
+            return f"Unknown action '{action}'. Valid actions: by_index, loop, ring, by_location"
+
+    return route_tool_call(
+        tool_name="mesh_select_targeted",
+        params={
+            "action": action,
+            "indices": indices,
+            "element_type": element_type,
+            "selection_mode": selection_mode,
+            "edge_index": edge_index,
+            "axis": axis,
+            "min_coord": min_coord,
+            "max_coord": max_coord
+        },
+        direct_executor=execute
+    )
 
 
 # Internal function - exposed via mesh_select mega tool
@@ -126,11 +151,11 @@ def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
     Args:
         type: 'VERT', 'EDGE', 'FACE'.
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.delete_selected(type)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_delete_selected",
+        params={"type": type},
+        direct_executor=lambda: get_mesh_handler().delete_selected(type)
+    )
 
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
@@ -163,12 +188,18 @@ def mesh_extrude_region(ctx: Context, move: Union[str, List[float], None] = None
     Args:
         move: Optional [x, y, z] vector to move extruded region. Can be a list or string '[0.0, 0.0, 2.0]'.
     """
-    handler = get_mesh_handler()
-    try:
-        parsed_move = parse_coordinate(move)
-        return handler.extrude_region(parsed_move)
-    except (RuntimeError, ValueError) as e:
-        return str(e)
+    def execute():
+        try:
+            parsed_move = parse_coordinate(move)
+            return get_mesh_handler().extrude_region(parsed_move)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_extrude_region",
+        params={"move": move},
+        direct_executor=execute
+    )
 
 @mcp.tool()
 def mesh_fill_holes(ctx: Context) -> str:
@@ -178,11 +209,11 @@ def mesh_fill_holes(ctx: Context) -> str:
 
     Workflow: BEFORE → mesh_select_boundary (CRITICAL!) | AFTER → mesh_merge_by_distance
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.fill_holes()
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_fill_holes",
+        params={},
+        direct_executor=lambda: get_mesh_handler().fill_holes()
+    )
 
 @mcp.tool()
 def mesh_bevel(
@@ -203,11 +234,11 @@ def mesh_bevel(
         profile: Shape of the bevel (0.5 is round).
         affect: 'EDGES' or 'VERTICES'.
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.bevel(offset, segments, profile, affect)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_bevel",
+        params={"offset": offset, "segments": segments, "profile": profile, "affect": affect},
+        direct_executor=lambda: get_mesh_handler().bevel(offset, segments, profile, affect)
+    )
 
 @mcp.tool()
 def mesh_loop_cut(
@@ -226,11 +257,11 @@ def mesh_loop_cut(
         number_cuts: Number of cuts to make.
         smoothness: Smoothness of the subdivision.
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.loop_cut(number_cuts, smoothness)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_loop_cut",
+        params={"number_cuts": number_cuts, "smoothness": smoothness},
+        direct_executor=lambda: get_mesh_handler().loop_cut(number_cuts, smoothness)
+    )
 
 @mcp.tool()
 def mesh_inset(
@@ -247,11 +278,11 @@ def mesh_inset(
         thickness: Amount to inset.
         depth: Amount to move the inset face in/out.
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.inset(thickness, depth)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_inset",
+        params={"thickness": thickness, "depth": depth},
+        direct_executor=lambda: get_mesh_handler().inset(thickness, depth)
+    )
 
 @mcp.tool()
 def mesh_boolean(
@@ -275,11 +306,11 @@ def mesh_boolean(
         operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
         solver: 'EXACT' (modern, recommended) or 'FLOAT' (legacy).
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.boolean(operation, solver)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_boolean",
+        params={"operation": operation, "solver": solver},
+        direct_executor=lambda: get_mesh_handler().boolean(operation, solver)
+    )
 
 @mcp.tool()
 def mesh_merge_by_distance(
@@ -295,11 +326,11 @@ def mesh_merge_by_distance(
     Args:
         distance: Threshold distance to merge.
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.merge_by_distance(distance)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_merge_by_distance",
+        params={"distance": distance},
+        direct_executor=lambda: get_mesh_handler().merge_by_distance(distance)
+    )
 
 @mcp.tool()
 def mesh_subdivide(
@@ -316,11 +347,11 @@ def mesh_subdivide(
         number_cuts: Number of cuts.
         smoothness: Smoothness factor (0.0 to 1.0).
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.subdivide(number_cuts, smoothness)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_subdivide",
+        params={"number_cuts": number_cuts, "smoothness": smoothness},
+        direct_executor=lambda: get_mesh_handler().subdivide(number_cuts, smoothness)
+    )
 
 @mcp.tool()
 def mesh_smooth(
@@ -338,11 +369,11 @@ def mesh_smooth(
         iterations: Number of smoothing passes (1-100). More = smoother
         factor: Smoothing strength (0.0-1.0). 0=no effect, 1=maximum smoothing
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.smooth_vertices(iterations, factor)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_smooth",
+        params={"iterations": iterations, "factor": factor},
+        direct_executor=lambda: get_mesh_handler().smooth_vertices(iterations, factor)
+    )
 
 @mcp.tool()
 def mesh_flatten(
@@ -358,11 +389,11 @@ def mesh_flatten(
     Args:
         axis: Axis to flatten along ("X", "Y", or "Z")
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.flatten_vertices(axis)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_flatten",
+        params={"axis": axis},
+        direct_executor=lambda: get_mesh_handler().flatten_vertices(axis)
+    )
     
     
 @mcp.tool()
@@ -380,61 +411,67 @@ def mesh_list_groups(
         object_name: Name of the mesh object.
         group_type: 'VERTEX' or 'FACE' (defaults to VERTEX).
     """
-    handler = get_mesh_handler()
-    try:
-        result = handler.list_groups(object_name, group_type)
-        import json
-        
-        obj_name = result.get("object_name")
-        g_type = result.get("group_type")
-        count = result.get("group_count", 0)
-        groups = result.get("groups", [])
-        note = result.get("note")
-        
-        if count == 0:
-            msg = f"Object '{obj_name}' has no {g_type.lower()} groups."
+    def execute():
+        handler = get_mesh_handler()
+        try:
+            result = handler.list_groups(object_name, group_type)
+
+            obj_name = result.get("object_name")
+            g_type = result.get("group_type")
+            count = result.get("group_count", 0)
+            groups = result.get("groups", [])
+            note = result.get("note")
+
+            if count == 0:
+                msg = f"Object '{obj_name}' has no {g_type.lower()} groups."
+                if note:
+                    msg += f"\nNote: {note}"
+                return msg
+
+            lines = [
+                f"Object: {obj_name}",
+                f"{g_type} Groups ({count}):"
+            ]
+
+            # Limit output if too many groups
+            limit = 50
+
+            for i, group in enumerate(groups):
+                if i >= limit:
+                    lines.append(f"  ... and {len(groups) - limit} more")
+                    break
+
+                name = group.get("name")
+                idx = group.get("index")
+                # For vertex groups, show member count if available
+                # For face maps/attrs, show type info
+
+                extras = []
+                if "member_count" in group:
+                    extras.append(f"members: {group['member_count']}")
+                if "lock_weight" in group and group["lock_weight"]:
+                    extras.append("locked")
+                if "data_type" in group:
+                    extras.append(f"type: {group['data_type']}")
+
+                extra_str = f" ({', '.join(extras)})" if extras else ""
+
+                lines.append(f"  [{idx if idx is not None else '-'}] {name}{extra_str}")
+
             if note:
-                msg += f"\nNote: {note}"
-            return msg
-            
-        lines = [
-            f"Object: {obj_name}",
-            f"{g_type} Groups ({count}):"
-        ]
-        
-        # Limit output if too many groups
-        limit = 50
-        
-        for i, group in enumerate(groups):
-            if i >= limit:
-                lines.append(f"  ... and {len(groups) - limit} more")
-                break
-                
-            name = group.get("name")
-            idx = group.get("index")
-            # For vertex groups, show member count if available
-            # For face maps/attrs, show type info
-            
-            extras = []
-            if "member_count" in group:
-                extras.append(f"members: {group['member_count']}")
-            if "lock_weight" in group and group["lock_weight"]:
-                extras.append("locked")
-            if "data_type" in group:
-                extras.append(f"type: {group['data_type']}")
-                
-            extra_str = f" ({', '.join(extras)})" if extras else ""
-            
-            lines.append(f"  [{idx if idx is not None else '-'}] {name}{extra_str}")
-            
-        if note:
-            lines.append(f"\nNote: {note}")
-            
-        ctx.info(f"Listed {count} {g_type} groups for '{obj_name}'")
-        return "\n".join(lines)
-        
-    except RuntimeError as e:
-        return str(e)
+                lines.append(f"\nNote: {note}")
+
+            ctx_info(ctx, f"Listed {count} {g_type} groups for '{obj_name}'")
+            return "\n".join(lines)
+
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_list_groups",
+        params={"object_name": object_name, "group_type": group_type},
+        direct_executor=execute
+    )
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_loop(
     ctx: Context,
@@ -601,13 +638,19 @@ def mesh_get_vertex_data(
         mesh_get_vertex_data(object_name="Cube") -> Returns all vertex data
         mesh_get_vertex_data(object_name="Cube", selected_only=True) -> Returns only selected vertices
     """
-    handler = get_mesh_handler()
-    try:
-        import json
-        result = handler.get_vertex_data(object_name, selected_only)
-        return json.dumps(result, indent=2)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        try:
+            import json
+            result = get_mesh_handler().get_vertex_data(object_name, selected_only)
+            return json.dumps(result, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_get_vertex_data",
+        params={"object_name": object_name, "selected_only": selected_only},
+        direct_executor=execute
+    )
 
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_by_location(
@@ -724,11 +767,11 @@ def mesh_randomize(
         mesh_randomize(amount=0.2, normal=1.0) -> Displacement along normals
         mesh_randomize(amount=0.1, uniform=0.5, normal=0.5, seed=42) -> Mix with fixed seed
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.randomize(amount, uniform, normal, seed)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_randomize",
+        params={"amount": amount, "uniform": uniform, "normal": normal, "seed": seed},
+        direct_executor=lambda: get_mesh_handler().randomize(amount, uniform, normal, seed)
+    )
 
 
 @mcp.tool()
@@ -750,11 +793,11 @@ def mesh_shrink_fatten(
         mesh_shrink_fatten(value=0.1) -> Fatten/inflate selected vertices
         mesh_shrink_fatten(value=-0.05) -> Shrink/deflate selected vertices
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.shrink_fatten(value)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_shrink_fatten",
+        params={"value": value},
+        direct_executor=lambda: get_mesh_handler().shrink_fatten(value)
+    )
 
 
 # ==============================================================================
@@ -781,11 +824,11 @@ def mesh_create_vertex_group(
         mesh_create_vertex_group(object_name="Body", name="Head")
         mesh_create_vertex_group(object_name="Character", name="LeftArm")
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.create_vertex_group(object_name, name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_create_vertex_group",
+        params={"object_name": object_name, "name": name},
+        direct_executor=lambda: get_mesh_handler().create_vertex_group(object_name, name)
+    )
 
 
 @mcp.tool()
@@ -810,11 +853,11 @@ def mesh_assign_to_group(
         mesh_assign_to_group(object_name="Body", group_name="Head", weight=1.0)
         mesh_assign_to_group(object_name="Arm", group_name="Bicep", weight=0.5)
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.assign_to_group(object_name, group_name, weight)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_assign_to_group",
+        params={"object_name": object_name, "group_name": group_name, "weight": weight},
+        direct_executor=lambda: get_mesh_handler().assign_to_group(object_name, group_name, weight)
+    )
 
 
 @mcp.tool()
@@ -835,11 +878,11 @@ def mesh_remove_from_group(
     Examples:
         mesh_remove_from_group(object_name="Body", group_name="Head")
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.remove_from_group(object_name, group_name)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_remove_from_group",
+        params={"object_name": object_name, "group_name": group_name},
+        direct_executor=lambda: get_mesh_handler().remove_from_group(object_name, group_name)
+    )
 
 
 # ==============================================================================
@@ -873,11 +916,11 @@ def mesh_bisect(
         mesh_bisect(plane_co=[0,0,1], plane_no=[0,0,1], clear_outer=True) -> Cut and remove top
         mesh_bisect(plane_co=[0,0,0], plane_no=[1,0,0], fill=True) -> Cut at X=0 with cap
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.bisect(plane_co, plane_no, clear_inner, clear_outer, fill)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_bisect",
+        params={"plane_co": plane_co, "plane_no": plane_no, "clear_inner": clear_inner, "clear_outer": clear_outer, "fill": fill},
+        direct_executor=lambda: get_mesh_handler().bisect(plane_co, plane_no, clear_inner, clear_outer, fill)
+    )
 
 
 @mcp.tool()
@@ -899,11 +942,11 @@ def mesh_edge_slide(
         mesh_edge_slide(value=0.5) -> Slide selected edges 50% toward one side
         mesh_edge_slide(value=-0.3) -> Slide selected edges 30% toward other side
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.edge_slide(value)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_edge_slide",
+        params={"value": value},
+        direct_executor=lambda: get_mesh_handler().edge_slide(value)
+    )
 
 
 @mcp.tool()
@@ -925,11 +968,11 @@ def mesh_vert_slide(
         mesh_vert_slide(value=0.5) -> Slide vertices 50% along their connected edges
         mesh_vert_slide(value=-0.2) -> Slide vertices 20% in opposite direction
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.vert_slide(value)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_vert_slide",
+        params={"value": value},
+        direct_executor=lambda: get_mesh_handler().vert_slide(value)
+    )
 
 
 @mcp.tool()
@@ -944,11 +987,11 @@ def mesh_triangulate(ctx: Context) -> str:
     Examples:
         mesh_triangulate() -> Converts all selected faces to triangles
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.triangulate()
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_triangulate",
+        params={},
+        direct_executor=lambda: get_mesh_handler().triangulate()
+    )
 
 
 @mcp.tool()
@@ -972,11 +1015,11 @@ def mesh_remesh_voxel(
         mesh_remesh_voxel(voxel_size=0.05) -> High detail remesh
         mesh_remesh_voxel(voxel_size=0.2, adaptivity=0.5) -> Lower detail with adaptive reduction
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.remesh_voxel(voxel_size, adaptivity)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_remesh_voxel",
+        params={"voxel_size": voxel_size, "adaptivity": adaptivity},
+        direct_executor=lambda: get_mesh_handler().remesh_voxel(voxel_size, adaptivity)
+    )
 
 
 # ==============================================================================
@@ -986,9 +1029,9 @@ def mesh_remesh_voxel(
 @mcp.tool()
 def mesh_transform_selected(
     ctx: Context,
-    translate: Optional[List[float]] = None,
-    rotate: Optional[List[float]] = None,
-    scale: Optional[List[float]] = None,
+    translate: Union[str, List[float], None] = None,
+    rotate: Union[str, List[float], None] = None,
+    scale: Union[str, List[float], None] = None,
     pivot: Literal["MEDIAN_POINT", "BOUNDING_BOX_CENTER", "CURSOR", "INDIVIDUAL_ORIGINS", "ACTIVE_ELEMENT"] = "MEDIAN_POINT"
 ) -> str:
     """
@@ -998,9 +1041,9 @@ def mesh_transform_selected(
     Workflow: BEFORE → mesh_select_* | AFTER → mesh_merge_by_distance
 
     Args:
-        translate: Translation vector [x, y, z]. Moves geometry.
-        rotate: Rotation in radians [x, y, z]. Rotates around pivot.
-        scale: Scale factors [x, y, z]. Scales from pivot.
+        translate: Translation vector [x, y, z]. Moves geometry. Accepts list or string "[x, y, z]".
+        rotate: Rotation in radians [x, y, z]. Rotates around pivot. Accepts list or string "[x, y, z]".
+        scale: Scale factors [x, y, z]. Scales from pivot. Accepts list or string "[x, y, z]".
         pivot: Pivot point for rotation/scale.
             - MEDIAN_POINT: Center of selection (default)
             - BOUNDING_BOX_CENTER: Center of bounding box
@@ -1014,11 +1057,20 @@ def mesh_transform_selected(
         mesh_transform_selected(scale=[2, 2, 1]) -> Double size in X and Y
         mesh_transform_selected(translate=[1, 0, 0], pivot="CURSOR") -> Move relative to cursor
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.transform_selected(translate, rotate, scale, pivot)
-    except RuntimeError as e:
-        return str(e)
+    def execute():
+        try:
+            parsed_translate = parse_coordinate(translate)
+            parsed_rotate = parse_coordinate(rotate)
+            parsed_scale = parse_coordinate(scale)
+            return get_mesh_handler().transform_selected(parsed_translate, parsed_rotate, parsed_scale, pivot)
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_transform_selected",
+        params={"translate": translate, "rotate": rotate, "scale": scale, "pivot": pivot},
+        direct_executor=execute
+    )
 
 
 @mcp.tool()
@@ -1050,11 +1102,11 @@ def mesh_bridge_edge_loops(
         mesh_bridge_edge_loops(interpolation="SURFACE", smoothness=1.0) -> Smooth curved bridge
         mesh_bridge_edge_loops(twist=1) -> Twisted bridge connection
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.bridge_edge_loops(number_cuts, interpolation, smoothness, twist)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_bridge_edge_loops",
+        params={"number_cuts": number_cuts, "interpolation": interpolation, "smoothness": smoothness, "twist": twist},
+        direct_executor=lambda: get_mesh_handler().bridge_edge_loops(number_cuts, interpolation, smoothness, twist)
+    )
 
 
 @mcp.tool()
@@ -1076,11 +1128,11 @@ def mesh_duplicate_selected(
         mesh_duplicate_selected(translate=[2, 0, 0]) -> Duplicate and move 2 units on X
         mesh_duplicate_selected() -> Duplicate in-place (WARNING: overlapping geometry!)
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.duplicate_selected(translate)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_duplicate_selected",
+        params={"translate": translate},
+        direct_executor=lambda: get_mesh_handler().duplicate_selected(translate)
+    )
 
 
 # ==============================================================================
@@ -1116,11 +1168,11 @@ def mesh_spin(
         mesh_spin(axis="X", center=[0, 0, 0]) -> Spin around X at origin
         mesh_spin(dupli=True) -> Create radial pattern without connecting faces
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.spin(steps, angle, axis, center, dupli)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_spin",
+        params={"steps": steps, "angle": angle, "axis": axis, "center": center, "dupli": dupli},
+        direct_executor=lambda: get_mesh_handler().spin(steps, angle, axis, center, dupli)
+    )
 
 
 @mcp.tool()
@@ -1150,11 +1202,11 @@ def mesh_screw(
         mesh_screw(turns=1, offset=0) -> Same as spin (no translation)
         mesh_screw(steps=64, turns=5, offset=0.2) -> Fine-threaded screw
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.screw(steps, turns, axis, center, offset)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_screw",
+        params={"steps": steps, "turns": turns, "axis": axis, "center": center, "offset": offset},
+        direct_executor=lambda: get_mesh_handler().screw(steps, turns, axis, center, offset)
+    )
 
 
 @mcp.tool()
@@ -1175,11 +1227,11 @@ def mesh_add_vertex(
         mesh_add_vertex(position=[0, 0, 0]) -> Add vertex at origin
         mesh_add_vertex(position=[1.5, 2.0, 0.5]) -> Add vertex at specific location
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.add_vertex(position)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_add_vertex",
+        params={"position": position},
+        direct_executor=lambda: get_mesh_handler().add_vertex(position)
+    )
 
 
 @mcp.tool()
@@ -1196,11 +1248,11 @@ def mesh_add_edge_face(ctx: Context) -> str:
         (select 2 verts) mesh_add_edge_face() -> Creates edge between them
         (select 3+ verts) mesh_add_edge_face() -> Creates face from vertices
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.add_edge_face()
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_add_edge_face",
+        params={},
+        direct_executor=lambda: get_mesh_handler().add_edge_face()
+    )
 
 
 # ==============================================================================
@@ -1232,11 +1284,11 @@ def mesh_edge_crease(
         mesh_edge_crease(crease_value=0.5) -> Partially sharp edges (softer bevel effect)
         mesh_edge_crease(crease_value=0.0) -> Remove crease (fully smoothed)
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.edge_crease(crease_value)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_edge_crease",
+        params={"crease_value": crease_value},
+        direct_executor=lambda: get_mesh_handler().edge_crease(crease_value)
+    )
 
 
 @mcp.tool()
@@ -1262,11 +1314,11 @@ def mesh_bevel_weight(
         mesh_bevel_weight(weight=0.5) -> Half bevel effect (smaller bevel)
         mesh_bevel_weight(weight=0.0) -> Remove bevel weight (no beveling)
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.bevel_weight(weight)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_bevel_weight",
+        params={"weight": weight},
+        direct_executor=lambda: get_mesh_handler().bevel_weight(weight)
+    )
 
 
 @mcp.tool()
@@ -1293,11 +1345,11 @@ def mesh_mark_sharp(
         mesh_mark_sharp(action="mark") -> Mark selected edges as sharp
         mesh_mark_sharp(action="clear") -> Clear sharp marking from selected edges
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.mark_sharp(action)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_mark_sharp",
+        params={"action": action},
+        direct_executor=lambda: get_mesh_handler().mark_sharp(action)
+    )
 
 
 # ==============================================================================
@@ -1336,11 +1388,11 @@ def mesh_dissolve(
         mesh_dissolve(dissolve_type="verts") -> Dissolve selected vertices
         mesh_dissolve(dissolve_type="edges") -> Dissolve selected edges
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.dissolve(dissolve_type, angle_limit, use_face_split, use_boundary_tear)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_dissolve",
+        params={"dissolve_type": dissolve_type, "angle_limit": angle_limit, "use_face_split": use_face_split, "use_boundary_tear": use_boundary_tear},
+        direct_executor=lambda: get_mesh_handler().dissolve(dissolve_type, angle_limit, use_face_split, use_boundary_tear)
+    )
 
 
 @mcp.tool()
@@ -1368,11 +1420,11 @@ def mesh_tris_to_quads(
         mesh_tris_to_quads() -> Convert with default thresholds
         mesh_tris_to_quads(face_threshold=60.0, shape_threshold=60.0) -> More aggressive conversion
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.tris_to_quads(face_threshold, shape_threshold)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_tris_to_quads",
+        params={"face_threshold": face_threshold, "shape_threshold": shape_threshold},
+        direct_executor=lambda: get_mesh_handler().tris_to_quads(face_threshold, shape_threshold)
+    )
 
 
 @mcp.tool()
@@ -1400,11 +1452,11 @@ def mesh_normals_make_consistent(
         mesh_normals_make_consistent() -> Fix normals facing outward
         mesh_normals_make_consistent(inside=True) -> Fix normals facing inward (for rooms)
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.normals_make_consistent(inside)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_normals_make_consistent",
+        params={"inside": inside},
+        direct_executor=lambda: get_mesh_handler().normals_make_consistent(inside)
+    )
 
 
 @mcp.tool()
@@ -1436,11 +1488,11 @@ def mesh_decimate(
         mesh_decimate(ratio=0.5) -> Reduce selected geometry by half
         mesh_decimate(ratio=0.25, use_symmetry=True) -> Aggressive reduction with symmetry
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.decimate(ratio, use_symmetry, symmetry_axis)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_decimate",
+        params={"ratio": ratio, "use_symmetry": use_symmetry, "symmetry_axis": symmetry_axis},
+        direct_executor=lambda: get_mesh_handler().decimate(ratio, use_symmetry, symmetry_axis)
+    )
 
 
 # ==============================================================================
@@ -1475,11 +1527,11 @@ def mesh_knife_project(
         mesh_knife_project(cut_through=True) -> Cut through entire mesh
         mesh_knife_project(cut_through=False) -> Only cut visible faces from view
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.knife_project(cut_through)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_knife_project",
+        params={"cut_through": cut_through},
+        direct_executor=lambda: get_mesh_handler().knife_project(cut_through)
+    )
 
 
 @mcp.tool()
@@ -1504,11 +1556,11 @@ def mesh_rip(
         mesh_rip() -> Rip at selected vertices
         mesh_rip(use_fill=True) -> Rip and fill the hole
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.rip(use_fill)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_rip",
+        params={"use_fill": use_fill},
+        direct_executor=lambda: get_mesh_handler().rip(use_fill)
+    )
 
 
 @mcp.tool()
@@ -1530,11 +1582,11 @@ def mesh_split(ctx: Context) -> str:
     Examples:
         (select faces) mesh_split() -> Disconnect selected faces from rest of mesh
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.split()
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_split",
+        params={},
+        direct_executor=lambda: get_mesh_handler().split()
+    )
 
 
 @mcp.tool()
@@ -1556,11 +1608,11 @@ def mesh_edge_split(ctx: Context) -> str:
     Examples:
         (select edge loop) mesh_edge_split() -> Split mesh along the edge loop
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.edge_split()
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_edge_split",
+        params={},
+        direct_executor=lambda: get_mesh_handler().edge_split()
+    )
 
 
 # ==============================================================================
@@ -1609,8 +1661,186 @@ def mesh_set_proportional_edit(
         mesh_set_proportional_edit(use_connected=True) -> Only affect connected verts
         mesh_set_proportional_edit(enabled=False) -> Disable proportional editing
     """
-    handler = get_mesh_handler()
-    try:
-        return handler.set_proportional_edit(enabled, falloff_type, size, use_connected)
-    except RuntimeError as e:
-        return str(e)
+    return route_tool_call(
+        tool_name="mesh_set_proportional_edit",
+        params={"enabled": enabled, "falloff_type": falloff_type, "size": size, "use_connected": use_connected},
+        direct_executor=lambda: get_mesh_handler().set_proportional_edit(enabled, falloff_type, size, use_connected)
+    )
+
+
+# ==============================================================================
+# TASK-036: Symmetry & Advanced Fill
+# ==============================================================================
+
+@mcp.tool()
+def mesh_symmetrize(
+    ctx: Context,
+    direction: Literal["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"] = "NEGATIVE_X",
+    threshold: float = 0.0001
+) -> str:
+    """
+    [EDIT MODE][DESTRUCTIVE] Symmetrizes mesh.
+
+    Mirrors geometry from one side to the other, making the mesh perfectly symmetric.
+    Useful for:
+    - Fixing asymmetric character models
+    - Creating symmetric objects from half-models
+    - Repair after asymmetric edits
+
+    Direction examples:
+    - NEGATIVE_X: Copy from +X to -X (right to left)
+    - POSITIVE_X: Copy from -X to +X (left to right)
+
+    Workflow: BEFORE → mesh_select(action="all") to symmetrize entire mesh
+
+    Args:
+        direction: Which side to copy FROM and TO. NEGATIVE_X = copy +X to -X.
+        threshold: Distance threshold for merging mirrored vertices.
+
+    Examples:
+        mesh_symmetrize() -> Mirror right side to left (NEGATIVE_X)
+        mesh_symmetrize(direction="POSITIVE_X") -> Mirror left side to right
+        mesh_symmetrize(direction="NEGATIVE_Z") -> Mirror top to bottom
+    """
+    return route_tool_call(
+        tool_name="mesh_symmetrize",
+        params={"direction": direction, "threshold": threshold},
+        direct_executor=lambda: get_mesh_handler().symmetrize(direction, threshold)
+    )
+
+
+@mcp.tool()
+def mesh_grid_fill(
+    ctx: Context,
+    span: int = 1,
+    offset: int = 0,
+    use_interp_simple: bool = False
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills boundary with a grid of quads.
+
+    Unlike mesh_fill_holes (which creates triangles), grid_fill creates
+    a proper quad grid - essential for subdivision-ready topology.
+
+    Requirements:
+    - Selection must be a closed edge loop (boundary)
+    - Works best with even number of edges
+
+    Workflow: BEFORE → mesh_select(action="boundary") to select hole edge
+
+    Args:
+        span: Grid resolution (number of rows). Higher = denser grid.
+        offset: Shifts the grid pattern alignment.
+        use_interp_simple: Use simple interpolation (faster, less smooth).
+
+    Examples:
+        mesh_grid_fill() -> Fill with minimal quads
+        mesh_grid_fill(span=4) -> Fill with 4-row grid
+        mesh_grid_fill(span=2, offset=1) -> Shifted grid pattern
+    """
+    return route_tool_call(
+        tool_name="mesh_grid_fill",
+        params={"span": span, "offset": offset, "use_interp_simple": use_interp_simple},
+        direct_executor=lambda: get_mesh_handler().grid_fill(span, offset, use_interp_simple)
+    )
+
+
+@mcp.tool()
+def mesh_poke_faces(
+    ctx: Context,
+    offset: float = 0.0,
+    use_relative_offset: bool = False,
+    center_mode: Literal["MEDIAN", "MEDIAN_WEIGHTED", "BOUNDS"] = "MEDIAN_WEIGHTED"
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Pokes selected faces.
+
+    Adds a vertex at the center of each selected face and connects to edges,
+    creating a fan of triangles. Useful for:
+    - Creating spikes/cones
+    - Preparing for subdivision patterns
+    - Artistic effects
+
+    Workflow: BEFORE → mesh_select faces | Can combine with extrude for spikes
+
+    Args:
+        offset: Distance to push center vertex outward (negative = inward).
+        use_relative_offset: Scale offset by face size.
+        center_mode: How to calculate face center (MEDIAN, MEDIAN_WEIGHTED, BOUNDS).
+
+    Examples:
+        mesh_poke_faces() -> Poke faces with vertex at center
+        mesh_poke_faces(offset=0.5) -> Poke and push center out (creates spikes)
+        mesh_poke_faces(offset=-0.2) -> Poke and push center in (creates dimples)
+    """
+    return route_tool_call(
+        tool_name="mesh_poke_faces",
+        params={"offset": offset, "use_relative_offset": use_relative_offset, "center_mode": center_mode},
+        direct_executor=lambda: get_mesh_handler().poke_faces(offset, use_relative_offset, center_mode)
+    )
+
+
+@mcp.tool()
+def mesh_beautify_fill(
+    ctx: Context,
+    angle_limit: float = 180.0
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Beautifies face arrangement.
+
+    Rotates triangle edges to create more uniform triangulation.
+    Useful after:
+    - Boolean operations
+    - Triangulation
+    - Import cleanup
+
+    Workflow: BEFORE → mesh_select faces (select triangulated area)
+
+    Args:
+        angle_limit: Maximum angle for edge rotation (degrees). 180 = no limit.
+
+    Examples:
+        mesh_beautify_fill() -> Beautify all selected triangles
+        mesh_beautify_fill(angle_limit=45.0) -> Only rotate edges below 45°
+    """
+    return route_tool_call(
+        tool_name="mesh_beautify_fill",
+        params={"angle_limit": angle_limit},
+        direct_executor=lambda: get_mesh_handler().beautify_fill(angle_limit)
+    )
+
+
+@mcp.tool()
+def mesh_mirror(
+    ctx: Context,
+    axis: Literal["X", "Y", "Z"] = "X",
+    use_mirror_merge: bool = True,
+    merge_threshold: float = 0.001
+) -> str:
+    """
+    [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Mirrors selected geometry.
+
+    Unlike symmetrize (which replaces one side), mirror creates a copy.
+    Useful for:
+    - Duplicating symmetric parts
+    - Creating mirrored elements
+
+    For non-destructive mirroring, use modeling_add_modifier(type="MIRROR").
+
+    Workflow: BEFORE → mesh_select geometry to mirror
+
+    Args:
+        axis: Axis to mirror across (X, Y, or Z).
+        use_mirror_merge: Merge vertices at mirror plane.
+        merge_threshold: Distance for merging mirrored vertices.
+
+    Examples:
+        mesh_mirror() -> Mirror selection across X axis
+        mesh_mirror(axis="Y") -> Mirror across Y axis
+        mesh_mirror(use_mirror_merge=False) -> Mirror without merging (keeps gap)
+    """
+    return route_tool_call(
+        tool_name="mesh_mirror",
+        params={"axis": axis, "use_mirror_merge": use_mirror_merge, "merge_threshold": merge_threshold},
+        direct_executor=lambda: get_mesh_handler().mirror(axis, use_mirror_merge, merge_threshold)
+    )

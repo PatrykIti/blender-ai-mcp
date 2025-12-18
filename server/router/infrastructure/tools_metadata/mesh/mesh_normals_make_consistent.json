@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_normals_make_consistent",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["normals", "recalculate", "consistent", "flip", "invert", "outside", "inside"],
+  "sample_prompts": [
+    "recalculate normals",
+    "fix inverted faces",
+    "make normals consistent",
+    "flip normals inside",
+    "fix black faces"
+  ],
+  "parameters": {
+    "inside": {
+      "type": "bool",
+      "default": false,
+      "description": "Flip normals to face inward"
+    }
+  },
+  "related_tools": ["mesh_select", "import_obj", "import_fbx"],
+  "patterns": [],
+  "description": "Recalculates normals to face consistently outward (or inward)."
+}

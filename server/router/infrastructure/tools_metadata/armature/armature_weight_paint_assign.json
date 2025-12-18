@@ -1,0 +1,17 @@
+{
+  "tool_name": "armature_weight_paint_assign",
+  "category": "armature",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["weight", "paint", "vertex", "group", "bone", "influence", "skinning"],
+  "sample_prompts": ["assign weight", "set vertex weight", "paint weights", "assign to bone"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "vertex_group": {"type": "string", "required": true},
+    "weight": {"type": "float", "default": 1.0, "range": [0.0, 1.0]},
+    "mode": {"type": "enum", "options": ["REPLACE", "ADD", "SUBTRACT"], "default": "REPLACE"}
+  },
+  "related_tools": ["armature_bind", "mesh_select_targeted", "mesh_create_vertex_group"],
+  "patterns": ["weight_painting", "skinning"],
+  "description": "Assigns weights to selected vertices for bone deformation."
+}

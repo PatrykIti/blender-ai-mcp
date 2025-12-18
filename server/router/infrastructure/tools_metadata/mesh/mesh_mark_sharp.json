@@ -1,0 +1,24 @@
+{
+  "tool_name": "mesh_mark_sharp",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["sharp", "mark sharp", "normals", "shading", "hard edge"],
+  "sample_prompts": [
+    "mark edges as sharp",
+    "clear sharp marking",
+    "make edges sharp for shading",
+    "control smooth shading"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": ["mark", "clear"],
+      "default": "mark",
+      "description": "Mark or clear sharp edges"
+    }
+  },
+  "related_tools": ["mesh_edge_crease", "mesh_select_targeted"],
+  "patterns": [],
+  "description": "Marks or clears sharp edges for shading and normal control."
+}

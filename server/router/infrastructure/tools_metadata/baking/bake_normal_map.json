@@ -1,0 +1,20 @@
+{
+  "tool_name": "bake_normal_map",
+  "category": "baking",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["bake", "normal", "map", "texture", "detail"],
+  "sample_prompts": ["bake normal map", "create normal texture", "bake surface detail"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "output_path": {"type": "string", "required": true},
+    "resolution": {"type": "int", "default": 1024},
+    "high_poly_source": {"type": "string", "default": null},
+    "cage_extrusion": {"type": "float", "default": 0.1},
+    "margin": {"type": "int", "default": 16},
+    "normal_space": {"type": "string", "default": "TANGENT"}
+  },
+  "related_tools": ["bake_ao", "uv_unwrap"],
+  "patterns": [],
+  "description": "Bakes normal map to texture file."
+}

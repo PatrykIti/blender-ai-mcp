@@ -1,6 +1,6 @@
 # TASK-039: Router Supervisor Implementation
 
-**Status:** 🚧 To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** Core Infrastructure
 **Estimated Sub-Tasks:** 24
@@ -70,11 +70,27 @@ server/router/
 │   ├── interceptor/
 │   ├── analyzers/
 │   ├── engines/
+│   ├── classifier/
+│   ├── workflows/
 │   └── router.py                  # SupervisorRouter
 ├── infrastructure/
 │   ├── __init__.py
 │   ├── metadata_loader.py
-│   └── config.py
+│   ├── config.py
+│   ├── logger.py
+│   └── tools_metadata/            # Per-tool JSON metadata
+│       ├── _schema.json           # JSON Schema for validation
+│       ├── scene/
+│       ├── system/
+│       ├── modeling/
+│       ├── mesh/
+│       ├── material/
+│       ├── uv/
+│       ├── curve/
+│       ├── collection/
+│       ├── lattice/
+│       ├── sculpt/
+│       └── baking/
 └── adapters/
     ├── __init__.py
     └── mcp_integration.py         # Hook into MCP server
@@ -180,17 +196,93 @@ class ICorrectionEngine(ABC):
 **Priority:** 🔴 High
 **Layer:** Infrastructure
 
-Create tool metadata loading system.
+Create tool metadata loading system with modular per-tool JSON files.
 
 **Files:**
 - `server/router/infrastructure/metadata_loader.py`
-- `server/router/infrastructure/tools_metadata.json`
+
+**Directory Structure:**
+```
+server/router/infrastructure/tools_metadata/
+├── _schema.json                    # JSON Schema for validation
+├── scene/
+│   ├── scene_list_objects.json
+│   ├── scene_delete_object.json
+│   ├── scene_context.json
+│   └── ...
+├── system/
+│   ├── system_set_mode.json
+│   ├── system_import_obj.json
+│   ├── system_export_obj.json
+│   └── ...
+├── modeling/
+│   ├── modeling_create_primitive.json
+│   ├── modeling_add_modifier.json
+│   └── ...
+├── mesh/
+│   ├── mesh_extrude.json
+│   ├── mesh_bevel.json
+│   ├── mesh_select.json
+│   └── ...
+├── material/
+│   ├── material_create.json
+│   ├── material_assign.json
+│   └── ...
+├── uv/
+│   ├── uv_unwrap.json
+│   ├── uv_project.json
+│   └── ...
+├── curve/
+│   └── ...
+├── collection/
+│   └── ...
+├── lattice/
+│   └── ...
+├── sculpt/
+│   └── ...
+└── baking/
+    └── ...
+```
+
+**Single Tool Metadata Format:**
+```json
+{
+  "tool_name": "mesh_extrude",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": true,
+  "keywords": ["extrude", "pull", "extend", "push"],
+  "sample_prompts": [
+    "extrude the selected faces",
+    "pull out the top face",
+    "extend the geometry upward"
+  ],
+  "parameters": {
+    "value": {"type": "float", "default": 0.0, "range": [-100.0, 100.0]},
+    "direction": {"type": "enum", "options": ["NORMAL", "X", "Y", "Z"]}
+  },
+  "related_tools": ["mesh_inset", "mesh_bevel"],
+  "patterns": ["phone_like:screen_cutout", "tower_like:height_extension"]
+}
+```
 
 **Features:**
-- Load tool definitions from JSON
-- Parse keywords, categories, sample_prompts
-- Validate metadata schema
-- Cache loaded metadata
+- Load tool definitions from per-tool JSON files
+- Auto-discover files by walking `tools_metadata/` directory
+- Parse keywords, categories, sample_prompts, parameters
+- Validate against `_schema.json`
+- Cache loaded metadata in memory
+- Hot-reload support (detect file changes)
+
+**MetadataLoader API:**
+```python
+class MetadataLoader:
+    def load_all(self) -> Dict[str, ToolMetadata]
+    def load_by_area(self, area: str) -> Dict[str, ToolMetadata]
+    def get_tool(self, tool_name: str) -> Optional[ToolMetadata]
+    def reload(self) -> None
+    def validate_all(self) -> List[ValidationError]
+```
 
 **Tests:**
 - `tests/unit/router/infrastructure/test_metadata_loader.py`
@@ -595,30 +687,65 @@ FirewallResult:
 
 ---
 
-### TASK-039-15: Intent Classifier (TF-IDF)
+### TASK-039-15: Intent Classifier (Sentence-Transformers)
 
 **Priority:** 🟡 Medium
 **Layer:** Application
 
-Implement offline intent classification.
+Implement offline intent classification using semantic embeddings.
 
 **Files:**
 - `server/router/application/classifier/intent_classifier.py`
+- `server/router/application/classifier/embedding_cache.py`
+
+**Approach: LaBSE Embeddings (Offline, ~1.8GB RAM)**
+
+Uses `sentence-transformers` with LaBSE model for multilingual semantic similarity.
+No external API calls - everything runs locally.
 
 **Features:**
-- TF-IDF vectorization of prompts
-- LogisticRegression classifier
-- Train on `sample_prompts` from metadata
-- Predict tool from natural language
+- LaBSE embeddings for semantic understanding
+- Cosine similarity matching against tool embeddings
+- Pre-compute and cache tool embeddings on startup
+- Fallback to TF-IDF if embeddings unavailable
+- Support for multilingual prompts (LaBSE is 109 languages)
 
 **Dependencies:**
-- scikit-learn (add to pyproject.toml)
+- sentence-transformers (add to pyproject.toml)
+- torch (CPU-only, auto-installed with sentence-transformers)
 
 **Usage:**
 ```python
 classifier = IntentClassifier()
-classifier.train(metadata)
-tool = classifier.predict("extrude the top face")  # → "mesh_extrude"
+classifier.load_tool_embeddings(metadata)  # Pre-compute on startup
+
+# Fast inference (~10ms)
+tool, confidence = classifier.predict("extrude the top face")
+# → ("mesh_extrude", 0.87)
+
+# Multilingual support
+tool, confidence = classifier.predict("wyciągnij górną ścianę")
+# → ("mesh_extrude", 0.82)
+```
+
+**Model Details:**
+```python
+# LaBSE - Language-agnostic BERT Sentence Embedding
+MODEL_NAME = "sentence-transformers/LaBSE"
+EMBEDDING_DIM = 768
+RAM_USAGE = "~1.8GB"
+INFERENCE_TIME = "~10ms per query"
+```
+
+**Embedding Cache:**
+```python
+class EmbeddingCache:
+    def __init__(self, cache_dir: Path):
+        self.cache_file = cache_dir / "tool_embeddings.pkl"
+
+    def save(self, embeddings: Dict[str, np.ndarray]) -> None
+    def load(self) -> Optional[Dict[str, np.ndarray]]
+    def is_valid(self, metadata_hash: str) -> bool
 ```
 
 **Tests:**
@@ -958,7 +1085,7 @@ Finalize all router documentation.
 [project]
 dependencies = [
     # ... existing ...
-    "scikit-learn (>=1.4.0,<2.0.0)",  # For TF-IDF classifier
+    "sentence-transformers>=2.0.0,<4.0.0",  # LaBSE embeddings (~1.8GB RAM)
 ]
 
 [dependency-groups]
@@ -967,11 +1094,13 @@ dev = [
 ]
 ```
 
-### Optional (for advanced features)
+**Note:** `sentence-transformers` automatically installs `torch` (CPU version) and `numpy`.
+Model downloads on first use (~500MB for LaBSE).
+
+### Optional (for faster similarity search with 1000+ tools)
 ```toml
-# Optional: for LaBSE embeddings
-# "sentence-transformers (>=2.0.0,<3.0.0)",
-# "faiss-cpu (>=1.7.0,<2.0.0)",
+# Optional: for FAISS-based similarity search
+# "faiss-cpu>=1.7.0,<2.0.0",
 ```
 
 ---

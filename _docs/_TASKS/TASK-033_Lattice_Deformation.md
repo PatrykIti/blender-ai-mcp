@@ -182,3 +182,53 @@ lattice_edit_point(lattice_name="TowerLattice", point_index=[12, 13, 14, 15], of
 - [x] E2E test: Create cube → create fitted lattice → bind → edit points → verify deformation
 - [x] E2E test: Taper workflow (tower example)
 - [x] Test vertex group binding
+
+---
+
+## Router Integration
+
+For each tool, create metadata JSON file in `server/router/infrastructure/tools_metadata/lattice/`:
+
+### Example: lattice_create.json
+
+```json
+{
+  "tool_name": "lattice_create",
+  "category": "lattice",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["lattice", "deform", "cage", "control points", "taper"],
+  "sample_prompts": [
+    "create a lattice for this object",
+    "add lattice deformer",
+    "setup lattice cage around the tower"
+  ],
+  "parameters": {
+    "name": {"type": "string", "default": "Lattice"},
+    "target_object": {"type": "string", "description": "Object to fit lattice to"},
+    "points_u": {"type": "int", "default": 2, "range": [2, 64]},
+    "points_v": {"type": "int", "default": 2, "range": [2, 64]},
+    "points_w": {"type": "int", "default": 2, "range": [2, 64]}
+  },
+  "related_tools": ["lattice_bind", "lattice_edit_point"],
+  "patterns": ["tower_like:tapering"],
+  "description": "Creates a lattice object for non-destructive deformation."
+}
+```
+
+---
+
+## Documentation Updates Required
+
+After implementing these tools, update:
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-033_Lattice_Deformation.md` | Mark sub-tasks as ✅ Done |
+| `_docs/_TASKS/README.md` | Move task to Done section |
+| `_docs/_CHANGELOG/{NN}-{date}-lattice-tools.md` | Create changelog entry |
+| `_docs/_MCP_SERVER/README.md` | Add tools to MCP tools table |
+| `_docs/_ADDON/README.md` | Add RPC commands to handler table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools with arguments |
+| `_docs/MODELING_TOOLS_ARCHITECTURE.md` | Add Lattice section |
+| `README.md` | Update roadmap checkboxes, add to autoApprove lists |

@@ -3,40 +3,29 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~40 sub-tasks)
-- **In Progress:** 0
-- **Done:** 100
+- **To Do:** 4 tasks (~22 sub-tasks)
+- **In Progress:** 1 task
+- **Done:** 132
 
 ---
 
 ## 🚨 To Do
 
-### Core Infrastructure
+### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor** | 🔴 High | 24 sub-tasks: interceptor, analyzers, engines, workflows |
-
-### Modeling & Architecture
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | lattice_create, lattice_bind, lattice_edit_point |
-| [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | text_create, text_edit, text_to_mesh |
-
-### Import & Workflow
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | mesh_symmetrize, mesh_grid_fill, mesh_poke_faces |
-
-### Future / Nice-to-Have
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-037](./TASK-037_Armature_Rigging.md) | **Armature & Rigging** | 🟢 Low | armature_create, armature_add_bone, armature_bind |
+| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | 🔴 High | Loop parameter + $FORMAT() for simplified YAML workflows |
+| [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
+| [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
+| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
 
 ---
 
 ## 🚧 In Progress
 
-*No tasks currently in progress*
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---
 
@@ -44,6 +33,37 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-068](./TASK-068_License_BUSL_Compliance.md) | **License: BUSL 1.1 Compliance + Apache Change License File** | 🔴 High | 2025-12-17 |
+| [TASK-067](./TASK-067_Update_Root_README_MCP_Client_Configs.md) | **Update Root README MCP Client Configs (Collapsible + Codex CLI)** | 🟡 Medium | 2025-12-17 |
+| [TASK-066](./TASK-066_Remove_Legacy_Goal_Matching_Fallback.md) | **Remove Legacy Goal Matching Fallback (Ensemble-Only)** | 🔴 High | 2025-12-17 |
+| [TASK-065](./TASK-065_Workflow_Catalog_Tool.md) | **Workflow Catalog Tool (replace vector_db_manage)** | 🟡 Medium | 2025-12-17 |
+| [TASK-064](./TASK-064_Flexible_List_Parameter_Parsing.md) | **Flexible vector/color params** | 🟡 Medium | 2025-12-15 |
+| [TASK-063](./TASK-063_Router_Auto_Selection_Preservation.md) | **Router: preserve edit selection** | 🔴 High | 2025-12-15 |
+| [TASK-062](./TASK-062_Modeling_Add_Modifier_Boolean_Object_Reference.md) | **`modeling_add_modifier` BOOLEAN: object by name** | 🔴 High | 2025-12-15 |
+| [TASK-060](./TASK-060_Unified_Expression_Evaluator.md) | **Unified Expression Evaluator** | 🔴 High | 2025-12-12 |
+| [TASK-057](./TASK-057_Remove_Old_Pattern_Expansion_Path.md) | **Remove Old Pattern-Based Expansion Path** | 🟡 Medium | 2025-12-11 |
+| [TASK-056](./TASK-056_Workflow_System_Enhancements.md) | **Workflow System Enhancements** | 🔴 High | 2025-12-11 |
+| [TASK-053](./TASK-053_Ensemble_Matcher_System.md) | **Ensemble Matcher System** | 🔴 High | 2025-12-11 |
+| [TASK-055-FIX](./TASK-055-FIX_Unified_Parameter_Resolution.md) | **Unified Parameter Resolution** | 🔴 High | 2025-12-11 |
+| [TASK-055-FIX-6](./TASK-055-FIX-6_Flexible_YAML_Parameter_Loading.md) | **Flexible YAML Parameter Loading with Semantic Extensions** | 🔴 Critical | 2025-12-10 |
+| [TASK-055](./TASK-055_Interactive_Parameter_Resolution.md) | **Interactive Parameter Resolution** | 🔴 High | 2025-12-08 |
+| [TASK-052](./TASK-052_Intelligent_Parametric_Adaptation.md) | **Parametric Workflow Variables** | 🔴 High | 2025-12-07 |
+| [TASK-051](./TASK-051_Confidence_Based_Workflow_Adaptation.md) | **Confidence-Based Workflow Adaptation** | 🔴 High | 2025-12-07 |
+| [TASK-050](./TASK-050_Multi_Embedding_Workflow_System.md) | **Multi-Embedding Workflow System** | 🔴 High | 2025-12-07 |
+| [TASK-049](./TASK-049_Fix_ToolDispatcher_Mappings.md) | **Fix ToolDispatcher Mappings** | 🔴 High | 2025-12-07 |
+| [TASK-048](./TASK-048_Proper_DI_For_Classifiers_Shared_LaBSE_model.md) | **Proper DI for Classifiers + Shared LaBSE Model** | 🔴 High | 2025-12-07 |
+| [TASK-047](./TASK-047_Migration_Router_Semantic_Search_To_LanceDB.md) | **LanceDB Vector Store Migration** | 🔴 High | 2025-12-06 |
+| [TASK-046](./TASK-046_Router_Semantic_Generalization.md) | **Router Semantic Generalization (LaBSE)** | 🔴 High | 2025-12-06 |
+| [TASK-041](./TASK-041_Router_YAML_Workflow_Integration.md) | **Router YAML Workflow Integration** | 🔴 High | 2025-12-03 |
+| [TASK-037](./TASK-037_Armature_Rigging.md) | **Armature & Rigging** | 🟢 Low | 2025-12-05 |
+| [TASK-036](./TASK-036_Symmetry_Advanced_Fill.md) | **Symmetry & Advanced Fill** | 🟡 Medium | 2025-12-05 |
+| [TASK-045](./TASK-045_Object_Inspection_Tools.md) | **Object Inspection Tools** | 🟡 Medium | 2025-12-04 |
+| [TASK-034](./TASK-034_Text_Annotations.md) | **Text & Annotations** | 🟡 Medium | 2025-12-04 |
+| [TASK-044](./TASK-044_Extraction_Analysis_Tools.md) | **Extraction Analysis Tools** | 🔴 High | 2025-12-04 |
+| [TASK-043](./TASK-043_Scene_Utility_Tools.md) | **Scene Utility Tools** | 🔴 High | 2025-12-03 |
+| [TASK-033](./TASK-033_Lattice_Deformation.md) | **Lattice Deformation** | 🟠 High | 2025-12-03 |
+| [TASK-039](./TASK-039_Router_Supervisor_Implementation.md) | **Router Supervisor Implementation** | 🔴 High | 2025-12-02 |
+| [TASK-040](./TASK-040_Router_E2E_Test_Coverage_Extension.md) | **Router E2E Test Coverage Extension** | 🟡 Medium | 2025-12-02 |
 | [TASK-028](./TASK-028_E2E_Testing_Infrastructure.md) | **E2E Testing Infrastructure** | 🔴 High | 2025-11-30 |
 | [TASK-038](./TASK-038_Organic_Modeling_Tools.md) | **Organic Modeling Tools** | 🔴 High | 2025-11-30 |
 | [TASK-035-4](./TASK-035_Import_Tools.md#task-035-4-import_glb) | **import_glb** | 🟠 High | 2025-11-30 |

@@ -122,3 +122,24 @@ class IMaterialTool(ABC):
             Success message with connection details.
         """
         pass
+
+    # TASK-045-6: material_inspect_nodes
+    @abstractmethod
+    def inspect_nodes(
+        self,
+        material_name: str,
+        include_connections: bool = True,
+    ) -> Dict[str, Any]:
+        """Inspects material shader node graph.
+
+        Returns all nodes in the material's node tree with their types,
+        parameters, and connections.
+
+        Args:
+            material_name: Name of the material to inspect.
+            include_connections: Include node connections/links (default True).
+
+        Returns:
+            Dictionary with node graph information.
+        """
+        pass

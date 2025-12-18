@@ -378,3 +378,91 @@ class MaterialHandler:
         links.new(tex_node.outputs[output_socket], bsdf.inputs[input_name])
 
         return f"Connected texture to '{input_name}' on '{material_name}'"
+
+    # TASK-045-6: material_inspect_nodes
+    def inspect_nodes(self, material_name, include_connections=True):
+        """Inspects material shader node graph.
+
+        Returns all nodes in the material's node tree with their types,
+        parameters, and connections.
+
+        Args:
+            material_name: Name of the material to inspect.
+            include_connections: Include node connections/links (default True).
+
+        Returns:
+            Dictionary with node graph information.
+        """
+        mat = bpy.data.materials.get(material_name)
+        if not mat:
+            raise ValueError(f"Material '{material_name}' not found")
+
+        result = {
+            "material_name": material_name,
+            "uses_nodes": mat.use_nodes,
+            "nodes": [],
+            "connections": []
+        }
+
+        if not mat.use_nodes or not mat.node_tree:
+            return result
+
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+
+        # Gather node information
+        for node in nodes:
+            node_info = {
+                "name": node.name,
+                "type": node.type,
+                "bl_idname": node.bl_idname,
+                "label": node.label if node.label else None,
+                "location": [round(node.location[0], 1), round(node.location[1], 1)],
+                "inputs": [],
+                "outputs": []
+            }
+
+            # Gather input socket info
+            for inp in node.inputs:
+                inp_info = {
+                    "name": inp.name,
+                    "type": inp.type,
+                    "is_linked": inp.is_linked
+                }
+                # Get default value if available
+                if hasattr(inp, 'default_value'):
+                    try:
+                        val = inp.default_value
+                        if hasattr(val, '__iter__') and not isinstance(val, str):
+                            inp_info["default_value"] = [round(v, 4) if isinstance(v, float) else v for v in val]
+                        elif isinstance(val, float):
+                            inp_info["default_value"] = round(val, 4)
+                        else:
+                            inp_info["default_value"] = val
+                    except Exception:
+                        pass
+                node_info["inputs"].append(inp_info)
+
+            # Gather output socket info
+            for out in node.outputs:
+                out_info = {
+                    "name": out.name,
+                    "type": out.type,
+                    "is_linked": out.is_linked
+                }
+                node_info["outputs"].append(out_info)
+
+            result["nodes"].append(node_info)
+
+        # Gather connections if requested
+        if include_connections:
+            for link in links:
+                conn_info = {
+                    "from_node": link.from_node.name,
+                    "from_socket": link.from_socket.name,
+                    "to_node": link.to_node.name,
+                    "to_socket": link.to_socket.name
+                }
+                result["connections"].append(conn_info)
+
+        return result
