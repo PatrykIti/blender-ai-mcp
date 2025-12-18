@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.0.0 (2025-12-18)
+
+### Features
+
+- Introduce Router Supervisor + YAML workflow engine (semantic matching, new tool suites)
+  ([#24](https://github.com/PatrykIti/blender-ai-mcp/pull/24),
+  [`e124c24`](https://github.com/PatrykIti/blender-ai-mcp/commit/e124c24ecce7a7f4c214980e78d86505b42fb8ec))
+
+
 ## v1.14.0 (2025-11-30)
 
 ### Documentation
