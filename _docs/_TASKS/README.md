@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 4 tasks (~22 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 132
+- **Done:** 133
 
 ---
 
@@ -33,6 +33,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-069](./TASK-069_Repo_Community_Standards_and_Release_Docs.md) | **Repo Professionalization: SECURITY/SUPPORT/CoC + Support Matrix + Release/Dev Docs** | 🟡 Medium | 2025-12-18 |
 | [TASK-068](./TASK-068_License_BUSL_Compliance.md) | **License: BUSL 1.1 Compliance + Apache Change License File** | 🔴 High | 2025-12-17 |
 | [TASK-067](./TASK-067_Update_Root_README_MCP_Client_Configs.md) | **Update Root README MCP Client Configs (Collapsible + Codex CLI)** | 🟡 Medium | 2025-12-17 |
 | [TASK-066](./TASK-066_Remove_Legacy_Goal_Matching_Fallback.md) | **Remove Legacy Goal Matching Fallback (Ensemble-Only)** | 🔴 High | 2025-12-17 |

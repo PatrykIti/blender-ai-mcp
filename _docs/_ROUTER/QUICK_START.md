@@ -6,9 +6,9 @@ Get started with Router Supervisor in 5 minutes.
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11+ (Router semantic features require sentence-transformers/LanceDB)
 - Poetry
-- Blender 4.0+ with addon installed
+- Blender 5.0 (tested) with addon installed (Blender 4.x is best-effort)
 - ~2GB RAM for LaBSE model
 
 ---

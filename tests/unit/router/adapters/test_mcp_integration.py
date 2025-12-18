@@ -194,14 +194,20 @@ class TestAsyncExecutorWrapping:
             run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             assert integration._execution_count == 1
 
-    def test_wrap_executor_error_fallback(self, integration, mock_executor):
-        """Test fallback on router error."""
-        # Cause router to fail
+    def test_wrap_executor_error_fail_fast(self, integration):
+        """Test fail-fast on router error (no fallback to original execution)."""
+        calls: list[str] = []
+
+        async def executor(tool_name: str, params: dict) -> str:
+            calls.append(tool_name)
+            return f"Executed {tool_name}"
+
         with patch.object(integration.router, 'process_llm_tool_call', side_effect=Exception("Router error")):
-            wrapped = integration.wrap_tool_executor(mock_executor)
+            wrapped = integration.wrap_tool_executor(executor)
             result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
-            # Should fall back to original execution
-            assert result == "Executed mesh_extrude_region"
+            assert "[ROUTER ERROR]" in result
+            assert "Router error" in result
+            assert calls == []
             assert integration._error_count == 1
 
 
@@ -232,6 +238,22 @@ class TestSyncExecutorWrapping:
             wrapped = integration.wrap_sync_executor(mock_sync_executor)
             result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
             assert "mesh_extrude_region" in result
+
+    def test_wrap_sync_error_fail_fast(self, integration):
+        """Test fail-fast on router error (no fallback to original execution)."""
+        calls: list[str] = []
+
+        def executor(tool_name: str, params: dict) -> str:
+            calls.append(tool_name)
+            return f"Executed {tool_name}"
+
+        with patch.object(integration.router, 'process_llm_tool_call', side_effect=Exception("Router error")):
+            wrapped = integration.wrap_sync_executor(executor)
+            result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
+            assert "[ROUTER ERROR]" in result
+            assert "Router error" in result
+            assert calls == []
+            assert integration._error_count == 1
 
 
 # ============================================================================

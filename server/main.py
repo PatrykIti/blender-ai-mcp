@@ -1,7 +1,11 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
 """
 Blender AI MCP Server
 Author: Patryk Ciechański (https://github.com/PatrykIti)
 """
+
 import logging
 import os
 from server.adapters.mcp.server import run

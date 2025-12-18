@@ -1,3 +1,12 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
+"""
+MCP tool registration modules ("areas").
+
+Author: Patryk Ciechański (PatrykIti)
+"""
+
 from . import baking
 from . import collection
 from . import curve

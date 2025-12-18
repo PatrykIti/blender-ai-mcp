@@ -8,40 +8,43 @@ Licensed Work:        blender-ai-mcp
 
 Additional Use Grant:
 
-You may make Production Use of the Licensed Work, provided that such
-Production Use:
-
-  (a) is not for the purpose of operating a Competing Offering (defined below);
-      and
-
-  (b) is not by or for a Large Entity (defined below), unless you have a
-      separate commercial license from the Licensor.
+You may make Production Use of the Licensed Work, provided that Your use does
+not include offering the Licensed Work (or its functionality) to third
+parties on a hosted or embedded basis in order to operate a Competing
+Offering (defined below).
 
 This Additional Use Grant applies only to Production Use. It does not limit
 any rights for non-production use granted by this License.
 
-Definitions used in this Additional Use Grant:
+For purposes of this license:
 
-  - "Production Use" means use of the Licensed Work in production, including
-    internal business operations or providing services to third parties, other
-    than evaluation, development, testing, or personal experimentation.
+  - A "Competing Offering" is a Product that is offered to third parties and
+    that significantly overlaps with the capabilities of the Licensed Work as
+    an AI-driven Blender MCP server / AI control layer for Blender.
 
-  - "Competing Offering" means a product or service whose primary purpose is
-    to provide AI-driven control, automation, or inspection of Blender through
-    an MCP server or a materially similar tool-calling interface, where the
-    product or service is offered to third parties as a substitute for the
-    Licensed Work.
+  - "Product" means software that is offered to end users to run in their own
+    environments or offered as a hosted service.
 
-  - "Large Entity" means any entity that:
-      (i) has annual revenue exceeding USD $10,000,000; or
-      (ii) employs more than 100 people; or
-      (iii) is publicly traded; or
-      (iv) is owned by, or acting on behalf of, a publicly traded company.
+  - "Hosted" means making the Licensed Work available over a network (for
+    example via API access to its MCP tools), such that third parties can use
+    its functionality without obtaining their own copy of the Licensed Work.
+
+  - "Embedded" means including the source code or executable code from the
+    Licensed Work in a Product, or packaging a Product such that the Licensed
+    Work must be installed, accessed, or downloaded for the Product to
+    operate.
+
+Internal use of the Licensed Work within an organization (including its
+affiliates under common control) is not a Competing Offering.
+
+Using the Licensed Work internally to produce outputs for clients (e.g.,
+assets, renders, reports) without providing third parties access to the
+Licensed Work itself is not a Competing Offering.
 
 Commercial licensing:
 
-If you need rights beyond this Additional Use Grant (including Production Use
-by a Large Entity, or Production Use for a Competing Offering), contact:
+If you need rights beyond this Additional Use Grant (including operating a
+Competing Offering), contact:
 patryk.ciechanski@patrykiti.pl
 
 Change Date:          2029-12-01

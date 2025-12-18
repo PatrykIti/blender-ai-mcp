@@ -48,6 +48,13 @@ Communication happens via **JSON-RPC over TCP sockets**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
 
+## ✅ Support Matrix
+
+- **Blender**: tested on **Blender 5.0** (E2E). The addon declares minimum **Blender 4.0**, but 4.x support is best-effort.
+- **Python (MCP server)**: **3.11** is the CI baseline. **3.10+** works for core tools, but Router semantic features (LaBSE/LanceDB) require **3.11+**.
+- **OS**: macOS / Windows / Linux (Docker recommended). On Linux, use host networking or proper host resolution for `BLENDER_RPC_HOST`.
+- **Memory**: Router semantic matching uses a local LaBSE model (~2GB RAM).
+
 ## 🧪 Testing
 
 **Unit Tests** (no Blender required):
@@ -1270,6 +1277,12 @@ docker run -i --rm \
 ## 🤝 Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our Clean Architecture standards before submitting a Pull Request.
+
+## 🧩 Community & Support
+
+- Support: [SUPPORT.md](SUPPORT.md)
+- Security: [SECURITY.md](SECURITY.md)
+- Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ## 👨‍💻 Author
 
