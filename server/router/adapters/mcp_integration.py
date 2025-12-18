@@ -137,9 +137,11 @@ class MCPRouterIntegration:
 
             except Exception as e:
                 self._error_count += 1
-                logger.error(f"Router processing failed: {e}")
-                # Fallback to original execution
-                return await executor(tool_name, params)
+                logger.error(f"Router processing failed (fail-fast, no fallback): {e}")
+                return (
+                    "[ROUTER ERROR] Router processing failed (fail-fast, no fallback). "
+                    f"{type(e).__name__}: {e}"
+                )
 
         return wrapped_executor
 
@@ -183,9 +185,11 @@ class MCPRouterIntegration:
 
             except Exception as e:
                 self._error_count += 1
-                logger.error(f"Router processing failed: {e}")
-                # Fallback to original execution
-                return executor(tool_name, params)
+                logger.error(f"Router processing failed (fail-fast, no fallback): {e}")
+                return (
+                    "[ROUTER ERROR] Router processing failed (fail-fast, no fallback). "
+                    f"{type(e).__name__}: {e}"
+                )
 
         return wrapped_executor
 

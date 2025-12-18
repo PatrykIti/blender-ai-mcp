@@ -20,9 +20,9 @@ Make the repository licensing **internally consistent** and closer to a legally 
 **File:** `LICENSE.md`
 
 - Add a clear BUSL parameter block (Licensor, Licensed Work, Change Date, Change License)
-- Rework custom terms into **Additional Use Grant** that grants **Production Use** only when:
-  - it is **not** for operating a *Competing Offering*
-  - it is **not** by/for a *Large Entity* (unless separately licensed)
+- Rework custom terms into a BUSL-compatible **Additional Use Grant** (production use only) that:
+  - allows internal production use
+  - prohibits production use that offers the Licensed Work to third parties on a hosted/embedded basis to operate a *Competing Offering*
 - Include the **canonical BUSL-1.1 license text** below, unmodified
 
 ### 2) Add the Change License text (Apache 2.0)
@@ -50,4 +50,3 @@ Make the repository licensing **internally consistent** and closer to a legally 
 - [x] `LICENSE.md` contains the canonical BUSL-1.1 text unmodified and a BUSL-compatible Additional Use Grant.
 - [x] Apache 2.0 (Change License) full text is present in repo.
 - [x] Packaging metadata references `LICENSE.md`.
-

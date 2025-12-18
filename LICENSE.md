@@ -9,8 +9,9 @@ Licensed Work:        blender-ai-mcp
 Additional Use Grant:
 
 You may make Production Use of the Licensed Work, provided that Your use does
-not include offering the Licensed Work to third parties on a hosted or
-embedded basis in order to operate a Competing Offering (defined below).
+not include offering the Licensed Work (or its functionality) to third
+parties on a hosted or embedded basis in order to operate a Competing
+Offering (defined below).
 
 This Additional Use Grant applies only to Production Use. It does not limit
 any rights for non-production use granted by this License.
