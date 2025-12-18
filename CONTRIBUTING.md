@@ -59,6 +59,10 @@ This project follows **Clean Architecture**. Before writing code, understand the
 poetry install --no-interaction
 ```
 
+More details:
+- `_docs/_DEV/README.md`
+- `_docs/_DEV/RELEASING.md`
+
 ## 🐍 Coding Standards
 
 - **Type Hints**: Fully typed Python 3.10+.
