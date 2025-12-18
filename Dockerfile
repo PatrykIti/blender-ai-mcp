@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
-RUN pip install poetry
+ENV PIP_NO_CACHE_DIR=1
+RUN pip install --no-cache-dir poetry
 
 # Copy metadata needed by Poetry (it validates referenced files)
 COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
@@ -21,7 +22,7 @@ COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
 RUN poetry config virtualenvs.create false
 
 # Install dependencies
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi --no-root --no-cache
 
 # Pre-download LaBSE model for fast router startup (~1.2GB)
 # This avoids 60-70s download delay on every container start

@@ -30,5 +30,19 @@ jobs:
       - name: Verify Addon Build
         run: python scripts/build_addon.py
 
+      - name: Free Disk Space (Docker build)
+        run: |
+          df -h
+          rm -rf .venv
+          rm -rf ~/.cache/pypoetry ~/.cache/pip || true
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/share/powershell
+          sudo apt-get clean
+          docker system prune -af || true
+          df -h
+
       - name: Verify Docker Build
         run: docker build .
