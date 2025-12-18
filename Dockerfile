@@ -11,9 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install Poetry (latest version via official installer, same as CI)
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir pipx && \
+    pipx install poetry && \
+    pipx ensurepath
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy metadata needed by Poetry (it validates referenced files)
 COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
