@@ -7,13 +7,17 @@ LABEL org.opencontainers.image.source=https://github.com/PatrykIti/blender-ai-mc
 WORKDIR /app
 
 # Install system dependencies (if any)
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
+# Install Poetry (latest version via official installer, same as CI)
 ENV PIP_NO_CACHE_DIR=1
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir pipx && \
+    pipx install poetry && \
+    pipx ensurepath
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy metadata needed by Poetry (it validates referenced files)
 COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
@@ -21,8 +25,9 @@ COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
 # Config poetry to not use virtualenvs (we are in docker)
 RUN poetry config virtualenvs.create false
 
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi --no-root --no-cache
+# Install dependencies and clean up cache
+RUN poetry install --no-interaction --no-ansi --no-root && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip
 
 # Pre-download LaBSE model for fast router startup (~1.2GB)
 # This avoids 60-70s download delay on every container start

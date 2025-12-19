@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test-and-build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,19 +30,26 @@ jobs:
       - name: Verify Addon Build
         run: python scripts/build_addon.py
 
-      - name: Free Disk Space (Docker build)
-        run: |
-          df -h
-          rm -rf .venv
-          rm -rf ~/.cache/pypoetry ~/.cache/pip || true
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/local/share/powershell
-          sudo apt-get clean
-          docker system prune -af || true
-          df -h
+  docker-build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Verify Docker Build
-        run: docker build .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Docker Build (${{ matrix.platform }})
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
