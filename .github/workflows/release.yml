@@ -121,6 +121,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT }}
 
+      - name: Set image name lowercase
+        run: echo "IMAGE_NAME=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v5
@@ -130,7 +133,7 @@ jobs:
           push: true
           cache-from: type=gha,scope=${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true
 
       - name: Export digest
         run: |
@@ -181,16 +184,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT }}
 
+      - name: Set image name lowercase
+        run: echo "IMAGE_NAME=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          IMAGE="ghcr.io/${{ github.repository }}"
           # Create and push manifest for version tag
           docker buildx imagetools create \
-            -t "${IMAGE}:${{ env.DOCKER_TAG }}" \
-            -t "${IMAGE}:latest" \
-            $(printf "${IMAGE}@sha256:%s " *)
+            -t "${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}" \
+            -t "${{ env.IMAGE_NAME }}:latest" \
+            $(printf "${{ env.IMAGE_NAME }}@sha256:%s " *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect "ghcr.io/${{ github.repository }}:${{ env.DOCKER_TAG }}"
+          docker buildx imagetools inspect "${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
