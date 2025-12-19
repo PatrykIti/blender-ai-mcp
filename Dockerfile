@@ -7,6 +7,7 @@ LABEL org.opencontainers.image.source=https://github.com/PatrykIti/blender-ai-mc
 WORKDIR /app
 
 # Install system dependencies (if any)
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
