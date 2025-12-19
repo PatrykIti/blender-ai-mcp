@@ -16,9 +16,16 @@ Provide a single `mesh_inspect` mega tool that wraps mesh introspection actions 
 
 ## 📝 Documentation Updates
 
-- `README.md` (mega tools table + summary sources)
-- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
-- `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md`
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-074_Mesh_Inspect_Mega_Tool.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-mesh-inspect-mega-tool.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_MCP_SERVER/README.md` | Add `mesh_inspect` to mega tools table |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add `mesh_inspect` to Implemented table |
+| `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Document `mesh_inspect` actions + summary |
+| `README.md` | Update mega tools table + summary sources |
 
 ---
 

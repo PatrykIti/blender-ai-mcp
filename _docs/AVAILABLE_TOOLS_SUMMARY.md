@@ -13,6 +13,8 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 > Only mega tools are registered as MCP tools (`@mcp.tool`); standalone action handlers live in the
 > Blender addon unless a compatibility wrapper is required.
 
+### Implemented
+
 | Mega Tool | Actions | Replaces | Status |
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
@@ -20,6 +22,11 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints*`, `modifier_data*` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints*`, `modeling_get_modifier_data*` | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
+
+### Planned
+
+| Mega Tool | Actions | Replaces | Status |
+|-----------|---------|----------|--------|
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | 🚧 Planned |
 
 Note: * planned actions not yet implemented.
@@ -33,6 +40,8 @@ Projected savings:
 
 ## 🏗️ Scene Tools (`scene_`)
 *Tools for managing the scene graph, selection, and visualization.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -53,6 +62,11 @@ Projected savings:
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
+
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
 | `scene_get_constraints` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. | 🚧 Planned |
 
 Note: * planned actions not yet implemented.
@@ -73,6 +87,8 @@ Note: * planned actions not yet implemented.
 ## 📦 Collection Tools (`collection_`)
 *Tools for managing Blender collections (organizational containers).*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `collection_list` | `include_objects` (bool) | Lists all collections with hierarchy, object counts, and visibility flags. | ✅ Done |
@@ -83,6 +99,8 @@ Note: * planned actions not yet implemented.
 
 ## 🎨 Material Tools (`material_`)
 *Tools for managing materials and shaders.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -99,6 +117,8 @@ Note: * planned actions not yet implemented.
 ## 🗺️ UV Tools (`uv_`)
 *Tools for texture coordinate mapping operations.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `uv_list_maps` | `object_name` (str), `include_island_counts` (bool) | Lists UV maps for a mesh object with active flags and loop counts. | ✅ Done |
@@ -111,6 +131,8 @@ Note: * planned actions not yet implemented.
 ## 🧊 Modeling Tools (`modeling_`)
 *Object-level geometry operations (non-destructive or container management).*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
@@ -118,7 +140,6 @@ Note: * planned actions not yet implemented.
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
-| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | 🚧 Planned |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
 | `modeling_join_objects` | `object_names` (list) | Joins multiple objects into one mesh. | ✅ Done |
 | `modeling_separate_object` | `name`, `type` (LOOSE/SELECTED/MATERIAL) | Separates a mesh into multiple objects. | ✅ Done |
@@ -129,16 +150,29 @@ Note: * planned actions not yet implemented.
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
 
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | 🚧 Planned |
+
 ---
 
 ## 🔲 Lattice Tools (`lattice_`)
 *Non-destructive deformation using lattice cages for architectural and organic modeling.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object. If target_object provided, auto-fits to bounding box. | ✅ Done |
 | `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice using Lattice modifier. Non-destructive deformation. | ✅ Done |
 | `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. | ✅ Done |
+
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
 | `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. | 🚧 Planned |
 
 **Use Cases:**
@@ -152,11 +186,12 @@ Note: * planned actions not yet implemented.
 ## 🕸️ Mesh Tools (`mesh_`) - Edit Mode
 *Low-level geometry manipulation (vertices, edges, faces).*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `mesh_select` | `action` (all/none/linked/more/less/boundary) | **MEGA TOOL** - Simple selection operations. | ✅ Done |
 | `mesh_select_targeted` | `action` (by_index/loop/ring/by_location), params | **MEGA TOOL** - Targeted selection operations with parameters. | ✅ Done |
-| `mesh_inspect` | `action` (summary/vertices/edges/faces/uvs/normals/attributes/shape_keys/group_weights), params | **MEGA TOOL** - Mesh introspection with summary and raw data. | 🚧 Planned |
 | `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
 | `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
 | `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |
@@ -170,13 +205,6 @@ Note: * planned actions not yet implemented.
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
-| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity + flags. | 🚧 Planned |
-| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity + normals/material index. | 🚧 Planned |
-| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UVs per face loop. | 🚧 Planned |
-| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | 🚧 Planned |
-| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | 🚧 Planned |
-| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | 🚧 Planned |
-| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | 🚧 Planned |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. | ✅ Done |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). | ✅ Done |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
@@ -212,6 +240,19 @@ Note: * planned actions not yet implemented.
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
+| `mesh_inspect` | `action` (summary/vertices/edges/faces/uvs/normals/attributes/shape_keys/group_weights), params | **MEGA TOOL** - Mesh introspection with summary and raw data. | 🚧 Planned |
+| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity + flags. | 🚧 Planned |
+| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity + normals/material index. | 🚧 Planned |
+| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UVs per face loop. | 🚧 Planned |
+| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | 🚧 Planned |
+| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | 🚧 Planned |
+| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | 🚧 Planned |
+| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | 🚧 Planned |
+
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
 - ~~`mesh_select_linked`~~ → Use `mesh_select(action="linked")`
@@ -228,16 +269,25 @@ Note: * planned actions not yet implemented.
 ## 〰️ Curve Tools (`curve_`)
 *Tools for creating and managing curve objects.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
 | `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
+
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
 | `curve_get_data` | `object_name` | Returns curve splines, points, and settings. | 🚧 Planned |
 
 ---
 
 ## 🔤 Text Tools (`text_`)
 *Tools for 3D typography and text annotations.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -256,6 +306,8 @@ Note: * planned actions not yet implemented.
 ## 📤 Export Tools (`export_`)
 *Tools for exporting scene or objects to various 3D file formats.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `export_glb` | `filepath`, `export_selected`, `export_animations`, `export_materials`, `apply_modifiers` | Exports to GLB/GLTF format (web, game engines). | ✅ Done |
@@ -266,6 +318,8 @@ Note: * planned actions not yet implemented.
 
 ## 🎨 Sculpt Tools (`sculpt_`)
 *Tools for Sculpt Mode operations (organic shape manipulation).*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -288,6 +342,8 @@ Note: * planned actions not yet implemented.
 ## ⚙️ System Tools (`system_`)
 *System-level operations for mode switching, undo/redo, and file management.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `system_set_mode` | `mode` (str), `object_name` (str, optional) | Switches Blender mode (OBJECT/EDIT/SCULPT/POSE/...) with optional object selection. | ✅ Done |
@@ -301,6 +357,8 @@ Note: * planned actions not yet implemented.
 
 ## 🔥 Baking Tools (`bake_`)
 *Texture baking operations using Cycles renderer. Critical for game development workflows.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -319,6 +377,8 @@ Note: * planned actions not yet implemented.
 ## 📥 Import Tools (`import_`)
 *Tools for importing external 3D files and reference images.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `import_obj` | `filepath`, `use_split_objects`, `use_split_groups`, `global_scale`, `forward_axis`, `up_axis` | Imports OBJ file (geometry, UVs, normals). | ✅ Done |
@@ -330,6 +390,8 @@ Note: * planned actions not yet implemented.
 
 ## 🔍 Extraction Tools (`extraction_`)
 *Specialized analysis tools for the Automatic Workflow Extraction System (TASK-042).*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
@@ -351,6 +413,8 @@ Note: * planned actions not yet implemented.
 ## 🦴 Armature Tools (`armature_`)
 *Skeletal animation and rigging tools for character/mechanical animation.*
 
+### Implemented
+
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `armature_create` | `name`, `location`, `bone_name`, `bone_length` | Creates armature with initial bone for rigging. | ✅ Done |
@@ -358,6 +422,11 @@ Note: * planned actions not yet implemented.
 | `armature_bind` | `mesh_name`, `armature_name`, `bind_type` (AUTO/ENVELOPE/EMPTY) | Binds mesh to armature with automatic weight calculation. | ✅ Done |
 | `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses armature bone (rotation/location/scale in Pose Mode). | ✅ Done |
 | `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` (REPLACE/ADD/SUBTRACT) | Assigns weights to selected vertices for manual rigging. | ✅ Done |
+
+### Planned
+
+| Tool Name | Arguments | Description | Status |
+|-----------|-----------|-------------|--------|
 | `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). | 🚧 Planned |
 
 **Use Cases:**
@@ -370,6 +439,8 @@ Note: * planned actions not yet implemented.
 
 ## 🤖 Workflow Catalog & Router Tools (`workflow_catalog`, `router_*`)
 *Tools for browsing workflows (read-only) and controlling the Router Supervisor.*
+
+### Implemented
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|

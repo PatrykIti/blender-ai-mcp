@@ -16,8 +16,18 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ## 📝 Documentation Updates
 
-- `README.md` (tools tables)
-- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-073_Rig_Curve_Lattice_Introspection.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-rig-curve-lattice-introspection.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add RPC commands (`curve.get_data`, `lattice.get_points`, `armature.get_data`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers (if exposed) |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools to Implemented table |
+| `_docs/TOOLS/CURVE_TOOLS_ARCHITECTURE.md` | Document `curve_get_data` |
+| `_docs/TOOLS/LATTICE_TOOLS_ARCHITECTURE.md` | Document `lattice_get_points` |
+| `README.md` | Update tools tables |
 
 ---
 

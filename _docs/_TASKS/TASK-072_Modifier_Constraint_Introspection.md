@@ -16,9 +16,19 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 
 ## 📝 Documentation Updates
 
-- `README.md` (tools tables + mega tools)
-- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
-- `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md`
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-072_Modifier_Constraint_Introspection.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-modifier-constraint-introspection.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add RPC commands (`modeling.get_modifier_data`, `scene.get_constraints`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers + `scene_inspect` action updates |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools/actions to Implemented table |
+| `_docs/TOOLS/SCENE_TOOLS_ARCHITECTURE.md` | Document `scene_get_constraints` |
+| `_docs/TOOLS/MODELING_TOOLS_ARCHITECTURE.md` | Document `modeling_get_modifier_data` |
+| `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Add `scene_inspect` actions |
+| `README.md` | Update tools tables + mega tools |
 
 ---
 

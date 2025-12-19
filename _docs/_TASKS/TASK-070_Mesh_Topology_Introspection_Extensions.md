@@ -22,8 +22,17 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 
 ## 📝 Documentation Updates
 
-- `README.md` (tools tables)
-- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-070_Mesh_Topology_Introspection_Extensions.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-mesh-topology-introspection.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add mesh RPC commands (`mesh.get_edge_data`, `mesh.get_face_data`, `mesh.get_uv_data`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers (if exposed) |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools to Implemented table |
+| `_docs/TOOLS/MESH_TOOLS_ARCHITECTURE.md` | Document new mesh introspection tools |
+| `README.md` | Update tools tables |
 
 ---
 

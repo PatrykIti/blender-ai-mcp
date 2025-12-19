@@ -22,8 +22,17 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 
 ## 📝 Documentation Updates
 
-- `README.md` (tools tables)
-- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-071_Mesh_Introspection_Advanced.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-mesh-introspection-advanced.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add mesh RPC commands (`mesh.get_loop_normals`, `mesh.get_vertex_group_weights`, `mesh.get_attributes`, `mesh.get_shape_keys`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers (if exposed) |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools to Implemented table |
+| `_docs/TOOLS/MESH_TOOLS_ARCHITECTURE.md` | Document new mesh introspection tools |
+| `README.md` | Update tools tables |
 
 ---
 
