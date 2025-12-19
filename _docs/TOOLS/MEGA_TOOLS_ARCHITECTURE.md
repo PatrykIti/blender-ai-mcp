@@ -19,6 +19,14 @@ They are wrappers only: standalone tools remain the source of truth for workflow
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 Planned mega tools/actions are listed above but not counted in the total.
 
+**`mesh_inspect.summary` sources (recommended):**
+- `scene_inspect(action="topology")` → counts
+- `uv_list_maps` → `has_uvs`
+- `mesh_get_shape_keys` → `has_shape_keys`
+- `mesh_get_loop_normals` or mesh flags → `has_custom_normals`
+- `mesh_list_groups` → `vertex_groups`
+- `modeling_list_modifiers` → `modifiers`
+
 ---
 
 # 1. scene_context ✅ Done
