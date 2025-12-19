@@ -20,6 +20,16 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 
 ---
 
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (exact normals/weights/attributes)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `selected_only`, `group_name`, `attribute_name`
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-071-1: mesh_get_loop_normals

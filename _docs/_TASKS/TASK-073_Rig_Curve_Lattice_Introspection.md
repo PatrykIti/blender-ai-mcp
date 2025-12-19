@@ -14,6 +14,16 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ---
 
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (exact spline/point/bone data)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `include_pose`
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-073-1: curve_get_data

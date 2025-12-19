@@ -639,6 +639,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ## 🧠 LLM Context Optimization
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
+> Mega tools are wrappers only; standalone tools remain for workflow execution and router compatibility.
 
 ### Scene Mega Tools
 
@@ -646,7 +647,9 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials | -3 | ✅ |
+| `scene_inspect` | object, topology, modifiers, materials, constraints*, modifier_data* | -3 | ✅ |
+
+* planned actions
 
 ### Mesh Mega Tools
 
@@ -656,7 +659,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
 | `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights | TBD | 🚧 |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned tools not counted.
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned actions not counted.
 
 ---
 

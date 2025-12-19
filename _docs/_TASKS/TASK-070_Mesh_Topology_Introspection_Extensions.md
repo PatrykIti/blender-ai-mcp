@@ -20,6 +20,16 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 
 ---
 
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (exact topology/attributes)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `selected_only`, `uv_layer`, `group_name`, `attribute_name`
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-070-1: mesh_get_edge_data

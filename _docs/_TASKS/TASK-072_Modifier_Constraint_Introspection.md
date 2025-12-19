@@ -14,6 +14,16 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 
 ---
 
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (full modifier/constraint data)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `modifier_name`, `include_bones`
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-072-1: modeling_get_modifier_data
@@ -95,6 +105,29 @@ def scene_get_constraints(
 | Addon | `blender_addon/application/handlers/scene.py` | Constraint dump |
 | Metadata | `server/router/infrastructure/tools_metadata/scene/scene_get_constraints.json` | Tool metadata |
 | Tests | `tests/unit/tools/scene/test_get_constraints.py` | Object + bone constraints |
+
+---
+
+### TASK-072-3: scene_inspect action extensions
+
+**Status:** ⏳ TODO
+
+Add new actions to the existing mega tool (do not remove standalone tools):
+
+- `constraints` → delegates to `scene_get_constraints`
+- `modifier_data` → delegates to `modeling_get_modifier_data`
+
+**Notes:**
+- Standalone tools remain required for workflow execution and router compatibility.
+- Mega tool is a read-only wrapper for context reduction only.
+
+**Files to Update:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Adapter | `server/adapters/mcp/areas/scene.py` | Accept new `action` values |
+| Metadata | `server/router/infrastructure/tools_metadata/scene/scene_inspect.json` | Update action schema |
+| Docs | `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Add new actions |
+| Tests | `tests/unit/tools/scene/test_scene_inspect.py` | New action coverage |
 
 ---
 

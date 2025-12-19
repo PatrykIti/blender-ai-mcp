@@ -1,7 +1,7 @@
 # Mega Tools Architecture
 
 Mega tools are unified tools that consolidate multiple related operations to **reduce LLM context usage**.
-Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools with action parameters.
+They are wrappers only: standalone tools remain the source of truth for workflows and router execution.
 
 ---
 
@@ -11,13 +11,13 @@ Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools
 |-----------|---------|----------|---------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | -1 |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | -2 |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | -3 |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints*`, `modifier_data*` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints*`, `modeling_get_modifier_data*` | -3 |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
 | `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | TBD |
 
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
-Planned mega tools are listed above but not counted in the total.
+Planned mega tools/actions are listed above but not counted in the total.
 
 ---
 
@@ -164,6 +164,8 @@ Detailed inspection queries for objects and scene.
 | `"topology"` | `object_name` (required), `detailed` | Returns vertex/edge/face/tri/quad/ngon counts. Optional: `detailed=True` for non-manifold checks. |
 | `"modifiers"` | `object_name` (optional), `include_disabled` | Returns modifier stacks. If `object_name` is None, scans all objects. |
 | `"materials"` | `material_filter`, `include_empty_slots` | Returns material slot audit across scene. |
+| `"constraints"`* | `object_name`, `include_bones` | Returns object (and optional bone) constraints. |
+| `"modifier_data"`* | `object_name`, `modifier_name` | Returns full modifier properties. |
 
 ## Object Parameters
 
@@ -191,6 +193,20 @@ Detailed inspection queries for objects and scene.
 |-----------|------|---------|-------------|
 | `material_filter` | `str` | `None` | Filter materials by name substring. |
 | `include_empty_slots` | `bool` | `True` | Include empty material slots. |
+
+## Constraints Parameters (*planned*)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Target object. |
+| `include_bones` | `bool` | `False` | Include bone constraints (armatures). |
+
+## Modifier Data Parameters (*planned*)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Target object. |
+| `modifier_name` | `str` | `None` | Filter to a specific modifier. |
 
 ## Examples
 

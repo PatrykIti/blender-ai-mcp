@@ -34,6 +34,11 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 - `shape_keys` → `mesh_get_shape_keys`
 - `group_weights` → `mesh_get_vertex_group_weights`
 
+**Rules:**
+- Standalone tools remain required for workflow execution and router compatibility.
+- Mega tool is read-only and delegates to the underlying tool outputs.
+- Action names are short aliases of `mesh_get_*` for LLM context efficiency.
+
 ---
 
 ## ✅ Success Criteria
