@@ -39,7 +39,30 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 - Standalone tools remain required for workflow execution and router compatibility.
 - Mega tool is read-only and delegates to the underlying tool outputs.
 - Action names are short aliases of `mesh_get_*` for LLM context efficiency.
- - `summary` must avoid large payloads (no per-vertex/face arrays).
+- `summary` must avoid large payloads (no per-vertex/face arrays).
+
+**Summary JSON (example):**
+```json
+{
+  "object_name": "Body",
+  "vertex_count": 1234,
+  "edge_count": 2456,
+  "face_count": 1200,
+  "has_uvs": true,
+  "has_shape_keys": true,
+  "has_custom_normals": false,
+  "vertex_groups": ["Spine", "Arm_L", "Arm_R"],
+  "modifiers": ["Bevel", "Subdivision"]
+}
+```
+
+**Summary Sources (recommended):**
+- `scene_inspect(action="topology")` → vertex/edge/face counts
+- `uv_list_maps` → `has_uvs`
+- `mesh_get_shape_keys` → `has_shape_keys` (names only, no deltas)
+- `mesh_get_loop_normals` or mesh data flags → `has_custom_normals`
+- `mesh_list_groups` → `vertex_groups`
+- `modeling_list_modifiers` → `modifiers`
 
 ---
 
