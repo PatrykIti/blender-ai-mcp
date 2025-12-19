@@ -8,14 +8,7 @@ on:
       manual_tag:
         description: 'Tag to build (e.g. v2.1.0). Leave empty to use latest.'
         required: false
-        description: 'Tag to build (e.g. v2.1.0). Leave empty to use latest.'
-        required: false
         default: 'latest'
-      skip_release:
-        description: 'Skip release job and only build Docker images'
-        required: false
-        type: boolean
-        default: true
       skip_release:
         description: 'Skip release job and only build Docker images'
         required: false
@@ -24,7 +17,6 @@ on:
 
 jobs:
   build-and-test:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_release == false)
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_release == false)
     runs-on: ubuntu-latest
     steps:
@@ -58,7 +50,6 @@ jobs:
 
   release:
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_release == false)
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_release == false)
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
@@ -89,7 +80,6 @@ jobs:
 
   docker:
     needs: release
-    if: always() && ((github.event_name == 'push' && needs.release.result == 'success') || (github.event_name == 'workflow_dispatch' && (needs.release.result == 'success' || needs.release.result == 'skipped')))
     if: always() && ((github.event_name == 'push' && needs.release.result == 'success') || (github.event_name == 'workflow_dispatch' && (needs.release.result == 'success' || needs.release.result == 'skipped')))
     runs-on: ${{ matrix.runner }}
     strategy:
