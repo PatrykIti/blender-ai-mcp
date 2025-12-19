@@ -2,6 +2,23 @@
 
 <!-- version list -->
 
+## v2.1.1 (2025-12-19)
+
+### Bug Fixes
+
+- Workflow ([#29](https://github.com/PatrykIti/blender-ai-mcp/pull/29),
+  [`70bcce5`](https://github.com/PatrykIti/blender-ai-mcp/commit/70bcce520490e517fc7eed4f770d7fa5350bd4a6))
+
+### Chores
+
+- Fixing docker build jobs ([#27](https://github.com/PatrykIti/blender-ai-mcp/pull/27),
+  [`8d870ab`](https://github.com/PatrykIti/blender-ai-mcp/commit/8d870abd4d6fe870040b17145b8086584b41b849))
+
+- Fixing merge manifests for docker image
+  ([#28](https://github.com/PatrykIti/blender-ai-mcp/pull/28),
+  [`3bdddd0`](https://github.com/PatrykIti/blender-ai-mcp/commit/3bdddd063d09e11c48279f91933e05a10d3eb993))
+
+
 ## v2.1.0 (2025-12-19)
 
 ### Chores
