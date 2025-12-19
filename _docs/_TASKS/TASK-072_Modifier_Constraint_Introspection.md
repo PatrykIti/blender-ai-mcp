@@ -35,7 +35,8 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 def modeling_get_modifier_data(
     ctx: Context,
     object_name: str,
-    modifier_name: str | None = None
+    modifier_name: str | None = None,
+    include_node_tree: bool = False
 ) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
@@ -56,6 +57,11 @@ def modeling_get_modifier_data(
   ]
 }
 ```
+
+**Notes:**
+- `include_node_tree=true` should include Geometry Nodes group metadata
+  (node tree name, inputs/outputs, and exposed parameters only).
+  Avoid dumping full node graphs by default.
 
 **Implementation Checklist:**
 | Layer | File | What to Add |

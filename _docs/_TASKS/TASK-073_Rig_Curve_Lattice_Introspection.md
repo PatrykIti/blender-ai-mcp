@@ -24,6 +24,15 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ---
 
+## 🔗 Relationship Notes
+
+- `armature_get_data(include_pose=True)` returns pose transforms for bones
+  (location/rotation/scale) and the bone hierarchy.
+- `scene_get_constraints(include_bones=True)` returns constraint settings on bones.
+- Use both when reconstructing rigged assets: pose transforms + constraints are complementary.
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-073-1: curve_get_data

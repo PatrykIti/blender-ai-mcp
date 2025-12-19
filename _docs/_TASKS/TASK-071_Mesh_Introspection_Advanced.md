@@ -161,7 +161,8 @@ def mesh_get_attributes(
 @mcp.tool()
 def mesh_get_shape_keys(
     ctx: Context,
-    object_name: str
+    object_name: str,
+    include_deltas: bool = False
 ) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
@@ -174,10 +175,22 @@ def mesh_get_shape_keys(
   "object_name": "Body",
   "shape_keys": [
     {"name": "Basis", "value": 0.0},
-    {"name": "Smile", "value": 0.2}
+    {
+      "name": "Smile",
+      "value": 0.2,
+      "deltas": [
+        {"vert": 0, "delta": [0.0, 0.0, 0.0]},
+        {"vert": 5, "delta": [0.001, 0.0, -0.002]}
+      ]
+    }
   ]
 }
 ```
+
+**Notes:**
+- `include_deltas=false` returns names + values only (lightweight).
+- `include_deltas=true` returns per-vertex deltas relative to Basis.
+  Use sparse output (only non-zero deltas) for large meshes.
 
 **Implementation Checklist:**
 | Layer | File | What to Add |

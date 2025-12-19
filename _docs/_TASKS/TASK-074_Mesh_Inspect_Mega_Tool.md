@@ -33,14 +33,17 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 - `attributes` → `mesh_get_attributes`
 - `shape_keys` → `mesh_get_shape_keys`
 - `group_weights` → `mesh_get_vertex_group_weights`
+- `summary` → lightweight overview (counts + flags only)
 
 **Rules:**
 - Standalone tools remain required for workflow execution and router compatibility.
 - Mega tool is read-only and delegates to the underlying tool outputs.
 - Action names are short aliases of `mesh_get_*` for LLM context efficiency.
+ - `summary` must avoid large payloads (no per-vertex/face arrays).
 
 ---
 
 ## ✅ Success Criteria
 - A single tool can fetch any mesh introspection payload
 - Reduces prompt/tool overhead in workflow extraction
+ - `summary` returns a fast overview (counts + presence flags)

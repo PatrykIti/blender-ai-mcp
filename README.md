@@ -657,7 +657,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
-| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights | TBD | 🚧 |
+| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | TBD | 🚧 |
 
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned actions not counted.
 
