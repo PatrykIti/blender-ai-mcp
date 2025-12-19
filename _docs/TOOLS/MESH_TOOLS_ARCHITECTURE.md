@@ -1274,6 +1274,144 @@ Workflow: Set proportional edit → mesh_transform_selected (transforms use prop
 
 ---
 
+# 48. mesh_get_edge_data ✅ Done
+
+Returns edge connectivity and edge flags (seam/sharp/crease/bevel).
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "edge_count": 1024,
+  "selected_count": 12,
+  "returned_count": 12,
+  "edges": [
+    {
+      "index": 0,
+      "verts": [12, 45],
+      "is_boundary": false,
+      "is_manifold": true,
+      "is_seam": false,
+      "is_sharp": true,
+      "crease": 0.5,
+      "bevel_weight": 1.0,
+      "selected": false
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_edge_data",
+  "args": {
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Edge-level reconstruction (seams, sharp edges, weights)
+
+---
+
+# 49. mesh_get_face_data ✅ Done
+
+Returns face connectivity, normals, centers, and material indices.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "face_count": 512,
+  "selected_count": 8,
+  "returned_count": 8,
+  "faces": [
+    {
+      "index": 0,
+      "verts": [1, 2, 3, 4],
+      "normal": [0.0, 0.0, 1.0],
+      "center": [0.0, 0.0, 0.2],
+      "area": 0.0012,
+      "material_index": 0,
+      "selected": false
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_face_data",
+  "args": {
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Face reconstruction + material assignment replication
+
+---
+
+# 50. mesh_get_uv_data ✅ Done
+
+Returns UV coordinates per face loop for a given UV layer.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- uv_layer: str (optional; defaults to active)
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "uv_layer": "UVMap",
+  "face_count": 128,
+  "selected_count": 0,
+  "returned_count": 128,
+  "faces": [
+    {
+      "face_index": 0,
+      "verts": [1, 2, 3, 4],
+      "uvs": [[0.1, 0.2], [0.4, 0.2], [0.4, 0.6], [0.1, 0.6]]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_uv_data",
+  "args": {
+    "object_name": "Body",
+    "uv_layer": "UVMap"
+  }
+}
+```
+
+Use Case:
+- UV reconstruction from mesh topology
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

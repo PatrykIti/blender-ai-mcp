@@ -137,6 +137,9 @@ def register():
         rpc_server.register_handler("mesh.select_more", mesh_handler.select_more)
         rpc_server.register_handler("mesh.select_less", mesh_handler.select_less)
         rpc_server.register_handler("mesh.get_vertex_data", mesh_handler.get_vertex_data)
+        rpc_server.register_handler("mesh.get_edge_data", mesh_handler.get_edge_data)
+        rpc_server.register_handler("mesh.get_face_data", mesh_handler.get_face_data)
+        rpc_server.register_handler("mesh.get_uv_data", mesh_handler.get_uv_data)
         rpc_server.register_handler("mesh.select_by_location", mesh_handler.select_by_location)
         rpc_server.register_handler("mesh.select_boundary", mesh_handler.select_boundary)
         # TASK-016: Organic & Deform Tools

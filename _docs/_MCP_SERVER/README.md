@@ -140,6 +140,9 @@ Low-level geometry manipulation.
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
+| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity and flags. |
+| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity, normals, and material index. |
+| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UV coordinates per face loop. |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |

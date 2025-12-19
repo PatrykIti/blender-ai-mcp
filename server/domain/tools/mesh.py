@@ -106,6 +106,26 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
+    def get_edge_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+        """Returns edge connectivity and attributes."""
+        pass
+
+    @abstractmethod
+    def get_face_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+        """Returns face connectivity and attributes."""
+        pass
+
+    @abstractmethod
+    def get_uv_data(
+        self,
+        object_name: str,
+        uv_layer: Optional[str] = None,
+        selected_only: bool = False
+    ) -> Dict[str, Any]:
+        """Returns UV data per face loop."""
+        pass
+
+    @abstractmethod
     def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
         """Selects geometry within coordinate range on specified axis."""
         pass

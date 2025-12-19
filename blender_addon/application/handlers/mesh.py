@@ -630,6 +630,172 @@ class MeshHandler:
             "vertices": vertices
         }
 
+    def get_edge_data(self, object_name, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity and attributes.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
+
+        edges = []
+        selected_count = 0
+
+        for e in bm.edges:
+            if e.select:
+                selected_count += 1
+            if selected_only and not e.select:
+                continue
+
+            smooth = getattr(e, "smooth", True)
+            edges.append({
+                "index": e.index,
+                "verts": [e.verts[0].index, e.verts[1].index],
+                "is_boundary": e.is_boundary,
+                "is_manifold": e.is_manifold,
+                "is_seam": e.seam,
+                "is_sharp": not smooth,
+                "crease": round(float(getattr(e, "crease", 0.0)), 6),
+                "bevel_weight": round(float(getattr(e, "bevel_weight", 0.0)), 6),
+                "selected": e.select,
+            })
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return {
+            "object_name": object_name,
+            "edge_count": len(bm.edges),
+            "selected_count": selected_count,
+            "returned_count": len(edges),
+            "edges": edges,
+        }
+
+    def get_face_data(self, object_name, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity and attributes.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+
+        faces = []
+        selected_count = 0
+
+        for f in bm.faces:
+            if f.select:
+                selected_count += 1
+            if selected_only and not f.select:
+                continue
+
+            normal = f.normal
+            center = f.calc_center_median()
+
+            faces.append({
+                "index": f.index,
+                "verts": [v.index for v in f.verts],
+                "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
+                "center": [round(center.x, 6), round(center.y, 6), round(center.z, 6)],
+                "area": round(float(f.calc_area()), 6),
+                "material_index": f.material_index,
+                "selected": f.select,
+            })
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return {
+            "object_name": object_name,
+            "face_count": len(bm.faces),
+            "selected_count": selected_count,
+            "returned_count": len(faces),
+            "faces": faces,
+        }
+
+    def get_uv_data(self, object_name, uv_layer=None, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.faces.ensure_lookup_table()
+        bm.verts.ensure_lookup_table()
+
+        uv_layers = bm.loops.layers.uv
+        uv_layer_ref = uv_layers.get(uv_layer) if uv_layer else uv_layers.active
+        if uv_layer_ref is None:
+            if prev_mode != 'EDIT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            if uv_layer:
+                raise ValueError(f"UV layer '{uv_layer}' not found")
+            raise ValueError(f"Object '{object_name}' has no UV layers")
+
+        faces = []
+        selected_count = 0
+
+        for f in bm.faces:
+            if f.select:
+                selected_count += 1
+            if selected_only and not f.select:
+                continue
+
+            verts = []
+            uvs = []
+            for loop in f.loops:
+                verts.append(loop.vert.index)
+                uv = loop[uv_layer_ref].uv
+                uvs.append([round(uv.x, 6), round(uv.y, 6)])
+
+            faces.append({
+                "face_index": f.index,
+                "verts": verts,
+                "uvs": uvs,
+            })
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return {
+            "object_name": object_name,
+            "uv_layer": getattr(uv_layer_ref, "name", uv_layer),
+            "face_count": len(bm.faces),
+            "selected_count": selected_count,
+            "returned_count": len(faces),
+            "faces": faces,
+        }
+
     def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range.

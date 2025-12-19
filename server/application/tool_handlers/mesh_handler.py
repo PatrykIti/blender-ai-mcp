@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.mesh import IMeshTool
 
@@ -135,6 +135,34 @@ class MeshToolHandler(IMeshTool):
     def get_vertex_data(self, object_name: str, selected_only: bool = False) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         response = self.rpc.send_request("mesh.get_vertex_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_edge_data(self, object_name: str, selected_only: bool = False) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        response = self.rpc.send_request("mesh.get_edge_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_face_data(self, object_name: str, selected_only: bool = False) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        response = self.rpc.send_request("mesh.get_face_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_uv_data(
+        self,
+        object_name: str,
+        uv_layer: Optional[str] = None,
+        selected_only: bool = False
+    ) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        if uv_layer is not None:
+            args["uv_layer"] = uv_layer
+        response = self.rpc.send_request("mesh.get_uv_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result

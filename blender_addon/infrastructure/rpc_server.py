@@ -74,6 +74,9 @@ _NO_UNDO_PUSH_PREFIXES = (
     "material.inspect_nodes",
     "uv.list_maps",
     "mesh.get_vertex_data",
+    "mesh.get_edge_data",
+    "mesh.get_face_data",
+    "mesh.get_uv_data",
     "mesh.list_groups",
     # Pure output generation (no scene edits expected)
     "export.",

@@ -1,0 +1,34 @@
+{
+  "tool_name": "mesh_get_uv_data",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["uv", "texture", "unwrap", "mapping", "loop", "coordinates"],
+  "sample_prompts": [
+    "get UV data",
+    "show UV coordinates",
+    "export UV loops",
+    "inspect UV layer",
+    "analyze UV mapping"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "uv_layer": {
+      "type": "string",
+      "required": false,
+      "description": "UV layer name (defaults to active)"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected faces"
+    }
+  },
+  "related_tools": ["uv_list_maps", "mesh_get_face_data"],
+  "patterns": [],
+  "description": "Returns UV coordinates per face loop for a given UV layer."
+}

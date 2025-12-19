@@ -211,9 +211,9 @@ Edit Mode operations for geometry manipulation.
 | `mesh_select_ring` | Select edge ring | ✅ |
 | `mesh_select_by_location` | Select by 3D position | ✅ |
 | `mesh_get_vertex_data` | Get vertex positions | ✅ |
-| `mesh_get_edge_data` | Get edge connectivity + flags | 🚧 |
-| `mesh_get_face_data` | Get face connectivity + normals/materials | 🚧 |
-| `mesh_get_uv_data` | Get UV loop data | 🚧 |
+| `mesh_get_edge_data` | Get edge connectivity + flags | ✅ |
+| `mesh_get_face_data` | Get face connectivity + normals/materials | ✅ |
+| `mesh_get_uv_data` | Get UV loop data | ✅ |
 | `mesh_get_loop_normals` | Get per-loop normals (split/custom) | 🚧 |
 | `mesh_get_vertex_group_weights` | Get vertex group weights | 🚧 |
 | `mesh_get_attributes` | Get mesh attributes (vertex colors) | 🚧 |
@@ -756,6 +756,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_flatten",
         "mesh_list_groups",
         "mesh_get_vertex_data",
+        "mesh_get_edge_data",
+        "mesh_get_face_data",
+        "mesh_get_uv_data",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -935,6 +938,9 @@ We recommend using Docker to run the MCP Server.
         "mesh_flatten",
         "mesh_list_groups",
         "mesh_get_vertex_data",
+        "mesh_get_edge_data",
+        "mesh_get_face_data",
+        "mesh_get_uv_data",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",

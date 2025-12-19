@@ -652,6 +652,104 @@ def mesh_get_vertex_data(
         direct_executor=execute
     )
 
+@mcp.tool()
+def mesh_get_edge_data(
+    ctx: Context,
+    object_name: str,
+    selected_only: bool = False
+) -> str:
+    """
+    [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity + attributes.
+
+    Workflow: AFTER → mesh_get_vertex_data | USE FOR → topology reconstruction
+
+    Args:
+        object_name: Name of the object to inspect
+        selected_only: If True, only return selected edges (default: False)
+
+    Returns:
+        JSON string with edge data including connectivity and flags.
+    """
+    def execute():
+        try:
+            import json
+            result = get_mesh_handler().get_edge_data(object_name, selected_only)
+            return json.dumps(result, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_get_edge_data",
+        params={"object_name": object_name, "selected_only": selected_only},
+        direct_executor=execute
+    )
+
+@mcp.tool()
+def mesh_get_face_data(
+    ctx: Context,
+    object_name: str,
+    selected_only: bool = False
+) -> str:
+    """
+    [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity + attributes.
+
+    Workflow: AFTER → mesh_get_edge_data | USE FOR → face reconstruction
+
+    Args:
+        object_name: Name of the object to inspect
+        selected_only: If True, only return selected faces (default: False)
+
+    Returns:
+        JSON string with face data including indices, normals, and materials.
+    """
+    def execute():
+        try:
+            import json
+            result = get_mesh_handler().get_face_data(object_name, selected_only)
+            return json.dumps(result, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_get_face_data",
+        params={"object_name": object_name, "selected_only": selected_only},
+        direct_executor=execute
+    )
+
+@mcp.tool()
+def mesh_get_uv_data(
+    ctx: Context,
+    object_name: str,
+    uv_layer: Optional[str] = None,
+    selected_only: bool = False
+) -> str:
+    """
+    [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
+
+    Workflow: AFTER → mesh_get_face_data | USE FOR → UV reconstruction
+
+    Args:
+        object_name: Name of the object to inspect
+        uv_layer: Optional UV layer name (default: active)
+        selected_only: If True, only return selected faces (default: False)
+
+    Returns:
+        JSON string with UV data per face loop.
+    """
+    def execute():
+        try:
+            import json
+            result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only)
+            return json.dumps(result, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="mesh_get_uv_data",
+        params={"object_name": object_name, "uv_layer": uv_layer, "selected_only": selected_only},
+        direct_executor=execute
+    )
+
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_by_location(
     ctx: Context,

@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [116](./116-2025-12-19-mesh-topology-introspection.md) | 2025-12-19 | **Mesh topology introspection tools (edges/faces/UVs)** | - |
 | [115](./115-2025-12-16-mcp-ctx-info-async-bridge.md) | 2025-12-16 | **Fix unawaited Context.info() warnings in MCP tool adapters** | - |
 | [114](./114-2025-12-16-addon-auto-undo-push.md) | 2025-12-16 | **Addon auto-undo push for granular system_undo** | - |
 | [113](./113-2025-12-15-flexible-vector-param-parsing.md) | 2025-12-15 | **Flexible vector/color params accept string/list (TASK-064)** | - |

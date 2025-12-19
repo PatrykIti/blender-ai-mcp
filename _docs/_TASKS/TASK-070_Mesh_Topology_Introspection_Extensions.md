@@ -4,7 +4,7 @@
 **Category:** Mesh Introspection  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-014-13 (Scene Inspect Mesh Topology), TASK-044 (Extraction Analysis Tools)  
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ---
 
@@ -57,7 +57,7 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 
 ### TASK-070-1: mesh_get_edge_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 Read-only edge topology dump with essential flags and weights.
 
@@ -111,13 +111,13 @@ bm.verts.ensure_lookup_table()
 | Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | BMesh edge dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_edge_data.json` | Tool metadata |
-| Tests | `tests/unit/tools/mesh/test_get_edge_data.py` | Edge flags + counts |
+| Tests | `tests/unit/tools/mesh/test_mesh_topology_introspection.py` | Edge flags + counts |
 
 ---
 
 ### TASK-070-2: mesh_get_face_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 Read-only face topology dump (vertex indices + normals + material assignment).
 
@@ -159,13 +159,13 @@ def mesh_get_face_data(
 | Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | BMesh face dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_face_data.json` | Tool metadata |
-| Tests | `tests/unit/tools/mesh/test_get_face_data.py` | Face indices + materials |
+| Tests | `tests/unit/tools/mesh/test_mesh_topology_introspection.py` | Face indices + materials |
 
 ---
 
 ### TASK-070-3: mesh_get_uv_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 Read-only UV loop dump for precise UV reconstruction.
 
@@ -204,7 +204,7 @@ def mesh_get_uv_data(
 | Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | UV layer loop dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_uv_data.json` | Tool metadata |
-| Tests | `tests/unit/tools/mesh/test_get_uv_data.py` | UV layer selection + counts |
+| Tests | `tests/unit/tools/mesh/test_mesh_topology_introspection.py` | UV layer selection + counts |
 
 ---
 

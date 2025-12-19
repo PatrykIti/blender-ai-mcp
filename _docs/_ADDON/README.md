@@ -173,6 +173,10 @@ Technical details.
 | `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
 | `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
 | `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
+| `mesh.get_vertex_data` | `get_vertex_data` | Returns vertex positions and selection states. |
+| `mesh.get_edge_data` | `get_edge_data` | Returns edge connectivity and flags. |
+| `mesh.get_face_data` | `get_face_data` | Returns face connectivity, normals, and materials. |
+| `mesh.get_uv_data` | `get_uv_data` | Returns UV coordinates per face loop. |
 | `randomize` | `randomize` | Randomizes vertex positions for organic surfaces. |
 | `shrink_fatten` | `shrink_fatten` | Moves vertices along their normals (inflate/deflate). |
 | `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |
@@ -307,4 +311,3 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042).
 | `extraction.edge_loop_analysis` | `edge_loop_analysis` | Analyzes edge loops, boundary/manifold/non-manifold edges. |
 | `extraction.face_group_analysis` | `face_group_analysis` | Analyzes face groups by normal direction and height levels. |
 | `extraction.render_angles` | `render_angles` | Multi-angle renders for LLM Vision semantic analysis. |
-
