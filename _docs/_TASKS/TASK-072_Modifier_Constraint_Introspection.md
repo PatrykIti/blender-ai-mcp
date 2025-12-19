@@ -59,9 +59,13 @@ def modeling_get_modifier_data(
 ```
 
 **Notes:**
-- `include_node_tree=true` should include Geometry Nodes group metadata
-  (node tree name, inputs/outputs, and exposed parameters only).
-  Avoid dumping full node graphs by default.
+- `include_node_tree=true` should include Geometry Nodes *group metadata only*:
+  - `node_tree.name`
+  - `node_tree.is_linked` + `node_tree.library_path` (if linked)
+  - `inputs[]`: `name`, `identifier`, `socket_type`, `default_value`, `min`, `max`, `subtype`
+  - `outputs[]`: `name`, `identifier`, `socket_type`
+- Do NOT include internal nodes, links, or geometry data.
+- Keep payload stable and deterministic (sorted by input index).
 
 **Implementation Checklist:**
 | Layer | File | What to Add |
