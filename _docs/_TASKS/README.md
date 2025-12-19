@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~22 sub-tasks)
+- **To Do:** 5 tasks (~25 sub-tasks)
 - **In Progress:** 1 task
 - **Done:** 133
 
@@ -18,6 +18,11 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
 | [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
+
+### Mesh Introspection
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-070](./TASK-070_Mesh_Topology_Introspection_Extensions.md) | **Mesh Topology Introspection Extensions** | 🔴 High | Edge/face/UV dumps for 1:1 procedural reconstruction |
 
 ---
 

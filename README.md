@@ -208,6 +208,9 @@ Edit Mode operations for geometry manipulation.
 | `mesh_select_ring` | Select edge ring | ✅ |
 | `mesh_select_by_location` | Select by 3D position | ✅ |
 | `mesh_get_vertex_data` | Get vertex positions | ✅ |
+| `mesh_get_edge_data` | Get edge connectivity + flags | 🚧 |
+| `mesh_get_face_data` | Get face connectivity + normals/materials | 🚧 |
+| `mesh_get_uv_data` | Get UV loop data | 🚧 |
 
 #### Core Operations
 | Tool | Description | Status |
