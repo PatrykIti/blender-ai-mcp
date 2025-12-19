@@ -796,6 +796,337 @@ class MeshHandler:
             "faces": faces,
         }
 
+    def get_loop_normals(self, object_name, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns per-loop normals (split/custom).
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.faces.ensure_lookup_table()
+
+        selected_faces = set()
+        for f in bm.faces:
+            if f.select:
+                selected_faces.add(f.index)
+
+        bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
+        mesh = obj.data
+        mesh.calc_normals_split()
+
+        selected_loop_indices = set()
+        if selected_faces:
+            for poly in mesh.polygons:
+                if poly.index in selected_faces:
+                    start = poly.loop_start
+                    end = start + poly.loop_total
+                    for loop_index in range(start, end):
+                        selected_loop_indices.add(loop_index)
+
+        loops = []
+        for loop_index, loop in enumerate(mesh.loops):
+            if selected_only and loop_index not in selected_loop_indices:
+                continue
+            normal = loop.normal
+            loops.append({
+                "loop_index": loop_index,
+                "vert": loop.vertex_index,
+                "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
+            })
+
+        if hasattr(mesh, "free_normals_split"):
+            mesh.free_normals_split()
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return {
+            "object_name": object_name,
+            "loop_count": len(mesh.loops),
+            "selected_count": len(selected_loop_indices),
+            "returned_count": len(loops),
+            "loops": loops,
+            "auto_smooth": bool(mesh.use_auto_smooth),
+            "custom_normals": bool(mesh.has_custom_normals),
+        }
+
+    def get_vertex_group_weights(self, object_name, group_name=None, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns vertex group weights.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+
+        selected_vertices = {v.index for v in bm.verts if v.select}
+        selected_count = len(selected_vertices)
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        if group_name:
+            target_group = obj.vertex_groups.get(group_name)
+            if not target_group:
+                raise ValueError(f"Vertex group '{group_name}' not found")
+            groups = [target_group]
+        else:
+            groups = list(obj.vertex_groups)
+
+        weights_by_group = {vg.index: [] for vg in groups}
+
+        for v in obj.data.vertices:
+            if selected_only and v.index not in selected_vertices:
+                continue
+            for g in v.groups:
+                if g.group in weights_by_group:
+                    weights_by_group[g.group].append({
+                        "vert": v.index,
+                        "weight": round(float(g.weight), 6),
+                    })
+
+        if group_name:
+            weights = weights_by_group[target_group.index]
+            return {
+                "object_name": object_name,
+                "group_name": target_group.name,
+                "group_index": target_group.index,
+                "selected_count": selected_count,
+                "returned_count": len(weights),
+                "weights": weights,
+            }
+
+        groups_data = []
+        for vg in groups:
+            weights = weights_by_group[vg.index]
+            groups_data.append({
+                "name": vg.name,
+                "index": vg.index,
+                "weight_count": len(weights),
+                "weights": weights,
+            })
+
+        return {
+            "object_name": object_name,
+            "group_count": len(groups_data),
+            "selected_count": selected_count,
+            "groups": groups_data,
+        }
+
+    def get_attributes(self, object_name, attribute_name=None, selected_only=False):
+        """
+        [EDIT MODE][READ-ONLY][SAFE] Returns mesh attribute data.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+        bm.edges.ensure_lookup_table()
+        bm.faces.ensure_lookup_table()
+
+        selected_verts = {v.index for v in bm.verts if v.select}
+        selected_edges = {e.index for e in bm.edges if e.select}
+        selected_faces = {f.index for f in bm.faces if f.select}
+
+        if prev_mode != 'EDIT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        mesh = obj.data
+        attributes = mesh.attributes
+
+        if attribute_name is None:
+            attrs_data = []
+            for attr in attributes:
+                attrs_data.append({
+                    "name": attr.name,
+                    "data_type": attr.data_type,
+                    "domain": attr.domain,
+                })
+            return {
+                "object_name": object_name,
+                "attribute_count": len(attrs_data),
+                "attributes": attrs_data,
+            }
+
+        attr = attributes.get(attribute_name)
+        if attr is None:
+            raise ValueError(f"Attribute '{attribute_name}' not found")
+
+        def _coerce_value(value):
+            if isinstance(value, bool):
+                return bool(value)
+            if isinstance(value, int):
+                return int(value)
+            try:
+                return round(float(value), 6)
+            except (TypeError, ValueError):
+                return value
+
+        def _coerce_sequence(seq):
+            values = []
+            try:
+                values = list(seq)
+            except TypeError:
+                for attr_name in ("x", "y", "z", "w"):
+                    if hasattr(seq, attr_name):
+                        values.append(getattr(seq, attr_name))
+            return [_coerce_value(value) for value in values]
+
+        selected_indices = None
+        selected_count = 0
+        domain = attr.domain
+
+        if domain == 'POINT':
+            selected_indices = selected_verts
+            selected_count = len(selected_verts)
+        elif domain == 'EDGE':
+            selected_indices = selected_edges
+            selected_count = len(selected_edges)
+        elif domain == 'FACE':
+            selected_indices = selected_faces
+            selected_count = len(selected_faces)
+        elif domain == 'CORNER':
+            selected_loop_indices = set()
+            if selected_faces:
+                for poly in mesh.polygons:
+                    if poly.index in selected_faces:
+                        start = poly.loop_start
+                        end = start + poly.loop_total
+                        for loop_index in range(start, end):
+                            selected_loop_indices.add(loop_index)
+            selected_indices = selected_loop_indices
+            selected_count = len(selected_loop_indices)
+
+        values = []
+        data_type = attr.data_type
+        for index, data in enumerate(attr.data):
+            if selected_only and selected_indices is not None and index not in selected_indices:
+                continue
+
+            if data_type in ("FLOAT_COLOR", "BYTE_COLOR"):
+                value = _coerce_sequence(getattr(data, "color", []))
+            elif data_type in ("FLOAT_VECTOR", "FLOAT2"):
+                value = _coerce_sequence(getattr(data, "vector", []))
+            elif hasattr(data, "value"):
+                value = _coerce_value(data.value)
+            elif hasattr(data, "vector"):
+                value = _coerce_sequence(data.vector)
+            elif hasattr(data, "color"):
+                value = _coerce_sequence(data.color)
+            else:
+                value = None
+
+            values.append({
+                "index": index,
+                "value": value,
+            })
+
+        return {
+            "object_name": object_name,
+            "attribute": {
+                "name": attr.name,
+                "data_type": attr.data_type,
+                "domain": attr.domain,
+            },
+            "element_count": len(attr.data),
+            "selected_count": selected_count,
+            "returned_count": len(values),
+            "values": values,
+        }
+
+    def get_shape_keys(self, object_name, include_deltas=False):
+        """
+        [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if not obj:
+            raise ValueError(f"Object '{object_name}' not found")
+        if obj.type != 'MESH':
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
+        prev_mode = obj.mode
+        bpy.context.view_layer.objects.active = obj
+        if prev_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        shape_keys = obj.data.shape_keys
+        if not shape_keys or not shape_keys.key_blocks:
+            if prev_mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode=prev_mode)
+            return {
+                "object_name": object_name,
+                "shape_key_count": 0,
+                "shape_keys": [],
+            }
+
+        key_blocks = shape_keys.key_blocks
+        basis = key_blocks[0]
+        shape_keys_data = []
+        threshold = 1e-6
+
+        for block in key_blocks:
+            entry = {
+                "name": block.name,
+                "value": round(float(block.value), 6),
+            }
+
+            if include_deltas:
+                deltas = []
+                if block != basis:
+                    for index, key_point in enumerate(block.data):
+                        basis_point = basis.data[index]
+                        dx = key_point.co.x - basis_point.co.x
+                        dy = key_point.co.y - basis_point.co.y
+                        dz = key_point.co.z - basis_point.co.z
+                        if abs(dx) > threshold or abs(dy) > threshold or abs(dz) > threshold:
+                            deltas.append({
+                                "vert": index,
+                                "delta": [
+                                    round(dx, 6),
+                                    round(dy, 6),
+                                    round(dz, 6),
+                                ],
+                            })
+                entry["deltas"] = deltas
+
+            shape_keys_data.append(entry)
+
+        if prev_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode=prev_mode)
+
+        return {
+            "object_name": object_name,
+            "shape_key_count": len(key_blocks),
+            "shape_keys": shape_keys_data,
+        }
+
     def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range.

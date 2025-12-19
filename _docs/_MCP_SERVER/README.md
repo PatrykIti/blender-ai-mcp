@@ -143,6 +143,10 @@ Low-level geometry manipulation.
 | `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity and flags. |
 | `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity, normals, and material index. |
 | `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UV coordinates per face loop. |
+| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). |
+| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. |
+| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attributes (vertex colors/layers). |
+| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional deltas). |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |

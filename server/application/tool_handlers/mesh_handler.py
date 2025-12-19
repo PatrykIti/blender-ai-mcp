@@ -167,6 +167,48 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
+    def get_loop_normals(self, object_name: str, selected_only: bool = False) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        response = self.rpc.send_request("mesh.get_loop_normals", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_vertex_group_weights(
+        self,
+        object_name: str,
+        group_name: Optional[str] = None,
+        selected_only: bool = False
+    ) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        if group_name is not None:
+            args["group_name"] = group_name
+        response = self.rpc.send_request("mesh.get_vertex_group_weights", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_attributes(
+        self,
+        object_name: str,
+        attribute_name: Optional[str] = None,
+        selected_only: bool = False
+    ) -> dict:
+        args = {"object_name": object_name, "selected_only": selected_only}
+        if attribute_name is not None:
+            args["attribute_name"] = attribute_name
+        response = self.rpc.send_request("mesh.get_attributes", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
+    def get_shape_keys(self, object_name: str, include_deltas: bool = False) -> dict:
+        args = {"object_name": object_name, "include_deltas": include_deltas}
+        response = self.rpc.send_request("mesh.get_shape_keys", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
     def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
         args = {"axis": axis, "min_coord": min_coord, "max_coord": max_coord, "mode": mode}
         response = self.rpc.send_request("mesh.select_by_location", args)

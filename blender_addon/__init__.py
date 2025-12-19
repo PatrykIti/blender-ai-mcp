@@ -140,6 +140,10 @@ def register():
         rpc_server.register_handler("mesh.get_edge_data", mesh_handler.get_edge_data)
         rpc_server.register_handler("mesh.get_face_data", mesh_handler.get_face_data)
         rpc_server.register_handler("mesh.get_uv_data", mesh_handler.get_uv_data)
+        rpc_server.register_handler("mesh.get_loop_normals", mesh_handler.get_loop_normals)
+        rpc_server.register_handler("mesh.get_vertex_group_weights", mesh_handler.get_vertex_group_weights)
+        rpc_server.register_handler("mesh.get_attributes", mesh_handler.get_attributes)
+        rpc_server.register_handler("mesh.get_shape_keys", mesh_handler.get_shape_keys)
         rpc_server.register_handler("mesh.select_by_location", mesh_handler.select_by_location)
         rpc_server.register_handler("mesh.select_boundary", mesh_handler.select_boundary)
         # TASK-016: Organic & Deform Tools

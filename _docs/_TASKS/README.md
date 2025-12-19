@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 8 tasks (~32 sub-tasks)
+- **To Do:** 7 tasks (~32 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 134
+- **Done:** 135
 
 ---
 
@@ -22,7 +22,6 @@ Task board for the project. Update statuses in markdown files.
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | Normals, attributes, weights, shape keys |
 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
@@ -49,6 +48,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | 2025-12-19 |
 | [TASK-070](./TASK-070_Mesh_Topology_Introspection_Extensions.md) | **Mesh Topology Introspection Extensions** | 🔴 High | 2025-12-19 |
 | [TASK-069](./TASK-069_Repo_Community_Standards_and_Release_Docs.md) | **Repo Professionalization: SECURITY/SUPPORT/CoC + Support Matrix + Release/Dev Docs** | 🟡 Medium | 2025-12-18 |
 | [TASK-068](./TASK-068_License_BUSL_Compliance.md) | **License: BUSL 1.1 Compliance + Apache Change License File** | 🔴 High | 2025-12-17 |

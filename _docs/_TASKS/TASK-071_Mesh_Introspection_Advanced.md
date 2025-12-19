@@ -4,7 +4,7 @@
 **Category:** Mesh Introspection  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-070 (Mesh Topology Introspection Extensions)  
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ---
 
@@ -57,7 +57,7 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 
 ### TASK-071-1: mesh_get_loop_normals
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def mesh_get_loop_normals(
@@ -97,7 +97,7 @@ def mesh_get_loop_normals(
 
 ### TASK-071-2: mesh_get_vertex_group_weights
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def mesh_get_vertex_group_weights(
@@ -137,7 +137,7 @@ def mesh_get_vertex_group_weights(
 
 ### TASK-071-3: mesh_get_attributes
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def mesh_get_attributes(
@@ -175,7 +175,7 @@ def mesh_get_attributes(
 
 ### TASK-071-4: mesh_get_shape_keys
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def mesh_get_shape_keys(

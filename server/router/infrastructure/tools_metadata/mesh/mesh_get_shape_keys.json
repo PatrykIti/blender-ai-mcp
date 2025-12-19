@@ -1,0 +1,28 @@
+{
+  "tool_name": "mesh_get_shape_keys",
+  "category": "mesh",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["shape keys", "blendshapes", "morph", "deltas"],
+  "sample_prompts": [
+    "list shape keys",
+    "get blendshape deltas",
+    "inspect shape key weights",
+    "export shape keys"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "include_deltas": {
+      "type": "bool",
+      "default": false,
+      "description": "Include per-vertex deltas relative to Basis"
+    }
+  },
+  "related_tools": ["mesh_get_vertex_data"],
+  "patterns": [],
+  "description": "Returns shape key list with optional per-vertex deltas."
+}

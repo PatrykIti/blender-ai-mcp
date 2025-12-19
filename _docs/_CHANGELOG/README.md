@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [117](./117-2025-12-19-mesh-introspection-advanced.md) | 2025-12-19 | **Mesh introspection advanced (normals/weights/attributes/shape keys)** | - |
 | [116](./116-2025-12-19-mesh-topology-introspection.md) | 2025-12-19 | **Mesh topology introspection tools (edges/faces/UVs)** | - |
 | [115](./115-2025-12-16-mcp-ctx-info-async-bridge.md) | 2025-12-16 | **Fix unawaited Context.info() warnings in MCP tool adapters** | - |
 | [114](./114-2025-12-16-addon-auto-undo-push.md) | 2025-12-16 | **Addon auto-undo push for granular system_undo** | - |

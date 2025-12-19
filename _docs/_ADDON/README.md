@@ -177,6 +177,10 @@ Technical details.
 | `mesh.get_edge_data` | `get_edge_data` | Returns edge connectivity and flags. |
 | `mesh.get_face_data` | `get_face_data` | Returns face connectivity, normals, and materials. |
 | `mesh.get_uv_data` | `get_uv_data` | Returns UV coordinates per face loop. |
+| `mesh.get_loop_normals` | `get_loop_normals` | Returns per-loop normals (split/custom). |
+| `mesh.get_vertex_group_weights` | `get_vertex_group_weights` | Returns vertex group weights. |
+| `mesh.get_attributes` | `get_attributes` | Returns mesh attributes (vertex colors/layers). |
+| `mesh.get_shape_keys` | `get_shape_keys` | Returns shape key data (optional deltas). |
 | `randomize` | `randomize` | Randomizes vertex positions for organic surfaces. |
 | `shrink_fatten` | `shrink_fatten` | Moves vertices along their normals (inflate/deflate). |
 | `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |

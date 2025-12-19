@@ -77,6 +77,10 @@ _NO_UNDO_PUSH_PREFIXES = (
     "mesh.get_edge_data",
     "mesh.get_face_data",
     "mesh.get_uv_data",
+    "mesh.get_loop_normals",
+    "mesh.get_vertex_group_weights",
+    "mesh.get_attributes",
+    "mesh.get_shape_keys",
     "mesh.list_groups",
     # Pure output generation (no scene edits expected)
     "export.",

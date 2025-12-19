@@ -1,0 +1,28 @@
+{
+  "tool_name": "mesh_get_loop_normals",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["loop", "normals", "split", "custom", "shading", "smooth"],
+  "sample_prompts": [
+    "get loop normals",
+    "export split normals",
+    "inspect custom normals",
+    "read shading normals"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return loops belonging to selected faces"
+    }
+  },
+  "related_tools": ["mesh_get_face_data", "mesh_get_vertex_data"],
+  "patterns": [],
+  "description": "Returns per-loop normals with auto smooth/custom normal flags."
+}

@@ -1412,6 +1412,198 @@ Use Case:
 
 ---
 
+# 51. mesh_get_loop_normals ✅ Done
+
+Returns per-loop normals (split/custom) for accurate shading reconstruction.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "loop_count": 2048,
+  "selected_count": 128,
+  "returned_count": 128,
+  "loops": [
+    {"loop_index": 0, "vert": 12, "normal": [0.0, 0.0, 1.0]}
+  ],
+  "auto_smooth": true,
+  "custom_normals": true
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_loop_normals",
+  "args": {
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Shading reconstruction (split/custom normals)
+
+---
+
+# 52. mesh_get_vertex_group_weights ✅ Done
+
+Returns vertex group weights for a single group or all groups.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- group_name: str (optional; defaults to all groups)
+- selected_only: bool (default False)
+
+Returns (single group):
+```json
+{
+  "group_name": "Spine",
+  "group_index": 0,
+  "selected_count": 12,
+  "returned_count": 12,
+  "weights": [
+    {"vert": 0, "weight": 1.0},
+    {"vert": 5, "weight": 0.42}
+  ]
+}
+```
+
+Returns (all groups):
+```json
+{
+  "group_count": 2,
+  "selected_count": 12,
+  "groups": [
+    {
+      "name": "Spine",
+      "index": 0,
+      "weight_count": 12,
+      "weights": [{"vert": 0, "weight": 1.0}]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_vertex_group_weights",
+  "args": {
+    "object_name": "Body",
+    "group_name": "Spine",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Rig/skin weight reconstruction
+
+---
+
+# 53. mesh_get_attributes ✅ Done
+
+Returns mesh attribute list or attribute data for a given name.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- attribute_name: str (optional; defaults to list only)
+- selected_only: bool (default False)
+
+Returns (list):
+```json
+{
+  "attribute_count": 1,
+  "attributes": [
+    {"name": "Col", "data_type": "FLOAT_COLOR", "domain": "POINT"}
+  ]
+}
+```
+
+Returns (data):
+```json
+{
+  "attribute": {"name": "Col", "data_type": "FLOAT_COLOR", "domain": "POINT"},
+  "element_count": 1024,
+  "selected_count": 12,
+  "returned_count": 12,
+  "values": [
+    {"index": 0, "value": [1.0, 0.5, 0.2, 1.0]}
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_attributes",
+  "args": {
+    "object_name": "Body",
+    "attribute_name": "Col",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Vertex color + attribute reconstruction
+
+---
+
+# 54. mesh_get_shape_keys ✅ Done
+
+Returns shape key data with optional sparse deltas relative to Basis.
+
+**Tag:** `[OBJECT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str
+- include_deltas: bool (default False)
+
+Returns:
+```json
+{
+  "shape_key_count": 2,
+  "shape_keys": [
+    {"name": "Basis", "value": 0.0, "deltas": []},
+    {
+      "name": "Smile",
+      "value": 0.2,
+      "deltas": [
+        {"vert": 0, "delta": [0.001, 0.0, -0.002]}
+      ]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_get_shape_keys",
+  "args": {
+    "object_name": "Body",
+    "include_deltas": true
+  }
+}
+```
+
+Use Case:
+- Blend shape reconstruction without external exports
+
+---
+
 # Rules
 1. **Prefix `mesh_`**: All tools must start with this prefix.
 2. **Edit Mode**: Most tools operate in Edit Mode. Introspection tools (like `list_groups`) may work in Object Mode.

@@ -214,10 +214,10 @@ Edit Mode operations for geometry manipulation.
 | `mesh_get_edge_data` | Get edge connectivity + flags | ✅ |
 | `mesh_get_face_data` | Get face connectivity + normals/materials | ✅ |
 | `mesh_get_uv_data` | Get UV loop data | ✅ |
-| `mesh_get_loop_normals` | Get per-loop normals (split/custom) | 🚧 |
-| `mesh_get_vertex_group_weights` | Get vertex group weights | 🚧 |
-| `mesh_get_attributes` | Get mesh attributes (vertex colors) | 🚧 |
-| `mesh_get_shape_keys` | Get shape key data | 🚧 |
+| `mesh_get_loop_normals` | Get per-loop normals (split/custom) | ✅ |
+| `mesh_get_vertex_group_weights` | Get vertex group weights | ✅ |
+| `mesh_get_attributes` | Get mesh attributes (vertex colors) | ✅ |
+| `mesh_get_shape_keys` | Get shape key data | ✅ |
 
 #### Core Operations
 | Tool | Description | Status |
@@ -759,6 +759,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_get_edge_data",
         "mesh_get_face_data",
         "mesh_get_uv_data",
+        "mesh_get_loop_normals",
+        "mesh_get_vertex_group_weights",
+        "mesh_get_attributes",
+        "mesh_get_shape_keys",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -941,6 +945,10 @@ We recommend using Docker to run the MCP Server.
         "mesh_get_edge_data",
         "mesh_get_face_data",
         "mesh_get_uv_data",
+        "mesh_get_loop_normals",
+        "mesh_get_vertex_group_weights",
+        "mesh_get_attributes",
+        "mesh_get_shape_keys",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",

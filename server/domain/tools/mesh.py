@@ -126,6 +126,36 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
+    def get_loop_normals(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+        """Returns per-loop normals (split/custom)."""
+        pass
+
+    @abstractmethod
+    def get_vertex_group_weights(
+        self,
+        object_name: str,
+        group_name: Optional[str] = None,
+        selected_only: bool = False
+    ) -> Dict[str, Any]:
+        """Returns vertex group weights."""
+        pass
+
+    @abstractmethod
+    def get_attributes(
+        self,
+        object_name: str,
+        attribute_name: Optional[str] = None,
+        selected_only: bool = False
+    ) -> Dict[str, Any]:
+        """Returns mesh attribute data."""
+        pass
+
+    @abstractmethod
+    def get_shape_keys(self, object_name: str, include_deltas: bool = False) -> Dict[str, Any]:
+        """Returns shape key data (optionally with deltas)."""
+        pass
+
+    @abstractmethod
     def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
         """Selects geometry within coordinate range on specified axis."""
         pass

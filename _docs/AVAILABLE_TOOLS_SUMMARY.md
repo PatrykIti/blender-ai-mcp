@@ -208,6 +208,10 @@ Note: * planned actions not yet implemented.
 | `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity + flags. | ✅ Done |
 | `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity + normals/material index. | ✅ Done |
 | `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UVs per face loop. | ✅ Done |
+| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | ✅ Done |
+| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | ✅ Done |
+| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | ✅ Done |
+| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | ✅ Done |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. | ✅ Done |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). | ✅ Done |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
@@ -248,10 +252,6 @@ Note: * planned actions not yet implemented.
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `mesh_inspect` | `action` (summary/vertices/edges/faces/uvs/normals/attributes/shape_keys/group_weights), params | **MEGA TOOL** - Mesh introspection with summary and raw data. | 🚧 Planned |
-| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | 🚧 Planned |
-| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | 🚧 Planned |
-| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | 🚧 Planned |
-| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | 🚧 Planned |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
@@ -458,7 +458,6 @@ Note: * planned actions not yet implemented.
 
 ## 🛠 Planned / In Progress
 
-- Mesh introspection tools: `mesh_get_loop_normals`, `mesh_get_vertex_group_weights`, `mesh_get_attributes`, `mesh_get_shape_keys`.
 - Scene/modeling introspection: `scene_get_constraints`, `modeling_get_modifier_data`, plus `scene_inspect` actions `constraints` and `modifier_data`.
 - Rig/curve/lattice introspection: `curve_get_data`, `lattice_get_points`, `armature_get_data`.
 - Mega tools: `mesh_inspect` with `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`.

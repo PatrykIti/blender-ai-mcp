@@ -1,0 +1,33 @@
+{
+  "tool_name": "mesh_get_vertex_group_weights",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["vertex", "groups", "weights", "rig", "skinning"],
+  "sample_prompts": [
+    "get vertex group weights",
+    "export group weights",
+    "inspect skin weights",
+    "read vertex weights"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "group_name": {
+      "type": "string",
+      "required": false,
+      "description": "Vertex group name (defaults to all groups)"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected vertices"
+    }
+  },
+  "related_tools": ["mesh_list_groups"],
+  "patterns": [],
+  "description": "Returns vertex group weights for the specified group or all groups."
+}
