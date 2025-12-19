@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v2.1.0 (2025-12-19)
+
+### Chores
+
+- Tighten licensing + add repo standards docs (security/support/coc)
+  ([#25](https://github.com/PatrykIti/blender-ai-mcp/pull/25),
+  [`baed7d9`](https://github.com/PatrykIti/blender-ai-mcp/commit/baed7d9c401a451aed13a59c2ad14474edd2dfa1))
+
+### Features
+
+- Add multi-arch Docker builds (amd64/arm64)
+  ([#26](https://github.com/PatrykIti/blender-ai-mcp/pull/26),
+  [`74b59ee`](https://github.com/PatrykIti/blender-ai-mcp/commit/74b59eed6b210df897dae6cfccd7ac93434968bd))
+
+
 ## v2.0.0 (2025-12-18)
 
 ### Features
