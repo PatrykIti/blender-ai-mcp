@@ -67,6 +67,44 @@ def modeling_get_modifier_data(
 - Do NOT include internal nodes, links, or geometry data.
 - Keep payload stable and deterministic (sorted by input index).
 
+**Geometry Nodes JSON (example):**
+```json
+{
+  "object_name": "Body",
+  "modifiers": [
+    {
+      "name": "GeometryNodes",
+      "type": "NODES",
+      "properties": {"some_flag": true},
+      "object_refs": [],
+      "node_tree": {
+        "name": "GN_Shell",
+        "is_linked": false,
+        "library_path": null,
+        "inputs": [
+          {
+            "name": "Bevel",
+            "identifier": "Input_2",
+            "socket_type": "NodeSocketFloat",
+            "default_value": 0.002,
+            "min": 0.0,
+            "max": 0.1,
+            "subtype": "DISTANCE"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Geometry",
+            "identifier": "Output_1",
+            "socket_type": "NodeSocketGeometry"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
 **Implementation Checklist:**
 | Layer | File | What to Add |
 |-------|------|-------------|
