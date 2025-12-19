@@ -14,8 +14,10 @@ Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | -3 |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
+| `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | TBD |
 
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+Planned mega tools are listed above but not counted in the total.
 
 ---
 

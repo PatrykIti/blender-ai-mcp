@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~25 sub-tasks)
+- **To Do:** 9 tasks (~35 sub-tasks)
 - **In Progress:** 1 task
 - **Done:** 133
 
@@ -23,6 +23,18 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-070](./TASK-070_Mesh_Topology_Introspection_Extensions.md) | **Mesh Topology Introspection Extensions** | 🔴 High | Edge/face/UV dumps for 1:1 procedural reconstruction |
+| [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | Normals, attributes, weights, shape keys |
+
+### Scene & Rig Introspection
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-072](./TASK-072_Modifier_Constraint_Introspection.md) | **Modifier & Constraint Introspection** | 🔴 High | Full modifier props + constraints |
+| [TASK-073](./TASK-073_Rig_Curve_Lattice_Introspection.md) | **Rig/Curve/Lattice Introspection** | 🔴 High | Curve splines, lattice points, armature data |
+
+### Mega Tools
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-074](./TASK-074_Mesh_Inspect_Mega_Tool.md) | **Mesh Inspect Mega Tool** | 🟡 Medium | Wrap mesh introspection actions |
 
 ---
 

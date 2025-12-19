@@ -150,6 +150,7 @@ Object Mode operations for scene management and inspection.
 | `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
 | `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
 | `scene_get_origin_info` | Get origin/pivot point info | ✅ |
+| `scene_get_constraints` | List object (and bone) constraints | 🚧 |
 
 ---
 
@@ -164,6 +165,7 @@ Object Mode operations for creating and transforming objects.
 | `modeling_add_modifier` | Add modifier to object | ✅ |
 | `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
 | `modeling_list_modifiers` | List modifiers on object | ✅ |
+| `modeling_get_modifier_data` | Get full modifier properties | 🚧 |
 | `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
 | `modeling_join_objects` | Join multiple objects | ✅ |
 | `modeling_separate_object` | Separate by loose parts/material | ✅ |
@@ -175,6 +177,7 @@ Object Mode operations for creating and transforming objects.
 | `lattice_create` | Create lattice fitted to object | ✅ |
 | `lattice_bind` | Bind object to lattice deformer | ✅ |
 | `lattice_edit_point` | Move lattice control points | ✅ |
+| `lattice_get_points` | Get lattice point positions | 🚧 |
 
 #### Text Objects
 | Tool | Description | Status |
@@ -211,6 +214,10 @@ Edit Mode operations for geometry manipulation.
 | `mesh_get_edge_data` | Get edge connectivity + flags | 🚧 |
 | `mesh_get_face_data` | Get face connectivity + normals/materials | 🚧 |
 | `mesh_get_uv_data` | Get UV loop data | 🚧 |
+| `mesh_get_loop_normals` | Get per-loop normals (split/custom) | 🚧 |
+| `mesh_get_vertex_group_weights` | Get vertex group weights | 🚧 |
+| `mesh_get_attributes` | Get mesh attributes (vertex colors) | 🚧 |
+| `mesh_get_shape_keys` | Get shape key data | 🚧 |
 
 #### Core Operations
 | Tool | Description | Status |
@@ -308,6 +315,7 @@ Curve creation and conversion.
 |------|-------------|--------|
 | `curve_create` | Create Bezier/NURBS/Path/Circle curve | ✅ |
 | `curve_to_mesh` | Convert curve to mesh | ✅ |
+| `curve_get_data` | Get curve splines and settings | 🚧 |
 
 ---
 
@@ -490,6 +498,7 @@ Skeletal rigging and animation.
 | `armature_bind` | Bind mesh to armature (auto weights) | ✅ |
 | `armature_pose_bone` | Pose armature bone | ✅ |
 | `armature_weight_paint_assign` | Assign weights to vertex group | ✅ |
+| `armature_get_data` | Get armature bones and hierarchy | 🚧 |
 
 ---
 
@@ -645,8 +654,9 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
+| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights | TBD | 🚧 |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned tools not counted.
 
 ---
 
