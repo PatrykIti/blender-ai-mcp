@@ -1,7 +1,13 @@
 # Mega Tools Architecture
 
 Mega tools are unified tools that consolidate multiple related operations to **reduce LLM context usage**.
-They are wrappers only: standalone tools remain the source of truth for workflows and router execution.
+They are wrappers only: standalone action handlers still exist and are the source of truth for execution.
+
+**Implementation pattern (see `scene_context`):**
+- Mega tool is exposed as a single `@mcp.tool`.
+- Action-level functions are **internal** (no `@mcp.tool`) and call Blender addon RPC handlers.
+- If a standalone MCP tool is required for workflow compatibility, it should be a thin wrapper
+  that calls the same internal action function (no duplicated logic).
 
 ---
 
@@ -18,6 +24,9 @@ They are wrappers only: standalone tools remain the source of truth for workflow
 
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 Planned mega tools/actions are listed above but not counted in the total.
+Projected savings:
+- `mesh_inspect` would wrap 8 introspection tools (net -7 definitions) once implemented.
+- `scene_inspect` extensions (`constraints`, `modifier_data`) would wrap 2 tools (net -2).
 
 **`mesh_inspect.summary` sources (recommended):**
 - `scene_inspect(action="topology")` → counts

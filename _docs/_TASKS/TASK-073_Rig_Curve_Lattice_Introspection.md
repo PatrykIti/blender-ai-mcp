@@ -14,6 +14,13 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ---
 
+## 📝 Documentation Updates
+
+- `README.md` (tools tables)
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+
+---
+
 ## ✅ Naming Conventions (Introspection Tools)
 
 - `get_*` = raw data payload (exact spline/point/bone data)
@@ -33,6 +40,13 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ---
 
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-073-1: curve_get_data
@@ -40,7 +54,6 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def curve_get_data(
     ctx: Context,
     object_name: str
@@ -67,7 +80,7 @@ def curve_get_data(
 |-------|------|-------------|
 | Domain | `server/domain/tools/curve.py` | `def get_data(...)` |
 | Application | `server/application/tool_handlers/curve_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/curve.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/curve.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/curve.py` | Curve spline dump |
 | Metadata | `server/router/infrastructure/tools_metadata/curve/curve_get_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/curve/test_get_data.py` | Spline + handle data |
@@ -79,7 +92,6 @@ def curve_get_data(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def lattice_get_points(
     ctx: Context,
     object_name: str
@@ -105,7 +117,7 @@ def lattice_get_points(
 |-------|------|-------------|
 | Domain | `server/domain/tools/lattice.py` | `def get_points(...)` |
 | Application | `server/application/tool_handlers/lattice_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/lattice.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/lattice.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/lattice.py` | Lattice point dump |
 | Metadata | `server/router/infrastructure/tools_metadata/lattice/lattice_get_points.json` | Tool metadata |
 | Tests | `tests/unit/tools/lattice/test_get_points.py` | Resolution + points |
@@ -117,7 +129,6 @@ def lattice_get_points(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def armature_get_data(
     ctx: Context,
     object_name: str,
@@ -144,7 +155,7 @@ def armature_get_data(
 |-------|------|-------------|
 | Domain | `server/domain/tools/armature.py` | `def get_data(...)` |
 | Application | `server/application/tool_handlers/armature_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/armature.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/armature.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/armature.py` | Bone hierarchy dump |
 | Metadata | `server/router/infrastructure/tools_metadata/armature/armature_get_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/armature/test_get_data.py` | Bone list + parents |

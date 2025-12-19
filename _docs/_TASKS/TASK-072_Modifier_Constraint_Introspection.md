@@ -14,6 +14,14 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 
 ---
 
+## 📝 Documentation Updates
+
+- `README.md` (tools tables + mega tools)
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md`
+
+---
+
 ## ✅ Naming Conventions (Introspection Tools)
 
 - `get_*` = raw data payload (full modifier/constraint data)
@@ -24,6 +32,13 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 
 ---
 
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-072-1: modeling_get_modifier_data
@@ -31,7 +46,6 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def modeling_get_modifier_data(
     ctx: Context,
     object_name: str,
@@ -110,7 +124,7 @@ def modeling_get_modifier_data(
 |-------|------|-------------|
 | Domain | `server/domain/tools/modeling.py` | `def get_modifier_data(...)` |
 | Application | `server/application/tool_handlers/modeling_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/modeling.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/modeling.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/modeling.py` | Modifier property dump |
 | Metadata | `server/router/infrastructure/tools_metadata/modeling/modeling_get_modifier_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/modeling/test_get_modifier_data.py` | Modifier props + refs |
@@ -122,7 +136,6 @@ def modeling_get_modifier_data(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def scene_get_constraints(
     ctx: Context,
     object_name: str,
@@ -149,7 +162,7 @@ def scene_get_constraints(
 |-------|------|-------------|
 | Domain | `server/domain/tools/scene.py` | `def get_constraints(...)` |
 | Application | `server/application/tool_handlers/scene_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/scene.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/scene.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/scene.py` | Constraint dump |
 | Metadata | `server/router/infrastructure/tools_metadata/scene/scene_get_constraints.json` | Tool metadata |
 | Tests | `tests/unit/tools/scene/test_get_constraints.py` | Object + bone constraints |
@@ -166,7 +179,8 @@ Add new actions to the existing mega tool (do not remove standalone tools):
 - `modifier_data` → delegates to `modeling_get_modifier_data`
 
 **Notes:**
-- Standalone tools remain required for workflow execution and router compatibility.
+- Standalone tools remain required for workflow execution and router compatibility
+  (internal functions; optional MCP wrappers if needed).
 - Mega tool is a read-only wrapper for context reduction only.
 
 **Files to Update:**

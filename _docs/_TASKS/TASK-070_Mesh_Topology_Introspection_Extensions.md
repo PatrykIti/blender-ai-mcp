@@ -20,6 +20,13 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 
 ---
 
+## 📝 Documentation Updates
+
+- `README.md` (tools tables)
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+
+---
+
 ## ✅ Naming Conventions (Introspection Tools)
 
 - `get_*` = raw data payload (exact topology/attributes)
@@ -27,6 +34,13 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 - `inspect_*` = aggregated stats (human-readable)
 - `analyze_*` = heuristics/interpretation (not raw data)
 - Parameters: `object_name`, `selected_only`, `uv_layer`, `group_name`, `attribute_name`
+
+---
+
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
 
 ---
 
@@ -39,7 +53,6 @@ Expose full mesh connectivity (edges, faces, UV loops) so workflows can reconstr
 Read-only edge topology dump with essential flags and weights.
 
 ```python
-@mcp.tool()
 def mesh_get_edge_data(
     ctx: Context,
     object_name: str,
@@ -86,7 +99,7 @@ bm.verts.ensure_lookup_table()
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_edge_data(...)` contract |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | BMesh edge dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_edge_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_edge_data.py` | Edge flags + counts |
@@ -100,7 +113,6 @@ bm.verts.ensure_lookup_table()
 Read-only face topology dump (vertex indices + normals + material assignment).
 
 ```python
-@mcp.tool()
 def mesh_get_face_data(
     ctx: Context,
     object_name: str,
@@ -135,7 +147,7 @@ def mesh_get_face_data(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_face_data(...)` contract |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | BMesh face dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_face_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_face_data.py` | Face indices + materials |
@@ -149,7 +161,6 @@ def mesh_get_face_data(
 Read-only UV loop dump for precise UV reconstruction.
 
 ```python
-@mcp.tool()
 def mesh_get_uv_data(
     ctx: Context,
     object_name: str,
@@ -181,7 +192,7 @@ def mesh_get_uv_data(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_uv_data(...)` contract |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | UV layer loop dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_uv_data.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_uv_data.py` | UV layer selection + counts |

@@ -14,6 +14,14 @@ Provide a single `mesh_inspect` mega tool that wraps mesh introspection actions 
 
 ---
 
+## 📝 Documentation Updates
+
+- `README.md` (mega tools table + summary sources)
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md`
+
+---
+
 ## 🔧 Design
 
 ```python
@@ -36,10 +44,12 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 - `summary` → lightweight overview (counts + flags only)
 
 **Rules:**
-- Standalone tools remain required for workflow execution and router compatibility.
+- Standalone tools remain required for workflow execution and router compatibility
+  (internal functions; optional MCP wrappers if needed).
 - Mega tool is read-only and delegates to the underlying tool outputs.
 - Action names are short aliases of `mesh_get_*` for LLM context efficiency.
 - `summary` must avoid large payloads (no per-vertex/face arrays).
+- Implement action handlers as internal functions (no `@mcp.tool`) and share them with any standalone wrappers.
 
 **Summary JSON (example):**
 ```json
@@ -69,4 +79,4 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 ## ✅ Success Criteria
 - A single tool can fetch any mesh introspection payload
 - Reduces prompt/tool overhead in workflow extraction
- - `summary` returns a fast overview (counts + presence flags)
+- `summary` returns a fast overview (counts + presence flags)

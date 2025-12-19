@@ -639,7 +639,8 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ## 🧠 LLM Context Optimization
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
-> Mega tools are wrappers only; standalone tools remain for workflow execution and router compatibility.
+> Mega tools are wrappers only; action-level handlers live as internal functions backed by Blender addon RPC.
+> Standalone MCP tools are exposed only where explicitly listed.
 
 ### Scene Mega Tools
 
@@ -660,6 +661,8 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 | `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | TBD | 🚧 |
 
 **Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned actions not counted.
+
+`mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
 
 ---
 

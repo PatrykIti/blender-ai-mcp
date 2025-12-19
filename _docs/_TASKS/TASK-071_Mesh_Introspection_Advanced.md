@@ -20,6 +20,13 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 
 ---
 
+## 📝 Documentation Updates
+
+- `README.md` (tools tables)
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+
+---
+
 ## ✅ Naming Conventions (Introspection Tools)
 
 - `get_*` = raw data payload (exact normals/weights/attributes)
@@ -30,6 +37,13 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 
 ---
 
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
+
+---
+
 ## 🔧 Sub-Tasks
 
 ### TASK-071-1: mesh_get_loop_normals
@@ -37,7 +51,6 @@ Add deeper mesh inspection tools beyond topology so workflows can preserve shadi
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def mesh_get_loop_normals(
     ctx: Context,
     object_name: str,
@@ -66,7 +79,7 @@ def mesh_get_loop_normals(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_loop_normals(...)` contract |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | Loop normal dump (mesh loops) |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_loop_normals.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_loop_normals.py` | Custom/split normals |
@@ -78,7 +91,6 @@ def mesh_get_loop_normals(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def mesh_get_vertex_group_weights(
     ctx: Context,
     object_name: str,
@@ -107,7 +119,7 @@ def mesh_get_vertex_group_weights(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_vertex_group_weights(...)` |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | Vertex group weight dump |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_vertex_group_weights.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_vertex_group_weights.py` | Group lookup + counts |
@@ -119,7 +131,6 @@ def mesh_get_vertex_group_weights(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def mesh_get_attributes(
     ctx: Context,
     object_name: str,
@@ -146,7 +157,7 @@ def mesh_get_attributes(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_attributes(...)` |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | Attribute dump (mesh.attributes) |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_attributes.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_attributes.py` | Attribute list + data |
@@ -158,7 +169,6 @@ def mesh_get_attributes(
 **Status:** ⏳ TODO
 
 ```python
-@mcp.tool()
 def mesh_get_shape_keys(
     ctx: Context,
     object_name: str,
@@ -197,7 +207,7 @@ def mesh_get_shape_keys(
 |-------|------|-------------|
 | Domain | `server/domain/tools/mesh.py` | `def get_shape_keys(...)` |
 | Application | `server/application/tool_handlers/mesh_handler.py` | RPC wrapper + validation |
-| Adapter | `server/adapters/mcp/areas/mesh.py` | `@mcp.tool()` exposure |
+| Adapter | `server/adapters/mcp/areas/mesh.py` | Internal action + optional `@mcp.tool` wrapper |
 | Addon | `blender_addon/application/handlers/mesh.py` | Shape key list + values |
 | Metadata | `server/router/infrastructure/tools_metadata/mesh/mesh_get_shape_keys.json` | Tool metadata |
 | Tests | `tests/unit/tools/mesh/test_get_shape_keys.py` | Shape key listing |

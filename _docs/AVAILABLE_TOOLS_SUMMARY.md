@@ -1,6 +1,7 @@
 # Available Tools Summary
 
 This document lists all currently implemented tools available for the AI, grouped by domain.
+Planned tools are marked as 🚧.
 For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `SCENE_TOOLS_ARCHITECTURE.md`.
 
 ---
@@ -9,16 +10,24 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 > **Unified tools that consolidate multiple related operations to reduce LLM context usage.**
 > Original tools are kept as internal functions and routed via mega tools.
+> Only mega tools are registered as MCP tools (`@mcp.tool`); standalone action handlers live in the
+> Blender addon unless a compatibility wrapper is required.
 
 | Mega Tool | Actions | Replaces | Status |
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | ✅ Done |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints*`, `modifier_data*` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints*`, `modeling_get_modifier_data*` | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
+| `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | 🚧 Planned |
 
-**Total Savings:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+Note: * planned actions not yet implemented.
+
+**Total Savings (current):** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+Projected savings:
+- `mesh_inspect` would wrap 8 introspection tools (net -7 definitions).
+- `scene_inspect` extensions (`constraints`, `modifier_data`) would wrap 2 tools (net -2).
 
 ---
 
@@ -29,7 +38,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `scene_context` | `action` (mode/selection) | **MEGA TOOL** - Quick context queries (mode, selection state). | ✅ Done |
 | `scene_create` | `action` (light/camera/empty), params | **MEGA TOOL** - Creates scene helper objects (lights, cameras, empties). | ✅ Done |
-| `scene_inspect` | `action` (object/topology/modifiers/materials), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
+| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints*/modifier_data*), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |
@@ -44,6 +53,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
+| `scene_get_constraints` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. | 🚧 Planned |
+
+Note: * planned actions not yet implemented.
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
@@ -106,6 +118,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
+| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | 🚧 Planned |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
 | `modeling_join_objects` | `object_names` (list) | Joins multiple objects into one mesh. | ✅ Done |
 | `modeling_separate_object` | `name`, `type` (LOOSE/SELECTED/MATERIAL) | Separates a mesh into multiple objects. | ✅ Done |
@@ -126,6 +139,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object. If target_object provided, auto-fits to bounding box. | ✅ Done |
 | `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice using Lattice modifier. Non-destructive deformation. | ✅ Done |
 | `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. | ✅ Done |
+| `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. | 🚧 Planned |
 
 **Use Cases:**
 - Tapering towers (Eiffel Tower workflow)
@@ -142,6 +156,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `mesh_select` | `action` (all/none/linked/more/less/boundary) | **MEGA TOOL** - Simple selection operations. | ✅ Done |
 | `mesh_select_targeted` | `action` (by_index/loop/ring/by_location), params | **MEGA TOOL** - Targeted selection operations with parameters. | ✅ Done |
+| `mesh_inspect` | `action` (summary/vertices/edges/faces/uvs/normals/attributes/shape_keys/group_weights), params | **MEGA TOOL** - Mesh introspection with summary and raw data. | 🚧 Planned |
 | `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
 | `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
 | `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |
@@ -155,6 +170,13 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
 | `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
+| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity + flags. | 🚧 Planned |
+| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity + normals/material index. | 🚧 Planned |
+| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UVs per face loop. | 🚧 Planned |
+| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | 🚧 Planned |
+| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | 🚧 Planned |
+| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | 🚧 Planned |
+| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | 🚧 Planned |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. | ✅ Done |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). | ✅ Done |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
@@ -210,6 +232,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|-----------|-------------|--------|
 | `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
 | `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
+| `curve_get_data` | `object_name` | Returns curve splines, points, and settings. | 🚧 Planned |
 
 ---
 
@@ -335,6 +358,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `armature_bind` | `mesh_name`, `armature_name`, `bind_type` (AUTO/ENVELOPE/EMPTY) | Binds mesh to armature with automatic weight calculation. | ✅ Done |
 | `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses armature bone (rotation/location/scale in Pose Mode). | ✅ Done |
 | `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` (REPLACE/ADD/SUBTRACT) | Assigns weights to selected vertices for manual rigging. | ✅ Done |
+| `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). | 🚧 Planned |
 
 **Use Cases:**
 - Character rigging for games/film
@@ -363,4 +387,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ## 🛠 Planned / In Progress
 
-*(All tasks completed!)*
+- Mesh introspection tools: `mesh_get_edge_data`, `mesh_get_face_data`, `mesh_get_uv_data`, `mesh_get_loop_normals`, `mesh_get_vertex_group_weights`, `mesh_get_attributes`, `mesh_get_shape_keys`.
+- Scene/modeling introspection: `scene_get_constraints`, `modeling_get_modifier_data`, plus `scene_inspect` actions `constraints` and `modifier_data`.
+- Rig/curve/lattice introspection: `curve_get_data`, `lattice_get_points`, `armature_get_data`.
+- Mega tools: `mesh_inspect` with `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`.

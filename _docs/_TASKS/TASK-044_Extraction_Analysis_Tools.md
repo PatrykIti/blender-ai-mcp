@@ -610,7 +610,7 @@ After implementing these tools, update:
 | `_docs/_MCP_SERVER/README.md` | Add new `extraction` area and tools to MCP tools table |
 | `_docs/_ADDON/README.md` | Add `extraction` RPC commands to handler table |
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add extraction tools with arguments |
-| `_docs/EXTRACTION_TOOLS_ARCHITECTURE.md` | **CREATE**: New architecture doc for extraction area |
+| `_docs/TOOLS/EXTRACTION_TOOLS_ARCHITECTURE.md` | **CREATE**: New architecture doc for extraction area |
 | `README.md` | Add extraction tools to roadmap, add to autoApprove lists |
 | `_docs/_TASKS/TASK-042_Automatic_Workflow_Extraction_System.md` | Update Phase 1 status when tools ready |
 
