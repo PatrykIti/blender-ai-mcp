@@ -337,8 +337,10 @@ Example:
 
 ---
 
-# 18. scene_get_constraints ✅ Done
+# 18. scene_get_constraints ✅ Done (internal via scene_inspect)
 Returns object (and optional bone) constraints.
+
+**Note:** Internal action (no `@mcp.tool`). Use `scene_inspect(action="constraints", ...)`.
 
 Args:
 - object_name: str
@@ -351,8 +353,9 @@ Returns: Dict with:
 Example:
 ```json
 {
-  "tool": "scene_get_constraints",
+  "tool": "scene_inspect",
   "args": {
+    "action": "constraints",
     "object_name": "Rig",
     "include_bones": true
   }

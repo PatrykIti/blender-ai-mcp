@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 5 tasks (~32 sub-tasks)
+- **To Do:** 4 tasks (~31 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 137
+- **Done:** 138
 
 ---
 
@@ -27,11 +27,6 @@ Task board for the project. Update statuses in markdown files.
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 
-### Mega Tools
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| [TASK-074](./TASK-074_Mesh_Inspect_Mega_Tool.md) | **Mesh Inspect Mega Tool** | 🟡 Medium | Wrap mesh introspection actions |
-
 ---
 
 ## 🚧 In Progress
@@ -46,6 +41,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-074](./TASK-074_Mesh_Inspect_Mega_Tool.md) | **Mesh Inspect Mega Tool** | 🟡 Medium | 2025-12-19 |
 | [TASK-073](./TASK-073_Rig_Curve_Lattice_Introspection.md) | **Rig/Curve/Lattice Introspection** | 🔴 High | 2025-12-19 |
 | [TASK-072](./TASK-072_Modifier_Constraint_Introspection.md) | **Modifier & Constraint Introspection** | 🔴 High | 2025-12-19 |
 | [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | 2025-12-19 |

@@ -45,8 +45,9 @@ Unified tools that consolidate multiple related operations to reduce LLM context
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | Detailed inspection queries for objects. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
+| `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
 
 ### Scene Tools
 Managing objects at the scene level.
@@ -67,9 +68,8 @@ Managing objects at the scene level.
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
-| `scene_get_constraints` | `object_name` (str), `include_bones` (bool) | Returns object (and optional bone) constraints. |
-
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
+> `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 
 ### Collection Tools
 Organizational tools for managing Blender collections.
@@ -117,12 +117,13 @@ Geometry creation and editing.
 | `modeling_separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
 | `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
 | `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
-| `modeling_get_modifier_data` | `object_name` (str), `modifier_name` (str), `include_node_tree` (bool) | Returns full modifier properties (Geometry Nodes metadata optional). |
 | `metaball_create` | `name`, `location`, `element_type`, `radius`, `resolution`, `threshold` | Creates a metaball object for organic blob shapes. |
 | `metaball_add_element` | `metaball_name`, `element_type`, `location`, `radius`, `stiffness` | Adds element to existing metaball for merging. |
 | `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. |
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. |
+
+> **Note:** `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")` for MCP clients.
 
 ### Mesh Tools (Edit Mode)
 Low-level geometry manipulation.
@@ -141,14 +142,6 @@ Low-level geometry manipulation.
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
-| `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
-| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity and flags. |
-| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity, normals, and material index. |
-| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UV coordinates per face loop. |
-| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). |
-| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. |
-| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attributes (vertex colors/layers). |
-| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional deltas). |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |
@@ -183,6 +176,8 @@ Low-level geometry manipulation.
 | `mesh_poke_faces` | `offset`, `use_relative_offset`, `center_mode` | Pokes faces (adds vertex at center, creates triangle fan). |
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. |
+
+> **Note:** Mesh introspection tools (`mesh_get_*`) are consolidated into `mesh_inspect` for MCP clients. Router can still call internal actions via handler metadata.
 
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 

@@ -229,7 +229,7 @@ def modeling_list_modifiers(
     )
 
 
-# Internal function - exposed via modeling_get_modifier_data and scene_inspect
+# Internal function - exposed via scene_inspect mega tool
 def _modeling_get_modifier_data(
     ctx: Context,
     object_name: str,
@@ -247,41 +247,6 @@ def _modeling_get_modifier_data(
     except RuntimeError as e:
         return str(e)
 
-
-@mcp.tool()
-def modeling_get_modifier_data(
-    ctx: Context,
-    object_name: str,
-    modifier_name: Optional[str] = None,
-    include_node_tree: bool = False
-) -> str:
-    """
-    [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
-
-    Workflow: READ-ONLY | USE → reconstruction of modifier stacks
-
-    Args:
-        object_name: Name of the object to inspect
-        modifier_name: Optional modifier name filter (default: all)
-        include_node_tree: Include Geometry Nodes group metadata (default: False)
-
-    Returns:
-        JSON string with modifier properties and object references.
-    """
-    return route_tool_call(
-        tool_name="modeling_get_modifier_data",
-        params={
-            "object_name": object_name,
-            "modifier_name": modifier_name,
-            "include_node_tree": include_node_tree
-        },
-        direct_executor=lambda: _modeling_get_modifier_data(
-            ctx,
-            object_name,
-            modifier_name,
-            include_node_tree
-        )
-    )
 
 @mcp.tool()
 def modeling_set_origin(

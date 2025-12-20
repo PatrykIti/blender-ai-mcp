@@ -22,16 +22,13 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
+| `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | ✅ Done |
 
 ### Planned
 
-| Mega Tool | Actions | Replaces | Status |
-|-----------|---------|----------|--------|
-| `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | 🚧 Planned |
+None.
 
-**Total Savings (current):** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
-Projected savings:
-- `mesh_inspect` would wrap 8 introspection tools (net -7 definitions).
+**Total Savings (current):** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
 
 ---
 
@@ -59,7 +56,6 @@ Projected savings:
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
-| `scene_get_constraints` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
@@ -71,6 +67,7 @@ Projected savings:
 - ~~`scene_inspect_mesh_topology`~~ → Use `scene_inspect(action="topology", ...)`
 - ~~`scene_inspect_modifiers`~~ → Use `scene_inspect(action="modifiers", ...)`
 - ~~`scene_inspect_material_slots`~~ → Use `scene_inspect(action="materials", ...)`
+- ~~`scene_get_constraints`~~ → Use `scene_inspect(action="constraints", ...)`
 
 ---
 
@@ -130,7 +127,6 @@ Projected savings:
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
-| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
 | `modeling_join_objects` | `object_names` (list) | Joins multiple objects into one mesh. | ✅ Done |
 | `modeling_separate_object` | `name`, `type` (LOOSE/SELECTED/MATERIAL) | Separates a mesh into multiple objects. | ✅ Done |
@@ -140,6 +136,9 @@ Projected savings:
 | `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. | ✅ Done |
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
+
+**Deprecated (now internal, use mega tools):**
+- ~~`modeling_get_modifier_data`~~ → Use `scene_inspect(action="modifier_data", ...)`
 
 ---
 
@@ -184,14 +183,6 @@ Projected savings:
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices. | ✅ Done |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane. | ✅ Done |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. | ✅ Done |
-| `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions/selection states. 🔴 CRITICAL | ✅ Done |
-| `mesh_get_edge_data` | `object_name`, `selected_only` | Returns edge connectivity + flags. | ✅ Done |
-| `mesh_get_face_data` | `object_name`, `selected_only` | Returns face connectivity + normals/material index. | ✅ Done |
-| `mesh_get_uv_data` | `object_name`, `uv_layer`, `selected_only` | Returns UVs per face loop. | ✅ Done |
-| `mesh_get_loop_normals` | `object_name`, `selected_only` | Returns per-loop normals (split/custom). | ✅ Done |
-| `mesh_get_vertex_group_weights` | `object_name`, `group_name`, `selected_only` | Returns vertex group weights. | ✅ Done |
-| `mesh_get_attributes` | `object_name`, `attribute_name`, `selected_only` | Returns mesh attribute data (colors/layers). | ✅ Done |
-| `mesh_get_shape_keys` | `object_name`, `include_deltas` | Returns shape key data (optional per-vertex deltas). | ✅ Done |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. | ✅ Done |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). | ✅ Done |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. | ✅ Done |
@@ -227,11 +218,15 @@ Projected savings:
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `mesh_inspect` | `action` (summary/vertices/edges/faces/uvs/normals/attributes/shape_keys/group_weights), params | **MEGA TOOL** - Mesh introspection with summary and raw data. | 🚧 Planned |
+**Deprecated (now internal, use mega tools):**
+- ~~`mesh_get_vertex_data`~~ → Use `mesh_inspect(action="vertices", ...)`
+- ~~`mesh_get_edge_data`~~ → Use `mesh_inspect(action="edges", ...)`
+- ~~`mesh_get_face_data`~~ → Use `mesh_inspect(action="faces", ...)`
+- ~~`mesh_get_uv_data`~~ → Use `mesh_inspect(action="uvs", ...)`
+- ~~`mesh_get_loop_normals`~~ → Use `mesh_inspect(action="normals", ...)`
+- ~~`mesh_get_vertex_group_weights`~~ → Use `mesh_inspect(action="group_weights", ...)`
+- ~~`mesh_get_attributes`~~ → Use `mesh_inspect(action="attributes", ...)`
+- ~~`mesh_get_shape_keys`~~ → Use `mesh_inspect(action="shape_keys", ...)`
 
 **Deprecated (now internal, use mega tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
@@ -428,4 +423,4 @@ Projected savings:
 
 ## 🛠 Planned / In Progress
 
-- Mega tools: `mesh_inspect` with `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`.
+None.

@@ -4,7 +4,12 @@ from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
-from server.infrastructure.di import get_mesh_handler
+from server.infrastructure.di import (
+    get_mesh_handler,
+    get_modeling_handler,
+    get_scene_handler,
+    get_uv_handler,
+)
 
 
 @mcp.tool()
@@ -601,123 +606,144 @@ def _mesh_select_less(ctx: Context) -> str:
         return str(e)
 
 @mcp.tool()
-def mesh_get_vertex_data(
+def mesh_inspect(
+    ctx: Context,
+    action: Literal[
+        "summary",
+        "vertices",
+        "edges",
+        "faces",
+        "uvs",
+        "normals",
+        "attributes",
+        "shape_keys",
+        "group_weights",
+    ],
+    object_name: Optional[str] = None,
+    selected_only: bool = False,
+    uv_layer: Optional[str] = None,
+    attribute_name: Optional[str] = None,
+    group_name: Optional[str] = None,
+    include_deltas: bool = False,
+) -> str:
+    """
+    [MESH][READ-ONLY][SAFE] Mega tool for mesh introspection.
+
+    Actions and required parameters:
+    - "summary": Requires object_name. Returns counts + flags only.
+    - "vertices": Requires object_name. Returns vertex positions.
+    - "edges": Requires object_name. Returns edge connectivity.
+    - "faces": Requires object_name. Returns face connectivity.
+    - "uvs": Requires object_name. Returns UV loop data.
+    - "normals": Requires object_name. Returns per-loop normals.
+    - "attributes": Requires object_name. Returns mesh attributes.
+    - "shape_keys": Requires object_name. Returns shape key data.
+    - "group_weights": Requires object_name. Returns vertex group weights.
+
+    Workflow: READ-ONLY | USE → mesh reconstruction and quick audits
+
+    Examples:
+        mesh_inspect(action="summary", object_name="Cube")
+        mesh_inspect(action="vertices", object_name="Cube", selected_only=True)
+        mesh_inspect(action="uvs", object_name="Cube", uv_layer="UVMap")
+        mesh_inspect(action="shape_keys", object_name="Face", include_deltas=True)
+    """
+    def execute():
+        if object_name is None:
+            return f"Error: '{action}' action requires 'object_name' parameter."
+
+        if action == "summary":
+            return _mesh_inspect_summary(ctx, object_name)
+        elif action == "vertices":
+            return _mesh_get_vertex_data(ctx, object_name, selected_only)
+        elif action == "edges":
+            return _mesh_get_edge_data(ctx, object_name, selected_only)
+        elif action == "faces":
+            return _mesh_get_face_data(ctx, object_name, selected_only)
+        elif action == "uvs":
+            return _mesh_get_uv_data(ctx, object_name, uv_layer, selected_only)
+        elif action == "normals":
+            return _mesh_get_loop_normals(ctx, object_name, selected_only)
+        elif action == "attributes":
+            return _mesh_get_attributes(ctx, object_name, attribute_name, selected_only)
+        elif action == "shape_keys":
+            return _mesh_get_shape_keys(ctx, object_name, include_deltas)
+        elif action == "group_weights":
+            return _mesh_get_vertex_group_weights(ctx, object_name, group_name, selected_only)
+        else:
+            return (
+                f"Unknown action '{action}'. Valid actions: summary, vertices, edges, "
+                "faces, uvs, normals, attributes, shape_keys, group_weights"
+            )
+
+    return route_tool_call(
+        tool_name="mesh_inspect",
+        params={
+            "action": action,
+            "object_name": object_name,
+            "selected_only": selected_only,
+            "uv_layer": uv_layer,
+            "attribute_name": attribute_name,
+            "group_name": group_name,
+            "include_deltas": include_deltas,
+        },
+        direct_executor=execute
+    )
+
+
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_vertex_data(
     ctx: Context,
     object_name: str,
     selected_only: bool = False
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states for programmatic analysis.
-
-    Workflow: FIRST STEP for programmatic selection | AFTER → mesh_select_by_index, mesh_select_by_location
-
-    This is a CRITICAL introspection tool that enables AI to make programmatic selection decisions
-    based on geometry data. Does NOT modify the mesh - pure read operation.
-
-    Args:
-        object_name: Name of the object to inspect
-        selected_only: If True, only return data for selected vertices (default: False)
-
-    Returns:
-        JSON string with vertex data:
-        {
-            "vertex_count": 8,
-            "selected_count": 4,
-            "vertices": [
-                {"index": 0, "position": [1.0, 1.0, 1.0], "selected": true},
-                {"index": 1, "position": [1.0, -1.0, 1.0], "selected": false}
-            ]
-        }
-
-    Use cases:
-        - Analyze vertex positions to determine selection strategy
-        - Find vertices by coordinate ranges
-        - Understand geometry before performing operations
-
-    Example:
-        mesh_get_vertex_data(object_name="Cube") -> Returns all vertex data
-        mesh_get_vertex_data(object_name="Cube", selected_only=True) -> Returns only selected vertices
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_vertex_data(object_name, selected_only)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_vertex_data(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_vertex_data",
-        params={"object_name": object_name, "selected_only": selected_only},
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_edge_data(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_edge_data(
     ctx: Context,
     object_name: str,
     selected_only: bool = False
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity + attributes.
-
-    Workflow: AFTER → mesh_get_vertex_data | USE FOR → topology reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        selected_only: If True, only return selected edges (default: False)
-
-    Returns:
-        JSON string with edge data including connectivity and flags.
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_edge_data(object_name, selected_only)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_edge_data(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_edge_data",
-        params={"object_name": object_name, "selected_only": selected_only},
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_face_data(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_face_data(
     ctx: Context,
     object_name: str,
     selected_only: bool = False
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity + attributes.
-
-    Workflow: AFTER → mesh_get_edge_data | USE FOR → face reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        selected_only: If True, only return selected faces (default: False)
-
-    Returns:
-        JSON string with face data including indices, normals, and materials.
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_face_data(object_name, selected_only)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_face_data(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_face_data",
-        params={"object_name": object_name, "selected_only": selected_only},
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_uv_data(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_uv_data(
     ctx: Context,
     object_name: str,
     uv_layer: Optional[str] = None,
@@ -725,65 +751,34 @@ def mesh_get_uv_data(
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
-
-    Workflow: AFTER → mesh_get_face_data | USE FOR → UV reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        uv_layer: Optional UV layer name (default: active)
-        selected_only: If True, only return selected faces (default: False)
-
-    Returns:
-        JSON string with UV data per face loop.
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_uv_data",
-        params={"object_name": object_name, "uv_layer": uv_layer, "selected_only": selected_only},
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_loop_normals(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_loop_normals(
     ctx: Context,
     object_name: str,
     selected_only: bool = False
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns per-loop normals (split/custom).
-
-    Workflow: AFTER → mesh_get_face_data | USE FOR → shading reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        selected_only: If True, only return loops belonging to selected faces (default: False)
-
-    Returns:
-        JSON string with loop normals and auto-smooth/custom-normal flags.
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_loop_normals(object_name, selected_only)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_loop_normals(object_name, selected_only)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_loop_normals",
-        params={"object_name": object_name, "selected_only": selected_only},
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_vertex_group_weights(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_vertex_group_weights(
     ctx: Context,
     object_name: str,
     group_name: Optional[str] = None,
@@ -791,41 +786,21 @@ def mesh_get_vertex_group_weights(
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex group weights.
-
-    Workflow: AFTER → mesh_list_groups | USE FOR → rig/weight reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        group_name: Optional vertex group name (default: all groups)
-        selected_only: If True, only return selected vertices (default: False)
-
-    Returns:
-        JSON string with per-vertex weights for the requested group(s).
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_vertex_group_weights(
-                object_name,
-                group_name,
-                selected_only
-            )
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_vertex_group_weights(
+            object_name,
+            group_name,
+            selected_only
+        )
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_vertex_group_weights",
-        params={
-            "object_name": object_name,
-            "group_name": group_name,
-            "selected_only": selected_only
-        },
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_attributes(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_attributes(
     ctx: Context,
     object_name: str,
     attribute_name: Optional[str] = None,
@@ -833,70 +808,74 @@ def mesh_get_attributes(
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns mesh attribute data (vertex colors, layers).
-
-    Workflow: AFTER → mesh_get_face_data | USE FOR → attribute reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        attribute_name: Optional attribute name (default: list attributes only)
-        selected_only: If True, only return selected elements (default: False)
-
-    Returns:
-        JSON string with attribute list or attribute data payload.
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_attributes(
-                object_name,
-                attribute_name,
-                selected_only
-            )
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_attributes(
+            object_name,
+            attribute_name,
+            selected_only
+        )
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_attributes",
-        params={
-            "object_name": object_name,
-            "attribute_name": attribute_name,
-            "selected_only": selected_only
-        },
-        direct_executor=execute
-    )
 
-@mcp.tool()
-def mesh_get_shape_keys(
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_get_shape_keys(
     ctx: Context,
     object_name: str,
     include_deltas: bool = False
 ) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
-
-    Workflow: AFTER → mesh_get_vertex_data | USE FOR → blend shape reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        include_deltas: If True, include per-vertex deltas (default: False)
-
-    Returns:
-        JSON string with shape key list (and optional deltas).
     """
-    def execute():
-        try:
-            import json
-            result = get_mesh_handler().get_shape_keys(object_name, include_deltas)
-            return json.dumps(result, indent=2)
-        except RuntimeError as e:
-            return str(e)
+    try:
+        import json
+        result = get_mesh_handler().get_shape_keys(object_name, include_deltas)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
-    return route_tool_call(
-        tool_name="mesh_get_shape_keys",
-        params={"object_name": object_name, "include_deltas": include_deltas},
-        direct_executor=execute
-    )
+
+# Internal function - exposed via mesh_inspect mega tool
+def _mesh_inspect_summary(ctx: Context, object_name: str) -> str:
+    """
+    [MESH][READ-ONLY][SAFE] Returns a lightweight overview for quick audits.
+    """
+    try:
+        import json
+
+        topology = get_scene_handler().inspect_mesh_topology(object_name, detailed=False)
+        uv_maps = get_uv_handler().list_maps(object_name, include_island_counts=False)
+        shape_keys = get_mesh_handler().get_shape_keys(object_name, include_deltas=False)
+        normals = get_mesh_handler().get_loop_normals(object_name, selected_only=False)
+        groups = get_mesh_handler().list_groups(object_name, group_type="VERTEX")
+        modifiers = get_modeling_handler().get_modifiers(object_name)
+
+        summary = {
+            "object_name": object_name,
+            "vertex_count": topology.get("vertex_count"),
+            "edge_count": topology.get("edge_count"),
+            "face_count": topology.get("face_count"),
+            "has_uvs": bool(uv_maps.get("uv_map_count", 0)),
+            "has_shape_keys": bool(shape_keys.get("shape_key_count", 0)),
+            "has_custom_normals": bool(normals.get("custom_normals", False)),
+            "vertex_groups": [
+                group.get("name")
+                for group in (groups.get("groups") or [])
+                if isinstance(group, dict) and group.get("name")
+            ],
+            "modifiers": [
+                modifier.get("name")
+                for modifier in (modifiers or [])
+                if isinstance(modifier, dict) and modifier.get("name")
+            ],
+        }
+
+        return json.dumps(summary, indent=2)
+    except RuntimeError as e:
+        return str(e)
 
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_by_location(

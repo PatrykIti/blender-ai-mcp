@@ -1,0 +1,85 @@
+{
+  "tool_name": "mesh_inspect",
+  "category": "mesh",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": [
+    "inspect",
+    "summary",
+    "vertex",
+    "edge",
+    "face",
+    "uv",
+    "normal",
+    "attributes",
+    "shape keys",
+    "weights"
+  ],
+  "sample_prompts": [
+    "get a mesh summary",
+    "inspect mesh vertices",
+    "show edge connectivity",
+    "get face data",
+    "inspect UVs",
+    "check custom normals",
+    "list mesh attributes",
+    "inspect shape keys",
+    "get vertex group weights"
+  ],
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "options": [
+        "summary",
+        "vertices",
+        "edges",
+        "faces",
+        "uvs",
+        "normals",
+        "attributes",
+        "shape_keys",
+        "group_weights"
+      ],
+      "required": true,
+      "description": "Introspection action to perform"
+    },
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected elements (where applicable)"
+    },
+    "uv_layer": {
+      "type": "string",
+      "default": null,
+      "description": "UV layer name (default: active)"
+    },
+    "attribute_name": {
+      "type": "string",
+      "default": null,
+      "description": "Attribute name (default: list attributes only)"
+    },
+    "group_name": {
+      "type": "string",
+      "default": null,
+      "description": "Vertex group name (default: all groups)"
+    },
+    "include_deltas": {
+      "type": "bool",
+      "default": false,
+      "description": "Include per-vertex shape key deltas"
+    }
+  },
+  "related_tools": [
+    "mesh_select_targeted",
+    "mesh_list_groups",
+    "uv_list_maps",
+    "scene_inspect"
+  ],
+  "patterns": [],
+  "description": "Mega tool for mesh introspection (summary, topology payloads, UVs, normals, attributes, shape keys, and weights)."
+}

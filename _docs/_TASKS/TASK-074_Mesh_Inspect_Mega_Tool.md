@@ -4,7 +4,7 @@
 **Category:** Mega Tools  
 **Estimated Effort:** Small  
 **Dependencies:** TASK-070, TASK-071  
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ---
 
@@ -26,6 +26,8 @@ Provide a single `mesh_inspect` mega tool that wraps mesh introspection actions 
 | `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add `mesh_inspect` to Implemented table; move/annotate `mesh_get_*` tools that become internal-only under mega tool mapping |
 | `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Document `mesh_inspect` actions + summary; add explicit note that mega tool actions are internal-only (no `@mcp.tool`) and router calls handlers via metadata |
 | `_docs/TOOLS/MESH_TOOLS_ARCHITECTURE.md` | If `mesh_get_*` wrappers are removed, mark them as internal actions used by `mesh_inspect` (no `@mcp.tool`) |
+| `_docs/TOOLS/SCENE_TOOLS_ARCHITECTURE.md` | Mark `scene_get_constraints` as internal-only (use `scene_inspect(action="constraints")`) |
+| `_docs/TOOLS/MODELING_TOOLS_ARCHITECTURE.md` | Mark `modeling_get_modifier_data` as internal-only (use `scene_inspect(action="modifier_data")`) |
 | `README.md` | Update mega tools table + summary sources; remove/annotate `mesh_get_*` if they are internal-only; add note about handler+metadata execution path |
 
 ---

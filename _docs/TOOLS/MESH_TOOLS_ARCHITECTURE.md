@@ -399,12 +399,14 @@ Example:
 
 ---
 
-# 20. mesh_get_vertex_data ✅ Done
+# 20. mesh_get_vertex_data ✅ Done (internal via mesh_inspect)
 
 Returns vertex positions and selection states for programmatic analysis.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
 **Priority:** 🔴 CRITICAL - Foundation for programmatic selection
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="vertices", ...)`.
 
 Args:
 - object_name: str
@@ -426,8 +428,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_vertex_data",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "vertices",
     "object_name": "Cube",
     "selected_only": false
   }
@@ -1274,11 +1277,13 @@ Workflow: Set proportional edit → mesh_transform_selected (transforms use prop
 
 ---
 
-# 48. mesh_get_edge_data ✅ Done
+# 48. mesh_get_edge_data ✅ Done (internal via mesh_inspect)
 
 Returns edge connectivity and edge flags (seam/sharp/crease/bevel).
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="edges", ...)`.
 
 Args:
 - object_name: str
@@ -1309,8 +1314,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_edge_data",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "edges",
     "object_name": "Body",
     "selected_only": false
   }
@@ -1322,11 +1328,13 @@ Use Case:
 
 ---
 
-# 49. mesh_get_face_data ✅ Done
+# 49. mesh_get_face_data ✅ Done (internal via mesh_inspect)
 
 Returns face connectivity, normals, centers, and material indices.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="faces", ...)`.
 
 Args:
 - object_name: str
@@ -1355,8 +1363,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_face_data",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "faces",
     "object_name": "Body",
     "selected_only": false
   }
@@ -1368,11 +1377,13 @@ Use Case:
 
 ---
 
-# 50. mesh_get_uv_data ✅ Done
+# 50. mesh_get_uv_data ✅ Done (internal via mesh_inspect)
 
 Returns UV coordinates per face loop for a given UV layer.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="uvs", ...)`.
 
 Args:
 - object_name: str
@@ -1399,8 +1410,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_uv_data",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "uvs",
     "object_name": "Body",
     "uv_layer": "UVMap"
   }
@@ -1412,11 +1424,13 @@ Use Case:
 
 ---
 
-# 51. mesh_get_loop_normals ✅ Done
+# 51. mesh_get_loop_normals ✅ Done (internal via mesh_inspect)
 
 Returns per-loop normals (split/custom) for accurate shading reconstruction.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="normals", ...)`.
 
 Args:
 - object_name: str
@@ -1439,8 +1453,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_loop_normals",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "normals",
     "object_name": "Body",
     "selected_only": false
   }
@@ -1452,11 +1467,13 @@ Use Case:
 
 ---
 
-# 52. mesh_get_vertex_group_weights ✅ Done
+# 52. mesh_get_vertex_group_weights ✅ Done (internal via mesh_inspect)
 
 Returns vertex group weights for a single group or all groups.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="group_weights", ...)`.
 
 Args:
 - object_name: str
@@ -1496,8 +1513,9 @@ Returns (all groups):
 Example:
 ```json
 {
-  "tool": "mesh_get_vertex_group_weights",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "group_weights",
     "object_name": "Body",
     "group_name": "Spine",
     "selected_only": false
@@ -1510,11 +1528,13 @@ Use Case:
 
 ---
 
-# 53. mesh_get_attributes ✅ Done
+# 53. mesh_get_attributes ✅ Done (internal via mesh_inspect)
 
 Returns mesh attribute list or attribute data for a given name.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="attributes", ...)`.
 
 Args:
 - object_name: str
@@ -1547,8 +1567,9 @@ Returns (data):
 Example:
 ```json
 {
-  "tool": "mesh_get_attributes",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "attributes",
     "object_name": "Body",
     "attribute_name": "Col",
     "selected_only": false
@@ -1561,11 +1582,13 @@ Use Case:
 
 ---
 
-# 54. mesh_get_shape_keys ✅ Done
+# 54. mesh_get_shape_keys ✅ Done (internal via mesh_inspect)
 
 Returns shape key data with optional sparse deltas relative to Basis.
 
 **Tag:** `[OBJECT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="shape_keys", ...)`.
 
 Args:
 - object_name: str
@@ -1591,8 +1614,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_shape_keys",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "shape_keys",
     "object_name": "Body",
     "include_deltas": true
   }

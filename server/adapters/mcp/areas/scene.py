@@ -800,30 +800,6 @@ def _scene_inspect_modifier_data(
     return _modeling_get_modifier_data(ctx, object_name, modifier_name, include_node_tree)
 
 
-@mcp.tool()
-def scene_get_constraints(
-    ctx: Context,
-    object_name: str,
-    include_bones: bool = False
-) -> str:
-    """
-    [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
-
-    Workflow: READ-ONLY | USE → rig validation and constraint reconstruction
-
-    Args:
-        object_name: Name of the object to inspect
-        include_bones: If True, include bone constraints for armatures
-
-    Returns:
-        JSON string with object and optional bone constraint data.
-    """
-    return route_tool_call(
-        tool_name="scene_get_constraints",
-        params={"object_name": object_name, "include_bones": include_bones},
-        direct_executor=lambda: _scene_get_constraints(ctx, object_name, include_bones)
-    )
-
 
 @mcp.tool()
 def scene_create(

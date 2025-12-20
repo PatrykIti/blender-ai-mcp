@@ -110,8 +110,10 @@ Example:
 
 ---
 
-# 6. modeling_get_modifier_data ✅ Done
+# 6. modeling_get_modifier_data ✅ Done (internal via scene_inspect)
 Returns full modifier properties (optionally Geometry Nodes metadata).
+
+**Note:** Internal action (no `@mcp.tool`). Use `scene_inspect(action="modifier_data", ...)`.
 
 Args:
 - object_name: str
@@ -137,8 +139,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "modeling_get_modifier_data",
+  "tool": "scene_inspect",
   "args": {
+    "action": "modifier_data",
     "object_name": "Body",
     "include_node_tree": false
   }

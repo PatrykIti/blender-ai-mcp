@@ -150,9 +150,10 @@ Object Mode operations for scene management and inspection.
 | `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
 | `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
 | `scene_get_origin_info` | Get origin/pivot point info | ✅ |
-| `scene_get_constraints` | List object (and bone) constraints | ✅ |
 
 ---
+
+Note: `scene_get_constraints` is now internal to `scene_inspect(action="constraints")`.
 
 ### Modeling Tools (`modeling_*`)
 
@@ -165,11 +166,12 @@ Object Mode operations for creating and transforming objects.
 | `modeling_add_modifier` | Add modifier to object | ✅ |
 | `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
 | `modeling_list_modifiers` | List modifiers on object | ✅ |
-| `modeling_get_modifier_data` | Get full modifier properties | ✅ |
 | `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
 | `modeling_join_objects` | Join multiple objects | ✅ |
 | `modeling_separate_object` | Separate by loose parts/material | ✅ |
 | `modeling_set_origin` | Set object origin point | ✅ |
+
+Note: `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")`.
 
 #### Lattice Deformation
 | Tool | Description | Status |
@@ -210,14 +212,8 @@ Edit Mode operations for geometry manipulation.
 | `mesh_select_loop` | Select edge loop | ✅ |
 | `mesh_select_ring` | Select edge ring | ✅ |
 | `mesh_select_by_location` | Select by 3D position | ✅ |
-| `mesh_get_vertex_data` | Get vertex positions | ✅ |
-| `mesh_get_edge_data` | Get edge connectivity + flags | ✅ |
-| `mesh_get_face_data` | Get face connectivity + normals/materials | ✅ |
-| `mesh_get_uv_data` | Get UV loop data | ✅ |
-| `mesh_get_loop_normals` | Get per-loop normals (split/custom) | ✅ |
-| `mesh_get_vertex_group_weights` | Get vertex group weights | ✅ |
-| `mesh_get_attributes` | Get mesh attributes (vertex colors) | ✅ |
-| `mesh_get_shape_keys` | Get shape key data | ✅ |
+
+Note: Mesh introspection actions are consolidated under `mesh_inspect` (internal `mesh_get_*`).
 
 #### Core Operations
 | Tool | Description | Status |
@@ -641,6 +637,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
 > Mega tools are wrappers only; action-level handlers live as internal functions backed by Blender addon RPC.
 > Standalone MCP tools are exposed only where explicitly listed.
+> Router can still execute internal actions via handler mappings and per-tool JSON metadata.
 
 ### Scene Mega Tools
 
@@ -648,9 +645,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -3 | ✅ |
-
-* planned actions
+| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -5 | ✅ |
 
 ### Mesh Mega Tools
 
@@ -658,9 +653,9 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
-| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | TBD | 🚧 |
+| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | -7 | ✅ |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context). Planned actions not counted.
+**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context).
 
 `mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
 
@@ -718,7 +713,6 @@ We recommend using Docker to run the MCP Server.
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
-        "scene_get_constraints",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -742,9 +736,9 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
-        "modeling_get_modifier_data",
         "mesh_select",
         "mesh_select_targeted",
+        "mesh_inspect",
         "mesh_delete_selected",
         "mesh_extrude_region",
         "mesh_fill_holes",
@@ -757,14 +751,6 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data",
-        "mesh_get_edge_data",
-        "mesh_get_face_data",
-        "mesh_get_uv_data",
-        "mesh_get_loop_normals",
-        "mesh_get_vertex_group_weights",
-        "mesh_get_attributes",
-        "mesh_get_shape_keys",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -909,7 +895,6 @@ We recommend using Docker to run the MCP Server.
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
-        "scene_get_constraints",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -933,9 +918,9 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
-        "modeling_get_modifier_data",
         "mesh_select",
         "mesh_select_targeted",
+        "mesh_inspect",
         "mesh_delete_selected",
         "mesh_extrude_region",
         "mesh_fill_holes",
@@ -948,14 +933,6 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data",
-        "mesh_get_edge_data",
-        "mesh_get_face_data",
-        "mesh_get_uv_data",
-        "mesh_get_loop_normals",
-        "mesh_get_vertex_group_weights",
-        "mesh_get_attributes",
-        "mesh_get_shape_keys",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -1149,7 +1126,6 @@ enabled_tools = [
   "scene_get_hierarchy",
   "scene_get_bounding_box",
   "scene_get_origin_info",
-  "scene_get_constraints",
   "collection_list",
   "collection_list_objects",
   "collection_manage",
@@ -1173,9 +1149,9 @@ enabled_tools = [
   "modeling_separate_object",
   "modeling_set_origin",
   "modeling_list_modifiers",
-  "modeling_get_modifier_data",
   "mesh_select",
   "mesh_select_targeted",
+  "mesh_inspect",
   "mesh_delete_selected",
   "mesh_extrude_region",
   "mesh_fill_holes",
@@ -1188,7 +1164,6 @@ enabled_tools = [
   "mesh_smooth",
   "mesh_flatten",
   "mesh_list_groups",
-  "mesh_get_vertex_data",
   "mesh_randomize",
   "mesh_shrink_fatten",
   "mesh_create_vertex_group",
