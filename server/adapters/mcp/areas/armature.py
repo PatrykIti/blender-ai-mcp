@@ -46,12 +46,27 @@ def armature_create(
         armature_create(name="CharacterRig") -> Simple rig at origin
         armature_create(name="Spine", bone_name="Root", bone_length=0.5) -> Custom bone
     """
-    handler = get_handler()
-    return handler.create(
-        name=name,
-        location=location,
-        bone_name=bone_name,
-        bone_length=bone_length
+    def execute():
+        handler = get_handler()
+        try:
+            return handler.create(
+                name=name,
+                location=location,
+                bone_name=bone_name,
+                bone_length=bone_length
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_create",
+        params={
+            "name": name,
+            "location": location,
+            "bone_name": bone_name,
+            "bone_length": bone_length
+        },
+        direct_executor=execute
     )
 
 
@@ -87,14 +102,31 @@ def armature_add_bone(
         armature_add_bone("Rig", "Spine", [0,0,0], [0,0,0.5]) -> Root bone
         armature_add_bone("Rig", "Chest", [0,0,0.5], [0,0,1], parent_bone="Spine", use_connect=True)
     """
-    handler = get_handler()
-    return handler.add_bone(
-        armature_name=armature_name,
-        bone_name=bone_name,
-        head=head,
-        tail=tail,
-        parent_bone=parent_bone,
-        use_connect=use_connect
+    def execute():
+        handler = get_handler()
+        try:
+            return handler.add_bone(
+                armature_name=armature_name,
+                bone_name=bone_name,
+                head=head,
+                tail=tail,
+                parent_bone=parent_bone,
+                use_connect=use_connect
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_add_bone",
+        params={
+            "armature_name": armature_name,
+            "bone_name": bone_name,
+            "head": head,
+            "tail": tail,
+            "parent_bone": parent_bone,
+            "use_connect": use_connect
+        },
+        direct_executor=execute
     )
 
 
@@ -127,11 +159,25 @@ def armature_bind(
         armature_bind("Character", "CharacterRig") -> Auto weights
         armature_bind("Robot", "RobotArm", bind_type="EMPTY") -> Manual weights
     """
-    handler = get_handler()
-    return handler.bind(
-        mesh_name=mesh_name,
-        armature_name=armature_name,
-        bind_type=bind_type
+    def execute():
+        handler = get_handler()
+        try:
+            return handler.bind(
+                mesh_name=mesh_name,
+                armature_name=armature_name,
+                bind_type=bind_type
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_bind",
+        params={
+            "mesh_name": mesh_name,
+            "armature_name": armature_name,
+            "bind_type": bind_type
+        },
+        direct_executor=execute
     )
 
 
@@ -164,13 +210,29 @@ def armature_pose_bone(
         armature_pose_bone("Rig", "UpperArm", rotation=[0, 0, 45]) -> Rotate 45 deg on Z
         armature_pose_bone("Rig", "Spine", rotation=[10, 0, 0]) -> Bend forward
     """
-    handler = get_handler()
-    return handler.pose_bone(
-        armature_name=armature_name,
-        bone_name=bone_name,
-        rotation=rotation,
-        location=location,
-        scale=scale
+    def execute():
+        handler = get_handler()
+        try:
+            return handler.pose_bone(
+                armature_name=armature_name,
+                bone_name=bone_name,
+                rotation=rotation,
+                location=location,
+                scale=scale
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_pose_bone",
+        params={
+            "armature_name": armature_name,
+            "bone_name": bone_name,
+            "rotation": rotation,
+            "location": location,
+            "scale": scale
+        },
+        direct_executor=execute
     )
 
 
@@ -207,12 +269,27 @@ def armature_weight_paint_assign(
         armature_weight_paint_assign("Character", "Hand.L", weight=1.0) -> Full weight
         armature_weight_paint_assign("Character", "Forearm.L", weight=0.5) -> Half weight
     """
-    handler = get_handler()
-    return handler.weight_paint_assign(
-        object_name=object_name,
-        vertex_group=vertex_group,
-        weight=weight,
-        mode=mode
+    def execute():
+        handler = get_handler()
+        try:
+            return handler.weight_paint_assign(
+                object_name=object_name,
+                vertex_group=vertex_group,
+                weight=weight,
+                mode=mode
+            )
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_weight_paint_assign",
+        params={
+            "object_name": object_name,
+            "vertex_group": vertex_group,
+            "weight": weight,
+            "mode": mode
+        },
+        direct_executor=execute
     )
 
 
