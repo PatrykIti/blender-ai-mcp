@@ -1,0 +1,118 @@
+# Screen Cutout Workflow
+# Creates a recessed screen cutout on the top face of a mesh
+
+name: screen_cutout_workflow
+description: Creates a recessed screen cutout on the top face
+category: electronics
+author: blender-ai-mcp
+version: "1.0.0"
+
+trigger_keywords:
+  - screen
+  - display
+  - cutout
+  - inset
+  - ekran
+  - wyswietlacz
+
+defaults:
+  inset_thickness: 0.02
+  inset_depth: 0.0
+  extrude_depth: -0.01
+  add_bevel: true
+  bevel_width: 0.002
+  bevel_segments: 2
+  select_min_z: 0.5
+  select_max_z: 9999.0
+
+parameters:
+  inset_thickness:
+    type: float
+    range: [0.001, 0.1]
+    default: 0.02
+    description: Inset thickness for screen border
+    semantic_hints: [inset, border, screen]
+    group: cutout
+
+  inset_depth:
+    type: float
+    range: [-0.05, 0.05]
+    default: 0.0
+    description: Optional inset depth adjustment
+    semantic_hints: [depth, inset]
+    group: cutout
+
+  extrude_depth:
+    type: float
+    range: [-0.1, 0.1]
+    default: -0.01
+    description: Extrude depth for screen recess (negative pushes inward)
+    semantic_hints: [extrude, recess, depth]
+    group: cutout
+
+  add_bevel:
+    type: bool
+    default: true
+    description: Add bevel to screen cutout edges
+    semantic_hints: [bevel, round, chamfer]
+    group: cutout
+
+  bevel_width:
+    type: float
+    range: [0.0005, 0.01]
+    default: 0.002
+    description: Bevel width for screen cutout
+    semantic_hints: [bevel, width, round]
+    group: cutout
+
+  bevel_segments:
+    type: int
+    range: [1, 6]
+    default: 2
+    description: Bevel segments for screen cutout
+    semantic_hints: [bevel, segments]
+    group: cutout
+
+  select_min_z:
+    type: float
+    range: [0.0, 2.0]
+    default: 0.5
+    description: Minimum Z for selecting top face
+    semantic_hints: [select, top, z]
+    group: selection
+
+  select_max_z:
+    type: float
+    range: [1.0, 10000.0]
+    default: 9999.0
+    description: Maximum Z for selecting top face
+    semantic_hints: [select, top, z]
+    group: selection
+
+steps:
+  - tool: mesh_select_targeted
+    params:
+      action: "by_location"
+      axis: "Z"
+      min_coord: "$select_min_z"
+      max_coord: "$select_max_z"
+      element_type: "FACE"
+    description: Select top face by Z range
+
+  - tool: mesh_inset
+    params:
+      thickness: "$inset_thickness"
+      depth: "$inset_depth"
+    description: Inset the selected face to create border
+
+  - tool: mesh_extrude_region
+    params:
+      move: [0.0, 0.0, "$extrude_depth"]
+    description: Extrude inward to create screen recess
+
+  - tool: mesh_bevel
+    params:
+      offset: "$bevel_width"
+      segments: "$bevel_segments"
+    condition: "add_bevel"
+    description: Bevel screen cutout edges (optional)
