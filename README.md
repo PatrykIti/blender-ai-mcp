@@ -580,9 +580,9 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Semantic Matching** | Match workflows by meaning, not just keywords (LaBSE embeddings) |
 | **Generalization** | Use similar workflow when exact match missing |
 | **Feedback Learning** | Improve matching from user corrections |
-| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
-| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow (TASK-051) |
-| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params (TASK-052) |
+| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering |
+| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow |
+| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params |
 
 #### Workflow-First Quick Start (recommended)
 
@@ -634,7 +634,7 @@ Router behavior:
   → Chair has proper leg ratios from table, vertical proportions from tower
 ```
 
-#### Parametric Variables (TASK-052)
+#### Parametric Variables
 
 ```yaml
 # In workflow YAML:
