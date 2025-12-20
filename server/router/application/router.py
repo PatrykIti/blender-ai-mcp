@@ -278,11 +278,8 @@ class SupervisorRouter:
         Returns:
             SceneContext with current state.
         """
-        if self.config.cache_scene_context:
-            cached = self.analyzer.get_cached()
-            if cached:
-                self._last_context = cached
-                return cached
+        if not self.config.cache_scene_context:
+            self.analyzer.invalidate_cache()
 
         context = self.analyzer.analyze()
         self._last_context = context
