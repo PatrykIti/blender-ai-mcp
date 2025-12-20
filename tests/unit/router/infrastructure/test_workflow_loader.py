@@ -412,8 +412,8 @@ class TestRealCustomWorkflows:
         # Should have at least the example workflows
         assert len(workflows) >= 1
 
-    def test_load_example_chair_json(self):
-        """Test loading the example chair workflow."""
+    def test_load_example_simple_table_yaml(self):
+        """Test loading the example simple table workflow."""
         # Path: tests/unit/router/infrastructure/test_workflow_loader.py
         # Need 5 parents to reach project root
         custom_dir = (
@@ -424,15 +424,14 @@ class TestRealCustomWorkflows:
         if not custom_dir.exists():
             pytest.skip("Custom workflows directory not found")
 
-        chair_file = custom_dir / "example_chair.json"
-        if not chair_file.exists():
-            pytest.skip("Example chair workflow not found")
+        table_file = custom_dir / "simple_table.yaml"
+        assert table_file.exists()
 
         loader = WorkflowLoader(workflows_dir=custom_dir)
-        workflow = loader.load_file(chair_file)
+        workflow = loader.load_file(table_file)
 
-        assert workflow.name == "chair_workflow"
-        assert len(workflow.steps) > 5  # Chair has many steps
+        assert workflow.name == "simple_table_workflow"
+        assert len(workflow.steps) > 5  # Simple table has many steps
 
 
 class TestWorkflowLoaderParameters:

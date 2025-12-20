@@ -13,7 +13,7 @@ TASK-046-6
 import json
 import logging
 from dataclasses import dataclass, asdict, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -180,7 +180,7 @@ class FeedbackCollector:
             The created FeedbackEntry.
         """
         entry = FeedbackEntry(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             prompt=prompt,
             matched_workflow=matched_workflow,
             match_confidence=confidence,
@@ -242,7 +242,7 @@ class FeedbackCollector:
 
         # Create new correction entry if not found
         entry = FeedbackEntry(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             prompt=prompt,
             matched_workflow=original_match,
             match_confidence=0.0,
