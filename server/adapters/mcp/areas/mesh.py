@@ -640,6 +640,14 @@ def mesh_inspect(
     - "shape_keys": Requires object_name. Returns shape key data.
     - "group_weights": Requires object_name. Returns vertex group weights.
 
+    Action → parameter hints:
+    - "summary": ignores selected_only, uv_layer, attribute_name, group_name, include_deltas
+    - "vertices"/"edges"/"faces"/"normals": selected_only applies
+    - "uvs": uv_layer (optional) + selected_only
+    - "attributes": attribute_name (optional) + selected_only
+    - "shape_keys": include_deltas (optional)
+    - "group_weights": group_name (optional) + selected_only
+
     Workflow: READ-ONLY | USE → mesh reconstruction and quick audits
 
     Examples:

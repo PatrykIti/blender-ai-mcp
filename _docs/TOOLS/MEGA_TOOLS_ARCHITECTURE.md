@@ -475,6 +475,15 @@ Mesh introspection mega tool (summary + raw payloads).
 | `group_name` | `str` | `None` | Vertex group name (default: all groups). |
 | `include_deltas` | `bool` | `False` | Include per-vertex shape key deltas. |
 
+## Action → Parameter Hints
+
+- `"summary"`: ignores `selected_only`, `uv_layer`, `attribute_name`, `group_name`, `include_deltas`
+- `"vertices"` / `"edges"` / `"faces"` / `"normals"`: `selected_only`
+- `"uvs"`: `uv_layer` (optional) + `selected_only`
+- `"attributes"`: `attribute_name` (optional) + `selected_only`
+- `"shape_keys"`: `include_deltas` (optional)
+- `"group_weights"`: `group_name` (optional) + `selected_only`
+
 ## Examples
 
 ```json
