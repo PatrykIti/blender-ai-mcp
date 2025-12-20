@@ -78,8 +78,9 @@ class TestParameterClamping:
         bevel_tool = next((t for t in tools if t["tool"] == "mesh_bevel"), None)
         assert bevel_tool is not None
 
-        # Width should be clamped
-        assert bevel_tool["params"]["width"] <= 10.0, "Bevel width should be clamped"
+        # Offset should be clamped (width alias normalized to offset)
+        assert "offset" in bevel_tool["params"]
+        assert bevel_tool["params"]["offset"] <= 10.0, "Bevel width should be clamped"
 
     def test_subdivide_cuts_clamped(self, router, rpc_client, clean_scene):
         """Test: Excessive subdivide cuts are clamped."""
