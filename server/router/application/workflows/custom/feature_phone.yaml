@@ -5,7 +5,7 @@ name: feature_phone_workflow
 description: Creates a classic keypad phone model with parametric dimensions
 category: electronics
 author: blender-ai-mcp
-version: "2.0.0"
+version: "3.0.0"
 
 trigger_keywords:
   - feature phone
@@ -45,8 +45,16 @@ defaults:
   clean_scene: false
 
   # Bevel for the main shell
-  body_bevel_width: 0.002
-  body_bevel_segments: 3
+  body_bevel_width: 0.003
+  body_bevel_segments: 4
+
+  # Bevel for keys and buttons
+  key_bevel_width: 0.0003
+  key_bevel_segments: 2
+
+  # Bevel for screen frame
+  screen_bevel_width: 0.001
+  screen_bevel_segments: 2
 
 parameters:
   # =============================
@@ -94,10 +102,42 @@ parameters:
   body_bevel_segments:
     type: int
     range: [1, 6]
-    default: 3
+    default: 4
     description: Bevel segments for the body shell
     semantic_hints: [bevel, smooth, segments]
     group: body
+
+  key_bevel_width:
+    type: float
+    range: [0.0001, 0.001]
+    default: 0.0003
+    description: Bevel width for keys and buttons
+    semantic_hints: [bevel, round, key]
+    group: keys
+
+  key_bevel_segments:
+    type: int
+    range: [1, 4]
+    default: 2
+    description: Bevel segments for keys
+    semantic_hints: [bevel, smooth, segments]
+    group: keys
+
+  screen_bevel_width:
+    type: float
+    range: [0.0005, 0.003]
+    default: 0.001
+    description: Bevel width for screen frame
+    semantic_hints: [bevel, round, screen]
+    group: screen
+
+  screen_bevel_segments:
+    type: int
+    range: [1, 4]
+    default: 2
+    description: Bevel segments for screen frame
+    semantic_hints: [bevel, smooth, segments]
+    group: screen
 
   # =============================
   # COMPUTED PARAMETERS
@@ -183,8 +223,9 @@ steps:
       properties:
         width: "$body_bevel_width"
         segments: "$body_bevel_segments"
-        limit_method: "NONE"
-    description: Bevel body shell edges
+        limit_method: "ANGLE"
+        angle_limit: 0.523599  # 30 degrees - bevels only sharp edges
+    description: Bevel body shell edges (angle-limited for rounder corners)
 
   - tool: modeling_create_primitive
     params:
@@ -342,6 +383,17 @@ steps:
         - "$CALCULATE(-0.0104 * scale_y)"
         - "$CALCULATE(0.0209 * scale_z)"
     description: Size and place screen frame
+
+  - tool: modeling_add_modifier
+    params:
+      name: "front_screen_frame"
+      modifier_type: "BEVEL"
+      properties:
+        width: "$screen_bevel_width"
+        segments: "$screen_bevel_segments"
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+    description: Bevel screen frame edges
 
   - tool: modeling_create_primitive
     params:
@@ -844,6 +896,40 @@ steps:
         - "$CALCULATE(-0.0055 * scale_y)"
         - "$CALCULATE(0.0255 * scale_z)"
     description: Size and place right side trim
+
+  # =============================
+  # BEVEL FOR KEYS AND BUTTONS
+  # =============================
+  - tool: modeling_add_modifier
+    params:
+      name: "{obj}"
+      modifier_type: "BEVEL"
+      properties:
+        width: "$key_bevel_width"
+        segments: "$key_bevel_segments"
+        limit_method: "ANGLE"
+        angle_limit: 0.785398  # 45 degrees
+    loop:
+      variable: "obj"
+      values:
+        - "key_1"
+        - "key_2"
+        - "key_3"
+        - "key_4"
+        - "key_5"
+        - "key_6"
+        - "key_7"
+        - "key_8"
+        - "key_9"
+        - "key_0"
+        - "key_star"
+        - "key_hash"
+        - "button_call"
+        - "button_end"
+        - "button_soft_left"
+        - "button_soft_right"
+        - "button_dpad"
+    description: Add bevel to all keys and main buttons
 
   # =============================
   # COLLECTION ASSIGNMENT
