@@ -212,12 +212,15 @@ def _scene_list_selection(ctx: Context) -> str:
 @mcp.tool()
 def scene_inspect(
     ctx: Context,
-    action: Literal["object", "topology", "modifiers", "materials"],
+    action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"],
     object_name: Optional[str] = None,
     detailed: bool = False,
     include_disabled: bool = True,
     material_filter: Optional[str] = None,
-    include_empty_slots: bool = True
+    include_empty_slots: bool = True,
+    include_bones: bool = False,
+    modifier_name: Optional[str] = None,
+    include_node_tree: bool = False
 ) -> str:
     """
     [SCENE][READ-ONLY][SAFE] Detailed inspection queries for objects and scene.
@@ -227,6 +230,8 @@ def scene_inspect(
     - "topology": Requires object_name. Returns vertex/edge/face/tri/quad/ngon counts. Optional: detailed=True for non-manifold checks.
     - "modifiers": Optional object_name (None scans all). Returns modifier stacks. Optional: include_disabled=False.
     - "materials": No params required. Returns material slot audit. Optional: material_filter, include_empty_slots.
+    - "constraints": Requires object_name. Returns object (and optional bone) constraints.
+    - "modifier_data": Requires object_name. Returns full modifier properties (optional modifier_name, include_node_tree).
 
     Workflow: READ-ONLY | USE → detailed analysis before export or debugging
 
@@ -236,6 +241,8 @@ def scene_inspect(
         scene_inspect(action="modifiers", object_name="Cube")
         scene_inspect(action="modifiers")  # scans all objects
         scene_inspect(action="materials", material_filter="Wood")
+        scene_inspect(action="constraints", object_name="Rig", include_bones=True)
+        scene_inspect(action="modifier_data", object_name="Cube", modifier_name="Bevel")
     """
     def execute():
         if action == "object":
@@ -250,12 +257,33 @@ def scene_inspect(
             return _scene_inspect_modifiers(ctx, object_name, include_disabled)
         elif action == "materials":
             return _scene_inspect_material_slots(ctx, material_filter, include_empty_slots)
+        elif action == "constraints":
+            if object_name is None:
+                return "Error: 'constraints' action requires 'object_name' parameter."
+            return _scene_get_constraints(ctx, object_name, include_bones)
+        elif action == "modifier_data":
+            if object_name is None:
+                return "Error: 'modifier_data' action requires 'object_name' parameter."
+            return _scene_inspect_modifier_data(ctx, object_name, modifier_name, include_node_tree)
         else:
-            return f"Unknown action '{action}'. Valid actions: object, topology, modifiers, materials"
+            return (
+                f"Unknown action '{action}'. Valid actions: object, topology, modifiers, "
+                "materials, constraints, modifier_data"
+            )
 
     return route_tool_call(
         tool_name="scene_inspect",
-        params={"action": action, "object_name": object_name, "detailed": detailed, "include_disabled": include_disabled, "material_filter": material_filter, "include_empty_slots": include_empty_slots},
+        params={
+            "action": action,
+            "object_name": object_name,
+            "detailed": detailed,
+            "include_disabled": include_disabled,
+            "material_filter": material_filter,
+            "include_empty_slots": include_empty_slots,
+            "include_bones": include_bones,
+            "modifier_name": modifier_name,
+            "include_node_tree": include_node_tree,
+        },
         direct_executor=execute
     )
 
@@ -738,8 +766,65 @@ def _scene_inspect_modifiers(
         return "\n".join(lines)
     except RuntimeError as e:
         return str(e)
-        
-        
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_get_constraints(
+    ctx: Context,
+    object_name: str,
+    include_bones: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
+    """
+    handler = get_scene_handler()
+    try:
+        import json
+        result = handler.get_constraints(object_name, include_bones)
+        return json.dumps(result, indent=2)
+    except RuntimeError as e:
+        return str(e)
+
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_modifier_data(
+    ctx: Context,
+    object_name: str,
+    modifier_name: Optional[str] = None,
+    include_node_tree: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
+    """
+    from server.adapters.mcp.areas.modeling import _modeling_get_modifier_data
+
+    return _modeling_get_modifier_data(ctx, object_name, modifier_name, include_node_tree)
+
+
+@mcp.tool()
+def scene_get_constraints(
+    ctx: Context,
+    object_name: str,
+    include_bones: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
+
+    Workflow: READ-ONLY | USE → rig validation and constraint reconstruction
+
+    Args:
+        object_name: Name of the object to inspect
+        include_bones: If True, include bone constraints for armatures
+
+    Returns:
+        JSON string with object and optional bone constraint data.
+    """
+    return route_tool_call(
+        tool_name="scene_get_constraints",
+        params={"object_name": object_name, "include_bones": include_bones},
+        direct_executor=lambda: _scene_get_constraints(ctx, object_name, include_bones)
+    )
+
+
 @mcp.tool()
 def scene_create(
     ctx: Context,

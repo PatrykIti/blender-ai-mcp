@@ -86,6 +86,7 @@ def register():
         rpc_server.register_handler("scene.inspect_material_slots", scene_handler.inspect_material_slots)
         rpc_server.register_handler("scene.inspect_mesh_topology", scene_handler.inspect_mesh_topology)
         rpc_server.register_handler("scene.inspect_modifiers", scene_handler.inspect_modifiers)
+        rpc_server.register_handler("scene.get_constraints", scene_handler.get_constraints)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
@@ -115,6 +116,7 @@ def register():
         rpc_server.register_handler("modeling.separate_object", modeling_handler.separate_object)
         rpc_server.register_handler("modeling.set_origin", modeling_handler.set_origin)
         rpc_server.register_handler("modeling.get_modifiers", modeling_handler.get_modifiers)
+        rpc_server.register_handler("modeling.get_modifier_data", modeling_handler.get_modifier_data)
 
         # Mesh (Edit Mode)
         rpc_server.register_handler("mesh.select_all", mesh_handler.select_all)

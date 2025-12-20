@@ -19,7 +19,7 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints*`, `modifier_data*` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints*`, `modeling_get_modifier_data*` | ✅ Done |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
 
@@ -29,12 +29,9 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 |-----------|---------|----------|--------|
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | 🚧 Planned |
 
-Note: * planned actions not yet implemented.
-
 **Total Savings (current):** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
 Projected savings:
 - `mesh_inspect` would wrap 8 introspection tools (net -7 definitions).
-- `scene_inspect` extensions (`constraints`, `modifier_data`) would wrap 2 tools (net -2).
 
 ---
 
@@ -47,7 +44,7 @@ Projected savings:
 |-----------|-----------|-------------|--------|
 | `scene_context` | `action` (mode/selection) | **MEGA TOOL** - Quick context queries (mode, selection state). | ✅ Done |
 | `scene_create` | `action` (light/camera/empty), params | **MEGA TOOL** - Creates scene helper objects (lights, cameras, empties). | ✅ Done |
-| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints*/modifier_data*), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
+| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |
@@ -62,14 +59,7 @@ Projected savings:
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
-
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `scene_get_constraints` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. | 🚧 Planned |
-
-Note: * planned actions not yet implemented.
+| `scene_get_constraints` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
@@ -140,6 +130,7 @@ Note: * planned actions not yet implemented.
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
+| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
 | `modeling_join_objects` | `object_names` (list) | Joins multiple objects into one mesh. | ✅ Done |
 | `modeling_separate_object` | `name`, `type` (LOOSE/SELECTED/MATERIAL) | Separates a mesh into multiple objects. | ✅ Done |
@@ -149,12 +140,6 @@ Note: * planned actions not yet implemented.
 | `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. | ✅ Done |
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
-
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `modeling_get_modifier_data` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties (Geometry Nodes metadata optional). | 🚧 Planned |
 
 ---
 
@@ -458,6 +443,5 @@ Note: * planned actions not yet implemented.
 
 ## 🛠 Planned / In Progress
 
-- Scene/modeling introspection: `scene_get_constraints`, `modeling_get_modifier_data`, plus `scene_inspect` actions `constraints` and `modifier_data`.
 - Rig/curve/lattice introspection: `curve_get_data`, `lattice_get_points`, `armature_get_data`.
 - Mega tools: `mesh_inspect` with `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`.

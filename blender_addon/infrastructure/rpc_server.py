@@ -68,6 +68,7 @@ _NO_UNDO_PUSH_CMDS = {
 _NO_UNDO_PUSH_PREFIXES = (
     # Read-only inspections
     "scene.inspect_",
+    "scene.get_constraints",
     "collection.list",
     "collection.list_objects",
     "material.list",
@@ -82,6 +83,7 @@ _NO_UNDO_PUSH_PREFIXES = (
     "mesh.get_attributes",
     "mesh.get_shape_keys",
     "mesh.list_groups",
+    "modeling.get_modifier_data",
     # Pure output generation (no scene edits expected)
     "export.",
     "baking.",

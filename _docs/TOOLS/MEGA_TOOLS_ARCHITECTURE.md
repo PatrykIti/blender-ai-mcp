@@ -17,7 +17,7 @@ They are wrappers only: standalone action handlers still exist and are the sourc
 |-----------|---------|----------|---------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | -1 |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | -2 |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints*`, `modifier_data*` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints*`, `modeling_get_modifier_data*` | -3 |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | -3 |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
 | `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`, `summary` | `mesh_get_*` introspection tools | TBD |
@@ -26,7 +26,6 @@ They are wrappers only: standalone action handlers still exist and are the sourc
 Planned mega tools/actions are listed above but not counted in the total.
 Projected savings:
 - `mesh_inspect` would wrap 8 introspection tools (net -7 definitions) once implemented.
-- `scene_inspect` extensions (`constraints`, `modifier_data`) would wrap 2 tools (net -2).
 
 **`mesh_inspect.summary` sources (recommended):**
 - `scene_inspect(action="topology")` → counts
@@ -181,8 +180,8 @@ Detailed inspection queries for objects and scene.
 | `"topology"` | `object_name` (required), `detailed` | Returns vertex/edge/face/tri/quad/ngon counts. Optional: `detailed=True` for non-manifold checks. |
 | `"modifiers"` | `object_name` (optional), `include_disabled` | Returns modifier stacks. If `object_name` is None, scans all objects. |
 | `"materials"` | `material_filter`, `include_empty_slots` | Returns material slot audit across scene. |
-| `"constraints"`* | `object_name`, `include_bones` | Returns object (and optional bone) constraints. |
-| `"modifier_data"`* | `object_name`, `modifier_name` | Returns full modifier properties. |
+| `"constraints"` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. |
+| `"modifier_data"` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties. |
 
 ## Object Parameters
 
@@ -211,19 +210,20 @@ Detailed inspection queries for objects and scene.
 | `material_filter` | `str` | `None` | Filter materials by name substring. |
 | `include_empty_slots` | `bool` | `True` | Include empty material slots. |
 
-## Constraints Parameters (*planned*)
+## Constraints Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `object_name` | `str` | **required** | Target object. |
 | `include_bones` | `bool` | `False` | Include bone constraints (armatures). |
 
-## Modifier Data Parameters (*planned*)
+## Modifier Data Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `object_name` | `str` | **required** | Target object. |
 | `modifier_name` | `str` | `None` | Filter to a specific modifier. |
+| `include_node_tree` | `bool` | `False` | Include Geometry Nodes group metadata. |
 
 ## Examples
 
@@ -283,6 +283,8 @@ Detailed inspection queries for objects and scene.
 - `scene_inspect_mesh_topology` → `scene_inspect(action="topology", ...)`
 - `scene_inspect_modifiers` → `scene_inspect(action="modifiers", ...)`
 - `scene_inspect_material_slots` → `scene_inspect(action="materials", ...)`
+- `scene_get_constraints` → `scene_inspect(action="constraints", ...)`
+- `modeling_get_modifier_data` → `scene_inspect(action="modifier_data", ...)`
 
 ---
 

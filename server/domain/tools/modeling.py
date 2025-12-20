@@ -68,6 +68,16 @@ class IModelingTool(ABC):
         """Returns a list of modifiers on the specified object."""
         pass
 
+    @abstractmethod
+    def get_modifier_data(
+        self,
+        object_name: str,
+        modifier_name: Optional[str] = None,
+        include_node_tree: bool = False,
+    ) -> Dict[str, Any]:
+        """Returns full modifier properties (optionally Geometry Nodes metadata)."""
+        pass
+
     # ==========================================================================
     # TASK-038-1: Metaball Tools
     # ==========================================================================

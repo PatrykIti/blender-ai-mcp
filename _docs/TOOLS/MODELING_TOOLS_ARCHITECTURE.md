@@ -110,7 +110,71 @@ Example:
 
 ---
 
-# 6. modeling_convert_to_mesh ✅ Done
+# 6. modeling_get_modifier_data ✅ Done
+Returns full modifier properties (optionally Geometry Nodes metadata).
+
+Args:
+- object_name: str
+- modifier_name: str (optional; defaults to all)
+- include_node_tree: bool (default False)
+
+Returns:
+```json
+{
+  "object_name": "Body",
+  "modifier_count": 1,
+  "modifiers": [
+    {
+      "name": "Bevel",
+      "type": "BEVEL",
+      "properties": {"width": 0.002, "segments": 3},
+      "object_refs": []
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "modeling_get_modifier_data",
+  "args": {
+    "object_name": "Body",
+    "include_node_tree": false
+  }
+}
+```
+
+Geometry Nodes metadata (when include_node_tree=true):
+```json
+{
+  "name": "GN_Shell",
+  "is_linked": false,
+  "library_path": null,
+  "inputs": [
+    {
+      "name": "Bevel",
+      "identifier": "Input_2",
+      "socket_type": "NodeSocketFloat",
+      "default_value": 0.002,
+      "min": 0.0,
+      "max": 0.1,
+      "subtype": "DISTANCE"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Geometry",
+      "identifier": "Output_1",
+      "socket_type": "NodeSocketGeometry"
+    }
+  ]
+}
+```
+
+---
+
+# 7. modeling_convert_to_mesh ✅ Done
 Converts objects (Curve, Text, Surface) into a Mesh.
 
 Example:
@@ -125,7 +189,7 @@ Example:
 
 ---
 
-# 7. modeling_join_objects ✅ Done
+# 8. modeling_join_objects ✅ Done
 Joins multiple mesh objects into a single one.
 
 Example:
@@ -140,7 +204,7 @@ Example:
 
 ---
 
-# 8. modeling_separate_object ✅ Done
+# 9. modeling_separate_object ✅ Done
 Separates a mesh object into multiple objects.
 
 Types: `LOOSE` (loose parts), `SELECTED` (selected faces), `MATERIAL`.
@@ -158,7 +222,7 @@ Example:
 
 ---
 
-# 9. modeling_set_origin ✅ Done
+# 10. modeling_set_origin ✅ Done
 Sets the object's origin point.
 
 Types: `GEOMETRY`, `ORIGIN_CURSOR`, `ORIGIN_CENTER_OF_MASS`.
@@ -176,7 +240,7 @@ Example:
 
 ---
 
-# 10. metaball_create ✅ Done (TASK-038)
+# 11. metaball_create ✅ Done (TASK-038)
 Creates a metaball object for organic blob shapes. Metaballs automatically merge when close together.
 
 **Tag:** `[OBJECT MODE][NON-DESTRUCTIVE]`
@@ -209,7 +273,7 @@ Use Case:
 
 ---
 
-# 11. metaball_add_element ✅ Done (TASK-038)
+# 12. metaball_add_element ✅ Done (TASK-038)
 Adds an element to an existing metaball for organic merging effects.
 
 **Tag:** `[OBJECT MODE][NON-DESTRUCTIVE]`
@@ -241,7 +305,7 @@ Use Case:
 
 ---
 
-# 12. metaball_to_mesh ✅ Done (TASK-038)
+# 13. metaball_to_mesh ✅ Done (TASK-038)
 Converts a metaball to mesh geometry for further editing.
 
 **Tag:** `[OBJECT MODE][DESTRUCTIVE]`
@@ -268,7 +332,7 @@ Use Case:
 
 ---
 
-# 13. skin_create_skeleton ✅ Done (TASK-038)
+# 14. skin_create_skeleton ✅ Done (TASK-038)
 Creates a skeleton mesh with Skin modifier for tubular/organic structures.
 
 **Tag:** `[OBJECT MODE][NON-DESTRUCTIVE]`
@@ -299,7 +363,7 @@ Use Case:
 
 ---
 
-# 14. skin_set_radius ✅ Done (TASK-038)
+# 15. skin_set_radius ✅ Done (TASK-038)
 Sets skin radius at vertices for varying thickness along skeleton.
 
 **Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`

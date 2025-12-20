@@ -150,7 +150,7 @@ Object Mode operations for scene management and inspection.
 | `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
 | `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
 | `scene_get_origin_info` | Get origin/pivot point info | ✅ |
-| `scene_get_constraints` | List object (and bone) constraints | 🚧 |
+| `scene_get_constraints` | List object (and bone) constraints | ✅ |
 
 ---
 
@@ -165,7 +165,7 @@ Object Mode operations for creating and transforming objects.
 | `modeling_add_modifier` | Add modifier to object | ✅ |
 | `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
 | `modeling_list_modifiers` | List modifiers on object | ✅ |
-| `modeling_get_modifier_data` | Get full modifier properties | 🚧 |
+| `modeling_get_modifier_data` | Get full modifier properties | ✅ |
 | `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
 | `modeling_join_objects` | Join multiple objects | ✅ |
 | `modeling_separate_object` | Separate by loose parts/material | ✅ |
@@ -648,7 +648,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials, constraints*, modifier_data* | -3 | ✅ |
+| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -3 | ✅ |
 
 * planned actions
 
@@ -718,6 +718,7 @@ We recommend using Docker to run the MCP Server.
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
+        "scene_get_constraints",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -741,6 +742,7 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
+        "modeling_get_modifier_data",
         "mesh_select",
         "mesh_select_targeted",
         "mesh_delete_selected",
@@ -904,6 +906,7 @@ We recommend using Docker to run the MCP Server.
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
+        "scene_get_constraints",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -927,6 +930,7 @@ We recommend using Docker to run the MCP Server.
         "modeling_separate_object",
         "modeling_set_origin",
         "modeling_list_modifiers",
+        "modeling_get_modifier_data",
         "mesh_select",
         "mesh_select_targeted",
         "mesh_delete_selected",
@@ -1139,6 +1143,7 @@ enabled_tools = [
   "scene_get_hierarchy",
   "scene_get_bounding_box",
   "scene_get_origin_info",
+  "scene_get_constraints",
   "collection_list",
   "collection_list_objects",
   "collection_manage",
@@ -1162,6 +1167,7 @@ enabled_tools = [
   "modeling_separate_object",
   "modeling_set_origin",
   "modeling_list_modifiers",
+  "modeling_get_modifier_data",
   "mesh_select",
   "mesh_select_targeted",
   "mesh_delete_selected",

@@ -4,7 +4,7 @@
 **Category:** Scene/Modeling Introspection  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-014-14 (Scene Inspect Modifiers)  
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ---
 
@@ -53,7 +53,7 @@ Expose full modifier parameters and object constraints for 1:1 reconstruction an
 
 ### TASK-072-1: modeling_get_modifier_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def modeling_get_modifier_data(
@@ -143,7 +143,7 @@ def modeling_get_modifier_data(
 
 ### TASK-072-2: scene_get_constraints
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def scene_get_constraints(
@@ -181,7 +181,7 @@ def scene_get_constraints(
 
 ### TASK-072-3: scene_inspect action extensions
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 Add new actions to the existing mega tool (do not remove standalone tools):
 

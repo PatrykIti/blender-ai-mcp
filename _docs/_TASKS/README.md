@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 7 tasks (~32 sub-tasks)
+- **To Do:** 6 tasks (~32 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 135
+- **Done:** 136
 
 ---
 
@@ -26,7 +26,6 @@ Task board for the project. Update statuses in markdown files.
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-072](./TASK-072_Modifier_Constraint_Introspection.md) | **Modifier & Constraint Introspection** | 🔴 High | Full modifier props + constraints |
 | [TASK-073](./TASK-073_Rig_Curve_Lattice_Introspection.md) | **Rig/Curve/Lattice Introspection** | 🔴 High | Curve splines, lattice points, armature data |
 
 ### Mega Tools
@@ -48,6 +47,7 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-072](./TASK-072_Modifier_Constraint_Introspection.md) | **Modifier & Constraint Introspection** | 🔴 High | 2025-12-19 |
 | [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | 2025-12-19 |
 | [TASK-070](./TASK-070_Mesh_Topology_Introspection_Extensions.md) | **Mesh Topology Introspection Extensions** | 🔴 High | 2025-12-19 |
 | [TASK-069](./TASK-069_Repo_Community_Standards_and_Release_Docs.md) | **Repo Professionalization: SECURITY/SUPPORT/CoC + Support Matrix + Release/Dev Docs** | 🟡 Medium | 2025-12-18 |

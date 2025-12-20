@@ -3,14 +3,20 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object"],
-  "sample_prompts": ["inspect the cube", "analyze mesh topology", "show modifiers on object"],
+  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object", "constraints"],
+  "sample_prompts": ["inspect the cube", "analyze mesh topology", "show modifiers on object", "inspect constraints on rig"],
   "parameters": {
-    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials"], "required": true},
+    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials", "constraints", "modifier_data"], "required": true},
     "object_name": {"type": "string", "default": null},
-    "detailed": {"type": "bool", "default": false}
+    "detailed": {"type": "bool", "default": false},
+    "include_disabled": {"type": "bool", "default": true},
+    "material_filter": {"type": "string", "default": null},
+    "include_empty_slots": {"type": "bool", "default": true},
+    "include_bones": {"type": "bool", "default": false},
+    "modifier_name": {"type": "string", "default": null},
+    "include_node_tree": {"type": "bool", "default": false}
   },
-  "related_tools": ["scene_list_objects", "scene_context"],
+  "related_tools": ["scene_list_objects", "scene_context", "scene_get_constraints", "modeling_get_modifier_data"],
   "patterns": [],
-  "description": "Detailed inspection of objects, topology, modifiers, and materials."
+  "description": "Detailed inspection of objects, topology, modifiers, materials, constraints, and modifier data."
 }

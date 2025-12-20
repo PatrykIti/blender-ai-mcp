@@ -42,7 +42,7 @@ Unified tools that consolidate multiple related operations to reduce LLM context
 |-----------|---------|-------------|
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | Detailed inspection queries for objects. |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | Detailed inspection queries for objects. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
 
@@ -67,6 +67,7 @@ Managing objects at the scene level.
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
+| `scene_get_constraints` | `object_name` (str), `include_bones` (bool) | Returns object (and optional bone) constraints. |
 
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 
@@ -116,6 +117,7 @@ Geometry creation and editing.
 | `modeling_separate_object` | `name` (str), `type` (str) | Separates a mesh object into new objects (LOOSE, SELECTED, MATERIAL). |
 | `modeling_set_origin` | `name` (str), `type` (str) | Sets the origin point of an object (e.g., ORIGIN_GEOMETRY_TO_CURSOR). |
 | `modeling_list_modifiers` | `name` (str) | Lists all modifiers currently on the specified object. |
+| `modeling_get_modifier_data` | `object_name` (str), `modifier_name` (str), `include_node_tree` (bool) | Returns full modifier properties (Geometry Nodes metadata optional). |
 | `metaball_create` | `name`, `location`, `element_type`, `radius`, `resolution`, `threshold` | Creates a metaball object for organic blob shapes. |
 | `metaball_add_element` | `metaball_name`, `element_type`, `location`, `radius`, `stiffness` | Adds element to existing metaball for merging. |
 | `metaball_to_mesh` | `metaball_name`, `apply_resolution` | Converts metaball to mesh for editing. |

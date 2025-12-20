@@ -337,7 +337,31 @@ Example:
 
 ---
 
-# 18. scene_set_mode ✅ Done
+# 18. scene_get_constraints ✅ Done
+Returns object (and optional bone) constraints.
+
+Args:
+- object_name: str
+- include_bones: bool (default False)
+
+Returns: Dict with:
+- constraints (object-level)
+- bone_constraints (optional, for armatures)
+
+Example:
+```json
+{
+  "tool": "scene_get_constraints",
+  "args": {
+    "object_name": "Rig",
+    "include_bones": true
+  }
+}
+```
+
+---
+
+# 19. scene_set_mode ✅ Done
 Sets the Blender interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
 
 **Tag:** `[SCENE][SAFE]`

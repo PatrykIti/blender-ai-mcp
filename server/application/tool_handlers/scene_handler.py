@@ -158,6 +158,15 @@ class SceneToolHandler(ISceneTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
+    def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
+        response = self.rpc.send_request("scene.get_constraints", {
+            "object_name": object_name,
+            "include_bones": include_bones
+        })
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
     # TASK-043: Scene Utility Tools
     def rename_object(self, old_name: str, new_name: str) -> str:
         response = self.rpc.send_request("scene.rename_object", {

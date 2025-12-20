@@ -87,6 +87,11 @@ class ISceneTool(ABC):
         """Audits modifier stacks for a specific object or the entire scene."""
         pass
 
+    @abstractmethod
+    def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
+        """Returns object (and optional bone) constraints."""
+        pass
+
     # TASK-043: Scene Utility Tools
     @abstractmethod
     def rename_object(self, old_name: str, new_name: str) -> str:

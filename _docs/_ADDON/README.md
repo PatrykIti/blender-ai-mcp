@@ -57,6 +57,7 @@ Technical details.
 | `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
+| `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
@@ -136,6 +137,7 @@ Technical details.
 | `set_origin` | `set_origin` | Sets the origin point of an object. |
 
 | `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
+| `modeling.get_modifier_data` | `get_modifier_data` | Returns full modifier properties (Geometry Nodes metadata optional). |
 | `modeling.metaball_create` | `metaball_create` | Creates metaball object. |
 | `modeling.metaball_add_element` | `metaball_add_element` | Adds element to metaball. |
 | `modeling.metaball_to_mesh` | `metaball_to_mesh` | Converts metaball to mesh. |
