@@ -1322,7 +1322,8 @@ enabled_tools = [
 *   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
 *   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
 
-### Viewport Output Modes & Temp Directory Mapping
+<details>
+<summary><strong>Viewport Output Modes &amp; Temp Directory Mapping</strong></summary>
 
 The `scene_get_viewport` tool supports multiple output modes via the `output_mode` argument:
 * `IMAGE` (default): returns a FastMCP `Image` resource (best for Cline / clients with native image support).
@@ -1341,6 +1342,8 @@ docker run -i --rm \
   -e BLENDER_AI_TMP_EXTERNAL_DIR=/host/tmp/blender-ai-mcp \
   ghcr.io/patrykiti/blender-ai-mcp:latest
 ```
+
+</details>
 
 ---
 
