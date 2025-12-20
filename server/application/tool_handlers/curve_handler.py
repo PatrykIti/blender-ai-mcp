@@ -30,3 +30,11 @@ class CurveToolHandler(ICurveTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    # TASK-073-1: Curve Get Data Tool
+    def get_data(self, object_name: str) -> str:
+        args = {"object_name": object_name}
+        response = self.rpc.send_request("curve.get_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

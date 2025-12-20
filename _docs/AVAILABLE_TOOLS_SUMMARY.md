@@ -153,12 +153,7 @@ Projected savings:
 | `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object. If target_object provided, auto-fits to bounding box. | ✅ Done |
 | `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice using Lattice modifier. Non-destructive deformation. | ✅ Done |
 | `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. | ✅ Done |
-
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. | 🚧 Planned |
+| `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. | ✅ Done |
 
 **Use Cases:**
 - Tapering towers (Eiffel Tower workflow)
@@ -260,12 +255,7 @@ Projected savings:
 |-----------|-----------|-------------|--------|
 | `curve_create` | `curve_type` (BEZIER/NURBS/PATH/CIRCLE), `location` | Creates a curve primitive object. | ✅ Done |
 | `curve_to_mesh` | `object_name` | Converts a curve object to mesh geometry. | ✅ Done |
-
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `curve_get_data` | `object_name` | Returns curve splines, points, and settings. | 🚧 Planned |
+| `curve_get_data` | `object_name` | Returns curve splines, points, and settings. | ✅ Done |
 
 ---
 
@@ -407,12 +397,7 @@ Projected savings:
 | `armature_bind` | `mesh_name`, `armature_name`, `bind_type` (AUTO/ENVELOPE/EMPTY) | Binds mesh to armature with automatic weight calculation. | ✅ Done |
 | `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses armature bone (rotation/location/scale in Pose Mode). | ✅ Done |
 | `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` (REPLACE/ADD/SUBTRACT) | Assigns weights to selected vertices for manual rigging. | ✅ Done |
-
-### Planned
-
-| Tool Name | Arguments | Description | Status |
-|-----------|-----------|-------------|--------|
-| `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). | 🚧 Planned |
+| `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). | ✅ Done |
 
 **Use Cases:**
 - Character rigging for games/film
@@ -443,5 +428,4 @@ Projected savings:
 
 ## 🛠 Planned / In Progress
 
-- Rig/curve/lattice introspection: `curve_get_data`, `lattice_get_points`, `armature_get_data`.
 - Mega tools: `mesh_inspect` with `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`.

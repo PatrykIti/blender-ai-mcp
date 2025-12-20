@@ -83,6 +83,9 @@ _NO_UNDO_PUSH_PREFIXES = (
     "mesh.get_attributes",
     "mesh.get_shape_keys",
     "mesh.list_groups",
+    "curve.get_data",
+    "lattice.get_points",
+    "armature.get_data",
     "modeling.get_modifier_data",
     # Pure output generation (no scene edits expected)
     "export.",

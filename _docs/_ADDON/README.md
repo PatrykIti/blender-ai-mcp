@@ -225,6 +225,7 @@ Technical details.
 |-------------|----------------|-------------|
 | `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
 | `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
+| `curve.get_data` | `get_data` | Returns curve splines, points, and settings. |
 
 
 ### Text (`application/handlers/text.py`)
@@ -303,6 +304,19 @@ Technical details.
 | `lattice.create` | `lattice_create` | Creates lattice object, auto-fits to target bounds. |
 | `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
 | `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
+| `lattice.get_points` | `get_points` | Returns lattice point positions and resolution. |
+
+
+### Armature (`application/handlers/armature.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `armature.create` | `create` | Creates armature with initial bone. |
+| `armature.add_bone` | `add_bone` | Adds a bone to an existing armature. |
+| `armature.bind` | `bind` | Binds mesh to armature (AUTO/ENVELOPE/EMPTY). |
+| `armature.pose_bone` | `pose_bone` | Poses a bone in Pose Mode. |
+| `armature.weight_paint_assign` | `weight_paint_assign` | Assigns weights to selected vertices for a bone group. |
+| `armature.get_data` | `get_data` | Returns bone hierarchy and optional pose data. |
 
 
 ### Extraction (`application/handlers/extraction.py`)

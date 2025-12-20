@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [119](./119-2025-12-19-rig-curve-lattice-introspection.md) | 2025-12-19 | **Rig, curve, and lattice introspection** | - |
 | [118](./118-2025-12-19-modifier-constraint-introspection.md) | 2025-12-19 | **Modifier & constraint introspection** | - |
 | [117](./117-2025-12-19-mesh-introspection-advanced.md) | 2025-12-19 | **Mesh introspection advanced (normals/weights/attributes/shape keys)** | - |
 | [116](./116-2025-12-19-mesh-topology-introspection.md) | 2025-12-19 | **Mesh topology introspection tools (edges/faces/UVs)** | - |

@@ -23,6 +23,7 @@ Lattice tools enable **non-destructive shape manipulation** using a cage of cont
 | `lattice_create` | Creates lattice object, auto-fits to target | High |
 | `lattice_bind` | Binds object to lattice via modifier | High |
 | `lattice_edit_point` | Moves lattice control points | High |
+| `lattice_get_points` | Returns lattice points and resolution | High |
 
 ---
 
@@ -133,6 +134,38 @@ lattice_edit_point(lattice_name="Lattice", point_index=7, offset=[1.0, 1.0, 2.0]
 
 ---
 
+### lattice_get_points
+
+**[OBJECT MODE][READ-ONLY][SAFE]**
+
+Returns lattice point positions and resolution for reconstruction.
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | str | *required* | Name of lattice to inspect |
+
+**Example:**
+```python
+lattice_get_points(object_name="TowerLattice")
+```
+
+**Returns (example):**
+```json
+{
+  "object_name": "TowerLattice",
+  "points_u": 2,
+  "points_v": 2,
+  "points_w": 4,
+  "point_count": 16,
+  "points": [
+    {"co": [0, 0, 0], "co_deform": [0, 0, 0]}
+  ]
+}
+```
+
+---
+
 ## Architecture
 
 ### Layer Structure
@@ -168,6 +201,7 @@ lattice_edit_point(lattice_name="Lattice", point_index=7, offset=[1.0, 1.0, 2.0]
 | `lattice.create` | `LatticeHandler.lattice_create()` |
 | `lattice.bind` | `LatticeHandler.lattice_bind()` |
 | `lattice.edit_point` | `LatticeHandler.lattice_edit_point()` |
+| `lattice.get_points` | `LatticeHandler.get_points()` |
 
 ---
 

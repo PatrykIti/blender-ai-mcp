@@ -9,6 +9,7 @@ from typing import Literal
 from mcp.server.fastmcp import Context
 
 from server.adapters.mcp.registry import mcp
+from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_armature_handler
 
 
@@ -212,4 +213,38 @@ def armature_weight_paint_assign(
         vertex_group=vertex_group,
         weight=weight,
         mode=mode
+    )
+
+
+@mcp.tool()
+def armature_get_data(
+    ctx: Context,
+    object_name: str,
+    include_pose: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns armature bones and hierarchy.
+
+    Workflow: READ-ONLY | USE → rig reconstruction in workflows
+
+    Args:
+        object_name: Name of the armature object to inspect
+        include_pose: Include pose transforms (location/rotation/scale)
+
+    Returns:
+        JSON string with bone hierarchy and optional pose data.
+    """
+    def execute():
+        handler = get_handler()
+        try:
+            import json
+            data = handler.get_data(object_name, include_pose)
+            return json.dumps(data, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="armature_get_data",
+        params={"object_name": object_name, "include_pose": include_pose},
+        direct_executor=execute
     )

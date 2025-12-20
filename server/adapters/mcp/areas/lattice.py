@@ -183,3 +183,35 @@ def lattice_edit_point(
         },
         direct_executor=execute
     )
+
+
+@mcp.tool()
+def lattice_get_points(
+    ctx: Context,
+    object_name: str
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns lattice point positions and resolution.
+
+    Workflow: READ-ONLY | USE → lattice reconstruction in workflows
+
+    Args:
+        object_name: Name of the lattice object to inspect
+
+    Returns:
+        JSON string with lattice points and resolution.
+    """
+    def execute():
+        handler = get_lattice_handler()
+        try:
+            import json
+            data = handler.get_points(object_name)
+            return json.dumps(data, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="lattice_get_points",
+        params={"object_name": object_name},
+        direct_executor=execute
+    )

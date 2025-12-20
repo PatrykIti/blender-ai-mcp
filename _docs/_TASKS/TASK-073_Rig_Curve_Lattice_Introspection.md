@@ -4,7 +4,7 @@
 **Category:** Rig/Geometry Introspection  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-021 (Curves), TASK-033 (Lattice), TASK-037 (Armature)  
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ---
 
@@ -61,7 +61,7 @@ Expose full data for curves, lattices, and armatures so they can be reconstructe
 
 ### TASK-073-1: curve_get_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def curve_get_data(
@@ -99,7 +99,7 @@ def curve_get_data(
 
 ### TASK-073-2: lattice_get_points
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def lattice_get_points(
@@ -136,7 +136,7 @@ def lattice_get_points(
 
 ### TASK-073-3: armature_get_data
 
-**Status:** ⏳ TODO
+**Status:** ✅ Done
 
 ```python
 def armature_get_data(

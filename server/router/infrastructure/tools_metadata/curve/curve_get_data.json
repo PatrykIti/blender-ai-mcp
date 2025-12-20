@@ -1,0 +1,24 @@
+{
+  "tool_name": "curve_get_data",
+  "category": "curve",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["curve", "spline", "bezier", "nurbs", "points", "handles", "inspect", "data"],
+  "sample_prompts": [
+    "get curve data",
+    "dump curve splines",
+    "inspect curve points",
+    "show bezier handles",
+    "export curve settings"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the curve object to inspect"
+    }
+  },
+  "related_tools": ["curve_create", "curve_to_mesh", "modeling_convert_to_mesh"],
+  "patterns": [],
+  "description": "Returns curve splines, points, and settings for reconstruction."
+}

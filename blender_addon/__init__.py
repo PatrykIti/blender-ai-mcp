@@ -193,6 +193,7 @@ def register():
         # TASK-021: Phase 2.6 - Curves & Procedural
         rpc_server.register_handler("curve.create_curve", curve_handler.create_curve)
         rpc_server.register_handler("curve.curve_to_mesh", curve_handler.curve_to_mesh)
+        rpc_server.register_handler("curve.get_data", curve_handler.get_data)
         rpc_server.register_handler("mesh.spin", mesh_handler.spin)
         rpc_server.register_handler("mesh.screw", mesh_handler.screw)
         rpc_server.register_handler("mesh.add_vertex", mesh_handler.add_vertex)
@@ -280,6 +281,7 @@ def register():
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
         rpc_server.register_handler("lattice.bind", lattice_handler.lattice_bind)
         rpc_server.register_handler("lattice.edit_point", lattice_handler.lattice_edit_point)
+        rpc_server.register_handler("lattice.get_points", lattice_handler.get_points)
 
         # TASK-044: Extraction Analysis Tools
         rpc_server.register_handler("extraction.deep_topology", extraction_handler.deep_topology)
@@ -300,6 +302,7 @@ def register():
         rpc_server.register_handler("armature.bind", armature_handler.bind)
         rpc_server.register_handler("armature.pose_bone", armature_handler.pose_bone)
         rpc_server.register_handler("armature.weight_paint_assign", armature_handler.weight_paint_assign)
+        rpc_server.register_handler("armature.get_data", armature_handler.get_data)
 
         rpc_server.start()
     else:

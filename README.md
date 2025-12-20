@@ -177,7 +177,7 @@ Object Mode operations for creating and transforming objects.
 | `lattice_create` | Create lattice fitted to object | ✅ |
 | `lattice_bind` | Bind object to lattice deformer | ✅ |
 | `lattice_edit_point` | Move lattice control points | ✅ |
-| `lattice_get_points` | Get lattice point positions | 🚧 |
+| `lattice_get_points` | Get lattice point positions | ✅ |
 
 #### Text Objects
 | Tool | Description | Status |
@@ -315,7 +315,7 @@ Curve creation and conversion.
 |------|-------------|--------|
 | `curve_create` | Create Bezier/NURBS/Path/Circle curve | ✅ |
 | `curve_to_mesh` | Convert curve to mesh | ✅ |
-| `curve_get_data` | Get curve splines and settings | 🚧 |
+| `curve_get_data` | Get curve splines and settings | ✅ |
 
 ---
 
@@ -498,7 +498,7 @@ Skeletal rigging and animation.
 | `armature_bind` | Bind mesh to armature (auto weights) | ✅ |
 | `armature_pose_bone` | Pose armature bone | ✅ |
 | `armature_weight_paint_assign` | Assign weights to vertex group | ✅ |
-| `armature_get_data` | Get armature bones and hierarchy | 🚧 |
+| `armature_get_data` | Get armature bones and hierarchy | ✅ |
 
 ---
 
@@ -800,6 +800,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "curve_get_data",
         "text_create",
         "text_edit",
         "text_to_mesh",
@@ -827,6 +828,7 @@ We recommend using Docker to run the MCP Server.
         "lattice_create",
         "lattice_bind",
         "lattice_edit_point",
+        "lattice_get_points",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -853,6 +855,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
+        "armature_get_data",
         "workflow_catalog",
         "router_set_goal",
         "router_get_status",
@@ -988,6 +991,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "curve_get_data",
         "text_create",
         "text_edit",
         "text_to_mesh",
@@ -1015,6 +1019,7 @@ We recommend using Docker to run the MCP Server.
         "lattice_create",
         "lattice_bind",
         "lattice_edit_point",
+        "lattice_get_points",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -1041,6 +1046,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
+        "armature_get_data",
         "workflow_catalog",
         "router_set_goal",
         "router_get_status",
@@ -1218,6 +1224,7 @@ enabled_tools = [
   "mesh_mirror",
   "curve_create",
   "curve_to_mesh",
+  "curve_get_data",
   "text_create",
   "text_edit",
   "text_to_mesh",
@@ -1245,6 +1252,7 @@ enabled_tools = [
   "lattice_create",
   "lattice_bind",
   "lattice_edit_point",
+  "lattice_get_points",
   "mesh_set_proportional_edit",
   "system_set_mode",
   "system_undo",
@@ -1271,6 +1279,7 @@ enabled_tools = [
   "armature_bind",
   "armature_pose_bone",
   "armature_weight_paint_assign",
+  "armature_get_data",
   "workflow_catalog",
   "router_set_goal",
   "router_get_status",

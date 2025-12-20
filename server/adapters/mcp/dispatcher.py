@@ -286,6 +286,7 @@ class ToolDispatcher:
         self._safe_update(curve, {
             "curve_create": "create",
             "curve_to_mesh": "to_mesh",
+            "curve_get_data": "get_data",
         })
 
         # Sculpt tools
@@ -321,6 +322,7 @@ class ToolDispatcher:
             "lattice_create": "create",
             "lattice_bind": "bind",
             "lattice_edit_point": "edit_point",
+            "lattice_get_points": "get_points",
         })
 
         # Extraction tools
@@ -350,6 +352,7 @@ class ToolDispatcher:
             "armature_bind": "bind",
             "armature_pose_bone": "pose_bone",
             "armature_weight_paint_assign": "weight_paint_assign",
+            "armature_get_data": "get_data",
         })
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:

@@ -77,3 +77,35 @@ def curve_to_mesh(
         params={"object_name": object_name},
         direct_executor=execute
     )
+
+
+@mcp.tool()
+def curve_get_data(
+    ctx: Context,
+    object_name: str
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns curve splines, points, and settings.
+
+    Workflow: READ-ONLY | USE → curve reconstruction in workflows
+
+    Args:
+        object_name: Name of the curve object to inspect
+
+    Returns:
+        JSON string with curve data including splines and point handles.
+    """
+    def execute():
+        handler = get_curve_handler()
+        try:
+            import json
+            data = handler.get_data(object_name)
+            return json.dumps(data, indent=2)
+        except RuntimeError as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="curve_get_data",
+        params={"object_name": object_name},
+        direct_executor=execute
+    )

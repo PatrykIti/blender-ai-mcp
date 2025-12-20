@@ -193,6 +193,7 @@ Curve creation and conversion.
 |-----------|-----------|-------------|
 | `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
 | `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
+| `curve_get_data` | `object_name` | Returns curve splines, points, and settings. |
 
 ### Text Tools
 3D typography and text annotations.
@@ -251,6 +252,19 @@ Non-destructive shape deformation using control point cages.
 | `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object, auto-fits to target object bounds. |
 | `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice via Lattice modifier. |
 | `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. |
+| `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. |
+
+### Armature Tools
+Skeletal rigging and pose utilities.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `armature_create` | `name`, `location`, `bone_name`, `bone_length` | Creates armature with initial bone. |
+| `armature_add_bone` | `armature_name`, `bone_name`, `head`, `tail`, `parent_bone`, `use_connect` | Adds bone to existing armature with optional parenting. |
+| `armature_bind` | `mesh_name`, `armature_name`, `bind_type` | Binds mesh to armature (AUTO/ENVELOPE/EMPTY). |
+| `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses bone in Pose Mode. |
+| `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` | Assigns weights to selected vertices. |
+| `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). |
 
 ### System Tools
 System-level operations for mode switching, undo/redo, and file management.

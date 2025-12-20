@@ -74,3 +74,16 @@ class ILatticeTool(ABC):
             Success message with updated point positions.
         """
         pass
+
+    @abstractmethod
+    def get_points(self, object_name: str) -> str:
+        """
+        Returns lattice point positions and resolution.
+
+        Args:
+            object_name: Name of the lattice object to inspect
+
+        Returns:
+            JSON string with lattice points and resolution.
+        """
+        pass
