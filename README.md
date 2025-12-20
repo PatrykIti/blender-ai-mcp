@@ -119,7 +119,8 @@ Our goal is to enable AI to model complex 3D assets—from organs and biological
 
 ---
 
-### Scene Tools (`scene_*`)
+<details>
+<summary><strong>Scene Tools (`scene_*`) — ✅</strong></summary>
 
 Object Mode operations for scene management and inspection.
 
@@ -155,7 +156,10 @@ Object Mode operations for scene management and inspection.
 
 Note: `scene_get_constraints` is now internal to `scene_inspect(action="constraints")`.
 
-### Modeling Tools (`modeling_*`)
+</details>
+
+<details>
+<summary><strong>Modeling Tools (`modeling_*`) — ✅</strong></summary>
 
 Object Mode operations for creating and transforming objects.
 
@@ -196,7 +200,10 @@ Note: `modeling_get_modifier_data` is now internal to `scene_inspect(action="mod
 
 ---
 
-### Mesh Tools (`mesh_*`)
+</details>
+
+<details>
+<summary><strong>Mesh Tools (`mesh_*`) — ✅</strong></summary>
 
 Edit Mode operations for geometry manipulation.
 
@@ -303,7 +310,10 @@ Note: Mesh introspection actions are consolidated under `mesh_inspect` (internal
 
 ---
 
-### Curve Tools (`curve_*`)
+</details>
+
+<details>
+<summary><strong>Curve Tools (`curve_*`) — ✅</strong></summary>
 
 Curve creation and conversion.
 
@@ -315,7 +325,10 @@ Curve creation and conversion.
 
 ---
 
-### Collection Tools (`collection_*`)
+</details>
+
+<details>
+<summary><strong>Collection Tools (`collection_*`) — ✅</strong></summary>
 
 Collection management and hierarchy.
 
@@ -327,7 +340,10 @@ Collection management and hierarchy.
 
 ---
 
-### Material Tools (`material_*`)
+</details>
+
+<details>
+<summary><strong>Material Tools (`material_*`) — ✅</strong></summary>
 
 Material creation and assignment.
 
@@ -343,7 +359,10 @@ Material creation and assignment.
 
 ---
 
-### UV Tools (`uv_*`)
+</details>
+
+<details>
+<summary><strong>UV Tools (`uv_*`) — ✅</strong></summary>
 
 UV mapping operations.
 
@@ -356,7 +375,10 @@ UV mapping operations.
 
 ---
 
-### System Tools (`system_*`)
+</details>
+
+<details>
+<summary><strong>System Tools (`system_*`) — ✅</strong></summary>
 
 Global project-level operations.
 
@@ -371,7 +393,10 @@ Global project-level operations.
 
 ---
 
-### Export Tools (`export_*`)
+</details>
+
+<details>
+<summary><strong>Export Tools (`export_*`) — ✅</strong></summary>
 
 File export operations.
 
@@ -383,7 +408,10 @@ File export operations.
 
 ---
 
-### Import Tools (`import_*`)
+</details>
+
+<details>
+<summary><strong>Import Tools (`import_*`) — ✅</strong></summary>
 
 File import operations.
 
@@ -396,7 +424,10 @@ File import operations.
 
 ---
 
-### Baking Tools (`bake_*`)
+</details>
+
+<details>
+<summary><strong>Baking Tools (`bake_*`) — ✅</strong></summary>
 
 Texture baking for game dev workflows.
 
@@ -409,7 +440,10 @@ Texture baking for game dev workflows.
 
 ---
 
-### Extraction Tools (`extraction_*`)
+</details>
+
+<details>
+<summary><strong>Extraction Tools (`extraction_*`) — ✅</strong></summary>
 
 Analysis tools for the Automatic Workflow Extraction System. Enables deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
 
@@ -424,7 +458,10 @@ Analysis tools for the Automatic Workflow Extraction System. Enables deep topolo
 
 ---
 
-### Metaball Tools (`metaball_*`)
+</details>
+
+<details>
+<summary><strong>Metaball Tools (`metaball_*`) — ✅</strong></summary>
 
 Organic blob primitives for medical/biological modeling.
 
@@ -436,7 +473,10 @@ Organic blob primitives for medical/biological modeling.
 
 ---
 
-### Macro Tools (`macro_*`)
+</details>
+
+<details>
+<summary><strong>Macro Tools (`macro_*`) — 🚧</strong></summary>
 
 High-level abstractions where one command executes hundreds of Blender operations.
 
@@ -452,7 +492,10 @@ High-level abstractions where one command executes hundreds of Blender operation
 
 ---
 
-### Sculpting Tools (`sculpt_*`)
+</details>
+
+<details>
+<summary><strong>Sculpting Tools (`sculpt_*`) — ✅</strong></summary>
 
 Organic shaping and sculpt workflows.
 
@@ -483,7 +526,10 @@ Organic shaping and sculpt workflows.
 
 ---
 
-### Armature Tools (`armature_*`)
+</details>
+
+<details>
+<summary><strong>Armature Tools (`armature_*`) — ✅</strong></summary>
 
 Skeletal rigging and animation.
 
@@ -497,6 +543,8 @@ Skeletal rigging and animation.
 | `armature_get_data` | Get armature bones and hierarchy | ✅ |
 
 ---
+
+</details>
 
 ### 🤖 Router Supervisor ✅
 
@@ -639,6 +687,9 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 > Standalone MCP tools are exposed only where explicitly listed.
 > Router can still execute internal actions via handler mappings and per-tool JSON metadata.
 
+<details>
+<summary><strong>Mega Tools (LLM Context Optimization)</strong></summary>
+
 ### Scene Mega Tools
 
 | Mega Tool | Actions | Savings | Status |
@@ -658,6 +709,8 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 **Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context).
 
 `mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
+
+</details>
 
 ---
 
