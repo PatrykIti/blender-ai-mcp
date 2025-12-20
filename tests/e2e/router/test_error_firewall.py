@@ -164,7 +164,8 @@ class TestFirewallParameterModification:
 
         if extrude_tool:
             # Depth should remain unchanged
-            assert extrude_tool["params"].get("depth") == 0.5
+            move = extrude_tool["params"].get("move") or []
+            assert isinstance(move, (list, tuple)) and move[2] == 0.5
 
 
 class TestFirewallConfiguration:

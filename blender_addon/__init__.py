@@ -119,6 +119,7 @@ def register():
         rpc_server.register_handler("modeling.get_modifier_data", modeling_handler.get_modifier_data)
 
         # Mesh (Edit Mode)
+        rpc_server.register_handler("mesh.select", mesh_handler.select)
         rpc_server.register_handler("mesh.select_all", mesh_handler.select_all)
         rpc_server.register_handler("mesh.delete_selected", mesh_handler.delete_selected)
         rpc_server.register_handler("mesh.select_by_index", mesh_handler.select_by_index)

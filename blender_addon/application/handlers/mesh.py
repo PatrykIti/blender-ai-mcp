@@ -35,6 +35,28 @@ class MeshHandler:
         bpy.ops.mesh.select_all(action=action)
         return "Deselected all" if deselect else "Selected all"
 
+    def select(self, action="all", boundary_mode="EDGE"):
+        """
+        [EDIT MODE][SELECTION-BASED][SAFE] Selection helper for basic actions.
+
+        Args:
+            action: all, none, linked, more, less, boundary
+            boundary_mode: EDGE or VERT (only for boundary action)
+        """
+        if action == "all":
+            return self.select_all(deselect=False)
+        if action == "none":
+            return self.select_all(deselect=True)
+        if action == "linked":
+            return self.select_linked()
+        if action == "more":
+            return self.select_more()
+        if action == "less":
+            return self.select_less()
+        if action == "boundary":
+            return self.select_boundary(mode=boundary_mode)
+        raise ValueError(f"Unknown selection action: {action}")
+
     def delete_selected(self, type='VERT'):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected elements.

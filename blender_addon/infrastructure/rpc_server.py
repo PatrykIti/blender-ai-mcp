@@ -63,6 +63,7 @@ _NO_UNDO_PUSH_CMDS = {
     "mesh.select_ring",
     "mesh.select_by_location",
     "mesh.set_proportional_edit",
+    "mesh.select",
 }
 
 _NO_UNDO_PUSH_PREFIXES = (

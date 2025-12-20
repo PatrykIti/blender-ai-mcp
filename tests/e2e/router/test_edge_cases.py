@@ -182,7 +182,8 @@ class TestInvalidParameters:
         extrude_tool = next((t for t in tools if t["tool"] == "mesh_extrude_region"), None)
         if extrude_tool:
             # Depth may be clamped based on object dimensions
-            assert isinstance(extrude_tool["params"].get("depth"), (int, float))
+            move = extrude_tool["params"].get("move")
+            assert isinstance(move, (list, tuple)) and len(move) == 3
 
 
 class TestNonMeshObjects:

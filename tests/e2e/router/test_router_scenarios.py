@@ -153,6 +153,7 @@ class TestFullPipelineExecution:
     def test_bevel_after_mode_switch_works(self, router, rpc_client, clean_scene):
         """Test: Bevel with mode correction executes correctly."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
+        rpc_client.send_request("system.set_mode", {"mode": "OBJECT"})
 
         # Stay in OBJECT mode, try to bevel
         tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1, "segments": 2})
