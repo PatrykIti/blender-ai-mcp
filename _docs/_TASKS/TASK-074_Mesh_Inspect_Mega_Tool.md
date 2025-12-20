@@ -22,10 +22,11 @@ Provide a single `mesh_inspect` mega tool that wraps mesh introspection actions 
 | `_docs/_TASKS/README.md` | Update task list + stats |
 | `_docs/_CHANGELOG/{NN}-{date}-mesh-inspect-mega-tool.md` | Create changelog entry |
 | `_docs/_CHANGELOG/README.md` | Add changelog index entry |
-| `_docs/_MCP_SERVER/README.md` | Add `mesh_inspect` to mega tools table |
-| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add `mesh_inspect` to Implemented table |
-| `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Document `mesh_inspect` actions + summary |
-| `README.md` | Update mega tools table + summary sources |
+| `_docs/_MCP_SERVER/README.md` | Add `mesh_inspect` to mega tools table; remove/annotate single-action `mesh_get_*` entries if they become internal-only; note router can still call internal actions via handler + metadata |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add `mesh_inspect` to Implemented table; move/annotate `mesh_get_*` tools that become internal-only under mega tool mapping |
+| `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Document `mesh_inspect` actions + summary; add explicit note that mega tool actions are internal-only (no `@mcp.tool`) and router calls handlers via metadata |
+| `_docs/TOOLS/MESH_TOOLS_ARCHITECTURE.md` | If `mesh_get_*` wrappers are removed, mark them as internal actions used by `mesh_inspect` (no `@mcp.tool`) |
+| `README.md` | Update mega tools table + summary sources; remove/annotate `mesh_get_*` if they are internal-only; add note about handler+metadata execution path |
 
 ---
 
@@ -51,12 +52,20 @@ def mesh_inspect(ctx: Context, action: str, **kwargs) -> str:
 - `summary` → lightweight overview (counts + flags only)
 
 **Rules:**
-- Standalone tools remain required for workflow execution and router compatibility
-  (internal functions; optional MCP wrappers if needed).
+- Standalone tools remain required for workflow execution and router compatibility,
+  but they should be internal functions (no `@mcp.tool`) when covered by a mega tool.
+- For TASK-070 to TASK-073: any new single-action tools that are part of a mega tool
+  must not be registered as `@mcp.tool` (internal only).
+- Every function in `server/adapters/mcp/areas/` has a handler counterpart, and the
+  router calls handlers directly using per-tool JSON metadata, even if there is no
+  `@mcp.tool` registration.
+- Remove redundant `@mcp.tool` wrappers for actions already included in a mega tool;
+  keep only internal functions. Example: keep `_scene_inspect_mesh_topology` and the
+  handler call, but drop any `scene_inspect_mesh_topology` MCP wrapper.
 - Mega tool is read-only and delegates to the underlying tool outputs.
 - Action names are short aliases of `mesh_get_*` for LLM context efficiency.
 - `summary` must avoid large payloads (no per-vertex/face arrays).
-- Implement action handlers as internal functions (no `@mcp.tool`) and share them with any standalone wrappers.
+- Implement action handlers as internal functions only (no `@mcp.tool`) for actions covered by the mega tool.
 
 **Summary JSON (example):**
 ```json
