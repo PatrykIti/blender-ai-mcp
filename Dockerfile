@@ -26,8 +26,7 @@ COPY pyproject.toml poetry.lock* README.md LICENSE.md /app/
 RUN poetry config virtualenvs.create false
 
 # Install dependencies and clean up cache
-RUN poetry install --no-interaction --no-ansi --no-root --only main && \
-    rm -rf /root/.cache/pypoetry /root/.cache/pip
+RUN poetry install --no-interaction --no-ansi --no-root --only main
 
 # Pre-download LaBSE model for fast router startup (~1.2GB)
 # This avoids 60-70s download delay on every container start
