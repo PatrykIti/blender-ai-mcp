@@ -300,7 +300,7 @@ Tools for browsing and importing workflow definitions (no execution).
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `workflow_catalog` | `action` (list/get/search/import), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite` | Lists/searches/inspects workflows and imports YAML/JSON files. Returns `needs_input` when overwrite confirmation is required. |
+| `workflow_catalog` | `action` (list/get/search/import/import_init/import_append/import_finalize/import_abort), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite`, `content`, `content_type`, `source_name`, `session_id`, `chunk_data`, `chunk_index`, `total_chunks` | Lists/searches/inspects workflows and imports YAML/JSON via file path, inline content, or chunked sessions. Returns `needs_input` when overwrite confirmation is required. |
 
 ### Router Tools
 Tools for managing the Router Supervisor and executing matched workflows.

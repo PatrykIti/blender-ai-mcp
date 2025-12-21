@@ -186,3 +186,74 @@ def test_import_workflow_overwrite_removes_files_and_embeddings(workflow_setup):
     assert vector_store.deleted_namespace == VectorNamespace.WORKFLOWS
     assert result["removed_embeddings"] == 2
     assert registry.reload_calls == 1
+
+
+def test_import_workflow_content_json(workflow_setup):
+    workflows_dir, _incoming_dir, loader, registry = workflow_setup
+    content = json.dumps(
+        {
+            "name": "inline_workflow",
+            "steps": [
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {"primitive_type": "Cube"},
+                }
+            ],
+        }
+    )
+
+    handler = WorkflowCatalogToolHandler(
+        workflow_loader=loader,
+        workflow_classifier=DummyWorkflowClassifier(),
+        vector_store=DummyVectorStore(),
+    )
+
+    result = handler.import_workflow_content(content=content, content_type="json")
+
+    assert result["status"] == "imported"
+    assert result["workflow_name"] == "inline_workflow"
+    assert result["source_type"] == "inline"
+    assert Path(result["saved_path"]).exists()
+    assert Path(result["saved_path"]).parent == workflows_dir
+    assert registry.reload_calls == 1
+
+
+def test_import_workflow_chunked_json(workflow_setup):
+    workflows_dir, _incoming_dir, loader, registry = workflow_setup
+    content = json.dumps(
+        {
+            "name": "chunked_workflow",
+            "steps": [
+                {
+                    "tool": "modeling_create_primitive",
+                    "params": {"primitive_type": "Cube"},
+                }
+            ],
+        }
+    )
+
+    handler = WorkflowCatalogToolHandler(
+        workflow_loader=loader,
+        workflow_classifier=DummyWorkflowClassifier(),
+        vector_store=DummyVectorStore(),
+    )
+
+    init = handler.begin_import_session(content_type="json", source_name="chunked.json")
+    session_id = init["session_id"]
+
+    midpoint = len(content) // 2
+    first_chunk = content[:midpoint]
+    second_chunk = content[midpoint:]
+
+    handler.append_import_chunk(session_id=session_id, chunk_data=first_chunk, chunk_index=0)
+    handler.append_import_chunk(session_id=session_id, chunk_data=second_chunk, chunk_index=1)
+
+    result = handler.finalize_import_session(session_id=session_id)
+
+    assert result["status"] == "imported"
+    assert result["workflow_name"] == "chunked_workflow"
+    assert result["source_type"] == "chunked"
+    assert result["session_id"] == session_id
+    assert Path(result["saved_path"]).exists()
+    assert Path(result["saved_path"]).parent == workflows_dir
+    assert registry.reload_calls == 1

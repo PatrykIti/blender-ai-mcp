@@ -243,13 +243,29 @@ class PickleToLanceMigration:
 @mcp.tool()
 def workflow_catalog(
     ctx: Context,
-    action: Literal["list", "get", "search", "import"],
+    action: Literal[
+        "list",
+        "get",
+        "search",
+        "import",
+        "import_init",
+        "import_append",
+        "import_finalize",
+        "import_abort",
+    ],
     workflow_name: Optional[str] = None,
     query: Optional[str] = None,
     top_k: int = 5,
     threshold: float = 0.0,
     filepath: Optional[str] = None,
     overwrite: Optional[bool] = None,
+    content: Optional[str] = None,
+    content_type: Optional[str] = None,
+    source_name: Optional[str] = None,
+    session_id: Optional[str] = None,
+    chunk_data: Optional[str] = None,
+    chunk_index: Optional[int] = None,
+    total_chunks: Optional[int] = None,
 ) -> str:
     """
     [SYSTEM][SAFE] Browse, search, and import workflow definitions (no execution).
@@ -258,7 +274,8 @@ def workflow_catalog(
       - list: List available workflows with summary metadata
       - get: Get a workflow definition (including steps) by name
       - search: Find workflows similar to a query (semantic when available)
-      - import: Import workflow from YAML/JSON file into the server
+      - import: Import workflow from YAML/JSON file or inline content
+      - import_init/import_append/import_finalize/import_abort: Chunked import session helpers
     """
 ```
 
@@ -267,6 +284,15 @@ def workflow_catalog(
 ```text
 # Import a workflow definition
 workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+
+# Inline import (no file path required)
+workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+
+# Chunked import
+workflow_catalog(action="import_init", content_type="json", source_name="chair.json")
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
 
 # If a name conflict is detected
 workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=true)

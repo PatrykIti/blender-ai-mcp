@@ -1,5 +1,6 @@
 import difflib
 import logging
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -25,6 +26,7 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         self._workflow_loader = workflow_loader
         self._workflow_classifier = workflow_classifier
         self._vector_store = vector_store
+        self._import_sessions: Dict[str, Dict[str, Any]] = {}
 
     def list_workflows(self) -> Dict[str, Any]:
         workflows = self._workflow_loader.load_all()
@@ -184,6 +186,191 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
                 "filepath": str(path),
             }
 
+        suffix = path.suffix.lower()
+        format_hint = "json" if suffix == ".json" else "yaml"
+        result = self._import_loaded_workflow(
+            workflow=workflow,
+            overwrite=overwrite,
+            format_hint=format_hint,
+            source_path=str(path),
+        )
+        result["source_type"] = "file"
+        return result
+
+    def import_workflow_content(
+        self,
+        content: str,
+        content_type: Optional[str] = None,
+        overwrite: Optional[bool] = None,
+        source_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if not content:
+            return {"status": "error", "message": "content is required for import"}
+
+        try:
+            workflow, resolved_format = self._workflow_loader.load_content(
+                content=content,
+                source_name=source_name,
+                format_hint=content_type,
+            )
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to load workflow content: {e}",
+                "source_name": source_name or "inline",
+            }
+
+        result = self._import_loaded_workflow(
+            workflow=workflow,
+            overwrite=overwrite,
+            format_hint=resolved_format,
+            source_path=source_name or "inline",
+        )
+        result["source_type"] = "inline"
+        result["content_type"] = resolved_format
+        return result
+
+    def begin_import_session(
+        self,
+        content_type: Optional[str] = None,
+        source_name: Optional[str] = None,
+        total_chunks: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        session_id = uuid.uuid4().hex
+        normalized_type = (content_type or "").strip().lower() or None
+        if normalized_type in {"yml", "yaml", "text/yaml", "application/x-yaml"}:
+            normalized_type = "yaml"
+        elif normalized_type in {"json", "application/json"}:
+            normalized_type = "json"
+        elif normalized_type:
+            return {
+                "status": "error",
+                "message": f"Unsupported content_type: {content_type}",
+            }
+
+        self._import_sessions[session_id] = {
+            "chunks": [],
+            "indexed_chunks": {},
+            "use_indexed": False,
+            "bytes_received": 0,
+            "content_type": normalized_type,
+            "source_name": source_name,
+            "total_chunks": total_chunks,
+        }
+
+        return {
+            "status": "ready",
+            "session_id": session_id,
+            "content_type": normalized_type,
+            "source_name": source_name,
+            "total_chunks": total_chunks,
+        }
+
+    def append_import_chunk(
+        self,
+        session_id: str,
+        chunk_data: str,
+        chunk_index: Optional[int] = None,
+        total_chunks: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        session = self._import_sessions.get(session_id)
+        if session is None:
+            return {"status": "error", "message": "Unknown session_id"}
+        if chunk_data is None:
+            return {"status": "error", "message": "chunk_data is required"}
+
+        if total_chunks is not None:
+            session["total_chunks"] = total_chunks
+
+        if session["use_indexed"]:
+            if chunk_index is None:
+                return {"status": "error", "message": "chunk_index required for indexed session"}
+            session["indexed_chunks"][int(chunk_index)] = chunk_data
+        else:
+            if chunk_index is None:
+                session["chunks"].append(chunk_data)
+            else:
+                indexed = {}
+                for idx, data in enumerate(session["chunks"]):
+                    indexed[idx] = data
+                session["chunks"] = []
+                session["indexed_chunks"] = indexed
+                session["use_indexed"] = True
+                session["indexed_chunks"][int(chunk_index)] = chunk_data
+
+        session["bytes_received"] += len(chunk_data)
+        received = (
+            len(session["indexed_chunks"])
+            if session["use_indexed"]
+            else len(session["chunks"])
+        )
+
+        return {
+            "status": "chunk_received",
+            "session_id": session_id,
+            "received_chunks": received,
+            "total_chunks": session.get("total_chunks"),
+            "bytes_received": session["bytes_received"],
+        }
+
+    def finalize_import_session(
+        self,
+        session_id: str,
+        overwrite: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        session = self._import_sessions.get(session_id)
+        if session is None:
+            return {"status": "error", "message": "Unknown session_id"}
+
+        total_chunks = session.get("total_chunks")
+        if session["use_indexed"]:
+            if total_chunks is not None and len(session["indexed_chunks"]) < total_chunks:
+                missing = sorted(
+                    set(range(int(total_chunks))) - set(session["indexed_chunks"].keys())
+                )
+                return {
+                    "status": "error",
+                    "message": "Missing chunks for session",
+                    "missing_indices": missing,
+                }
+            chunks = [session["indexed_chunks"][idx] for idx in sorted(session["indexed_chunks"])]
+        else:
+            if total_chunks is not None and len(session["chunks"]) < total_chunks:
+                return {
+                    "status": "error",
+                    "message": "Missing chunks for session",
+                }
+            chunks = list(session["chunks"])
+
+        content = "".join(chunks)
+        result = self.import_workflow_content(
+            content=content,
+            content_type=session.get("content_type"),
+            overwrite=overwrite,
+            source_name=session.get("source_name") or f"session:{session_id}",
+        )
+        result["source_type"] = "chunked"
+        result["session_id"] = session_id
+        result["received_chunks"] = len(chunks)
+        result["bytes_received"] = session["bytes_received"]
+
+        if result.get("status") != "needs_input":
+            self._import_sessions.pop(session_id, None)
+        return result
+
+    def abort_import_session(self, session_id: str) -> Dict[str, Any]:
+        if session_id in self._import_sessions:
+            self._import_sessions.pop(session_id, None)
+            return {"status": "aborted", "session_id": session_id}
+        return {"status": "error", "message": "Unknown session_id"}
+
+    def _import_loaded_workflow(
+        self,
+        workflow: Any,
+        overwrite: Optional[bool],
+        format_hint: str,
+        source_path: str,
+    ) -> Dict[str, Any]:
         workflow_name = workflow.name
         existing_definition = self._workflow_loader.get_workflow(workflow_name)
         existing_files = self._find_existing_workflow_files(workflow_name)
@@ -219,11 +406,6 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
                 "message": "Import skipped by user",
                 "conflicts": conflicts,
             }
-
-        format_hint = "yaml"
-        suffix = path.suffix.lower()
-        if suffix == ".json":
-            format_hint = "json"
 
         saved_path = self._workflow_loader.save_workflow(
             workflow=workflow,
@@ -262,7 +444,7 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
             "status": "imported",
             "workflow_name": workflow_name,
             "saved_path": str(saved_path),
-            "source_path": str(path),
+            "source_path": source_path,
             "overwritten": has_conflict,
             "removed_files": removed_files,
             "removed_embeddings": removed_embeddings,

@@ -394,6 +394,15 @@ IntentClassifier            WorkflowIntentClassifier
 # Import a workflow from YAML/JSON
 workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
 
+# Import inline content (no file path required)
+workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+
+# Chunked import (for large workflows)
+workflow_catalog(action="import_init", content_type="json", source_name="chair.json")
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
+
 # If a name conflict is detected
 workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=true)
 workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=false)

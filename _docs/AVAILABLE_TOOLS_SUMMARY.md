@@ -409,7 +409,7 @@ None.
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
-| `workflow_catalog` | `action` (list/get/search/import), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite` | Lists/searches/inspects workflow definitions and imports YAML/JSON workflows. Returns `needs_input` when a name conflict requires overwrite confirmation. | ✅ Done |
+| `workflow_catalog` | `action` (list/get/search/import/import_init/import_append/import_finalize/import_abort), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite`, `content`, `content_type`, `source_name`, `session_id`, `chunk_data`, `chunk_index`, `total_chunks` | Lists/searches/inspects workflow definitions and imports YAML/JSON via file path, inline content, or chunked sessions. Returns `needs_input` when a name conflict requires overwrite confirmation. | ✅ Done |
 | `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match/disabled/error), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
 | `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |

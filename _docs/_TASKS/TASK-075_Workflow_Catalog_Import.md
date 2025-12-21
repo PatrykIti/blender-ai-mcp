@@ -1,13 +1,13 @@
 # TASK-075: Workflow Catalog Import (YAML/JSON)
 
 ## Goal
-Enable importing external workflow YAML/JSON files into the MCP server without rebuilding Docker images, while preserving safety (no execution) and keeping router/vector-store state consistent.
+Enable importing external workflow YAML/JSON workflows into the MCP server without rebuilding Docker images, while preserving safety (no execution) and keeping router/vector-store state consistent. Support file paths, inline content, and chunked uploads to avoid container filesystem mounts.
 
 ## Context
 The current workflow discovery tool (`workflow_catalog`) is read-only and only lists/searches workflows already present in `server/router/application/workflows/custom/`. This forces a rebuild or file copy into the image for new workflows, which slows iteration.
 
 We need a safe, explicit import path that:
-- reads a workflow definition from a user-provided file path,
+- reads a workflow definition from a user-provided file path or inline content,
 - persists it into the server’s workflow directory,
 - refreshes the router registry and embeddings,
 - and asks for confirmation when a workflow with the same name already exists.
@@ -26,7 +26,7 @@ We need a safe, explicit import path that:
 ## Requirements
 
 ### Functional
-1) Import a workflow from a local YAML/JSON file path.
+1) Import a workflow from a local YAML/JSON file path or inline content.
 2) Validate the workflow using existing `WorkflowLoader` rules.
 3) Persist to the server’s custom workflow directory.
 4) If a workflow with the same name exists (in loader cache, files, or vector store), ask for confirmation.
@@ -48,7 +48,7 @@ We need a safe, explicit import path that:
 - Must not require network access or external dependencies beyond current YAML/JSON parsing.
 
 ## Proposed API
-Extend MCP tool `workflow_catalog` with an import action:
+Extend MCP tool `workflow_catalog` with import actions:
 
 ```
 workflow_catalog(
@@ -56,10 +56,46 @@ workflow_catalog(
   filepath="/abs/or/relative/path/to/workflow.yaml",
   overwrite=true|false|None
 )
+
+workflow_catalog(
+  action="import",
+  content="<yaml or json>",
+  content_type="yaml|json|None",
+  source_name="optional-label.yaml",
+  overwrite=true|false|None
+)
+
+workflow_catalog(
+  action="import_init",
+  content_type="yaml|json|None",
+  source_name="optional-label.yaml",
+  total_chunks=10
+)
+
+workflow_catalog(
+  action="import_append",
+  session_id="...",
+  chunk_data="...",
+  chunk_index=0,
+  total_chunks=10
+)
+
+workflow_catalog(
+  action="import_finalize",
+  session_id="...",
+  overwrite=true|false|None
+)
 ```
 
 ### Input Parameters
-- `filepath` (required): path to YAML/JSON workflow file.
+- `filepath` (optional): path to YAML/JSON workflow file (file-based import).
+- `content` (optional): inline YAML/JSON workflow content (inline import).
+- `content_type` (optional): hint for inline/chunked parsing (`yaml`/`json`).
+- `source_name` (optional): label for inline/chunked content (for error messages).
+- `session_id` (required for chunked): import session ID from `import_init`.
+- `chunk_data` (required for chunked): chunk payload for `import_append`.
+- `chunk_index` (optional): chunk index for `import_append` (0-based).
+- `total_chunks` (optional): expected chunk count for chunked import.
 - `overwrite` (optional):
   - `None` → ask via `needs_input` if conflicts exist,
   - `true` → replace existing workflow + clear embeddings,
@@ -75,6 +111,10 @@ workflow_catalog(
   - `vector_store_records`: integer count
 - `saved_path`: path in custom workflows directory (if imported)
 - `source_path`: original file path
+- `source_type`: `file` | `inline` | `chunked`
+- `content_type`: `yaml` | `json` (for inline/chunked imports)
+- `session_id`: chunked session ID (chunked import only)
+- `received_chunks`: count of chunks received (chunked import only)
 - `overwritten`: boolean
 - `removed_files`: list of deleted workflow files (when overwriting)
 - `removed_embeddings`: count of deleted vector records
@@ -87,12 +127,27 @@ workflow_catalog(
 | `imported` | Workflow saved and caches refreshed | None |
 | `needs_input` | Conflict detected and `overwrite` not provided | Call again with `overwrite=true` or `overwrite=false` |
 | `skipped` | Conflict detected and `overwrite=false` | None |
-| `error` | Validation or IO failure | Fix input file/path and retry |
+| `error` | Validation or IO failure | Fix input and retry |
+| `ready` | Chunked session initialized | Send chunks with `import_append` |
+| `chunk_received` | Chunk accepted | Continue appending until complete |
+| `aborted` | Chunked session removed | Restart import if needed |
 
 ### Interaction Examples
 ```
 # First import
 workflow_catalog(action="import", filepath="/tmp/chair.yaml")
+-> {"status":"imported","workflow_name":"chair_workflow",...}
+
+# Inline import
+workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+-> {"status":"imported","workflow_name":"chair_workflow",...}
+
+# Chunked import
+workflow_catalog(action="import_init", content_type="yaml", source_name="chair.yaml", total_chunks=2)
+-> {"status":"ready","session_id":"..."}
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
 -> {"status":"imported","workflow_name":"chair_workflow",...}
 
 # Conflict without overwrite
@@ -111,8 +166,8 @@ workflow_catalog(action="import", filepath="/tmp/chair.yaml", overwrite=false)
 ## Detailed Flow
 
 ### Import Happy Path
-1) `workflow_catalog(action="import", filepath=...)`
-2) `WorkflowLoader.load_file()` validates and parses the file
+1) `workflow_catalog(action="import", filepath=...)` or `workflow_catalog(action="import", content=...)`
+2) `WorkflowLoader.load_file()` or `WorkflowLoader.load_content()` validates and parses the workflow
 3) File is saved into custom workflows directory
 4) Loader cache reloaded (`WorkflowLoader.reload()`)
 5) Registry reloaded (`WorkflowRegistry.load_custom_workflows(reload=True)`)
@@ -144,25 +199,29 @@ workflow_catalog(action="import", filepath="/tmp/chair.yaml", overwrite=false)
 ## Edge Cases
 - File does not exist → `error` with details
 - Unsupported extension → `error`
+- Unsupported inline `content_type` → `error`
 - YAML invalid or missing required fields → `error`
 - Workflow name has spaces → validation error from `WorkflowLoader`
 - Multiple existing files with same name but different extensions
 - Vector store unavailable → skip deletion with warning; still import
+ - Chunked import missing chunks → `error` with missing indices
 
 ## Implementation Plan
 
 ### 1) Domain Interface
-- Extend `IWorkflowCatalogTool` with `import_workflow(filepath, overwrite)`
+- Extend `IWorkflowCatalogTool` with `import_workflow_content`, chunked session helpers
 
 ### 2) Handler Implementation
 - `WorkflowCatalogToolHandler.import_workflow()`
+- `WorkflowCatalogToolHandler.import_workflow_content()`
+- Chunked session methods
 - Reuse `WorkflowLoader` for validation and persistence
 - Inject `vector_store` (for conflict detection + deletion)
 - Safe overwrite logic with explicit `overwrite` flag
 
 ### 3) MCP Adapter
-- Add `action="import"` to `workflow_catalog` tool
-- Accept `filepath`, `overwrite` args
+- Add `import_init/import_append/import_finalize/import_abort`
+- Accept `filepath`, `content`, `content_type`, `source_name`, `session_id`, `chunk_*`, `overwrite`
 - Return JSON with `needs_input` on conflict
 
 ### 4) DI Wiring
@@ -183,6 +242,7 @@ workflow_catalog(action="import", filepath="/tmp/chair.yaml", overwrite=false)
 - Persist with `WorkflowLoader.save_workflow()` to ensure consistent structure.
 - Maintain non-destructive behavior unless `overwrite=true`.
 - Do not call `router_set_goal` or run workflow steps.
+ - Chunked import is in-memory only (no extra volume mounts required).
 
 ## Logging / Telemetry
 - Log import status and conflicts via existing MCP context logging.
@@ -223,6 +283,8 @@ workflow_catalog(action="import", filepath="/tmp/chair.yaml", overwrite=false)
    - Expect `status: imported`, old embeddings removed.
 5) **Invalid YAML**
    - Expect `status: error`.
+6) **Chunked missing chunk**
+   - Expect `status: error` with missing indices.
 
 ## Rollout / Rollback
 - Safe to roll out immediately; import is opt-in.
