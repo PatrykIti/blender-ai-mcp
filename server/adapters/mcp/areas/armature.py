@@ -8,7 +8,7 @@ Exposes armature tools via FastMCP.
 from typing import Literal
 from mcp.server.fastmcp import Context
 
-from server.adapters.mcp.registry import mcp
+from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_armature_handler
 
