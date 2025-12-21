@@ -474,6 +474,8 @@ Mesh introspection mega tool (summary + raw payloads).
 | `attribute_name` | `str` | `None` | Attribute name (default: list attributes only). |
 | `group_name` | `str` | `None` | Vertex group name (default: all groups). |
 | `include_deltas` | `bool` | `False` | Include per-vertex shape key deltas. |
+| `offset` | `int` | `None` | Paging offset (applied after selection filter). |
+| `limit` | `int` | `None` | Max items to return (paging). |
 
 ## Action → Parameter Hints
 
@@ -483,6 +485,7 @@ Mesh introspection mega tool (summary + raw payloads).
 - `"attributes"`: `attribute_name` (optional) + `selected_only`
 - `"shape_keys"`: `include_deltas` (optional)
 - `"group_weights"`: `group_name` (optional) + `selected_only`
+- `offset`/`limit`: optional paging over returned items (after selection filter)
 
 ## Examples
 
@@ -514,6 +517,18 @@ Mesh introspection mega tool (summary + raw payloads).
     "action": "shape_keys",
     "object_name": "Face",
     "include_deltas": true
+  }
+}
+```
+
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "normals",
+    "object_name": "Body",
+    "offset": 0,
+    "limit": 5000
   }
 }
 ```

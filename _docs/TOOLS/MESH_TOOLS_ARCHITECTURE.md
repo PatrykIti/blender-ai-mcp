@@ -1441,7 +1441,11 @@ Returns:
 {
   "loop_count": 2048,
   "selected_count": 128,
+  "filtered_count": 128,
   "returned_count": 128,
+  "offset": 0,
+  "limit": 128,
+  "has_more": true,
   "loops": [
     {"loop_index": 0, "vert": 12, "normal": [0.0, 0.0, 1.0]}
   ],

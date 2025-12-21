@@ -72,6 +72,16 @@
       "type": "bool",
       "default": false,
       "description": "Include per-vertex shape key deltas"
+    },
+    "offset": {
+      "type": "int",
+      "default": null,
+      "description": "Paging offset applied after selection filtering"
+    },
+    "limit": {
+      "type": "int",
+      "default": null,
+      "description": "Max items to return (paging)"
     }
   },
   "related_tools": [

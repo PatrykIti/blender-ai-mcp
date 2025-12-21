@@ -132,22 +132,52 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> dict:
+    def get_vertex_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_vertex_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def get_edge_data(self, object_name: str, selected_only: bool = False) -> dict:
+    def get_edge_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_edge_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def get_face_data(self, object_name: str, selected_only: bool = False) -> dict:
+    def get_face_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_face_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -157,18 +187,34 @@ class MeshToolHandler(IMeshTool):
         self,
         object_name: str,
         uv_layer: Optional[str] = None,
-        selected_only: bool = False
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if uv_layer is not None:
             args["uv_layer"] = uv_layer
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_uv_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def get_loop_normals(self, object_name: str, selected_only: bool = False) -> dict:
+    def get_loop_normals(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_loop_normals", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -178,11 +224,17 @@ class MeshToolHandler(IMeshTool):
         self,
         object_name: str,
         group_name: Optional[str] = None,
-        selected_only: bool = False
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if group_name is not None:
             args["group_name"] = group_name
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_vertex_group_weights", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -192,18 +244,34 @@ class MeshToolHandler(IMeshTool):
         self,
         object_name: str,
         attribute_name: Optional[str] = None,
-        selected_only: bool = False
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if attribute_name is not None:
             args["attribute_name"] = attribute_name
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_attributes", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def get_shape_keys(self, object_name: str, include_deltas: bool = False) -> dict:
+    def get_shape_keys(
+        self,
+        object_name: str,
+        include_deltas: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> dict:
         args = {"object_name": object_name, "include_deltas": include_deltas}
+        if offset is not None:
+            args["offset"] = offset
+        if limit is not None:
+            args["limit"] = limit
         response = self.rpc.send_request("mesh.get_shape_keys", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")

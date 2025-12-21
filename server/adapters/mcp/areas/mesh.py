@@ -625,6 +625,8 @@ def mesh_inspect(
     attribute_name: Optional[str] = None,
     group_name: Optional[str] = None,
     include_deltas: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
 ) -> str:
     """
     [MESH][READ-ONLY][SAFE] Mega tool for mesh introspection.
@@ -647,6 +649,7 @@ def mesh_inspect(
     - "attributes": attribute_name (optional) + selected_only
     - "shape_keys": include_deltas (optional)
     - "group_weights": group_name (optional) + selected_only
+    - "offset"/"limit": optional paging over returned items (after selection filter)
 
     Workflow: READ-ONLY | USE → mesh reconstruction and quick audits
 
@@ -663,21 +666,21 @@ def mesh_inspect(
         if action == "summary":
             return _mesh_inspect_summary(ctx, object_name)
         elif action == "vertices":
-            return _mesh_get_vertex_data(ctx, object_name, selected_only)
+            return _mesh_get_vertex_data(ctx, object_name, selected_only, offset, limit)
         elif action == "edges":
-            return _mesh_get_edge_data(ctx, object_name, selected_only)
+            return _mesh_get_edge_data(ctx, object_name, selected_only, offset, limit)
         elif action == "faces":
-            return _mesh_get_face_data(ctx, object_name, selected_only)
+            return _mesh_get_face_data(ctx, object_name, selected_only, offset, limit)
         elif action == "uvs":
-            return _mesh_get_uv_data(ctx, object_name, uv_layer, selected_only)
+            return _mesh_get_uv_data(ctx, object_name, uv_layer, selected_only, offset, limit)
         elif action == "normals":
-            return _mesh_get_loop_normals(ctx, object_name, selected_only)
+            return _mesh_get_loop_normals(ctx, object_name, selected_only, offset, limit)
         elif action == "attributes":
-            return _mesh_get_attributes(ctx, object_name, attribute_name, selected_only)
+            return _mesh_get_attributes(ctx, object_name, attribute_name, selected_only, offset, limit)
         elif action == "shape_keys":
-            return _mesh_get_shape_keys(ctx, object_name, include_deltas)
+            return _mesh_get_shape_keys(ctx, object_name, include_deltas, offset, limit)
         elif action == "group_weights":
-            return _mesh_get_vertex_group_weights(ctx, object_name, group_name, selected_only)
+            return _mesh_get_vertex_group_weights(ctx, object_name, group_name, selected_only, offset, limit)
         else:
             return (
                 f"Unknown action '{action}'. Valid actions: summary, vertices, edges, "
@@ -694,6 +697,8 @@ def mesh_inspect(
             "attribute_name": attribute_name,
             "group_name": group_name,
             "include_deltas": include_deltas,
+            "offset": offset,
+            "limit": limit,
         },
         direct_executor=execute
     )
@@ -703,14 +708,16 @@ def mesh_inspect(
 def _mesh_get_vertex_data(
     ctx: Context,
     object_name: str,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states for programmatic analysis.
     """
     try:
         import json
-        result = get_mesh_handler().get_vertex_data(object_name, selected_only)
+        result = get_mesh_handler().get_vertex_data(object_name, selected_only, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
@@ -720,14 +727,16 @@ def _mesh_get_vertex_data(
 def _mesh_get_edge_data(
     ctx: Context,
     object_name: str,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity + attributes.
     """
     try:
         import json
-        result = get_mesh_handler().get_edge_data(object_name, selected_only)
+        result = get_mesh_handler().get_edge_data(object_name, selected_only, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
@@ -737,14 +746,16 @@ def _mesh_get_edge_data(
 def _mesh_get_face_data(
     ctx: Context,
     object_name: str,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity + attributes.
     """
     try:
         import json
-        result = get_mesh_handler().get_face_data(object_name, selected_only)
+        result = get_mesh_handler().get_face_data(object_name, selected_only, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
@@ -755,14 +766,16 @@ def _mesh_get_uv_data(
     ctx: Context,
     object_name: str,
     uv_layer: Optional[str] = None,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
     """
     try:
         import json
-        result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only)
+        result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
@@ -772,14 +785,16 @@ def _mesh_get_uv_data(
 def _mesh_get_loop_normals(
     ctx: Context,
     object_name: str,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns per-loop normals (split/custom).
     """
     try:
         import json
-        result = get_mesh_handler().get_loop_normals(object_name, selected_only)
+        result = get_mesh_handler().get_loop_normals(object_name, selected_only, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)
@@ -790,7 +805,9 @@ def _mesh_get_vertex_group_weights(
     ctx: Context,
     object_name: str,
     group_name: Optional[str] = None,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex group weights.
@@ -800,7 +817,9 @@ def _mesh_get_vertex_group_weights(
         result = get_mesh_handler().get_vertex_group_weights(
             object_name,
             group_name,
-            selected_only
+            selected_only,
+            offset,
+            limit
         )
         return json.dumps(result, indent=2)
     except RuntimeError as e:
@@ -812,7 +831,9 @@ def _mesh_get_attributes(
     ctx: Context,
     object_name: str,
     attribute_name: Optional[str] = None,
-    selected_only: bool = False
+    selected_only: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns mesh attribute data (vertex colors, layers).
@@ -822,7 +843,9 @@ def _mesh_get_attributes(
         result = get_mesh_handler().get_attributes(
             object_name,
             attribute_name,
-            selected_only
+            selected_only,
+            offset,
+            limit
         )
         return json.dumps(result, indent=2)
     except RuntimeError as e:
@@ -833,14 +856,16 @@ def _mesh_get_attributes(
 def _mesh_get_shape_keys(
     ctx: Context,
     object_name: str,
-    include_deltas: bool = False
+    include_deltas: bool = False,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None
 ) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
     """
     try:
         import json
-        result = get_mesh_handler().get_shape_keys(object_name, include_deltas)
+        result = get_mesh_handler().get_shape_keys(object_name, include_deltas, offset, limit)
         return json.dumps(result, indent=2)
     except RuntimeError as e:
         return str(e)

@@ -26,6 +26,14 @@ class MeshHandler:
         bm = bmesh.from_edit_mesh(obj.data)
         return bm
 
+    def _normalize_paging(self, offset, limit):
+        """Normalizes paging params to (offset:int>=0, limit:int|None)."""
+        safe_offset = 0 if offset is None else max(int(offset), 0)
+        if limit is None:
+            return safe_offset, None
+        safe_limit = max(int(limit), 0)
+        return safe_offset, safe_limit
+
     def _get_auto_smooth_state(self, obj):
         """
         Blender 5.0+: Auto Smooth is represented by the Smooth by Angle modifier.
@@ -618,7 +626,7 @@ class MeshHandler:
         
         return f"Shrunk selection by one step ({initial_count} -> {final_count} vertices)"
 
-    def get_vertex_data(self, object_name, selected_only=False):
+    def get_vertex_data(self, object_name, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states.
         """
@@ -638,6 +646,8 @@ class MeshHandler:
         
         vertices = []
         selected_count = 0
+        offset, limit = self._normalize_paging(offset, limit)
+        seen = 0
         
         for v in bm.verts:
             if v.select:
@@ -646,26 +656,40 @@ class MeshHandler:
             # Skip if selected_only is True and vertex is not selected
             if selected_only and not v.select:
                 continue
-            
+
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(vertices) >= limit:
+                break
+
             vertices.append({
                 "index": v.index,
                 "position": [round(v.co.x, 6), round(v.co.y, 6), round(v.co.z, 6)],
                 "selected": v.select
             })
+            seen += 1
         
         # Restore previous mode
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
         
+        filtered_count = selected_count if selected_only else len(bm.verts)
+        has_more = limit is not None and (offset + len(vertices)) < filtered_count
+
         return {
             "object_name": object_name,
             "vertex_count": len(bm.verts),
             "selected_count": selected_count,
+            "filtered_count": filtered_count,
             "returned_count": len(vertices),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "vertices": vertices
         }
 
-    def get_edge_data(self, object_name, selected_only=False):
+    def get_edge_data(self, object_name, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity and attributes.
         """
@@ -686,12 +710,20 @@ class MeshHandler:
 
         edges = []
         selected_count = 0
+        offset, limit = self._normalize_paging(offset, limit)
+        seen = 0
 
         for e in bm.edges:
             if e.select:
                 selected_count += 1
             if selected_only and not e.select:
                 continue
+
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(edges) >= limit:
+                break
 
             smooth = getattr(e, "smooth", True)
             edges.append({
@@ -705,19 +737,27 @@ class MeshHandler:
                 "bevel_weight": round(float(getattr(e, "bevel_weight", 0.0)), 6),
                 "selected": e.select,
             })
+            seen += 1
 
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
+
+        filtered_count = selected_count if selected_only else len(bm.edges)
+        has_more = limit is not None and (offset + len(edges)) < filtered_count
 
         return {
             "object_name": object_name,
             "edge_count": len(bm.edges),
             "selected_count": selected_count,
+            "filtered_count": filtered_count,
             "returned_count": len(edges),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "edges": edges,
         }
 
-    def get_face_data(self, object_name, selected_only=False):
+    def get_face_data(self, object_name, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity and attributes.
         """
@@ -738,12 +778,20 @@ class MeshHandler:
 
         faces = []
         selected_count = 0
+        offset, limit = self._normalize_paging(offset, limit)
+        seen = 0
 
         for f in bm.faces:
             if f.select:
                 selected_count += 1
             if selected_only and not f.select:
                 continue
+
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(faces) >= limit:
+                break
 
             normal = f.normal
             center = f.calc_center_median()
@@ -757,19 +805,27 @@ class MeshHandler:
                 "material_index": f.material_index,
                 "selected": f.select,
             })
+            seen += 1
 
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
+
+        filtered_count = selected_count if selected_only else len(bm.faces)
+        has_more = limit is not None and (offset + len(faces)) < filtered_count
 
         return {
             "object_name": object_name,
             "face_count": len(bm.faces),
             "selected_count": selected_count,
+            "filtered_count": filtered_count,
             "returned_count": len(faces),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "faces": faces,
         }
 
-    def get_uv_data(self, object_name, uv_layer=None, selected_only=False):
+    def get_uv_data(self, object_name, uv_layer=None, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
         """
@@ -799,12 +855,20 @@ class MeshHandler:
 
         faces = []
         selected_count = 0
+        offset, limit = self._normalize_paging(offset, limit)
+        seen = 0
 
         for f in bm.faces:
             if f.select:
                 selected_count += 1
             if selected_only and not f.select:
                 continue
+
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(faces) >= limit:
+                break
 
             verts = []
             uvs = []
@@ -818,20 +882,28 @@ class MeshHandler:
                 "verts": verts,
                 "uvs": uvs,
             })
+            seen += 1
 
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
+
+        filtered_count = selected_count if selected_only else len(bm.faces)
+        has_more = limit is not None and (offset + len(faces)) < filtered_count
 
         return {
             "object_name": object_name,
             "uv_layer": getattr(uv_layer_ref, "name", uv_layer),
             "face_count": len(bm.faces),
             "selected_count": selected_count,
+            "filtered_count": filtered_count,
             "returned_count": len(faces),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "faces": faces,
         }
 
-    def get_loop_normals(self, object_name, selected_only=False):
+    def get_loop_normals(self, object_name, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns per-loop normals (split/custom).
         """
@@ -868,9 +940,16 @@ class MeshHandler:
 
         loops = []
         corner_normals = mesh.corner_normals
+        offset, limit = self._normalize_paging(offset, limit)
+        seen = 0
         for loop_index, loop in enumerate(mesh.loops):
             if selected_only and loop_index not in selected_loop_indices:
                 continue
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(loops) >= limit:
+                break
             normal = corner_normals[loop_index]
             if hasattr(normal, "vector"):
                 normal = normal.vector
@@ -879,6 +958,7 @@ class MeshHandler:
                 "vert": loop.vertex_index,
                 "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
             })
+            seen += 1
 
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
@@ -887,11 +967,18 @@ class MeshHandler:
         if auto_smooth_angle is not None:
             auto_smooth_angle = round(float(auto_smooth_angle), 6)
 
+        filtered_count = len(selected_loop_indices) if selected_only else len(mesh.loops)
+        has_more = limit is not None and (offset + len(loops)) < filtered_count
+
         return {
             "object_name": object_name,
             "loop_count": len(mesh.loops),
             "selected_count": len(selected_loop_indices),
+            "filtered_count": filtered_count,
             "returned_count": len(loops),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "loops": loops,
             "auto_smooth": auto_smooth,
             "auto_smooth_angle": auto_smooth_angle,
@@ -899,7 +986,7 @@ class MeshHandler:
             "custom_normals": bool(mesh.has_custom_normals),
         }
 
-    def get_vertex_group_weights(self, object_name, group_name=None, selected_only=False):
+    def get_vertex_group_weights(self, object_name, group_name=None, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns vertex group weights.
         """
@@ -923,6 +1010,8 @@ class MeshHandler:
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
 
+        offset, limit = self._normalize_paging(offset, limit)
+
         if group_name:
             target_group = obj.vertex_groups.get(group_name)
             if not target_group:
@@ -945,13 +1034,24 @@ class MeshHandler:
 
         if group_name:
             weights = weights_by_group[target_group.index]
+            filtered_count = len(weights)
+            if limit is None:
+                paged_weights = weights[offset:]
+            else:
+                paged_weights = weights[offset:offset + limit]
+            returned_count = len(paged_weights)
+            has_more = limit is not None and (offset + returned_count) < filtered_count
             return {
                 "object_name": object_name,
                 "group_name": target_group.name,
                 "group_index": target_group.index,
                 "selected_count": selected_count,
-                "returned_count": len(weights),
-                "weights": weights,
+                "filtered_count": filtered_count,
+                "returned_count": returned_count,
+                "offset": offset,
+                "limit": limit,
+                "has_more": has_more,
+                "weights": paged_weights,
             }
 
         groups_data = []
@@ -964,14 +1064,27 @@ class MeshHandler:
                 "weights": weights,
             })
 
+        filtered_count = len(groups_data)
+        if limit is None:
+            paged_groups = groups_data[offset:]
+        else:
+            paged_groups = groups_data[offset:offset + limit]
+        returned_count = len(paged_groups)
+        has_more = limit is not None and (offset + returned_count) < filtered_count
+
         return {
             "object_name": object_name,
-            "group_count": len(groups_data),
+            "group_count": filtered_count,
             "selected_count": selected_count,
-            "groups": groups_data,
+            "filtered_count": filtered_count,
+            "returned_count": returned_count,
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
+            "groups": paged_groups,
         }
 
-    def get_attributes(self, object_name, attribute_name=None, selected_only=False):
+    def get_attributes(self, object_name, attribute_name=None, selected_only=False, offset=None, limit=None):
         """
         [EDIT MODE][READ-ONLY][SAFE] Returns mesh attribute data.
         """
@@ -1001,6 +1114,8 @@ class MeshHandler:
         mesh = obj.data
         attributes = mesh.attributes
 
+        offset, limit = self._normalize_paging(offset, limit)
+
         if attribute_name is None:
             attrs_data = []
             for attr in attributes:
@@ -1009,10 +1124,22 @@ class MeshHandler:
                     "data_type": attr.data_type,
                     "domain": attr.domain,
                 })
+            filtered_count = len(attrs_data)
+            if limit is None:
+                paged_attrs = attrs_data[offset:]
+            else:
+                paged_attrs = attrs_data[offset:offset + limit]
+            returned_count = len(paged_attrs)
+            has_more = limit is not None and (offset + returned_count) < filtered_count
             return {
                 "object_name": object_name,
-                "attribute_count": len(attrs_data),
-                "attributes": attrs_data,
+                "attribute_count": filtered_count,
+                "filtered_count": filtered_count,
+                "returned_count": returned_count,
+                "offset": offset,
+                "limit": limit,
+                "has_more": has_more,
+                "attributes": paged_attrs,
             }
 
         attr = attributes.get(attribute_name)
@@ -1066,9 +1193,16 @@ class MeshHandler:
 
         values = []
         data_type = attr.data_type
+        seen = 0
+        filtered_count = selected_count if selected_only and selected_indices is not None else len(attr.data)
         for index, data in enumerate(attr.data):
             if selected_only and selected_indices is not None and index not in selected_indices:
                 continue
+            if seen < offset:
+                seen += 1
+                continue
+            if limit is not None and len(values) >= limit:
+                break
 
             if data_type in ("FLOAT_COLOR", "BYTE_COLOR"):
                 value = _coerce_sequence(getattr(data, "color", []))
@@ -1087,6 +1221,9 @@ class MeshHandler:
                 "index": index,
                 "value": value,
             })
+            seen += 1
+
+        has_more = limit is not None and (offset + len(values)) < filtered_count
 
         return {
             "object_name": object_name,
@@ -1097,11 +1234,15 @@ class MeshHandler:
             },
             "element_count": len(attr.data),
             "selected_count": selected_count,
+            "filtered_count": filtered_count,
             "returned_count": len(values),
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
             "values": values,
         }
 
-    def get_shape_keys(self, object_name, include_deltas=False):
+    def get_shape_keys(self, object_name, include_deltas=False, offset=None, limit=None):
         """
         [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
         """
@@ -1123,6 +1264,11 @@ class MeshHandler:
             return {
                 "object_name": object_name,
                 "shape_key_count": 0,
+                "filtered_count": 0,
+                "returned_count": 0,
+                "offset": 0,
+                "limit": None,
+                "has_more": False,
                 "shape_keys": [],
             }
 
@@ -1158,13 +1304,27 @@ class MeshHandler:
 
             shape_keys_data.append(entry)
 
+        offset, limit = self._normalize_paging(offset, limit)
+        filtered_count = len(shape_keys_data)
+        if limit is None:
+            paged_keys = shape_keys_data[offset:]
+        else:
+            paged_keys = shape_keys_data[offset:offset + limit]
+        returned_count = len(paged_keys)
+        has_more = limit is not None and (offset + returned_count) < filtered_count
+
         if prev_mode != 'OBJECT':
             bpy.ops.object.mode_set(mode=prev_mode)
 
         return {
             "object_name": object_name,
             "shape_key_count": len(key_blocks),
-            "shape_keys": shape_keys_data,
+            "filtered_count": filtered_count,
+            "returned_count": returned_count,
+            "offset": offset,
+            "limit": limit,
+            "has_more": has_more,
+            "shape_keys": paged_keys,
         }
 
     def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):

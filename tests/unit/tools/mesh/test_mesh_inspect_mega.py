@@ -34,7 +34,7 @@ class TestMeshInspectMega:
             selected_only=True,
         )
 
-        mock_vertices.assert_called_once_with(self.mock_ctx, "Cube", True)
+        mock_vertices.assert_called_once_with(self.mock_ctx, "Cube", True, None, None)
         assert result == "Vertices"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -46,7 +46,7 @@ class TestMeshInspectMega:
         mock_edges.return_value = "Edges"
         result = mesh_inspect.fn(self.mock_ctx, action="edges", object_name="Cube")
 
-        mock_edges.assert_called_once_with(self.mock_ctx, "Cube", False)
+        mock_edges.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
         assert result == "Edges"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -58,7 +58,7 @@ class TestMeshInspectMega:
         mock_faces.return_value = "Faces"
         result = mesh_inspect.fn(self.mock_ctx, action="faces", object_name="Cube")
 
-        mock_faces.assert_called_once_with(self.mock_ctx, "Cube", False)
+        mock_faces.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
         assert result == "Faces"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -76,7 +76,7 @@ class TestMeshInspectMega:
             selected_only=True,
         )
 
-        mock_uvs.assert_called_once_with(self.mock_ctx, "Cube", "UVMap", True)
+        mock_uvs.assert_called_once_with(self.mock_ctx, "Cube", "UVMap", True, None, None)
         assert result == "UVs"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -88,7 +88,7 @@ class TestMeshInspectMega:
         mock_normals.return_value = "Normals"
         result = mesh_inspect.fn(self.mock_ctx, action="normals", object_name="Cube")
 
-        mock_normals.assert_called_once_with(self.mock_ctx, "Cube", False)
+        mock_normals.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
         assert result == "Normals"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -106,7 +106,7 @@ class TestMeshInspectMega:
             selected_only=True,
         )
 
-        mock_attrs.assert_called_once_with(self.mock_ctx, "Cube", "Col", True)
+        mock_attrs.assert_called_once_with(self.mock_ctx, "Cube", "Col", True, None, None)
         assert result == "Attributes"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -123,7 +123,7 @@ class TestMeshInspectMega:
             include_deltas=True,
         )
 
-        mock_shape_keys.assert_called_once_with(self.mock_ctx, "Cube", True)
+        mock_shape_keys.assert_called_once_with(self.mock_ctx, "Cube", True, None, None)
         assert result == "Shape Keys"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -141,7 +141,7 @@ class TestMeshInspectMega:
             selected_only=True,
         )
 
-        mock_groups.assert_called_once_with(self.mock_ctx, "Cube", "Spine", True)
+        mock_groups.assert_called_once_with(self.mock_ctx, "Cube", "Spine", True, None, None)
         assert result == "Groups"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
