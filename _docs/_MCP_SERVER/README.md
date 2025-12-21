@@ -296,11 +296,11 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042). Enables 
 | `extraction_render_angles` | `object_name`, `output_dir`, `resolution`, `angles` | Multi-angle renders (front, back, left, right, top, iso) for LLM Vision semantic analysis. |
 
 ### Workflow Catalog Tools
-Read-only tools for browsing and inspecting workflow definitions (no execution).
+Tools for browsing and importing workflow definitions (no execution).
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists workflows, searches similar workflows, and returns workflow definitions (including steps) without executing them. |
+| `workflow_catalog` | `action` (list/get/search/import), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite` | Lists/searches/inspects workflows and imports YAML/JSON files. Returns `needs_input` when overwrite confirmation is required. |
 
 ### Router Tools
 Tools for managing the Router Supervisor and executing matched workflows.

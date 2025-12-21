@@ -342,5 +342,6 @@ def get_workflow_catalog_handler() -> IWorkflowCatalogTool:
         _workflow_catalog_handler_instance = WorkflowCatalogToolHandler(
             workflow_loader=get_workflow_loader(),
             workflow_classifier=get_workflow_classifier(),
+            vector_store=get_vector_store(),
         )
     return _workflow_catalog_handler_instance

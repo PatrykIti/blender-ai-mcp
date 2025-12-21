@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class IWorkflowCatalogTool(ABC):
-    """Read-only access to workflow definitions (no execution).
+    """Access to workflow definitions (no execution).
 
     Intended for:
     - Listing available workflows
     - Inspecting workflow metadata and steps
     - Searching for similar workflows (semantic/keyword) to guide manual modeling
+    - Importing workflows from YAML/JSON files
     """
 
     @abstractmethod
@@ -31,3 +32,11 @@ class IWorkflowCatalogTool(ABC):
         """Search for workflows similar to a query (no execution)."""
         raise NotImplementedError
 
+    @abstractmethod
+    def import_workflow(
+        self,
+        filepath: str,
+        overwrite: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        """Import a workflow from a YAML/JSON file path."""
+        raise NotImplementedError

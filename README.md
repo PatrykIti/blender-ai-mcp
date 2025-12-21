@@ -594,13 +594,17 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 Use this when you want the LLM to **prefer existing YAML workflows** and only fall back to manual tool-calling when no workflow matches.
 
 ```text
-1) Optional: preview likely workflow matches (read-only)
+1) Optional: import external workflow YAML/JSON
+   workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+   - if status == "needs_input": repeat with overwrite=true or overwrite=false
+
+2) Optional: preview likely workflow matches
    workflow_catalog(action="search", query="<your prompt>", top_k=5, threshold=0.0)
 
-2) Set the goal (mandatory)
+3) Set the goal (mandatory)
    router_set_goal(goal="<your prompt including modifiers>")
 
-3) Handle Router response
+4) Handle Router response
    - status == "needs_input": call router_set_goal(goal, resolved_params={...})
    - status == "ready": proceed (workflow executes / expands into tool calls)
    - status == "no_match": switch to manual tool-calling

@@ -243,20 +243,34 @@ class PickleToLanceMigration:
 @mcp.tool()
 def workflow_catalog(
     ctx: Context,
-    action: Literal["list", "get", "search"],
+    action: Literal["list", "get", "search", "import"],
     workflow_name: Optional[str] = None,
     query: Optional[str] = None,
     top_k: int = 5,
     threshold: float = 0.0,
+    filepath: Optional[str] = None,
+    overwrite: Optional[bool] = None,
 ) -> str:
     """
-    [SYSTEM][SAFE][READ-ONLY] Browse and search workflow definitions (no execution).
+    [SYSTEM][SAFE] Browse, search, and import workflow definitions (no execution).
 
     Actions:
       - list: List available workflows with summary metadata
       - get: Get a workflow definition (including steps) by name
       - search: Find workflows similar to a query (semantic when available)
+      - import: Import workflow from YAML/JSON file into the server
     """
+```
+
+#### Usage
+
+```text
+# Import a workflow definition
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+
+# If a name conflict is detected
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=true)
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=false)
 ```
 
 ---
