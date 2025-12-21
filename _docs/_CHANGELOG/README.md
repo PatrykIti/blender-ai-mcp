@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [122](./122-2025-12-21-blender-5-0-mesh-inspect-fixes.md) | 2025-12-21 | **Blender 5.0 mesh_inspect fixes** | - |
 | [121](./121-2025-12-20-workflow-catalog-import.md) | 2025-12-20 | **Workflow catalog import action** | - |
 | [120](./120-2025-12-19-mesh-inspect-mega-tool.md) | 2025-12-19 | **Mesh inspect mega tool** | - |
 | [119](./119-2025-12-19-rig-curve-lattice-introspection.md) | 2025-12-19 | **Rig, curve, and lattice introspection** | - |

@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~31 sub-tasks)
+- **To Do:** 11 tasks (~90 sub-tasks)
 - **In Progress:** 1 task
 - **Done:** 139
 
@@ -26,6 +26,17 @@ Task board for the project. Update statuses in markdown files.
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+
+### Reconstruction (Mesh, Material, Scene)
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-076](./TASK-076_Mesh_Build_Mega_Tool.md) | **Mesh Build Mega Tool (Core Topology)** | 🔴 High | Write-side reconstruction for vertices/edges/faces |
+| [TASK-077](./TASK-077_Mesh_Build_Surface_Data.md) | **Mesh Build Surface Data (UVs, Materials, Attributes)** | 🔴 High | UVs + material indices + attributes |
+| [TASK-078](./TASK-078_Mesh_Build_Deformation_Data.md) | **Mesh Build Deformation Data (Normals, Weights, Shape Keys)** | 🔴 High | Custom normals + weights + shape keys |
+| [TASK-079](./TASK-079_Node_Graph_Build_Tools.md) | **Node Graph Build Tools (Material + Geometry Nodes)** | 🔴 High | Rebuild shader/GN graphs |
+| [TASK-080](./TASK-080_Image_Asset_Tools.md) | **Image Asset Tools (List, Load, Export, Pack)** | 🟡 Medium | Texture asset pipeline |
+| [TASK-081](./TASK-081_Scene_Render_World_Settings.md) | **Scene Render + World Settings (Inspect & Apply)** | 🟡 Medium | Render + world settings |
+| [TASK-082](./TASK-082_Animation_and_Drivers_Tools.md) | **Animation and Driver Tools (Inspect + Build)** | 🟡 Medium | Actions, FCurves, drivers, NLA |
 
 ---
 

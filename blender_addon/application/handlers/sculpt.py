@@ -575,7 +575,6 @@ class SculptHandler:
 
         # Set shading
         if use_smooth_shading:
-            obj.data.use_auto_smooth = False
             bpy.ops.mesh.faces_shade_smooth()
 
         return (

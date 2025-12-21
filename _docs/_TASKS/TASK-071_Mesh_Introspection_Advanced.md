@@ -79,6 +79,8 @@ def mesh_get_loop_normals(
     {"loop_index": 0, "vert": 12, "normal": [0.0, 0.0, 1.0]}
   ],
   "auto_smooth": true,
+  "auto_smooth_angle": 0.523599,
+  "auto_smooth_source": "modifier:Smooth by Angle",
   "custom_normals": true
 }
 ```

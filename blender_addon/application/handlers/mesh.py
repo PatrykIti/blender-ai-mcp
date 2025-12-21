@@ -26,6 +26,19 @@ class MeshHandler:
         bm = bmesh.from_edit_mesh(obj.data)
         return bm
 
+    def _get_auto_smooth_state(self, obj):
+        """
+        Blender 5.0+: Auto Smooth is represented by the Smooth by Angle modifier.
+        Returns tuple: (enabled: bool, angle: Optional[float], source: Optional[str]).
+        """
+        for mod in obj.modifiers:
+            if getattr(mod, "type", None) == "SMOOTH_BY_ANGLE":
+                angle = None
+                if hasattr(mod, "angle"):
+                    angle = float(mod.angle)
+                return True, angle, f"modifier:{mod.name}"
+        return False, None, None
+
     def select_all(self, deselect=False):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry.
@@ -843,7 +856,7 @@ class MeshHandler:
 
         bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
         mesh = obj.data
-        mesh.calc_normals_split()
+        mesh.calc_normals()
 
         selected_loop_indices = set()
         if selected_faces:
@@ -855,21 +868,25 @@ class MeshHandler:
                         selected_loop_indices.add(loop_index)
 
         loops = []
+        corner_normals = mesh.corner_normals
         for loop_index, loop in enumerate(mesh.loops):
             if selected_only and loop_index not in selected_loop_indices:
                 continue
-            normal = loop.normal
+            normal = corner_normals[loop_index]
+            if hasattr(normal, "vector"):
+                normal = normal.vector
             loops.append({
                 "loop_index": loop_index,
                 "vert": loop.vertex_index,
                 "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
             })
 
-        if hasattr(mesh, "free_normals_split"):
-            mesh.free_normals_split()
-
         if prev_mode != 'EDIT':
             bpy.ops.object.mode_set(mode=prev_mode)
+
+        auto_smooth, auto_smooth_angle, auto_smooth_source = self._get_auto_smooth_state(obj)
+        if auto_smooth_angle is not None:
+            auto_smooth_angle = round(float(auto_smooth_angle), 6)
 
         return {
             "object_name": object_name,
@@ -877,7 +894,9 @@ class MeshHandler:
             "selected_count": len(selected_loop_indices),
             "returned_count": len(loops),
             "loops": loops,
-            "auto_smooth": bool(mesh.use_auto_smooth),
+            "auto_smooth": auto_smooth,
+            "auto_smooth_angle": auto_smooth_angle,
+            "auto_smooth_source": auto_smooth_source,
             "custom_normals": bool(mesh.has_custom_normals),
         }
 

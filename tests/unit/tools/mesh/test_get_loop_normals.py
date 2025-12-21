@@ -1,5 +1,6 @@
 """Tests for mesh loop normals introspection."""
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 import sys
 
@@ -32,28 +33,34 @@ class TestMeshGetLoopNormals(unittest.TestCase):
         obj.mode = 'OBJECT'
 
         mesh = MagicMock()
-        mesh.use_auto_smooth = True
         mesh.has_custom_normals = True
-        mesh.calc_normals_split = MagicMock()
-        mesh.free_normals_split = MagicMock()
+        mesh.calc_normals = MagicMock()
 
         loop0 = MagicMock()
         loop0.vertex_index = 0
-        loop0.normal = MagicMock(x=0.0, y=0.0, z=1.0)
         loop1 = MagicMock()
         loop1.vertex_index = 1
-        loop1.normal = MagicMock(x=0.0, y=1.0, z=0.0)
         loop2 = MagicMock()
         loop2.vertex_index = 2
-        loop2.normal = MagicMock(x=1.0, y=0.0, z=0.0)
         loop3 = MagicMock()
         loop3.vertex_index = 3
-        loop3.normal = MagicMock(x=1.0, y=1.0, z=1.0)
         mesh.loops = [loop0, loop1, loop2, loop3]
+        mesh.corner_normals = [
+            SimpleNamespace(x=0.0, y=0.0, z=1.0),
+            SimpleNamespace(x=0.0, y=1.0, z=0.0),
+            SimpleNamespace(x=1.0, y=0.0, z=0.0),
+            SimpleNamespace(x=1.0, y=1.0, z=1.0),
+        ]
 
         poly0 = MagicMock(index=0, loop_start=0, loop_total=2)
         poly1 = MagicMock(index=1, loop_start=2, loop_total=2)
         mesh.polygons = [poly0, poly1]
+
+        smooth_mod = MagicMock()
+        smooth_mod.type = "SMOOTH_BY_ANGLE"
+        smooth_mod.name = "Smooth by Angle"
+        smooth_mod.angle = 0.5
+        obj.modifiers = [smooth_mod]
 
         obj.data = mesh
         bpy.data.objects = {"Cube": obj}
@@ -74,6 +81,7 @@ class TestMeshGetLoopNormals(unittest.TestCase):
         assert result["returned_count"] == 2
         assert result["loops"][0]["loop_index"] == 2
         assert result["auto_smooth"] is True
+        assert result["auto_smooth_angle"] == 0.5
         assert result["custom_normals"] is True
 
 

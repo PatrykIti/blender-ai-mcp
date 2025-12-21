@@ -95,7 +95,7 @@ for edge in bm.edges:
 
 **Status:** ✅ Done
 
-Marks edges as sharp for flat shading / auto-smooth.
+Marks edges as sharp for flat shading / Smooth by Angle (5.0+).
 
 ```python
 @mcp.tool()
@@ -108,7 +108,7 @@ def mesh_mark_sharp(
     [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Marks/clears sharp edges.
 
     Sharp edges affect:
-    - Auto Smooth (splits normals at sharp edges)
+    - Smooth by Angle (5.0+) (splits normals at sharp edges)
     - Edge Split modifier
     - Normal display
 
@@ -140,4 +140,4 @@ else:
 - [x] Unit tests for each tool (15 tests passing)
 - [x] E2E test: Create cube → select edges → set crease → add Subsurf → verify sharp corners
 - [x] E2E test: Bevel weight + Bevel modifier workflow
-- [x] E2E test: Mark sharp + Auto Smooth workflow
+- [x] E2E test: Mark sharp + Smooth by Angle workflow (5.0+)

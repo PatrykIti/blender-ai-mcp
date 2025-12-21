@@ -202,7 +202,7 @@ None.
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices. | ✅ Done |
 | `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. | ✅ Done |
 | `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. | ✅ Done |
-| `mesh_mark_sharp` | `action` (mark/clear) | Marks or clears sharp edges for Auto Smooth and Edge Split. | ✅ Done |
+| `mesh_mark_sharp` | `action` (mark/clear) | Marks or clears sharp edges for Smooth by Angle (5.0+) and Edge Split. | ✅ Done |
 | `mesh_dissolve` | `dissolve_type` (limited/verts/edges/faces), `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry while preserving shape (cleanup). | ✅ Done |
 | `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. | ✅ Done |
 | `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward). | ✅ Done |

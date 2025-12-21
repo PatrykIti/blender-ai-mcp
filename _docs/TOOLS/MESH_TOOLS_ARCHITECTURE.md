@@ -1056,7 +1056,7 @@ Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_ad
 
 # 42. mesh_mark_sharp ✅ Done
 
-Marks or clears sharp edges for Auto Smooth and Edge Split modifier.
+Marks or clears sharp edges for Smooth by Angle (5.0+) and Edge Split modifier.
 
 **Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
 
@@ -1080,7 +1080,7 @@ Use Case:
 - Edge Split modifier workflow
 
 Sharp edges affect:
-- Auto Smooth: Splits normals at sharp edges for flat shading
+- Smooth by Angle (5.0+): Splits normals at sharp edges for flat shading
 - Edge Split modifier: Creates hard edges without geometry duplication
 - Normal display and shading calculations
 
@@ -1446,6 +1446,8 @@ Returns:
     {"loop_index": 0, "vert": 12, "normal": [0.0, 0.0, 1.0]}
   ],
   "auto_smooth": true,
+  "auto_smooth_angle": 0.523599,
+  "auto_smooth_source": "modifier:Smooth by Angle",
   "custom_normals": true
 }
 ```

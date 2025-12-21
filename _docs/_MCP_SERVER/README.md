@@ -161,7 +161,7 @@ Low-level geometry manipulation.
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices (F key). |
 | `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. |
 | `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. |
-| `mesh_mark_sharp` | `action` | Marks ('mark') or clears ('clear') sharp edges for Auto Smooth. |
+| `mesh_mark_sharp` | `action` | Marks ('mark') or clears ('clear') sharp edges for Smooth by Angle (5.0+). |
 | `mesh_dissolve` | `dissolve_type`, `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry (limited/verts/edges/faces) while preserving shape. |
 | `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. |
 | `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward if inside=True). |
