@@ -7,6 +7,7 @@ MCP tool registration modules ("areas").
 Author: Patryk Ciechański (PatrykIti)
 """
 
+from . import armature
 from . import baking
 from . import collection
 from . import curve

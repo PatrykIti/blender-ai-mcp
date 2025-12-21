@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [123](./123-2025-12-21-introspection-api-fixes.md) | 2025-12-21 | **Introspection API fixes (Blender 5.0+)** | - |
 | [122](./122-2025-12-21-blender-5-0-mesh-inspect-fixes.md) | 2025-12-21 | **Blender 5.0 mesh_inspect fixes** | - |
 | [121](./121-2025-12-20-workflow-catalog-import.md) | 2025-12-20 | **Workflow catalog import action** | - |
 | [120](./120-2025-12-19-mesh-inspect-mega-tool.md) | 2025-12-19 | **Mesh inspect mega tool** | - |

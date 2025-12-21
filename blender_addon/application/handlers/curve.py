@@ -130,13 +130,16 @@ class CurveHandler:
             if spline.type == 'BEZIER':
                 bezier_points = []
                 for point in spline.bezier_points:
+                    handle_type = point.handle_left_type
+                    if point.handle_left_type != point.handle_right_type:
+                        handle_type = "MIXED"
                     bezier_points.append({
                         "co": _vector_to_list(point.co),
                         "handle_left": _vector_to_list(point.handle_left),
                         "handle_right": _vector_to_list(point.handle_right),
                         "handle_left_type": point.handle_left_type,
                         "handle_right_type": point.handle_right_type,
-                        "handle_type": point.handle_type,
+                        "handle_type": handle_type,
                         "radius": point.radius,
                         "tilt": point.tilt,
                         "weight": getattr(point, "weight_softbody", None)

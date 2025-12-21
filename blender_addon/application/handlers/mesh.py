@@ -856,7 +856,6 @@ class MeshHandler:
 
         bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
         mesh = obj.data
-        mesh.calc_normals()
 
         selected_loop_indices = set()
         if selected_faces:
