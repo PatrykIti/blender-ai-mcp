@@ -1,11 +1,11 @@
-# Feature Phone Workflow - Basic Edition
-# Simple keypad phone from primitives (based on Siemens SL45i proportions)
+# Feature Phone Workflow - Full Edition
+# Based on Siemens SL45i structure analysis
 
 name: feature_phone_workflow
-description: Creates a basic keypad phone with rounded edges
+description: Creates a realistic keypad phone with rounded body and details
 category: electronics
 author: blender-ai-mcp
-version: "4.0.0"
+version: "5.0.0"
 
 trigger_keywords:
   - feature phone
@@ -25,22 +25,22 @@ sample_prompts:
 
 defaults:
   # Phone dimensions (from SL45i reference)
-  width: 0.076
+  width: 0.077
   depth: 0.020
-  height: 0.210
+  height: 0.209
 
   # Cleanup option
   clean_scene: false
 
   # Bevel settings
   body_bevel_width: 0.003
-  body_bevel_segments: 3
+  body_bevel_segments: 4
 
 parameters:
   width:
     type: float
     range: [0.05, 0.10]
-    default: 0.076
+    default: 0.077
     description: Phone width (X)
     semantic_hints: [width, size]
     group: dimensions
@@ -48,7 +48,7 @@ parameters:
   height:
     type: float
     range: [0.15, 0.25]
-    default: 0.210
+    default: 0.209
     description: Phone height (Z)
     semantic_hints: [height, size]
     group: dimensions
@@ -76,8 +76,8 @@ parameters:
 
   body_bevel_segments:
     type: int
-    range: [2, 5]
-    default: 3
+    range: [2, 6]
+    default: 4
     description: Bevel segments for smoothness
     group: style
 
@@ -95,18 +95,22 @@ steps:
     params: {action: "create", collection_name: "Phone_Body"}
 
   - tool: collection_manage
+    params: {action: "create", collection_name: "Phone_Front"}
+
+  - tool: collection_manage
     params: {action: "create", collection_name: "Phone_Screen"}
 
   - tool: collection_manage
     params: {action: "create", collection_name: "Phone_Buttons"}
 
   # =============================
-  # BODY SHELL
+  # BODY - Main Shell
   # =============================
   - tool: modeling_create_primitive
     params:
       primitive_type: Cube
       name: "body_shell"
+    description: Main body shell
 
   - tool: modeling_transform_object
     params:
@@ -115,7 +119,10 @@ steps:
         - "$CALCULATE(width / 2)"
         - "$CALCULATE(depth / 2)"
         - "$CALCULATE(height / 2)"
-      location: [0.0, 0.0, 0.0]
+      location:
+        - 0.0
+        - "$CALCULATE(depth * 0.55)"
+        - 0.0
 
   - tool: modeling_add_modifier
     params:
@@ -126,36 +133,252 @@ steps:
         segments: "$body_bevel_segments"
         limit_method: "ANGLE"
         angle_limit: 0.523599
-
-  - tool: collection_manage
-    params:
-      action: "move_object"
-      collection_name: "Phone_Body"
-      object_name: "body_shell"
+    description: Bevel body for rounded edges
 
   # =============================
-  # SCREEN AREA
+  # BODY - Back Panel (Battery Cover)
   # =============================
   - tool: modeling_create_primitive
     params:
       primitive_type: Cube
-      name: "screen_frame"
+      name: "back_panel"
+    description: Battery cover
 
   - tool: modeling_transform_object
     params:
-      name: "screen_frame"
+      name: "back_panel"
       scale:
-        - "$CALCULATE(width * 0.92 / 2)"
-        - "$CALCULATE(0.004)"
-        - "$CALCULATE(height * 0.38 / 2)"
+        - "$CALCULATE(width * 0.98 / 2)"
+        - "$CALCULATE(depth * 0.5 / 2)"
+        - "$CALCULATE(height * 0.67 / 2)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.002)"
-        - "$CALCULATE(height * 0.15)"
+        - "$CALCULATE(depth * 0.72)"
+        - "$CALCULATE(-height * 0.11)"
 
   - tool: modeling_add_modifier
     params:
-      name: "screen_frame"
+      name: "back_panel"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.002
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # BODY - Antenna Hole
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "antenna_hole"
+    description: Antenna opening
+
+  - tool: modeling_transform_object
+    params:
+      name: "antenna_hole"
+      rotation: [1.5708, 0.0, 0.0]
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.3)"
+      location:
+        - 0.0
+        - "$CALCULATE(depth * 0.3)"
+        - "$CALCULATE(height * 0.32)"
+
+  # =============================
+  # BODY - Charging Port
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "charging_port"
+    description: Charging port opening
+
+  - tool: modeling_transform_object
+    params:
+      name: "charging_port"
+      scale:
+        - "$CALCULATE(width * 0.13 / 2)"
+        - "$CALCULATE(depth * 0.4 / 2)"
+        - "$CALCULATE(height * 0.02 / 2)"
+      location:
+        - "$CALCULATE(width * 0.17)"
+        - "$CALCULATE(depth * 0.48)"
+        - "$CALCULATE(-height * 0.45)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "charging_port"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0005
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # FRONT - Lower Arc (Top curve with speaker)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "front_lower_arc"
+    description: Top curved section
+
+  - tool: modeling_transform_object
+    params:
+      name: "front_lower_arc"
+      scale:
+        - "$CALCULATE(width * 0.86 / 2)"
+        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(height * 0.12 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.28)"
+        - "$CALCULATE(height * 0.31)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "front_lower_arc"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.003
+        segments: 4
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # FRONT - Top Eyelet (Speaker grille)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "front_top_eyelet"
+    description: Speaker/earpiece grille
+
+  - tool: modeling_transform_object
+    params:
+      name: "front_top_eyelet"
+      rotation: [1.5708, 0.0, 0.0]
+      scale:
+        - "$CALCULATE(width * 0.10)"
+        - "$CALCULATE(width * 0.10)"
+        - "$CALCULATE(depth * 0.24)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.57)"
+        - "$CALCULATE(height * 0.31)"
+
+  # =============================
+  # FRONT - Screen Frame
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "front_screen_frame"
+    description: Screen frame
+
+  - tool: modeling_transform_object
+    params:
+      name: "front_screen_frame"
+      scale:
+        - "$CALCULATE(width * 0.94 / 2)"
+        - "$CALCULATE(depth * 0.35 / 2)"
+        - "$CALCULATE(height * 0.42 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.52)"
+        - "$CALCULATE(height * 0.10)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "front_screen_frame"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.002
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # FRONT - Screen Glass
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "screen_glass"
+    description: Screen glass
+
+  - tool: modeling_transform_object
+    params:
+      name: "screen_glass"
+      scale:
+        - "$CALCULATE(width * 0.75 / 2)"
+        - "$CALCULATE(depth * 0.04 / 2)"
+        - "$CALCULATE(height * 0.26 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.65)"
+        - "$CALCULATE(height * 0.07)"
+
+  # =============================
+  # FRONT - Speaker Grille (Keypad housing)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "front_speaker_grille"
+    description: Keypad housing
+
+  - tool: modeling_transform_object
+    params:
+      name: "front_speaker_grille"
+      scale:
+        - "$CALCULATE(width * 0.99 / 2)"
+        - "$CALCULATE(depth * 0.78 / 2)"
+        - "$CALCULATE(height * 0.41 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.21)"
+        - "$CALCULATE(-height * 0.29)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "front_speaker_grille"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.003
+        segments: 4
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # FRONT - Keypad Ribs
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "front_keypad_ribs"
+    description: Keypad texture area
+
+  - tool: modeling_transform_object
+    params:
+      name: "front_keypad_ribs"
+      scale:
+        - "$CALCULATE(width * 0.85 / 2)"
+        - "$CALCULATE(depth * 0.40 / 2)"
+        - "$CALCULATE(height * 0.24 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.40)"
+        - "$CALCULATE(-height * 0.35)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "front_keypad_ribs"
       modifier_type: "BEVEL"
       properties:
         width: 0.001
@@ -163,89 +386,164 @@ steps:
         limit_method: "ANGLE"
         angle_limit: 0.523599
 
+  # =============================
+  # FRONT - Side Trims
+  # =============================
   - tool: modeling_create_primitive
     params:
       primitive_type: Cube
-      name: "screen_glass"
+      name: "side_trim_left"
+    description: Left side trim
 
   - tool: modeling_transform_object
     params:
-      name: "screen_glass"
+      name: "side_trim_left"
       scale:
-        - "$CALCULATE(width * 0.72 / 2)"
-        - "$CALCULATE(0.001)"
-        - "$CALCULATE(height * 0.24 / 2)"
+        - "$CALCULATE(width * 0.10 / 2)"
+        - "$CALCULATE(depth * 0.83 / 2)"
+        - "$CALCULATE(height * 0.47 / 2)"
       location:
-        - 0.0
-        - "$CALCULATE(-depth / 2 - 0.004)"
+        - "$CALCULATE(-width * 0.46)"
+        - "$CALCULATE(-depth * 0.27)"
         - "$CALCULATE(height * 0.12)"
 
-  - tool: collection_manage
+  - tool: modeling_add_modifier
     params:
-      action: "move_object"
-      collection_name: "Phone_Screen"
-      object_name: "{obj}"
-    loop:
-      variable: "obj"
-      values:
-        - "screen_frame"
-        - "screen_glass"
+      name: "side_trim_left"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.002
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "side_trim_right"
+    description: Right side trim
+
+  - tool: modeling_transform_object
+    params:
+      name: "side_trim_right"
+      scale:
+        - "$CALCULATE(width * 0.10 / 2)"
+        - "$CALCULATE(depth * 0.83 / 2)"
+        - "$CALCULATE(height * 0.47 / 2)"
+      location:
+        - "$CALCULATE(width * 0.46)"
+        - "$CALCULATE(-depth * 0.27)"
+        - "$CALCULATE(height * 0.12)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "side_trim_right"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.002
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
 
   # =============================
-  # NAVIGATION BUTTONS
+  # BUTTONS - Navigation
   # =============================
   - tool: modeling_create_primitive
     params:
       primitive_type: Cylinder
       name: "button_dpad"
+    description: D-pad navigation
 
   - tool: modeling_transform_object
     params:
       name: "button_dpad"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.32 / 2)"
-        - "$CALCULATE(width * 0.32 / 2)"
-        - "$CALCULATE(0.002)"
+        - "$CALCULATE(width * 0.17)"
+        - "$CALCULATE(width * 0.17)"
+        - "$CALCULATE(depth * 0.15)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.11)"
+        - "$CALCULATE(-depth * 0.60)"
+        - "$CALCULATE(-height * 0.16)"
 
   - tool: modeling_create_primitive
     params:
       primitive_type: Cylinder
       name: "button_call"
+    description: Call button
 
   - tool: modeling_transform_object
     params:
       name: "button_call"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.24 / 2)"
-        - "$CALCULATE(height * 0.08 / 2)"
-        - "$CALCULATE(0.002)"
+        - "$CALCULATE(width * 0.13)"
+        - "$CALCULATE(height * 0.045)"
+        - "$CALCULATE(depth * 0.12)"
       location:
         - "$CALCULATE(-width * 0.27)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.11)"
+        - "$CALCULATE(-depth * 0.60)"
+        - "$CALCULATE(-height * 0.16)"
 
   - tool: modeling_create_primitive
     params:
       primitive_type: Cylinder
       name: "button_end"
+    description: End button
 
   - tool: modeling_transform_object
     params:
       name: "button_end"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.24 / 2)"
-        - "$CALCULATE(height * 0.08 / 2)"
-        - "$CALCULATE(0.002)"
+        - "$CALCULATE(width * 0.13)"
+        - "$CALCULATE(height * 0.045)"
+        - "$CALCULATE(depth * 0.12)"
       location:
         - "$CALCULATE(width * 0.27)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
+        - "$CALCULATE(-depth * 0.60)"
+        - "$CALCULATE(-height * 0.16)"
+
+  # =============================
+  # BUTTONS - Soft keys
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "button_soft_left"
+    description: Left soft key
+
+  - tool: modeling_transform_object
+    params:
+      name: "button_soft_left"
+      rotation: [1.5708, 0.0, 0.0]
+      scale:
+        - "$CALCULATE(width * 0.16)"
+        - "$CALCULATE(height * 0.025)"
+        - "$CALCULATE(depth * 0.12)"
+      location:
+        - "$CALCULATE(-width * 0.23)"
+        - "$CALCULATE(-depth * 0.60)"
+        - "$CALCULATE(-height * 0.11)"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "button_soft_right"
+    description: Right soft key
+
+  - tool: modeling_transform_object
+    params:
+      name: "button_soft_right"
+      rotation: [1.5708, 0.0, 0.0]
+      scale:
+        - "$CALCULATE(width * 0.16)"
+        - "$CALCULATE(height * 0.025)"
+        - "$CALCULATE(depth * 0.12)"
+      location:
+        - "$CALCULATE(width * 0.23)"
+        - "$CALCULATE(-depth * 0.60)"
         - "$CALCULATE(-height * 0.11)"
 
   # =============================
@@ -261,13 +559,13 @@ steps:
       name: "key_1"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.11)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(-width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.22)"
+        - "$CALCULATE(-width * 0.29)"
+        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-height * 0.26)"
 
   - tool: modeling_create_primitive
     params:
@@ -279,13 +577,13 @@ steps:
       name: "key_2"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.22 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.115)"
+        - "$CALCULATE(height * 0.022)"
+        - "$CALCULATE(depth * 0.10)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.22)"
+        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-height * 0.26)"
 
   - tool: modeling_create_primitive
     params:
@@ -297,13 +595,13 @@ steps:
       name: "key_3"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.11)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.22)"
+        - "$CALCULATE(width * 0.29)"
+        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-height * 0.26)"
 
   # =============================
   # KEYPAD - Row 2 (4-5-6)
@@ -318,13 +616,13 @@ steps:
       name: "key_4"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.108)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(-width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.28)"
+        - "$CALCULATE(-width * 0.275)"
+        - "$CALCULATE(-depth * 0.53)"
+        - "$CALCULATE(-height * 0.32)"
 
   - tool: modeling_create_primitive
     params:
@@ -336,13 +634,13 @@ steps:
       name: "key_5"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.22 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.11)"
+        - "$CALCULATE(height * 0.022)"
+        - "$CALCULATE(depth * 0.10)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.28)"
+        - "$CALCULATE(-depth * 0.53)"
+        - "$CALCULATE(-height * 0.32)"
 
   - tool: modeling_create_primitive
     params:
@@ -354,13 +652,13 @@ steps:
       name: "key_6"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.108)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.28)"
+        - "$CALCULATE(width * 0.275)"
+        - "$CALCULATE(-depth * 0.53)"
+        - "$CALCULATE(-height * 0.32)"
 
   # =============================
   # KEYPAD - Row 3 (7-8-9)
@@ -375,13 +673,13 @@ steps:
       name: "key_7"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.10)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(-width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.34)"
+        - "$CALCULATE(-width * 0.26)"
+        - "$CALCULATE(-depth * 0.50)"
+        - "$CALCULATE(-height * 0.38)"
 
   - tool: modeling_create_primitive
     params:
@@ -393,13 +691,13 @@ steps:
       name: "key_8"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.22 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.104)"
+        - "$CALCULATE(height * 0.022)"
+        - "$CALCULATE(depth * 0.10)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.34)"
+        - "$CALCULATE(-depth * 0.50)"
+        - "$CALCULATE(-height * 0.38)"
 
   - tool: modeling_create_primitive
     params:
@@ -411,13 +709,13 @@ steps:
       name: "key_9"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.10)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.10)"
       location:
-        - "$CALCULATE(width * 0.28)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.34)"
+        - "$CALCULATE(width * 0.26)"
+        - "$CALCULATE(-depth * 0.50)"
+        - "$CALCULATE(-height * 0.38)"
 
   # =============================
   # KEYPAD - Row 4 (*-0-#)
@@ -432,13 +730,13 @@ steps:
       name: "key_star"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.18 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.084)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.14)"
       location:
-        - "$CALCULATE(-width * 0.25)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.40)"
+        - "$CALCULATE(-width * 0.24)"
+        - "$CALCULATE(-depth * 0.43)"
+        - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
     params:
@@ -450,13 +748,13 @@ steps:
       name: "key_0"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.096)"
+        - "$CALCULATE(height * 0.022)"
+        - "$CALCULATE(depth * 0.14)"
       location:
         - 0.0
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.40)"
+        - "$CALCULATE(-depth * 0.43)"
+        - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
     params:
@@ -468,13 +766,13 @@ steps:
       name: "key_hash"
       rotation: [1.5708, 0.0, 0.0]
       scale:
-        - "$CALCULATE(width * 0.18 / 2)"
-        - "$CALCULATE(height * 0.038 / 2)"
-        - "$CALCULATE(0.0015)"
+        - "$CALCULATE(width * 0.084)"
+        - "$CALCULATE(height * 0.021)"
+        - "$CALCULATE(depth * 0.14)"
       location:
-        - "$CALCULATE(width * 0.25)"
-        - "$CALCULATE(-depth / 2 - 0.003)"
-        - "$CALCULATE(-height * 0.40)"
+        - "$CALCULATE(width * 0.24)"
+        - "$CALCULATE(-depth * 0.43)"
+        - "$CALCULATE(-height * 0.44)"
 
   # =============================
   # BUTTON BEVELS
@@ -494,6 +792,8 @@ steps:
         - "button_dpad"
         - "button_call"
         - "button_end"
+        - "button_soft_left"
+        - "button_soft_right"
         - "key_1"
         - "key_2"
         - "key_3"
@@ -506,10 +806,53 @@ steps:
         - "key_0"
         - "key_star"
         - "key_hash"
+    description: Bevel all buttons and keys
 
   # =============================
   # COLLECTION ASSIGNMENT
   # =============================
+  - tool: collection_manage
+    params:
+      action: "move_object"
+      collection_name: "Phone_Body"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values:
+        - "body_shell"
+        - "back_panel"
+        - "antenna_hole"
+        - "charging_port"
+    description: Move body objects
+
+  - tool: collection_manage
+    params:
+      action: "move_object"
+      collection_name: "Phone_Front"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values:
+        - "front_lower_arc"
+        - "front_top_eyelet"
+        - "front_speaker_grille"
+        - "front_keypad_ribs"
+        - "side_trim_left"
+        - "side_trim_right"
+    description: Move front objects
+
+  - tool: collection_manage
+    params:
+      action: "move_object"
+      collection_name: "Phone_Screen"
+      object_name: "{obj}"
+    loop:
+      variable: "obj"
+      values:
+        - "front_screen_frame"
+        - "screen_glass"
+    description: Move screen objects
+
   - tool: collection_manage
     params:
       action: "move_object"
@@ -521,6 +864,8 @@ steps:
         - "button_dpad"
         - "button_call"
         - "button_end"
+        - "button_soft_left"
+        - "button_soft_right"
         - "key_1"
         - "key_2"
         - "key_3"
@@ -533,3 +878,4 @@ steps:
         - "key_0"
         - "key_star"
         - "key_hash"
+    description: Move buttons and keys
