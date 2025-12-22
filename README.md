@@ -596,6 +596,11 @@ Use this when you want the LLM to **prefer existing YAML workflows** and only fa
 ```text
 1) Optional: import external workflow YAML/JSON
    workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+   workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+   workflow_catalog(action="import_init", content_type="json", source_name="chair.json", total_chunks=2)
+   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+   workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
    - if status == "needs_input": repeat with overwrite=true or overwrite=false
 
 2) Optional: preview likely workflow matches

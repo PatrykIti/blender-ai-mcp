@@ -10,6 +10,8 @@
 
 Added `workflow_catalog(action="import")` to load external YAML/JSON workflows into the server, refresh workflow registry and embeddings, and prompt for overwrite confirmation on name conflicts.
 
+> **Note (2025-12-21):** Inline and chunked import support was added in [Changelog 125](./125-2025-12-21-workflow-catalog-inline-chunked-import.md).
+
 ---
 
 ## Changes
