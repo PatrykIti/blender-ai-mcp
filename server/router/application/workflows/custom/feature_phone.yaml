@@ -83,7 +83,7 @@ steps:
   # =============================
   - tool: scene_clean_scene
     params:
-      keep_lights_and_cameras: false
+      keep_lights_and_cameras: true
     condition: "clean_scene"
     description: Optional scene cleanup
 
@@ -243,6 +243,55 @@ steps:
   - tool: scene_delete_object
     params:
       name: "screen_recess_cutter"
+
+  # =============================
+  # BODY - Battery Cover Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "battery_recess_cutter"
+    description: Cutter for recessed battery cover seat (no cover object yet)
+
+  - tool: modeling_transform_object
+    params:
+      name: "battery_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.88 / 2)"
+        - "$CALCULATE(depth * 0.11 / 2)"
+        - "$CALCULATE(height * 0.62 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(depth * 0.33)"
+        - "$CALCULATE(-height * 0.08)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "battery_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0012
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "battery_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "battery_recess_cutter"
 
   - tool: modeling_add_modifier
     params:
