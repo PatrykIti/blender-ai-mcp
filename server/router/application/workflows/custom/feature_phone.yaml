@@ -33,7 +33,7 @@ defaults:
   clean_scene: false
 
   # Bevel/Subsurf settings
-  body_bevel_width: 0.0045
+  body_bevel_width: 0.0055
   body_bevel_segments: 6
   body_subsurf_levels: 3
 
@@ -71,7 +71,7 @@ parameters:
   body_bevel_width:
     type: float
     range: [0.001, 0.006]
-    default: 0.0045
+    default: 0.0055
     description: Bevel width for body
     group: style
 
@@ -136,8 +136,8 @@ steps:
     params:
       name: "body_lattice"
       target_object: "body_shell"
-      points_u: 2
-      points_v: 2
+      points_u: 3
+      points_v: 3
       points_w: 4
       interpolation: "KEY_BSPLINE"
     description: Lattice for gentle body taper and curvature
@@ -150,9 +150,9 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [12, 14]
+      point_index: [27, 30, 33]
       offset:
-        - "$CALCULATE(width * 0.075)"
+        - "$CALCULATE(width * 0.06)"
         - 0.0
         - 0.0
       relative: true
@@ -160,9 +160,9 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [13, 15]
+      point_index: [29, 32, 35]
       offset:
-        - "$CALCULATE(-width * 0.075)"
+        - "$CALCULATE(-width * 0.06)"
         - 0.0
         - 0.0
       relative: true
@@ -170,9 +170,9 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [8, 10]
+      point_index: [18, 21, 24]
       offset:
-        - "$CALCULATE(width * 0.045)"
+        - "$CALCULATE(width * 0.04)"
         - 0.0
         - 0.0
       relative: true
@@ -180,9 +180,9 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [9, 11]
+      point_index: [20, 23, 26]
       offset:
-        - "$CALCULATE(-width * 0.045)"
+        - "$CALCULATE(-width * 0.04)"
         - 0.0
         - 0.0
       relative: true
@@ -190,37 +190,7 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [4, 6]
-      offset:
-        - "$CALCULATE(-width * 0.012)"
-        - 0.0
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [5, 7]
-      offset:
-        - "$CALCULATE(width * 0.012)"
-        - 0.0
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [0, 2]
-      offset:
-        - "$CALCULATE(-width * 0.02)"
-        - 0.0
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [1, 3]
+      point_index: [9, 12, 15]
       offset:
         - "$CALCULATE(width * 0.02)"
         - 0.0
@@ -230,7 +200,37 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [12, 13]
+      point_index: [11, 14, 17]
+      offset:
+        - "$CALCULATE(-width * 0.02)"
+        - 0.0
+        - 0.0
+      relative: true
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "body_lattice"
+      point_index: [0, 3, 6]
+      offset:
+        - "$CALCULATE(width * 0.01)"
+        - 0.0
+        - 0.0
+      relative: true
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "body_lattice"
+      point_index: [2, 5, 8]
+      offset:
+        - "$CALCULATE(-width * 0.01)"
+        - 0.0
+        - 0.0
+      relative: true
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "body_lattice"
+      point_index: [27, 28, 29]
       offset:
         - 0.0
         - "$CALCULATE(depth * 0.06)"
@@ -240,7 +240,7 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [14, 15]
+      point_index: [33, 34, 35]
       offset:
         - 0.0
         - "$CALCULATE(-depth * 0.06)"
@@ -250,7 +250,7 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [8, 9]
+      point_index: [18, 19, 20]
       offset:
         - 0.0
         - "$CALCULATE(depth * 0.04)"
@@ -260,7 +260,7 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [10, 11]
+      point_index: [24, 25, 26]
       offset:
         - 0.0
         - "$CALCULATE(-depth * 0.04)"
@@ -270,27 +270,7 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [4, 5]
-      offset:
-        - 0.0
-        - "$CALCULATE(depth * 0.01)"
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [6, 7]
-      offset:
-        - 0.0
-        - "$CALCULATE(-depth * 0.01)"
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [0, 1]
+      point_index: [9, 10, 11]
       offset:
         - 0.0
         - "$CALCULATE(depth * 0.02)"
@@ -300,10 +280,30 @@ steps:
   - tool: lattice_edit_point
     params:
       lattice_name: "body_lattice"
-      point_index: [2, 3]
+      point_index: [15, 16, 17]
       offset:
         - 0.0
         - "$CALCULATE(-depth * 0.02)"
+        - 0.0
+      relative: true
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "body_lattice"
+      point_index: [0, 1, 2]
+      offset:
+        - 0.0
+        - "$CALCULATE(depth * 0.015)"
+        - 0.0
+      relative: true
+
+  - tool: lattice_edit_point
+    params:
+      lattice_name: "body_lattice"
+      point_index: [6, 7, 8]
+      offset:
+        - 0.0
+        - "$CALCULATE(-depth * 0.015)"
         - 0.0
       relative: true
 
@@ -363,6 +363,100 @@ steps:
         angle_limit: 0.523599
 
   # =============================
+  # BODY - Top Hole / Lanyard
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "body_top_hole"
+    description: Top lanyard/antenna hole
+
+  - tool: modeling_transform_object
+    params:
+      name: "body_top_hole"
+      rotation: [1.5708, 0.0, 0.0]
+      scale:
+        - "$CALCULATE(width * 0.058)"
+        - "$CALCULATE(width * 0.058)"
+        - "$CALCULATE(depth * 0.01)"
+      location:
+        - 0.0
+        - "$CALCULATE(depth * 0.31)"
+        - "$CALCULATE(height * 0.314)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_top_hole"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0004
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # BODY - Bottom Strip
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "body_bottom_strip"
+    description: Bottom back strip detail
+
+  - tool: modeling_transform_object
+    params:
+      name: "body_bottom_strip"
+      scale:
+        - "$CALCULATE(width * 0.255 / 2)"
+        - "$CALCULATE(depth * 0.43 / 2)"
+        - "$CALCULATE(height * 0.002 / 2)"
+      location:
+        - "$CALCULATE(width * 0.166)"
+        - "$CALCULATE(depth * 0.48)"
+        - "$CALCULATE(-height * 0.446)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_bottom_strip"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0003
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
+  # BODY - Bottom Block
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "body_bottom_block"
+    description: Bottom latch block
+
+  - tool: modeling_transform_object
+    params:
+      name: "body_bottom_block"
+      scale:
+        - "$CALCULATE(width * 0.196 / 2)"
+        - "$CALCULATE(depth * 0.083 / 2)"
+        - "$CALCULATE(height * 0.021 / 2)"
+      location:
+        - "$CALCULATE(width * 0.166)"
+        - "$CALCULATE(depth * 0.47)"
+        - "$CALCULATE(-height * 0.459)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_bottom_block"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0003
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  # =============================
   # BODY - Antenna
   # =============================
   - tool: modeling_create_primitive
@@ -375,12 +469,12 @@ steps:
     params:
       name: "antenna_base"
       scale:
-        - "$CALCULATE(width * 0.035)"
-        - "$CALCULATE(width * 0.035)"
-        - "$CALCULATE(depth * 0.12)"
-      location:
-        - "$CALCULATE(width * 0.26)"
+        - "$CALCULATE(width * 0.045)"
+        - "$CALCULATE(width * 0.045)"
         - "$CALCULATE(depth * 0.18)"
+      location:
+        - "$CALCULATE(width * 0.30)"
+        - "$CALCULATE(depth * 0.24)"
         - "$CALCULATE(height * 0.48)"
 
   - tool: modeling_add_modifier
@@ -403,13 +497,13 @@ steps:
     params:
       name: "antenna_rod"
       scale:
-        - "$CALCULATE(width * 0.012)"
-        - "$CALCULATE(width * 0.012)"
-        - "$CALCULATE(height * 0.12)"
+        - "$CALCULATE(width * 0.016)"
+        - "$CALCULATE(width * 0.016)"
+        - "$CALCULATE(height * 0.16)"
       location:
-        - "$CALCULATE(width * 0.26)"
-        - "$CALCULATE(depth * 0.18)"
-        - "$CALCULATE(height * 0.5 + height * 0.12)"
+        - "$CALCULATE(width * 0.30)"
+        - "$CALCULATE(depth * 0.24)"
+        - "$CALCULATE(height * 0.5 + height * 0.16)"
 
   - tool: modeling_add_modifier
     params:
@@ -471,7 +565,7 @@ steps:
       location:
         - 0.0
         - "$CALCULATE(-depth * 0.28)"
-        - "$CALCULATE(height * 0.31)"
+        - "$CALCULATE(height * 0.36)"
 
   - tool: modeling_add_modifier
     params:
@@ -503,7 +597,7 @@ steps:
       location:
         - 0.0
         - "$CALCULATE(-depth * 0.57)"
-        - "$CALCULATE(height * 0.31)"
+        - "$CALCULATE(height * 0.37)"
 
   # =============================
   # FRONT - Screen Frame
@@ -524,7 +618,7 @@ steps:
       location:
         - 0.0
         - "$CALCULATE(-depth * 0.52)"
-        - "$CALCULATE(height * 0.10)"
+        - "$CALCULATE(height * 0.16)"
 
   - tool: modeling_add_modifier
     params:
@@ -555,7 +649,7 @@ steps:
       location:
         - 0.0
         - "$CALCULATE(-depth * 0.65)"
-        - "$CALCULATE(height * 0.07)"
+        - "$CALCULATE(height * 0.12)"
 
   # =============================
   # FRONT - Lower Insert (Ramp)
@@ -663,13 +757,13 @@ steps:
     params:
       name: "side_trim_left"
       scale:
-        - "$CALCULATE(width * 0.05 / 2)"
-        - "$CALCULATE(depth * 0.16 / 2)"
-        - "$CALCULATE(height * 0.60 / 2)"
+        - "$CALCULATE(width * 0.20 / 2)"
+        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(height * 0.47 / 2)"
       location:
-        - "$CALCULATE(-width * 0.47)"
-        - "$CALCULATE(-depth * 0.42)"
-        - "$CALCULATE(height * 0.02)"
+        - "$CALCULATE(-width * 0.46)"
+        - "$CALCULATE(-depth * 0.27)"
+        - "$CALCULATE(height * 0.12)"
 
   - tool: modeling_add_modifier
     params:
@@ -691,13 +785,13 @@ steps:
     params:
       name: "side_trim_right"
       scale:
-        - "$CALCULATE(width * 0.05 / 2)"
-        - "$CALCULATE(depth * 0.16 / 2)"
-        - "$CALCULATE(height * 0.60 / 2)"
+        - "$CALCULATE(width * 0.20 / 2)"
+        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(height * 0.47 / 2)"
       location:
-        - "$CALCULATE(width * 0.47)"
-        - "$CALCULATE(-depth * 0.42)"
-        - "$CALCULATE(height * 0.02)"
+        - "$CALCULATE(width * 0.46)"
+        - "$CALCULATE(-depth * 0.27)"
+        - "$CALCULATE(height * 0.12)"
 
   - tool: modeling_add_modifier
     params:
@@ -1117,6 +1211,9 @@ steps:
         - "body_shell"
         - "body_lattice"
         - "back_panel"
+        - "body_top_hole"
+        - "body_bottom_strip"
+        - "body_bottom_block"
         - "antenna_base"
         - "antenna_rod"
         - "charging_port"
