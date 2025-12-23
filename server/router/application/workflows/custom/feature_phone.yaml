@@ -152,7 +152,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [27, 30, 33]
       offset:
-        - "$CALCULATE(width * 0.06)"
+        - 0.18
         - 0.0
         - 0.0
       relative: true
@@ -162,7 +162,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [29, 32, 35]
       offset:
-        - "$CALCULATE(-width * 0.06)"
+        - -0.18
         - 0.0
         - 0.0
       relative: true
@@ -172,7 +172,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [18, 21, 24]
       offset:
-        - "$CALCULATE(width * 0.04)"
+        - 0.12
         - 0.0
         - 0.0
       relative: true
@@ -182,7 +182,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [20, 23, 26]
       offset:
-        - "$CALCULATE(-width * 0.04)"
+        - -0.12
         - 0.0
         - 0.0
       relative: true
@@ -192,7 +192,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [9, 12, 15]
       offset:
-        - "$CALCULATE(width * 0.02)"
+        - 0.08
         - 0.0
         - 0.0
       relative: true
@@ -202,7 +202,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [11, 14, 17]
       offset:
-        - "$CALCULATE(-width * 0.02)"
+        - -0.08
         - 0.0
         - 0.0
       relative: true
@@ -212,7 +212,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [0, 3, 6]
       offset:
-        - "$CALCULATE(width * 0.01)"
+        - 0.05
         - 0.0
         - 0.0
       relative: true
@@ -222,7 +222,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [2, 5, 8]
       offset:
-        - "$CALCULATE(-width * 0.01)"
+        - -0.05
         - 0.0
         - 0.0
       relative: true
@@ -233,7 +233,7 @@ steps:
       point_index: [27, 28, 29]
       offset:
         - 0.0
-        - "$CALCULATE(depth * 0.06)"
+        - 0.12
         - 0.0
       relative: true
 
@@ -243,7 +243,7 @@ steps:
       point_index: [33, 34, 35]
       offset:
         - 0.0
-        - "$CALCULATE(-depth * 0.06)"
+        - -0.12
         - 0.0
       relative: true
 
@@ -253,7 +253,7 @@ steps:
       point_index: [18, 19, 20]
       offset:
         - 0.0
-        - "$CALCULATE(depth * 0.04)"
+        - 0.08
         - 0.0
       relative: true
 
@@ -263,7 +263,7 @@ steps:
       point_index: [24, 25, 26]
       offset:
         - 0.0
-        - "$CALCULATE(-depth * 0.04)"
+        - -0.08
         - 0.0
       relative: true
 
@@ -273,7 +273,7 @@ steps:
       point_index: [9, 10, 11]
       offset:
         - 0.0
-        - "$CALCULATE(depth * 0.02)"
+        - 0.05
         - 0.0
       relative: true
 
@@ -283,7 +283,7 @@ steps:
       point_index: [15, 16, 17]
       offset:
         - 0.0
-        - "$CALCULATE(-depth * 0.02)"
+        - -0.05
         - 0.0
       relative: true
 
@@ -293,7 +293,7 @@ steps:
       point_index: [0, 1, 2]
       offset:
         - 0.0
-        - "$CALCULATE(depth * 0.015)"
+        - 0.03
         - 0.0
       relative: true
 
@@ -303,7 +303,7 @@ steps:
       point_index: [6, 7, 8]
       offset:
         - 0.0
-        - "$CALCULATE(-depth * 0.015)"
+        - -0.03
         - 0.0
       relative: true
 
