@@ -33,7 +33,7 @@ defaults:
   clean_scene: false
 
   # Bevel/Subsurf settings
-  body_bevel_width: 0.0035
+  body_bevel_width: 0.0045
   body_bevel_segments: 6
   body_subsurf_levels: 3
 
@@ -71,7 +71,7 @@ parameters:
   body_bevel_width:
     type: float
     range: [0.001, 0.006]
-    default: 0.0035
+    default: 0.0045
     description: Bevel width for body
     group: style
 
@@ -152,7 +152,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [12, 14]
       offset:
-        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(width * 0.075)"
         - 0.0
         - 0.0
       relative: true
@@ -162,7 +162,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [13, 15]
       offset:
-        - "$CALCULATE(-width * 0.06)"
+        - "$CALCULATE(-width * 0.075)"
         - 0.0
         - 0.0
       relative: true
@@ -172,7 +172,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [8, 10]
       offset:
-        - "$CALCULATE(width * 0.03)"
+        - "$CALCULATE(width * 0.045)"
         - 0.0
         - 0.0
       relative: true
@@ -182,7 +182,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [9, 11]
       offset:
-        - "$CALCULATE(-width * 0.03)"
+        - "$CALCULATE(-width * 0.045)"
         - 0.0
         - 0.0
       relative: true
@@ -192,7 +192,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [4, 6]
       offset:
-        - "$CALCULATE(-width * 0.008)"
+        - "$CALCULATE(-width * 0.012)"
         - 0.0
         - 0.0
       relative: true
@@ -202,7 +202,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [5, 7]
       offset:
-        - "$CALCULATE(width * 0.008)"
+        - "$CALCULATE(width * 0.012)"
         - 0.0
         - 0.0
       relative: true
@@ -212,7 +212,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [0, 2]
       offset:
-        - "$CALCULATE(-width * 0.015)"
+        - "$CALCULATE(-width * 0.02)"
         - 0.0
         - 0.0
       relative: true
@@ -222,7 +222,7 @@ steps:
       lattice_name: "body_lattice"
       point_index: [1, 3]
       offset:
-        - "$CALCULATE(width * 0.015)"
+        - "$CALCULATE(width * 0.02)"
         - 0.0
         - 0.0
       relative: true
@@ -759,7 +759,7 @@ steps:
         - "$CALCULATE(depth * 0.07)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.16)"
 
   - tool: modeling_create_primitive
@@ -778,7 +778,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(-width * 0.27)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.16)"
 
   - tool: modeling_create_primitive
@@ -797,7 +797,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(width * 0.27)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.16)"
 
   # =============================
@@ -819,7 +819,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(-width * 0.235)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.11)"
 
   - tool: modeling_create_primitive
@@ -838,7 +838,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(width * 0.235)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.11)"
 
   # =============================
@@ -859,7 +859,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(-width * 0.285)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.26)"
 
   - tool: modeling_create_primitive
@@ -877,7 +877,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.26)"
 
   - tool: modeling_create_primitive
@@ -895,7 +895,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(width * 0.285)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.26)"
 
   # =============================
@@ -916,7 +916,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(-width * 0.275)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.32)"
 
   - tool: modeling_create_primitive
@@ -934,7 +934,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.32)"
 
   - tool: modeling_create_primitive
@@ -952,7 +952,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(width * 0.275)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.32)"
 
   # =============================
@@ -973,7 +973,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(-width * 0.26)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.38)"
 
   - tool: modeling_create_primitive
@@ -991,7 +991,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.38)"
 
   - tool: modeling_create_primitive
@@ -1009,7 +1009,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(width * 0.26)"
-        - "$CALCULATE(-depth * 0.56)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.38)"
 
   # =============================
@@ -1030,7 +1030,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(-width * 0.24)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
@@ -1048,7 +1048,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
@@ -1066,7 +1066,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(width * 0.24)"
-        - "$CALCULATE(-depth * 0.55)"
+        - "$CALCULATE(-depth * 0.63)"
         - "$CALCULATE(-height * 0.44)"
 
   # =============================
