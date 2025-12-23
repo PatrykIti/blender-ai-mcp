@@ -5,7 +5,7 @@ name: feature_phone_workflow
 description: Creates a realistic keypad phone with rounded shell, keypad, screen, and antenna
 category: electronics
 author: blender-ai-mcp
-version: "5.1.0"
+version: "5.2.0"
 
 trigger_keywords:
   - feature phone
@@ -24,32 +24,30 @@ sample_prompts:
   - "stworz telefon przyciskowy"
 
 defaults:
-  # Phone dimensions (generic feature phone)
-  width: 0.077
-  depth: 0.020
-  height: 0.209
+  # Phone dimensions (closer to classic feature phone scale)
+  width: 0.046
+  depth: 0.019
+  height: 0.109
 
   # Cleanup option
   clean_scene: false
 
-  # Bevel/Subsurf settings
-  body_bevel_width: 0.0055
-  body_bevel_segments: 6
-  body_subsurf_levels: 3
+  # Body smoothing (extra Subsurf after Skin)
+  body_subsurf_levels: 0
 
 parameters:
   width:
     type: float
-    range: [0.05, 0.10]
-    default: 0.077
+    range: [0.04, 0.10]
+    default: 0.046
     description: Phone width (X)
     semantic_hints: [width, size]
     group: dimensions
 
   height:
     type: float
-    range: [0.15, 0.25]
-    default: 0.209
+    range: [0.09, 0.25]
+    default: 0.109
     description: Phone height (Z)
     semantic_hints: [height, size]
     group: dimensions
@@ -57,7 +55,7 @@ parameters:
   depth:
     type: float
     range: [0.015, 0.035]
-    default: 0.020
+    default: 0.019
     description: Phone depth (Y)
     semantic_hints: [depth, thickness]
     group: dimensions
@@ -68,25 +66,11 @@ parameters:
     description: Clean scene before building
     group: workflow
 
-  body_bevel_width:
-    type: float
-    range: [0.001, 0.006]
-    default: 0.0055
-    description: Bevel width for body
-    group: style
-
-  body_bevel_segments:
-    type: int
-    range: [2, 6]
-    default: 6
-    description: Bevel segments for smoothness
-    group: style
-
   body_subsurf_levels:
     type: int
     range: [0, 3]
-    default: 3
-    description: Subdivision levels for body smoothness
+    default: 0
+    description: Extra Subdivision levels for body (after Skin/Subsurf bake)
     group: style
 
 steps:
@@ -114,214 +98,86 @@ steps:
   # =============================
   # BODY - Main Shell
   # =============================
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: Cube
-      name: "body_shell"
-    description: Main body shell
-
-  - tool: modeling_transform_object
+  - tool: modeling_skin_create_skeleton
     params:
       name: "body_shell"
-      scale:
-        - "$CALCULATE(width / 2)"
-        - "$CALCULATE(depth / 2)"
-        - "$CALCULATE(height / 2)"
-      location:
-        - 0.0
-        - 0.0
-        - 0.0
+      location: [0.0, 0.0, 0.0]
+      vertices:
+        - [0.0, 0.0, "$CALCULATE(-height * 0.511)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.37)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.19)"]
+        - [0.0, 0.0, 0.0]
+        - [0.0, 0.0, "$CALCULATE(height * 0.19)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.37)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.511)"]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 4]
+        - [4, 5]
+        - [5, 6]
+    description: Smooth body shell (Skin-based) to avoid boxy artifacts
 
-  - tool: lattice_create
-    params:
-      name: "body_lattice"
-      target_object: "body_shell"
-      points_u: 3
-      points_v: 3
-      points_w: 4
-      interpolation: "KEY_BSPLINE"
-    description: Lattice for gentle body taper and curvature
-
-  - tool: lattice_bind
+  # Skin radii (scaled to hit target width/depth after Skin/Subsurf)
+  - tool: modeling_skin_set_radius
     params:
       object_name: "body_shell"
-      lattice_name: "body_lattice"
+      vertex_index: 0
+      radius_x: "$CALCULATE(width * 0.48)"
+      radius_y: "$CALCULATE(depth * 0.50)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [27, 30, 33]
-      offset:
-        - 0.18
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 1
+      radius_x: "$CALCULATE(width * 0.53)"
+      radius_y: "$CALCULATE(depth * 0.54)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [29, 32, 35]
-      offset:
-        - -0.18
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 2
+      radius_x: "$CALCULATE(width * 0.545)"
+      radius_y: "$CALCULATE(depth * 0.548)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [18, 21, 24]
-      offset:
-        - 0.12
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 3
+      radius_x: "$CALCULATE(width * 0.548)"
+      radius_y: "$CALCULATE(depth * 0.548)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [20, 23, 26]
-      offset:
-        - -0.12
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 4
+      radius_x: "$CALCULATE(width * 0.52)"
+      radius_y: "$CALCULATE(depth * 0.53)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [9, 12, 15]
-      offset:
-        - 0.08
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 5
+      radius_x: "$CALCULATE(width * 0.43)"
+      radius_y: "$CALCULATE(depth * 0.48)"
 
-  - tool: lattice_edit_point
+  - tool: modeling_skin_set_radius
     params:
-      lattice_name: "body_lattice"
-      point_index: [11, 14, 17]
-      offset:
-        - -0.08
-        - 0.0
-        - 0.0
-      relative: true
+      object_name: "body_shell"
+      vertex_index: 6
+      radius_x: "$CALCULATE(width * 0.36)"
+      radius_y: "$CALCULATE(depth * 0.45)"
 
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [0, 3, 6]
-      offset:
-        - 0.05
-        - 0.0
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [2, 5, 8]
-      offset:
-        - -0.05
-        - 0.0
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [27, 28, 29]
-      offset:
-        - 0.0
-        - 0.12
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [33, 34, 35]
-      offset:
-        - 0.0
-        - -0.12
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [18, 19, 20]
-      offset:
-        - 0.0
-        - 0.08
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [24, 25, 26]
-      offset:
-        - 0.0
-        - -0.08
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [9, 10, 11]
-      offset:
-        - 0.0
-        - 0.05
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [15, 16, 17]
-      offset:
-        - 0.0
-        - -0.05
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [0, 1, 2]
-      offset:
-        - 0.0
-        - 0.03
-        - 0.0
-      relative: true
-
-  - tool: lattice_edit_point
-    params:
-      lattice_name: "body_lattice"
-      point_index: [6, 7, 8]
-      offset:
-        - 0.0
-        - -0.03
-        - 0.0
-      relative: true
-
-  - tool: scene_hide_object
-    params:
-      object_name: "body_lattice"
-      hide: true
-
-  - tool: modeling_add_modifier
+  - tool: modeling_apply_modifier
     params:
       name: "body_shell"
-      modifier_type: "BEVEL"
-      properties:
-        width: "$body_bevel_width"
-        segments: "$body_bevel_segments"
-        limit_method: "ANGLE"
-        angle_limit: 0.523599
-    description: Bevel body for rounded edges
+      modifier_name: "Skin"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "Subdivision"
 
   - tool: modeling_add_modifier
     params:
@@ -330,37 +186,93 @@ steps:
       properties:
         levels: "$body_subsurf_levels"
         render_levels: "$body_subsurf_levels"
+    condition: "body_subsurf_levels > 0"
 
   # =============================
   # BODY - Back Panel (Battery Cover)
   # =============================
-  - tool: modeling_create_primitive
-    params:
-      primitive_type: Cube
-      name: "back_panel"
-    description: Battery cover
-
-  - tool: modeling_transform_object
+  - tool: modeling_skin_create_skeleton
     params:
       name: "back_panel"
-      scale:
-        - "$CALCULATE(width * 0.98 / 2)"
-        - "$CALCULATE(depth * 0.5 / 2)"
-        - "$CALCULATE(height * 0.67 / 2)"
       location:
         - 0.0
-        - "$CALCULATE(depth * 0.72)"
+        - "$CALCULATE(depth * 0.70)"
         - "$CALCULATE(-height * 0.11)"
+      vertices:
+        - [0.0, 0.0, "$CALCULATE(-height * 0.511 * 0.70)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.37 * 0.70)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.19 * 0.70)"]
+        - [0.0, 0.0, 0.0]
+        - [0.0, 0.0, "$CALCULATE(height * 0.19 * 0.70)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.37 * 0.70)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.511 * 0.70)"]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 4]
+        - [4, 5]
+        - [5, 6]
+    description: Curved battery cover (Skin-based) to avoid boxy artifacts
 
-  - tool: modeling_add_modifier
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 0
+      radius_x: "$CALCULATE(width * 0.48 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.50 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 1
+      radius_x: "$CALCULATE(width * 0.53 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.54 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 2
+      radius_x: "$CALCULATE(width * 0.545 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.548 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 3
+      radius_x: "$CALCULATE(width * 0.548 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.548 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 4
+      radius_x: "$CALCULATE(width * 0.52 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.53 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 5
+      radius_x: "$CALCULATE(width * 0.43 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.48 * 0.55)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "back_panel"
+      vertex_index: 6
+      radius_x: "$CALCULATE(width * 0.36 * 0.97)"
+      radius_y: "$CALCULATE(depth * 0.45 * 0.55)"
+
+  - tool: modeling_apply_modifier
     params:
       name: "back_panel"
-      modifier_type: "BEVEL"
-      properties:
-        width: 0.002
-        segments: 3
-        limit_method: "ANGLE"
-        angle_limit: 0.523599
+      modifier_name: "Skin"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "back_panel"
+      modifier_name: "Subdivision"
 
   # =============================
   # BODY - Top Hole / Lanyard
@@ -560,11 +472,11 @@ steps:
       name: "front_lower_arc"
       scale:
         - "$CALCULATE(width * 0.86 / 2)"
-        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(depth * 0.30 / 2)"
         - "$CALCULATE(height * 0.12 / 2)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.28)"
+        - "$CALCULATE(-depth * 0.35)"
         - "$CALCULATE(height * 0.36)"
 
   - tool: modeling_add_modifier
@@ -696,11 +608,11 @@ steps:
       name: "front_speaker_grille"
       scale:
         - "$CALCULATE(width * 0.99 / 2)"
-        - "$CALCULATE(depth * 0.78 / 2)"
+        - "$CALCULATE(depth * 0.32 / 2)"
         - "$CALCULATE(height * 0.41 / 2)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.21)"
+        - "$CALCULATE(-depth * 0.34)"
         - "$CALCULATE(-height * 0.29)"
 
   - tool: modeling_add_modifier
@@ -758,11 +670,11 @@ steps:
       name: "side_trim_left"
       scale:
         - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(depth * 0.24 / 2)"
         - "$CALCULATE(height * 0.47 / 2)"
       location:
         - "$CALCULATE(-width * 0.46)"
-        - "$CALCULATE(-depth * 0.27)"
+        - "$CALCULATE(-depth * 0.38)"
         - "$CALCULATE(height * 0.12)"
 
   - tool: modeling_add_modifier
@@ -786,11 +698,11 @@ steps:
       name: "side_trim_right"
       scale:
         - "$CALCULATE(width * 0.20 / 2)"
-        - "$CALCULATE(depth * 0.82 / 2)"
+        - "$CALCULATE(depth * 0.24 / 2)"
         - "$CALCULATE(height * 0.47 / 2)"
       location:
         - "$CALCULATE(width * 0.46)"
-        - "$CALCULATE(-depth * 0.27)"
+        - "$CALCULATE(-depth * 0.38)"
         - "$CALCULATE(height * 0.12)"
 
   - tool: modeling_add_modifier
@@ -913,7 +825,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(-width * 0.235)"
-        - "$CALCULATE(-depth * 0.63)"
+        - "$CALCULATE(-depth * 0.70)"
         - "$CALCULATE(-height * 0.11)"
 
   - tool: modeling_create_primitive
@@ -932,7 +844,7 @@ steps:
         - "$CALCULATE(depth * 0.059)"
       location:
         - "$CALCULATE(width * 0.235)"
-        - "$CALCULATE(-depth * 0.63)"
+        - "$CALCULATE(-depth * 0.70)"
         - "$CALCULATE(-height * 0.11)"
 
   # =============================
@@ -1124,7 +1036,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(-width * 0.24)"
-        - "$CALCULATE(-depth * 0.63)"
+        - "$CALCULATE(-depth * 0.70)"
         - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
@@ -1142,7 +1054,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - 0.0
-        - "$CALCULATE(-depth * 0.63)"
+        - "$CALCULATE(-depth * 0.70)"
         - "$CALCULATE(-height * 0.44)"
 
   - tool: modeling_create_primitive
@@ -1160,7 +1072,7 @@ steps:
         - "$CALCULATE(depth * 0.047)"
       location:
         - "$CALCULATE(width * 0.24)"
-        - "$CALCULATE(-depth * 0.63)"
+        - "$CALCULATE(-depth * 0.70)"
         - "$CALCULATE(-height * 0.44)"
 
   # =============================
@@ -1209,7 +1121,6 @@ steps:
       variable: "obj"
       values:
         - "body_shell"
-        - "body_lattice"
         - "back_panel"
         - "body_top_hole"
         - "body_bottom_strip"
