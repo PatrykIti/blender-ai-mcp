@@ -245,6 +245,56 @@ steps:
       name: "screen_recess_cutter"
 
   # =============================
+  # BODY - Speaker Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "speaker_recess_cutter"
+    description: Cutter for recessed speaker seat above screen
+
+  - tool: modeling_transform_object
+    params:
+      name: "speaker_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.085)"
+        - "$CALCULATE(width * 0.085)"
+        - "$CALCULATE(depth * 0.06)"
+      rotation: [1.5708, 0.0, 0.0]
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.33)"
+        - "$CALCULATE(height * 0.34)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "speaker_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0004
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "speaker_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "speaker_recess_cutter"
+
+  # =============================
   # BODY - Battery Cover Recess (Boolean)
   # =============================
   - tool: modeling_create_primitive
@@ -475,6 +525,55 @@ steps:
   - tool: scene_delete_object
     params:
       name: "side_button_right_cutter"
+
+  # =============================
+  # BODY - Microphone Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "mic_recess_cutter"
+    description: Cutter for microphone hole/recess at bottom
+
+  - tool: modeling_transform_object
+    params:
+      name: "mic_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.02)"
+        - "$CALCULATE(width * 0.02)"
+        - "$CALCULATE(depth * 0.16)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.05)"
+        - "$CALCULATE(-height * 0.515)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "mic_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.00025
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "mic_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "mic_recess_cutter"
 
   - tool: modeling_add_modifier
     params:
