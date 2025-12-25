@@ -5,7 +5,7 @@ name: feature_phone_workflow
 description: Creates a smooth feature-phone body shell (base) with a recessed screen seat
 category: electronics
 author: blender-ai-mcp
-version: "5.3.1"
+version: "5.3.2"
 
 trigger_keywords:
   - feature phone
@@ -574,6 +574,55 @@ steps:
   - tool: scene_delete_object
     params:
       name: "mic_recess_cutter"
+
+  # =============================
+  # BODY - Charging Port Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "charge_port_cutter"
+    description: Cutter for bottom charging port recess (Siemens-style)
+
+  - tool: modeling_transform_object
+    params:
+      name: "charge_port_cutter"
+      scale:
+        - "$CALCULATE(width * 0.26)"
+        - "$CALCULATE(depth * 0.32)"
+        - "$CALCULATE(height * 0.04)"
+      location:
+        - 0.0
+        - 0.0
+        - "$CALCULATE(-height * 0.515)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "charge_port_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0005
+        segments: 3
+        limit_method: "NONE"
+        profile: 0.7
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "charge_port_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "charge_port_cutter"
 
   - tool: modeling_add_modifier
     params:
