@@ -293,6 +293,189 @@ steps:
     params:
       name: "battery_recess_cutter"
 
+  # =============================
+  # BODY - Antenna Socket (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "antenna_socket_cutter"
+    description: Cutter for antenna socket (mount point)
+
+  - tool: modeling_transform_object
+    params:
+      name: "antenna_socket_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.55)"
+      location:
+        - "$CALCULATE(-width * 0.32)"
+        - "$CALCULATE(depth * 0.24)"
+        - "$CALCULATE(height * 0.47)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "antenna_socket_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "antenna_socket_cutter"
+
+  # =============================
+  # BODY - Keypad Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "keypad_recess_cutter"
+    description: Cutter for recessed keypad seat (no buttons yet)
+
+  - tool: modeling_transform_object
+    params:
+      name: "keypad_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.92 / 2)"
+        - "$CALCULATE(depth * 0.11 / 2)"
+        - "$CALCULATE(height * 0.42 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.33)"
+        - "$CALCULATE(-height * 0.29)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "keypad_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0012
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "keypad_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "keypad_recess_cutter"
+
+  # =============================
+  # BODY - Side Button Recesses (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "side_button_left_cutter"
+    description: Cutter for left-side button recess (seat)
+
+  - tool: modeling_transform_object
+    params:
+      name: "side_button_left_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.10)"
+        - "$CALCULATE(height * 0.05)"
+      location:
+        - "$CALCULATE(-width * 0.54)"
+        - 0.0
+        - "$CALCULATE(height * 0.05)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "side_button_left_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0008
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "side_button_left_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "side_button_left_cutter"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "side_button_right_cutter"
+    description: Cutter for right-side button recess (seat)
+
+  - tool: modeling_transform_object
+    params:
+      name: "side_button_right_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.10)"
+        - "$CALCULATE(height * 0.05)"
+      location:
+        - "$CALCULATE(width * 0.54)"
+        - 0.0
+        - "$CALCULATE(height * 0.05)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "side_button_right_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0008
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "side_button_right_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "side_button_right_cutter"
+
   - tool: modeling_add_modifier
     params:
       name: "body_shell"
