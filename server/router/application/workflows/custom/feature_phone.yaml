@@ -5,7 +5,7 @@ name: feature_phone_workflow
 description: Creates a smooth feature-phone body shell (base) with a recessed screen seat
 category: electronics
 author: blender-ai-mcp
-version: "5.3.2"
+version: "5.3.3"
 
 trigger_keywords:
   - feature phone
@@ -543,7 +543,7 @@ steps:
         - "$CALCULATE(width * 0.02)"
         - "$CALCULATE(depth * 0.16)"
       location:
-        - 0.0
+        - "$CALCULATE(width * 0.26)"
         - "$CALCULATE(-depth * 0.05)"
         - "$CALCULATE(-height * 0.515)"
 
@@ -588,13 +588,13 @@ steps:
     params:
       name: "charge_port_cutter"
       scale:
-        - "$CALCULATE(width * 0.26)"
-        - "$CALCULATE(depth * 0.32)"
-        - "$CALCULATE(height * 0.04)"
+        - "$CALCULATE(width * 0.26 / 2)"
+        - "$CALCULATE(depth * 0.32 / 2)"
+        - "$CALCULATE(height * 0.04 / 2)"
       location:
         - 0.0
         - 0.0
-        - "$CALCULATE(-height * 0.515)"
+        - "$CALCULATE(-height * 0.482)"
 
   - tool: modeling_add_modifier
     params:
