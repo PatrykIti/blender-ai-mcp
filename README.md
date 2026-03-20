@@ -48,12 +48,30 @@ Communication happens via **JSON-RPC over TCP sockets**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
 
+### Runtime Responsibility Model
+
+The project intentionally separates four different responsibilities:
+
+- **FastMCP platform layer**: client-facing MCP surface, discovery, visibility, prompts, elicitation, and future 3.x platform features.
+- **LaBSE semantic layer**: multilingual semantic matching for workflows, modifiers, and learned parameter reuse.
+- **Router policy layer**: deterministic correction, guardrails, adaptation, and execution policy.
+- **Inspection / assertion layer**: source of truth for actual Blender state and future correctness checks.
+
+Important:
+
+- LaBSE helps answer “what did the user probably mean?”
+- Router helps answer “how do we execute this safely?”
+- Inspection tools answer “what is actually true in Blender right now?”
+
+See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
+
 ## ✅ Support Matrix
 
 - **Blender**: tested on **Blender 5.0** (E2E). The addon declares minimum **Blender 4.0**, but 4.x support is best-effort.
 - **Python (MCP server)**: **3.11** is the CI baseline. **3.10+** works for core tools, but Router semantic features (LaBSE/LanceDB) require **3.11+**.
 - **OS**: macOS / Windows / Linux (Docker recommended). On Linux, use host networking or proper host resolution for `BLENDER_RPC_HOST`.
 - **Memory**: Router semantic matching uses a local LaBSE model (~2GB RAM).
+- **FastMCP runtime**: current repo baseline is **FastMCP 2.x**; strategic migration to **FastMCP 3.x** platform features is tracked in `_docs/_TASKS/TASK-083` through `TASK-097`.
 
 ## 🧪 Testing
 
@@ -557,7 +575,14 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 
 **Status:** ✅ **Complete** | All 6 Phases Done | Test counts vary — see **🧪 Testing** for up-to-date numbers
 
-> **Documentation:** See [`_docs/_ROUTER/`](_docs/_ROUTER/) for full documentation including [Quick Start](_docs/_ROUTER/QUICK_START.md), [Configuration](_docs/_ROUTER/CONFIGURATION.md), [Patterns](_docs/_ROUTER/PATTERNS.md), and [API Reference](_docs/_ROUTER/API.md).
+> **Documentation:** See [`_docs/_ROUTER/`](_docs/_ROUTER/) for full documentation including [Quick Start](_docs/_ROUTER/QUICK_START.md), [Configuration](_docs/_ROUTER/CONFIGURATION.md), [Patterns](_docs/_ROUTER/PATTERNS.md), [API Reference](_docs/_ROUTER/API.md), and [Responsibility Boundaries](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
+
+#### Responsibility Boundaries
+
+- **FastMCP** should own discovery, visibility, prompts, elicitation, and future 3.x client-surface shaping.
+- **LaBSE** should own semantic retrieval and multilingual generalization.
+- **Router** should own deterministic safety and correction policy.
+- **Inspection tools** should remain the source of Blender truth; router and LaBSE are not substitutes for verification.
 
 #### All Phases Complete ✅
 
@@ -588,6 +613,8 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering |
 | **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow |
 | **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params |
+
+> Note: Router policy is authoritative for correction and execution flow. Inspection tools are authoritative for actual scene state and result verification.
 
 #### Workflow-First Quick Start (recommended)
 
@@ -647,6 +674,10 @@ Router behavior:
   → Uses table_workflow with inherited proportions
   → Chair has proper leg ratios from table, vertical proportions from tower
 ```
+
+Note:
+- LaBSE is used here as a semantic retrieval layer.
+- It is not the source of truth for scene correctness, geometry state, or safe execution.
 
 #### Parametric Variables
 

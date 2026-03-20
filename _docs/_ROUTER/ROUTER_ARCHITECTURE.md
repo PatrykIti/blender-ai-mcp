@@ -7,6 +7,11 @@ This file contains:
 - base classes,
 - implementation template.
 
+> Note:
+> This is a code-template / historical architecture document.
+> For the current responsibility split between FastMCP, LaBSE, router policy, and inspection truth,
+> read [`RESPONSIBILITY_BOUNDARIES.md`](./RESPONSIBILITY_BOUNDARIES.md).
+
 **Key Concept**: Router is an INTELLIGENT SUPERVISOR over LLM tool calls,
 not just an "intent matcher". It intercepts, corrects, expands, and overrides
 tool calls before execution.

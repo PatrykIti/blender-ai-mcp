@@ -41,12 +41,36 @@ The system allows AI to create:
                 Domain | Application | Adapters | Infra
 ```
 
+### Runtime Responsibility Split
+
+Beyond the Clean Architecture layers, the runtime product is divided into four responsibility layers:
+
+- **FastMCP platform layer**: public MCP surface, discovery, visibility, prompts, elicitation, background-task UX, and future 3.x client-surface shaping.
+- **Semantic layer (LaBSE / vector retrieval)**: workflow matching, multilingual generalization, learned parameter reuse.
+- **Router policy layer**: deterministic correction, guardrails, adaptation, override policy, and execution safety.
+- **Inspection / assertion layer**: the source of truth for current Blender state and future correctness checks.
+
+This split is intentional:
+
+- FastMCP should not be the semantic engine.
+- LaBSE should not be the truth engine.
+- Router should not be the primary discovery/catalog-shaping engine.
+- Inspection must remain the final authority on actual Blender state.
+
+See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
+
 ### 1. MCP Server (Client Side)
 A Python application that exposes tools to the AI model and acts as a client for the Blender Addon.
 - **Domain**: Defines interfaces (`IModelingTool`) and models (`RpcRequest`).
 - **Application**: Implements tool logic (`ModelingToolHandler`) using dependency injection.
 - **Adapters**: Implements `RpcClient` (sockets) and `FastMCP` endpoints.
 - **Infrastructure**: DI Container and Configuration.
+
+Current state:
+- The runtime currently uses a strong FastMCP 2.x adapter surface.
+
+Strategic direction:
+- Move toward FastMCP 3.x platform capabilities for discovery, visibility, versioned surfaces, prompts, and richer client interaction patterns.
 
 ### 2. Blender Addon (Server Side)
 A plugin running inside Blender's Python environment (`bpy`).
@@ -128,6 +152,8 @@ We group operations into high-level, robust tools.
 - **Dependency Injection**: All dependencies are injected via providers (`di.py`).
 - **Thread Safety**: The Addon uses `bpy.app.timers` to ensure thread safety when handling RPC requests.
 - **No "Raw Code"**: The AI calls tools, it never executes arbitrary Python scripts.
+- **Semantic vs Truth Separation**: Semantic retrieval helps decide likely intent; inspection tools determine actual scene truth.
+- **Deterministic Safety First**: Router corrections should prefer deterministic fixes and explicit policy over speculative behavior.
 
 ---
 

@@ -32,6 +32,17 @@ This project follows **Clean Architecture**. Before writing code, understand the
 
 **Rule:** Dependencies only point **INWARD**. `Adapters` -> `Application` -> `Domain`.
 
+Also read:
+- `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
+
+That document defines the runtime responsibility split between:
+- FastMCP platform behavior
+- LaBSE semantic matching
+- Router correction/safety policy
+- Inspection/assertion truth
+
+Do not blur those layers when extending the repo.
+
 ---
 
 ## 🚀 Development Workflow
@@ -47,6 +58,7 @@ This project follows **Clean Architecture**. Before writing code, understand the
     *   If the tool should be understood by the Router, add/update metadata in `server/router/infrastructure/tools_metadata/**/<tool>.json`.
 6.  **Test**: Add/update unit tests in `tests/unit/` (mock Blender RPC; no Blender needed).
 7.  **Document**: Update `CHANGELOG.md`, `README.md`, and relevant docs in `_docs/` (especially `_docs/_ROUTER/` for router/workflow changes).
+    * If your change touches FastMCP platform design, LaBSE semantics, router correction scope, or verification logic, update `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` too.
 
 ---
 

@@ -23,7 +23,9 @@ WORKFLOW SELECTION (MANDATORY)
    - workflow_catalog(action="search", query="<user prompt>", top_k=5, threshold=0.0)
    - If you want to inspect steps without executing anything:
        * workflow_catalog(action="get", workflow_name="<workflow_name>")
-   - Use this only as a hint; Router is the source of truth.
+   - Use this only as a hint.
+   - ~~Router is the source of truth.~~
+   - Router is the execution-policy layer; inspection tools are the source of truth for actual Blender state.
 
 3) Set goal (ALWAYS)
    - router_set_goal(goal="<user prompt including modifiers>")
@@ -47,6 +49,7 @@ RELIABILITY (STILL REQUIRED)
    * scene_list_objects()
    * scene_inspect(action="object", object_name=...)
    * scene_get_bounding_box(object_name=..., world_space=True)
+   * Treat these inspection results as authoritative over prior semantic assumptions
 - For shape-critical parts (round vs boxy, holes/openings, clearances), do quick visual QA using visibility tools:
    * scene_isolate_object(object_name=...)
    * scene_get_viewport(shading="SOLID", focus_target=..., output_mode="IMAGE") or extraction_render_angles(object_name=...)

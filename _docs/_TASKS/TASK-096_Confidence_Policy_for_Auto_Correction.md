@@ -1,0 +1,117 @@
+# TASK-096: Confidence Policy for Auto-Correction
+
+**Priority:** 🔴 High  
+**Category:** Router Safety  
+**Estimated Effort:** Medium  
+**Dependencies:** TASK-085, TASK-087, TASK-095  
+**Status:** ⬜ To Do
+
+---
+
+## Objective
+
+Define a formal confidence-based policy that determines when the router may auto-correct, when it should ask, and when it must stop.
+
+---
+
+## Problem
+
+Auto-correction is essential in Blender AI systems, but it becomes dangerous when the system does not clearly distinguish:
+
+- a safe precondition fix
+- a parameter normalization
+- a speculative rewrite of user intent
+- a pattern-based replacement with creative consequences
+
+Without a confidence policy, the same router can feel “helpful” in one case and “mysteriously wrong” in another.
+
+The risk grows as the project adds:
+
+- more workflows
+- more overrides
+- more semantic matching
+- more ways to reinterpret a tool call
+
+---
+
+## Business Outcome
+
+Turn auto-correction into a governed product capability instead of an opaque collection of heuristics.
+
+The system should make clear business distinctions between:
+
+- safe automatic repair
+- interactive clarification
+- fail-fast blocking
+
+That improves both trust and debuggability.
+
+---
+
+## Proposed Solution
+
+Introduce an explicit confidence policy for router behavior.
+
+Recommended operating model:
+
+- **High confidence**: safe deterministic corrections may run automatically.
+- **Medium confidence**: the system should prefer clarification, preview, or constrained escalation.
+- **Low confidence**: the system should not reinterpret intent silently.
+- **No confidence**: block or return a clear needs-input path.
+
+This policy should apply not only to workflow matching, but also to:
+
+- overrides
+- intent repair
+- semantic parameter reuse
+- tool substitution
+
+---
+
+## FastMCP Features / Approach Context
+
+- **User Elicitation** — **FastMCP 2.10.0**  
+  Use as the structured path for medium-confidence clarification.
+- **Multi-select elicitation support** — **FastMCP 2.14.0**
+- **Session-Scoped State** — **FastMCP 3.0.0**  
+  Preserve confidence context and interaction phase across a session.
+
+---
+
+## Scope
+
+This task covers:
+
+- confidence-to-action policy
+- escalation rules
+- separation of auto-fix vs ask vs block behavior
+- consistent business behavior across correction paths
+
+This task does not cover:
+
+- low-level implementation of every engine
+- replacing the router
+
+---
+
+## Why This Matters For Blender AI
+
+The key product question is not “can the router correct this?”
+
+It is:
+
+- “should it correct this automatically?”
+- “how sure is it?”
+- “what is the blast radius if it is wrong?”
+
+That distinction is what separates a strong assistant from a surprising one.
+
+---
+
+## Success Criteria
+
+- The router has an explicit confidence policy.
+- Safe corrections are automatic only when confidence and risk justify it.
+- Ambiguous cases move into structured clarification instead of silent reinterpretation.
+- Auto-correction becomes more trustworthy because its decision policy is visible and consistent.
+

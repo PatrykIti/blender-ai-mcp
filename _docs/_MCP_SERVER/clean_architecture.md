@@ -46,6 +46,19 @@ The MCP server project is organized according to Clean Architecture principles t
     - `uv.py` - UV tools (list_maps)
   - `server.py`: Entry point that imports areas (triggering registration) and exposes the `run()` function.
 
+Important runtime note:
+- The MCP adapter layer is the place where FastMCP presents the public client surface.
+- Semantic understanding is handled elsewhere.
+- Scene truth is handled elsewhere.
+
+In other words:
+- FastMCP is the platform/presentation layer.
+- LaBSE is the semantic layer.
+- Router is the policy/safety layer.
+- Inspection tools are the truth layer.
+
+See `../_ROUTER/RESPONSIBILITY_BOUNDARIES.md`.
+
 ### 4. Infrastructure (`server/infrastructure`)
 **Technical details and configuration.**
 - `di.py`: **Dependency Injection Providers**. Factory functions that create the dependency graph:
@@ -75,3 +88,9 @@ Example: Calling `scene_list_objects` tool
 9. `SceneToolHandler` -> formats result string for AI model.
 
 This flow is identical for all tool areas (mesh, curve, modeling, etc.) - only the handler and RPC command names differ.
+
+Current state:
+- The repo currently exposes a strong FastMCP 2.x-style tool surface.
+
+Strategic direction:
+- Future evolution will move more discovery, visibility, prompt, and interaction responsibilities into FastMCP 3.x platform capabilities rather than handling them implicitly through the flat tool catalog alone.

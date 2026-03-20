@@ -10,6 +10,7 @@
 |----------|-------------|
 | [ROUTER_HIGH_LEVEL_OVERVIEW.md](./ROUTER_HIGH_LEVEL_OVERVIEW.md) | Concept and architecture |
 | [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md) | Code templates and structure |
+| [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) | Role split between FastMCP platform, LaBSE semantics, router safety, and inspection/assertion truth |
 | [IMPLEMENTATION/](./IMPLEMENTATION/) | Step-by-step implementation docs |
 | [WORKFLOWS/](./WORKFLOWS/) | Predefined workflow definitions |
 | [TOOLS/](./TOOLS/) | **Guide for adding new tools to Router** |
@@ -36,6 +37,19 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
                   [Workflow Expansion Engine]
                   [Error Firewall]
 ```
+
+---
+
+## Responsibility Boundaries
+
+The router sits inside a larger stack and should not absorb every responsibility.
+
+- **FastMCP platform layer** owns discovery, visibility, prompts, elicitation, background tasks, and client-facing surface design.
+- **LaBSE semantic layer** owns multilingual semantic matching, workflow retrieval, and learned semantic parameter reuse.
+- **Router policy layer** owns deterministic safety, correction, guardrails, and confidence-based execution decisions.
+- **Inspection/assertion layer** owns scene truth and result verification.
+
+Read [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) before changing FastMCP integration, LaBSE usage, router correction policy, or state-validation behavior.
 
 ---
 

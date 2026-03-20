@@ -7,6 +7,9 @@ Documentation for the MCP Server (Client Side).
 - **[Clean Architecture](./clean_architecture.md)**
   - Detailed description of layers and control flow (DI).
   - Dependency separation principles implemented in version 0.1.5.
+- **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
+  - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
+  - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
 
 ## 🚀 Running (Docker)
 

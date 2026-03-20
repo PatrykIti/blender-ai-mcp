@@ -33,6 +33,24 @@ The project exists to avoid raw-code Blender automation. The intended product su
 - Dependency wiring belongs in `server/infrastructure/di.py`.
 - Router additions must remain metadata-driven where possible.
 
+## Runtime Boundaries
+
+Read `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` before changing FastMCP integration, LaBSE usage, router policy, or verification flows.
+
+The intended responsibility split is:
+
+- **FastMCP platform layer**: discovery, visibility, prompts, elicitation, background tasks, versioned/public MCP surfaces.
+- **LaBSE semantic layer**: workflow matching, multilingual semantic retrieval, synonym handling, learned parameter reuse.
+- **Router policy layer**: deterministic execution safety, mode/selection fixes, clamping, correction policy, ask/block/override decisions.
+- **Inspection/assertion layer**: Blender truth and verification via scene/mesh/object inspection and future assertion tools.
+
+Do not let these roles blur together:
+
+- Do not use LaBSE as the authority for scene truth or execution safety.
+- Do not use the router as the primary discovery/catalog-shaping mechanism when FastMCP platform features should handle that.
+- Do not treat semantic confidence as proof that a Blender result is correct; rely on inspection/assertion tools for that.
+- Prefer structured state reporting and verification over prose when correctness matters.
+
 ## Environment Notes
 
 - Python `3.11+` is the practical baseline for full repo functionality.
@@ -86,6 +104,7 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 ## Change Playbook: Router Or Workflow Work
 
 - Read `_docs/_ROUTER/README.md` and the relevant implementation/workflow docs before changing router behavior.
+- Read `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` before changing anything that touches FastMCP platform design, LaBSE responsibilities, router correction scope, or verification logic.
 - Router logic is not just intent matching. It includes correction, override, workflow expansion, parameter resolution, adaptation, and firewall behavior.
 - Preserve edit-mode selection state where possible. This is a documented project goal and already has explicit fixes/tasks around it.
 - Keep metadata, workflow YAML, router engines, and tests in sync.
@@ -146,6 +165,7 @@ If your change touches these areas, read the corresponding task docs first. They
 - MCP surface: `_docs/_MCP_SERVER/README.md`
 - Addon surface: `_docs/_ADDON/README.md`
 - Router system: `_docs/_ROUTER/README.md`
+- Runtime boundaries: `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 - Prompting patterns for LLM clients: `_docs/_PROMPTS/README.md`
 
 ## Practical Guidance For Agents

@@ -9,6 +9,24 @@ Documentation for the Blender Addon (Server Side).
   - `bpy.app.timers` mechanism.
   - JSON Protocol.
 
+## Responsibility Boundary
+
+The addon is the Blender execution and state layer.
+
+It should be treated as the authority for:
+
+- actual `bpy` execution
+- object/mesh/material/world state
+- data returned by inspection tools
+
+It is not the place for:
+
+- MCP discovery logic
+- semantic workflow matching
+- LLM-facing correction policy
+
+Those belong to the FastMCP platform layer and router stack on the server side.
+
 ## 🛠 Structure (Clean Architecture)
 
 The Addon is layered to separate Blender logic from networking mechanisms.
@@ -25,6 +43,9 @@ Business Logic ("How to do it in Blender").
 - `scene.py`: `SceneHandler` (List objects, delete).
 - `modeling.py`: `ModelingHandler` (Create primitives, transforms, modifiers).
 - Direct usage of `bpy`.
+
+Practical rule:
+- If a question is “what is actually true in Blender right now?”, the addon-side state and inspection handlers should be the source of truth.
 
 ### 3. Infrastructure (`infrastructure/`)
 Technical details.
