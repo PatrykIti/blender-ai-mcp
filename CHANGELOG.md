@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.2.0 (2026-03-20)
+
+### Features
+
+- Add advanced introspection tools, workflow catalog import, and feature phone workflows
+  ([#30](https://github.com/PatrykIti/blender-ai-mcp/pull/30),
+  [`d1d4c3a`](https://github.com/PatrykIti/blender-ai-mcp/commit/d1d4c3a7390c02dd861d86053866fefba6916c5f))
+
+
 ## v2.1.1 (2025-12-19)
 
 ### Bug Fixes
