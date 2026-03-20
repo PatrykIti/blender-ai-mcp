@@ -69,3 +69,11 @@ class LatticeToolHandler(ILatticeTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def get_points(self, object_name: str) -> str:
+        """Returns lattice point positions and resolution."""
+        args = {"object_name": object_name}
+        response = self.rpc.send_request("lattice.get_points", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

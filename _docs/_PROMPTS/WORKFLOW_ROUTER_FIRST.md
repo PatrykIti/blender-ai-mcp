@@ -38,7 +38,7 @@ WORKFLOW SELECTION (MANDATORY)
        - If status == "no_match" or "disabled":
            * Ask the user whether to:
                A) continue in MANUAL mode (use the “Manual Modeling Prompt”), or
-               B) add/create a new workflow (out of scope unless user requests).
+               B) add/create a new workflow (use workflow_catalog import; inline/chunked supported).
        - If status == "error":
            * Stop and surface the error message (Router malfunction). Ask user to open a GitHub issue with logs/stack trace.
 

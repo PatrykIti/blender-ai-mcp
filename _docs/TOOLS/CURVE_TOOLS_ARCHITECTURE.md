@@ -77,6 +77,61 @@ Notes:
 
 ---
 
+# 3. curve_get_data ✅ Done
+
+Returns curve splines, points, and settings for reconstruction.
+
+**Tag:** `[OBJECT MODE][READ-ONLY][SAFE]`
+
+Args:
+- object_name: str - Name of the curve object to inspect
+
+Example:
+```json
+{
+  "tool": "curve_get_data",
+  "args": {
+    "object_name": "BezierCurve"
+  }
+}
+```
+
+Returns (example):
+```json
+{
+  "object_name": "BezierCurve",
+  "dimensions": "3D",
+  "bevel_depth": 0.0,
+  "extrude": 0.0,
+  "splines": [
+    {
+      "type": "BEZIER",
+      "use_cyclic_u": false,
+      "bezier_points": [
+        {
+          "co": [0.0, 0.0, 0.0],
+          "handle_left": [-1.0, 0.0, 0.0],
+          "handle_right": [1.0, 0.0, 0.0],
+          "handle_left_type": "AUTO",
+          "handle_right_type": "AUTO"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use Cases:
+- Exact curve reconstruction in YAML workflows
+- Copying spline shapes between scenes
+- Validating curve settings before conversion
+
+Notes:
+- Returns Bezier handle positions for BEZIER splines.
+- NURBS/POLY splines return control points with weights when available.
+
+---
+
 # Workflow Examples
 
 ## Creating a Vase with Spin

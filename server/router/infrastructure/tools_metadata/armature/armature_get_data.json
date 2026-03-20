@@ -1,0 +1,28 @@
+{
+  "tool_name": "armature_get_data",
+  "category": "armature",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["armature", "bones", "rig", "hierarchy", "pose", "inspect", "data"],
+  "sample_prompts": [
+    "get armature bone data",
+    "dump rig hierarchy",
+    "inspect armature bones",
+    "export pose transforms"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the armature object to inspect"
+    },
+    "include_pose": {
+      "type": "bool",
+      "default": false,
+      "description": "Include pose transforms for bones"
+    }
+  },
+  "related_tools": ["armature_create", "armature_add_bone", "armature_pose_bone", "scene_get_constraints"],
+  "patterns": [],
+  "description": "Returns armature bones and hierarchy (optional pose data)."
+}

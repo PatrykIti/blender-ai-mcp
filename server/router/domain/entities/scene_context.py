@@ -164,7 +164,9 @@ class SceneContext:
     @property
     def has_selection(self) -> bool:
         """Check if anything is selected."""
-        if self.mode.startswith("EDIT") and self.topology:
+        if self.mode.startswith("EDIT"):
+            if self.topology is None:
+                return False
             return self.topology.has_selection
         return len(self.selected_objects) > 0
 

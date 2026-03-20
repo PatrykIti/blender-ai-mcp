@@ -399,12 +399,14 @@ Example:
 
 ---
 
-# 20. mesh_get_vertex_data ✅ Done
+# 20. mesh_get_vertex_data ✅ Done (internal via mesh_inspect)
 
 Returns vertex positions and selection states for programmatic analysis.
 
 **Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
 **Priority:** 🔴 CRITICAL - Foundation for programmatic selection
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="vertices", ...)`.
 
 Args:
 - object_name: str
@@ -426,8 +428,9 @@ Returns:
 Example:
 ```json
 {
-  "tool": "mesh_get_vertex_data",
+  "tool": "mesh_inspect",
   "args": {
+    "action": "vertices",
     "object_name": "Cube",
     "selected_only": false
   }
@@ -1053,7 +1056,7 @@ Workflow: BEFORE → mesh_select_targeted(action="loop") | AFTER → modeling_ad
 
 # 42. mesh_mark_sharp ✅ Done
 
-Marks or clears sharp edges for Auto Smooth and Edge Split modifier.
+Marks or clears sharp edges for Smooth by Angle (5.0+) and Edge Split modifier.
 
 **Tag:** `[EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE]`
 
@@ -1077,7 +1080,7 @@ Use Case:
 - Edge Split modifier workflow
 
 Sharp edges affect:
-- Auto Smooth: Splits normals at sharp edges for flat shading
+- Smooth by Angle (5.0+): Splits normals at sharp edges for flat shading
 - Edge Split modifier: Creates hard edges without geometry duplication
 - Normal display and shading calculations
 
@@ -1271,6 +1274,363 @@ Use Case:
 - Mountain/terrain modeling
 
 Workflow: Set proportional edit → mesh_transform_selected (transforms use proportional influence)
+
+---
+
+# 48. mesh_get_edge_data ✅ Done (internal via mesh_inspect)
+
+Returns edge connectivity and edge flags (seam/sharp/crease/bevel).
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="edges", ...)`.
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "edge_count": 1024,
+  "selected_count": 12,
+  "returned_count": 12,
+  "edges": [
+    {
+      "index": 0,
+      "verts": [12, 45],
+      "is_boundary": false,
+      "is_manifold": true,
+      "is_seam": false,
+      "is_sharp": true,
+      "crease": 0.5,
+      "bevel_weight": 1.0,
+      "selected": false
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "edges",
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Edge-level reconstruction (seams, sharp edges, weights)
+
+---
+
+# 49. mesh_get_face_data ✅ Done (internal via mesh_inspect)
+
+Returns face connectivity, normals, centers, and material indices.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="faces", ...)`.
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "face_count": 512,
+  "selected_count": 8,
+  "returned_count": 8,
+  "faces": [
+    {
+      "index": 0,
+      "verts": [1, 2, 3, 4],
+      "normal": [0.0, 0.0, 1.0],
+      "center": [0.0, 0.0, 0.2],
+      "area": 0.0012,
+      "material_index": 0,
+      "selected": false
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "faces",
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Face reconstruction + material assignment replication
+
+---
+
+# 50. mesh_get_uv_data ✅ Done (internal via mesh_inspect)
+
+Returns UV coordinates per face loop for a given UV layer.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="uvs", ...)`.
+
+Args:
+- object_name: str
+- uv_layer: str (optional; defaults to active)
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "uv_layer": "UVMap",
+  "face_count": 128,
+  "selected_count": 0,
+  "returned_count": 128,
+  "faces": [
+    {
+      "face_index": 0,
+      "verts": [1, 2, 3, 4],
+      "uvs": [[0.1, 0.2], [0.4, 0.2], [0.4, 0.6], [0.1, 0.6]]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "uvs",
+    "object_name": "Body",
+    "uv_layer": "UVMap"
+  }
+}
+```
+
+Use Case:
+- UV reconstruction from mesh topology
+
+---
+
+# 51. mesh_get_loop_normals ✅ Done (internal via mesh_inspect)
+
+Returns per-loop normals (split/custom) for accurate shading reconstruction.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="normals", ...)`.
+
+Args:
+- object_name: str
+- selected_only: bool (default False)
+
+Returns:
+```json
+{
+  "loop_count": 2048,
+  "selected_count": 128,
+  "filtered_count": 128,
+  "returned_count": 128,
+  "offset": 0,
+  "limit": 128,
+  "has_more": true,
+  "loops": [
+    {"loop_index": 0, "vert": 12, "normal": [0.0, 0.0, 1.0]}
+  ],
+  "auto_smooth": true,
+  "auto_smooth_angle": 0.523599,
+  "auto_smooth_source": "modifier:Smooth by Angle",
+  "custom_normals": true
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "normals",
+    "object_name": "Body",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Shading reconstruction (split/custom normals)
+
+---
+
+# 52. mesh_get_vertex_group_weights ✅ Done (internal via mesh_inspect)
+
+Returns vertex group weights for a single group or all groups.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="group_weights", ...)`.
+
+Args:
+- object_name: str
+- group_name: str (optional; defaults to all groups)
+- selected_only: bool (default False)
+
+Returns (single group):
+```json
+{
+  "group_name": "Spine",
+  "group_index": 0,
+  "selected_count": 12,
+  "returned_count": 12,
+  "weights": [
+    {"vert": 0, "weight": 1.0},
+    {"vert": 5, "weight": 0.42}
+  ]
+}
+```
+
+Returns (all groups):
+```json
+{
+  "group_count": 2,
+  "selected_count": 12,
+  "groups": [
+    {
+      "name": "Spine",
+      "index": 0,
+      "weight_count": 12,
+      "weights": [{"vert": 0, "weight": 1.0}]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "group_weights",
+    "object_name": "Body",
+    "group_name": "Spine",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Rig/skin weight reconstruction
+
+---
+
+# 53. mesh_get_attributes ✅ Done (internal via mesh_inspect)
+
+Returns mesh attribute list or attribute data for a given name.
+
+**Tag:** `[EDIT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="attributes", ...)`.
+
+Args:
+- object_name: str
+- attribute_name: str (optional; defaults to list only)
+- selected_only: bool (default False)
+
+Returns (list):
+```json
+{
+  "attribute_count": 1,
+  "attributes": [
+    {"name": "Col", "data_type": "FLOAT_COLOR", "domain": "POINT"}
+  ]
+}
+```
+
+Returns (data):
+```json
+{
+  "attribute": {"name": "Col", "data_type": "FLOAT_COLOR", "domain": "POINT"},
+  "element_count": 1024,
+  "selected_count": 12,
+  "returned_count": 12,
+  "values": [
+    {"index": 0, "value": [1.0, 0.5, 0.2, 1.0]}
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "attributes",
+    "object_name": "Body",
+    "attribute_name": "Col",
+    "selected_only": false
+  }
+}
+```
+
+Use Case:
+- Vertex color + attribute reconstruction
+
+---
+
+# 54. mesh_get_shape_keys ✅ Done (internal via mesh_inspect)
+
+Returns shape key data with optional sparse deltas relative to Basis.
+
+**Tag:** `[OBJECT MODE][READ-ONLY][SAFE]`
+
+**Note:** Internal action (no `@mcp.tool`). Use `mesh_inspect(action="shape_keys", ...)`.
+
+Args:
+- object_name: str
+- include_deltas: bool (default False)
+
+Returns:
+```json
+{
+  "shape_key_count": 2,
+  "shape_keys": [
+    {"name": "Basis", "value": 0.0, "deltas": []},
+    {
+      "name": "Smile",
+      "value": 0.2,
+      "deltas": [
+        {"vert": 0, "delta": [0.001, 0.0, -0.002]}
+      ]
+    }
+  ]
+}
+```
+
+Example:
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "shape_keys",
+    "object_name": "Body",
+    "include_deltas": true
+  }
+}
+```
+
+Use Case:
+- Blend shape reconstruction without external exports
 
 ---
 

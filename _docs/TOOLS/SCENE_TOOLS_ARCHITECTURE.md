@@ -337,7 +337,34 @@ Example:
 
 ---
 
-# 18. scene_set_mode ✅ Done
+# 18. scene_get_constraints ✅ Done (internal via scene_inspect)
+Returns object (and optional bone) constraints.
+
+**Note:** Internal action (no `@mcp.tool`). Use `scene_inspect(action="constraints", ...)`.
+
+Args:
+- object_name: str
+- include_bones: bool (default False)
+
+Returns: Dict with:
+- constraints (object-level)
+- bone_constraints (optional, for armatures)
+
+Example:
+```json
+{
+  "tool": "scene_inspect",
+  "args": {
+    "action": "constraints",
+    "object_name": "Rig",
+    "include_bones": true
+  }
+}
+```
+
+---
+
+# 19. scene_set_mode ✅ Done
 Sets the Blender interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
 
 **Tag:** `[SCENE][SAFE]`

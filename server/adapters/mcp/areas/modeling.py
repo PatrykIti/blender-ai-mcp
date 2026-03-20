@@ -228,6 +228,26 @@ def modeling_list_modifiers(
         direct_executor=execute
     )
 
+
+# Internal function - exposed via scene_inspect mega tool
+def _modeling_get_modifier_data(
+    ctx: Context,
+    object_name: str,
+    modifier_name: Optional[str] = None,
+    include_node_tree: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
+    """
+    handler = get_modeling_handler()
+    try:
+        import json
+        data = handler.get_modifier_data(object_name, modifier_name, include_node_tree)
+        return json.dumps(data, indent=2)
+    except RuntimeError as e:
+        return str(e)
+
+
 @mcp.tool()
 def modeling_set_origin(
     ctx: Context,

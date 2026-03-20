@@ -1,0 +1,28 @@
+{
+  "tool_name": "scene_get_constraints",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["constraints", "rig", "bones", "targets"],
+  "sample_prompts": [
+    "list constraints",
+    "inspect object constraints",
+    "get bone constraints",
+    "export rig constraints"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "include_bones": {
+      "type": "bool",
+      "default": false,
+      "description": "Include bone constraints for armatures"
+    }
+  },
+  "related_tools": ["scene_inspect"],
+  "patterns": [],
+  "description": "Returns object constraints and optional bone constraints for armatures."
+}

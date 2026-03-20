@@ -1,0 +1,176 @@
+# TASK-073: Rig, Curve, and Lattice Introspection
+
+**Priority:** 🔴 High  
+**Category:** Rig/Geometry Introspection  
+**Estimated Effort:** Medium  
+**Dependencies:** TASK-021 (Curves), TASK-033 (Lattice), TASK-037 (Armature)  
+**Status:** ✅ Done
+
+---
+
+## 🎯 Objective
+
+Expose full data for curves, lattices, and armatures so they can be reconstructed precisely in YAML workflows.
+
+---
+
+## 📝 Documentation Updates
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-073_Rig_Curve_Lattice_Introspection.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-rig-curve-lattice-introspection.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add RPC commands (`curve.get_data`, `lattice.get_points`, `armature.get_data`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers (if exposed) |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools to Implemented table |
+| `_docs/TOOLS/CURVE_TOOLS_ARCHITECTURE.md` | Document `curve_get_data` |
+| `_docs/TOOLS/LATTICE_TOOLS_ARCHITECTURE.md` | Document `lattice_get_points` |
+| `README.md` | Update tools tables |
+
+---
+
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (exact spline/point/bone data)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `include_pose`
+
+---
+
+## 🔗 Relationship Notes
+
+- `armature_get_data(include_pose=True)` returns pose transforms for bones
+  (location/rotation/scale) and the bone hierarchy.
+- `scene_get_constraints(include_bones=True)` returns constraint settings on bones.
+- Use both when reconstructing rigged assets: pose transforms + constraints are complementary.
+
+---
+
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
+
+---
+
+## 🔧 Sub-Tasks
+
+### TASK-073-1: curve_get_data
+
+**Status:** ✅ Done
+
+```python
+def curve_get_data(
+    ctx: Context,
+    object_name: str
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns curve splines, points, and settings.
+    """
+```
+
+**Return JSON (example):**
+```json
+{
+  "object_name": "BezierCurve",
+  "splines": [
+    {"type": "BEZIER", "points": [[0,0,0], [1,0,0]], "handles": [...]}
+  ],
+  "bevel_depth": 0.0,
+  "extrude": 0.0
+}
+```
+
+**Implementation Checklist:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/curve.py` | `def get_data(...)` |
+| Application | `server/application/tool_handlers/curve_handler.py` | RPC wrapper + validation |
+| Adapter | `server/adapters/mcp/areas/curve.py` | Internal action + optional `@mcp.tool` wrapper |
+| Addon | `blender_addon/application/handlers/curve.py` | Curve spline dump |
+| Metadata | `server/router/infrastructure/tools_metadata/curve/curve_get_data.json` | Tool metadata |
+| Tests | `tests/unit/tools/curve/test_get_data.py` | Spline + handle data |
+
+---
+
+### TASK-073-2: lattice_get_points
+
+**Status:** ✅ Done
+
+```python
+def lattice_get_points(
+    ctx: Context,
+    object_name: str
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns lattice point positions and resolution.
+    """
+```
+
+**Return JSON (example):**
+```json
+{
+  "object_name": "Lattice",
+  "points_u": 2,
+  "points_v": 2,
+  "points_w": 4,
+  "points": [[0,0,0], [1,0,0], ...]
+}
+```
+
+**Implementation Checklist:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/lattice.py` | `def get_points(...)` |
+| Application | `server/application/tool_handlers/lattice_handler.py` | RPC wrapper + validation |
+| Adapter | `server/adapters/mcp/areas/lattice.py` | Internal action + optional `@mcp.tool` wrapper |
+| Addon | `blender_addon/application/handlers/lattice.py` | Lattice point dump |
+| Metadata | `server/router/infrastructure/tools_metadata/lattice/lattice_get_points.json` | Tool metadata |
+| Tests | `tests/unit/tools/lattice/test_get_points.py` | Resolution + points |
+
+---
+
+### TASK-073-3: armature_get_data
+
+**Status:** ✅ Done
+
+```python
+def armature_get_data(
+    ctx: Context,
+    object_name: str,
+    include_pose: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns armature bones and hierarchy.
+    """
+```
+
+**Return JSON (example):**
+```json
+{
+  "object_name": "Armature",
+  "bones": [
+    {"name": "Spine", "head": [0,0,0], "tail": [0,0,1], "parent": null}
+  ],
+  "pose": []
+}
+```
+
+**Implementation Checklist:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/armature.py` | `def get_data(...)` |
+| Application | `server/application/tool_handlers/armature_handler.py` | RPC wrapper + validation |
+| Adapter | `server/adapters/mcp/areas/armature.py` | Internal action + optional `@mcp.tool` wrapper |
+| Addon | `blender_addon/application/handlers/armature.py` | Bone hierarchy dump |
+| Metadata | `server/router/infrastructure/tools_metadata/armature/armature_get_data.json` | Tool metadata |
+| Tests | `tests/unit/tools/armature/test_get_data.py` | Bone list + parents |
+
+---
+
+## ✅ Success Criteria
+- Curve, lattice, and armature structures can be reconstructed without exports

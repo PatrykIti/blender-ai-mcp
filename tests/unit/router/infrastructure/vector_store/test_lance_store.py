@@ -73,13 +73,17 @@ class TestLanceVectorStoreInit:
         """Test that store implements IVectorStore."""
         assert isinstance(store, IVectorStore)
 
-    @pytest.mark.skipif(not LANCEDB_AVAILABLE, reason="LanceDB not installed")
     def test_init_creates_db_path(self, temp_db_path):
-        """Test that init creates database directory when LanceDB available."""
+        """Test init behavior for db path with or without LanceDB."""
         db_path = temp_db_path / "subdir" / "db"
         store = LanceVectorStore(db_path=db_path)
-        # Directory is created during initialization when LanceDB is available
-        assert db_path.exists()
+        stats = store.get_stats()
+
+        if stats["lancedb_available"]:
+            # Directory is created during initialization when LanceDB is available
+            assert db_path.exists()
+        else:
+            assert stats["using_fallback"] is True
 
     def test_init_default_path(self):
         """Test initialization with default path."""

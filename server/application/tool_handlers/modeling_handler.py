@@ -99,6 +99,22 @@ class ModelingToolHandler(IModelingTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
+    def get_modifier_data(
+        self,
+        object_name: str,
+        modifier_name: Optional[str] = None,
+        include_node_tree: bool = False,
+    ) -> Dict[str, Any]:
+        args = {
+            "object_name": object_name,
+            "modifier_name": modifier_name,
+            "include_node_tree": include_node_tree,
+        }
+        response = self.rpc.send_request("modeling.get_modifier_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result
+
     # ==========================================================================
     # TASK-038-1: Metaball Tools
     # ==========================================================================

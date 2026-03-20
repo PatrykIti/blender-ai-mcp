@@ -386,7 +386,27 @@ IntentClassifier            WorkflowIntentClassifier
 | **IVectorStore** | Domain interface for vector storage | `domain/interfaces/i_vector_store.py` |
 | **LanceVectorStore** | LanceDB implementation | `infrastructure/vector_store/lance_store.py` |
 | **PickleToLanceMigration** | Migrate legacy pickle caches | `infrastructure/vector_store/migrations.py` |
-| **workflow_catalog** | MCP tool for workflow browsing (read-only) | `server/adapters/mcp/areas/workflow_catalog.py` |
+| **workflow_catalog** | MCP tool for workflow browsing/import (no execution) | `server/adapters/mcp/areas/workflow_catalog.py` |
+
+### Workflow Catalog Usage
+
+```text
+# Import a workflow from YAML/JSON
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+
+# Import inline content (no file path required)
+workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+
+# Chunked import (for large workflows)
+workflow_catalog(action="import_init", content_type="json", source_name="chair.json")
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
+
+# If a name conflict is detected
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=true)
+workflow_catalog(action="import", filepath="/path/to/workflow.yaml", overwrite=false)
+```
 
 ### Implementation Docs
 

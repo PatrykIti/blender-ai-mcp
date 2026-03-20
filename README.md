@@ -87,24 +87,29 @@ See [_docs/_TESTS/README.md](_docs/_TESTS/README.md) for detailed testing docume
 <summary>📋 Example E2E Test Output (click to expand)</summary>
 
 ```
-============================= test session starts ==============================
-platform darwin -- Python 3.13.9, pytest-9.0.1, Blender 5.0
-collected 142 items
+tests/e2e/tools/extraction/test_face_group_analysis.py ....
+tests/e2e/tools/extraction/test_render_angles.py ....
+tests/e2e/tools/import_tool/test_import_tools.py .........
+tests/e2e/tools/knife_cut/test_knife_cut_tools.py .........
+tests/e2e/tools/lattice/test_lattice_tools.py .............
+tests/e2e/tools/material/test_material_tools.py ..............
+tests/e2e/tools/mesh/test_mesh_cleanup.py .................
+tests/e2e/tools/mesh/test_mesh_edge_weights.py ...............
+tests/e2e/tools/mesh/test_mesh_symmetry_fill.py ............................
+tests/e2e/tools/scene/test_camera_focus.py ....
+tests/e2e/tools/scene/test_camera_orbit.py ......
+tests/e2e/tools/scene/test_hide_object.py ...
+tests/e2e/tools/scene/test_isolate_object.py ...
+tests/e2e/tools/scene/test_rename_object.py ..
+tests/e2e/tools/scene/test_scene_inspect_material_slots.py ....
+tests/e2e/tools/scene/test_show_all_objects.py ...
+tests/e2e/tools/scene/test_snapshot_tools.py ...
+tests/e2e/tools/sculpt/test_sculpt_tools.py .............
+tests/e2e/tools/system/test_system_tools.py ............
+tests/e2e/tools/text/test_text_tools.py ....................
+tests/e2e/tools/uv/test_uv_tools.py ................
 
-tests/e2e/tools/baking/test_baking_tools.py ✓✓✓✓✓✓✓
-tests/e2e/tools/collection/test_collection_tools.py ✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/export/test_export_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/import_tool/test_import_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/knife_cut/test_knife_cut_tools.py ✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/material/test_material_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_cleanup.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/mesh/test_mesh_edge_weights.py ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/scene/test_*.py ✓✓✓✓✓✓✓
-tests/e2e/tools/sculpt/test_sculpt_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/system/test_system_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-tests/e2e/tools/uv/test_uv_tools.py ✓✓✓✓✓✓✓✓✓✓✓✓
-
-============================= 142 passed in 12.25s =============================
+============================= 352 passed in 46.21s ==============================
 ```
 
 </details>
@@ -119,7 +124,8 @@ Our goal is to enable AI to model complex 3D assets—from organs and biological
 
 ---
 
-### Scene Tools (`scene_*`)
+<details>
+<summary><strong>Scene Tools (`scene_*`) — ✅</strong></summary>
 
 Object Mode operations for scene management and inspection.
 
@@ -153,7 +159,12 @@ Object Mode operations for scene management and inspection.
 
 ---
 
-### Modeling Tools (`modeling_*`)
+Note: `scene_get_constraints` is now internal to `scene_inspect(action="constraints")`.
+
+</details>
+
+<details>
+<summary><strong>Modeling Tools (`modeling_*`) — ✅</strong></summary>
 
 Object Mode operations for creating and transforming objects.
 
@@ -169,12 +180,15 @@ Object Mode operations for creating and transforming objects.
 | `modeling_separate_object` | Separate by loose parts/material | ✅ |
 | `modeling_set_origin` | Set object origin point | ✅ |
 
+Note: `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")`.
+
 #### Lattice Deformation
 | Tool | Description | Status |
 |------|-------------|--------|
 | `lattice_create` | Create lattice fitted to object | ✅ |
 | `lattice_bind` | Bind object to lattice deformer | ✅ |
 | `lattice_edit_point` | Move lattice control points | ✅ |
+| `lattice_get_points` | Get lattice point positions | ✅ |
 
 #### Text Objects
 | Tool | Description | Status |
@@ -191,7 +205,10 @@ Object Mode operations for creating and transforming objects.
 
 ---
 
-### Mesh Tools (`mesh_*`)
+</details>
+
+<details>
+<summary><strong>Mesh Tools (`mesh_*`) — ✅</strong></summary>
 
 Edit Mode operations for geometry manipulation.
 
@@ -207,7 +224,8 @@ Edit Mode operations for geometry manipulation.
 | `mesh_select_loop` | Select edge loop | ✅ |
 | `mesh_select_ring` | Select edge ring | ✅ |
 | `mesh_select_by_location` | Select by 3D position | ✅ |
-| `mesh_get_vertex_data` | Get vertex positions | ✅ |
+
+Note: Mesh introspection actions are consolidated under `mesh_inspect` (internal `mesh_get_*`).
 
 #### Core Operations
 | Tool | Description | Status |
@@ -297,7 +315,10 @@ Edit Mode operations for geometry manipulation.
 
 ---
 
-### Curve Tools (`curve_*`)
+</details>
+
+<details>
+<summary><strong>Curve Tools (`curve_*`) — ✅</strong></summary>
 
 Curve creation and conversion.
 
@@ -305,10 +326,14 @@ Curve creation and conversion.
 |------|-------------|--------|
 | `curve_create` | Create Bezier/NURBS/Path/Circle curve | ✅ |
 | `curve_to_mesh` | Convert curve to mesh | ✅ |
+| `curve_get_data` | Get curve splines and settings | ✅ |
 
 ---
 
-### Collection Tools (`collection_*`)
+</details>
+
+<details>
+<summary><strong>Collection Tools (`collection_*`) — ✅</strong></summary>
 
 Collection management and hierarchy.
 
@@ -320,7 +345,10 @@ Collection management and hierarchy.
 
 ---
 
-### Material Tools (`material_*`)
+</details>
+
+<details>
+<summary><strong>Material Tools (`material_*`) — ✅</strong></summary>
 
 Material creation and assignment.
 
@@ -336,7 +364,10 @@ Material creation and assignment.
 
 ---
 
-### UV Tools (`uv_*`)
+</details>
+
+<details>
+<summary><strong>UV Tools (`uv_*`) — ✅</strong></summary>
 
 UV mapping operations.
 
@@ -349,7 +380,10 @@ UV mapping operations.
 
 ---
 
-### System Tools (`system_*`)
+</details>
+
+<details>
+<summary><strong>System Tools (`system_*`) — ✅</strong></summary>
 
 Global project-level operations.
 
@@ -364,7 +398,10 @@ Global project-level operations.
 
 ---
 
-### Export Tools (`export_*`)
+</details>
+
+<details>
+<summary><strong>Export Tools (`export_*`) — ✅</strong></summary>
 
 File export operations.
 
@@ -376,7 +413,10 @@ File export operations.
 
 ---
 
-### Import Tools (`import_*`)
+</details>
+
+<details>
+<summary><strong>Import Tools (`import_*`) — ✅</strong></summary>
 
 File import operations.
 
@@ -389,7 +429,10 @@ File import operations.
 
 ---
 
-### Baking Tools (`bake_*`)
+</details>
+
+<details>
+<summary><strong>Baking Tools (`bake_*`) — ✅</strong></summary>
 
 Texture baking for game dev workflows.
 
@@ -402,7 +445,10 @@ Texture baking for game dev workflows.
 
 ---
 
-### Extraction Tools (`extraction_*`)
+</details>
+
+<details>
+<summary><strong>Extraction Tools (`extraction_*`) — ✅</strong></summary>
 
 Analysis tools for the Automatic Workflow Extraction System. Enables deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
 
@@ -417,7 +463,10 @@ Analysis tools for the Automatic Workflow Extraction System. Enables deep topolo
 
 ---
 
-### Metaball Tools (`metaball_*`)
+</details>
+
+<details>
+<summary><strong>Metaball Tools (`metaball_*`) — ✅</strong></summary>
 
 Organic blob primitives for medical/biological modeling.
 
@@ -429,7 +478,10 @@ Organic blob primitives for medical/biological modeling.
 
 ---
 
-### Macro Tools (`macro_*`)
+</details>
+
+<details>
+<summary><strong>Macro Tools (`macro_*`) — 🚧</strong></summary>
 
 High-level abstractions where one command executes hundreds of Blender operations.
 
@@ -445,7 +497,10 @@ High-level abstractions where one command executes hundreds of Blender operation
 
 ---
 
-### Sculpting Tools (`sculpt_*`)
+</details>
+
+<details>
+<summary><strong>Sculpting Tools (`sculpt_*`) — ✅</strong></summary>
 
 Organic shaping and sculpt workflows.
 
@@ -476,7 +531,10 @@ Organic shaping and sculpt workflows.
 
 ---
 
-### Armature Tools (`armature_*`)
+</details>
+
+<details>
+<summary><strong>Armature Tools (`armature_*`) — ✅</strong></summary>
 
 Skeletal rigging and animation.
 
@@ -487,8 +545,11 @@ Skeletal rigging and animation.
 | `armature_bind` | Bind mesh to armature (auto weights) | ✅ |
 | `armature_pose_bone` | Pose armature bone | ✅ |
 | `armature_weight_paint_assign` | Assign weights to vertex group | ✅ |
+| `armature_get_data` | Get armature bones and hierarchy | ✅ |
 
 ---
+
+</details>
 
 ### 🤖 Router Supervisor ✅
 
@@ -524,22 +585,31 @@ Intelligent Router acting as **supervisor over LLM tool calls** - not just an "i
 | **Semantic Matching** | Match workflows by meaning, not just keywords (LaBSE embeddings) |
 | **Generalization** | Use similar workflow when exact match missing |
 | **Feedback Learning** | Improve matching from user corrections |
-| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering (TASK-047) |
-| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow (TASK-051) |
-| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params (TASK-052) |
+| **LanceDB Vector Store** | O(log N) HNSW search with metadata filtering |
+| **Confidence Adaptation** | HIGH/MEDIUM/LOW confidence → full/filtered/core workflow |
+| **Parametric Variables** | `$variable` syntax with `defaults` and `modifiers` for dynamic params |
 
 #### Workflow-First Quick Start (recommended)
 
 Use this when you want the LLM to **prefer existing YAML workflows** and only fall back to manual tool-calling when no workflow matches.
 
 ```text
-1) Optional: preview likely workflow matches (read-only)
+1) Optional: import external workflow YAML/JSON
+   workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
+   workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
+   workflow_catalog(action="import_init", content_type="json", source_name="chair.json", total_chunks=2)
+   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+   workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
+   - if status == "needs_input": repeat with overwrite=true or overwrite=false
+
+2) Optional: preview likely workflow matches
    workflow_catalog(action="search", query="<your prompt>", top_k=5, threshold=0.0)
 
-2) Set the goal (mandatory)
+3) Set the goal (mandatory)
    router_set_goal(goal="<your prompt including modifiers>")
 
-3) Handle Router response
+4) Handle Router response
    - status == "needs_input": call router_set_goal(goal, resolved_params={...})
    - status == "ready": proceed (workflow executes / expands into tool calls)
    - status == "no_match": switch to manual tool-calling
@@ -578,7 +648,7 @@ Router behavior:
   → Chair has proper leg ratios from table, vertical proportions from tower
 ```
 
-#### Parametric Variables (TASK-052)
+#### Parametric Variables
 
 ```yaml
 # In workflow YAML:
@@ -627,6 +697,12 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ## 🧠 LLM Context Optimization
 
 > Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
+> Mega tools are wrappers only; action-level handlers live as internal functions backed by Blender addon RPC.
+> Standalone MCP tools are exposed only where explicitly listed.
+> Router can still execute internal actions via handler mappings and per-tool JSON metadata.
+
+<details>
+<summary><strong>Mega Tools (LLM Context Optimization)</strong></summary>
 
 ### Scene Mega Tools
 
@@ -634,7 +710,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials | -3 | ✅ |
+| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -5 | ✅ |
 
 ### Mesh Mega Tools
 
@@ -642,8 +718,13 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
+| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | -7 | ✅ |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context).
+
+`mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
+
+</details>
 
 ---
 
@@ -724,6 +805,7 @@ We recommend using Docker to run the MCP Server.
         "modeling_list_modifiers",
         "mesh_select",
         "mesh_select_targeted",
+        "mesh_inspect",
         "mesh_delete_selected",
         "mesh_extrude_region",
         "mesh_fill_holes",
@@ -736,7 +818,6 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -772,6 +853,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "curve_get_data",
         "text_create",
         "text_edit",
         "text_to_mesh",
@@ -799,6 +881,7 @@ We recommend using Docker to run the MCP Server.
         "lattice_create",
         "lattice_bind",
         "lattice_edit_point",
+        "lattice_get_points",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -825,6 +908,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
+        "armature_get_data",
         "workflow_catalog",
         "router_set_goal",
         "router_get_status",
@@ -903,6 +987,7 @@ We recommend using Docker to run the MCP Server.
         "modeling_list_modifiers",
         "mesh_select",
         "mesh_select_targeted",
+        "mesh_inspect",
         "mesh_delete_selected",
         "mesh_extrude_region",
         "mesh_fill_holes",
@@ -915,7 +1000,6 @@ We recommend using Docker to run the MCP Server.
         "mesh_smooth",
         "mesh_flatten",
         "mesh_list_groups",
-        "mesh_get_vertex_data",
         "mesh_randomize",
         "mesh_shrink_fatten",
         "mesh_create_vertex_group",
@@ -951,6 +1035,7 @@ We recommend using Docker to run the MCP Server.
         "mesh_mirror",
         "curve_create",
         "curve_to_mesh",
+        "curve_get_data",
         "text_create",
         "text_edit",
         "text_to_mesh",
@@ -978,6 +1063,7 @@ We recommend using Docker to run the MCP Server.
         "lattice_create",
         "lattice_bind",
         "lattice_edit_point",
+        "lattice_get_points",
         "mesh_set_proportional_edit",
         "system_set_mode",
         "system_undo",
@@ -1004,6 +1090,7 @@ We recommend using Docker to run the MCP Server.
         "armature_bind",
         "armature_pose_bone",
         "armature_weight_paint_assign",
+        "armature_get_data",
         "workflow_catalog",
         "router_set_goal",
         "router_get_status",
@@ -1131,6 +1218,7 @@ enabled_tools = [
   "modeling_list_modifiers",
   "mesh_select",
   "mesh_select_targeted",
+  "mesh_inspect",
   "mesh_delete_selected",
   "mesh_extrude_region",
   "mesh_fill_holes",
@@ -1143,7 +1231,6 @@ enabled_tools = [
   "mesh_smooth",
   "mesh_flatten",
   "mesh_list_groups",
-  "mesh_get_vertex_data",
   "mesh_randomize",
   "mesh_shrink_fatten",
   "mesh_create_vertex_group",
@@ -1179,6 +1266,7 @@ enabled_tools = [
   "mesh_mirror",
   "curve_create",
   "curve_to_mesh",
+  "curve_get_data",
   "text_create",
   "text_edit",
   "text_to_mesh",
@@ -1206,6 +1294,7 @@ enabled_tools = [
   "lattice_create",
   "lattice_bind",
   "lattice_edit_point",
+  "lattice_get_points",
   "mesh_set_proportional_edit",
   "system_set_mode",
   "system_undo",
@@ -1232,6 +1321,7 @@ enabled_tools = [
   "armature_bind",
   "armature_pose_bone",
   "armature_weight_paint_assign",
+  "armature_get_data",
   "workflow_catalog",
   "router_set_goal",
   "router_get_status",
@@ -1246,7 +1336,8 @@ enabled_tools = [
 *   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
 *   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
 
-### Viewport Output Modes & Temp Directory Mapping
+<details>
+<summary><strong>Viewport Output Modes &amp; Temp Directory Mapping</strong></summary>
 
 The `scene_get_viewport` tool supports multiple output modes via the `output_mode` argument:
 * `IMAGE` (default): returns a FastMCP `Image` resource (best for Cline / clients with native image support).
@@ -1265,6 +1356,8 @@ docker run -i --rm \
   -e BLENDER_AI_TMP_EXTERNAL_DIR=/host/tmp/blender-ai-mcp \
   ghcr.io/patrykiti/blender-ai-mcp:latest
 ```
+
+</details>
 
 ---
 

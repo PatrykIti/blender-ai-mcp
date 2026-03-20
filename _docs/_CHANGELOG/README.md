@@ -6,6 +6,16 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [125](./125-2025-12-21-workflow-catalog-inline-chunked-import.md) | 2025-12-21 | **Workflow catalog inline + chunked import** | - |
+| [124](./124-2025-12-21-mesh-inspect-paging.md) | 2025-12-21 | **Mesh inspect paging** | - |
+| [123](./123-2025-12-21-introspection-api-fixes.md) | 2025-12-21 | **Introspection API fixes (Blender 5.0+)** | - |
+| [122](./122-2025-12-21-blender-5-0-mesh-inspect-fixes.md) | 2025-12-21 | **Blender 5.0 mesh_inspect fixes** | - |
+| [121](./121-2025-12-20-workflow-catalog-import.md) | 2025-12-20 | **Workflow catalog import action** | - |
+| [120](./120-2025-12-19-mesh-inspect-mega-tool.md) | 2025-12-19 | **Mesh inspect mega tool** | - |
+| [119](./119-2025-12-19-rig-curve-lattice-introspection.md) | 2025-12-19 | **Rig, curve, and lattice introspection** | - |
+| [118](./118-2025-12-19-modifier-constraint-introspection.md) | 2025-12-19 | **Modifier & constraint introspection** | - |
+| [117](./117-2025-12-19-mesh-introspection-advanced.md) | 2025-12-19 | **Mesh introspection advanced (normals/weights/attributes/shape keys)** | - |
+| [116](./116-2025-12-19-mesh-topology-introspection.md) | 2025-12-19 | **Mesh topology introspection tools (edges/faces/UVs)** | - |
 | [115](./115-2025-12-16-mcp-ctx-info-async-bridge.md) | 2025-12-16 | **Fix unawaited Context.info() warnings in MCP tool adapters** | - |
 | [114](./114-2025-12-16-addon-auto-undo-push.md) | 2025-12-16 | **Addon auto-undo push for granular system_undo** | - |
 | [113](./113-2025-12-15-flexible-vector-param-parsing.md) | 2025-12-15 | **Flexible vector/color params accept string/list (TASK-064)** | - |

@@ -837,6 +837,126 @@ class SceneHandler:
 
         return result
 
+    def get_constraints(self, object_name, include_bones=False):
+        """
+        [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
+        """
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        constraints = self._serialize_constraints(getattr(obj, "constraints", []))
+        bone_constraints = []
+
+        if include_bones and obj.type == 'ARMATURE':
+            pose = getattr(obj, "pose", None)
+            if pose and hasattr(pose, "bones"):
+                for bone in pose.bones:
+                    bone_list = self._serialize_constraints(getattr(bone, "constraints", []))
+                    if bone_list:
+                        bone_constraints.append({
+                            "bone_name": bone.name,
+                            "constraints": bone_list
+                        })
+
+        return {
+            "object_name": object_name,
+            "constraint_count": len(constraints),
+            "constraints": constraints,
+            "bone_constraints": bone_constraints
+        }
+
+    def _serialize_constraints(self, constraints):
+        return [self._serialize_constraint(constraint) for constraint in constraints]
+
+    def _serialize_constraint(self, constraint):
+        object_refs = []
+        seen_refs = set()
+        properties = {}
+
+        for prop in sorted(constraint.bl_rna.properties, key=lambda p: p.identifier):
+            if prop.identifier == "rna_type":
+                continue
+            try:
+                value = getattr(constraint, prop.identifier)
+            except Exception:
+                continue
+
+            properties[prop.identifier] = self._serialize_constraint_value(value, prop, object_refs, seen_refs)
+
+        return {
+            "name": constraint.name,
+            "type": constraint.type,
+            "properties": properties,
+            "object_refs": object_refs
+        }
+
+    def _serialize_constraint_value(self, value, prop, object_refs, seen_refs):
+        if prop.type == 'POINTER':
+            if value is None:
+                return None
+            if hasattr(value, "name"):
+                key = (prop.identifier, value.name)
+                if key not in seen_refs:
+                    seen_refs.add(key)
+                    object_refs.append({"property": prop.identifier, "object_name": value.name})
+                return value.name
+            return str(value)
+
+        if prop.type == 'COLLECTION':
+            items = []
+            try:
+                for item in value:
+                    items.append(self._serialize_constraint_collection_item(item))
+            except Exception:
+                return []
+            return items
+
+        return self._serialize_simple_value(value)
+
+    def _serialize_constraint_collection_item(self, item):
+        if hasattr(item, "target"):
+            target = getattr(item, "target", None)
+            entry = {"target": target.name if target else None}
+            subtarget = getattr(item, "subtarget", None)
+            if subtarget:
+                entry["subtarget"] = subtarget
+            if hasattr(item, "weight"):
+                entry["weight"] = round(float(item.weight), 6)
+            return entry
+
+        if hasattr(item, "name"):
+            return item.name
+
+        return self._serialize_simple_value(item)
+
+    def _serialize_simple_value(self, value):
+        if isinstance(value, bool):
+            return bool(value)
+        if isinstance(value, int):
+            return int(value)
+        if isinstance(value, float):
+            return round(float(value), 6)
+        if isinstance(value, str):
+            return value
+        if isinstance(value, set):
+            return sorted(value)
+        if hasattr(value, "__iter__"):
+            try:
+                return [self._serialize_simple_value(v) for v in value]
+            except Exception:
+                pass
+        if hasattr(value, "x") and hasattr(value, "y"):
+            coords = [value.x, value.y]
+            if hasattr(value, "z"):
+                coords.append(value.z)
+            if hasattr(value, "w"):
+                coords.append(value.w)
+            return [round(float(c), 6) for c in coords]
+        if hasattr(value, "name"):
+            return value.name
+        return str(value)
+
     # TASK-043: Scene Utility Tools
     def rename_object(self, old_name, new_name):
         """Renames an object in the scene."""

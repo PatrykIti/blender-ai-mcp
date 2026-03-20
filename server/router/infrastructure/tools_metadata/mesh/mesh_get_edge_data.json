@@ -1,0 +1,29 @@
+{
+  "tool_name": "mesh_get_edge_data",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["edge", "connectivity", "topology", "seam", "sharp", "crease", "bevel"],
+  "sample_prompts": [
+    "get edge connectivity",
+    "show edge data",
+    "inspect mesh edges",
+    "export edge flags",
+    "analyze edge topology"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected edges"
+    }
+  },
+  "related_tools": ["mesh_get_vertex_data", "mesh_get_face_data", "mesh_select"],
+  "patterns": [],
+  "description": "Returns edge connectivity and attributes (seam/sharp/crease/bevel)."
+}

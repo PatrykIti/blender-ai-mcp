@@ -1,0 +1,208 @@
+# TASK-072: Modifier & Constraint Introspection
+
+**Priority:** 🔴 High  
+**Category:** Scene/Modeling Introspection  
+**Estimated Effort:** Medium  
+**Dependencies:** TASK-014-14 (Scene Inspect Modifiers)  
+**Status:** ✅ Done
+
+---
+
+## 🎯 Objective
+
+Expose full modifier parameters and object constraints for 1:1 reconstruction and rig validation.
+
+---
+
+## 📝 Documentation Updates
+
+| File | What to Update |
+|------|----------------|
+| `_docs/_TASKS/TASK-072_Modifier_Constraint_Introspection.md` | Mark sub-tasks ✅ Done, update status |
+| `_docs/_TASKS/README.md` | Update task list + stats |
+| `_docs/_CHANGELOG/{NN}-{date}-modifier-constraint-introspection.md` | Create changelog entry |
+| `_docs/_CHANGELOG/README.md` | Add changelog index entry |
+| `_docs/_ADDON/README.md` | Add RPC commands (`modeling.get_modifier_data`, `scene.get_constraints`) |
+| `_docs/_MCP_SERVER/README.md` | Add MCP wrappers + `scene_inspect` action updates |
+| `_docs/AVAILABLE_TOOLS_SUMMARY.md` | Add tools/actions to Implemented table |
+| `_docs/TOOLS/SCENE_TOOLS_ARCHITECTURE.md` | Document `scene_get_constraints` |
+| `_docs/TOOLS/MODELING_TOOLS_ARCHITECTURE.md` | Document `modeling_get_modifier_data` |
+| `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Add `scene_inspect` actions |
+| `README.md` | Update tools tables + mega tools |
+
+---
+
+## ✅ Naming Conventions (Introspection Tools)
+
+- `get_*` = raw data payload (full modifier/constraint data)
+- `list_*` = names or lightweight summaries only
+- `inspect_*` = aggregated stats (human-readable)
+- `analyze_*` = heuristics/interpretation (not raw data)
+- Parameters: `object_name`, `modifier_name`, `include_bones`
+
+---
+
+## 🧱 Implementation Pattern
+
+- Action handlers are internal functions (no `@mcp.tool`) called via addon RPC.
+- Add a thin MCP wrapper only if a standalone tool is required for workflow/router compatibility.
+
+---
+
+## 🔧 Sub-Tasks
+
+### TASK-072-1: modeling_get_modifier_data
+
+**Status:** ✅ Done
+
+```python
+def modeling_get_modifier_data(
+    ctx: Context,
+    object_name: str,
+    modifier_name: str | None = None,
+    include_node_tree: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
+    """
+```
+
+**Return JSON (example):**
+```json
+{
+  "object_name": "Body",
+  "modifiers": [
+    {
+      "name": "Bevel",
+      "type": "BEVEL",
+      "properties": {"width": 0.002, "segments": 3},
+      "object_refs": []
+    }
+  ]
+}
+```
+
+**Notes:**
+- `include_node_tree=true` should include Geometry Nodes *group metadata only*:
+  - `node_tree.name`
+  - `node_tree.is_linked` + `node_tree.library_path` (if linked)
+  - `inputs[]`: `name`, `identifier`, `socket_type`, `default_value`, `min`, `max`, `subtype`
+  - `outputs[]`: `name`, `identifier`, `socket_type`
+- Do NOT include internal nodes, links, or geometry data.
+- Keep payload stable and deterministic (sorted by input index).
+
+**Geometry Nodes JSON (example):**
+```json
+{
+  "object_name": "Body",
+  "modifiers": [
+    {
+      "name": "GeometryNodes",
+      "type": "NODES",
+      "properties": {"some_flag": true},
+      "object_refs": [],
+      "node_tree": {
+        "name": "GN_Shell",
+        "is_linked": false,
+        "library_path": null,
+        "inputs": [
+          {
+            "name": "Bevel",
+            "identifier": "Input_2",
+            "socket_type": "NodeSocketFloat",
+            "default_value": 0.002,
+            "min": 0.0,
+            "max": 0.1,
+            "subtype": "DISTANCE"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "Geometry",
+            "identifier": "Output_1",
+            "socket_type": "NodeSocketGeometry"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Implementation Checklist:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/modeling.py` | `def get_modifier_data(...)` |
+| Application | `server/application/tool_handlers/modeling_handler.py` | RPC wrapper + validation |
+| Adapter | `server/adapters/mcp/areas/modeling.py` | Internal action + optional `@mcp.tool` wrapper |
+| Addon | `blender_addon/application/handlers/modeling.py` | Modifier property dump |
+| Metadata | `server/router/infrastructure/tools_metadata/modeling/modeling_get_modifier_data.json` | Tool metadata |
+| Tests | `tests/unit/tools/modeling/test_get_modifier_data.py` | Modifier props + refs |
+
+---
+
+### TASK-072-2: scene_get_constraints
+
+**Status:** ✅ Done
+
+```python
+def scene_get_constraints(
+    ctx: Context,
+    object_name: str,
+    include_bones: bool = False
+) -> str:
+    """
+    [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
+    """
+```
+
+**Return JSON (example):**
+```json
+{
+  "object_name": "Rig",
+  "constraints": [
+    {"name": "Track", "type": "TRACK_TO", "properties": {"target": "Empty"}}
+  ],
+  "bone_constraints": []
+}
+```
+
+**Implementation Checklist:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Domain | `server/domain/tools/scene.py` | `def get_constraints(...)` |
+| Application | `server/application/tool_handlers/scene_handler.py` | RPC wrapper + validation |
+| Adapter | `server/adapters/mcp/areas/scene.py` | Internal action + optional `@mcp.tool` wrapper |
+| Addon | `blender_addon/application/handlers/scene.py` | Constraint dump |
+| Metadata | `server/router/infrastructure/tools_metadata/scene/scene_get_constraints.json` | Tool metadata |
+| Tests | `tests/unit/tools/scene/test_get_constraints.py` | Object + bone constraints |
+
+---
+
+### TASK-072-3: scene_inspect action extensions
+
+**Status:** ✅ Done
+
+Add new actions to the existing mega tool (do not remove standalone tools):
+
+- `constraints` → delegates to `scene_get_constraints`
+- `modifier_data` → delegates to `modeling_get_modifier_data`
+
+**Notes:**
+- Standalone tools remain required for workflow execution and router compatibility
+  (internal functions; optional MCP wrappers if needed).
+- Mega tool is a read-only wrapper for context reduction only.
+
+**Files to Update:**
+| Layer | File | What to Add |
+|-------|------|-------------|
+| Adapter | `server/adapters/mcp/areas/scene.py` | Accept new `action` values |
+| Metadata | `server/router/infrastructure/tools_metadata/scene/scene_inspect.json` | Update action schema |
+| Docs | `_docs/TOOLS/MEGA_TOOLS_ARCHITECTURE.md` | Add new actions |
+| Tests | `tests/unit/tools/scene/test_scene_inspect.py` | New action coverage |
+
+---
+
+## ✅ Success Criteria
+- Modifier properties can be reconstructed without manual inspection
+- Constraints are fully serializable (targets resolved by name)

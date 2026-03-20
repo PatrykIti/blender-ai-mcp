@@ -1,0 +1,29 @@
+{
+  "tool_name": "mesh_get_face_data",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["face", "polygon", "topology", "normal", "material", "center", "area"],
+  "sample_prompts": [
+    "get face connectivity",
+    "show face data",
+    "inspect mesh faces",
+    "export face normals",
+    "analyze face topology"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected faces"
+    }
+  },
+  "related_tools": ["mesh_get_edge_data", "mesh_get_uv_data", "mesh_select"],
+  "patterns": [],
+  "description": "Returns face connectivity with normals, center, area, and material index."
+}

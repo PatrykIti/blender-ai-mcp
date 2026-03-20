@@ -137,6 +137,10 @@ class ToolCorrectionEngine(ICorrectionEngine):
                 pre_steps.append(selection_call)
                 corrections_applied.append("auto_select_all")
 
+        # 2.5 Normalize common parameter aliases
+        corrected_params, param_aliases = self._normalize_params(tool_name, corrected_params)
+        corrections_applied.extend(param_aliases)
+
         # 3. Clamp parameters
         if self._config.clamp_parameters:
             corrected_params, param_corrections = self.clamp_parameters(
@@ -155,6 +159,30 @@ class ToolCorrectionEngine(ICorrectionEngine):
         )
 
         return corrected_call, pre_steps
+
+    def _normalize_params(
+        self,
+        tool_name: str,
+        params: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], List[str]]:
+        """Normalize common parameter aliases to tool-native names."""
+        normalized = dict(params)
+        corrections = []
+
+        if tool_name == "mesh_bevel":
+            if "width" in normalized:
+                if "offset" not in normalized:
+                    normalized["offset"] = normalized["width"]
+                    corrections.append("alias_width->offset")
+                normalized.pop("width", None)
+
+        if tool_name == "mesh_extrude_region":
+            if "depth" in normalized and "move" not in normalized:
+                normalized["move"] = [0.0, 0.0, normalized["depth"]]
+                normalized.pop("depth", None)
+                corrections.append("alias_depth->move")
+
+        return normalized, corrections
 
     def clamp_parameters(
         self,

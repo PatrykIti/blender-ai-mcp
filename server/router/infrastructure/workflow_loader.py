@@ -10,7 +10,7 @@ import dataclasses
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Tuple, Union
 
 try:
     import yaml
@@ -149,6 +149,59 @@ class WorkflowLoader:
 
         # Validate and convert
         return self._parse_workflow(data, file_path)
+
+    def load_content(
+        self,
+        content: str,
+        source_name: Optional[str] = None,
+        format_hint: Optional[str] = None,
+    ) -> Tuple[WorkflowDefinition, str]:
+        """Load a workflow definition from raw YAML/JSON content.
+
+        Args:
+            content: Raw workflow content (YAML or JSON).
+            source_name: Optional label for error messages.
+            format_hint: Optional "json"/"yaml" hint to force parser.
+
+        Returns:
+            Tuple of parsed workflow definition and resolved format ("json"|"yaml").
+        """
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("Workflow content is empty")
+
+        source = Path(source_name) if source_name else None
+        normalized_hint = (format_hint or "").strip().lower()
+        if normalized_hint in {"yml", "yaml", "text/yaml", "application/x-yaml"}:
+            normalized_hint = "yaml"
+        elif normalized_hint in {"json", "application/json"}:
+            normalized_hint = "json"
+        elif normalized_hint:
+            raise ValueError(f"Unsupported content_type: {format_hint}")
+
+        if normalized_hint == "json":
+            data = json.loads(content)
+            resolved_format = "json"
+        elif normalized_hint == "yaml":
+            if not YAML_AVAILABLE:
+                raise ImportError(
+                    "PyYAML is required to load YAML workflows. "
+                    "Install with: poetry add pyyaml"
+                )
+            data = yaml.safe_load(content)
+            resolved_format = "yaml"
+        else:
+            try:
+                data = json.loads(content)
+                resolved_format = "json"
+            except Exception as json_error:
+                if not YAML_AVAILABLE:
+                    raise ValueError(
+                        "Failed to parse workflow content as JSON and YAML support is unavailable."
+                    ) from json_error
+                data = yaml.safe_load(content)
+                resolved_format = "yaml"
+
+        return self._parse_workflow(data, source), resolved_format
 
     def _parse_workflow(
         self, data: Dict[str, Any], source: Optional[Path] = None

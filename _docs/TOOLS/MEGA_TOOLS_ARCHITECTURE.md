@@ -1,7 +1,14 @@
 # Mega Tools Architecture
 
 Mega tools are unified tools that consolidate multiple related operations to **reduce LLM context usage**.
-Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools with action parameters.
+They are wrappers only: standalone action handlers still exist and are the source of truth for execution.
+
+**Implementation pattern (see `scene_context`):**
+- Mega tool is exposed as a single `@mcp.tool`.
+- Action-level functions are **internal** (no `@mcp.tool`) and call Blender addon RPC handlers.
+- If a standalone MCP tool is required for workflow compatibility, it should be a thin wrapper
+  that calls the same internal action function (no duplicated logic).
+- Router can still execute internal actions directly via handler mappings and per-tool JSON metadata.
 
 ---
 
@@ -11,11 +18,20 @@ Instead of learning 18+ separate tools, the LLM only needs to learn 5 mega tools
 |-----------|---------|----------|---------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | -1 |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | -2 |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots` | -3 |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | -5 |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
+| `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`, `summary` | `mesh_get_*` introspection tools | -7 |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
+
+**`mesh_inspect.summary` sources (recommended):**
+- `scene_inspect(action="topology")` → counts
+- `uv_list_maps` → `has_uvs`
+- `mesh_get_shape_keys` → `has_shape_keys`
+- `mesh_get_loop_normals` or mesh flags → `has_custom_normals`
+- `mesh_list_groups` → `vertex_groups`
+- `modeling_list_modifiers` → `modifiers`
 
 ---
 
@@ -162,6 +178,8 @@ Detailed inspection queries for objects and scene.
 | `"topology"` | `object_name` (required), `detailed` | Returns vertex/edge/face/tri/quad/ngon counts. Optional: `detailed=True` for non-manifold checks. |
 | `"modifiers"` | `object_name` (optional), `include_disabled` | Returns modifier stacks. If `object_name` is None, scans all objects. |
 | `"materials"` | `material_filter`, `include_empty_slots` | Returns material slot audit across scene. |
+| `"constraints"` | `object_name`, `include_bones` | Returns object (and optional bone) constraints. |
+| `"modifier_data"` | `object_name`, `modifier_name`, `include_node_tree` | Returns full modifier properties. |
 
 ## Object Parameters
 
@@ -189,6 +207,21 @@ Detailed inspection queries for objects and scene.
 |-----------|------|---------|-------------|
 | `material_filter` | `str` | `None` | Filter materials by name substring. |
 | `include_empty_slots` | `bool` | `True` | Include empty material slots. |
+
+## Constraints Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Target object. |
+| `include_bones` | `bool` | `False` | Include bone constraints (armatures). |
+
+## Modifier Data Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Target object. |
+| `modifier_name` | `str` | `None` | Filter to a specific modifier. |
+| `include_node_tree` | `bool` | `False` | Include Geometry Nodes group metadata. |
 
 ## Examples
 
@@ -248,6 +281,8 @@ Detailed inspection queries for objects and scene.
 - `scene_inspect_mesh_topology` → `scene_inspect(action="topology", ...)`
 - `scene_inspect_modifiers` → `scene_inspect(action="modifiers", ...)`
 - `scene_inspect_material_slots` → `scene_inspect(action="materials", ...)`
+- `scene_get_constraints` → `scene_inspect(action="constraints", ...)`
+- `modeling_get_modifier_data` → `scene_inspect(action="modifier_data", ...)`
 
 ---
 
@@ -406,6 +441,124 @@ Targeted selection operations for mesh geometry (with parameters).
 - `mesh_select_loop` → `mesh_select_targeted(action="loop", ...)`
 - `mesh_select_ring` → `mesh_select_targeted(action="ring", ...)`
 - `mesh_select_by_location` → `mesh_select_targeted(action="by_location", ...)`
+
+---
+
+# 6. mesh_inspect ✅ Done
+
+Mesh introspection mega tool (summary + raw payloads).
+
+**Tag:** `[MESH][READ-ONLY][SAFE]`
+
+## Actions
+
+| Action | Description |
+|--------|-------------|
+| `"summary"` | Lightweight overview (counts + presence flags). |
+| `"vertices"` | Vertex positions + selection states. |
+| `"edges"` | Edge connectivity + flags. |
+| `"faces"` | Face connectivity + normals/material index. |
+| `"uvs"` | UV loop coordinates. |
+| `"normals"` | Per-loop normals (split/custom). |
+| `"attributes"` | Mesh attributes (vertex colors/layers). |
+| `"shape_keys"` | Shape key list + optional deltas. |
+| `"group_weights"` | Vertex group weights. |
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `object_name` | `str` | **required** | Name of the object to inspect. |
+| `selected_only` | `bool` | `False` | Only return selected elements (where applicable). |
+| `uv_layer` | `str` | `None` | UV layer name (default: active). |
+| `attribute_name` | `str` | `None` | Attribute name (default: list attributes only). |
+| `group_name` | `str` | `None` | Vertex group name (default: all groups). |
+| `include_deltas` | `bool` | `False` | Include per-vertex shape key deltas. |
+| `offset` | `int` | `None` | Paging offset (applied after selection filter). |
+| `limit` | `int` | `None` | Max items to return (paging). |
+
+## Action → Parameter Hints
+
+- `"summary"`: ignores `selected_only`, `uv_layer`, `attribute_name`, `group_name`, `include_deltas`
+- `"vertices"` / `"edges"` / `"faces"` / `"normals"`: `selected_only`
+- `"uvs"`: `uv_layer` (optional) + `selected_only`
+- `"attributes"`: `attribute_name` (optional) + `selected_only`
+- `"shape_keys"`: `include_deltas` (optional)
+- `"group_weights"`: `group_name` (optional) + `selected_only`
+- `offset`/`limit`: optional paging over returned items (after selection filter)
+
+## Examples
+
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "summary",
+    "object_name": "Body"
+  }
+}
+```
+
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "vertices",
+    "object_name": "Body",
+    "selected_only": true
+  }
+}
+```
+
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "shape_keys",
+    "object_name": "Face",
+    "include_deltas": true
+  }
+}
+```
+
+```json
+{
+  "tool": "mesh_inspect",
+  "args": {
+    "action": "normals",
+    "object_name": "Body",
+    "offset": 0,
+    "limit": 5000
+  }
+}
+```
+
+## Summary JSON (example)
+
+```json
+{
+  "object_name": "Body",
+  "vertex_count": 1234,
+  "edge_count": 2456,
+  "face_count": 1200,
+  "has_uvs": true,
+  "has_shape_keys": true,
+  "has_custom_normals": false,
+  "vertex_groups": ["Spine", "Arm_L", "Arm_R"],
+  "modifiers": ["Bevel", "Subdivision"]
+}
+```
+
+## Replaces
+
+- `mesh_get_vertex_data` → `mesh_inspect(action="vertices", ...)`
+- `mesh_get_edge_data` → `mesh_inspect(action="edges", ...)`
+- `mesh_get_face_data` → `mesh_inspect(action="faces", ...)`
+- `mesh_get_uv_data` → `mesh_inspect(action="uvs", ...)`
+- `mesh_get_loop_normals` → `mesh_inspect(action="normals", ...)`
+- `mesh_get_attributes` → `mesh_inspect(action="attributes", ...)`
+- `mesh_get_shape_keys` → `mesh_inspect(action="shape_keys", ...)`
+- `mesh_get_vertex_group_weights` → `mesh_inspect(action="group_weights", ...)`
 
 ---
 

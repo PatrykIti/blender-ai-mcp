@@ -1,0 +1,33 @@
+{
+  "tool_name": "mesh_get_attributes",
+  "category": "mesh",
+  "mode_required": "EDIT",
+  "selection_required": false,
+  "keywords": ["attributes", "vertex colors", "layers", "data", "color"],
+  "sample_prompts": [
+    "list mesh attributes",
+    "get vertex color data",
+    "inspect mesh attributes",
+    "export attribute layer"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "attribute_name": {
+      "type": "string",
+      "required": false,
+      "description": "Attribute name (defaults to list only)"
+    },
+    "selected_only": {
+      "type": "bool",
+      "default": false,
+      "description": "Only return selected elements"
+    }
+  },
+  "related_tools": ["mesh_get_face_data", "mesh_get_vertex_data"],
+  "patterns": [],
+  "description": "Returns mesh attribute list or full attribute data by name."
+}

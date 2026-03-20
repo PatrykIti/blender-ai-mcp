@@ -83,13 +83,22 @@ class LanceVectorStore(IVectorStore):
             logger.error(f"Failed to initialize LanceDB: {e}")
             self._use_fallback = True
 
+    def _list_tables(self) -> List[str]:
+        """Return table list with backward-compatible API."""
+        if self._db is None:
+            return []
+        try:
+            return self._db.list_tables()
+        except AttributeError:
+            return self._db.table_names()
+
     def _ensure_table(self) -> None:
         """Create table if it doesn't exist."""
         if self._db is None:
             return
 
         try:
-            if self.TABLE_NAME in self._db.table_names():
+            if self.TABLE_NAME in self._list_tables():
                 self._table = self._db.open_table(self.TABLE_NAME)
             else:
                 # Create empty table with schema

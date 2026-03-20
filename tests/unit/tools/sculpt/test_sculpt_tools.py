@@ -508,7 +508,6 @@ class TestSculptEnableDyntopo:
         bpy.context.sculpt_object = mock_sculpt_obj
 
         mock_mesh_object.data = MagicMock()
-        mock_mesh_object.data.use_auto_smooth = True
 
         sculpt = MagicMock()
         sculpt.detail_type_method = None

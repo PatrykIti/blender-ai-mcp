@@ -172,3 +172,14 @@ class ArmatureToolHandler(IArmatureTool):
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
+
+    def get_data(self, object_name: str, include_pose: bool = False) -> str:
+        """Returns armature bones and hierarchy (optional pose data)."""
+        args = {
+            "object_name": object_name,
+            "include_pose": include_pose
+        }
+        response = self.rpc.send_request("armature.get_data", args)
+        if response.status == "error":
+            raise RuntimeError(f"Blender Error: {response.error}")
+        return response.result

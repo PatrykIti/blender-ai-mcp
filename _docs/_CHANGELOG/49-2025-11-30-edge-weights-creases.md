@@ -17,7 +17,7 @@ Sets bevel weight on selected edges for selective beveling with Bevel modifier.
 - Use with Bevel modifier's "Weight" limit method
 
 ### mesh_mark_sharp
-Marks or clears sharp edges for Auto Smooth and Edge Split modifier.
+Marks or clears sharp edges for Smooth by Angle (5.0+) and Edge Split modifier.
 - `action`: "mark" | "clear"
 - Affects normal calculations and shading
 

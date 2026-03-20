@@ -1,0 +1,33 @@
+{
+  "tool_name": "modeling_get_modifier_data",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["modifier", "properties", "geometry nodes", "stack", "reconstruction"],
+  "sample_prompts": [
+    "get modifier data",
+    "inspect modifier properties",
+    "export modifier settings",
+    "read geometry nodes inputs"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to inspect"
+    },
+    "modifier_name": {
+      "type": "string",
+      "required": false,
+      "description": "Modifier name (defaults to all modifiers)"
+    },
+    "include_node_tree": {
+      "type": "bool",
+      "default": false,
+      "description": "Include Geometry Nodes interface metadata"
+    }
+  },
+  "related_tools": ["modeling_list_modifiers", "scene_inspect"],
+  "patterns": [],
+  "description": "Returns full modifier properties, optionally including Geometry Nodes group metadata."
+}

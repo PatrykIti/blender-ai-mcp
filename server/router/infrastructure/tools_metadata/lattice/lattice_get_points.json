@@ -1,0 +1,23 @@
+{
+  "tool_name": "lattice_get_points",
+  "category": "lattice",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["lattice", "points", "control", "cage", "deform", "inspect", "data"],
+  "sample_prompts": [
+    "get lattice points",
+    "inspect lattice resolution",
+    "export lattice control points",
+    "show lattice cage data"
+  ],
+  "parameters": {
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the lattice object to inspect"
+    }
+  },
+  "related_tools": ["lattice_create", "lattice_bind", "lattice_edit_point"],
+  "patterns": [],
+  "description": "Returns lattice point positions and resolution for reconstruction."
+}

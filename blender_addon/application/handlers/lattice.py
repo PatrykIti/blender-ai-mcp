@@ -3,6 +3,24 @@ from typing import List, Optional, Union
 from mathutils import Vector
 
 
+def _vector_to_list(value):
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if hasattr(value, "to_tuple"):
+        return list(value.to_tuple())
+    if hasattr(value, "x"):
+        coords = [value.x, value.y, value.z]
+        if hasattr(value, "w"):
+            coords.append(value.w)
+        return coords
+    try:
+        return list(value)
+    except TypeError:
+        return [value]
+
+
 class LatticeHandler:
     """Application service for lattice deformation operations."""
 
@@ -231,3 +249,34 @@ class LatticeHandler:
                 f"Set {len(indices)} point(s) on '{lattice_name}' to position {list(offset)} "
                 f"(indices: {indices})"
             )
+
+    def get_points(self, object_name: str) -> dict:
+        """
+        [OBJECT MODE][READ-ONLY][SAFE] Returns lattice point positions and resolution.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Lattice '{object_name}' not found")
+
+        lattice_obj = bpy.data.objects[object_name]
+        if lattice_obj.type != 'LATTICE':
+            raise ValueError(f"Object '{object_name}' is not a lattice (type: {lattice_obj.type})")
+
+        lattice_data = lattice_obj.data
+        points = []
+        for point in lattice_data.points:
+            points.append({
+                "co": _vector_to_list(point.co),
+                "co_deform": _vector_to_list(getattr(point, "co_deform", None))
+            })
+
+        return {
+            "object_name": lattice_obj.name,
+            "points_u": lattice_data.points_u,
+            "points_v": lattice_data.points_v,
+            "points_w": lattice_data.points_w,
+            "interpolation_u": lattice_data.interpolation_type_u,
+            "interpolation_v": lattice_data.interpolation_type_v,
+            "interpolation_w": lattice_data.interpolation_type_w,
+            "point_count": len(points),
+            "points": points
+        }

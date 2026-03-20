@@ -325,6 +325,177 @@ class ModelingHandler:
 
         return modifiers_list
 
+    def get_modifier_data(self, object_name, modifier_name=None, include_node_tree=False):
+        """
+        [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Object '{object_name}' not found")
+
+        obj = bpy.data.objects[object_name]
+
+        modifiers = list(obj.modifiers)
+        if modifier_name:
+            modifier = obj.modifiers.get(modifier_name)
+            if modifier is None:
+                modifier = next((m for m in modifiers if m.name == modifier_name), None)
+            if modifier is None:
+                raise ValueError(f"Modifier '{modifier_name}' not found on '{object_name}'")
+            modifiers = [modifier]
+
+        result_modifiers = []
+        for mod in modifiers:
+            result_modifiers.append(self._serialize_modifier(mod, include_node_tree))
+
+        return {
+            "object_name": object_name,
+            "modifier_count": len(result_modifiers),
+            "modifiers": result_modifiers,
+        }
+
+    def _serialize_modifier(self, mod, include_node_tree):
+        object_refs = []
+        seen_refs = set()
+        properties = {}
+
+        for prop in sorted(mod.bl_rna.properties, key=lambda p: p.identifier):
+            if prop.identifier == "rna_type":
+                continue
+            try:
+                value = getattr(mod, prop.identifier)
+            except Exception:
+                continue
+            properties[prop.identifier] = self._serialize_modifier_value(value, prop, object_refs, seen_refs)
+
+        modifier_data = {
+            "name": mod.name,
+            "type": mod.type,
+            "properties": properties,
+            "object_refs": object_refs,
+        }
+
+        if include_node_tree and getattr(mod, "type", None) == "NODES":
+            node_group = getattr(mod, "node_group", None)
+            if node_group:
+                modifier_data["node_tree"] = self._serialize_node_tree(node_group)
+
+        return modifier_data
+
+    def _serialize_modifier_value(self, value, prop, object_refs, seen_refs):
+        if prop.type == 'POINTER':
+            if value is None:
+                return None
+            if hasattr(value, "name"):
+                key = (prop.identifier, value.name)
+                if key not in seen_refs:
+                    seen_refs.add(key)
+                    object_refs.append({"property": prop.identifier, "object_name": value.name})
+                return value.name
+            return str(value)
+
+        if prop.type == 'COLLECTION':
+            items = []
+            try:
+                for item in value:
+                    items.append(self._serialize_collection_item(item))
+            except Exception:
+                return []
+            return items
+
+        return self._serialize_simple_value(value)
+
+    def _serialize_collection_item(self, item):
+        if hasattr(item, "target"):
+            target = getattr(item, "target", None)
+            entry = {"target": target.name if target else None}
+            subtarget = getattr(item, "subtarget", None)
+            if subtarget:
+                entry["subtarget"] = subtarget
+            if hasattr(item, "weight"):
+                entry["weight"] = round(float(item.weight), 6)
+            return entry
+
+        if hasattr(item, "name"):
+            return item.name
+
+        return self._serialize_simple_value(item)
+
+    def _serialize_simple_value(self, value):
+        if isinstance(value, bool):
+            return bool(value)
+        if isinstance(value, int):
+            return int(value)
+        if isinstance(value, float):
+            return round(float(value), 6)
+        if isinstance(value, str):
+            return value
+        if isinstance(value, set):
+            return sorted(value)
+        if hasattr(value, "__iter__"):
+            try:
+                return [self._serialize_simple_value(v) for v in value]
+            except Exception:
+                pass
+        if hasattr(value, "x") and hasattr(value, "y"):
+            coords = [value.x, value.y]
+            if hasattr(value, "z"):
+                coords.append(value.z)
+            if hasattr(value, "w"):
+                coords.append(value.w)
+            return [round(float(c), 6) for c in coords]
+        if hasattr(value, "name"):
+            return value.name
+        return str(value)
+
+    def _serialize_node_tree(self, node_group):
+        return {
+            "name": node_group.name,
+            "is_linked": bool(getattr(node_group, "library", None)),
+            "library_path": getattr(getattr(node_group, "library", None), "filepath", None),
+            "inputs": self._serialize_node_sockets(node_group, "INPUT"),
+            "outputs": self._serialize_node_sockets(node_group, "OUTPUT"),
+        }
+
+    def _serialize_node_sockets(self, node_group, direction):
+        sockets = []
+
+        if direction == "INPUT" and hasattr(node_group, "inputs"):
+            sockets = list(node_group.inputs)
+        elif direction == "OUTPUT" and hasattr(node_group, "outputs"):
+            sockets = list(node_group.outputs)
+        elif hasattr(node_group, "interface"):
+            items = getattr(node_group.interface, "items_tree", None) or getattr(node_group.interface, "items", None)
+            if items:
+                sockets = [
+                    item for item in items
+                    if getattr(item, "in_out", None) == direction
+                ]
+
+        return [self._serialize_node_socket(socket) for socket in sockets]
+
+    def _serialize_node_socket(self, socket):
+        data = {
+            "name": getattr(socket, "name", None),
+            "identifier": getattr(socket, "identifier", None),
+            "socket_type": (
+                getattr(socket, "bl_socket_idname", None)
+                or getattr(socket, "socket_type", None)
+                or getattr(socket, "type", None)
+                or socket.__class__.__name__
+            ),
+        }
+
+        if hasattr(socket, "default_value"):
+            data["default_value"] = self._serialize_simple_value(socket.default_value)
+        if hasattr(socket, "min_value"):
+            data["min"] = self._serialize_simple_value(socket.min_value)
+        if hasattr(socket, "max_value"):
+            data["max"] = self._serialize_simple_value(socket.max_value)
+        if hasattr(socket, "subtype"):
+            data["subtype"] = socket.subtype
+
+        return data
+
     # ==========================================================================
     # TASK-038-1: Metaball Tools
     # ==========================================================================

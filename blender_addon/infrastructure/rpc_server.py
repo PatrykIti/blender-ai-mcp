@@ -63,18 +63,31 @@ _NO_UNDO_PUSH_CMDS = {
     "mesh.select_ring",
     "mesh.select_by_location",
     "mesh.set_proportional_edit",
+    "mesh.select",
 }
 
 _NO_UNDO_PUSH_PREFIXES = (
     # Read-only inspections
     "scene.inspect_",
+    "scene.get_constraints",
     "collection.list",
     "collection.list_objects",
     "material.list",
     "material.inspect_nodes",
     "uv.list_maps",
     "mesh.get_vertex_data",
+    "mesh.get_edge_data",
+    "mesh.get_face_data",
+    "mesh.get_uv_data",
+    "mesh.get_loop_normals",
+    "mesh.get_vertex_group_weights",
+    "mesh.get_attributes",
+    "mesh.get_shape_keys",
     "mesh.list_groups",
+    "curve.get_data",
+    "lattice.get_points",
+    "armature.get_data",
+    "modeling.get_modifier_data",
     # Pure output generation (no scene edits expected)
     "export.",
     "baking.",

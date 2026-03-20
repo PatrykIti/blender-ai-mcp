@@ -20,3 +20,9 @@ class ICurveTool(ABC):
     def curve_to_mesh(self, object_name: str) -> str:
         """Converts a curve object to mesh geometry."""
         pass
+
+    # TASK-073-1: Curve Get Data Tool
+    @abstractmethod
+    def get_data(self, object_name: str) -> str:
+        """Returns curve spline data for reconstruction."""
+        pass

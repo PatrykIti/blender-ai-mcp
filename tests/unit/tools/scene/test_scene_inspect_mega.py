@@ -108,6 +108,39 @@ class TestSceneInspectMega:
         mock_inspect_materials.assert_called_once_with(self.mock_ctx, None, True)
         assert result == "Materials report"
 
+    @patch("server.adapters.mcp.areas.scene._scene_get_constraints")
+    def test_action_constraints_routes_correctly(self, mock_get_constraints):
+        """Test action='constraints' routes to _scene_get_constraints."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+
+        mock_get_constraints.return_value = "Constraints report"
+        result = scene_inspect.fn(
+            self.mock_ctx,
+            action="constraints",
+            object_name="Rig",
+            include_bones=True
+        )
+
+        mock_get_constraints.assert_called_once_with(self.mock_ctx, "Rig", True)
+        assert result == "Constraints report"
+
+    @patch("server.adapters.mcp.areas.scene._scene_inspect_modifier_data")
+    def test_action_modifier_data_routes_correctly(self, mock_modifier_data):
+        """Test action='modifier_data' routes to _scene_inspect_modifier_data."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+
+        mock_modifier_data.return_value = "Modifier data"
+        result = scene_inspect.fn(
+            self.mock_ctx,
+            action="modifier_data",
+            object_name="Cube",
+            modifier_name="Bevel",
+            include_node_tree=True
+        )
+
+        mock_modifier_data.assert_called_once_with(self.mock_ctx, "Cube", "Bevel", True)
+        assert result == "Modifier data"
+
     def test_invalid_action_returns_error(self):
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.scene import scene_inspect
@@ -120,3 +153,5 @@ class TestSceneInspectMega:
         assert "topology" in result
         assert "modifiers" in result
         assert "materials" in result
+        assert "constraints" in result
+        assert "modifier_data" in result

@@ -101,8 +101,94 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def get_vertex_data(self, object_name: str, selected_only: bool = False) -> Dict[str, Any]:
+    def get_vertex_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
         """Returns vertex positions and selection states for programmatic analysis."""
+        pass
+
+    @abstractmethod
+    def get_edge_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns edge connectivity and attributes."""
+        pass
+
+    @abstractmethod
+    def get_face_data(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns face connectivity and attributes."""
+        pass
+
+    @abstractmethod
+    def get_uv_data(
+        self,
+        object_name: str,
+        uv_layer: Optional[str] = None,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns UV data per face loop."""
+        pass
+
+    @abstractmethod
+    def get_loop_normals(
+        self,
+        object_name: str,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns per-loop normals (split/custom)."""
+        pass
+
+    @abstractmethod
+    def get_vertex_group_weights(
+        self,
+        object_name: str,
+        group_name: Optional[str] = None,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns vertex group weights."""
+        pass
+
+    @abstractmethod
+    def get_attributes(
+        self,
+        object_name: str,
+        attribute_name: Optional[str] = None,
+        selected_only: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns mesh attribute data."""
+        pass
+
+    @abstractmethod
+    def get_shape_keys(
+        self,
+        object_name: str,
+        include_deltas: bool = False,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Returns shape key data (optionally with deltas)."""
         pass
 
     @abstractmethod

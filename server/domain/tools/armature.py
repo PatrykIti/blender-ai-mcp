@@ -67,3 +67,12 @@ class IArmatureTool(ABC):
     ) -> str:
         """Assigns weights to selected vertices for a vertex group."""
         pass
+
+    @abstractmethod
+    def get_data(
+        self,
+        object_name: str,
+        include_pose: bool = False
+    ) -> str:
+        """Returns armature bones and hierarchy (optional pose data)."""
+        pass

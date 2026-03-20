@@ -3,13 +3,29 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 4 tasks (~22 sub-tasks)
+- **To Do:** 23 tasks (~180 sub-tasks)
 - **In Progress:** 1 task
-- **Done:** 133
+- **Done:** 139
 
 ---
 
 ## 🚨 To Do
+
+### FastMCP Platform & LLM UX
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Providers + transforms as the new server base |
+| [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | Tool Search as the primary discovery model |
+| [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | Per-session visibility and phase-based capability exposure |
+| [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | Rename/reshape public MCP surfaces without rewriting business logic |
+| [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | First-class clarification flow for router/workflow inputs |
+| [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | Non-blocking jobs for imports, renders, analysis, reconstruction |
+| [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | Structured state exchange for critical tools |
+| [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md) | **Prompt Layer and Tool-Compatible Prompt Delivery** | 🟡 Medium | Prompts as first-class server product, including tool-only clients |
+| [TASK-091](./TASK-091_Versioned_Client_Surfaces.md) | **Versioned Client Surfaces for Safe API Evolution** | 🔴 High | Legacy and LLM-first surfaces can coexist |
+| [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | Bounded internal reasoning helpers for analysis and recovery |
+| [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md) | **Observability, Timeouts, and Pagination** | 🟡 Medium | Better tracing, safer execution, cleaner component listings |
+| [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -18,6 +34,25 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
 | [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
 | [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
+
+### Mesh Introspection
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+
+### Scene & Rig Introspection
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+
+### Reconstruction (Mesh, Material, Scene)
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-076](./TASK-076_Mesh_Build_Mega_Tool.md) | **Mesh Build Mega Tool (Core Topology)** | 🔴 High | Write-side reconstruction for vertices/edges/faces |
+| [TASK-077](./TASK-077_Mesh_Build_Surface_Data.md) | **Mesh Build Surface Data (UVs, Materials, Attributes)** | 🔴 High | UVs + material indices + attributes |
+| [TASK-078](./TASK-078_Mesh_Build_Deformation_Data.md) | **Mesh Build Deformation Data (Normals, Weights, Shape Keys)** | 🔴 High | Custom normals + weights + shape keys |
+| [TASK-079](./TASK-079_Node_Graph_Build_Tools.md) | **Node Graph Build Tools (Material + Geometry Nodes)** | 🔴 High | Rebuild shader/GN graphs |
+| [TASK-080](./TASK-080_Image_Asset_Tools.md) | **Image Asset Tools (List, Load, Export, Pack)** | 🟡 Medium | Texture asset pipeline |
+| [TASK-081](./TASK-081_Scene_Render_World_Settings.md) | **Scene Render + World Settings (Inspect & Apply)** | 🟡 Medium | Render + world settings |
+| [TASK-082](./TASK-082_Animation_and_Drivers_Tools.md) | **Animation and Driver Tools (Inspect + Build)** | 🟡 Medium | Actions, FCurves, drivers, NLA |
 
 ---
 
@@ -33,6 +68,12 @@ Task board for the project. Update statuses in markdown files.
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-075](./TASK-075_Workflow_Catalog_Import.md) | **Workflow Catalog Import (YAML/JSON, inline/chunked)** | 🟡 Medium | 2025-12-20 |
+| [TASK-074](./TASK-074_Mesh_Inspect_Mega_Tool.md) | **Mesh Inspect Mega Tool** | 🟡 Medium | 2025-12-19 |
+| [TASK-073](./TASK-073_Rig_Curve_Lattice_Introspection.md) | **Rig/Curve/Lattice Introspection** | 🔴 High | 2025-12-19 |
+| [TASK-072](./TASK-072_Modifier_Constraint_Introspection.md) | **Modifier & Constraint Introspection** | 🔴 High | 2025-12-19 |
+| [TASK-071](./TASK-071_Mesh_Introspection_Advanced.md) | **Mesh Introspection Advanced** | 🔴 High | 2025-12-19 |
+| [TASK-070](./TASK-070_Mesh_Topology_Introspection_Extensions.md) | **Mesh Topology Introspection Extensions** | 🔴 High | 2025-12-19 |
 | [TASK-069](./TASK-069_Repo_Community_Standards_and_Release_Docs.md) | **Repo Professionalization: SECURITY/SUPPORT/CoC + Support Matrix + Release/Dev Docs** | 🟡 Medium | 2025-12-18 |
 | [TASK-068](./TASK-068_License_BUSL_Compliance.md) | **License: BUSL 1.1 Compliance + Apache Change License File** | 🔴 High | 2025-12-17 |
 | [TASK-067](./TASK-067_Update_Root_README_MCP_Client_Configs.md) | **Update Root README MCP Client Configs (Collapsible + Codex CLI)** | 🟡 Medium | 2025-12-17 |

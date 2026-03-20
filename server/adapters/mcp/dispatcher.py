@@ -75,6 +75,7 @@ class ToolDispatcher:
             "scene_inspect_material_slots": "inspect_material_slots",
             "scene_inspect_mesh_topology": "inspect_mesh_topology",
             "scene_inspect_modifiers": "inspect_modifiers",
+            "scene_get_constraints": "get_constraints",
             "scene_create_light": "create_light",
             "scene_create_camera": "create_camera",
             "scene_create_empty": "create_empty",
@@ -119,6 +120,7 @@ class ToolDispatcher:
             "modeling_add_modifier": "add_modifier",
             "modeling_apply_modifier": "apply_modifier",
             "modeling_list_modifiers": "get_modifiers",
+            "modeling_get_modifier_data": "get_modifier_data",
             "modeling_convert_to_mesh": "convert_to_mesh",
             "modeling_join_objects": "join_objects",
             "modeling_separate_object": "separate_object",
@@ -145,6 +147,13 @@ class ToolDispatcher:
             "mesh_select_ring": "select_ring",
             "mesh_select_by_location": "select_by_location",
             "mesh_get_vertex_data": "get_vertex_data",
+            "mesh_get_edge_data": "get_edge_data",
+            "mesh_get_face_data": "get_face_data",
+            "mesh_get_uv_data": "get_uv_data",
+            "mesh_get_loop_normals": "get_loop_normals",
+            "mesh_get_vertex_group_weights": "get_vertex_group_weights",
+            "mesh_get_attributes": "get_attributes",
+            "mesh_get_shape_keys": "get_shape_keys",
             "mesh_delete_selected": "delete_selected",
             "mesh_extrude_region": "extrude_region",
             "mesh_fill_holes": "fill_holes",
@@ -277,6 +286,7 @@ class ToolDispatcher:
         self._safe_update(curve, {
             "curve_create": "create",
             "curve_to_mesh": "to_mesh",
+            "curve_get_data": "get_data",
         })
 
         # Sculpt tools
@@ -312,6 +322,7 @@ class ToolDispatcher:
             "lattice_create": "create",
             "lattice_bind": "bind",
             "lattice_edit_point": "edit_point",
+            "lattice_get_points": "get_points",
         })
 
         # Extraction tools
@@ -341,6 +352,7 @@ class ToolDispatcher:
             "armature_bind": "bind",
             "armature_pose_bone": "pose_bone",
             "armature_weight_paint_assign": "weight_paint_assign",
+            "armature_get_data": "get_data",
         })
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:

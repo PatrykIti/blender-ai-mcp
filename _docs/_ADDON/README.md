@@ -57,6 +57,7 @@ Technical details.
 | `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
+| `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
@@ -136,6 +137,7 @@ Technical details.
 | `set_origin` | `set_origin` | Sets the origin point of an object. |
 
 | `get_modifiers` | `get_modifiers` | Returns a list of modifiers on the object. |
+| `modeling.get_modifier_data` | `get_modifier_data` | Returns full modifier properties (Geometry Nodes metadata optional). |
 | `modeling.metaball_create` | `metaball_create` | Creates metaball object. |
 | `modeling.metaball_add_element` | `metaball_add_element` | Adds element to metaball. |
 | `modeling.metaball_to_mesh` | `metaball_to_mesh` | Converts metaball to mesh. |
@@ -173,6 +175,14 @@ Technical details.
 | `smooth_vertices` | `smooth_vertices` | Smooths selected vertices using Laplacian smoothing. |
 | `flatten_vertices` | `flatten_vertices` | Flattens selected vertices to plane along specified axis. |
 | `list_groups` | `list_groups` | Lists vertex/face groups defined on the mesh. |
+| `mesh.get_vertex_data` | `get_vertex_data` | Returns vertex positions and selection states. |
+| `mesh.get_edge_data` | `get_edge_data` | Returns edge connectivity and flags. |
+| `mesh.get_face_data` | `get_face_data` | Returns face connectivity, normals, and materials. |
+| `mesh.get_uv_data` | `get_uv_data` | Returns UV coordinates per face loop. |
+| `mesh.get_loop_normals` | `get_loop_normals` | Returns per-loop normals (split/custom). |
+| `mesh.get_vertex_group_weights` | `get_vertex_group_weights` | Returns vertex group weights. |
+| `mesh.get_attributes` | `get_attributes` | Returns mesh attributes (vertex colors/layers). |
+| `mesh.get_shape_keys` | `get_shape_keys` | Returns shape key data (optional deltas). |
 | `randomize` | `randomize` | Randomizes vertex positions for organic surfaces. |
 | `shrink_fatten` | `shrink_fatten` | Moves vertices along their normals (inflate/deflate). |
 | `create_vertex_group` | `create_vertex_group` | Creates a new vertex group on mesh object. |
@@ -215,6 +225,7 @@ Technical details.
 |-------------|----------------|-------------|
 | `curve.create_curve` | `create_curve` | Creates curve primitive (Bezier, NURBS, Path, Circle). |
 | `curve.curve_to_mesh` | `curve_to_mesh` | Converts curve to mesh. |
+| `curve.get_data` | `get_data` | Returns curve splines, points, and settings. |
 
 
 ### Text (`application/handlers/text.py`)
@@ -293,6 +304,19 @@ Technical details.
 | `lattice.create` | `lattice_create` | Creates lattice object, auto-fits to target bounds. |
 | `lattice.bind` | `lattice_bind` | Binds object to lattice via Lattice modifier. |
 | `lattice.edit_point` | `lattice_edit_point` | Moves lattice control points for deformation. |
+| `lattice.get_points` | `get_points` | Returns lattice point positions and resolution. |
+
+
+### Armature (`application/handlers/armature.py`)
+
+| RPC Command | Handler Method | Description |
+|-------------|----------------|-------------|
+| `armature.create` | `create` | Creates armature with initial bone. |
+| `armature.add_bone` | `add_bone` | Adds a bone to an existing armature. |
+| `armature.bind` | `bind` | Binds mesh to armature (AUTO/ENVELOPE/EMPTY). |
+| `armature.pose_bone` | `pose_bone` | Poses a bone in Pose Mode. |
+| `armature.weight_paint_assign` | `weight_paint_assign` | Assigns weights to selected vertices for a bone group. |
+| `armature.get_data` | `get_data` | Returns bone hierarchy and optional pose data. |
 
 
 ### Extraction (`application/handlers/extraction.py`)
@@ -307,4 +331,3 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042).
 | `extraction.edge_loop_analysis` | `edge_loop_analysis` | Analyzes edge loops, boundary/manifold/non-manifold edges. |
 | `extraction.face_group_analysis` | `face_group_analysis` | Analyzes face groups by normal direction and height levels. |
 | `extraction.render_angles` | `render_angles` | Multi-angle renders for LLM Vision semantic analysis. |
-

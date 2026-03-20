@@ -42,11 +42,12 @@ Unified tools that consolidate multiple related operations to reduce LLM context
 |-----------|---------|-------------|
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials` | Detailed inspection queries for objects. |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | Detailed inspection queries for objects. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
+| `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |
 
-**Total:** 18 tools → 5 mega tools (**-13 definitions** for LLM context)
+**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
 
 ### Scene Tools
 Managing objects at the scene level.
@@ -67,8 +68,8 @@ Managing objects at the scene level.
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
-
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
+> `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 
 ### Collection Tools
 Organizational tools for managing Blender collections.
@@ -122,6 +123,8 @@ Geometry creation and editing.
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. |
 
+> **Note:** `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")` for MCP clients.
+
 ### Mesh Tools (Edit Mode)
 Low-level geometry manipulation.
 
@@ -139,7 +142,6 @@ Low-level geometry manipulation.
 | `mesh_smooth` | `iterations`, `factor` | Smooths selected vertices using Laplacian smoothing. |
 | `mesh_flatten` | `axis` | Flattens selected vertices to plane (X/Y/Z). |
 | `mesh_list_groups` | `object_name`, `group_type` | Lists vertex groups or face maps/attributes. |
-| `mesh_get_vertex_data` | `object_name`, `selected_only` | Returns vertex positions and selection states. |
 | `mesh_randomize` | `amount`, `uniform`, `normal`, `seed` | Randomizes vertex positions for organic surfaces. |
 | `mesh_shrink_fatten` | `value` | Moves vertices along their normals (inflate/deflate). |
 | `mesh_create_vertex_group` | `object_name`, `name` | Creates a new vertex group on mesh object. |
@@ -159,7 +161,7 @@ Low-level geometry manipulation.
 | `mesh_add_edge_face` | *none* | Creates edge or face from selected vertices (F key). |
 | `mesh_edge_crease` | `crease_value` | Sets crease weight on selected edges (0.0-1.0) for Subdivision Surface control. |
 | `mesh_bevel_weight` | `weight` | Sets bevel weight on selected edges (0.0-1.0) for selective beveling. |
-| `mesh_mark_sharp` | `action` | Marks ('mark') or clears ('clear') sharp edges for Auto Smooth. |
+| `mesh_mark_sharp` | `action` | Marks ('mark') or clears ('clear') sharp edges for Smooth by Angle (5.0+). |
 | `mesh_dissolve` | `dissolve_type`, `angle_limit`, `use_face_split`, `use_boundary_tear` | Dissolves geometry (limited/verts/edges/faces) while preserving shape. |
 | `mesh_tris_to_quads` | `face_threshold`, `shape_threshold` | Converts triangles to quads based on angle thresholds. |
 | `mesh_normals_make_consistent` | `inside` | Recalculates normals to face consistently outward (or inward if inside=True). |
@@ -175,6 +177,8 @@ Low-level geometry manipulation.
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. |
 
+> **Note:** Mesh introspection tools (`mesh_get_*`) are consolidated into `mesh_inspect` for MCP clients. Router can still call internal actions via handler metadata.
+
 > **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
 ### Curve Tools
@@ -184,6 +188,7 @@ Curve creation and conversion.
 |-----------|-----------|-------------|
 | `curve_create` | `curve_type`, `location` | Creates curve primitive (BEZIER, NURBS, PATH, CIRCLE). |
 | `curve_to_mesh` | `object_name` | Converts curve object to mesh geometry. |
+| `curve_get_data` | `object_name` | Returns curve splines, points, and settings. |
 
 ### Text Tools
 3D typography and text annotations.
@@ -242,6 +247,19 @@ Non-destructive shape deformation using control point cages.
 | `lattice_create` | `name`, `target_object`, `location`, `points_u`, `points_v`, `points_w`, `interpolation` | Creates lattice object, auto-fits to target object bounds. |
 | `lattice_bind` | `object_name`, `lattice_name`, `vertex_group` | Binds object to lattice via Lattice modifier. |
 | `lattice_edit_point` | `lattice_name`, `point_index`, `offset`, `relative` | Moves lattice control points to deform bound objects. |
+| `lattice_get_points` | `object_name` | Returns lattice point positions and resolution. |
+
+### Armature Tools
+Skeletal rigging and pose utilities.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `armature_create` | `name`, `location`, `bone_name`, `bone_length` | Creates armature with initial bone. |
+| `armature_add_bone` | `armature_name`, `bone_name`, `head`, `tail`, `parent_bone`, `use_connect` | Adds bone to existing armature with optional parenting. |
+| `armature_bind` | `mesh_name`, `armature_name`, `bind_type` | Binds mesh to armature (AUTO/ENVELOPE/EMPTY). |
+| `armature_pose_bone` | `armature_name`, `bone_name`, `rotation`, `location`, `scale` | Poses bone in Pose Mode. |
+| `armature_weight_paint_assign` | `object_name`, `vertex_group`, `weight`, `mode` | Assigns weights to selected vertices. |
+| `armature_get_data` | `object_name`, `include_pose` | Returns armature bones and hierarchy (optional pose data). |
 
 ### System Tools
 System-level operations for mode switching, undo/redo, and file management.
@@ -278,11 +296,11 @@ Analysis tools for the Automatic Workflow Extraction System (TASK-042). Enables 
 | `extraction_render_angles` | `object_name`, `output_dir`, `resolution`, `angles` | Multi-angle renders (front, back, left, right, top, iso) for LLM Vision semantic analysis. |
 
 ### Workflow Catalog Tools
-Read-only tools for browsing and inspecting workflow definitions (no execution).
+Tools for browsing and importing workflow definitions (no execution).
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `workflow_catalog` | `action` (list/get/search), `workflow_name`, `query`, `top_k`, `threshold` | Lists workflows, searches similar workflows, and returns workflow definitions (including steps) without executing them. |
+| `workflow_catalog` | `action` (list/get/search/import/import_init/import_append/import_finalize/import_abort), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite`, `content`, `content_type`, `source_name`, `session_id`, `chunk_data`, `chunk_index`, `total_chunks` | Lists/searches/inspects workflows and imports YAML/JSON via file path, inline content, or chunked sessions. Returns `needs_input` when overwrite confirmation is required. |
 
 ### Router Tools
 Tools for managing the Router Supervisor and executing matched workflows.

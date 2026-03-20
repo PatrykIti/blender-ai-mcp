@@ -4,6 +4,7 @@
 Remove the MCP tool `vector_db_manage` (vector DB admin tool) and replace it with a read-only workflow exploration tool:
 
 - `workflow_catalog` (list/get/search)
+- **Note (2025-12-21):** Import support was added later in TASK-075, including inline and chunked upload paths.
 - Must **not** execute workflows
 - Must allow inspecting workflow `steps` to help LLM “imagine”/plan modeling
 
@@ -21,6 +22,7 @@ Add MCP tool:
 - `workflow_catalog(action="list")` → list workflows + metadata
 - `workflow_catalog(action="get", workflow_name="...")` → return workflow definition incl. `steps`
 - `workflow_catalog(action="search", query="...", top_k=..., threshold=...)` → similar workflows (semantic when available; keyword fallback)
+  - Later extended with `import` (file/inline/chunked) in TASK-075
 
 Implementation should follow the existing Clean Architecture pattern:
 - Domain interface: `server/domain/tools/workflow_catalog.py`
@@ -48,4 +50,3 @@ Update user-facing docs to reflect the new tool:
 - No public MCP tool exists that performs destructive vector DB management actions
 - No docs/prompts reference `vector_db_manage` as a current tool
 - `workflow_catalog` does not call `router_set_goal` (no workflow execution)
-

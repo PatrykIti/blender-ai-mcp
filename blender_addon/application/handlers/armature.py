@@ -10,6 +10,24 @@ import math
 from typing import Optional, List
 
 
+def _vector_to_list(value):
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if hasattr(value, "to_tuple"):
+        return list(value.to_tuple())
+    if hasattr(value, "x"):
+        coords = [value.x, value.y, value.z]
+        if hasattr(value, "w"):
+            coords.append(value.w)
+        return coords
+    try:
+        return list(value)
+    except TypeError:
+        return [value]
+
+
 class ArmatureHandler:
     """Handler for armature/rigging operations in Blender."""
 
@@ -310,3 +328,53 @@ class ArmatureHandler:
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Assigned weight {weight} to {len(selected_verts)} vertices in group '{vertex_group}' (mode={mode})"
+
+    def get_data(self, object_name: str, include_pose: bool = False) -> dict:
+        """
+        [OBJECT MODE][READ-ONLY][SAFE] Returns armature bones and hierarchy.
+        """
+        if object_name not in bpy.data.objects:
+            raise ValueError(f"Armature '{object_name}' not found")
+
+        armature_obj = bpy.data.objects[object_name]
+        if armature_obj.type != 'ARMATURE':
+            raise ValueError(
+                f"Object '{object_name}' is not an armature (type: {armature_obj.type})"
+            )
+
+        bones = []
+        for bone in armature_obj.data.bones:
+            bones.append({
+                "name": bone.name,
+                "head": _vector_to_list(bone.head_local),
+                "tail": _vector_to_list(bone.tail_local),
+                "roll": bone.roll,
+                "parent": bone.parent.name if bone.parent else None,
+                "use_connect": bone.use_connect,
+                "use_deform": getattr(bone, "use_deform", None),
+                "inherit_scale": getattr(bone, "inherit_scale", None)
+            })
+
+        pose_data = []
+        if include_pose and armature_obj.pose:
+            for pose_bone in armature_obj.pose.bones:
+                entry = {
+                    "name": pose_bone.name,
+                    "location": _vector_to_list(pose_bone.location),
+                    "scale": _vector_to_list(pose_bone.scale),
+                    "rotation_mode": pose_bone.rotation_mode
+                }
+                if pose_bone.rotation_mode == 'QUATERNION':
+                    entry["rotation_quaternion"] = _vector_to_list(pose_bone.rotation_quaternion)
+                elif pose_bone.rotation_mode == 'AXIS_ANGLE':
+                    entry["rotation_axis_angle"] = _vector_to_list(pose_bone.rotation_axis_angle)
+                else:
+                    entry["rotation_euler"] = _vector_to_list(pose_bone.rotation_euler)
+                pose_data.append(entry)
+
+        return {
+            "object_name": armature_obj.name,
+            "bone_count": len(bones),
+            "bones": bones,
+            "pose": pose_data
+        }

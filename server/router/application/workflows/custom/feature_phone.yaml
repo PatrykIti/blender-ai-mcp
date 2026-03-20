@@ -1,0 +1,670 @@
+# Feature Phone Workflow - Body Shell Base
+# Creates a smooth, rounded body shell with a recessed screen seat.
+
+name: feature_phone_workflow
+description: Creates a smooth feature-phone body shell (base) with a recessed screen seat
+category: electronics
+author: blender-ai-mcp
+version: "5.3.5"
+
+trigger_keywords:
+  - feature phone
+  - keypad phone
+  - button phone
+  - classic phone
+  - old phone
+  - retro phone
+  - telefon przyciskowy
+  - telefonu przyciskowego
+  - telefon z klawiatura
+  - stary telefon
+  - obudowa telefonu
+  - obudowa telefonu przyciskowego
+  - obudowe telefonu przyciskowego
+
+sample_prompts:
+  - "create a classic keypad phone body shell"
+  - "make a feature phone body shell"
+  - "stworz obudowe telefonu przyciskowego"
+
+defaults:
+  # Phone dimensions (classic feature phone scale)
+  width: 0.046
+  depth: 0.019
+  height: 0.109
+
+  # Cleanup option
+  clean_scene: false
+
+  # Extra Subsurf after Skin/Subdivision bake
+  body_subsurf_levels: 2
+
+parameters:
+  width:
+    type: float
+    range: [0.04, 0.10]
+    default: 0.046
+    description: Phone width (X)
+    semantic_hints: [width, size]
+    group: dimensions
+
+  height:
+    type: float
+    range: [0.09, 0.25]
+    default: 0.109
+    description: Phone height (Z)
+    semantic_hints: [height, size]
+    group: dimensions
+
+  depth:
+    type: float
+    range: [0.015, 0.035]
+    default: 0.019
+    description: Phone depth (Y)
+    semantic_hints: [depth, thickness]
+    group: dimensions
+
+  clean_scene:
+    type: bool
+    default: false
+    description: Clean scene before building
+    group: workflow
+
+  body_subsurf_levels:
+    type: int
+    range: [0, 3]
+    default: 2
+    description: Extra Subdivision levels for body (after Skin/Subsurf bake)
+    group: style
+
+steps:
+  # =============================
+  # SCENE PREP
+  # =============================
+  - tool: scene_clean_scene
+    params:
+      keep_lights_and_cameras: true
+    condition: "clean_scene"
+    description: Optional scene cleanup
+
+  - tool: collection_manage
+    params: {action: "create", collection_name: "Phone_Body"}
+
+  # =============================
+  # BODY - Main Shell (Skin)
+  # =============================
+  - tool: modeling_skin_create_skeleton
+    params:
+      name: "body_shell"
+      location: [0.0, 0.0, 0.0]
+      vertices:
+        - [0.0, 0.0, "$CALCULATE(-height * 0.511)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.37)"]
+        - [0.0, 0.0, "$CALCULATE(-height * 0.19)"]
+        - [0.0, 0.0, 0.0]
+        - [0.0, 0.0, "$CALCULATE(height * 0.19)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.37)"]
+        - [0.0, 0.0, "$CALCULATE(height * 0.511)"]
+      edges:
+        - [0, 1]
+        - [1, 2]
+        - [2, 3]
+        - [3, 4]
+        - [4, 5]
+        - [5, 6]
+    description: Smooth body shell (Skin-based) to avoid boxy artifacts
+
+  # Skin radii (scaled to hit target width/depth after Skin/Subsurf)
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 0
+      radius_x: "$CALCULATE(width * 0.48)"
+      radius_y: "$CALCULATE(depth * 0.50)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 1
+      radius_x: "$CALCULATE(width * 0.53)"
+      radius_y: "$CALCULATE(depth * 0.54)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 2
+      radius_x: "$CALCULATE(width * 0.545)"
+      radius_y: "$CALCULATE(depth * 0.548)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 3
+      radius_x: "$CALCULATE(width * 0.548)"
+      radius_y: "$CALCULATE(depth * 0.548)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 4
+      radius_x: "$CALCULATE(width * 0.52)"
+      radius_y: "$CALCULATE(depth * 0.53)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 5
+      radius_x: "$CALCULATE(width * 0.43)"
+      radius_y: "$CALCULATE(depth * 0.48)"
+
+  - tool: modeling_skin_set_radius
+    params:
+      object_name: "body_shell"
+      vertex_index: 6
+      radius_x: "$CALCULATE(width * 0.36)"
+      radius_y: "$CALCULATE(depth * 0.45)"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "Skin"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "Subdivision"
+
+  # Thin the shell slightly to leave room for front parts (matches the approved base shape)
+  - tool: scene_set_active_object
+    params:
+      name: "body_shell"
+
+  - tool: scene_set_mode
+    params:
+      mode: "EDIT"
+
+  - tool: mesh_select
+    params:
+      action: "all"
+
+  - tool: mesh_transform_selected
+    params:
+      scale: [1.0, 0.75, 1.0]
+
+  - tool: scene_set_mode
+    params:
+      mode: "OBJECT"
+
+  # =============================
+  # BODY - Screen Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "screen_recess_cutter"
+    description: Cutter for recessed screen seat
+
+  - tool: modeling_transform_object
+    params:
+      name: "screen_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.96 / 2)"
+        - "$CALCULATE(depth * 0.11 / 2)"
+        - "$CALCULATE(height * 0.30 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.33)"
+        - "$CALCULATE(height * 0.12)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "screen_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0012
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "screen_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "screen_recess_cutter"
+
+  # =============================
+  # BODY - Speaker Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "speaker_recess_cutter"
+    description: Cutter for recessed speaker seat above screen
+
+  - tool: modeling_transform_object
+    params:
+      name: "speaker_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.085)"
+        - "$CALCULATE(width * 0.085)"
+        - "$CALCULATE(depth * 0.06)"
+      rotation: [1.5708, 0.0, 0.0]
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.33)"
+        - "$CALCULATE(height * 0.34)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "speaker_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0004
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "speaker_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "speaker_recess_cutter"
+
+  # =============================
+  # BODY - Battery Cover Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "battery_recess_cutter"
+    description: Cutter for recessed battery cover seat (no cover object yet)
+
+  - tool: modeling_transform_object
+    params:
+      name: "battery_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.88 / 2)"
+        - "$CALCULATE(depth * 0.11 / 2)"
+        - "$CALCULATE(height * 0.62 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(depth * 0.33)"
+        - "$CALCULATE(-height * 0.08)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "battery_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0012
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "battery_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "battery_recess_cutter"
+
+  # =============================
+  # BODY - Antenna Socket (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "antenna_socket_cutter"
+    description: Cutter for antenna socket (mount point)
+
+  - tool: modeling_transform_object
+    params:
+      name: "antenna_socket_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.55)"
+      location:
+        - "$CALCULATE(-width * 0.32)"
+        - "$CALCULATE(depth * 0.24)"
+        - "$CALCULATE(height * 0.47)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "antenna_socket_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "antenna_socket_cutter"
+
+  # =============================
+  # BODY - Keypad Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "keypad_recess_cutter"
+    description: Cutter for recessed keypad seat (no buttons yet)
+
+  - tool: modeling_transform_object
+    params:
+      name: "keypad_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.92 / 2)"
+        - "$CALCULATE(depth * 0.11 / 2)"
+        - "$CALCULATE(height * 0.42 / 2)"
+      location:
+        - 0.0
+        - "$CALCULATE(-depth * 0.33)"
+        - "$CALCULATE(-height * 0.29)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "keypad_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0012
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "keypad_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "keypad_recess_cutter"
+
+  # =============================
+  # BODY - Side Button Recesses (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "side_button_left_cutter"
+    description: Cutter for left-side button recess (seat)
+
+  - tool: modeling_transform_object
+    params:
+      name: "side_button_left_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.10)"
+        - "$CALCULATE(height * 0.05)"
+      location:
+        - "$CALCULATE(-width * 0.54)"
+        - 0.0
+        - "$CALCULATE(height * 0.05)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "side_button_left_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0008
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "side_button_left_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "side_button_left_cutter"
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "side_button_right_cutter"
+    description: Cutter for right-side button recess (seat)
+
+  - tool: modeling_transform_object
+    params:
+      name: "side_button_right_cutter"
+      scale:
+        - "$CALCULATE(width * 0.06)"
+        - "$CALCULATE(depth * 0.10)"
+        - "$CALCULATE(height * 0.05)"
+      location:
+        - "$CALCULATE(width * 0.54)"
+        - 0.0
+        - "$CALCULATE(height * 0.05)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "side_button_right_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0008
+        segments: 2
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "side_button_right_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "side_button_right_cutter"
+
+  # =============================
+  # BODY - Microphone Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cylinder
+      name: "mic_recess_cutter"
+    description: Cutter for microphone hole/recess at bottom
+
+  - tool: modeling_transform_object
+    params:
+      name: "mic_recess_cutter"
+      scale:
+        - "$CALCULATE(width * 0.035)"
+        - "$CALCULATE(width * 0.035)"
+        - "$CALCULATE(depth * 0.21)"
+      location:
+        - "$CALCULATE(width * 0.26)"
+        - 0.0
+        - "$CALCULATE(-height * 0.482)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "mic_recess_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0005
+        segments: 3
+        limit_method: "ANGLE"
+        angle_limit: 0.523599
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "mic_recess_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "mic_recess_cutter"
+
+  # =============================
+  # BODY - Charging Port Recess (Boolean)
+  # =============================
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: Cube
+      name: "charge_port_cutter"
+    description: Cutter for bottom charging port recess (Siemens-style)
+
+  - tool: modeling_transform_object
+    params:
+      name: "charge_port_cutter"
+      scale:
+        - "$CALCULATE(width * 0.26 / 2)"
+        - "$CALCULATE(depth * 0.32 / 2)"
+        - "$CALCULATE(height * 0.04 / 2)"
+      location:
+        - 0.0
+        - 0.0
+        - "$CALCULATE(-height * 0.482)"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "charge_port_cutter"
+      modifier_type: "BEVEL"
+      properties:
+        width: 0.0005
+        segments: 3
+        limit_method: "NONE"
+        profile: 0.7
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "BOOLEAN"
+      properties:
+        operation: "DIFFERENCE"
+        solver: "EXACT"
+        object: "charge_port_cutter"
+
+  - tool: modeling_apply_modifier
+    params:
+      name: "body_shell"
+      modifier_name: "BOOLEAN"
+
+  - tool: scene_delete_object
+    params:
+      name: "charge_port_cutter"
+
+  - tool: modeling_add_modifier
+    params:
+      name: "body_shell"
+      modifier_type: "SUBSURF"
+      properties:
+        levels: "$body_subsurf_levels"
+        render_levels: "$body_subsurf_levels"
+    condition: "body_subsurf_levels > 0"
+
+  # =============================
+  # COLLECTION ASSIGNMENT
+  # =============================
+  - tool: collection_manage
+    params:
+      action: "link_object"
+      collection_name: "Phone_Body"
+      object_name: "body_shell"
+    description: Put body shell in Phone_Body collection
+
+  # =============================
+  # MATERIAL
+  # =============================
+  - tool: material_create
+    params:
+      name: "Phone_Body_Plastic"
+      base_color: [0.08, 0.08, 0.085, 1.0]
+      roughness: 0.45
+      metallic: 0.0
+    description: Create dark plastic body material
+
+  # Ensure stable look even if material already existed and was edited by user
+  - tool: material_set_params
+    params:
+      material_name: "Phone_Body_Plastic"
+      base_color: [0.08, 0.08, 0.085, 1.0]
+      roughness: "0.62"
+      metallic: "0.0"
+    description: Normalize body material params (prevents accidental color drift)
+
+  - tool: material_assign
+    params:
+      material_name: "Phone_Body_Plastic"
+      object_name: "body_shell"
+    description: Apply body material
