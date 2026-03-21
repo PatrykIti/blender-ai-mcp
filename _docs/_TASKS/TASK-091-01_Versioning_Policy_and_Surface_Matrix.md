@@ -35,6 +35,15 @@ Example:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-091-01-01](./TASK-091-01-01_Core_Versioning_Matrix.md) | Core Versioning Policy and Surface Matrix | Core implementation layer |
+| [TASK-091-01-02](./TASK-091-01-02_Tests_Versioning_Matrix.md) | Tests and Docs Versioning Policy and Surface Matrix | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - every public surface change has an explicit versioning policy

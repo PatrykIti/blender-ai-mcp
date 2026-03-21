@@ -29,6 +29,15 @@ The runner must:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-092-02-01](./TASK-092-02-01_Core_Assistant_Runner_Typed_Result.md) | Core Assistant Runner with Typed Result Wrappers | Core implementation layer |
+| [TASK-092-02-02](./TASK-092-02-02_Tests_Assistant_Runner_Typed_Result.md) | Tests and Docs Assistant Runner with Typed Result Wrappers | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - assistants return typed results instead of free-form text blobs

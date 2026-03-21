@@ -22,6 +22,15 @@ Harden the allowed role of LaBSE within parameter memory and workflow matching s
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-095-04-01](./TASK-095-04-01_Core_Parameter_Memory_Workflow_Matching.md) | Core Parameter Memory and Workflow Matching Hardening | Core implementation layer |
+| [TASK-095-04-02](./TASK-095-04-02_Tests_Parameter_Memory_Workflow_Matching.md) | Tests and Docs Parameter Memory and Workflow Matching Hardening | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - learned mapping reuse is clearly separated from execution-policy approval

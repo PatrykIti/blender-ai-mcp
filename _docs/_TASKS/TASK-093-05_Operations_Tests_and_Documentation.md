@@ -22,6 +22,15 @@ Add operations-oriented regression coverage and documentation for telemetry, tim
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-093-05-01](./TASK-093-05-01_Core_Operations_Tests_Documentation.md) | Core Operations Tests and Documentation | Core implementation layer |
+| [TASK-093-05-02](./TASK-093-05-02_Tests_Operations_Tests_Documentation.md) | Tests and Docs Operations Tests and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - operational diagnostics and limits are both documented and tested

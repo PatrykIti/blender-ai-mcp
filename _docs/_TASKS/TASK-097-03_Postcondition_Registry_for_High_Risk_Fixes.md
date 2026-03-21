@@ -30,6 +30,15 @@ Start with fixes that most affect LLM spatial awareness and execution correctnes
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-03-01](./TASK-097-03-01_Core_Postcondition_Registry_High_Risk.md) | Core Postcondition Registry for High-Risk Fixes | Core implementation layer |
+| [TASK-097-03-02](./TASK-097-03-02_Tests_Postcondition_Registry_High_Risk.md) | Tests and Docs Postcondition Registry for High-Risk Fixes | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the repo knows which fixes require post-execution verification

@@ -24,6 +24,15 @@ Measure and document the effect of moving from flat discovery to search-first di
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-05-01](./TASK-084-05-01_Core_Discovery_Tests_Benchmarks_Docs.md) | Core Discovery Tests, Benchmarks, and Docs | Core implementation layer |
+| [TASK-084-05-02](./TASK-084-05-02_Tests_Discovery_Tests_Benchmarks_Docs.md) | Tests and Docs Discovery Tests, Benchmarks, and Docs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the repo has a measurable before/after view of discovery payload size

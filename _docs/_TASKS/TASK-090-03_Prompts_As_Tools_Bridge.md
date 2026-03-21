@@ -20,6 +20,15 @@ Expose prompt assets safely to tool-only clients through a prompt-as-tools bridg
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-090-03-01](./TASK-090-03-01_Core_Prompts_Bridge.md) | Core Prompts as Tools Bridge | Core implementation layer |
+| [TASK-090-03-02](./TASK-090-03-02_Tests_Prompts_Bridge.md) | Tests and Docs Prompts as Tools Bridge | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - tool-only clients can access prompt products without copying markdown outside the server

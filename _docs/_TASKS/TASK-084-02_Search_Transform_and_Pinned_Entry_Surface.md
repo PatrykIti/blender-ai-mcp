@@ -68,6 +68,15 @@ Keep regex search only as an internal-debug option when deterministic pattern ma
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-02-01](./TASK-084-02-01_Core_Search_Transform_Pinned_Entry.md) | Core Search Transform and Pinned Entry Surface | Core implementation layer |
+| [TASK-084-02-02](./TASK-084-02-02_Tests_Search_Transform_Pinned_Entry.md) | Tests and Docs Search Transform and Pinned Entry Surface | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - `list_tools` on the `llm-guided` surface no longer returns the full tool catalog

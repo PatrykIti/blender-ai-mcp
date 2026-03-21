@@ -30,6 +30,15 @@ This subtask must explicitly separate:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-093-03-01](./TASK-093-03-01_Core_Pagination_Rollout_Component_Data.md) | Core Pagination Rollout for Component and Data Listings | Core implementation layer |
+| [TASK-093-03-02](./TASK-093-03-02_Tests_Pagination_Rollout_Component_Data.md) | Tests and Docs Pagination Rollout for Component and Data Listings | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - both component listings and large inspection payloads can be paged safely

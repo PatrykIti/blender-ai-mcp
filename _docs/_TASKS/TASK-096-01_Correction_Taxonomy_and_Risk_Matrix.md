@@ -21,6 +21,15 @@ Classify correction types and assign risk or blast-radius levels to each class.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-01-01](./TASK-096-01-01_Core_Correction_Taxonomy_Risk_Matrix.md) | Core Correction Taxonomy and Risk Matrix | Core implementation layer |
+| [TASK-096-01-02](./TASK-096-01-02_Tests_Correction_Taxonomy_Risk_Matrix.md) | Tests and Docs Correction Taxonomy and Risk Matrix | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - every correction type has a clear classification and blast-radius label

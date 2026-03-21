@@ -21,6 +21,15 @@ Define the event model and schema for correction audit trails.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-01-01](./TASK-097-01-01_Core_Correction_Event_Audit_Schema.md) | Core Correction Event Model and Audit Schema | Core implementation layer |
+| [TASK-097-01-02](./TASK-097-01-02_Tests_Correction_Event_Audit_Schema.md) | Tests and Docs Correction Event Model and Audit Schema | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - correction intent, execution, and verification have separate fields in the audit model

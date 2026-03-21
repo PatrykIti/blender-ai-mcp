@@ -27,6 +27,15 @@ Introduce visibility presets for different clients and a guided-mode surface tha
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-04-01](./TASK-085-04-01_Core_Profiles_Guided_Presets.md) | Core Client Profiles and Guided Mode Presets | Core implementation layer |
+| [TASK-085-04-02](./TASK-085-04-02_Tests_Profiles_Guided_Presets.md) | Tests and Docs Client Profiles and Guided Mode Presets | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - surface profiles can be selected without forking tool handler logic

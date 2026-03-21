@@ -23,6 +23,15 @@ Define the transition strategy for delivering structured-first responses while s
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-05-01](./TASK-089-05-01_Core_Adapter_Dual_Format_Delivery.md) | Core Adapter Dual-Format Delivery Strategy | Core implementation layer |
+| [TASK-089-05-02](./TASK-089-05-02_Tests_Adapter_Dual_Format_Delivery.md) | Tests and Docs Adapter Dual-Format Delivery Strategy | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the transition to structured output does not force a destructive client cut-over

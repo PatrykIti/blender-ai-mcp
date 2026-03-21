@@ -30,6 +30,15 @@ Keep the aliased public surface compatible with router internals, dispatcher exe
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-086-04-01](./TASK-086-04-01_Core_Compatibility_Adapters_Dispatcher_Alignment.md) | Core Compatibility Adapters and Dispatcher Alignment | Core implementation layer |
+| [TASK-086-04-02](./TASK-086-04-02_Tests_Compatibility_Adapters_Dispatcher_Alignment.md) | Tests and Docs Compatibility Adapters and Dispatcher Alignment | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - router continues to emit canonical internal tool names

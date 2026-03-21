@@ -3,7 +3,7 @@
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
 ---
 
@@ -44,6 +44,15 @@ def is_visible(component, phase, profile):
         return True
     return component.name in profile.pinned_tools
 ```
+
+---
+
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-02-01](./TASK-085-02-01_Core_Visibility_Engine_Tagged_Providers.md) | Core Visibility Policy Engine and Tagged Providers | Core implementation layer |
+| [TASK-085-02-02](./TASK-085-02-02_Tests_Visibility_Engine_Tagged_Providers.md) | Tests and Docs Visibility Policy Engine and Tagged Providers | Tests, docs, and QA |
 
 ---
 

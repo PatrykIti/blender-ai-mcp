@@ -116,6 +116,15 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-01-01](./TASK-083-01-01_Core_FastMCP_Dependency_Runtime_Audit.md) | Core FastMCP 3.x Dependency and Runtime Audit | Core implementation layer |
+| [TASK-083-01-02](./TASK-083-01-02_Tests_FastMCP_Dependency_Runtime_Audit.md) | Tests and Docs FastMCP 3.x Dependency and Runtime Audit | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - there is one explicit list of current MCP surfaces and entrypoints

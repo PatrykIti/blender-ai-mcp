@@ -44,6 +44,15 @@ class ElicitationRequest:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-01-01](./TASK-087-01-01_Core_Elicitation_Domain_Response_Contracts.md) | Core Elicitation Domain Model and Response Contracts | Core implementation layer |
+| [TASK-087-01-02](./TASK-087-01-02_Tests_Elicitation_Domain_Response_Contracts.md) | Tests and Docs Elicitation Domain Model and Response Contracts | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - unresolved parameters can be mapped into typed elicitation fields

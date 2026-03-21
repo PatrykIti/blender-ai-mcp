@@ -34,6 +34,15 @@ if confidence in {"LOW", "NONE"}:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-03-01](./TASK-096-03-01_Core_Auto_Fix_Ask_Block.md) | Core Auto-Fix, Ask, Block Policy Engine | Core implementation layer |
+| [TASK-096-03-02](./TASK-096-03-02_Tests_Auto_Fix_Ask_Block.md) | Tests and Docs Auto-Fix, Ask, Block Policy Engine | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the router has one explicit decision point for auto-fix, ask, or block behavior

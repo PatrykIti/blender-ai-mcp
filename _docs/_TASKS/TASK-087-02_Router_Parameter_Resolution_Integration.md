@@ -47,6 +47,15 @@ This task should add:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-02-01](./TASK-087-02-01_Core_Router_Parameter_Resolution_Integration.md) | Core Router Parameter Resolution Integration | Core implementation layer |
+| [TASK-087-02-02](./TASK-087-02-02_Tests_Router_Parameter_Resolution_Integration.md) | Tests and Docs Router Parameter Resolution Integration | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - missing parameters can be collected without breaking the router goal flow

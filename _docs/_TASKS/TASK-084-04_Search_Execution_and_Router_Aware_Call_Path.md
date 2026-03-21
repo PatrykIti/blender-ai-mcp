@@ -47,6 +47,15 @@ The default assumption should be that discovered-tool execution goes through the
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-04-01](./TASK-084-04-01_Core_Search_Execution_Router_Aware.md) | Core Search Execution and Router-Aware Call Path | Core implementation layer |
+| [TASK-084-04-02](./TASK-084-04-02_Tests_Search_Execution_Router_Aware.md) | Tests and Docs Search Execution and Router-Aware Call Path | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - search discovery does not bypass router safety policy

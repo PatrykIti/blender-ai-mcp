@@ -40,6 +40,15 @@ The startup path must account for OTEL initialization before FastMCP import/boot
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-093-01-01](./TASK-093-01-01_Core_Telemetry_OpenTelemetry_Bootstrap.md) | Core Telemetry Model and OpenTelemetry Bootstrap | Core implementation layer |
+| [TASK-093-01-02](./TASK-093-01-02_Tests_Telemetry_OpenTelemetry_Bootstrap.md) | Tests and Docs Telemetry Model and OpenTelemetry Bootstrap | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - request, tool, and router spans can be exported through OpenTelemetry

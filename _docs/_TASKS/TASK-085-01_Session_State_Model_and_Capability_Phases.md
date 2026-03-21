@@ -62,6 +62,15 @@ In particular:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-01-01](./TASK-085-01-01_Core_Session_State_Capability.md) | Core Session State Model and Capability Phases | Core implementation layer |
+| [TASK-085-01-02](./TASK-085-01-02_Tests_Session_State_Capability.md) | Tests and Docs Session State Model and Capability Phases | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - phases are explicit, serializable, and not hidden inside private router fields

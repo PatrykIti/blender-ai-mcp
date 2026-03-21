@@ -21,6 +21,15 @@ Move truth and verification decisions onto structured inspection contracts inste
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-095-03-01](./TASK-095-03-01_Core_Truth_Verification_Handoff_Inspection.md) | Core Truth and Verification Handoff to Inspection Contracts | Core implementation layer |
+| [TASK-095-03-02](./TASK-095-03-02_Tests_Truth_Verification_Handoff_Inspection.md) | Tests and Docs Truth and Verification Handoff to Inspection Contracts | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - semantic confidence is not used as a proxy for scene truth

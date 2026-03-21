@@ -32,6 +32,15 @@ Hide backend-only arguments and expose only the parameters that an LLM should re
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-086-03-01](./TASK-086-03-01_Core_LLM_Simplification_Hidden_Args.md) | Core LLM-First Surface Simplification and Hidden Args | Core implementation layer |
+| [TASK-086-03-02](./TASK-086-03-02_Tests_LLM_Simplification_Hidden_Args.md) | Tests and Docs LLM-First Surface Simplification and Hidden Args | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the `llm-guided` surface no longer exposes avoidable technical noise

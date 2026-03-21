@@ -20,6 +20,15 @@ Compose separate public surfaces through version filtering instead of forking th
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-091-03-01](./TASK-091-03-01_Core_Version_Filtered_Composition.md) | Core Version-Filtered Server Composition | Core implementation layer |
+| [TASK-091-03-02](./TASK-091-03-02_Tests_Version_Filtered_Composition.md) | Tests and Docs Version-Filtered Server Composition | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - legacy and `llm-guided` surfaces can coexist on top of the same provider set

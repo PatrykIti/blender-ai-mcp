@@ -34,6 +34,15 @@ Classify which operations should remain foreground, which should support optiona
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-01-01](./TASK-088-01-01_Core_Heavy_Operation_Inventory_Candidacy.md) | Core Heavy Operation Inventory and Task Candidacy | Core implementation layer |
+| [TASK-088-01-02](./TASK-088-01-02_Tests_Heavy_Operation_Inventory_Candidacy.md) | Tests and Docs Heavy Operation Inventory and Task Candidacy | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - every heavy tool has an explicit execution mode classification

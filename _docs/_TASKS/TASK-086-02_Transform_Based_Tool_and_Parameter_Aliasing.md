@@ -40,6 +40,15 @@ alias_map = {
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-086-02-01](./TASK-086-02-01_Core_Transform_Parameter_Aliasing.md) | Core Transform-Based Tool and Parameter Aliasing | Core implementation layer |
+| [TASK-086-02-02](./TASK-086-02-02_Tests_Transform_Parameter_Aliasing.md) | Tests and Docs Transform-Based Tool and Parameter Aliasing | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - aliases are applied at the public surface layer

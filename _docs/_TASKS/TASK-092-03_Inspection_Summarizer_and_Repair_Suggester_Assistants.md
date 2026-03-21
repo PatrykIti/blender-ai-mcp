@@ -24,6 +24,15 @@ Ship the first two bounded analytical assistants:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-092-03-01](./TASK-092-03-01_Core_Inspection_Summarizer_Repair_Suggester.md) | Core Inspection Summarizer and Repair Suggester Assistants | Core implementation layer |
+| [TASK-092-03-02](./TASK-092-03-02_Tests_Inspection_Summarizer_Repair_Suggester.md) | Tests and Docs Inspection Summarizer and Repair Suggester Assistants | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - at least one assistant can digest large inspection payloads into a structured summary

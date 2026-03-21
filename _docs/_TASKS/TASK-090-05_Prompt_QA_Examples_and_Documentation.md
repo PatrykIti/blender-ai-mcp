@@ -22,6 +22,15 @@ Add rendering tests, usage examples, and documentation for the prompt layer.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-090-05-01](./TASK-090-05-01_Core_Prompt_QA_Examples_Documentation.md) | Core Prompt QA, Examples, and Documentation | Core implementation layer |
+| [TASK-090-05-02](./TASK-090-05-02_Tests_Prompt_QA_Examples_Documentation.md) | Tests and Docs Prompt QA, Examples, and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - prompt products are testable and easy to distribute across clients

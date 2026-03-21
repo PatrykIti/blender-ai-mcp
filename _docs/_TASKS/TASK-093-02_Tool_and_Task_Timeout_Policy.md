@@ -21,6 +21,15 @@ Define separate timeout policy for foreground tools, background tasks, RPC calls
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md) | Core Tool and Task Timeout Policy | Core implementation layer |
+| [TASK-093-02-02](./TASK-093-02-02_Tests_Timeout.md) | Tests and Docs Tool and Task Timeout Policy | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - every runtime boundary has an explicit timeout contract

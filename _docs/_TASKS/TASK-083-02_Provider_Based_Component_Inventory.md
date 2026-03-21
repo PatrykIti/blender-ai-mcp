@@ -88,6 +88,15 @@ def build_core_tools_provider(di) -> LocalProvider:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-02-01](./TASK-083-02-01_Core_Provider_Component_Inventory.md) | Core Provider-Based Component Inventory | Core implementation layer |
+| [TASK-083-02-02](./TASK-083-02-02_Tests_Provider_Component_Inventory.md) | Tests and Docs Provider-Based Component Inventory | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - tools are assembled from reusable providers instead of one global registry

@@ -42,6 +42,15 @@ Prefer explicit RPC verbs or payload types for:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-04-01](./TASK-088-04-01_Core_RPC_Blender_Main_Thread.md) | Core RPC and Blender Main-Thread Adaptation | Core implementation layer |
+| [TASK-088-04-02](./TASK-088-04-02_Tests_RPC_Blender_Main_Thread.md) | Tests and Docs RPC and Blender Main-Thread Adaptation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - background jobs no longer depend on one blocking `result_queue.get(timeout=30.0)` model

@@ -42,6 +42,15 @@ The bridge is not complete if only one of these identities exists.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-02-01](./TASK-088-02-01_Core_Async_Bridge_Job_Registry.md) | Core Async Task Bridge and Job Registry | Core implementation layer |
+| [TASK-088-02-02](./TASK-088-02-02_Tests_Async_Bridge_Job_Registry.md) | Tests and Docs Async Task Bridge and Job Registry | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the server can register, track, and complete background jobs explicitly

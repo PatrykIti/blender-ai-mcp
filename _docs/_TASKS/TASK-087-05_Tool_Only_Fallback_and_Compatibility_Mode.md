@@ -26,6 +26,15 @@ Preserve a clean fallback contract for clients that do not support the elicitati
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-05-01](./TASK-087-05-01_Core_Fallback_Compatibility.md) | Core Tool-Only Fallback and Compatibility Mode | Core implementation layer |
+| [TASK-087-05-02](./TASK-087-05-02_Tests_Fallback_Compatibility.md) | Tests and Docs Tool-Only Fallback and Compatibility Mode | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - no existing tool-only client loses capability after elicitation support is added

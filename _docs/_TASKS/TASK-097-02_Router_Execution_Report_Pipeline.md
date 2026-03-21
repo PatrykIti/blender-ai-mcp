@@ -29,6 +29,15 @@ Extend router output and `route_tool_call()` so multi-step execution produces a 
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-02-01](./TASK-097-02-01_Core_Router_Execution_Report_Pipeline.md) | Core Router Execution Report Pipeline | Core implementation layer |
+| [TASK-097-02-02](./TASK-097-02-02_Tests_Router_Execution_Report_Pipeline.md) | Tests and Docs Router Execution Report Pipeline | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - multi-step execution is represented as structured data as well as optional summary text

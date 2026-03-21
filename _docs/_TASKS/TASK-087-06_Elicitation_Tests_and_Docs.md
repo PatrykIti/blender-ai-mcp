@@ -25,6 +25,15 @@ Add test coverage and documentation for both native elicitation mode and tool-on
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-06-01](./TASK-087-06-01_Core_Elicitation_Tests_Docs.md) | Core Elicitation Tests and Docs | Core implementation layer |
+| [TASK-087-06-02](./TASK-087-06-02_Tests_Elicitation_Tests_Docs.md) | Tests and Docs Elicitation Tests and Docs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - both interaction modes are documented and regression-tested

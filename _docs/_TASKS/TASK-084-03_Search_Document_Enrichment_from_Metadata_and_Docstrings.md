@@ -52,6 +52,15 @@ def build_search_document(tool_def, metadata):
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-03-01](./TASK-084-03-01_Core_Search_Document_Enrichment_Metadata.md) | Core Search Document Enrichment from Metadata and Docstrings | Core implementation layer |
+| [TASK-084-03-02](./TASK-084-03-02_Tests_Search_Document_Enrichment_Metadata.md) | Tests and Docs Search Document Enrichment from Metadata and Docstrings | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - search quality does not depend only on tool names

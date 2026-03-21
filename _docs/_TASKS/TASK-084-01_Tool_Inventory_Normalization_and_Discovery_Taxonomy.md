@@ -77,6 +77,15 @@ class DiscoveryEntry:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-01-01](./TASK-084-01-01_Core_Inventory_Normalization_Discovery_Taxonomy.md) | Core Tool Inventory Normalization and Discovery Taxonomy | Core implementation layer |
+| [TASK-084-01-02](./TASK-084-01-02_Tests_Inventory_Normalization_Discovery_Taxonomy.md) | Tests and Docs Tool Inventory Normalization and Discovery Taxonomy | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - discovery inventory covers all public and router-callable tools

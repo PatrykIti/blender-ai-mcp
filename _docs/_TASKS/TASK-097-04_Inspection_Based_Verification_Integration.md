@@ -21,6 +21,15 @@ Verify important corrections through structured scene and mesh inspection instea
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-04-01](./TASK-097-04-01_Core_Inspection_Verification_Integration.md) | Core Inspection-Based Verification Integration | Core implementation layer |
+| [TASK-097-04-02](./TASK-097-04-02_Tests_Inspection_Verification_Integration.md) | Tests and Docs Inspection-Based Verification Integration | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - high-risk verification depends on inspection-layer truth, not semantic guesswork

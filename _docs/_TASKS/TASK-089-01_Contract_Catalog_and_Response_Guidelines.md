@@ -28,6 +28,15 @@ Define the shared contract catalog and the rules for when tools return:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-01-01](./TASK-089-01-01_Core_Contract_Catalog_Response_Guidelines.md) | Core Contract Catalog and Response Guidelines | Core implementation layer |
+| [TASK-089-01-02](./TASK-089-01-02_Tests_Contract_Catalog_Response_Guidelines.md) | Tests and Docs Contract Catalog and Response Guidelines | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the adapter layer has one shared response-design policy instead of per-tool conventions

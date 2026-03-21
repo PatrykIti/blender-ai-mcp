@@ -30,6 +30,15 @@ Support enums, booleans, lists, and multi-select flows as typed elicitation widg
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-03-01](./TASK-087-03-01_Core_Constrained_Choice_Multi_Select.md) | Core Constrained Choice and Multi-Select Flows | Core implementation layer |
+| [TASK-087-03-02](./TASK-087-03-02_Tests_Constrained_Choice_Multi_Select.md) | Tests and Docs Constrained Choice and Multi-Select Flows | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - enum parameters do not need to be typed manually as raw strings

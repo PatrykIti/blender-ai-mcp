@@ -41,6 +41,15 @@ The execution report should let an LLM and an operator see:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-04-01](./TASK-089-04-01_Core_Router_Workflow_Execution_Report.md) | Core Router, Workflow, and Execution Report Contracts | Core implementation layer |
+| [TASK-089-04-02](./TASK-089-04-02_Tests_Router_Workflow_Execution_Report.md) | Tests and Docs Router, Workflow, and Execution Report Contracts | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - router and workflow interactions are machine-readable, not only prose-readable

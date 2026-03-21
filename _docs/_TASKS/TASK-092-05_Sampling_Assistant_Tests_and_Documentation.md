@@ -13,6 +13,15 @@ Add tests and maintainer-facing documentation for assistant usage.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-092-05-01](./TASK-092-05-01_Core_Sampling_Assistant_Tests_Documentation.md) | Core Sampling Assistant Tests and Documentation | Core implementation layer |
+| [TASK-092-05-02](./TASK-092-05-02_Tests_Sampling_Assistant_Tests_Documentation.md) | Tests and Docs Sampling Assistant Tests and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - maintainers know when assistants should be used and when they should not

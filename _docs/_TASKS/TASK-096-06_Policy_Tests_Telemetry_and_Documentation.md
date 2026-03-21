@@ -13,6 +13,15 @@ Add policy-focused regression coverage, telemetry markers, and documentation.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-06-01](./TASK-096-06-01_Core_Tests_Telemetry_Documentation.md) | Core Policy Tests, Telemetry, and Documentation | Core implementation layer |
+| [TASK-096-06-02](./TASK-096-06-02_Tests_Tests_Telemetry_Documentation.md) | Tests and Docs Policy Tests, Telemetry, and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - confidence-to-action behavior is documented and regression-tested

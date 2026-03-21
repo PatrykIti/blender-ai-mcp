@@ -27,6 +27,15 @@ Make visibility decisions observable, testable, and documented.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-05-01](./TASK-085-05-01_Core_Visibility_Observability_Tests_Docs.md) | Core Visibility Observability, Tests, and Docs | Core implementation layer |
+| [TASK-085-05-02](./TASK-085-05-02_Tests_Visibility_Observability_Tests_Docs.md) | Tests and Docs Visibility Observability, Tests, and Docs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - it is easy to inspect why a tool is visible or hidden

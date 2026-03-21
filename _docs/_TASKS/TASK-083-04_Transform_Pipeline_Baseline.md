@@ -98,6 +98,15 @@ def build_surface_transforms(surface_config, server, providers):
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-04-01](./TASK-083-04-01_Core_Transform_Pipeline_Baseline.md) | Core Transform Pipeline Baseline | Core implementation layer |
+| [TASK-083-04-02](./TASK-083-04-02_Tests_Transform_Pipeline_Baseline.md) | Tests and Docs Transform Pipeline Baseline | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the server has one explicit transform pipeline

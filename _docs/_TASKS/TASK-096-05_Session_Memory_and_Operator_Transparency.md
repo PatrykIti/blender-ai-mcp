@@ -13,6 +13,15 @@ Persist confidence context in session state and expose the chosen policy path to
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-05-01](./TASK-096-05-01_Core_Session_Memory_Operator_Transparency.md) | Core Session Memory and Operator Transparency | Core implementation layer |
+| [TASK-096-05-02](./TASK-096-05-02_Tests_Session_Memory_Operator_Transparency.md) | Tests and Docs Session Memory and Operator Transparency | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - confidence decisions are visible in status or debug payloads

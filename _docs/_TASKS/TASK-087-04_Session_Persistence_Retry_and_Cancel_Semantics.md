@@ -24,6 +24,15 @@ Handle partial answers, re-prompting, and cancellation without losing workflow c
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-087-04-01](./TASK-087-04-01_Core_Session_Persistence_Retry_Cancel.md) | Core Session Persistence, Retry, and Cancel Semantics | Core implementation layer |
+| [TASK-087-04-02](./TASK-087-04-02_Tests_Session_Persistence_Retry_Cancel.md) | Tests and Docs Session Persistence, Retry, and Cancel Semantics | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - users can cancel or pause elicitation safely

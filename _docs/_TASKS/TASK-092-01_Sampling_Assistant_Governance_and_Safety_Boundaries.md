@@ -28,6 +28,15 @@ Define exactly where server-orchestrated sampling assistants are allowed and whe
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-092-01-01](./TASK-092-01-01_Core_Sampling_Assistant_Governance_Safety.md) | Core Sampling Assistant Governance and Safety Boundaries | Core implementation layer |
+| [TASK-092-01-02](./TASK-092-01-02_Tests_Sampling_Assistant_Governance_Safety.md) | Tests and Docs Sampling Assistant Governance and Safety Boundaries | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - assistant usage boundaries are explicit and aligned with the semantic/safety/truth split

@@ -45,6 +45,15 @@ elif router_result.blocked_calls > 0:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-03-01](./TASK-085-03-01_Core_Router_Driven_Transitions.md) | Core Router-Driven Phase Transitions | Core implementation layer |
+| [TASK-085-03-02](./TASK-085-03-02_Tests_Router_Driven_Transitions.md) | Tests and Docs Router-Driven Phase Transitions | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the router provides phase hints only

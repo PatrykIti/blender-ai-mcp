@@ -47,6 +47,15 @@ These contracts should make it easy for an LLM to stay oriented in mesh space:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-03-01](./TASK-089-03-01_Core_Structured_Mesh_Introspection_Contracts.md) | Core Structured Mesh Introspection Contracts | Core implementation layer |
+| [TASK-089-03-02](./TASK-089-03-02_Tests_Structured_Mesh_Introspection_Contracts.md) | Tests and Docs Structured Mesh Introspection Contracts | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - mesh introspection contracts are consistent across all action types

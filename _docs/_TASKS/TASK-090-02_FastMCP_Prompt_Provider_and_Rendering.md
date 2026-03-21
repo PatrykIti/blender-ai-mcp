@@ -22,6 +22,15 @@ Expose prompt assets as native FastMCP prompt components with structured renderi
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-090-02-01](./TASK-090-02-01_Core_FastMCP_Prompt_Provider_Rendering.md) | Core FastMCP Prompt Provider and Rendering | Core implementation layer |
+| [TASK-090-02-02](./TASK-090-02-02_Tests_FastMCP_Prompt_Provider_Rendering.md) | Tests and Docs FastMCP Prompt Provider and Rendering | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - prompt-capable clients can list and fetch prompt products directly through the server

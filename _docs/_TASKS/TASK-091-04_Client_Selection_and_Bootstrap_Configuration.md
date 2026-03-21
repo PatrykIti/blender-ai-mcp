@@ -24,6 +24,15 @@ Make the active surface variant selectable through bootstrap and runtime configu
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-091-04-01](./TASK-091-04-01_Core_Selection_Bootstrap_Configuration.md) | Core Client Selection and Bootstrap Configuration | Core implementation layer |
+| [TASK-091-04-02](./TASK-091-04-02_Tests_Selection_Bootstrap_Configuration.md) | Tests and Docs Client Selection and Bootstrap Configuration | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the chosen surface variant is explicit and configurable

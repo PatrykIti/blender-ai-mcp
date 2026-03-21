@@ -27,6 +27,15 @@ Define a stable progress, cancellation, and result-retrieval model for backgroun
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-03-01](./TASK-088-03-01_Core_Progress_Cancellation_Result_Retrieval.md) | Core Progress, Cancellation, and Result Retrieval | Core implementation layer |
+| [TASK-088-03-02](./TASK-088-03-02_Tests_Progress_Cancellation_Result_Retrieval.md) | Tests and Docs Progress, Cancellation, and Result Retrieval | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - clients can observe progress and cancel work without restarting the session

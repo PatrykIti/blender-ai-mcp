@@ -23,6 +23,15 @@ Close the task-mode rollout with regression coverage, operations guidance, and d
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-06-01](./TASK-088-06-01_Core_Tests_Operations_Docs.md) | Core Task Mode Tests, Operations, and Docs | Core implementation layer |
+| [TASK-088-06-02](./TASK-088-06-02_Tests_Tests_Operations_Docs.md) | Tests and Docs Task Mode Tests, Operations, and Docs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - task mode has test coverage and clear operating guidance

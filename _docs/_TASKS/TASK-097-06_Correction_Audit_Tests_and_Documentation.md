@@ -13,6 +13,15 @@ Add regression coverage and documentation for correction transparency and postco
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-06-01](./TASK-097-06-01_Core_Correction_Audit_Tests_Documentation.md) | Core Correction Audit Tests and Documentation | Core implementation layer |
+| [TASK-097-06-02](./TASK-097-06-02_Tests_Correction_Audit_Tests_Documentation.md) | Tests and Docs Correction Audit Tests and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - correction audit behavior is documented and regression-tested

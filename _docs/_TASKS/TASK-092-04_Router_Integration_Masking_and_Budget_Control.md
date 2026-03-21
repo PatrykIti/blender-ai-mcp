@@ -13,6 +13,15 @@ Integrate assistants with router and recovery flows while enforcing token, tool,
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-092-04-01](./TASK-092-04-01_Core_Router_Integration_Masking_Budget.md) | Core Router Integration, Masking, and Budget Control | Core implementation layer |
+| [TASK-092-04-02](./TASK-092-04-02_Tests_Router_Integration_Masking_Budget.md) | Tests and Docs Router Integration, Masking, and Budget Control | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - assistants are bounded and cannot expand into free-form agent sprawl

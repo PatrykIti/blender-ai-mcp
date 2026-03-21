@@ -97,6 +97,15 @@ def build_server(surface_config, di) -> FastMCP:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-03-01](./TASK-083-03-01_Core_Factory_Composition_Root.md) | Core Server Factory and Composition Root | Core implementation layer |
+| [TASK-083-03-02](./TASK-083-03-02_Tests_Factory_Composition_Root.md) | Tests and Docs Server Factory and Composition Root | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - `server/main.py` uses an explicit composition root

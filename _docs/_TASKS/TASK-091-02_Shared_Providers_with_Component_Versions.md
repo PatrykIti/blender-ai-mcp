@@ -28,6 +28,15 @@ For any public component name that will gain multiple versions:
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-091-02-01](./TASK-091-02-01_Core_Shared_Providers_Component_Versions.md) | Core Shared Providers with Component Versions | Core implementation layer |
+| [TASK-091-02-02](./TASK-091-02-02_Tests_Shared_Providers_Component_Versions.md) | Tests and Docs Shared Providers with Component Versions | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - one capability can expose more than one public contract safely

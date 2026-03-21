@@ -22,6 +22,15 @@ Add coexistence tests and migration documentation for the versioned-surface mode
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-091-05-01](./TASK-091-05-01_Core_Versioned_Tests_Documentation.md) | Core Versioned Surface Tests and Documentation | Core implementation layer |
+| [TASK-091-05-02](./TASK-091-05-02_Tests_Versioned_Tests_Documentation.md) | Tests and Docs Versioned Surface Tests and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the migration path between surfaces is documented and testable

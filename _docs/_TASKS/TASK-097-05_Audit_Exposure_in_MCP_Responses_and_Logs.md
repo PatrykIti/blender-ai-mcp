@@ -13,6 +13,15 @@ Expose correction audit trails both to MCP clients and to platform telemetry or 
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-097-05-01](./TASK-097-05-01_Core_Audit_Exposure_MCP_Responses.md) | Core Audit Exposure in MCP Responses and Logs | Core implementation layer |
+| [TASK-097-05-02](./TASK-097-05-02_Tests_Audit_Exposure_MCP_Responses.md) | Tests and Docs Audit Exposure in MCP Responses and Logs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - maintainers and operators can inspect what was changed and why

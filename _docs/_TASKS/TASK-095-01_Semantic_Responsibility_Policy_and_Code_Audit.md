@@ -24,6 +24,15 @@ Audit current LaBSE usage across the repo and formalize the allowed responsibili
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-095-01-01](./TASK-095-01-01_Core_Semantic_Responsibility_Code_Audit.md) | Core Semantic Responsibility Policy and Code Audit | Core implementation layer |
+| [TASK-095-01-02](./TASK-095-01-02_Tests_Semantic_Responsibility_Code_Audit.md) | Tests and Docs Semantic Responsibility Policy and Code Audit | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the repo has a code-backed semantic boundary audit, not just a high-level architecture note

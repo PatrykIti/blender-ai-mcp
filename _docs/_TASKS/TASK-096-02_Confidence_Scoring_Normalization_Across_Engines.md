@@ -22,6 +22,15 @@ Normalize confidence signals from different engines into one shared confidence e
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-02-01](./TASK-096-02-01_Core_Confidence_Scoring_Normalization_Engines.md) | Core Confidence Scoring Normalization Across Engines | Core implementation layer |
+| [TASK-096-02-02](./TASK-096-02-02_Tests_Confidence_Scoring_Normalization_Engines.md) | Tests and Docs Confidence Scoring Normalization Across Engines | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the policy engine receives one consistent confidence model

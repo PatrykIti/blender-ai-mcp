@@ -3,7 +3,7 @@
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
 ---
 
@@ -31,6 +31,15 @@ Define which tools and parameters are public, how they should be named for LLM c
 ### Ownership Rule
 
 Do not create a second standalone manifest that competes with the shared platform capability manifest created in TASK-084-01.
+
+---
+
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-086-01-01](./TASK-086-01-01_Core_Public_Manifest_Naming_Conventions.md) | Core Public Surface Manifest and Naming Conventions | Core implementation layer |
+| [TASK-086-01-02](./TASK-086-01-02_Tests_Public_Manifest_Naming_Conventions.md) | Tests and Docs Public Surface Manifest and Naming Conventions | Tests, docs, and QA |
 
 ---
 

@@ -13,6 +13,15 @@ Route medium-confidence interpretation paths into structured clarification inste
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-096-04-01](./TASK-096-04-01_Core_Medium_Confidence_Elicitation_Escalation.md) | Core Medium-Confidence Elicitation and Escalation | Core implementation layer |
+| [TASK-096-04-02](./TASK-096-04-02_Tests_Medium_Confidence_Elicitation_Escalation.md) | Tests and Docs Medium-Confidence Elicitation and Escalation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - medium-confidence reinterpretation does not happen without an explicit clarification path

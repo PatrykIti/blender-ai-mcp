@@ -13,6 +13,15 @@ Define the Code Mode experiment scope, success criteria, and hard guardrails bef
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-094-01-01](./TASK-094-01-01_Core_Code_Experiment_Design_Guardrails.md) | Core Code Mode Experiment Design and Guardrails | Core implementation layer |
+| [TASK-094-01-02](./TASK-094-01-02_Tests_Code_Experiment_Design_Guardrails.md) | Tests and Docs Code Mode Experiment Design and Guardrails | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - Code Mode is explicitly scoped as experimental

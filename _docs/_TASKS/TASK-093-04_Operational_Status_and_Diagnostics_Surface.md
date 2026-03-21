@@ -25,6 +25,15 @@ Expose an operational diagnostics surface for maintainers and clients.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-093-04-01](./TASK-093-04-01_Core_Operational_Status_Diagnostics.md) | Core Operational Status and Diagnostics Surface | Core implementation layer |
+| [TASK-093-04-02](./TASK-093-04-02_Tests_Operational_Status_Diagnostics.md) | Tests and Docs Operational Status and Diagnostics Surface | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - debugging runtime state no longer requires guesswork

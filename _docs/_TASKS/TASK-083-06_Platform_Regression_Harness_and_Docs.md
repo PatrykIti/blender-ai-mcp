@@ -53,6 +53,15 @@ Close the baseline migration with regression coverage and documentation that pre
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-06-01](./TASK-083-06-01_Core_Platform_Regression_Harness_Docs.md) | Core Platform Regression Harness and Docs | Core implementation layer |
+| [TASK-083-06-02](./TASK-083-06-02_Tests_Platform_Regression_Harness_Docs.md) | Tests and Docs Platform Regression Harness and Docs | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the MCP platform layer has its own regression harness

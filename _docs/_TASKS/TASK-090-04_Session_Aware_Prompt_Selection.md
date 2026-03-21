@@ -23,6 +23,15 @@ Make prompt selection depend on session phase and client profile.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-090-04-01](./TASK-090-04-01_Core_Session_Aware_Prompt_Selection.md) | Core Session-Aware Prompt Selection | Core implementation layer |
+| [TASK-090-04-02](./TASK-090-04-02_Tests_Session_Aware_Prompt_Selection.md) | Tests and Docs Session-Aware Prompt Selection | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - the prompt layer reacts to session context instead of behaving like a flat static library

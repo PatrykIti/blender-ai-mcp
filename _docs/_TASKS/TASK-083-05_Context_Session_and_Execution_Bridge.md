@@ -95,6 +95,15 @@ Legacy sync wrappers may remain temporarily for compatibility.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-05-01](./TASK-083-05-01_Core_Context_Session_Execution_Bridge.md) | Core Context, Session, and Execution Bridge | Core implementation layer |
+| [TASK-083-05-02](./TASK-083-05-02_Tests_Context_Session_Execution_Bridge.md) | Tests and Docs Context, Session, and Execution Bridge | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - adapter tools have a consistent session and execution bridge

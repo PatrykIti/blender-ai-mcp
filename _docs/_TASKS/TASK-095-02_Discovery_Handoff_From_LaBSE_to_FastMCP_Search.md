@@ -13,6 +13,15 @@ Remove general MCP tool discovery from the semantic layer and move it onto FastM
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-095-02-01](./TASK-095-02-01_Core_Discovery_Handoff_LaBSE_FastMCP.md) | Core Discovery Handoff from LaBSE to FastMCP Search | Core implementation layer |
+| [TASK-095-02-02](./TASK-095-02-02_Tests_Discovery_Handoff_LaBSE_FastMCP.md) | Tests and Docs Discovery Handoff from LaBSE to FastMCP Search | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - tool discovery no longer depends on LaBSE classifiers

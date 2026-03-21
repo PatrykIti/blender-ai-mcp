@@ -24,6 +24,15 @@ Close the surface-optimization work with clarity-focused tests, examples, and do
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-086-05-01](./TASK-086-05-01_Core_QA_Examples_Documentation.md) | Core Surface QA, Examples, and Documentation | Core implementation layer |
+| [TASK-086-05-02](./TASK-086-05-02_Tests_QA_Examples_Documentation.md) | Tests and Docs Surface QA, Examples, and Documentation | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - docs and prompt examples use the new public surface consistently

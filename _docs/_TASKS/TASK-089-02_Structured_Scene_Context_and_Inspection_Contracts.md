@@ -57,6 +57,15 @@ class SceneModeContract(BaseModel):
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-02-01](./TASK-089-02-01_Core_Structured_Scene_Context_Inspection.md) | Core Structured Scene Context and Inspection Contracts | Core implementation layer |
+| [TASK-089-02-02](./TASK-089-02-02_Tests_Structured_Scene_Context_Inspection.md) | Tests and Docs Structured Scene Context and Inspection Contracts | Tests, docs, and QA |
+
+---
+
 ## Acceptance Criteria
 
 - scene read tools return stable structured schemas
