@@ -31,7 +31,8 @@ Implement the core code changes for **FastMCP 3.x Dependency and Runtime Audit**
 ### Existing Files To Update
 
 - `pyproject.toml`
-  - move FastMCP dependency to a stable 3.x line
+  - move FastMCP dependency to a stable 3.1+ line (`>=3.1,<4.0` until explicitly revised)
+  - treat this as a hard migration gate for TASK-084/TASK-094 runtime work
   - record any additional dependencies only when they are actually required by selected platform features
 - `README.md`
   - update the runtime baseline note so it no longer states that the repo is still anchored on 2.x

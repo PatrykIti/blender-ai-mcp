@@ -69,6 +69,10 @@ For this repo, Code Mode should remain:
 - profile-scoped
 - read-heavy first
 
+Hard gate:
+
+- TASK-094 implementation is blocked until TASK-083 Gate 0 is green and runtime is pinned to a FastMCP 3.1+ baseline (`>=3.1,<4.0` unless explicitly revised).
+
 It should not become the default write path for Blender mutations without a separate proof burden.
 
 ---

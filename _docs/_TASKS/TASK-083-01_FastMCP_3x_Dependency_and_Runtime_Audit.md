@@ -45,7 +45,8 @@ Without this audit the migration can easily become half-upgraded:
 ### Existing Files To Update
 
 - `pyproject.toml`
-  - move FastMCP dependency to a stable 3.x line
+  - move FastMCP dependency to a stable 3.1+ line (`>=3.1,<4.0` until explicitly revised)
+  - treat this as a hard migration gate for TASK-084/TASK-094 runtime work
   - record any additional dependencies only when they are actually required by selected platform features
 - `README.md`
   - update the runtime baseline note so it no longer states that the repo is still anchored on 2.x
@@ -67,7 +68,7 @@ Without this audit the migration can easily become half-upgraded:
 
 This audit must explicitly capture already-visible inventory gaps in the repo, for example:
 
-- `server/adapters/mcp/areas/__init__.py` does not import `text`
+- side-effect area imports are still a bootstrap coupling risk and must be inventoried even when a family is currently imported
 - `server/router/infrastructure/metadata_loader.py` does not include every MCP-facing area family
 - sync adapter tools currently depend on ad hoc `ctx.info()` bridging instead of a broader context/session model
 - the runtime still has no explicit distinction between surface profile, contract version, and session phase
@@ -130,3 +131,4 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 - there is one explicit list of current MCP surfaces and entrypoints
 - every known 2.x coupling point is documented and mapped to a follow-up migration task
 - inventory gaps are captured as first-class work items, not left implicit
+- FastMCP runtime baseline is pinned to an explicit 3.1+ line and documented as a gate for 3.1-only features

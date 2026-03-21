@@ -24,9 +24,12 @@ Implement the **RPC and Addon Timeout Coordination** slice of the parent task.
 
 ### Slice Outputs
 
-- separate foreground and long-running operation boundaries with explicit contracts
-- align RPC/task/pagination/timeout behavior with deterministic state transitions
-- keep Blender main-thread safety and operational diagnostics explicit
+- define one timeout budget hierarchy across boundaries:
+  - FastMCP tool/task timeout
+  - RPC client deadline
+  - addon execution budget
+- propagate deadlines explicitly from server RPC calls to addon execution paths
+- normalize timeout and cancellation outcomes so clients receive stable boundary-specific errors
 
 ### Implementation Checklist
 
@@ -45,16 +48,16 @@ Implement the **RPC and Addon Timeout Coordination** slice of the parent task.
 
 ## Acceptance Criteria
 
-- operation lifecycle states are explicit and test-covered
-- timeouts/pagination/diagnostics behavior is boundary-specific and documented
-- error and cancellation paths preserve consistent contracts
+- timeout hierarchy is explicit, deterministic, and documented per boundary
+- deadline propagation between RPC client and addon runtime is test-covered
+- timeout errors are normalized into stable client-visible outcomes
 - slice does not regress existing synchronous operations
 
 ---
 
 ## Atomic Work Items
 
-1. Implement operation boundary logic and contracts in listed touchpoints.
-2. Add tests for launch/poll/cancel/timeout/pagination state transitions as applicable.
-3. Capture baseline vs post-change operational metrics for the slice.
-4. Document runtime boundary behavior and failure semantics.
+1. Implement timeout budget fields and precedence rules in RPC client and addon runtime.
+2. Add deadline propagation from RPC requests to addon task execution and polling paths.
+3. Add tests for timeout-expired, timeout-inherited, and cancel-vs-timeout race scenarios.
+4. Document boundary-specific timeout defaults and error mapping semantics.

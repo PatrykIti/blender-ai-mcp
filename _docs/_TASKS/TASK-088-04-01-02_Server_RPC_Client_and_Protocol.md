@@ -23,9 +23,17 @@ Implement the **Server RPC Client and Protocol** slice of the parent task.
 
 ### Slice Outputs
 
-- separate foreground and long-running operation boundaries with explicit contracts
-- align RPC/task/pagination/timeout behavior with deterministic state transitions
-- keep Blender main-thread safety and operational diagnostics explicit
+- expose explicit client methods for job lifecycle operations:
+  - `launch`
+  - `poll`
+  - `cancel`
+  - `collect_result`
+- define deterministic protocol envelopes for request/response/error fields:
+  - `request_id`
+  - `job_id`
+  - `status`
+  - typed `error_code`
+- keep backward compatibility for existing synchronous calls while routing new async-capable paths through explicit protocol verbs
 
 ### Implementation Checklist
 
@@ -43,16 +51,16 @@ Implement the **Server RPC Client and Protocol** slice of the parent task.
 
 ## Acceptance Criteria
 
-- operation lifecycle states are explicit and test-covered
-- timeouts/pagination/diagnostics behavior is boundary-specific and documented
-- error and cancellation paths preserve consistent contracts
+- client exposes explicit lifecycle methods for launch/poll/cancel/result retrieval
+- protocol envelopes and error codes are deterministic and documented
+- legacy synchronous operations remain usable during transition
 - slice does not regress existing synchronous operations
 
 ---
 
 ## Atomic Work Items
 
-1. Implement operation boundary logic and contracts in listed touchpoints.
-2. Add tests for launch/poll/cancel/timeout/pagination state transitions as applicable.
-3. Capture baseline vs post-change operational metrics for the slice.
-4. Document runtime boundary behavior and failure semantics.
+1. Add explicit RPC client methods for `launch`, `poll`, `cancel`, and `collect_result`.
+2. Implement typed envelope parsing and stable error mapping in the client adapter.
+3. Add focused tests for lifecycle method behavior and protocol error handling.
+4. Document verb contracts and compatibility behavior vs legacy sync calls.
