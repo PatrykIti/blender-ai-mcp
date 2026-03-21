@@ -50,6 +50,16 @@ Implement the **Scene Contract Definitions** slice of the parent task.
 - invalid payloads fail fast with contract-level errors
 - slice contracts are ready for higher-level audit/versioning integration
 
+### Concrete DoD by Touchpoint
+
+- `server/adapters/mcp/contracts/scene.py`
+  - defines versionable contract models for at least: mode/selection, object inspection, snapshot state, snapshot diff
+  - each contract includes explicit required/optional fields and validation rules
+  - serializer output is deterministic across repeated runs on identical input
+- `server/domain/tools/scene.py`
+  - interface-level return contracts remain framework-agnostic
+  - domain signatures do not import adapter/framework contract classes directly
+
 ---
 
 ## Atomic Work Items

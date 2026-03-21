@@ -3,7 +3,7 @@
 **Priority:** 🟡 Medium  
 **Category:** FastMCP LLM Reliability  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
+**Dependencies:** TASK-083, TASK-089, TASK-095  
 **Status:** ⬜ To Do
 
 ---

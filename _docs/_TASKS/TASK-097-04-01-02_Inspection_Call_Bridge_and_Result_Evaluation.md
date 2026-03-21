@@ -57,6 +57,18 @@ Adjust `mcp_integration.py` only to preserve parity for middleware/explicit inte
 - failure/inconclusive verification paths are explicit and test-covered
 - slice integrates with policy and contract layers without ambiguity
 
+### Concrete DoD by Touchpoint
+
+- `server/adapters/mcp/router_helper.py`
+  - emits a structured execution report envelope with distinct sections for original call, correction steps, verification result, and final status
+  - report distinguishes `verified_success`, `verification_failed`, and `verification_inconclusive`
+  - fallback behavior is explicit and does not silently drop verification outcomes
+- `server/adapters/mcp/areas/*.py`
+  - router-aware entrypoints propagate structured report payloads instead of step-concatenated text-only output on structured surfaces
+  - compatibility rendering for legacy text surfaces remains available
+- `server/router/adapters/mcp_integration.py` (parity scope)
+  - mirrors primary `route_tool_call` verification result semantics for middleware integration paths
+
 ---
 
 ## Atomic Work Items

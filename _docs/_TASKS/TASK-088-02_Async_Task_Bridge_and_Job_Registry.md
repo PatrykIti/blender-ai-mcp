@@ -30,6 +30,11 @@ It does not own:
 - RPC transport verbs
 - tool-by-tool adoption
 
+### Runtime Gate
+
+- task bridge validation must run against a FastMCP runtime with task support enabled (`fastmcp[tasks]` or equivalent)
+- task-launch entrypoints used for bridge tests must be `async def` with `task=True`
+
 ---
 
 ## Pseudocode
@@ -64,6 +69,7 @@ The bridge is not complete if only one of these identities exists.
 ## Acceptance Criteria
 
 - the server can register, track, and complete background jobs explicitly
+- bridge behavior is validated on an async, task-capable runtime path (not sync-only stubs)
 
 ---
 

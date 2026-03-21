@@ -71,7 +71,7 @@ For this repo, Code Mode should remain:
 
 Hard gate:
 
-- TASK-094 implementation is blocked until TASK-083 Gate 0 is green and runtime is pinned to a FastMCP 3.1+ baseline (`>=3.1,<4.0` unless explicitly revised).
+- TASK-094 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this experimental surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
 
 It should not become the default write path for Blender mutations without a separate proof burden.
 

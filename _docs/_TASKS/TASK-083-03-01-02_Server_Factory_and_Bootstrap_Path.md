@@ -54,6 +54,20 @@ Implement the **Server Factory and Bootstrap Path** slice of the parent task.
 - no new startup side effects are introduced outside composition root
 - slice output remains compatible with parent migration gates
 
+### Concrete DoD by Touchpoint
+
+- `server/adapters/mcp/factory.py`
+  - exposes `build_server(surface_profile=...)` as the primary composition entrypoint
+  - assembles providers and transforms from explicit profile settings, not import side effects
+- `server/adapters/mcp/server.py`
+  - runtime startup uses factory-built server instance
+  - profile selection and startup errors are logged with actionable diagnostics
+- `server/main.py`
+  - no direct reliance on global tool-registration side effects
+  - bootstrap path supports at least default profile and one non-default profile in tests
+- `server/adapters/mcp/instance.py`
+  - reduced to compatibility shim or clearly marked transitional module
+
 ---
 
 ## Atomic Work Items

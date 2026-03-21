@@ -45,8 +45,8 @@ Without this audit the migration can easily become half-upgraded:
 ### Existing Files To Update
 
 - `pyproject.toml`
-  - move FastMCP dependency to a stable 3.1+ line (`>=3.1,<4.0` until explicitly revised)
-  - treat this as a hard migration gate for TASK-084/TASK-094 runtime work
+  - move FastMCP dependency to a stable 3.0+ line (`>=3.0,<4.0` until explicitly revised)
+  - define a separate 3.1+ feature gate for TASK-084/TASK-094 runtime work
   - record any additional dependencies only when they are actually required by selected platform features
 - `README.md`
   - update the runtime baseline note so it no longer states that the repo is still anchored on 2.x
@@ -131,4 +131,4 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 - there is one explicit list of current MCP surfaces and entrypoints
 - every known 2.x coupling point is documented and mapped to a follow-up migration task
 - inventory gaps are captured as first-class work items, not left implicit
-- FastMCP runtime baseline is pinned to an explicit 3.1+ line and documented as a gate for 3.1-only features
+- FastMCP runtime baseline is pinned to an explicit 3.0+ line, with 3.1-only features documented as separate gates

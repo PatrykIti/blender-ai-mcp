@@ -50,6 +50,15 @@ Implement the **Capability Manifest Schema and Tags** slice of the parent task.
 - inventory build detects missing/invalid entries with explicit errors
 - slice output is ready for TASK-084 search transform rollout
 
+### Concrete DoD by Touchpoint
+
+- `server/adapters/mcp/platform/capability_manifest.py`
+  - defines one canonical manifest entry model with fields for capability name, audience tags, phase tags, alias map, and visibility defaults
+  - validates duplicate public aliases and duplicate canonical names as explicit errors
+- `server/adapters/mcp/discovery/taxonomy.py`
+  - defines category/tag normalization rules with deterministic ordering
+  - rejects unknown tag prefixes unless explicitly allowlisted
+
 ---
 
 ## Atomic Work Items

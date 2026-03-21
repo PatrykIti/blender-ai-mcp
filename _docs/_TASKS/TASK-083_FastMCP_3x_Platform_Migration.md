@@ -153,9 +153,9 @@ Migration should stay area-oriented:
 Before starting broad implementation of TASK-084 through TASK-097, the following gates must pass:
 
 - **Gate 0 (after TASK-083-01): Runtime Baseline Gate**
-  - `pyproject.toml` pins FastMCP to a 3.1+ stable baseline (`>=3.1,<4.0` unless explicitly revised)
-  - migration docs explain why 3.1 is required for downstream features (`BM25SearchTransform`, `Code Mode`)
-  - smoke tests confirm runtime boots on the selected baseline
+  - `pyproject.toml` pins FastMCP to a stable 3.0+ baseline (`>=3.0,<4.0` unless explicitly revised)
+  - migration docs explain that 3.1+ is a feature gate for downstream tasks that require it (`BM25SearchTransform`, `Code Mode`)
+  - smoke tests confirm runtime boots on the selected baseline and on the 3.1+ feature line used by gated tasks
 - **Gate A (after TASK-083-03): Composition Root Gate**
   - bootstrap uses `build_server(surface_profile=...)` instead of global side-effect registration
   - profile selection is explicit in config (`legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`)
@@ -166,7 +166,7 @@ Before starting broad implementation of TASK-084 through TASK-097, the following
   - provider-level and server-level transform layering is documented and verified in tests
 
 If either gate is red, downstream FastMCP platform tasks are blocked except for doc-only preparation.
-If Gate 0 is red, tasks that require FastMCP 3.1+ features (notably TASK-084 and TASK-094) are blocked except for doc-only preparation.
+If Gate 0 is green but runtime is still below 3.1, tasks that require FastMCP 3.1+ features (notably TASK-084 and TASK-094) are blocked except for doc-only preparation.
 
 Implementation is decomposed into:
 

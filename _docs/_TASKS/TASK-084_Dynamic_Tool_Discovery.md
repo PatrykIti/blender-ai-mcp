@@ -69,7 +69,7 @@ For this repo, the preferred default is:
 
 Hard gate:
 
-- TASK-084 implementation is blocked until TASK-083 Gate 0 is green and runtime is pinned to a FastMCP 3.1+ baseline (`>=3.1,<4.0` unless explicitly revised).
+- TASK-084 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
 
 Do not introduce a custom search proxy unless the built-in call path proves insufficient.
 

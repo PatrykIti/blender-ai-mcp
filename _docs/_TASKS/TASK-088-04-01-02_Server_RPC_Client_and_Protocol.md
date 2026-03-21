@@ -56,6 +56,14 @@ Implement the **Server RPC Client and Protocol** slice of the parent task.
 - legacy synchronous operations remain usable during transition
 - slice does not regress existing synchronous operations
 
+### Concrete DoD by Touchpoint
+
+- `server/adapters/rpc/client.py`
+  - adds explicit methods: `launch_job(...)`, `poll_job(...)`, `cancel_job(...)`, `collect_job_result(...)`
+  - all lifecycle methods return a typed envelope including at minimum `request_id`, `job_id`, `status`
+  - timeout and transport failures map to stable adapter error codes (documented in this file's test notes)
+  - legacy sync call path remains callable and is covered by at least one regression test
+
 ---
 
 ## Atomic Work Items

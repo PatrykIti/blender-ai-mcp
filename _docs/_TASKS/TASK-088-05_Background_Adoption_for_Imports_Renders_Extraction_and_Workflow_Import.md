@@ -44,6 +44,7 @@ Each adopted candidate must include an explicit async MCP entrypoint on task-cap
 - `async def ...` adapter signature
 - `task=True` enablement at the MCP boundary
 - explicit fallback behavior for legacy/sync surfaces where required
+- runtime verification on a FastMCP installation with task support enabled (`fastmcp[tasks]` or equivalent)
 
 ---
 
