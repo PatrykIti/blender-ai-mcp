@@ -22,39 +22,39 @@ Implement the **Handler and Adapter Integration** slice of the parent task.
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/application/tool_handlers/scene_handler.py`, `server/adapters/mcp/areas/scene.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- define concrete contract envelopes/schemas for the target capability family
+- wire contracts through handler/adapter integration without changing domain ownership
+- ensure renderer/serialization paths preserve structured-first guarantees
 
 ### Implementation Checklist
 
-- touch `server/application/tool_handlers/scene_handler.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/areas/scene.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/application/tool_handlers/scene_handler.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/areas/scene.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- contract schemas are explicit, stable, and test-covered
+- handler->adapter mapping is deterministic and backward-compatible where required
+- invalid payloads fail fast with contract-level errors
+- slice contracts are ready for higher-level audit/versioning integration
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement schema/envelope definitions and integration in listed touchpoints.
+2. Add contract tests for valid payloads, invalid payloads, and compatibility mode.
+3. Capture representative before/after payload examples.
+4. Document required and optional fields with ownership notes.

@@ -22,39 +22,39 @@ Implement the **Visibility Transform and Policy Engine** slice of the parent tas
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/adapters/mcp/transforms/visibility_policy.py`, `server/adapters/mcp/surfaces.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- materialize tag wiring and deterministic policy evaluation for visibility decisions
+- apply visibility at the transform layer with profile/phase awareness
+- preserve explicit override behavior for pinned or always-visible capabilities
 
 ### Implementation Checklist
 
-- touch `server/adapters/mcp/transforms/visibility_policy.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/surfaces.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/adapters/mcp/transforms/visibility_policy.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/surfaces.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- visibility outcomes are deterministic for profile+phase+tag inputs
+- transform-level filtering is test-covered and does not leak disabled components
+- policy behavior is observable and debuggable through logs/diagnostics
+- slice integrates cleanly with discovery and session-state assumptions
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement tag mapping and visibility policy logic in listed touchpoints.
+2. Add focused tests for allow, deny, overlap, and pinned-component behavior.
+3. Capture a before/after component listing for at least two phases.
+4. Document evaluation order and override semantics.

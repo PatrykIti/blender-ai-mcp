@@ -22,39 +22,39 @@ Implement the **Capability Manifest Schema and Tags** slice of the parent task.
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/adapters/mcp/platform/capability_manifest.py`, `server/adapters/mcp/discovery/taxonomy.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- define canonical manifest/taxonomy fields required for discovery and visibility
+- implement deterministic inventory/enrichment build path from declared sources
+- ensure manifest data can be consumed by search/visibility transforms without router coupling
 
 ### Implementation Checklist
 
-- touch `server/adapters/mcp/platform/capability_manifest.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/discovery/taxonomy.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/adapters/mcp/platform/capability_manifest.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/discovery/taxonomy.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- manifest schema and inventory output are deterministic and versionable
+- all required discovery fields are present or explicitly defaulted
+- inventory build detects missing/invalid entries with explicit errors
+- slice output is ready for TASK-084 search transform rollout
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement manifest/taxonomy structures and enrichment logic in listed touchpoints.
+2. Add regression tests for schema validity, enrichment completeness, and missing data handling.
+3. Capture inventory before/after sample for at least one profile.
+4. Document ownership split between platform manifest and router metadata.

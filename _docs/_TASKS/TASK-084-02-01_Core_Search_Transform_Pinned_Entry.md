@@ -15,7 +15,7 @@ Implement the core code changes for **Search Transform and Pinned Entry Surface*
 
 ## Repository Touchpoints
 
-- `future `server/adapters/mcp/transforms/discovery.py``
+- future `server/adapters/mcp/transforms/discovery.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/workflow_catalog.py`
 

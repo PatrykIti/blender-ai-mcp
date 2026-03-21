@@ -22,39 +22,39 @@ Implement the **Postcondition Mapping and Verification Trigger** slice of the pa
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/router/application/router.py`, `server/router/application/engines/tool_correction_engine.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- materialize structured execution/audit/postcondition behavior for correction paths
+- ensure verification triggers map to inspection contracts for high-risk fixes
+- expose auditable outcomes to responses/logs with deterministic fields
 
 ### Implementation Checklist
 
-- touch `server/router/application/router.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/router/application/engines/tool_correction_engine.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/router/application/router.py` with explicit change notes and boundary rationale
+- touch `server/router/application/engines/tool_correction_engine.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- audit and execution-report fields are complete and deterministic
+- postcondition verification gates high-risk success finalization
+- failure/inconclusive verification paths are explicit and test-covered
+- slice integrates with policy and contract layers without ambiguity
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement audit/report/verification mapping in listed touchpoints.
+2. Add tests for success, failure, and inconclusive verification outcomes.
+3. Capture before/after audit payload examples for corrected executions.
+4. Document postcondition trigger rules and exposure policy.

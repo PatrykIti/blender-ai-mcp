@@ -24,42 +24,42 @@ Implement the core code changes for **Router Integration, Masking, and Budget Co
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/adapters/mcp/sampling/assistant_runner.py`, `server/router/application/router.py`, `server/adapters/mcp/router_helper.py`, `server/adapters/mcp/contracts/router.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- enforce bounded sampling usage with explicit masking and budget controls
+- keep assistant outputs typed and policy-gated
+- prevent assistant paths from bypassing router safety or inspection truth layers
 
 ### Implementation Checklist
 
-- touch `server/adapters/mcp/sampling/assistant_runner.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/router/application/router.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/router_helper.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/contracts/router.py` with an explicit change note (or explicit no-change rationale)
-- touch `tests/unit/router/application/test_correction_policy_engine.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/adapters/mcp/sampling/assistant_runner.py` with explicit change notes and boundary rationale
+- touch `server/router/application/router.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/router_helper.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/contracts/router.py` with explicit change notes and boundary rationale
+- touch `tests/unit/router/application/test_correction_policy_engine.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- assistant behavior is request-bound, typed, and policy-compliant
+- masking and budget limits are deterministic and test-covered
+- fallback behavior is explicit when sampling is unavailable or blocked
+- no boundary violations relative to semantic/safety/truth split
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement bounded assistant behavior and policy hooks in listed touchpoints.
+2. Add tests for available, unavailable, masked, and budget-exceeded paths.
+3. Capture typed output examples for each terminal assistant status.
+4. Document allowed/forbidden assistant responsibilities for this slice.

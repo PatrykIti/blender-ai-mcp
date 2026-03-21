@@ -16,7 +16,7 @@ Implement the core code changes for **Constrained Choice and Multi-Select Flows*
 ## Repository Touchpoints
 
 - `server/router/domain/entities/parameter.py`
-- `workflow definitions in `server/router/application/workflows/custom/*.yaml``
+- workflow definitions in `server/router/application/workflows/custom/*.yaml`
 
 ---
 

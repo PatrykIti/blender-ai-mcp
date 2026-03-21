@@ -22,40 +22,40 @@ Implement the core code changes for **Evaluation Harness and Benchmark Scenarios
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `tests/unit/adapters/mcp/test_server_factory.py`, `tests/unit/adapters/mcp/test_prompt_provider.py`, `_docs/_MCP_SERVER/README.md`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- deliver explicit experimental Code Mode behavior with guardrails
+- limit pilot surface to approved read-heavy workflows
+- produce measurable comparison artifacts against classic tool loops
 
 ### Implementation Checklist
 
-- touch `tests/unit/adapters/mcp/test_server_factory.py` with an explicit change note (or explicit no-change rationale)
-- touch `tests/unit/adapters/mcp/test_prompt_provider.py` with an explicit change note (or explicit no-change rationale)
-- touch `_docs/_MCP_SERVER/README.md` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `tests/unit/adapters/mcp/test_server_factory.py` with explicit change notes and boundary rationale
+- touch `tests/unit/adapters/mcp/test_prompt_provider.py` with explicit change notes and boundary rationale
+- touch `_docs/_MCP_SERVER/README.md` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- code-mode experiment boundaries are explicit and enforceable
+- write/destructive operations are blocked where required
+- benchmark artifacts are reproducible and linked to recommendations
+- slice remains profile-scoped and opt-in only
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement pilot/benchmark/documentation behavior in listed touchpoints.
+2. Add tests for guardrail enforcement and discovery/execution flow.
+3. Capture benchmark metrics vs classic tool-loop baseline.
+4. Document go/no-go criteria and retained constraints.

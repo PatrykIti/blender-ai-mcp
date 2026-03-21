@@ -24,42 +24,42 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `server/adapters/mcp/session_state.py`, `server/adapters/mcp/execution_report.py`, `server/adapters/mcp/areas/router.py`, `server/application/tool_handlers/router_handler.py`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- normalize confidence/policy context into deterministic decision inputs
+- route medium-confidence and session-memory behavior through explicit policy semantics
+- expose operator-visible policy context without ambiguity
 
 ### Implementation Checklist
 
-- touch `server/adapters/mcp/session_state.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/execution_report.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/areas/router.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/application/tool_handlers/router_handler.py` with an explicit change note (or explicit no-change rationale)
-- touch `server/adapters/mcp/contracts/router.py` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `server/adapters/mcp/session_state.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/execution_report.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/areas/router.py` with explicit change notes and boundary rationale
+- touch `server/application/tool_handlers/router_handler.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/contracts/router.py` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- policy decisions are deterministic for equivalent inputs
+- session/operator context is consistent with executed decisions
+- escalation behavior is test-covered and contract-driven
+- slice integrates with audit/reporting layers without hidden heuristics
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement confidence/session/policy behavior in listed touchpoints.
+2. Add tests for deterministic decisions, escalation, and session persistence/reset.
+3. Capture policy decision traces for representative risk classes.
+4. Document operator-facing policy semantics and fields.

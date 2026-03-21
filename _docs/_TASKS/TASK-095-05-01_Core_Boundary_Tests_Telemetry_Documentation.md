@@ -23,41 +23,41 @@ Implement the core code changes for **Boundary Tests, Telemetry, and Documentati
 
 ## Planned Work
 
-### Deliverables
+### Slice Outputs
 
-- implement the slice behavior end-to-end across: `tests/unit/router/application/test_tool_correction_engine.py`, `tests/unit/router/infrastructure/test_metadata_loader.py`, `_docs/_ROUTER/semantic-boundary-audit.md`, `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
-- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
-- preserve the parent task contract so this slice can be merged independently
+- move target decisions from semantic inference to platform/inspection ownership
+- harden allowed LaBSE roles for workflow/parameter semantics only
+- surface boundary enforcement through tests and telemetry markers
 
 ### Implementation Checklist
 
-- touch `tests/unit/router/application/test_tool_correction_engine.py` with an explicit change note (or explicit no-change rationale)
-- touch `tests/unit/router/infrastructure/test_metadata_loader.py` with an explicit change note (or explicit no-change rationale)
-- touch `_docs/_ROUTER/semantic-boundary-audit.md` with an explicit change note (or explicit no-change rationale)
-- touch `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` with an explicit change note (or explicit no-change rationale)
-- add or update focused regression coverage for the changed slice behavior
-- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+- touch `tests/unit/router/application/test_tool_correction_engine.py` with explicit change notes and boundary rationale
+- touch `tests/unit/router/infrastructure/test_metadata_loader.py` with explicit change notes and boundary rationale
+- touch `_docs/_ROUTER/semantic-boundary-audit.md` with explicit change notes and boundary rationale
+- touch `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md` with explicit change notes and boundary rationale
+- add or update focused regression coverage for the slice behavior
+- capture before/after evidence tied to the slice outputs
 
 ### Review Notes To Attach
 
-- short rationale for every changed touchpoint
-- explicit note of any deferred work (if present) and why it is safe to defer
-- exact test commands used for slice validation
+- rationale per changed touchpoint and any explicit no-change decisions
+- exact test commands and profile/config context used during validation
+- deferred work list with safety rationale
 
 ---
 
 ## Acceptance Criteria
 
-- every listed touchpoint is either updated or explicitly marked as no-change with justification
-- the slice has at least one focused regression test proving intended behavior
-- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
-- parent-level behavior remains compatible when this slice lands alone
+- semantic boundary rules are explicit and enforced in code paths
+- discovery/truth responsibilities are not delegated to LaBSE
+- boundary violations are detectable in regression tests and telemetry
+- slice preserves multilingual semantic benefits in allowed scope
 
 ---
 
 ## Atomic Work Items
 
-1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
-2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
-3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
-4. Document any deferred edges and why they do not block parent-task acceptance.
+1. Implement boundary enforcement changes in listed touchpoints.
+2. Add tests for allowed-role and forbidden-role behaviors.
+3. Capture one before/after decision trace showing ownership handoff.
+4. Document boundary rationale and operational implications.
