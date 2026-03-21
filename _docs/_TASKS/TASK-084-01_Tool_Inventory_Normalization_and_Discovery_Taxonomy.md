@@ -1,4 +1,4 @@
-# TASK-084-01: Tool Inventory Normalization and Discovery Taxonomy
+# TASK-084-01: Public Capability Inventory and Discovery Taxonomy
 
 **Parent:** [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md)  
 **Status:** ⬜ Planned  
@@ -9,7 +9,7 @@
 
 ## Objective
 
-Create one canonical discovery inventory containing categories, tags, aliases, and visibility flags for every MCP-facing capability.
+Create one canonical discovery inventory for the public MCP-facing capability surface: categories, tags, aliases, and visibility flags for capabilities that should actually participate in public discovery.
 
 ---
 
@@ -35,7 +35,7 @@ Create one canonical discovery inventory containing categories, tags, aliases, a
 ### Existing Files To Update
 
 - `server/router/infrastructure/metadata_loader.py`
-  - include every router-callable family that needs search enrichment data
+  - expose router hints only as optional enrichment
 - `server/router/infrastructure/tools_metadata/_schema.json`
   - keep router-focused fields router-focused; do not make it the canonical audience/visibility registry
 
@@ -51,6 +51,9 @@ The canonical source for:
 
 belongs in the platform capability manifest, not in router metadata.
 
+Internal router / dispatcher aliases are not part of the public discovery taxonomy by default.
+If an internal alias needs metadata for routing or compatibility, keep it in a separate internal execution map.
+
 ---
 
 ## Pseudocode
@@ -58,7 +61,7 @@ belongs in the platform capability manifest, not in router metadata.
 ```python
 @dataclass
 class DiscoveryEntry:
-    tool_name: str
+    public_name: str
     category: str
     tags: set[str]
     aliases: list[str]
@@ -70,10 +73,11 @@ class DiscoveryEntry:
 
 ## Atomic Work Items
 
-1. Define the shared platform manifest for public capability metadata.
-2. Build discovery inventory from manifest + docstrings + schemas + optional router hints.
+1. Define the shared platform manifest for public capability metadata only.
+2. Build discovery inventory from public manifest + docstrings + schemas + optional router hints.
 3. Keep router metadata as enrichment only.
-4. Add tests proving every public and router-callable capability is represented exactly once.
+4. Keep dispatcher/router compatibility names out of the public discovery inventory unless they are explicitly exposed on a public surface.
+5. Add tests proving every public MCP-visible capability is represented exactly once.
 
 ---
 
@@ -88,5 +92,6 @@ class DiscoveryEntry:
 
 ## Acceptance Criteria
 
-- discovery inventory covers all public and router-callable tools
+- discovery inventory covers all public MCP-visible capabilities on the shaped surface
+- internal router / dispatcher aliases are either excluded from discovery or explicitly marked non-discoverable
 - discovery grouping is no longer fragmented across docstrings, metadata, and ad hoc lists

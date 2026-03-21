@@ -11,9 +11,9 @@
 
 Define the shared contract catalog and the rules for when tools return:
 
-- pure structured payloads
-- structured payloads plus a human summary
-- legacy text-only output as a compatibility fallback
+- native object / model payloads for structured MCP delivery
+- optional short human summaries only where they add real compatibility value
+- legacy text-only output only as an explicit compatibility exception
 
 ---
 
@@ -22,9 +22,17 @@ Define the shared contract catalog and the rules for when tools return:
 - create:
   - `server/adapters/mcp/contracts/__init__.py`
   - `server/adapters/mcp/contracts/base.py`
-  - `server/adapters/mcp/contracts/serializers.py`
-  - `server/adapters/mcp/contracts/renderers.py`
+  - `server/adapters/mcp/contracts/output_schema.py`
+  - `server/adapters/mcp/contracts/compat.py`
   - `tests/unit/adapters/mcp/test_contract_base.py`
+
+First-pass goal:
+
+- define how adapter tools return native dict / dataclass / Pydantic objects
+- define when `outputSchema` is required
+- define where existing stringified JSON responses must be removed
+
+Do not start by building a custom response-renderer framework.
 
 ---
 
@@ -40,11 +48,13 @@ Define the shared contract catalog and the rules for when tools return:
 ## Acceptance Criteria
 
 - the adapter layer has one shared response-design policy instead of per-tool conventions
+- contract-enabled adapters no longer need `json.dumps(...)` to expose machine-readable state
 
 ---
 
 ## Atomic Work Items
 
-1. Define the base contract envelope and serializer rules.
-2. Add the shared renderer set: `structured`, `structured_plus_summary`, `legacy_text`.
-3. Add tests proving the same payload can be rendered differently by profile.
+1. Define the base contract envelope and native adapter return rules.
+2. Define when to return plain object-like payloads versus typed models with explicit `outputSchema`.
+3. Identify and remove existing JSON-string return paths in contract-enabled tools.
+4. Add tests proving object-like returns surface as structured MCP payloads on FastMCP without custom renderers.

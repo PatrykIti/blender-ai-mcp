@@ -75,6 +75,7 @@ For this task series, the migration baseline must establish:
 - a clear distinction between surface profile, contract version, and session phase
 - provider-based composition as the runtime source of truth
 - built-in FastMCP transforms as the default shaping mechanism before custom wrappers are considered
+- reusable `LocalProvider` groups and registration seams as the default migration path before introducing repo-specific custom provider abstractions
 
 ---
 
@@ -136,7 +137,7 @@ This remains the umbrella task. The original business scope stays unchanged.
 ### Atomic Delivery Waves
 
 1. Audit current 2.x coupling and missing inventory coverage.
-2. Extract reusable providers and remove side-effect-only registration assumptions.
+2. Extract reusable `LocalProvider` groups / registrars and remove side-effect-only registration assumptions.
 3. Replace the singleton bootstrap with a server factory and surface profiles.
 4. Lock a deterministic transform order that later tasks extend rather than bypass.
 5. Normalize context, session, and execution reporting for async-capable platform features.
@@ -147,6 +148,12 @@ Migration should stay area-oriented:
 - `scene`, `mesh`, and `modeling` first, because they dominate the public catalog
 - `router` and `workflow_catalog` next, because later 3.x interaction work depends on them
 - remaining families after the provider and factory pattern is proven
+
+YAGNI rule for this umbrella:
+
+- do not introduce a broad custom-provider subsystem unless a concrete FastMCP limitation appears
+- prefer registration functions bound to `LocalProvider` instances over inventing repo-specific provider hierarchies
+- keep the first migration focused on factory, profiles, transforms, and reusable provider groups
 
 ### Migration Gates (Blocking For TASK-084+)
 

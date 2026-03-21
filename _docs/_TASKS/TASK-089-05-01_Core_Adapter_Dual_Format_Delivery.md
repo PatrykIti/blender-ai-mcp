@@ -9,30 +9,29 @@
 
 ## Objective
 
-Implement the core code changes for **Adapter Dual-Format Delivery Strategy**.
+Implement the core code changes for **Native Structured-First Delivery and Compatibility Strategy**.
 
 ---
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/contracts/renderers.py`
-- `server/adapters/mcp/contracts/serializers.py`
+- `server/adapters/mcp/contracts/output_schema.py`
+- `server/adapters/mcp/contracts/compat.py`
 - `server/adapters/mcp/factory.py`
 - `server/adapters/mcp/surfaces.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/areas/workflow_catalog.py`
 - `tests/unit/adapters/mcp/test_contract_base.py`
+
 ---
 
 ## Planned Work
 
-- add response renderers for:
-  - `structured`
-  - `structured_plus_summary`
-  - `legacy_text`
-- choose the renderer by surface profile, contract line, or explicit compatibility override
-- ensure structured renderers emit MCP `structuredContent` aligned to declared `outputSchema`
-- ensure legacy renderer emits compatible text fallback from the same source structured payloads
+- switch contract-enabled adapters from JSON-string returns to native object/model returns
+- declare explicit `outputSchema` where needed for stable public contracts
+- define profile/contract exceptions only where deterministic legacy text fallback is still required
+- avoid introducing custom response renderers unless native FastMCP structured delivery proves insufficient
+
 ---
 
 ## Acceptance Criteria
@@ -40,10 +39,11 @@ Implement the core code changes for **Adapter Dual-Format Delivery Strategy**.
 - the transition to structured output does not force a destructive client cut-over
 - structured surfaces expose contract-aligned `structuredContent` + `outputSchema`
 - compatibility surfaces preserve deterministic text fallback without contract drift
+
 ---
 
 ## Atomic Work Items
 
-1. Define default renderer selection per surface profile.
-2. Add contract-line overrides where legacy payloads must remain available.
-3. Add adapter tests for renderer selection, `structuredContent` + `outputSchema` alignment, and backward compatibility.
+1. Convert the first contract-enabled adapters to native object/model returns.
+2. Add contract-line overrides only where legacy payloads must remain available.
+3. Add adapter tests for native `structuredContent` + `outputSchema` alignment and backward compatibility.

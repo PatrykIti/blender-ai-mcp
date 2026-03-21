@@ -72,6 +72,11 @@ Public contract versioning should start only after:
 
 This prevents versioning unstable aliases or half-defined response contracts.
 
+Activation gate:
+
+- do not start broad component versioning work until one non-versioned `llm-guided` public line is stable enough to compare against legacy behavior
+- use versioning only when there is an actual coexistence or migration burden, not as a substitute for finishing TASK-086 / TASK-089 first
+
 ---
 
 ## FastMCP Features To Use

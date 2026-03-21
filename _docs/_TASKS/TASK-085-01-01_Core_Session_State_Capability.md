@@ -30,18 +30,22 @@ Implement the core code changes for **Session State Model and Capability Phases*
 - store in session state:
   - `phase`
   - `goal`
-  - `active_surface_profile`
-  - `active_contract_line`
+  - `pending_clarification`
   - `last_router_status`
+  - optional read-only bootstrap metadata for diagnostics only
+
 ---
 
 ## Acceptance Criteria
 
 - phases are explicit, serializable, and not hidden inside private router fields
+- the first implementation uses a coarse phase model only
+
 ---
 
 ## Atomic Work Items
 
-1. Define the session-state schema and default values.
-2. Add profile, contract-line, and phase helpers.
-3. Add tests for persistence and reset behavior across turns.
+1. Define the minimal session-state schema and default values.
+2. Add coarse phase helpers for the first guided entry surface only.
+3. Keep bootstrap profile/version config outside mutable session state.
+4. Add tests for persistence and reset behavior across turns.

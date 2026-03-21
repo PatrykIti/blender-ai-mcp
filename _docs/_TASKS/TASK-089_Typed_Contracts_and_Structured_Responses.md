@@ -65,9 +65,10 @@ Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md
 For this repo:
 
 - domain and application handlers may keep returning dict/list state
-- adapter-side contracts and renderers should define public shape
+- adapter-side contracts should define public shape
 - structured payloads are the default for state-heavy tools
-- summary text should be a renderer choice, not the only contract
+- stop serializing structured payloads to JSON text in MCP adapters as the first migration move
+- do not introduce a custom renderer subsystem before native FastMCP structured delivery is used correctly
 
 ### MCP Contract Delivery DoD
 
@@ -75,7 +76,8 @@ For contract-enabled tools in this task scope:
 
 - return machine-readable payloads through MCP `structuredContent`
 - declare and maintain tool `outputSchema` aligned with the structured payload shape
-- keep compatibility via text rendering fallback (`content` text) selected by renderer policy (`structured_plus_summary` / `legacy_text`)
+- rely on FastMCP's native compatibility delivery where object-like returns already produce structured output plus traditional content
+- add explicit text-only compatibility behavior only where a real client need remains after native delivery is used correctly
 
 ---
 
@@ -136,11 +138,11 @@ This remains the umbrella task. The original scope stays unchanged.
 
 ### Atomic Delivery Waves
 
-1. Define one shared contract catalog and renderer policy.
-2. Convert scene context and scene inspection surfaces to stable structured payloads.
-3. Standardize mesh introspection envelopes and paging fields.
-4. Add structured router, workflow, and execution report contracts.
-5. Preserve compatibility through dual-format renderers selected by profile or contract line.
+1. Define one shared contract catalog and adapter return policy.
+2. Remove unconditional `json.dumps(...)` / prose-only return paths from contract-enabled adapters.
+3. Convert scene context and scene inspection surfaces to stable structured payloads.
+4. Standardize mesh introspection envelopes and paging fields.
+5. Add structured router, workflow, and execution report contracts.
 6. Add schema tests and public docs for the new contract set.
 
 Implementation is decomposed into:

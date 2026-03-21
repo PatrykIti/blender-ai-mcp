@@ -20,6 +20,7 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 - `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/providers/core_tools.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+
 ---
 
 ## Planned Work
@@ -31,15 +32,16 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 - introduce tags such as:
   - `phase:planning`
   - `phase:build`
-  - `phase:repair`
+  - `phase:inspect`
   - `audience:legacy`
   - `audience:llm`
-  - `risk:destructive`
+  - `entry:guided`
 
 ### Ownership Rule
 
 Visibility tags should come from the shared platform capability manifest and provider registration.
 Router metadata may inform policy, but it is not the canonical visibility registry.
+
 ---
 
 ## Layered Subtasks
@@ -55,10 +57,13 @@ Router metadata may inform policy, but it is not the canonical visibility regist
 
 - visibility rules are deterministic and testable
 - provider tags become the canonical grouping mechanism for visibility decisions
+- the first implementation scopes visibility adaptation to the guided entry surface
+
 ---
 
 ## Atomic Work Items
 
-1. Materialize profile, audience, phase, and risk tags on provider components.
+1. Materialize profile, audience, phase, and entry-surface tags on provider components.
 2. Implement one deterministic visibility policy function.
-3. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.
+3. Apply the policy first to `router_*`, `workflow_catalog`, and other entry capabilities.
+4. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.

@@ -39,7 +39,8 @@ Introduce visibility presets for different clients and a guided-mode surface tha
 ## Acceptance Criteria
 
 - surface profiles can be selected without forking tool handler logic
-- guided mode hides low-level noise while preserving deeper access through search or alternate profiles
+- guided mode starts from a small entry surface, not by phase-filtering the entire catalog at once
+- deeper capabilities remain available through search or alternate profiles
 
 ---
 
@@ -47,4 +48,5 @@ Introduce visibility presets for different clients and a guided-mode surface tha
 
 1. Align profile names with the server factory and versioning matrix.
 2. Define exactly which providers and transforms each profile uses.
-3. Add one golden test per profile for visible entry tools.
+3. Keep `llm-guided` initial visibility intentionally tiny and centered on entry tools.
+4. Add one golden test per profile for visible entry tools.

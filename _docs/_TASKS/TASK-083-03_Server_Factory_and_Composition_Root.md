@@ -9,7 +9,7 @@
 
 ## Objective
 
-Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit composition root that builds a server from providers, transforms, and runtime configuration.
+Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit composition root that builds a server from reusable provider groups, transforms, and runtime configuration.
 
 ---
 
@@ -53,6 +53,16 @@ The composition root should treat these as surface profiles, not versions:
 - `internal-debug`
 - `code-mode-pilot`
 
+### YAGNI Rule
+
+The first factory implementation should compose from:
+
+- built-in `LocalProvider` instances
+- registration functions extracted from current area modules
+- built-in FastMCP transforms
+
+Do not block this task on a full redesign of adapter packages or on custom provider abstractions.
+
 ---
 
 ## Pseudocode
@@ -90,7 +100,7 @@ def build_server(surface_config, di) -> FastMCP:
 ## Atomic Work Items
 
 1. Replace singleton bootstrap with `build_server(surface_profile=...)`.
-2. Define the initial profile matrix and default provider sets.
+2. Define the initial profile matrix and default `LocalProvider` sets.
 3. Move startup configuration into one settings object.
 4. Keep a compatibility shim for `instance.py` only until all areas stop depending on the global singleton.
 5. Add profile bootstrap tests before adding any new transform behavior.
@@ -111,3 +121,4 @@ def build_server(surface_config, di) -> FastMCP:
 - `server/main.py` uses an explicit composition root
 - more than one server surface can be built from the same runtime
 - `instance.py` is no longer the central runtime composition primitive
+- the first factory path does not require a repo-specific provider framework beyond reusable `LocalProvider` groups / registrars

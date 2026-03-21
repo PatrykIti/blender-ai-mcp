@@ -30,6 +30,7 @@ Expose typed contracts for `scene_context`, `scene_inspect`, `scene_snapshot_sta
   - `_scene_get_mode`
   - `_scene_list_selection`
   - `_scene_inspect_object`
+- replace stringified JSON return paths in scene read adapters with native dict / model returns
 
 ### State Priority
 
@@ -77,6 +78,7 @@ class SceneModeContract(BaseModel):
 ## Atomic Work Items
 
 1. Define scene-mode and selection contracts first.
-2. Define object inspection contracts with transforms, bounds, origin, and hierarchy.
-3. Define snapshot and diff contracts for before/after awareness.
-4. Add tests proving the same payload can be rendered with or without summary text.
+2. Return native structured payloads from `scene_context` actions instead of prose-only or JSON-string wrappers.
+3. Define object inspection contracts with transforms, bounds, origin, and hierarchy.
+4. Define snapshot and diff contracts for before/after awareness.
+5. Add tests proving FastMCP surfaces structured MCP output directly from the returned object/model payloads.

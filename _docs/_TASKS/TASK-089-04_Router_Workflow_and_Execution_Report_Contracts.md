@@ -29,6 +29,7 @@ Introduce typed contracts for `router_set_goal`, router status, workflow catalog
   - `server/adapters/mcp/contracts/router.py`
   - `server/adapters/mcp/contracts/workflow_catalog.py`
   - `tests/unit/router/application/test_router_contracts.py`
+- remove direct `json.dumps(...)` returns from `router.py` and `workflow_catalog.py` for contract-enabled paths
 
 ### Execution Awareness Rule
 
@@ -61,4 +62,5 @@ The execution report should let an LLM and an operator see:
 
 1. Define structured `router_set_goal` success, needs-input, no-match, and error contracts.
 2. Define workflow catalog list/get/search/import contracts.
-3. Define the execution report envelope used by router-aware adapter calls.
+3. Return native object/model payloads from router and workflow catalog adapters instead of JSON strings.
+4. Define the execution report envelope used by router-aware adapter calls.

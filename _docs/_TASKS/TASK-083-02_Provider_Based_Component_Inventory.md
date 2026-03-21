@@ -9,7 +9,7 @@
 
 ## Objective
 
-Replace the current flat registration mindset with reusable provider groups that can be mounted into multiple public surfaces without duplicating handler logic.
+Replace the current flat registration mindset with reusable registration seams and `LocalProvider` groups that can be mounted into multiple public surfaces without duplicating handler logic.
 
 ---
 
@@ -31,11 +31,12 @@ Replace the current flat registration mindset with reusable provider groups that
 
 - `server/adapters/mcp/areas/*.py`
   - stop assuming a single global `mcp`
-  - expose registration functions that can bind to a concrete provider
+  - expose registration functions that can bind to `FastMCP` or `LocalProvider`
 - `server/adapters/mcp/areas/__init__.py`
-  - replace side-effect-only imports with exported registrars/provider builders
+  - replace side-effect-only imports with exported registrars / provider builders
 - `server/infrastructure/di.py`
-  - add provider factories alongside handler factories
+  - keep handler DI explicit
+  - do not add a second dependency system just for providers
 
 ### New Files To Create
 
@@ -45,6 +46,9 @@ Replace the current flat registration mindset with reusable provider groups that
 - `server/adapters/mcp/providers/internal_tools.py`
 - `server/adapters/mcp/providers/__init__.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
+
+These files should build `LocalProvider` instances or expose registrar functions.
+They should not introduce repo-specific provider base classes unless a real need emerges.
 
 ### Migration Rule
 
@@ -62,6 +66,9 @@ After each family:
 - dispatcher alignment must stay green
 - hidden side-effect imports must keep shrinking, not regrow in another file
 
+Do not pause this task to redesign every area into a new abstraction family.
+The first-pass goal is to decouple registration from one global `mcp`, not to maximize abstraction.
+
 ---
 
 ## Provider Split
@@ -76,6 +83,22 @@ After each family:
   - compatibility or helper tools not meant for default discovery
 
 `server/adapters/mcp/dispatcher.py` remains the router execution bridge. It does not become the public catalog registry.
+
+---
+
+## Implementation Direction
+
+Prefer one of these two patterns:
+
+1. `register_scene_tools(target, di)` style registrars bound to `FastMCP` or `LocalProvider`
+2. `build_scene_provider(di) -> LocalProvider`
+
+Both are acceptable if they:
+
+- remove the hard dependency on `server.adapters.mcp.instance.mcp`
+- keep business logic in handlers
+- avoid duplicating tool definitions across surfaces
+- keep router dispatcher naming aligned with canonical internal tool names
 
 ---
 
@@ -118,3 +141,13 @@ def build_core_tools_provider(di) -> LocalProvider:
 - tools are assembled from reusable providers instead of one global registry
 - multiple FastMCP servers can be composed from the same providers
 - provider boundaries stay aligned with Clean Architecture responsibilities
+- the first implementation uses built-in `LocalProvider` composition and/or registrars, not an unnecessary custom provider framework
+
+---
+
+## Atomic Work Items
+
+1. Extract registration seams from area modules without changing handler/business behavior.
+2. Group those registrars into reusable `LocalProvider` builders.
+3. Keep router / dispatcher internal naming separate from public surface shaping.
+4. Add tests proving multiple surfaces can reuse the same provider groups.

@@ -9,7 +9,7 @@
 
 ## Objective
 
-Implement visibility filtering around component tags, audience, and session phase.
+Implement deterministic visibility filtering around component tags, audience, and session phase, starting with the small guided entry surface instead of the full catalog.
 
 ---
 
@@ -22,10 +22,10 @@ Implement visibility filtering around component tags, audience, and session phas
 - introduce tags such as:
   - `phase:planning`
   - `phase:build`
-  - `phase:repair`
+  - `phase:inspect`
   - `audience:legacy`
   - `audience:llm`
-  - `risk:destructive`
+  - `entry:guided`
 
 ### Ownership Rule
 
@@ -60,11 +60,14 @@ def is_visible(component, phase, profile):
 
 - visibility rules are deterministic and testable
 - provider tags become the canonical grouping mechanism for visibility decisions
+- the first implementation operates on the guided entry surface before expanding to the deeper catalog
 
 ---
 
 ## Atomic Work Items
 
-1. Materialize profile, audience, phase, and risk tags on provider components.
+1. Materialize profile, audience, phase, and entry-surface tags on provider components.
 2. Implement one deterministic visibility policy function.
-3. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.
+3. Apply the policy first to `router_*`, `workflow_catalog`, and other small entry capabilities.
+4. Leave the deeper catalog reachable through profile defaults and/or search until later expansion is justified.
+5. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.

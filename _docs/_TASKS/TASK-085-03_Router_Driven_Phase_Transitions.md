@@ -9,7 +9,7 @@
 
 ## Objective
 
-Feed router state changes into session phase transitions without moving discovery or visibility ownership into the router.
+Feed router state changes into coarse session phase transitions without moving discovery or visibility ownership into the router.
 
 ---
 
@@ -25,9 +25,9 @@ Feed router state changes into session phase transitions without moving discover
 
 - create `server/router/application/session_phase_hints.py`
 - emit phase hints such as:
-  - `workflow_resolution` after `router_set_goal`
+  - `planning` after `router_set_goal` resolves or requests clarification
   - `build` when workflow execution or expansion starts
-  - `repair` after firewall blocks or high-risk correction paths
+  - `inspect` when the guided surface hands off into inspection / validation flows
 - let the FastMCP platform layer persist the final phase in session state
 
 ---
@@ -35,12 +35,12 @@ Feed router state changes into session phase transitions without moving discover
 ## Pseudocode
 
 ```python
-if router_result.pending_workflow:
-    phase_hint = "workflow_resolution"
-elif router_result.executed_workflow:
+if router_result.executed_workflow:
     phase_hint = "build"
-elif router_result.blocked_calls > 0:
-    phase_hint = "repair"
+elif router_result.needs_input or router_result.pending_workflow:
+    phase_hint = "planning"
+elif router_result.inspection_recommended:
+    phase_hint = "inspect"
 ```
 
 ---
@@ -56,5 +56,6 @@ elif router_result.blocked_calls > 0:
 
 ## Acceptance Criteria
 
-- the router provides phase hints only
+- the router provides coarse phase hints only
 - the visibility layer remains the owner of what becomes visible
+- the first implementation does not require broad phase orchestration across the full tool catalog

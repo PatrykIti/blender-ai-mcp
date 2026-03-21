@@ -9,7 +9,7 @@
 
 ## Objective
 
-Define an explicit session state model and a small set of capability phases that visibility rules can rely on.
+Define an explicit session state model and a deliberately small first-pass phase set that visibility rules can rely on.
 
 ---
 
@@ -30,9 +30,9 @@ Define an explicit session state model and a small set of capability phases that
 - store in session state:
   - `phase`
   - `goal`
-  - `active_surface_profile`
-  - `active_contract_line`
+  - `pending_clarification`
   - `last_router_status`
+  - optional read-only bootstrap metadata when useful for diagnostics
 
 ---
 
@@ -42,12 +42,11 @@ Define an explicit session state model and a small set of capability phases that
 class SessionPhase(StrEnum):
     BOOTSTRAP = "bootstrap"
     PLANNING = "planning"
-    WORKFLOW_RESOLUTION = "workflow_resolution"
     BUILD = "build"
-    INSPECT_VALIDATE = "inspect_validate"
-    REPAIR = "repair"
-    EXPORT_HANDOFF = "export_handoff"
+    INSPECT = "inspect"
 ```
+
+Optional future extensions such as `repair` or `export_handoff` should not block the first rollout.
 
 ### State Model Rule
 
@@ -56,9 +55,9 @@ It must not become a second bootstrap config system.
 
 In particular:
 
-- `active_surface_profile` comes from bootstrap
-- `active_contract_line` comes from version selection
+- bootstrap config remains outside mutable session state
 - `phase` changes during the session
+- if profile/version metadata is stored for diagnostics, it should be read-only mirrored state, not a second config system
 
 ---
 
@@ -74,11 +73,13 @@ In particular:
 ## Acceptance Criteria
 
 - phases are explicit, serializable, and not hidden inside private router fields
+- the first phase model is intentionally coarse and small enough to operate reliably on the current sync-heavy repo
 
 ---
 
 ## Atomic Work Items
 
-1. Define the session-state schema and default values.
-2. Add profile, contract-line, and phase helpers.
+1. Define the minimal session-state schema and default values.
+2. Add coarse phase helpers only for the first guided entry surface.
 3. Add tests for persistence and reset behavior across turns.
+4. Do not introduce fine-grained workflow phases until the coarse model proves useful.

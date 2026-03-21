@@ -1,4 +1,4 @@
-# TASK-087-01: Elicitation Domain Model and Response Contracts
+# TASK-087-01: Clarification Requirements Model and MCP Elicitation Mapping
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
 **Status:** ⬜ Planned  
@@ -9,7 +9,7 @@
 
 ## Objective
 
-Define typed elicitation request and response models that can be derived from `ParameterSchema` and persisted safely across a session.
+Define a domain-neutral clarification-requirements model derived from `ParameterSchema`, then map it at the FastMCP adapter layer to native elicitation or compatibility fallback payloads.
 
 ---
 
@@ -24,9 +24,9 @@ Define typed elicitation request and response models that can be derived from `P
 ## Planned Work
 
 - create:
-  - `server/router/domain/entities/elicitation.py`
+  - `server/router/domain/entities/clarification.py`
   - `server/adapters/mcp/elicitation_contracts.py`
-  - `tests/unit/router/domain/entities/test_elicitation.py`
+  - `tests/unit/router/domain/entities/test_clarification.py`
 
 ---
 
@@ -34,13 +34,23 @@ Define typed elicitation request and response models that can be derived from `P
 
 ```python
 @dataclass
-class ElicitationRequest:
-    request_id: str
-    question_set_id: str
+class ClarificationRequirement:
+    field_name: str
+    prompt: str
+    value_type: str
+    required: bool
+    choices: list[str] | None
+    allows_multiple: bool = False
+
+
+@dataclass
+class ClarificationPlan:
     goal: str
     workflow_name: str
-    fields: list[ElicitationField]
+    requirements: list[ClarificationRequirement]
 ```
+
+MCP-specific fields such as `request_id`, `question_set_id`, and protocol actions belong in the adapter mapping layer, not in router domain entities.
 
 ---
 
@@ -55,13 +65,15 @@ class ElicitationRequest:
 
 ## Acceptance Criteria
 
-- unresolved parameters can be mapped into typed elicitation fields
-- the contract explicitly supports `accept`, `decline`, and `cancel`
+- unresolved parameters can be mapped into typed clarification requirements
+- domain/application models stay free of MCP protocol identifiers and action enums
+- the adapter layer can map the same clarification plan to native `ctx.elicit(...)` or to a typed `needs_input` fallback
 
 ---
 
 ## Atomic Work Items
 
-1. Define typed question and answer payloads derived from `ParameterSchema`.
-2. Add stable IDs for request, question set, and individual fields.
-3. Add serializable persistence rules for partial answers.
+1. Define domain-neutral clarification requirement and clarification plan models derived from `ParameterSchema`.
+2. Keep MCP request IDs, question-set IDs, and protocol action handling in `server/adapters/mcp/elicitation_contracts.py`.
+3. Define serializable persistence rules for partial answers and unresolved fields.
+4. Add adapter tests proving the same clarification plan can drive native elicitation and compatibility fallback.

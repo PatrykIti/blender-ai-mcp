@@ -1,4 +1,4 @@
-# TASK-089-05: Adapter Dual-Format Delivery Strategy
+# TASK-089-05: Native Structured-First Delivery and Compatibility Strategy
 
 **Parent:** [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md)  
 **Status:** ⬜ Planned  
@@ -9,20 +9,16 @@
 
 ## Objective
 
-Define the transition strategy for delivering structured-first responses while still supporting summary text and legacy clients where required.
+Define the transition strategy for delivering structured-first responses by relying on FastMCP's native structured/tool-output behavior first, while preserving explicit compatibility exceptions where required.
 
 ---
 
 ## Planned Work
 
-- add response renderers for:
-  - `structured`
-  - `structured_plus_summary`
-  - `legacy_text`
-- choose the renderer by surface profile, contract line, or explicit compatibility override
-- enforce MCP delivery parity:
-  - structured renderers expose `structuredContent` and respect declared `outputSchema`
-  - legacy renderer keeps text compatibility without changing source structured payloads
+- document which contract-enabled tools can rely on FastMCP automatic structured delivery immediately
+- define where explicit `outputSchema` is required versus where object-like returns are sufficient
+- define narrow compatibility exceptions for legacy text-heavy clients still expecting string output
+- avoid introducing a custom renderer layer unless a concrete compatibility gap remains after native structured returns are in place
 
 ---
 
@@ -39,12 +35,13 @@ Define the transition strategy for delivering structured-first responses while s
 
 - the transition to structured output does not force a destructive client cut-over
 - contract-enabled tools expose `structuredContent` + `outputSchema` on structured surfaces
-- legacy text fallback remains available and deterministic on compatibility surfaces
+- legacy text fallback remains available and deterministic on compatibility surfaces where it is still needed
+- first-pass rollout does not depend on a custom response-renderer subsystem
 
 ---
 
 ## Atomic Work Items
 
-1. Define default renderer selection per surface profile.
-2. Add contract-line overrides where legacy payloads must remain available.
-3. Add adapter tests for renderer selection and backward compatibility.
+1. Audit which tools can switch from JSON-string returns to native object/model returns with no client breakage.
+2. Define contract-line or profile-level exceptions only for the few tools that still need legacy text compatibility.
+3. Add adapter tests for native structured delivery and backward compatibility.

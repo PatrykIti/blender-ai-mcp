@@ -67,6 +67,12 @@ Visibility work in this task must preserve the distinction between:
 
 The router may emit hints, but FastMCP remains the owner of what is visible.
 
+Initial rollout rule:
+
+- start with a very small async-capable entry surface (`router_*`, `workflow_catalog`, prompt/help/status entrypoints where applicable)
+- start with coarse phases only
+- do not attempt whole-catalog phase orchestration in the first pass
+
 ---
 
 ## FastMCP Features To Use
@@ -123,11 +129,12 @@ This remains the umbrella task. The original business goal stays unchanged.
 
 ### Atomic Delivery Waves
 
-1. Define explicit session state keys and the minimal phase model.
+1. Define explicit session state keys and the minimal coarse phase model.
 2. Bind visibility rules to platform tags and profile defaults instead of ad hoc wrapper logic.
 3. Feed router-generated phase hints into session state without moving ownership into the router.
-4. Add guided presets for `llm-guided` work while preserving deeper access through search or debug surfaces.
-5. Add observability so maintainers can see which profile and phase shaped the active surface.
+4. Apply adaptive visibility first to the small guided entry surface, not to the whole catalog.
+5. Add guided presets for `llm-guided` work while preserving deeper access through search or debug surfaces.
+6. Add observability so maintainers can see which profile and phase shaped the active surface.
 
 Implementation is decomposed into:
 

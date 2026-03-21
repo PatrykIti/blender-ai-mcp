@@ -33,6 +33,7 @@ Standardize contracts for `mesh_inspect` and the internal `mesh_get_*` actions, 
   - `returned`
   - `total`
   - `items`
+- replace `json.dumps(...)` adapter returns in `mesh_inspect` actions with native structured payloads
 
 ### Spatial Priority
 
@@ -68,4 +69,5 @@ These contracts should make it easy for an LLM to stay oriented in mesh space:
 
 1. Standardize envelope fields for all `mesh_inspect` actions.
 2. Normalize per-item schemas for vertices, edges, faces, normals, UVs, attributes, shape keys, and weights.
-3. Add paging and selection-filter tests for every action family.
+3. Return native dict / model payloads from mesh inspection adapters so FastMCP can emit `structuredContent` directly.
+4. Add paging and selection-filter tests for every action family.

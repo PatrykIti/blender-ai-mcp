@@ -2,7 +2,7 @@
 
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
 **Status:** ⬜ Planned  
-**Priority:** 🔴 High  
+**Priority:** 🟡 Medium  
 **Depends On:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)
 
 ---
@@ -23,6 +23,9 @@ Compose separate public surfaces through version filtering instead of forking th
 Apply version filters only after provider registration and public naming/contract metadata are already stable.
 `VersionFilter` should shape public surfaces, not become a substitute for naming or renderer policy.
 
+Do not use `VersionFilter` as the first mechanism for creating `legacy-flat` versus `llm-guided`.
+Profile composition should exist first; version filtering is an additive coexistence tool.
+
 ---
 
 ## Layered Subtasks
@@ -37,11 +40,12 @@ Apply version filters only after provider registration and public naming/contrac
 ## Acceptance Criteria
 
 - legacy and `llm-guided` surfaces can coexist on top of the same provider set
+- version filtering is used only where multiple public contract versions actually exist
 
 ---
 
 ## Atomic Work Items
 
-1. Add `VersionFilter` selection to profile composition.
-2. Add one test for legacy-only exposure and one for llm-guided exposure.
+1. Add `VersionFilter` selection to profile composition only after the target profile matrix is already stable.
+2. Add one test for legacy-only exposure and one for llm-guided exposure where a capability genuinely has multiple public contract versions.
 3. Add one test ensuring unversioned internals do not leak unexpectedly into profile-specific public surfaces.
