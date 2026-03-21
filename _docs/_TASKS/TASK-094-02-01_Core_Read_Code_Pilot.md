@@ -15,9 +15,11 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 
 ## Repository Touchpoints
 
-- `server/application/tool_handlers/scene_handler.py`
-- `server/application/tool_handlers/mesh_handler.py`
-- `server/application/tool_handlers/workflow_catalog_handler.py`
+- `server/adapters/mcp/factory.py`
+- `server/adapters/mcp/surfaces.py`
+- `server/adapters/mcp/settings.py`
+- `server/adapters/mcp/transforms/discovery.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
 
 ---
 
@@ -31,11 +33,18 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 
 ### Implementation Checklist
 
-- touch `server/application/tool_handlers/scene_handler.py` with explicit change notes and boundary rationale
-- touch `server/application/tool_handlers/mesh_handler.py` with explicit change notes and boundary rationale
-- touch `server/application/tool_handlers/workflow_catalog_handler.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/factory.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/surfaces.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/settings.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/transforms/discovery.py` with explicit change notes and boundary rationale
+- touch `tests/unit/adapters/mcp/test_server_factory.py` with explicit change notes and boundary rationale
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
+
+### Layer Boundary Rule
+
+Keep this slice in MCP platform composition.
+Do not rewrite scene/mesh/workflow handlers only to make Code Mode read-only.
 
 ### Review Notes To Attach
 
@@ -51,12 +60,13 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 - write/destructive operations are blocked where required
 - benchmark artifacts are reproducible and linked to recommendations
 - slice remains profile-scoped and opt-in only
+- business handler logic remains unchanged unless a separate domain task explicitly requires it
 
 ---
 
 ## Atomic Work Items
 
-1. Implement pilot/benchmark/documentation behavior in listed touchpoints.
+1. Implement pilot/benchmark/documentation behavior in listed MCP platform touchpoints.
 2. Add tests for guardrail enforcement and discovery/execution flow.
 3. Capture benchmark metrics vs classic tool-loop baseline.
 4. Document go/no-go criteria and retained constraints.

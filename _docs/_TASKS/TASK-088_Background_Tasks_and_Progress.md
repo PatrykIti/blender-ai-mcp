@@ -72,6 +72,7 @@ Implementation should stay split across four seams:
 - server RPC verbs and protocol changes
 - addon job lifecycle and main-thread coordination
 - incremental adoption by selected heavy tools
+- async task-capable adapter entrypoints (`async def` + `task=True`) for selected heavy operations
 
 ---
 
@@ -131,7 +132,7 @@ This remains the umbrella task. The original scope stays unchanged.
 2. Build the FastMCP task bridge and explicit job identity mapping.
 3. Define progress, cancellation, and result retrieval contracts.
 4. Adapt RPC and addon runtime to launch, poll, and cancel Blender jobs safely.
-5. Roll task mode into the highest-value heavy tools first.
+5. Convert selected heavy entrypoints to async task-capable adapters and roll task mode into the highest-value tools first.
 6. Add operations-focused tests and docs for task behavior.
 
 Implementation is decomposed into:

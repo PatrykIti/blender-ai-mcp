@@ -16,7 +16,18 @@ Expose prompt assets safely to tool-only clients through a prompt-as-tools bridg
 ## Planned Work
 
 - use a `PromptsAsTools`-style transform
+- use canonical bridge tool names exposed by the transform:
+  - `list_prompts`
+  - `get_prompt`
 - define visibility and pinning rules for prompt bridge tools
+
+### Pinning Rule
+
+For tool-only `llm-guided` surfaces:
+
+- keep `list_prompts` pinned as the discovery entry point
+- keep `get_prompt` discoverable without forcing it into every pinned set unless profile UX requires it
+- do not introduce duplicate custom bridge names for the same behavior
 
 ---
 
@@ -32,3 +43,4 @@ Expose prompt assets safely to tool-only clients through a prompt-as-tools bridg
 ## Acceptance Criteria
 
 - tool-only clients can access prompt products without copying markdown outside the server
+- bridge tool naming is explicit and stable (`list_prompts`, `get_prompt`)

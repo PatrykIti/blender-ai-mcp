@@ -25,7 +25,11 @@ Implement the core code changes for **Prompts as Tools Bridge**.
 ## Planned Work
 
 - use a `PromptsAsTools`-style transform
+- expose canonical bridge tool names:
+  - `list_prompts`
+  - `get_prompt`
 - define visibility and pinning rules for prompt bridge tools
+- keep `list_prompts` pinned by default on tool-only `llm-guided` surfaces; keep `get_prompt` discoverable and pin only when profile UX requires it
 ---
 
 ## Acceptance Criteria
@@ -35,5 +39,6 @@ Implement the core code changes for **Prompts as Tools Bridge**.
 
 ## Atomic Work Items
 
-1. Implement the leaf scope in the listed touchpoints.
-2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.
+1. Implement PromptsAsTools bridge with canonical `list_prompts` and `get_prompt` names.
+2. Implement deterministic pinning/visibility policy per surface profile without duplicate bridge aliases.
+3. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

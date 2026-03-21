@@ -26,8 +26,15 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 ### Slice Outputs
 
 - materialize structured execution/audit/postcondition behavior for correction paths
-- ensure verification triggers map to inspection contracts for high-risk fixes
 - expose auditable outcomes to responses/logs with deterministic fields
+
+### Boundary Rule
+
+Keep this slice focused on report-pipeline structure and propagation.
+Do not implement postcondition trigger mapping or verification orchestration here; that belongs to:
+
+- [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)
+- [TASK-097-04](./TASK-097-04_Inspection_Based_Verification_Integration.md)
 
 ### Implementation Checklist
 
@@ -48,15 +55,15 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 ## Acceptance Criteria
 
 - audit and execution-report fields are complete and deterministic
-- postcondition verification gates high-risk success finalization
-- failure/inconclusive verification paths are explicit and test-covered
+- verification outcomes (when produced upstream) are propagated without reinterpretation
 - slice integrates with policy and contract layers without ambiguity
+- trigger and orchestration ownership stays outside this slice (TASK-097-03/097-04)
 
 ---
 
 ## Atomic Work Items
 
-1. Implement audit/report/verification mapping in listed touchpoints.
-2. Add tests for success, failure, and inconclusive verification outcomes.
+1. Implement audit/report field mapping and propagation in listed touchpoints.
+2. Add tests for report completeness across direct, corrected, blocked, and needs-input paths.
 3. Capture before/after audit payload examples for corrected executions.
-4. Document postcondition trigger rules and exposure policy.
+4. Document handoff contract to TASK-097-03/097-04 for postcondition trigger and verification ownership.

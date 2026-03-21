@@ -15,9 +15,16 @@ Build a read-only pilot surface for discovery, inspection, and workflow explorat
 
 ## Repository Touchpoints
 
-- `server/application/tool_handlers/scene_handler.py`
-- `server/application/tool_handlers/mesh_handler.py`
-- `server/application/tool_handlers/workflow_catalog_handler.py`
+- `server/adapters/mcp/factory.py`
+- `server/adapters/mcp/surfaces.py`
+- `server/adapters/mcp/settings.py`
+- `server/adapters/mcp/transforms/discovery.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
+
+### Boundary Rule
+
+Code Mode pilot work belongs to the MCP platform composition layer.
+Do not fork or rewrite business handlers just to expose a read-only Code Mode surface.
 
 ---
 
@@ -33,3 +40,4 @@ Build a read-only pilot surface for discovery, inspection, and workflow explorat
 ## Acceptance Criteria
 
 - the pilot surface does not expose direct destructive write paths by default
+- pilot behavior is delivered through profile composition and transforms, not handler-layer forks

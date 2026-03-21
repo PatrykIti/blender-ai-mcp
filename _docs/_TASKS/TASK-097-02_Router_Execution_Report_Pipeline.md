@@ -27,6 +27,14 @@ Extend router output and `route_tool_call()` so multi-step execution produces a 
 2. Capture original call, corrected steps, executed steps, and final status.
 3. Add adapter rendering tests for structured and summary variants.
 
+### Boundary Rule
+
+This task owns report pipeline structure and propagation.
+Postcondition trigger logic and inspection verification orchestration remain in:
+
+- [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)
+- [TASK-097-04](./TASK-097-04_Inspection_Based_Verification_Integration.md)
+
 ---
 
 ## Layered Subtasks

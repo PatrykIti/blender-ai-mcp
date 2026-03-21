@@ -27,7 +27,7 @@ Implement the core code changes for **Tool and Task Timeout Policy**.
 ### Slice Outputs
 
 - separate foreground and long-running operation boundaries with explicit contracts
-- align RPC/task/pagination/timeout behavior with deterministic state transitions
+- align RPC/task/timeout behavior with deterministic state transitions
 - keep Blender main-thread safety and operational diagnostics explicit
 
 ### Implementation Checklist
@@ -50,7 +50,7 @@ Implement the core code changes for **Tool and Task Timeout Policy**.
 ## Acceptance Criteria
 
 - operation lifecycle states are explicit and test-covered
-- timeouts/pagination/diagnostics behavior is boundary-specific and documented
+- timeout/diagnostics behavior is boundary-specific and documented
 - error and cancellation paths preserve consistent contracts
 - slice does not regress existing synchronous operations
 
@@ -59,6 +59,6 @@ Implement the core code changes for **Tool and Task Timeout Policy**.
 ## Atomic Work Items
 
 1. Implement operation boundary logic and contracts in listed touchpoints.
-2. Add tests for launch/poll/cancel/timeout/pagination state transitions as applicable.
+2. Add tests for launch/poll/cancel/timeout state transitions as applicable.
 3. Capture baseline vs post-change operational metrics for the slice.
 4. Document runtime boundary behavior and failure semantics.

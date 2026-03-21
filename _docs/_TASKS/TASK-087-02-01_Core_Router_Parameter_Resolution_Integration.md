@@ -25,6 +25,7 @@ Implement the core code changes for **Router Parameter Resolution Integration**.
 
 - make `router_set_goal()` async-aware on the elicitation-capable `llm-guided` surface
 - return typed unresolved bundles instead of only plain dict lists
+- enforce request-bound elicitation lifecycle (no out-of-band prompting outside active MCP requests)
 ---
 
 ## Acceptance Criteria
@@ -37,4 +38,5 @@ Implement the core code changes for **Router Parameter Resolution Integration**.
 
 1. Add an async router entry tool for native elicitation.
 2. Preserve the current second-call `resolved_params` fallback path.
-3. Validate that learned parameter storage still works after elicitation answers are applied.
+3. Enforce request-bound elicitation semantics and reject out-of-band continuation attempts.
+4. Validate that learned parameter storage still works after elicitation answers are applied.

@@ -37,6 +37,14 @@ Each slice must prove:
 - result retrieval is explicit
 - the synchronous fallback remains understandable
 
+### Async Gate
+
+Each adopted candidate must include an explicit async MCP entrypoint on task-capable surfaces:
+
+- `async def ...` adapter signature
+- `task=True` enablement at the MCP boundary
+- explicit fallback behavior for legacy/sync surfaces where required
+
 ---
 
 ## Layered Subtasks
@@ -51,3 +59,4 @@ Each slice must prove:
 ## Acceptance Criteria
 
 - at least one render path, one extraction path, and one workflow-import path support task mode
+- adopted paths are explicitly async task-capable on selected surfaces, with documented fallback on non-task surfaces

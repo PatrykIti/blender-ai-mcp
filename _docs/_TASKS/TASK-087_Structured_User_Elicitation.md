@@ -68,6 +68,7 @@ For this repo:
 - native elicitation should live on async-capable LLM-guided surfaces
 - legacy and tool-only surfaces must keep a typed `needs_input` fallback
 - workflow context and partial answers must survive across the next interaction step
+- elicitation must remain request-bound to an active MCP request (no out-of-band elicitation after request completion)
 
 ---
 

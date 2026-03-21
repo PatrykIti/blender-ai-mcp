@@ -48,6 +48,7 @@ Each slice must prove:
 - progress and cancellation are observable
 - result retrieval is explicit
 - the synchronous fallback remains understandable
+- selected entrypoints are exposed as async task-capable adapters (`async def`, `task=True`) on task-enabled surfaces
 ---
 
 ## Acceptance Criteria
@@ -57,5 +58,6 @@ Each slice must prove:
 
 ## Atomic Work Items
 
-1. Implement the leaf scope in the listed touchpoints.
-2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.
+1. Convert selected candidates to explicit async MCP entrypoints with `task=True` on task-enabled surfaces.
+2. Preserve or document sync fallback behavior for non-task/legacy surfaces.
+3. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

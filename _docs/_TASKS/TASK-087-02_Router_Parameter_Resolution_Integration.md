@@ -45,6 +45,11 @@ This task should add:
 - native elicitation on `llm-guided`
 - fallback `needs_input` payloads on `legacy-flat`
 
+### Request-Bound Rule
+
+`ctx.elicit(...)` must run only inside an active request context.
+Do not introduce out-of-band elicitation continuations after request completion; use persisted state and a new request turn instead.
+
 ---
 
 ## Layered Subtasks
@@ -60,6 +65,7 @@ This task should add:
 
 - missing parameters can be collected without breaking the router goal flow
 - workflow execution receives a consistent resolved payload
+- elicitation flow remains request-bound and never depends on out-of-band server prompts
 
 ---
 
