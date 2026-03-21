@@ -136,7 +136,7 @@ This remains the umbrella task. The original scope stays unchanged.
 ### Atomic Delivery Waves
 
 1. Define the correction event model.
-2. Add structured router execution reporting.
+2. Extend the base structured router execution report from TASK-089 with audit-oriented fields.
 3. Register which fixes require post-execution verification.
 4. Verify those fixes through inspection contracts.
 5. Expose the audit trail in responses and logs.
@@ -147,7 +147,7 @@ Implementation is decomposed into:
 | Order | Subtask | Purpose |
 |------|---------|---------|
 | 1 | [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md) | Define the correction audit event model |
-| 2 | [TASK-097-02](./TASK-097-02_Router_Execution_Report_Pipeline.md) | Add structured router execution reporting |
+| 2 | [TASK-097-02](./TASK-097-02_Router_Execution_Report_Pipeline.md) | Extend the base execution report with audit-aware reporting |
 | 3 | [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md) | Register postconditions for high-risk fixes |
 | 4 | [TASK-097-04](./TASK-097-04_Inspection_Based_Verification_Integration.md) | Verify important fixes through inspection contracts |
 | 5 | [TASK-097-05](./TASK-097-05_Audit_Exposure_in_MCP_Responses_and_Logs.md) | Expose audit trails to clients and logging |

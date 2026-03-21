@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
+**Dependencies:** TASK-083, TASK-086  
 **Status:** ⬜ To Do
 
 ---
@@ -67,9 +67,17 @@ For this repo, the preferred default is:
 - a very small pinned visible set
 - native synthetic `search_tools` and `call_tool`
 
+Discovery rollout for this repo must happen in two phases:
+
+- **Infrastructure phase:** inventory, search document building, and call-path validation may proceed once the platform composition and transform baseline exists
+- **Default public rollout phase:** search-first becomes the default `llm-guided` experience only after the public LLM-facing naming/argument surface from TASK-086 is stable enough to index intentionally and compare safely against legacy behavior
+
 Hard gate:
 
 - TASK-084 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
+- default rollout on the public `llm-guided` surface is additionally blocked until:
+  - the shaped public surface from TASK-086 exists and is stable enough to index intentionally
+  - TASK-091 defines the coexistence/rollback path for comparing discovery-first behavior against legacy behavior
 
 Do not introduce a custom search proxy unless the built-in call path proves insufficient.
 
@@ -96,6 +104,7 @@ This task covers:
 - deciding which tools stay always visible
 - designing a small public “entry layer” for the server
 - improving LLM tool selection quality at catalog scale
+- moving discovery onto the shaped public surface rather than indexing raw internal adapter names as the long-term default
 
 This task does not cover:
 
@@ -135,11 +144,11 @@ This remains the umbrella task. The original product objective stays unchanged.
 ### Atomic Delivery Waves
 
 1. Define one platform-owned discovery manifest and taxonomy.
-2. Roll out BM25 search with pinned entry tools on the LLM-guided surface.
+2. Build BM25 search infrastructure and pinned entry tooling against the canonical platform manifest.
 3. Enrich search text from docstrings, schemas, aliases, and capability metadata.
 4. Prove discovered-tool execution stays on the same router and dispatcher path.
 5. Prove auth/visibility parity for `search_tools` / `call_tool` vs direct paths.
-6. Measure payload reduction and search quality before making discovery-first the default.
+6. Roll discovery-first out as the default only on the stabilized public surface, then measure payload reduction and search quality against legacy behavior.
 
 Implementation is decomposed into:
 
@@ -153,6 +162,8 @@ Implementation is decomposed into:
 
 ### Repo-Specific Focus
 
+- future `server/adapters/mcp/platform/**`
+- future `server/adapters/mcp/discovery/**`
 - `server/router/infrastructure/tools_metadata/**`
 - `server/router/infrastructure/metadata_loader.py`
 - `server/adapters/mcp/areas/*.py`

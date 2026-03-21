@@ -9,7 +9,7 @@
 
 ## Objective
 
-Introduce typed contracts for `router_set_goal`, router status, workflow catalog responses, and execution reporting.
+Introduce typed contracts for `router_set_goal`, router status, workflow catalog responses, and the base execution-report envelope used by router-aware adapter calls.
 
 ---
 
@@ -40,6 +40,11 @@ The execution report should let an LLM and an operator see:
 - what actually executed
 - what failed, blocked, or needs input next
 
+### Ownership Rule
+
+This task owns the base execution-report contract and adapter-facing response envelope.
+Later audit/postcondition work in TASK-097 must extend this contract rather than redefining it from scratch.
+
 ---
 
 ## Layered Subtasks
@@ -63,4 +68,5 @@ The execution report should let an LLM and an operator see:
 1. Define structured `router_set_goal` success, needs-input, no-match, and error contracts.
 2. Define workflow catalog list/get/search/import contracts.
 3. Return native object/model payloads from router and workflow catalog adapters instead of JSON strings.
-4. Define the execution report envelope used by router-aware adapter calls.
+4. Define the base execution report envelope used by router-aware adapter calls.
+5. Keep audit-trail and postcondition-verification fields out of the base contract until TASK-097 layers them on intentionally.

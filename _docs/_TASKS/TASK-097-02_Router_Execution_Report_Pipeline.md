@@ -3,13 +3,13 @@
 **Parent:** [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)
+**Depends On:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md), [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)
 
 ---
 
 ## Objective
 
-Extend router output and `route_tool_call()` so multi-step execution produces a structured execution report instead of only a concatenated text response.
+Extend the base execution report from TASK-089-04 so router output and `route_tool_call()` carry correction audit and verification-aware data instead of only a concatenated text response.
 
 ---
 
@@ -24,13 +24,15 @@ Extend router output and `route_tool_call()` so multi-step execution produces a 
 
 ## Atomic Work Items
 
-1. Define one execution-report schema shared by router-aware tool entry points.
-2. Capture original call, corrected steps, executed steps, and final status.
-3. Add adapter rendering tests for structured and summary variants.
+1. Reuse the base execution-report contract from TASK-089-04 instead of redefining it.
+2. Add correction-audit fields and references to the correction event model from TASK-097-01.
+3. Extend execution reporting with verification-ready status fields and placeholders that later subtasks can populate.
+4. Add adapter rendering tests for structured and summary variants.
 
 ### Boundary Rule
 
-This task owns report pipeline structure and propagation.
+TASK-089-04 owns the base report envelope and router/workflow response contracts.
+This task owns only the audit/postcondition-oriented extension layer and propagation through the router-aware call path.
 Postcondition trigger logic and inspection verification orchestration remain in:
 
 - [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)
@@ -50,3 +52,4 @@ Postcondition trigger logic and inspection verification orchestration remain in:
 ## Acceptance Criteria
 
 - multi-step execution is represented as structured data as well as optional summary text
+- the extended audit/verification fields remain backward-compatible with the base execution-report contract from TASK-089-04

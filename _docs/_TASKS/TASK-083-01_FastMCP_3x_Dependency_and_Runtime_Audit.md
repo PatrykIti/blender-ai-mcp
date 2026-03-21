@@ -18,6 +18,7 @@ Audit every place where the current server is still shaped around FastMCP 2.x as
 Without this audit the migration can easily become half-upgraded:
 
 - `pyproject.toml` moves to 3.x while bootstrap still depends on 2.x patterns
+- FastMCP is upgraded while the repo still advertises or tests against a Python/runtime baseline that does not actually support the intended feature set
 - some tools are mounted through providers while others still depend on side-effect imports
 - tests continue asserting flat-catalog behavior
 - router/dispatcher logic still treats MCP wrappers as the only source of truth
@@ -46,12 +47,16 @@ Without this audit the migration can easily become half-upgraded:
 
 - `pyproject.toml`
   - move FastMCP dependency to a stable 3.0+ line (`>=3.0,<4.0` until explicitly revised)
+  - align `requires-python` and documented runtime support with the practical baseline used by this task series (`3.11+` unless explicitly revised)
   - define a separate 3.1+ feature gate for TASK-084/TASK-094 runtime work
   - record any additional dependencies only when they are actually required by selected platform features
+  - capture any intentionally degraded or unsupported behavior on older interpreters in a runtime matrix instead of leaving it implicit
 - `README.md`
   - update the runtime baseline note so it no longer states that the repo is still anchored on 2.x
+  - align the documented Python/runtime baseline with the audited support matrix
 - `_docs/_MCP_SERVER/README.md`
   - add a short migration-baseline section
+  - add a runtime-baseline section covering interpreter support and feature gates
 
 ### New Files To Create
 
@@ -61,6 +66,8 @@ Without this audit the migration can easily become half-upgraded:
   - validates the inventory against the actual runtime layout
 - `_docs/_MCP_SERVER/fastmcp_3x_migration_matrix.md`
   - maps current 2.x patterns to the target 3.x composition model
+- `_docs/_MCP_SERVER/runtime_baseline_matrix.md`
+  - records supported Python/FastMCP combinations, feature gates, and smoke-test expectations
 
 ---
 
@@ -74,6 +81,14 @@ This audit must explicitly capture already-visible inventory gaps in the repo, f
 - the runtime still has no explicit distinction between surface profile, contract version, and session phase
 
 These are not side observations. They directly affect later provider inventory, discovery, and visibility work.
+
+The audit must also explicitly resolve the current Python baseline mismatch:
+
+- repo guidance treats Python `3.11+` as the practical baseline for full functionality
+- `pyproject.toml` still advertises `^3.10`
+- several semantic/runtime dependencies only install on `3.11+`
+
+Gate 0 should not be considered green until that mismatch is documented and resolved into one explicit support policy.
 
 ---
 
@@ -104,6 +119,7 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 - inventory completeness test for all current MCP areas
 - inventory vs metadata-loader area coverage test
 - bootstrap smoke test proving imports no longer depend on hidden side effects
+- smoke-test matrix proving the selected FastMCP line boots on the supported Python baseline(s)
 
 ---
 
@@ -114,6 +130,7 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 3. Inventory every place that assumes one global `mcp` instance.
 4. Inventory every place that assumes one flat public catalog.
 5. Inventory every adapter entry point that will need async-aware context/session handling later.
+6. Inventory the practical Python/runtime baseline and document which feature sets are supported on each tested combination.
 
 ---
 
@@ -132,3 +149,4 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 - every known 2.x coupling point is documented and mapped to a follow-up migration task
 - inventory gaps are captured as first-class work items, not left implicit
 - FastMCP runtime baseline is pinned to an explicit 3.0+ line, with 3.1-only features documented as separate gates
+- `requires-python`, docs, and smoke-test assumptions agree on the supported runtime baseline used for this migration series

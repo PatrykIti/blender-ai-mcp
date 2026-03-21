@@ -142,7 +142,7 @@ This remains the umbrella task. The original scope stays unchanged.
 2. Remove unconditional `json.dumps(...)` / prose-only return paths from contract-enabled adapters.
 3. Convert scene context and scene inspection surfaces to stable structured payloads.
 4. Standardize mesh introspection envelopes and paging fields.
-5. Add structured router, workflow, and execution report contracts.
+5. Add structured router, workflow, and base execution-report contracts that later audit/postcondition work can extend.
 6. Add schema tests and public docs for the new contract set.
 
 Implementation is decomposed into:

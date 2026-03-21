@@ -136,7 +136,7 @@ This remains the umbrella task. The original business scope stays unchanged.
 
 ### Atomic Delivery Waves
 
-1. Audit current 2.x coupling and missing inventory coverage.
+1. Audit current 2.x coupling, supported Python/runtime baseline, and missing inventory coverage.
 2. Extract reusable `LocalProvider` groups / registrars and remove side-effect-only registration assumptions.
 3. Replace the singleton bootstrap with a server factory and surface profiles.
 4. Lock a deterministic transform order that later tasks extend rather than bypass.
@@ -161,8 +161,10 @@ Before starting broad implementation of TASK-084 through TASK-097, the following
 
 - **Gate 0 (after TASK-083-01): Runtime Baseline Gate**
   - `pyproject.toml` pins FastMCP to a stable 3.0+ baseline (`>=3.0,<4.0` unless explicitly revised)
+  - `pyproject.toml`, docs, and smoke-test assumptions agree on the practical supported Python baseline for this task series (`3.11+` unless explicitly revised)
+  - a runtime/dependency matrix explains which capabilities are baseline-supported vs degraded/disabled on older interpreters, and Gate 0 is evaluated against the supported baseline rather than an arbitrary local interpreter
   - migration docs explain that 3.1+ is a feature gate for downstream tasks that require it (`BM25SearchTransform`, `Code Mode`)
-  - smoke tests confirm runtime boots on the selected baseline and on the 3.1+ feature line used by gated tasks
+  - smoke tests confirm runtime boots on the selected FastMCP baseline and on the supported Python/runtime matrix used by gated tasks
 - **Gate A (after TASK-083-03): Composition Root Gate**
   - bootstrap uses `build_server(surface_profile=...)` instead of global side-effect registration
   - profile selection is explicit in config (`legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`)
