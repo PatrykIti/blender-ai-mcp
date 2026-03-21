@@ -311,3 +311,18 @@ Do not collapse these into one implementation task without explicitly separating
 8. Telemetry, timeouts, and diagnostics
 9. Sampling assistants and Code Mode experiments
 10. Confidence policy and correction audit hardening
+
+### Blocking Migration Gates Before TASK-084+
+
+After step 1, enforce two explicit gates before broad rollout of TASK-084 through TASK-097:
+
+- **Gate A (post TASK-083-03): Composition Root Ready**
+  - factory bootstrap is the runtime source of truth
+  - profile selection is explicit and test-covered
+  - global side-effect registration is no longer required for default startup
+- **Gate B (post TASK-083-04): Transform Pipeline Ready**
+  - transform order is deterministic and regression-tested
+  - naming, visibility, and version shaping are transform-driven
+  - provider-level vs server-level transform layering is documented and verified
+
+If either gate fails, downstream implementation tasks should be limited to planning/docs only.

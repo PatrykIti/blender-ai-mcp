@@ -24,21 +24,37 @@ Implement the core code changes for **Elicitation Tests and Docs**.
 
 ## Planned Work
 
-- unit contract tests
-- router handler tests
-- compatibility tests for fallback clients
-- docs updates in:
-  - `_docs/_MCP_SERVER/README.md`
-  - `_docs/_PROMPTS/README.md`
-  - `README.md`
+### Regression Scenarios (Required)
+
+1. accept/decline/cancel elicitation paths return deterministic contracts and session state updates.
+2. router parameter resolution integrates correctly with native elicitation in async-capable surfaces.
+3. tool-only fallback returns typed `needs_input` payloads equivalent to native elicitation semantics.
+4. retry/cancel flows preserve or clear partial answers exactly as documented.
+
+### Metrics To Capture
+
+- contract schema validation pass rate for elicitation payloads
+- native-vs-fallback parity mismatches (target: 0)
+- mean interaction rounds to resolve required parameters
+
+### Documentation Deliverables
+
+- update `_docs/_MCP_SERVER/README.md` with native vs fallback behavior matrix
+- update `_docs/_PROMPTS/README.md` with elicitation-aware prompting guidance
+- update `README.md` with user-facing clarification flow summary
 ---
 
 ## Acceptance Criteria
 
-- both interaction modes are documented and regression-tested
+- all required elicitation regression scenarios are implemented and passing
+- captured metrics are attached with baseline vs post-change values
+- docs explicitly describe both native elicitation and tool-only fallback behavior
+- no behavioral drift between documented and tested interaction modes
 ---
 
 ## Atomic Work Items
 
-1. Implement the leaf scope in the listed touchpoints.
-2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.
+1. Add/expand unit tests for elicitation contracts and router integration paths.
+2. Add explicit parity tests for native elicitation vs tool-only fallback payloads.
+3. Collect scenario metrics and attach them to the task progress notes.
+4. Update docs with regression matrix, examples, and compatibility guidance.

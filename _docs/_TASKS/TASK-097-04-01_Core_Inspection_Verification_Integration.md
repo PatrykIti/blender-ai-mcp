@@ -24,28 +24,41 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 
 ## Planned Work
 
-- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### Deliverables
 
----
+- implement the slice behavior end-to-end across: `server/router/application/router.py`, `server/router/application/engines/tool_correction_engine.py`, `server/router/adapters/mcp_integration.py`, `server/adapters/mcp/router_helper.py`
+- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
+- preserve the parent task contract so this slice can be merged independently
 
-## Layered Subtasks
+### Implementation Checklist
 
-| ID | Title | Focus |
-|----|-------|-------|
-| [TASK-097-04-01-01](./TASK-097-04-01-01_Postcondition_Mapping_and_Verification_Trigger.md) | Postcondition Mapping and Verification Trigger | Core slice |
-| [TASK-097-04-01-02](./TASK-097-04-01-02_Inspection_Call_Bridge_and_Result_Evaluation.md) | Inspection Call Bridge and Result Evaluation | Core slice |
+- touch `server/router/application/router.py` with an explicit change note (or explicit no-change rationale)
+- touch `server/router/application/engines/tool_correction_engine.py` with an explicit change note (or explicit no-change rationale)
+- touch `server/router/adapters/mcp_integration.py` with an explicit change note (or explicit no-change rationale)
+- touch `server/adapters/mcp/router_helper.py` with an explicit change note (or explicit no-change rationale)
+- add or update focused regression coverage for the changed slice behavior
+- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+
+### Review Notes To Attach
+
+- short rationale for every changed touchpoint
+- explicit note of any deferred work (if present) and why it is safe to defer
+- exact test commands used for slice validation
 
 ---
 
 ## Acceptance Criteria
 
-- high-risk verification depends on inspection-layer truth, not semantic guesswork
+- every listed touchpoint is either updated or explicitly marked as no-change with justification
+- the slice has at least one focused regression test proving intended behavior
+- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
+- parent-level behavior remains compatible when this slice lands alone
+
 ---
 
 ## Atomic Work Items
 
-1. Map each high-risk correction family to the scene or mesh inspection contracts it needs for verification.
-2. Trigger verification after correction and before final success is reported through adapter execution reports.
-3. Keep verification logic dependent on inspection-layer truth rather than semantic confidence or prose heuristics.
+1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
+2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
+3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
+4. Document any deferred edges and why they do not block parent-task acceptance.

@@ -22,20 +22,39 @@ Add tests and documentation updates for **Transform Pipeline Baseline**.
 
 ## Planned Work
 
-- Add unit/regression tests that cover the new behavior.
-- Update docs and examples to reflect the surface change.
-- Capture any compatibility or migration guidance if the surface changes.
+### Regression Scenarios (Required)
+
+1. transform order happy path: configured transform chain matches expected deterministic order.
+2. name-routing path: transformed public names still resolve to canonical internal tools.
+3. visibility/search interplay path: listing reflects visibility before discovery transforms.
+4. regression path: provider-level vs server-level transform layering remains stable.
+
+### Metrics To Capture
+
+- transform-order snapshot drift count (target: 0)
+- public->internal lookup mismatch count (target: 0)
+- profile transform-chain coverage in tests
+
+### Documentation Deliverables
+
+- update task-linked docs with a before/after summary tied to the captured metrics
+- document exact test commands, fixtures, and profile/config used during validation
+- record compatibility or migration notes when behavior differs between surfaces
 
 ---
 
 ## Acceptance Criteria
 
-- Tests cover the new behavior with minimal regressions.
-- Docs reflect the new contracts, surfaces, or policies.
+- all required regression scenarios are implemented and passing in CI/local test runs
+- metrics are captured with baseline vs post-change values and attached to the task update
+- docs include the regression matrix and explain expected behavior boundaries
+- no untracked regressions are observed on related router/dispatcher/platform paths
 
 ---
 
 ## Atomic Work Items
 
-1. Add or update unit tests for the new behavior.
-2. Update `_docs/` and public docs as needed.
+1. Implement the required regression scenarios in focused unit/integration tests.
+2. Run the target suites, collect metric outputs, and compare to baseline values.
+3. Update docs with regression matrix, metric table, and migration/compatibility notes.
+4. Verify adjacent surfaces for spillover regressions and document the result.

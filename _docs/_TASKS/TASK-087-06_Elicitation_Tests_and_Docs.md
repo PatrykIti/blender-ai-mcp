@@ -15,13 +15,24 @@ Add test coverage and documentation for both native elicitation mode and tool-on
 
 ## Planned Work
 
-- unit contract tests
-- router handler tests
-- compatibility tests for fallback clients
-- docs updates in:
-  - `_docs/_MCP_SERVER/README.md`
-  - `_docs/_PROMPTS/README.md`
-  - `README.md`
+### Regression Scenarios (Required)
+
+1. native elicitation happy path resolves missing workflow parameters and continues execution.
+2. accept/decline/cancel responses are persisted and replayed correctly across retries.
+3. tool-only fallback path returns typed `needs_input` contracts with equivalent decision semantics.
+4. mixed-client regression path shows no divergence between native and fallback behavior under identical inputs.
+
+### Metrics To Capture
+
+- elicitation contract schema pass rate
+- fallback/native parity mismatch count (target: 0)
+- average rounds-to-resolution for unresolved parameter sets
+
+### Documentation Deliverables
+
+- update `_docs/_MCP_SERVER/README.md` with interaction-mode matrix and examples
+- update `_docs/_PROMPTS/README.md` with elicitation-aware prompting recommendations
+- update `README.md` with high-level clarification flow and compatibility notes
 
 ---
 
@@ -36,4 +47,7 @@ Add test coverage and documentation for both native elicitation mode and tool-on
 
 ## Acceptance Criteria
 
-- both interaction modes are documented and regression-tested
+- all required elicitation regression scenarios are implemented and passing
+- metrics are captured with baseline vs post-change values and linked in task notes
+- native and fallback modes are both documented with explicit expected behavior
+- no undocumented divergence remains between tested and documented interaction flows

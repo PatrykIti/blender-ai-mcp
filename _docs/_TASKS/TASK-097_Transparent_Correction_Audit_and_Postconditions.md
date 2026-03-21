@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** Router Safety  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-089, TASK-096  
+**Dependencies:** TASK-089, TASK-095, TASK-096  
 **Status:** ⬜ To Do
 
 ---

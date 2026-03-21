@@ -3,7 +3,7 @@
 **Priority:** 🟡 Medium  
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
+**Dependencies:** TASK-083, TASK-088  
 **Status:** ⬜ To Do
 
 ---

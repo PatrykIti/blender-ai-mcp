@@ -148,6 +148,21 @@ Migration should stay area-oriented:
 - `router` and `workflow_catalog` next, because later 3.x interaction work depends on them
 - remaining families after the provider and factory pattern is proven
 
+### Migration Gates (Blocking For TASK-084+)
+
+Before starting broad implementation of TASK-084 through TASK-097, the following gates must pass:
+
+- **Gate A (after TASK-083-03): Composition Root Gate**
+  - bootstrap uses `build_server(surface_profile=...)` instead of global side-effect registration
+  - profile selection is explicit in config (`legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`)
+  - unit smoke tests prove at least two profiles can boot from the same provider set
+- **Gate B (after TASK-083-04): Transform Pipeline Gate**
+  - transform order is deterministic and covered by snapshot/regression tests
+  - naming/visibility/version shaping happens in the transform chain, not in ad hoc adapter wrappers
+  - provider-level and server-level transform layering is documented and verified in tests
+
+If either gate is red, downstream FastMCP platform tasks are blocked except for doc-only preparation.
+
 Implementation is decomposed into:
 
 | Order | Subtask | Purpose |

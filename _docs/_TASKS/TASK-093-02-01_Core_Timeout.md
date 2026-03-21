@@ -24,27 +24,41 @@ Implement the core code changes for **Tool and Task Timeout Policy**.
 
 ## Planned Work
 
-- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### Deliverables
 
----
+- implement the slice behavior end-to-end across: `server/adapters/rpc/client.py`, `blender_addon/infrastructure/rpc_server.py`, `server/infrastructure/config.py`, `server/adapters/mcp/factory.py`
+- keep ownership boundaries explicit (FastMCP platform vs router policy vs inspection truth)
+- preserve the parent task contract so this slice can be merged independently
 
-## Layered Subtasks
+### Implementation Checklist
 
-| ID | Title | Focus |
-|----|-------|-------|
-| [TASK-093-02-01-01](./TASK-093-02-01-01_Platform_Timeout_Policy_and_Config.md) | Platform Timeout Policy and Config | Core slice |
-| [TASK-093-02-01-02](./TASK-093-02-01-02_RPC_and_Addon_Timeout_Coordination.md) | RPC and Addon Timeout Coordination | Core slice |
+- touch `server/adapters/rpc/client.py` with an explicit change note (or explicit no-change rationale)
+- touch `blender_addon/infrastructure/rpc_server.py` with an explicit change note (or explicit no-change rationale)
+- touch `server/infrastructure/config.py` with an explicit change note (or explicit no-change rationale)
+- touch `server/adapters/mcp/factory.py` with an explicit change note (or explicit no-change rationale)
+- add or update focused regression coverage for the changed slice behavior
+- capture one before/after example of the affected runtime surface (payload, config, or execution flow)
+
+### Review Notes To Attach
+
+- short rationale for every changed touchpoint
+- explicit note of any deferred work (if present) and why it is safe to defer
+- exact test commands used for slice validation
 
 ---
 
 ## Acceptance Criteria
 
-- every runtime boundary has an explicit timeout contract
+- every listed touchpoint is either updated or explicitly marked as no-change with justification
+- the slice has at least one focused regression test proving intended behavior
+- no boundary violations are introduced relative to `RESPONSIBILITY_BOUNDARIES.md`
+- parent-level behavior remains compatible when this slice lands alone
+
 ---
 
 ## Atomic Work Items
 
-1. Implement the leaf scope in the listed touchpoints.
-2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.
+1. Implement the scoped behavior in the listed touchpoints with explicit boundary ownership.
+2. Add/adjust regression tests for the changed behavior and verify deterministic outcomes.
+3. Record before/after evidence for the changed surface (contract, visibility, routing, or runtime behavior).
+4. Document any deferred edges and why they do not block parent-task acceptance.
