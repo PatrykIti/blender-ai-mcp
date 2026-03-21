@@ -15,6 +15,8 @@ Implement the core code changes for **Router, Workflow, and Execution Report Con
 
 ## Repository Touchpoints
 
+- `server/adapters/mcp/contracts/router.py`
+- `server/adapters/mcp/contracts/workflow_catalog.py`
 - `server/application/tool_handlers/router_handler.py`
 - `server/application/tool_handlers/workflow_catalog_handler.py`
 - `server/adapters/mcp/areas/router.py`
@@ -28,6 +30,15 @@ Implement the core code changes for **Router, Workflow, and Execution Report Con
 - Implement the primary code changes described in the parent task.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
+
+---
+
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-04-01-01](./TASK-089-04-01-01_Router_Contracts_and_Execution_Report.md) | Router Contracts and Execution Report | Core slice |
+| [TASK-089-04-01-02](./TASK-089-04-01-02_Workflow_Catalog_Contracts.md) | Workflow Catalog Contracts | Core slice |
 
 ---
 

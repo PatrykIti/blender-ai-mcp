@@ -1,0 +1,40 @@
+# TASK-089-04-01-02: Workflow Catalog Contracts
+
+**Parent:** [TASK-089-04-01](./TASK-089-04-01_Core_Router_Workflow_Execution_Report.md)  
+**Status:** ⬜ Planned  
+**Priority:** 🔴 High  
+**Depends On:** None
+
+---
+
+## Objective
+
+Implement the **Workflow Catalog Contracts** slice of the parent task.
+
+---
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/contracts/workflow_catalog.py`
+- `server/application/tool_handlers/workflow_catalog_handler.py`
+- `server/adapters/mcp/areas/workflow_catalog.py`
+
+---
+
+## Planned Work
+
+- Implement the scoped changes for this slice.
+- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
+
+---
+
+## Acceptance Criteria
+
+- The scoped slice is complete and integrates cleanly with the parent task.
+
+---
+
+## Atomic Work Items
+
+1. Apply the changes in the listed touchpoints.
+2. Verify the slice remains compatible with the parent contract.
