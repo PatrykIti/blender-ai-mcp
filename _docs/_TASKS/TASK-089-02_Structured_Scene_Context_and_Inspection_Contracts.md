@@ -70,6 +70,7 @@ class SceneModeContract(BaseModel):
 
 - scene read tools return stable structured schemas
 - human-readable summaries become an optional presentation layer
+- structured surfaces expose scene contracts via `structuredContent` with matching `outputSchema`
 
 ---
 

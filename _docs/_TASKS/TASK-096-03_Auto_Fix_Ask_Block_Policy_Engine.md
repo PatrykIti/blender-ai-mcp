@@ -18,6 +18,7 @@ Implement a single policy engine that maps `confidence + risk + correction_type`
 - create:
   - `server/router/application/policy/correction_policy_engine.py`
   - `tests/unit/router/application/test_correction_policy_engine.py`
+- wire policy-engine runtime collaborators explicitly through `server/infrastructure/di.py`
 
 ---
 

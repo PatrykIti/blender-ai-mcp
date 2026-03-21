@@ -18,6 +18,7 @@ Implement the core code changes for **Auto-Fix, Ask, Block Policy Engine**.
 - `server/router/application/policy/correction_policy_engine.py`
 - `server/router/application/router.py`
 - `server/router/application/engines/tool_correction_engine.py`
+- `server/infrastructure/di.py`
 - `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
@@ -26,11 +27,13 @@ Implement the core code changes for **Auto-Fix, Ask, Block Policy Engine**.
 - create:
   - `server/router/application/policy/correction_policy_engine.py`
   - `tests/unit/router/application/test_correction_policy_engine.py`
+- wire policy-engine construction and lifecycle through `server/infrastructure/di.py`
 ---
 
 ## Acceptance Criteria
 
 - the router has one explicit decision point for auto-fix, ask, or block behavior
+- policy-engine runtime wiring is explicit via DI (no hidden adapter/handler singletons)
 ---
 
 ## Atomic Work Items

@@ -18,6 +18,7 @@ Extend router output and `route_tool_call()` so multi-step execution produces a 
 - `server/adapters/mcp/router_helper.py`
 - `server/router/application/router.py`
 - `server/router/infrastructure/logger.py`
+- `server/infrastructure/di.py`
 
 ---
 

@@ -16,6 +16,7 @@ Measure and document the effect of moving from flat discovery to search-first di
 ## Planned Work
 
 - add snapshot tests for `legacy-flat` vs `llm-guided` `list_tools`
+- add auth/visibility parity checks for discovery (`search_tools` / `call_tool`)
 - benchmark visible tool count and payload size
 - update:
   - `_docs/_MCP_SERVER/README.md`
@@ -37,3 +38,4 @@ Measure and document the effect of moving from flat discovery to search-first di
 
 - the repo has a measurable before/after view of discovery payload size
 - documentation clearly explains when to use search-first discovery
+- discovery path parity is proven for auth and visibility filtering

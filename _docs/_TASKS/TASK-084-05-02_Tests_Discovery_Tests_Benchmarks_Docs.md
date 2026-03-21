@@ -28,12 +28,14 @@ Add tests and documentation updates for **Discovery Tests, Benchmarks, and Docs*
 2. pinned-entry behavior: pinned tools remain visible while non-pinned tools are hidden from flat listing.
 3. negative query path: irrelevant query returns bounded, deterministic results without leaking hidden tools.
 4. router/dispatcher parity: discovered execution path matches direct execution behavior for the same tool call.
+5. auth/visibility parity: discovery honors auth filtering and session visibility changes with zero hidden-tool leakage.
 
 ### Metrics To Capture
 
 - `tools/list` payload size before/after (bytes)
 - visible tool count per surface profile (`legacy-flat` vs `llm-guided`)
 - top-N discovery relevance sanity check on curated queries
+- hidden-tool leak count through discovery (`search_tools` / `call_tool`) (target: 0)
 
 ### Documentation Deliverables
 

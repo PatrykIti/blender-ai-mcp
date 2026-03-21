@@ -74,6 +74,11 @@ Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md
 
 This policy must consume normalized confidence and explicit risk classes, not raw matcher-specific scores or implicit router heuristics.
 
+Runtime wiring rule:
+
+- when a new runtime policy component/provider is introduced, update dependency wiring in `server/infrastructure/di.py` explicitly
+- do not introduce hidden singleton construction paths in adapters/handlers for policy components
+
 ---
 
 ## FastMCP Features / Approach Context

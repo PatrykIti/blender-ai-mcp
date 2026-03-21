@@ -18,6 +18,7 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 - `server/adapters/mcp/router_helper.py`
 - `server/router/application/router.py`
 - `server/router/infrastructure/logger.py`
+- `server/infrastructure/di.py`
 
 ---
 
@@ -41,6 +42,7 @@ Do not implement postcondition trigger mapping or verification orchestration her
 - touch `server/adapters/mcp/router_helper.py` with explicit change notes and boundary rationale
 - touch `server/router/application/router.py` with explicit change notes and boundary rationale
 - touch `server/router/infrastructure/logger.py` with explicit change notes and boundary rationale
+- touch `server/infrastructure/di.py` with explicit change notes and boundary rationale when adding runtime report collaborators
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
 
@@ -58,6 +60,7 @@ Do not implement postcondition trigger mapping or verification orchestration her
 - verification outcomes (when produced upstream) are propagated without reinterpretation
 - slice integrates with policy and contract layers without ambiguity
 - trigger and orchestration ownership stays outside this slice (TASK-097-03/097-04)
+- runtime report collaborator wiring remains DI-owned and explicit
 
 ---
 

@@ -18,6 +18,7 @@ Define the event model and schema for correction audit trails.
 - create:
   - `server/router/domain/entities/correction_audit.py`
   - `server/adapters/mcp/contracts/correction_audit.py`
+- wire new runtime audit collaborators through `server/infrastructure/di.py` when introduced
 
 ---
 

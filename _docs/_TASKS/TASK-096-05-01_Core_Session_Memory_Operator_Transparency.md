@@ -20,6 +20,7 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 - `server/adapters/mcp/areas/router.py`
 - `server/application/tool_handlers/router_handler.py`
 - `server/adapters/mcp/contracts/router.py`
+- `server/infrastructure/di.py`
 ---
 
 ## Planned Work
@@ -37,6 +38,7 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 - touch `server/adapters/mcp/areas/router.py` with explicit change notes and boundary rationale
 - touch `server/application/tool_handlers/router_handler.py` with explicit change notes and boundary rationale
 - touch `server/adapters/mcp/contracts/router.py` with explicit change notes and boundary rationale
+- touch `server/infrastructure/di.py` with explicit change notes and boundary rationale when introducing runtime collaborators
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
 
@@ -54,6 +56,7 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 - session/operator context is consistent with executed decisions
 - escalation behavior is test-covered and contract-driven
 - slice integrates with audit/reporting layers without hidden heuristics
+- runtime collaborator wiring remains DI-owned and traceable
 
 ---
 

@@ -21,6 +21,7 @@ Implement the core code changes for **Correction Event Model and Audit Schema**.
 - `server/adapters/mcp/router_helper.py`
 - `server/router/application/router.py`
 - `server/router/infrastructure/logger.py`
+- `server/infrastructure/di.py`
 - `tests/unit/router/application/test_correction_audit.py`
 
 ---
@@ -30,11 +31,13 @@ Implement the core code changes for **Correction Event Model and Audit Schema**.
 - create:
   - `server/router/domain/entities/correction_audit.py`
   - `server/adapters/mcp/contracts/correction_audit.py`
+- wire runtime audit collaborators via `server/infrastructure/di.py` when new services/providers are introduced
 ---
 
 ## Acceptance Criteria
 
 - correction intent, execution, and verification have separate fields in the audit model
+- runtime audit collaborators are wired through DI without hidden adapter-level construction
 ---
 
 ## Atomic Work Items

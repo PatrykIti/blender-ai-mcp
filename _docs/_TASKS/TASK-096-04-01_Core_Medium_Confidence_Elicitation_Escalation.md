@@ -19,6 +19,7 @@ Implement the core code changes for **Medium-Confidence Elicitation and Escalati
 - `server/application/tool_handlers/router_handler.py`
 - `server/router/application/policy/correction_policy_engine.py`
 - `server/adapters/mcp/elicitation_contracts.py`
+- `server/infrastructure/di.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 ---
 
@@ -36,6 +37,7 @@ Implement the core code changes for **Medium-Confidence Elicitation and Escalati
 - touch `server/application/tool_handlers/router_handler.py` with explicit change notes and boundary rationale
 - touch `server/router/application/policy/correction_policy_engine.py` with explicit change notes and boundary rationale
 - touch `server/adapters/mcp/elicitation_contracts.py` with explicit change notes and boundary rationale
+- touch `server/infrastructure/di.py` with explicit change notes and boundary rationale when adding or changing runtime collaborators
 - touch `tests/unit/router/application/test_router_handler_parameters.py` with explicit change notes and boundary rationale
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
@@ -54,6 +56,7 @@ Implement the core code changes for **Medium-Confidence Elicitation and Escalati
 - session/operator context is consistent with executed decisions
 - escalation behavior is test-covered and contract-driven
 - slice integrates with audit/reporting layers without hidden heuristics
+- runtime collaborator wiring stays explicit through DI
 
 ---
 

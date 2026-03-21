@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 
 ---
 
@@ -30,6 +30,7 @@ Implement the core code changes for **Session Persistence, Retry, and Cancel Sem
   - `partial_answers`
   - `pending_question_set_id`
 - helper logic for retry and cleanup
+- align persisted elicitation keys with the canonical session-state model from TASK-085-01
 ---
 
 ## Acceptance Criteria

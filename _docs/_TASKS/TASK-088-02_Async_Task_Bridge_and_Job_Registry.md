@@ -34,6 +34,7 @@ It does not own:
 
 - task bridge validation must run against a FastMCP runtime with task support enabled (`fastmcp[tasks]` or equivalent)
 - task-launch entrypoints used for bridge tests must be `async def` with `task=True`
+- bridge-owned task entrypoints must declare explicit `TaskConfig` mode semantics and document why each mode is chosen
 
 ---
 

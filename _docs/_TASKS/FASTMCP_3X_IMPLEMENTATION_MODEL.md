@@ -28,6 +28,12 @@ The platform layer exists to make Blender state and tool semantics easier for an
 
 ## Canonical Terms
 
+### Protocol Naming Rule
+
+- MCP spec versions are date-based (for example `2025-11-25`), not “MCP 3.x”.
+- “3.x” in this document always refers to **FastMCP**.
+- When protocol behavior matters, cite the MCP spec revision and/or SEP directly.
+
 ### Capability
 
 One underlying business capability such as `scene_inspect`, `mesh_inspect`, `router_set_goal`, or `workflow_catalog`.

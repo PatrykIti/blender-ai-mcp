@@ -28,12 +28,16 @@ Add tests and documentation updates for **Task Mode Tests, Operations, and Docs*
 2. cancellation path: cancel request stops execution and reports terminal cancelled state.
 3. timeout boundary path: tool/task/RPC timeouts trigger correct boundary-specific error handling.
 4. foreground compatibility path: non-task calls retain expected synchronous behavior.
+5. task-mode semantics path: endpoints with `TaskConfig(mode="forbidden"|"optional"|"required")` behave exactly as configured.
+6. registration guard path: `task=True` on a sync function raises registration-time error.
 
 ### Metrics To Capture
 
 - job launch-to-first-progress latency
 - cancellation acknowledgement latency
 - timeout classification accuracy across MCP/task/RPC boundaries
+- task-mode matrix coverage across configured endpoints
+- sync-task registration violations detected (target: 0 in runtime, 1+ in dedicated negative test fixture)
 
 ### Documentation Deliverables
 

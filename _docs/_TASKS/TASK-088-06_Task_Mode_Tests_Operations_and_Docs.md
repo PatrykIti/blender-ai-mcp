@@ -16,6 +16,8 @@ Close the task-mode rollout with regression coverage, operations guidance, and d
 ## Planned Work
 
 - progress, timeout, and cancellation tests
+- `TaskConfig` mode matrix tests (`forbidden` / `optional` / `required`)
+- decorator registration guard test: `task=True` is accepted only on `async def`
 - operations docs for job cleanup and stuck-task diagnosis
 - updates to:
   - `_docs/_TESTS/README.md`
@@ -35,3 +37,5 @@ Close the task-mode rollout with regression coverage, operations guidance, and d
 ## Acceptance Criteria
 
 - task mode has test coverage and clear operating guidance
+- task-mode semantics (`forbidden` / `optional` / `required`) are test-covered and documented per endpoint
+- invalid sync registration with `task=True` is covered by a failing-registration test

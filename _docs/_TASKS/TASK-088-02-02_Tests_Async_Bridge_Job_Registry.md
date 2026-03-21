@@ -28,6 +28,7 @@ Add tests and documentation updates for **Async Task Bridge and Job Registry**.
 2. cancellation path: cancel request stops execution and reports terminal cancelled state.
 3. timeout boundary path: tool/task/RPC timeouts trigger correct boundary-specific error handling.
 4. foreground compatibility path: non-task calls retain expected synchronous behavior.
+5. mode semantics path: `TaskConfig(mode="forbidden"|"optional"|"required")` behavior is consistent with bridge lifecycle expectations.
 
 ### Metrics To Capture
 

@@ -24,6 +24,7 @@ Implement the core code changes for **Discovery Tests, Benchmarks, and Docs**.
 ## Planned Work
 
 - add snapshot tests for `legacy-flat` vs `llm-guided` `list_tools`
+- add discovery auth/visibility parity tests (`search_tools` / `call_tool`)
 - benchmark visible tool count and payload size
 - update:
   - `_docs/_MCP_SERVER/README.md`
@@ -35,6 +36,7 @@ Implement the core code changes for **Discovery Tests, Benchmarks, and Docs**.
 
 - the repo has a measurable before/after view of discovery payload size
 - documentation clearly explains when to use search-first discovery
+- discovery respects the same auth/visibility/session filters as direct listing/call paths
 ---
 
 ## Atomic Work Items

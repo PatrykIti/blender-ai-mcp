@@ -3,7 +3,7 @@
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 
 ---
 
@@ -21,6 +21,11 @@ Handle partial answers, re-prompting, and cancellation without losing workflow c
   - `partial_answers`
   - `pending_question_set_id`
 - helper logic for retry and cleanup
+
+### Session Model Rule
+
+This task must reuse the session model from [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md).
+Do not introduce a parallel session-state schema for elicitation persistence.
 
 ---
 

@@ -79,6 +79,8 @@ Implementation should stay split across four seams:
 - FastMCP runtime must include task support (`fastmcp[tasks]` or equivalent dependency set enabled in this repo baseline).
 - MCP entrypoints marked with `task=True` must be `async def` and verified in tests.
 - Task-capable surfaces must keep an explicit compatibility fallback for non-task/sync clients when required.
+- Task-enabled entrypoints must use explicit `TaskConfig` execution semantics (`mode="optional" | "required" | "forbidden"`) rather than implicit behavior.
+- Registration-guard tests must prove that `task=True` on a sync function fails at registration time.
 
 ---
 
@@ -126,6 +128,7 @@ Without background tasks, those features become harder to ship cleanly.
 - The platform becomes ready for larger-scale Blender workflows.
 - Long operations feel like a supported product pattern rather than an operational edge case.
 - Task-mode entrypoints are explicitly async and validated against a runtime with task support enabled.
+- Task execution mode behavior (`optional`/`required`/`forbidden`) is explicitly defined, tested, and documented per adopted endpoint.
 
 ---
 

@@ -69,6 +69,14 @@ For this repo:
 - structured payloads are the default for state-heavy tools
 - summary text should be a renderer choice, not the only contract
 
+### MCP Contract Delivery DoD
+
+For contract-enabled tools in this task scope:
+
+- return machine-readable payloads through MCP `structuredContent`
+- declare and maintain tool `outputSchema` aligned with the structured payload shape
+- keep compatibility via text rendering fallback (`content` text) selected by renderer policy (`structured_plus_summary` / `legacy_text`)
+
 ---
 
 ## FastMCP Features To Use
@@ -118,6 +126,7 @@ Structured response contracts reduce that gap.
 - Inspection and validation flows rely less on natural-language parsing.
 - The project gains a cleaner foundation for spatial assertions and automated QA.
 - The model’s follow-up decisions improve because the state contract is clearer.
+- Structured contract surfaces consistently expose `structuredContent` + `outputSchema`, with explicit text fallback behavior for compatibility surfaces.
 
 ---
 

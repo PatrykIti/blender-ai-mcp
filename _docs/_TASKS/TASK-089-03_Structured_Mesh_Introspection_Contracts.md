@@ -60,6 +60,7 @@ These contracts should make it easy for an LLM to stay oriented in mesh space:
 
 - mesh introspection contracts are consistent across all action types
 - pagination fields are standardized
+- structured mesh responses are delivered through `structuredContent` and validated against declared `outputSchema`
 
 ---
 

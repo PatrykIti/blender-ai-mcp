@@ -31,15 +31,19 @@ Implement the core code changes for **Adapter Dual-Format Delivery Strategy**.
   - `structured_plus_summary`
   - `legacy_text`
 - choose the renderer by surface profile, contract line, or explicit compatibility override
+- ensure structured renderers emit MCP `structuredContent` aligned to declared `outputSchema`
+- ensure legacy renderer emits compatible text fallback from the same source structured payloads
 ---
 
 ## Acceptance Criteria
 
 - the transition to structured output does not force a destructive client cut-over
+- structured surfaces expose contract-aligned `structuredContent` + `outputSchema`
+- compatibility surfaces preserve deterministic text fallback without contract drift
 ---
 
 ## Atomic Work Items
 
 1. Define default renderer selection per surface profile.
 2. Add contract-line overrides where legacy payloads must remain available.
-3. Add adapter tests for renderer selection and backward compatibility.
+3. Add adapter tests for renderer selection, `structuredContent` + `outputSchema` alignment, and backward compatibility.

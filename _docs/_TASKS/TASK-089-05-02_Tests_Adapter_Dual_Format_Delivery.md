@@ -28,6 +28,8 @@ Add tests and documentation updates for **Adapter Dual-Format Delivery Strategy*
 2. legacy renderer path: legacy text mode remains available where required.
 3. structured renderer path: structured or structured+summary outputs remain deterministic.
 4. invalid payload path: schema violations fail fast with explicit contract errors.
+5. MCP field path: structured surfaces include `structuredContent` and remain consistent with declared `outputSchema`.
+6. compatibility field path: legacy surfaces retain required text payloads for older clients.
 
 ### Metrics To Capture
 

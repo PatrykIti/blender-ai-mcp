@@ -73,6 +73,11 @@ Hard gate:
 
 Do not introduce a custom search proxy unless the built-in call path proves insufficient.
 
+Discovery must preserve auth/visibility parity:
+
+- `search_tools` results and `call_tool` execution must respect the same authorization and visibility pipeline as direct tool listing/calls
+- session-level visibility changes (`ctx.enable_components()` / `ctx.disable_components()`) must be reflected in discovery results
+
 ---
 
 ## FastMCP Features To Use
@@ -133,7 +138,8 @@ This remains the umbrella task. The original product objective stays unchanged.
 2. Roll out BM25 search with pinned entry tools on the LLM-guided surface.
 3. Enrich search text from docstrings, schemas, aliases, and capability metadata.
 4. Prove discovered-tool execution stays on the same router and dispatcher path.
-5. Measure payload reduction and search quality before making discovery-first the default.
+5. Prove auth/visibility parity for `search_tools` / `call_tool` vs direct paths.
+6. Measure payload reduction and search quality before making discovery-first the default.
 
 Implementation is decomposed into:
 

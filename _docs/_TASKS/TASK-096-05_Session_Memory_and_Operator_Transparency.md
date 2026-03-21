@@ -11,6 +11,8 @@
 
 Persist confidence context in session state and expose the chosen policy path to operators and diagnostics surfaces.
 
+Runtime wiring note: if this slice introduces runtime memory/reporting collaborators, wire them explicitly in `server/infrastructure/di.py`.
+
 ---
 
 ## Layered Subtasks

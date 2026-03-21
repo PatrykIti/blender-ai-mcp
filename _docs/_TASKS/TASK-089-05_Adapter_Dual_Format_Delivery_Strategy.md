@@ -20,6 +20,9 @@ Define the transition strategy for delivering structured-first responses while s
   - `structured_plus_summary`
   - `legacy_text`
 - choose the renderer by surface profile, contract line, or explicit compatibility override
+- enforce MCP delivery parity:
+  - structured renderers expose `structuredContent` and respect declared `outputSchema`
+  - legacy renderer keeps text compatibility without changing source structured payloads
 
 ---
 
@@ -35,6 +38,8 @@ Define the transition strategy for delivering structured-first responses while s
 ## Acceptance Criteria
 
 - the transition to structured output does not force a destructive client cut-over
+- contract-enabled tools expose `structuredContent` + `outputSchema` on structured surfaces
+- legacy text fallback remains available and deterministic on compatibility surfaces
 
 ---
 

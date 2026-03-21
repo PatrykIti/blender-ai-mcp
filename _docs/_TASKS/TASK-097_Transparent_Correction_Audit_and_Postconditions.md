@@ -72,6 +72,11 @@ Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md
 Audit and postcondition work should be layered on top of structured contracts and inspection truth.
 Do not treat prose explanations as the primary audit record.
 
+Runtime wiring rule:
+
+- when introducing new runtime audit/verification collaborators, wire them explicitly through `server/infrastructure/di.py`
+- avoid hidden adapter-level singleton construction for audit/postcondition services
+
 ---
 
 ## FastMCP Features / Approach Context

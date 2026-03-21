@@ -7,6 +7,12 @@ Task board for the project. Update statuses in markdown files.
 - **In Progress:** 1 task
 - **Done:** 139
 
+## 🧭 Terminology Guardrails
+
+- MCP specification revisions are date-based (for example `2025-11-25`), not “MCP 3.x”.
+- In this board, “3.x” refers to the **FastMCP** runtime line.
+- If a task depends on protocol behavior, reference the MCP spec revision and/or SEP explicitly.
+
 ---
 
 ## 🚨 To Do

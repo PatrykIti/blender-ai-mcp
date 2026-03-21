@@ -18,6 +18,7 @@ Implement the core code changes for **Postcondition Registry for High-Risk Fixes
 - `server/router/domain/entities/postcondition.py`
 - `server/router/application/policy/postcondition_registry.py`
 - `server/router/application/engines/tool_correction_engine.py`
+- `server/infrastructure/di.py`
 - `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
@@ -26,6 +27,7 @@ Implement the core code changes for **Postcondition Registry for High-Risk Fixes
 - create:
   - `server/router/domain/entities/postcondition.py`
   - `server/router/application/policy/postcondition_registry.py`
+- wire postcondition registry runtime access through `server/infrastructure/di.py`
 
 ### High-Risk Baseline
 
@@ -40,6 +42,7 @@ Start with fixes that most affect LLM spatial awareness and execution correctnes
 ## Acceptance Criteria
 
 - the repo knows which fixes require post-execution verification
+- postcondition registry runtime wiring is explicit through DI
 ---
 
 ## Atomic Work Items

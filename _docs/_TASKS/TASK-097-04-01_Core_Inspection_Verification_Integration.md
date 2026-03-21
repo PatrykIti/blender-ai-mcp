@@ -20,6 +20,7 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 - `server/adapters/mcp/router_helper.py`
 - `server/adapters/mcp/areas/*.py`
 - `server/router/adapters/mcp_integration.py` (secondary path parity)
+- `server/infrastructure/di.py`
 
 ---
 
@@ -47,6 +48,7 @@ Keep parity there where relevant, but do not move primary runtime ownership away
 - touch `server/router/application/engines/tool_correction_engine.py` with explicit change notes and boundary rationale
 - touch `server/router/adapters/mcp_integration.py` with explicit change notes and boundary rationale
 - touch `server/adapters/mcp/router_helper.py` with explicit change notes and boundary rationale
+- touch `server/infrastructure/di.py` with explicit change notes and boundary rationale when adding verification collaborators
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
 
@@ -64,6 +66,7 @@ Keep parity there where relevant, but do not move primary runtime ownership away
 - verification outcomes are deterministic and visible in router execution reporting
 - inconclusive or failed verification paths escalate according to policy instead of silent success
 - integration preserves compatibility with existing low-risk correction flows
+- runtime verification collaborator wiring remains explicit via DI
 
 ---
 

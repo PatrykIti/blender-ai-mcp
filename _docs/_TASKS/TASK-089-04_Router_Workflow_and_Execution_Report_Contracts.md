@@ -53,6 +53,7 @@ The execution report should let an LLM and an operator see:
 ## Acceptance Criteria
 
 - router and workflow interactions are machine-readable, not only prose-readable
+- structured router/workflow responses use `structuredContent` with contract-aligned `outputSchema`
 
 ---
 

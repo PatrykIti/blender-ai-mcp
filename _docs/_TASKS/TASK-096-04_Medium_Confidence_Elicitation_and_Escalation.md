@@ -11,6 +11,8 @@
 
 Route medium-confidence interpretation paths into structured clarification instead of silent auto-rewrites.
 
+Runtime wiring note: if this slice introduces new runtime policy or elicitation collaborators, wire them explicitly in `server/infrastructure/di.py`.
+
 ---
 
 ## Layered Subtasks

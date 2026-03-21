@@ -20,6 +20,7 @@ Implement the core code changes for **Audit Exposure in MCP Responses and Logs**
 - `server/adapters/mcp/router_helper.py`
 - `server/router/infrastructure/logger.py`
 - `server/infrastructure/telemetry.py`
+- `server/infrastructure/di.py`
 ---
 
 ## Planned Work
@@ -37,6 +38,7 @@ Implement the core code changes for **Audit Exposure in MCP Responses and Logs**
 - touch `server/adapters/mcp/router_helper.py` with explicit change notes and boundary rationale
 - touch `server/router/infrastructure/logger.py` with explicit change notes and boundary rationale
 - touch `server/infrastructure/telemetry.py` with explicit change notes and boundary rationale
+- touch `server/infrastructure/di.py` with explicit change notes and boundary rationale when introducing audit/telemetry collaborators
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
 
@@ -54,6 +56,7 @@ Implement the core code changes for **Audit Exposure in MCP Responses and Logs**
 - postcondition verification gates high-risk success finalization
 - failure/inconclusive verification paths are explicit and test-covered
 - slice integrates with policy and contract layers without ambiguity
+- runtime audit/telemetry collaborator wiring remains explicit via DI
 
 ---
 
