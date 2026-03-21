@@ -107,3 +107,28 @@ That requires a server base that can present different capabilities in different
 - Existing business capabilities remain intact during the platform transition.
 - The platform becomes easier to evolve for both router-first and manual-tool workflows.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original business scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-083-01](./TASK-083-01_FastMCP_3x_Dependency_and_Runtime_Audit.md) | Audit current 2.x coupling and define migration readiness baseline |
+| 2 | [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md) | Split the current flat registry into reusable provider groups |
+| 3 | [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md) | Replace the singleton runtime with a composition-root server factory |
+| 4 | [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md) | Establish the base transform pipeline for later discovery/visibility/versioning work |
+| 5 | [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md) | Normalize context/session/execution bridging for 3.x features |
+| 6 | [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md) | Add regression coverage and architecture documentation for the new platform base |
+
+### Repo-Specific Focus
+
+- `pyproject.toml`
+- `server/adapters/mcp/instance.py`
+- `server/adapters/mcp/server.py`
+- `server/adapters/mcp/areas/*.py`
+- `server/infrastructure/di.py`
+- `tests/unit/router/adapters/test_mcp_integration.py`

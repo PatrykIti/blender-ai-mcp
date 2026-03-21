@@ -99,3 +99,19 @@ Without background tasks, those features become harder to ship cleanly.
 - The platform becomes ready for larger-scale Blender workflows.
 - Long operations feel like a supported product pattern rather than an operational edge case.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md) | Classify which operations should support task execution |
+| 2 | [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md) | Build the background-task bridge and job registry |
+| 3 | [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md) | Define progress, cancellation, and result retrieval contracts |
+| 4 | [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md) | Adapt RPC and Blender runtime for longer-running jobs |
+| 5 | [TASK-088-05](./TASK-088-05_Background_Adoption_for_Imports_Renders_Extraction_and_Workflow_Import.md) | Roll task mode into concrete heavy tools |
+| 6 | [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md) | Add operations docs and regression coverage |

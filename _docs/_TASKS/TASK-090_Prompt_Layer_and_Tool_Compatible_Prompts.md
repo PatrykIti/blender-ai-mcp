@@ -100,3 +100,18 @@ instead of leaving it fragmented across external instructions.
 - Users need less manual prompt setup to get strong behavior.
 - The project’s best operating guidance becomes easier to distribute consistently.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md) | Inventory prompt assets and assign operating modes |
+| 2 | [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md) | Expose prompts as native FastMCP prompt components |
+| 3 | [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md) | Bridge prompts to tool-only clients |
+| 4 | [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md) | Make prompt selection phase and profile aware |
+| 5 | [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md) | Add prompt QA coverage and docs |

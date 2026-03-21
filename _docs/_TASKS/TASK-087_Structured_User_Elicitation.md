@@ -96,3 +96,19 @@ When a user says “make a table,” the system often needs more than one unstat
 - Router and workflow usage become more reliable when the initial prompt is incomplete.
 - The project reduces ambiguity-driven build failures and retry loops.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-087-01](./TASK-087-01_Elicitation_Domain_Model_and_Response_Contracts.md) | Define typed elicitation request and response contracts |
+| 2 | [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md) | Integrate `router_set_goal` with structured elicitation |
+| 3 | [TASK-087-03](./TASK-087-03_Constrained_Choice_and_Multi_Select_Flows.md) | Support enums, booleans, and multi-select flows cleanly |
+| 4 | [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md) | Preserve partial answers and cancellation semantics |
+| 5 | [TASK-087-05](./TASK-087-05_Tool_Only_Fallback_and_Compatibility_Mode.md) | Provide a fallback for clients without elicitation support |
+| 6 | [TASK-087-06](./TASK-087-06_Elicitation_Tests_and_Docs.md) | Add test coverage and docs for both interaction modes |

@@ -92,3 +92,18 @@ That transition is much easier when different surfaces can coexist intentionally
 - Compatibility becomes a product capability instead of a release risk.
 - Future experimentation becomes easier to manage.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md) | Define the surface matrix and version lifecycle |
+| 2 | [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md) | Add component versions on shared providers |
+| 3 | [TASK-091-03](./TASK-091-03_Version_Filtered_Server_Composition.md) | Compose surfaces through VersionFilter |
+| 4 | [TASK-091-04](./TASK-091-04_Client_Selection_and_Bootstrap_Configuration.md) | Select surface variants through bootstrap and config |
+| 5 | [TASK-091-05](./TASK-091-05_Versioned_Surface_Tests_and_Documentation.md) | Add coexistence tests and migration docs |

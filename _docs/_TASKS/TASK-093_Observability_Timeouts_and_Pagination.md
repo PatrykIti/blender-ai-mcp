@@ -96,3 +96,18 @@ Observability and operational guardrails make those distinctions clearer and sho
 - Large component listings stop being an operational liability.
 - The project gains better visibility into real-world LLM usage patterns.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md) | Add telemetry foundations and OpenTelemetry bootstrap |
+| 2 | [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md) | Define timeouts for tools, tasks, and RPC boundaries |
+| 3 | [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md) | Add pagination to large listings and payloads |
+| 4 | [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md) | Expose operational diagnostics and runtime status |
+| 5 | [TASK-093-05](./TASK-093-05_Operations_Tests_and_Documentation.md) | Add operations-focused tests and documentation |

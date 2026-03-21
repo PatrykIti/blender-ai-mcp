@@ -101,3 +101,25 @@ Those are different tasks and should not all compete equally in one flat visible
 - The model receives less irrelevant tool noise.
 - The project gains a practical mechanism for “guided mode” without removing deeper capabilities.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original business goal stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md) | Define session state and capability phases |
+| 2 | [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md) | Build visibility filtering around phase/profile tags |
+| 3 | [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md) | Feed router phase hints into session state without mixing responsibilities |
+| 4 | [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md) | Add guided mode and client profile presets |
+| 5 | [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md) | Add visibility diagnostics, tests, and docs |
+
+### Repo-Specific Focus
+
+- `server/router/application/router.py`
+- `server/application/tool_handlers/router_handler.py`
+- `server/adapters/mcp/context_utils.py`
+- `server/adapters/mcp/router_helper.py`

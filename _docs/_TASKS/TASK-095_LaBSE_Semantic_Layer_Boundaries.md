@@ -120,3 +120,18 @@ This separation is critical if the project wants both multilingual flexibility a
 - Workflow and parameter semantics stay multilingual and flexible.
 - The router becomes easier to tune because semantic and deterministic responsibilities are clearly separated.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md) | Audit current LaBSE usage and define the formal responsibility policy |
+| 2 | [TASK-095-02](./TASK-095-02_Discovery_Handoff_From_LaBSE_to_FastMCP_Search.md) | Move general discovery responsibility to FastMCP search |
+| 3 | [TASK-095-03](./TASK-095-03_Truth_and_Verification_Handoff_to_Inspection_Contracts.md) | Move truth and verification decisions onto inspection contracts |
+| 4 | [TASK-095-04](./TASK-095-04_Parameter_Memory_and_Workflow_Matching_Hardening.md) | Harden the allowed roles of LaBSE in workflow and parameter logic |
+| 5 | [TASK-095-05](./TASK-095-05_Boundary_Tests_Telemetry_and_Documentation.md) | Add regression coverage, telemetry markers, and docs |

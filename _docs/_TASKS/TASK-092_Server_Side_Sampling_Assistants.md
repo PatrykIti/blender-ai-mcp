@@ -95,3 +95,18 @@ That is where sampling-based assistants can create value.
 - Outer client loops become lighter where server-local reasoning is a better fit.
 - The project gains a path to smarter validation and recovery without fully agentic sprawl.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-092-01](./TASK-092-01_Sampling_Assistant_Governance_and_Safety_Boundaries.md) | Define where sampling assistants are allowed and where they are not |
+| 2 | [TASK-092-02](./TASK-092-02_Assistant_Runner_with_Typed_Result_Wrappers.md) | Build the bounded assistant runner with typed outputs |
+| 3 | [TASK-092-03](./TASK-092-03_Inspection_Summarizer_and_Repair_Suggester_Assistants.md) | Add the first analytical assistants |
+| 4 | [TASK-092-04](./TASK-092-04_Router_Integration_Masking_and_Budget_Control.md) | Integrate assistants with router flows and budgets |
+| 5 | [TASK-092-05](./TASK-092-05_Sampling_Assistant_Tests_and_Documentation.md) | Add tests and documentation for assistant usage |

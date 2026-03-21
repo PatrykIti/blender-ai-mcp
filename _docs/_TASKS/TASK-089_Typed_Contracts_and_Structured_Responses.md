@@ -106,3 +106,19 @@ Structured response contracts reduce that gap.
 - The project gains a cleaner foundation for spatial assertions and automated QA.
 - The model’s follow-up decisions improve because the state contract is clearer.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md) | Define the contract catalog and response design rules |
+| 2 | [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md) | Add structured contracts for scene context and inspection |
+| 3 | [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md) | Standardize mesh introspection contracts and paging |
+| 4 | [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md) | Add typed contracts for router and execution reporting |
+| 5 | [TASK-089-05](./TASK-089-05_Adapter_Dual_Format_Delivery_Strategy.md) | Define a dual-format transition strategy for clients |
+| 6 | [TASK-089-06](./TASK-089-06_Contract_Tests_Schemas_and_Documentation.md) | Add schema tests and contract documentation |

@@ -115,3 +115,19 @@ That distinction is what separates a strong assistant from a surprising one.
 - Ambiguous cases move into structured clarification instead of silent reinterpretation.
 - Auto-correction becomes more trustworthy because its decision policy is visible and consistent.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md) | Classify correction types and blast radius |
+| 2 | [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md) | Normalize confidence signals across engines |
+| 3 | [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md) | Add a single policy engine for auto-fix, ask, or block decisions |
+| 4 | [TASK-096-04](./TASK-096-04_Medium_Confidence_Elicitation_and_Escalation.md) | Route medium-confidence cases into structured clarification |
+| 5 | [TASK-096-05](./TASK-096-05_Session_Memory_and_Operator_Transparency.md) | Persist and expose confidence context through the session |
+| 6 | [TASK-096-06](./TASK-096-06_Policy_Tests_Telemetry_and_Documentation.md) | Add policy coverage, telemetry, and docs |

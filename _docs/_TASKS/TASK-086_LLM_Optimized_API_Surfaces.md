@@ -104,3 +104,18 @@ Tool transformation is one of the cleanest ways to improve that without destabil
 - Different clients can receive different API shapes without forking the business layer.
 - The server becomes easier to productize for Blender creation workflows.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md) | Define the public surface manifest and naming rules |
+| 2 | [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md) | Apply tool and parameter aliasing through transforms |
+| 3 | [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md) | Hide backend-only arguments and simplify the LLM-facing surface |
+| 4 | [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md) | Keep aliases compatible with router and dispatcher internals |
+| 5 | [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md) | Add surface QA, examples, and documentation |

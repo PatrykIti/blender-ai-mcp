@@ -98,3 +98,17 @@ But because Blender writes are high-impact, the feature should be treated carefu
 - Experimental value is separated from production-default decisions.
 - The project gains a research path for lower-context orchestration at catalog scale.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md) | Define the experiment scope and safety guardrails |
+| 2 | [TASK-094-02](./TASK-094-02_Read_Only_Code_Mode_Pilot_Surface.md) | Build a read-only pilot surface for Code Mode |
+| 3 | [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md) | Benchmark Code Mode against classic tool loops |
+| 4 | [TASK-094-04](./TASK-094-04_Decision_Memo_and_Documentation.md) | Record the outcome and final recommendation |

@@ -113,3 +113,19 @@ That is especially important before the project adds more advanced workflow auto
 - The system is less likely to drift silently after a failed or misleading repair.
 - Router behavior becomes easier to inspect, tune, and trust over time.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md) | Define the correction audit event model |
+| 2 | [TASK-097-02](./TASK-097-02_Router_Execution_Report_Pipeline.md) | Add structured router execution reporting |
+| 3 | [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md) | Register postconditions for high-risk fixes |
+| 4 | [TASK-097-04](./TASK-097-04_Inspection_Based_Verification_Integration.md) | Verify important fixes through inspection contracts |
+| 5 | [TASK-097-05](./TASK-097-05_Audit_Exposure_in_MCP_Responses_and_Logs.md) | Expose audit trails to clients and logging |
+| 6 | [TASK-097-06](./TASK-097-06_Correction_Audit_Tests_and_Documentation.md) | Add audit transparency coverage and docs |

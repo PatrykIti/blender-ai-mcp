@@ -103,3 +103,26 @@ It is one of the most important FastMCP 3.1 features for this project.
 - Tool selection quality improves for complex Blender tasks.
 - The project can keep growing its tool catalog without linearly increasing model confusion.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original product objective stays unchanged.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md) | Build one canonical discovery inventory and taxonomy |
+| 2 | [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md) | Introduce search-first discovery with pinned entry tools |
+| 3 | [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md) | Enrich search documents from metadata, docstrings, and schemas |
+| 4 | [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md) | Keep search execution aligned with router and dispatcher behavior |
+| 5 | [TASK-084-05](./TASK-084-05_Discovery_Tests_Benchmarks_and_Docs.md) | Add discovery regression tests, benchmarks, and docs |
+
+### Repo-Specific Focus
+
+- `server/router/infrastructure/tools_metadata/**`
+- `server/router/infrastructure/metadata_loader.py`
+- `server/adapters/mcp/areas/*.py`
+- `server/adapters/mcp/dispatcher.py`
+- `server/adapters/mcp/areas/workflow_catalog.py`
