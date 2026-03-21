@@ -29,6 +29,15 @@ Implement the core code changes for **Structured Mesh Introspection Contracts**.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-03-01-01](./TASK-089-03-01-01_Mesh_Contract_Envelopes_and_Schemas.md) | Mesh Contract Envelopes and Schemas | Core slice |
+| [TASK-089-03-01-02](./TASK-089-03-01-02_Handler_and_Paging_Integration.md) | Handler and Paging Integration | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

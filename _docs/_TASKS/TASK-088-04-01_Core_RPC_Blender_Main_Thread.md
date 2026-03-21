@@ -30,6 +30,15 @@ Implement the core code changes for **RPC and Blender Main-Thread Adaptation**.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-088-04-01-01](./TASK-088-04-01-01_Addon_Job_Lifecycle_Primitives.md) | Addon Job Lifecycle Primitives | Core slice |
+| [TASK-088-04-01-02](./TASK-088-04-01-02_Server_RPC_Client_and_Protocol.md) | Server RPC Client and Protocol | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

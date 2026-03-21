@@ -31,6 +31,15 @@ Implement the core code changes for **Server Factory and Composition Root**.
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-083-03-01-01](./TASK-083-03-01-01_Surface_Profile_Settings_and_Config.md) | Surface Profile Settings and Config | Core slice |
+| [TASK-083-03-01-02](./TASK-083-03-01-02_Server_Factory_and_Bootstrap_Path.md) | Server Factory and Bootstrap Path | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

@@ -29,6 +29,15 @@ Implement the core code changes for **Structured Scene Context and Inspection Co
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-089-02-01-01](./TASK-089-02-01-01_Scene_Contract_Definitions.md) | Scene Contract Definitions | Core slice |
+| [TASK-089-02-01-02](./TASK-089-02-01-02_Handler_and_Adapter_Integration.md) | Handler and Adapter Integration | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

@@ -30,6 +30,15 @@ Implement the core code changes for **Tool Inventory Normalization and Discovery
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-084-01-01-01](./TASK-084-01-01-01_Capability_Manifest_Schema_and_Tags.md) | Capability Manifest Schema and Tags | Core slice |
+| [TASK-084-01-01-02](./TASK-084-01-01-02_Inventory_Builder_and_Enrichment.md) | Inventory Builder and Enrichment | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

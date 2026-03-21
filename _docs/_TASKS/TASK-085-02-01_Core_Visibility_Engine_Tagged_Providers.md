@@ -27,6 +27,15 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 
 ---
 
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-02-01-01](./TASK-085-02-01-01_Visibility_Tags_and_Manifest_Wiring.md) | Visibility Tags and Manifest Wiring | Core slice |
+| [TASK-085-02-01-02](./TASK-085-02-01-02_Visibility_Transform_and_Policy_Engine.md) | Visibility Transform and Policy Engine | Core slice |
+
+---
+
 ## Acceptance Criteria
 
 - Core implementation is complete and aligned with the parent scope.

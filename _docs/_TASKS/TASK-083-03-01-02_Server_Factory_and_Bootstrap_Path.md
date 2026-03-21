@@ -1,0 +1,41 @@
+# TASK-083-03-01-02: Server Factory and Bootstrap Path
+
+**Parent:** [TASK-083-03-01](./TASK-083-03-01_Core_Factory_Composition_Root.md)  
+**Status:** ⬜ Planned  
+**Priority:** 🔴 High  
+**Depends On:** None
+
+---
+
+## Objective
+
+Implement the **Server Factory and Bootstrap Path** slice of the parent task.
+
+---
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/factory.py`
+- `server/adapters/mcp/server.py`
+- `server/main.py`
+- `server/adapters/mcp/instance.py`
+
+---
+
+## Planned Work
+
+- Implement the scoped changes for this slice.
+- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
+
+---
+
+## Acceptance Criteria
+
+- The scoped slice is complete and integrates cleanly with the parent task.
+
+---
+
+## Atomic Work Items
+
+1. Apply the changes in the listed touchpoints.
+2. Verify the slice remains compatible with the parent contract.
