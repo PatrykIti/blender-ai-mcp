@@ -10,7 +10,7 @@
 
 ## Objective
 
-Introduce controlled server-side LLM assistance for analysis, triage, and validation tasks that benefit from short internal reasoning loops.
+Introduce controlled, server-orchestrated, client-mediated LLM assistance for analysis, triage, and validation tasks that benefit from short internal reasoning loops.
 
 ---
 
@@ -47,6 +47,20 @@ Use FastMCP sampling capabilities for tightly scoped internal assistants, especi
 - the server can bound the scope clearly
 
 These helpers should complement the router, not replace it.
+
+---
+
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Terminology note for this repo:
+
+- the server orchestrates sampling
+- the client still owns the model call
+- sampling remains request-bound and capability-dependent
+
+Do not design this task as autonomous background reasoning detached from an active MCP request.
 
 ---
 
@@ -100,6 +114,14 @@ That is where sampling-based assistants can create value.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define hard boundaries for where sampling assistants are allowed.
+2. Build a typed assistant runner with explicit fallback behavior when sampling is unavailable.
+3. Add a very small first set of analytical assistants.
+4. Integrate them with router and inspection flows under budget and masking rules.
+5. Add tests and docs focused on bounded behavior, not agentic expansion.
 
 Implementation is decomposed into:
 

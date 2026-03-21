@@ -34,9 +34,28 @@ Standardize contracts for `mesh_inspect` and the internal `mesh_get_*` actions, 
   - `total`
   - `items`
 
+### Spatial Priority
+
+These contracts should make it easy for an LLM to stay oriented in mesh space:
+
+- element identity
+- coordinates
+- connectivity
+- selection flags
+- layer or attribute names
+- paging metadata
+
 ---
 
 ## Acceptance Criteria
 
 - mesh introspection contracts are consistent across all action types
 - pagination fields are standardized
+
+---
+
+## Atomic Work Items
+
+1. Standardize envelope fields for all `mesh_inspect` actions.
+2. Normalize per-item schemas for vertices, edges, faces, normals, UVs, attributes, shape keys, and weights.
+3. Add paging and selection-filter tests for every action family.

@@ -47,10 +47,23 @@ Use FastMCP versioned components and filtered server surfaces to expose differen
 Examples of business-level use cases:
 
 - legacy flat surface for compatibility
-- curated LLM-first surface for modern clients
+- curated `llm-guided` surface for modern clients
 - future expert or internal surface for power workflows
 
 This is not only about backwards compatibility. It is also a strategic enabler for product evolution.
+
+---
+
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This task must preserve the distinction between:
+
+- surface profile: which surface is booted
+- contract version: which public contract version a capability exposes
+
+Profiles and versions should work together, not become two competing configuration systems.
 
 ---
 
@@ -68,7 +81,7 @@ This task covers:
 - coexistence of multiple public server surfaces
 - safer migration strategy
 - compatibility management
-- staged adoption of LLM-first changes
+- staged adoption of `llm-guided` contract lines and related public-surface changes
 
 This task does not cover:
 
@@ -97,6 +110,14 @@ That transition is much easier when different surfaces can coexist intentionally
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define the surface matrix and contract-line lifecycle rules.
+2. Assign baseline versions to shared provider components before introducing alternate versions.
+3. Compose profile-specific surfaces through built-in `VersionFilter`.
+4. Expose surface-profile and contract-line selection through bootstrap config.
+5. Add coexistence tests and migration guidance for maintainers and clients.
 
 Implementation is decomposed into:
 

@@ -18,7 +18,7 @@ Make prompt selection depend on session phase and client profile.
 - add prompt tags such as:
   - `phase:planning`
   - `phase:repair`
-  - `profile:guided-router-first`
+  - `profile:llm-guided`
 - expose recommended prompts by phase or profile
 
 ---
@@ -26,3 +26,11 @@ Make prompt selection depend on session phase and client profile.
 ## Acceptance Criteria
 
 - the prompt layer reacts to session context instead of behaving like a flat static library
+
+---
+
+## Atomic Work Items
+
+1. Align prompt profile tags with the canonical surface profile names.
+2. Add one recommendation path by phase and one by profile.
+3. Add tests that prompt recommendations change when session phase changes.

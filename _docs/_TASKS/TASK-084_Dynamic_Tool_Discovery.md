@@ -57,6 +57,20 @@ Core tools such as router entry, status, prompt access, and essential help can r
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo, the preferred default is:
+
+- built-in `BM25SearchTransform` for `llm-guided` discovery
+- a very small pinned visible set
+- native synthetic `search_tools` and `call_tool`
+
+Do not introduce a custom search proxy unless the built-in call path proves insufficient.
+
+---
+
 ## FastMCP Features To Use
 
 - **Tool Search** — **FastMCP 3.1.0**
@@ -108,6 +122,14 @@ It is one of the most important FastMCP 3.1 features for this project.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original product objective stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define one platform-owned discovery manifest and taxonomy.
+2. Roll out BM25 search with pinned entry tools on the LLM-guided surface.
+3. Enrich search text from docstrings, schemas, aliases, and capability metadata.
+4. Prove discovered-tool execution stays on the same router and dispatcher path.
+5. Measure payload reduction and search quality before making discovery-first the default.
 
 Implementation is decomposed into:
 

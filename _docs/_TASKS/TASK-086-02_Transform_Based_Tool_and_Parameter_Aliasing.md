@@ -20,6 +20,11 @@ Apply tool-name and parameter-name aliasing through the transform pipeline inste
   - `server/adapters/mcp/transforms/public_params.py`
   - `tests/unit/adapters/mcp/test_aliasing_transform.py`
 
+### FastMCP Mechanism
+
+Prefer built-in FastMCP `ToolTransform` with `ArgTransform`-style argument reshaping.
+Custom code in this repo should mostly translate manifest rules into transform configuration.
+
 ---
 
 ## Pseudocode
@@ -39,3 +44,11 @@ alias_map = {
 
 - aliases are applied at the public surface layer
 - internal handler signatures remain stable
+
+---
+
+## Atomic Work Items
+
+1. Map manifest aliases into FastMCP tool transforms.
+2. Map public argument aliases and hidden defaults into argument transforms.
+3. Add parity tests for direct calls, search-discovered calls, and versioned calls.

@@ -21,6 +21,23 @@ Add pagination to large component listings and large structured data payloads.
 
 ---
 
+## Scope Split
+
+This subtask must explicitly separate:
+
+- component pagination through FastMCP `list_page_size`
+- payload pagination through contract fields such as `offset`, `limit`, `returned`, `total`, and `items`
+
+---
+
 ## Acceptance Criteria
 
 - both component listings and large inspection payloads can be paged safely
+
+---
+
+## Atomic Work Items
+
+1. Add `list_page_size` to the relevant surface profiles.
+2. Standardize payload pagination envelopes for mesh and workflow-heavy responses.
+3. Add tests for both MCP list pagination and tool payload pagination.

@@ -55,6 +55,20 @@ This should work as a dynamic product behavior, not as a static documentation re
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Visibility work in this task must preserve the distinction between:
+
+- surface profile selected at bootstrap
+- session phase selected at runtime
+- contract version selected through version filters
+
+The router may emit hints, but FastMCP remains the owner of what is visible.
+
+---
+
 ## FastMCP Features To Use
 
 - **Session-Scoped State** — **FastMCP 3.0.0**
@@ -106,6 +120,14 @@ Those are different tasks and should not all compete equally in one flat visible
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original business goal stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define explicit session state keys and the minimal phase model.
+2. Bind visibility rules to platform tags and profile defaults instead of ad hoc wrapper logic.
+3. Feed router-generated phase hints into session state without moving ownership into the router.
+4. Add guided presets for `llm-guided` work while preserving deeper access through search or debug surfaces.
+5. Add observability so maintainers can see which profile and phase shaped the active surface.
 
 Implementation is decomposed into:
 

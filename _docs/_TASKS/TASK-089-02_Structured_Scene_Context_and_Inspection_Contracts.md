@@ -31,6 +31,17 @@ Expose typed contracts for `scene_context`, `scene_inspect`, `scene_snapshot_sta
   - `_scene_list_selection`
   - `_scene_inspect_object`
 
+### State Priority
+
+These contracts should optimize for LLM awareness of:
+
+- active mode
+- active object
+- selection state
+- hierarchy and collections
+- transforms, bounds, and origin
+- material and modifier context
+
 ---
 
 ## Pseudocode
@@ -50,3 +61,12 @@ class SceneModeContract(BaseModel):
 
 - scene read tools return stable structured schemas
 - human-readable summaries become an optional presentation layer
+
+---
+
+## Atomic Work Items
+
+1. Define scene-mode and selection contracts first.
+2. Define object inspection contracts with transforms, bounds, origin, and hierarchy.
+3. Define snapshot and diff contracts for before/after awareness.
+4. Add tests proving the same payload can be rendered with or without summary text.

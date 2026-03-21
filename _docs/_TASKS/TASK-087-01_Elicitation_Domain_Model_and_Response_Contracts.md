@@ -36,6 +36,7 @@ Define typed elicitation request and response models that can be derived from `P
 @dataclass
 class ElicitationRequest:
     request_id: str
+    question_set_id: str
     goal: str
     workflow_name: str
     fields: list[ElicitationField]
@@ -47,3 +48,11 @@ class ElicitationRequest:
 
 - unresolved parameters can be mapped into typed elicitation fields
 - the contract explicitly supports `accept`, `decline`, and `cancel`
+
+---
+
+## Atomic Work Items
+
+1. Define typed question and answer payloads derived from `ParameterSchema`.
+2. Add stable IDs for request, question set, and individual fields.
+3. Add serializable persistence rules for partial answers.

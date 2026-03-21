@@ -59,6 +59,20 @@ The goal is not to change what the server can do, but to change how clearly the 
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This task should rely on built-in FastMCP public-surface shaping:
+
+- `ToolTransform`
+- `ArgTransform`
+- profile-specific renderers and visibility
+
+Do not fork business logic or duplicate router execution paths to create LLM-friendly naming.
+
+---
+
 ## FastMCP Features To Use
 
 - **Tool Transformation** — **FastMCP 3.0.0**
@@ -109,6 +123,14 @@ Tool transformation is one of the cleanest ways to improve that without destabil
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define a platform-owned public naming and argument convention.
+2. Apply aliasing and hidden-argument rules on the public surface only.
+3. Simplify the LLM-guided surface while keeping expert and internal variants richer.
+4. Prove dispatcher and router internals still operate on canonical internal names.
+5. Add examples and QA cases focused on how LLMs choose and fill tools.
 
 Implementation is decomposed into:
 

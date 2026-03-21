@@ -13,6 +13,14 @@ Verify important corrections through structured scene and mesh inspection instea
 
 ---
 
+## Atomic Work Items
+
+1. Map each high-risk correction family to the inspection contracts it depends on.
+2. Execute verification after correction and before success is finalized.
+3. Add tests for verified success, verification failure, and inconclusive verification.
+
+---
+
 ## Acceptance Criteria
 
 - high-risk verification depends on inspection-layer truth, not semantic guesswork

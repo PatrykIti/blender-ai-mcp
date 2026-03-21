@@ -65,6 +65,15 @@ Risky or high-impact corrections should not be considered complete until the res
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Audit and postcondition work should be layered on top of structured contracts and inspection truth.
+Do not treat prose explanations as the primary audit record.
+
+---
+
 ## FastMCP Features / Approach Context
 
 - **Structured response contracts** — **3.x baseline**  
@@ -118,6 +127,15 @@ That is especially important before the project adds more advanced workflow auto
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define the correction event model.
+2. Add structured router execution reporting.
+3. Register which fixes require post-execution verification.
+4. Verify those fixes through inspection contracts.
+5. Expose the audit trail in responses and logs.
+6. Add regression coverage and docs for transparency behavior.
 
 Implementation is decomposed into:
 

@@ -9,7 +9,22 @@
 
 ## Objective
 
-Define exactly where server-side sampling assistants are allowed and where they are forbidden by the repository's responsibility boundaries.
+Define exactly where server-orchestrated sampling assistants are allowed and where they are forbidden by the repository's responsibility boundaries.
+
+---
+
+## Allowed First Use Cases
+
+- inspection summarization
+- repair suggestion drafting
+- compact explanation of large structured diagnostics
+
+## Forbidden First Use Cases
+
+- autonomous geometry-destructive planning
+- hidden substitution for router safety policy
+- scene-truth decisions without inspection contracts
+- detached background reasoning outside an active request
 
 ---
 

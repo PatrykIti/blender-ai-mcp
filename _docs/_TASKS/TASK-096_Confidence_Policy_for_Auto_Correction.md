@@ -68,6 +68,14 @@ This policy should apply not only to workflow matching, but also to:
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This policy must consume normalized confidence and explicit risk classes, not raw matcher-specific scores or implicit router heuristics.
+
+---
+
 ## FastMCP Features / Approach Context
 
 - **User Elicitation** — **FastMCP 2.10.0**  
@@ -120,6 +128,15 @@ That distinction is what separates a strong assistant from a surprising one.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Classify correction types and blast radius.
+2. Normalize confidence signals across matcher and correction engines.
+3. Add one explicit policy engine for auto-fix, ask, or block decisions.
+4. Route medium-confidence cases into typed clarification.
+5. Persist the decision context and expose it for operators and tests.
+6. Add telemetry and docs for the resulting behavior.
 
 Implementation is decomposed into:
 

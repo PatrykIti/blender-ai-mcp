@@ -35,6 +35,7 @@ Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit c
   - bootstrap through a factory instead of import side effects
 - `server/infrastructure/config.py`
   - add surface-profile and server-factory options
+  - keep profile selection distinct from later contract-version filtering
 
 ### New Files To Create
 
@@ -42,6 +43,15 @@ Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit c
 - `server/adapters/mcp/surfaces.py`
 - `server/adapters/mcp/settings.py`
 - `tests/unit/adapters/mcp/test_server_factory.py`
+
+### Surface Profile Baseline
+
+The composition root should treat these as surface profiles, not versions:
+
+- `legacy-flat`
+- `llm-guided`
+- `internal-debug`
+- `code-mode-pilot`
 
 ---
 
@@ -74,6 +84,16 @@ def build_server(surface_config, di) -> FastMCP:
 - build alternate surface profile
 - assert provider order and transform order
 - assert bootstrap no longer depends on importing all `areas` modules globally
+
+---
+
+## Atomic Work Items
+
+1. Replace singleton bootstrap with `build_server(surface_profile=...)`.
+2. Define the initial profile matrix and default provider sets.
+3. Move startup configuration into one settings object.
+4. Keep a compatibility shim for `instance.py` only until all areas stop depending on the global singleton.
+5. Add profile bootstrap tests before adding any new transform behavior.
 
 ---
 

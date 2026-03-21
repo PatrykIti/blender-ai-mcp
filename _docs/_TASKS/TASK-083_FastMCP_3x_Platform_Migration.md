@@ -58,6 +58,19 @@ The migration should preserve the current business capabilities while making lat
 
 ---
 
+## Implementation Constraints
+
+Follow the shared platform model in [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this task series, the migration baseline must establish:
+
+- one canonical platform manifest outside router metadata
+- a clear distinction between surface profile, contract version, and session phase
+- provider-based composition as the runtime source of truth
+- built-in FastMCP transforms as the default shaping mechanism before custom wrappers are considered
+
+---
+
 ## FastMCP Features To Use
 
 - **Provider Architecture** — **FastMCP 3.0.0**
@@ -112,6 +125,15 @@ That requires a server base that can present different capabilities in different
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original business scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Audit current 2.x coupling and missing inventory coverage.
+2. Extract reusable providers and remove side-effect-only registration assumptions.
+3. Replace the singleton bootstrap with a server factory and surface profiles.
+4. Lock a deterministic transform order that later tasks extend rather than bypass.
+5. Normalize context, session, and execution reporting for async-capable platform features.
+6. Add regression coverage for profiles, providers, transforms, and bootstrap behavior.
 
 Implementation is decomposed into:
 

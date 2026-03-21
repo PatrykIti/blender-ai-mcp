@@ -17,6 +17,7 @@ Expose an operational diagnostics surface for maintainers and clients.
 
 - publish status data such as:
   - active surface or profile
+  - active contract line
   - router summary
   - task counts
   - timeout config
@@ -27,3 +28,11 @@ Expose an operational diagnostics surface for maintainers and clients.
 ## Acceptance Criteria
 
 - debugging runtime state no longer requires guesswork
+
+---
+
+## Atomic Work Items
+
+1. Define the diagnostics payload contract.
+2. Expose profile, contract line, phase, timeout, and task state.
+3. Add one test proving diagnostics reflect session-phase and profile changes.

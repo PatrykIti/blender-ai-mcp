@@ -19,10 +19,18 @@ Define the transition strategy for delivering structured-first responses while s
   - `structured`
   - `structured_plus_summary`
   - `legacy_text`
-- choose the renderer by surface profile or version
+- choose the renderer by surface profile, contract line, or explicit compatibility override
 
 ---
 
 ## Acceptance Criteria
 
 - the transition to structured output does not force a destructive client cut-over
+
+---
+
+## Atomic Work Items
+
+1. Define default renderer selection per surface profile.
+2. Add contract-line overrides where legacy payloads must remain available.
+3. Add adapter tests for renderer selection and backward compatibility.

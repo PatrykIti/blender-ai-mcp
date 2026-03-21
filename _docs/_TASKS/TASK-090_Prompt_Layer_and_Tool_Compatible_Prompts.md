@@ -55,6 +55,15 @@ This strengthens consistency across ChatGPT, Claude, Codex, and other MCP consum
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Native prompts should remain the primary mechanism on prompt-capable surfaces.
+Prompt bridge tools exist for compatibility, not as the default public abstraction.
+
+---
+
 ## FastMCP Features To Use
 
 - **Prompt components in the FastMCP 3.x platform model** — **FastMCP 3.0.0**
@@ -105,6 +114,14 @@ instead of leaving it fragmented across external instructions.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Inventory prompt assets and tag them by phase, audience, and operating mode.
+2. Expose them as native FastMCP prompts.
+3. Add a prompt bridge for tool-only surfaces.
+4. Make prompt recommendations depend on session phase and profile.
+5. Add QA examples and docs so prompt products stay curated instead of drifting.
 
 Implementation is decomposed into:
 

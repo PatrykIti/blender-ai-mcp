@@ -19,8 +19,24 @@ Build the bounded assistant runner around `ctx.sample()` or `sample_step()` with
   - `server/adapters/mcp/sampling/assistant_runner.py`
   - `server/adapters/mcp/sampling/result_types.py`
 
+### Capability Rule
+
+The runner must:
+
+- detect sampling capability availability
+- degrade cleanly when sampling is unavailable
+- keep every assistant request bound to the originating MCP request
+
 ---
 
 ## Acceptance Criteria
 
 - assistants return typed results instead of free-form text blobs
+
+---
+
+## Atomic Work Items
+
+1. Build one bounded runner around `ctx.sample()` / `ctx.sample_step()`.
+2. Add capability detection and fallback return shapes.
+3. Add tests for typed success, unavailable-capability fallback, and masked-error behavior.

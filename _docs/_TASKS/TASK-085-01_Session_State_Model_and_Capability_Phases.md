@@ -31,6 +31,7 @@ Define an explicit session state model and a small set of capability phases that
   - `phase`
   - `goal`
   - `active_surface_profile`
+  - `active_contract_line`
   - `last_router_status`
 
 ---
@@ -48,8 +49,27 @@ class SessionPhase(StrEnum):
     EXPORT_HANDOFF = "export_handoff"
 ```
 
+### State Model Rule
+
+Session state should keep runtime interaction state only.
+It must not become a second bootstrap config system.
+
+In particular:
+
+- `active_surface_profile` comes from bootstrap
+- `active_contract_line` comes from version selection
+- `phase` changes during the session
+
 ---
 
 ## Acceptance Criteria
 
 - phases are explicit, serializable, and not hidden inside private router fields
+
+---
+
+## Atomic Work Items
+
+1. Define the session-state schema and default values.
+2. Add profile, contract-line, and phase helpers.
+3. Add tests for persistence and reset behavior across turns.

@@ -15,7 +15,7 @@ Measure and document the effect of moving from flat discovery to search-first di
 
 ## Planned Work
 
-- add snapshot tests for legacy vs LLM-first `list_tools`
+- add snapshot tests for `legacy-flat` vs `llm-guided` `list_tools`
 - benchmark visible tool count and payload size
 - update:
   - `_docs/_MCP_SERVER/README.md`

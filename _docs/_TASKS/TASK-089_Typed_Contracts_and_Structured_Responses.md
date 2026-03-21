@@ -52,16 +52,29 @@ The desired behavior is:
 
 - important inspection tools return structured, stable payloads
 - the LLM no longer depends on brittle text parsing for key state
-- internal server-side reasoning helpers can also use validated structured output when sampling is involved
+- internal sampling-assisted reasoning helpers can also use validated structured output when client-mediated sampling is involved
 
 This should begin with high-value context and inspection surfaces and then expand outward.
+
+---
+
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo:
+
+- domain and application handlers may keep returning dict/list state
+- adapter-side contracts and renderers should define public shape
+- structured payloads are the default for state-heavy tools
+- summary text should be a renderer choice, not the only contract
 
 ---
 
 ## FastMCP Features To Use
 
 - **Tool output schemas / structured content support in the current FastMCP server tools surface** — **3.x baseline**
-- **Structured output via `result_type` for server-side sampling** — **FastMCP 2.14.1**
+- **Structured output via `result_type` for client-mediated sampling flows** — **FastMCP 2.14.1**
 
 ---
 
@@ -111,6 +124,15 @@ Structured response contracts reduce that gap.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define one shared contract catalog and renderer policy.
+2. Convert scene context and scene inspection surfaces to stable structured payloads.
+3. Standardize mesh introspection envelopes and paging fields.
+4. Add structured router, workflow, and execution report contracts.
+5. Preserve compatibility through dual-format renderers selected by profile or contract line.
+6. Add schema tests and public docs for the new contract set.
 
 Implementation is decomposed into:
 

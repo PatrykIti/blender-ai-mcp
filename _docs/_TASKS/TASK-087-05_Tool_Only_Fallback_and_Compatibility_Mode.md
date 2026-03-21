@@ -19,6 +19,7 @@ Preserve a clean fallback contract for clients that do not support the elicitati
   - `status: "needs_input"`
   - typed `questions`
   - stable `request_id`
+  - stable `question_set_id`
 - let `router_set_goal` choose between:
   - native elicitation flow when supported
   - fallback payload when not supported
@@ -28,3 +29,11 @@ Preserve a clean fallback contract for clients that do not support the elicitati
 ## Acceptance Criteria
 
 - no existing tool-only client loses capability after elicitation support is added
+
+---
+
+## Atomic Work Items
+
+1. Define one stable fallback schema shared by router and workflow import flows.
+2. Preserve current `resolved_params` continuation semantics.
+3. Add compatibility tests against the current sync MCP adapter behavior.

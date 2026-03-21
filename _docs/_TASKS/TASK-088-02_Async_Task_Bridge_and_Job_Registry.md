@@ -31,8 +31,25 @@ async def render_angles_task(...):
     ...
 ```
 
+### Identity Rule
+
+Track both:
+
+- FastMCP task ID
+- addon-side Blender job ID
+
+The bridge is not complete if only one of these identities exists.
+
 ---
 
 ## Acceptance Criteria
 
 - the server can register, track, and complete background jobs explicitly
+
+---
+
+## Atomic Work Items
+
+1. Define FastMCP task ID to addon job ID mapping.
+2. Add a registry that stores status, progress, cancelability, and final result metadata.
+3. Add tests for launch, poll, completion, and cancellation bookkeeping.

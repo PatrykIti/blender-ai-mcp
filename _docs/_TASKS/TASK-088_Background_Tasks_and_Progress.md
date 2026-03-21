@@ -55,6 +55,19 @@ This gives the product room to grow into more ambitious workflows without making
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo, background execution is a two-layer problem:
+
+- FastMCP task UX at the MCP boundary
+- addon/server-side Blender job execution beyond the current blocking RPC timeout model
+
+This task is not complete if only the MCP layer becomes task-aware while the addon still blocks on a single `result_queue.get(timeout=30.0)` path.
+
+---
+
 ## FastMCP Features To Use
 
 - **Background Tasks** — **FastMCP 2.14.0**
@@ -104,6 +117,15 @@ Without background tasks, those features become harder to ship cleanly.
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Classify which operations truly need task mode instead of synchronous execution.
+2. Build the FastMCP task bridge and explicit job identity mapping.
+3. Define progress, cancellation, and result retrieval contracts.
+4. Adapt RPC and addon runtime to launch, poll, and cancel Blender jobs safely.
+5. Roll task mode into the highest-value heavy tools first.
+6. Add operations-focused tests and docs for task behavior.
 
 Implementation is decomposed into:
 

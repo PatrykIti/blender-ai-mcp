@@ -73,6 +73,14 @@ Those responsibilities should sit with FastMCP discovery controls, deterministic
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Discovery and visibility should hand off to the platform manifest and FastMCP search controls, not to router metadata or semantic overreach.
+
+---
+
 ## FastMCP Features / Approach Context
 
 - **Tool Search** — **FastMCP 3.1.0**  
@@ -125,6 +133,14 @@ This separation is critical if the project wants both multilingual flexibility a
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Audit current LaBSE call sites and classify each by responsibility.
+2. Move general discovery onto FastMCP platform search.
+3. Move truth and verification checks onto structured inspection contracts.
+4. Keep LaBSE focused on workflow and parameter semantics.
+5. Add tests and telemetry that make boundary violations visible.
 
 Implementation is decomposed into:
 

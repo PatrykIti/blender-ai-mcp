@@ -23,9 +23,14 @@ Define which tools and parameters are public, how they should be named for LLM c
 
 ## Planned Work
 
-- create `server/adapters/mcp/surface_manifest.py`
-- create `server/adapters/mcp/naming_rules.py`
+- update `server/adapters/mcp/platform/capability_manifest.py`
+- create `server/adapters/mcp/platform/public_contracts.py`
+- create `server/adapters/mcp/platform/naming_rules.py`
 - add `tests/unit/adapters/mcp/test_surface_manifest.py`
+
+### Ownership Rule
+
+Do not create a second standalone manifest that competes with the shared platform capability manifest created in TASK-084-01.
 
 ---
 
@@ -33,3 +38,11 @@ Define which tools and parameters are public, how they should be named for LLM c
 
 - there is an explicit `internal name -> public name -> audience -> version` mapping
 - naming decisions are no longer hidden inside scattered wrappers
+
+---
+
+## Atomic Work Items
+
+1. Define naming rules for tools, arguments, and summaries.
+2. Attach public contract metadata to the shared capability manifest.
+3. Add tests for one capability exposing more than one public contract line.

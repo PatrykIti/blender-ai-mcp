@@ -27,6 +27,11 @@ Implement visibility filtering around component tags, audience, and session phas
   - `audience:llm`
   - `risk:destructive`
 
+### Ownership Rule
+
+Visibility tags should come from the shared platform capability manifest and provider registration.
+Router metadata may inform policy, but it is not the canonical visibility registry.
+
 ---
 
 ## Pseudocode
@@ -46,3 +51,11 @@ def is_visible(component, phase, profile):
 
 - visibility rules are deterministic and testable
 - provider tags become the canonical grouping mechanism for visibility decisions
+
+---
+
+## Atomic Work Items
+
+1. Materialize profile, audience, phase, and risk tags on provider components.
+2. Implement one deterministic visibility policy function.
+3. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.

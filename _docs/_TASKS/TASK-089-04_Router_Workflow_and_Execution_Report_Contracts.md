@@ -30,8 +30,25 @@ Introduce typed contracts for `router_set_goal`, router status, workflow catalog
   - `server/adapters/mcp/contracts/workflow_catalog.py`
   - `tests/unit/router/application/test_router_contracts.py`
 
+### Execution Awareness Rule
+
+The execution report should let an LLM and an operator see:
+
+- what the router decided
+- which steps were injected or corrected
+- what actually executed
+- what failed, blocked, or needs input next
+
 ---
 
 ## Acceptance Criteria
 
 - router and workflow interactions are machine-readable, not only prose-readable
+
+---
+
+## Atomic Work Items
+
+1. Define structured `router_set_goal` success, needs-input, no-match, and error contracts.
+2. Define workflow catalog list/get/search/import contracts.
+3. Define the execution report envelope used by router-aware adapter calls.

@@ -51,6 +51,18 @@ This task should be treated as product infrastructure, not just developer conven
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This umbrella must treat these as separate concerns:
+
+- built-in FastMCP OpenTelemetry spans vs repo-specific router/job attributes
+- MCP component pagination vs domain payload pagination
+- foreground tool timeouts vs background-task execution timeouts vs RPC timeouts
+
+---
+
 ## FastMCP Features To Use
 
 - **OpenTelemetry tracing** — **FastMCP 3.0.0**
@@ -101,6 +113,14 @@ Observability and operational guardrails make those distinctions clearer and sho
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Bootstrap OpenTelemetry on top of FastMCP’s native spans.
+2. Define explicit timeout contracts per runtime boundary.
+3. Enable pagination for large MCP component lists.
+4. Standardize payload pagination for large structured tool outputs.
+5. Expose operational diagnostics so maintainers can see active profile, phase, jobs, and timeout state.
 
 Implementation is decomposed into:
 

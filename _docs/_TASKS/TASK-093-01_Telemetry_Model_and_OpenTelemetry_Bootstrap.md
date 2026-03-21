@@ -27,8 +27,27 @@ Introduce telemetry foundations and OpenTelemetry bootstrap for the MCP platform
   - `server/infrastructure/telemetry.py`
   - `tests/unit/infrastructure/test_telemetry.py`
 
+### Bootstrap Rule
+
+FastMCP already provides native tool, prompt, and resource spans.
+This task should:
+
+- bootstrap OTEL SDK/exporter configuration early enough in startup
+- add repo-specific router and addon-job attributes/spans
+- avoid rebuilding baseline MCP operation tracing from scratch
+
+The startup path must account for OTEL initialization before FastMCP import/bootstrap takes effect.
+
 ---
 
 ## Acceptance Criteria
 
 - request, tool, and router spans can be exported through OpenTelemetry
+
+---
+
+## Atomic Work Items
+
+1. Add OTEL bootstrap helper and configuration wiring.
+2. Ensure startup initializes telemetry before server construction.
+3. Add router-specific span helpers and in-memory exporter tests.

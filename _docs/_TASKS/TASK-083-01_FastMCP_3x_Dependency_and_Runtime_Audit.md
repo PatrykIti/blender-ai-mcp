@@ -69,6 +69,8 @@ This audit must explicitly capture already-visible inventory gaps in the repo, f
 
 - `server/adapters/mcp/areas/__init__.py` does not import `text`
 - `server/router/infrastructure/metadata_loader.py` does not include every MCP-facing area family
+- sync adapter tools currently depend on ad hoc `ctx.info()` bridging instead of a broader context/session model
+- the runtime still has no explicit distinction between surface profile, contract version, and session phase
 
 These are not side observations. They directly affect later provider inventory, discovery, and visibility work.
 
@@ -101,6 +103,16 @@ def build_runtime_inventory() -> list[SurfaceModule]:
 - inventory completeness test for all current MCP areas
 - inventory vs metadata-loader area coverage test
 - bootstrap smoke test proving imports no longer depend on hidden side effects
+
+---
+
+## Atomic Work Items
+
+1. Inventory all area modules, including missing side-effect imports and non-tool components.
+2. Inventory all router metadata families and list which MCP-facing families are absent.
+3. Inventory every place that assumes one global `mcp` instance.
+4. Inventory every place that assumes one flat public catalog.
+5. Inventory every adapter entry point that will need async-aware context/session handling later.
 
 ---
 

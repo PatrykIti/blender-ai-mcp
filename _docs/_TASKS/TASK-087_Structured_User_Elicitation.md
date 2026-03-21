@@ -59,6 +59,18 @@ The system should treat elicitation as a standard interaction contract, not an e
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo:
+
+- native elicitation should live on async-capable LLM-guided surfaces
+- legacy and tool-only surfaces must keep a typed `needs_input` fallback
+- workflow context and partial answers must survive across the next interaction step
+
+---
+
 ## FastMCP Features To Use
 
 - **User Elicitation** — **FastMCP 2.10.0**
@@ -101,6 +113,15 @@ When a user says “make a table,” the system often needs more than one unstat
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define elicitation request and answer contracts derived from workflow parameter schemas.
+2. Add an async-aware router entry path that can call `ctx.elicit(...)`.
+3. Support constrained choice, booleans, and multi-select without free-form ambiguity.
+4. Persist partial answers and cancellation state in session data.
+5. Preserve a stable fallback payload for clients without elicitation support.
+6. Add test coverage for both native elicitation and compatibility mode.
 
 Implementation is decomposed into:
 

@@ -27,6 +27,7 @@ Create one canonical discovery inventory containing categories, tags, aliases, a
 
 ### New Files To Create
 
+- `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/discovery/tool_inventory.py`
 - `server/adapters/mcp/discovery/taxonomy.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
@@ -34,9 +35,21 @@ Create one canonical discovery inventory containing categories, tags, aliases, a
 ### Existing Files To Update
 
 - `server/router/infrastructure/metadata_loader.py`
-  - include every MCP-facing family that should participate in discovery
+  - include every router-callable family that needs search enrichment data
 - `server/router/infrastructure/tools_metadata/_schema.json`
-  - extend the schema with discovery-specific fields such as tags, aliases, pinned, audience, and hidden-from-search flags
+  - keep router-focused fields router-focused; do not make it the canonical audience/visibility registry
+
+### Ownership Rule
+
+The canonical source for:
+
+- audience
+- phase tags
+- public aliases
+- pinned defaults
+- hidden-from-search defaults
+
+belongs in the platform capability manifest, not in router metadata.
 
 ---
 
@@ -52,6 +65,15 @@ class DiscoveryEntry:
     pinned: bool
     hidden_from_search: bool
 ```
+
+---
+
+## Atomic Work Items
+
+1. Define the shared platform manifest for public capability metadata.
+2. Build discovery inventory from manifest + docstrings + schemas + optional router hints.
+3. Keep router metadata as enrichment only.
+4. Add tests proving every public and router-callable capability is represented exactly once.
 
 ---
 

@@ -9,7 +9,7 @@
 
 ## Objective
 
-Hide backend-only arguments and expose only the parameters that an LLM should realistically provide on the LLM-first surface.
+Hide backend-only arguments and expose only the parameters that an LLM should realistically provide on the `llm-guided` surface.
 
 ---
 
@@ -34,5 +34,5 @@ Hide backend-only arguments and expose only the parameters that an LLM should re
 
 ## Acceptance Criteria
 
-- the LLM-first surface no longer exposes avoidable technical noise
+- the `llm-guided` surface no longer exposes avoidable technical noise
 - expert and internal surfaces can still expose advanced controls where needed

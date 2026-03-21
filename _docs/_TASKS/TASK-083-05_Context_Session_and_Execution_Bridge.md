@@ -30,6 +30,7 @@ Normalize how adapter tools use `Context`, session state, and execution metadata
 
 - `server/adapters/mcp/context_utils.py`
   - add helpers for session read/write, progress, and elicitation handoff
+  - stop treating `ctx.info()` bridging as the only shared context utility
 - `server/adapters/mcp/router_helper.py`
   - separate execution reporting from plain text concatenation
 - `server/router/adapters/mcp_integration.py`
@@ -64,6 +65,17 @@ def build_execution_report(tool_name, params, router_result, raw_result):
     }
 ```
 
+### Migration Rule
+
+Do not convert the entire repo to async in one step.
+Convert the interaction-heavy entry points first:
+
+- router entry tools
+- workflow catalog entry tools
+- prompt and task-capable entry tools
+
+Legacy sync wrappers may remain temporarily for compatibility.
+
 ---
 
 ## Tests
@@ -71,6 +83,15 @@ def build_execution_report(tool_name, params, router_result, raw_result):
 - session state helpers
 - structured execution report generation
 - backward-compatibility coverage for sync wrappers
+
+---
+
+## Atomic Work Items
+
+1. Add session helpers around `ctx.get_state()` / `ctx.set_state()`.
+2. Add execution context and report objects that adapters can reuse.
+3. Convert the highest-value interaction entry points to async-aware context usage.
+4. Preserve sync compatibility for the flat legacy surface.
 
 ---
 

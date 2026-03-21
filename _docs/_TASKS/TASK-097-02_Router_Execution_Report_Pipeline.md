@@ -21,6 +21,14 @@ Extend router output and `route_tool_call()` so multi-step execution produces a 
 
 ---
 
+## Atomic Work Items
+
+1. Define one execution-report schema shared by router-aware tool entry points.
+2. Capture original call, corrected steps, executed steps, and final status.
+3. Add adapter rendering tests for structured and summary variants.
+
+---
+
 ## Acceptance Criteria
 
 - multi-step execution is represented as structured data as well as optional summary text

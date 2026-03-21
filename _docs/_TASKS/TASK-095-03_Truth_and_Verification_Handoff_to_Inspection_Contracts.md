@@ -13,6 +13,14 @@ Move truth and verification decisions onto structured inspection contracts inste
 
 ---
 
+## Atomic Work Items
+
+1. Identify every place where semantic confidence currently leaks into truth-like decisions.
+2. Replace those decisions with explicit inspection contract checks.
+3. Add tests proving scene truth no longer depends on semantic score alone.
+
+---
+
 ## Acceptance Criteria
 
 - semantic confidence is not used as a proxy for scene truth

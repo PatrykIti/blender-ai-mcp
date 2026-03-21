@@ -28,10 +28,28 @@ Adapt RPC and addon runtime so longer-running work no longer depends on a single
   - fast request-response calls
   - task launch
   - task polling or result retrieval
+  - task cancellation
 - replace the one-size-fits-all 30-second wait strategy with job-aware timeout policy
+
+### RPC Shape Direction
+
+Prefer explicit RPC verbs or payload types for:
+
+- launch
+- poll
+- cancel
+- collect result
 
 ---
 
 ## Acceptance Criteria
 
 - background jobs no longer depend on one blocking `result_queue.get(timeout=30.0)` model
+
+---
+
+## Atomic Work Items
+
+1. Add addon-side job lifecycle primitives.
+2. Add RPC client methods for launch, poll, cancel, and collect.
+3. Keep Blender main-thread execution safe while decoupling job completion from socket wait time.

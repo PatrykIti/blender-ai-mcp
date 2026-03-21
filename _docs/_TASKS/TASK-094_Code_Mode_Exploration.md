@@ -58,6 +58,21 @@ The likely bad-fit scenario is making it the default execution path for direct g
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo, Code Mode should remain:
+
+- explicit
+- opt-in
+- profile-scoped
+- read-heavy first
+
+It should not become the default write path for Blender mutations without a separate proof burden.
+
+---
+
 ## FastMCP Features To Use
 
 - **Code Mode** — **FastMCP 3.1.0**  
@@ -103,6 +118,13 @@ But because Blender writes are high-impact, the feature should be treated carefu
 ## Umbrella Execution Notes
 
 This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define experiment guardrails and exclusion rules.
+2. Build a read-only pilot surface on top of the same provider set.
+3. Benchmark discovery and orchestration cost against classic tool loops.
+4. Record an explicit go/no-go decision with retained constraints.
 
 Implementation is decomposed into:
 

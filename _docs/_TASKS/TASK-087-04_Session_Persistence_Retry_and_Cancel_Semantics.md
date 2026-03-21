@@ -19,6 +19,7 @@ Handle partial answers, re-prompting, and cancellation without losing workflow c
   - `pending_elicitation_id`
   - `pending_workflow_name`
   - `partial_answers`
+  - `pending_question_set_id`
 - helper logic for retry and cleanup
 
 ---
@@ -27,3 +28,11 @@ Handle partial answers, re-prompting, and cancellation without losing workflow c
 
 - users can cancel or pause elicitation safely
 - partial answers survive across the next interaction step when appropriate
+
+---
+
+## Atomic Work Items
+
+1. Persist pending question-set identity and partial answers.
+2. Implement retry, cancel, and cleanup transitions explicitly.
+3. Add tests for cancel-and-resume and partial-answer retry flows.

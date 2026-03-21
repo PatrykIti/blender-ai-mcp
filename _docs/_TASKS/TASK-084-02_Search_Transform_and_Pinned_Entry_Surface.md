@@ -9,7 +9,7 @@
 
 ## Objective
 
-Enable search-first discovery as the default model for LLM-first surfaces and define the pinned entry tools that remain directly visible.
+Enable search-first discovery as the default model for the `llm-guided` surface and define the pinned entry tools that remain directly visible.
 
 ---
 
@@ -32,7 +32,7 @@ Enable search-first discovery as the default model for LLM-first surfaces and de
 ### Existing Files To Update
 
 - `server/adapters/mcp/factory.py`
-  - enable the search transform for LLM-first surfaces
+  - enable the search transform for the `llm-guided` surface
 - `server/adapters/mcp/surfaces.py`
   - declare the pinned entry tools list
 
@@ -43,16 +43,16 @@ Enable search-first discovery as the default model for LLM-first surfaces and de
 - `router_set_goal`
 - `router_get_status`
 - `workflow_catalog`
-- `search_tools`
-- `call_tool`
 - prompt bridge tools from TASK-090 when they exist
+
+`search_tools` and `call_tool` should come from the search transform itself and must not be duplicated manually.
 
 ---
 
 ## Pseudocode
 
 ```python
-search_transform = RegexSearchTransform(
+search_transform = BM25SearchTransform(
     always_visible=[
         "router_set_goal",
         "router_get_status",
@@ -61,9 +61,23 @@ search_transform = RegexSearchTransform(
 )
 ```
 
+### Search Strategy
+
+For this repo, prefer `BM25SearchTransform` on LLM-guided surfaces.
+Keep regex search only as an internal-debug option when deterministic pattern matching is useful for diagnostics.
+
 ---
 
 ## Acceptance Criteria
 
-- `list_tools` on the LLM-first surface no longer returns the full tool catalog
+- `list_tools` on the `llm-guided` surface no longer returns the full tool catalog
 - pinned tools stay visible and are not duplicated in search results
+
+---
+
+## Atomic Work Items
+
+1. Enable built-in BM25 search on the `llm-guided` profile.
+2. Keep the visible entry set intentionally tiny.
+3. Validate that pinned tools do not reappear in search results.
+4. Add explicit tests for search result usefulness on mega tools such as `scene_inspect` and `mesh_inspect`.

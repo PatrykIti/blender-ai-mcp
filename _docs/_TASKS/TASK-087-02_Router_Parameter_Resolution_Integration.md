@@ -23,7 +23,7 @@ Integrate `router_set_goal` and `RouterToolHandler.set_goal()` with `ctx.elicit(
 
 ## Planned Work
 
-- make `router_set_goal()` async-aware on the elicitation-capable surface
+- make `router_set_goal()` async-aware on the elicitation-capable `llm-guided` surface
 - return typed unresolved bundles instead of only plain dict lists
 
 ---
@@ -37,9 +37,25 @@ result = await ctx.elicit(
 )
 ```
 
+### Compatibility Rule
+
+Do not require every surface to use native elicitation.
+This task should add:
+
+- native elicitation on `llm-guided`
+- fallback `needs_input` payloads on `legacy-flat`
+
 ---
 
 ## Acceptance Criteria
 
 - missing parameters can be collected without breaking the router goal flow
 - workflow execution receives a consistent resolved payload
+
+---
+
+## Atomic Work Items
+
+1. Add an async router entry tool for native elicitation.
+2. Preserve the current second-call `resolved_params` fallback path.
+3. Validate that learned parameter storage still works after elicitation answers are applied.
