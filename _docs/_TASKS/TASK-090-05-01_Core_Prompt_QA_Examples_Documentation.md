@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Prompt QA, Examples, and Documentation**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

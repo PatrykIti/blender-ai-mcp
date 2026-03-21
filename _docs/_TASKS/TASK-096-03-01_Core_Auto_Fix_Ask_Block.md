@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Auto-Fix, Ask, Block Policy Engine**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

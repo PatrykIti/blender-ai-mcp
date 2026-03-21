@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)  
 
 ---
 

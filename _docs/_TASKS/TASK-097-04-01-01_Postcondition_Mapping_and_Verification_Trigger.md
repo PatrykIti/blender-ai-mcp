@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-04-01](./TASK-097-04-01_Core_Inspection_Verification_Integration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-097-04-01](./TASK-097-04-01_Core_Inspection_Verification_Integration.md)  
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Evaluation Harness and Benchmark Scenarios
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

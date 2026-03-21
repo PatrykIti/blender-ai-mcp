@@ -56,6 +56,13 @@ The server should be rebuilt conceptually around:
 
 The migration should preserve the current business capabilities while making later tasks cheaper and safer.
 
+The implementation should move incrementally, not as one wide cut-over:
+
+- first establish inventory and registration seams
+- then migrate provider composition area by area
+- then flip bootstrap and transform composition
+- only then layer discovery, visibility, and versioned public surfaces on top
+
 ---
 
 ## Implementation Constraints
@@ -134,6 +141,12 @@ This remains the umbrella task. The original business scope stays unchanged.
 4. Lock a deterministic transform order that later tasks extend rather than bypass.
 5. Normalize context, session, and execution reporting for async-capable platform features.
 6. Add regression coverage for profiles, providers, transforms, and bootstrap behavior.
+
+Migration should stay area-oriented:
+
+- `scene`, `mesh`, and `modeling` first, because they dominate the public catalog
+- `router` and `workflow_catalog` next, because later 3.x interaction work depends on them
+- remaining families after the provider and factory pattern is proven
 
 Implementation is decomposed into:
 

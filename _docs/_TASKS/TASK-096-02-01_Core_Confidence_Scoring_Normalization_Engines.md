@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)  
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Progress, Cancellation, and Result Retriev
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-05](./TASK-097-05_Audit_Exposure_in_MCP_Responses_and_Logs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-097-05](./TASK-097-05_Audit_Exposure_in_MCP_Responses_and_Logs.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Audit Exposure in MCP Responses and Logs**
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

@@ -18,6 +18,11 @@ Compose separate public surfaces through version filtering instead of forking th
 - use built-in FastMCP `VersionFilter` in the server factory
 - surface configs use `version_lt` or `version_gte` style filters
 
+### Composition Rule
+
+Apply version filters only after provider registration and public naming/contract metadata are already stable.
+`VersionFilter` should shape public surfaces, not become a substitute for naming or renderer policy.
+
 ---
 
 ## Layered Subtasks

@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-04](./TASK-097-04_Inspection_Based_Verification_Integration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md), [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md), [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)  
 
 ---
 
@@ -47,5 +47,6 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Map each high-risk correction family to the scene or mesh inspection contracts it needs for verification.
+2. Trigger verification after correction and before final success is reported through adapter execution reports.
+3. Keep verification logic dependent on inspection-layer truth rather than semantic confidence or prose heuristics.

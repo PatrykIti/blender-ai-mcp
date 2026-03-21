@@ -3,7 +3,7 @@
 **Parent:** [TASK-092-02](./TASK-092-02_Assistant_Runner_with_Typed_Result_Wrappers.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-092-02](./TASK-092-02_Assistant_Runner_with_Typed_Result_Wrappers.md)  
 
 ---
 
@@ -15,7 +15,11 @@ Implement the core code changes for **Assistant Runner with Typed Result Wrapper
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- `server/adapters/mcp/sampling/assistant_runner.py`
+- `server/adapters/mcp/sampling/result_types.py`
+- `server/adapters/mcp/context_utils.py`
+- `server/adapters/mcp/contracts/base.py`
+- `tests/unit/adapters/mcp/test_assistant_runner.py`
 
 ---
 
@@ -35,5 +39,6 @@ Implement the core code changes for **Assistant Runner with Typed Result Wrapper
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement one bounded runner around `ctx.sample()` / `ctx.sample_step()` with explicit capability detection and request-bound execution context.
+2. Return typed result envelopes for `success`, `unavailable`, `masked_error`, and `rejected_by_policy` instead of free-form text blobs.
+3. Keep the runner generic and adapter-scoped so router policy, semantic retrieval, and inspection truth remain separate concerns.

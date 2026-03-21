@@ -3,7 +3,7 @@
 **Parent:** [TASK-095-05](./TASK-095-05_Boundary_Tests_Telemetry_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-095-05](./TASK-095-05_Boundary_Tests_Telemetry_and_Documentation.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Boundary Tests, Telemetry, and Documentati
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

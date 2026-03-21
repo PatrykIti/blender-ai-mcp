@@ -20,6 +20,16 @@ Build the FastMCP task bridge and a job registry for long-running operations.
   - `server/adapters/mcp/tasks/task_bridge.py`
   - `tests/unit/adapters/mcp/test_job_registry.py`
 
+### Scope Rule
+
+This task owns only the server-side bridge and registry.
+
+It does not own:
+
+- addon job primitives
+- RPC transport verbs
+- tool-by-tool adoption
+
 ---
 
 ## Pseudocode
@@ -61,4 +71,5 @@ The bridge is not complete if only one of these identities exists.
 
 1. Define FastMCP task ID to addon job ID mapping.
 2. Add a registry that stores status, progress, cancelability, and final result metadata.
-3. Add tests for launch, poll, completion, and cancellation bookkeeping.
+3. Keep task lifecycle coordination in adapter/infrastructure code, not in business handlers.
+4. Add tests for launch, poll, completion, and cancellation bookkeeping.

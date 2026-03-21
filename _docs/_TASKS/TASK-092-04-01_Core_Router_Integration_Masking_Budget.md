@@ -3,7 +3,7 @@
 **Parent:** [TASK-092-04](./TASK-092-04_Router_Integration_Masking_and_Budget_Control.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-092-04](./TASK-092-04_Router_Integration_Masking_and_Budget_Control.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Router Integration, Masking, and Budget Co
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md)  
 
 ---
 

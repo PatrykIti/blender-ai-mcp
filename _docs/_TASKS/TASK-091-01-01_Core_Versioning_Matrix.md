@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)  
 
 ---
 
@@ -15,7 +15,12 @@ Implement the core code changes for **Versioning Policy and Surface Matrix**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- `server/adapters/mcp/version_policy.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
+- `server/adapters/mcp/platform/public_contracts.py`
+- `server/adapters/mcp/surfaces.py`
+- `server/adapters/mcp/settings.py`
+- `tests/unit/adapters/mcp/test_version_policy.py`
 
 ---
 
@@ -35,5 +40,6 @@ Implement the core code changes for **Versioning Policy and Surface Matrix**.
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define one explicit matrix mapping surface profiles to preferred contract lines and deprecation policy.
+2. Convert current public contracts into explicit baseline `1.x` lines only after public naming and renderer rules are frozen.
+3. Keep version policy owned by the platform layer rather than scattered across area modules or router metadata.

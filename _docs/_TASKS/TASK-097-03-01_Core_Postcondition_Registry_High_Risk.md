@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Postcondition Registry for High-Risk Fixes
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

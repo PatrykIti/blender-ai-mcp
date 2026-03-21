@@ -3,7 +3,7 @@
 **Parent:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md)  
 
 ---
 

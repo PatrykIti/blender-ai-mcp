@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-05](./TASK-087-05_Tool_Only_Fallback_and_Compatibility_Mode.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-087-05](./TASK-087-05_Tool_Only_Fallback_and_Compatibility_Mode.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Tool-Only Fallback and Compatibility Mode*
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

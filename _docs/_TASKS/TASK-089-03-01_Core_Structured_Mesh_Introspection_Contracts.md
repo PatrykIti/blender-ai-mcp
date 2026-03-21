@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)  
 
 ---
 

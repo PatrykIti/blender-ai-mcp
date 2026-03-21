@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)  
 
 ---
 
@@ -48,5 +48,6 @@ Implement the core code changes for **Server Factory and Composition Root**.
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Introduce one explicit factory path that builds a server from providers, transforms, and settings.
+2. Keep `instance.py` as a compatibility shim only while area modules still import it.
+3. Prove the bootstrap path works before broad provider migration continues.

@@ -17,8 +17,8 @@ Add policy-focused regression coverage, telemetry markers, and documentation.
 
 | ID | Title | Focus |
 |----|-------|-------|
-| [TASK-096-06-01](./TASK-096-06-01_Core_Tests_Telemetry_Documentation.md) | Core Policy Tests, Telemetry, and Documentation | Core implementation layer |
-| [TASK-096-06-02](./TASK-096-06-02_Tests_Tests_Telemetry_Documentation.md) | Tests and Docs Policy Tests, Telemetry, and Documentation | Tests, docs, and QA |
+| [TASK-096-06-01](./TASK-096-06-01_Core_Policy_Telemetry_Documentation.md) | Core Policy Tests, Telemetry, and Documentation | Core implementation layer |
+| [TASK-096-06-02](./TASK-096-06-02_Tests_Policy_Telemetry_Documentation.md) | Tests and Docs Policy Telemetry and Documentation | Tests, docs, and QA |
 
 ---
 

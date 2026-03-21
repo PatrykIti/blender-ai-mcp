@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)  
 
 ---
 
@@ -15,7 +15,13 @@ Implement the core code changes for **Correction Event Model and Audit Schema**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- `server/router/domain/entities/correction_audit.py`
+- `server/adapters/mcp/contracts/correction_audit.py`
+- `server/adapters/mcp/execution_report.py`
+- `server/adapters/mcp/router_helper.py`
+- `server/router/application/router.py`
+- `server/router/infrastructure/logger.py`
+- `tests/unit/router/application/test_correction_audit.py`
 
 ---
 
@@ -35,5 +41,6 @@ Implement the core code changes for **Correction Event Model and Audit Schema**.
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define a structured correction audit entity that separates correction intent, decision basis, execution steps, and verification outcome.
+2. Make router execution reporting reference audit events instead of relying on concatenated text or log-only explanations.
+3. Keep audit payloads serializable and machine-readable so adapters can render them as structured output or summary text without changing the source data model.

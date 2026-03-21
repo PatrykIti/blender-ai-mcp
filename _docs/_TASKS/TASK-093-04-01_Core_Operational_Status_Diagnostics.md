@@ -3,7 +3,7 @@
 **Parent:** [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Operational Status and Diagnostics Surface
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

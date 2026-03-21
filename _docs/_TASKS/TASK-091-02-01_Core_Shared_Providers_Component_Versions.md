@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)  
 
 ---
 
@@ -15,7 +15,12 @@ Implement the core code changes for **Shared Providers with Component Versions**
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- `server/adapters/mcp/providers/core_tools.py`
+- `server/adapters/mcp/providers/router_tools.py`
+- `server/adapters/mcp/providers/workflow_tools.py`
+- `server/adapters/mcp/platform/public_contracts.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
+- `tests/unit/adapters/mcp/test_provider_versions.py`
 
 ---
 
@@ -35,5 +40,6 @@ Implement the core code changes for **Shared Providers with Component Versions**
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Assign explicit baseline versions to the current public contracts on shared providers without duplicating handler implementations.
+2. Add alternate versions only for capabilities whose public name, parameter contract, or response contract actually changes.
+3. Keep internal canonical tool names and dispatcher mappings unversioned unless the internal execution contract truly changes.

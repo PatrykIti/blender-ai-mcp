@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-03](./TASK-091-03_Version_Filtered_Server_Composition.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-091-03](./TASK-091-03_Version_Filtered_Server_Composition.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Version-Filtered Server Composition**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

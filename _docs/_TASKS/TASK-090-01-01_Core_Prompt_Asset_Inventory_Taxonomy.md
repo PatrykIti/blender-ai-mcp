@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md)  
 
 ---
 
@@ -15,7 +15,8 @@ Implement the core code changes for **Prompt Asset Inventory and Taxonomy**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/*.md`
 
 ---
 

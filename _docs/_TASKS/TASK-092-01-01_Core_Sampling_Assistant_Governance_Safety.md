@@ -3,7 +3,7 @@
 **Parent:** [TASK-092-01](./TASK-092-01_Sampling_Assistant_Governance_and_Safety_Boundaries.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-092-01](./TASK-092-01_Sampling_Assistant_Governance_and_Safety_Boundaries.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Sampling Assistant Governance and Safety B
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

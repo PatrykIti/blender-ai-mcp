@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-04](./TASK-091-04_Client_Selection_and_Bootstrap_Configuration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-091-04](./TASK-091-04_Client_Selection_and_Bootstrap_Configuration.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Client Selection and Bootstrap Configurati
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

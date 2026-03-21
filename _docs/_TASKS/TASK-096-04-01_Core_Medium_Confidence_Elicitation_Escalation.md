@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-04](./TASK-096-04_Medium_Confidence_Elicitation_and_Escalation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-096-04](./TASK-096-04_Medium_Confidence_Elicitation_and_Escalation.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Medium-Confidence Elicitation and Escalati
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

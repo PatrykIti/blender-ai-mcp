@@ -1,9 +1,9 @@
-# TASK-088-06-02: Tests and Docs Task Mode Tests, Operations, and Docs
+# TASK-088-06-02: Tests and Docs Task Mode Operations and Docs
 
 **Parent:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-088-06-01](./TASK-088-06-01_Core_Tests_Operations_Docs.md)
+**Depends On:** [TASK-088-06-01](./TASK-088-06-01_Core_Task_Mode_Operations_Docs.md)
 
 ---
 

@@ -1,21 +1,21 @@
-# TASK-096-06-01: Core Policy Tests, Telemetry, and Documentation
+# TASK-088-06-01: Core Task Mode Tests, Operations, and Docs
 
-**Parent:** [TASK-096-06](./TASK-096-06_Policy_Tests_Telemetry_and_Documentation.md)  
+**Parent:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
 
 ---
 
 ## Objective
 
-Implement the core code changes for **Policy Tests, Telemetry, and Documentation**.
+Implement the core code changes for **Task Mode Tests, Operations, and Docs**.
 
 ---
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

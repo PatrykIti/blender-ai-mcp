@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Platform  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
+**Dependencies:** TASK-083, TASK-086, TASK-089  
 **Status:** ⬜ To Do
 
 ---
@@ -64,6 +64,13 @@ This task must preserve the distinction between:
 - contract version: which public contract version a capability exposes
 
 Profiles and versions should work together, not become two competing configuration systems.
+
+Public contract versioning should start only after:
+
+- the naming and public contract baseline exists
+- the adapter contract model exists for structured-first payloads
+
+This prevents versioning unstable aliases or half-defined response contracts.
 
 ---
 

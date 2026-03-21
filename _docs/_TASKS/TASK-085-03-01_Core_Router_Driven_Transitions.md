@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md)  
 
 ---
 

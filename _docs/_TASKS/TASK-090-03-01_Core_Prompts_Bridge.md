@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Prompts as Tools Bridge**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

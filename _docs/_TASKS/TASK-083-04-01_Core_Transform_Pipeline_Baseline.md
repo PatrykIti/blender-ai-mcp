@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)  
 
 ---
 

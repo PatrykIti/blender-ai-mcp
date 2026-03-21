@@ -3,7 +3,7 @@
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
+**Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -54,4 +54,4 @@ Example:
 
 1. Define profile names and their default contract lines.
 2. Define version lifecycle rules for introducing, deprecating, and removing public contracts.
-3. Add one migration rule for converting current unversioned public tools into explicit `1.0` contracts.
+3. Freeze the initial public naming and contract baseline before converting current unversioned tools into explicit `1.0` contracts.

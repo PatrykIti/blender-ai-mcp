@@ -3,7 +3,7 @@
 **Parent:** [TASK-084-05](./TASK-084-05_Discovery_Tests_Benchmarks_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-084-05](./TASK-084-05_Discovery_Tests_Benchmarks_and_Docs.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Discovery Tests, Benchmarks, and Docs**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

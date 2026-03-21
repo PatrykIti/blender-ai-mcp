@@ -3,7 +3,7 @@
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)
+**Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -47,4 +47,5 @@ For any public component name that will gain multiple versions:
 
 1. Assign baseline versions to the legacy public contracts.
 2. Add alternate versions only for the capabilities that actually need public evolution.
-3. Add tests proving shared provider components can expose multiple versions without duplicating handler code.
+3. Attach versions only to manifest-owned public contracts, not to unstable internal names or adapter-local aliases.
+4. Add tests proving shared provider components can expose multiple versions without duplicating handler code.

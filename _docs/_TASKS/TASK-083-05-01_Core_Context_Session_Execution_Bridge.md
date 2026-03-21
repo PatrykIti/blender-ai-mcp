@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** None
+**Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)  
 
 ---
 

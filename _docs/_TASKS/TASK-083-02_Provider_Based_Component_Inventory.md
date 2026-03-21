@@ -46,6 +46,22 @@ Replace the current flat registration mindset with reusable provider groups that
 - `server/adapters/mcp/providers/__init__.py`
 - `tests/unit/adapters/mcp/test_provider_inventory.py`
 
+### Migration Rule
+
+Do not rewrite every MCP area in one pass.
+
+Provider extraction should proceed area by area in this order:
+
+1. `scene`, `mesh`, `modeling`
+2. `router`, `workflow_catalog`
+3. remaining tool families
+
+After each family:
+
+- the provider inventory test must stay green
+- dispatcher alignment must stay green
+- hidden side-effect imports must keep shrinking, not regrow in another file
+
 ---
 
 ## Provider Split

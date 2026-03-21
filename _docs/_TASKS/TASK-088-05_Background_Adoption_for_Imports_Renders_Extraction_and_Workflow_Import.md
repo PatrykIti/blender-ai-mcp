@@ -21,6 +21,22 @@ Roll task mode into the first set of concrete heavy tools.
   - `workflow_catalog(import_finalize)`
   - selected import or export paths
 
+### Adoption Rule
+
+Adopt task mode in vertical slices:
+
+1. one render path
+2. one extraction path
+3. one workflow-import path
+4. only then optional import/export extensions
+
+Each slice must prove:
+
+- task launch works
+- progress and cancellation are observable
+- result retrieval is explicit
+- the synchronous fallback remains understandable
+
 ---
 
 ## Layered Subtasks

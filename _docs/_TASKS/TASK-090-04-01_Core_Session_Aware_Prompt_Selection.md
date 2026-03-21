@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Session-Aware Prompt Selection**.
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 

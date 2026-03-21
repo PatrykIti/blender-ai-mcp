@@ -66,6 +66,13 @@ For this repo, background execution is a two-layer problem:
 
 This task is not complete if only the MCP layer becomes task-aware while the addon still blocks on a single `result_queue.get(timeout=30.0)` path.
 
+Implementation should stay split across four seams:
+
+- server task bridge
+- server RPC verbs and protocol changes
+- addon job lifecycle and main-thread coordination
+- incremental adoption by selected heavy tools
+
 ---
 
 ## FastMCP Features To Use

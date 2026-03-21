@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** None
+**Depends On:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
 
 ---
 
@@ -15,7 +15,7 @@ Implement the core code changes for **Visibility Observability, Tests, and Docs*
 
 ## Repository Touchpoints
 
-- (TBD from parent task)
+- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
 
 ---
 
