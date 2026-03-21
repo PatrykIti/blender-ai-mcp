@@ -3,7 +3,7 @@
 **Parent:** [TASK-094-02](./TASK-094-02_Read_Only_Code_Mode_Pilot_Surface.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-094-02](./TASK-094-02_Read_Only_Code_Mode_Pilot_Surface.md)  
+**Depends On:** [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md)
 
 ---
 
@@ -23,7 +23,7 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -31,11 +31,10 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the pilot surface does not expose direct destructive write paths by default
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

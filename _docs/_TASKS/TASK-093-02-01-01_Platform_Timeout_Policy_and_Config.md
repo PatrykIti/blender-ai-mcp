@@ -3,7 +3,7 @@
 **Parent:** [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md)  
+**Depends On:** [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)  
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md)  
+**Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
 ---
 
@@ -23,19 +23,25 @@ Implement the core code changes for **Session State Model and Capability Phases*
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/adapters/mcp/session_phase.py`
+  - `server/adapters/mcp/session_capabilities.py`
+  - `tests/unit/adapters/mcp/test_session_phase.py`
+- store in session state:
+  - `phase`
+  - `goal`
+  - `active_surface_profile`
+  - `active_contract_line`
+  - `last_router_status`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- phases are explicit, serializable, and not hidden inside private router fields
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define the session-state schema and default values.
+2. Add profile, contract-line, and phase helpers.
+3. Add tests for persistence and reset behavior across turns.

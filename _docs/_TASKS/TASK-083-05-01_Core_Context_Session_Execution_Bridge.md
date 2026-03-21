@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)  
+**Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 
 ---
 
@@ -25,19 +25,33 @@ Implement the core code changes for **Context, Session, and Execution Bridge**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### Existing Files To Update
 
+- `server/adapters/mcp/context_utils.py`
+  - add helpers for session read/write, progress, and elicitation handoff
+  - stop treating `ctx.info()` bridging as the only shared context utility
+- `server/adapters/mcp/router_helper.py`
+  - separate execution reporting from plain text concatenation
+- `server/router/adapters/mcp_integration.py`
+  - align executor wrapping with the new execution contract
+
+### New Files To Create
+
+- `server/adapters/mcp/session_state.py`
+- `server/adapters/mcp/execution_context.py`
+- `server/adapters/mcp/execution_report.py`
+- `tests/unit/adapters/mcp/test_context_bridge.py`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- adapter tools have a consistent session and execution bridge
+- later platform features do not need to introduce ad hoc `ctx.*` helper patterns
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Add session helpers around `ctx.get_state()` / `ctx.set_state()`.
+2. Add execution context and report objects that adapters can reuse.
+3. Convert the highest-value interaction entry points to async-aware context usage.
+4. Preserve sync compatibility for the flat legacy surface.

@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-04-01](./TASK-089-04-01_Core_Router_Workflow_Execution_Report.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-04-01](./TASK-089-04-01_Core_Router_Workflow_Execution_Report.md)  
+**Depends On:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)  
 
 ---
 

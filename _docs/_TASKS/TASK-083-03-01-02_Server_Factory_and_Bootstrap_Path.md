@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-03-01](./TASK-083-03-01_Core_Factory_Composition_Root.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-03-01](./TASK-083-03-01_Core_Factory_Composition_Root.md)  
+**Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)  
 
 ---
 

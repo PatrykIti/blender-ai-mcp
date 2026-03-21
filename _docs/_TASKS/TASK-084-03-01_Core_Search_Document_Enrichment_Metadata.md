@@ -3,7 +3,7 @@
 **Parent:** [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md)  
+**Depends On:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
 ---
 
@@ -23,19 +23,25 @@ Implement the core code changes for **Search Document Enrichment from Metadata a
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create `server/adapters/mcp/discovery/search_documents.py`
+- generate search text from:
+  - tool name
+  - public aliases
+  - description
+  - docstring summary
+  - parameter names
+  - parameter descriptions
+  - tags and category
+- add tests proving that mega tools such as `mesh_inspect` are discoverable by action-level intent
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- search quality does not depend only on tool names
+- mega tools and router tools are discoverable through intent-level phrasing
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

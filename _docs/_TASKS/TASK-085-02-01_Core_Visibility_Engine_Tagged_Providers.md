@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)  
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
 ---
 
@@ -15,16 +15,31 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/visibility/tags.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
+- `server/adapters/mcp/providers/core_tools.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/transforms/visibility_policy.py`
+  - `server/adapters/mcp/visibility/tags.py`
+  - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- introduce tags such as:
+  - `phase:planning`
+  - `phase:build`
+  - `phase:repair`
+  - `audience:legacy`
+  - `audience:llm`
+  - `risk:destructive`
 
+### Ownership Rule
+
+Visibility tags should come from the shared platform capability manifest and provider registration.
+Router metadata may inform policy, but it is not the canonical visibility registry.
 ---
 
 ## Layered Subtasks
@@ -38,11 +53,12 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- visibility rules are deterministic and testable
+- provider tags become the canonical grouping mechanism for visibility decisions
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Materialize profile, audience, phase, and risk tags on provider components.
+2. Implement one deterministic visibility policy function.
+3. Add tests for profile-only visibility, phase-only visibility, and pinned-tool exceptions.

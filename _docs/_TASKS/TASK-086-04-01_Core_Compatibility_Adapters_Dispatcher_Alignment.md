@@ -3,7 +3,7 @@
 **Parent:** [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)  
+**Depends On:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)
 
 ---
 
@@ -23,19 +23,18 @@ Implement the core code changes for **Compatibility Adapters and Dispatcher Alig
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- add a canonical-name resolver
+- maintain `public_name -> internal_name` mapping
+- extend alignment tests to understand public/internal name pairs
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- router continues to emit canonical internal tool names
+- public aliases do not break dispatcher execution
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
+**Depends On:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md), [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md)
 
 ---
 
@@ -15,25 +15,33 @@ Implement the core code changes for **Visibility Observability, Tests, and Docs*
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/README.md`
+- `README.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- add snapshot tests for visible surface by phase and profile
+- expose diagnostics such as:
+  - current phase
+  - active profile
+  - hidden category counts
+- update:
+  - `_docs/_MCP_SERVER/README.md`
+  - `_docs/_PROMPTS/README.md`
+  - `README.md`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- it is easy to inspect why a tool is visible or hidden
+- visibility logic is not a black box
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

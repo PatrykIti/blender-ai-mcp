@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)  
+**Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 
 ---
 
@@ -24,19 +24,32 @@ Implement the core code changes for **Transform Pipeline Baseline**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### New Files To Create
 
+- `server/adapters/mcp/transforms/__init__.py`
+- `server/adapters/mcp/transforms/naming.py`
+- `server/adapters/mcp/transforms/visibility.py`
+- `server/adapters/mcp/transforms/discovery.py`
+- `server/adapters/mcp/transforms/prompts_bridge.py`
+- `tests/unit/adapters/mcp/test_transform_pipeline.py`
+
+### Existing Files To Update
+
+- `server/adapters/mcp/factory.py`
+  - build and attach a deterministic transform chain
+- `server/adapters/mcp/surfaces.py`
+  - define which transforms each surface uses
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the server has one explicit transform pipeline
+- later platform tasks extend the pipeline instead of bypassing it with custom wrappers
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Prove the final transform order against FastMCP 3.x semantics before coding custom wrappers.
+2. Use built-in `ToolTransform`, `Visibility`, `PromptsAsTools`, `BM25SearchTransform`, and `VersionFilter` wherever they fit.
+3. Keep custom repo-specific code focused on configuration and manifest translation.
+4. Add one snapshot-style transform-order test per surface profile.

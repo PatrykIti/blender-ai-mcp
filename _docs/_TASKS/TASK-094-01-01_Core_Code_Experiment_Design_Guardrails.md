@@ -3,7 +3,7 @@
 **Parent:** [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md)  
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 
 ---
 
@@ -15,13 +15,15 @@ Implement the core code changes for **Code Mode Experiment Design and Guardrails
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/surfaces.py`
+- `server/adapters/mcp/settings.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
+- `_docs/_MCP_SERVER/README.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -29,11 +31,11 @@ Implement the core code changes for **Code Mode Experiment Design and Guardrails
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- Code Mode is explicitly scoped as experimental
+- write-heavy or destructive Blender operations are excluded from the default experiment
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

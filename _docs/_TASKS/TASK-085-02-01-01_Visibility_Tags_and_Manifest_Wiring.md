@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-02-01](./TASK-085-02-01_Core_Visibility_Engine_Tagged_Providers.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-085-02-01](./TASK-085-02-01_Core_Visibility_Engine_Tagged_Providers.md)  
+**Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)  
 
 ---
 

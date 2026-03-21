@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md)  
+**Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -23,10 +23,24 @@ Implement the core code changes for **Structured Scene Context and Inspection Co
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/contracts/scene.py`
+  - `tests/unit/tools/scene/test_scene_contracts.py`
+- reduce prose formatting in helpers such as:
+  - `_scene_get_mode`
+  - `_scene_list_selection`
+  - `_scene_inspect_object`
 
+### State Priority
+
+These contracts should optimize for LLM awareness of:
+
+- active mode
+- active object
+- selection state
+- hierarchy and collections
+- transforms, bounds, and origin
+- material and modifier context
 ---
 
 ## Layered Subtasks
@@ -40,11 +54,13 @@ Implement the core code changes for **Structured Scene Context and Inspection Co
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- scene read tools return stable structured schemas
+- human-readable summaries become an optional presentation layer
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define scene-mode and selection contracts first.
+2. Define object inspection contracts with transforms, bounds, origin, and hierarchy.
+3. Define snapshot and diff contracts for before/after awareness.
+4. Add tests proving the same payload can be rendered with or without summary text.

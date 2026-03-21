@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md)  
+**Depends On:** [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md), [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)
 
 ---
 
@@ -15,25 +15,25 @@ Implement the core code changes for **Prompt QA, Examples, and Documentation**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `README.md`
+- `_docs/_PROMPTS/README.md`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- snapshot tests for rendered prompt products
+- docs updates in:
+  - `README.md`
+  - `_docs/_PROMPTS/README.md`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- prompt products are testable and easy to distribute across clients
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

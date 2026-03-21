@@ -3,7 +3,7 @@
 **Parent:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md)  
+**Depends On:** [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)
 
 ---
 
@@ -23,7 +23,7 @@ Implement the core code changes for **Pagination Rollout for Component and Data 
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -31,11 +31,11 @@ Implement the core code changes for **Pagination Rollout for Component and Data 
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- both component listings and large inspection payloads can be paged safely
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Add `list_page_size` to the relevant surface profiles.
+2. Standardize payload pagination envelopes for mesh and workflow-heavy responses.
+3. Add tests for both MCP list pagination and tool payload pagination.

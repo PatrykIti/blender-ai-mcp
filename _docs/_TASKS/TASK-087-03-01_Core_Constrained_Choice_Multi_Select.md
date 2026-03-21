@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-03](./TASK-087-03_Constrained_Choice_and_Multi_Select_Flows.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-087-03](./TASK-087-03_Constrained_Choice_and_Multi_Select_Flows.md)  
+**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 
 ---
 
@@ -22,19 +22,20 @@ Implement the core code changes for **Constrained Choice and Multi-Select Flows*
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- map:
+  - `enum` -> single choice
+  - `bool` -> yes or no
+  - `list[str]` -> multi-select
+  - ranged numeric values -> validated numeric input
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- enum parameters do not need to be typed manually as raw strings
+- multi-select is supported for feature packs or export bundles
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

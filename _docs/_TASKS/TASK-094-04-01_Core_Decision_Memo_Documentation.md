@@ -3,7 +3,7 @@
 **Parent:** [TASK-094-04](./TASK-094-04_Decision_Memo_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-094-04](./TASK-094-04_Decision_Memo_and_Documentation.md)  
+**Depends On:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)
 
 ---
 
@@ -15,13 +15,14 @@ Implement the core code changes for **Decision Memo and Documentation**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `_docs/_TASKS/TASK-094_Code_Mode_Exploration.md`
+- `_docs/_MCP_SERVER/README.md`
+- `README.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -29,11 +30,10 @@ Implement the core code changes for **Decision Memo and Documentation**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- there is one explicit product recommendation grounded in experiment results
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

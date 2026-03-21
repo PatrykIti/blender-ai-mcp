@@ -3,7 +3,7 @@
 **Parent:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)  
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
 ---
 
@@ -23,19 +23,28 @@ Implement the core code changes for **Search Transform and Pinned Entry Surface*
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### New Files To Create
 
+- `server/adapters/mcp/discovery/search_surface.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+
+### Existing Files To Update
+
+- `server/adapters/mcp/factory.py`
+  - enable the search transform for the `llm-guided` surface
+- `server/adapters/mcp/surfaces.py`
+  - declare the pinned entry tools list
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- `list_tools` on the `llm-guided` surface no longer returns the full tool catalog
+- pinned tools stay visible and are not duplicated in search results
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Enable built-in BM25 search on the `llm-guided` profile.
+2. Keep the visible entry set intentionally tiny.
+3. Validate that pinned tools do not reappear in search results.
+4. Add explicit tests for search result usefulness on mega tools such as `scene_inspect` and `mesh_inspect`.

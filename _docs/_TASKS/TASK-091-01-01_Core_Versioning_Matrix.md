@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)  
+**Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -26,16 +26,28 @@ Implement the core code changes for **Versioning Policy and Surface Matrix**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create `server/adapters/mcp/version_policy.py`
+- define surfaces such as:
+  - `legacy-flat`
+  - `llm-guided`
+  - `internal-debug`
 
+### Distinction Rule
+
+This task must define two matrices:
+
+- surface profile matrix
+- contract version matrix
+
+Example:
+
+- profile `legacy-flat` may prefer contract line `legacy-v1`
+- profile `llm-guided` may prefer contract line `llm-v2`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- every public surface change has an explicit versioning policy
 ---
 
 ## Atomic Work Items

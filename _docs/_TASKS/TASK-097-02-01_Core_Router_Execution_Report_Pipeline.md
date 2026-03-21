@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-02](./TASK-097-02_Router_Execution_Report_Pipeline.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-097-02](./TASK-097-02_Router_Execution_Report_Pipeline.md)  
+**Depends On:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)
 
 ---
 
@@ -23,7 +23,7 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -31,11 +31,11 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- multi-step execution is represented as structured data as well as optional summary text
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define one execution-report schema shared by router-aware tool entry points.
+2. Capture original call, corrected steps, executed steps, and final status.
+3. Add adapter rendering tests for structured and summary variants.

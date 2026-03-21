@@ -24,7 +24,7 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -41,8 +41,7 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- high-risk verification depends on inspection-layer truth, not semantic guesswork
 ---
 
 ## Atomic Work Items

@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)  
+**Depends On:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md), [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)
 
 ---
 
@@ -27,16 +27,14 @@ Implement the core code changes for **Correction Event Model and Audit Schema**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/router/domain/entities/correction_audit.py`
+  - `server/adapters/mcp/contracts/correction_audit.py`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- correction intent, execution, and verification have separate fields in the audit model
 ---
 
 ## Atomic Work Items

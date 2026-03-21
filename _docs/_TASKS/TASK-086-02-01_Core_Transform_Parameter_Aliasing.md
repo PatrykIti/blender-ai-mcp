@@ -3,7 +3,7 @@
 **Parent:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)  
+**Depends On:** [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md)
 
 ---
 
@@ -29,16 +29,21 @@ Implement the core code changes for **Transform-Based Tool and Parameter Aliasin
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/transforms/naming.py`
+  - `server/adapters/mcp/transforms/public_params.py`
+  - `tests/unit/adapters/mcp/test_aliasing_transform.py`
 
+### FastMCP Mechanism
+
+Prefer built-in FastMCP `ToolTransform` with `ArgTransform`-style argument reshaping.
+Custom code in this repo should mostly translate manifest rules into transform configuration.
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- aliases are applied at the public surface layer
+- internal handler signatures remain stable
 ---
 
 ## Atomic Work Items

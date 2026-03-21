@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-05](./TASK-088-05_Background_Adoption_for_Imports_Renders_Extraction_and_Workflow_Import.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-05](./TASK-088-05_Background_Adoption_for_Imports_Renders_Extraction_and_Workflow_Import.md)  
+**Depends On:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md), [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md)
 
 ---
 
@@ -15,25 +15,47 @@ Implement the core code changes for **Background Adoption for Imports, Renders, 
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/extraction.py`
+- `server/adapters/mcp/areas/workflow_catalog.py`
+- `server/adapters/mcp/areas/system.py`
+- `server/application/tool_handlers/extraction_handler.py`
+- `server/application/tool_handlers/workflow_catalog_handler.py`
+- `tests/e2e/tools/extraction/`
+- `tests/e2e/tools/scene/`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- initial candidates:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+  - selected import or export paths
 
+### Adoption Rule
+
+Adopt task mode in vertical slices:
+
+1. one render path
+2. one extraction path
+3. one workflow-import path
+4. only then optional import/export extensions
+
+Each slice must prove:
+
+- task launch works
+- progress and cancellation are observable
+- result retrieval is explicit
+- the synchronous fallback remains understandable
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- at least one render path, one extraction path, and one workflow-import path support task mode
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

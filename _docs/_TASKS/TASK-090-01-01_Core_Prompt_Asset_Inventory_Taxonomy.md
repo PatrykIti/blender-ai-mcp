@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md)  
+**Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 
 ---
 
@@ -22,19 +22,21 @@ Implement the core code changes for **Prompt Asset Inventory and Taxonomy**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create `server/adapters/mcp/prompts/prompt_catalog.py`
+- classify prompts for:
+  - onboarding
+  - router-first use
+  - manual-tool use
+  - validation
+  - troubleshooting
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- every prompt asset has ownership, tags, and a target operating mode
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

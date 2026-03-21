@@ -3,7 +3,7 @@
 **Parent:** [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md)  
+**Depends On:** [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md), [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)
 
 ---
 
@@ -15,25 +15,30 @@ Implement the core code changes for **Surface QA, Examples, and Documentation**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `tests/unit/adapters/mcp/test_aliasing_transform.py`
+- `tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py`
+- `README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- snapshot tests for public surface schemas
+- update:
+  - `README.md`
+  - `_docs/_MCP_SERVER/README.md`
+  - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+  - `_docs/_PROMPTS/*`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- docs and prompt examples use the new public surface consistently
+- regressions in naming or parameter visibility are caught by tests
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

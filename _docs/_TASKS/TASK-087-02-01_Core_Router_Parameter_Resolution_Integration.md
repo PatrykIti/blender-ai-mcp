@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
+**Depends On:** [TASK-087-01](./TASK-087-01_Elicitation_Domain_Model_and_Response_Contracts.md)
 
 ---
 
@@ -23,19 +23,18 @@ Implement the core code changes for **Router Parameter Resolution Integration**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- make `router_set_goal()` async-aware on the elicitation-capable `llm-guided` surface
+- return typed unresolved bundles instead of only plain dict lists
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- missing parameters can be collected without breaking the router goal flow
+- workflow execution receives a consistent resolved payload
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Add an async router entry tool for native elicitation.
+2. Preserve the current second-call `resolved_params` fallback path.
+3. Validate that learned parameter storage still works after elicitation answers are applied.

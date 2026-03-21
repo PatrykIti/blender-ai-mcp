@@ -3,7 +3,7 @@
 **Parent:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md)  
+**Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)
 
 ---
 
@@ -23,19 +23,21 @@ Implement the core code changes for **Router-Driven Phase Transitions**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create `server/router/application/session_phase_hints.py`
+- emit phase hints such as:
+  - `workflow_resolution` after `router_set_goal`
+  - `build` when workflow execution or expansion starts
+  - `repair` after firewall blocks or high-risk correction paths
+- let the FastMCP platform layer persist the final phase in session state
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the router provides phase hints only
+- the visibility layer remains the owner of what becomes visible
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)  
+**Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -27,10 +27,19 @@ Implement the core code changes for **Router, Workflow, and Execution Report Con
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/contracts/router.py`
+  - `server/adapters/mcp/contracts/workflow_catalog.py`
+  - `tests/unit/router/application/test_router_contracts.py`
 
+### Execution Awareness Rule
+
+The execution report should let an LLM and an operator see:
+
+- what the router decided
+- which steps were injected or corrected
+- what actually executed
+- what failed, blocked, or needs input next
 ---
 
 ## Layered Subtasks
@@ -44,11 +53,11 @@ Implement the core code changes for **Router, Workflow, and Execution Report Con
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- router and workflow interactions are machine-readable, not only prose-readable
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Define structured `router_set_goal` success, needs-input, no-match, and error contracts.
+2. Define workflow catalog list/get/search/import contracts.
+3. Define the execution report envelope used by router-aware adapter calls.

@@ -25,10 +25,33 @@ Implement the core code changes for **Server Factory and Composition Root**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### Existing Files To Update
 
+- `server/adapters/mcp/instance.py`
+  - reduce it to a compatibility shim or remove its role as the runtime source of truth
+- `server/adapters/mcp/server.py`
+  - expose `build_server()` and `run_server(surface=...)`
+- `server/main.py`
+  - bootstrap through a factory instead of import side effects
+- `server/infrastructure/config.py`
+  - add surface-profile and server-factory options
+  - keep profile selection distinct from later contract-version filtering
+
+### New Files To Create
+
+- `server/adapters/mcp/factory.py`
+- `server/adapters/mcp/surfaces.py`
+- `server/adapters/mcp/settings.py`
+- `tests/unit/adapters/mcp/test_server_factory.py`
+
+### Surface Profile Baseline
+
+The composition root should treat these as surface profiles, not versions:
+
+- `legacy-flat`
+- `llm-guided`
+- `internal-debug`
+- `code-mode-pilot`
 ---
 
 ## Layered Subtasks
@@ -42,8 +65,9 @@ Implement the core code changes for **Server Factory and Composition Root**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- `server/main.py` uses an explicit composition root
+- more than one server surface can be built from the same runtime
+- `instance.py` is no longer the central runtime composition primitive
 ---
 
 ## Atomic Work Items

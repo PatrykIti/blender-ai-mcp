@@ -3,7 +3,7 @@
 **Parent:** [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md)  
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
 ---
 
@@ -21,19 +21,30 @@ Implement the core code changes for **Platform Regression Harness and Docs**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+### New Files To Create
 
+- `tests/unit/adapters/mcp/test_surface_bootstrap.py`
+- `tests/unit/adapters/mcp/test_surface_inventory.py`
+- `tests/unit/adapters/mcp/test_surface_compatibility.py`
+- `_docs/_MCP_SERVER/fastmcp_3x_composition.md`
+
+### Existing Files To Update
+
+- `_docs/_TASKS/README.md`
+  - link umbrella tasks to their new subtask breakdowns if needed
+- `ARCHITECTURE.md`
+  - document providers, transforms, and the composition root
+- `README.md`
+  - update runtime baseline and platform-layer explanation
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the MCP platform layer has its own regression harness
+- the 3.x composition model is documented for future platform tasks
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

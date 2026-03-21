@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)  
+**Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)
 
 ---
 
@@ -15,25 +15,24 @@ Implement the core code changes for **Correction Taxonomy and Risk Matrix**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/router/domain/entities/correction_policy.py`
+- `_docs/_ROUTER/correction-risk-matrix.md`
+- `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/router/domain/entities/correction_policy.py`
+  - `_docs/_ROUTER/correction-risk-matrix.md`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- every correction type has a clear classification and blast-radius label
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

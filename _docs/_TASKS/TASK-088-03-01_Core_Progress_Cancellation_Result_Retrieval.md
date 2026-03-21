@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md)  
+**Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
 
 ---
 
@@ -15,25 +15,33 @@ Implement the core code changes for **Progress, Cancellation, and Result Retriev
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/tasks/progress.py`
+- `server/adapters/mcp/tasks/result_store.py`
+- `server/adapters/mcp/tasks/job_registry.py`
+- `server/adapters/mcp/areas/scene.py`
+- `server/adapters/mcp/areas/extraction.py`
+- `server/adapters/mcp/areas/workflow_catalog.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/adapters/mcp/tasks/progress.py`
+  - `server/adapters/mcp/tasks/result_store.py`
+- standardize fields such as:
+  - `status`
+  - `progress`
+  - `status_message`
+  - `result_ref`
+  - `cancelled`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- clients can observe progress and cancel work without restarting the session
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)  
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)
 
 ---
 
@@ -27,16 +27,17 @@ Implement the core code changes for **Contract Catalog and Response Guidelines**
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/adapters/mcp/contracts/__init__.py`
+  - `server/adapters/mcp/contracts/base.py`
+  - `server/adapters/mcp/contracts/serializers.py`
+  - `server/adapters/mcp/contracts/renderers.py`
+  - `tests/unit/adapters/mcp/test_contract_base.py`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the adapter layer has one shared response-design policy instead of per-tool conventions
 ---
 
 ## Atomic Work Items

@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)  
+**Depends On:** [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md)
 
 ---
 
@@ -27,16 +27,25 @@ Implement the core code changes for **Async Task Bridge and Job Registry**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/tasks/job_registry.py`
+  - `server/adapters/mcp/tasks/task_bridge.py`
+  - `tests/unit/adapters/mcp/test_job_registry.py`
 
+### Scope Rule
+
+This task owns only the server-side bridge and registry.
+
+It does not own:
+
+- addon job primitives
+- RPC transport verbs
+- tool-by-tool adoption
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the server can register, track, and complete background jobs explicitly
 ---
 
 ## Atomic Work Items

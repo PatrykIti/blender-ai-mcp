@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
+**Depends On:** [TASK-088-05](./TASK-088-05_Background_Adoption_for_Imports_Renders_Extraction_and_Workflow_Import.md)
 
 ---
 
@@ -15,25 +15,27 @@ Implement the core code changes for **Task Mode Tests, Operations, and Docs**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `tests/unit/adapters/mcp/test_job_registry.py`
+- `tests/unit/infrastructure/test_rpc_connection.py`
+- `_docs/_TESTS/README.md`
+- `_docs/_MCP_SERVER/README.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- progress, timeout, and cancellation tests
+- operations docs for job cleanup and stuck-task diagnosis
+- updates to:
+  - `_docs/_TESTS/README.md`
+  - `_docs/_MCP_SERVER/README.md`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- task mode has test coverage and clear operating guidance
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

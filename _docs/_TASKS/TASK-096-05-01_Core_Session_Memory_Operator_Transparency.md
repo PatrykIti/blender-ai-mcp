@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-05](./TASK-096-05_Session_Memory_and_Operator_Transparency.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-096-05](./TASK-096-05_Session_Memory_and_Operator_Transparency.md)  
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)
 
 ---
 
@@ -15,13 +15,16 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/session_state.py`
+- `server/adapters/mcp/execution_report.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/application/tool_handlers/router_handler.py`
+- `server/adapters/mcp/contracts/router.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
+- Implement the concrete leaf scope implied by the parent task in the listed touchpoints.
 - Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
 - Avoid introducing new bootstrap side effects outside the platform composition root.
 
@@ -29,11 +32,10 @@ Implement the core code changes for **Session Memory and Operator Transparency**
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- confidence decisions are visible in status or debug payloads
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

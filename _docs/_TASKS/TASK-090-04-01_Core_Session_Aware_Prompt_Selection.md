@@ -3,7 +3,7 @@
 **Parent:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
+**Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md)
 
 ---
 
@@ -15,25 +15,29 @@ Implement the core code changes for **Session-Aware Prompt Selection**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/session_state.py`
+- `server/adapters/mcp/context_utils.py`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- add prompt tags such as:
+  - `phase:planning`
+  - `phase:repair`
+  - `profile:llm-guided`
+- expose recommended prompts by phase or profile
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the prompt layer reacts to session context instead of behaving like a flat static library
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Align prompt profile tags with the canonical surface profile names.
+2. Add one recommendation path by phase and one by profile.
+3. Add tests that prompt recommendations change when session phase changes.

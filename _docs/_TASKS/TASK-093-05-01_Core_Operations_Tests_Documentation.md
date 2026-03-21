@@ -3,7 +3,7 @@
 **Parent:** [TASK-093-05](./TASK-093-05_Operations_Tests_and_Documentation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-093-05](./TASK-093-05_Operations_Tests_and_Documentation.md)  
+**Depends On:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md), [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md)
 
 ---
 
@@ -15,25 +15,27 @@ Implement the core code changes for **Operations Tests and Documentation**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `tests/unit/infrastructure/test_telemetry.py`
+- `tests/unit/infrastructure/test_rpc_connection.py`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TESTS/README.md`
+- `README.md`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- update:
+  - `_docs/_MCP_SERVER/README.md`
+  - `_docs/_TESTS/README.md`
+  - `README.md`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- operational diagnostics and limits are both documented and tested
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

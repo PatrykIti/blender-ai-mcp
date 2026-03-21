@@ -3,7 +3,7 @@
 **Parent:** [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)  
+**Depends On:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)
 
 ---
 
@@ -15,25 +15,25 @@ Implement the core code changes for **Auto-Fix, Ask, Block Policy Engine**.
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/router/application/policy/correction_policy_engine.py`
+- `server/router/application/router.py`
+- `server/router/application/engines/tool_correction_engine.py`
+- `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create:
+  - `server/router/application/policy/correction_policy_engine.py`
+  - `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the router has one explicit decision point for auto-fix, ask, or block behavior
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

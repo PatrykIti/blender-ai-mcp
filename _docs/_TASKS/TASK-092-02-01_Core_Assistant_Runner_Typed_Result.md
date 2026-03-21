@@ -3,7 +3,7 @@
 **Parent:** [TASK-092-02](./TASK-092-02_Assistant_Runner_with_Typed_Result_Wrappers.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-092-02](./TASK-092-02_Assistant_Runner_with_Typed_Result_Wrappers.md)  
+**Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -25,16 +25,22 @@ Implement the core code changes for **Assistant Runner with Typed Result Wrapper
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/sampling/assistant_runner.py`
+  - `server/adapters/mcp/sampling/result_types.py`
 
+### Capability Rule
+
+The runner must:
+
+- detect sampling capability availability
+- degrade cleanly when sampling is unavailable
+- keep every assistant request bound to the originating MCP request
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- assistants return typed results instead of free-form text blobs
 ---
 
 ## Atomic Work Items

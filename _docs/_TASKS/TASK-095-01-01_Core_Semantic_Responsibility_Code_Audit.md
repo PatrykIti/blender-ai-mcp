@@ -3,7 +3,7 @@
 **Parent:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)  
+**Depends On:** [TASK-083-01](./TASK-083-01_FastMCP_3x_Dependency_and_Runtime_Audit.md)
 
 ---
 
@@ -15,25 +15,30 @@ Implement the core code changes for **Semantic Responsibility Policy and Code Au
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `_docs/_ROUTER/semantic-boundary-audit.md`
+- `server/router/application/classifier/intent_classifier.py`
+- `server/router/application/classifier/workflow_intent_classifier.py`
+- `server/router/application/resolver/parameter_resolver.py`
+- `server/router/application/matcher/semantic_workflow_matcher.py`
+- `server/router/application/matcher/ensemble_aggregator.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- create `_docs/_ROUTER/semantic-boundary-audit.md`
+- classify current call sites across:
+  - classifiers
+  - matchers
+  - parameter resolver and store
+  - router adaptation
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the repo has a code-backed semantic boundary audit, not just a high-level architecture note
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

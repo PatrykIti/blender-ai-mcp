@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md)  
+**Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
 ---
 
@@ -25,19 +25,20 @@ Implement the core code changes for **Heavy Operation Inventory and Task Candida
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- build a candidacy matrix for:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+  - import and export tools
+  - future reconstruction tools
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- every heavy tool has an explicit execution mode classification
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Implement the leaf scope in the listed touchpoints.
+2. Keep the implementation aligned with the parent task boundaries and the existing runtime call path.

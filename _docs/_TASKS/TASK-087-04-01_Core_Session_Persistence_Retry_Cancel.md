@@ -3,7 +3,7 @@
 **Parent:** [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md)  
+**Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 
 ---
 
@@ -15,25 +15,31 @@ Implement the core code changes for **Session Persistence, Retry, and Cancel Sem
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/adapters/mcp/session_state.py`
+- `server/adapters/mcp/context_utils.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/application/tool_handlers/router_handler.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- session state fields:
+  - `pending_elicitation_id`
+  - `pending_workflow_name`
+  - `partial_answers`
+  - `pending_question_set_id`
+- helper logic for retry and cleanup
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- users can cancel or pause elicitation safely
+- partial answers survive across the next interaction step when appropriate
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Persist pending question-set identity and partial answers.
+2. Implement retry, cancel, and cleanup transitions explicitly.
+3. Add tests for cancel-and-resume and partial-answer retry flows.

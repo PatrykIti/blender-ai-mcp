@@ -3,7 +3,7 @@
 **Parent:** [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md)  
+**Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
 
 ---
 
@@ -24,10 +24,21 @@ Implement the core code changes for **RPC and Blender Main-Thread Adaptation**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- separate:
+  - fast request-response calls
+  - task launch
+  - task polling or result retrieval
+  - task cancellation
+- replace the one-size-fits-all 30-second wait strategy with job-aware timeout policy
 
+### RPC Shape Direction
+
+Prefer explicit RPC verbs or payload types for:
+
+- launch
+- poll
+- cancel
+- collect result
 ---
 
 ## Layered Subtasks
@@ -41,11 +52,11 @@ Implement the core code changes for **RPC and Blender Main-Thread Adaptation**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- background jobs no longer depend on one blocking `result_queue.get(timeout=30.0)` model
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Add addon-side job lifecycle primitives.
+2. Add RPC client methods for launch, poll, cancel, and collect.
+3. Keep Blender main-thread execution safe while decoupling job completion from socket wait time.

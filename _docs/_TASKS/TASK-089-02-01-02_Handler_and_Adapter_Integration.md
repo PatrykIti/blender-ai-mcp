@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-02-01](./TASK-089-02-01_Core_Structured_Scene_Context_Inspection.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-02-01](./TASK-089-02-01_Core_Structured_Scene_Context_Inspection.md)  
+**Depends On:** [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md)  
 
 ---
 

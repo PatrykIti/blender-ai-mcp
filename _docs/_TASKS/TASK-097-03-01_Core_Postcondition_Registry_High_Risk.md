@@ -3,7 +3,7 @@
 **Parent:** [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-097-03](./TASK-097-03_Postcondition_Registry_for_High_Risk_Fixes.md)  
+**Depends On:** [TASK-097-01](./TASK-097-01_Correction_Event_Model_and_Audit_Schema.md)
 
 ---
 
@@ -15,25 +15,35 @@ Implement the core code changes for **Postcondition Registry for High-Risk Fixes
 
 ## Repository Touchpoints
 
-- Use the parent task touchpoints as the maximum write scope for this leaf; keep the implementation focused on the smallest core slice that lands the parent design.
-
+- `server/router/domain/entities/postcondition.py`
+- `server/router/application/policy/postcondition_registry.py`
+- `server/router/application/engines/tool_correction_engine.py`
+- `tests/unit/router/application/test_correction_policy_engine.py`
 ---
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/router/domain/entities/postcondition.py`
+  - `server/router/application/policy/postcondition_registry.py`
 
+### High-Risk Baseline
+
+Start with fixes that most affect LLM spatial awareness and execution correctness:
+
+- mode corrections
+- active-object corrections
+- selection injection
+- parameter clamps with visible geometric impact
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- the repo knows which fixes require post-execution verification
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Classify the initial high-risk correction set.
+2. Define one postcondition entry per correction family.
+3. Add tests for registry lookup and verification trigger conditions.

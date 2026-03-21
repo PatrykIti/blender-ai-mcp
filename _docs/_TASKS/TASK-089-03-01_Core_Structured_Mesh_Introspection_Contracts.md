@@ -3,7 +3,7 @@
 **Parent:** [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)  
+**Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -23,10 +23,27 @@ Implement the core code changes for **Structured Mesh Introspection Contracts**.
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- create:
+  - `server/adapters/mcp/contracts/mesh.py`
+  - `tests/unit/tools/mesh/test_mesh_contracts.py`
+- standardize an envelope with fields such as:
+  - `object_name`
+  - `offset`
+  - `limit`
+  - `returned`
+  - `total`
+  - `items`
 
+### Spatial Priority
+
+These contracts should make it easy for an LLM to stay oriented in mesh space:
+
+- element identity
+- coordinates
+- connectivity
+- selection flags
+- layer or attribute names
+- paging metadata
 ---
 
 ## Layered Subtasks
@@ -40,11 +57,12 @@ Implement the core code changes for **Structured Mesh Introspection Contracts**.
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- mesh introspection contracts are consistent across all action types
+- pagination fields are standardized
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Standardize envelope fields for all `mesh_inspect` actions.
+2. Normalize per-item schemas for vertices, edges, faces, normals, UVs, attributes, shape keys, and weights.
+3. Add paging and selection-filter tests for every action family.

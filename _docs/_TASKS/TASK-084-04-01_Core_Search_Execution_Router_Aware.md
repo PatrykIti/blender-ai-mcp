@@ -3,7 +3,7 @@
 **Parent:** [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md)  
+**Depends On:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 
 ---
 
@@ -24,19 +24,22 @@ Implement the core code changes for **Search Execution and Router-Aware Call Pat
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
-
+- define the canonical call path for:
+  - direct public tool calls
+  - search proxy execution
+  - router-emitted internal tool calls
+- use the built-in FastMCP `call_tool` proxy for discovered-tool execution
+- add parity tests for direct call vs discovered-call behavior
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- search discovery does not bypass router safety policy
+- discovered-call execution remains behaviorally equivalent to direct calls
 ---
 
 ## Atomic Work Items
 
-1. Apply the core changes in the relevant adapters/handlers.
-2. Verify the core flow still matches the expected execution path.
+1. Document the canonical execution path for direct and discovered calls.
+2. Prove that router interception still happens for discovered tools.
+3. Prove that public alias resolution and hidden arguments still behave correctly when called through `call_tool`.

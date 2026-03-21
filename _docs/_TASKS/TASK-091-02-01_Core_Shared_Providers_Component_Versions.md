@@ -3,7 +3,7 @@
 **Parent:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)  
+**Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
 ---
 
@@ -26,16 +26,21 @@ Implement the core code changes for **Shared Providers with Component Versions**
 
 ## Planned Work
 
-- Implement the primary code changes described in the parent task.
-- Keep responsibilities aligned with Clean Architecture and `RESPONSIBILITY_BOUNDARIES.md`.
-- Avoid introducing new bootstrap side effects outside the platform composition root.
+- version provider-registered tools and prompts where surface evolution requires it
+- keep the business layer shared
 
+### Migration Rule
+
+For any public component name that will gain multiple versions:
+
+1. assign an explicit version to the current implementation first
+2. add the new implementation under the same public name with a higher version
+3. never mix versioned and unversioned forms of the same public name
 ---
 
 ## Acceptance Criteria
 
-- Core implementation is complete and aligned with the parent scope.
-
+- one capability can expose more than one public contract safely
 ---
 
 ## Atomic Work Items
