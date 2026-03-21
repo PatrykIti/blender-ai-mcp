@@ -13,6 +13,17 @@ Verify important corrections through structured scene and mesh inspection instea
 
 ---
 
+## Active Runtime Seam
+
+Primary runtime seam for router-aware MCP execution is:
+
+- MCP area tools → `route_tool_call(...)` in `server/adapters/mcp/router_helper.py`
+
+`server/router/adapters/mcp_integration.py` is a secondary middleware-style adapter path.
+It should be kept behaviorally aligned where used, but runtime-critical verification behavior must be defined first on the primary `route_tool_call` path.
+
+---
+
 ## Atomic Work Items
 
 1. Map each high-risk correction family to the inspection contracts it depends on.

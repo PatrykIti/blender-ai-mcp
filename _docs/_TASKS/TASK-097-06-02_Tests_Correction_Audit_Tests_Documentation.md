@@ -24,16 +24,16 @@ Add tests and documentation updates for **Correction Audit Tests and Documentati
 
 ### Regression Scenarios (Required)
 
-1. policy happy path: confidence+risk inputs resolve to expected auto-fix/ask/block decision.
-2. medium-confidence path: escalation invokes clarification flow instead of silent rewrite.
-3. audit path: correction events and execution reports are emitted with required fields.
-4. postcondition path: high-risk fixes are verified and failures are surfaced explicitly.
+1. end-to-end success path: corrected execution emits decision context, audit event, execution report, and verification pass outcome.
+2. end-to-end failure path: failed postcondition verification prevents optimistic success and exposes explicit failure status.
+3. inconclusive path: inconclusive verification is surfaced distinctly from pass/fail and follows documented escalation behavior.
+4. documentation parity path: published docs/examples match actual response schemas and regression fixtures.
 
 ### Metrics To Capture
 
-- decision-matrix coverage across risk/confidence classes
-- audit event completeness ratio
-- postcondition verification success/failure distribution
+- end-to-end audit trace completeness ratio
+- false-success count after failed/inconclusive verification (target: 0)
+- documentation/example drift count against current contract schemas (target: 0)
 
 ### Documentation Deliverables
 
@@ -48,7 +48,7 @@ Add tests and documentation updates for **Correction Audit Tests and Documentati
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related correction policy, audit exposure, and verification integration paths
 
 ---
 

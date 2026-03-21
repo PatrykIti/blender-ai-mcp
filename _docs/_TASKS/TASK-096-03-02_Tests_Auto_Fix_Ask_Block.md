@@ -24,16 +24,16 @@ Add tests and documentation updates for **Auto-Fix, Ask, Block Policy Engine**.
 
 ### Regression Scenarios (Required)
 
-1. policy happy path: confidence+risk inputs resolve to expected auto-fix/ask/block decision.
-2. medium-confidence path: escalation invokes clarification flow instead of silent rewrite.
-3. audit path: correction events and execution reports are emitted with required fields.
-4. postcondition path: high-risk fixes are verified and failures are surfaced explicitly.
+1. auto-fix decision path: high-confidence low-risk deterministic corrections resolve to `auto-fix`.
+2. ask decision path: medium-confidence or bounded-ambiguity corrections resolve to `ask` (elicitation/escalation path).
+3. block decision path: low/none confidence or forbidden-risk combinations resolve to `block`.
+4. precedence path: risk and correction-type guards override raw confidence when policy rules conflict.
 
 ### Metrics To Capture
 
-- decision-matrix coverage across risk/confidence classes
-- audit event completeness ratio
-- postcondition verification success/failure distribution
+- decision-matrix coverage across correction type x risk x confidence combinations
+- policy-branch coverage for `auto-fix`, `ask`, and `block`
+- unexpected default/fallback decision count (target: 0)
 
 ### Documentation Deliverables
 
@@ -48,7 +48,7 @@ Add tests and documentation updates for **Auto-Fix, Ask, Block Policy Engine**.
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related correction-policy and elicitation escalation paths
 
 ---
 

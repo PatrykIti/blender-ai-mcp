@@ -15,9 +15,11 @@ Add tests and documentation updates for **FastMCP 3.x Dependency and Runtime Aud
 
 ## Repository Touchpoints
 
-- `tests/unit/router/adapters/test_mcp_integration.py`
+- `tests/unit/adapters/mcp/test_runtime_inventory.py`
+- `tests/unit/adapters/mcp/test_provider_inventory.py`
 - `README.md`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_MCP_SERVER/fastmcp_3x_migration_matrix.md`
 
 ---
 
@@ -25,16 +27,16 @@ Add tests and documentation updates for **FastMCP 3.x Dependency and Runtime Aud
 
 ### Regression Scenarios (Required)
 
-1. policy happy path: confidence+risk inputs resolve to expected auto-fix/ask/block decision.
-2. medium-confidence path: escalation invokes clarification flow instead of silent rewrite.
-3. audit path: correction events and execution reports are emitted with required fields.
-4. postcondition path: high-risk fixes are verified and failures are surfaced explicitly.
+1. dependency baseline path: FastMCP dependency and runtime notes are aligned to the selected 3.x baseline.
+2. runtime inventory path: all MCP area families in the runtime are represented in one canonical inventory and validated by tests.
+3. bootstrap seam path: startup no longer depends on hidden side-effect imports as the default composition mechanism.
+4. gap visibility path: known inventory mismatches (for example metadata coverage gaps) are explicitly surfaced in docs and tests.
 
 ### Metrics To Capture
 
-- decision-matrix coverage across risk/confidence classes
-- audit event completeness ratio
-- postcondition verification success/failure distribution
+- runtime inventory coverage ratio (area modules vs inventory entries)
+- side-effect bootstrap dependency count (target trending to 0 for default startup)
+- unresolved 2.x coupling points after audit (explicit list, target monotonically decreasing)
 
 ### Documentation Deliverables
 
@@ -49,7 +51,7 @@ Add tests and documentation updates for **FastMCP 3.x Dependency and Runtime Aud
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related MCP bootstrap/inventory/platform paths
 
 ---
 

@@ -24,9 +24,9 @@ Implement the **Platform Timeout Policy and Config** slice of the parent task.
 
 ### Slice Outputs
 
-- deliver profile/bootstrap behavior through composition-root configuration, not side effects
-- ensure profile selection resolves deterministic provider and transform sets
-- keep startup failure modes explicit and config-driven
+- define explicit platform timeout settings for MCP tool execution and task-facing behavior
+- ensure timeout configuration is deterministic, validated, and applied through the composition root
+- keep invalid timeout values and unsupported combinations fail-fast with explicit errors
 
 ### Implementation Checklist
 
@@ -45,16 +45,16 @@ Implement the **Platform Timeout Policy and Config** slice of the parent task.
 
 ## Acceptance Criteria
 
-- profile/bootstrap behavior is deterministic and test-covered
-- config contract is explicit (supported values, defaults, invalid-value handling)
-- no new startup side effects are introduced outside composition root
-- slice output remains compatible with parent migration gates
+- timeout config contract is explicit (supported keys, defaults, ranges, invalid-value handling)
+- factory/bootstrap applies timeout policy deterministically for target profiles
+- invalid timeout config fails fast with actionable diagnostics
+- scope remains platform timeout policy only; RPC/addon coordination stays in TASK-093-02-01-02
 
 ---
 
 ## Atomic Work Items
 
-1. Implement config/profile handling in listed touchpoints and document supported modes.
-2. Add focused tests for valid profiles, invalid profiles, and default fallback behavior.
-3. Capture one before/after bootstrap trace proving composition-root ownership.
-4. Document migration notes for downstream tasks that depend on this slice.
+1. Implement timeout settings and validation rules in listed touchpoints.
+2. Add focused tests for default values, valid overrides, and invalid timeout inputs.
+3. Capture one before/after execution trace showing timeout policy application.
+4. Document timeout policy boundaries vs RPC/addon timeout coordination scope.

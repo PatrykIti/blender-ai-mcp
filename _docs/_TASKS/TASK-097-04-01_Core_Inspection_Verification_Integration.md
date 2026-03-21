@@ -17,8 +17,9 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 
 - `server/router/application/router.py`
 - `server/router/application/engines/tool_correction_engine.py`
-- `server/router/adapters/mcp_integration.py`
 - `server/adapters/mcp/router_helper.py`
+- `server/adapters/mcp/areas/*.py`
+- `server/router/adapters/mcp_integration.py` (secondary path parity)
 
 ---
 
@@ -29,6 +30,16 @@ Implement the core code changes for **Inspection-Based Verification Integration*
 - implement inspection-triggered postcondition verification for high-risk correction paths
 - ensure verification outcomes (pass/fail/inconclusive) are propagated through router execution contracts
 - prevent optimistic success finalization when required inspection checks fail or are inconclusive
+
+### Runtime Seam Rule
+
+Implement verification wiring first on the active runtime seam:
+
+- `areas/*` tools call `route_tool_call(...)`
+- `route_tool_call(...)` coordinates router execution and response shaping
+
+`server/router/adapters/mcp_integration.py` remains a secondary middleware adapter.
+Keep parity there where relevant, but do not move primary runtime ownership away from `route_tool_call`.
 
 ### Implementation Checklist
 

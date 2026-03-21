@@ -24,16 +24,16 @@ Add tests and documentation updates for **Postcondition Registry for High-Risk F
 
 ### Regression Scenarios (Required)
 
-1. policy happy path: confidence+risk inputs resolve to expected auto-fix/ask/block decision.
-2. medium-confidence path: escalation invokes clarification flow instead of silent rewrite.
-3. audit path: correction events and execution reports are emitted with required fields.
-4. postcondition path: high-risk fixes are verified and failures are surfaced explicitly.
+1. registry lookup path: known high-risk correction families resolve to explicit postcondition entries.
+2. no-registry path: non-registered correction families skip verification triggers predictably.
+3. trigger gate path: verification trigger conditions respect risk class, correction type, and policy flags.
+4. schema validity path: invalid or incomplete postcondition registry entries fail fast in tests.
 
 ### Metrics To Capture
 
-- decision-matrix coverage across risk/confidence classes
-- audit event completeness ratio
-- postcondition verification success/failure distribution
+- high-risk correction-family coverage in registry
+- false trigger rate for non-registered corrections
+- invalid registry entry detection count (target: explicit failures in tests)
 
 ### Documentation Deliverables
 
@@ -48,7 +48,7 @@ Add tests and documentation updates for **Postcondition Registry for High-Risk F
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related correction-policy and verification-trigger paths
 
 ---
 

@@ -15,8 +15,9 @@ Implement the **Inspection Call Bridge and Result Evaluation** slice of the pare
 
 ## Repository Touchpoints
 
-- `server/router/adapters/mcp_integration.py`
 - `server/adapters/mcp/router_helper.py`
+- `server/adapters/mcp/areas/*.py`
+- `server/router/adapters/mcp_integration.py` (secondary path parity)
 
 ---
 
@@ -28,10 +29,16 @@ Implement the **Inspection Call Bridge and Result Evaluation** slice of the pare
 - ensure verification triggers map to inspection contracts for high-risk fixes
 - expose auditable outcomes to responses/logs with deterministic fields
 
+### Runtime Seam Rule
+
+Primary runtime call bridge is `route_tool_call(...)` in `server/adapters/mcp/router_helper.py`.
+Adjust `mcp_integration.py` only to preserve parity for middleware/explicit integration usage, not as the default execution seam.
+
 ### Implementation Checklist
 
-- touch `server/router/adapters/mcp_integration.py` with explicit change notes and boundary rationale
 - touch `server/adapters/mcp/router_helper.py` with explicit change notes and boundary rationale
+- touch `server/adapters/mcp/areas/*.py` with explicit change notes and boundary rationale
+- touch `server/router/adapters/mcp_integration.py` with explicit change notes and boundary rationale (parity scope)
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
 
@@ -54,7 +61,7 @@ Implement the **Inspection Call Bridge and Result Evaluation** slice of the pare
 
 ## Atomic Work Items
 
-1. Implement audit/report/verification mapping in listed touchpoints.
+1. Implement audit/report/verification mapping on the `route_tool_call` runtime path.
 2. Add tests for success, failure, and inconclusive verification outcomes.
 3. Capture before/after audit payload examples for corrected executions.
-4. Document postcondition trigger rules and exposure policy.
+4. Document parity expectations for `mcp_integration.py` without shifting primary runtime ownership.

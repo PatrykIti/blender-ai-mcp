@@ -24,16 +24,16 @@ Add tests and documentation updates for **Audit Exposure in MCP Responses and Lo
 
 ### Regression Scenarios (Required)
 
-1. policy happy path: confidence+risk inputs resolve to expected auto-fix/ask/block decision.
-2. medium-confidence path: escalation invokes clarification flow instead of silent rewrite.
-3. audit path: correction events and execution reports are emitted with required fields.
-4. postcondition path: high-risk fixes are verified and failures are surfaced explicitly.
+1. response exposure path: MCP responses include structured correction audit fields required by the contract.
+2. logging exposure path: logs include correlatable audit identifiers and execution context for corrected runs.
+3. masking path: sensitive fields are redacted/masked according to audit exposure policy.
+4. compatibility path: summary/legacy response variants preserve compatibility while still exposing required audit metadata.
 
 ### Metrics To Capture
 
-- decision-matrix coverage across risk/confidence classes
-- audit event completeness ratio
-- postcondition verification success/failure distribution
+- audit field completeness ratio in MCP responses
+- response/log correlation coverage using shared audit identifiers
+- masking/redaction violation count (target: 0)
 
 ### Documentation Deliverables
 
@@ -48,7 +48,7 @@ Add tests and documentation updates for **Audit Exposure in MCP Responses and Lo
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related contract renderer and telemetry/logging paths
 
 ---
 

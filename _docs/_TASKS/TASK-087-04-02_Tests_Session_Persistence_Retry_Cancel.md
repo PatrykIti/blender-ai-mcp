@@ -24,16 +24,16 @@ Add tests and documentation updates for **Session Persistence, Retry, and Cancel
 
 ### Regression Scenarios (Required)
 
-1. allowed-role path: LaBSE remains limited to semantic retrieval/matching responsibilities.
-2. discovery handoff path: platform search handles general tool discovery.
-3. truth path: verification decisions use inspection contracts, not semantic confidence alone.
-4. boundary regression path: semantic boundary violations are detected by tests/telemetry.
+1. resume path: pending elicitation state survives to the next request and resumes with the same question-set identity.
+2. retry path: retrying with partial answers preserves already accepted values and only asks for unresolved fields.
+3. cancel path: cancel clears pending state deterministically and prevents stale follow-up execution.
+4. compatibility path: non-elicitation surfaces keep stable typed `needs_input` fallback behavior.
 
 ### Metrics To Capture
 
-- boundary violation count (target: 0)
-- percentage of discovery requests served by platform search path
-- verification decisions backed by inspection contracts
+- elicitation resume success rate across request boundaries
+- stale pending-state leakage count (target: 0)
+- cancel cleanup correctness rate (pending ids/questions removed as expected)
 
 ### Documentation Deliverables
 
@@ -48,7 +48,7 @@ Add tests and documentation updates for **Session Persistence, Retry, and Cancel
 - all required regression scenarios are implemented and passing in CI/local test runs
 - metrics are captured with baseline vs post-change values and attached to the task update
 - docs include the regression matrix and explain expected behavior boundaries
-- no untracked regressions are observed on related router/dispatcher/platform paths
+- no untracked regressions are observed on related router/elicitation/session-state paths
 
 ---
 
