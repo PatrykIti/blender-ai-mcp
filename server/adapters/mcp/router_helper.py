@@ -15,8 +15,10 @@ from server.adapters.mcp.contracts.correction_audit import (
 )
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
+from server.infrastructure.di import get_postcondition_registry, get_scene_handler
 from server.infrastructure.di import is_router_enabled, get_router
 from server.adapters.mcp.dispatcher import get_dispatcher
+from server.router.domain.entities.correction_policy import CorrectionCategory
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +36,26 @@ def _build_correction_audit_events(
     if not corrected_tools or not steps:
         return ()
 
-    if len(corrected_tools) > 1:
-        category = "workflow_expansion"
-    else:
-        corrected_tool = corrected_tools[0]["tool"]
-        corrected_params = corrected_tools[0]["params"]
-        if corrected_tool != original_tool_name:
+    events: list[CorrectionAuditEventContract] = []
+    for index, (tool, step) in enumerate(zip(corrected_tools, steps), 1):
+        corrected_tool_name = tool["tool"]
+        corrected_params = tool["params"]
+
+        if corrected_tool_name == "system_set_mode" and original_tool_name != "system_set_mode":
+            category = "precondition_mode"
+        elif corrected_tool_name in {"mesh_select", "mesh_select_targeted"} and original_tool_name not in {"mesh_select", "mesh_select_targeted"}:
+            category = "precondition_selection"
+        elif corrected_tool_name == "scene_set_active_object" and original_tool_name != "scene_set_active_object":
+            category = "precondition_active_object"
+        elif len(corrected_tools) > 1 and corrected_tool_name != original_tool_name:
+            category = "workflow_expansion"
+        elif corrected_tool_name != original_tool_name:
             category = "tool_override"
         elif corrected_params != original_params:
             category = "parameter_rewrite"
         else:
-            return ()
+            continue
 
-    events: list[CorrectionAuditEventContract] = []
-    for index, (tool, step) in enumerate(zip(corrected_tools, steps), 1):
         events.append(
             CorrectionAuditEventContract(
                 event_id=f"audit_{index}",
@@ -57,8 +65,8 @@ def _build_correction_audit_events(
                 intent=CorrectionIntentContract(
                     original_tool_name=original_tool_name,
                     original_params=original_params,
-                    corrected_tool_name=tool["tool"],
-                    corrected_params=tool["params"],
+                    corrected_tool_name=corrected_tool_name,
+                    corrected_params=corrected_params,
                     category=category,
                 ),
                 execution=CorrectionExecutionContract(
@@ -71,6 +79,84 @@ def _build_correction_audit_events(
             )
         )
     return tuple(events)
+
+
+def _apply_postcondition_verification(
+    audit_events: tuple[CorrectionAuditEventContract, ...],
+) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
+    """Evaluate inspection-based verification for registered high-risk correction events."""
+
+    if not audit_events:
+        return audit_events, "not_requested"
+
+    registry = get_postcondition_registry()
+    scene_handler = get_scene_handler()
+
+    updated_events: list[CorrectionAuditEventContract] = []
+    statuses: list[str] = []
+
+    for event in audit_events:
+        try:
+            category = CorrectionCategory(event.intent.category)
+        except ValueError:
+            updated_events.append(event)
+            continue
+
+        requirement = registry.get(category)
+        if requirement is None:
+            updated_events.append(event)
+            continue
+
+        status = "inconclusive"
+        details: dict[str, Any] | None = None
+
+        if requirement.verification_key == "verify_mode":
+            mode_payload = scene_handler.get_mode()
+            expected_mode = (
+                event.execution.params.get("mode")
+                or event.intent.corrected_params.get("mode")
+            )
+            actual_mode = mode_payload.get("mode")
+            status = "passed" if expected_mode == actual_mode else "failed"
+            details = {"expected_mode": expected_mode, "actual_mode": actual_mode}
+        elif requirement.verification_key == "verify_selection":
+            selection_payload = scene_handler.list_selection()
+            selection_count = selection_payload.get("selection_count", 0)
+            status = "passed" if selection_count > 0 else "failed"
+            details = {"selection_count": selection_count}
+        elif requirement.verification_key == "verify_active_object":
+            mode_payload = scene_handler.get_mode()
+            expected_object = (
+                event.execution.params.get("name")
+                or event.intent.corrected_params.get("name")
+            )
+            actual_object = mode_payload.get("active_object")
+            status = "passed" if expected_object == actual_object else "failed"
+            details = {"expected_object": expected_object, "actual_object": actual_object}
+
+        statuses.append(status)
+        updated_events.append(
+            event.model_copy(
+                update={
+                    "verification": CorrectionVerificationContract(
+                        status=status,
+                        details=details,
+                    )
+                }
+            )
+        )
+
+    if not statuses:
+        return tuple(updated_events), "not_requested"
+    if any(status == "failed" for status in statuses):
+        overall = "failed"
+    elif any(status == "inconclusive" for status in statuses):
+        overall = "inconclusive"
+    elif all(status == "passed" for status in statuses):
+        overall = "passed"
+    else:
+        overall = "pending"
+    return tuple(updated_events), overall
 
 
 def route_tool_call_report(
@@ -145,18 +231,22 @@ def route_tool_call_report(
                 ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result)
             )
 
+        audit_events = _build_correction_audit_events(
+            original_tool_name=tool_name,
+            original_params=params,
+            corrected_tools=corrected_tools,
+            steps=steps,
+        )
+        audit_events, verification_status = _apply_postcondition_verification(audit_events)
+
         return MCPExecutionReport(
             context=context,
             router_enabled=True,
             router_applied=True,
             router_disposition="corrected",
             steps=tuple(steps),
-            audit_events=_build_correction_audit_events(
-                original_tool_name=tool_name,
-                original_params=params,
-                corrected_tools=corrected_tools,
-                steps=steps,
-            ),
+            audit_events=audit_events,
+            verification_status=verification_status,
         )
 
     except Exception as e:

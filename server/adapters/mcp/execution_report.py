@@ -37,7 +37,7 @@ class MCPExecutionReport(MCPContract):
     error: str | None = None
     policy_context: dict[str, Any] | None = None
     audit_events: tuple[CorrectionAuditEventContract, ...] = ()
-    verification_status: Literal["not_requested", "pending", "passed", "failed"] = "not_requested"
+    verification_status: Literal["not_requested", "pending", "passed", "failed", "inconclusive"] = "not_requested"
 
     def to_dict(self) -> dict[str, Any]:
         """Return a structured dict representation."""
