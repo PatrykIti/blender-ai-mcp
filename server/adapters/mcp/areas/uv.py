@@ -1,7 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -22,7 +21,6 @@ def register_uv_tools(target: Any) -> Dict[str, Any]:
         globals(), target, UV_PUBLIC_TOOL_NAMES, tags=get_capability_tags("uv")
     )
 
-@mcp.tool()
 def uv_list_maps(
     ctx: Context,
     object_name: str,
@@ -99,7 +97,6 @@ def uv_list_maps(
     )
 
 
-@mcp.tool()
 def uv_unwrap(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -154,7 +151,6 @@ def uv_unwrap(
     )
 
 
-@mcp.tool()
 def uv_pack_islands(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -202,7 +198,6 @@ def uv_pack_islands(
     )
 
 
-@mcp.tool()
 def uv_create_seam(
     ctx: Context,
     object_name: Optional[str] = None,

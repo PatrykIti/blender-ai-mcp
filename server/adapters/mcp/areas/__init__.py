@@ -1,29 +1,7 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
 # SPDX-License-Identifier: BUSL-1.1
 
-"""
-MCP tool registration modules ("areas").
-
-Author: Patryk Ciechański (PatrykIti)
-"""
-
-# Compatibility bootstrap for the current runtime. TASK-083-02/03 gradually
-# replaces this side-effect import path with explicit registrars and providers.
-from . import armature
-from . import baking
-from . import collection
-from . import curve
-from . import extraction
-from . import lattice
-from . import material
-from . import mesh
-from . import modeling
-from . import router
-from . import scene
-from . import sculpt
-from . import system
-from . import uv
-from . import workflow_catalog
+"""Explicit MCP area registrars used by provider-based composition."""
 
 from .mesh import register_mesh_tools
 from .modeling import register_modeling_tools

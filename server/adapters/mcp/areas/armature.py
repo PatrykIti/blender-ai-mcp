@@ -6,10 +6,9 @@ Exposes armature tools via FastMCP.
 """
 
 from typing import Any, Dict, Literal
-from mcp.server.fastmcp import Context
+from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_armature_handler
@@ -37,7 +36,6 @@ def get_handler():
     return get_armature_handler()
 
 
-@mcp.tool()
 def armature_create(
     ctx: Context,
     name: str = "Armature",
@@ -89,7 +87,6 @@ def armature_create(
     )
 
 
-@mcp.tool()
 def armature_add_bone(
     ctx: Context,
     armature_name: str,
@@ -149,7 +146,6 @@ def armature_add_bone(
     )
 
 
-@mcp.tool()
 def armature_bind(
     ctx: Context,
     mesh_name: str,
@@ -200,7 +196,6 @@ def armature_bind(
     )
 
 
-@mcp.tool()
 def armature_pose_bone(
     ctx: Context,
     armature_name: str,
@@ -255,7 +250,6 @@ def armature_pose_bone(
     )
 
 
-@mcp.tool()
 def armature_weight_paint_assign(
     ctx: Context,
     object_name: str,
@@ -312,7 +306,6 @@ def armature_weight_paint_assign(
     )
 
 
-@mcp.tool()
 def armature_get_data(
     ctx: Context,
     object_name: str,

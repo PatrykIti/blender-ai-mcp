@@ -30,6 +30,7 @@ Current provider groups:
   - reserved for internal/helper-only platform capabilities
 
 Area modules now expose `register_*_tools(target)` seams so the same tool definitions can be mounted on a `FastMCP` server or a `LocalProvider`.
+The legacy `server/adapters/mcp/instance.py` module is now only a decorator shim and is no longer part of runtime composition.
 
 ## Surface Profiles
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -361,3 +362,16 @@ def test_build_core_tools_provider_requires_local_provider():
             core_tools.build_core_tools_provider()
     finally:
         core_tools.LocalProvider = original
+
+
+def test_area_modules_no_longer_depend_on_instance_singleton():
+    """Provider-based registrars should not require `server.adapters.mcp.instance.mcp`."""
+
+    areas_dir = Path("server/adapters/mcp/areas")
+
+    for path in sorted(areas_dir.glob("*.py")):
+        if path.name == "__init__.py" or path.stem.startswith("_"):
+            continue
+        source = path.read_text(encoding="utf-8")
+        assert "from server.adapters.mcp.instance import mcp" not in source, path.name
+        assert "@mcp.tool()" not in source, path.name

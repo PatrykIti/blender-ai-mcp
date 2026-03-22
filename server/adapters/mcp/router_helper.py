@@ -324,7 +324,6 @@ def route_tool_call(
         Result string from tool execution (routed or direct).
 
     Example:
-        @mcp.tool()
         def mesh_extrude_region(ctx: Context, depth: float = 1.0) -> str:
             return route_tool_call(
                 tool_name="mesh_extrude_region",

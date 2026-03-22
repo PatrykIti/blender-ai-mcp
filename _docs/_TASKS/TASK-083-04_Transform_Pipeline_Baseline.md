@@ -11,6 +11,12 @@
 
 Introduce a base transform pipeline that becomes the canonical place for naming, visibility, discovery, prompt bridging, and versioning concerns.
 
+## Current State
+
+The deterministic transform scaffold is implemented and wired into server composition. The baseline order is enforced in code and covered by tests.
+
+This task remains open because several checks described in the tests/docs slice only become meaningful when later tasks populate currently-placeholder stages such as discovery, prompt bridge, version filtering, and fuller visibility interactions.
+
 ---
 
 ## Repository Touchpoints

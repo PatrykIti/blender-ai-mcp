@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_curve_handler
@@ -25,7 +24,6 @@ def register_curve_tools(target: Any) -> Dict[str, Any]:
 # TASK-021: Phase 2.6 - Curves & Procedural
 # ==============================================================================
 
-@mcp.tool()
 def curve_create(
     ctx: Context,
     curve_type: Literal["BEZIER", "NURBS", "PATH", "CIRCLE"] = "BEZIER",
@@ -64,7 +62,6 @@ def curve_create(
     )
 
 
-@mcp.tool()
 def curve_to_mesh(
     ctx: Context,
     object_name: str
@@ -95,7 +92,6 @@ def curve_to_mesh(
     )
 
 
-@mcp.tool()
 def curve_get_data(
     ctx: Context,
     object_name: str

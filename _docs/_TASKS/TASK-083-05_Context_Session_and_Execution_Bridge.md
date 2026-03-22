@@ -11,6 +11,12 @@
 
 Normalize how adapter tools use `Context`, session state, and execution metadata so the repo is ready for visibility, elicitation, prompts, and background tasks.
 
+## Current State
+
+The baseline bridge primitives are implemented: session helpers, execution context, execution report, and sync-compatible context utilities all exist and are covered by tests.
+
+This task remains open because broader interaction coverage for elicitation, task mode, and richer operational behavior depends on downstream work in TASK-087, TASK-088, and TASK-093.
+
 ---
 
 ## Repository Touchpoints

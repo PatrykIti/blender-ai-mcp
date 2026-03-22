@@ -11,6 +11,12 @@
 
 Add tests and documentation updates for **Transform Pipeline Baseline**.
 
+## Current State
+
+The deterministic transform order is implemented and tested at the scaffold level.
+
+This slice remains open because several fuller scenarios listed below only make sense after downstream tasks populate the currently-placeholder versioning, prompt bridge, discovery, and richer visibility stages.
+
 ---
 
 ## Repository Touchpoints

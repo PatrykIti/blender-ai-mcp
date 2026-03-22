@@ -32,7 +32,7 @@ def test_runtime_inventory_lists_every_area_module_on_disk():
 
 
 def test_runtime_inventory_matches_side_effect_bootstrap_modules():
-    """Inventory side-effect flags should match the current bootstrap import list."""
+    """Inventory side-effect flags should match the empty post-migration bootstrap list."""
 
     bootstrapped_modules = set(get_bootstrap_side_effect_modules())
     inventory_bootstrapped = {
@@ -40,7 +40,7 @@ def test_runtime_inventory_matches_side_effect_bootstrap_modules():
     }
 
     assert inventory_bootstrapped == bootstrapped_modules
-    assert "text" not in bootstrapped_modules
+    assert bootstrapped_modules == set()
 
 
 def test_runtime_inventory_tracks_singleton_and_context_import_coupling():
@@ -91,26 +91,22 @@ def test_runtime_inventory_baseline_matches_pyproject():
 
 
 def test_runtime_inventory_documents_required_coupling_points():
-    """Known 2.x-era coupling points should stay explicit and source-controlled."""
+    """Only the remaining post-TASK-083 coupling points should stay explicit."""
 
     coupling_files = {coupling.file_path for coupling in MCP_RUNTIME_COUPLINGS}
 
     assert {
         "pyproject.toml",
-        "server/adapters/mcp/instance.py",
-        "server/adapters/mcp/server.py",
-        "server/adapters/mcp/areas/__init__.py",
-        "server/adapters/mcp/context_utils.py",
         "server/adapters/mcp/router_helper.py",
         "server/router/adapters/mcp_integration.py",
     } <= coupling_files
 
 
-def test_area_init_imports_remain_simple_relative_imports():
-    """The legacy bootstrap registry should stay easy to audit until provider extraction replaces it."""
+def test_area_init_no_longer_uses_side_effect_relative_imports():
+    """The area package should expose registrars without side-effect bootstrap imports."""
 
     init_source = AREAS_INIT_PATH.read_text(encoding="utf-8")
     import_lines = re.findall(r"^from \. import (\w+)$", init_source, flags=re.MULTILINE)
 
-    assert sorted(import_lines) == list(get_bootstrap_side_effect_modules())
+    assert sorted(import_lines) == list(get_bootstrap_side_effect_modules()) == []
     assert (ROUTER_METADATA_DIR / "text").is_dir()

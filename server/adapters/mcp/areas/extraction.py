@@ -8,7 +8,6 @@ import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -32,7 +31,6 @@ def register_extraction_tools(target: Any) -> Dict[str, Any]:
     )
 
 
-@mcp.tool()
 def extraction_deep_topology(
     ctx: Context,
     object_name: str
@@ -76,7 +74,6 @@ def extraction_deep_topology(
     )
 
 
-@mcp.tool()
 def extraction_component_separate(
     ctx: Context,
     object_name: str,
@@ -120,7 +117,6 @@ def extraction_component_separate(
     )
 
 
-@mcp.tool()
 def extraction_detect_symmetry(
     ctx: Context,
     object_name: str,
@@ -179,7 +175,6 @@ def extraction_detect_symmetry(
     )
 
 
-@mcp.tool()
 def extraction_edge_loop_analysis(
     ctx: Context,
     object_name: str
@@ -221,7 +216,6 @@ def extraction_edge_loop_analysis(
     )
 
 
-@mcp.tool()
 def extraction_face_group_analysis(
     ctx: Context,
     object_name: str,
@@ -272,7 +266,6 @@ def extraction_face_group_analysis(
     )
 
 
-@mcp.tool()
 def extraction_render_angles(
     ctx: Context,
     object_name: str,

@@ -1,7 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -22,7 +21,6 @@ def register_collection_tools(target: Any) -> Dict[str, Any]:
     )
 
 
-@mcp.tool()
 def collection_list(ctx: Context, include_objects: bool = False) -> str:
     """
     [COLLECTION][SAFE][READ-ONLY] Lists all collections with hierarchy information.
@@ -80,7 +78,6 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
     )
 
 
-@mcp.tool()
 def collection_list_objects(
     ctx: Context,
     collection_name: str,
@@ -153,7 +150,6 @@ def collection_list_objects(
     )
 
 
-@mcp.tool()
 def collection_manage(
     ctx: Context,
     action: Literal["create", "delete", "rename", "move_object", "link_object", "unlink_object"],

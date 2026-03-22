@@ -9,7 +9,6 @@ from server.adapters.mcp.contracts.scene import (
     SceneModeContract,
     SceneSelectionContract,
 )
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.utils import parse_coordinate
@@ -62,7 +61,6 @@ def register_scene_tools(target: Any) -> Dict[str, Any]:
     }
 
 # ... Scene Tools ...
-@mcp.tool()
 def scene_list_objects(ctx: Context) -> str:
     """
     [SCENE][SAFE][READ-ONLY] Lists all objects in the current Blender scene with their types.
@@ -84,7 +82,6 @@ def scene_list_objects(ctx: Context) -> str:
         direct_executor=execute
     )
 
-@mcp.tool()
 def scene_delete_object(name: str, ctx: Context) -> str:
     """
     [SCENE][DESTRUCTIVE] Deletes an object from the scene by name.
@@ -101,7 +98,6 @@ def scene_delete_object(name: str, ctx: Context) -> str:
         direct_executor=lambda: get_scene_handler().delete_object(name)
     )
 
-@mcp.tool()
 def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
     """
     [SCENE][DESTRUCTIVE] Deletes objects from the scene.
@@ -119,7 +115,6 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
         direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras)
     )
 
-@mcp.tool()
 def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
     """
     [SCENE][SAFE] Duplicates an object and optionally moves it.
@@ -144,7 +139,6 @@ def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List
         direct_executor=execute
     )
 
-@mcp.tool()
 def scene_set_active_object(ctx: Context, name: str) -> str:
     """
     [SCENE][SAFE] Sets the active object.
@@ -162,7 +156,6 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
     )
 
 
-@mcp.tool()
 def scene_context(
     ctx: Context,
     action: Literal["mode", "selection"]
@@ -242,7 +235,6 @@ def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
     return summary
 
 
-@mcp.tool()
 def scene_inspect(
     ctx: Context,
     action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"],
@@ -367,7 +359,6 @@ def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
     return report
 
 
-@mcp.tool()
 def scene_get_viewport(
     ctx: Context,
     width: int = 1024,
@@ -457,7 +448,6 @@ def scene_get_viewport(
         direct_executor=execute
     )
 
-@mcp.tool()
 def scene_snapshot_state(
     ctx: Context,
     include_mesh_stats: bool = False,
@@ -511,7 +501,6 @@ def scene_snapshot_state(
         direct_executor=execute
     )
 
-@mcp.tool()
 def scene_compare_snapshot(
     ctx: Context,
     baseline_snapshot: str,
@@ -714,7 +703,6 @@ def _scene_inspect_modifier_data(
 
 
 
-@mcp.tool()
 def scene_create(
     ctx: Context,
     action: Literal["light", "camera", "empty"],
@@ -858,7 +846,6 @@ def _scene_create_empty(
     except (RuntimeError, ValueError) as e:
         return str(e)
 
-@mcp.tool()
 def scene_set_mode(ctx: Context, mode: str) -> str:
     """
     [SCENE][SAFE] Sets the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
@@ -886,7 +873,6 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
 
 # TASK-043: Scene Utility Tools
 
-@mcp.tool()
 def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
     """
     [OBJECT MODE][SCENE][SAFE] Renames an object in the scene.
@@ -914,7 +900,6 @@ def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
     )
 
 
-@mcp.tool()
 def scene_hide_object(
     ctx: Context,
     object_name: str,
@@ -948,7 +933,6 @@ def scene_hide_object(
     )
 
 
-@mcp.tool()
 def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
     """
     [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Shows all hidden objects.
@@ -975,7 +959,6 @@ def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
     )
 
 
-@mcp.tool()
 def scene_isolate_object(
     ctx: Context,
     object_name: Union[str, List[str]]
@@ -1010,7 +993,6 @@ def scene_isolate_object(
     )
 
 
-@mcp.tool()
 def scene_camera_orbit(
     ctx: Context,
     angle_horizontal: float = 0.0,
@@ -1048,7 +1030,6 @@ def scene_camera_orbit(
     )
 
 
-@mcp.tool()
 def scene_camera_focus(
     ctx: Context,
     object_name: str,
@@ -1082,7 +1063,6 @@ def scene_camera_focus(
 
 # TASK-045: Object Inspection Tools
 
-@mcp.tool()
 def scene_get_custom_properties(
     ctx: Context,
     object_name: str
@@ -1133,7 +1113,6 @@ def scene_get_custom_properties(
     )
 
 
-@mcp.tool()
 def scene_set_custom_property(
     ctx: Context,
     object_name: str,
@@ -1173,7 +1152,6 @@ def scene_set_custom_property(
     )
 
 
-@mcp.tool()
 def scene_get_hierarchy(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -1248,7 +1226,6 @@ def scene_get_hierarchy(
     )
 
 
-@mcp.tool()
 def scene_get_bounding_box(
     ctx: Context,
     object_name: str,
@@ -1303,7 +1280,6 @@ def scene_get_bounding_box(
     )
 
 
-@mcp.tool()
 def scene_get_origin_info(
     ctx: Context,
     object_name: str

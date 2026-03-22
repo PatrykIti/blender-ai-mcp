@@ -18,22 +18,10 @@ def _find_repo_root(start: Path) -> Path:
     raise RuntimeError(f"Could not find repo root from: {start}")
 
 
-def _is_mcp_tool_decorator(decorator: ast.expr) -> bool:
-    if isinstance(decorator, ast.Call):
-        decorator = decorator.func
-
-    return (
-        isinstance(decorator, ast.Attribute)
-        and isinstance(decorator.value, ast.Name)
-        and decorator.value.id == "mcp"
-        and decorator.attr == "tool"
-    )
-
-
 def _extract_mcp_tool_signatures(areas_dir: Path) -> dict[str, set[str] | None]:
     """
     Returns:
-        Dict of tool_name -> set(parameter_names), excluding ctx
+        Dict of public tool_name -> set(parameter_names), excluding ctx.
         If a tool accepts **kwargs, returns None for that tool (skip strict param checks).
     """
     signatures: dict[str, set[str] | None] = {}
@@ -43,12 +31,30 @@ def _extract_mcp_tool_signatures(areas_dir: Path) -> dict[str, set[str] | None]:
             continue
 
         tree = ast.parse(py_file.read_text(encoding="utf-8"))
+        public_tool_names: set[str] = set()
+
+        for node in tree.body:
+            if not isinstance(node, ast.Assign):
+                continue
+
+            if not any(
+                isinstance(target, ast.Name) and target.id.endswith("_PUBLIC_TOOL_NAMES")
+                for target in node.targets
+            ):
+                continue
+
+            if not isinstance(node.value, (ast.Tuple, ast.List)):
+                continue
+
+            for element in node.value.elts:
+                if isinstance(element, ast.Constant) and isinstance(element.value, str):
+                    public_tool_names.add(element.value)
 
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
 
-            if not any(_is_mcp_tool_decorator(d) for d in node.decorator_list):
+            if node.name not in public_tool_names:
                 continue
 
             tool_name = node.name

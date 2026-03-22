@@ -24,7 +24,7 @@ Gate 0 for the migration series should evaluate the runtime baseline against the
 
 1. Project metadata (`pyproject.toml`) matches the supported Python and FastMCP baseline.
 2. Runtime inventory stays aligned with the actual MCP area layout and metadata coverage.
-3. Bootstrap and factory smoke tests are added as provider/factory slices land in `TASK-083-02` and `TASK-083-03`.
+3. Bootstrap/factory/provider/transform smoke tests are covered by the TASK-083 regression harness.
 4. FastMCP `3.1+`-only tasks stay blocked until the runtime line is explicitly moved to `>=3.1,<4.0`.
 
 ## Related Files

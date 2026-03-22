@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
 # SPDX-License-Identifier: BUSL-1.1
 
-"""Helpers for registering existing MCP tool functions on reusable targets."""
+"""Helpers for registering plain MCP tool callables on reusable targets."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def register_existing_tools(
     *,
     tags: Iterable[str] | None = None,
 ) -> Dict[str, Any]:
-    """Register existing FastMCP tool functions on a server/provider target."""
+    """Register existing tool callables on a server/provider target."""
 
     registered: Dict[str, Any] = {}
     tag_set = set(tags) if tags is not None else None

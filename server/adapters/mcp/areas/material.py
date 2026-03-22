@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -27,7 +26,6 @@ def register_material_tools(target: Any) -> Dict[str, Any]:
     )
 
 
-@mcp.tool()
 def material_list(ctx: Context, include_unassigned: bool = True) -> str:
     """
     [MATERIAL][SAFE][READ-ONLY] Lists materials with shader parameters and assignment counts.
@@ -77,7 +75,6 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
     )
 
 
-@mcp.tool()
 def material_list_by_object(ctx: Context, object_name: str, include_indices: bool = False) -> str:
     """
     [MATERIAL][SAFE][READ-ONLY] Lists material slots for a given object.
@@ -129,7 +126,6 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
     )
 
 
-@mcp.tool()
 def material_create(
     ctx: Context,
     name: str,
@@ -188,7 +184,6 @@ def material_create(
     )
 
 
-@mcp.tool()
 def material_assign(
     ctx: Context,
     material_name: str,
@@ -239,7 +234,6 @@ def material_assign(
     )
 
 
-@mcp.tool()
 def material_set_params(
     ctx: Context,
     material_name: str,
@@ -301,7 +295,6 @@ def material_set_params(
     )
 
 
-@mcp.tool()
 def material_set_texture(
     ctx: Context,
     material_name: str,
@@ -352,7 +345,6 @@ def material_set_texture(
 
 
 # TASK-045-6: material_inspect_nodes
-@mcp.tool()
 def material_inspect_nodes(
     ctx: Context,
     material_name: str,

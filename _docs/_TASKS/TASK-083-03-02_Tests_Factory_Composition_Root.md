@@ -11,6 +11,12 @@
 
 Add tests and documentation updates for **Server Factory and Composition Root**.
 
+## Current State
+
+Factory/bootstrap regression tests exist and pass for default and alternate profiles, invalid profile failure, and no-side-effect startup.
+
+This slice remains open because the docs/metrics part is not being treated as fully closed yet, and the legacy decorator shim still exists as a temporary compatibility layer rather than being fully removed.
+
 ---
 
 ## Repository Touchpoints

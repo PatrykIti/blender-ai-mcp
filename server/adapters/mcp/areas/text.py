@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_text_handler
@@ -25,7 +24,6 @@ def register_text_tools(target: Any) -> Dict[str, Any]:
 # TASK-034: Text & Annotations
 # ==============================================================================
 
-@mcp.tool()
 def text_create(
     ctx: Context,
     text: str = "Text",
@@ -100,7 +98,6 @@ def text_create(
     )
 
 
-@mcp.tool()
 def text_edit(
     ctx: Context,
     object_name: str,
@@ -167,7 +164,6 @@ def text_edit(
     )
 
 
-@mcp.tool()
 def text_to_mesh(
     ctx: Context,
     object_name: str,

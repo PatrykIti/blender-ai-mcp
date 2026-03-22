@@ -11,6 +11,12 @@
 
 Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit composition root that builds a server from reusable provider groups, transforms, and runtime configuration.
 
+## Current State
+
+The composition root is implemented in code: server startup uses `build_server(surface_profile=...)`, surface profiles are explicit, and the platform manifest scaffold is wired into the factory/bootstrap path.
+
+This task remains open because the compatibility shim in `instance.py` still exists as a temporary external-safety layer, and the tests/docs slice is not being treated as fully closed yet.
+
 ---
 
 ## Repository Touchpoints

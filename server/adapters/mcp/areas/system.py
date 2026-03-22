@@ -1,7 +1,6 @@
 from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -35,7 +34,6 @@ def register_system_tools(target: Any) -> Dict[str, Any]:
 # === Export Tools ===
 
 
-@mcp.tool()
 def export_glb(
     ctx: Context,
     filepath: str,
@@ -81,7 +79,6 @@ def export_glb(
     )
 
 
-@mcp.tool()
 def export_fbx(
     ctx: Context,
     filepath: str,
@@ -127,7 +124,6 @@ def export_fbx(
     )
 
 
-@mcp.tool()
 def export_obj(
     ctx: Context,
     filepath: str,
@@ -182,7 +178,6 @@ def export_obj(
 # === Import Tools ===
 
 
-@mcp.tool()
 def import_obj(
     ctx: Context,
     filepath: str,
@@ -231,7 +226,6 @@ def import_obj(
     )
 
 
-@mcp.tool()
 def import_fbx(
     ctx: Context,
     filepath: str,
@@ -280,7 +274,6 @@ def import_fbx(
     )
 
 
-@mcp.tool()
 def import_glb(
     ctx: Context,
     filepath: str,
@@ -323,7 +316,6 @@ def import_glb(
     )
 
 
-@mcp.tool()
 def import_image_as_plane(
     ctx: Context,
     filepath: str,
@@ -378,7 +370,6 @@ def import_image_as_plane(
     )
 
 
-@mcp.tool()
 def system_set_mode(
     ctx: Context,
     mode: Literal["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE"],
@@ -410,7 +401,6 @@ def system_set_mode(
     )
 
 
-@mcp.tool()
 def system_undo(ctx: Context, steps: int = 1) -> str:
     """
     [SCENE][NON-DESTRUCTIVE] Undoes the last operation(s).
@@ -430,7 +420,6 @@ def system_undo(ctx: Context, steps: int = 1) -> str:
     )
 
 
-@mcp.tool()
 def system_redo(ctx: Context, steps: int = 1) -> str:
     """
     [SCENE][NON-DESTRUCTIVE] Redoes previously undone operation(s).
@@ -450,7 +439,6 @@ def system_redo(ctx: Context, steps: int = 1) -> str:
     )
 
 
-@mcp.tool()
 def system_save_file(
     ctx: Context,
     filepath: Optional[str] = None,
@@ -478,7 +466,6 @@ def system_save_file(
     )
 
 
-@mcp.tool()
 def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     """
     [SCENE][DESTRUCTIVE] Creates a new Blender file (clears current scene).
@@ -497,7 +484,6 @@ def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     )
 
 
-@mcp.tool()
 def system_snapshot(
     ctx: Context,
     action: Literal["save", "restore", "list", "delete"],

@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_modeling_handler
@@ -93,7 +92,6 @@ def _modeling_create_primitive_impl(
     )
 
 
-@mcp.tool()
 def modeling_create_primitive(
     ctx: Context,
     primitive_type: str,
@@ -162,7 +160,6 @@ def _modeling_transform_object_impl(
     )
 
 
-@mcp.tool()
 def modeling_transform_object(
     ctx: Context,
     name: str,
@@ -218,7 +215,6 @@ def _modeling_add_modifier_impl(
     )
 
 
-@mcp.tool()
 def modeling_add_modifier(
     ctx: Context,
     name: str,
@@ -262,7 +258,6 @@ def _modeling_apply_modifier_impl(
     )
 
 
-@mcp.tool()
 def modeling_apply_modifier(
     ctx: Context,
     name: str, 
@@ -299,7 +294,6 @@ def _modeling_convert_to_mesh_impl(
     )
 
 
-@mcp.tool()
 def modeling_convert_to_mesh(
     ctx: Context,
     name: str
@@ -335,7 +329,6 @@ def _modeling_join_objects_impl(
     )
 
 
-@mcp.tool()
 def modeling_join_objects(
     ctx: Context,
     object_names: List[str]
@@ -381,7 +374,6 @@ def _modeling_separate_object_impl(
     )
 
 
-@mcp.tool()
 def modeling_separate_object(
     ctx: Context,
     name: str,
@@ -426,7 +418,6 @@ def _modeling_list_modifiers_impl(
     )
 
 
-@mcp.tool()
 def modeling_list_modifiers(
     ctx: Context,
     name: str
@@ -480,7 +471,6 @@ def _modeling_set_origin_impl(
     )
 
 
-@mcp.tool()
 def modeling_set_origin(
     ctx: Context,
     name: str,
@@ -561,7 +551,6 @@ def _metaball_create_impl(
     )
 
 
-@mcp.tool()
 def metaball_create(
     ctx: Context,
     name: str = "Metaball",
@@ -657,7 +646,6 @@ def _metaball_add_element_impl(
     )
 
 
-@mcp.tool()
 def metaball_add_element(
     ctx: Context,
     metaball_name: str,
@@ -724,7 +712,6 @@ def _metaball_to_mesh_impl(
     )
 
 
-@mcp.tool()
 def metaball_to_mesh(
     ctx: Context,
     metaball_name: str,
@@ -804,7 +791,6 @@ def _skin_create_skeleton_impl(
     )
 
 
-@mcp.tool()
 def skin_create_skeleton(
     ctx: Context,
     name: str = "Skeleton",
@@ -868,7 +854,6 @@ def _skin_set_radius_impl(
     )
 
 
-@mcp.tool()
 def skin_set_radius(
     ctx: Context,
     object_name: str,

@@ -31,7 +31,6 @@ from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state,
     update_session_from_router_goal,
 )
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import get_router_status
@@ -109,7 +108,6 @@ async def _maybe_elicit_router_answers(
     return result
 
 
-@mcp.tool()
 async def router_set_goal(
     ctx: Context,
     goal: str,
@@ -201,7 +199,6 @@ async def router_set_goal(
     return RouterGoalResponseContract.model_validate(result)
 
 
-@mcp.tool()
 def router_get_status(ctx: Context) -> RouterStatusContract:
     """
     [SYSTEM][SAFE] Get current Router Supervisor status.
@@ -226,7 +223,6 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
     return RouterStatusContract.model_validate(status_payload)
 
 
-@mcp.tool()
 def router_clear_goal(ctx: Context) -> str:
     """
     [SYSTEM][SAFE] Clear the current modeling goal.
@@ -244,7 +240,6 @@ def router_clear_goal(ctx: Context) -> str:
 # --- Semantic Matching Tools (TASK-046) ---
 
 
-@mcp.tool()
 def router_find_similar_workflows(
     ctx: Context,
     prompt: str,
@@ -277,7 +272,6 @@ def router_find_similar_workflows(
     return handler.find_similar_workflows_formatted(prompt, top_k)
 
 
-@mcp.tool()
 def router_get_inherited_proportions(
     ctx: Context,
     workflow_names: List[str],
@@ -306,7 +300,6 @@ def router_get_inherited_proportions(
     return handler.get_proportions_formatted(workflow_names, dimensions)
 
 
-@mcp.tool()
 def router_feedback(
     ctx: Context,
     prompt: str,

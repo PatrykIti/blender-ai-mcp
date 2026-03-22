@@ -8,7 +8,6 @@ from typing import Any, Dict, Optional
 from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_baking_handler
@@ -29,7 +28,6 @@ def register_baking_tools(target: Any) -> Dict[str, Any]:
     )
 
 
-@mcp.tool()
 def bake_normal_map(
     ctx: Context,
     object_name: str,
@@ -93,7 +91,6 @@ def bake_normal_map(
     )
 
 
-@mcp.tool()
 def bake_ao(
     ctx: Context,
     object_name: str,
@@ -148,7 +145,6 @@ def bake_ao(
     )
 
 
-@mcp.tool()
 def bake_combined(
     ctx: Context,
     object_name: str,
@@ -208,7 +204,6 @@ def bake_combined(
     )
 
 
-@mcp.tool()
 def bake_diffuse(
     ctx: Context,
     object_name: str,

@@ -6,6 +6,8 @@
 **Dependencies:** None  
 **Status:** 🚧 In Progress
 
+**Current Baseline Summary:** The platform baseline is implemented: area modules no longer register through the global singleton, the runtime composes surfaces through providers/factory/manifest, the transform scaffold exists, the session/execution bridge exists, and the TASK-083 regression harness is green. This umbrella remains open because some nested validation/docs deliverables are intentionally not literal `done` yet, and some full-scope checks only become meaningful once downstream tasks such as TASK-084, TASK-087, TASK-088, TASK-089, TASK-090, TASK-091, and TASK-095 populate the currently-placeholder platform stages.
+
 ---
 
 ## Objective
@@ -133,6 +135,22 @@ That requires a server base that can present different capabilities in different
 - Later capabilities such as discovery, adaptive visibility, versioning, and prompt delivery can be added without another structural migration.
 - Existing business capabilities remain intact during the platform transition.
 - The platform becomes easier to evolve for both router-first and manual-tool workflows.
+
+### What Is Already Done In Code
+
+- provider-based registration is the in-repo runtime path
+- surface profiles and factory bootstrap are implemented
+- the platform-owned capability manifest scaffold exists
+- the deterministic transform pipeline scaffold is wired into server composition
+- session/execution bridge primitives are implemented
+- the TASK-083 platform regression suite is green
+
+### What Is Intentionally Still Open
+
+- deeper tests/docs slices that asked for metric capture or broader evidence tables, not just green code
+- transform-stage interaction checks that only become meaningful once discovery/version/prompt stages are populated by later tasks
+- richer context/elicitation/task-mode validation that depends on TASK-087, TASK-088, and TASK-093
+- cleanup removal of the temporary legacy decorator shim once external compatibility is no longer needed
 
 ---
 

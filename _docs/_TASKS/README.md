@@ -68,7 +68,7 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Gate 0 audit baseline complete; provider/factory migration in progress |
+| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Platform baseline is implemented and green; task stays open for deferred validation/docs slices and compatibility cleanup |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---

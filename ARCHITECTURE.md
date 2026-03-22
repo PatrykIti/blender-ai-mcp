@@ -89,6 +89,10 @@ It is now moving toward:
 - future version coexistence
 - future search- and visibility-driven shaping
 
+Area modules now expose plain tool callables plus explicit `register_*_tools(...)`
+seams. Runtime composition happens through provider builders, not through
+module-import side effects.
+
 See [_docs/_MCP_SERVER/fastmcp_3x_composition.md](_docs/_MCP_SERVER/fastmcp_3x_composition.md).
 
 ### 2. Blender Addon (Server Side)

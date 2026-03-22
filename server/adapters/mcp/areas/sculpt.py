@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Literal, Optional
 from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_sculpt_handler
@@ -38,7 +37,6 @@ def register_sculpt_tools(target: Any) -> Dict[str, Any]:
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_auto(
     ctx: Context,
     operation: Literal["smooth", "inflate", "flatten", "sharpen"] = "smooth",
@@ -84,7 +82,6 @@ def sculpt_auto(
     )
 
 
-@mcp.tool()
 def sculpt_brush_smooth(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -117,7 +114,6 @@ def sculpt_brush_smooth(
     )
 
 
-@mcp.tool()
 def sculpt_brush_grab(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -151,7 +147,6 @@ def sculpt_brush_grab(
     )
 
 
-@mcp.tool()
 def sculpt_brush_crease(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -193,7 +188,6 @@ def sculpt_brush_crease(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_brush_clay(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -223,7 +217,6 @@ def sculpt_brush_clay(
     )
 
 
-@mcp.tool()
 def sculpt_brush_inflate(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -253,7 +246,6 @@ def sculpt_brush_inflate(
     )
 
 
-@mcp.tool()
 def sculpt_brush_blob(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -288,7 +280,6 @@ def sculpt_brush_blob(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_brush_snake_hook(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -318,7 +309,6 @@ def sculpt_brush_snake_hook(
     )
 
 
-@mcp.tool()
 def sculpt_brush_draw(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -348,7 +338,6 @@ def sculpt_brush_draw(
     )
 
 
-@mcp.tool()
 def sculpt_brush_pinch(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -383,7 +372,6 @@ def sculpt_brush_pinch(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_enable_dyntopo(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -426,7 +414,6 @@ def sculpt_enable_dyntopo(
     )
 
 
-@mcp.tool()
 def sculpt_disable_dyntopo(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -451,7 +438,6 @@ def sculpt_disable_dyntopo(
     )
 
 
-@mcp.tool()
 def sculpt_dyntopo_flood_fill(
     ctx: Context,
     object_name: Optional[str] = None,

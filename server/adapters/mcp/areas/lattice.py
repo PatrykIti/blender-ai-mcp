@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
@@ -23,7 +22,6 @@ def register_lattice_tools(target: Any) -> Dict[str, Any]:
     )
 
 
-@mcp.tool()
 def lattice_create(
     ctx: Context,
     name: str = "Lattice",
@@ -96,7 +94,6 @@ def lattice_create(
     )
 
 
-@mcp.tool()
 def lattice_bind(
     ctx: Context,
     object_name: str,
@@ -145,7 +142,6 @@ def lattice_bind(
     )
 
 
-@mcp.tool()
 def lattice_edit_point(
     ctx: Context,
     lattice_name: str,
@@ -202,7 +198,6 @@ def lattice_edit_point(
     )
 
 
-@mcp.tool()
 def lattice_get_points(
     ctx: Context,
     object_name: str

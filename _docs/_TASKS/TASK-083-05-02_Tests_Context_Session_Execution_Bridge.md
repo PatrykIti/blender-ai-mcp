@@ -11,6 +11,12 @@
 
 Add tests and documentation updates for **Context, Session, and Execution Bridge**.
 
+## Current State
+
+Baseline bridge tests exist and pass for session helpers, execution report generation, sync compatibility, and router-aware direct execution reporting.
+
+This slice remains open because broader elicitation/task/operations coverage depends on later interaction-heavy tasks rather than the TASK-083 baseline alone.
+
 ---
 
 ## Repository Touchpoints

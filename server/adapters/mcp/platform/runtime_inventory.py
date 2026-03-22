@@ -4,8 +4,9 @@
 """Runtime inventory for the FastMCP 3.x migration baseline.
 
 This module is the canonical audit seam introduced by TASK-083-01.
-It captures the current MCP runtime layout, known 2.x coupling points,
-and the explicit Python / FastMCP baseline for the migration series.
+It captures the current MCP runtime layout, the remaining post-migration
+coupling points, and the explicit Python / FastMCP baseline for the
+migration series.
 
 The inventory is intentionally static and source-controlled. It is not meant
 to infer architecture from imports at runtime; it is meant to document the
@@ -77,14 +78,13 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.armature",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
-        context_import_style="mcp.server.fastmcp",
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
+        context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
         metadata_loader_covered=False,
         notes=(
-            "Still uses the legacy Context import path.",
             "Router metadata exists on disk but MetadataLoader.AREAS does not include this family.",
         ),
     ),
@@ -93,8 +93,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.baking",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
@@ -105,8 +105,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.collection",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -117,8 +117,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.curve",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
@@ -129,8 +129,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.extraction",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -144,8 +144,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.lattice",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
@@ -156,8 +156,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.material",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -168,8 +168,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.mesh",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -180,8 +180,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.modeling",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
@@ -192,8 +192,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.router",
         public=True,
         router_callable=False,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=False,
@@ -207,8 +207,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.scene",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -219,8 +219,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.sculpt",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
@@ -231,8 +231,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.system",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -244,13 +244,12 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         public=True,
         router_callable=True,
         bootstrapped_by_side_effect=False,
-        uses_global_mcp_singleton=True,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
         metadata_loader_covered=False,
         notes=(
-            "Text tools exist as an MCP area module but are not imported by server.adapters.mcp.areas.",
             "Router metadata exists on disk but MetadataLoader.AREAS does not include this family.",
         ),
     ),
@@ -259,8 +258,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.uv",
         public=True,
         router_callable=True,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
@@ -271,8 +270,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         import_path="server.adapters.mcp.areas.workflow_catalog",
         public=True,
         router_callable=False,
-        bootstrapped_by_side_effect=True,
-        uses_global_mcp_singleton=True,
+        bootstrapped_by_side_effect=False,
+        uses_global_mcp_singleton=False,
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=False,
@@ -294,52 +293,22 @@ MCP_RUNTIME_COUPLINGS: Final[tuple[RuntimeCoupling, ...]] = (
         follow_up_tasks=("TASK-083-01",),
     ),
     RuntimeCoupling(
-        file_path="server/adapters/mcp/instance.py",
-        coupling="global_fastmcp_singleton",
-        current_assumption=(
-            "One module-level FastMCP instance is the runtime source of truth for every tool area."
-        ),
-        follow_up_tasks=("TASK-083-02", "TASK-083-03"),
-    ),
-    RuntimeCoupling(
-        file_path="server/adapters/mcp/server.py",
-        coupling="side_effect_bootstrap",
-        current_assumption=(
-            "Server startup depends on importing server.adapters.mcp.areas for side-effect registration."
-        ),
-        follow_up_tasks=("TASK-083-02", "TASK-083-03"),
-    ),
-    RuntimeCoupling(
-        file_path="server/adapters/mcp/areas/__init__.py",
-        coupling="flat_registration_registry",
-        current_assumption=(
-            "The public MCP catalog is assembled through a flat import list rather than reusable providers."
-        ),
-        follow_up_tasks=("TASK-083-02",),
-    ),
-    RuntimeCoupling(
-        file_path="server/adapters/mcp/context_utils.py",
-        coupling="sync_context_bridge",
-        current_assumption=(
-            "Sync MCP tools use an ad hoc ctx.info bridge instead of a broader context/session model."
-        ),
-        follow_up_tasks=("TASK-083-05",),
-    ),
-    RuntimeCoupling(
         file_path="server/adapters/mcp/router_helper.py",
         coupling="direct_router_wrapper",
         current_assumption=(
-            "Router-aware execution is applied inside tool wrappers instead of a platform-owned transform pipeline."
+            "Router-aware execution still lives in adapter-side helper code instead of "
+            "a platform-owned transform/runtime execution layer."
         ),
-        follow_up_tasks=("TASK-083-04", "TASK-095", "TASK-096", "TASK-097"),
+        follow_up_tasks=("TASK-095", "TASK-096", "TASK-097"),
     ),
     RuntimeCoupling(
         file_path="server/router/adapters/mcp_integration.py",
-        coupling="flat_catalog_router_integration",
+        coupling="router_execution_contract_alignment",
         current_assumption=(
-            "Router middleware assumes a flat tool-catalog wrapping model rather than provider/factory composition."
+            "Router middleware still needs fuller alignment with structured execution "
+            "contracts and composed public surfaces."
         ),
-        follow_up_tasks=("TASK-083-04", "TASK-089"),
+        follow_up_tasks=("TASK-089",),
     ),
 )
 

@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
@@ -83,7 +82,6 @@ def register_mesh_tools(target: Any) -> Dict[str, Any]:
     }
 
 
-@mcp.tool()
 def mesh_select(
     ctx: Context,
     action: Literal["all", "none", "linked", "more", "less", "boundary"],
@@ -131,7 +129,6 @@ def mesh_select(
     )
 
 
-@mcp.tool()
 def mesh_select_targeted(
     ctx: Context,
     action: Literal["by_index", "loop", "ring", "by_location"],
@@ -217,7 +214,6 @@ def _mesh_select_all(ctx: Context, deselect: bool = False) -> str:
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
 def mesh_delete_selected(ctx: Context, type: str = 'VERT') -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected geometry elements.
@@ -252,7 +248,6 @@ def _mesh_select_by_index(ctx: Context, indices: List[int], type: str = 'VERT', 
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
 def mesh_extrude_region(ctx: Context, move: Union[str, List[float], None] = None) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Extrudes selected geometry.
@@ -277,7 +272,6 @@ def mesh_extrude_region(ctx: Context, move: Union[str, List[float], None] = None
         direct_executor=execute
     )
 
-@mcp.tool()
 def mesh_fill_holes(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Fills holes by creating faces from selected edges/vertices.
@@ -291,7 +285,6 @@ def mesh_fill_holes(ctx: Context) -> str:
         direct_executor=lambda: get_mesh_handler().fill_holes()
     )
 
-@mcp.tool()
 def mesh_bevel(
     ctx: Context,
     offset: float = 0.1,
@@ -316,7 +309,6 @@ def mesh_bevel(
         direct_executor=lambda: get_mesh_handler().bevel(offset, segments, profile, affect)
     )
 
-@mcp.tool()
 def mesh_loop_cut(
     ctx: Context,
     number_cuts: int = 1,
@@ -339,7 +331,6 @@ def mesh_loop_cut(
         direct_executor=lambda: get_mesh_handler().loop_cut(number_cuts, smoothness)
     )
 
-@mcp.tool()
 def mesh_inset(
     ctx: Context,
     thickness: float = 0.0,
@@ -360,7 +351,6 @@ def mesh_inset(
         direct_executor=lambda: get_mesh_handler().inset(thickness, depth)
     )
 
-@mcp.tool()
 def mesh_boolean(
     ctx: Context,
     operation: str = 'DIFFERENCE',
@@ -388,7 +378,6 @@ def mesh_boolean(
         direct_executor=lambda: get_mesh_handler().boolean(operation, solver)
     )
 
-@mcp.tool()
 def mesh_merge_by_distance(
     ctx: Context,
     distance: float = 0.001
@@ -408,7 +397,6 @@ def mesh_merge_by_distance(
         direct_executor=lambda: get_mesh_handler().merge_by_distance(distance)
     )
 
-@mcp.tool()
 def mesh_subdivide(
     ctx: Context,
     number_cuts: int = 1,
@@ -429,7 +417,6 @@ def mesh_subdivide(
         direct_executor=lambda: get_mesh_handler().subdivide(number_cuts, smoothness)
     )
 
-@mcp.tool()
 def mesh_smooth(
     ctx: Context,
     iterations: int = 1,
@@ -451,7 +438,6 @@ def mesh_smooth(
         direct_executor=lambda: get_mesh_handler().smooth_vertices(iterations, factor)
     )
 
-@mcp.tool()
 def mesh_flatten(
     ctx: Context,
     axis: str
@@ -472,7 +458,6 @@ def mesh_flatten(
     )
     
     
-@mcp.tool()
 def mesh_list_groups(
     ctx: Context,
     object_name: str,
@@ -676,7 +661,6 @@ def _mesh_select_less(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
-@mcp.tool()
 def mesh_inspect(
     ctx: Context,
     action: Literal[
@@ -1135,7 +1119,6 @@ def _mesh_select_boundary(
 # TASK-016: Organic & Deform Tools
 # ==============================================================================
 
-@mcp.tool()
 def mesh_randomize(
     ctx: Context,
     amount: float = 0.1,
@@ -1167,7 +1150,6 @@ def mesh_randomize(
     )
 
 
-@mcp.tool()
 def mesh_shrink_fatten(
     ctx: Context,
     value: float
@@ -1197,7 +1179,6 @@ def mesh_shrink_fatten(
 # TASK-017: Vertex Group Tools
 # ==============================================================================
 
-@mcp.tool()
 def mesh_create_vertex_group(
     ctx: Context,
     object_name: str,
@@ -1224,7 +1205,6 @@ def mesh_create_vertex_group(
     )
 
 
-@mcp.tool()
 def mesh_assign_to_group(
     ctx: Context,
     object_name: str,
@@ -1253,7 +1233,6 @@ def mesh_assign_to_group(
     )
 
 
-@mcp.tool()
 def mesh_remove_from_group(
     ctx: Context,
     object_name: str,
@@ -1282,7 +1261,6 @@ def mesh_remove_from_group(
 # TASK-018: Phase 2.5 - Advanced Precision Tools
 # ==============================================================================
 
-@mcp.tool()
 def mesh_bisect(
     ctx: Context,
     plane_co: List[float],
@@ -1316,7 +1294,6 @@ def mesh_bisect(
     )
 
 
-@mcp.tool()
 def mesh_edge_slide(
     ctx: Context,
     value: float = 0.0
@@ -1342,7 +1319,6 @@ def mesh_edge_slide(
     )
 
 
-@mcp.tool()
 def mesh_vert_slide(
     ctx: Context,
     value: float = 0.0
@@ -1368,7 +1344,6 @@ def mesh_vert_slide(
     )
 
 
-@mcp.tool()
 def mesh_triangulate(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Converts selected faces to triangles.
@@ -1387,7 +1362,6 @@ def mesh_triangulate(ctx: Context) -> str:
     )
 
 
-@mcp.tool()
 def mesh_remesh_voxel(
     ctx: Context,
     voxel_size: float = 0.1,
@@ -1419,7 +1393,6 @@ def mesh_remesh_voxel(
 # TASK-019: Phase 2.4 - Core Transform & Geometry
 # ==============================================================================
 
-@mcp.tool()
 def mesh_transform_selected(
     ctx: Context,
     translate: Union[str, List[float], None] = None,
@@ -1466,7 +1439,6 @@ def mesh_transform_selected(
     )
 
 
-@mcp.tool()
 def mesh_bridge_edge_loops(
     ctx: Context,
     number_cuts: int = 0,
@@ -1502,7 +1474,6 @@ def mesh_bridge_edge_loops(
     )
 
 
-@mcp.tool()
 def mesh_duplicate_selected(
     ctx: Context,
     translate: Optional[List[float]] = None
@@ -1532,7 +1503,6 @@ def mesh_duplicate_selected(
 # TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
 # ==============================================================================
 
-@mcp.tool()
 def mesh_spin(
     ctx: Context,
     steps: int = 12,
@@ -1568,7 +1538,6 @@ def mesh_spin(
     )
 
 
-@mcp.tool()
 def mesh_screw(
     ctx: Context,
     steps: int = 12,
@@ -1602,7 +1571,6 @@ def mesh_screw(
     )
 
 
-@mcp.tool()
 def mesh_add_vertex(
     ctx: Context,
     position: List[float]
@@ -1627,7 +1595,6 @@ def mesh_add_vertex(
     )
 
 
-@mcp.tool()
 def mesh_add_edge_face(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates an edge or face from selected vertices.
@@ -1652,7 +1619,6 @@ def mesh_add_edge_face(ctx: Context) -> str:
 # TASK-029: Edge Weights & Creases (Subdivision Control)
 # ==============================================================================
 
-@mcp.tool()
 def mesh_edge_crease(
     ctx: Context,
     crease_value: float = 1.0
@@ -1684,7 +1650,6 @@ def mesh_edge_crease(
     )
 
 
-@mcp.tool()
 def mesh_bevel_weight(
     ctx: Context,
     weight: float = 1.0
@@ -1714,7 +1679,6 @@ def mesh_bevel_weight(
     )
 
 
-@mcp.tool()
 def mesh_mark_sharp(
     ctx: Context,
     action: Literal["mark", "clear"] = "mark"
@@ -1749,7 +1713,6 @@ def mesh_mark_sharp(
 # TASK-030: Mesh Cleanup & Optimization
 # ==============================================================================
 
-@mcp.tool()
 def mesh_dissolve(
     ctx: Context,
     dissolve_type: Literal["verts", "edges", "faces", "limited"] = "limited",
@@ -1788,7 +1751,6 @@ def mesh_dissolve(
     )
 
 
-@mcp.tool()
 def mesh_tris_to_quads(
     ctx: Context,
     face_threshold: float = 40.0,
@@ -1820,7 +1782,6 @@ def mesh_tris_to_quads(
     )
 
 
-@mcp.tool()
 def mesh_normals_make_consistent(
     ctx: Context,
     inside: bool = False
@@ -1852,7 +1813,6 @@ def mesh_normals_make_consistent(
     )
 
 
-@mcp.tool()
 def mesh_decimate(
     ctx: Context,
     ratio: float = 0.5,
@@ -1892,7 +1852,6 @@ def mesh_decimate(
 # TASK-032: Knife & Cut Tools
 # ==============================================================================
 
-@mcp.tool()
 def mesh_knife_project(
     ctx: Context,
     cut_through: bool = True
@@ -1927,7 +1886,6 @@ def mesh_knife_project(
     )
 
 
-@mcp.tool()
 def mesh_rip(
     ctx: Context,
     use_fill: bool = False
@@ -1956,7 +1914,6 @@ def mesh_rip(
     )
 
 
-@mcp.tool()
 def mesh_split(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits selection from mesh.
@@ -1982,7 +1939,6 @@ def mesh_split(ctx: Context) -> str:
     )
 
 
-@mcp.tool()
 def mesh_edge_split(ctx: Context) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Splits mesh at selected edges.
@@ -2013,7 +1969,6 @@ def mesh_edge_split(ctx: Context) -> str:
 # ==============================================================================
 
 
-@mcp.tool()
 def mesh_set_proportional_edit(
     ctx: Context,
     enabled: bool = True,
@@ -2065,7 +2020,6 @@ def mesh_set_proportional_edit(
 # TASK-036: Symmetry & Advanced Fill
 # ==============================================================================
 
-@mcp.tool()
 def mesh_symmetrize(
     ctx: Context,
     direction: Literal["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"] = "NEGATIVE_X",
@@ -2102,7 +2056,6 @@ def mesh_symmetrize(
     )
 
 
-@mcp.tool()
 def mesh_grid_fill(
     ctx: Context,
     span: int = 1,
@@ -2138,7 +2091,6 @@ def mesh_grid_fill(
     )
 
 
-@mcp.tool()
 def mesh_poke_faces(
     ctx: Context,
     offset: float = 0.0,
@@ -2173,7 +2125,6 @@ def mesh_poke_faces(
     )
 
 
-@mcp.tool()
 def mesh_beautify_fill(
     ctx: Context,
     angle_limit: float = 180.0
@@ -2203,7 +2154,6 @@ def mesh_beautify_fill(
     )
 
 
-@mcp.tool()
 def mesh_mirror(
     ctx: Context,
     axis: Literal["X", "Y", "Z"] = "X",

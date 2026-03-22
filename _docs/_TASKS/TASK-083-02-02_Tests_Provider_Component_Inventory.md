@@ -11,6 +11,12 @@
 
 Add tests and documentation updates for **Provider-Based Component Inventory**.
 
+## Current State
+
+Baseline provider inventory tests exist and pass, including registrar/provider coverage and a guard that area modules no longer depend on the global singleton decorator path.
+
+This slice remains open because it still overhangs on explicit evidence/metrics-style documentation rather than raw code correctness alone, and because final removal of the temporary compatibility shim is intentionally deferred.
+
 ---
 
 ## Repository Touchpoints
@@ -24,16 +30,16 @@ Add tests and documentation updates for **Provider-Based Component Inventory**.
 
 ### Regression Scenarios (Required)
 
-1. search/discovery happy path: expected tools are discoverable and callable through the intended public path.
-2. pinned-entry behavior: pinned tools remain visible while non-pinned tools are hidden from flat listing.
-3. negative query path: irrelevant query returns bounded, deterministic results without leaking hidden tools.
-4. router/dispatcher parity: discovered execution path matches direct execution behavior for the same tool call.
+1. provider inventory happy path: expected tools are registered through reusable `register_*_tools(...)` seams.
+2. provider builder path: `core_tools`, `router_tools`, `workflow_tools`, and `internal_tools` build reusable `LocalProvider` instances.
+3. no-singleton path: area modules no longer depend on `server.adapters.mcp.instance.mcp` or `@mcp.tool()` registration.
+4. router/dispatcher parity: provider extraction does not change canonical internal tool names used by router/dispatcher paths.
 
 ### Metrics To Capture
 
-- `tools/list` payload size before/after (bytes)
-- visible tool count per surface profile (`legacy-flat` vs `llm-guided`)
-- top-N discovery relevance sanity check on curated queries
+- provider inventory pass rate across all area families
+- provider builder bootstrap pass rate per provider group
+- area modules still depending on global singleton registration (target: `0`)
 
 ### Documentation Deliverables
 

@@ -12,7 +12,6 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.context_utils import ctx_info
-from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_workflow_catalog_handler
 
@@ -38,7 +37,6 @@ def register_workflow_tools(target: Any) -> Dict[str, Any]:
     }
 
 
-@mcp.tool()
 def workflow_catalog(
     ctx: Context,
     action: Literal[

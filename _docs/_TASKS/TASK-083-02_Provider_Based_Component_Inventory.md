@@ -11,6 +11,12 @@
 
 Replace the current flat registration mindset with reusable registration seams and `LocalProvider` groups that can be mounted into multiple public surfaces without duplicating handler logic.
 
+## Current State
+
+The core provider-based migration is implemented in code: area modules expose `register_*_tools(...)`, reusable provider builders exist, and the in-repo runtime no longer depends on `server.adapters.mcp.instance.mcp`.
+
+This task remains open because the tests/docs slice is not being treated as literally closed yet, and the temporary compatibility shim in `instance.py` is still present until it can be removed safely.
+
 ---
 
 ## Repository Touchpoints
