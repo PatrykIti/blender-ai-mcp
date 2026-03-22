@@ -63,6 +63,9 @@ Do not let these roles blur together:
 - Install deps: `poetry install --no-interaction`
 - Run server locally: `poetry run python server/main.py`
 - Build addon zip: `python scripts/build_addon.py`
+- Pre-commit install: `poetry run pre-commit install --hook-type pre-commit --hook-type pre-push`
+- Full repo checks: `PRE_COMMIT_HOME=/tmp/pre-commit-cache poetry run pre-commit run --all-files`
+- Type checks: `poetry run mypy`
 - Unit tests: `PYTHONPATH=. poetry run pytest tests/unit/ -v`
 - Unit test collection count: `poetry run pytest tests/unit --collect-only`
 - E2E tests: `python3 scripts/run_e2e_tests.py`
@@ -74,7 +77,10 @@ Do not let these roles blur together:
 - Tool docstrings are part of the product. Keep them explicit, accurate, and aligned with actual behavior.
 - Prefer meaningful error strings over uncaught exceptions. The server should not crash on normal tool misuse.
 - Follow naming patterns already used in the repo: `scene_*`, `modeling_*`, `mesh_*`, `router_*`, etc.
-- Match local formatting conventions. There is no enforced formatter in this repo.
+- Repo formatting/linting/type-checking is enforced through `pre-commit`. Keep `ruff`, `mypy`, JSON/TOML/YAML validation, GitHub workflow validation, and router metadata schema validation green.
+- Do not weaken established domain/runtime contracts just to satisfy the type checker. If a contract is intentionally optional or dynamic, preserve it and narrow at call sites or use explicit helper functions/casts where needed.
+- For RPC-backed handlers, prefer explicit result-unwrapping/narrowing helpers over changing `RpcResponse` semantics.
+- Router metadata JSON now uses one deliberate type vocabulary for schema validation: `string`, `int`, `float`, `bool`, `enum`, `array`, `vector3`, `object`, `scalar`.
 
 ## Tool Surface Conventions
 
@@ -124,6 +130,7 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 
 ## Testing Expectations
 
+- Before considering work done, run the relevant `pre-commit` hooks or the full `pre-commit run --all-files` when the change is broad.
 - For server-side logic, default to unit tests first.
 - For Blender behavior, add or update E2E coverage if the change affects real geometry, mode handling, selection handling, viewport output, router correction, or workflow execution.
 - Router tests should avoid repeated heavy model initialization. Follow the shared/session-scoped patterns already used in tests.
@@ -172,5 +179,7 @@ If your change touches these areas, read the corresponding task docs first. They
 
 - Before changing a tool, inspect both the MCP adapter and the Blender handler. Many apparent server changes are really cross-boundary contracts.
 - Before changing router behavior, inspect metadata and tests, not just Python code.
+- Before changing router metadata, keep `_schema.json`, metadata files, and metadata-loader/tests aligned so `check-router-tool-metadata` continues to pass.
 - Before adding a new public tool, check whether it should instead be an action on an existing mega tool.
 - Before adding a new workflow feature, check the existing task docs. Several future features are already predesigned there and should not be reinvented ad hoc.
+- If a typing cleanup touches contracts, prefer making intent explicit with concrete types, guards, casts, or helper functions instead of silently broadening/narrowing product behavior.
