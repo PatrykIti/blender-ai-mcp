@@ -31,6 +31,15 @@ For this task series:
 The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
 The composition document linked above is the canonical reference for the current factory/provider/transform baseline.
 
+## Correction Audit Exposure Baseline
+
+Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:
+
+- structured execution reports carry `router_disposition`, `audit_events`, `audit_ids`, and `verification_status`
+- corrected execution paths expose correlatable audit ids both in MCP-facing response contracts and in router telemetry/logging
+- high-risk precondition fixes use inspection-based verification for `mode`, `selection`, and `active_object`
+- legacy string rendering remains available for compatibility, but audit/report fields are the canonical machine-readable record
+
 ## Runtime Baseline
 
 The current support policy for the migration track is:

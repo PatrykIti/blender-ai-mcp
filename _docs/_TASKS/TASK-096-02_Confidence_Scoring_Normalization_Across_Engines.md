@@ -1,7 +1,7 @@
 # TASK-096-02: Confidence Scoring Normalization Across Engines
 
 **Parent:** [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)
 

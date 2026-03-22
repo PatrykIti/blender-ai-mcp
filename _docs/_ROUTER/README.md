@@ -60,6 +60,18 @@ Read [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) before chang
 
 ---
 
+## Correction Transparency Baseline
+
+The current router safety baseline separates decision policy, audit trail, and verification outcome.
+
+- corrected executions emit structured audit events with separate intent, execution, and verification fields
+- router-aware MCP reports expose `router_disposition`, `audit_ids`, and `verification_status`
+- high-risk fixes for `mode`, `selection`, and `active_object` are verified against inspection truth before success is trusted
+- inconclusive verification is surfaced explicitly and must not be treated as silent success
+- router telemetry/logs carry the same `audit_ids` so operator traces can be correlated with MCP responses
+
+---
+
 ## Components
 
 | Component | Purpose | Status |

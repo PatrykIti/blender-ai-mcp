@@ -76,6 +76,13 @@ Current router policy direction:
 - medium-confidence reinterpretation is escalated into structured clarification
 - policy context is being surfaced to session state and router status for operator transparency
 
+Current correction transparency baseline:
+
+- corrected router-aware MCP executions carry explicit `router_disposition`, `audit_ids`, and `verification_status`
+- high-risk precondition repairs for mode, selection, and active object are verified against inspection truth before the run is treated as successful
+- router telemetry/logs receive the same `audit_ids`, so corrected executions can be correlated across responses and operator traces
+- legacy text rendering still exists for compatibility, but the structured execution report is now the canonical audit record
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ## ✅ Support Matrix

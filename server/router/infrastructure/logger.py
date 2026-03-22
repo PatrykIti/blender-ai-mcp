@@ -368,6 +368,31 @@ class RouterLogger:
             f"[ROUTER] Done: {original_tool} → {len(executed_tools)} tools ({duration_ms:.1f}ms) [{status}]"
         )
 
+    def log_execution_audit(
+        self,
+        tool_name: str,
+        disposition: str,
+        verification_status: str,
+        audit_ids: List[str],
+    ) -> None:
+        """Log audit exposure for corrected execution paths."""
+
+        event = RouterEvent(
+            event_type=EventType.EXECUTION_COMPLETE,
+            tool_name=tool_name,
+            data={
+                "disposition": disposition,
+                "verification_status": verification_status,
+                "audit_ids": audit_ids,
+            },
+        )
+        self._add_event(event)
+
+        ids = ",".join(audit_ids) if audit_ids else "-"
+        self.logger.info(
+            f"[ROUTER] Audit: {tool_name} disposition={disposition} verification={verification_status} audit_ids={ids}"
+        )
+
     def log_error(
         self,
         tool_name: str,

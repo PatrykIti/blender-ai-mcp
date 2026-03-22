@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 25 tasks (~200 sub-tasks)
+- **To Do:** 23 tasks (~200 sub-tasks)
 - **In Progress:** 2 tasks
-- **Done:** 139
+- **Done:** 141
 
 ## 🧭 Terminology Guardrails
 
@@ -34,8 +34,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 | [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md) | **Observability, Timeouts, and Pagination** | 🟡 Medium | Better tracing, safer execution, cleaner component listings |
 | [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration; not on the default critical path |
 | [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md) | **LaBSE Semantic Layer Boundaries** | 🔴 High | Formal boundary between semantic retrieval and execution truth |
-| [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md) | **Confidence Policy for Auto-Correction** | 🔴 High | Govern when the router may fix, ask, or block |
-| [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md) | **Transparent Correction Audit and Postconditions** | 🔴 High | Make corrections explicit and verify important repairs |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -79,6 +77,8 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md) | **Transparent Correction Audit and Postconditions** | 🔴 High | 2026-03-22 |
+| [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md) | **Confidence Policy for Auto-Correction** | 🔴 High | 2026-03-22 |
 | [TASK-075](./TASK-075_Workflow_Catalog_Import.md) | **Workflow Catalog Import (YAML/JSON, inline/chunked)** | 🟡 Medium | 2025-12-20 |
 | [TASK-074](./TASK-074_Mesh_Inspect_Mega_Tool.md) | **Mesh Inspect Mega Tool** | 🟡 Medium | 2025-12-19 |
 | [TASK-073](./TASK-073_Rig_Curve_Lattice_Introspection.md) | **Rig/Curve/Lattice Introspection** | 🔴 High | 2025-12-19 |

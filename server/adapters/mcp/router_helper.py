@@ -18,6 +18,7 @@ from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionSt
 from server.infrastructure.di import get_postcondition_registry, get_scene_handler
 from server.infrastructure.di import is_router_enabled, get_router
 from server.adapters.mcp.dispatcher import get_dispatcher
+from server.router.infrastructure.logger import get_router_logger
 from server.router.domain.entities.correction_policy import CorrectionCategory
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,28 @@ def _build_correction_audit_events(
     return tuple(events)
 
 
+def _extract_audit_ids(
+    audit_events: tuple[CorrectionAuditEventContract, ...],
+) -> tuple[str, ...]:
+    """Return stable audit identifiers for exposure in reports and logs."""
+
+    return tuple(event.event_id for event in audit_events)
+
+
+def _log_audit_exposure(report: MCPExecutionReport) -> None:
+    """Emit one structured log line for correction audit visibility."""
+
+    if not report.audit_ids and report.router_disposition in {"bypassed", "direct"}:
+        return
+
+    get_router_logger().log_execution_audit(
+        tool_name=report.context.tool_name,
+        disposition=report.router_disposition,
+        verification_status=report.verification_status,
+        audit_ids=list(report.audit_ids),
+    )
+
+
 def _apply_postcondition_verification(
     audit_events: tuple[CorrectionAuditEventContract, ...],
 ) -> tuple[tuple[CorrectionAuditEventContract, ...], str]:
@@ -110,29 +133,33 @@ def _apply_postcondition_verification(
         status = "inconclusive"
         details: dict[str, Any] | None = None
 
-        if requirement.verification_key == "verify_mode":
-            mode_payload = scene_handler.get_mode()
-            expected_mode = (
-                event.execution.params.get("mode")
-                or event.intent.corrected_params.get("mode")
-            )
-            actual_mode = mode_payload.get("mode")
-            status = "passed" if expected_mode == actual_mode else "failed"
-            details = {"expected_mode": expected_mode, "actual_mode": actual_mode}
-        elif requirement.verification_key == "verify_selection":
-            selection_payload = scene_handler.list_selection()
-            selection_count = selection_payload.get("selection_count", 0)
-            status = "passed" if selection_count > 0 else "failed"
-            details = {"selection_count": selection_count}
-        elif requirement.verification_key == "verify_active_object":
-            mode_payload = scene_handler.get_mode()
-            expected_object = (
-                event.execution.params.get("name")
-                or event.intent.corrected_params.get("name")
-            )
-            actual_object = mode_payload.get("active_object")
-            status = "passed" if expected_object == actual_object else "failed"
-            details = {"expected_object": expected_object, "actual_object": actual_object}
+        try:
+            if requirement.verification_key == "verify_mode":
+                mode_payload = scene_handler.get_mode()
+                expected_mode = (
+                    event.execution.params.get("mode")
+                    or event.intent.corrected_params.get("mode")
+                )
+                actual_mode = mode_payload.get("mode")
+                status = "passed" if expected_mode == actual_mode else "failed"
+                details = {"expected_mode": expected_mode, "actual_mode": actual_mode}
+            elif requirement.verification_key == "verify_selection":
+                selection_payload = scene_handler.list_selection()
+                selection_count = selection_payload.get("selection_count", 0)
+                status = "passed" if selection_count > 0 else "failed"
+                details = {"selection_count": selection_count}
+            elif requirement.verification_key == "verify_active_object":
+                mode_payload = scene_handler.get_mode()
+                expected_object = (
+                    event.execution.params.get("name")
+                    or event.intent.corrected_params.get("name")
+                )
+                actual_object = mode_payload.get("active_object")
+                status = "passed" if expected_object == actual_object else "failed"
+                details = {"expected_object": expected_object, "actual_object": actual_object}
+        except Exception as exc:
+            status = "inconclusive"
+            details = {"error": str(exc), "verification_key": requirement.verification_key}
 
         statuses.append(status)
         updated_events.append(
@@ -171,24 +198,30 @@ def route_tool_call_report(
 
     if not is_router_enabled():
         result = direct_executor()
-        return MCPExecutionReport(
+        report = MCPExecutionReport(
             context=context,
             router_enabled=False,
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            audit_ids=(),
         )
+        _log_audit_exposure(report)
+        return report
 
     router = get_router()
     if router is None:
         result = direct_executor()
-        return MCPExecutionReport(
+        report = MCPExecutionReport(
             context=context,
             router_enabled=True,
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            audit_ids=(),
         )
+        _log_audit_exposure(report)
+        return report
 
     try:
         corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
@@ -196,13 +229,16 @@ def route_tool_call_report(
         if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
             if corrected_tools[0]["params"] == params:
                 result = direct_executor()
-                return MCPExecutionReport(
+                report = MCPExecutionReport(
                     context=context,
                     router_enabled=True,
                     router_applied=False,
                     router_disposition="direct",
                     steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+                    audit_ids=(),
                 )
+                _log_audit_exposure(report)
+                return report
 
         dispatcher = get_dispatcher()
         steps: List[ExecutionStep] = []
@@ -239,26 +275,32 @@ def route_tool_call_report(
         )
         audit_events, verification_status = _apply_postcondition_verification(audit_events)
 
-        return MCPExecutionReport(
+        report = MCPExecutionReport(
             context=context,
             router_enabled=True,
             router_applied=True,
             router_disposition="corrected",
             steps=tuple(steps),
             audit_events=audit_events,
+            audit_ids=_extract_audit_ids(audit_events),
             verification_status=verification_status,
         )
+        _log_audit_exposure(report)
+        return report
 
     except Exception as e:
         logger.error(f"Router processing failed for {tool_name}: {e}", exc_info=True)
         fallback_result = direct_executor()
-        return MCPExecutionReport(
+        report = MCPExecutionReport(
             context=context,
             router_enabled=True,
             router_applied=False,
             router_disposition="failed_open_fallback",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=fallback_result),),
+            audit_ids=(),
         )
+        _log_audit_exposure(report)
+        return report
 
 
 def route_tool_call(
@@ -341,6 +383,7 @@ def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:
         router_applied=True,
         router_disposition="corrected",
         steps=tuple(steps),
+        audit_ids=(),
     )
     return report.to_legacy_text()
 

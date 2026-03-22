@@ -1,7 +1,7 @@
 # TASK-096-01: Correction Taxonomy and Risk Matrix
 
 **Parent:** [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)
 
