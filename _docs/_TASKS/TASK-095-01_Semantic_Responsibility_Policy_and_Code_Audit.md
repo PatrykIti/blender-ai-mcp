@@ -1,7 +1,7 @@
 # TASK-095-01: Semantic Responsibility Policy and Code Audit
 
 **Parent:** [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-01](./TASK-083-01_FastMCP_3x_Dependency_and_Runtime_Audit.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Audit current LaBSE usage across the repo and formalize the allowed responsibility boundary for the semantic layer.
+
+## Completion Summary
+
+This slice is now closed.
+
+- `_docs/_ROUTER/semantic-boundary-audit.md` documents the current semantic call sites and their allowed/disallowed roles.
+- infrastructure tests guard both audit completeness and layer separation so FastMCP platform files and truth/verification files do not start depending on LaBSE matching components by accident.
+- downstream handoff work remains intentionally deferred to `TASK-095-02` and `TASK-095-03`.
 
 ---
 

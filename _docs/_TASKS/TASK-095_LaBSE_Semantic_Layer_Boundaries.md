@@ -6,6 +6,8 @@
 **Dependencies:** TASK-083 (policy / audit baseline). Integration gates: TASK-084 (discovery handoff), TASK-089 (inspection-contract handoff)
 **Status:** 🚧 In Progress
 
+**Current State:** `TASK-095-01` is complete: the semantic boundary policy is documented and backed by tests that guard audit completeness plus platform/truth separation. The umbrella remains open for the downstream handoff slices gated by `TASK-084` and `TASK-089`.
+
 ---
 
 ## Objective

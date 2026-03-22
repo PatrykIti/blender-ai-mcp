@@ -53,7 +53,52 @@ Boundary assessment:
 - Allowed for semantic memory and relevance scoring
 - Not allowed as the truth layer for actual scene state or post-execution validation
 
-### 4. Semantic Workflow Matching
+### 4. Parameter Memory Store
+
+File:
+- `server/router/application/resolver/parameter_store.py`
+
+Current role:
+- stores learned parameter mappings with LaBSE-derived embeddings
+- retrieves prior mappings through semantic similarity search
+- keeps multilingual parameter reuse inside the resolver/store boundary
+
+Boundary assessment:
+- Allowed as semantic memory persistence and retrieval
+- Not allowed as discovery/catalog authority
+- Not allowed as proof that a stored value is still correct in current Blender state
+
+### 5. Semantic Matcher (Ensemble)
+
+File:
+- `server/router/application/matcher/semantic_matcher.py`
+
+Current role:
+- wraps `WorkflowIntentClassifier` for ensemble matching
+- contributes semantic workflow scores into the ensemble vote
+- keeps semantic matching as one input among keyword/pattern signals
+
+Boundary assessment:
+- Allowed as semantic workflow similarity inside matcher composition
+- Not allowed as the sole authority for workflow execution policy
+- Not allowed to bypass platform-owned discovery/exposure decisions
+
+### 6. Semantic Modifier Extraction
+
+File:
+- `server/router/application/matcher/modifier_extractor.py`
+
+Current role:
+- uses classifier similarity to match prompt phrases to workflow modifiers
+- enables multilingual modifier extraction
+- returns semantic modifier hints for workflow parameter overrides
+
+Boundary assessment:
+- Allowed as semantic modifier interpretation inside workflow/parameter semantics
+- Not allowed as scene truth or verification evidence
+- Not allowed to become a public tool-discovery mechanism
+
+### 7. Semantic Workflow Matching
 
 File:
 - `server/router/application/matcher/semantic_workflow_matcher.py`
@@ -66,7 +111,7 @@ Boundary assessment:
 - Allowed for workflow matching and generalization
 - Not allowed as final authority for inspection, verification, or public catalog shaping
 
-### 5. Ensemble Aggregation
+### 8. Ensemble Aggregation
 
 File:
 - `server/router/application/matcher/ensemble_aggregator.py`
@@ -78,6 +123,36 @@ Current role:
 Boundary assessment:
 - Allowed as semantic/deterministic aggregation inside workflow choice
 - Not allowed to leak semantic confidence into scene truth assumptions
+
+### 9. Workflow Adaptation Filtering
+
+File:
+- `server/router/application/engines/workflow_adapter.py`
+
+Current role:
+- uses classifier similarity to decide whether optional workflow steps are semantically relevant
+- applies a semantic threshold only inside workflow adaptation
+- keeps optional-step selection separate from Blender truth inspection
+
+Boundary assessment:
+- Allowed as semantic filtering for workflow adaptation
+- Not allowed as proof that the adapted workflow result is correct
+- Not allowed to replace explicit platform visibility/discovery controls
+
+### 10. Router Semantic Orchestration
+
+File:
+- `server/router/application/router.py`
+
+Current role:
+- wires shared LaBSE-backed components into router orchestration
+- initializes semantic matcher and modifier extractor via DI/shared classifier
+- consumes semantic results as one input into router/workflow behavior
+
+Boundary assessment:
+- Allowed as orchestration of semantic components
+- Not allowed to collapse the platform/discovery/truth boundaries back into one fuzzy decision layer
+- Must keep semantic outcomes subordinate to deterministic policy and inspection truth
 
 ## Current Non-Semantic Layers That Must Stay Separate
 
@@ -118,6 +193,7 @@ Boundary rule:
 - LaBSE is already centered around workflow and tool similarity rather than direct Blender execution
 - shared model loading through DI keeps heavy semantic infrastructure centralized
 - parameter memory uses semantic similarity for reuse, which is within the allowed responsibility boundary
+- workflow adaptation and modifier interpretation use semantic similarity as workflow-level guidance rather than Blender truth
 
 ### Boundary Risks To Watch
 

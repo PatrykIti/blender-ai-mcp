@@ -1,7 +1,7 @@
 # TASK-095-01-02: Tests and Docs Semantic Responsibility Policy and Code Audit
 
 **Parent:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01-01](./TASK-095-01-01_Core_Semantic_Responsibility_Code_Audit.md)
 
@@ -10,6 +10,15 @@
 ## Objective
 
 Add tests and documentation updates for **Semantic Responsibility Policy and Code Audit**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- audit coverage tests verify that the semantic boundary document enumerates the current LaBSE call sites that matter for the repo boundary policy
+- boundary tests verify that FastMCP platform/exposure files do not import semantic router components
+- boundary tests verify that truth/verification-side MCP files do not import semantic matching components
+- the still-deferred discovery and truth handoff work remains explicitly owned by `TASK-095-02` and `TASK-095-03`, not by this slice
 
 ---
 
@@ -24,16 +33,16 @@ Add tests and documentation updates for **Semantic Responsibility Policy and Cod
 
 ### Regression Scenarios (Required)
 
-1. allowed-role path: LaBSE remains limited to semantic retrieval/matching responsibilities.
-2. discovery handoff path: platform search handles general tool discovery.
-3. truth path: verification decisions use inspection contracts, not semantic confidence alone.
-4. boundary regression path: semantic boundary violations are detected by tests/telemetry.
+1. allowed-role path: the audit document explicitly records allowed/disallowed LaBSE roles.
+2. platform-separation path: FastMCP platform/exposure files stay free of semantic matcher imports.
+3. truth-separation path: verification-side MCP files stay free of semantic matcher imports.
+4. boundary regression path: audit completeness and separation violations are detected by tests.
 
 ### Metrics To Capture
 
 - boundary violation count (target: 0)
-- percentage of discovery requests served by platform search path
-- verification decisions backed by inspection contracts
+- unaudited semantic call-site count (target: 0)
+- platform/truth boundary import violations (target: 0)
 
 ### Documentation Deliverables
 
