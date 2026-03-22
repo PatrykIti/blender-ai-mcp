@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.contracts.correction_audit import CorrectionAuditEventContract
@@ -27,10 +27,17 @@ class MCPExecutionReport(MCPContract):
     context: MCPExecutionContext
     router_enabled: bool
     router_applied: bool
+    router_disposition: Literal[
+        "bypassed",
+        "direct",
+        "corrected",
+        "failed_open_fallback",
+    ]
     steps: tuple[ExecutionStep, ...] = ()
     error: str | None = None
     policy_context: dict[str, Any] | None = None
     audit_events: tuple[CorrectionAuditEventContract, ...] = ()
+    verification_status: Literal["not_requested", "pending", "passed", "failed"] = "not_requested"
 
     def to_dict(self) -> dict[str, Any]:
         """Return a structured dict representation."""

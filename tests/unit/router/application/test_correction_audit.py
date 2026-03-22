@@ -44,9 +44,11 @@ def test_execution_report_can_carry_audit_events():
         context=MCPExecutionContext(tool_name="mesh_bevel", params={"offset": 100.0}),
         router_enabled=True,
         router_applied=True,
+        router_disposition="corrected",
         steps=(ExecutionStep(tool_name="mesh_bevel", params={"offset": 1.0}, result="Bevel"),),
         audit_events=(event,),
     )
 
     assert report.audit_events[0].intent.category == "parameter_rewrite"
     assert report.to_legacy_text() == "Bevel"
+    assert report.verification_status == "not_requested"

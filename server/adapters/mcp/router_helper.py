@@ -89,6 +89,7 @@ def route_tool_call_report(
             context=context,
             router_enabled=False,
             router_applied=False,
+            router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
         )
 
@@ -99,6 +100,7 @@ def route_tool_call_report(
             context=context,
             router_enabled=True,
             router_applied=False,
+            router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
         )
 
@@ -112,6 +114,7 @@ def route_tool_call_report(
                     context=context,
                     router_enabled=True,
                     router_applied=False,
+                    router_disposition="direct",
                     steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
                 )
 
@@ -146,6 +149,7 @@ def route_tool_call_report(
             context=context,
             router_enabled=True,
             router_applied=True,
+            router_disposition="corrected",
             steps=tuple(steps),
             audit_events=_build_correction_audit_events(
                 original_tool_name=tool_name,
@@ -162,6 +166,7 @@ def route_tool_call_report(
             context=context,
             router_enabled=True,
             router_applied=False,
+            router_disposition="failed_open_fallback",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=fallback_result),),
         )
 
@@ -244,6 +249,7 @@ def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:
         context=MCPExecutionContext(tool_name="sequence", params={"tools": tools}),
         router_enabled=True,
         router_applied=True,
+        router_disposition="corrected",
         steps=tuple(steps),
     )
     return report.to_legacy_text()

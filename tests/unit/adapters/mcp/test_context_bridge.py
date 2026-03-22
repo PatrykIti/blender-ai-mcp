@@ -82,6 +82,7 @@ def test_execution_report_renders_legacy_text_for_multi_step_sequence():
         context=MCPExecutionContext(tool_name="mesh_extrude_region", params={"move": [0, 0, 1]}),
         router_enabled=True,
         router_applied=True,
+        router_disposition="corrected",
         steps=(
             ExecutionStep(tool_name="scene_set_mode", params={"mode": "EDIT"}, result="OK"),
             ExecutionStep(tool_name="mesh_extrude_region", params={"move": [0, 0, 1]}, result="Extruded"),
@@ -105,5 +106,6 @@ def test_route_tool_call_report_returns_direct_execution_when_router_disabled(mo
 
     assert report.router_enabled is False
     assert report.router_applied is False
+    assert report.router_disposition == "bypassed"
     assert report.steps[0].tool_name == "scene_list_objects"
     assert report.to_legacy_text() == "['Cube']"
