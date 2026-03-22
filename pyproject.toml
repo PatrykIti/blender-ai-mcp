@@ -62,9 +62,18 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
 
+[tool.mypy]
+python_version = "3.11"
+files = ["server", "blender_addon", "tests", "scripts"]
+ignore_missing_imports = true
+implicit_optional = true
+show_error_codes = true
+pretty = false
+
 [dependency-groups]
 dev = [
     "pytest (>=9.0.1,<10.0.0)",
     "pillow (>=12.0.0,<13.0.0)",
-    "pre-commit (>=4.5.1,<5.0.0)"
+    "pre-commit (>=4.5.1,<5.0.0)",
+    "mypy (>=1.19.1,<2.0.0)"
 ]

@@ -16,6 +16,9 @@ node_modules/
 package-lock.json
 package.json
 poetry.lock
+.mypy_cache
+.pytest_cache
+.ruff_cache
 
 .claude
 CLAUDE.md
