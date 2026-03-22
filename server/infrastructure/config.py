@@ -13,6 +13,9 @@ class Config(BaseModel):
     # Router Supervisor
     ROUTER_ENABLED: bool = Field(default=True, description="Enable Router Supervisor for LLM tool calls")
     ROUTER_LOG_DECISIONS: bool = Field(default=True, description="Log router decisions")
+    OTEL_ENABLED: bool = Field(default=False, description="Enable OpenTelemetry bootstrap")
+    OTEL_EXPORTER: str = Field(default="none", description="OpenTelemetry exporter: none|console|memory")
+    OTEL_SERVICE_NAME: str = Field(default="blender-ai-mcp", description="OpenTelemetry service.name")
 
     # MCP Surface / Factory
     MCP_SURFACE_PROFILE: str = Field(default="legacy-flat", description="Bootstrap surface profile")
@@ -40,6 +43,9 @@ def get_config() -> Config:
         BLENDER_RPC_PORT=int(os.getenv("BLENDER_RPC_PORT", 8765)),
         ROUTER_ENABLED=os.getenv("ROUTER_ENABLED", "true").lower() in ("true", "1", "yes"),
         ROUTER_LOG_DECISIONS=os.getenv("ROUTER_LOG_DECISIONS", "true").lower() in ("true", "1", "yes"),
+        OTEL_ENABLED=os.getenv("OTEL_ENABLED", "false").lower() in ("true", "1", "yes"),
+        OTEL_EXPORTER=os.getenv("OTEL_EXPORTER", "none"),
+        OTEL_SERVICE_NAME=os.getenv("OTEL_SERVICE_NAME", "blender-ai-mcp"),
         MCP_SURFACE_PROFILE=os.getenv("MCP_SURFACE_PROFILE", "legacy-flat"),
         MCP_DEFAULT_CONTRACT_LINE=os.getenv("MCP_DEFAULT_CONTRACT_LINE") or None,
         MCP_LIST_PAGE_SIZE=int(os.getenv("MCP_LIST_PAGE_SIZE", 100)),

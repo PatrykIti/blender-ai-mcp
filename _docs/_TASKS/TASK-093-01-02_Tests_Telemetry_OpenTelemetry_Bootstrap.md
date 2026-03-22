@@ -1,7 +1,7 @@
 # TASK-093-01-02: Tests and Docs Telemetry Model and OpenTelemetry Bootstrap
 
 **Parent:** [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-01-01](./TASK-093-01-01_Core_Telemetry_OpenTelemetry_Bootstrap.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Telemetry Model and OpenTelemetry Bootstrap**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- in-memory exporter tests verify emitted spans and router-specific attributes
+- public docs now describe OTEL bootstrap configuration and the current telemetry baseline
 
 ---
 

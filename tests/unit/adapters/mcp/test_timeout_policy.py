@@ -33,3 +33,18 @@ def test_factory_attaches_timeout_policy_to_server():
 
     assert server._bam_timeout_policy.tool_timeout_seconds == 30.0
     assert server._bam_timeout_policy.rpc_timeout_seconds == 30.0
+
+
+def test_timeout_policy_exposes_canonical_boundary_names():
+    """Timeout policy should name each runtime boundary explicitly for diagnostics/docs."""
+
+    server = build_server("legacy-flat")
+    policy = server._bam_timeout_policy
+
+    assert policy.boundary_names == (
+        "mcp_tool",
+        "mcp_task",
+        "rpc_client",
+        "addon_execution",
+    )
+    assert policy.to_dict()["tool_timeout_seconds"] == 30.0

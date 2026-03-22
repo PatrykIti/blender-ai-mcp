@@ -1,7 +1,7 @@
 # TASK-093-01-01: Core Telemetry Model and OpenTelemetry Bootstrap
 
 **Parent:** [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 

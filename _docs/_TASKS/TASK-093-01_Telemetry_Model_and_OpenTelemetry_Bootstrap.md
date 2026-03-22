@@ -1,7 +1,7 @@
 # TASK-093-01: Telemetry Model and OpenTelemetry Bootstrap
 
 **Parent:** [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Introduce telemetry foundations and OpenTelemetry bootstrap for the MCP platform layer.
+
+## Completion Summary
+
+This slice is now closed.
+
+- OpenTelemetry bootstrap helper exists
+- startup initializes telemetry before MCP server bootstrap
+- repo-specific router spans are emitted and covered by in-memory exporter tests
 
 ---
 

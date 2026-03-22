@@ -11,6 +11,8 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 import json
 
+from server.infrastructure.telemetry import emit_router_event_span
+
 
 class EventType(Enum):
     """Types of router events."""
@@ -127,6 +129,12 @@ class RouterLogger:
         event.session_id = self._session_id
         self._events.append(event)
         self._stats["total_events"] += 1
+        emit_router_event_span(
+            event_type=event.event_type.value,
+            tool_name=event.tool_name,
+            session_id=event.session_id,
+            data=event.data,
+        )
 
         # Trim events if over limit
         if len(self._events) > self.max_events:

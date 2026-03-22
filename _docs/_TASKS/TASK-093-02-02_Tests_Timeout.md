@@ -1,7 +1,7 @@
 # TASK-093-02-02: Tests and Docs Tool and Task Timeout Policy
 
 **Parent:** [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Tool and Task Timeout Policy**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover config hierarchy validation, factory timeout attachment, and RPC/addon timeout coordination
+- docs now describe the timeout boundary names and baseline configuration
 
 ---
 

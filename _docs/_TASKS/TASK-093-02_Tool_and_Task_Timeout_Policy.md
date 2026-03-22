@@ -1,7 +1,7 @@
 # TASK-093-02: Tool and Task Timeout Policy
 
 **Parent:** [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Define separate timeout policy for foreground tools, background tasks, RPC calls, and Blender-side execution.
+
+## Completion Summary
+
+This slice is now closed.
+
+- the timeout policy object is attached deterministically at factory bootstrap
+- canonical timeout boundaries are explicit (`mcp_tool`, `mcp_task`, `rpc_client`, `addon_execution`)
+- tests/docs cover config validation and RPC/addon timeout coordination on those boundaries
 
 ---
 

@@ -152,6 +152,18 @@ Public surface evolution now has an explicit coexistence path:
 Selected public-evolution capabilities such as `scene_context`, `scene_inspect`, and `workflow_catalog`
 now expose explicit component versions, while unchanged capabilities remain unversioned and shared.
 
+### Telemetry And Timeout Baseline
+
+Operational baseline now includes:
+
+- optional OpenTelemetry bootstrap via `OTEL_ENABLED`, `OTEL_EXPORTER`, and `OTEL_SERVICE_NAME`
+- repo-specific router spans on top of the FastMCP runtime
+- explicit timeout boundaries:
+  - `mcp_tool`
+  - `mcp_task`
+  - `rpc_client`
+  - `addon_execution`
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ### Session-Adaptive Guided Mode

@@ -145,6 +145,19 @@ Current guided-surface rollback/coexistence path:
 Bootstrap/config can override the default contract line through `MCP_DEFAULT_CONTRACT_LINE`.
 Version filtering is applied in the transform pipeline; profile selection and contract-line selection remain separate axes.
 
+## Telemetry And Timeout Foundations
+
+The platform now has the first operations baseline for telemetry and timeout policy:
+
+- optional OTEL bootstrap through `OTEL_ENABLED`, `OTEL_EXPORTER`, and `OTEL_SERVICE_NAME`
+- repo-specific router spans emitted on top of the current MCP runtime
+- explicit timeout policy object attached at factory bootstrap
+- canonical timeout boundary names:
+  - `mcp_tool`
+  - `mcp_task`
+  - `rpc_client`
+  - `addon_execution`
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

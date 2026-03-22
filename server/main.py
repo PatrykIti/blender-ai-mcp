@@ -8,7 +8,8 @@ Author: Patryk Ciechański (https://github.com/PatrykIti)
 
 import logging
 import os
-from server.adapters.mcp.server import run
+from server.infrastructure.config import get_config
+from server.infrastructure.telemetry import initialize_telemetry_from_config
 
 # Get log level from env, default to INFO
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -20,4 +21,9 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
+    config = get_config()
+    initialize_telemetry_from_config(config)
+
+    from server.adapters.mcp.server import run
+
     run()
