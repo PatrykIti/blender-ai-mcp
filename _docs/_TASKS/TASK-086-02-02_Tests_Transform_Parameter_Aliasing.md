@@ -1,7 +1,7 @@
 # TASK-086-02-02: Tests and Docs Transform-Based Tool and Parameter Aliasing
 
 **Parent:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-02-01](./TASK-086-02-01_Core_Transform_Parameter_Aliasing.md)
 

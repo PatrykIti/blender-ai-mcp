@@ -4,7 +4,7 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
 
 ---
 

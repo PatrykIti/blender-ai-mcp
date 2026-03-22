@@ -23,6 +23,10 @@ from server.adapters.mcp.areas.system import SYSTEM_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.text import TEXT_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.uv import UV_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.workflow_catalog import WORKFLOW_PUBLIC_TOOL_NAMES
+from server.adapters.mcp.platform.public_contracts import (
+    CapabilityPublicContract,
+    build_capability_public_contracts,
+)
 from server.adapters.mcp.visibility.tags import get_capability_tags
 
 
@@ -34,25 +38,122 @@ class CapabilityManifestEntry:
     provider_group: str
     tool_names: tuple[str, ...]
     tags: tuple[str, ...]
+    public_contracts: tuple[CapabilityPublicContract, ...]
 
 
 CAPABILITY_MANIFEST = (
-    CapabilityManifestEntry("scene", "core_tools", SCENE_PUBLIC_TOOL_NAMES, get_capability_tags("scene")),
-    CapabilityManifestEntry("mesh", "core_tools", MESH_PUBLIC_TOOL_NAMES, get_capability_tags("mesh")),
-    CapabilityManifestEntry("modeling", "core_tools", MODELING_PUBLIC_TOOL_NAMES, get_capability_tags("modeling")),
-    CapabilityManifestEntry("material", "core_tools", MATERIAL_PUBLIC_TOOL_NAMES, get_capability_tags("material")),
-    CapabilityManifestEntry("uv", "core_tools", UV_PUBLIC_TOOL_NAMES, get_capability_tags("uv")),
-    CapabilityManifestEntry("collection", "core_tools", COLLECTION_PUBLIC_TOOL_NAMES, get_capability_tags("collection")),
-    CapabilityManifestEntry("curve", "core_tools", CURVE_PUBLIC_TOOL_NAMES, get_capability_tags("curve")),
-    CapabilityManifestEntry("lattice", "core_tools", LATTICE_PUBLIC_TOOL_NAMES, get_capability_tags("lattice")),
-    CapabilityManifestEntry("sculpt", "core_tools", SCULPT_PUBLIC_TOOL_NAMES, get_capability_tags("sculpt")),
-    CapabilityManifestEntry("baking", "core_tools", BAKING_PUBLIC_TOOL_NAMES, get_capability_tags("baking")),
-    CapabilityManifestEntry("text", "core_tools", TEXT_PUBLIC_TOOL_NAMES, get_capability_tags("text")),
-    CapabilityManifestEntry("armature", "core_tools", ARMATURE_PUBLIC_TOOL_NAMES, get_capability_tags("armature")),
-    CapabilityManifestEntry("system", "core_tools", SYSTEM_PUBLIC_TOOL_NAMES, get_capability_tags("system")),
-    CapabilityManifestEntry("extraction", "core_tools", EXTRACTION_PUBLIC_TOOL_NAMES, get_capability_tags("extraction")),
-    CapabilityManifestEntry("router", "router_tools", ROUTER_PUBLIC_TOOL_NAMES, get_capability_tags("router")),
-    CapabilityManifestEntry("workflow_catalog", "workflow_tools", WORKFLOW_PUBLIC_TOOL_NAMES, get_capability_tags("workflow_catalog")),
+    CapabilityManifestEntry(
+        "scene",
+        "core_tools",
+        SCENE_PUBLIC_TOOL_NAMES,
+        get_capability_tags("scene"),
+        build_capability_public_contracts("scene", SCENE_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "mesh",
+        "core_tools",
+        MESH_PUBLIC_TOOL_NAMES,
+        get_capability_tags("mesh"),
+        build_capability_public_contracts("mesh", MESH_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "modeling",
+        "core_tools",
+        MODELING_PUBLIC_TOOL_NAMES,
+        get_capability_tags("modeling"),
+        build_capability_public_contracts("modeling", MODELING_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "material",
+        "core_tools",
+        MATERIAL_PUBLIC_TOOL_NAMES,
+        get_capability_tags("material"),
+        build_capability_public_contracts("material", MATERIAL_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "uv",
+        "core_tools",
+        UV_PUBLIC_TOOL_NAMES,
+        get_capability_tags("uv"),
+        build_capability_public_contracts("uv", UV_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "collection",
+        "core_tools",
+        COLLECTION_PUBLIC_TOOL_NAMES,
+        get_capability_tags("collection"),
+        build_capability_public_contracts("collection", COLLECTION_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "curve",
+        "core_tools",
+        CURVE_PUBLIC_TOOL_NAMES,
+        get_capability_tags("curve"),
+        build_capability_public_contracts("curve", CURVE_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "lattice",
+        "core_tools",
+        LATTICE_PUBLIC_TOOL_NAMES,
+        get_capability_tags("lattice"),
+        build_capability_public_contracts("lattice", LATTICE_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "sculpt",
+        "core_tools",
+        SCULPT_PUBLIC_TOOL_NAMES,
+        get_capability_tags("sculpt"),
+        build_capability_public_contracts("sculpt", SCULPT_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "baking",
+        "core_tools",
+        BAKING_PUBLIC_TOOL_NAMES,
+        get_capability_tags("baking"),
+        build_capability_public_contracts("baking", BAKING_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "text",
+        "core_tools",
+        TEXT_PUBLIC_TOOL_NAMES,
+        get_capability_tags("text"),
+        build_capability_public_contracts("text", TEXT_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "armature",
+        "core_tools",
+        ARMATURE_PUBLIC_TOOL_NAMES,
+        get_capability_tags("armature"),
+        build_capability_public_contracts("armature", ARMATURE_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "system",
+        "core_tools",
+        SYSTEM_PUBLIC_TOOL_NAMES,
+        get_capability_tags("system"),
+        build_capability_public_contracts("system", SYSTEM_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "extraction",
+        "core_tools",
+        EXTRACTION_PUBLIC_TOOL_NAMES,
+        get_capability_tags("extraction"),
+        build_capability_public_contracts("extraction", EXTRACTION_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "router",
+        "router_tools",
+        ROUTER_PUBLIC_TOOL_NAMES,
+        get_capability_tags("router"),
+        build_capability_public_contracts("router", ROUTER_PUBLIC_TOOL_NAMES),
+    ),
+    CapabilityManifestEntry(
+        "workflow_catalog",
+        "workflow_tools",
+        WORKFLOW_PUBLIC_TOOL_NAMES,
+        get_capability_tags("workflow_catalog"),
+        build_capability_public_contracts("workflow_catalog", WORKFLOW_PUBLIC_TOOL_NAMES),
+    ),
 )
 
 

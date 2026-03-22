@@ -1,7 +1,7 @@
 # TASK-086-01-02: Tests and Docs Public Surface Manifest and Naming Conventions
 
 **Parent:** [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-01-01](./TASK-086-01-01_Core_Public_Manifest_Naming_Conventions.md)
 
