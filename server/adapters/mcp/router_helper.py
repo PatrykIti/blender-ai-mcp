@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def route_tool_call_report(
     tool_name: str,
     params: Dict[str, Any],
-    direct_executor: Callable[[], str],
+    direct_executor: Callable[[], Any],
     prompt: Optional[str] = None,
 ) -> MCPExecutionReport:
     """Build a structured execution report for a tool call."""
@@ -105,9 +105,9 @@ def route_tool_call_report(
 def route_tool_call(
     tool_name: str,
     params: Dict[str, Any],
-    direct_executor: Callable[[], str],
+    direct_executor: Callable[[], Any],
     prompt: Optional[str] = None,
-) -> str:
+) -> Any:
     """Route a tool call through the Router Supervisor if enabled.
 
     This function should be called at the beginning of MCP tool functions
@@ -137,6 +137,10 @@ def route_tool_call(
         direct_executor=direct_executor,
         prompt=prompt,
     )
+    if report.error is None and len(report.steps) == 1:
+        result = report.steps[0].result
+        if not isinstance(result, str):
+            return result
     return report.to_legacy_text()
 
 

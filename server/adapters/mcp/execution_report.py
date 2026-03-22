@@ -17,7 +17,7 @@ class ExecutionStep:
 
     tool_name: str
     params: dict[str, Any]
-    result: str
+    result: Any
     error: str | None = None
 
 
@@ -46,10 +46,12 @@ class MCPExecutionReport:
             return "No operations performed."
 
         if len(self.steps) == 1:
-            return self.steps[0].result
+            result = self.steps[0].result
+            return result if isinstance(result, str) else str(result)
 
         combined_parts = []
         for index, step in enumerate(self.steps, 1):
-            combined_parts.append(f"[Step {index}: {step.tool_name}] {step.result}")
+            rendered = step.result if isinstance(step.result, str) else str(step.result)
+            combined_parts.append(f"[Step {index}: {step.tool_name}] {rendered}")
 
         return "\n".join(combined_parts)

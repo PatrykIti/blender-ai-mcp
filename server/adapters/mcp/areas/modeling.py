@@ -448,17 +448,15 @@ def _modeling_get_modifier_data(
     object_name: str,
     modifier_name: Optional[str] = None,
     include_node_tree: bool = False
-) -> str:
+) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
     """
     handler = get_modeling_handler()
     try:
-        import json
-        data = handler.get_modifier_data(object_name, modifier_name, include_node_tree)
-        return json.dumps(data, indent=2)
+        return handler.get_modifier_data(object_name, modifier_name, include_node_tree)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 def _modeling_set_origin_impl(

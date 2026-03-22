@@ -3,6 +3,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
 from fastmcp.utilities.types import Image
+from server.adapters.mcp.contracts.scene import (
+    SceneContextResponseContract,
+    SceneInspectResponseContract,
+    SceneModeContract,
+    SceneSelectionContract,
+)
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
@@ -160,7 +166,7 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
 def scene_context(
     ctx: Context,
     action: Literal["mode", "selection"]
-) -> str:
+) -> SceneContextResponseContract:
     """
     [SCENE][READ-ONLY][SAFE] Quick context queries for scene state.
 
@@ -176,11 +182,20 @@ def scene_context(
     """
     def execute():
         if action == "mode":
-            return _scene_get_mode(ctx)
+            return SceneContextResponseContract(
+                action="mode",
+                payload=SceneModeContract.model_validate(_scene_get_mode(ctx)),
+            )
         elif action == "selection":
-            return _scene_list_selection(ctx)
+            return SceneContextResponseContract(
+                action="selection",
+                payload=SceneSelectionContract.model_validate(_scene_list_selection(ctx)),
+            )
         else:
-            return f"Unknown action '{action}'. Valid actions: mode, selection"
+            return SceneContextResponseContract(
+                action="mode",
+                error=f"Unknown action '{action}'. Valid actions: mode, selection",
+            )
 
     return route_tool_call(
         tool_name="scene_context",
@@ -190,7 +205,7 @@ def scene_context(
 
 
 # Internal function - exposed via scene_context mega tool
-def _scene_get_mode(ctx: Context) -> str:
+def _scene_get_mode(ctx: Context) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Reports the current Blender interaction mode and selection summary.
 
@@ -205,20 +220,11 @@ def _scene_get_mode(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
-    selected_names = response.get("selected_object_names") or []
-    selected = ", ".join(selected_names) if selected_names else "None"
-    active_type = response.get("active_object_type")
-    active_suffix = f" ({active_type})" if active_type else ""
-    return (
-        "Blender Context Snapshot:\n"
-        f"- Mode: {response.get('mode', 'UNKNOWN')}\n"
-        f"- Active Object: {response.get('active_object') or 'None'}{active_suffix}\n"
-        f"- Selected Objects ({response.get('selection_count', 0)}): {selected}"
-    )
+    return response
 
 
 # Internal function - exposed via scene_context mega tool
-def _scene_list_selection(ctx: Context) -> str:
+def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Lists the current selection in Object or Edit Mode.
 
@@ -233,24 +239,7 @@ def _scene_list_selection(ctx: Context) -> str:
     except RuntimeError as e:
         return str(e)
 
-    selected_names = summary.get("selected_object_names") or []
-    selected = ", ".join(selected_names) if selected_names else "None"
-    parts = [
-        "Selection Summary:",
-        f"- Mode: {summary.get('mode', 'UNKNOWN')}",
-        f"- Objects Selected ({summary.get('selection_count', 0)}): {selected}",
-    ]
-
-    if summary.get("edit_mode_vertex_count") is not None:
-        parts.append(
-            "- Edit Mode Counts: V={} E={} F={}".format(
-                summary.get("edit_mode_vertex_count", 0),
-                summary.get("edit_mode_edge_count", 0),
-                summary.get("edit_mode_face_count", 0),
-            )
-        )
-
-    return "\n".join(parts)
+    return summary
 
 
 @mcp.tool()
@@ -265,7 +254,7 @@ def scene_inspect(
     include_bones: bool = False,
     modifier_name: Optional[str] = None,
     include_node_tree: bool = False
-) -> str:
+) -> SceneInspectResponseContract:
     """
     [SCENE][READ-ONLY][SAFE] Detailed inspection queries for objects and scene.
 
@@ -291,28 +280,58 @@ def scene_inspect(
     def execute():
         if action == "object":
             if object_name is None:
-                return "Error: 'object' action requires 'object_name' parameter."
-            return _scene_inspect_object(ctx, object_name)
+                return SceneInspectResponseContract(
+                    action="object",
+                    error="Error: 'object' action requires 'object_name' parameter.",
+                )
+            return SceneInspectResponseContract(action="object", payload=_scene_inspect_object(ctx, object_name))
         elif action == "topology":
             if object_name is None:
-                return "Error: 'topology' action requires 'object_name' parameter."
-            return _scene_inspect_mesh_topology(ctx, object_name, detailed)
+                return SceneInspectResponseContract(
+                    action="topology",
+                    error="Error: 'topology' action requires 'object_name' parameter.",
+                )
+            return SceneInspectResponseContract(
+                action="topology",
+                payload=_scene_inspect_mesh_topology(ctx, object_name, detailed),
+            )
         elif action == "modifiers":
-            return _scene_inspect_modifiers(ctx, object_name, include_disabled)
+            return SceneInspectResponseContract(
+                action="modifiers",
+                payload=_scene_inspect_modifiers(ctx, object_name, include_disabled),
+            )
         elif action == "materials":
-            return _scene_inspect_material_slots(ctx, material_filter, include_empty_slots)
+            return SceneInspectResponseContract(
+                action="materials",
+                payload=_scene_inspect_material_slots(ctx, material_filter, include_empty_slots),
+            )
         elif action == "constraints":
             if object_name is None:
-                return "Error: 'constraints' action requires 'object_name' parameter."
-            return _scene_get_constraints(ctx, object_name, include_bones)
+                return SceneInspectResponseContract(
+                    action="constraints",
+                    error="Error: 'constraints' action requires 'object_name' parameter.",
+                )
+            return SceneInspectResponseContract(
+                action="constraints",
+                payload=_scene_get_constraints(ctx, object_name, include_bones),
+            )
         elif action == "modifier_data":
             if object_name is None:
-                return "Error: 'modifier_data' action requires 'object_name' parameter."
-            return _scene_inspect_modifier_data(ctx, object_name, modifier_name, include_node_tree)
+                return SceneInspectResponseContract(
+                    action="modifier_data",
+                    error="Error: 'modifier_data' action requires 'object_name' parameter.",
+                )
+            return SceneInspectResponseContract(
+                action="modifier_data",
+                payload=_scene_inspect_modifier_data(ctx, object_name, modifier_name, include_node_tree),
+            )
         else:
-            return (
-                f"Unknown action '{action}'. Valid actions: object, topology, modifiers, "
-                "materials, constraints, modifier_data"
+            return SceneInspectResponseContract(
+                action="object",
+                error=(
+                    f"Unknown action '{action}'. Valid actions: object, topology, modifiers, "
+                    "materials, constraints, modifier_data"
+                ),
             )
 
     return route_tool_call(
@@ -333,7 +352,7 @@ def scene_inspect(
 
 
 # Internal function - exposed via scene_inspect mega tool
-def _scene_inspect_object(ctx: Context, name: str) -> str:
+def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Provides a detailed report for a single object (transform, collections, materials, modifiers, mesh stats).
 
@@ -343,61 +362,9 @@ def _scene_inspect_object(ctx: Context, name: str) -> str:
     try:
         report = handler.inspect_object(name)
     except RuntimeError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return f"{msg}. Use scene_list_objects to verify the name."
-        return msg
+        return {"error": str(e)}
 
-    lines = [
-        f"Object: {report.get('object_name')} ({report.get('type')})",
-        f"Location: {report.get('location')}",
-        f"Rotation: {report.get('rotation')}",
-        f"Scale: {report.get('scale')}",
-        f"Dimensions: {report.get('dimensions')}",
-        f"Collections: {', '.join(report.get('collections') or ['<none>'])}",
-    ]
-
-    material_slots = report.get("material_slots") or []
-    if material_slots:
-        slot_lines = [
-            f"    #{slot['slot_index']}: {slot.get('material_name') or 'None'}"
-            for slot in material_slots
-        ]
-        lines.append("Materials:\n" + "\n".join(slot_lines))
-    else:
-        lines.append("Materials: <none>")
-
-    modifiers = report.get("modifiers") or []
-    if modifiers:
-        mod_lines = [
-            f"    {mod.get('name')} ({mod.get('type')}), viewport={mod.get('show_viewport')}, render={mod.get('show_render')}"
-            for mod in modifiers
-        ]
-        lines.append("Modifiers:\n" + "\n".join(mod_lines))
-    else:
-        lines.append("Modifiers: <none>")
-
-    mesh_stats = report.get("mesh_stats")
-    if mesh_stats:
-        lines.append(
-            "Mesh Stats: V={vertices}, E={edges}, F={faces}, T={triangles}".format(
-                vertices=mesh_stats.get("vertices"),
-                edges=mesh_stats.get("edges"),
-                faces=mesh_stats.get("faces"),
-                triangles=mesh_stats.get("triangles"),
-            )
-        )
-    else:
-        lines.append("Mesh Stats: <not a mesh>")
-
-    custom_props = report.get("custom_properties") or {}
-    if custom_props:
-        prop_lines = [f"    {k}: {v}" for k, v in custom_props.items()]
-        lines.append("Custom Properties:\n" + "\n".join(prop_lines))
-    else:
-        lines.append("Custom Properties: <none>")
-
-    return "\n".join(lines)
+    return report
 
 
 @mcp.tool()
@@ -632,7 +599,7 @@ def _scene_inspect_material_slots(
     ctx: Context,
     material_filter: Optional[str] = None,
     include_empty_slots: bool = True
-) -> str:
+) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Audits material slot assignments across the entire scene.
 
@@ -652,56 +619,21 @@ def _scene_inspect_material_slots(
             material_filter=material_filter,
             include_empty_slots=include_empty_slots
         )
-        import json
-
-        total = result.get("total_slots", 0)
-        assigned = result.get("assigned_slots", 0)
-        empty = result.get("empty_slots", 0)
-        warnings = result.get("warnings", [])
-        slots = result.get("slots", [])
-
-        # Format summary
-        lines = [
-            "Material Slot Audit:",
-            f"- Total Slots: {total}",
-            f"- Assigned: {assigned}",
-            f"- Empty: {empty}",
-        ]
-
-        if material_filter:
-            lines.append(f"- Filter: '{material_filter}'")
-
-        if warnings:
-            lines.append(f"\nWarnings ({len(warnings)}):")
-            for warning in warnings:
-                lines.append(f"  ! {warning}")
-
-        if slots:
-            lines.append(f"\nSlot Details ({len(slots)} slots):")
-            for slot in slots[:20]:  # Limit to first 20 for readability
-                obj_name = slot.get("object_name")
-                slot_idx = slot.get("slot_index")
-                mat_name = slot.get("material_name") or "EMPTY"
-                slot_name = slot.get("slot_name", "")
-                lines.append(f"  [{obj_name}][{slot_idx}] {slot_name}: {mat_name}")
-
-            if len(slots) > 20:
-                lines.append(f"  ... and {len(slots) - 20} more slots")
-
-        lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
-
-        summary = "\n".join(lines)
-        ctx_info(ctx, f"Material slot audit: {total} slots ({assigned} assigned, {empty} empty)")
-        return summary
+        ctx_info(
+            ctx,
+            f"Material slot audit: {result.get('total_slots', 0)} slots "
+            f"({result.get('assigned_slots', 0)} assigned, {result.get('empty_slots', 0)} empty)",
+        )
+        return result
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_mesh_topology(
     ctx: Context,
     object_name: str,
     detailed: bool = False
-) -> str:
+) -> Dict[str, Any]:
     """
     [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
 
@@ -717,34 +649,16 @@ def _scene_inspect_mesh_topology(
     handler = get_scene_handler()
     try:
         stats = handler.inspect_mesh_topology(object_name, detailed)
-        import json
-        
-        lines = [
-            f"Topology Report for '{stats.get('object_name')}':",
-            f"- Vertices: {stats.get('vertex_count')}",
-            f"- Edges: {stats.get('edge_count')}",
-            f"- Faces: {stats.get('face_count')}",
-            f"  - Triangles: {stats.get('triangle_count')}",
-            f"  - Quads: {stats.get('quad_count')}",
-            f"  - N-Gons: {stats.get('ngon_count')}",
-        ]
-        
-        if detailed:
-            lines.append("Detailed Checks:")
-            lines.append(f"  - Non-Manifold Edges: {stats.get('non_manifold_edges')}")
-            lines.append(f"  - Loose Vertices: {stats.get('loose_vertices')}")
-            lines.append(f"  - Loose Edges: {stats.get('loose_edges')}")
-            
-        return "\n".join(lines)
+        return stats
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
     
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_modifiers(
     ctx: Context,
     object_name: Optional[str] = None,
     include_disabled: bool = True
-) -> str:
+) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
 
@@ -759,74 +673,29 @@ def _scene_inspect_modifiers(
     handler = get_scene_handler()
     try:
         result = handler.inspect_modifiers(object_name, include_disabled)
-        import json
-        
-        obj_count = result.get("object_count", 0)
-        mod_count = result.get("modifier_count", 0)
-        objects = result.get("objects", [])
-        
-        if obj_count == 0:
-            if object_name:
-                return f"Object '{object_name}' has no modifiers."
-            return "No modifiers found in the scene."
-            
-        lines = [
-            f"Modifier Inspection ({mod_count} modifiers on {obj_count} objects):",
-            ""
-        ]
-        
-        # Limit output if scene-wide and too many objects
-        limit = 20
-        
-        for i, obj in enumerate(objects):
-            if i >= limit:
-                lines.append(f"... and {len(objects) - limit} more objects")
-                break
-                
-            lines.append(f"Object: {obj['name']}")
-            for mod in obj['modifiers']:
-                name = mod['name']
-                mtype = mod['type']
-                flags = []
-                if not mod['show_viewport']:
-                    flags.append("hidden_viewport")
-                if not mod['show_render']:
-                    flags.append("hidden_render")
-                
-                flag_str = f" [{', '.join(flags)}]" if flags else ""
-                
-                # Build details string from extra keys
-                details = []
-                for k, v in mod.items():
-                    if k not in ["name", "type", "is_enabled", "show_viewport", "show_render"]:
-                        details.append(f"{k}={v}")
-                
-                detail_str = f" ({', '.join(details)})" if details else ""
-                
-                lines.append(f"  - {name} ({mtype}){detail_str}{flag_str}")
-            lines.append("")
-            
-        ctx_info(ctx, f"Inspected modifiers: {mod_count} on {obj_count} objects")
-        return "\n".join(lines)
+        ctx_info(
+            ctx,
+            f"Inspected modifiers: {result.get('modifier_count', 0)} on "
+            f"{result.get('object_count', 0)} objects",
+        )
+        return result
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 # Internal function - exposed via scene_inspect mega tool
 def _scene_get_constraints(
     ctx: Context,
     object_name: str,
     include_bones: bool = False
-) -> str:
+) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
     """
     handler = get_scene_handler()
     try:
-        import json
-        result = handler.get_constraints(object_name, include_bones)
-        return json.dumps(result, indent=2)
+        return handler.get_constraints(object_name, include_bones)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via scene_inspect mega tool
@@ -835,7 +704,7 @@ def _scene_inspect_modifier_data(
     object_name: str,
     modifier_name: Optional[str] = None,
     include_node_tree: bool = False
-) -> str:
+) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
     """
