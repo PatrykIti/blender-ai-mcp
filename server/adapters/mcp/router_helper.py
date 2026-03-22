@@ -7,10 +7,99 @@ Provides utilities for routing tool calls through SupervisorRouter.
 from typing import Dict, Any, List, Optional, Callable
 import logging
 
+from server.adapters.mcp.execution_context import MCPExecutionContext
+from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
 from server.infrastructure.di import is_router_enabled, get_router
 from server.adapters.mcp.dispatcher import get_dispatcher
 
 logger = logging.getLogger(__name__)
+
+
+def route_tool_call_report(
+    tool_name: str,
+    params: Dict[str, Any],
+    direct_executor: Callable[[], str],
+    prompt: Optional[str] = None,
+) -> MCPExecutionReport:
+    """Build a structured execution report for a tool call."""
+
+    context = MCPExecutionContext(tool_name=tool_name, params=params, prompt=prompt)
+
+    if not is_router_enabled():
+        result = direct_executor()
+        return MCPExecutionReport(
+            context=context,
+            router_enabled=False,
+            router_applied=False,
+            steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+        )
+
+    router = get_router()
+    if router is None:
+        result = direct_executor()
+        return MCPExecutionReport(
+            context=context,
+            router_enabled=True,
+            router_applied=False,
+            steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+        )
+
+    try:
+        corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
+
+        if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
+            if corrected_tools[0]["params"] == params:
+                result = direct_executor()
+                return MCPExecutionReport(
+                    context=context,
+                    router_enabled=True,
+                    router_applied=False,
+                    steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+                )
+
+        dispatcher = get_dispatcher()
+        steps: List[ExecutionStep] = []
+
+        for index, tool in enumerate(corrected_tools):
+            tool_to_execute = tool["tool"]
+            tool_params = tool["params"]
+
+            logger.debug(
+                "Router executing step %s/%s: %s",
+                index + 1,
+                len(corrected_tools),
+                tool_to_execute,
+            )
+
+            if tool_to_execute == tool_name and index == len(corrected_tools) - 1:
+                result = (
+                    direct_executor()
+                    if tool_params == params
+                    else dispatcher.execute(tool_to_execute, tool_params)
+                )
+            else:
+                result = dispatcher.execute(tool_to_execute, tool_params)
+
+            steps.append(
+                ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result)
+            )
+
+        return MCPExecutionReport(
+            context=context,
+            router_enabled=True,
+            router_applied=True,
+            steps=tuple(steps),
+        )
+
+    except Exception as e:
+        logger.error(f"Router processing failed for {tool_name}: {e}", exc_info=True)
+        fallback_result = direct_executor()
+        return MCPExecutionReport(
+            context=context,
+            router_enabled=True,
+            router_applied=False,
+            steps=(ExecutionStep(tool_name=tool_name, params=params, result=fallback_result),),
+        )
 
 
 def route_tool_call(
@@ -42,59 +131,13 @@ def route_tool_call(
                 direct_executor=lambda: get_mesh_handler().extrude_region(depth=depth),
             )
     """
-    # If router is disabled, execute directly
-    if not is_router_enabled():
-        return direct_executor()
-
-    router = get_router()
-    if router is None:
-        return direct_executor()
-
-    try:
-        # Process through router
-        corrected_tools = router.process_llm_tool_call(tool_name, params, prompt)
-
-        # If router returns single unchanged tool, execute directly
-        if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
-            # Check if params are the same
-            if corrected_tools[0]["params"] == params:
-                return direct_executor()
-
-        # Execute the corrected/expanded tool sequence
-        dispatcher = get_dispatcher()
-        results: List[str] = []
-
-        for i, tool in enumerate(corrected_tools):
-            tool_to_execute = tool["tool"]
-            tool_params = tool["params"]
-
-            logger.debug(f"Router executing step {i+1}/{len(corrected_tools)}: {tool_to_execute}")
-
-            # If this is the original tool, use direct executor
-            if tool_to_execute == tool_name and i == len(corrected_tools) - 1:
-                # Use potentially modified params
-                result = direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, tool_params)
-            else:
-                # Use dispatcher for other tools
-                result = dispatcher.execute(tool_to_execute, tool_params)
-
-            results.append(result)
-
-        # Combine results
-        if len(results) == 1:
-            return results[0]
-
-        # Format multi-step results
-        combined_parts = []
-        for i, (result, tool) in enumerate(zip(results, corrected_tools), 1):
-            combined_parts.append(f"[Step {i}: {tool['tool']}] {result}")
-
-        return "\n".join(combined_parts)
-
-    except Exception as e:
-        logger.error(f"Router processing failed for {tool_name}: {e}", exc_info=True)
-        # Fallback to direct execution
-        return direct_executor()
+    report = route_tool_call_report(
+        tool_name=tool_name,
+        params=params,
+        direct_executor=direct_executor,
+        prompt=prompt,
+    )
+    return report.to_legacy_text()
 
 
 def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:
@@ -110,7 +153,7 @@ def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:
         return "No operations performed."
 
     dispatcher = get_dispatcher()
-    results: List[str] = []
+    steps: List[ExecutionStep] = []
 
     for tool in tools:
         tool_name = tool.get("tool", "")
@@ -118,18 +161,24 @@ def execute_routed_sequence(tools: List[Dict[str, Any]]) -> str:
 
         try:
             result = dispatcher.execute(tool_name, params)
-            results.append(result)
+            steps.append(ExecutionStep(tool_name=tool_name, params=params, result=result))
         except Exception as e:
-            results.append(f"Error executing {tool_name}: {str(e)}")
+            steps.append(
+                ExecutionStep(
+                    tool_name=tool_name,
+                    params=params,
+                    result=f"Error executing {tool_name}: {str(e)}",
+                    error=str(e),
+                )
+            )
 
-    if len(results) == 1:
-        return results[0]
-
-    combined_parts = []
-    for i, (result, tool) in enumerate(zip(results, tools), 1):
-        combined_parts.append(f"[Step {i}: {tool['tool']}] {result}")
-
-    return "\n".join(combined_parts)
+    report = MCPExecutionReport(
+        context=MCPExecutionContext(tool_name="sequence", params={"tools": tools}),
+        router_enabled=True,
+        router_applied=True,
+        steps=tuple(steps),
+    )
+    return report.to_legacy_text()
 
 
 def get_router_status() -> Dict[str, Any]:

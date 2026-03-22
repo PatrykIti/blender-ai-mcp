@@ -1,43 +1,64 @@
-"""Utilities for working with FastMCP Context from sync tool functions.
-
-FastMCP's Context methods like `ctx.info()` are async and must be awaited.
-Most tools in this repo are implemented as sync functions, so we need a safe
-bridge that avoids "coroutine was never awaited" warnings.
-"""
+"""Utilities for working with FastMCP Context from sync tool functions."""
 
 from __future__ import annotations
 
-import asyncio
-
-import anyio
 from fastmcp import Context
+from server.adapters.mcp.session_state import (
+    get_session_phase,
+    get_session_value,
+    set_session_phase,
+    set_session_value,
+)
 
 
 def ctx_info(ctx: Context, message: str) -> None:
-    """Best-effort INFO message to the connected MCP client.
+    """Best-effort INFO message to the connected MCP client."""
 
-    Works from both:
-    - async event loop thread (schedule with create_task)
-    - AnyIO worker thread (use anyio.from_thread.run)
-    """
-    # If we're in the async event loop thread, schedule a task.
     try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop is not None:
-        coro = ctx.info(message)
-        try:
-            loop.create_task(coro)
-        except Exception:
-            coro.close()
-        return
-
-    # If we're in a worker thread managed by AnyIO, bridge to the event loop.
-    try:
-        anyio.from_thread.run(ctx.info, message)
+        ctx.info(message)
     except Exception:
-        # Best-effort: never fail a tool call because of client logging.
         return
 
+
+def ctx_warning(ctx: Context, message: str) -> None:
+    """Best-effort WARNING message to the connected MCP client."""
+
+    try:
+        ctx.warning(message)
+    except Exception:
+        return
+
+
+def ctx_error(ctx: Context, message: str) -> None:
+    """Best-effort ERROR message to the connected MCP client."""
+
+    try:
+        ctx.error(message)
+    except Exception:
+        return
+
+
+def ctx_progress(
+    ctx: Context,
+    progress: float,
+    total: float | None = None,
+    message: str | None = None,
+) -> None:
+    """Best-effort progress reporting for long-running interactions."""
+
+    try:
+        ctx.report_progress(progress=progress, total=total, message=message)
+    except Exception:
+        return
+
+
+__all__ = [
+    "ctx_error",
+    "ctx_info",
+    "ctx_progress",
+    "ctx_warning",
+    "get_session_phase",
+    "get_session_value",
+    "set_session_phase",
+    "set_session_value",
+]
