@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
+**Dependencies:** TASK-083 (platform baseline). Cross-task integration gate: TASK-093-02 (shared timeout policy consumed by RPC/job adaptation).
 **Status:** ⬜ To Do
 
 ---
@@ -74,6 +74,12 @@ Implementation should stay split across four seams:
 - incremental adoption by selected heavy tools
 - async task-capable adapter entrypoints (`async def` + `task=True`) for selected heavy operations
 
+### Timeout Ownership Rule
+
+- TASK-088 owns job architecture, task bridge adoption, RPC verbs, addon job lifecycle, and concrete endpoint rollout
+- TASK-093-02 owns the shared timeout contract across foreground tools, background tasks, RPC calls, and Blender-side execution
+- TASK-088 runtime adaptation must consume that shared timeout policy instead of defining a second timeout taxonomy inside RPC/job code
+
 ### Runtime Requirement (Hard Gate)
 
 - FastMCP runtime must include task support (`fastmcp[tasks]` or equivalent dependency set enabled in this repo baseline).
@@ -141,7 +147,7 @@ This remains the umbrella task. The original scope stays unchanged.
 1. Classify which operations truly need task mode instead of synchronous execution.
 2. Build the FastMCP task bridge and explicit job identity mapping.
 3. Define progress, cancellation, and result retrieval contracts.
-4. Adapt RPC and addon runtime to launch, poll, and cancel Blender jobs safely.
+4. Adapt RPC and addon runtime to launch, poll, and cancel Blender jobs safely while consuming the shared timeout policy from TASK-093-02.
 5. Convert selected heavy entrypoints to async task-capable adapters and roll task mode into the highest-value tools first.
 6. Add operations-focused tests and docs for task behavior.
 

@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** Router Semantics  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083, TASK-084, TASK-089  
+**Dependencies:** TASK-083 (policy / audit baseline). Integration gates: TASK-084 (discovery handoff), TASK-089 (inspection-contract handoff)
 **Status:** ⬜ To Do
 
 ---
@@ -77,6 +77,14 @@ Those responsibilities should sit with FastMCP discovery controls, deterministic
 
 Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
 
+This task has two dependency moments and they must stay explicit:
+
+- the boundary policy / code-audit phase may start as soon as the FastMCP 3.x migration baseline is understood well enough to audit current call sites
+- discovery handoff work waits for TASK-084 because it consumes the platform search surface
+- truth / verification handoff work waits for TASK-089 because it consumes structured inspection contracts
+
+Do not delay the policy and audit phase behind the downstream migration work it is meant to govern.
+
 Discovery and visibility should hand off to the platform manifest and FastMCP search controls, not to router metadata or semantic overreach.
 
 ---
@@ -136,7 +144,7 @@ This remains the umbrella task. The original scope stays unchanged.
 
 ### Atomic Delivery Waves
 
-1. Audit current LaBSE call sites and classify each by responsibility.
+1. Audit current LaBSE call sites and publish the boundary policy before downstream handoff work proceeds.
 2. Move general discovery onto FastMCP platform search.
 3. Move truth and verification checks onto structured inspection contracts.
 4. Keep LaBSE focused on workflow and parameter semantics.

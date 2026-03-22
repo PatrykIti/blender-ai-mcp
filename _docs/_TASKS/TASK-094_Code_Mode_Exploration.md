@@ -3,7 +3,7 @@
 **Priority:** 🟡 Medium  
 **Category:** FastMCP Research  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083, TASK-084  
+**Dependencies:** TASK-083 (platform baseline). Optional comparison input: TASK-084 (search-first discovery baseline, when available).
 **Status:** ⬜ To Do
 
 ---
@@ -69,6 +69,9 @@ For this repo, Code Mode should remain:
 - profile-scoped
 - read-heavy first
 
+Code Mode research does not require search-first rollout to exist.
+If TASK-084 is available, it may be used as a secondary benchmark comparison, but it is not a prerequisite for experiment guardrails or the first read-only pilot surface.
+
 Hard gate:
 
 - TASK-094 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this experimental surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
@@ -127,7 +130,7 @@ This remains the umbrella task. The original scope stays unchanged.
 
 1. Define experiment guardrails and exclusion rules.
 2. Build a read-only pilot surface on top of the same provider set.
-3. Benchmark discovery and orchestration cost against classic tool loops.
+3. Benchmark discovery and orchestration cost against classic tool loops, with optional secondary comparison against search-first discovery when TASK-084 is available.
 4. Record an explicit go/no-go decision with retained constraints.
 
 Implementation is decomposed into:

@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083 (platform baseline), TASK-086 (public surface baseline), TASK-091 (default public rollout / coexistence gate)
+**Dependencies:** TASK-083 (mandatory platform baseline). Integration / rollout gates: TASK-085 (session-visibility parity on adaptive surfaces), TASK-086 (public surface baseline), TASK-091 (default public rollout / coexistence gate)
 **Status:** ⬜ To Do
 
 ---
@@ -72,6 +72,12 @@ Discovery rollout for this repo must happen in two phases:
 - **Infrastructure phase:** inventory, search document building, and call-path validation may proceed once the platform composition and transform baseline exists
 - **Default public rollout phase:** search-first becomes the default `llm-guided` experience only after the public LLM-facing naming/argument surface from TASK-086 is stable enough to index intentionally and compare safely against legacy behavior
 
+Visibility ownership rule:
+
+- TASK-084 owns discovery inventory, search transforms, and call-path parity
+- TASK-085 owns session state, visibility policy, and phase-driven enable/disable behavior
+- TASK-084 must consume the visibility state defined by TASK-085 where adaptive visibility is active, but it must not define a second visibility model
+
 Hard gate:
 
 - TASK-084 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
@@ -85,6 +91,7 @@ This task has two different dependency moments and they must stay explicit:
 
 - **Discovery infrastructure work** may begin once the TASK-083 composition / transform baseline exists and the shared public manifest is available for the capabilities being indexed
 - **Public search indexing and naming validation** must target the baseline public surface established by TASK-086, not the raw internal registration names
+- **Adaptive visibility parity** is integrated after TASK-085 visibility controls exist; it is not a prerequisite for the earlier inventory / search-plumbing work
 - **Default public rollout** of search-first `llm-guided` behavior is gated by TASK-091 so coexistence and rollback against legacy behavior are defined up front
 
 Do not introduce a custom search proxy unless the built-in call path proves insufficient.
@@ -92,7 +99,7 @@ Do not introduce a custom search proxy unless the built-in call path proves insu
 Discovery must preserve auth/visibility parity:
 
 - `search_tools` results and `call_tool` execution must respect the same authorization and visibility pipeline as direct tool listing/calls
-- session-level visibility changes (`ctx.enable_components()` / `ctx.disable_components()`) must be reflected in discovery results
+- session-level visibility changes defined by TASK-085 (`ctx.enable_components()` / `ctx.disable_components()`) must be reflected in discovery results wherever adaptive visibility is enabled
 
 ---
 
@@ -155,7 +162,7 @@ This remains the umbrella task. The original product objective stays unchanged.
 2. Build BM25 search infrastructure and pinned entry tooling against the canonical platform manifest.
 3. Enrich search text from docstrings, schemas, aliases, and capability metadata.
 4. Prove discovered-tool execution stays on the same router and dispatcher path.
-5. Prove auth/visibility parity for `search_tools` / `call_tool` vs direct paths.
+5. Prove auth parity for `search_tools` / `call_tool` vs direct paths, and prove visibility parity once TASK-085 adaptive visibility controls exist.
 6. Roll discovery-first out as the default only on the stabilized public surface, then measure payload reduction and search quality against legacy behavior.
 
 Implementation is decomposed into:

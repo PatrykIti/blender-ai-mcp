@@ -13,6 +13,25 @@ Define separate timeout policy for foreground tools, background tasks, RPC calls
 
 ---
 
+## Ownership Rule
+
+This task defines:
+
+- timeout boundary names
+- default timeout classes
+- override rules
+- timeout-related diagnostics fields
+
+This task does not define:
+
+- RPC launch / poll / cancel verbs
+- addon job lifecycle primitives
+- tool-by-tool task adoption
+
+Those belong to TASK-088 and must consume the timeout policy defined here.
+
+---
+
 ## Repository Touchpoints
 
 - `server/adapters/rpc/client.py`

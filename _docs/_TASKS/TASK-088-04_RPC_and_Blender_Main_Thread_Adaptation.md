@@ -3,7 +3,7 @@
 **Parent:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🔴 High  
-**Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
+**Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md), [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)
 
 ---
 
@@ -29,7 +29,7 @@ Adapt RPC and addon runtime so longer-running work no longer depends on a single
   - task launch
   - task polling or result retrieval
   - task cancellation
-- replace the one-size-fits-all 30-second wait strategy with job-aware timeout policy
+- replace the one-size-fits-all 30-second wait strategy by consuming the shared job-aware timeout policy defined in TASK-093-02
 
 ### RPC Shape Direction
 
@@ -39,6 +39,9 @@ Prefer explicit RPC verbs or payload types for:
 - poll
 - cancel
 - collect result
+
+Do not define a second timeout taxonomy in this task.
+Timeout values, boundary names, and fallback semantics come from TASK-093-02 and are only applied here to the concrete RPC/addon runtime.
 
 ---
 

@@ -3,7 +3,7 @@
 **Parent:** [TASK-094](./TASK-094_Code_Mode_Exploration.md)  
 **Status:** ⬜ Planned  
 **Priority:** 🟡 Medium  
-**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
+**Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)
 
 ---
 
