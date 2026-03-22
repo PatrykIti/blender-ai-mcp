@@ -10,6 +10,7 @@ from mcp.server.fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_armature_handler
 
@@ -26,7 +27,9 @@ ARMATURE_PUBLIC_TOOL_NAMES = (
 def register_armature_tools(target: Any) -> Dict[str, Any]:
     """Register public armature tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(globals(), target, ARMATURE_PUBLIC_TOOL_NAMES)
+    return register_existing_tools(
+        globals(), target, ARMATURE_PUBLIC_TOOL_NAMES, tags=get_capability_tags("armature")
+    )
 
 
 def get_handler():

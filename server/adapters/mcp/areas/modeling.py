@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.router_helper import route_tool_call
@@ -26,7 +27,7 @@ MODELING_PUBLIC_TOOL_NAMES = (
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
     """Register one modeling tool on a FastMCP-compatible target."""
 
-    return target.tool(fn, name=tool_name)
+    return target.tool(fn, name=tool_name, tags=set(get_capability_tags("modeling")))
 
 
 def register_modeling_tools(target: Any) -> Dict[str, Any]:

@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
@@ -21,7 +22,9 @@ MATERIAL_PUBLIC_TOOL_NAMES = (
 def register_material_tools(target: Any) -> Dict[str, Any]:
     """Register public material tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(globals(), target, MATERIAL_PUBLIC_TOOL_NAMES)
+    return register_existing_tools(
+        globals(), target, MATERIAL_PUBLIC_TOOL_NAMES, tags=get_capability_tags("material")
+    )
 
 
 @mcp.tool()

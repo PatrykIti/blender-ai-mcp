@@ -10,6 +10,7 @@ from typing import Any
 
 from fastmcp import Context
 
+from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import get_session_value, set_session_value
 
@@ -86,7 +87,8 @@ def update_session_from_router_goal(
     current = get_session_capability_state(ctx)
     status = router_result.get("status")
     pending = router_result.get("unresolved") if status == "needs_input" else None
-    phase = infer_phase_from_router_status(status, current_phase=current.phase)
+    hinted_phase = router_result.get("phase_hint") or derive_phase_hint_from_router_result(router_result)
+    phase = coerce_session_phase(hinted_phase or infer_phase_from_router_status(status, current_phase=current.phase))
 
     state = SessionCapabilityState(
         phase=phase,

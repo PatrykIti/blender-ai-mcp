@@ -9,6 +9,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_baking_handler
 
@@ -23,7 +24,9 @@ BAKING_PUBLIC_TOOL_NAMES = (
 def register_baking_tools(target: Any) -> Dict[str, Any]:
     """Register public baking tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(globals(), target, BAKING_PUBLIC_TOOL_NAMES)
+    return register_existing_tools(
+        globals(), target, BAKING_PUBLIC_TOOL_NAMES, tags=get_capability_tags("baking")
+    )
 
 
 @mcp.tool()

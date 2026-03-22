@@ -23,6 +23,7 @@ from server.adapters.mcp.areas.system import SYSTEM_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.text import TEXT_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.uv import UV_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.workflow_catalog import WORKFLOW_PUBLIC_TOOL_NAMES
+from server.adapters.mcp.visibility.tags import get_capability_tags
 
 
 @dataclass(frozen=True)
@@ -32,25 +33,26 @@ class CapabilityManifestEntry:
     capability_id: str
     provider_group: str
     tool_names: tuple[str, ...]
+    tags: tuple[str, ...]
 
 
 CAPABILITY_MANIFEST = (
-    CapabilityManifestEntry("scene", "core_tools", SCENE_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("mesh", "core_tools", MESH_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("modeling", "core_tools", MODELING_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("material", "core_tools", MATERIAL_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("uv", "core_tools", UV_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("collection", "core_tools", COLLECTION_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("curve", "core_tools", CURVE_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("lattice", "core_tools", LATTICE_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("sculpt", "core_tools", SCULPT_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("baking", "core_tools", BAKING_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("text", "core_tools", TEXT_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("armature", "core_tools", ARMATURE_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("system", "core_tools", SYSTEM_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("extraction", "core_tools", EXTRACTION_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("router", "router_tools", ROUTER_PUBLIC_TOOL_NAMES),
-    CapabilityManifestEntry("workflow_catalog", "workflow_tools", WORKFLOW_PUBLIC_TOOL_NAMES),
+    CapabilityManifestEntry("scene", "core_tools", SCENE_PUBLIC_TOOL_NAMES, get_capability_tags("scene")),
+    CapabilityManifestEntry("mesh", "core_tools", MESH_PUBLIC_TOOL_NAMES, get_capability_tags("mesh")),
+    CapabilityManifestEntry("modeling", "core_tools", MODELING_PUBLIC_TOOL_NAMES, get_capability_tags("modeling")),
+    CapabilityManifestEntry("material", "core_tools", MATERIAL_PUBLIC_TOOL_NAMES, get_capability_tags("material")),
+    CapabilityManifestEntry("uv", "core_tools", UV_PUBLIC_TOOL_NAMES, get_capability_tags("uv")),
+    CapabilityManifestEntry("collection", "core_tools", COLLECTION_PUBLIC_TOOL_NAMES, get_capability_tags("collection")),
+    CapabilityManifestEntry("curve", "core_tools", CURVE_PUBLIC_TOOL_NAMES, get_capability_tags("curve")),
+    CapabilityManifestEntry("lattice", "core_tools", LATTICE_PUBLIC_TOOL_NAMES, get_capability_tags("lattice")),
+    CapabilityManifestEntry("sculpt", "core_tools", SCULPT_PUBLIC_TOOL_NAMES, get_capability_tags("sculpt")),
+    CapabilityManifestEntry("baking", "core_tools", BAKING_PUBLIC_TOOL_NAMES, get_capability_tags("baking")),
+    CapabilityManifestEntry("text", "core_tools", TEXT_PUBLIC_TOOL_NAMES, get_capability_tags("text")),
+    CapabilityManifestEntry("armature", "core_tools", ARMATURE_PUBLIC_TOOL_NAMES, get_capability_tags("armature")),
+    CapabilityManifestEntry("system", "core_tools", SYSTEM_PUBLIC_TOOL_NAMES, get_capability_tags("system")),
+    CapabilityManifestEntry("extraction", "core_tools", EXTRACTION_PUBLIC_TOOL_NAMES, get_capability_tags("extraction")),
+    CapabilityManifestEntry("router", "router_tools", ROUTER_PUBLIC_TOOL_NAMES, get_capability_tags("router")),
+    CapabilityManifestEntry("workflow_catalog", "workflow_tools", WORKFLOW_PUBLIC_TOOL_NAMES, get_capability_tags("workflow_catalog")),
 )
 
 

@@ -24,8 +24,8 @@ def test_transform_pipeline_uses_deterministic_stage_order():
 
 
 def test_transform_pipeline_materializes_only_active_transforms():
-    """The baseline factory may keep stages empty while preserving deterministic order."""
+    """The baseline factory should materialize only the active transforms for a surface."""
 
     transforms = materialize_transforms(get_surface_profile("llm-guided"))
 
-    assert transforms == []
+    assert len(transforms) == 2

@@ -12,6 +12,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_workflow_catalog_handler
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
-    return target.tool(fn, name=tool_name)
+    return target.tool(fn, name=tool_name, tags=set(get_capability_tags("workflow_catalog")))
 
 
 def register_workflow_tools(target: Any) -> Dict[str, Any]:

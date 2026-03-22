@@ -50,8 +50,15 @@ def build_surface_transform_pipeline(
 def materialize_transforms(surface: SurfaceProfileSettings) -> list[Any]:
     """Return only the active transform objects for a surface profile."""
 
-    return [
-        stage.transform
-        for stage in build_surface_transform_pipeline(surface)
-        if stage.transform is not None
-    ]
+    materialized: list[Any] = []
+
+    for stage in build_surface_transform_pipeline(surface):
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            materialized.extend(transform)
+        else:
+            materialized.append(transform)
+
+    return materialized

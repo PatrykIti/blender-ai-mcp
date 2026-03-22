@@ -12,6 +12,7 @@ import json
 from typing import Dict, Any, List, Optional, Tuple, Union
 
 from server.domain.tools.router import IRouterTool
+from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
 
 class RouterToolHandler(IRouterTool):
@@ -79,6 +80,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "disabled"}),
                 "message": "Router is disabled. Goal noted but no workflow optimization available.",
             }
 
@@ -90,6 +92,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "disabled"}),
                 "message": "Router not initialized.",
             }
 
@@ -103,6 +106,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "error"}),
                 "error": {
                     "type": type(e).__name__,
                     "details": str(e),
@@ -118,6 +122,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "no_match"}),
                 "message": f"No workflow matched for: '{goal}'. Router will use heuristics to assist.",
             }
 
@@ -134,6 +139,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed ({len(execution_results)} tool calls).",
             }
@@ -258,6 +264,7 @@ class RouterToolHandler(IRouterTool):
                     "resolved": {},
                     "unresolved": invalid_params,
                     "resolution_sources": {},
+                    "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
                     "message": "Some provided parameter values are invalid. Please correct them and try again.",
                 }
 
@@ -271,6 +278,7 @@ class RouterToolHandler(IRouterTool):
                     **{k: "yaml_modifier" for k in existing_modifiers},
                     **{k: "user" for k in (explicit_params or {}) if k not in existing_modifiers},
                 },
+                "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
             }
@@ -316,6 +324,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": result.resolved,
                 "unresolved": unresolved_list,
                 "resolution_sources": resolution_sources,
+                "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
                 "message": (
                     "Some provided parameter values are invalid. Please correct them and try again."
                     if invalid_params
@@ -332,6 +341,7 @@ class RouterToolHandler(IRouterTool):
             "resolved": result.resolved,
             "unresolved": [],
             "resolution_sources": resolution_sources,
+            "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
             "executed": len(execution_results),
             "message": f"Workflow '{matched_workflow}' executed with {len(result.resolved)} parameters ({len(execution_results)} tool calls).",
         }

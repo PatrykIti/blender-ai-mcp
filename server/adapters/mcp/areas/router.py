@@ -20,6 +20,7 @@ from server.adapters.mcp.session_capabilities import (
     update_session_from_router_goal,
 )
 from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.infrastructure.di import get_router_handler
 
@@ -38,7 +39,7 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
-    return target.tool(fn, name=tool_name)
+    return target.tool(fn, name=tool_name, tags=set(get_capability_tags("router")))
 
 
 def register_router_tools(target: Any) -> Dict[str, Any]:
