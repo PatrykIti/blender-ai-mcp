@@ -13,6 +13,8 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
+from server.infrastructure.telemetry import emit_router_event_span
+from server.router.application.resolver.parameter_store import SEMANTIC_MEMORY_SCOPE
 from server.router.domain.entities.parameter import (
     ParameterResolutionResult,
     ParameterSchema,
@@ -123,6 +125,33 @@ class ParameterResolver(IParameterResolver):
                 logger.debug(f"TIER 3: {param_name} deferred (computed param)")
                 continue
 
+            # Gate learned semantic memory behind parameter relevance.
+            # Semantic reuse may help fill a value, but only when the prompt
+            # actually relates to this parameter. Otherwise semantic memory
+            # would become hidden policy approval for an unrelated field.
+            relevance = self.calculate_relevance(prompt, schema)
+
+            if relevance <= self._relevance_threshold:
+                resolved[param_name] = schema.default
+                sources[param_name] = "default"
+                emit_router_event_span(
+                    event_type="semantic_parameter_resolution",
+                    tool_name=workflow_name,
+                    session_id=None,
+                    data={
+                        "parameter_name": param_name,
+                        "outcome": "default_irrelevant",
+                        "relevance": relevance,
+                        "semantic_scope": SEMANTIC_MEMORY_SCOPE,
+                        "policy_approval_delegated": False,
+                    },
+                )
+                logger.debug(
+                    f"TIER 3: {param_name}={schema.default} "
+                    f"(default, relevance={relevance:.3f} < threshold)"
+                )
+                continue
+
             # TIER 2: Check learned mappings (from previous LLM interactions)
             stored_mapping = self._store.find_mapping(
                 prompt=prompt,
@@ -136,39 +165,52 @@ class ParameterResolver(IParameterResolver):
                 sources[param_name] = "learned"
                 # Increment usage count for analytics
                 self._store.increment_usage(stored_mapping)
+                emit_router_event_span(
+                    event_type="semantic_parameter_resolution",
+                    tool_name=workflow_name,
+                    session_id=None,
+                    data={
+                        "parameter_name": param_name,
+                        "outcome": "reuse_learned_mapping",
+                        "relevance": relevance,
+                        "similarity": stored_mapping.similarity,
+                        "semantic_scope": SEMANTIC_MEMORY_SCOPE,
+                        "policy_approval_delegated": False,
+                    },
+                )
                 logger.debug(
                     f"TIER 2: {param_name}={stored_mapping.value} "
                     f"(learned, similarity={stored_mapping.similarity:.3f})"
                 )
                 continue
 
-            # TIER 3: Check if prompt relates to this parameter
-            relevance = self.calculate_relevance(prompt, schema)
-
-            if relevance > self._relevance_threshold:
-                # Prompt mentions this parameter but we don't know value
-                # → Mark for LLM resolution
-                context = self.extract_context(prompt, schema)
-                unresolved.append(
-                    UnresolvedParameter(
-                        name=param_name,
-                        schema=schema,
-                        context=context,
-                        relevance=relevance,
-                    )
+            # TIER 3: Prompt relates to this parameter, but semantic memory
+            # cannot supply a value, so the field remains explicitly unresolved.
+            context = self.extract_context(prompt, schema)
+            unresolved.append(
+                UnresolvedParameter(
+                    name=param_name,
+                    schema=schema,
+                    context=context,
+                    relevance=relevance,
                 )
-                logger.debug(
-                    f"TIER 3: {param_name} UNRESOLVED "
-                    f"(relevance={relevance:.3f}, context='{context}')"
-                )
-            else:
-                # Prompt doesn't mention this parameter - use default
-                resolved[param_name] = schema.default
-                sources[param_name] = "default"
-                logger.debug(
-                    f"TIER 3: {param_name}={schema.default} "
-                    f"(default, relevance={relevance:.3f} < threshold)"
-                )
+            )
+            emit_router_event_span(
+                event_type="semantic_parameter_resolution",
+                tool_name=workflow_name,
+                session_id=None,
+                data={
+                    "parameter_name": param_name,
+                    "outcome": "unresolved_relevant",
+                    "relevance": relevance,
+                    "semantic_scope": SEMANTIC_MEMORY_SCOPE,
+                    "policy_approval_delegated": False,
+                },
+            )
+            logger.debug(
+                f"TIER 3: {param_name} UNRESOLVED "
+                f"(relevance={relevance:.3f}, context='{context}')"
+            )
 
         result = ParameterResolutionResult(
             resolved=resolved,

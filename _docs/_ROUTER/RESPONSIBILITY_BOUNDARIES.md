@@ -116,6 +116,12 @@ If the question is:
 
 LaBSE must not be the source of truth.
 
+### Current Enforcement Notes
+
+- general MCP tool discovery is owned by FastMCP search and visibility controls
+- semantic parameter memory is allowed only when the prompt is relevant to the target parameter
+- semantic workflow results are workflow-retrieval input, not proof of truth or policy approval
+
 ---
 
 ## Layer 3: Router Policy And Safety Layer

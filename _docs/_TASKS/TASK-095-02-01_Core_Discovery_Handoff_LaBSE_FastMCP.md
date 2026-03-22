@@ -1,7 +1,7 @@
 # TASK-095-02-01: Core Discovery Handoff from LaBSE to FastMCP Search
 
 **Parent:** [TASK-095-02](./TASK-095-02_Discovery_Handoff_From_LaBSE_to_FastMCP_Search.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 

@@ -1,7 +1,7 @@
 # TASK-095-02: Discovery Handoff from LaBSE to FastMCP Search
 
 **Parent:** [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md), [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 
@@ -25,3 +25,8 @@ Remove general MCP tool discovery from the semantic layer and move it onto FastM
 ## Acceptance Criteria
 
 - tool discovery no longer depends on LaBSE classifiers
+
+## Completion Summary
+
+- platform-owned discovery files are covered by boundary tests and stay free of semantic matcher/classifier imports
+- MCP tool discovery remains owned by FastMCP search instead of LaBSE-driven classifier paths

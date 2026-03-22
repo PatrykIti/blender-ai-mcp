@@ -13,6 +13,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from server.infrastructure.telemetry import emit_router_event_span
 from server.router.domain.entities.parameter import StoredMapping
 from server.router.domain.interfaces.i_parameter_resolver import IParameterStore
 from server.router.domain.interfaces.i_vector_store import (
@@ -25,6 +26,8 @@ from server.router.domain.interfaces.i_workflow_intent_classifier import (
 )
 
 logger = logging.getLogger(__name__)
+
+SEMANTIC_MEMORY_SCOPE = "parameter_memory_only"
 
 
 class ParameterStore(IParameterStore):
@@ -184,6 +187,17 @@ class ParameterStore(IParameterStore):
         )
 
         if not results:
+            emit_router_event_span(
+                event_type="semantic_parameter_store_lookup",
+                tool_name=workflow_name,
+                session_id=None,
+                data={
+                    "parameter_name": parameter_name,
+                    "outcome": "miss",
+                    "semantic_scope": SEMANTIC_MEMORY_SCOPE,
+                    "policy_approval_delegated": False,
+                },
+            )
             logger.debug(
                 f"No mapping found for '{prompt}' -> {parameter_name} "
                 f"(workflow: {workflow_name}, threshold: {threshold})"
@@ -214,6 +228,18 @@ class ParameterStore(IParameterStore):
         logger.debug(
             f"Found mapping: '{mapping.context}' -> {parameter_name}={mapping.value} "
             f"(similarity: {mapping.similarity:.3f})"
+        )
+        emit_router_event_span(
+            event_type="semantic_parameter_store_lookup",
+            tool_name=workflow_name,
+            session_id=None,
+            data={
+                "parameter_name": parameter_name,
+                "outcome": "hit",
+                "similarity": mapping.similarity,
+                "semantic_scope": SEMANTIC_MEMORY_SCOPE,
+                "policy_approval_delegated": False,
+            },
         )
 
         return mapping

@@ -4,9 +4,9 @@
 **Category:** Router Semantics  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (policy / audit baseline). Integration gates: TASK-084 (discovery handoff), TASK-089 (inspection-contract handoff)
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Current State:** `TASK-095-01` is complete: the semantic boundary policy is documented and backed by tests that guard audit completeness plus platform/truth separation. The umbrella remains open for the downstream handoff slices gated by `TASK-084` and `TASK-089`.
+**Completion Summary:** This task is now closed. Discovery ownership is on FastMCP search, truth/verification stays on inspection contracts, semantic parameter memory is gated by parameter relevance before learned reuse, semantic workflow results carry explicit scope markers, and tests/telemetry/docs now make LaBSE boundary violations visible.
 
 ---
 

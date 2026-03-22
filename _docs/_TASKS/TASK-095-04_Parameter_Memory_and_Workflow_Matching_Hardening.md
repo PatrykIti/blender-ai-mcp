@@ -1,7 +1,7 @@
 # TASK-095-04: Parameter Memory and Workflow Matching Hardening
 
 **Parent:** [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)
 
@@ -34,3 +34,8 @@ Harden the allowed role of LaBSE within parameter memory and workflow matching s
 ## Acceptance Criteria
 
 - learned mapping reuse is clearly separated from execution-policy approval
+
+## Completion Summary
+
+- parameter memory reuse is now gated by parameter relevance before learned mappings can be applied
+- semantic workflow metadata and telemetry markers now identify workflow retrieval as an allowed semantic scope rather than policy/truth approval

@@ -25,12 +25,14 @@ EXPECTED_AUDITED_CALL_SITES = {
 
 PLATFORM_BOUNDARY_PATHS = (
     REPO_ROOT / "server" / "adapters" / "mcp" / "platform",
+    REPO_ROOT / "server" / "adapters" / "mcp" / "discovery",
     REPO_ROOT / "server" / "adapters" / "mcp" / "transforms",
     REPO_ROOT / "server" / "adapters" / "mcp" / "visibility",
 )
 
 TRUTH_BOUNDARY_PATHS = (
     REPO_ROOT / "server" / "adapters" / "mcp" / "router_helper.py",
+    REPO_ROOT / "server" / "router" / "application" / "engines" / "tool_correction_engine.py",
     REPO_ROOT / "server" / "adapters" / "mcp" / "areas" / "scene.py",
     REPO_ROOT / "server" / "adapters" / "mcp" / "areas" / "mesh.py",
 )

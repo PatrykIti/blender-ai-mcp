@@ -134,6 +134,12 @@ Primary local validation commands for TASK-093 diagnostics/pagination:
 poetry run pytest tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_timeout_policy.py tests/unit/tools/workflow_catalog/test_workflow_catalog_import.py tests/unit/adapters/mcp/test_pagination_policy.py -q
 ```
 
+Primary local validation commands for TASK-095 semantic boundary hardening:
+
+```bash
+poetry run pytest tests/unit/router/infrastructure/test_semantic_boundary_audit.py tests/unit/router/infrastructure/test_semantic_boundary_telemetry.py tests/unit/router/application/test_correction_audit.py tests/unit/router/application/resolver/test_parameter_resolver.py tests/unit/router/application/matcher/test_semantic_workflow_matcher.py tests/unit/router/application/matcher/test_ensemble_aggregator.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

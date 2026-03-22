@@ -11,6 +11,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 import logging
 
+from server.infrastructure.telemetry import emit_router_event_span
 from server.router.domain.entities.ensemble import MatcherResult, EnsembleResult
 from server.router.application.matcher.modifier_extractor import ModifierExtractor
 from server.router.infrastructure.config import RouterConfig
@@ -158,6 +159,20 @@ class EnsembleAggregator:
             f"(score: {best_score:.3f}, level: {confidence_level}, "
             f"modifiers: {list(modifier_result.modifiers.keys())})"
         )
+
+        if "semantic" in best_contributions:
+            emit_router_event_span(
+                event_type="semantic_workflow_match",
+                tool_name=best_workflow,
+                session_id=None,
+                data={
+                    "confidence_level": confidence_level,
+                    "final_score": best_score,
+                    "semantic_scope": "workflow_retrieval_only",
+                    "policy_approval_delegated": False,
+                    "truth_source_required": "inspection_contracts",
+                },
+            )
 
         return EnsembleResult(
             workflow_name=best_workflow,

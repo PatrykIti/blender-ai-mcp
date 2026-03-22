@@ -1,7 +1,7 @@
 # TASK-095-03: Truth and Verification Handoff to Inspection Contracts
 
 **Parent:** [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md), [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md), [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md)
 
@@ -33,3 +33,8 @@ Move truth and verification decisions onto structured inspection contracts inste
 ## Acceptance Criteria
 
 - semantic confidence is not used as a proxy for scene truth
+
+## Completion Summary
+
+- inspection-based verification remains the source of truth for correction validation
+- boundary tests now cover that high semantic confidence does not override contradictory inspection truth

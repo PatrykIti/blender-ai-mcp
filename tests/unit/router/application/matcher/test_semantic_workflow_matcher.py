@@ -212,6 +212,9 @@ class TestSemanticWorkflowMatcher:
         assert result.confidence == 0.75
         assert result.match_type == "semantic"
         assert result.confidence_level == "MEDIUM"  # TASK-051
+        assert result.metadata["semantic_scope"] == "workflow_retrieval_only"
+        assert result.metadata["policy_approval_delegated"] is False
+        assert result.metadata["truth_source_required"] == "inspection_contracts"
 
     def test_match_generalized(self, matcher, mock_registry):
         """Test generalized match from similar workflows."""
@@ -252,6 +255,7 @@ class TestSemanticWorkflowMatcher:
         # Generalized confidence is reduced
         assert result.confidence == 0.72 * 0.8
         assert len(result.similar_workflows) == 2
+        assert result.metadata["semantic_scope"] == "workflow_retrieval_only"
 
     def test_find_similar(self, matcher):
         """Test find_similar method."""

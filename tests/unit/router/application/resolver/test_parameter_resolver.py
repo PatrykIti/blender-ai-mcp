@@ -262,7 +262,7 @@ class TestParameterResolverTier2:
     """Tests for TIER 2: Learned mapping resolution."""
 
     def test_learned_mapping_used_when_no_yaml(
-        self, resolver, mock_store, sample_parameters
+        self, resolver, mock_store, mock_classifier, sample_parameters
     ):
         """Test learned mapping is used when no YAML modifier exists."""
         mock_store.add_mapping(
@@ -271,6 +271,11 @@ class TestParameterResolverTier2:
             value=0,
             workflow_name="picnic_table",
             similarity=0.92,
+        )
+        mock_classifier.set_similarity(
+            "stół z prostymi nogami",
+            "nogi",
+            0.8,
         )
 
         result = resolver.resolve(
@@ -284,7 +289,7 @@ class TestParameterResolverTier2:
         assert result.resolution_sources["leg_angle_left"] == "learned"
 
     def test_usage_incremented_when_mapping_used(
-        self, resolver, mock_store, sample_parameters
+        self, resolver, mock_store, mock_classifier, sample_parameters
     ):
         """Test usage count is incremented when mapping is reused."""
         mock_store.add_mapping(
@@ -293,15 +298,45 @@ class TestParameterResolverTier2:
             value=0,
             workflow_name="picnic_table",
         )
+        mock_classifier.set_similarity(
+            "table with leg angle",
+            "angle",
+            0.8,
+        )
 
         resolver.resolve(
-            prompt="test prompt",
+            prompt="table with leg angle",
             workflow_name="picnic_table",
             parameters={"leg_angle_left": sample_parameters["leg_angle_left"]},
             existing_modifiers={},
         )
 
         assert mock_store._increment_calls == 1
+
+    def test_learned_mapping_not_reused_when_prompt_is_irrelevant(
+        self, resolver, mock_store, mock_classifier, sample_parameters
+    ):
+        """Semantic memory should not auto-fill unrelated parameters just because a mapping exists."""
+
+        mock_classifier._default_similarity = 0.2
+        mock_store.add_mapping(
+            context="wide table",
+            parameter_name="top_width",
+            value=2.5,
+            workflow_name="picnic_table",
+            similarity=0.95,
+        )
+
+        result = resolver.resolve(
+            prompt="simple table",
+            workflow_name="picnic_table",
+            parameters={"top_width": sample_parameters["top_width"]},
+            existing_modifiers={},
+        )
+
+        assert result.resolved["top_width"] == 1.5
+        assert result.resolution_sources["top_width"] == "default"
+        assert mock_store._increment_calls == 0
 
 
 class TestParameterResolverTier3:

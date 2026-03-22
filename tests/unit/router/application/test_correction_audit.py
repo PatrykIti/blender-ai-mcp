@@ -144,6 +144,34 @@ def test_postcondition_verification_can_be_inconclusive(monkeypatch):
     assert "verification unavailable" in verified_events[0].verification.details["error"]
 
 
+def test_postcondition_verification_uses_inspection_truth_not_semantic_confidence(monkeypatch):
+    """High semantic confidence must not override contradictory inspection truth."""
+
+    events = _build_correction_audit_events(
+        original_tool_name="mesh_extrude_region",
+        original_params={"move": [0, 0, 1]},
+        corrected_tools=[
+            {"tool": "system_set_mode", "params": {"mode": "EDIT"}},
+            {"tool": "mesh_extrude_region", "params": {"move": [0, 0, 1]}},
+        ],
+        steps=[
+            ExecutionStep(tool_name="system_set_mode", params={"mode": "EDIT"}, result="OK"),
+            ExecutionStep(tool_name="mesh_extrude_region", params={"move": [0, 0, 1]}, result="Extruded"),
+        ],
+        policy_context={"score": 0.99, "decision": "auto_fix", "reason": "high semantic confidence"},
+    )
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.router_helper.get_scene_handler",
+        lambda: type("Handler", (), {"get_mode": lambda self: {"mode": "OBJECT"}})(),
+    )
+
+    verified_events, status = _apply_postcondition_verification(events)
+
+    assert status == "failed"
+    assert verified_events[0].verification.status == "failed"
+
+
 def test_route_tool_call_report_exposes_audit_ids_to_router_telemetry(monkeypatch):
     """Corrected executions should expose correlatable audit ids in report and telemetry."""
 

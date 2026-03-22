@@ -24,6 +24,18 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+SEMANTIC_WORKFLOW_SCOPE = "workflow_retrieval_only"
+
+
+def _semantic_boundary_metadata() -> Dict[str, Any]:
+    """Return stable metadata describing the allowed semantic scope."""
+
+    return {
+        "semantic_scope": SEMANTIC_WORKFLOW_SCOPE,
+        "policy_approval_delegated": False,
+        "truth_source_required": "inspection_contracts",
+    }
+
 
 @dataclass
 class MatchResult:
@@ -229,6 +241,7 @@ class SemanticWorkflowMatcher:
                     "source_type": confidence_result.get("source_type"),
                     "matched_text": confidence_result.get("matched_text"),
                     "language_detected": confidence_result.get("language_detected"),
+                    **_semantic_boundary_metadata(),
                 },
             )
 
@@ -330,6 +343,7 @@ class SemanticWorkflowMatcher:
                 "base_workflow": base_workflow,
                 "generalized_from": [w for w, _ in similar_workflows],
                 "original_prompt": prompt,
+                **_semantic_boundary_metadata(),
             },
         )
 

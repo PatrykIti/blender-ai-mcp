@@ -1,7 +1,7 @@
 # TASK-095-04-01: Core Parameter Memory and Workflow Matching Hardening
 
 **Parent:** [TASK-095-04](./TASK-095-04_Parameter_Memory_and_Workflow_Matching_Hardening.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)
 

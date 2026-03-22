@@ -201,6 +201,13 @@ Boundary rule:
 - semantic confidence could drift into auto-correction policy unless `TASK-096` keeps explicit risk/decision logic separate
 - workflow match confidence could be mistaken for execution truth unless `TASK-089` and `TASK-097` keep structured inspection/postcondition paths authoritative
 
+### Current Enforcement State
+
+- general MCP tool discovery is owned by FastMCP search (`search_tools` / `call_tool`) and not by LaBSE-driven classifier paths
+- inspection-based verification stays authoritative through structured scene/mesh contracts and postcondition verification
+- semantic parameter memory is now gated by parameter relevance before learned mappings are reused
+- semantic workflow results emit explicit scope markers that identify them as workflow-retrieval input only
+
 ## Explicit Policy
 
 Allowed LaBSE roles in this repo:
@@ -220,8 +227,9 @@ Disallowed LaBSE roles in this repo:
 - post-execution verification
 - proof that a correction succeeded
 
-## Deferred Follow-Up
+## Follow-Up State
 
-- `TASK-095-02`: move discovery ownership fully onto FastMCP search
-- `TASK-095-03`: move truth / verification ownership fully onto structured inspection contracts
-- `TASK-095-04`: harden parameter memory and workflow matching inside the allowed semantic scope
+- `TASK-095-02`: discovery ownership is now on FastMCP search
+- `TASK-095-03`: truth / verification ownership stays on structured inspection contracts
+- `TASK-095-04`: parameter memory and workflow matching are hardened inside the allowed semantic scope
+- `TASK-095-05`: tests, telemetry markers, and docs now make boundary violations visible

@@ -1,7 +1,7 @@
 # TASK-095-05: Boundary Tests, Telemetry, and Documentation
 
 **Parent:** [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-095-02](./TASK-095-02_Discovery_Handoff_From_LaBSE_to_FastMCP_Search.md), [TASK-095-03](./TASK-095-03_Truth_and_Verification_Handoff_to_Inspection_Contracts.md), [TASK-095-04](./TASK-095-04_Parameter_Memory_and_Workflow_Matching_Hardening.md)
 
@@ -25,3 +25,8 @@ Add regression coverage, telemetry markers, and documentation for the LaBSE boun
 ## Acceptance Criteria
 
 - boundary violations are detectable through tests and logs
+
+## Completion Summary
+
+- boundary tests now cover discovery, truth/verification, semantic memory hardening, and telemetry markers
+- router docs and test docs now describe the enforced semantic boundary rather than only the intended one
