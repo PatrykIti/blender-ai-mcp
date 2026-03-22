@@ -8,9 +8,16 @@
 
 | Document | Description |
 |----------|-------------|
+| [QUICK_START.md](./QUICK_START.md) | Fast setup path, prerequisites, and first Router usage example |
 | [ROUTER_HIGH_LEVEL_OVERVIEW.md](./ROUTER_HIGH_LEVEL_OVERVIEW.md) | Concept and architecture |
 | [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md) | Code templates and structure |
+| [API.md](./API.md) | SupervisorRouter API reference and component method surface |
+| [CONFIGURATION.md](./CONFIGURATION.md) | Full `RouterConfig` option reference and examples |
+| [PATTERNS.md](./PATTERNS.md) | Geometry pattern detection rules, supported patterns, and scoring |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common Router failures, diagnostics, and recovery steps |
 | [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) | Role split between FastMCP platform, LaBSE semantics, router safety, and inspection/assertion truth |
+| [semantic-boundary-audit.md](./semantic-boundary-audit.md) | Code-backed audit of semantic responsibilities against the boundary policy |
+| [correction-risk-matrix.md](./correction-risk-matrix.md) | Code-backed matrix for correction classes, blast radius, and auto-safe policy |
 | [IMPLEMENTATION/](./IMPLEMENTATION/) | Step-by-step implementation docs |
 | [WORKFLOWS/](./WORKFLOWS/) | Predefined workflow definitions |
 | [TOOLS/](./TOOLS/) | **Guide for adding new tools to Router** |

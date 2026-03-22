@@ -32,6 +32,7 @@ Project Change Log.
 | [103](./103-2025-12-09-router-semantic-matching-fix.md) | 2025-12-09 | **Router Semantic Matching Improvements (TASK-055-FIX-2)** | - |
 | [102](./102-2025-12-08-ensemble-modifier-fixes.md) | 2025-12-08 | **Ensemble Matching & Modifier Extraction Fixes** | - |
 | [101](./101-2025-12-08-unified-parameter-resolution.md) | 2025-12-08 | **Unified Parameter Resolution Interface (TASK-055-FIX)** | - |
+| [100](./100-2025-12-09-parameter-context-extraction.md) | 2025-12-09 | **Hybrid Context Extraction for ParameterStore (TASK-055-FIX-3)** | - |
 | [100](./100-2025-12-08-interactive-parameter-resolution.md) | 2025-12-08 | **Interactive Parameter Resolution (TASK-055)** *(superseded by 101)* | - |
 | [99](./99-2025-12-07-router-matching-fixes.md) | 2025-12-07 | **Router Matching & Parametric Variables Fixes** | - |
 | [98](./98-2025-12-07-parametric-variables.md) | 2025-12-07 | **Parametric Workflow Variables (TASK-052)** | - |
@@ -40,7 +41,9 @@ Project Change Log.
 | [95](./95-2025-12-07-fix-dispatcher-mappings.md) | 2025-12-07 | **Fix ToolDispatcher Mappings (TASK-049)** | - |
 | [94](./94-2025-12-07-proper-di-shared-labse.md) | 2025-12-07 | **Proper DI for Classifiers + Shared LaBSE Model (TASK-048)** | - |
 | [93](./93-2025-12-06-lancedb-migration.md) | 2025-12-06 | **LanceDB Vector Store Migration (TASK-047)** | - |
+| [92](./92-2025-12-05-symmetry-fill-tools.md) | 2025-12-05 | **Symmetry & Advanced Fill Tools (TASK-036)** | - |
 | [91](./91-2025-12-05-armature-rigging-tools.md) | 2025-12-05 | **Armature & Rigging Tools (TASK-037)** | 1.31.0 |
+| [91](./91-2025-12-04-object-inspection-tools.md) | 2025-12-04 | **Object Inspection Tools (TASK-045)** | - |
 | [90](./90-2025-12-04-text-tools.md) | 2025-12-04 | **Text & Annotations Tools (TASK-034)** | 1.30.0 |
 | [89](./89-2025-12-04-task-044-extraction-analysis-tools.md) | 2025-12-04 | **Extraction Analysis Tools (TASK-044)** | 1.29.0 |
 | [88](./88-2025-12-03-task-041-p5-testing-documentation.md) | 2025-12-03 | **Testing & Documentation (TASK-041 P5 Complete)** | - |
@@ -96,6 +99,7 @@ Project Change Log.
 | [38](./38-2025-11-29-mega-tools-implementation.md) | 2025-11-29 | **Mega Tools Implementation (TASK-020)** | 1.11.0 |
 | [37](./37-2025-11-28-phase-2-1-advanced-selection.md) | 2025-11-28 | **Phase 2.1: Advanced Selection Tools (TASK-015)** | - |
 | [36](./36-2025-11-28-mcp-parameter-validation-fixes.md) | 2025-11-28 | **MCP Parameter Validation Fixes (PR #14)** | - |
+| [35](./35-2025-11-27-fix-blender-tool-bugs.md) | 2025-11-27 | **Fix Blender Tool Bugs (Mode Validation, Boolean Solver, Edit Mode Context)** | - |
 | [34](./34-2025-11-27-scene-inspect-modifiers.md) | 2025-11-27 | **Scene Inspect Modifiers (TASK-014-14)** | 1.9.13 |
 | [33](./33-2025-11-27-scene-inspect-mesh-topology.md) | 2025-11-27 | **Scene Inspect Mesh Topology (TASK-014-13)** | 1.9.12 |
 | [32](./32-2025-11-27-mesh-list-groups.md) | 2025-11-27 | **Mesh List Groups (TASK-014-12)** | 1.9.11 |
@@ -109,6 +113,7 @@ Project Change Log.
 | [24](./24-2025-11-27-scene-inspect-object.md) | 2025-11-27 | **Scene Inspect Object Tool (TASK-014-3)** | 1.9.3 |
 | [23](./23-2025-11-27-scene-list-selection.md) | 2025-11-27 | **Scene List Selection Tool (TASK-014-2)** | 1.9.2 |
 | [22](./22-2025-11-27-scene-get-mode.md) | 2025-11-27 | **Scene Get Mode Tool (TASK-014-1)** | 1.9.1 |
+| [22](./22-2025-11-25-mesh-smooth-flatten.md) | 2025-11-25 | **Mesh Smooth & Flatten Tools (TASK-012)** | - |
 | [21](./21-2025-11-25-tool-docstring-standardization.md) | 2025-11-25 | **Tool Docstring Standardization (Scene, Modeling, Mesh)** | 0.2.4 |
 | [20](./20-2025-11-25-advanced-mesh-ops.md) | 2025-11-25 | **Advanced Mesh Operations (Boolean, Merge, Subdivide)** | 0.2.3 |
 | [19](./19-2025-11-24-mesh-edges.md) | 2025-11-24 | **Edge Operations (Bevel, Loop Cut, Inset)** | 0.2.2 |

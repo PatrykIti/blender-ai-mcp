@@ -8,6 +8,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 
 | # | Document | Component | Task | Status |
 |---|----------|-----------|------|--------|
+| 00 | `00-tests-structure.md` | Router Tests Structure | TASK-039-24 | ✅ |
 | 01 | `01-directory-structure.md` | Directory Structure | TASK-039-1 | ✅ |
 | 02 | `02-domain-entities.md` | Domain Entities | TASK-039-2 | ✅ |
 | 03 | `03-domain-interfaces.md` | Domain Interfaces | TASK-039-3 | ✅ |
@@ -39,6 +40,7 @@ Step-by-step implementation guides for each Router Supervisor component.
 | 29 | `29-semantic-workflow-matcher.md` | Semantic Workflow Matcher | TASK-046-3 | ✅ |
 | 30 | `30-proportion-inheritance.md` | Proportion Inheritance | TASK-046-4 | ✅ |
 | 31 | `31-feedback-learning.md` | Feedback Learning | TASK-046-6 | ✅ |
+| 32 | `32-lance-vector-store.md` | LanceDB Vector Store | TASK-047 | ✅ |
 | 32 | `32-workflow-adapter.md` | Workflow Adapter | TASK-051 | ✅ |
 | 33 | `33-parametric-variables.md` | Parametric Variables | TASK-052 | ✅ |
 | 34 | `34-ensemble-matching-system.md` | Ensemble Matching | TASK-053 | ✅ |
