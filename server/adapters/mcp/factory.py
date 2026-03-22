@@ -10,7 +10,7 @@ from fastmcp import FastMCP
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.surfaces import resolve_surface_contract_profile
-from server.adapters.mcp.tasks.runtime_compat import ensure_task_runtime_compatibility
+from server.adapters.mcp.tasks.runtime_policy import validate_task_runtime_or_raise
 from server.adapters.mcp.timeout_policy import build_timeout_policy
 from server.adapters.mcp.transforms import (
     build_surface_transform_pipeline,
@@ -41,7 +41,7 @@ def build_server(
     providers = build_surface_providers(surface)
     pipeline = build_surface_transform_pipeline(surface)
     transforms = materialize_transforms(surface)
-    ensure_task_runtime_compatibility()
+    task_runtime_report = validate_task_runtime_or_raise(tasks_required=surface.tasks_enabled)
     timeout_policy = build_timeout_policy(
         tool_timeout_seconds=config.MCP_TOOL_TIMEOUT_SECONDS,
         task_timeout_seconds=config.MCP_TASK_TIMEOUT_SECONDS,
@@ -66,5 +66,6 @@ def build_server(
     server._bam_timeout_policy = timeout_policy
     server._bam_delivery_mode = surface.delivery_mode
     server._bam_contract_line = surface.default_contract_line
+    server._bam_task_runtime_report = task_runtime_report
 
     return server

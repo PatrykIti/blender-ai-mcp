@@ -4,9 +4,9 @@
 **Category:** FastMCP Platform  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083, TASK-088  
-**Status:** ⬜ Planned
+**Status:** ✅ Done
 
-**Current State:** TASK-088 introduced a repo-local compatibility shim in `server/adapters/mcp/tasks/runtime_compat.py` to bridge the current `fastmcp` / `docket` symbol drift. The repo is usable with that shim, but upstream/runtime alignment is still technical debt and should be closed intentionally.
+**Completion Summary:** This task is now closed. The repo now declares and validates one explicit supported task-runtime pair: `fastmcp 3.1.1` + `pydocket 0.18.2`. Task-capable surfaces fail clearly on unsupported pairs, the old runtime compatibility shim has been removed, and tests/docs now validate a no-shim baseline.
 
 ---
 
@@ -32,15 +32,14 @@ If we leave it unresolved:
 - failures may reappear when versions drift again
 - maintainers have no single supported runtime contract to point to
 
-### Current Code Reality
+### Previous Code Reality
 
-Today the runtime debt is visible in concrete repo seams:
+Before completion, the runtime debt was visible in concrete repo seams:
 
-- `server/adapters/mcp/tasks/runtime_compat.py` mutates `docket.dependencies` symbols at runtime
-- `server/adapters/mcp/factory.py` calls `ensure_task_runtime_compatibility()` for every server build
-- `pyproject.toml` declares broad `fastmcp (>=3.0,<4.0)` but does not express an explicit supported Docket pair at the project dependency level
-- `poetry.lock` currently resolves `fastmcp 3.1.1`
-- current tests only prove the shimmed alias exists, not that the upstream runtime pair is formally supported without the shim
+- `server/adapters/mcp/tasks/runtime_compat.py` mutated `docket.dependencies` symbols at runtime
+- `server/adapters/mcp/factory.py` called `ensure_task_runtime_compatibility()` for every server build
+- `pyproject.toml` declared broad `fastmcp (>=3.0,<4.0)` without an explicit supported Docket pair
+- tests only proved the shimmed alias existed, not that the upstream runtime pair was formally supported without the shim
 
 ---
 

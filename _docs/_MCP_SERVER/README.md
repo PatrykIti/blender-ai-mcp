@@ -23,9 +23,9 @@ The MCP server is in the middle of a platform migration tracked by `TASK-083` th
 
 For this task series:
 
-- the runtime baseline is **FastMCP 3.0+**
+- the task-capable runtime baseline is **FastMCP 3.1.1 + pydocket 0.18.2**
 - the supported server baseline is **Python 3.11+**
-- **FastMCP 3.1+** is a feature gate for downstream work that needs built-in Tool Search / BM25 or Code Mode
+- **FastMCP 3.1+** remains the line required for built-in Tool Search / BM25, Code Mode work, and the current task-capable surfaces
 - the current runtime inventory lives in `server/adapters/mcp/platform/runtime_inventory.py`
 
 The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
@@ -196,11 +196,11 @@ Router-aware MCP execution now exposes a correction-transparency baseline on top
 
 The current support policy for the migration track is:
 
-- **Supported**: Python `3.11+` with FastMCP `>=3.0,<4.0`
-- **Feature-gated**: Python `3.11+` with FastMCP `>=3.1,<4.0` for `TASK-084` and `TASK-094`
+- **Supported task-capable pair**: Python `3.11+` with `fastmcp 3.1.1` and `pydocket 0.18.2`
+- **Required line for current platform work**: FastMCP `3.1.x`
 - **Not supported for TASK-083+ migration work**: Python `3.10`
 
-This keeps the runtime policy aligned with the repo's practical dependency set (`sentence-transformers`, `lancedb`, `pyarrow`) and with the FastMCP 3.x migration work.
+This keeps the runtime policy aligned with the repo's practical dependency set (`sentence-transformers`, `lancedb`, `pyarrow`) and with the now-shipped task-mode surfaces.
 
 ## 🚀 Running (Docker)
 

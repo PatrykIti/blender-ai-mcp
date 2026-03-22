@@ -234,7 +234,7 @@ Current clarification behavior:
 - **Python (MCP server)**: **3.11+** is the supported baseline for the FastMCP 3.x migration track and for full repo functionality.
 - **OS**: macOS / Windows / Linux (Docker recommended). On Linux, use host networking or proper host resolution for `BLENDER_RPC_HOST`.
 - **Memory**: Router semantic matching uses a local LaBSE model (~2GB RAM).
-- **FastMCP runtime**: migration baseline is **FastMCP 3.0+**. Features that depend on **FastMCP 3.1+** (notably Tool Search / BM25 and Code Mode work in `TASK-084` and `TASK-094`) are gated separately.
+- **FastMCP task runtime**: supported pair is **fastmcp 3.1.1** with **pydocket 0.18.2**. Task-capable surfaces rely on this aligned pair.
 
 ## 🧪 Testing
 

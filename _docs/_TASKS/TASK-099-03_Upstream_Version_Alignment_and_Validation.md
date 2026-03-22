@@ -1,7 +1,7 @@
 # TASK-099-03: Upstream Version Alignment and Validation
 
 **Parent:** [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-099-02](./TASK-099-02_Runtime_Guards_and_Shim_Containment.md)
 
@@ -28,15 +28,15 @@ Choose one supported FastMCP+Docket version pair and validate real task runtime 
 - update repo dependencies if needed
 - validate real task runtime behavior on the selected pair
 
-### Current Code Reality
+### Previous Code Reality
 
-The repo currently has:
+Before completion, the repo had:
 
 - broad `fastmcp (>=3.0,<4.0)` declaration
 - no explicit top-level Docket dependency declaration in `pyproject.toml`
-- lockfile resolution that currently lands on `fastmcp 3.1.1`
+- lockfile/runtime drift against the task extra expectation
 
-This means version alignment work is not just a test step; it is also a dependency-policy step.
+That is why version alignment in this task had to be treated as both a test step and a dependency-policy step.
 
 ---
 
@@ -53,3 +53,9 @@ This means version alignment work is not just a test step; it is also a dependen
 
 - one supported version pair is selected and documented
 - real task runtime works on that pair without relying on undefined behavior
+
+## Completion Summary
+
+- project metadata now encodes the task-capable runtime as `fastmcp[tasks] >=3.1.1,<3.2.0`
+- the repo now declares `pydocket >=0.18.2,<0.19.0`
+- the lockfile and active environment were aligned to the supported pair and validated without the old shim

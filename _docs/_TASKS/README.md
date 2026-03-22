@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 16 tasks (~230 sub-tasks)
+- **To Do:** 15 tasks (~230 sub-tasks)
 - **In Progress:** 3 tasks
-- **Done:** 149
+- **Done:** 150
 
 ## 🧭 Terminology Guardrails
 
@@ -22,7 +22,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md) | **FastMCP-Docket Runtime Alignment and Shims Removal** | 🔴 High | Remove local task-runtime shim through explicit upstream version alignment |
 | [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md) | **Prompt Layer and Tool-Compatible Prompt Delivery** | 🟡 Medium | Prompts as first-class server product, including tool-only clients |
 | [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | Bounded internal reasoning helpers for analysis and recovery |
 | [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration; not on the default critical path |
@@ -71,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md) | **FastMCP-Docket Runtime Alignment and Shims Removal** | 🔴 High | 2026-03-22 |
 | [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md) | **Background Task Adoption for Import and Export Operations** | 🔴 High | 2026-03-22 |
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | 2026-03-22 |
 | [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | 2026-03-22 |

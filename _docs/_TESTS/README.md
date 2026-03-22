@@ -122,6 +122,12 @@ poetry run pytest tests/unit/adapters/mcp/test_task_candidacy.py tests/unit/adap
 poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_versioned_surface.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/rpc/test_background_job_lifecycle.py tests/unit/adapters/rpc/test_timeout_coordination.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
 ```
 
+Primary local validation commands for TASK-099 runtime alignment:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

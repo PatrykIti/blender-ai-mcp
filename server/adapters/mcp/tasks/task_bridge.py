@@ -15,7 +15,6 @@ from fastmcp import Context
 
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.tasks.result_store import get_background_result_store
-from server.adapters.mcp.tasks.runtime_compat import ensure_task_runtime_compatibility
 from server.adapters.mcp.timeout_policy import MCPTimeoutPolicy, build_timeout_policy
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_rpc_client
@@ -48,7 +47,6 @@ def _get_timeout_policy(ctx: Context) -> MCPTimeoutPolicy:
 def is_background_task_context(ctx: Context) -> bool:
     """Return True when the current tool execution is running as an MCP task."""
 
-    ensure_task_runtime_compatibility()
     try:
         is_background_task = getattr(ctx, "is_background_task", False)
         task_id = getattr(ctx, "task_id", None)
@@ -98,7 +96,6 @@ async def run_rpc_background_job(
 ) -> T:
     """Run an adopted Blender-backed operation in foreground or task mode."""
 
-    ensure_task_runtime_compatibility()
     if not is_background_task_context(ctx):
         return foreground_executor()
 
@@ -230,7 +227,6 @@ async def run_local_background_operation(
 ) -> T:
     """Run a server-local heavy operation in task mode with shared bookkeeping."""
 
-    ensure_task_runtime_compatibility()
     if not is_background_task_context(ctx):
         return foreground_executor()
 

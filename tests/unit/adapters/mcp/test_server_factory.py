@@ -31,6 +31,7 @@ def test_build_server_builds_default_surface():
     assert server._bam_surface_profile == "legacy-flat"
     assert server._bam_capability_manifest == get_capability_manifest()
     assert len(server.providers) >= 4
+    assert server._bam_task_runtime_report.tasks_required is False
 
 
 def test_build_server_builds_alternate_surface_profile():
@@ -44,6 +45,8 @@ def test_build_server_builds_alternate_surface_profile():
     assert guided.name == get_surface_profile("llm-guided").server_name
     assert debug.name == get_surface_profile("internal-debug").server_name
     assert len(debug.providers) > len(guided.providers)
+    assert guided._bam_task_runtime_report.tasks_required is True
+    assert guided._bam_task_runtime_report.supported is True
 
 
 def test_factory_bootstrap_no_longer_imports_areas_side_effect_registry():
@@ -61,3 +64,29 @@ def test_build_server_can_use_explicit_contract_line_override():
     server = build_server("llm-guided", contract_line="llm-guided-v1")
 
     assert server._bam_contract_line == "llm-guided-v1"
+
+
+def test_build_server_fails_clearly_when_task_runtime_pair_is_unsupported(monkeypatch):
+    """Task-capable surfaces should fail fast on an unsupported FastMCP+Docket pair."""
+
+    from server.adapters.mcp.tasks.runtime_policy import TaskRuntimeReport
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.factory.validate_task_runtime_or_raise",
+        lambda tasks_required: (_ for _ in ()).throw(
+            RuntimeError(
+                "Unsupported task runtime for FastMCP task-capable surfaces. "
+                "Resolved pair: fastmcp=3.1.1, pydocket=0.16.1. "
+                "Supported pair: fastmcp>=3.1.1,<3.2.0 + pydocket>=0.18.2,<0.19.0. "
+                "Reason: pydocket 0.16.1 is outside supported range >=0.18.2,<0.19.0"
+            )
+        ),
+    )
+
+    try:
+        build_server("llm-guided")
+    except RuntimeError as exc:
+        assert "Unsupported task runtime" in str(exc)
+        assert "pydocket=0.16.1" in str(exc)
+    else:
+        raise AssertionError("Expected unsupported task runtime to fail fast")

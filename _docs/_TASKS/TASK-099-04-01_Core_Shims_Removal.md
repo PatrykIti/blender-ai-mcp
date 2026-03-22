@@ -1,7 +1,7 @@
 # TASK-099-04-01: Core Shims Removal
 
 **Parent:** [TASK-099-04](./TASK-099-04_Shims_Removal_and_Release_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-099-03](./TASK-099-03_Upstream_Version_Alignment_and_Validation.md)
 

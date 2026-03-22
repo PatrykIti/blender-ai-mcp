@@ -8,7 +8,7 @@ from server.adapters.mcp.tasks.result_store import (
     get_background_result_store,
     reset_background_result_store_for_tests,
 )
-from server.adapters.mcp.tasks.runtime_compat import ensure_task_runtime_compatibility
+from server.adapters.mcp.tasks.runtime_policy import get_task_runtime_report
 
 
 def setup_function():
@@ -41,12 +41,11 @@ def test_background_job_registry_tracks_identity_progress_and_completion():
     assert stored_again is not None
     assert stored_again.payload == {"ok": True}
 
+def test_task_runtime_report_matches_current_supported_pair():
+    """Current environment should resolve to the supported FastMCP+Docket task pair."""
 
-def test_runtime_compatibility_adds_current_execution_alias_for_fastmcp():
-    """The repo should patch the Docket symbol drift FastMCP still imports."""
+    report = get_task_runtime_report(tasks_required=True)
 
-    ensure_task_runtime_compatibility()
-
-    import docket.dependencies as docket_dependencies
-
-    assert hasattr(docket_dependencies, "current_execution")
+    assert report.supported is True
+    assert report.fastmcp_version == "3.1.1"
+    assert report.pydocket_version == "0.18.2"

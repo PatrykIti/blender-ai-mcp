@@ -1,7 +1,7 @@
 # TASK-099-04: Shims Removal and Release Documentation
 
 **Parent:** [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-099-03](./TASK-099-03_Upstream_Version_Alignment_and_Validation.md)
 
@@ -18,15 +18,15 @@ Remove the repo-local runtime compatibility shim and close the task with release
 - remove or neutralize `runtime_compat.py`
 - update release/docs/test notes to reflect the supported runtime baseline
 
-### Current Code Reality
+### Previous Code Reality
 
-Today `runtime_compat.py` is a real behavioral dependency:
+Before completion, `runtime_compat.py` was a real behavioral dependency:
 
-- factory calls it
-- task bridge assumes it may be needed
-- one unit test asserts the alias exists
+- factory called it
+- task bridge assumed it might be needed
+- one unit test asserted the alias existed
 
-This final slice must remove those assumptions cleanly rather than only deleting the file.
+This final slice removed those assumptions rather than only deleting the file.
 
 ---
 
@@ -43,3 +43,9 @@ This final slice must remove those assumptions cleanly rather than only deleting
 
 - the repo-local shim is gone or no longer behaviorally required
 - release/docs/test guidance reflects the final aligned runtime baseline
+
+## Completion Summary
+
+- `runtime_compat.py` is removed
+- factory and task bridge now rely on explicit runtime policy instead of mutation-based compatibility patching
+- release/platform docs now describe the aligned no-shim baseline

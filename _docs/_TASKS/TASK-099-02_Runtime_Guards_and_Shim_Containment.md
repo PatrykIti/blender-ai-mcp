@@ -1,7 +1,7 @@
 # TASK-099-02: Runtime Guards and Shim Containment
 
 **Parent:** [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-099-01](./TASK-099-01_Compatibility_Matrix_and_Reproduction_Harness.md)
 
@@ -29,10 +29,10 @@ Contain the temporary compatibility shim and add fail-fast diagnostics for unsup
 - make shim activation visible and scoped
 - improve error messaging when task mode is unavailable because of runtime mismatch
 
-### Current Code Reality
+### Previous Code Reality
 
-Today the shim is activated unconditionally from `factory.py`.
-There is no explicit “supported pair” guard and no fail-fast path that explains to maintainers which runtime combination is unsupported.
+Before completion, the shim was activated unconditionally from `factory.py`.
+There was no explicit “supported pair” guard and no fail-fast path that explained to maintainers which runtime combination was unsupported.
 
 ---
 
@@ -49,3 +49,9 @@ There is no explicit “supported pair” guard and no fail-fast path that expla
 
 - unsupported version pairs fail clearly
 - the temporary shim is explicit, bounded, and test-covered
+
+## Completion Summary
+
+- the repo now validates task-capable runtime pairs explicitly during server build
+- unsupported task-runtime pairs fail with pair-specific error messages
+- the old shim containment problem no longer exists because the shim has been removed

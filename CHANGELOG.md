@@ -10,6 +10,8 @@
 
 - Extend task mode to the system import/export family (`export_glb`, `export_fbx`, `export_obj`, `import_obj`, `import_fbx`, `import_glb`, `import_image_as_plane`) on task-capable surfaces
 
+- Align FastMCP task runtime to `fastmcp 3.1.1` + `pydocket 0.18.2`, add explicit runtime guards, and remove the old local compatibility shim
+
 ## v2.2.0 (2026-03-20)
 
 ### Features

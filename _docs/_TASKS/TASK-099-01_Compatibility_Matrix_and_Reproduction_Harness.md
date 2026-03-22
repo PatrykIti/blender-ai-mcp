@@ -1,7 +1,7 @@
 # TASK-099-01: Compatibility Matrix and Reproduction Harness
 
 **Parent:** [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)
 
@@ -60,3 +60,8 @@ It does not yet capture a fuller reproduction matrix such as:
 
 - maintainers can reproduce the current drift intentionally
 - the repo records the exact version pair that required the shim
+
+## Completion Summary
+
+- the repo now records the previously mismatched pair and the final aligned pair explicitly
+- runtime policy tests now validate the supported pair directly instead of relying on implicit shim behavior

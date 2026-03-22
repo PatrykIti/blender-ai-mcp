@@ -20,8 +20,10 @@ from server.adapters.mcp.tasks.result_store import (
     get_background_result_store,
     reset_background_result_store_for_tests,
 )
-from server.adapters.mcp.tasks.runtime_compat import (
-    ensure_task_runtime_compatibility,
+from server.adapters.mcp.tasks.runtime_policy import (
+    TaskRuntimeReport,
+    get_task_runtime_report,
+    validate_task_runtime_or_raise,
 )
 
 __all__ = [
@@ -30,11 +32,13 @@ __all__ = [
     "BackgroundResultRecord",
     "BackgroundResultStore",
     "TASK_CANDIDACY_MATRIX",
-    "ensure_task_runtime_compatibility",
     "get_background_job_registry",
     "get_background_result_store",
     "get_task_candidacy",
+    "get_task_runtime_report",
     "get_tool_task_config",
     "reset_background_job_registry_for_tests",
     "reset_background_result_store_for_tests",
+    "TaskRuntimeReport",
+    "validate_task_runtime_or_raise",
 ]
