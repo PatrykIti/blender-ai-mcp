@@ -1,7 +1,7 @@
 # TASK-089-04: Router, Workflow, and Execution Report Contracts
 
 **Parent:** [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md), [TASK-087-01](./TASK-087-01_Elicitation_Domain_Model_and_Response_Contracts.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Introduce typed contracts for `router_set_goal`, router status, workflow catalog responses, and the base execution-report envelope used by router-aware adapter calls.
+
+## Completion Summary
+
+This slice is now closed.
+
+- router/workflow responses are contract-based and machine-readable
+- execution reports use a shared structured envelope
+- clarification payloads reuse the TASK-087 model instead of diverging
 
 ---
 

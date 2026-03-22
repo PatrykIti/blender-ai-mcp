@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 19 tasks (~200 sub-tasks)
+- **To Do:** 18 tasks (~200 sub-tasks)
 - **In Progress:** 4 tasks
-- **Done:** 143
+- **Done:** 144
 
 ## 🧭 Terminology Guardrails
 
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | Non-blocking jobs for imports, renders, analysis, reconstruction |
-| [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | Structured state exchange for critical tools |
 | [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md) | **Prompt Layer and Tool-Compatible Prompt Delivery** | 🟡 Medium | Prompts as first-class server product, including tool-only clients |
 | [TASK-091](./TASK-091_Versioned_Client_Surfaces.md) | **Versioned Client Surfaces for Safe API Evolution** | 🔴 High | Legacy and LLM-first surfaces can coexist |
 | [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | Bounded internal reasoning helpers for analysis and recovery |
@@ -75,6 +74,7 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | 2026-03-22 |
 | [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | 2026-03-22 |
 | [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | 2026-03-22 |
 | [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md) | **Transparent Correction Audit and Postconditions** | 🔴 High | 2026-03-22 |

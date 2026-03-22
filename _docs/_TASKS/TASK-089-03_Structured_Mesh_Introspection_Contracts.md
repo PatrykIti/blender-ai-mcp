@@ -1,7 +1,7 @@
 # TASK-089-03: Structured Mesh Introspection Contracts
 
 **Parent:** [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Standardize contracts for `mesh_inspect` and the internal `mesh_get_*` actions, including paging fields for large payloads.
+
+## Completion Summary
+
+This slice is now closed.
+
+- `mesh_inspect` uses one consistent envelope across action families
+- paging metadata and summary/item payload conventions are standardized
+- tests cover contract validation and structured delivery on the MCP surface
 
 ---
 

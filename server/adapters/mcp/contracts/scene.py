@@ -37,3 +37,43 @@ class SceneInspectResponseContract(MCPContract):
     action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"]
     payload: dict[str, Any] | None = None
     error: str | None = None
+
+
+class SceneSnapshotStateContract(MCPContract):
+    snapshot: dict[str, Any] | None = None
+    hash: str | None = None
+    error: str | None = None
+
+
+class SceneSnapshotDiffContract(MCPContract):
+    objects_added: list[str] | None = None
+    objects_removed: list[str] | None = None
+    objects_modified: list[dict[str, Any]] | None = None
+    baseline_hash: str | None = None
+    target_hash: str | None = None
+    baseline_timestamp: str | None = None
+    target_timestamp: str | None = None
+    has_changes: bool | None = None
+    error: str | None = None
+
+
+class SceneCustomPropertiesContract(MCPContract):
+    object_name: str | None = None
+    property_count: int | None = None
+    properties: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneHierarchyContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneBoundingBoxContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneOriginInfoContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None

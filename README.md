@@ -106,6 +106,22 @@ Current correction transparency baseline:
 - router telemetry/logs receive the same `audit_ids`, so corrected executions can be correlated across responses and operator traces
 - legacy text rendering still exists for compatibility, but the structured execution report is now the canonical audit record
 
+### Structured Contract Baseline
+
+Critical MCP surfaces now default to machine-readable structured contracts:
+
+- `scene_context`
+- `scene_inspect`
+- `scene_snapshot_state`
+- `scene_compare_snapshot`
+- `mesh_inspect`
+- `router_set_goal`
+- `router_get_status`
+- `workflow_catalog`
+
+On structured surfaces, these tools expose native structured payloads aligned with declared schemas.
+Compatibility surfaces can still preserve deterministic text fallback where explicitly required.
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ### Session-Adaptive Guided Mode

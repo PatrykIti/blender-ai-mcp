@@ -1,7 +1,7 @@
 # TASK-089-02: Structured Scene Context and Inspection Contracts
 
 **Parent:** [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Expose typed contracts for `scene_context`, `scene_inspect`, `scene_snapshot_state`, `scene_compare_snapshot`, and related read-heavy scene tools.
+
+## Completion Summary
+
+This slice is now closed.
+
+- scene context and inspection mega tools use structured contracts
+- snapshot/diff and the remaining read-heavy scene helpers now return typed payloads instead of prose/JSON dumps
+- tests cover both contract validation and real FastMCP structured delivery
 
 ---
 

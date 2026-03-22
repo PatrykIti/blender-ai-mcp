@@ -84,6 +84,25 @@ Missing-input handling is now a first-class interaction layer:
 - session state persists pending clarification identity, partial answers, and last elicitation action
 - `workflow_catalog` import conflicts reuse the same typed clarification payload shape for compatibility mode
 
+## Structured Contract Baseline
+
+The structured-contract layer now covers the high-value state-heavy MCP surfaces:
+
+- `scene_context`
+- `scene_inspect`
+- `scene_snapshot_state`
+- `scene_compare_snapshot`
+- `scene_get_custom_properties`
+- `scene_get_hierarchy`
+- `scene_get_bounding_box`
+- `scene_get_origin_info`
+- `mesh_inspect`
+- `router_set_goal`
+- `router_get_status`
+- `workflow_catalog`
+
+These tools return native structured payloads on contract-enabled paths and use the shared contract helpers/output-schema policy instead of prose-first JSON-string wrappers.
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

@@ -26,6 +26,27 @@ The router and dispatcher still use canonical internal tool names.
 
 ---
 
+## Structured Contract Surfaces
+
+The current structured-contract baseline covers:
+
+- `scene_context`
+- `scene_inspect`
+- `scene_snapshot_state`
+- `scene_compare_snapshot`
+- `scene_get_custom_properties`
+- `scene_get_hierarchy`
+- `scene_get_bounding_box`
+- `scene_get_origin_info`
+- `mesh_inspect`
+- `router_set_goal`
+- `router_get_status`
+- `workflow_catalog`
+
+These tools are intended to expose stable machine-readable payloads rather than prose-first JSON strings.
+
+---
+
 ## 🧠 LLM Context Optimization - Mega Tools
 
 > **Unified tools that consolidate multiple related operations to reduce LLM context usage.**

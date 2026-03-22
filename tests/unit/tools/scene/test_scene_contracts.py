@@ -1,10 +1,16 @@
 """Tests for structured scene contracts."""
 
 from server.adapters.mcp.contracts.scene import (
+    SceneBoundingBoxContract,
     SceneContextResponseContract,
+    SceneCustomPropertiesContract,
+    SceneHierarchyContract,
     SceneInspectResponseContract,
     SceneModeContract,
+    SceneOriginInfoContract,
     SceneSelectionContract,
+    SceneSnapshotDiffContract,
+    SceneSnapshotStateContract,
 )
 
 
@@ -51,3 +57,37 @@ def test_scene_inspect_contract_carries_structured_payload_or_error():
 
     assert payload.payload["object_name"] == "Cube"
     assert error.error == "object_name required"
+
+
+def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads():
+    """Structured scene read contracts should validate the remaining read-heavy payloads."""
+
+    snapshot = SceneSnapshotStateContract(
+        snapshot={"object_count": 1, "mode": "OBJECT"},
+        hash="abc123",
+    )
+    diff = SceneSnapshotDiffContract(
+        objects_added=["Cube"],
+        objects_removed=[],
+        objects_modified=[],
+        baseline_hash="base",
+        target_hash="target",
+        baseline_timestamp="t1",
+        target_timestamp="t2",
+        has_changes=True,
+    )
+    props = SceneCustomPropertiesContract(
+        object_name="Cube",
+        property_count=1,
+        properties={"tag": "hero"},
+    )
+    hierarchy = SceneHierarchyContract(payload={"roots": [{"name": "Cube"}], "total_objects": 1})
+    bbox = SceneBoundingBoxContract(payload={"min": [0, 0, 0], "max": [1, 1, 1]})
+    origin = SceneOriginInfoContract(payload={"origin_world": [0, 0, 0], "suggestions": []})
+
+    assert snapshot.hash == "abc123"
+    assert diff.objects_added == ["Cube"]
+    assert props.properties["tag"] == "hero"
+    assert hierarchy.payload["total_objects"] == 1
+    assert bbox.payload["max"] == [1, 1, 1]
+    assert origin.payload["origin_world"] == [0, 0, 0]

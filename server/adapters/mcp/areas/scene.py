@@ -4,10 +4,16 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.contracts.scene import (
+    SceneBoundingBoxContract,
     SceneContextResponseContract,
+    SceneCustomPropertiesContract,
+    SceneHierarchyContract,
     SceneInspectResponseContract,
     SceneModeContract,
+    SceneOriginInfoContract,
     SceneSelectionContract,
+    SceneSnapshotDiffContract,
+    SceneSnapshotStateContract,
 )
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
@@ -452,7 +458,7 @@ def scene_snapshot_state(
     ctx: Context,
     include_mesh_stats: bool = False,
     include_materials: bool = False
-) -> str:
+) -> SceneSnapshotStateContract:
     """
     [SCENE][SAFE][READ-ONLY] Captures a lightweight JSON snapshot of the scene state.
 
@@ -469,31 +475,17 @@ def scene_snapshot_state(
     def execute():
         handler = get_scene_handler()
         try:
-            result = handler.snapshot_state(
+            contract = SceneSnapshotStateContract.model_validate(handler.snapshot_state(
                 include_mesh_stats=include_mesh_stats,
                 include_materials=include_materials
-            )
-            import json
-
-            snapshot = result.get("snapshot", {})
-            snapshot_hash = result.get("hash", "unknown")
+            ))
+            snapshot = contract.snapshot
+            snapshot_hash = contract.hash
             object_count = snapshot.get("object_count", 0)
-            timestamp = snapshot.get("timestamp", "unknown")
-
-            summary = (
-                f"Scene Snapshot Captured:\n"
-                f"- Timestamp: {timestamp}\n"
-                f"- Objects: {object_count}\n"
-                f"- Hash: {snapshot_hash[:16]}...\n"
-                f"- Active Object: {snapshot.get('active_object') or 'None'}\n"
-                f"- Mode: {snapshot.get('mode', 'UNKNOWN')}\n\n"
-                f"Full snapshot (JSON):\n{json.dumps(snapshot, indent=2)}"
-            )
-
             ctx_info(ctx, f"Snapshot captured: {object_count} objects, hash={snapshot_hash[:8]}")
-            return summary
+            return contract
         except RuntimeError as e:
-            return str(e)
+            return SceneSnapshotStateContract(error=str(e))
 
     return route_tool_call(
         tool_name="scene_snapshot_state",
@@ -506,7 +498,7 @@ def scene_compare_snapshot(
     baseline_snapshot: str,
     target_snapshot: str,
     ignore_minor_transforms: float = 0.0
-) -> str:
+) -> SceneSnapshotDiffContract:
     """
     [SCENE][SAFE][READ-ONLY] Compares two scene snapshots and returns a diff summary.
 
@@ -525,57 +517,18 @@ def scene_compare_snapshot(
         diff_service = get_snapshot_diff_service()
 
         try:
-            result = diff_service.compare_snapshots(
+            result = SceneSnapshotDiffContract.model_validate(diff_service.compare_snapshots(
                 baseline_snapshot=baseline_snapshot,
                 target_snapshot=target_snapshot,
                 ignore_minor_transforms=ignore_minor_transforms
-            )
+            ))
         except ValueError as e:
-            return f"Error: {str(e)}"
-
-        added = result.get("objects_added", [])
-        removed = result.get("objects_removed", [])
-        modified = result.get("objects_modified", [])
-        has_changes = result.get("has_changes", False)
-
-        if not has_changes:
-            return "No changes detected between snapshots."
-
-        lines = [
-            "Snapshot Comparison:",
-            f"- Baseline: {result.get('baseline_timestamp')} (hash: {result.get('baseline_hash', 'unknown')[:16]}...)",
-            f"- Target: {result.get('target_timestamp')} (hash: {result.get('target_hash', 'unknown')[:16]}...)",
-            ""
-        ]
-
-        if added:
-            lines.append(f"Objects Added ({len(added)}):")
-            for obj_name in added:
-                lines.append(f"  + {obj_name}")
-            lines.append("")
-
-        if removed:
-            lines.append(f"Objects Removed ({len(removed)}):")
-            for obj_name in removed:
-                lines.append(f"  - {obj_name}")
-            lines.append("")
-
-        if modified:
-            lines.append(f"Objects Modified ({len(modified)}):")
-            for mod in modified:
-                obj_name = mod.get("object_name")
-                changes = mod.get("changes", [])
-                lines.append(f"  ~ {obj_name}:")
-                for change in changes:
-                    prop = change.get("property")
-                    old_val = change.get("old_value")
-                    new_val = change.get("new_value")
-                    lines.append(f"      {prop}: {old_val} → {new_val}")
-            lines.append("")
-
-        summary = "\n".join(lines)
-        ctx_info(ctx, f"Snapshot diff: +{len(added)} -{len(removed)} ~{len(modified)}")
-        return summary
+            return SceneSnapshotDiffContract(error=str(e))
+        ctx_info(
+            ctx,
+            f"Snapshot diff: +{len(result.objects_added)} -{len(result.objects_removed)} ~{len(result.objects_modified)}",
+        )
+        return result
 
     return route_tool_call(
         tool_name="scene_compare_snapshot",
@@ -1066,7 +1019,7 @@ def scene_camera_focus(
 def scene_get_custom_properties(
     ctx: Context,
     object_name: str
-) -> str:
+) -> SceneCustomPropertiesContract | str:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets custom properties (metadata) from an object.
 
@@ -1085,26 +1038,14 @@ def scene_get_custom_properties(
     def execute():
         handler = get_scene_handler()
         try:
-            result = handler.get_custom_properties(object_name)
-            import json
+            result = SceneCustomPropertiesContract.model_validate(handler.get_custom_properties(object_name))
+            props = result.properties
+            count = result.property_count
 
-            props = result.get("properties", {})
-            count = result.get("property_count", 0)
-
-            if count == 0:
-                return f"Object '{object_name}' has no custom properties."
-
-            lines = [
-                f"Custom Properties for '{object_name}' ({count} properties):",
-            ]
-            for key, value in props.items():
-                lines.append(f"  • {key}: {value}")
-
-            lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
             ctx_info(ctx, f"Retrieved {count} custom properties from '{object_name}'")
-            return "\n".join(lines)
+            return result
         except RuntimeError as e:
-            return str(e)
+            return SceneCustomPropertiesContract(error=str(e), object_name=object_name)
 
     return route_tool_call(
         tool_name="scene_get_custom_properties",
@@ -1156,7 +1097,7 @@ def scene_get_hierarchy(
     ctx: Context,
     object_name: Optional[str] = None,
     include_transforms: bool = False
-) -> str:
+) -> SceneHierarchyContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets parent-child hierarchy for objects.
 
@@ -1175,49 +1116,11 @@ def scene_get_hierarchy(
     def execute():
         handler = get_scene_handler()
         try:
-            result = handler.get_hierarchy(object_name, include_transforms)
-            import json
-
-            if object_name:
-                # Single object hierarchy
-                parent = result.get("parent", "None")
-                children = result.get("children", [])
-                depth = result.get("depth", 0)
-                path = result.get("hierarchy_path", object_name)
-
-                lines = [
-                    f"Hierarchy for '{object_name}':",
-                    f"  • Parent: {parent or 'None (root)'}",
-                    f"  • Children ({len(children)}): {', '.join(children) if children else 'None'}",
-                    f"  • Depth: {depth}",
-                    f"  • Path: {path}",
-                ]
-            else:
-                # Full scene hierarchy
-                roots = result.get("roots", [])
-                total = result.get("total_objects", 0)
-                max_depth = result.get("max_depth", 0)
-
-                lines = [
-                    f"Scene Hierarchy ({total} objects, max depth {max_depth}):",
-                ]
-
-                def format_tree(items, indent=0):
-                    for item in items:
-                        name = item.get("name", "Unknown")
-                        children = item.get("children", [])
-                        prefix = "  " * indent + ("└─ " if indent > 0 else "• ")
-                        lines.append(f"{prefix}{name}")
-                        if children:
-                            format_tree(children, indent + 1)
-
-                format_tree(roots)
-
-            lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
+            result = SceneHierarchyContract(payload=handler.get_hierarchy(object_name, include_transforms))
             ctx_info(ctx, f"Retrieved hierarchy for {object_name or 'full scene'}")
-            return "\n".join(lines)
+            return result
         except RuntimeError as e:
-            return str(e)
+            return SceneHierarchyContract(error=str(e))
 
     return route_tool_call(
         tool_name="scene_get_hierarchy",
@@ -1230,7 +1133,7 @@ def scene_get_bounding_box(
     ctx: Context,
     object_name: str,
     world_space: bool = True
-) -> str:
+) -> SceneBoundingBoxContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets bounding box corners for an object.
 
@@ -1248,30 +1151,11 @@ def scene_get_bounding_box(
     def execute():
         handler = get_scene_handler()
         try:
-            result = handler.get_bounding_box(object_name, world_space)
-            import json
-
-            space = result.get("space", "world" if world_space else "local")
-            min_corner = result.get("min", [0, 0, 0])
-            max_corner = result.get("max", [0, 0, 0])
-            center = result.get("center", [0, 0, 0])
-            dimensions = result.get("dimensions", [0, 0, 0])
-            volume = result.get("volume", 0)
-
-            lines = [
-                f"Bounding Box for '{object_name}' ({space} space):",
-                f"  • Min: [{min_corner[0]:.4f}, {min_corner[1]:.4f}, {min_corner[2]:.4f}]",
-                f"  • Max: [{max_corner[0]:.4f}, {max_corner[1]:.4f}, {max_corner[2]:.4f}]",
-                f"  • Center: [{center[0]:.4f}, {center[1]:.4f}, {center[2]:.4f}]",
-                f"  • Dimensions: [{dimensions[0]:.4f}, {dimensions[1]:.4f}, {dimensions[2]:.4f}]",
-                f"  • Volume: {volume:.6f}",
-            ]
-
-            lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
+            result = SceneBoundingBoxContract(payload=handler.get_bounding_box(object_name, world_space))
             ctx_info(ctx, f"Retrieved bounding box for '{object_name}'")
-            return "\n".join(lines)
+            return result
         except RuntimeError as e:
-            return str(e)
+            return SceneBoundingBoxContract(error=str(e))
 
     return route_tool_call(
         tool_name="scene_get_bounding_box",
@@ -1283,7 +1167,7 @@ def scene_get_bounding_box(
 def scene_get_origin_info(
     ctx: Context,
     object_name: str
-) -> str:
+) -> SceneOriginInfoContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets origin (pivot point) information for an object.
 
@@ -1301,32 +1185,11 @@ def scene_get_origin_info(
     def execute():
         handler = get_scene_handler()
         try:
-            result = handler.get_origin_info(object_name)
-            import json
-
-            origin_world = result.get("origin_world", [0, 0, 0])
-            relative = result.get("relative_to_bbox", {"x": 0.5, "y": 0.5, "z": 0.5})
-            suggestions = result.get("suggestions", [])
-
-            lines = [
-                f"Origin Info for '{object_name}':",
-                f"  • World Position: [{origin_world[0]:.4f}, {origin_world[1]:.4f}, {origin_world[2]:.4f}]",
-                f"  • Relative to BBox:",
-                f"      X: {relative.get('x', 0.5):.2f} (0=min, 0.5=center, 1=max)",
-                f"      Y: {relative.get('y', 0.5):.2f}",
-                f"      Z: {relative.get('z', 0.5):.2f}",
-            ]
-
-            if suggestions:
-                lines.append("  • Suggestions:")
-                for sug in suggestions:
-                    lines.append(f"      - {sug}")
-
-            lines.append(f"\nFull data (JSON):\n{json.dumps(result, indent=2)}")
+            result = SceneOriginInfoContract(payload=handler.get_origin_info(object_name))
             ctx_info(ctx, f"Retrieved origin info for '{object_name}'")
-            return "\n".join(lines)
+            return result
         except RuntimeError as e:
-            return str(e)
+            return SceneOriginInfoContract(error=str(e))
 
     return route_tool_call(
         tool_name="scene_get_origin_info",

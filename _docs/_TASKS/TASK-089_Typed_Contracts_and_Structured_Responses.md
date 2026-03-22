@@ -4,7 +4,9 @@
 **Category:** FastMCP LLM Reliability  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-083  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The structured-contract layer now covers the high-value scene, mesh, router, workflow, and execution-report surfaces; adapter return policy is centralized; contract-enabled tools use native structured delivery with compatibility strategy where needed; and tests/docs cover schemas, delivery behavior, and the current contract-enabled public surfaces.
 
 ---
 

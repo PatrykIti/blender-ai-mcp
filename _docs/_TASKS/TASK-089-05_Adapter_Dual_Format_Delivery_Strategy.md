@@ -1,7 +1,7 @@
 # TASK-089-05: Native Structured-First Delivery and Compatibility Strategy
 
 **Parent:** [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md), [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md), [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Define the transition strategy for delivering structured-first responses by relying on FastMCP's native structured/tool-output behavior first, while preserving explicit compatibility exceptions where required.
+
+## Completion Summary
+
+This slice is now closed.
+
+- native structured-first delivery is the default on contract-enabled paths
+- compatibility exceptions remain explicit and narrow instead of being spread across adapters
+- tests cover both structured and compatibility delivery expectations
 
 ---
 
