@@ -7,9 +7,12 @@ class RpcRequest(BaseModel):
     cmd: str
     args: Dict[str, Any] = Field(default_factory=dict)
     timeout_seconds: Optional[float] = None
+    deadline_unix_ms: Optional[int] = None
 
 class RpcResponse(BaseModel):
     request_id: str
     status: str  # "ok" or "error"
     result: Optional[Any] = None
     error: Optional[str] = None
+    error_code: Optional[str] = None
+    error_boundary: Optional[str] = None

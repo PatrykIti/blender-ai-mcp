@@ -232,6 +232,7 @@ class BlenderRpcServer:
         cmd = message.get("cmd")
         args = message.get("args", {})
         timeout_seconds = message.get("timeout_seconds")
+        deadline_unix_ms = message.get("deadline_unix_ms")
 
         if not request_id or not cmd:
             return {"status": "error", "error": "Missing request_id or cmd", "request_id": request_id}
@@ -277,9 +278,17 @@ class BlenderRpcServer:
                 if isinstance(timeout_seconds, (int, float)) and timeout_seconds > 0
                 else DEFAULT_EXECUTION_TIMEOUT_SECONDS
             )
+            if isinstance(deadline_unix_ms, (int, float)):
+                remaining_seconds = max(0.0, (float(deadline_unix_ms) / 1000.0) - time.time())
+                effective_timeout = min(effective_timeout, remaining_seconds)
             response_payload = result_queue.get(timeout=effective_timeout)
         except queue.Empty:
-            response_payload = {"status": "error", "error": "Command timed out"}
+            response_payload = {
+                "status": "error",
+                "error": f"Addon execution timeout after {effective_timeout:.1f}s for '{cmd}'",
+                "error_code": "timeout",
+                "error_boundary": "addon_execution",
+            }
         
         del self.result_queues[request_id]
         

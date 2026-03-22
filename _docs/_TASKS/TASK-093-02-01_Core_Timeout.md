@@ -1,7 +1,7 @@
 # TASK-093-02-01: Core Tool and Task Timeout Policy
 
 **Parent:** [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
 

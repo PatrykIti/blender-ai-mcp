@@ -67,14 +67,21 @@ class RpcClient(IRpcClient):
                 pass
             self.socket = None
 
-    def send_request(self, cmd: str, args: Dict[str, Any] = None) -> RpcResponse:
+    def send_request(
+        self,
+        cmd: str,
+        args: Dict[str, Any] = None,
+        timeout_seconds: Optional[float] = None,
+    ) -> RpcResponse:
         if args is None:
             args = {}
 
+        addon_timeout = timeout_seconds or self.addon_execution_timeout_seconds
         request = RpcRequest(
             cmd=cmd,
             args=args,
-            timeout_seconds=self.addon_execution_timeout_seconds,
+            timeout_seconds=addon_timeout,
+            deadline_unix_ms=int((time.time() + addon_timeout) * 1000),
         )
         
         # Auto-reconnect logic
@@ -87,6 +94,9 @@ class RpcClient(IRpcClient):
                 )
 
         try:
+            # Keep the socket boundary explicit per request.
+            self.socket.settimeout(self.timeout)
+
             # Send
             data = request.model_dump_json().encode('utf-8')
             send_msg(self.socket, data)
@@ -105,11 +115,15 @@ class RpcClient(IRpcClient):
             return RpcResponse(
                 request_id=request.request_id,
                 status="error",
-                error=f"Connection error: {str(e)}"
+                error=f"RPC client timeout after {self.timeout:.1f}s while waiting for '{cmd}'",
+                error_code="timeout" if isinstance(e, socket.timeout) else "connection_error",
+                error_boundary="rpc_client",
             )
         except Exception as e:
             return RpcResponse(
                 request_id=request.request_id,
                 status="error",
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
+                error_code="unexpected_error",
+                error_boundary="rpc_client",
             )
