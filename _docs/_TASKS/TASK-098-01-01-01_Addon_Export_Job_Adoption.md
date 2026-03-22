@@ -1,7 +1,7 @@
 # TASK-098-01-01-01: Addon Export Job Adoption
 
 **Parent:** [TASK-098-01-01](./TASK-098-01-01_Core_Export_Task_Mode_Adoption.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-098-01](./TASK-098-01_Export_Task_Mode_Adoption.md)
 

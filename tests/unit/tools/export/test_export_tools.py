@@ -10,6 +10,7 @@ import sys
 import pytest
 from unittest.mock import MagicMock, patch
 
+from blender_addon.application.handlers.job_utils import JobCancelledError
 from blender_addon.application.handlers.system import SystemHandler
 
 
@@ -379,6 +380,32 @@ class TestExportObj:
         assert call_kwargs["export_uv"] is False
         assert call_kwargs["export_normals"] is False
         assert call_kwargs["export_triangulated_mesh"] is True
+
+    def test_export_obj_reports_progress_for_background_job_hooks(self):
+        """OBJ export should emit coarse progress milestones when callbacks are provided."""
+
+        progress_events = []
+
+        with patch("os.makedirs"), patch("os.access", return_value=True), patch("os.path.exists", return_value=True):
+            result = self.handler.export_obj(
+                filepath="/tmp/test.obj",
+                progress_callback=lambda current, total=None, message=None: progress_events.append(
+                    (current, total, message)
+                ),
+            )
+
+        assert "Successfully exported" in result
+        assert progress_events[0] == (0, 4, "Validating OBJ export path")
+        assert progress_events[-1] == (4, 4, "OBJ export complete")
+
+    def test_export_glb_honors_cooperative_cancellation(self):
+        """Export handlers should stop early when background cancellation is requested."""
+
+        with pytest.raises(JobCancelledError):
+            self.handler.export_glb(
+                filepath="/tmp/test.glb",
+                is_cancelled=lambda: True,
+            )
 
 
 class TestExportEdgeCases:

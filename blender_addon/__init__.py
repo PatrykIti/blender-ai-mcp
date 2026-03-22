@@ -205,6 +205,9 @@ def register():
         rpc_server.register_handler("export.glb", system_handler.export_glb)
         rpc_server.register_handler("export.fbx", system_handler.export_fbx)
         rpc_server.register_handler("export.obj", system_handler.export_obj)
+        rpc_server.register_background_handler("export.glb", system_handler.export_glb)
+        rpc_server.register_background_handler("export.fbx", system_handler.export_fbx)
+        rpc_server.register_background_handler("export.obj", system_handler.export_obj)
 
         # TASK-025: System Tools
         rpc_server.register_handler("system.set_mode", system_handler.set_mode)
@@ -278,6 +281,9 @@ def register():
         rpc_server.register_handler("import.fbx", system_handler.import_fbx)
         rpc_server.register_handler("import.glb", system_handler.import_glb)
         rpc_server.register_handler("import.image_as_plane", system_handler.import_image_as_plane)
+        rpc_server.register_background_handler("import.obj", system_handler.import_obj)
+        rpc_server.register_background_handler("import.fbx", system_handler.import_fbx)
+        rpc_server.register_background_handler("import.glb", system_handler.import_glb)
 
         # TASK-033: Lattice Deformation Tools
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)

@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import sys
 
+from blender_addon.application.handlers.job_utils import JobCancelledError
 from blender_addon.application.handlers.system import SystemHandler
 
 
@@ -178,6 +179,37 @@ class TestImportGLB:
         assert call_kwargs['import_pack_images'] is False
         assert call_kwargs['merge_vertices'] is True
         assert call_kwargs['import_shading'] == "SMOOTH"
+
+    @patch('os.path.exists')
+    def test_import_glb_reports_progress_for_background_job_hooks(self, mock_exists):
+        """GLB import should emit coarse progress milestones when callbacks are provided."""
+
+        mock_exists.return_value = True
+        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
+        progress_events = []
+
+        result = self.handler.import_glb(
+            filepath="/path/to/model.gltf",
+            progress_callback=lambda current, total=None, message=None: progress_events.append(
+                (current, total, message)
+            ),
+        )
+
+        assert "Successfully imported" in result
+        assert progress_events[0] == (0, 3, "Validating GLB/GLTF import file")
+        assert progress_events[-1] == (3, 3, "GLB/GLTF import complete")
+
+    @patch('os.path.exists')
+    def test_import_obj_honors_cooperative_cancellation(self, mock_exists):
+        """Import handlers should stop early when background cancellation is requested."""
+
+        mock_exists.return_value = True
+
+        with pytest.raises(JobCancelledError):
+            self.handler.import_obj(
+                filepath="/path/to/model.obj",
+                is_cancelled=lambda: True,
+            )
 
 
 class TestImportImageAsPlane:

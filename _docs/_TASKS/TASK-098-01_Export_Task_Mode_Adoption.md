@@ -1,7 +1,7 @@
 # TASK-098-01: Export Task Mode Adoption
 
 **Parent:** [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)
 
@@ -65,3 +65,9 @@ Exports should follow the same pattern as the TASK-088 first wave:
 
 - export tools can run through the shared background task path
 - export tools keep a coherent synchronous fallback path
+
+## Completion Summary
+
+- `export_glb`, `export_fbx`, and `export_obj` now register explicit task mode on task-capable surfaces
+- addon handlers expose cooperative progress/cancel hooks and are registered as background-capable jobs
+- foreground export behavior remains intact

@@ -1,7 +1,7 @@
 # TASK-098-02: Import Task Mode Adoption
 
 **Parent:** [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)
 
@@ -60,3 +60,9 @@ Foreground result strings that mention imported object names should remain under
 
 - import tools can run through the shared background task path
 - import tools keep a coherent synchronous fallback path
+
+## Completion Summary
+
+- `import_obj`, `import_fbx`, and `import_glb` now register explicit task mode on task-capable surfaces
+- addon handlers expose cooperative progress/cancel hooks and are registered as background-capable jobs
+- foreground import behavior remains intact, including imported-object delta reporting

@@ -1,7 +1,7 @@
 # TASK-098-02-01-02: Async Import MCP Entrypoints
 
 **Parent:** [TASK-098-02-01](./TASK-098-02-01_Core_Import_Task_Mode_Adoption.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-098-02](./TASK-098-02_Import_Task_Mode_Adoption.md)
 

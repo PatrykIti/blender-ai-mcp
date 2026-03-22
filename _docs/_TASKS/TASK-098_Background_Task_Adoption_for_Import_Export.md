@@ -4,7 +4,9 @@
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-088, TASK-093-02  
-**Status:** ⬜ Planned
+**Status:** 🚧 In Progress
+
+**Current State:** `TASK-098-01` and `TASK-098-02` are now implemented in code: export and import tools use explicit async MCP entrypoints with `TaskConfig(mode="optional")`, addon-side background job registration, and the shared TASK-088 bridge. `TASK-098-03` (`import_image_as_plane`) and `TASK-098-04` (operations/rollback/docs closeout) remain open.
 
 ---
 
