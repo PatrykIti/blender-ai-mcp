@@ -37,6 +37,7 @@ from server.domain.tools.armature import IArmatureTool
 from server.domain.tools.workflow_catalog import IWorkflowCatalogTool
 from server.infrastructure.config import get_config
 from server.router.infrastructure.workflow_loader import get_workflow_loader
+from server.router.application.policy.correction_policy_engine import CorrectionPolicyEngine
 
 # --- Providers (Factory Functions) ---
 # Wzorzec "Singleton" realizowany przez zmienne modułu (lub lru_cache)
@@ -193,6 +194,12 @@ def get_router_config():
     return RouterConfig(log_decisions=config.ROUTER_LOG_DECISIONS)
 
 
+def get_correction_policy_engine() -> CorrectionPolicyEngine:
+    """Provider for correction policy engine."""
+
+    return CorrectionPolicyEngine()
+
+
 def get_intent_classifier():
     """Provider for IntentClassifier (tool classification).
 
@@ -331,6 +338,7 @@ def get_router_handler() -> IRouterTool:
             enabled=config.ROUTER_ENABLED,
             parameter_resolver=get_parameter_resolver() if config.ROUTER_ENABLED else None,
             workflow_loader=get_workflow_loader() if config.ROUTER_ENABLED else None,
+            correction_policy_engine=get_correction_policy_engine() if config.ROUTER_ENABLED else None,
         )
     return _router_handler_instance
 

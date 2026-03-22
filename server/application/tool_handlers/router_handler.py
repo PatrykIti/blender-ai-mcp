@@ -12,6 +12,14 @@ import json
 from typing import Dict, Any, List, Optional, Tuple, Union
 
 from server.domain.tools.router import IRouterTool
+from server.router.application.confidence_normalization import (
+    normalize_ensemble_result,
+    normalize_workflow_match_confidence,
+)
+from server.router.application.policy.correction_policy_engine import (
+    CorrectionPolicyEngine,
+    PolicyDecision,
+)
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
 
@@ -32,6 +40,7 @@ class RouterToolHandler(IRouterTool):
         enabled: bool = True,
         parameter_resolver=None,
         workflow_loader=None,
+        correction_policy_engine: Optional[CorrectionPolicyEngine] = None,
     ):
         """Initialize router handler.
 
@@ -48,6 +57,7 @@ class RouterToolHandler(IRouterTool):
         self._enabled = enabled
         self._parameter_resolver = parameter_resolver
         self._workflow_loader = workflow_loader
+        self._correction_policy_engine = correction_policy_engine or CorrectionPolicyEngine()
 
     def set_goal(
         self,
@@ -125,6 +135,76 @@ class RouterToolHandler(IRouterTool):
                 "phase_hint": derive_phase_hint_from_router_result({"status": "no_match"}),
                 "message": f"No workflow matched for: '{goal}'. Router will use heuristics to assist.",
             }
+
+        # Medium-confidence workflow matches should escalate to clarification instead
+        # of silently reinterpreting intent.
+        ensemble_result = getattr(router, "_last_ensemble_result", None)
+        if ensemble_result is not None:
+            normalized_confidence = normalize_ensemble_result(ensemble_result)
+            policy_decision = self._correction_policy_engine.decide(normalized_confidence)
+            if policy_decision.decision == PolicyDecision.ASK:
+                return {
+                    "status": "needs_input",
+                    "workflow": matched_workflow,
+                    "resolved": {},
+                    "unresolved": [
+                        {
+                            "param": "workflow_confirmation",
+                            "type": "string",
+                            "description": "Confirm or refine the workflow choice before execution",
+                            "enum": [matched_workflow],
+                            "default": matched_workflow,
+                            "context": goal,
+                            "semantic_hints": [],
+                            "error": (
+                                f"Medium-confidence workflow match ({normalized_confidence.score:.3f}, "
+                                f"band={normalized_confidence.band}) requires confirmation."
+                            ),
+                        }
+                    ],
+                    "resolution_sources": {},
+                    "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+                    "message": (
+                        f"Workflow '{matched_workflow}' is only a medium-confidence match. "
+                        "Please confirm or refine the requested workflow before execution."
+                    ),
+                }
+        else:
+            last_match = getattr(router, "_last_match_result", None)
+            if last_match is not None:
+                normalized_confidence = normalize_workflow_match_confidence(
+                    workflow_name=matched_workflow,
+                    confidence_level=getattr(last_match, "confidence_level", None),
+                    requires_adaptation=bool(getattr(last_match, "requires_adaptation", False)),
+                )
+                policy_decision = self._correction_policy_engine.decide(normalized_confidence)
+                if policy_decision.decision == PolicyDecision.ASK:
+                    return {
+                        "status": "needs_input",
+                        "workflow": matched_workflow,
+                        "resolved": {},
+                        "unresolved": [
+                            {
+                                "param": "workflow_confirmation",
+                                "type": "string",
+                                "description": "Confirm or refine the workflow choice before execution",
+                                "enum": [matched_workflow],
+                                "default": matched_workflow,
+                                "context": goal,
+                                "semantic_hints": [],
+                                "error": (
+                                    f"Medium-confidence workflow match "
+                                    f"(band={normalized_confidence.band}) requires confirmation."
+                                ),
+                            }
+                        ],
+                        "resolution_sources": {},
+                        "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+                        "message": (
+                            f"Workflow '{matched_workflow}' is only a medium-confidence match. "
+                            "Please confirm or refine the requested workflow before execution."
+                        ),
+                    }
 
         # Step 2: Get workflow definition and parameters
         loader = self._workflow_loader

@@ -161,6 +161,8 @@ class MockRouter:
         self._pending_workflow = None
         self._pending_modifiers = {}
         self._pending_variables = {}
+        self._last_match_result = None
+        self._last_ensemble_result = None
 
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set goal and return matched workflow."""
@@ -519,6 +521,23 @@ class TestSetGoalUnified:
         result = handler.set_goal("picnic table with straight legs")
 
         assert result["resolution_sources"]["leg_angle_left"] == "yaml_modifier"
+
+    def test_set_goal_medium_confidence_match_escalates_to_needs_input(
+        self, handler, mock_loader, mock_resolver, mock_router
+    ):
+        """Medium-confidence workflow matches should request confirmation instead of auto-running."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal("picnic table")
+
+        assert result["status"] == "needs_input"
+        assert result["workflow"] == "picnic_table"
+        assert result["unresolved"][0]["param"] == "workflow_confirmation"
 
 
 class TestExtractContextForParam:

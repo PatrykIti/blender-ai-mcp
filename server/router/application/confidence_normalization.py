@@ -59,6 +59,35 @@ def normalize_ensemble_result(result: EnsembleResult) -> NormalizedConfidence:
     )
 
 
+def normalize_workflow_match_confidence(
+    *,
+    workflow_name: str | None,
+    confidence_level: str | None,
+    requires_adaptation: bool,
+) -> NormalizedConfidence:
+    """Normalize coarse workflow match state when only a confidence band is available."""
+
+    band = _WORKFLOW_CONFIDENCE_BANDS.get(confidence_level or "NONE", ConfidenceBand.NONE)
+    score = {
+        ConfidenceBand.HIGH: 0.9,
+        ConfidenceBand.MEDIUM: 0.7,
+        ConfidenceBand.LOW: 0.3,
+        ConfidenceBand.NONE: 0.0,
+    }[band]
+    return NormalizedConfidence(
+        source="workflow_match",
+        score=score,
+        band=band,
+        risk=CorrectionRisk.HIGH if requires_adaptation else CorrectionRisk.MEDIUM,
+        rationale="Workflow match confidence classification",
+        metadata={
+            "workflow_name": workflow_name,
+            "confidence_level": confidence_level,
+            "requires_adaptation": requires_adaptation,
+        },
+    )
+
+
 def normalize_override_decision(rule_name: str, should_override: bool) -> NormalizedConfidence:
     """Normalize override engine confidence into one shared envelope."""
 
