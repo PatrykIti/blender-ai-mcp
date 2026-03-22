@@ -8,6 +8,8 @@ import ast
 import json
 from pathlib import Path
 
+from server.adapters.mcp.platform.name_resolution import get_llm_guided_alias_map
+
 
 def _find_repo_root(start: Path) -> Path:
     for candidate in [start] + list(start.parents):
@@ -224,4 +226,27 @@ def test_router_emitted_tool_names_exist_in_mcp():
     assert not unknown, (
         "Router code emits tool_name values not present in MCP tools/dispatcher handlers:\n"
         + "\n".join(f"- {tool}" for tool in unknown)
+    )
+
+
+def test_public_aliases_resolve_to_known_internal_tools():
+    """Public aliases must resolve to canonical tool ids known to MCP or dispatcher internals."""
+
+    repo_root = _find_repo_root(Path(__file__).resolve().parent)
+    mcp_signatures = _extract_mcp_tool_signatures(
+        repo_root / "server" / "adapters" / "mcp" / "areas"
+    )
+    dispatcher_tools = _extract_dispatcher_tool_names(
+        repo_root / "server" / "adapters" / "mcp" / "dispatcher.py"
+    )
+
+    unknown = sorted(
+        public_name
+        for public_name, internal_name in get_llm_guided_alias_map().items()
+        if internal_name not in mcp_signatures and internal_name not in dispatcher_tools
+    )
+
+    assert not unknown, (
+        "Public aliases resolve to unknown internal MCP/dispatcher tool ids:\n"
+        + "\n".join(f"- {name}" for name in unknown)
     )

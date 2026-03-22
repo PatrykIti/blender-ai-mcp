@@ -1,7 +1,7 @@
 # TASK-086-04: Compatibility Adapters and Dispatcher Alignment
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)
 

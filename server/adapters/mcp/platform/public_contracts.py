@@ -49,3 +49,34 @@ def build_capability_public_contracts(
         ),
     )
     return (legacy_contract, llm_contract)
+
+
+def get_public_to_internal_tool_map(
+    manifest_entries,
+    *,
+    audience: str | None = None,
+) -> dict[str, str]:
+    """Build a public-name to internal-name mapping from manifest contracts."""
+
+    mapping: dict[str, str] = {}
+    for entry in manifest_entries:
+        for contract in entry.public_contracts:
+            if audience is not None and contract.audience != audience:
+                continue
+            for internal_name, public_name in contract.tool_name_map:
+                mapping[public_name] = internal_name
+    return mapping
+
+
+def resolve_internal_tool_name(
+    manifest_entries,
+    tool_name: str,
+    *,
+    audience: str | None = None,
+) -> str:
+    """Resolve a public alias back to the canonical internal tool name."""
+
+    return get_public_to_internal_tool_map(
+        manifest_entries,
+        audience=audience,
+    ).get(tool_name, tool_name)

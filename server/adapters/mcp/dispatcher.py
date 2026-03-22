@@ -7,6 +7,7 @@ Maps tool names to their handler methods for router-based execution.
 from typing import Dict, Any, Callable, Optional
 import logging
 
+from server.adapters.mcp.platform.name_resolution import resolve_canonical_tool_name
 from server.infrastructure.di import (
     get_scene_handler,
     get_modeling_handler,
@@ -365,10 +366,11 @@ class ToolDispatcher:
         Returns:
             Result string from tool execution.
         """
-        handler = self._tool_map.get(tool_name)
+        canonical_name = resolve_canonical_tool_name(tool_name)
+        handler = self._tool_map.get(canonical_name)
 
         if handler is None:
-            logger.warning(f"Tool not found in dispatcher: {tool_name}")
+            logger.warning(f"Tool not found in dispatcher: {tool_name} (canonical={canonical_name})")
             return f"Error: Tool '{tool_name}' not found in dispatcher."
 
         try:
@@ -376,11 +378,11 @@ class ToolDispatcher:
             filtered_params = {k: v for k, v in params.items() if v is not None}
             return handler(**filtered_params)
         except TypeError as e:
-            logger.error(f"Parameter error for {tool_name}: {e}")
-            return f"Error executing {tool_name}: {str(e)}"
+            logger.error(f"Parameter error for {canonical_name}: {e}")
+            return f"Error executing {canonical_name}: {str(e)}"
         except Exception as e:
-            logger.error(f"Tool execution failed for {tool_name}: {e}")
-            return f"Error executing {tool_name}: {str(e)}"
+            logger.error(f"Tool execution failed for {canonical_name}: {e}")
+            return f"Error executing {canonical_name}: {str(e)}"
 
     def has_tool(self, tool_name: str) -> bool:
         """Check if a tool is registered.
@@ -391,7 +393,7 @@ class ToolDispatcher:
         Returns:
             True if tool is registered.
         """
-        return tool_name in self._tool_map
+        return resolve_canonical_tool_name(tool_name) in self._tool_map
 
     def list_tools(self) -> list:
         """List all registered tool names.
