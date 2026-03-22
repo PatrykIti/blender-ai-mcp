@@ -16,6 +16,25 @@ from server.infrastructure.di import get_workflow_catalog_handler
 
 logger = logging.getLogger(__name__)
 
+WORKFLOW_PUBLIC_TOOL_NAMES = ("workflow_catalog",)
+
+
+def _register_existing_tool(target: Any, tool_name: str) -> Any:
+    """Register an existing workflow catalog tool on a FastMCP-compatible target."""
+
+    tool = globals()[tool_name]
+    fn = getattr(tool, "fn", tool)
+    return target.tool(fn, name=tool_name)
+
+
+def register_workflow_tools(target: Any) -> Dict[str, Any]:
+    """Register public workflow tools on a FastMCP server or LocalProvider."""
+
+    return {
+        tool_name: _register_existing_tool(target, tool_name)
+        for tool_name in WORKFLOW_PUBLIC_TOOL_NAMES
+    }
+
 
 @mcp.tool()
 def workflow_catalog(

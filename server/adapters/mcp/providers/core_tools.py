@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from server.adapters.mcp.areas.mesh import register_mesh_tools
+from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.areas.modeling import register_modeling_tools
 
 try:
@@ -23,6 +25,8 @@ def register_core_tools(target: Any) -> Dict[str, Any]:
     """Register the current core tool slice on a FastMCP-compatible target."""
 
     registered: Dict[str, Any] = {}
+    registered.update(register_scene_tools(target))
+    registered.update(register_mesh_tools(target))
     registered.update(register_modeling_tools(target))
     return registered
 

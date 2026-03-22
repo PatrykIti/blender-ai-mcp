@@ -19,6 +19,32 @@ from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.infrastructure.di import get_router_handler
 
+ROUTER_PUBLIC_TOOL_NAMES = (
+    "router_set_goal",
+    "router_get_status",
+    "router_clear_goal",
+    "router_find_similar_workflows",
+    "router_get_inherited_proportions",
+    "router_feedback",
+)
+
+
+def _register_existing_tool(target: Any, tool_name: str) -> Any:
+    """Register an existing router tool on a FastMCP-compatible target."""
+
+    tool = globals()[tool_name]
+    fn = getattr(tool, "fn", tool)
+    return target.tool(fn, name=tool_name)
+
+
+def register_router_tools(target: Any) -> Dict[str, Any]:
+    """Register public router tools on a FastMCP server or LocalProvider."""
+
+    return {
+        tool_name: _register_existing_tool(target, tool_name)
+        for tool_name in ROUTER_PUBLIC_TOOL_NAMES
+    }
+
 
 @mcp.tool()
 def router_set_goal(

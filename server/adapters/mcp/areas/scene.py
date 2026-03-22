@@ -1,6 +1,6 @@
 import base64
 from datetime import datetime
-from typing import List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.instance import mcp
@@ -10,6 +10,49 @@ from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_scene_handler
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.tmp_paths import get_viewport_output_paths
+
+SCENE_PUBLIC_TOOL_NAMES = (
+    "scene_list_objects",
+    "scene_delete_object",
+    "scene_clean_scene",
+    "scene_duplicate_object",
+    "scene_set_active_object",
+    "scene_context",
+    "scene_inspect",
+    "scene_get_viewport",
+    "scene_snapshot_state",
+    "scene_compare_snapshot",
+    "scene_create",
+    "scene_set_mode",
+    "scene_rename_object",
+    "scene_hide_object",
+    "scene_show_all_objects",
+    "scene_isolate_object",
+    "scene_camera_orbit",
+    "scene_camera_focus",
+    "scene_get_custom_properties",
+    "scene_set_custom_property",
+    "scene_get_hierarchy",
+    "scene_get_bounding_box",
+    "scene_get_origin_info",
+)
+
+
+def _register_existing_tool(target: Any, tool_name: str) -> Any:
+    """Register an existing scene tool on a FastMCP-compatible target."""
+
+    tool = globals()[tool_name]
+    fn = getattr(tool, "fn", tool)
+    return target.tool(fn, name=tool_name)
+
+
+def register_scene_tools(target: Any) -> Dict[str, Any]:
+    """Register public scene tools on a FastMCP server or LocalProvider."""
+
+    return {
+        tool_name: _register_existing_tool(target, tool_name)
+        for tool_name in SCENE_PUBLIC_TOOL_NAMES
+    }
 
 # ... Scene Tools ...
 @mcp.tool()

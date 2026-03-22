@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
@@ -10,6 +10,75 @@ from server.infrastructure.di import (
     get_scene_handler,
     get_uv_handler,
 )
+
+MESH_PUBLIC_TOOL_NAMES = (
+    "mesh_select",
+    "mesh_select_targeted",
+    "mesh_delete_selected",
+    "mesh_extrude_region",
+    "mesh_fill_holes",
+    "mesh_bevel",
+    "mesh_loop_cut",
+    "mesh_inset",
+    "mesh_boolean",
+    "mesh_merge_by_distance",
+    "mesh_subdivide",
+    "mesh_smooth",
+    "mesh_flatten",
+    "mesh_list_groups",
+    "mesh_inspect",
+    "mesh_randomize",
+    "mesh_shrink_fatten",
+    "mesh_create_vertex_group",
+    "mesh_assign_to_group",
+    "mesh_remove_from_group",
+    "mesh_bisect",
+    "mesh_edge_slide",
+    "mesh_vert_slide",
+    "mesh_triangulate",
+    "mesh_remesh_voxel",
+    "mesh_transform_selected",
+    "mesh_bridge_edge_loops",
+    "mesh_duplicate_selected",
+    "mesh_spin",
+    "mesh_screw",
+    "mesh_add_vertex",
+    "mesh_add_edge_face",
+    "mesh_edge_crease",
+    "mesh_bevel_weight",
+    "mesh_mark_sharp",
+    "mesh_dissolve",
+    "mesh_tris_to_quads",
+    "mesh_normals_make_consistent",
+    "mesh_decimate",
+    "mesh_knife_project",
+    "mesh_rip",
+    "mesh_split",
+    "mesh_edge_split",
+    "mesh_set_proportional_edit",
+    "mesh_symmetrize",
+    "mesh_grid_fill",
+    "mesh_poke_faces",
+    "mesh_beautify_fill",
+    "mesh_mirror",
+)
+
+
+def _register_existing_tool(target: Any, tool_name: str) -> Any:
+    """Register an existing mesh tool on a FastMCP-compatible target."""
+
+    tool = globals()[tool_name]
+    fn = getattr(tool, "fn", tool)
+    return target.tool(fn, name=tool_name)
+
+
+def register_mesh_tools(target: Any) -> Dict[str, Any]:
+    """Register public mesh tools on a FastMCP server or LocalProvider."""
+
+    return {
+        tool_name: _register_existing_tool(target, tool_name)
+        for tool_name in MESH_PUBLIC_TOOL_NAMES
+    }
 
 
 @mcp.tool()
