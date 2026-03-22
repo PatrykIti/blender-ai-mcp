@@ -131,6 +131,7 @@ def test_import_workflow_conflict_needs_input(workflow_setup):
     assert result["conflicts"]["definition_loaded"] is True
     assert result["conflicts"]["files"]
     assert result["conflicts"]["vector_store_records"] == 1
+    assert "clarification" not in result
     assert registry.reload_calls == 0
 
 

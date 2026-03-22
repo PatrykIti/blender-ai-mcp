@@ -56,3 +56,42 @@ def test_fallback_payload_and_dynamic_response_type_are_stable():
     assert payload.fields[0].field_name == "height"
     assert payload.question_set_id.startswith("qs_")
     assert coerce_elicitation_answers(answers) == {"height": 1.2}
+
+
+def test_elicitation_contracts_support_bool_and_multi_select_fields():
+    """Bool and multi-select requirements should map to typed native/fallback contracts."""
+
+    plan = build_clarification_plan(
+        goal="chair",
+        workflow_name="chair_workflow",
+        unresolved_fields=[
+            {
+                "param": "add_cushion",
+                "type": "bool",
+                "description": "Add a seat cushion",
+                "default": False,
+            },
+            {
+                "param": "feature_pack",
+                "type": "array",
+                "description": "Optional feature pack",
+                "enum": ["arms", "wheels", "headrest"],
+                "allows_multiple": True,
+                "default": ["arms"],
+            },
+        ],
+    )
+
+    payload = build_fallback_payload(plan, request_id="req_123", question_set_id="qs_custom")
+    response_type = build_elicitation_response_type(plan)
+    answers = response_type(add_cushion=True, feature_pack=["arms", "headrest"])
+
+    assert payload.request_id == "req_123"
+    assert payload.question_set_id == "qs_custom"
+    assert payload.fields[0].value_type == "bool"
+    assert payload.fields[1].allows_multiple is True
+    assert payload.fields[1].choices == ["arms", "wheels", "headrest"]
+    assert coerce_elicitation_answers(answers) == {
+        "add_cushion": True,
+        "feature_pack": ["arms", "headrest"],
+    }

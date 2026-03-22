@@ -30,6 +30,7 @@ from server.adapters.mcp.session_capabilities import get_session_capability_stat
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
     clear_session_goal_state,
+    merge_resolved_params_with_session_answers,
     update_session_from_router_goal,
 )
 from server.adapters.mcp.guided_mode import build_visibility_diagnostics
@@ -79,6 +80,7 @@ async def _maybe_elicit_router_answers(
     if result.get("status") != "needs_input":
         return result
 
+    session = get_session_capability_state(ctx)
     plan = build_clarification_plan(
         goal=goal,
         workflow_name=result.get("workflow") or "unknown_workflow",
@@ -87,7 +89,27 @@ async def _maybe_elicit_router_answers(
     if plan.is_empty:
         return result
 
-    fallback_payload = build_fallback_payload(plan)
+    try:
+        request_id = getattr(ctx, "request_id", None)
+    except Exception:
+        request_id = None
+    else:
+        if callable(request_id):
+            try:
+                request_id = request_id()
+            except Exception:
+                request_id = None
+        elif request_id is not None and not isinstance(request_id, str):
+            try:
+                request_id = str(request_id)
+            except Exception:
+                request_id = None
+
+    fallback_payload = build_fallback_payload(
+        plan,
+        request_id=request_id,
+        question_set_id=session.pending_question_set_id,
+    )
     result["clarification"] = fallback_payload.model_dump()
 
     try:
@@ -166,20 +188,41 @@ async def router_set_goal(
         -> {"status": "ready", ...}  # Learned from previous interaction
     """
     handler = get_router_handler()
-    result = handler.set_goal(goal, resolved_params)
+    merged_resolved_params = merge_resolved_params_with_session_answers(ctx, resolved_params)
+    result = handler.set_goal(goal, merged_resolved_params)
 
     if resolved_params is None and result.get("status") == "needs_input":
         result = await _maybe_elicit_router_answers(ctx, goal, result)
         if result.get("elicitation_action") == "accept":
+            merged_answers = dict(merged_resolved_params or {})
+            merged_answers.update(result.get("elicitation_answers") or {})
             result = handler.set_goal(
                 goal,
-                resolved_params=result.get("elicitation_answers"),
+                resolved_params=merged_answers,
             )
+
+    if result.get("status") == "needs_input" and "clarification" not in result:
+        plan = build_clarification_plan(
+            goal=goal,
+            workflow_name=result.get("workflow") or "unknown_workflow",
+            unresolved_fields=result.get("unresolved", []),
+        )
+        if not plan.is_empty:
+            try:
+                request_id = getattr(ctx, "request_id", None)
+            except Exception:
+                request_id = None
+            result["clarification"] = build_fallback_payload(
+                plan,
+                request_id=request_id if isinstance(request_id, str) else None,
+                question_set_id=get_session_capability_state(ctx).pending_question_set_id,
+            ).model_dump()
 
     state = update_session_from_router_goal(
         ctx,
         goal,
         result,
+        provided_answers=merged_resolved_params,
         surface_profile=get_config().MCP_SURFACE_PROFILE,
     )
     await apply_visibility_for_session_state(ctx, state)
@@ -194,15 +237,6 @@ async def router_set_goal(
         ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> {unresolved_count} params need input")
     else:
         ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> status: {status}")
-
-    if result.get("status") == "needs_input" and "clarification" not in result:
-        plan = build_clarification_plan(
-            goal=goal,
-            workflow_name=result.get("workflow") or "unknown_workflow",
-            unresolved_fields=result.get("unresolved", []),
-        )
-        if not plan.is_empty:
-            result["clarification"] = build_fallback_payload(plan).model_dump()
 
     return RouterGoalResponseContract.model_validate(result)
 
@@ -227,6 +261,9 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
             "current_phase": session.phase.value,
             "surface_profile": surface_profile,
             "pending_clarification": session.pending_clarification,
+            "pending_question_set_id": session.pending_question_set_id,
+            "partial_answers": session.partial_answers,
+            "last_elicitation_action": session.last_elicitation_action,
             "last_router_status": session.last_router_status,
             "policy_context": session.policy_context,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],

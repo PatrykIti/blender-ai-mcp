@@ -1,7 +1,7 @@
 # TASK-087-04: Session Persistence, Retry, and Cancel Semantics
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 

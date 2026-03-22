@@ -12,6 +12,8 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.elicitation_contracts import build_fallback_payload
+from server.router.domain.entities.elicitation import ClarificationPlan, ClarificationRequirement
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_workflow_catalog_handler
 
@@ -105,6 +107,37 @@ def workflow_catalog(
     handler = get_workflow_catalog_handler()
 
     try:
+        def _with_import_clarification(result: Dict[str, Any]) -> Dict[str, Any]:
+            if result.get("status") != "needs_input" or result.get("clarification") is not None:
+                return result
+
+            workflow_name_for_prompt = result.get("workflow_name") or source_name or filepath or "workflow_import"
+            try:
+                request_id = getattr(ctx, "request_id", None)
+            except Exception:
+                request_id = None
+
+            plan = ClarificationPlan(
+                goal="workflow_import",
+                workflow_name=str(workflow_name_for_prompt),
+                requirements=(
+                    ClarificationRequirement(
+                        field_name="overwrite",
+                        prompt="Overwrite the existing workflow import target?",
+                        value_type="bool",
+                        required=True,
+                        default=False,
+                        context=str(workflow_name_for_prompt),
+                        description=result.get("message") or "Choose whether to overwrite the existing workflow.",
+                    ),
+                ),
+            )
+            result["clarification"] = build_fallback_payload(
+                plan,
+                request_id=request_id if isinstance(request_id, str) else None,
+            ).model_dump()
+            return result
+
         if action == "list":
             result: Dict[str, Any] = handler.list_workflows()
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Listed {result.get('count', 0)} workflows")
@@ -148,6 +181,7 @@ def workflow_catalog(
                     action="import",
                     error="filepath or content required for import action",
                 )
+            result = _with_import_clarification(result)
             status = result.get("status", "unknown")
             if status == "imported":
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
@@ -194,6 +228,7 @@ def workflow_catalog(
                     error="session_id required for import_finalize",
                 )
             result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
+            result = _with_import_clarification(result)
             status = result.get("status", "unknown")
             if status == "imported":
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")

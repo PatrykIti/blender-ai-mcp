@@ -10,6 +10,7 @@ from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state,
     get_session_capability_state,
     infer_phase_from_router_status,
+    merge_resolved_params_with_session_answers,
     SessionCapabilityState,
     update_session_from_router_goal,
 )
@@ -140,3 +141,43 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
         name == "enable_components" and call["tags"] == {"phase:build"}
         for name, call in calls[1:]
     )
+
+
+def test_update_session_from_router_goal_persists_pending_elicitation_fields():
+    """needs_input router responses should persist stable elicitation identifiers."""
+
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "needs_input",
+            "workflow": "chair_workflow",
+            "clarification": {
+                "question_set_id": "qs_test",
+            },
+            "elicitation_action": "cancel",
+        },
+        provided_answers={"width": 1.0},
+    )
+
+    assert state.pending_elicitation_id == "elic_qs_test"
+    assert state.pending_workflow_name == "chair_workflow"
+    assert state.pending_question_set_id == "qs_test"
+    assert state.partial_answers == {"width": 1.0}
+    assert state.last_elicitation_action == "cancel"
+
+
+def test_merge_resolved_params_with_session_answers_prefers_new_values():
+    """Explicit follow-up answers should override older partial answers."""
+
+    ctx = FakeContext(
+        state={
+            "partial_answers": {"width": 1.0, "height": 2.0},
+        }
+    )
+
+    merged = merge_resolved_params_with_session_answers(ctx, {"height": 3.0, "depth": 0.5})
+
+    assert merged == {"width": 1.0, "height": 3.0, "depth": 0.5}

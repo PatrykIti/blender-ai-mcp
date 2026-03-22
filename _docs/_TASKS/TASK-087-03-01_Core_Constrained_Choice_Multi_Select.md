@@ -1,7 +1,7 @@
 # TASK-087-03-01: Core Constrained Choice and Multi-Select Flows
 
 **Parent:** [TASK-087-03](./TASK-087-03_Constrained_Choice_and_Multi_Select_Flows.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 

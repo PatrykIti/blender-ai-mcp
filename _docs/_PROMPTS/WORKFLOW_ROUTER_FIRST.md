@@ -32,7 +32,8 @@ WORKFLOW SELECTION (MANDATORY)
 
    4) Handle Router response
        - If status == "needs_input":
-           * Ask the user the missing questions (use any enum/options returned by Router).
+           * If your client shows structured elicitation UI, use it.
+           * Otherwise ask the user the missing questions using the typed clarification payload from Router.
            * Call router_set_goal(goal, resolved_params={...}) with the user answers.
            * Repeat until status == "ready".
        - If status == "ready":

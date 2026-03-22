@@ -131,6 +131,20 @@ Guided-mode behavior:
 - visible guided entry capabilities
 - hidden capability counts by category
 
+### Structured Clarification Flow
+
+The server now supports two missing-input modes for workflow-first interactions:
+
+- **Native elicitation** on async-capable guided surfaces such as `llm-guided`
+- **Typed fallback payloads** for tool-only / compatibility clients
+
+Current clarification behavior:
+
+- `router_set_goal(...)` can ask for missing workflow parameters through structured elicitation
+- constrained choices support enums, booleans, and multi-select-style answers
+- partial answers and pending clarification ids survive across the next request step
+- `workflow_catalog` import conflicts also expose the same typed fallback clarification shape
+
 ## ✅ Support Matrix
 
 - **Blender**: tested on **Blender 5.0** (E2E). The addon declares minimum **Blender 4.0**, but 4.x support is best-effort.

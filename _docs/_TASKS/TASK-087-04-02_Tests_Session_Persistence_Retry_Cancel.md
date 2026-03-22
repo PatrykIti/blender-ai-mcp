@@ -1,7 +1,7 @@
 # TASK-087-04-02: Tests and Docs Session Persistence, Retry, and Cancel Semantics
 
 **Parent:** [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-087-04-01](./TASK-087-04-01_Core_Session_Persistence_Retry_Cancel.md)
 

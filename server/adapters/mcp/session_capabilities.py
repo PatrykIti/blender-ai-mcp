@@ -23,6 +23,11 @@ SESSION_LAST_ROUTER_STATUS_KEY = "last_router_status"
 SESSION_POLICY_CONTEXT_KEY = "policy_context"
 SESSION_SURFACE_PROFILE_KEY = "surface_profile"
 SESSION_CONTRACT_VERSION_KEY = "contract_version"
+SESSION_PENDING_ELICITATION_ID_KEY = "pending_elicitation_id"
+SESSION_PENDING_WORKFLOW_NAME_KEY = "pending_workflow_name"
+SESSION_PARTIAL_ANSWERS_KEY = "partial_answers"
+SESSION_PENDING_QUESTION_SET_ID_KEY = "pending_question_set_id"
+SESSION_LAST_ELICITATION_ACTION_KEY = "last_elicitation_action"
 
 
 @dataclass(frozen=True)
@@ -36,6 +41,11 @@ class SessionCapabilityState:
     policy_context: dict[str, Any] | None = None
     surface_profile: str | None = None
     contract_version: str | None = None
+    pending_elicitation_id: str | None = None
+    pending_workflow_name: str | None = None
+    partial_answers: dict[str, Any] | None = None
+    pending_question_set_id: str | None = None
+    last_elicitation_action: str | None = None
 
 
 def infer_phase_from_router_status(
@@ -69,6 +79,11 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         policy_context=get_session_value(ctx, SESSION_POLICY_CONTEXT_KEY),
         surface_profile=get_session_value(ctx, SESSION_SURFACE_PROFILE_KEY),
         contract_version=get_session_value(ctx, SESSION_CONTRACT_VERSION_KEY),
+        pending_elicitation_id=get_session_value(ctx, SESSION_PENDING_ELICITATION_ID_KEY),
+        pending_workflow_name=get_session_value(ctx, SESSION_PENDING_WORKFLOW_NAME_KEY),
+        partial_answers=get_session_value(ctx, SESSION_PARTIAL_ANSWERS_KEY),
+        pending_question_set_id=get_session_value(ctx, SESSION_PENDING_QUESTION_SET_ID_KEY),
+        last_elicitation_action=get_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY),
     )
 
 
@@ -82,6 +97,11 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_POLICY_CONTEXT_KEY, state.policy_context)
     set_session_value(ctx, SESSION_SURFACE_PROFILE_KEY, state.surface_profile)
     set_session_value(ctx, SESSION_CONTRACT_VERSION_KEY, state.contract_version)
+    set_session_value(ctx, SESSION_PENDING_ELICITATION_ID_KEY, state.pending_elicitation_id)
+    set_session_value(ctx, SESSION_PENDING_WORKFLOW_NAME_KEY, state.pending_workflow_name)
+    set_session_value(ctx, SESSION_PARTIAL_ANSWERS_KEY, state.partial_answers)
+    set_session_value(ctx, SESSION_PENDING_QUESTION_SET_ID_KEY, state.pending_question_set_id)
+    set_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY, state.last_elicitation_action)
 
 
 def update_session_from_router_goal(
@@ -89,6 +109,7 @@ def update_session_from_router_goal(
     goal: str,
     router_result: dict[str, Any],
     *,
+    provided_answers: dict[str, Any] | None = None,
     surface_profile: str | None = None,
     contract_version: str | None = None,
 ) -> SessionCapabilityState:
@@ -99,6 +120,22 @@ def update_session_from_router_goal(
     pending = router_result.get("unresolved") if status == "needs_input" else None
     hinted_phase = router_result.get("phase_hint") or derive_phase_hint_from_router_result(router_result)
     phase = coerce_session_phase(hinted_phase or infer_phase_from_router_status(status, current_phase=current.phase))
+    clarification = router_result.get("clarification") or {}
+    current_partial_answers = dict(current.partial_answers or {})
+    current_partial_answers.update(provided_answers or {})
+
+    if status == "needs_input":
+        pending_elicitation_id = f"elic_{clarification.get('question_set_id')}" if clarification.get("question_set_id") else current.pending_elicitation_id
+        pending_workflow_name = router_result.get("workflow") or current.pending_workflow_name
+        pending_question_set_id = clarification.get("question_set_id") or current.pending_question_set_id
+        last_elicitation_action = router_result.get("elicitation_action") or current.last_elicitation_action
+        partial_answers = current_partial_answers or None
+    else:
+        pending_elicitation_id = None
+        pending_workflow_name = None
+        pending_question_set_id = None
+        last_elicitation_action = None
+        partial_answers = None
 
     state = SessionCapabilityState(
         phase=phase,
@@ -108,6 +145,11 @@ def update_session_from_router_goal(
         policy_context=router_result.get("policy_context"),
         surface_profile=surface_profile or current.surface_profile,
         contract_version=contract_version or current.contract_version,
+        pending_elicitation_id=pending_elicitation_id,
+        pending_workflow_name=pending_workflow_name,
+        partial_answers=partial_answers,
+        pending_question_set_id=pending_question_set_id,
+        last_elicitation_action=last_elicitation_action,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -130,9 +172,26 @@ def clear_session_goal_state(
         policy_context=None,
         surface_profile=surface_profile or current.surface_profile,
         contract_version=contract_version or current.contract_version,
+        pending_elicitation_id=None,
+        pending_workflow_name=None,
+        partial_answers=None,
+        pending_question_set_id=None,
+        last_elicitation_action=None,
     )
     set_session_capability_state(ctx, state)
     return state
+
+
+def merge_resolved_params_with_session_answers(
+    ctx: Context,
+    resolved_params: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Merge explicit resolved params with any persisted partial answers."""
+
+    current = get_session_capability_state(ctx)
+    merged = dict(current.partial_answers or {})
+    merged.update(resolved_params or {})
+    return merged or None
 
 
 async def apply_visibility_for_session_state(

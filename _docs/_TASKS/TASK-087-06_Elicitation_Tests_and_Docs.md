@@ -1,7 +1,7 @@
 # TASK-087-06: Elicitation Tests and Docs
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-087-03](./TASK-087-03_Constrained_Choice_and_Multi_Select_Flows.md), [TASK-087-04](./TASK-087-04_Session_Persistence_Retry_and_Cancel_Semantics.md), [TASK-087-05](./TASK-087-05_Tool_Only_Fallback_and_Compatibility_Mode.md)
 

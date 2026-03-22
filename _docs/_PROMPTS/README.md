@@ -11,6 +11,10 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 >
 > `llm-guided` also starts from a small guided entry surface and expands with
 > coarse session phases (`bootstrap` / `planning` / `build` / `inspect_validate`).
+>
+> On elicitation-capable clients, missing workflow parameters may be presented as
+> structured clarification UI instead of free-form chat questions. Tool-only clients
+> receive a typed `needs_input` fallback payload instead.
 
 ## How to use (Claude / ChatGPT)
 

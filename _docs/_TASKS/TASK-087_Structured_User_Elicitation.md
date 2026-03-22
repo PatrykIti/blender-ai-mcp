@@ -4,7 +4,9 @@
 **Category:** FastMCP Interaction UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has a domain-neutral clarification model, native FastMCP elicitation on async guided surfaces, typed fallback payloads for tool-only/compatibility flows, constrained choice handling for enums/booleans/multi-select answers, session persistence for pending clarification state and partial answers, and tests/docs covering native-vs-fallback behavior. `workflow_catalog` import conflicts now reuse the same typed clarification payload shape instead of inventing a second fallback schema.
 
 ---
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 
 
 class WorkflowCatalogResponseContract(MCPContract):
@@ -30,4 +31,5 @@ class WorkflowCatalogResponseContract(MCPContract):
     available: list[str] | None = None
     suggestions: list[str] | None = None
     session_id: str | None = None
+    clarification: ClarificationFallbackPayload | None = None
     error: str | None = None

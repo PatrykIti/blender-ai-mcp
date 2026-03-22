@@ -32,6 +32,7 @@ class ClarificationFieldPayload(BaseModel):
 class ClarificationFallbackPayload(BaseModel):
     """Typed `needs_input` payload for non-elicitation clients."""
 
+    request_id: str | None = None
     question_set_id: str
     goal: str
     workflow_name: str
@@ -52,17 +53,22 @@ def build_clarification_plan(
 
     requirements: list[ClarificationRequirement] = []
     for unresolved in unresolved_fields:
-        choices = unresolved.get("enum")
+        choices = unresolved.get("enum") or unresolved.get("options")
         if choices is not None:
             choices = tuple(str(choice) for choice in choices)
+        value_type = unresolved.get("type", "string")
+        allows_multiple = bool(
+            unresolved.get("allows_multiple")
+            or value_type in {"list[str]", "array", "list"}
+        )
         requirements.append(
             ClarificationRequirement(
                 field_name=unresolved["param"],
                 prompt=unresolved.get("description") or unresolved["param"],
-                value_type=unresolved.get("type", "string"),
+                value_type=value_type,
                 required=True,
                 choices=choices,
-                allows_multiple=False,
+                allows_multiple=allows_multiple,
                 default=unresolved.get("default"),
                 context=unresolved.get("context"),
                 description=unresolved.get("description"),
@@ -77,7 +83,12 @@ def build_clarification_plan(
     )
 
 
-def build_fallback_payload(plan: ClarificationPlan) -> ClarificationFallbackPayload:
+def build_fallback_payload(
+    plan: ClarificationPlan,
+    *,
+    request_id: str | None = None,
+    question_set_id: str | None = None,
+) -> ClarificationFallbackPayload:
     """Build the typed `needs_input` fallback payload for non-elicitation surfaces."""
 
     question_set_hash = sha1(
@@ -86,7 +97,8 @@ def build_fallback_payload(plan: ClarificationPlan) -> ClarificationFallbackPayl
         )
     ).hexdigest()[:12]
     return ClarificationFallbackPayload(
-        question_set_id=f"qs_{question_set_hash}",
+        request_id=request_id,
+        question_set_id=question_set_id or f"qs_{question_set_hash}",
         goal=plan.goal,
         workflow_name=plan.workflow_name,
         fields=[
@@ -116,7 +128,11 @@ def build_elicitation_response_type(plan: ClarificationPlan) -> type[BaseModel]:
     for requirement in plan.requirements:
         field_type: Any
         choices = requirement.choices
-        if choices:
+        if requirement.allows_multiple and choices:
+            field_type = list[Literal.__getitem__(choices)]
+        elif requirement.allows_multiple:
+            field_type = list[str]
+        elif choices:
             field_type = Literal.__getitem__(choices)
         elif requirement.value_type == "float":
             field_type = float
@@ -124,13 +140,16 @@ def build_elicitation_response_type(plan: ClarificationPlan) -> type[BaseModel]:
             field_type = int
         elif requirement.value_type == "bool":
             field_type = bool
+        elif requirement.value_type in {"list[str]", "array", "list"}:
+            field_type = list[str]
         else:
             field_type = str
 
+        default = ... if requirement.required else requirement.default
         model_fields[requirement.field_name] = (
             field_type,
             Field(
-                ...,
+                default,
                 description=requirement.description or requirement.prompt,
                 examples=[requirement.default] if requirement.default is not None else None,
             ),

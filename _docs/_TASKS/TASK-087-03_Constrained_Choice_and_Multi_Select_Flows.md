@@ -1,7 +1,7 @@
 # TASK-087-03: Constrained Choice and Multi-Select Flows
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)
 
