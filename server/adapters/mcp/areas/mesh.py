@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 from fastmcp import Context
+from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
@@ -697,7 +698,7 @@ def mesh_inspect(
     include_deltas: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-) -> str:
+) -> MeshInspectResponseContract:
     """
     [MESH][READ-ONLY][SAFE] Mega tool for mesh introspection.
 
@@ -731,30 +732,55 @@ def mesh_inspect(
     """
     def execute():
         if object_name is None:
-            return f"Error: '{action}' action requires 'object_name' parameter."
+            return MeshInspectResponseContract(
+                action=action,
+                error=f"Error: '{action}' action requires 'object_name' parameter.",
+            )
 
         if action == "summary":
-            return _mesh_inspect_summary(ctx, object_name)
+            return _to_mesh_inspect_contract(action, _mesh_inspect_summary(ctx, object_name))
         elif action == "vertices":
-            return _mesh_get_vertex_data(ctx, object_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action, _mesh_get_vertex_data(ctx, object_name, selected_only, offset, limit)
+            )
         elif action == "edges":
-            return _mesh_get_edge_data(ctx, object_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action, _mesh_get_edge_data(ctx, object_name, selected_only, offset, limit)
+            )
         elif action == "faces":
-            return _mesh_get_face_data(ctx, object_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action, _mesh_get_face_data(ctx, object_name, selected_only, offset, limit)
+            )
         elif action == "uvs":
-            return _mesh_get_uv_data(ctx, object_name, uv_layer, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action,
+                _mesh_get_uv_data(ctx, object_name, uv_layer, selected_only, offset, limit),
+            )
         elif action == "normals":
-            return _mesh_get_loop_normals(ctx, object_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action, _mesh_get_loop_normals(ctx, object_name, selected_only, offset, limit)
+            )
         elif action == "attributes":
-            return _mesh_get_attributes(ctx, object_name, attribute_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action,
+                _mesh_get_attributes(ctx, object_name, attribute_name, selected_only, offset, limit),
+            )
         elif action == "shape_keys":
-            return _mesh_get_shape_keys(ctx, object_name, include_deltas, offset, limit)
+            return _to_mesh_inspect_contract(
+                action, _mesh_get_shape_keys(ctx, object_name, include_deltas, offset, limit)
+            )
         elif action == "group_weights":
-            return _mesh_get_vertex_group_weights(ctx, object_name, group_name, selected_only, offset, limit)
+            return _to_mesh_inspect_contract(
+                action,
+                _mesh_get_vertex_group_weights(ctx, object_name, group_name, selected_only, offset, limit),
+            )
         else:
-            return (
-                f"Unknown action '{action}'. Valid actions: summary, vertices, edges, "
-                "faces, uvs, normals, attributes, shape_keys, group_weights"
+            return MeshInspectResponseContract(
+                action="summary",
+                error=(
+                    f"Unknown action '{action}'. Valid actions: summary, vertices, edges, "
+                    "faces, uvs, normals, attributes, shape_keys, group_weights"
+                ),
             )
 
     return route_tool_call(
@@ -775,22 +801,75 @@ def mesh_inspect(
 
 
 # Internal function - exposed via mesh_inspect mega tool
+def _to_mesh_inspect_contract(action: str, payload: Dict[str, Any]) -> MeshInspectResponseContract:
+    """Normalize mesh introspection payloads into one structured envelope."""
+
+    if "error" in payload:
+        return MeshInspectResponseContract(action=action, error=payload["error"])
+
+    if action == "summary":
+        return MeshInspectResponseContract(
+            action="summary",
+            object_name=payload.get("object_name"),
+            summary=payload,
+        )
+
+    item_key_map = {
+        "vertices": "vertices",
+        "edges": "edges",
+        "faces": "faces",
+        "uvs": "faces",
+        "normals": "loops",
+        "attributes": "attributes" if "attributes" in payload else "values",
+        "shape_keys": "shape_keys",
+        "group_weights": "groups" if "groups" in payload else "weights",
+    }
+
+    item_key = item_key_map[action]
+    items = payload.get(item_key) or []
+    metadata = {
+        k: v
+        for k, v in payload.items()
+        if k
+        not in {
+            "object_name",
+            "filtered_count",
+            "returned_count",
+            "offset",
+            "limit",
+            "has_more",
+            item_key,
+        }
+    }
+
+    return MeshInspectResponseContract(
+        action=action,
+        object_name=payload.get("object_name"),
+        total=payload.get("filtered_count"),
+        returned=payload.get("returned_count"),
+        offset=payload.get("offset"),
+        limit=payload.get("limit"),
+        has_more=payload.get("has_more"),
+        items=items,
+        metadata=metadata or None,
+    )
+
+
+# Internal function - exposed via mesh_inspect mega tool
 def _mesh_get_vertex_data(
     ctx: Context,
     object_name: str,
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex positions and selection states for programmatic analysis.
     """
     try:
-        import json
-        result = get_mesh_handler().get_vertex_data(object_name, selected_only, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_vertex_data(object_name, selected_only, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -800,16 +879,14 @@ def _mesh_get_edge_data(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns edge connectivity + attributes.
     """
     try:
-        import json
-        result = get_mesh_handler().get_edge_data(object_name, selected_only, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_edge_data(object_name, selected_only, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -819,16 +896,14 @@ def _mesh_get_face_data(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns face connectivity + attributes.
     """
     try:
-        import json
-        result = get_mesh_handler().get_face_data(object_name, selected_only, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_face_data(object_name, selected_only, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -839,16 +914,14 @@ def _mesh_get_uv_data(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns UVs per face loop.
     """
     try:
-        import json
-        result = get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_uv_data(object_name, uv_layer, selected_only, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -858,16 +931,14 @@ def _mesh_get_loop_normals(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns per-loop normals (split/custom).
     """
     try:
-        import json
-        result = get_mesh_handler().get_loop_normals(object_name, selected_only, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_loop_normals(object_name, selected_only, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -878,12 +949,11 @@ def _mesh_get_vertex_group_weights(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns vertex group weights.
     """
     try:
-        import json
         result = get_mesh_handler().get_vertex_group_weights(
             object_name,
             group_name,
@@ -891,9 +961,9 @@ def _mesh_get_vertex_group_weights(
             offset,
             limit
         )
-        return json.dumps(result, indent=2)
+        return result
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -904,12 +974,11 @@ def _mesh_get_attributes(
     selected_only: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [EDIT MODE][READ-ONLY][SAFE] Returns mesh attribute data (vertex colors, layers).
     """
     try:
-        import json
         result = get_mesh_handler().get_attributes(
             object_name,
             attribute_name,
@@ -917,9 +986,9 @@ def _mesh_get_attributes(
             offset,
             limit
         )
-        return json.dumps(result, indent=2)
+        return result
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
@@ -929,26 +998,22 @@ def _mesh_get_shape_keys(
     include_deltas: bool = False,
     offset: Optional[int] = None,
     limit: Optional[int] = None
-) -> str:
+) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns shape key data.
     """
     try:
-        import json
-        result = get_mesh_handler().get_shape_keys(object_name, include_deltas, offset, limit)
-        return json.dumps(result, indent=2)
+        return get_mesh_handler().get_shape_keys(object_name, include_deltas, offset, limit)
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 
 # Internal function - exposed via mesh_inspect mega tool
-def _mesh_inspect_summary(ctx: Context, object_name: str) -> str:
+def _mesh_inspect_summary(ctx: Context, object_name: str) -> Dict[str, Any]:
     """
     [MESH][READ-ONLY][SAFE] Returns a lightweight overview for quick audits.
     """
     try:
-        import json
-
         topology = get_scene_handler().inspect_mesh_topology(object_name, detailed=False)
         uv_maps = get_uv_handler().list_maps(object_name, include_island_counts=False)
         shape_keys = get_mesh_handler().get_shape_keys(object_name, include_deltas=False)
@@ -976,9 +1041,9 @@ def _mesh_inspect_summary(ctx: Context, object_name: str) -> str:
             ],
         }
 
-        return json.dumps(summary, indent=2)
+        return summary
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
 # Internal function - exposed via mesh_select_targeted mega tool
 def _mesh_select_by_location(

@@ -1,6 +1,8 @@
 """Tests for mesh_inspect mega tool routing and validation."""
 from unittest.mock import MagicMock, patch
 
+from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
+
 
 class TestMeshInspectMega:
     """Test mesh_inspect mega tool routing."""
@@ -14,11 +16,14 @@ class TestMeshInspectMega:
         """Test action='summary' routes to _mesh_inspect_summary."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_summary.return_value = "Summary"
-        result = mesh_inspect.fn(self.mock_ctx, action="summary", object_name="Cube")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_summary.return_value = {"object_name": "Cube", "vertex_count": 8}
+        result = callable_mesh_inspect(self.mock_ctx, action="summary", object_name="Cube")
 
         mock_summary.assert_called_once_with(self.mock_ctx, "Cube")
-        assert result == "Summary"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "summary"
+        assert result.summary["object_name"] == "Cube"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_vertex_data")
@@ -26,8 +31,17 @@ class TestMeshInspectMega:
         """Test action='vertices' routes to _mesh_get_vertex_data."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_vertices.return_value = "Vertices"
-        result = mesh_inspect.fn(
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_vertices.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 4,
+            "returned_count": 2,
+            "offset": 0,
+            "limit": 2,
+            "has_more": True,
+            "vertices": [{"index": 0}, {"index": 1}],
+        }
+        result = callable_mesh_inspect(
             self.mock_ctx,
             action="vertices",
             object_name="Cube",
@@ -35,7 +49,10 @@ class TestMeshInspectMega:
         )
 
         mock_vertices.assert_called_once_with(self.mock_ctx, "Cube", True, None, None)
-        assert result == "Vertices"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "vertices"
+        assert result.returned == 2
+        assert len(result.items) == 2
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_edge_data")
@@ -43,11 +60,21 @@ class TestMeshInspectMega:
         """Test action='edges' routes to _mesh_get_edge_data."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_edges.return_value = "Edges"
-        result = mesh_inspect.fn(self.mock_ctx, action="edges", object_name="Cube")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_edges.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "edges": [{"index": 0}],
+        }
+        result = callable_mesh_inspect(self.mock_ctx, action="edges", object_name="Cube")
 
         mock_edges.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
-        assert result == "Edges"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "edges"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_face_data")
@@ -55,11 +82,21 @@ class TestMeshInspectMega:
         """Test action='faces' routes to _mesh_get_face_data."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_faces.return_value = "Faces"
-        result = mesh_inspect.fn(self.mock_ctx, action="faces", object_name="Cube")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_faces.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "faces": [{"index": 0}],
+        }
+        result = callable_mesh_inspect(self.mock_ctx, action="faces", object_name="Cube")
 
         mock_faces.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
-        assert result == "Faces"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "faces"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_uv_data")
@@ -67,8 +104,17 @@ class TestMeshInspectMega:
         """Test action='uvs' routes to _mesh_get_uv_data."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_uvs.return_value = "UVs"
-        result = mesh_inspect.fn(
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_uvs.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "faces": [{"face_index": 0}],
+        }
+        result = callable_mesh_inspect(
             self.mock_ctx,
             action="uvs",
             object_name="Cube",
@@ -77,7 +123,8 @@ class TestMeshInspectMega:
         )
 
         mock_uvs.assert_called_once_with(self.mock_ctx, "Cube", "UVMap", True, None, None)
-        assert result == "UVs"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "uvs"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_loop_normals")
@@ -85,11 +132,21 @@ class TestMeshInspectMega:
         """Test action='normals' routes to _mesh_get_loop_normals."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_normals.return_value = "Normals"
-        result = mesh_inspect.fn(self.mock_ctx, action="normals", object_name="Cube")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_normals.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "loops": [{"loop_index": 0}],
+        }
+        result = callable_mesh_inspect(self.mock_ctx, action="normals", object_name="Cube")
 
         mock_normals.assert_called_once_with(self.mock_ctx, "Cube", False, None, None)
-        assert result == "Normals"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "normals"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_attributes")
@@ -97,8 +154,17 @@ class TestMeshInspectMega:
         """Test action='attributes' routes to _mesh_get_attributes."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_attrs.return_value = "Attributes"
-        result = mesh_inspect.fn(
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_attrs.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "values": [{"index": 0, "value": [1, 0, 0]}],
+        }
+        result = callable_mesh_inspect(
             self.mock_ctx,
             action="attributes",
             object_name="Cube",
@@ -107,7 +173,8 @@ class TestMeshInspectMega:
         )
 
         mock_attrs.assert_called_once_with(self.mock_ctx, "Cube", "Col", True, None, None)
-        assert result == "Attributes"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "attributes"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_shape_keys")
@@ -115,8 +182,17 @@ class TestMeshInspectMega:
         """Test action='shape_keys' routes to _mesh_get_shape_keys."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_shape_keys.return_value = "Shape Keys"
-        result = mesh_inspect.fn(
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_shape_keys.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "shape_keys": [{"name": "Key 1"}],
+        }
+        result = callable_mesh_inspect(
             self.mock_ctx,
             action="shape_keys",
             object_name="Cube",
@@ -124,7 +200,8 @@ class TestMeshInspectMega:
         )
 
         mock_shape_keys.assert_called_once_with(self.mock_ctx, "Cube", True, None, None)
-        assert result == "Shape Keys"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "shape_keys"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_get_vertex_group_weights")
@@ -132,8 +209,17 @@ class TestMeshInspectMega:
         """Test action='group_weights' routes to _mesh_get_vertex_group_weights."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        mock_groups.return_value = "Groups"
-        result = mesh_inspect.fn(
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        mock_groups.return_value = {
+            "object_name": "Cube",
+            "filtered_count": 1,
+            "returned_count": 1,
+            "offset": 0,
+            "limit": None,
+            "has_more": False,
+            "weights": [{"vert": 1, "weight": 1.0}],
+        }
+        result = callable_mesh_inspect(
             self.mock_ctx,
             action="group_weights",
             object_name="Cube",
@@ -142,25 +228,30 @@ class TestMeshInspectMega:
         )
 
         mock_groups.assert_called_once_with(self.mock_ctx, "Cube", "Spine", True, None, None)
-        assert result == "Groups"
+        assert isinstance(result, MeshInspectResponseContract)
+        assert result.action == "group_weights"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     def test_missing_object_name_returns_error(self, mock_router_enabled):
         """Test missing object_name returns helpful error."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        result = mesh_inspect.fn(self.mock_ctx, action="vertices")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        result = callable_mesh_inspect(self.mock_ctx, action="vertices")
 
-        assert "requires 'object_name'" in result
+        assert isinstance(result, MeshInspectResponseContract)
+        assert "requires 'object_name'" in result.error
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     def test_invalid_action_returns_error(self, mock_router_enabled):
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.mesh import mesh_inspect
 
-        result = mesh_inspect.fn(self.mock_ctx, action="invalid", object_name="Cube")
+        callable_mesh_inspect = getattr(mesh_inspect, "fn", mesh_inspect)
+        result = callable_mesh_inspect(self.mock_ctx, action="invalid", object_name="Cube")
 
-        assert "Unknown action" in result
-        assert "summary" in result
-        assert "vertices" in result
-        assert "group_weights" in result
+        assert isinstance(result, MeshInspectResponseContract)
+        assert "Unknown action" in result.error
+        assert "summary" in result.error
+        assert "vertices" in result.error
+        assert "group_weights" in result.error
