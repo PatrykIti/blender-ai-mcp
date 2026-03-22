@@ -1,7 +1,7 @@
 # TASK-084-04-01: Core Search Execution and Router-Aware Call Path
 
 **Parent:** [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 
@@ -11,11 +11,13 @@
 
 Implement the core code changes for **Search Execution and Router-Aware Call Path**.
 
-## Current State
+## Completion Summary
 
-The built-in `call_tool` proxy is now wired into the preview search surface, and direct-vs-proxy public alias execution is parity-tested.
+This slice is now closed.
 
-This slice remains open because the explicit router-failure policy per surface has not yet been rolled out as a finalized product behavior.
+- `call_tool` is wired into the default search-first guided surface
+- direct-vs-proxy public alias execution is parity-tested
+- guided surfaces now use explicit fail-closed router behavior on router-processing failure
 
 ---
 

@@ -45,6 +45,24 @@ def _build_preview_server(surface_profile: str, contract_line: str) -> FastMCP:
     )
 
 
+def _build_no_discovery_server(surface_profile: str, contract_line: str) -> FastMCP:
+    surface = resolve_surface_contract_profile(surface_profile, contract_line=contract_line)
+    providers = build_surface_providers(surface)
+    transforms = [
+        stage.transform
+        for stage in build_surface_transform_pipeline(surface)
+        if stage.transform is not None and stage.name not in {"visibility", "discovery"}
+    ]
+    return FastMCP(
+        surface.server_name,
+        providers=providers,
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+
+
 def test_llm_guided_defaults_to_v2_contract_line():
     server = build_server("llm-guided")
 
@@ -60,7 +78,7 @@ def test_llm_guided_defaults_to_v2_contract_line():
 
 
 def test_llm_guided_can_boot_older_contract_line_for_safe_coexistence():
-    server = _build_preview_server("llm-guided", contract_line="llm-guided-v1")
+    server = _build_no_discovery_server("llm-guided", contract_line="llm-guided-v1")
 
     names = _tool_names(server)
 
@@ -73,8 +91,8 @@ def test_llm_guided_can_boot_older_contract_line_for_safe_coexistence():
 
 
 def test_version_filter_selects_expected_component_versions_without_hiding_unversioned_tools():
-    guided_v1 = _build_preview_server("llm-guided", contract_line="llm-guided-v1")
-    guided_v2 = _build_preview_server("llm-guided", contract_line="llm-guided-v2")
+    guided_v1 = _build_no_discovery_server("llm-guided", contract_line="llm-guided-v1")
+    guided_v2 = _build_no_discovery_server("llm-guided", contract_line="llm-guided-v2")
 
     assert get_tool_version(guided_v1, "scene_context") == "1"
     assert get_tool_version(guided_v2, "check_scene") == "2"

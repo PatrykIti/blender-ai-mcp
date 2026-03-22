@@ -15,7 +15,7 @@ Add tests and documentation updates for **Search Document Enrichment from Metada
 
 This slice is now closed.
 
-- discovery tests now cover enriched public-name search behavior on the preview surface
+- discovery tests now cover enriched public-name search behavior on the default guided search surface
 - metadata/document enrichment is exercised through the search-surface and tool-inventory test suite
 
 ---

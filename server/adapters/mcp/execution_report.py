@@ -32,6 +32,7 @@ class MCPExecutionReport(MCPContract):
         "direct",
         "corrected",
         "failed_open_fallback",
+        "failed_closed_error",
     ]
     steps: tuple[ExecutionStep, ...] = ()
     error: str | None = None

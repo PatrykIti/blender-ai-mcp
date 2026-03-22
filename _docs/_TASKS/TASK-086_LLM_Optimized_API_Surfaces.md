@@ -4,9 +4,9 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Current State:** The first stable `llm-guided` public line is implemented and documented: manifest-owned public contracts exist, transform-based aliases and hidden-argument rules are live, dispatcher/router compatibility is tested, and public docs/prompts now describe the new surface. This umbrella remains open because the search-discovered/versioned parity slice still depends on TASK-084 and TASK-091.
+**Completion Summary:** This task is now closed. The first stable `llm-guided` public line is implemented and documented, including manifest-owned public contracts, transform-based aliases and hidden-argument rules, dispatcher/router compatibility, prompt/docs coverage, and parity with the now-enabled discovery/versioning path.
 
 ---
 

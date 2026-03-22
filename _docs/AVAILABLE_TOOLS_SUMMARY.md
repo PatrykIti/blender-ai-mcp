@@ -26,6 +26,25 @@ The router and dispatcher still use canonical internal tool names.
 
 ---
 
+## Search-First Discovery Rollout
+
+Default `llm-guided` entry surface:
+
+- `router_set_goal`
+- `router_get_status`
+- `browse_workflows`
+- `search_tools`
+- `call_tool`
+
+Measured current baseline:
+
+- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
+- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+
+Discovery respects guided visibility and does not leak hidden tools during bootstrap.
+
+---
+
 ## Structured Contract Surfaces
 
 The current structured-contract baseline covers:

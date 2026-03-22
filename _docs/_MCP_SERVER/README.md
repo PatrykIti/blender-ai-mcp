@@ -61,6 +61,29 @@ Current hidden/expert-only arguments on `llm-guided` include:
 Router and dispatcher internals still operate on canonical internal names.
 The public alias layer is a transform concern, not a second business-logic path.
 
+## Search-First Discovery Rollout
+
+The default `llm-guided` surface now runs search-first discovery by default.
+
+Current visible entry set on `llm-guided`:
+
+- `router_set_goal`
+- `router_get_status`
+- `browse_workflows`
+- `search_tools`
+- `call_tool`
+
+Measured baseline from the current unit suite:
+
+- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
+- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+
+Search-first behavior now respects guided visibility:
+
+- hidden tools do not appear in bootstrap-phase search results
+- hidden tools cannot be invoked through `call_tool`
+- direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+
 ## Session-Adaptive Visibility Baseline
 
 The `llm-guided` surface now has a first complete guided-mode visibility baseline:

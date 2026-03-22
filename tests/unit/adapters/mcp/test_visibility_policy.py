@@ -91,5 +91,5 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     guided_transforms = materialize_transforms(get_surface_profile("llm-guided"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
-    assert len(guided_transforms) == 4
+    assert len(guided_transforms) == 5
     assert len(legacy_transforms) == 1

@@ -1,7 +1,7 @@
 # TASK-084-02: Search Transform and Pinned Entry Surface
 
 **Parent:** [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md), [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md), [TASK-091-03](./TASK-091-03_Version_Filtered_Server_Composition.md)
 
@@ -11,16 +11,13 @@
 
 Enable search-first discovery as the default model for the stabilized public `llm-guided` surface and define the pinned entry tools that remain directly visible.
 
-## Current State
+## Completion Summary
 
-The core search transform machinery now exists and is validated on a search-enabled preview surface:
+This slice is now closed.
 
-- built-in BM25 search is wired through the discovery transform stage
-- pinned entry tools are resolved from manifest-owned public discovery metadata
-- `search_tools` and `call_tool` are available and parity-tested against direct public alias execution
-
-The default `llm-guided` surface still keeps `search_enabled=False` intentionally.
-This slice remains open because the default public rollout on `llm-guided` is still intentionally gated behind TASK-085 visibility parity and TASK-091 coexistence/rollback work.
+- `llm-guided` now defaults to search-first discovery
+- pinned entry tools are exposed directly while the broader catalog is discovered on demand
+- the rollout now runs on the shaped/versioned public surface rather than the raw internal catalog
 
 ---
 

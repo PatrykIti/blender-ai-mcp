@@ -37,7 +37,7 @@ CLIENT_PROFILE_PRESETS: dict[str, ClientProfilePreset] = {
         default_phase=SessionPhase.BOOTSTRAP,
         description="Guided surface starting from small entry capabilities and coarse session phases.",
         entry_capability_ids=("router", "workflow_catalog"),
-        search_enabled_by_default=False,
+        search_enabled_by_default=True,
     ),
     "internal-debug": ClientProfilePreset(
         name="internal-debug",

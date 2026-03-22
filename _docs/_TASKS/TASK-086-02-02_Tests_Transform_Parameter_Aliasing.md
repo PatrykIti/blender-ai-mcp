@@ -1,7 +1,7 @@
 # TASK-086-02-02: Tests and Docs Transform-Based Tool and Parameter Aliasing
 
 **Parent:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-02-01](./TASK-086-02-01_Core_Transform_Parameter_Aliasing.md)
 
@@ -11,16 +11,14 @@
 
 Add tests and documentation updates for **Transform-Based Tool and Parameter Aliasing**.
 
-## Current State
+## Completion Summary
 
-The currently-available direct public-surface checks are implemented and passing:
+This slice is now closed.
 
-- alias happy path
-- hidden-argument path
-- invalid alias path
-- dispatcher/router compatibility for canonical-name resolution
-
-This slice remains open because the remaining parity scenarios for search-discovered calls and versioned public lines belong to the downstream TASK-084 / TASK-091 integration path rather than the current baseline.
+- alias happy path is covered
+- hidden-argument path is covered
+- invalid alias path is covered
+- dispatcher/router compatibility now also covers search-discovered calls and versioned public lines
 
 ---
 

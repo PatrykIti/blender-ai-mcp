@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.correction_audit import (
 )
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
+from server.infrastructure.config import get_config
 from server.infrastructure.di import get_postcondition_registry, get_scene_handler
 from server.infrastructure.di import is_router_enabled, get_router
 from server.adapters.mcp.dispatcher import get_dispatcher
@@ -22,6 +23,28 @@ from server.router.infrastructure.logger import get_router_logger
 from server.router.domain.entities.correction_policy import CorrectionCategory
 
 logger = logging.getLogger(__name__)
+
+
+def _get_active_surface_profile() -> str:
+    """Return the active surface profile for the current tool call."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_ctx = _current_context.get(None)
+        if current_ctx is not None:
+            server = current_ctx.fastmcp
+            return getattr(server, "_bam_surface_profile", get_config().MCP_SURFACE_PROFILE)
+    except Exception:
+        pass
+
+    return get_config().MCP_SURFACE_PROFILE
+
+
+def _should_fail_closed_on_router_error(surface_profile: str) -> bool:
+    """Guided/product surfaces fail closed; explicit compatibility stays fail-open."""
+
+    return surface_profile != "legacy-flat"
 
 
 def _build_correction_audit_events(
@@ -195,6 +218,8 @@ def route_tool_call_report(
     """Build a structured execution report for a tool call."""
 
     context = MCPExecutionContext(tool_name=tool_name, params=params, prompt=prompt)
+    surface_profile = _get_active_surface_profile()
+    context.surface_profile = surface_profile
 
     if not is_router_enabled():
         result = direct_executor()
@@ -211,6 +236,18 @@ def route_tool_call_report(
 
     router = get_router()
     if router is None:
+        if _should_fail_closed_on_router_error(surface_profile):
+            report = MCPExecutionReport(
+                context=context,
+                router_enabled=True,
+                router_applied=False,
+                router_disposition="failed_closed_error",
+                error="Router is enabled but not initialized for this guided surface.",
+                audit_ids=(),
+            )
+            _log_audit_exposure(report)
+            return report
+
         result = direct_executor()
         report = MCPExecutionReport(
             context=context,
@@ -290,6 +327,18 @@ def route_tool_call_report(
 
     except Exception as e:
         logger.error(f"Router processing failed for {tool_name}: {e}", exc_info=True)
+        if _should_fail_closed_on_router_error(surface_profile):
+            report = MCPExecutionReport(
+                context=context,
+                router_enabled=True,
+                router_applied=False,
+                router_disposition="failed_closed_error",
+                error=f"Router processing failed for {tool_name}: {e}",
+                audit_ids=(),
+            )
+            _log_audit_exposure(report)
+            return report
+
         fallback_result = direct_executor()
         report = MCPExecutionReport(
             context=context,

@@ -6,19 +6,24 @@ import asyncio
 import json
 from dataclasses import replace
 
+import pytest
 from fastmcp import FastMCP
+from fastmcp.exceptions import NotFoundError, ToolError
+from fastmcp.server.transforms.visibility import create_visibility_transforms
 
-from server.adapters.mcp.factory import build_surface_providers
+from server.adapters.mcp.factory import build_server, build_surface_providers
+from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
-from server.adapters.mcp.transforms import materialize_transforms
+from server.adapters.mcp.transforms import build_surface_transform_pipeline, materialize_transforms
 from server.adapters.mcp.transforms.discovery import build_discovery_transform
+from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules
 
 
 def _build_search_enabled_server() -> FastMCP:
     base_surface = get_surface_profile("llm-guided")
     search_surface = replace(base_surface, search_enabled=True, search_max_results=5)
 
-    return FastMCP(
+    server = FastMCP(
         search_surface.server_name,
         providers=build_surface_providers(search_surface),
         transforms=materialize_transforms(search_surface),
@@ -26,6 +31,36 @@ def _build_search_enabled_server() -> FastMCP:
         tasks=search_surface.tasks_enabled,
         instructions=search_surface.instructions,
     )
+    server._bam_surface_profile = search_surface.name
+    return server
+
+
+def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=True)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(create_visibility_transforms(build_visibility_rules(surface.name, phase)))
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    server._bam_surface_profile = surface.name
+    return server
 
 
 def _decode_tool_result(result):
@@ -40,16 +75,16 @@ def _decode_tool_result(result):
     return json.loads(text)
 
 
-def test_discovery_transform_stays_disabled_by_default_for_llm_guided():
-    """Infrastructure may exist without forcing default public rollout yet."""
+def test_discovery_transform_enabled_by_default_for_llm_guided():
+    """llm-guided should now default to search-first discovery."""
 
-    assert build_discovery_transform(get_surface_profile("llm-guided")) is None
+    assert build_discovery_transform(get_surface_profile("llm-guided")) is not None
 
 
-def test_search_enabled_surface_lists_only_pinned_and_synthetic_tools():
-    """Search-enabled llm-guided surface should expose only pinned entry tools plus search proxies."""
+def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
+    """Default llm-guided surface should expose only pinned entry tools plus search proxies."""
 
-    server = _build_search_enabled_server()
+    server = build_server("llm-guided")
 
     async def run():
         tools = await server.list_tools()
@@ -66,10 +101,24 @@ def test_search_enabled_surface_lists_only_pinned_and_synthetic_tools():
     }
 
 
-def test_search_tools_operate_on_public_alias_names(monkeypatch):
-    """Search results should use public aliases for non-pinned discovered tools."""
+def test_bootstrap_search_does_not_leak_hidden_build_tools():
+    """Bootstrap-phase discovery should not surface hidden build tools."""
 
-    server = _build_search_enabled_server()
+    server = build_server("llm-guided")
+
+    async def run():
+        return await server.call_tool("search_tools", {"query": "inspect topology object materials"})
+
+    payload = _decode_tool_result(asyncio.run(run()))
+
+    assert all(tool["name"] != "inspect_scene" for tool in payload)
+    assert all(tool["name"] != "scene_inspect" for tool in payload)
+
+
+def test_build_phase_search_uses_public_alias_names_for_discovered_tools():
+    """Build-phase discovery should expose public aliases on the shaped surface."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
         return await server.call_tool("search_tools", {"query": "inspect topology object materials"})
@@ -96,7 +145,7 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
         lambda ctx, message: None,
     )
 
-    server = _build_search_enabled_server()
+    server = build_server("llm-guided")
 
     async def run():
         direct = await server.call_tool("browse_workflows", {"action": "list"})
@@ -109,3 +158,78 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     direct, discovered = asyncio.run(run())
 
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
+
+
+def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
+    """llm-guided search-first should materially reduce the initial tool payload."""
+
+    legacy = build_server("legacy-flat")
+    guided = build_server("llm-guided")
+
+    async def run():
+        legacy_tools = await legacy.list_tools()
+        guided_tools = await guided.list_tools()
+        legacy_payload = [tool.to_mcp_tool().model_dump(mode="json", exclude_none=True) for tool in legacy_tools]
+        guided_payload = [tool.to_mcp_tool().model_dump(mode="json", exclude_none=True) for tool in guided_tools]
+        return (
+            len(legacy_tools),
+            len(guided_tools),
+            len(json.dumps(legacy_payload)),
+            len(json.dumps(guided_payload)),
+        )
+
+    legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
+
+    assert legacy_count == 159
+    assert guided_count == 5
+    assert guided_bytes < legacy_bytes
+
+
+def test_call_tool_cannot_invoke_hidden_tool_during_bootstrap():
+    """Hidden tools should not become callable through call_tool during bootstrap."""
+
+    server = build_server("llm-guided")
+
+    async def run():
+        return await server.call_tool(
+            "call_tool",
+            {"name": "inspect_scene", "arguments": {"action": "object", "target_object": "Cube"}},
+        )
+
+    with pytest.raises((NotFoundError, ToolError)):
+        asyncio.run(run())
+
+
+def test_guided_surface_fails_closed_for_direct_and_discovered_calls(monkeypatch):
+    """Guided surfaces should not silently bypass router failures during discovery-first rollout."""
+
+    class Handler:
+        def list_objects(self):
+            return ["Cube"]
+
+    class FailingRouter:
+        def process_llm_tool_call(self, tool_name, params, prompt=None):
+            raise RuntimeError("router down")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: FailingRouter())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        direct = await server.call_tool("scene_list_objects", {})
+        discovered = await server.call_tool(
+            "call_tool",
+            {"name": "scene_list_objects", "arguments": {}},
+        )
+        return direct, discovered
+
+    direct, discovered = asyncio.run(run())
+
+    direct_text = "".join(getattr(block, "text", "") for block in direct.content)
+    discovered_text = "".join(getattr(block, "text", "") for block in discovered.content)
+
+    assert "Router processing failed" in direct_text
+    assert discovered_text == direct_text

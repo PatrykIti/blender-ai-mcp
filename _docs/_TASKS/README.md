@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 17 tasks (~200 sub-tasks)
-- **In Progress:** 4 tasks
-- **Done:** 145
+- **In Progress:** 2 tasks
+- **Done:** 147
 
 ## 🧭 Terminology Guardrails
 
@@ -63,8 +63,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Platform baseline is implemented and green; task stays open for deferred validation/docs slices and compatibility cleanup |
-| [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | Infra `084-01..04` is implemented on a preview search surface; rollout/default activation still gated by TASK-085 and TASK-091 |
-| [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | `llm-guided` public baseline is implemented and documented; remaining open parity slice depends on TASK-084/TASK-091 |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---
@@ -73,6 +71,8 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | 2026-03-22 |
+| [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | 2026-03-22 |
 | [TASK-091](./TASK-091_Versioned_Client_Surfaces.md) | **Versioned Client Surfaces for Safe API Evolution** | 🔴 High | 2026-03-22 |
 | [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | 2026-03-22 |
 | [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | 2026-03-22 |

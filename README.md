@@ -78,6 +78,25 @@ Current public argument aliases on `llm-guided`:
 
 The legacy/internal names remain the canonical internal contract used by router and dispatcher internals.
 
+### Search-First Discovery
+
+`llm-guided` now defaults to a search-first tool surface.
+
+Current measurable baseline:
+
+- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
+- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+
+The visible `llm-guided` entry set is:
+
+- `router_set_goal`
+- `router_get_status`
+- `browse_workflows`
+- `search_tools`
+- `call_tool`
+
+Build and inspection tools stay discoverable on demand and remain constrained by guided visibility/session phase rules.
+
 ### Runtime Responsibility Model
 
 The project intentionally separates four different responsibilities:

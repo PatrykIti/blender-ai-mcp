@@ -1,7 +1,7 @@
 # TASK-086-02: Transform-Based Tool and Parameter Aliasing
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md)
 
@@ -11,15 +11,13 @@
 
 Apply tool-name and parameter-name aliasing through the transform pipeline instead of duplicating handler logic or forking the business layer.
 
-## Current State
+## Completion Summary
 
-The core aliasing layer is implemented and tested for direct public-surface behavior:
+This slice is now closed.
 
 - tool aliases and argument aliases are applied through transforms
 - hidden/expert-only arguments are hidden on `llm-guided`
-- dispatcher/name-resolution compatibility is covered for direct alias use
-
-This slice remains open because parity for search-discovered calls and future versioned public lines depends on TASK-084 and TASK-091.
+- parity now covers direct public calls, discovered calls, and versioned public lines
 
 ---
 
