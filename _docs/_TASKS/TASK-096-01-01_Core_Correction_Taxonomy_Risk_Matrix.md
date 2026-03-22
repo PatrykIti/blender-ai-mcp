@@ -1,7 +1,7 @@
 # TASK-096-01-01: Core Correction Taxonomy and Risk Matrix
 
 **Parent:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-095-01](./TASK-095-01_Semantic_Responsibility_Policy_and_Code_Audit.md)
 

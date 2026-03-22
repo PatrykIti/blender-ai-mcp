@@ -1,7 +1,7 @@
 # TASK-096-01-02: Tests and Docs Correction Taxonomy and Risk Matrix
 
 **Parent:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-096-01-01](./TASK-096-01-01_Core_Correction_Taxonomy_Risk_Matrix.md)
 
