@@ -10,7 +10,7 @@ TASK-055-FIX: Unified set_goal with resolved_params, removed separate parameter 
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class IRouterTool(ABC):

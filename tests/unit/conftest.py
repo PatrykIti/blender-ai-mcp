@@ -4,10 +4,11 @@ Pytest configuration for managing bpy and bmesh mocks across all tests.
 This ensures that bpy is properly mocked before any test imports blender modules,
 and that mocks are reset between tests for proper isolation.
 """
+
 import sys
 from unittest.mock import MagicMock
-import pytest
 
+import pytest
 
 # Create global mocks for bpy, bmesh, and mathutils
 mock_bpy = MagicMock()
@@ -19,7 +20,7 @@ class MockVector:
     """Mock Vector class for mathutils."""
 
     def __init__(self, coords=(0, 0, 0)):
-        if hasattr(coords, '__iter__'):
+        if hasattr(coords, "__iter__"):
             self._coords = list(coords)
         else:
             self._coords = [coords, coords, coords]
@@ -74,7 +75,7 @@ class MockKDTree:
     def find(self, co, filter=None):
         """Returns (co, index, dist) - mock returns None if no points."""
         if not self._points:
-            return None, None, float('inf')
+            return None, None, float("inf")
         # Simple mock: return first point with distance 0
         return self._points[0][0], self._points[0][1], 0.0
 
@@ -90,8 +91,8 @@ class MockKDTree:
 class MockEuler:
     """Mock Euler class for mathutils."""
 
-    def __init__(self, rotation=(0, 0, 0), order='XYZ'):
-        if hasattr(rotation, '__iter__'):
+    def __init__(self, rotation=(0, 0, 0), order="XYZ"):
+        if hasattr(rotation, "__iter__"):
             self._rotation = list(rotation)
         else:
             self._rotation = [rotation, rotation, rotation]

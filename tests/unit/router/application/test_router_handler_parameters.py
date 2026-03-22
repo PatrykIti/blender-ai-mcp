@@ -5,16 +5,16 @@ TASK-055-5, TASK-055-6
 TASK-055-FIX: Updated for unified set_goal interface.
 """
 
-import pytest
 from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.router.domain.entities.parameter import (
-    ParameterSchema,
     ParameterResolutionResult,
-    UnresolvedParameter,
+    ParameterSchema,
     StoredMapping,
+    UnresolvedParameter,
 )
 
 
@@ -93,12 +93,14 @@ class MockParameterResolver:
                     f"range={schema.range})"
                 )
 
-        self.stored_values.append({
-            "context": context,
-            "parameter_name": parameter_name,
-            "value": value,
-            "workflow_name": workflow_name,
-        })
+        self.stored_values.append(
+            {
+                "context": context,
+                "parameter_name": parameter_name,
+                "value": value,
+                "workflow_name": workflow_name,
+            }
+        )
         return f"Stored: '{context}' → {parameter_name}={value} (workflow: {workflow_name})"
 
     def resolve(
@@ -123,12 +125,14 @@ class MockParameterResolver:
                 resolved[name] = schema.default
                 sources[name] = "default"
             else:
-                unresolved.append(UnresolvedParameter(
-                    name=name,
-                    schema=schema,
-                    context=prompt,
-                    relevance=0.8,
-                ))
+                unresolved.append(
+                    UnresolvedParameter(
+                        name=name,
+                        schema=schema,
+                        context=prompt,
+                        relevance=0.8,
+                    )
+                )
         return ParameterResolutionResult(
             resolved=resolved,
             unresolved=unresolved,
@@ -299,18 +303,20 @@ class TestSetGoalUnified:
                     default=0.3,
                     description="Right leg angle",
                 ),
-            }
+            },
         )
 
         # Configure resolver to return everything as resolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.0, "leg_angle_right": 0.0},
-            unresolved=[],
-            resolution_sources={
-                "leg_angle_left": "yaml_modifier",
-                "leg_angle_right": "yaml_modifier",
-            },
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.0, "leg_angle_right": 0.0},
+                unresolved=[],
+                resolution_sources={
+                    "leg_angle_left": "yaml_modifier",
+                    "leg_angle_right": "yaml_modifier",
+                },
+            )
+        )
 
         result = handler.set_goal("picnic table with straight legs")
 
@@ -333,18 +339,20 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
 
         # Configure resolver to return unresolved parameter
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="leg_angle_left",
-                    schema=leg_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="leg_angle_left",
+                        schema=leg_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result = handler.set_goal("table")
 
@@ -367,18 +375,20 @@ class TestSetGoalUnified:
         )
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="bench_layout",
-                    schema=layout_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="bench_layout",
+                        schema=layout_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result = handler.set_goal("table")
 
@@ -386,9 +396,7 @@ class TestSetGoalUnified:
         assert result["unresolved"][0]["param"] == "bench_layout"
         assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
 
-    def test_set_goal_invalid_enum_value_returns_needs_input(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_invalid_enum_value_returns_needs_input(self, handler, mock_loader, mock_resolver):
         """Invalid enum values should be reported instead of silently ignored."""
         layout_schema = ParameterSchema(
             name="bench_layout",
@@ -400,11 +408,13 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
         # Resolver would otherwise consider everything resolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"bench_layout": "all"},
-            unresolved=[],
-            resolution_sources={"bench_layout": "default"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"bench_layout": "all"},
+                unresolved=[],
+                resolution_sources={"bench_layout": "default"},
+            )
+        )
 
         result = handler.set_goal("table", resolved_params={"bench_layout": "side-only"})
 
@@ -413,9 +423,7 @@ class TestSetGoalUnified:
         assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
         assert "Invalid value" in result["unresolved"][0]["error"]
 
-    def test_set_goal_enum_value_is_case_insensitive(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_enum_value_is_case_insensitive(self, handler, mock_loader, mock_resolver):
         """String enum inputs should accept case-insensitive user values."""
         layout_schema = ParameterSchema(
             name="bench_layout",
@@ -426,20 +434,20 @@ class TestSetGoalUnified:
         )
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"bench_layout": "sides"},
-            unresolved=[],
-            resolution_sources={"bench_layout": "user"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"bench_layout": "sides"},
+                unresolved=[],
+                resolution_sources={"bench_layout": "user"},
+            )
+        )
 
         result = handler.set_goal("table", resolved_params={"bench_layout": "Sides"})
 
         assert result["status"] == "ready"
         assert result["resolved"]["bench_layout"] == "sides"
 
-    def test_set_goal_with_resolved_params_second_call(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_with_resolved_params_second_call(self, handler, mock_loader, mock_resolver):
         """Test providing resolved_params on second call."""
         leg_schema = ParameterSchema(
             name="leg_angle_left",
@@ -451,28 +459,32 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
 
         # First call returns unresolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="leg_angle_left",
-                    schema=leg_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="leg_angle_left",
+                        schema=leg_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result1 = handler.set_goal("table")
         assert result1["status"] == "needs_input"
 
         # Second call with resolved_params
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.5},
-            unresolved=[],
-            resolution_sources={"leg_angle_left": "learned_mapping"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.5},
+                unresolved=[],
+                resolution_sources={"leg_angle_left": "learned_mapping"},
+            )
+        )
 
         result2 = handler.set_goal("table", resolved_params={"leg_angle_left": 0.5})
 
@@ -497,9 +509,7 @@ class TestSetGoalUnified:
         assert result["status"] == "disabled"
         assert "not initialized" in result["message"]
 
-    def test_set_goal_resolution_sources_included(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_resolution_sources_included(self, handler, mock_loader, mock_resolver):
         """Test that resolution sources are included in response."""
         mock_loader.add_test_workflow(
             "picnic_table",
@@ -509,14 +519,16 @@ class TestSetGoalUnified:
                     type="float",
                     default=0.3,
                 ),
-            }
+            },
         )
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.0},
-            unresolved=[],
-            resolution_sources={"leg_angle_left": "yaml_modifier"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.0},
+                unresolved=[],
+                resolution_sources={"leg_angle_left": "yaml_modifier"},
+            )
+        )
 
         result = handler.set_goal("picnic table with straight legs")
 

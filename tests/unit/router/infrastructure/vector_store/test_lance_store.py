@@ -6,20 +6,20 @@ Tests LanceDB-based vector storage with fallback support.
 TASK-047-2
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
 
-from server.router.infrastructure.vector_store.lance_store import (
-    LanceVectorStore,
-    LANCEDB_AVAILABLE,
-)
+import pytest
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
+)
+from server.router.infrastructure.vector_store.lance_store import (
+    LANCEDB_AVAILABLE,
+    LanceVectorStore,
 )
 
 
@@ -511,6 +511,7 @@ class TestLanceVectorStoreMultiEmbedding:
         assert len(results) > 0
         # Results should be WeightedSearchResult
         from server.router.domain.interfaces.i_vector_store import WeightedSearchResult
+
         assert all(isinstance(r, WeightedSearchResult) for r in results)
 
     def test_search_workflows_weighted_returns_best_per_workflow(self, store, workflow_records):

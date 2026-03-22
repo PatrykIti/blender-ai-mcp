@@ -1,10 +1,11 @@
 """
 Tests for UV Tools (TASK-014-11, TASK-024)
 """
+
 import pytest
-from server.application.tool_handlers.uv_handler import UVToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.uv_handler import UVToolHandler
 
 
 @pytest.fixture
@@ -34,11 +35,7 @@ def create_test_object(modeling_handler, scene_handler, name="E2E_UVTest"):
         pass
 
     # Create cube
-    modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        name=name,
-        location=[0, 0, 0]
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", name=name, location=[0, 0, 0])
     return name
 
 
@@ -54,16 +51,14 @@ def cleanup_test_object(scene_handler, name):
 # UV List Maps Tests
 # =============================================================================
 
+
 def test_uv_list_maps_basic(uv_handler, modeling_handler, scene_handler):
     """Test listing UV maps for a mesh object."""
     obj_name = "E2E_UVListTest"
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.list_maps(
-            object_name=obj_name,
-            include_island_counts=False
-        )
+        result = uv_handler.list_maps(object_name=obj_name, include_island_counts=False)
 
         assert isinstance(result, dict)
         assert "object_name" in result
@@ -88,10 +83,7 @@ def test_uv_list_maps_with_island_counts(uv_handler, modeling_handler, scene_han
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.list_maps(
-            object_name=obj_name,
-            include_island_counts=True
-        )
+        result = uv_handler.list_maps(object_name=obj_name, include_island_counts=True)
 
         assert isinstance(result, dict)
         assert "uv_maps" in result
@@ -120,10 +112,7 @@ def test_uv_list_maps_invalid_object(uv_handler):
     """Test listing UV maps for non-existent object."""
     try:
         with pytest.raises(RuntimeError) as exc_info:
-            uv_handler.list_maps(
-                object_name="NonExistentObject12345",
-                include_island_counts=False
-            )
+            uv_handler.list_maps(object_name="NonExistentObject12345", include_island_counts=False)
         # Check if error is the expected validation error (not connection error)
         error_msg = str(exc_info.value).lower()
         if "not found" in error_msg:
@@ -146,21 +135,14 @@ def test_uv_list_maps_non_mesh_object(uv_handler, scene_handler):
         # Create a camera (non-mesh object)
         camera_name = "E2E_UVTestCamera"
         try:
-            scene_handler.create_camera(
-                location=[0, 0, 5],
-                rotation=[0, 0, 0],
-                name=camera_name
-            )
+            scene_handler.create_camera(location=[0, 0, 5], rotation=[0, 0, 0], name=camera_name)
         except RuntimeError as e:
             if "could not connect" in str(e).lower():
                 pytest.skip(f"Blender not available: {e}")
             raise
 
         with pytest.raises(RuntimeError) as exc_info:
-            uv_handler.list_maps(
-                object_name=camera_name,
-                include_island_counts=False
-            )
+            uv_handler.list_maps(object_name=camera_name, include_island_counts=False)
         error_msg = str(exc_info.value).lower()
         if "not a mesh" in error_msg:
             print(f"✓ uv_list_maps properly handles non-mesh object '{camera_name}'")
@@ -180,6 +162,7 @@ def test_uv_list_maps_non_mesh_object(uv_handler, scene_handler):
 # TASK-024: uv_unwrap Tests
 # =============================================================================
 
+
 def test_uv_unwrap_smart_project(uv_handler, modeling_handler, scene_handler):
     """Test UV unwrap with SMART_PROJECT method."""
     obj_name = "E2E_UVUnwrapSmartTest"
@@ -187,11 +170,7 @@ def test_uv_unwrap_smart_project(uv_handler, modeling_handler, scene_handler):
         create_test_object(modeling_handler, scene_handler, obj_name)
 
         result = uv_handler.unwrap(
-            object_name=obj_name,
-            method="SMART_PROJECT",
-            angle_limit=66.0,
-            island_margin=0.02,
-            scale_to_bounds=True
+            object_name=obj_name, method="SMART_PROJECT", angle_limit=66.0, island_margin=0.02, scale_to_bounds=True
         )
 
         assert isinstance(result, str)
@@ -213,11 +192,7 @@ def test_uv_unwrap_cube_project(uv_handler, modeling_handler, scene_handler):
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.unwrap(
-            object_name=obj_name,
-            method="CUBE",
-            scale_to_bounds=True
-        )
+        result = uv_handler.unwrap(object_name=obj_name, method="CUBE", scale_to_bounds=True)
 
         assert isinstance(result, str)
         assert "CUBE" in result
@@ -238,11 +213,7 @@ def test_uv_unwrap_cylinder_project(uv_handler, modeling_handler, scene_handler)
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.unwrap(
-            object_name=obj_name,
-            method="CYLINDER",
-            scale_to_bounds=True
-        )
+        result = uv_handler.unwrap(object_name=obj_name, method="CYLINDER", scale_to_bounds=True)
 
         assert isinstance(result, str)
         assert "CYLINDER" in result
@@ -263,11 +234,7 @@ def test_uv_unwrap_sphere_project(uv_handler, modeling_handler, scene_handler):
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.unwrap(
-            object_name=obj_name,
-            method="SPHERE",
-            scale_to_bounds=True
-        )
+        result = uv_handler.unwrap(object_name=obj_name, method="SPHERE", scale_to_bounds=True)
 
         assert isinstance(result, str)
         assert "SPHERE" in result
@@ -288,11 +255,7 @@ def test_uv_unwrap_standard(uv_handler, modeling_handler, scene_handler):
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.unwrap(
-            object_name=obj_name,
-            method="UNWRAP",
-            island_margin=0.02
-        )
+        result = uv_handler.unwrap(object_name=obj_name, method="UNWRAP", island_margin=0.02)
 
         assert isinstance(result, str)
         assert "UNWRAP" in result
@@ -311,10 +274,7 @@ def test_uv_unwrap_invalid_object(uv_handler):
     """Test UV unwrap with non-existent object."""
     try:
         with pytest.raises(RuntimeError) as exc_info:
-            uv_handler.unwrap(
-                object_name="NonExistentObject12345",
-                method="SMART_PROJECT"
-            )
+            uv_handler.unwrap(object_name="NonExistentObject12345", method="SMART_PROJECT")
         error_msg = str(exc_info.value).lower()
         if "not found" in error_msg:
             print("✓ uv_unwrap properly handles invalid object name")
@@ -334,18 +294,14 @@ def test_uv_unwrap_invalid_object(uv_handler):
 # TASK-024: uv_pack_islands Tests
 # =============================================================================
 
+
 def test_uv_pack_islands_basic(uv_handler, modeling_handler, scene_handler):
     """Test packing UV islands with default parameters."""
     obj_name = "E2E_UVPackTest"
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.pack_islands(
-            object_name=obj_name,
-            margin=0.02,
-            rotate=True,
-            scale=True
-        )
+        result = uv_handler.pack_islands(object_name=obj_name, margin=0.02, rotate=True, scale=True)
 
         assert isinstance(result, str)
         assert "Packed" in result or "pack" in result.lower()
@@ -366,12 +322,7 @@ def test_uv_pack_islands_custom_params(uv_handler, modeling_handler, scene_handl
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.pack_islands(
-            object_name=obj_name,
-            margin=0.05,
-            rotate=False,
-            scale=False
-        )
+        result = uv_handler.pack_islands(object_name=obj_name, margin=0.05, rotate=False, scale=False)
 
         assert isinstance(result, str)
         assert "Packed" in result
@@ -390,10 +341,7 @@ def test_uv_pack_islands_invalid_object(uv_handler):
     """Test packing UV islands with non-existent object."""
     try:
         with pytest.raises(RuntimeError) as exc_info:
-            uv_handler.pack_islands(
-                object_name="NonExistentObject12345",
-                margin=0.02
-            )
+            uv_handler.pack_islands(object_name="NonExistentObject12345", margin=0.02)
         error_msg = str(exc_info.value).lower()
         if "not found" in error_msg:
             print("✓ uv_pack_islands properly handles invalid object name")
@@ -413,16 +361,14 @@ def test_uv_pack_islands_invalid_object(uv_handler):
 # TASK-024: uv_create_seam Tests
 # =============================================================================
 
+
 def test_uv_create_seam_mark(uv_handler, modeling_handler, scene_handler):
     """Test marking UV seams on selected edges."""
     obj_name = "E2E_UVSeamMarkTest"
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.create_seam(
-            object_name=obj_name,
-            action="mark"
-        )
+        result = uv_handler.create_seam(object_name=obj_name, action="mark")
 
         assert isinstance(result, str)
         assert "Marked" in result or "seam" in result.lower()
@@ -443,10 +389,7 @@ def test_uv_create_seam_clear(uv_handler, modeling_handler, scene_handler):
     try:
         create_test_object(modeling_handler, scene_handler, obj_name)
 
-        result = uv_handler.create_seam(
-            object_name=obj_name,
-            action="clear"
-        )
+        result = uv_handler.create_seam(object_name=obj_name, action="clear")
 
         assert isinstance(result, str)
         assert "Cleared" in result or "seam" in result.lower()
@@ -465,10 +408,7 @@ def test_uv_create_seam_invalid_object(uv_handler):
     """Test creating seam with non-existent object."""
     try:
         with pytest.raises(RuntimeError) as exc_info:
-            uv_handler.create_seam(
-                object_name="NonExistentObject12345",
-                action="mark"
-            )
+            uv_handler.create_seam(object_name="NonExistentObject12345", action="mark")
         error_msg = str(exc_info.value).lower()
         if "not found" in error_msg:
             print("✓ uv_create_seam properly handles invalid object name")

@@ -7,10 +7,12 @@ Tests the complete workflow:
 3. Convert text to mesh for export
 4. Complete workflow: Create text → extrude → convert to mesh
 """
-import pytest
+
 import time
-from server.application.tool_handlers.text_handler import TextToolHandler
+
+import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.text_handler import TextToolHandler
 
 
 @pytest.fixture
@@ -419,7 +421,7 @@ def test_text_to_mesh_keep_original(text_handler, scene_handler):
         # We'll try to clean up common patterns
         try:
             scene_handler.delete_object(f"{text_name}.001")
-        except:
+        except Exception:
             pass
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -471,12 +473,12 @@ def test_complete_3d_text_workflow(text_handler, scene_handler):
             bevel_resolution=2,
         )
         assert "Modified text object" in result2
-        print(f"  Step 2: Added extrusion and bevel")
+        print("  Step 2: Added extrusion and bevel")
 
         # 3. Convert to mesh for export
         result3 = text_handler.to_mesh(object_name=text_name)
         assert "Converted text" in result3
-        print(f"  Step 3: Converted to mesh")
+        print("  Step 3: Converted to mesh")
 
         print("✓ Complete 3D text workflow successful")
 
@@ -505,7 +507,7 @@ def test_signage_workflow(text_handler, scene_handler):
         )
 
         assert "Created text object" in result
-        print(f"✓ Signage workflow: Created centered EXIT sign")
+        print("✓ Signage workflow: Created centered EXIT sign")
 
         # Cleanup
         scene_handler.delete_object(sign_name)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class IExtractionTool(ABC):
@@ -60,7 +60,7 @@ class IExtractionTool(ABC):
         object_name: str,
         angles: Optional[List[str]] = None,
         resolution: int = 512,
-        output_dir: str = "/tmp/extraction_renders"
+        output_dir: str = "/tmp/extraction_renders",
     ) -> Dict[str, Any]:
         """Renders object from multiple angles for LLM Vision analysis.
 

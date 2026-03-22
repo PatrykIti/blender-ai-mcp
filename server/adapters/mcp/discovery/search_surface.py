@@ -21,10 +21,7 @@ from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
 
 
 def _catalog_hash(search_documents: dict[str, str]) -> str:
-    key = "|".join(
-        f"{tool_name}:{document}"
-        for tool_name, document in sorted(search_documents.items())
-    )
+    key = "|".join(f"{tool_name}:{document}" for tool_name, document in sorted(search_documents.items()))
     return hashlib.sha256(key.encode()).hexdigest()
 
 

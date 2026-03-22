@@ -6,7 +6,6 @@ import asyncio
 from dataclasses import dataclass, field
 
 from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
-
 from server.adapters.mcp.areas import router as router_area
 from server.adapters.mcp.elicitation_contracts import build_elicitation_response_type
 from server.adapters.mcp.session_capabilities import get_session_capability_state

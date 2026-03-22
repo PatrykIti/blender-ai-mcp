@@ -1,5 +1,6 @@
-import bpy
 import bmesh
+import bpy
+
 
 class MeshHandler:
     """Application service for Edit Mode mesh operations."""
@@ -10,14 +11,14 @@ class MeshHandler:
         Returns tuple (obj, previous_mode).
         """
         obj = bpy.context.active_object
-        if not obj or obj.type != 'MESH':
+        if not obj or obj.type != "MESH":
             raise ValueError("Active object must be a Mesh.")
-        
+
         previous_mode = obj.mode
-        
-        if previous_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
-        
+
+        if previous_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
+
         return obj, previous_mode
 
     def _get_bmesh(self):
@@ -52,7 +53,7 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects or deselects all geometry.
         """
         self._ensure_edit_mode()
-        action = 'DESELECT' if deselect else 'SELECT'
+        action = "DESELECT" if deselect else "SELECT"
         bpy.ops.mesh.select_all(action=action)
         return "Deselected all" if deselect else "Selected all"
 
@@ -78,51 +79,47 @@ class MeshHandler:
             return self.select_boundary(mode=boundary_mode)
         raise ValueError(f"Unknown selection action: {action}")
 
-    def delete_selected(self, type='VERT'):
+    def delete_selected(self, type="VERT"):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Deletes selected elements.
         Type: VERT, EDGE, FACE.
         """
         # Using bmesh for deletion is safer when mixing with other bmesh ops
         bm = self._get_bmesh()
-        
+
         # Ensure lookups
         bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
-        
+
         to_delete = []
-        
+
         # Map string type to bmesh sequence
-        if type == 'VERT':
+        if type == "VERT":
             to_delete = [v for v in bm.verts if v.select]
-        elif type == 'EDGE':
+        elif type == "EDGE":
             to_delete = [e for e in bm.edges if e.select]
-        elif type == 'FACE':
+        elif type == "FACE":
             to_delete = [f for f in bm.faces if f.select]
         else:
             # Fallback for other types if needed, or raise error
             raise ValueError(f"Invalid delete type: {type}. Must be VERT, EDGE, or FACE.")
-            
+
         count = len(to_delete)
-        
+
         # Execute delete
         # context: VERTS, EDGES, FACES, EDGES_FACES, FACES_KEEP_BOUNDARY etc.
         # For simplicity mapping VERT->VERTS, EDGE->EDGES, FACE->FACES
-        context_map = {
-            'VERT': 'VERTS', 
-            'EDGE': 'EDGES', 
-            'FACE': 'FACES'
-        }
-        
-        bmesh.ops.delete(bm, geom=to_delete, context=context_map.get(type, 'VERTS'))
-        
+        context_map = {"VERT": "VERTS", "EDGE": "EDGES", "FACE": "FACES"}
+
+        bmesh.ops.delete(bm, geom=to_delete, context=context_map.get(type, "VERTS"))
+
         # Update mesh
         bmesh.update_edit_mesh(bpy.context.active_object.data)
-        
+
         return f"Deleted {count} selected {type}(s)"
 
-    def select_by_index(self, indices, type='VERT', selection_mode='SET'):
+    def select_by_index(self, indices, type="VERT", selection_mode="SET"):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Select geometry elements by index.
         Uses BMesh for precise 0-based indexing.
@@ -135,39 +132,39 @@ class MeshHandler:
         self._ensure_edit_mode()
 
         # Handle SET mode (exclusive selection)
-        if selection_mode == 'SET':
-            bpy.ops.mesh.select_all(action='DESELECT')
+        if selection_mode == "SET":
+            bpy.ops.mesh.select_all(action="DESELECT")
 
         bm = self._get_bmesh()
-        
+
         # Ensure lookups table is current
         bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
-        
+
         target_seq = None
-        if type == 'VERT':
+        if type == "VERT":
             target_seq = bm.verts
-        elif type == 'EDGE':
+        elif type == "EDGE":
             target_seq = bm.edges
-        elif type == 'FACE':
+        elif type == "FACE":
             target_seq = bm.faces
         else:
             raise ValueError(f"Invalid type: {type}. Must be VERT, EDGE, or FACE.")
-            
+
         count = 0
-        target_state = False if selection_mode == 'SUBTRACT' else True
-        
+        target_state = False if selection_mode == "SUBTRACT" else True
+
         for i in indices:
             if 0 <= i < len(target_seq):
                 # Set select state
                 target_seq[i].select = target_state
                 count += 1
-        
+
         # Flush selection to ensure consistent state
         bmesh.update_edit_mesh(bpy.context.active_object.data)
-        
-        action_desc = "Deselected" if selection_mode == 'SUBTRACT' else "Selected"
+
+        action_desc = "Deselected" if selection_mode == "SUBTRACT" else "Selected"
         return f"{action_desc} {count} {type}(s) (Mode: {selection_mode})"
 
     def extrude_region(self, move=None):
@@ -177,22 +174,22 @@ class MeshHandler:
         Always provide 'move' or follow up with a transform.
         """
         self._ensure_edit_mode()
-        
+
         # Use built-in operator which handles context well for simple extrusion
         # Default mode is REGION which is what 'E' key does
         args = {}
         if move:
-            args['TRANSFORM_OT_translate'] = {"value": move}
-            
-        # We call extrude_region_move. 
+            args["TRANSFORM_OT_translate"] = {"value": move}
+
+        # We call extrude_region_move.
         # Note: Passing transform args to a macro operator like this via python is sometimes tricky.
         # Alternatively, we call extrude, then translate.
-        
+
         bpy.ops.mesh.extrude_region_move(
-            MESH_OT_extrude_region={"use_normal_flip":False, "use_dissolve_ortho_edges":False, "mirror":False}, 
-            TRANSFORM_OT_translate={"value": move if move else (0,0,0)}
+            MESH_OT_extrude_region={"use_normal_flip": False, "use_dissolve_ortho_edges": False, "mirror": False},
+            TRANSFORM_OT_translate={"value": move if move else (0, 0, 0)},
         )
-        
+
         return "Extruded region"
 
     def fill_holes(self):
@@ -204,25 +201,25 @@ class MeshHandler:
         # F key behavior
         # Context: Selected edges/vertices
         bpy.ops.mesh.edge_face_add()
-        
+
         # Recalculate normals to prevent invisible faces (backface culling issues)
-        bpy.ops.mesh.select_all(action='SELECT') # Select all to ensure consistent normals across whole mesh
+        bpy.ops.mesh.select_all(action="SELECT")  # Select all to ensure consistent normals across whole mesh
         bpy.ops.mesh.normals_make_consistent(inside=False)
-        bpy.ops.mesh.select_all(action='DESELECT') # Cleanup selection
-        
+        bpy.ops.mesh.select_all(action="DESELECT")  # Cleanup selection
+
         return "Filled holes and recalculated normals"
 
-    def bevel(self, offset=0.1, segments=1, profile=0.5, affect='EDGES'):
+    def bevel(self, offset=0.1, segments=1, profile=0.5, affect="EDGES"):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bevels selected geometry.
         """
         self._ensure_edit_mode()
         # bpy.ops.mesh.bevel works on selection
         bpy.ops.mesh.bevel(
-            offset=offset, 
-            segments=segments, 
-            profile=profile, 
-            affect=affect # 'VERTICES' or 'EDGES'
+            offset=offset,
+            segments=segments,
+            profile=profile,
+            affect=affect,  # 'VERTICES' or 'EDGES'
         )
         return f"Bevel applied (offset={offset}, segments={segments})"
 
@@ -233,17 +230,17 @@ class MeshHandler:
         You MUST select edges perpendicular to the desired cut direction first.
         """
         self._ensure_edit_mode()
-        
+
         try:
             # This is highly likely to fail in headless/background mode without correct override
             # We can try to override the context if we have a 3D view (which we check for get_viewport)
             # But identifying the *ring* to cut is impossible without an edge index target.
-            
+
             # ALTERNATIVE: Subdivide selected edges.
             # If edges are selected, subdivide cuts them.
             bpy.ops.mesh.subdivide(number_cuts=number_cuts, smoothness=smoothness)
             return f"Subdivided selected geometry (cuts={number_cuts})"
-            
+
         except Exception as e:
             return f"Failed to loop cut: {e}"
 
@@ -255,12 +252,12 @@ class MeshHandler:
         bpy.ops.mesh.inset(thickness=thickness, depth=depth)
         return f"Inset applied (thickness={thickness}, depth={depth})"
 
-    def boolean(self, operation='DIFFERENCE', solver='EXACT'):
+    def boolean(self, operation="DIFFERENCE", solver="EXACT"):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
         Formula: Unselected - Selected (for DIFFERENCE).
         TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
-        
+
         Workflow:
           1. Select 'Cutter' geometry.
           2. Deselect 'Base' geometry.
@@ -296,25 +293,25 @@ class MeshHandler:
         Uses Laplacian smoothing algorithm.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
-        
+
         if not selected_verts:
             # Restore mode before raising error? Or just raise?
             # Ideally restore, but if we fail fast...
             # The context is already changed. Let's try to be nice.
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
-        
+
         vert_count = len(selected_verts)
-        
+
         bpy.ops.mesh.vertices_smooth(factor=factor, repeat=iterations)
-        
-        if previous_mode != 'EDIT':
+
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Smoothed {vert_count} vertices ({iterations} iterations, {factor:.2f} factor)"
 
     def flatten_vertices(self, axis):
@@ -323,47 +320,39 @@ class MeshHandler:
         Aligns vertices perpendicular to chosen axis using scale-to-zero transform.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
-        
+
         if not selected_verts:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
-        
+
         vert_count = len(selected_verts)
-        
+
         axis = axis.upper()
-        if axis not in ['X', 'Y', 'Z']:
-            if previous_mode != 'EDIT':
+        if axis not in ["X", "Y", "Z"]:
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
-        
-        constraint_map = {
-            "X": (True, False, False),
-            "Y": (False, True, False),
-            "Z": (False, False, True)
-        }
-        
+
+        constraint_map = {"X": (True, False, False), "Y": (False, True, False), "Z": (False, False, True)}
+
         constraint = constraint_map[axis]
         scale_value = [1.0, 1.0, 1.0]
         for i, constrained in enumerate(constraint):
             if constrained:
                 scale_value[i] = 0.0
-        
-        bpy.ops.transform.resize(
-            value=tuple(scale_value),
-            constraint_axis=constraint,
-            orient_type='GLOBAL'
-        )
 
-        if previous_mode != 'EDIT':
+        bpy.ops.transform.resize(value=tuple(scale_value), constraint_axis=constraint, orient_type="GLOBAL")
+
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Flattened {vert_count} vertices along {axis} axis"
 
-    def list_groups(self, object_name, group_type='VERTEX'):
+    def list_groups(self, object_name, group_type="VERTEX"):
         """
         [MESH][SAFE][READ-ONLY] Lists vertex/face groups defined on mesh object.
 
@@ -379,12 +368,12 @@ class MeshHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         group_type = group_type.upper()
 
-        if group_type == 'VERTEX':
+        if group_type == "VERTEX":
             groups_data = []
 
             for idx, vg in enumerate(obj.vertex_groups):
@@ -395,7 +384,7 @@ class MeshHandler:
                         # Check if vertex is in this group
                         if vg.index in [g.group for g in v.groups]:
                             assigned_count += 1
-                    except:
+                    except Exception:
                         pass
 
                 group_info = {
@@ -410,19 +399,19 @@ class MeshHandler:
                 "object_name": object_name,
                 "group_type": "VERTEX",
                 "group_count": len(groups_data),
-                "groups": groups_data
+                "groups": groups_data,
             }
 
-        elif group_type == 'FACE':
+        elif group_type == "FACE":
             # Face maps were removed in Blender 3.0+
             # Check if face_maps attribute exists
-            if hasattr(obj, 'face_maps'):
+            if hasattr(obj, "face_maps"):
                 groups_data = []
                 for fm in obj.face_maps:
                     group_info = {
                         "name": fm.name,
                         "index": fm.index,
-                        "member_count": 0  # Face maps don't track count directly
+                        "member_count": 0,  # Face maps don't track count directly
                     }
                     groups_data.append(group_info)
 
@@ -431,12 +420,12 @@ class MeshHandler:
                     "group_type": "FACE",
                     "group_count": len(groups_data),
                     "groups": groups_data,
-                    "note": "Face maps are deprecated in Blender 3.0+"
+                    "note": "Face maps are deprecated in Blender 3.0+",
                 }
             else:
                 # Try using face attributes (Blender 3.0+)
                 # Face attributes are stored in obj.data.attributes
-                face_attributes = [attr for attr in obj.data.attributes if attr.domain == 'FACE']
+                face_attributes = [attr for attr in obj.data.attributes if attr.domain == "FACE"]
 
                 if not face_attributes:
                     return {
@@ -444,16 +433,12 @@ class MeshHandler:
                         "group_type": "FACE",
                         "group_count": 0,
                         "groups": [],
-                        "note": "No face attributes found. Face maps were deprecated in Blender 3.0+. Use vertex groups or custom attributes instead."
+                        "note": "No face attributes found. Face maps were deprecated in Blender 3.0+. Use vertex groups or custom attributes instead.",
                     }
 
                 groups_data = []
                 for attr in face_attributes:
-                    group_info = {
-                        "name": attr.name,
-                        "data_type": attr.data_type,
-                        "domain": attr.domain
-                    }
+                    group_info = {"name": attr.name, "data_type": attr.data_type, "domain": attr.domain}
                     groups_data.append(group_info)
 
                 return {
@@ -461,7 +446,7 @@ class MeshHandler:
                     "group_type": "FACE",
                     "group_count": len(groups_data),
                     "groups": groups_data,
-                    "note": "Showing face-domain attributes (Blender 3.0+ replacement for face maps)"
+                    "note": "Showing face-domain attributes (Blender 3.0+ replacement for face maps)",
                 }
         else:
             raise ValueError(f"Invalid group_type '{group_type}'. Must be 'VERTEX' or 'FACE'")
@@ -471,15 +456,15 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge loop based on the target edge index.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Validate edge index
         if edge_index < 0 or edge_index >= len(bm.edges):
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
-            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
-        
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges) - 1})")
+
         # Deselect all first
         for edge in bm.edges:
             edge.select = False
@@ -487,21 +472,21 @@ class MeshHandler:
             vert.select = False
         for face in bm.faces:
             face.select = False
-        
+
         # Select the target edge
         target_edge = bm.edges[edge_index]
         target_edge.select = True
-        
+
         # Ensure mesh is updated
         bmesh.update_edit_mesh(obj.data)
-        
+
         # Use Blender's loop selection operator
         bpy.ops.mesh.loop_multi_select(ring=False)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected edge loop from edge {edge_index}"
 
     def select_ring(self, edge_index):
@@ -509,15 +494,15 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects an edge ring based on the target edge index.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Validate edge index
         if edge_index < 0 or edge_index >= len(bm.edges):
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
-            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges)-1})")
-        
+            raise ValueError(f"Invalid edge_index {edge_index}. Mesh has {len(bm.edges)} edges (0-{len(bm.edges) - 1})")
+
         # Deselect all first
         for edge in bm.edges:
             edge.select = False
@@ -525,21 +510,21 @@ class MeshHandler:
             vert.select = False
         for face in bm.faces:
             face.select = False
-        
+
         # Select the target edge
         target_edge = bm.edges[edge_index]
         target_edge.select = True
-        
+
         # Ensure mesh is updated
         bmesh.update_edit_mesh(obj.data)
-        
+
         # Use Blender's ring selection operator
         bpy.ops.mesh.loop_multi_select(ring=True)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected edge ring from edge {edge_index}"
 
     def select_linked(self):
@@ -547,27 +532,27 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Selects all geometry linked to current selection.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Check if anything is selected
         selected_count = sum(1 for v in bm.verts if v.select)
-        
+
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select at least one vertex/edge/face to use select_linked")
-        
+
         # Use Blender's select_linked operator
         bpy.ops.mesh.select_linked()
-        
+
         # Count selected after operation
         final_count = sum(1 for v in bm.verts if v.select)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected linked geometry ({final_count} vertices total)"
 
     def select_more(self):
@@ -575,27 +560,27 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Grows the current selection by one step.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Count selected before
         initial_count = sum(1 for v in bm.verts if v.select)
-        
+
         if initial_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select at least one element to grow selection")
-        
+
         # Grow selection
         bpy.ops.mesh.select_more()
-        
+
         # Count selected after
         final_count = sum(1 for v in bm.verts if v.select)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Grew selection by one step ({initial_count} -> {final_count} vertices)"
 
     def select_less(self):
@@ -603,27 +588,27 @@ class MeshHandler:
         [EDIT MODE][SELECTION-BASED][SAFE] Shrinks the current selection by one step.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Count selected before
         initial_count = sum(1 for v in bm.verts if v.select)
-        
+
         if initial_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select at least one element to shrink selection")
-        
+
         # Shrink selection
         bpy.ops.mesh.select_less()
-        
+
         # Count selected after
         final_count = sum(1 for v in bm.verts if v.select)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Shrunk selection by one step ({initial_count} -> {final_count} vertices)"
 
     def get_vertex_data(self, object_name, selected_only=False, offset=None, limit=None):
@@ -633,26 +618,26 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
-        
+
         # Ensure we're in EDIT mode to read bmesh data
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
-        
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         vertices = []
         selected_count = 0
         offset, limit = self._normalize_paging(offset, limit)
         seen = 0
-        
+
         for v in bm.verts:
             if v.select:
                 selected_count += 1
-            
+
             # Skip if selected_only is True and vertex is not selected
             if selected_only and not v.select:
                 continue
@@ -663,17 +648,19 @@ class MeshHandler:
             if limit is not None and len(vertices) >= limit:
                 break
 
-            vertices.append({
-                "index": v.index,
-                "position": [round(v.co.x, 6), round(v.co.y, 6), round(v.co.z, 6)],
-                "selected": v.select
-            })
+            vertices.append(
+                {
+                    "index": v.index,
+                    "position": [round(v.co.x, 6), round(v.co.y, 6), round(v.co.z, 6)],
+                    "selected": v.select,
+                }
+            )
             seen += 1
-        
+
         # Restore previous mode
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
-        
+
         filtered_count = selected_count if selected_only else len(bm.verts)
         has_more = limit is not None and (offset + len(vertices)) < filtered_count
 
@@ -686,7 +673,7 @@ class MeshHandler:
             "offset": offset,
             "limit": limit,
             "has_more": has_more,
-            "vertices": vertices
+            "vertices": vertices,
         }
 
     def get_edge_data(self, object_name, selected_only=False, offset=None, limit=None):
@@ -696,13 +683,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
@@ -726,20 +713,22 @@ class MeshHandler:
                 break
 
             smooth = getattr(e, "smooth", True)
-            edges.append({
-                "index": e.index,
-                "verts": [e.verts[0].index, e.verts[1].index],
-                "is_boundary": e.is_boundary,
-                "is_manifold": e.is_manifold,
-                "is_seam": e.seam,
-                "is_sharp": not smooth,
-                "crease": round(float(getattr(e, "crease", 0.0)), 6),
-                "bevel_weight": round(float(getattr(e, "bevel_weight", 0.0)), 6),
-                "selected": e.select,
-            })
+            edges.append(
+                {
+                    "index": e.index,
+                    "verts": [e.verts[0].index, e.verts[1].index],
+                    "is_boundary": e.is_boundary,
+                    "is_manifold": e.is_manifold,
+                    "is_seam": e.seam,
+                    "is_sharp": not smooth,
+                    "crease": round(float(getattr(e, "crease", 0.0)), 6),
+                    "bevel_weight": round(float(getattr(e, "bevel_weight", 0.0)), 6),
+                    "selected": e.select,
+                }
+            )
             seen += 1
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         filtered_count = selected_count if selected_only else len(bm.edges)
@@ -764,13 +753,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
@@ -796,18 +785,20 @@ class MeshHandler:
             normal = f.normal
             center = f.calc_center_median()
 
-            faces.append({
-                "index": f.index,
-                "verts": [v.index for v in f.verts],
-                "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
-                "center": [round(center.x, 6), round(center.y, 6), round(center.z, 6)],
-                "area": round(float(f.calc_area()), 6),
-                "material_index": f.material_index,
-                "selected": f.select,
-            })
+            faces.append(
+                {
+                    "index": f.index,
+                    "verts": [v.index for v in f.verts],
+                    "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
+                    "center": [round(center.x, 6), round(center.y, 6), round(center.z, 6)],
+                    "area": round(float(f.calc_area()), 6),
+                    "material_index": f.material_index,
+                    "selected": f.select,
+                }
+            )
             seen += 1
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         filtered_count = selected_count if selected_only else len(bm.faces)
@@ -832,13 +823,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.faces.ensure_lookup_table()
@@ -847,7 +838,7 @@ class MeshHandler:
         uv_layers = bm.loops.layers.uv
         uv_layer_ref = uv_layers.get(uv_layer) if uv_layer else uv_layers.active
         if uv_layer_ref is None:
-            if prev_mode != 'EDIT':
+            if prev_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=prev_mode)
             if uv_layer:
                 raise ValueError(f"UV layer '{uv_layer}' not found")
@@ -877,14 +868,16 @@ class MeshHandler:
                 uv = loop[uv_layer_ref].uv
                 uvs.append([round(uv.x, 6), round(uv.y, 6)])
 
-            faces.append({
-                "face_index": f.index,
-                "verts": verts,
-                "uvs": uvs,
-            })
+            faces.append(
+                {
+                    "face_index": f.index,
+                    "verts": verts,
+                    "uvs": uvs,
+                }
+            )
             seen += 1
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         filtered_count = selected_count if selected_only else len(bm.faces)
@@ -910,13 +903,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.faces.ensure_lookup_table()
@@ -953,14 +946,16 @@ class MeshHandler:
             normal = corner_normals[loop_index]
             if hasattr(normal, "vector"):
                 normal = normal.vector
-            loops.append({
-                "loop_index": loop_index,
-                "vert": loop.vertex_index,
-                "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
-            })
+            loops.append(
+                {
+                    "loop_index": loop_index,
+                    "vert": loop.vertex_index,
+                    "normal": [round(normal.x, 6), round(normal.y, 6), round(normal.z, 6)],
+                }
+            )
             seen += 1
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         auto_smooth, auto_smooth_angle, auto_smooth_source = self._get_auto_smooth_state(obj)
@@ -993,13 +988,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
@@ -1007,7 +1002,7 @@ class MeshHandler:
         selected_vertices = {v.index for v in bm.verts if v.select}
         selected_count = len(selected_vertices)
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         offset, limit = self._normalize_paging(offset, limit)
@@ -1027,10 +1022,12 @@ class MeshHandler:
                 continue
             for g in v.groups:
                 if g.group in weights_by_group:
-                    weights_by_group[g.group].append({
-                        "vert": v.index,
-                        "weight": round(float(g.weight), 6),
-                    })
+                    weights_by_group[g.group].append(
+                        {
+                            "vert": v.index,
+                            "weight": round(float(g.weight), 6),
+                        }
+                    )
 
         if group_name:
             weights = weights_by_group[target_group.index]
@@ -1038,7 +1035,7 @@ class MeshHandler:
             if limit is None:
                 paged_weights = weights[offset:]
             else:
-                paged_weights = weights[offset:offset + limit]
+                paged_weights = weights[offset : offset + limit]
             returned_count = len(paged_weights)
             has_more = limit is not None and (offset + returned_count) < filtered_count
             return {
@@ -1057,18 +1054,20 @@ class MeshHandler:
         groups_data = []
         for vg in groups:
             weights = weights_by_group[vg.index]
-            groups_data.append({
-                "name": vg.name,
-                "index": vg.index,
-                "weight_count": len(weights),
-                "weights": weights,
-            })
+            groups_data.append(
+                {
+                    "name": vg.name,
+                    "index": vg.index,
+                    "weight_count": len(weights),
+                    "weights": weights,
+                }
+            )
 
         filtered_count = len(groups_data)
         if limit is None:
             paged_groups = groups_data[offset:]
         else:
-            paged_groups = groups_data[offset:offset + limit]
+            paged_groups = groups_data[offset : offset + limit]
         returned_count = len(paged_groups)
         has_more = limit is not None and (offset + returned_count) < filtered_count
 
@@ -1091,13 +1090,13 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
@@ -1108,7 +1107,7 @@ class MeshHandler:
         selected_edges = {e.index for e in bm.edges if e.select}
         selected_faces = {f.index for f in bm.faces if f.select}
 
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         mesh = obj.data
@@ -1119,16 +1118,18 @@ class MeshHandler:
         if attribute_name is None:
             attrs_data = []
             for attr in attributes:
-                attrs_data.append({
-                    "name": attr.name,
-                    "data_type": attr.data_type,
-                    "domain": attr.domain,
-                })
+                attrs_data.append(
+                    {
+                        "name": attr.name,
+                        "data_type": attr.data_type,
+                        "domain": attr.domain,
+                    }
+                )
             filtered_count = len(attrs_data)
             if limit is None:
                 paged_attrs = attrs_data[offset:]
             else:
-                paged_attrs = attrs_data[offset:offset + limit]
+                paged_attrs = attrs_data[offset : offset + limit]
             returned_count = len(paged_attrs)
             has_more = limit is not None and (offset + returned_count) < filtered_count
             return {
@@ -1170,16 +1171,16 @@ class MeshHandler:
         selected_count = 0
         domain = attr.domain
 
-        if domain == 'POINT':
+        if domain == "POINT":
             selected_indices = selected_verts
             selected_count = len(selected_verts)
-        elif domain == 'EDGE':
+        elif domain == "EDGE":
             selected_indices = selected_edges
             selected_count = len(selected_edges)
-        elif domain == 'FACE':
+        elif domain == "FACE":
             selected_indices = selected_faces
             selected_count = len(selected_faces)
-        elif domain == 'CORNER':
+        elif domain == "CORNER":
             selected_loop_indices = set()
             if selected_faces:
                 for poly in mesh.polygons:
@@ -1217,10 +1218,12 @@ class MeshHandler:
             else:
                 value = None
 
-            values.append({
-                "index": index,
-                "value": value,
-            })
+            values.append(
+                {
+                    "index": index,
+                    "value": value,
+                }
+            )
             seen += 1
 
         has_more = limit is not None and (offset + len(values)) < filtered_count
@@ -1249,17 +1252,17 @@ class MeshHandler:
         obj = bpy.data.objects.get(object_name)
         if not obj:
             raise ValueError(f"Object '{object_name}' not found")
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         prev_mode = obj.mode
         bpy.context.view_layer.objects.active = obj
-        if prev_mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if prev_mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         shape_keys = obj.data.shape_keys
         if not shape_keys or not shape_keys.key_blocks:
-            if prev_mode != 'OBJECT':
+            if prev_mode != "OBJECT":
                 bpy.ops.object.mode_set(mode=prev_mode)
             return {
                 "object_name": object_name,
@@ -1292,14 +1295,16 @@ class MeshHandler:
                         dy = key_point.co.y - basis_point.co.y
                         dz = key_point.co.z - basis_point.co.z
                         if abs(dx) > threshold or abs(dy) > threshold or abs(dz) > threshold:
-                            deltas.append({
-                                "vert": index,
-                                "delta": [
-                                    round(dx, 6),
-                                    round(dy, 6),
-                                    round(dz, 6),
-                                ],
-                            })
+                            deltas.append(
+                                {
+                                    "vert": index,
+                                    "delta": [
+                                        round(dx, 6),
+                                        round(dy, 6),
+                                        round(dz, 6),
+                                    ],
+                                }
+                            )
                 entry["deltas"] = deltas
 
             shape_keys_data.append(entry)
@@ -1309,11 +1314,11 @@ class MeshHandler:
         if limit is None:
             paged_keys = shape_keys_data[offset:]
         else:
-            paged_keys = shape_keys_data[offset:offset + limit]
+            paged_keys = shape_keys_data[offset : offset + limit]
         returned_count = len(paged_keys)
         has_more = limit is not None and (offset + returned_count) < filtered_count
 
-        if prev_mode != 'OBJECT':
+        if prev_mode != "OBJECT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         return {
@@ -1327,31 +1332,31 @@ class MeshHandler:
             "shape_keys": paged_keys,
         }
 
-    def select_by_location(self, axis, min_coord, max_coord, mode='VERT'):
+    def select_by_location(self, axis, min_coord, max_coord, mode="VERT"):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Selects geometry within coordinate range.
         """
         obj, previous_mode = self._ensure_edit_mode()
-        
+
         bm = bmesh.from_edit_mesh(obj.data)
-        
+
         # Validate axis
         axis = axis.upper()
-        if axis not in ['X', 'Y', 'Z']:
-            if previous_mode != 'EDIT':
+        if axis not in ["X", "Y", "Z"]:
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
-        
+
         # Validate mode
         mode = mode.upper()
-        if mode not in ['VERT', 'EDGE', 'FACE']:
-            if previous_mode != 'EDIT':
+        if mode not in ["VERT", "EDGE", "FACE"]:
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid mode '{mode}'. Must be VERT, EDGE, or FACE")
-        
-        axis_idx = {'X': 0, 'Y': 1, 'Z': 2}[axis]
+
+        axis_idx = {"X": 0, "Y": 1, "Z": 2}[axis]
         selected_count = 0
-        
+
         # Deselect all first
         for v in bm.verts:
             v.select = False
@@ -1359,15 +1364,15 @@ class MeshHandler:
             e.select = False
         for f in bm.faces:
             f.select = False
-        
-        if mode == 'VERT':
+
+        if mode == "VERT":
             for v in bm.verts:
                 coord = v.co[axis_idx]
                 if min_coord <= coord <= max_coord:
                     v.select = True
                     selected_count += 1
-        
-        elif mode == 'EDGE':
+
+        elif mode == "EDGE":
             for e in bm.edges:
                 # Check if both verts are in range
                 v1_coord = e.verts[0].co[axis_idx]
@@ -1378,8 +1383,8 @@ class MeshHandler:
                     e.verts[0].select = True
                     e.verts[1].select = True
                     selected_count += 1
-        
-        elif mode == 'FACE':
+
+        elif mode == "FACE":
             for f in bm.faces:
                 # Use face centroid
                 centroid = f.calc_center_median()
@@ -1391,16 +1396,16 @@ class MeshHandler:
                     for e in f.edges:
                         e.select = True
                     selected_count += 1
-        
+
         bmesh.update_edit_mesh(obj.data)
-        
+
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
-        
+
         return f"Selected {selected_count} {mode.lower()}(s) in range {axis}=[{min_coord}, {max_coord}]"
 
-    def select_boundary(self, mode='EDGE'):
+    def select_boundary(self, mode="EDGE"):
         """
         [EDIT MODE][SELECTION-BASED][SAFE] Selects boundary edges or vertices.
         """
@@ -1410,8 +1415,8 @@ class MeshHandler:
 
         # Validate mode
         mode = mode.upper()
-        if mode not in ['EDGE', 'VERT']:
-            if previous_mode != 'EDIT':
+        if mode not in ["EDGE", "VERT"]:
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid mode '{mode}'. Must be EDGE or VERT")
 
@@ -1425,7 +1430,7 @@ class MeshHandler:
 
         selected_count = 0
 
-        if mode == 'EDGE':
+        if mode == "EDGE":
             # Select boundary edges (edges with only 1 adjacent face)
             for edge in bm.edges:
                 if edge.is_boundary:
@@ -1434,7 +1439,7 @@ class MeshHandler:
                     edge.verts[1].select = True
                     selected_count += 1
 
-        elif mode == 'VERT':
+        elif mode == "VERT":
             # Select boundary vertices
             for vert in bm.verts:
                 if vert.is_boundary:
@@ -1444,7 +1449,7 @@ class MeshHandler:
         bmesh.update_edit_mesh(obj.data)
 
         # Restore previous mode
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Selected {selected_count} boundary {mode.lower()}(s)"
@@ -1464,7 +1469,7 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
 
@@ -1473,17 +1478,14 @@ class MeshHandler:
         # uniform: uniform random factor (0-1)
         # normal: normal-based factor (0-1)
         # seed: random seed
-        bpy.ops.transform.vertex_random(
-            offset=amount,
-            uniform=uniform,
-            normal=normal,
-            seed=seed
-        )
+        bpy.ops.transform.vertex_random(offset=amount, uniform=uniform, normal=normal, seed=seed)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
-        return f"Randomized {selected_count} vertices (amount={amount}, uniform={uniform}, normal={normal}, seed={seed})"
+        return (
+            f"Randomized {selected_count} vertices (amount={amount}, uniform={uniform}, normal={normal}, seed={seed})"
+        )
 
     def shrink_fatten(self, value):
         """
@@ -1496,14 +1498,14 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected")
 
         # bpy.ops.transform.shrink_fatten moves selection along normals
         bpy.ops.transform.shrink_fatten(value=value)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         direction = "fattened" if value > 0 else "shrunk"
@@ -1522,7 +1524,7 @@ class MeshHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         # Check if group already exists
@@ -1543,7 +1545,7 @@ class MeshHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         if group_name not in obj.vertex_groups:
@@ -1555,14 +1557,14 @@ class MeshHandler:
         # Ensure we're in EDIT mode and object is active
         bpy.context.view_layer.objects.active = obj
         prev_mode = obj.mode
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         selected_indices = [v.index for v in bm.verts if v.select]
 
         if not selected_indices:
-            if prev_mode != 'EDIT':
+            if prev_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=prev_mode)
             raise ValueError("No vertices selected")
 
@@ -1577,13 +1579,13 @@ class MeshHandler:
         # For specific weight, we use the vertex group API directly
         if weight != 1.0:
             # Need to briefly switch to object mode to modify weights
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode="OBJECT")
             vg = obj.vertex_groups[group_name]
-            vg.add(selected_indices, weight, 'REPLACE')
-            bpy.ops.object.mode_set(mode='EDIT')
+            vg.add(selected_indices, weight, "REPLACE")
+            bpy.ops.object.mode_set(mode="EDIT")
 
         # Restore previous mode
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         return f"Assigned {len(selected_indices)} vertices to '{group_name}' with weight {weight}"
@@ -1597,7 +1599,7 @@ class MeshHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         if group_name not in obj.vertex_groups:
@@ -1606,14 +1608,14 @@ class MeshHandler:
         # Ensure we're in EDIT mode and object is active
         bpy.context.view_layer.objects.active = obj
         prev_mode = obj.mode
-        if prev_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         bm = bmesh.from_edit_mesh(obj.data)
         selected_indices = [v.index for v in bm.verts if v.select]
 
         if not selected_indices:
-            if prev_mode != 'EDIT':
+            if prev_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=prev_mode)
             raise ValueError("No vertices selected")
 
@@ -1624,7 +1626,7 @@ class MeshHandler:
         bpy.ops.object.vertex_group_remove_from()
 
         # Restore previous mode
-        if prev_mode != 'EDIT':
+        if prev_mode != "EDIT":
             bpy.ops.object.mode_set(mode=prev_mode)
 
         return f"Removed {len(selected_indices)} vertices from '{group_name}'"
@@ -1644,7 +1646,7 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select geometry to bisect.")
 
@@ -1660,10 +1662,10 @@ class MeshHandler:
             plane_no=tuple(plane_no),
             clear_inner=clear_inner,
             clear_outer=clear_outer,
-            use_fill=fill
+            use_fill=fill,
         )
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         options = []
@@ -1688,7 +1690,7 @@ class MeshHandler:
         selected_edges = sum(1 for e in bm.edges if e.select)
 
         if selected_edges == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to slide.")
 
@@ -1697,7 +1699,7 @@ class MeshHandler:
 
         bpy.ops.transform.edge_slide(value=value)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Slid {selected_edges} edge(s) by {value}"
@@ -1713,7 +1715,7 @@ class MeshHandler:
         selected_verts = sum(1 for v in bm.verts if v.select)
 
         if selected_verts == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected. Select vertices to slide.")
 
@@ -1722,7 +1724,7 @@ class MeshHandler:
 
         bpy.ops.transform.vert_slide(value=value)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Slid {selected_verts} vertex/vertices by {value}"
@@ -1738,7 +1740,7 @@ class MeshHandler:
         selected_faces = sum(1 for f in bm.faces if f.select)
 
         if selected_faces == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No faces selected. Select faces to triangulate.")
 
@@ -1747,7 +1749,7 @@ class MeshHandler:
 
         bpy.ops.mesh.quads_convert_to_tris()
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Triangulated {selected_faces} face(s) ({non_tri_count} were non-triangular)"
@@ -1758,13 +1760,13 @@ class MeshHandler:
         Uses bpy.ops.object.voxel_remesh.
         """
         obj = bpy.context.active_object
-        if not obj or obj.type != 'MESH':
+        if not obj or obj.type != "MESH":
             raise ValueError("Active object must be a Mesh.")
 
         # Ensure we're in Object Mode for voxel remesh
         prev_mode = obj.mode
-        if prev_mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if prev_mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Store original face count for comparison
         original_faces = len(obj.data.polygons)
@@ -1780,8 +1782,8 @@ class MeshHandler:
         new_faces = len(obj.data.polygons)
 
         # Restore previous mode if it was EDIT
-        if prev_mode == 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if prev_mode == "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         return f"Voxel remesh complete (voxel_size={voxel_size}, adaptivity={adaptivity}). Faces: {original_faces} → {new_faces}"
 
@@ -1789,7 +1791,7 @@ class MeshHandler:
     # TASK-019: Phase 2.4 - Core Transform & Geometry
     # ==========================================================================
 
-    def transform_selected(self, translate=None, rotate=None, scale=None, pivot='MEDIAN_POINT'):
+    def transform_selected(self, translate=None, rotate=None, scale=None, pivot="MEDIAN_POINT"):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected geometry.
         Uses bpy.ops.transform.* operators.
@@ -1800,7 +1802,7 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected")
 
@@ -1820,11 +1822,11 @@ class MeshHandler:
             if rotate:
                 # Rotate around each axis
                 if rotate[0] != 0:
-                    bpy.ops.transform.rotate(value=rotate[0], orient_axis='X')
+                    bpy.ops.transform.rotate(value=rotate[0], orient_axis="X")
                 if rotate[1] != 0:
-                    bpy.ops.transform.rotate(value=rotate[1], orient_axis='Y')
+                    bpy.ops.transform.rotate(value=rotate[1], orient_axis="Y")
                 if rotate[2] != 0:
-                    bpy.ops.transform.rotate(value=rotate[2], orient_axis='Z')
+                    bpy.ops.transform.rotate(value=rotate[2], orient_axis="Z")
                 operations.append(f"rotated by {rotate} rad")
 
             # Apply scale
@@ -1836,7 +1838,7 @@ class MeshHandler:
             # Restore original pivot point
             bpy.context.scene.tool_settings.transform_pivot_point = original_pivot
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         if not operations:
@@ -1844,7 +1846,7 @@ class MeshHandler:
 
         return f"Transformed {selected_count} vertices: {', '.join(operations)} (pivot: {pivot})"
 
-    def bridge_edge_loops(self, number_cuts=0, interpolation='LINEAR', smoothness=0.0, twist=0):
+    def bridge_edge_loops(self, number_cuts=0, interpolation="LINEAR", smoothness=0.0, twist=0):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Bridges two edge loops with faces.
         Uses bpy.ops.mesh.bridge_edge_loops.
@@ -1855,19 +1857,16 @@ class MeshHandler:
         selected_edges = sum(1 for e in bm.edges if e.select)
 
         if selected_edges < 2:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("Select at least two edge loops to bridge")
 
         # Execute bridge
         bpy.ops.mesh.bridge_edge_loops(
-            type=interpolation,
-            number_cuts=number_cuts,
-            smoothness=smoothness,
-            twist_offset=twist
+            type=interpolation, number_cuts=number_cuts, smoothness=smoothness, twist_offset=twist
         )
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Bridged edge loops (cuts={number_cuts}, interpolation={interpolation}, smoothness={smoothness}, twist={twist})"
@@ -1885,20 +1884,17 @@ class MeshHandler:
         selected_faces = sum(1 for f in bm.faces if f.select)
 
         if selected_verts == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected")
 
         # Duplicate with optional translation
         if translate:
-            bpy.ops.mesh.duplicate_move(
-                MESH_OT_duplicate={},
-                TRANSFORM_OT_translate={"value": tuple(translate)}
-            )
+            bpy.ops.mesh.duplicate_move(MESH_OT_duplicate={}, TRANSFORM_OT_translate={"value": tuple(translate)})
         else:
             bpy.ops.mesh.duplicate()
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         move_str = f", moved by {translate}" if translate else " (in-place)"
@@ -1908,7 +1904,7 @@ class MeshHandler:
     # TASK-021: Phase 2.6 - Curves & Procedural (Mesh-based tools)
     # ==========================================================================
 
-    def spin(self, steps=12, angle=6.283185, axis='Z', center=None, dupli=False):
+    def spin(self, steps=12, angle=6.283185, axis="Z", center=None, dupli=False):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/lathes selected geometry.
         Uses bpy.ops.mesh.spin.
@@ -1919,16 +1915,12 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select a profile to spin.")
 
         # Determine axis vector
-        axis_map = {
-            'X': (1, 0, 0),
-            'Y': (0, 1, 0),
-            'Z': (0, 0, 1)
-        }
+        axis_map = {"X": (1, 0, 0), "Y": (0, 1, 0), "Z": (0, 0, 1)}
         axis_upper = axis.upper()
         if axis_upper not in axis_map:
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
@@ -1940,22 +1932,16 @@ class MeshHandler:
             center = list(bpy.context.scene.cursor.location)
 
         # Execute spin
-        bpy.ops.mesh.spin(
-            steps=steps,
-            angle=angle,
-            center=tuple(center),
-            axis=axis_vector,
-            dupli=dupli
-        )
+        bpy.ops.mesh.spin(steps=steps, angle=angle, center=tuple(center), axis=axis_vector, dupli=dupli)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         degrees = round(angle * 180 / 3.14159, 1)
         dupli_str = " (duplicate mode)" if dupli else ""
         return f"Spin complete: {steps} steps, {degrees}° around {axis} at center {center}{dupli_str}"
 
-    def screw(self, steps=12, turns=1, axis='Z', center=None, offset=0.0):
+    def screw(self, steps=12, turns=1, axis="Z", center=None, offset=0.0):
         """
         [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates spiral/screw geometry.
         Uses bpy.ops.mesh.screw.
@@ -1966,16 +1952,12 @@ class MeshHandler:
         selected_count = sum(1 for v in bm.verts if v.select)
 
         if selected_count == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select a profile to screw.")
 
         # Determine axis vector
-        axis_map = {
-            'X': (1, 0, 0),
-            'Y': (0, 1, 0),
-            'Z': (0, 0, 1)
-        }
+        axis_map = {"X": (1, 0, 0), "Y": (0, 1, 0), "Z": (0, 0, 1)}
         axis_upper = axis.upper()
         if axis_upper not in axis_map:
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
@@ -1987,15 +1969,9 @@ class MeshHandler:
             center = list(bpy.context.scene.cursor.location)
 
         # Execute screw
-        bpy.ops.mesh.screw(
-            steps=steps,
-            turns=turns,
-            center=tuple(center),
-            axis=axis_vector,
-            screw_offset=offset
-        )
+        bpy.ops.mesh.screw(steps=steps, turns=turns, center=tuple(center), axis=axis_vector, screw_offset=offset)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Screw complete: {steps} steps, {turns} turn(s), offset={offset} around {axis} at center {center}"
@@ -2027,7 +2003,7 @@ class MeshHandler:
         # Update mesh
         bmesh.update_edit_mesh(obj.data)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Added vertex at {position} (index: {new_vert.index})"
@@ -2043,14 +2019,14 @@ class MeshHandler:
         selected_verts = sum(1 for v in bm.verts if v.select)
 
         if selected_verts < 2:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("Select at least 2 vertices to create edge/face")
 
         # Execute edge/face add
         bpy.ops.mesh.edge_face_add()
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         if selected_verts == 2:
@@ -2076,7 +2052,7 @@ class MeshHandler:
         has_selection = any(e.select for e in bm.edges)
 
         if not has_selection:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to set crease weight.")
 
@@ -2086,14 +2062,14 @@ class MeshHandler:
         # Get or create crease layer FIRST - Blender 4.0+ uses float layers
         # Creating a layer may invalidate edge references, so do this before iterating
         crease_layer = None
-        if hasattr(bm.edges.layers, 'crease'):
+        if hasattr(bm.edges.layers, "crease"):
             # Blender 3.x
             crease_layer = bm.edges.layers.crease.verify()
         else:
             # Blender 4.0+ uses float layer named 'crease_edge'
-            crease_layer = bm.edges.layers.float.get('crease_edge')
+            crease_layer = bm.edges.layers.float.get("crease_edge")
             if crease_layer is None:
-                crease_layer = bm.edges.layers.float.new('crease_edge')
+                crease_layer = bm.edges.layers.float.new("crease_edge")
 
         # NOW collect and set crease on selected edges (after layer is created)
         edge_count = 0
@@ -2105,7 +2081,7 @@ class MeshHandler:
         # Update mesh
         bmesh.update_edit_mesh(obj.data)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Set crease weight {crease_value} on {edge_count} edge(s)"
@@ -2124,7 +2100,7 @@ class MeshHandler:
         has_selection = any(e.select for e in bm.edges)
 
         if not has_selection:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to set bevel weight.")
 
@@ -2134,14 +2110,14 @@ class MeshHandler:
         # Get or create bevel weight layer FIRST - Blender 4.0+ uses float layers
         # Creating a layer may invalidate edge references, so do this before iterating
         bevel_layer = None
-        if hasattr(bm.edges.layers, 'bevel_weight'):
+        if hasattr(bm.edges.layers, "bevel_weight"):
             # Blender 3.x
             bevel_layer = bm.edges.layers.bevel_weight.verify()
         else:
             # Blender 4.0+ uses float layer named 'bevel_weight_edge'
-            bevel_layer = bm.edges.layers.float.get('bevel_weight_edge')
+            bevel_layer = bm.edges.layers.float.get("bevel_weight_edge")
             if bevel_layer is None:
-                bevel_layer = bm.edges.layers.float.new('bevel_weight_edge')
+                bevel_layer = bm.edges.layers.float.new("bevel_weight_edge")
 
         # NOW collect and set bevel weight on selected edges (after layer is created)
         edge_count = 0
@@ -2153,7 +2129,7 @@ class MeshHandler:
         # Update mesh
         bmesh.update_edit_mesh(obj.data)
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Set bevel weight {weight} on {edge_count} edge(s)"
@@ -2172,14 +2148,14 @@ class MeshHandler:
         selected_edges = sum(1 for e in bm.edges if e.select)
 
         if selected_edges == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to mark/clear sharp.")
 
         # Validate action
         action = action.lower()
         if action not in ["mark", "clear"]:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid action '{action}'. Must be 'mark' or 'clear'.")
 
@@ -2191,7 +2167,7 @@ class MeshHandler:
             bpy.ops.mesh.mark_sharp(clear=True)
             action_desc = "Cleared sharp from"
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"{action_desc} {selected_edges} edge(s) as sharp"
@@ -2213,42 +2189,34 @@ class MeshHandler:
         valid_types = ["limited", "verts", "edges", "faces"]
         dissolve_type = dissolve_type.lower()
         if dissolve_type not in valid_types:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid dissolve_type '{dissolve_type}'. Must be one of: {valid_types}")
 
         # Convert angle to radians for limited dissolve
         import math
+
         angle_limit_rad = math.radians(angle_limit)
 
         try:
             if dissolve_type == "limited":
-                bpy.ops.mesh.dissolve_limited(
-                    angle_limit=angle_limit_rad,
-                    use_dissolve_boundaries=use_boundary_tear
-                )
+                bpy.ops.mesh.dissolve_limited(angle_limit=angle_limit_rad, use_dissolve_boundaries=use_boundary_tear)
                 result_desc = f"Limited dissolve (angle: {angle_limit}°)"
             elif dissolve_type == "verts":
-                bpy.ops.mesh.dissolve_verts(
-                    use_face_split=use_face_split,
-                    use_boundary_tear=use_boundary_tear
-                )
+                bpy.ops.mesh.dissolve_verts(use_face_split=use_face_split, use_boundary_tear=use_boundary_tear)
                 result_desc = "Dissolved selected vertices"
             elif dissolve_type == "edges":
-                bpy.ops.mesh.dissolve_edges(
-                    use_verts=True,
-                    use_face_split=use_face_split
-                )
+                bpy.ops.mesh.dissolve_edges(use_verts=True, use_face_split=use_face_split)
                 result_desc = "Dissolved selected edges"
             else:  # faces
                 bpy.ops.mesh.dissolve_faces(use_verts=True)
                 result_desc = "Dissolved selected faces"
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Dissolve failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"{result_desc} completed successfully"
@@ -2266,20 +2234,18 @@ class MeshHandler:
 
         # Convert thresholds to radians
         import math
+
         face_threshold_rad = math.radians(face_threshold)
         shape_threshold_rad = math.radians(shape_threshold)
 
         try:
-            bpy.ops.mesh.tris_convert_to_quads(
-                face_threshold=face_threshold_rad,
-                shape_threshold=shape_threshold_rad
-            )
+            bpy.ops.mesh.tris_convert_to_quads(face_threshold=face_threshold_rad, shape_threshold=shape_threshold_rad)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Tris to quads conversion failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Converted triangles to quads (face threshold: {face_threshold}°, shape threshold: {shape_threshold}°)"
@@ -2297,11 +2263,11 @@ class MeshHandler:
         try:
             bpy.ops.mesh.normals_make_consistent(inside=inside)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Normals recalculation failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         direction = "inward" if inside else "outward"
@@ -2323,29 +2289,25 @@ class MeshHandler:
         ratio = max(0.0, min(1.0, ratio))
 
         # Validate symmetry axis
-        valid_axes = ['X', 'Y', 'Z']
+        valid_axes = ["X", "Y", "Z"]
         symmetry_axis = symmetry_axis.upper()
         if symmetry_axis not in valid_axes:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid symmetry_axis '{symmetry_axis}'. Must be one of: {valid_axes}")
 
         try:
-            bpy.ops.mesh.decimate(
-                ratio=ratio,
-                use_symmetry=use_symmetry,
-                symmetry_axis=symmetry_axis
-            )
+            bpy.ops.mesh.decimate(ratio=ratio, use_symmetry=use_symmetry, symmetry_axis=symmetry_axis)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Decimate failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         symmetry_desc = f" with {symmetry_axis} symmetry" if use_symmetry else ""
-        return f"Decimated mesh to {ratio*100:.1f}% of original{symmetry_desc}"
+        return f"Decimated mesh to {ratio * 100:.1f}% of original{symmetry_desc}"
 
     # ==========================================================================
     # TASK-032: Knife & Cut Tools
@@ -2361,16 +2323,16 @@ class MeshHandler:
         obj, previous_mode = self._ensure_edit_mode()
 
         bm = bmesh.from_edit_mesh(obj.data)
-        selected_count = sum(1 for f in bm.faces if f.select)
+        sum(1 for f in bm.faces if f.select)
 
         try:
             bpy.ops.mesh.knife_project(cut_through=cut_through)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Knife project failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         cut_mode = "through entire mesh" if cut_through else "visible faces only"
@@ -2389,7 +2351,7 @@ class MeshHandler:
         selected_verts = sum(1 for v in bm.verts if v.select)
 
         if selected_verts == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected. Select vertices to rip.")
 
@@ -2399,10 +2361,10 @@ class MeshHandler:
             view_region = None
 
             for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
+                if area.type == "VIEW_3D":
                     view_area = area
                     for region in area.regions:
-                        if region.type == 'WINDOW':
+                        if region.type == "WINDOW":
                             view_region = region
                     break
 
@@ -2410,8 +2372,7 @@ class MeshHandler:
                 # Use context override for rip_move
                 with bpy.context.temp_override(area=view_area, region=view_region):
                     bpy.ops.mesh.rip_move(
-                        MESH_OT_rip={'use_fill': use_fill},
-                        TRANSFORM_OT_translate={'value': (0, 0, 0)}
+                        MESH_OT_rip={"use_fill": use_fill}, TRANSFORM_OT_translate={"value": (0, 0, 0)}
                     )
             else:
                 # Fallback: use split as alternative (different behavior but similar result)
@@ -2419,11 +2380,11 @@ class MeshHandler:
                 if use_fill:
                     bpy.ops.mesh.edge_face_add()
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Rip failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         fill_desc = " (hole filled)" if use_fill else ""
@@ -2443,18 +2404,18 @@ class MeshHandler:
         selected_faces = sum(1 for f in bm.faces if f.select)
 
         if selected_verts == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select geometry to split.")
 
         try:
             bpy.ops.mesh.split()
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Split failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Split {selected_verts} vertices ({selected_faces} faces) from mesh"
@@ -2472,18 +2433,18 @@ class MeshHandler:
         selected_edges = sum(1 for e in bm.edges if e.select)
 
         if selected_edges == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No edges selected. Select edges to split.")
 
         try:
             bpy.ops.mesh.edge_split()
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Edge split failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Split mesh at {selected_edges} edge(s)"
@@ -2506,10 +2467,7 @@ class MeshHandler:
         Essential for organic modeling - creates smooth falloff in deformations.
         """
         # Validate falloff type
-        valid_falloffs = [
-            "SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE",
-            "SHARP", "LINEAR", "CONSTANT", "RANDOM"
-        ]
+        valid_falloffs = ["SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM"]
         falloff_type = falloff_type.upper()
         if falloff_type not in valid_falloffs:
             raise ValueError(f"Invalid falloff type: {falloff_type}. Valid: {valid_falloffs}")
@@ -2520,11 +2478,11 @@ class MeshHandler:
         # Set proportional edit mode
         if enabled:
             if use_connected:
-                tool_settings.proportional_edit = 'CONNECTED'
+                tool_settings.proportional_edit = "CONNECTED"
             else:
-                tool_settings.proportional_edit = 'ENABLED'
+                tool_settings.proportional_edit = "ENABLED"
         else:
-            tool_settings.proportional_edit = 'DISABLED'
+            tool_settings.proportional_edit = "DISABLED"
 
         # Set falloff type
         tool_settings.proportional_edit_falloff = falloff_type
@@ -2535,10 +2493,7 @@ class MeshHandler:
         # Build status message
         if enabled:
             mode = "connected" if use_connected else "enabled"
-            return (
-                f"Proportional editing {mode} "
-                f"(falloff={falloff_type}, size={size})"
-            )
+            return f"Proportional editing {mode} (falloff={falloff_type}, size={size})"
         else:
             return "Proportional editing disabled"
 
@@ -2554,25 +2509,21 @@ class MeshHandler:
         obj, previous_mode = self._ensure_edit_mode()
 
         # Validate direction
-        valid_directions = [
-            "NEGATIVE_X", "POSITIVE_X",
-            "NEGATIVE_Y", "POSITIVE_Y",
-            "NEGATIVE_Z", "POSITIVE_Z"
-        ]
+        valid_directions = ["NEGATIVE_X", "POSITIVE_X", "NEGATIVE_Y", "POSITIVE_Y", "NEGATIVE_Z", "POSITIVE_Z"]
         direction = direction.upper()
         if direction not in valid_directions:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid direction '{direction}'. Must be one of: {valid_directions}")
 
         try:
             bpy.ops.mesh.symmetrize(direction=direction, threshold=threshold)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Symmetrize failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Symmetrized mesh (direction={direction}, threshold={threshold})"
@@ -2589,18 +2540,18 @@ class MeshHandler:
         selected_edges = sum(1 for e in bm.edges if e.select)
 
         if selected_edges < 3:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("Select at least 3 edges forming a closed boundary to use grid fill.")
 
         try:
             bpy.ops.mesh.fill_grid(span=span, offset=offset, use_interp_simple=use_interp_simple)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Grid fill failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Grid filled boundary (span={span}, offset={offset})"
@@ -2617,7 +2568,7 @@ class MeshHandler:
         selected_faces = sum(1 for f in bm.faces if f.select)
 
         if selected_faces == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No faces selected. Select faces to poke.")
 
@@ -2625,22 +2576,18 @@ class MeshHandler:
         valid_modes = ["MEDIAN", "MEDIAN_WEIGHTED", "BOUNDS"]
         center_mode = center_mode.upper()
         if center_mode not in valid_modes:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid center_mode '{center_mode}'. Must be one of: {valid_modes}")
 
         try:
-            bpy.ops.mesh.poke(
-                offset=offset,
-                use_relative_offset=use_relative_offset,
-                center_mode=center_mode
-            )
+            bpy.ops.mesh.poke(offset=offset, use_relative_offset=use_relative_offset, center_mode=center_mode)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Poke faces failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Poked {selected_faces} face(s) (offset={offset}, center_mode={center_mode})"
@@ -2659,7 +2606,7 @@ class MeshHandler:
         selected_faces = sum(1 for f in bm.faces if f.select)
 
         if selected_faces == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No faces selected. Select triangulated faces to beautify.")
 
@@ -2669,11 +2616,11 @@ class MeshHandler:
         try:
             bpy.ops.mesh.beautify_fill(angle_limit=angle_limit_rad)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Beautify fill failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Beautified {selected_faces} face(s) (angle_limit={angle_limit}°)"
@@ -2690,36 +2637,33 @@ class MeshHandler:
         selected_verts = sum(1 for v in bm.verts if v.select)
 
         if selected_verts == 0:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No geometry selected. Select geometry to mirror.")
 
         # Validate axis
         axis = axis.upper()
-        if axis not in ['X', 'Y', 'Z']:
-            if previous_mode != 'EDIT':
+        if axis not in ["X", "Y", "Z"]:
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError(f"Invalid axis '{axis}'. Must be X, Y, or Z")
 
         # Determine constraint axis
-        constraint_axis = (axis == 'X', axis == 'Y', axis == 'Z')
+        constraint_axis = (axis == "X", axis == "Y", axis == "Z")
 
         try:
             # Use transform.mirror operator
-            bpy.ops.transform.mirror(
-                orient_type='GLOBAL',
-                constraint_axis=constraint_axis
-            )
+            bpy.ops.transform.mirror(orient_type="GLOBAL", constraint_axis=constraint_axis)
 
             # Optionally merge mirrored vertices
             if use_mirror_merge:
                 bpy.ops.mesh.remove_doubles(threshold=merge_threshold)
         except RuntimeError as e:
-            if previous_mode != 'EDIT':
+            if previous_mode != "EDIT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise RuntimeError(f"Mirror failed: {e}")
 
-        if previous_mode != 'EDIT':
+        if previous_mode != "EDIT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         merge_desc = f", merged vertices within {merge_threshold}" if use_mirror_merge else ""

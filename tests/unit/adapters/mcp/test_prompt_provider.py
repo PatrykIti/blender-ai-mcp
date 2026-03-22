@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 
 from fastmcp.prompts.prompt import PromptResult
-
 from server.adapters.mcp.prompts.provider import build_prompt_assets_provider
 from server.adapters.mcp.prompts.rendering import render_recommended_prompts
 

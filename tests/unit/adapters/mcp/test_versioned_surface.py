@@ -6,7 +6,6 @@ import asyncio
 
 import pytest
 from fastmcp import FastMCP
-
 from server.adapters.mcp.factory import build_server, build_surface_providers
 from server.adapters.mcp.surfaces import resolve_surface_contract_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline

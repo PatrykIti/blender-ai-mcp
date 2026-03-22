@@ -7,17 +7,16 @@ TASK-050: Updated to not depend on specific builtin workflows (YAML-based now).
 """
 
 import pytest
-
 from server.router.application.engines.workflow_expansion_engine import (
     WorkflowExpansionEngine,
 )
 from server.router.application.workflows.registry import get_workflow_registry
+from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
-from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.infrastructure.config import RouterConfig
 
 

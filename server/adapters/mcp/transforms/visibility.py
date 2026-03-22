@@ -9,8 +9,8 @@ from typing import Any
 
 from fastmcp.server.transforms.visibility import create_visibility_transforms
 
-from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.session_phase import SessionPhase
+from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules
 
 

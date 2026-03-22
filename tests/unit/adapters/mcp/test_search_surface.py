@@ -10,7 +10,6 @@ import pytest
 from fastmcp import FastMCP
 from fastmcp.exceptions import NotFoundError, ToolError
 from fastmcp.server.transforms.visibility import create_visibility_transforms
-
 from server.adapters.mcp.factory import build_server, build_surface_providers
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile

@@ -74,7 +74,4 @@ def build_search_documents(
     """Build enriched search text keyed by public tool name."""
 
     resolved_entry_map = entry_map or build_discovery_entry_map()
-    return {
-        tool.name: build_search_document(tool, resolved_entry_map.get(tool.name))
-        for tool in tools
-    }
+    return {tool.name: build_search_document(tool, resolved_entry_map.get(tool.name)) for tool in tools}

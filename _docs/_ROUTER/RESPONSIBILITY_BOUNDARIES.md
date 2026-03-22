@@ -226,6 +226,30 @@ For correction policy specifically:
 
 This separation should hold even when the same request touches all four layers.
 
+## Sampling Assistant Guardrails
+
+Sampling assistants do not introduce a fifth authority layer.
+They are a bounded FastMCP-mediated helper mechanism that must remain subordinate to the existing split above.
+
+Allowed first responsibilities:
+
+- summarize structured inspection payloads
+- compress large diagnostics into compact next-step guidance
+- draft repair suggestions from router/runtime diagnostics
+
+Forbidden first responsibilities:
+
+- autonomous geometry-destructive planning
+- hidden substitution for router safety policy
+- scene-truth decisions without inspection contracts
+- detached background reasoning outside an active MCP request
+
+Design rule:
+
+- assistants may help interpret inspection truth
+- assistants may help draft recovery guidance from diagnostics
+- assistants must not become the authority for safety approval, discovery ownership, or Blender truth
+
 ---
 
 ## Current State In This Repository

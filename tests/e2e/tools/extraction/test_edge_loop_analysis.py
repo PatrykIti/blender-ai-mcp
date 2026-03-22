@@ -3,6 +3,7 @@ E2E Tests for extraction_edge_loop_analysis (TASK-044-4)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 
 
@@ -37,7 +38,7 @@ def test_edge_loop_analysis_support_loops(extraction_handler, test_cube):
         assert "support_loop_candidates" in result
         assert "estimated_bevel_segments" in result
 
-        print(f"✓ edge_loop_analysis support loop detection:")
+        print("✓ edge_loop_analysis support loop detection:")
         print(f"  Support loops: {result['support_loop_candidates']}")
         print(f"  Estimated bevel segments: {result['estimated_bevel_segments']}")
 
@@ -51,7 +52,7 @@ def test_edge_loop_analysis_support_loops(extraction_handler, test_cube):
 def test_edge_loop_analysis_not_found(extraction_handler):
     """Test edge loop analysis on non-existent object."""
     try:
-        result = extraction_handler.edge_loop_analysis("NonExistentObject12345")
+        extraction_handler.edge_loop_analysis("NonExistentObject12345")
         pytest.fail("Should have raised an error")
 
     except RuntimeError as e:

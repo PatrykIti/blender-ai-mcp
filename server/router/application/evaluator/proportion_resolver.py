@@ -8,7 +8,7 @@ TASK-041-13
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Union, Callable
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -292,10 +292,7 @@ class ProportionResolver:
         Returns:
             List of dicts with 'name' and 'description'.
         """
-        return [
-            {"name": name, "description": info["description"]}
-            for name, info in self._auto_params.items()
-        ]
+        return [{"name": name, "description": info["description"]} for name, info in self._auto_params.items()]
 
     def is_auto_param(self, value: Any) -> bool:
         """Check if a value is an $AUTO_* parameter.

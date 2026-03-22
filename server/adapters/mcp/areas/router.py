@@ -12,10 +12,12 @@ TASK-046: Extended with semantic matching tools.
 TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 """
 
-import json
 from typing import Any, Dict, List, Optional
+
 from fastmcp import Context
 from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
+
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.router import (
     RouterGoalResponseContract,
     RouterStatusContract,
@@ -26,6 +28,10 @@ from server.adapters.mcp.elicitation_contracts import (
     build_fallback_payload,
     coerce_elicitation_answers,
 )
+from server.adapters.mcp.guided_mode import build_visibility_diagnostics
+from server.adapters.mcp.router_helper import get_router_status
+from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_assistant
+from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
     clear_session_goal_state_async,
@@ -33,11 +39,8 @@ from server.adapters.mcp.session_capabilities import (
     merge_resolved_params_with_session_answers_async,
     update_session_from_router_goal_async,
 )
-from server.adapters.mcp.guided_mode import build_visibility_diagnostics
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.adapters.mcp.context_utils import ctx_info
-from server.adapters.mcp.router_helper import get_router_status
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_router_handler
 from server.infrastructure.telemetry import get_telemetry_state
@@ -63,10 +66,7 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 def register_router_tools(target: Any) -> Dict[str, Any]:
     """Register public router tools on a FastMCP server or LocalProvider."""
 
-    return {
-        tool_name: _register_existing_tool(target, tool_name)
-        for tool_name in ROUTER_PUBLIC_TOOL_NAMES
-    }
+    return {tool_name: _register_existing_tool(target, tool_name) for tool_name in ROUTER_PUBLIC_TOOL_NAMES}
 
 
 def _get_runtime_contract_line(ctx: Context) -> str | None:
@@ -141,6 +141,44 @@ def _get_list_page_size(ctx: Context) -> int | None:
         return getattr(ctx.fastmcp, "list_page_size", None)
     except Exception:
         return None
+
+
+def _should_attach_repair_suggestion(payload: Dict[str, Any]) -> bool:
+    """Return True when router diagnostics justify bounded repair guidance."""
+
+    status = payload.get("status")
+    if status in {"no_match", "error"}:
+        return True
+    if payload.get("last_router_error"):
+        return True
+    return payload.get("last_router_disposition") in {
+        "failed_closed_error",
+        "failed_open_fallback",
+    }
+
+
+def _build_repair_diagnostics(
+    payload: Dict[str, Any],
+    *,
+    source: str,
+) -> Dict[str, Any]:
+    """Build a bounded diagnostic payload for the repair assistant."""
+
+    diagnostics = {
+        "source": source,
+        "status": payload.get("status"),
+        "workflow": payload.get("workflow"),
+        "message": payload.get("message"),
+        "error": payload.get("error"),
+        "unresolved": payload.get("unresolved"),
+        "policy_context": payload.get("policy_context"),
+        "last_router_status": payload.get("last_router_status"),
+        "last_router_disposition": payload.get("last_router_disposition"),
+        "last_router_error": payload.get("last_router_error"),
+        "router_failure_policy": payload.get("router_failure_policy"),
+        "assistant_diagnostics": payload.get("assistant_diagnostics"),
+    }
+    return {key: value for key, value in diagnostics.items() if value is not None}
 
 
 async def _maybe_elicit_router_answers(
@@ -316,6 +354,13 @@ async def router_set_goal(
     else:
         ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> status: {status}")
 
+    if _should_attach_repair_suggestion(result):
+        repair_outcome = await run_repair_suggestion_assistant(
+            ctx,
+            diagnostics=_build_repair_diagnostics(result, source="router_set_goal"),
+        )
+        result["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
+
     return RouterGoalResponseContract.model_validate(result)
 
 
@@ -328,6 +373,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
     - Pending workflow
     - Router statistics
     - Component status
+    - Bounded repair guidance when the latest router state indicates a failure/recovery path
     """
     session = await get_session_capability_state_async(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
@@ -364,6 +410,12 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "background_jobs": background_jobs,
         }
     )
+    if _should_attach_repair_suggestion(status_payload):
+        repair_outcome = await run_repair_suggestion_assistant(
+            ctx,
+            diagnostics=_build_repair_diagnostics(status_payload, source="router_get_status"),
+        )
+        status_payload["repair_suggestion"] = to_repair_assistant_contract(repair_outcome).model_dump()
     return RouterStatusContract.model_validate(status_payload)
 
 
@@ -475,7 +527,6 @@ def router_feedback(
     result = handler.record_feedback(prompt, correct_workflow)
     ctx_info(ctx, f"[ROUTER] Feedback recorded: {prompt[:30]}... -> {correct_workflow}")
     return result
-
 
     # TASK-055-FIX: Removed separate parameter resolution tools.
     # All parameter resolution now happens through router_set_goal with resolved_params argument.

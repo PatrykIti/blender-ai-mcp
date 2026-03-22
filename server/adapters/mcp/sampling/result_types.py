@@ -1,0 +1,186 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
+"""Typed result envelopes for bounded MCP sampling assistants."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Generic, Literal, TypeVar, cast
+
+from server.adapters.mcp.contracts.base import MCPContract
+
+AssistantTerminalStatus = Literal[
+    "success",
+    "unavailable",
+    "masked_error",
+    "rejected_by_policy",
+]
+AssistantCapabilitySource = Literal["client", "fallback_handler", "unavailable", "unknown"]
+AssistantResponsibility = Literal["inspection_summary", "repair_suggestion", "diagnostic_summary"]
+
+
+class AssistantBudgetContract(MCPContract):
+    """Deterministic budget limits for one assistant invocation."""
+
+    max_input_chars: int
+    max_messages: int
+    max_tokens: int
+    tool_budget: int
+
+
+class InspectionSummaryContract(MCPContract):
+    """Structured summary produced from inspection contracts."""
+
+    inspection_action: str
+    object_name: str | None = None
+    overview: str
+    key_findings: list[str]
+    risk_flags: list[str] = []
+    suggested_followups: list[str] = []
+    truth_source: Literal["inspection_contract"] = "inspection_contract"
+
+
+class RepairSuggestionActionContract(MCPContract):
+    """One bounded follow-up action suggested after a failure/diagnostic state."""
+
+    kind: Literal[
+        "inspect",
+        "clarify",
+        "retry",
+        "adjust_parameters",
+        "change_mode",
+        "change_selection",
+        "stop",
+    ]
+    reason: str
+
+
+class RepairSuggestionContract(MCPContract):
+    """Structured repair guidance derived from router/runtime diagnostics."""
+
+    summary: str
+    actions: list[RepairSuggestionActionContract]
+    requires_user_input: bool = False
+    requires_inspection: bool = False
+    safety_notes: list[str] = []
+    truth_source: Literal["router_diagnostics", "inspection_required"] = "router_diagnostics"
+
+
+class InspectionSummaryAssistantContract(MCPContract):
+    """Structured envelope for inspection-summary assistant executions."""
+
+    status: AssistantTerminalStatus
+    assistant_name: str
+    message: str
+    request_id: str | None = None
+    capability_source: AssistantCapabilitySource | None = None
+    rejection_reason: str | None = None
+    budget: AssistantBudgetContract
+    result: InspectionSummaryContract | None = None
+
+
+class RepairSuggestionAssistantContract(MCPContract):
+    """Structured envelope for repair-suggestion assistant executions."""
+
+    status: AssistantTerminalStatus
+    assistant_name: str
+    message: str
+    request_id: str | None = None
+    capability_source: AssistantCapabilitySource | None = None
+    rejection_reason: str | None = None
+    budget: AssistantBudgetContract
+    result: RepairSuggestionContract | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AssistantPolicy:
+    """Policy/budget definition for one bounded assistant."""
+
+    assistant_name: str
+    responsibility: AssistantResponsibility
+    max_input_chars: int
+    max_messages: int
+    max_tokens: int
+    tool_budget: int = 0
+    mask_error_details: bool = True
+    temperature: float = 0.0
+    allow_in_background: bool = False
+
+    def to_budget_contract(self) -> AssistantBudgetContract:
+        """Return the public budget contract for this policy."""
+
+        return AssistantBudgetContract(
+            max_input_chars=self.max_input_chars,
+            max_messages=self.max_messages,
+            max_tokens=self.max_tokens,
+            tool_budget=self.tool_budget,
+        )
+
+
+AssistantResultT = TypeVar("AssistantResultT", bound=MCPContract)
+
+
+@dataclass(slots=True)
+class AssistantRunResult(Generic[AssistantResultT]):
+    """Internal generic outcome from the assistant runner."""
+
+    status: AssistantTerminalStatus
+    assistant_name: str
+    message: str
+    budget: AssistantBudgetContract
+    request_id: str | None = None
+    capability_source: AssistantCapabilitySource | None = None
+    rejection_reason: str | None = None
+    result: AssistantResultT | None = None
+
+
+def to_inspection_assistant_contract(
+    outcome: AssistantRunResult[InspectionSummaryContract],
+) -> InspectionSummaryAssistantContract:
+    """Convert a generic runner outcome into the public inspection envelope."""
+
+    return InspectionSummaryAssistantContract(
+        status=outcome.status,
+        assistant_name=outcome.assistant_name,
+        message=outcome.message,
+        request_id=outcome.request_id,
+        capability_source=outcome.capability_source,
+        rejection_reason=outcome.rejection_reason,
+        budget=outcome.budget,
+        result=cast(InspectionSummaryContract | None, outcome.result),
+    )
+
+
+def to_repair_assistant_contract(
+    outcome: AssistantRunResult[RepairSuggestionContract],
+) -> RepairSuggestionAssistantContract:
+    """Convert a generic runner outcome into the public repair envelope."""
+
+    return RepairSuggestionAssistantContract(
+        status=outcome.status,
+        assistant_name=outcome.assistant_name,
+        message=outcome.message,
+        request_id=outcome.request_id,
+        capability_source=outcome.capability_source,
+        rejection_reason=outcome.rejection_reason,
+        budget=outcome.budget,
+        result=cast(RepairSuggestionContract | None, outcome.result),
+    )
+
+
+__all__ = [
+    "AssistantBudgetContract",
+    "AssistantCapabilitySource",
+    "AssistantPolicy",
+    "AssistantResponsibility",
+    "AssistantRunResult",
+    "AssistantTerminalStatus",
+    "InspectionSummaryAssistantContract",
+    "InspectionSummaryContract",
+    "RepairSuggestionActionContract",
+    "RepairSuggestionAssistantContract",
+    "RepairSuggestionContract",
+    "to_inspection_assistant_contract",
+    "to_repair_assistant_contract",
+]

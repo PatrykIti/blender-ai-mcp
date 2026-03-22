@@ -1,18 +1,19 @@
 """Tests for mesh introspection tools (read-only data retrieval)."""
-import unittest
-from unittest.mock import MagicMock, patch
+
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
+
 
 class TestMeshGetVertexData(unittest.TestCase):
     def setUp(self):
@@ -29,8 +30,8 @@ class TestMeshGetVertexData(unittest.TestCase):
         """Should return data for all vertices."""
         # Setup object
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
@@ -47,7 +48,7 @@ class TestMeshGetVertexData(unittest.TestCase):
             v.co.x = float(i)
             v.co.y = float(i * 2)
             v.co.z = float(i * 3)
-            v.select = (i < 2)
+            v.select = i < 2
             verts.append(v)
 
         mock_verts_seq = MagicMock()
@@ -65,14 +66,14 @@ class TestMeshGetVertexData(unittest.TestCase):
         assert result["returned_count"] == 4
         assert len(result["vertices"]) == 4
         assert result["vertices"][0]["index"] == 0
-        assert result["vertices"][0]["selected"] == True
-        assert result["vertices"][2]["selected"] == False
+        assert result["vertices"][0]["selected"]
+        assert not result["vertices"][2]["selected"]
 
     def test_get_vertex_data_selected_only(self):
         """Should return data only for selected vertices."""
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
@@ -88,7 +89,7 @@ class TestMeshGetVertexData(unittest.TestCase):
             v.co.x = float(i)
             v.co.y = 0.0
             v.co.z = 0.0
-            v.select = (i < 2)
+            v.select = i < 2
             verts.append(v)
 
         mock_verts_seq = MagicMock()
@@ -118,7 +119,7 @@ class TestMeshGetVertexData(unittest.TestCase):
     def test_get_vertex_data_not_mesh(self):
         """Should raise ValueError when object is not a mesh."""
         obj = MagicMock()
-        obj.type = 'CAMERA'
+        obj.type = "CAMERA"
         bpy.data.objects = {"Camera": obj}
 
         with self.assertRaises(ValueError) as context:
@@ -129,14 +130,14 @@ class TestMeshGetVertexData(unittest.TestCase):
     def test_get_vertex_data_restores_mode(self):
         """Should restore previous mode after reading data."""
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
         bm = MagicMock()
         bmesh.from_edit_mesh.return_value = bm
-        
+
         mock_verts_seq = MagicMock()
         mock_verts_seq.__iter__.return_value = iter([])
         mock_verts_seq.__len__.return_value = 0
@@ -146,10 +147,10 @@ class TestMeshGetVertexData(unittest.TestCase):
         self.handler.get_vertex_data("Cube")
 
         # Verify mode was switched to EDIT and back to OBJECT
-        mode_calls = [call[1]['mode'] for call in bpy.ops.object.mode_set.call_args_list]
-        assert 'EDIT' in mode_calls
-        assert 'OBJECT' in mode_calls
+        mode_calls = [call[1]["mode"] for call in bpy.ops.object.mode_set.call_args_list]
+        assert "EDIT" in mode_calls
+        assert "OBJECT" in mode_calls
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

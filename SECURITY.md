@@ -21,4 +21,3 @@ Include as much of the following as possible:
 ## Disclosure
 
 I will acknowledge receipt as soon as possible and work with you on a responsible disclosure timeline.
-

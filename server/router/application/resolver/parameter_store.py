@@ -11,7 +11,7 @@ Mappings are auto-managed through router_set_goal flow.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from server.infrastructure.telemetry import emit_router_event_span
 from server.router.domain.entities.parameter import StoredMapping
@@ -60,9 +60,7 @@ class ParameterStore(IParameterStore):
         self._vector_store = vector_store
         self._similarity_threshold = similarity_threshold
 
-        logger.info(
-            f"ParameterStore initialized with threshold={similarity_threshold}"
-        )
+        logger.info(f"ParameterStore initialized with threshold={similarity_threshold}")
 
     def _generate_record_id(
         self,
@@ -135,10 +133,7 @@ class ParameterStore(IParameterStore):
         # Upsert to vector store
         self._vector_store.upsert([record])
 
-        logger.info(
-            f"Stored mapping: '{context}' -> {parameter_name}={value} "
-            f"(workflow: {workflow_name})"
-        )
+        logger.info(f"Stored mapping: '{context}' -> {parameter_name}={value} (workflow: {workflow_name})")
 
     def find_mapping(
         self,
@@ -163,11 +158,7 @@ class ParameterStore(IParameterStore):
             StoredMapping if a similar mapping is found above threshold,
             None otherwise.
         """
-        threshold = (
-            similarity_threshold
-            if similarity_threshold is not None
-            else self._similarity_threshold
-        )
+        threshold = similarity_threshold if similarity_threshold is not None else self._similarity_threshold
 
         # Generate embedding for prompt
         query_embedding = self._classifier.get_embedding(prompt)
@@ -270,9 +261,7 @@ class ParameterStore(IParameterStore):
             "value": mapping.value,
             "value_type": type(mapping.value).__name__,
             "usage_count": mapping.usage_count + 1,
-            "created_at": (
-                mapping.created_at.isoformat() if mapping.created_at else None
-            ),
+            "created_at": (mapping.created_at.isoformat() if mapping.created_at else None),
             "updated_at": datetime.now().isoformat(),
         }
 
@@ -289,8 +278,7 @@ class ParameterStore(IParameterStore):
         self._vector_store.upsert([record])
 
         logger.debug(
-            f"Incremented usage for '{mapping.context}' -> "
-            f"{mapping.parameter_name} (count: {mapping.usage_count + 1})"
+            f"Incremented usage for '{mapping.context}' -> {mapping.parameter_name} (count: {mapping.usage_count + 1})"
         )
 
     def clear(self) -> int:

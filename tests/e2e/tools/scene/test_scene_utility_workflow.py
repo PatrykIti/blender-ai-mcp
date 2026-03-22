@@ -6,6 +6,7 @@ list objects → rename → isolate → focus → orbit → inspect
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
@@ -51,18 +52,14 @@ def test_full_inspection_workflow(scene_handler):
         print(f"✓ Step 4: Focused camera on '{new_name}'")
 
         # Step 5: Orbit around it
-        result = scene_handler.camera_orbit(
-            angle_horizontal=45.0,
-            angle_vertical=15.0,
-            target_object=new_name
-        )
+        result = scene_handler.camera_orbit(angle_horizontal=45.0, angle_vertical=15.0, target_object=new_name)
         assert "orbit" in result.lower() or "Orbited" in result
         print(f"✓ Step 5: Orbited camera around '{new_name}'")
 
         # Step 6: Show all objects again
         result = scene_handler.show_all_objects()
         assert "visible" in result.lower() or "objects" in result.lower()
-        print(f"✓ Step 6: Showed all objects")
+        print("✓ Step 6: Showed all objects")
 
         # Cleanup: Rename back
         scene_handler.rename_object(new_name, original_name)
@@ -95,7 +92,7 @@ def test_visibility_control_workflow(scene_handler):
         hidden_count = min(2, len(objects))
         for i in range(hidden_count):
             result = scene_handler.hide_object(objects[i]["name"], hide=True)
-            print(f"✓ Step 2.{i+1}: Hid '{objects[i]['name']}'")
+            print(f"✓ Step 2.{i + 1}: Hid '{objects[i]['name']}'")
 
         # Step 3: Show all
         result = scene_handler.show_all_objects()
@@ -144,7 +141,7 @@ def test_multi_object_isolation_workflow(scene_handler):
 
         # Step 4: Restore
         result = scene_handler.show_all_objects()
-        print(f"✓ Step 4: Restored visibility")
+        print("✓ Step 4: Restored visibility")
 
         print("\n✅ Multi-object isolation workflow completed successfully!")
 

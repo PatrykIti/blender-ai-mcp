@@ -11,10 +11,10 @@ Environment Variables:
         to the internal temp dir. If unset, falls back to BLENDER_AI_TMP_INTERNAL_DIR.
 """
 
-from pathlib import Path
-from typing import Tuple
 import os
 import tempfile
+from pathlib import Path
+from typing import Tuple
 
 
 def get_viewport_output_paths(filename: str, latest_name: str = "viewport_latest.jpg") -> Tuple[Path, Path, str, str]:

@@ -8,12 +8,14 @@ Tests the complete workflow:
 4. Pose bones for animation
 5. Assign vertex weights manually
 """
-import pytest
+
 import time
+
+import pytest
 from server.application.tool_handlers.armature_handler import ArmatureToolHandler
-from server.application.tool_handlers.scene_handler import SceneToolHandler
-from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
+from server.application.tool_handlers.modeling_handler import ModelingToolHandler
+from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.system_handler import SystemToolHandler
 
 
@@ -570,7 +572,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             bone_length=0.5,
         )
         assert "Created armature" in result1
-        print(f"  Step 1: Created armature with Root bone")
+        print("  Step 1: Created armature with Root bone")
 
         # 2. Add spine bone
         result2 = armature_handler.add_bone(
@@ -582,7 +584,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             use_connect=True,
         )
         assert "Added bone 'Spine'" in result2
-        print(f"  Step 2: Added Spine bone")
+        print("  Step 2: Added Spine bone")
 
         # 3. Add chest bone
         result3 = armature_handler.add_bone(
@@ -594,7 +596,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             use_connect=True,
         )
         assert "Added bone 'Chest'" in result3
-        print(f"  Step 3: Added Chest bone")
+        print("  Step 3: Added Chest bone")
 
         # 4. Create mesh to rig
         modeling_handler.create_primitive(
@@ -603,7 +605,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             radius=0.3,
             location=[0, 0, 0.75],
         )
-        print(f"  Step 4: Created mesh cylinder")
+        print("  Step 4: Created mesh cylinder")
 
         # 5. Bind mesh to armature
         result5 = armature_handler.bind(
@@ -612,7 +614,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             bind_type="AUTO",
         )
         assert "Bound mesh" in result5
-        print(f"  Step 5: Bound mesh to armature")
+        print("  Step 5: Bound mesh to armature")
 
         # 6. Pose a bone
         result6 = armature_handler.pose_bone(
@@ -621,7 +623,7 @@ def test_simple_rig_workflow(armature_handler, scene_handler, modeling_handler):
             rotation=[15, 0, 0],
         )
         assert "Posed bone" in result6
-        print(f"  Step 6: Posed Spine bone")
+        print("  Step 6: Posed Spine bone")
 
         print("✓ Simple rig workflow completed successfully")
 
@@ -647,7 +649,7 @@ def test_arm_rig_workflow(armature_handler, scene_handler):
             bone_length=0.3,
             location=[0.5, 0, 0],
         )
-        print(f"  Step 1: Created armature with Shoulder")
+        print("  Step 1: Created armature with Shoulder")
 
         # 2. Add upper arm
         armature_handler.add_bone(
@@ -658,7 +660,7 @@ def test_arm_rig_workflow(armature_handler, scene_handler):
             parent_bone="Shoulder",
             use_connect=True,
         )
-        print(f"  Step 2: Added UpperArm")
+        print("  Step 2: Added UpperArm")
 
         # 3. Add forearm
         armature_handler.add_bone(
@@ -669,7 +671,7 @@ def test_arm_rig_workflow(armature_handler, scene_handler):
             parent_bone="UpperArm",
             use_connect=True,
         )
-        print(f"  Step 3: Added Forearm")
+        print("  Step 3: Added Forearm")
 
         # 4. Add hand
         armature_handler.add_bone(
@@ -680,7 +682,7 @@ def test_arm_rig_workflow(armature_handler, scene_handler):
             parent_bone="Forearm",
             use_connect=True,
         )
-        print(f"  Step 4: Added Hand")
+        print("  Step 4: Added Hand")
 
         # 5. Pose arm (bend at elbow)
         result = armature_handler.pose_bone(
@@ -689,7 +691,7 @@ def test_arm_rig_workflow(armature_handler, scene_handler):
             rotation=[0, 0, -45],
         )
         assert "Posed bone" in result
-        print(f"  Step 5: Posed arm at elbow")
+        print("  Step 5: Posed arm at elbow")
 
         print("✓ Arm rig workflow completed successfully")
 

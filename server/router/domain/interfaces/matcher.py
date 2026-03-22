@@ -8,7 +8,7 @@ These interfaces enable the ensemble matcher to run multiple matchers
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from server.router.domain.entities.ensemble import MatcherResult, ModifierResult
 

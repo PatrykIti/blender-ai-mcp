@@ -73,13 +73,7 @@ def test_apply_session_visibility_uses_native_fastmcp_session_api():
     assert ctx.calls[0][0] == "reset_visibility"
     assert ctx.calls[1][0] == "disable_components"
     assert ctx.calls[1][1]["match_all"] is True
+    assert any(name == "enable_components" and call["tags"] == {"entry:guided"} for name, call in ctx.calls[2:])
     assert any(
-        name == "enable_components"
-        and call["tags"] == {"entry:guided"}
-        for name, call in ctx.calls[2:]
-    )
-    assert any(
-        name == "enable_components"
-        and call["tags"] == {"phase:inspect_validate"}
-        for name, call in ctx.calls[2:]
+        name == "enable_components" and call["tags"] == {"phase:inspect_validate"} for name, call in ctx.calls[2:]
     )

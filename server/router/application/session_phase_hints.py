@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-
 PLANNING_PHASE_HINT = "planning"
 BUILD_PHASE_HINT = "build"
 INSPECT_VALIDATE_PHASE_HINT = "inspect_validate"

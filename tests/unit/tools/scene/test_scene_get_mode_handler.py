@@ -1,5 +1,5 @@
 import unittest
-from typing import Dict, Any
+from typing import Any, Dict
 
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.domain.interfaces.rpc import IRpcClient
@@ -78,22 +78,14 @@ class TestSceneGetModeAndSelectionHandlers(unittest.TestCase):
         self.assertEqual(report["object_name"], "Cube")
 
     def test_get_mode_error(self):
-        rpc = DummyRpc(
-            {
-                "scene.get_mode": RpcResponse(request_id="abc", status="error", error="oops")
-            }
-        )
+        rpc = DummyRpc({"scene.get_mode": RpcResponse(request_id="abc", status="error", error="oops")})
         handler = SceneToolHandler(rpc)
 
         with self.assertRaises(RuntimeError):
             handler.get_mode()
 
     def test_inspect_object_error(self):
-        rpc = DummyRpc(
-            {
-                "scene.inspect_object": RpcResponse(request_id="abc", status="error", error="missing")
-            }
-        )
+        rpc = DummyRpc({"scene.inspect_object": RpcResponse(request_id="abc", status="error", error="missing")})
         handler = SceneToolHandler(rpc)
 
         with self.assertRaises(RuntimeError):

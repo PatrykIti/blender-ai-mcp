@@ -8,7 +8,6 @@ from __future__ import annotations
 from fastmcp.prompts.prompt import Message, PromptResult
 
 from server.adapters.mcp.prompts.prompt_catalog import (
-    PromptCatalogEntry,
     get_prompt_catalog_entry,
     get_recommended_prompt_entries,
 )

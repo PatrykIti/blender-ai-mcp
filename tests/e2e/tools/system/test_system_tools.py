@@ -3,12 +3,14 @@ E2E Tests for System Tools (TASK-025)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import os
 import tempfile
+
 import pytest
-from server.application.tool_handlers.system_handler import SystemToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.system_handler import SystemToolHandler
 
 
 @pytest.fixture
@@ -53,11 +55,7 @@ class TestSystemSetMode:
                 pass
 
             # Create a mesh object (EDIT mode requires active mesh)
-            modeling_handler.create_primitive(
-                primitive_type="CUBE",
-                name=obj_name,
-                location=[0, 0, 0]
-            )
+            modeling_handler.create_primitive(primitive_type="CUBE", name=obj_name, location=[0, 0, 0])
 
             # First ensure we're in OBJECT mode
             system_handler.set_mode("OBJECT")
@@ -171,7 +169,7 @@ class TestSystemSnapshot:
             # List snapshots
             list_result = system_handler.snapshot("list")
             assert "e2e_test_snap" in list_result
-            print(f"✓ snapshot list: found e2e_test_snap")
+            print("✓ snapshot list: found e2e_test_snap")
 
             # Cleanup - delete the test snapshot
             delete_result = system_handler.snapshot("delete", name="e2e_test_snap")
@@ -204,7 +202,7 @@ class TestSystemSnapshot:
             result = system_handler.snapshot("restore", name="nonexistent_snapshot_xyz")
 
             assert "not found" in result.lower()
-            print(f"✓ snapshot not found: correctly handled")
+            print("✓ snapshot not found: correctly handled")
         except RuntimeError as e:
             pytest.skip(f"Blender not available: {e}")
 

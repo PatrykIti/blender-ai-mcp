@@ -12,6 +12,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
 )
+from server.adapters.mcp.sampling.result_types import (
+    AssistantBudgetContract,
+    InspectionSummaryAssistantContract,
+    InspectionSummaryContract,
+)
 
 
 def test_scene_context_contract_supports_mode_and_selection_payloads():
@@ -65,6 +70,23 @@ def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads(
     snapshot = SceneSnapshotStateContract(
         snapshot={"object_count": 1, "mode": "OBJECT"},
         hash="abc123",
+        assistant=InspectionSummaryAssistantContract(
+            status="success",
+            assistant_name="inspection_summarizer",
+            message="ok",
+            budget=AssistantBudgetContract(
+                max_input_chars=1000,
+                max_messages=1,
+                max_tokens=100,
+                tool_budget=0,
+            ),
+            result=InspectionSummaryContract(
+                inspection_action="scene_snapshot_state",
+                overview="Snapshot overview",
+                key_findings=["1 object"],
+                truth_source="inspection_contract",
+            ),
+        ),
     )
     diff = SceneSnapshotDiffContract(
         objects_added=["Cube"],
@@ -86,6 +108,7 @@ def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads(
     origin = SceneOriginInfoContract(payload={"origin_world": [0, 0, 0], "suggestions": []})
 
     assert snapshot.hash == "abc123"
+    assert snapshot.assistant.result.overview == "Snapshot overview"
     assert diff.objects_added == ["Cube"]
     assert props.properties["tag"] == "hero"
     assert hierarchy.payload["total_objects"] == 1

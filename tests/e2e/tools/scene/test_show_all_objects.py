@@ -3,6 +3,7 @@ E2E Tests for scene_show_all_objects (TASK-043-3)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 

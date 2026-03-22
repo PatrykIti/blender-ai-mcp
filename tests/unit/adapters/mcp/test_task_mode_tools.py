@@ -157,7 +157,7 @@ def test_extraction_render_angles_background_path_formats_json_result(monkeypatc
     ctx = BackgroundContext("task-render")
     result = asyncio.run(extraction_render_angles(ctx, object_name="Cube"))
 
-    assert "\"object_name\": \"Cube\"" in result
+    assert '"object_name": "Cube"' in result
     assert "Rendered 1 views of 'Cube'" in ctx.info_messages[-1]
     registry_record = get_background_job_registry().get("task-render")
     assert registry_record is not None
@@ -299,7 +299,10 @@ def test_import_glb_background_path_uses_system_bridge(monkeypatch):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
-                result={"job_id": job_id, "result": "Successfully imported GLB/GLTF from '/tmp/model.glb'. Objects: Cube"},
+                result={
+                    "job_id": job_id,
+                    "result": "Successfully imported GLB/GLTF from '/tmp/model.glb'. Objects: Cube",
+                },
             )
 
         def cancel_background_job(self, job_id):
@@ -360,7 +363,10 @@ def test_import_image_as_plane_background_path_uses_system_bridge(monkeypatch):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
-                result={"job_id": job_id, "result": "Successfully imported image as plane 'RefImage' from '/tmp/image.png'"},
+                result={
+                    "job_id": job_id,
+                    "result": "Successfully imported image as plane 'RefImage' from '/tmp/image.png'",
+                },
             )
 
         def cancel_background_job(self, job_id):

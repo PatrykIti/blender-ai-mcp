@@ -4,11 +4,11 @@ Tests for EnsembleMatcher.
 TASK-053-8: Integration tests for ensemble matcher orchestration.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.ensemble_matcher import EnsembleMatcher
-from server.router.domain.entities.ensemble import MatcherResult, EnsembleResult, ModifierResult
+from server.router.domain.entities.ensemble import EnsembleResult, MatcherResult
 from server.router.domain.entities.scene_context import SceneContext
 
 
@@ -51,14 +51,13 @@ class TestEnsembleMatcher:
         return aggregator
 
     @pytest.fixture
-    def ensemble_matcher(self, mock_keyword_matcher, mock_semantic_matcher,
-                        mock_pattern_matcher, mock_aggregator):
+    def ensemble_matcher(self, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator):
         """Create EnsembleMatcher instance."""
         return EnsembleMatcher(
             keyword_matcher=mock_keyword_matcher,
             semantic_matcher=mock_semantic_matcher,
             pattern_matcher=mock_pattern_matcher,
-            aggregator=mock_aggregator
+            aggregator=mock_aggregator,
         )
 
     def test_is_initialized_false_before_init(self, ensemble_matcher):
@@ -90,9 +89,9 @@ class TestEnsembleMatcher:
         mock_semantic_matcher.initialize.assert_not_called()
         assert ensemble_matcher.is_initialized() is True
 
-    def test_match_runs_all_matchers(self, ensemble_matcher, mock_keyword_matcher,
-                                    mock_semantic_matcher, mock_pattern_matcher,
-                                    mock_aggregator):
+    def test_match_runs_all_matchers(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test match runs all three matchers."""
         # Setup matcher results
         mock_keyword_matcher.match.return_value = MatcherResult("keyword", None, 0.0, 0.40)
@@ -106,7 +105,7 @@ class TestEnsembleMatcher:
             confidence_level="LOW",
             modifiers={"leg_style": "straight"},
             matcher_contributions={"semantic": 0.336},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         result = ensemble_matcher.match("proste nogi")
@@ -125,16 +124,13 @@ class TestEnsembleMatcher:
         assert isinstance(result, EnsembleResult)
         assert result.workflow_name == "table_workflow"
 
-    def test_match_with_context(self, ensemble_matcher, mock_keyword_matcher,
-                               mock_semantic_matcher, mock_pattern_matcher,
-                               mock_aggregator):
+    def test_match_with_context(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test match passes context to matchers."""
         # Setup context
         context = MagicMock(spec=SceneContext)
-        context.to_dict.return_value = {
-            "mode": "OBJECT",
-            "detected_pattern": "phone_like"
-        }
+        context.to_dict.return_value = {"mode": "OBJECT", "detected_pattern": "phone_like"}
 
         # Setup matcher results
         mock_keyword_matcher.match.return_value = MatcherResult("keyword", None, 0.0, 0.40)
@@ -148,22 +144,19 @@ class TestEnsembleMatcher:
             confidence_level="MEDIUM",
             modifiers={},
             matcher_contributions={"semantic": 0.32, "pattern": 0.1425},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
-        result = ensemble_matcher.match("create object", context=context)
+        ensemble_matcher.match("create object", context=context)
 
         # Verify context was converted to dict and passed
         context.to_dict.assert_called_once()
-        expected_context_dict = {
-            "mode": "OBJECT",
-            "detected_pattern": "phone_like"
-        }
+        expected_context_dict = {"mode": "OBJECT", "detected_pattern": "phone_like"}
         mock_pattern_matcher.match.assert_called_once_with("create object", expected_context_dict)
 
-    def test_match_handles_matcher_exception(self, ensemble_matcher, mock_keyword_matcher,
-                                            mock_semantic_matcher, mock_pattern_matcher,
-                                            mock_aggregator):
+    def test_match_handles_matcher_exception(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test match handles exception from a matcher gracefully."""
         # Setup keyword matcher to raise exception
         mock_keyword_matcher.match.side_effect = Exception("Keyword matcher failed")
@@ -179,7 +172,7 @@ class TestEnsembleMatcher:
             confidence_level="LOW",
             modifiers={},
             matcher_contributions={"semantic": 0.336},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         result = ensemble_matcher.match("test prompt")
@@ -199,8 +192,7 @@ class TestEnsembleMatcher:
         assert failed_result.confidence == 0.0
         assert "error" in failed_result.metadata
 
-    def test_get_info(self, ensemble_matcher, mock_keyword_matcher,
-                     mock_semantic_matcher, mock_pattern_matcher):
+    def test_get_info(self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher):
         """Test get_info returns matcher status."""
         # Setup semantic matcher as initialized
         mock_semantic_matcher.is_initialized.return_value = True
@@ -229,11 +221,9 @@ class TestEnsembleMatcher:
         assert "pattern_boost" in info["config"]
         assert "composition_threshold" in info["config"]
 
-    def test_match_aggregator_receives_correct_results(self, ensemble_matcher,
-                                                      mock_keyword_matcher,
-                                                      mock_semantic_matcher,
-                                                      mock_pattern_matcher,
-                                                      mock_aggregator):
+    def test_match_aggregator_receives_correct_results(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test aggregator receives results from all matchers."""
         # Setup matcher results
         keyword_result = MatcherResult("keyword", "table_workflow", 1.0, 0.40)
@@ -251,7 +241,7 @@ class TestEnsembleMatcher:
             confidence_level="MEDIUM",
             modifiers={},
             matcher_contributions={"keyword": 0.40},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         ensemble_matcher.match("create table")
@@ -266,9 +256,9 @@ class TestEnsembleMatcher:
         assert results_arg[2].matcher_name == "pattern"
         assert prompt_arg == "create table"
 
-    def test_match_without_context(self, ensemble_matcher, mock_keyword_matcher,
-                                  mock_semantic_matcher, mock_pattern_matcher,
-                                  mock_aggregator):
+    def test_match_without_context(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test match works without context parameter."""
         # Setup matcher results
         mock_keyword_matcher.match.return_value = MatcherResult("keyword", None, 0.0, 0.40)
@@ -282,7 +272,7 @@ class TestEnsembleMatcher:
             confidence_level="LOW",
             modifiers={},
             matcher_contributions={"semantic": 0.336},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         result = ensemble_matcher.match("create table")
@@ -294,9 +284,9 @@ class TestEnsembleMatcher:
 
         assert isinstance(result, EnsembleResult)
 
-    def test_match_integration_full_pipeline(self, ensemble_matcher, mock_keyword_matcher,
-                                            mock_semantic_matcher, mock_pattern_matcher,
-                                            mock_aggregator):
+    def test_match_integration_full_pipeline(
+        self, ensemble_matcher, mock_keyword_matcher, mock_semantic_matcher, mock_pattern_matcher, mock_aggregator
+    ):
         """Test full integration pipeline."""
         # Setup realistic scenario: semantic wins, modifiers extracted
         mock_keyword_matcher.match.return_value = MatcherResult("keyword", None, 0.0, 0.40)
@@ -305,7 +295,7 @@ class TestEnsembleMatcher:
             "table_workflow",
             0.84,
             0.40,
-            metadata={"confidence_level": "HIGH", "source_type": "description"}
+            metadata={"confidence_level": "HIGH", "source_type": "description"},
         )
         mock_pattern_matcher.match.return_value = MatcherResult("pattern", None, 0.0, 0.15)
 
@@ -316,7 +306,7 @@ class TestEnsembleMatcher:
             confidence_level="LOW",
             modifiers={"leg_style": "straight"},
             matcher_contributions={"semantic": 0.336},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         result = ensemble_matcher.match("prosty stół z prostymi nogami")

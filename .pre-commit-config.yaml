@@ -1,0 +1,78 @@
+default_install_hook_types:
+  - pre-commit
+  - pre-push
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args:
+          - --maxkb=2048
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args:
+          - --fix=lf
+      - id: trailing-whitespace
+        args:
+          - --markdown-linebreak-ext=md
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+        files: ^(server|blender_addon|tests|scripts)/.*\.py$
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+      - id: ruff-format
+        files: ^(server|blender_addon|tests|scripts)/.*\.py$
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.0
+    hooks:
+      - id: check-github-workflows
+      - id: check-metaschema
+        files: ^server/router/infrastructure/tools_metadata/_schema\.json$
+      - id: check-jsonschema
+        name: check-router-tool-metadata
+        files: ^server/router/infrastructure/tools_metadata/.+\.json$
+        exclude: ^server/router/infrastructure/tools_metadata/_schema\.json$
+        args:
+          - --schemafile
+          - server/router/infrastructure/tools_metadata/_schema.json
+
+  - repo: local
+    hooks:
+      - id: poetry-check
+        name: poetry-check
+        entry: poetry check --strict --lock
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|poetry\.lock)$
+      - id: unit-tests
+        name: unit-tests
+        entry: poetry run pytest tests/unit/ -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages:
+          - pre-push
+          - manual
+      - id: addon-build
+        name: addon-build
+        entry: python3 scripts/build_addon.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages:
+          - pre-push
+          - manual

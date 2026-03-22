@@ -10,19 +10,17 @@ TASK-047-4: Integrated with LanceVectorStore, implements IWorkflowIntentClassifi
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from server.router.domain.interfaces.i_workflow_intent_classifier import (
-    IWorkflowIntentClassifier,
-)
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
     VectorNamespace,
     VectorRecord,
-    WeightedSearchResult,
-    WorkflowEmbeddingRecord,
 )
+from server.router.domain.interfaces.i_workflow_intent_classifier import (
+    IWorkflowIntentClassifier,
+)
+from server.router.infrastructure.config import RouterConfig
 from server.router.infrastructure.language_detector import detect_language
 
 # Source type weights for scoring
@@ -35,29 +33,23 @@ SOURCE_WEIGHTS = {
 
 # TASK-050-5: Confidence levels and thresholds
 CONFIDENCE_THRESHOLDS = {
-    "HIGH": 0.90,      # >= 0.90: High confidence, direct match
-    "MEDIUM": 0.75,    # >= 0.75: Medium confidence, likely match
-    "LOW": 0.60,       # >= 0.60: Low confidence, possible match
-    "NONE": 0.0,       # < 0.60: No confidence, fallback to generalization
+    "HIGH": 0.90,  # >= 0.90: High confidence, direct match
+    "MEDIUM": 0.75,  # >= 0.75: Medium confidence, likely match
+    "LOW": 0.60,  # >= 0.60: Low confidence, possible match
+    "NONE": 0.0,  # < 0.60: No confidence, fallback to generalization
 }
-
-from server.router.infrastructure.config import RouterConfig
-
 logger = logging.getLogger(__name__)
 
 # Try to import sentence-transformers
 try:
-    from sentence_transformers import SentenceTransformer
     import numpy as np
+    from sentence_transformers import SentenceTransformer
 
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
     np = None  # type: ignore
-    logger.warning(
-        "sentence-transformers not installed. "
-        "Workflow classification will use fallback keyword matching."
-    )
+    logger.warning("sentence-transformers not installed. Workflow classification will use fallback keyword matching.")
 
 
 # LaBSE model for multilingual embeddings
@@ -246,9 +238,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             sample_prompts = workflow["sample_prompts"]
 
         for prompt in sample_prompts:
-            texts_with_meta.append(
-                (prompt, "sample_prompt", SOURCE_WEIGHTS["sample_prompt"])
-            )
+            texts_with_meta.append((prompt, "sample_prompt", SOURCE_WEIGHTS["sample_prompt"]))
 
         # Get trigger keywords (weight 0.8)
         trigger_keywords = []
@@ -258,15 +248,11 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             trigger_keywords = workflow["trigger_keywords"]
 
         for keyword in trigger_keywords:
-            texts_with_meta.append(
-                (keyword, "trigger_keyword", SOURCE_WEIGHTS["trigger_keyword"])
-            )
+            texts_with_meta.append((keyword, "trigger_keyword", SOURCE_WEIGHTS["trigger_keyword"]))
 
         # Add workflow name (weight 0.5)
         name_text = name.replace("_", " ")
-        texts_with_meta.append(
-            (name_text, "name", SOURCE_WEIGHTS["name"])
-        )
+        texts_with_meta.append((name_text, "name", SOURCE_WEIGHTS["name"]))
 
         # Add description (weight 0.6)
         description = None
@@ -276,9 +262,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             description = workflow["description"]
 
         if description:
-            texts_with_meta.append(
-                (description, "description", SOURCE_WEIGHTS["description"])
-            )
+            texts_with_meta.append((description, "description", SOURCE_WEIGHTS["description"]))
 
         return texts_with_meta
 
@@ -354,8 +338,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         if records:
             count = store.upsert(records)
             logger.info(
-                f"Stored {count} workflow embeddings "
-                f"({total_embeddings} texts from {len(workflows)} workflows)"
+                f"Stored {count} workflow embeddings ({total_embeddings} texts from {len(workflows)} workflows)"
             )
 
     def _setup_tfidf_fallback(self) -> None:
@@ -382,9 +365,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             self._tfidf_matrix = self._tfidf_vectorizer.fit_transform(documents)
             self._tfidf_workflow_names = workflow_names
 
-            logger.info(
-                f"TF-IDF fallback initialized with {len(workflow_names)} workflows"
-            )
+            logger.info(f"TF-IDF fallback initialized with {len(workflow_names)} workflows")
 
         except ImportError:
             logger.warning("sklearn not available for TF-IDF fallback")
@@ -780,16 +761,9 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             "model_loaded": self._model is not None,
             "num_workflows": unique_workflows,
             "num_embeddings": total_embeddings,
-            "embeddings_per_workflow": (
-                round(total_embeddings / unique_workflows, 1)
-                if unique_workflows > 0
-                else 0
-            ),
+            "embeddings_per_workflow": (round(total_embeddings / unique_workflows, 1) if unique_workflows > 0 else 0),
             "is_loaded": self._is_loaded,
-            "using_fallback": (
-                self._is_loaded
-                and self._tfidf_vectorizer is not None
-            ),
+            "using_fallback": (self._is_loaded and self._tfidf_vectorizer is not None),
             "multi_embedding_enabled": True,  # TASK-050-3
             "source_weights": SOURCE_WEIGHTS,
             "vector_store": {

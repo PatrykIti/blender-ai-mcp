@@ -8,10 +8,11 @@ To run:
     1. Start Blender with the addon enabled
     2. Run: pytest tests/e2e/tools/sculpt/ -v
 """
+
 import pytest
-from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.sculpt_handler import SculptToolHandler
 
 
 @pytest.fixture
@@ -38,12 +39,7 @@ def create_test_sphere(modeling_handler, scene_handler, name="E2E_SculptTest"):
         scene_handler.delete_object(name)
     except RuntimeError:
         pass
-    modeling_handler.create_primitive(
-        primitive_type="SPHERE",
-        radius=1.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="SPHERE", radius=1.0, location=[0, 0, 0], name=name)
     return name
 
 
@@ -59,6 +55,7 @@ def cleanup_test_object(scene_handler, name):
 # TASK-027-1: sculpt_auto tests
 # =============================================================================
 
+
 class TestSculptAutoE2E:
     """E2E tests for sculpt_auto tool."""
 
@@ -67,12 +64,7 @@ class TestSculptAutoE2E:
         obj_name = "E2E_SculptSmooth"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.auto_sculpt(
-                object_name=obj_name,
-                operation="smooth",
-                strength=0.3,
-                iterations=1
-            )
+            result = sculpt_handler.auto_sculpt(object_name=obj_name, operation="smooth", strength=0.3, iterations=1)
 
             assert isinstance(result, str)
             assert "smooth" in result.lower()
@@ -91,12 +83,7 @@ class TestSculptAutoE2E:
         obj_name = "E2E_SculptInflate"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.auto_sculpt(
-                object_name=obj_name,
-                operation="inflate",
-                strength=0.2,
-                iterations=1
-            )
+            result = sculpt_handler.auto_sculpt(object_name=obj_name, operation="inflate", strength=0.2, iterations=1)
 
             assert isinstance(result, str)
             assert "inflate" in result.lower()
@@ -115,12 +102,7 @@ class TestSculptAutoE2E:
         obj_name = "E2E_SculptFlatten"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.auto_sculpt(
-                object_name=obj_name,
-                operation="flatten",
-                strength=0.4,
-                iterations=2
-            )
+            result = sculpt_handler.auto_sculpt(object_name=obj_name, operation="flatten", strength=0.4, iterations=2)
 
             assert isinstance(result, str)
             assert "flatten" in result.lower()
@@ -139,12 +121,7 @@ class TestSculptAutoE2E:
         obj_name = "E2E_SculptSharpen"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.auto_sculpt(
-                object_name=obj_name,
-                operation="sharpen",
-                strength=0.5,
-                iterations=1
-            )
+            result = sculpt_handler.auto_sculpt(object_name=obj_name, operation="sharpen", strength=0.5, iterations=1)
 
             assert isinstance(result, str)
             assert "sharpen" in result.lower()
@@ -169,7 +146,7 @@ class TestSculptAutoE2E:
                 strength=0.3,
                 iterations=1,
                 use_symmetry=True,
-                symmetry_axis="X"
+                symmetry_axis="X",
             )
 
             assert isinstance(result, str)
@@ -189,12 +166,7 @@ class TestSculptAutoE2E:
         obj_name = "E2E_SculptIterations"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.auto_sculpt(
-                object_name=obj_name,
-                operation="smooth",
-                strength=0.3,
-                iterations=3
-            )
+            result = sculpt_handler.auto_sculpt(object_name=obj_name, operation="smooth", strength=0.3, iterations=3)
 
             assert isinstance(result, str)
             assert "3 iterations" in result
@@ -213,6 +185,7 @@ class TestSculptAutoE2E:
 # TASK-027-2: sculpt_brush_smooth tests
 # =============================================================================
 
+
 class TestSculptBrushSmoothE2E:
     """E2E tests for sculpt_brush_smooth tool."""
 
@@ -221,11 +194,7 @@ class TestSculptBrushSmoothE2E:
         obj_name = "E2E_BrushSmooth"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.brush_smooth(
-                object_name=obj_name,
-                radius=0.1,
-                strength=0.5
-            )
+            result = sculpt_handler.brush_smooth(object_name=obj_name, radius=0.1, strength=0.5)
 
             assert isinstance(result, str)
             assert "smooth brush ready" in result.lower()
@@ -245,10 +214,7 @@ class TestSculptBrushSmoothE2E:
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
             result = sculpt_handler.brush_smooth(
-                object_name=obj_name,
-                location=[0.0, 0.0, 1.0],
-                radius=0.15,
-                strength=0.6
+                object_name=obj_name, location=[0.0, 0.0, 1.0], radius=0.15, strength=0.6
             )
 
             assert isinstance(result, str)
@@ -268,6 +234,7 @@ class TestSculptBrushSmoothE2E:
 # TASK-027-3: sculpt_brush_grab tests
 # =============================================================================
 
+
 class TestSculptBrushGrabE2E:
     """E2E tests for sculpt_brush_grab tool."""
 
@@ -276,11 +243,7 @@ class TestSculptBrushGrabE2E:
         obj_name = "E2E_BrushGrab"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.brush_grab(
-                object_name=obj_name,
-                radius=0.2,
-                strength=0.7
-            )
+            result = sculpt_handler.brush_grab(object_name=obj_name, radius=0.2, strength=0.7)
 
             assert isinstance(result, str)
             assert "grab brush ready" in result.lower()
@@ -304,7 +267,7 @@ class TestSculptBrushGrabE2E:
                 from_location=[0.0, 0.0, 0.0],
                 to_location=[0.0, 0.0, 0.5],
                 radius=0.15,
-                strength=0.5
+                strength=0.5,
             )
 
             assert isinstance(result, str)
@@ -324,6 +287,7 @@ class TestSculptBrushGrabE2E:
 # TASK-027-4: sculpt_brush_crease tests
 # =============================================================================
 
+
 class TestSculptBrushCreaseE2E:
     """E2E tests for sculpt_brush_crease tool."""
 
@@ -332,12 +296,7 @@ class TestSculptBrushCreaseE2E:
         obj_name = "E2E_BrushCrease"
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
-            result = sculpt_handler.brush_crease(
-                object_name=obj_name,
-                radius=0.05,
-                strength=0.8,
-                pinch=0.7
-            )
+            result = sculpt_handler.brush_crease(object_name=obj_name, radius=0.05, strength=0.8, pinch=0.7)
 
             assert isinstance(result, str)
             assert "crease brush ready" in result.lower()
@@ -357,11 +316,7 @@ class TestSculptBrushCreaseE2E:
         try:
             create_test_sphere(modeling_handler, scene_handler, obj_name)
             result = sculpt_handler.brush_crease(
-                object_name=obj_name,
-                location=[0.5, 0.5, 1.0],
-                radius=0.08,
-                strength=0.9,
-                pinch=0.5
+                object_name=obj_name, location=[0.5, 0.5, 1.0], radius=0.08, strength=0.9, pinch=0.5
             )
 
             assert isinstance(result, str)
@@ -380,6 +335,7 @@ class TestSculptBrushCreaseE2E:
 # =============================================================================
 # Error handling tests
 # =============================================================================
+
 
 class TestSculptErrorHandlingE2E:
     """E2E tests for sculpt tool error handling."""

@@ -5,10 +5,10 @@ Abstract interface for correcting tool call parameters and context.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
-from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.entities.tool_call import CorrectedToolCall
 
 
 class ICorrectionEngine(ABC):

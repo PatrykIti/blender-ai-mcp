@@ -4,17 +4,17 @@ Geometry Pattern Detector Implementation.
 Detects patterns like tower_like, phone_like, table_like in object geometry.
 """
 
-from typing import Optional, List
+from typing import List, Optional
 
-from server.router.domain.interfaces.i_pattern_detector import IPatternDetector
-from server.router.domain.entities.scene_context import SceneContext, ProportionInfo
+from server.router.application.analyzers.proportion_calculator import calculate_proportions
 from server.router.domain.entities.pattern import (
-    PatternType,
+    PATTERN_RULES,
     DetectedPattern,
     PatternMatchResult,
-    PATTERN_RULES,
+    PatternType,
 )
-from server.router.application.analyzers.proportion_calculator import calculate_proportions
+from server.router.domain.entities.scene_context import ProportionInfo, SceneContext
+from server.router.domain.interfaces.i_pattern_detector import IPatternDetector
 
 
 class GeometryPatternDetector(IPatternDetector):

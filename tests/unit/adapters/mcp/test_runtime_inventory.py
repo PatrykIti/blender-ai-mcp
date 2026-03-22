@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import tomllib
-from pathlib import Path
 
 from server.adapters.mcp.platform.runtime_inventory import (
     AREAS_DIR,
@@ -38,9 +37,7 @@ def test_runtime_inventory_matches_side_effect_bootstrap_modules():
     """Inventory side-effect flags should match the empty post-migration bootstrap list."""
 
     bootstrapped_modules = set(get_bootstrap_side_effect_modules())
-    inventory_bootstrapped = {
-        module.area for module in MCP_SURFACE_MODULES if module.bootstrapped_by_side_effect
-    }
+    inventory_bootstrapped = {module.area for module in MCP_SURFACE_MODULES if module.bootstrapped_by_side_effect}
 
     assert inventory_bootstrapped == bootstrapped_modules
     assert bootstrapped_modules == set()
@@ -53,9 +50,7 @@ def test_runtime_inventory_tracks_singleton_and_context_import_coupling():
         source_path = AREAS_DIR / f"{module.area}.py"
         source = source_path.read_text(encoding="utf-8")
 
-        assert (
-            "from server.adapters.mcp.instance import mcp" in source
-        ) is module.uses_global_mcp_singleton
+        assert ("from server.adapters.mcp.instance import mcp" in source) is module.uses_global_mcp_singleton
 
         if module.context_import_style == "fastmcp":
             assert "from fastmcp import Context" in source
@@ -75,9 +70,7 @@ def test_runtime_inventory_tracks_router_metadata_coverage_gaps():
     metadata_directories = set(get_router_metadata_directories())
     metadata_loader_areas = set(get_metadata_loader_areas())
 
-    assert metadata_directories >= {
-        module.area for module in MCP_SURFACE_MODULES if module.router_metadata_directory
-    }
+    assert metadata_directories >= {module.area for module in MCP_SURFACE_MODULES if module.router_metadata_directory}
     assert set(get_metadata_loader_gap_areas()) == (metadata_directories - metadata_loader_areas)
     assert set(get_metadata_loader_gap_areas()) == set()
 

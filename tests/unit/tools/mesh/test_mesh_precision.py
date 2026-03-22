@@ -2,18 +2,18 @@
 Tests for TASK-018 (Phase 2.5 - Advanced Precision) tools.
 Pure pytest style - uses conftest.py fixtures.
 """
-import pytest
+
 from unittest.mock import MagicMock
 
-import bpy
 import bmesh
-
+import bpy
+import pytest
 from blender_addon.application.handlers.mesh import MeshHandler
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mesh_handler():
@@ -25,8 +25,8 @@ def mesh_handler():
 def mock_edit_mode():
     """Sets up basic edit mode mocks."""
     bpy.context.active_object = MagicMock()
-    bpy.context.active_object.type = 'MESH'
-    bpy.context.active_object.mode = 'EDIT'
+    bpy.context.active_object.type = "MESH"
+    bpy.context.active_object.mode = "EDIT"
     bpy.ops.object.mode_set = MagicMock()
     return bpy.context.active_object
 
@@ -35,8 +35,8 @@ def mock_edit_mode():
 def mock_object_mode():
     """Sets up basic object mode mocks."""
     mock_obj = MagicMock()
-    mock_obj.type = 'MESH'
-    mock_obj.mode = 'OBJECT'
+    mock_obj.type = "MESH"
+    mock_obj.mode = "OBJECT"
     mock_obj.data = MagicMock()
     mock_obj.data.polygons = [MagicMock() for _ in range(6)]  # 6 faces like a cube
     mock_obj.data.remesh_voxel_size = 0.1
@@ -102,6 +102,7 @@ def mock_bmesh_empty():
 # TASK-018-1: mesh_bisect tests
 # =============================================================================
 
+
 class TestMeshBisect:
     """Tests for mesh_bisect tool."""
 
@@ -109,17 +110,10 @@ class TestMeshBisect:
         """Should bisect with basic parameters."""
         bpy.ops.mesh.bisect = MagicMock()
 
-        result = mesh_handler.bisect(
-            plane_co=[0, 0, 0],
-            plane_no=[0, 0, 1]
-        )
+        result = mesh_handler.bisect(plane_co=[0, 0, 0], plane_no=[0, 0, 1])
 
         bpy.ops.mesh.bisect.assert_called_with(
-            plane_co=(0, 0, 0),
-            plane_no=(0, 0, 1),
-            clear_inner=False,
-            clear_outer=False,
-            use_fill=False
+            plane_co=(0, 0, 0), plane_no=(0, 0, 1), clear_inner=False, clear_outer=False, use_fill=False
         )
         assert "Bisected" in result
 
@@ -127,18 +121,10 @@ class TestMeshBisect:
         """Should bisect and clear inner geometry."""
         bpy.ops.mesh.bisect = MagicMock()
 
-        result = mesh_handler.bisect(
-            plane_co=[0, 0, 1],
-            plane_no=[0, 0, 1],
-            clear_inner=True
-        )
+        result = mesh_handler.bisect(plane_co=[0, 0, 1], plane_no=[0, 0, 1], clear_inner=True)
 
         bpy.ops.mesh.bisect.assert_called_with(
-            plane_co=(0, 0, 1),
-            plane_no=(0, 0, 1),
-            clear_inner=True,
-            clear_outer=False,
-            use_fill=False
+            plane_co=(0, 0, 1), plane_no=(0, 0, 1), clear_inner=True, clear_outer=False, use_fill=False
         )
         assert "cleared inner" in result
 
@@ -146,18 +132,10 @@ class TestMeshBisect:
         """Should bisect and fill the cut."""
         bpy.ops.mesh.bisect = MagicMock()
 
-        result = mesh_handler.bisect(
-            plane_co=[0, 0, 0],
-            plane_no=[1, 0, 0],
-            fill=True
-        )
+        result = mesh_handler.bisect(plane_co=[0, 0, 0], plane_no=[1, 0, 0], fill=True)
 
         bpy.ops.mesh.bisect.assert_called_with(
-            plane_co=(0, 0, 0),
-            plane_no=(1, 0, 0),
-            clear_inner=False,
-            clear_outer=False,
-            use_fill=True
+            plane_co=(0, 0, 0), plane_no=(1, 0, 0), clear_inner=False, clear_outer=False, use_fill=True
         )
         assert "filled" in result
 
@@ -180,6 +158,7 @@ class TestMeshBisect:
 # =============================================================================
 # TASK-018-2: mesh_edge_slide tests
 # =============================================================================
+
 
 class TestMeshEdgeSlide:
     """Tests for mesh_edge_slide tool."""
@@ -223,6 +202,7 @@ class TestMeshEdgeSlide:
 # TASK-018-2: mesh_vert_slide tests
 # =============================================================================
 
+
 class TestMeshVertSlide:
     """Tests for mesh_vert_slide tool."""
 
@@ -265,6 +245,7 @@ class TestMeshVertSlide:
 # TASK-018-3: mesh_triangulate tests
 # =============================================================================
 
+
 class TestMeshTriangulate:
     """Tests for mesh_triangulate tool."""
 
@@ -295,6 +276,7 @@ class TestMeshTriangulate:
 # =============================================================================
 # TASK-018-4: mesh_remesh_voxel tests
 # =============================================================================
+
 
 class TestMeshRemeshVoxel:
     """Tests for mesh_remesh_voxel tool."""
@@ -327,7 +309,7 @@ class TestMeshRemeshVoxel:
     def test_remesh_voxel_not_mesh_raises(self, mesh_handler):
         """Should raise ValueError when active object is not a mesh."""
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'CURVE'
+        bpy.context.active_object.type = "CURVE"
 
         with pytest.raises(ValueError, match="Active object must be a Mesh"):
             mesh_handler.remesh_voxel()

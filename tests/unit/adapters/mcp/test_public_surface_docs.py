@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -60,12 +59,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     """Prompt docs should prefer current llm-guided aliases for user-facing examples."""
 
     prompt_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
-    workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(
-        encoding="utf-8"
-    )
-    manual_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "MANUAL_TOOLS_NO_ROUTER.md").read_text(
-        encoding="utf-8"
-    )
+    workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(encoding="utf-8")
+    manual_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "MANUAL_TOOLS_NO_ROUTER.md").read_text(encoding="utf-8")
 
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme

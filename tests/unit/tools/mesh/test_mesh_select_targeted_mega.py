@@ -1,5 +1,5 @@
 """Tests for mesh_select_targeted mega tool routing and validation."""
-import pytest
+
 from unittest.mock import MagicMock, patch
 
 
@@ -18,16 +18,10 @@ class TestMeshSelectTargetedMega:
         mock_select_by_index.return_value = "Selected by index"
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
         result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="by_index",
-            indices=[0, 1, 2],
-            element_type="VERT",
-            selection_mode="SET"
+            self.mock_ctx, action="by_index", indices=[0, 1, 2], element_type="VERT", selection_mode="SET"
         )
 
-        mock_select_by_index.assert_called_once_with(
-            self.mock_ctx, [0, 1, 2], "VERT", "SET"
-        )
+        mock_select_by_index.assert_called_once_with(self.mock_ctx, [0, 1, 2], "VERT", "SET")
         assert result == "Selected by index"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -49,11 +43,7 @@ class TestMeshSelectTargetedMega:
 
         mock_select_loop.return_value = "Loop selected"
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
-        result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="loop",
-            edge_index=5
-        )
+        result = callable_mesh_select_targeted(self.mock_ctx, action="loop", edge_index=5)
 
         mock_select_loop.assert_called_once_with(self.mock_ctx, 5)
         assert result == "Loop selected"
@@ -77,11 +67,7 @@ class TestMeshSelectTargetedMega:
 
         mock_select_ring.return_value = "Ring selected"
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
-        result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="ring",
-            edge_index=3
-        )
+        result = callable_mesh_select_targeted(self.mock_ctx, action="ring", edge_index=3)
 
         mock_select_ring.assert_called_once_with(self.mock_ctx, 3)
         assert result == "Ring selected"
@@ -106,17 +92,10 @@ class TestMeshSelectTargetedMega:
         mock_select_by_location.return_value = "Selected by location"
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
         result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="by_location",
-            axis="Z",
-            min_coord=0.5,
-            max_coord=2.0,
-            element_type="VERT"
+            self.mock_ctx, action="by_location", axis="Z", min_coord=0.5, max_coord=2.0, element_type="VERT"
         )
 
-        mock_select_by_location.assert_called_once_with(
-            self.mock_ctx, "Z", 0.5, 2.0, "VERT"
-        )
+        mock_select_by_location.assert_called_once_with(self.mock_ctx, "Z", 0.5, 2.0, "VERT")
         assert result == "Selected by location"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
@@ -125,12 +104,7 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
-        result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="by_location",
-            min_coord=0.5,
-            max_coord=2.0
-        )
+        result = callable_mesh_select_targeted(self.mock_ctx, action="by_location", min_coord=0.5, max_coord=2.0)
 
         assert "Error" in result
         assert "axis" in result or "min_coord" in result or "max_coord" in result
@@ -141,11 +115,7 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
-        result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="by_location",
-            axis="Z"
-        )
+        result = callable_mesh_select_targeted(self.mock_ctx, action="by_location", axis="Z")
 
         assert "Error" in result
 
@@ -173,14 +143,8 @@ class TestMeshSelectTargetedMega:
         mock_select_by_index.return_value = "Faces selected"
         callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
         result = callable_mesh_select_targeted(
-            self.mock_ctx,
-            action="by_index",
-            indices=[0, 1],
-            element_type="FACE",
-            selection_mode="ADD"
+            self.mock_ctx, action="by_index", indices=[0, 1], element_type="FACE", selection_mode="ADD"
         )
 
-        mock_select_by_index.assert_called_once_with(
-            self.mock_ctx, [0, 1], "FACE", "ADD"
-        )
+        mock_select_by_index.assert_called_once_with(self.mock_ctx, [0, 1], "FACE", "ADD")
         assert result == "Faces selected"

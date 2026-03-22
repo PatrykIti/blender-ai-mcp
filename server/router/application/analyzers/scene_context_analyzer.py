@@ -5,16 +5,15 @@ Analyzes Blender scene state via RPC for router decision making.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Callable, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from server.router.domain.interfaces.i_scene_analyzer import ISceneAnalyzer
-from server.router.domain.entities.scene_context import (
-    SceneContext,
-    ObjectInfo,
-    TopologyInfo,
-    ProportionInfo,
-)
 from server.router.application.analyzers.proportion_calculator import calculate_proportions
+from server.router.domain.entities.scene_context import (
+    ObjectInfo,
+    SceneContext,
+    TopologyInfo,
+)
+from server.router.domain.interfaces.i_scene_analyzer import ISceneAnalyzer
 
 
 class SceneContextAnalyzer(ISceneAnalyzer):
@@ -75,7 +74,12 @@ class SceneContextAnalyzer(ISceneAnalyzer):
                 active_object = mode_data.get("active_object") or cached.active_object
 
                 # If active object changed within TTL, rebuild instead of returning stale cache.
-                if object_name is None and cached.active_object and active_object and active_object != cached.active_object:
+                if (
+                    object_name is None
+                    and cached.active_object
+                    and active_object
+                    and active_object != cached.active_object
+                ):
                     cached = None
                 else:
                     selected_objects = mode_data.get("selected_object_names", cached.selected_objects)
@@ -243,14 +247,16 @@ class SceneContextAnalyzer(ISceneAnalyzer):
                         if inspect_data:
                             dimensions = inspect_data.get("dimensions", [1.0, 1.0, 1.0])
 
-                    objects.append(ObjectInfo(
-                        name=obj_name,
-                        type=obj_type,
-                        location=obj_location,
-                        dimensions=dimensions,
-                        selected=obj_name in selected_objects,
-                        active=obj_name == active_object,
-                    ))
+                    objects.append(
+                        ObjectInfo(
+                            name=obj_name,
+                            type=obj_type,
+                            location=obj_location,
+                            dimensions=dimensions,
+                            selected=obj_name in selected_objects,
+                            active=obj_name == active_object,
+                        )
+                    )
 
             # Get topology for active mesh object in EDIT mode
             topology = None
@@ -292,6 +298,7 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
         except Exception as e:
             import logging
+
             logging.error(f"SceneContextAnalyzer._build_context failed: {e}", exc_info=True)
             return SceneContext.empty()
 
@@ -319,10 +326,12 @@ class SceneContextAnalyzer(ISceneAnalyzer):
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result
             import logging
+
             logging.warning(f"_get_mode_data_rpc: status={response.status}, result type={type(response.result)}")
             return {"mode": "OBJECT"}
         except Exception as e:
             import logging
+
             logging.error(f"_get_mode_data_rpc failed: {e}")
             return {"mode": "OBJECT"}
 
@@ -358,10 +367,7 @@ class SceneContextAnalyzer(ISceneAnalyzer):
     ) -> Optional[TopologyInfo]:
         """Get mesh topology via RPC."""
         try:
-            response = self._rpc_client.send_request(
-                "scene.inspect_mesh_topology",
-                {"object_name": object_name}
-            )
+            response = self._rpc_client.send_request("scene.inspect_mesh_topology", {"object_name": object_name})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 result = response.result
@@ -396,10 +402,7 @@ class SceneContextAnalyzer(ISceneAnalyzer):
     def _get_inspect_rpc(self, object_name: str) -> Dict[str, Any]:
         """Get object inspection data via RPC."""
         try:
-            response = self._rpc_client.send_request(
-                "scene.inspect_object",
-                {"object_name": object_name}
-            )
+            response = self._rpc_client.send_request("scene.inspect_object", {"object_name": object_name})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result
@@ -435,14 +438,16 @@ class SceneContextAnalyzer(ISceneAnalyzer):
         objects_data = response.get("objects", [])
         for obj_data in objects_data:
             if isinstance(obj_data, dict):
-                objects.append(ObjectInfo(
-                    name=obj_data.get("name", ""),
-                    type=obj_data.get("type", "MESH"),
-                    location=obj_data.get("location", [0.0, 0.0, 0.0]),
-                    dimensions=obj_data.get("dimensions", [1.0, 1.0, 1.0]),
-                    selected=obj_data.get("selected", False),
-                    active=obj_data.get("active", False),
-                ))
+                objects.append(
+                    ObjectInfo(
+                        name=obj_data.get("name", ""),
+                        type=obj_data.get("type", "MESH"),
+                        location=obj_data.get("location", [0.0, 0.0, 0.0]),
+                        dimensions=obj_data.get("dimensions", [1.0, 1.0, 1.0]),
+                        selected=obj_data.get("selected", False),
+                        active=obj_data.get("active", False),
+                    )
+                )
 
         # Parse topology info
         topology = None

@@ -12,7 +12,7 @@ TASK-046-3
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Tuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from server.router.application.classifier.workflow_intent_classifier import (
     WorkflowIntentClassifier,
@@ -165,9 +165,7 @@ class SemanticWorkflowMatcher:
         self._classifier.load_workflow_embeddings(workflows)
         self._is_initialized = True
 
-        logger.info(
-            f"SemanticWorkflowMatcher initialized with {len(workflows)} workflows"
-        )
+        logger.info(f"SemanticWorkflowMatcher initialized with {len(workflows)} workflows")
 
     def is_initialized(self) -> bool:
         """Check if matcher is initialized."""
@@ -380,15 +378,10 @@ class SemanticWorkflowMatcher:
             return f"Exact match: '{result.workflow_name}' (keyword match)"
 
         elif result.match_type == "semantic":
-            return (
-                f"Semantic match: '{result.workflow_name}' "
-                f"(similarity: {result.confidence:.1%})"
-            )
+            return f"Semantic match: '{result.workflow_name}' (similarity: {result.confidence:.1%})"
 
         elif result.match_type == "generalized":
-            sources = ", ".join(
-                f"{w}({s:.0%})" for w, s in result.similar_workflows[:3]
-            )
+            sources = ", ".join(f"{w}({s:.0%})" for w, s in result.similar_workflows[:3])
             return (
                 f"Generalized match: '{result.workflow_name}' "
                 f"(confidence: {result.confidence:.1%}, based on: {sources})"

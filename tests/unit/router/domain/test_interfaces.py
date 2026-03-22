@@ -6,35 +6,34 @@ Task: TASK-039-3
 These tests verify that interfaces are properly defined and can be implemented.
 """
 
-import pytest
 from abc import ABC
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, Optional
 
+from server.router.domain.entities import (
+    CorrectedToolCall,
+    DetectedPattern,
+    FirewallResult,
+    InterceptedToolCall,
+    # Ensemble (TASK-053)
+    MatcherResult,
+    ModifierResult,
+    OverrideDecision,
+    PatternMatchResult,
+    PatternType,
+    SceneContext,
+)
 from server.router.domain.interfaces import (
-    IToolInterceptor,
-    ISceneAnalyzer,
-    IPatternDetector,
     ICorrectionEngine,
-    IOverrideEngine,
     IExpansionEngine,
     IFirewall,
     IIntentClassifier,
     # Ensemble Matcher (TASK-053)
     IMatcher,
     IModifierExtractor,
-)
-from server.router.domain.entities import (
-    InterceptedToolCall,
-    CorrectedToolCall,
-    SceneContext,
-    PatternType,
-    DetectedPattern,
-    PatternMatchResult,
-    OverrideDecision,
-    FirewallResult,
-    # Ensemble (TASK-053)
-    MatcherResult,
-    ModifierResult,
+    IOverrideEngine,
+    IPatternDetector,
+    ISceneAnalyzer,
+    IToolInterceptor,
 )
 
 

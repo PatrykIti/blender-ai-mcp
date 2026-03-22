@@ -4,10 +4,11 @@ Unit tests for extraction_component_separate (TASK-044-2)
 Tests the ExtractionHandler.component_separate method which
 separates mesh into loose parts.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 

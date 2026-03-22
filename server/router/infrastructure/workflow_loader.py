@@ -10,7 +10,7 @@ import dataclasses
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import yaml
@@ -54,9 +54,7 @@ class WorkflowLoader:
                           Defaults to server/router/workflows/custom/
         """
         if workflows_dir is None:
-            self._workflows_dir = (
-                Path(__file__).parent.parent / "application" / "workflows" / "custom"
-            )
+            self._workflows_dir = Path(__file__).parent.parent / "application" / "workflows" / "custom"
         else:
             self._workflows_dir = workflows_dir
 
@@ -137,10 +135,7 @@ class WorkflowLoader:
 
         if file_path.suffix in [".yaml", ".yml"]:
             if not YAML_AVAILABLE:
-                raise ImportError(
-                    "PyYAML is required to load YAML workflows. "
-                    "Install with: poetry add pyyaml"
-                )
+                raise ImportError("PyYAML is required to load YAML workflows. Install with: poetry add pyyaml")
             data = yaml.safe_load(content)
         elif file_path.suffix == ".json":
             data = json.loads(content)
@@ -183,10 +178,7 @@ class WorkflowLoader:
             resolved_format = "json"
         elif normalized_hint == "yaml":
             if not YAML_AVAILABLE:
-                raise ImportError(
-                    "PyYAML is required to load YAML workflows. "
-                    "Install with: poetry add pyyaml"
-                )
+                raise ImportError("PyYAML is required to load YAML workflows. Install with: poetry add pyyaml")
             data = yaml.safe_load(content)
             resolved_format = "yaml"
         else:
@@ -203,9 +195,7 @@ class WorkflowLoader:
 
         return self._parse_workflow(data, source), resolved_format
 
-    def _parse_workflow(
-        self, data: Dict[str, Any], source: Optional[Path] = None
-    ) -> WorkflowDefinition:
+    def _parse_workflow(self, data: Dict[str, Any], source: Optional[Path] = None) -> WorkflowDefinition:
         """Parse workflow data into WorkflowDefinition.
 
         Args:
@@ -222,8 +212,7 @@ class WorkflowLoader:
         for field in self.REQUIRED_FIELDS:
             if field not in data:
                 raise WorkflowValidationError(
-                    f"Missing required field '{field}' in workflow"
-                    + (f" from {source}" if source else "")
+                    f"Missing required field '{field}' in workflow" + (f" from {source}" if source else "")
                 )
 
         # Parse steps
@@ -233,10 +222,7 @@ class WorkflowLoader:
             steps.append(step)
 
         if not steps:
-            raise WorkflowValidationError(
-                f"Workflow must have at least one step"
-                + (f" in {source}" if source else "")
-            )
+            raise WorkflowValidationError("Workflow must have at least one step" + (f" in {source}" if source else ""))
 
         # TASK-055: Parse parameters section
         parameters = self._parse_parameters(data.get("parameters", {}), source)
@@ -284,8 +270,7 @@ class WorkflowLoader:
         for param_name, param_data in data.items():
             if not isinstance(param_data, dict):
                 raise WorkflowValidationError(
-                    f"Parameter '{param_name}' must be a dictionary"
-                    + (f" in {source}" if source else "")
+                    f"Parameter '{param_name}' must be a dictionary" + (f" in {source}" if source else "")
                 )
 
             try:
@@ -295,8 +280,7 @@ class WorkflowLoader:
                 parameters[param_name] = schema
             except (ValueError, KeyError) as e:
                 raise WorkflowValidationError(
-                    f"Invalid parameter '{param_name}': {e}"
-                    + (f" in {source}" if source else "")
+                    f"Invalid parameter '{param_name}': {e}" + (f" in {source}" if source else "")
                 )
 
         return parameters
@@ -350,9 +334,7 @@ class WorkflowLoader:
                                 + (f" in {source}" if source else "")
                             )
 
-    def _parse_step(
-        self, data: Dict[str, Any], index: int, source: Optional[Path] = None
-    ) -> WorkflowStep:
+    def _parse_step(self, data: Dict[str, Any], index: int, source: Optional[Path] = None) -> WorkflowStep:
         """Parse a single workflow step.
 
         Args:
@@ -369,8 +351,7 @@ class WorkflowLoader:
         for field in self.STEP_REQUIRED_FIELDS:
             if field not in data:
                 raise WorkflowValidationError(
-                    f"Missing required field '{field}' in step {index + 1}"
-                    + (f" from {source}" if source else "")
+                    f"Missing required field '{field}' in step {index + 1}" + (f" from {source}" if source else "")
                 )
 
         # TASK-055-FIX-6 Phase 1: Flexible YAML loading - dynamically extract all WorkflowStep fields
@@ -472,37 +453,28 @@ class WorkflowLoader:
                 valid_types = {"float", "int", "bool", "string"}
                 for param_name, param_data in parameters.items():
                     if not isinstance(param_data, dict):
-                        errors.append(
-                            f"Parameter '{param_name}': must be a dictionary"
-                        )
+                        errors.append(f"Parameter '{param_name}': must be a dictionary")
                         continue
 
                     # Validate type if specified
                     param_type = param_data.get("type")
                     if param_type and param_type not in valid_types:
                         errors.append(
-                            f"Parameter '{param_name}': invalid type '{param_type}'. "
-                            f"Must be one of: {valid_types}"
+                            f"Parameter '{param_name}': invalid type '{param_type}'. Must be one of: {valid_types}"
                         )
 
                     # Validate range if specified
                     param_range = param_data.get("range")
                     if param_range:
                         if not isinstance(param_range, (list, tuple)) or len(param_range) != 2:
-                            errors.append(
-                                f"Parameter '{param_name}': range must be [min, max]"
-                            )
+                            errors.append(f"Parameter '{param_name}': range must be [min, max]")
                         elif param_range[0] > param_range[1]:
-                            errors.append(
-                                f"Parameter '{param_name}': range min must be <= max"
-                            )
+                            errors.append(f"Parameter '{param_name}': range min must be <= max")
 
                     # Validate semantic_hints if specified
                     hints = param_data.get("semantic_hints")
                     if hints and not isinstance(hints, list):
-                        errors.append(
-                            f"Parameter '{param_name}': semantic_hints must be a list"
-                        )
+                        errors.append(f"Parameter '{param_name}': semantic_hints must be a list")
 
         return errors
 

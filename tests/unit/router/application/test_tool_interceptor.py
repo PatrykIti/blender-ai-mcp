@@ -4,9 +4,7 @@ Unit tests for Tool Interceptor.
 Tests for ToolInterceptor implementation.
 """
 
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import patch
+from datetime import datetime
 
 from server.router.application.interceptor.tool_interceptor import ToolInterceptor
 from server.router.domain.entities.tool_call import InterceptedToolCall

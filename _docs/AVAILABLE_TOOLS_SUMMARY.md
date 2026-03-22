@@ -18,8 +18,9 @@ The `llm-guided` surface keeps the same internal capabilities but exposes a smal
 
 Current hidden/expert-only arguments on `llm-guided`:
 
-- `inspect_scene`: hides `detailed`, `include_disabled`, `modifier_name`, and similar backend-only inspection flags
-- `mesh_inspect`: hides `selected_only`, `uv_layer`, `include_deltas`
+- `inspect_scene`: hides `detailed`, `include_disabled`, `modifier_name`, `assistant_summary`, and similar backend-only inspection flags
+- `mesh_inspect`: hides `selected_only`, `uv_layer`, `include_deltas`, `assistant_summary`
+- `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, `scene_get_origin_info`: hide `assistant_summary`
 - `browse_workflows`: hides ranking/import session internals such as `top_k`, `threshold`, `session_id`, and chunk controls
 
 The router and dispatcher still use canonical internal tool names.
@@ -90,6 +91,28 @@ The current structured-contract baseline covers:
 - `workflow_catalog`
 
 These tools are intended to expose stable machine-readable payloads rather than prose-first JSON strings.
+
+## Server-Side Sampling Assistants
+
+Current bounded assistant integration points:
+
+- `scene_inspect`: optional `assistant_summary` on expert/internal paths
+- `mesh_inspect`: optional `assistant_summary` on expert/internal paths
+- `scene_snapshot_state`: optional `assistant_summary` on expert/internal paths
+- `scene_compare_snapshot`: optional `assistant_summary` on expert/internal paths
+- `scene_get_hierarchy`: optional `assistant_summary` on expert/internal paths
+- `scene_get_bounding_box`: optional `assistant_summary` on expert/internal paths
+- `scene_get_origin_info`: optional `assistant_summary` on expert/internal paths
+- `router_set_goal`: bounded `repair_suggestion` on `no_match` / `error`
+- `router_get_status`: bounded `repair_suggestion` when the latest router diagnostics indicate a recovery path
+- `workflow_catalog`: bounded `repair_suggestion` on import recovery states
+
+Assistant envelopes are structured and use explicit terminal statuses:
+
+- `success`
+- `unavailable`
+- `masked_error`
+- `rejected_by_policy`
 
 ---
 

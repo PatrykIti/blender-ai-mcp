@@ -15,13 +15,15 @@ class TestParenthesesSupport:
     def evaluator(self):
         """Create evaluator with test context."""
         ev = ConditionEvaluator()
-        ev.set_context({
-            "A": True,
-            "B": False,
-            "C": True,
-            "D": False,
-            "E": True,
-        })
+        ev.set_context(
+            {
+                "A": True,
+                "B": False,
+                "C": True,
+                "D": False,
+                "E": True,
+            }
+        )
         return ev
 
     def test_simple_parentheses(self, evaluator):
@@ -107,11 +109,13 @@ class TestParenthesesSupport:
     def test_parentheses_with_comparisons(self, evaluator):
         """Test parentheses with comparison operators."""
         ev = ConditionEvaluator()
-        ev.set_context({
-            "x": 5,
-            "y": 10,
-            "z": 3,
-        })
+        ev.set_context(
+            {
+                "x": 5,
+                "y": 10,
+                "z": 3,
+            }
+        )
 
         # (x > z) and (y > x) = (5 > 3) and (10 > 5) = True and True = True
         assert ev.evaluate("(x > z) and (y > x)") is True
@@ -143,10 +147,12 @@ class TestOperatorPrecedence:
     def evaluator(self):
         """Create evaluator with test context."""
         ev = ConditionEvaluator()
-        ev.set_context({
-            "T": True,
-            "F": False,
-        })
+        ev.set_context(
+            {
+                "T": True,
+                "F": False,
+            }
+        )
         return ev
 
     def test_not_has_highest_precedence(self, evaluator):

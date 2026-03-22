@@ -4,15 +4,14 @@ Tests for MetadataLoader.
 Task: TASK-039-4
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
 
+import pytest
 from server.router.infrastructure.metadata_loader import (
     MetadataLoader,
     ToolMetadata,
-    ValidationError,
 )
 
 
@@ -34,9 +33,7 @@ def temp_metadata_dir():
             "selection_required": True,
             "keywords": ["extrude", "pull"],
             "sample_prompts": ["extrude the face"],
-            "parameters": {
-                "value": {"type": "float", "default": 0.0}
-            },
+            "parameters": {"value": {"type": "float", "default": 0.0}},
             "related_tools": ["mesh_bevel"],
             "patterns": ["phone_like"],
             "description": "Extrudes geometry",

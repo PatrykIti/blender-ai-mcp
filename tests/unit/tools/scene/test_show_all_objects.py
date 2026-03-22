@@ -1,8 +1,8 @@
 """
 Unit tests for scene_show_all_objects (TASK-043-3)
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
 from blender_addon.application.handlers.scene import SceneHandler
@@ -41,24 +41,24 @@ class TestShowAllObjects:
         result = self.handler.show_all_objects(include_render=False)
 
         # All objects should be visible in viewport
-        assert self.cube.hide_viewport == False
-        assert self.sphere.hide_viewport == False
-        assert self.camera.hide_viewport == False
+        assert not self.cube.hide_viewport
+        assert not self.sphere.hide_viewport
+        assert not self.camera.hide_viewport
 
         # Render visibility should NOT change
-        assert self.cube.hide_render == True  # Was hidden, stays hidden in render
+        assert self.cube.hide_render  # Was hidden, stays hidden in render
 
         assert "2" in result  # 2 objects were unhidden
 
     def test_show_all_objects_include_render(self):
         """Test showing all objects in viewport and render."""
-        result = self.handler.show_all_objects(include_render=True)
+        self.handler.show_all_objects(include_render=True)
 
         # All objects should be visible everywhere
-        assert self.cube.hide_viewport == False
-        assert self.sphere.hide_viewport == False
-        assert self.cube.hide_render == False
-        assert self.sphere.hide_render == False
+        assert not self.cube.hide_viewport
+        assert not self.sphere.hide_viewport
+        assert not self.cube.hide_render
+        assert not self.sphere.hide_render
 
     def test_show_all_objects_none_hidden(self):
         """Test when no objects are hidden."""

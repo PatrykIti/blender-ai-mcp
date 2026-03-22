@@ -73,4 +73,3 @@ class TestSceneGetConstraints:
         assert result["constraint_count"] == 0
         assert result["bone_constraints"][0]["bone_name"] == "Bone"
         assert result["bone_constraints"][0]["constraints"][0]["name"] == "CopyRot"
-

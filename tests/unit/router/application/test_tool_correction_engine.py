@@ -5,17 +5,15 @@ Tests parameter clamping, mode switching, and selection handling.
 """
 
 import pytest
-from unittest.mock import MagicMock
-
 from server.router.application.engines.tool_correction_engine import (
-    ToolCorrectionEngine,
     MODE_REQUIREMENTS,
     PARAM_LIMITS,
     SELECTION_REQUIRED_TOOLS,
+    ToolCorrectionEngine,
 )
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
 from server.router.infrastructure.config import RouterConfig
@@ -76,8 +74,12 @@ def edit_mode_context():
             )
         ],
         topology=TopologyInfo(
-            vertices=8, edges=12, faces=6,
-            selected_verts=8, selected_edges=12, selected_faces=6,
+            vertices=8,
+            edges=12,
+            faces=6,
+            selected_verts=8,
+            selected_edges=12,
+            selected_faces=6,
         ),
         materials=[],
     )
@@ -100,8 +102,12 @@ def edit_mode_no_selection():
             )
         ],
         topology=TopologyInfo(
-            vertices=8, edges=12, faces=6,
-            selected_verts=0, selected_edges=0, selected_faces=0,
+            vertices=8,
+            edges=12,
+            faces=6,
+            selected_verts=0,
+            selected_edges=0,
+            selected_faces=0,
         ),
         materials=[],
     )

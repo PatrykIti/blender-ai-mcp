@@ -11,7 +11,6 @@ from importlib.metadata import PackageNotFoundError, version
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-
 SUPPORTED_FASTMCP_SPEC = SpecifierSet(">=3.1.1,<3.2.0")
 SUPPORTED_PYDOCKET_SPEC = SpecifierSet(">=0.18.2,<0.19.0")
 
@@ -30,10 +29,7 @@ class TaskRuntimeReport:
     def supported_pair_label(self) -> str:
         """Return the canonical supported-pair label used by docs and errors."""
 
-        return (
-            f"fastmcp{SUPPORTED_FASTMCP_SPEC} + "
-            f"pydocket{SUPPORTED_PYDOCKET_SPEC}"
-        )
+        return f"fastmcp{SUPPORTED_FASTMCP_SPEC} + pydocket{SUPPORTED_PYDOCKET_SPEC}"
 
     def to_dict(self) -> dict[str, str | bool | None]:
         """Serialize the report for diagnostics and tests."""
@@ -78,10 +74,9 @@ def get_task_runtime_report(*, tasks_required: bool) -> TaskRuntimeReport:
             pydocket_version=pydocket_version,
             tasks_required=False,
             supported=fastmcp_supported,
-            reason=None if fastmcp_supported else (
-                f"fastmcp {fastmcp_version} is outside the supported task-runtime line "
-                f"{SUPPORTED_FASTMCP_SPEC}"
-            ),
+            reason=None
+            if fastmcp_supported
+            else (f"fastmcp {fastmcp_version} is outside the supported task-runtime line {SUPPORTED_FASTMCP_SPEC}"),
         )
 
     if pydocket_version is None:
@@ -98,15 +93,9 @@ def get_task_runtime_report(*, tasks_required: bool) -> TaskRuntimeReport:
 
     reason = None
     if not fastmcp_supported:
-        reason = (
-            f"fastmcp {fastmcp_version} is outside supported range "
-            f"{SUPPORTED_FASTMCP_SPEC}"
-        )
+        reason = f"fastmcp {fastmcp_version} is outside supported range {SUPPORTED_FASTMCP_SPEC}"
     elif not pydocket_supported:
-        reason = (
-            f"pydocket {pydocket_version} is outside supported range "
-            f"{SUPPORTED_PYDOCKET_SPEC}"
-        )
+        reason = f"pydocket {pydocket_version} is outside supported range {SUPPORTED_PYDOCKET_SPEC}"
 
     return TaskRuntimeReport(
         fastmcp_version=fastmcp_version,

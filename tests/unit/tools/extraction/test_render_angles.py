@@ -4,10 +4,11 @@ Unit tests for extraction_render_angles (TASK-044-6)
 Tests the ExtractionHandler.render_angles method which
 renders objects from multiple angles for LLM Vision analysis.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 
@@ -21,8 +22,14 @@ class TestRenderAngles:
         self.cube.name = "Cube"
         self.cube.type = "MESH"
         self.cube.bound_box = [
-            (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
-            (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)
+            (-1, -1, -1),
+            (1, -1, -1),
+            (1, 1, -1),
+            (-1, 1, -1),
+            (-1, -1, 1),
+            (1, -1, 1),
+            (1, 1, 1),
+            (-1, 1, 1),
         ]
         self.cube.matrix_world = MagicMock()
 

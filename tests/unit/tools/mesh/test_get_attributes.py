@@ -1,17 +1,17 @@
 """Tests for mesh attributes introspection."""
+
+import sys
 import unittest
 from unittest.mock import MagicMock
-import sys
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -27,8 +27,8 @@ class TestMeshGetAttributes(unittest.TestCase):
 
     def _setup_object(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
 
         data0 = MagicMock()
         data0.color = [0.1, 0.2, 0.3, 1.0]
@@ -87,5 +87,5 @@ class TestMeshGetAttributes(unittest.TestCase):
         assert result["values"][0]["value"] == [0.1, 0.2, 0.3, 1.0]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

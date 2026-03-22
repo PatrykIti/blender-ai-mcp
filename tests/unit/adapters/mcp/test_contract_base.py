@@ -1,7 +1,5 @@
 """Tests for shared MCP structured contract helpers."""
 
-from pydantic import BaseModel
-
 from server.adapters.mcp.contracts.base import MCPContract, to_contract
 from server.adapters.mcp.contracts.output_schema import get_output_schema
 

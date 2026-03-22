@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
 # SPDX-License-Identifier: BUSL-1.1
+# ruff: noqa: E402
 
 bl_info = {
     "name": "Blender AI MCP",
@@ -19,22 +20,23 @@ except ImportError:
     bpy = None
 
 from .infrastructure.rpc_server import rpc_server
+
 # Import Application Handlers
 try:
-    from .application.handlers.scene import SceneHandler
-    from .application.handlers.modeling import ModelingHandler
-    from .application.handlers.mesh import MeshHandler
-    from .application.handlers.collection import CollectionHandler
-    from .application.handlers.material import MaterialHandler
-    from .application.handlers.uv import UVHandler
-    from .application.handlers.curve import CurveHandler
-    from .application.handlers.system import SystemHandler
-    from .application.handlers.sculpt import SculptHandler
-    from .application.handlers.baking import BakingHandler
-    from .application.handlers.lattice import LatticeHandler
-    from .application.handlers.extraction import ExtractionHandler
-    from .application.handlers.text import TextHandler
     from .application.handlers.armature import ArmatureHandler
+    from .application.handlers.baking import BakingHandler
+    from .application.handlers.collection import CollectionHandler
+    from .application.handlers.curve import CurveHandler
+    from .application.handlers.extraction import ExtractionHandler
+    from .application.handlers.lattice import LatticeHandler
+    from .application.handlers.material import MaterialHandler
+    from .application.handlers.mesh import MeshHandler
+    from .application.handlers.modeling import ModelingHandler
+    from .application.handlers.scene import SceneHandler
+    from .application.handlers.sculpt import SculptHandler
+    from .application.handlers.system import SystemHandler
+    from .application.handlers.text import TextHandler
+    from .application.handlers.uv import UVHandler
 except ImportError:
     SceneHandler = None
     ModelingHandler = None
@@ -318,10 +320,12 @@ def register():
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")
 
+
 def unregister():
     if bpy:
         print("[Blender AI MCP] Unregistering addon...")
         rpc_server.stop()
+
 
 if __name__ == "__main__":
     register()

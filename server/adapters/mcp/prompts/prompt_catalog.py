@@ -10,7 +10,6 @@ from pathlib import Path
 
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 
-
 PROMPTS_DIR = Path(__file__).resolve().parents[4] / "_docs" / "_PROMPTS"
 
 

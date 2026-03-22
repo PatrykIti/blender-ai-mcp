@@ -6,11 +6,12 @@ Exposes armature tools via FastMCP.
 """
 
 from typing import Any, Dict, Literal
+
 from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_armature_handler
 
 ARMATURE_PUBLIC_TOOL_NAMES = (
@@ -26,9 +27,7 @@ ARMATURE_PUBLIC_TOOL_NAMES = (
 def register_armature_tools(target: Any) -> Dict[str, Any]:
     """Register public armature tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, ARMATURE_PUBLIC_TOOL_NAMES, tags=get_capability_tags("armature")
-    )
+    return register_existing_tools(globals(), target, ARMATURE_PUBLIC_TOOL_NAMES, tags=get_capability_tags("armature"))
 
 
 def get_handler():
@@ -41,7 +40,7 @@ def armature_create(
     name: str = "Armature",
     location: list[float] | None = None,
     bone_name: str = "Bone",
-    bone_length: float = 1.0
+    bone_length: float = 1.0,
 ) -> str:
     """[OBJECT MODE][SCENE] Creates armature with initial bone.
 
@@ -63,27 +62,18 @@ def armature_create(
         armature_create(name="CharacterRig") -> Simple rig at origin
         armature_create(name="Spine", bone_name="Root", bone_length=0.5) -> Custom bone
     """
+
     def execute():
         handler = get_handler()
         try:
-            return handler.create(
-                name=name,
-                location=location,
-                bone_name=bone_name,
-                bone_length=bone_length
-            )
+            return handler.create(name=name, location=location, bone_name=bone_name, bone_length=bone_length)
         except RuntimeError as e:
             return str(e)
 
     return route_tool_call(
         tool_name="armature_create",
-        params={
-            "name": name,
-            "location": location,
-            "bone_name": bone_name,
-            "bone_length": bone_length
-        },
-        direct_executor=execute
+        params={"name": name, "location": location, "bone_name": bone_name, "bone_length": bone_length},
+        direct_executor=execute,
     )
 
 
@@ -94,7 +84,7 @@ def armature_add_bone(
     head: list[float],
     tail: list[float],
     parent_bone: str | None = None,
-    use_connect: bool = False
+    use_connect: bool = False,
 ) -> str:
     """[EDIT MODE on armature] Adds bone to armature.
 
@@ -118,6 +108,7 @@ def armature_add_bone(
         armature_add_bone("Rig", "Spine", [0,0,0], [0,0,0.5]) -> Root bone
         armature_add_bone("Rig", "Chest", [0,0,0.5], [0,0,1], parent_bone="Spine", use_connect=True)
     """
+
     def execute():
         handler = get_handler()
         try:
@@ -127,7 +118,7 @@ def armature_add_bone(
                 head=head,
                 tail=tail,
                 parent_bone=parent_bone,
-                use_connect=use_connect
+                use_connect=use_connect,
             )
         except RuntimeError as e:
             return str(e)
@@ -140,17 +131,14 @@ def armature_add_bone(
             "head": head,
             "tail": tail,
             "parent_bone": parent_bone,
-            "use_connect": use_connect
+            "use_connect": use_connect,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
 def armature_bind(
-    ctx: Context,
-    mesh_name: str,
-    armature_name: str,
-    bind_type: Literal["AUTO", "ENVELOPE", "EMPTY"] = "AUTO"
+    ctx: Context, mesh_name: str, armature_name: str, bind_type: Literal["AUTO", "ENVELOPE", "EMPTY"] = "AUTO"
 ) -> str:
     """[OBJECT MODE] Binds mesh to armature with automatic weights.
 
@@ -174,25 +162,18 @@ def armature_bind(
         armature_bind("Character", "CharacterRig") -> Auto weights
         armature_bind("Robot", "RobotArm", bind_type="EMPTY") -> Manual weights
     """
+
     def execute():
         handler = get_handler()
         try:
-            return handler.bind(
-                mesh_name=mesh_name,
-                armature_name=armature_name,
-                bind_type=bind_type
-            )
+            return handler.bind(mesh_name=mesh_name, armature_name=armature_name, bind_type=bind_type)
         except RuntimeError as e:
             return str(e)
 
     return route_tool_call(
         tool_name="armature_bind",
-        params={
-            "mesh_name": mesh_name,
-            "armature_name": armature_name,
-            "bind_type": bind_type
-        },
-        direct_executor=execute
+        params={"mesh_name": mesh_name, "armature_name": armature_name, "bind_type": bind_type},
+        direct_executor=execute,
     )
 
 
@@ -202,7 +183,7 @@ def armature_pose_bone(
     bone_name: str,
     rotation: list[float] | None = None,
     location: list[float] | None = None,
-    scale: list[float] | None = None
+    scale: list[float] | None = None,
 ) -> str:
     """[POSE MODE] Poses armature bone.
 
@@ -224,15 +205,12 @@ def armature_pose_bone(
         armature_pose_bone("Rig", "UpperArm", rotation=[0, 0, 45]) -> Rotate 45 deg on Z
         armature_pose_bone("Rig", "Spine", rotation=[10, 0, 0]) -> Bend forward
     """
+
     def execute():
         handler = get_handler()
         try:
             return handler.pose_bone(
-                armature_name=armature_name,
-                bone_name=bone_name,
-                rotation=rotation,
-                location=location,
-                scale=scale
+                armature_name=armature_name, bone_name=bone_name, rotation=rotation, location=location, scale=scale
             )
         except RuntimeError as e:
             return str(e)
@@ -244,9 +222,9 @@ def armature_pose_bone(
             "bone_name": bone_name,
             "rotation": rotation,
             "location": location,
-            "scale": scale
+            "scale": scale,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -255,7 +233,7 @@ def armature_weight_paint_assign(
     object_name: str,
     vertex_group: str,
     weight: float = 1.0,
-    mode: Literal["REPLACE", "ADD", "SUBTRACT"] = "REPLACE"
+    mode: Literal["REPLACE", "ADD", "SUBTRACT"] = "REPLACE",
 ) -> str:
     """[WEIGHT PAINT/EDIT MODE][SELECTION-BASED] Assigns weights to selected vertices.
 
@@ -282,35 +260,24 @@ def armature_weight_paint_assign(
         armature_weight_paint_assign("Character", "Hand.L", weight=1.0) -> Full weight
         armature_weight_paint_assign("Character", "Forearm.L", weight=0.5) -> Half weight
     """
+
     def execute():
         handler = get_handler()
         try:
             return handler.weight_paint_assign(
-                object_name=object_name,
-                vertex_group=vertex_group,
-                weight=weight,
-                mode=mode
+                object_name=object_name, vertex_group=vertex_group, weight=weight, mode=mode
             )
         except RuntimeError as e:
             return str(e)
 
     return route_tool_call(
         tool_name="armature_weight_paint_assign",
-        params={
-            "object_name": object_name,
-            "vertex_group": vertex_group,
-            "weight": weight,
-            "mode": mode
-        },
-        direct_executor=execute
+        params={"object_name": object_name, "vertex_group": vertex_group, "weight": weight, "mode": mode},
+        direct_executor=execute,
     )
 
 
-def armature_get_data(
-    ctx: Context,
-    object_name: str,
-    include_pose: bool = False
-) -> str:
+def armature_get_data(ctx: Context, object_name: str, include_pose: bool = False) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns armature bones and hierarchy.
 
@@ -323,10 +290,12 @@ def armature_get_data(
     Returns:
         JSON string with bone hierarchy and optional pose data.
     """
+
     def execute():
         handler = get_handler()
         try:
             import json
+
             data = handler.get_data(object_name, include_pose)
             return json.dumps(data, indent=2)
         except RuntimeError as e:
@@ -335,5 +304,5 @@ def armature_get_data(
     return route_tool_call(
         tool_name="armature_get_data",
         params={"object_name": object_name, "include_pose": include_pose},
-        direct_executor=execute
+        direct_executor=execute,
     )

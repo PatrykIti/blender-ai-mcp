@@ -23,4 +23,3 @@ Please include:
 
 - Verify Blender addon is enabled and the RPC server is reachable (default port: `8765`).
 - If using Docker on Linux, ensure host networking/host resolution is set correctly (see root `README.md` MCP client config examples).
-

@@ -26,8 +26,6 @@ def test_phase_hints_allow_explicit_inspection_handoffs():
     """Inspection recommendation should override other coarse status mapping."""
 
     assert (
-        derive_phase_hint_from_router_result(
-            {"status": "ready", "inspection_recommended": True}
-        )
+        derive_phase_hint_from_router_result({"status": "ready", "inspection_recommended": True})
         == INSPECT_VALIDATE_PHASE_HINT
     )

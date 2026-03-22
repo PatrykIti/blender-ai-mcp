@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from server.domain.models.rpc import RpcResponse
+
 
 class IRpcClient(ABC):
     @abstractmethod

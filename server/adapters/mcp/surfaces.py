@@ -21,7 +21,6 @@ from server.adapters.mcp.version_policy import (
     resolve_contract_line,
 )
 
-
 SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
     "legacy-flat": SurfaceProfileSettings(
         name="legacy-flat",

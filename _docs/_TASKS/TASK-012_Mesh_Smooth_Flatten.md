@@ -41,18 +41,18 @@ class MeshSmoothRequest(BaseModel):
 
 class IMeshSmoothTool(ABC):
     """Interface for mesh smoothing operations."""
-    
+
     @abstractmethod
     def smooth_vertices(self, request: MeshSmoothRequest) -> str:
         """
         Smooth selected vertices using Laplacian smoothing.
-        
+
         Args:
             request: Smoothing parameters
-            
+
         Returns:
             Success message with operation details
-            
+
         Raises:
             ObjectNotFoundError: If object doesn't exist
             InvalidModeError: If not in Edit Mode
@@ -75,18 +75,18 @@ class MeshFlattenRequest(BaseModel):
 
 class IMeshFlattenTool(ABC):
     """Interface for mesh flattening operations."""
-    
+
     @abstractmethod
     def flatten_vertices(self, request: MeshFlattenRequest) -> str:
         """
         Flatten selected vertices along specified axis.
-        
+
         Args:
             request: Flattening parameters
-            
+
         Returns:
             Success message with operation details
-            
+
         Raises:
             ObjectNotFoundError: If object doesn't exist
             InvalidModeError: If not in Edit Mode
@@ -107,10 +107,10 @@ from server.infrastructure.rpc.rpc_client import RpcClient
 
 class MeshSmoothHandler(IMeshSmoothTool):
     """Application handler for mesh smoothing operations."""
-    
+
     def __init__(self, rpc_client: RpcClient):
         self._rpc = rpc_client
-    
+
     def smooth_vertices(self, request: MeshSmoothRequest) -> str:
         """Execute mesh smoothing via RPC."""
         result = self._rpc.call(
@@ -130,10 +130,10 @@ from server.infrastructure.rpc.rpc_client import RpcClient
 
 class MeshFlattenHandler(IMeshFlattenTool):
     """Application handler for mesh flattening operations."""
-    
+
     def __init__(self, rpc_client: RpcClient):
         self._rpc = rpc_client
-    
+
     def flatten_vertices(self, request: MeshFlattenRequest) -> str:
         """Execute mesh flattening via RPC."""
         result = self._rpc.call(
@@ -162,7 +162,7 @@ def mesh_smooth(
     """
     [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
     Uses Laplacian smoothing to refine organic shapes and remove hard edges.
-    
+
     Args:
         object_name: Name of the mesh object to smooth
         iterations: Number of smoothing passes (1-100). More = smoother
@@ -185,7 +185,7 @@ def mesh_flatten(
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
     Aligns vertices perpendicular to chosen axis (X: YZ plane, Y: XZ plane, Z: XY plane).
-    
+
     Args:
         object_name: Name of the mesh object
         axis: Axis to flatten along ("X", "Y", or "Z")
@@ -217,7 +217,7 @@ def smooth_vertices(
     """
     [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
     Uses Laplacian smoothing algorithm.
-    
+
     Args:
         object_name: Name of the mesh object
         iterations: Number of smoothing iterations
@@ -229,39 +229,39 @@ def smooth_vertices(
             "status": "error",
             "message": f"Object '{object_name}' not found"
         }
-    
+
     if obj.type != 'MESH':
         return {
             "status": "error",
             "message": f"Object '{object_name}' is not a mesh (type: {obj.type})"
         }
-    
+
     # Ensure Edit Mode
     if obj.mode != 'EDIT':
         return {
             "status": "error",
             "message": f"Object '{object_name}' must be in Edit Mode"
         }
-    
+
     # Get selected vertex count
     import bmesh
     bm = bmesh.from_edit_mesh(obj.data)
     selected_verts = [v for v in bm.verts if v.select]
-    
+
     if not selected_verts:
         return {
             "status": "error",
             "message": f"No vertices selected on '{object_name}'"
         }
-    
+
     vert_count = len(selected_verts)
-    
+
     # Execute smooth operation
     bpy.ops.mesh.vertices_smooth(
         factor=factor,
         repeat=iterations
     )
-    
+
     return {
         "status": "success",
         "message": f"Smoothed {vert_count} vertices on '{object_name}' ({iterations} iterations, {factor:.2f} factor)"
@@ -282,7 +282,7 @@ def flatten_vertices(
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
     Aligns vertices perpendicular to chosen axis using scale-to-zero transform.
-    
+
     Args:
         object_name: Name of the mesh object
         axis: Axis to flatten along ("X", "Y", or "Z")
@@ -293,60 +293,60 @@ def flatten_vertices(
             "status": "error",
             "message": f"Object '{object_name}' not found"
         }
-    
+
     if obj.type != 'MESH':
         return {
             "status": "error",
             "message": f"Object '{object_name}' is not a mesh (type: {obj.type})"
         }
-    
+
     # Ensure Edit Mode
     if obj.mode != 'EDIT':
         return {
             "status": "error",
             "message": f"Object '{object_name}' must be in Edit Mode"
         }
-    
+
     # Get selected vertex count
     import bmesh
     bm = bmesh.from_edit_mesh(obj.data)
     selected_verts = [v for v in bm.verts if v.select]
-    
+
     if not selected_verts:
         return {
             "status": "error",
             "message": f"No vertices selected on '{object_name}'"
         }
-    
+
     vert_count = len(selected_verts)
-    
+
     # Map axis to constraint
     constraint_map = {
         "X": (True, False, False),
         "Y": (False, True, False),
         "Z": (False, False, True)
     }
-    
+
     # Execute flatten operation using scale
     bpy.ops.transform.resize(
         value=(1, 1, 1),
         constraint_axis=constraint_map[axis],
         orient_type='GLOBAL'
     )
-    
+
     # Apply scale to flatten
     constraint = constraint_map[axis]
     scale_value = [1.0, 1.0, 1.0]
     for i, constrained in enumerate(constraint):
         if constrained:
             scale_value[i] = 0.0
-    
+
     bpy.ops.transform.resize(
         value=tuple(scale_value),
         constraint_axis=constraint,
         orient_type='GLOBAL'
     )
-    
+
     return {
         "status": "success",
         "message": f"Flattened {vert_count} vertices on '{object_name}' along {axis} axis"
@@ -483,7 +483,7 @@ self.register("mesh.flatten_vertices", flatten_vertices)
 - **Blender API:**
   - `bpy.ops.mesh.vertices_smooth()` - Laplacian smoothing
   - `bpy.ops.transform.resize()` - Used for flattening via scale to 0
-  
+
 - **Architecture Patterns:**
   - `_docs/TOOLS_ARCHITECTURE_DEEP_DIVE.md` - Clean Architecture layers
   - `_docs/MESH_TOOLS_ARCHITECTURE.md` - Mesh tool patterns

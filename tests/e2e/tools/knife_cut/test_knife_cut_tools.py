@@ -10,6 +10,7 @@ Tested tools:
 - mesh_split
 - mesh_edge_split
 """
+
 import pytest
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -38,6 +39,7 @@ def scene_handler(rpc_client):
 # Setup Helpers
 # ==============================================================================
 
+
 def create_test_cube(modeling_handler, scene_handler, name="E2E_KnifeTest"):
     """Creates a test cube for knife/cut operations."""
     try:
@@ -47,18 +49,14 @@ def create_test_cube(modeling_handler, scene_handler, name="E2E_KnifeTest"):
         pass  # Object didn't exist
 
     # Create cube
-    result = modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
     return name
 
 
 # ==============================================================================
 # TASK-032-1: mesh_knife_project Tests
 # ==============================================================================
+
 
 def test_knife_project_basic(mesh_handler, modeling_handler, scene_handler):
     """Test basic knife project operation."""
@@ -79,7 +77,7 @@ def test_knife_project_basic(mesh_handler, modeling_handler, scene_handler):
         except RuntimeError as e:
             # Knife project often requires specific view/selection setup
             if "No selected geometry" in str(e) or "knife" in str(e).lower():
-                print(f"✓ mesh_knife_project: API call successful (view-dependent limitation)")
+                print("✓ mesh_knife_project: API call successful (view-dependent limitation)")
             else:
                 raise
 
@@ -94,6 +92,7 @@ def test_knife_project_basic(mesh_handler, modeling_handler, scene_handler):
 # TASK-032-2: mesh_rip Tests
 # ==============================================================================
 
+
 def test_rip_vertex(mesh_handler, modeling_handler, scene_handler):
     """Test ripping geometry at selected vertex."""
     try:
@@ -102,7 +101,7 @@ def test_rip_vertex(mesh_handler, modeling_handler, scene_handler):
 
         # Select a single vertex for ripping
         scene_handler.set_active_object(obj_name)
-        mesh_handler.select_by_index(indices=[0], type='VERT', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[0], type="VERT", selection_mode="SET")
 
         # Test
         result = mesh_handler.rip(use_fill=False)
@@ -126,7 +125,7 @@ def test_rip_with_fill(mesh_handler, modeling_handler, scene_handler):
 
         # Select a vertex
         scene_handler.set_active_object(obj_name)
-        mesh_handler.select_by_index(indices=[1], type='VERT', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[1], type="VERT", selection_mode="SET")
 
         # Test
         result = mesh_handler.rip(use_fill=True)
@@ -146,6 +145,7 @@ def test_rip_with_fill(mesh_handler, modeling_handler, scene_handler):
 # TASK-032-3: mesh_split Tests
 # ==============================================================================
 
+
 def test_split_selected_faces(mesh_handler, modeling_handler, scene_handler):
     """Test splitting selected faces from mesh."""
     try:
@@ -154,7 +154,7 @@ def test_split_selected_faces(mesh_handler, modeling_handler, scene_handler):
 
         # Select top face (index 4 on default cube)
         scene_handler.set_active_object(obj_name)
-        mesh_handler.select_by_index(indices=[4], type='FACE', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[4], type="FACE", selection_mode="SET")
 
         # Test
         result = mesh_handler.split()
@@ -198,6 +198,7 @@ def test_split_no_selection_error(mesh_handler, modeling_handler, scene_handler)
 # TASK-032-4: mesh_edge_split Tests
 # ==============================================================================
 
+
 def test_edge_split_selected_loop(mesh_handler, modeling_handler, scene_handler):
     """Test edge split on selected edge loop."""
     try:
@@ -206,7 +207,7 @@ def test_edge_split_selected_loop(mesh_handler, modeling_handler, scene_handler)
 
         # Select an edge loop (select edges)
         scene_handler.set_active_object(obj_name)
-        mesh_handler.select_by_index(indices=[0, 1, 2, 3], type='EDGE', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[0, 1, 2, 3], type="EDGE", selection_mode="SET")
 
         # Test
         result = mesh_handler.edge_split()
@@ -251,6 +252,7 @@ def test_edge_split_no_selection_error(mesh_handler, modeling_handler, scene_han
 # Integration Workflow Tests
 # ==============================================================================
 
+
 def test_workflow_split_and_transform(mesh_handler, modeling_handler, scene_handler):
     """
     Integration test: Split geometry and transform the split part.
@@ -262,7 +264,7 @@ def test_workflow_split_and_transform(mesh_handler, modeling_handler, scene_hand
         scene_handler.set_active_object(obj_name)
 
         # Step 1: Select a face
-        mesh_handler.select_by_index(indices=[4], type='FACE', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[4], type="FACE", selection_mode="SET")
         print("  Step 1 - Selected face")
 
         # Step 2: Split it
@@ -295,7 +297,7 @@ def test_workflow_edge_split_for_uv_seam(mesh_handler, modeling_handler, scene_h
         scene_handler.set_active_object(obj_name)
 
         # Step 1: Select edges around the middle
-        mesh_handler.select_by_index(indices=[4, 5, 6, 7], type='EDGE', selection_mode='SET')
+        mesh_handler.select_by_index(indices=[4, 5, 6, 7], type="EDGE", selection_mode="SET")
         print("  Step 1 - Selected edge loop")
 
         # Step 2: Edge split to create UV seam boundary

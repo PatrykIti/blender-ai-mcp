@@ -1,5 +1,5 @@
 """Tests for scene_context mega tool routing and validation."""
-import pytest
+
 from unittest.mock import MagicMock, patch
 
 from server.adapters.mcp.contracts.scene import SceneContextResponseContract

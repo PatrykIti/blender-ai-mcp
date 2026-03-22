@@ -1,8 +1,10 @@
 from typing import Any, Dict, List, Literal, Optional
+
 from fastmcp import Context
+
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_text_handler
 
 TEXT_PUBLIC_TOOL_NAMES = (
@@ -15,14 +17,13 @@ TEXT_PUBLIC_TOOL_NAMES = (
 def register_text_tools(target: Any) -> Dict[str, Any]:
     """Register public text tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, TEXT_PUBLIC_TOOL_NAMES, tags=get_capability_tags("text")
-    )
+    return register_existing_tools(globals(), target, TEXT_PUBLIC_TOOL_NAMES, tags=get_capability_tags("text"))
 
 
 # ==============================================================================
 # TASK-034: Text & Annotations
 # ==============================================================================
+
 
 def text_create(
     ctx: Context,
@@ -62,6 +63,7 @@ def text_create(
         text_create(text="3D", extrude=0.2, bevel_depth=0.02) -> 3D extruded text with bevel
         text_create(text="EXIT", size=2.0, align_x="CENTER") -> Centered sign text
     """
+
     def execute():
         handler = get_text_handler()
         try:
@@ -94,7 +96,7 @@ def text_create(
             "align_x": align_x,
             "align_y": align_y,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -132,6 +134,7 @@ def text_edit(
         text_edit(object_name="Sign", extrude=0.5, bevel_depth=0.05) -> Adds 3D depth
         text_edit(object_name="Label", align_x="CENTER") -> Centers text
     """
+
     def execute():
         handler = get_text_handler()
         try:
@@ -160,7 +163,7 @@ def text_edit(
             "align_x": align_x,
             "align_y": align_y,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -189,6 +192,7 @@ def text_to_mesh(
         text_to_mesh(object_name="Logo") -> Converts text to mesh (destroys original)
         text_to_mesh(object_name="Sign", keep_original=True) -> Keeps text, creates mesh copy
     """
+
     def execute():
         handler = get_text_handler()
         try:
@@ -205,5 +209,5 @@ def text_to_mesh(
             "object_name": object_name,
             "keep_original": keep_original,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )

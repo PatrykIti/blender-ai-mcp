@@ -133,15 +133,15 @@ class TestScaleParams:
         result = resolver.resolve("$AUTO_SCALE_SMALL")
         assert isinstance(result, list)
         assert len(result) == 3
-        assert result[0] == pytest.approx(1.6)   # 80% of 2.0
-        assert result[1] == pytest.approx(3.2)   # 80% of 4.0
-        assert result[2] == pytest.approx(0.4)   # 80% of 0.5
+        assert result[0] == pytest.approx(1.6)  # 80% of 2.0
+        assert result[1] == pytest.approx(3.2)  # 80% of 4.0
+        assert result[2] == pytest.approx(0.4)  # 80% of 0.5
 
     def test_auto_scale_tiny(self, resolver):
         result = resolver.resolve("$AUTO_SCALE_TINY")
         assert isinstance(result, list)
-        assert result[0] == pytest.approx(1.0)   # 50% of 2.0
-        assert result[1] == pytest.approx(2.0)   # 50% of 4.0
+        assert result[0] == pytest.approx(1.0)  # 50% of 2.0
+        assert result[1] == pytest.approx(2.0)  # 50% of 4.0
         assert result[2] == pytest.approx(0.25)  # 50% of 0.5
 
 
@@ -218,21 +218,25 @@ class TestResolveRecursive:
         result = resolver.resolve(["$AUTO_BEVEL", 1.0, "$AUTO_INSET"])
         assert result[0] == pytest.approx(0.025)  # AUTO_BEVEL
         assert result[1] == 1.0
-        assert result[2] == pytest.approx(0.06)   # AUTO_INSET
+        assert result[2] == pytest.approx(0.06)  # AUTO_INSET
 
     def test_resolve_dict(self, resolver):
-        result = resolver.resolve({
-            "width": "$AUTO_BEVEL",
-            "segments": 3,
-        })
+        result = resolver.resolve(
+            {
+                "width": "$AUTO_BEVEL",
+                "segments": 3,
+            }
+        )
         assert result["width"] == pytest.approx(0.025)
         assert result["segments"] == 3
 
     def test_resolve_nested(self, resolver):
-        result = resolver.resolve({
-            "scale": ["$AUTO_SCALE_SMALL"],
-            "offset": "$AUTO_OFFSET",
-        })
+        result = resolver.resolve(
+            {
+                "scale": ["$AUTO_SCALE_SMALL"],
+                "offset": "$AUTO_OFFSET",
+            }
+        )
         # scale contains a list with one AUTO_SCALE_SMALL
         # but AUTO_SCALE_SMALL itself returns a list
         # so we get a list containing a list

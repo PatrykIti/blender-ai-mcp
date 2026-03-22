@@ -4,22 +4,18 @@ Unit tests for Pickle to LanceDB migration.
 TASK-047-3
 """
 
-import pytest
-from pathlib import Path
-import tempfile
-import shutil
 import pickle
+import shutil
+import tempfile
+from pathlib import Path
 
-from server.router.infrastructure.vector_store.migrations import (
-    PickleToLanceMigration,
-    LEGACY_CACHE_DIR,
-    LEGACY_TOOL_CACHE,
-    LEGACY_WORKFLOW_CACHE,
-    NUMPY_AVAILABLE,
-)
+import pytest
 from server.router.domain.interfaces.i_vector_store import (
     VectorNamespace,
-    VectorRecord,
+)
+from server.router.infrastructure.vector_store.migrations import (
+    NUMPY_AVAILABLE,
+    PickleToLanceMigration,
 )
 
 
@@ -108,7 +104,6 @@ class TestPickleToLanceMigrationNeedsMigration:
         migration = PickleToLanceMigration(mock_store)
 
         # Reimport to get monkeypatched paths
-        from server.router.infrastructure.vector_store import migrations
 
         assert not migration.needs_migration()
 
@@ -131,12 +126,9 @@ class TestPickleToLanceMigrationNeedsMigration:
         assert migration.needs_migration()
 
     @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
-    def test_migration_needed_when_workflow_cache_exists(
-        self, mock_store, temp_legacy_dir
-    ):
+    def test_migration_needed_when_workflow_cache_exists(self, mock_store, temp_legacy_dir):
         """Test migration needed when workflow cache exists."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         workflow_cache_path = migrations.LEGACY_WORKFLOW_CACHE
@@ -165,7 +157,6 @@ class TestPickleToLanceMigrationMigrateAll:
     def test_migrate_tool_embeddings(self, mock_store, temp_legacy_dir):
         """Test migrating tool embeddings."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         # Create tool cache
@@ -189,7 +180,6 @@ class TestPickleToLanceMigrationMigrateAll:
     def test_migrate_workflow_embeddings(self, mock_store, temp_legacy_dir):
         """Test migrating workflow embeddings."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         # Create workflow cache
@@ -210,7 +200,6 @@ class TestPickleToLanceMigrationMigrateAll:
     def test_migrate_both(self, mock_store, temp_legacy_dir):
         """Test migrating both tools and workflows."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         # Create both caches
@@ -233,7 +222,6 @@ class TestPickleToLanceMigrationMigrateAll:
     def test_migrate_skips_wrong_dimension(self, mock_store, temp_legacy_dir):
         """Test that migration skips vectors with wrong dimension."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         # Create cache with wrong dimension
@@ -258,7 +246,6 @@ class TestPickleToLanceMigrationCleanup:
     def test_cleanup_removes_files(self, mock_store, temp_legacy_dir):
         """Test cleanup removes legacy files."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         # Create legacy files
@@ -302,7 +289,6 @@ class TestPickleToLanceMigrationSummary:
     def test_summary_after_migration(self, mock_store, temp_legacy_dir):
         """Test summary reflects migration results."""
         import numpy as np
-
         from server.router.infrastructure.vector_store import migrations
 
         create_pickle_file(

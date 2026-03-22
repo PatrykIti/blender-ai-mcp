@@ -4,36 +4,32 @@ Tests for Router Domain Entities.
 Task: TASK-039-2
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
 from server.router.domain.entities import (
-    # Tool Call
-    InterceptedToolCall,
     CorrectedToolCall,
-    ToolCallSequence,
-    # Scene Context
-    ObjectInfo,
-    TopologyInfo,
-    ProportionInfo,
-    SceneContext,
-    # Pattern
-    PatternType,
     DetectedPattern,
-    PatternMatchResult,
+    EnsembleResult,
     # Firewall
     FirewallAction,
-    FirewallRuleType,
-    FirewallViolation,
     FirewallResult,
-    # Override
-    OverrideReason,
-    ReplacementTool,
-    OverrideDecision,
+    InterceptedToolCall,
     # Ensemble (TASK-053)
     MatcherResult,
     ModifierResult,
-    EnsembleResult,
+    # Scene Context
+    OverrideDecision,
+    # Override
+    OverrideReason,
+    PatternMatchResult,
+    # Pattern
+    PatternType,
+    ProportionInfo,
+    ReplacementTool,
+    SceneContext,
+    ToolCallSequence,
+    TopologyInfo,
 )
 
 

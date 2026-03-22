@@ -3,6 +3,7 @@ E2E Tests for Snapshot Tools (TASK-014-4)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
@@ -16,10 +17,7 @@ def scene_handler(rpc_client):
 def test_snapshot_state(scene_handler):
     """Test creating a scene snapshot."""
     try:
-        result = scene_handler.snapshot_state(
-            include_mesh_stats=False,
-            include_materials=False
-        )
+        result = scene_handler.snapshot_state(include_mesh_stats=False, include_materials=False)
 
         assert isinstance(result, dict)
         assert "hash" in result
@@ -42,10 +40,7 @@ def test_snapshot_state(scene_handler):
 def test_snapshot_state_with_options(scene_handler):
     """Test snapshot with mesh stats and materials."""
     try:
-        result = scene_handler.snapshot_state(
-            include_mesh_stats=True,
-            include_materials=True
-        )
+        result = scene_handler.snapshot_state(include_mesh_stats=True, include_materials=True)
 
         assert isinstance(result, dict)
         assert "snapshot" in result

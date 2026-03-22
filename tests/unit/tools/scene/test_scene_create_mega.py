@@ -1,5 +1,5 @@
 """Tests for scene_create mega tool routing and validation."""
-import pytest
+
 from unittest.mock import MagicMock, patch
 
 
@@ -16,13 +16,7 @@ class TestSceneCreateMega:
 
         mock_create_light.return_value = "Light created"
         callable_scene_create = getattr(scene_create, "fn", scene_create)
-        result = callable_scene_create(
-            self.mock_ctx,
-            action="light",
-            light_type="SUN",
-            energy=5.0,
-            location=[0, 0, 5]
-        )
+        result = callable_scene_create(self.mock_ctx, action="light", light_type="SUN", energy=5.0, location=[0, 0, 5])
 
         mock_create_light.assert_called_once()
         assert result == "Light created"
@@ -35,11 +29,7 @@ class TestSceneCreateMega:
         mock_create_camera.return_value = "Camera created"
         callable_scene_create = getattr(scene_create, "fn", scene_create)
         result = callable_scene_create(
-            self.mock_ctx,
-            action="camera",
-            location=[0, -10, 5],
-            rotation=[1.0, 0, 0],
-            lens=85.0
+            self.mock_ctx, action="camera", location=[0, -10, 5], rotation=[1.0, 0, 0], lens=85.0
         )
 
         mock_create_camera.assert_called_once()
@@ -52,12 +42,7 @@ class TestSceneCreateMega:
 
         mock_create_empty.return_value = "Empty created"
         callable_scene_create = getattr(scene_create, "fn", scene_create)
-        result = callable_scene_create(
-            self.mock_ctx,
-            action="empty",
-            empty_type="ARROWS",
-            location=[0, 0, 2]
-        )
+        result = callable_scene_create(self.mock_ctx, action="empty", empty_type="ARROWS", location=[0, 0, 2])
 
         mock_create_empty.assert_called_once()
         assert result == "Empty created"
@@ -82,7 +67,7 @@ class TestSceneCreateMega:
 
         mock_create_light.return_value = "Light created"
         callable_scene_create = getattr(scene_create, "fn", scene_create)
-        result = callable_scene_create(self.mock_ctx, action="light")
+        callable_scene_create(self.mock_ctx, action="light")
 
         mock_create_light.assert_called_once()
         # Verify default light_type is POINT

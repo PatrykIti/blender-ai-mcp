@@ -1,5 +1,6 @@
 """Tests for scene_inspect mega tool routing and validation."""
-import pytest
+
+import asyncio
 from unittest.mock import MagicMock, patch
 
 from server.adapters.mcp.contracts.scene import SceneInspectResponseContract
@@ -18,7 +19,7 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_object.return_value = {"object_name": "Cube", "type": "MESH"}
-        result = callable_scene_inspect(self.mock_ctx, action="object", object_name="Cube")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="object", object_name="Cube"))
 
         mock_inspect_object.assert_called_once_with(self.mock_ctx, "Cube")
         assert isinstance(result, SceneInspectResponseContract)
@@ -30,7 +31,7 @@ class TestSceneInspectMega:
         from server.adapters.mcp.areas.scene import scene_inspect
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
-        result = callable_scene_inspect(self.mock_ctx, action="object")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="object"))
 
         assert isinstance(result, SceneInspectResponseContract)
         assert "object_name" in result.error
@@ -42,11 +43,13 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_topology.return_value = {"object_name": "Cube", "vertex_count": 8}
-        result = callable_scene_inspect(
-            self.mock_ctx,
-            action="topology",
-            object_name="Cube",
-            detailed=True
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="topology",
+                object_name="Cube",
+                detailed=True,
+            )
         )
 
         mock_inspect_topology.assert_called_once_with(self.mock_ctx, "Cube", True)
@@ -59,7 +62,7 @@ class TestSceneInspectMega:
         from server.adapters.mcp.areas.scene import scene_inspect
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
-        result = callable_scene_inspect(self.mock_ctx, action="topology")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="topology"))
 
         assert isinstance(result, SceneInspectResponseContract)
         assert "object_name" in result.error
@@ -71,11 +74,13 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_modifiers.return_value = {"modifier_count": 1}
-        result = callable_scene_inspect(
-            self.mock_ctx,
-            action="modifiers",
-            object_name="Cube",
-            include_disabled=False
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="modifiers",
+                object_name="Cube",
+                include_disabled=False,
+            )
         )
 
         mock_inspect_modifiers.assert_called_once_with(self.mock_ctx, "Cube", False)
@@ -89,7 +94,7 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_modifiers.return_value = {"modifier_count": 0}
-        result = callable_scene_inspect(self.mock_ctx, action="modifiers")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="modifiers"))
 
         mock_inspect_modifiers.assert_called_once_with(self.mock_ctx, None, True)
         assert isinstance(result, SceneInspectResponseContract)
@@ -101,11 +106,13 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_materials.return_value = {"total_slots": 3}
-        result = callable_scene_inspect(
-            self.mock_ctx,
-            action="materials",
-            material_filter="Wood",
-            include_empty_slots=False
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="materials",
+                material_filter="Wood",
+                include_empty_slots=False,
+            )
         )
 
         mock_inspect_materials.assert_called_once_with(self.mock_ctx, "Wood", False)
@@ -119,7 +126,7 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_inspect_materials.return_value = {"total_slots": 0}
-        result = callable_scene_inspect(self.mock_ctx, action="materials")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="materials"))
 
         mock_inspect_materials.assert_called_once_with(self.mock_ctx, None, True)
         assert isinstance(result, SceneInspectResponseContract)
@@ -131,11 +138,13 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_get_constraints.return_value = {"constraints": []}
-        result = callable_scene_inspect(
-            self.mock_ctx,
-            action="constraints",
-            object_name="Rig",
-            include_bones=True
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="constraints",
+                object_name="Rig",
+                include_bones=True,
+            )
         )
 
         mock_get_constraints.assert_called_once_with(self.mock_ctx, "Rig", True)
@@ -149,12 +158,14 @@ class TestSceneInspectMega:
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
         mock_modifier_data.return_value = {"modifier_name": "Bevel"}
-        result = callable_scene_inspect(
-            self.mock_ctx,
-            action="modifier_data",
-            object_name="Cube",
-            modifier_name="Bevel",
-            include_node_tree=True
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="modifier_data",
+                object_name="Cube",
+                modifier_name="Bevel",
+                include_node_tree=True,
+            )
         )
 
         mock_modifier_data.assert_called_once_with(self.mock_ctx, "Cube", "Bevel", True)
@@ -166,7 +177,7 @@ class TestSceneInspectMega:
         from server.adapters.mcp.areas.scene import scene_inspect
 
         callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
-        result = callable_scene_inspect(self.mock_ctx, action="invalid")
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="invalid"))
 
         assert isinstance(result, SceneInspectResponseContract)
         assert "Unknown action" in result.error
@@ -177,3 +188,52 @@ class TestSceneInspectMega:
         assert "materials" in result.error
         assert "constraints" in result.error
         assert "modifier_data" in result.error
+
+    @patch("server.adapters.mcp.areas.scene.run_inspection_summary_assistant")
+    @patch("server.adapters.mcp.areas.scene._scene_inspect_object")
+    def test_assistant_summary_attaches_typed_assistant_payload(
+        self,
+        mock_inspect_object,
+        mock_assistant,
+    ):
+        """assistant_summary=True should attach a bounded assistant envelope."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+        from server.adapters.mcp.sampling.result_types import (
+            AssistantBudgetContract,
+            AssistantRunResult,
+            InspectionSummaryContract,
+        )
+
+        callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
+        mock_inspect_object.return_value = {"object_name": "Cube", "type": "MESH"}
+        mock_assistant.return_value = AssistantRunResult(
+            status="success",
+            assistant_name="inspection_summarizer",
+            message="ok",
+            budget=AssistantBudgetContract(
+                max_input_chars=1000,
+                max_messages=1,
+                max_tokens=100,
+                tool_budget=0,
+            ),
+            capability_source="client",
+            result=InspectionSummaryContract(
+                inspection_action="object",
+                object_name="Cube",
+                overview="Cube overview",
+                key_findings=["Mesh object"],
+            ),
+        )
+
+        result = asyncio.run(
+            callable_scene_inspect(
+                self.mock_ctx,
+                action="object",
+                object_name="Cube",
+                assistant_summary=True,
+            )
+        )
+
+        assert result.assistant is not None
+        assert result.assistant.status == "success"
+        assert result.assistant.result.overview == "Cube overview"

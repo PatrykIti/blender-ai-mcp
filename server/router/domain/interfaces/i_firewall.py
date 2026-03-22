@@ -5,11 +5,11 @@ Abstract interface for validating and blocking invalid operations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.firewall_result import FirewallResult
+from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.entities.tool_call import CorrectedToolCall
 
 
 class IFirewall(ABC):

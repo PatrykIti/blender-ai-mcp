@@ -7,11 +7,11 @@ into standalone matcher implementing IMatcher interface.
 Matches workflows by detected geometry patterns in the scene.
 """
 
-from typing import Dict, Any, Optional, TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from server.router.domain.interfaces.matcher import IMatcher
 from server.router.domain.entities.ensemble import MatcherResult
+from server.router.domain.interfaces.matcher import IMatcher
 
 if TYPE_CHECKING:
     from server.router.application.workflows.registry import WorkflowRegistry
@@ -91,22 +91,12 @@ class PatternMatcher(IMatcher):
             >>> result.weighted_score # 0.1425 (0.95 × 0.15)
         """
         if not context:
-            return MatcherResult(
-                matcher_name=self.name,
-                workflow_name=None,
-                confidence=0.0,
-                weight=self.weight
-            )
+            return MatcherResult(matcher_name=self.name, workflow_name=None, confidence=0.0, weight=self.weight)
 
         # Check if pattern was detected by GeometryPatternDetector
         detected_pattern = context.get("detected_pattern")
         if not detected_pattern:
-            return MatcherResult(
-                matcher_name=self.name,
-                workflow_name=None,
-                confidence=0.0,
-                weight=self.weight
-            )
+            return MatcherResult(matcher_name=self.name, workflow_name=None, confidence=0.0, weight=self.weight)
 
         # Lookup workflow by pattern
         workflow_name = self._registry.find_by_pattern(detected_pattern)
@@ -118,10 +108,7 @@ class PatternMatcher(IMatcher):
                 workflow_name=workflow_name,
                 confidence=0.95,  # High confidence for pattern matches
                 weight=self.weight,
-                metadata={
-                    "matched_by": "pattern",
-                    "pattern": detected_pattern
-                }
+                metadata={"matched_by": "pattern", "pattern": detected_pattern},
             )
 
         # Pattern detected but no matching workflow
@@ -130,8 +117,5 @@ class PatternMatcher(IMatcher):
             workflow_name=None,
             confidence=0.0,
             weight=self.weight,
-            metadata={
-                "pattern_detected": detected_pattern,
-                "no_matching_workflow": True
-            }
+            metadata={"pattern_detected": detected_pattern, "no_matching_workflow": True},
         )

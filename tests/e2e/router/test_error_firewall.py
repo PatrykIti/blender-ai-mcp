@@ -7,8 +7,6 @@ Requires running Blender instance.
 TASK-040
 """
 
-import pytest
-
 from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
 
@@ -21,10 +19,7 @@ class TestFirewallBlocking:
         # Scene is empty after clean_scene, no objects to delete
         # Router should handle this gracefully
 
-        tools = router.process_llm_tool_call(
-            "scene_delete_object",
-            {"name": "NonExistentObject"}
-        )
+        tools = router.process_llm_tool_call("scene_delete_object", {"name": "NonExistentObject"})
 
         # Should return empty list or single tool (depends on implementation)
         # The key is it shouldn't crash
@@ -57,10 +52,7 @@ class TestFirewallModeAutoFix:
         router.invalidate_cache()
 
         # Try sculpt tool - should add mode switch
-        tools = router.process_llm_tool_call(
-            "sculpt_draw",
-            {"strength": 0.5}
-        )
+        tools = router.process_llm_tool_call("sculpt_draw", {"strength": 0.5})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -89,10 +81,7 @@ class TestFirewallSelectionAutoFix:
         router.invalidate_cache()
 
         # Try bevel with nothing selected
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.1, "segments": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1, "segments": 2})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -114,10 +103,7 @@ class TestFirewallSelectionAutoFix:
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "mesh_inset",
-            {"thickness": 0.1}
-        )
+        tools = router.process_llm_tool_call("mesh_inset", {"thickness": 0.1})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -135,18 +121,16 @@ class TestFirewallParameterModification:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Try inset with unreasonable thickness
-        tools = router.process_llm_tool_call(
-            "mesh_inset",
-            {"thickness": 500.0}
-        )
+        tools = router.process_llm_tool_call("mesh_inset", {"thickness": 500.0})
 
         inset_tool = next((t for t in tools if t["tool"] == "mesh_inset"), None)
 
         if inset_tool:
             # Thickness should be clamped to reasonable value
             # Default cube is 2x2x2, so thickness > 1 is unreasonable
-            assert inset_tool["params"].get("thickness", 500) <= 10.0, \
+            assert inset_tool["params"].get("thickness", 500) <= 10.0, (
                 f"Thickness should be clamped, got: {inset_tool['params']}"
+            )
 
     def test_extrude_depth_not_clamped_when_reasonable(self, router, rpc_client, clean_scene):
         """Test: Reasonable extrude depth is not modified."""
@@ -155,10 +139,7 @@ class TestFirewallParameterModification:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Reasonable depth
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.5}
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 
         extrude_tool = next((t for t in tools if t["tool"] == "mesh_extrude_region"), None)
 
@@ -175,7 +156,7 @@ class TestFirewallConfiguration:
         """Test: Disabled firewall allows mode violations."""
         config = RouterConfig(
             auto_mode_switch=False,  # Disable auto mode switch
-            auto_selection=False,    # Disable auto selection
+            auto_selection=False,  # Disable auto selection
         )
         router = SupervisorRouter(
             config=config,
@@ -186,10 +167,7 @@ class TestFirewallConfiguration:
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
 
         # Stay in OBJECT mode, try mesh tool
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.3}
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.3})
 
         tool_names = [t["tool"] for t in tools]
 

@@ -19,12 +19,12 @@ from server.adapters.mcp.areas.extraction import register_extraction_tools
 from server.adapters.mcp.areas.lattice import register_lattice_tools
 from server.adapters.mcp.areas.material import register_material_tools
 from server.adapters.mcp.areas.mesh import register_mesh_tools
+from server.adapters.mcp.areas.modeling import register_modeling_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.areas.sculpt import register_sculpt_tools
 from server.adapters.mcp.areas.system import register_system_tools
 from server.adapters.mcp.areas.text import register_text_tools
 from server.adapters.mcp.areas.uv import register_uv_tools
-from server.adapters.mcp.areas.modeling import register_modeling_tools
 
 try:
     from fastmcp.server.providers import LocalProvider

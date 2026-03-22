@@ -4,20 +4,18 @@ Unit tests for Router Logger.
 Tests logging and telemetry functionality.
 """
 
-import pytest
-import tempfile
 import json
-from datetime import datetime
+import tempfile
 from pathlib import Path
 
+import pytest
 from server.router.infrastructure.logger import (
-    RouterLogger,
-    RouterEvent,
     EventType,
-    get_router_logger,
+    RouterEvent,
+    RouterLogger,
     configure_router_logging,
+    get_router_logger,
 )
-
 
 # ============================================================================
 # Fixtures

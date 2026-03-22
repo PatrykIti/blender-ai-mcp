@@ -15,9 +15,7 @@ class TestMeshTransformSelectedMcpParsing:
         handler = MagicMock()
         handler.transform_selected.return_value = "OK"
         mock_get_mesh_handler.return_value = handler
-        callable_mesh_transform_selected = getattr(
-            mesh_transform_selected, "fn", mesh_transform_selected
-        )
+        callable_mesh_transform_selected = getattr(mesh_transform_selected, "fn", mesh_transform_selected)
 
         result = callable_mesh_transform_selected(self.mock_ctx, scale="[1, 1, 0.5]")
 
@@ -32,9 +30,7 @@ class TestMeshTransformSelectedMcpParsing:
         handler = MagicMock()
         handler.transform_selected.return_value = "OK"
         mock_get_mesh_handler.return_value = handler
-        callable_mesh_transform_selected = getattr(
-            mesh_transform_selected, "fn", mesh_transform_selected
-        )
+        callable_mesh_transform_selected = getattr(mesh_transform_selected, "fn", mesh_transform_selected)
 
         result = callable_mesh_transform_selected(self.mock_ctx, scale="invalid")
 

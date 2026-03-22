@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 DISCOVERY_CATEGORIES = {
     "scene",
     "mesh",

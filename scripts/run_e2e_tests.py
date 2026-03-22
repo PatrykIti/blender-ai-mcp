@@ -16,15 +16,16 @@ Usage:
     python scripts/run_e2e_tests.py --blender-path /path/to/blender
     python scripts/run_e2e_tests.py --skip-build
 """
+
 import argparse
+import os
+import signal
+import socket
 import subprocess
 import sys
 import time
-import socket
-import os
-import signal
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Tuple
 
 # Project paths
@@ -70,10 +71,7 @@ def find_blender_path(custom_path: Optional[str] = None) -> str:
     except Exception:
         pass
 
-    raise FileNotFoundError(
-        f"Blender not found. Please specify path with --blender-path. "
-        f"Checked: {platform_path}"
-    )
+    raise FileNotFoundError(f"Blender not found. Please specify path with --blender-path. Checked: {platform_path}")
 
 
 def build_addon() -> bool:
@@ -81,10 +79,7 @@ def build_addon() -> bool:
     log("Building addon...", "RUN")
     try:
         result = subprocess.run(
-            [sys.executable, str(BUILD_SCRIPT)],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT)
+            [sys.executable, str(BUILD_SCRIPT)], capture_output=True, text=True, cwd=str(PROJECT_ROOT)
         )
         if result.returncode != 0:
             log(f"Build failed: {result.stderr}", "ERR")
@@ -127,7 +122,7 @@ def check_addon_installed(blender_path: str) -> bool:
     """Check if blender_ai_mcp addon is installed."""
     log("Checking if addon is installed...")
 
-    check_script = '''
+    check_script = """
 import bpy
 import sys
 import addon_utils
@@ -159,13 +154,10 @@ if is_installed or is_enabled:
 else:
     print("ADDON_STATUS: NOT_INSTALLED")
     sys.exit(1)
-'''
+"""
 
     result = subprocess.run(
-        [blender_path, "--background", "--python-expr", check_script],
-        capture_output=True,
-        text=True,
-        timeout=30
+        [blender_path, "--background", "--python-expr", check_script], capture_output=True, text=True, timeout=30
     )
 
     is_installed = "ADDON_STATUS: INSTALLED" in result.stdout
@@ -178,7 +170,7 @@ def uninstall_addon(blender_path: str) -> bool:
     log("Uninstalling old addon...", "RUN")
 
     # Use addon_utils instead of bpy.ops to avoid UI context issues in --background mode
-    uninstall_script = '''
+    uninstall_script = """
 import bpy
 import sys
 import shutil
@@ -221,13 +213,10 @@ except Exception as e:
     traceback.print_exc()
     print(f"UNINSTALL_STATUS: FAILED - {e}")
     sys.exit(1)
-'''
+"""
 
     result = subprocess.run(
-        [blender_path, "--background", "--python-expr", uninstall_script],
-        capture_output=True,
-        text=True,
-        timeout=60
+        [blender_path, "--background", "--python-expr", uninstall_script], capture_output=True, text=True, timeout=60
     )
 
     success = "UNINSTALL_STATUS: SUCCESS" in result.stdout
@@ -297,10 +286,7 @@ except Exception as e:
 '''
 
     result = subprocess.run(
-        [blender_path, "--background", "--python-expr", install_script],
-        capture_output=True,
-        text=True,
-        timeout=120
+        [blender_path, "--background", "--python-expr", install_script], capture_output=True, text=True, timeout=120
     )
 
     success = "INSTALL_STATUS: SUCCESS" in result.stdout
@@ -328,7 +314,7 @@ def run_blender_with_rpc(blender_path: str) -> Tuple[subprocess.Popen, bool]:
         [blender_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        preexec_fn=os.setsid if sys.platform != "win32" else None
+        preexec_fn=os.setsid if sys.platform != "win32" else None,
     )
 
     # Wait for RPC server
@@ -377,7 +363,7 @@ def run_e2e_tests(verbose: bool = True) -> Tuple[bool, str]:
             stderr=subprocess.STDOUT,
             text=True,
             cwd=str(PROJECT_ROOT),
-            env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)},
         )
 
         # Capture output while streaming to console
@@ -396,7 +382,7 @@ def run_e2e_tests(verbose: bool = True) -> Tuple[bool, str]:
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
-            env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+            env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)},
         )
         output = f"{result.stdout}\n{result.stderr}"
         success = result.returncode == 0
@@ -497,6 +483,7 @@ def main():
     except Exception as e:
         log(f"Unexpected error: {e}", "ERR")
         import traceback
+
         traceback.print_exc()
         return 1
     finally:

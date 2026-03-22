@@ -4,13 +4,12 @@ Tests for SemanticWorkflowMatcher.
 TASK-046-3
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-from typing import Optional
 
+import pytest
 from server.router.application.matcher.semantic_workflow_matcher import (
-    SemanticWorkflowMatcher,
     MatchResult,
+    SemanticWorkflowMatcher,
 )
 from server.router.infrastructure.config import RouterConfig
 
@@ -118,7 +117,7 @@ class TestSemanticWorkflowMatcher:
         matcher = SemanticWorkflowMatcher(config=config)
 
         # Patch classifier to avoid loading model
-        with patch.object(matcher._classifier, 'load_workflow_embeddings'):
+        with patch.object(matcher._classifier, "load_workflow_embeddings"):
             matcher.initialize(mock_registry)
 
         return matcher
@@ -171,7 +170,7 @@ class TestSemanticWorkflowMatcher:
         # Patch classifier to return no results (TASK-051: use find_best_match_with_confidence)
         with patch.object(
             matcher._classifier,
-            'find_best_match_with_confidence',
+            "find_best_match_with_confidence",
             return_value={
                 "workflow_id": None,
                 "score": 0.0,
@@ -180,9 +179,9 @@ class TestSemanticWorkflowMatcher:
                 "matched_text": None,
                 "fallback_candidates": [],
                 "language_detected": "en",
-            }
+            },
         ):
-            with patch.object(matcher._classifier, 'get_generalization_candidates', return_value=[]):
+            with patch.object(matcher._classifier, "get_generalization_candidates", return_value=[]):
                 result = matcher.match("create something unknown")
 
         assert result.match_type == "none"
@@ -195,7 +194,7 @@ class TestSemanticWorkflowMatcher:
         # Patch classifier to return semantic match (TASK-051: use find_best_match_with_confidence)
         with patch.object(
             matcher._classifier,
-            'find_best_match_with_confidence',
+            "find_best_match_with_confidence",
             return_value={
                 "workflow_id": "phone_workflow",
                 "score": 0.75,
@@ -204,7 +203,7 @@ class TestSemanticWorkflowMatcher:
                 "matched_text": "create a phone",
                 "fallback_candidates": [],
                 "language_detected": "en",
-            }
+            },
         ):
             result = matcher.match("make a mobile device")
 
@@ -224,7 +223,7 @@ class TestSemanticWorkflowMatcher:
         # (TASK-051: use find_best_match_with_confidence which returns fallback_candidates)
         with patch.object(
             matcher._classifier,
-            'find_best_match_with_confidence',
+            "find_best_match_with_confidence",
             return_value={
                 "workflow_id": None,
                 "score": 0.0,
@@ -236,16 +235,16 @@ class TestSemanticWorkflowMatcher:
                     {"workflow_id": "tower_workflow", "score": 0.45, "source_type": "keyword"},
                 ],
                 "language_detected": "en",
-            }
+            },
         ):
             with patch.object(
                 matcher._classifier,
-                'get_generalization_candidates',
+                "get_generalization_candidates",
                 return_value=[("table_workflow", 0.72), ("tower_workflow", 0.45)],
             ):
                 with patch.object(
                     matcher._classifier,
-                    'get_confidence_level',
+                    "get_confidence_level",
                     return_value="LOW",
                 ):
                     result = matcher.match("create a chair")
@@ -261,7 +260,7 @@ class TestSemanticWorkflowMatcher:
         """Test find_similar method."""
         with patch.object(
             matcher._classifier,
-            'find_similar',
+            "find_similar",
             return_value=[("phone_workflow", 0.8), ("table_workflow", 0.5)],
         ):
             results = matcher.find_similar("create a device", top_k=2)

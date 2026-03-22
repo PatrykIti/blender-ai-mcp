@@ -18,7 +18,6 @@ from server.router.application.resolver.parameter_store import SEMANTIC_MEMORY_S
 from server.router.domain.entities.parameter import (
     ParameterResolutionResult,
     ParameterSchema,
-    StoredMapping,
     UnresolvedParameter,
 )
 from server.router.domain.interfaces.i_parameter_resolver import (
@@ -96,10 +95,7 @@ class ParameterResolver(IParameterResolver):
         # Handle None modifiers
         modifiers = existing_modifiers or {}
 
-        logger.debug(
-            f"Resolving parameters for workflow '{workflow_name}': "
-            f"{list(parameters.keys())}"
-        )
+        logger.debug(f"Resolving parameters for workflow '{workflow_name}': {list(parameters.keys())}")
         logger.debug(f"Existing modifiers: {modifiers}")
 
         for param_name, schema in parameters.items():
@@ -108,9 +104,7 @@ class ParameterResolver(IParameterResolver):
                 value = modifiers[param_name]
                 resolved[param_name] = value
                 sources[param_name] = "yaml_modifier"
-                logger.debug(
-                    f"TIER 1: {param_name}={value} (yaml_modifier)"
-                )
+                logger.debug(f"TIER 1: {param_name}={value} (yaml_modifier)")
                 continue
 
             # TASK-056-5: Computed parameters are internal by default.
@@ -146,10 +140,7 @@ class ParameterResolver(IParameterResolver):
                         "policy_approval_delegated": False,
                     },
                 )
-                logger.debug(
-                    f"TIER 3: {param_name}={schema.default} "
-                    f"(default, relevance={relevance:.3f} < threshold)"
-                )
+                logger.debug(f"TIER 3: {param_name}={schema.default} (default, relevance={relevance:.3f} < threshold)")
                 continue
 
             # TIER 2: Check learned mappings (from previous LLM interactions)
@@ -179,8 +170,7 @@ class ParameterResolver(IParameterResolver):
                     },
                 )
                 logger.debug(
-                    f"TIER 2: {param_name}={stored_mapping.value} "
-                    f"(learned, similarity={stored_mapping.similarity:.3f})"
+                    f"TIER 2: {param_name}={stored_mapping.value} (learned, similarity={stored_mapping.similarity:.3f})"
                 )
                 continue
 
@@ -207,10 +197,7 @@ class ParameterResolver(IParameterResolver):
                     "policy_approval_delegated": False,
                 },
             )
-            logger.debug(
-                f"TIER 3: {param_name} UNRESOLVED "
-                f"(relevance={relevance:.3f}, context='{context}')"
-            )
+            logger.debug(f"TIER 3: {param_name} UNRESOLVED (relevance={relevance:.3f}, context='{context}')")
 
         result = ParameterResolutionResult(
             resolved=resolved,
@@ -218,10 +205,7 @@ class ParameterResolver(IParameterResolver):
             resolution_sources=sources,
         )
 
-        logger.info(
-            f"Resolution complete: {len(resolved)} resolved, "
-            f"{len(unresolved)} unresolved"
-        )
+        logger.info(f"Resolution complete: {len(resolved)} resolved, {len(unresolved)} unresolved")
 
         return result
 
@@ -256,9 +240,7 @@ class ParameterResolver(IParameterResolver):
 
         # Check similarity with description
         if schema.description:
-            desc_similarity = self._classifier.similarity(
-                prompt, schema.description
-            )
+            desc_similarity = self._classifier.similarity(prompt, schema.description)
             max_relevance = max(max_relevance, desc_similarity)
 
         # Check similarity with semantic hints (full prompt vs hint)
@@ -283,9 +265,7 @@ class ParameterResolver(IParameterResolver):
                 word_sim = self._classifier.similarity(word, hint)
                 if word_sim > 0.65:  # Higher threshold for single words
                     max_relevance = max(max_relevance, 0.75)
-                    logger.debug(
-                        f"Semantic word match: '{word}' ↔ '{hint}' = {word_sim:.3f}"
-                    )
+                    logger.debug(f"Semantic word match: '{word}' ↔ '{hint}' = {word_sim:.3f}")
                     break
             if max_relevance >= 0.75:
                 break
@@ -318,7 +298,7 @@ class ParameterResolver(IParameterResolver):
             Extracted sentence context or empty string if extraction fails.
         """
         # Sentence boundary characters
-        SENTENCE_ENDINGS = {'.', '!', '?', '\n'}
+        SENTENCE_ENDINGS = {".", "!", "?", "\n"}
 
         # Find sentence containing hint
         # Walk backwards to find sentence start
@@ -383,9 +363,7 @@ class ParameterResolver(IParameterResolver):
                 # Center around hint
                 half_length = max_length // 2
                 context_start = max(0, hint_pos_in_context - half_length)
-                context_end = min(
-                    len(context), hint_pos_in_context + len(hint) + half_length
-                )
+                context_end = min(len(context), hint_pos_in_context + len(hint) + half_length)
                 context = context[context_start:context_end].strip()
             else:
                 # Simple truncation
@@ -421,9 +399,7 @@ class ParameterResolver(IParameterResolver):
 
         # TIER 3: If prompt is short enough, use entire prompt
         if len(prompt) <= 500:
-            logger.debug(
-                f"[TIER 3] Using full prompt as context (length={len(prompt)} ≤ 500)"
-            )
+            logger.debug(f"[TIER 3] Using full prompt as context (length={len(prompt)} ≤ 500)")
             return prompt.strip()
 
         # Look for semantic hints in prompt
@@ -436,9 +412,7 @@ class ParameterResolver(IParameterResolver):
                 continue  # Try next hint
 
             # TIER 1: Smart sentence extraction
-            context = self._extract_sentence_context(
-                prompt, idx, hint, max_context_length
-            )
+            context = self._extract_sentence_context(prompt, idx, hint, max_context_length)
 
             if context and len(context) >= 100:  # Minimum viable context length
                 logger.debug(
@@ -465,19 +439,14 @@ class ParameterResolver(IParameterResolver):
                 context = context[:max_context_length].strip()
 
             logger.debug(
-                f"[TIER 2] Expanded window context (length={len(context)}): "
-                f"'{context[:50]}...{context[-50:]}'"
+                f"[TIER 2] Expanded window context (length={len(context)}): '{context[:50]}...{context[-50:]}'"
             )
             return context
 
         # No hint found in any semantic hints, try description keywords
         if schema.description:
             # Extract nouns from description (simple approach)
-            desc_words = set(
-                word.lower()
-                for word in re.findall(r"\b\w+\b", schema.description)
-                if len(word) > 3
-            )
+            desc_words = set(word.lower() for word in re.findall(r"\b\w+\b", schema.description) if len(word) > 3)
 
             # Find sentences in prompt containing these words
             sentences = re.split(r"[.!?]", prompt)
@@ -538,7 +507,4 @@ class ParameterResolver(IParameterResolver):
             workflow_name=workflow_name,
         )
 
-        return (
-            f"Stored: '{context}' → {parameter_name}={value} "
-            f"(workflow: {workflow_name})"
-        )
+        return f"Stored: '{context}' → {parameter_name}={value} (workflow: {workflow_name})"

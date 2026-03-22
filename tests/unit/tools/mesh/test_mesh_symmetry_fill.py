@@ -9,19 +9,18 @@ Tests:
 - mesh_mirror
 """
 
-import unittest
-from unittest.mock import MagicMock, patch
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -52,8 +51,8 @@ class TestMeshSymmetrize(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.context.active_object.data = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.symmetrize = MagicMock()
@@ -124,8 +123,8 @@ class TestMeshGridFill(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.context.active_object.data = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.fill_grid = MagicMock()
@@ -137,54 +136,34 @@ class TestMeshGridFill(unittest.TestCase):
         """Test grid fill with default parameters"""
         result = self.handler.grid_fill()
 
-        bpy.ops.mesh.fill_grid.assert_called_once_with(
-            span=1,
-            offset=0,
-            use_interp_simple=False
-        )
+        bpy.ops.mesh.fill_grid.assert_called_once_with(span=1, offset=0, use_interp_simple=False)
         self.assertIn("Grid fill", result)
 
     def test_grid_fill_custom_span(self):
         """Test grid fill with custom span"""
         result = self.handler.grid_fill(span=4)
 
-        bpy.ops.mesh.fill_grid.assert_called_once_with(
-            span=4,
-            offset=0,
-            use_interp_simple=False
-        )
+        bpy.ops.mesh.fill_grid.assert_called_once_with(span=4, offset=0, use_interp_simple=False)
         self.assertIn("span=4", result)
 
     def test_grid_fill_custom_offset(self):
         """Test grid fill with custom offset"""
         result = self.handler.grid_fill(offset=2)
 
-        bpy.ops.mesh.fill_grid.assert_called_once_with(
-            span=1,
-            offset=2,
-            use_interp_simple=False
-        )
+        bpy.ops.mesh.fill_grid.assert_called_once_with(span=1, offset=2, use_interp_simple=False)
         self.assertIn("offset=2", result)
 
     def test_grid_fill_simple_interpolation(self):
         """Test grid fill with simple interpolation"""
-        result = self.handler.grid_fill(use_interp_simple=True)
+        self.handler.grid_fill(use_interp_simple=True)
 
-        bpy.ops.mesh.fill_grid.assert_called_once_with(
-            span=1,
-            offset=0,
-            use_interp_simple=True
-        )
+        bpy.ops.mesh.fill_grid.assert_called_once_with(span=1, offset=0, use_interp_simple=True)
 
     def test_grid_fill_all_parameters(self):
         """Test grid fill with all parameters"""
-        result = self.handler.grid_fill(span=3, offset=1, use_interp_simple=True)
+        self.handler.grid_fill(span=3, offset=1, use_interp_simple=True)
 
-        bpy.ops.mesh.fill_grid.assert_called_once_with(
-            span=3,
-            offset=1,
-            use_interp_simple=True
-        )
+        bpy.ops.mesh.fill_grid.assert_called_once_with(span=3, offset=1, use_interp_simple=True)
 
     def test_grid_fill_no_selection_raises(self):
         """Test grid fill raises error when no edges selected"""
@@ -214,8 +193,8 @@ class TestMeshPokeFaces(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.context.active_object.data = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.poke = MagicMock()
@@ -227,54 +206,34 @@ class TestMeshPokeFaces(unittest.TestCase):
         """Test poke faces with default parameters"""
         result = self.handler.poke_faces()
 
-        bpy.ops.mesh.poke.assert_called_once_with(
-            offset=0.0,
-            use_relative_offset=False,
-            center_mode='MEDIAN_WEIGHTED'
-        )
+        bpy.ops.mesh.poke.assert_called_once_with(offset=0.0, use_relative_offset=False, center_mode="MEDIAN_WEIGHTED")
         self.assertIn("Poked", result)
 
     def test_poke_faces_with_offset(self):
         """Test poke faces with custom offset"""
         result = self.handler.poke_faces(offset=0.5)
 
-        bpy.ops.mesh.poke.assert_called_once_with(
-            offset=0.5,
-            use_relative_offset=False,
-            center_mode='MEDIAN_WEIGHTED'
-        )
+        bpy.ops.mesh.poke.assert_called_once_with(offset=0.5, use_relative_offset=False, center_mode="MEDIAN_WEIGHTED")
         self.assertIn("offset=0.5", result)
 
     def test_poke_faces_relative_offset(self):
         """Test poke faces with relative offset"""
-        result = self.handler.poke_faces(offset=0.3, use_relative_offset=True)
+        self.handler.poke_faces(offset=0.3, use_relative_offset=True)
 
-        bpy.ops.mesh.poke.assert_called_once_with(
-            offset=0.3,
-            use_relative_offset=True,
-            center_mode='MEDIAN_WEIGHTED'
-        )
+        bpy.ops.mesh.poke.assert_called_once_with(offset=0.3, use_relative_offset=True, center_mode="MEDIAN_WEIGHTED")
 
     def test_poke_faces_center_mode_median(self):
         """Test poke faces with MEDIAN center mode"""
         result = self.handler.poke_faces(center_mode="MEDIAN")
 
-        bpy.ops.mesh.poke.assert_called_once_with(
-            offset=0.0,
-            use_relative_offset=False,
-            center_mode='MEDIAN'
-        )
+        bpy.ops.mesh.poke.assert_called_once_with(offset=0.0, use_relative_offset=False, center_mode="MEDIAN")
         self.assertIn("MEDIAN", result)
 
     def test_poke_faces_center_mode_bounds(self):
         """Test poke faces with BOUNDS center mode"""
         result = self.handler.poke_faces(center_mode="BOUNDS")
 
-        bpy.ops.mesh.poke.assert_called_once_with(
-            offset=0.0,
-            use_relative_offset=False,
-            center_mode='BOUNDS'
-        )
+        bpy.ops.mesh.poke.assert_called_once_with(offset=0.0, use_relative_offset=False, center_mode="BOUNDS")
         self.assertIn("BOUNDS", result)
 
     def test_poke_faces_case_insensitive(self):
@@ -317,8 +276,8 @@ class TestMeshBeautifyFill(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.context.active_object.data = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.beautify_fill = MagicMock()
@@ -375,8 +334,8 @@ class TestMeshMirror(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.context.active_object.data = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.transform.mirror = MagicMock()
@@ -417,7 +376,7 @@ class TestMeshMirror(unittest.TestCase):
 
     def test_mirror_without_merge(self):
         """Test mirror without merge"""
-        result = self.handler.mirror(use_mirror_merge=False)
+        self.handler.mirror(use_mirror_merge=False)
 
         bpy.ops.transform.mirror.assert_called_once()
         bpy.ops.mesh.remove_doubles.assert_not_called()
@@ -461,5 +420,5 @@ class TestMeshMirror(unittest.TestCase):
         self.assertIn("Mirror failed", str(context.exception))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

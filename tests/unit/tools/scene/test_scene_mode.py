@@ -1,9 +1,11 @@
 import sys
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # conftest.py handles bpy mocking
 from blender_addon.application.handlers.scene import SceneHandler
+
 
 class TestSceneMode:
     def setup_method(self):
@@ -26,7 +28,7 @@ class TestSceneMode:
         self.light = MagicMock()
         self.light.name = "Light"
 
-        self.mock_bpy.context.mode = 'OBJECT'
+        self.mock_bpy.context.mode = "OBJECT"
         self.mock_bpy.ops.object.mode_set = MagicMock()
         self.mock_bpy.context.active_object = self.cube
         self.mock_bpy.context.selected_objects = [self.cube, self.light]
@@ -34,19 +36,19 @@ class TestSceneMode:
 
     def test_set_mode_valid(self):
         # Execute
-        result = self.handler.set_mode('EDIT')
-        
+        result = self.handler.set_mode("EDIT")
+
         # Verify
-        self.mock_bpy.ops.object.mode_set.assert_called_with(mode='EDIT')
+        self.mock_bpy.ops.object.mode_set.assert_called_with(mode="EDIT")
         assert "Switched to EDIT mode" in result
 
     def test_set_mode_already_set(self):
         # Setup
-        self.mock_bpy.context.mode = 'EDIT'
-        
+        self.mock_bpy.context.mode = "EDIT"
+
         # Execute
-        result = self.handler.set_mode('EDIT')
-        
+        result = self.handler.set_mode("EDIT")
+
         # Verify
         self.mock_bpy.ops.object.mode_set.assert_not_called()
         assert "Already in EDIT mode" in result
@@ -57,27 +59,27 @@ class TestSceneMode:
 
         # Execute & Verify
         with pytest.raises(ValueError):
-            self.handler.set_mode('EDIT')
+            self.handler.set_mode("EDIT")
 
     def test_get_mode_returns_selection_summary(self):
-        self.mock_bpy.context.mode = 'EDIT_MESH'
+        self.mock_bpy.context.mode = "EDIT_MESH"
         result = self.handler.get_mode()
-        assert result["mode"] == 'EDIT_MESH'
-        assert result["active_object"] == 'Cube'
-        assert result["active_object_type"] == 'MESH'
+        assert result["mode"] == "EDIT_MESH"
+        assert result["active_object"] == "Cube"
+        assert result["active_object_type"] == "MESH"
         assert result["selection_count"] == 2
-        assert 'Cube' in result["selected_object_names"]
-        assert 'Light' in result["selected_object_names"]
+        assert "Cube" in result["selected_object_names"]
+        assert "Light" in result["selected_object_names"]
 
     def test_list_selection_object_mode(self):
-        self.mock_bpy.context.mode = 'OBJECT'
+        self.mock_bpy.context.mode = "OBJECT"
         summary = self.handler.list_selection()
-        assert summary["mode"] == 'OBJECT'
+        assert summary["mode"] == "OBJECT"
         assert summary["selection_count"] == 2
         assert summary["edit_mode_vertex_count"] is None
 
     def test_inspect_object_basic(self):
-        self.cube.type = 'LIGHT'
+        self.cube.type = "LIGHT"
         report = self.handler.inspect_object("Cube")
         assert report["object_name"] == "Cube"
         assert report["material_slots"] == []
@@ -89,7 +91,7 @@ class TestSceneMode:
 
     def test_set_mode_invalid_mode(self):
         with pytest.raises(ValueError, match="Invalid mode 'INVALID'. Valid:"):
-            self.handler.set_mode('INVALID')
+            self.handler.set_mode("INVALID")
 
     def test_set_mode_edit_wrong_object_type(self):
         """Test that EDIT mode rejects non-editable object types."""
@@ -97,9 +99,9 @@ class TestSceneMode:
         camera.name = "Camera"
         camera.type = "CAMERA"
         self.mock_bpy.context.active_object = camera
-        
+
         with pytest.raises(ValueError, match="Cannot enter EDIT mode"):
-            self.handler.set_mode('EDIT')
+            self.handler.set_mode("EDIT")
 
     def test_set_mode_sculpt_wrong_object_type(self):
         """Test that SCULPT mode rejects non-MESH types."""
@@ -107,17 +109,16 @@ class TestSceneMode:
         curve.name = "Curve"
         curve.type = "CURVE"
         self.mock_bpy.context.active_object = curve
-        
+
         with pytest.raises(ValueError, match="Cannot enter SCULPT mode"):
-            self.handler.set_mode('SCULPT')
-            
+            self.handler.set_mode("SCULPT")
+
     def test_set_mode_pose_wrong_object_type(self):
         """Test that POSE mode rejects non-ARMATURE types."""
         cube = MagicMock()
         cube.name = "Cube"
         cube.type = "MESH"
         self.mock_bpy.context.active_object = cube
-        
-        with pytest.raises(ValueError, match="Cannot enter POSE mode"):
-            self.handler.set_mode('POSE')
 
+        with pytest.raises(ValueError, match="Cannot enter POSE mode"):
+            self.handler.set_mode("POSE")

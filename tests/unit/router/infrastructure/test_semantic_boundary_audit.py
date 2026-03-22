@@ -6,7 +6,6 @@ import ast
 import re
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 AUDIT_DOC = REPO_ROOT / "_docs" / "_ROUTER" / "semantic-boundary-audit.md"
 
@@ -104,11 +103,7 @@ def test_platform_boundary_files_do_not_import_semantic_router_components():
 
     for py_file in _iter_python_files(PLATFORM_BOUNDARY_PATHS):
         modules = _extract_imported_modules(py_file)
-        forbidden = sorted(
-            module
-            for module in modules
-            if module.startswith(FORBIDDEN_SEMANTIC_IMPORT_PREFIXES)
-        )
+        forbidden = sorted(module for module in modules if module.startswith(FORBIDDEN_SEMANTIC_IMPORT_PREFIXES))
         assert forbidden == [], f"{py_file.relative_to(REPO_ROOT)} imports semantic modules: {forbidden}"
 
 
@@ -117,9 +112,5 @@ def test_truth_and_verification_files_do_not_import_semantic_router_components()
 
     for py_file in _iter_python_files(TRUTH_BOUNDARY_PATHS):
         modules = _extract_imported_modules(py_file)
-        forbidden = sorted(
-            module
-            for module in modules
-            if module.startswith(FORBIDDEN_SEMANTIC_IMPORT_PREFIXES)
-        )
+        forbidden = sorted(module for module in modules if module.startswith(FORBIDDEN_SEMANTIC_IMPORT_PREFIXES))
         assert forbidden == [], f"{py_file.relative_to(REPO_ROOT)} imports semantic modules: {forbidden}"

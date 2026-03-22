@@ -2,17 +2,19 @@
 Tests for TASK-038-5 (Proportional Editing).
 Pure pytest style - uses conftest.py fixtures.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # conftest.py handles bpy mocking
 from blender_addon.application.handlers.mesh import MeshHandler
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mesh_handler():
@@ -26,8 +28,8 @@ def mock_tool_settings():
     mock_bpy = sys.modules["bpy"]
 
     mock_settings = MagicMock()
-    mock_settings.proportional_edit = 'DISABLED'
-    mock_settings.proportional_edit_falloff = 'SMOOTH'
+    mock_settings.proportional_edit = "DISABLED"
+    mock_settings.proportional_edit_falloff = "SMOOTH"
     mock_settings.proportional_size = 1.0
 
     mock_bpy.context.tool_settings = mock_settings
@@ -38,6 +40,7 @@ def mock_tool_settings():
 # TASK-038-5: Proportional Editing Tests
 # =============================================================================
 
+
 class TestSetProportionalEdit:
     """Tests for mesh_set_proportional_edit tool."""
 
@@ -45,56 +48,42 @@ class TestSetProportionalEdit:
         """Should enable proportional editing with default parameters."""
         result = mesh_handler.set_proportional_edit(enabled=True)
 
-        assert mock_tool_settings.proportional_edit == 'ENABLED'
-        assert mock_tool_settings.proportional_edit_falloff == 'SMOOTH'
+        assert mock_tool_settings.proportional_edit == "ENABLED"
+        assert mock_tool_settings.proportional_edit_falloff == "SMOOTH"
         assert mock_tool_settings.proportional_size == 1.0
         assert "enabled" in result.lower()
 
     def test_enable_proportional_edit_with_options(self, mesh_handler, mock_tool_settings):
         """Should enable proportional editing with custom options."""
-        result = mesh_handler.set_proportional_edit(
-            enabled=True,
-            falloff_type="SHARP",
-            size=2.0,
-            use_connected=False
-        )
+        result = mesh_handler.set_proportional_edit(enabled=True, falloff_type="SHARP", size=2.0, use_connected=False)
 
-        assert mock_tool_settings.proportional_edit == 'ENABLED'
-        assert mock_tool_settings.proportional_edit_falloff == 'SHARP'
+        assert mock_tool_settings.proportional_edit == "ENABLED"
+        assert mock_tool_settings.proportional_edit_falloff == "SHARP"
         assert mock_tool_settings.proportional_size == 2.0
         assert "SHARP" in result
 
     def test_enable_proportional_edit_connected(self, mesh_handler, mock_tool_settings):
         """Should enable proportional editing with connected mode."""
-        result = mesh_handler.set_proportional_edit(
-            enabled=True,
-            use_connected=True
-        )
+        result = mesh_handler.set_proportional_edit(enabled=True, use_connected=True)
 
-        assert mock_tool_settings.proportional_edit == 'CONNECTED'
+        assert mock_tool_settings.proportional_edit == "CONNECTED"
         assert "connected" in result.lower()
 
     def test_disable_proportional_edit(self, mesh_handler, mock_tool_settings):
         """Should disable proportional editing."""
-        mock_tool_settings.proportional_edit = 'ENABLED'
+        mock_tool_settings.proportional_edit = "ENABLED"
 
         result = mesh_handler.set_proportional_edit(enabled=False)
 
-        assert mock_tool_settings.proportional_edit == 'DISABLED'
+        assert mock_tool_settings.proportional_edit == "DISABLED"
         assert "disabled" in result.lower()
 
     def test_proportional_edit_all_falloff_types(self, mesh_handler, mock_tool_settings):
         """Should accept all valid falloff types."""
-        valid_falloffs = [
-            "SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE",
-            "SHARP", "LINEAR", "CONSTANT", "RANDOM"
-        ]
+        valid_falloffs = ["SMOOTH", "SPHERE", "ROOT", "INVERSE_SQUARE", "SHARP", "LINEAR", "CONSTANT", "RANDOM"]
 
         for falloff in valid_falloffs:
-            result = mesh_handler.set_proportional_edit(
-                enabled=True,
-                falloff_type=falloff
-            )
+            result = mesh_handler.set_proportional_edit(enabled=True, falloff_type=falloff)
             assert mock_tool_settings.proportional_edit_falloff == falloff
             assert falloff in result
 
@@ -107,7 +96,7 @@ class TestSetProportionalEdit:
         """Should accept lowercase falloff types."""
         result = mesh_handler.set_proportional_edit(
             enabled=True,
-            falloff_type="smooth"  # lowercase
+            falloff_type="smooth",  # lowercase
         )
 
         assert mock_tool_settings.proportional_edit_falloff == "SMOOTH"

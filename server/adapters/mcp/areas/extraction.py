@@ -4,12 +4,12 @@ These tools support the Automatic Workflow Extraction System by providing
 deep topology analysis, component detection, symmetry detection, and
 multi-angle rendering for LLM Vision.
 """
+
 import json
 from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
-from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
+
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
@@ -17,6 +17,7 @@ from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
     run_rpc_background_job,
 )
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_extraction_handler
 
 EXTRACTION_PUBLIC_TOOL_NAMES = (
@@ -45,10 +46,7 @@ def register_extraction_tools(target: Any) -> Dict[str, Any]:
     return registered
 
 
-def extraction_deep_topology(
-    ctx: Context,
-    object_name: str
-) -> str:
+def extraction_deep_topology(ctx: Context, object_name: str) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Deep topology analysis for workflow extraction.
 
@@ -67,6 +65,7 @@ def extraction_deep_topology(
     Returns:
         JSON with extended topology data
     """
+
     def execute():
         handler = get_extraction_handler()
         try:
@@ -82,17 +81,11 @@ def extraction_deep_topology(
             return msg
 
     return route_tool_call(
-        tool_name="extraction_deep_topology",
-        params={"object_name": object_name},
-        direct_executor=execute
+        tool_name="extraction_deep_topology", params={"object_name": object_name}, direct_executor=execute
     )
 
 
-def extraction_component_separate(
-    ctx: Context,
-    object_name: str,
-    min_vertex_count: int = 4
-) -> str:
+def extraction_component_separate(ctx: Context, object_name: str, min_vertex_count: int = 4) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Separates mesh into loose parts (components).
 
@@ -108,13 +101,11 @@ def extraction_component_separate(
     Returns:
         JSON with list of created component names and their stats
     """
+
     def execute():
         handler = get_extraction_handler()
         try:
-            result = handler.component_separate(
-                object_name=object_name,
-                min_vertex_count=min_vertex_count
-            )
+            result = handler.component_separate(object_name=object_name, min_vertex_count=min_vertex_count)
             component_count = result.get("component_count", 0)
             ctx_info(ctx, f"Separated '{object_name}' into {component_count} components")
             return json.dumps(result, indent=2)
@@ -127,15 +118,11 @@ def extraction_component_separate(
     return route_tool_call(
         tool_name="extraction_component_separate",
         params={"object_name": object_name, "min_vertex_count": min_vertex_count},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
-def extraction_detect_symmetry(
-    ctx: Context,
-    object_name: str,
-    tolerance: float = 0.001
-) -> str:
+def extraction_detect_symmetry(ctx: Context, object_name: str, tolerance: float = 0.001) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Detects symmetry in mesh geometry.
 
@@ -151,13 +138,11 @@ def extraction_detect_symmetry(
     Returns:
         JSON with symmetry info including axis confidence and symmetric pair counts
     """
+
     def execute():
         handler = get_extraction_handler()
         try:
-            result = handler.detect_symmetry(
-                object_name=object_name,
-                tolerance=tolerance
-            )
+            result = handler.detect_symmetry(object_name=object_name, tolerance=tolerance)
             x_sym = result.get("x_symmetric", False)
             y_sym = result.get("y_symmetric", False)
             z_sym = result.get("z_symmetric", False)
@@ -174,7 +159,7 @@ def extraction_detect_symmetry(
                 ctx_info(ctx, f"Detected symmetry on axes: {', '.join(symmetries)}")
             else:
                 ctx_info(ctx, "No symmetry detected")
-            
+
             return json.dumps(result, indent=2)
         except RuntimeError as e:
             msg = str(e)
@@ -185,14 +170,11 @@ def extraction_detect_symmetry(
     return route_tool_call(
         tool_name="extraction_detect_symmetry",
         params={"object_name": object_name, "tolerance": tolerance},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
-def extraction_edge_loop_analysis(
-    ctx: Context,
-    object_name: str
-) -> str:
+def extraction_edge_loop_analysis(ctx: Context, object_name: str) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Analyzes edge loops for feature detection.
 
@@ -210,6 +192,7 @@ def extraction_edge_loop_analysis(
     Returns:
         JSON with edge loop analysis including loop counts and feature detection
     """
+
     def execute():
         handler = get_extraction_handler()
         try:
@@ -224,17 +207,11 @@ def extraction_edge_loop_analysis(
             return msg
 
     return route_tool_call(
-        tool_name="extraction_edge_loop_analysis",
-        params={"object_name": object_name},
-        direct_executor=execute
+        tool_name="extraction_edge_loop_analysis", params={"object_name": object_name}, direct_executor=execute
     )
 
 
-def extraction_face_group_analysis(
-    ctx: Context,
-    object_name: str,
-    angle_threshold: float = 5.0
-) -> str:
+def extraction_face_group_analysis(ctx: Context, object_name: str, angle_threshold: float = 5.0) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Analyzes face groups for feature detection.
 
@@ -257,13 +234,11 @@ def extraction_face_group_analysis(
     Returns:
         JSON with face group analysis including detected features
     """
+
     def execute():
         handler = get_extraction_handler()
         try:
-            result = handler.face_group_analysis(
-                object_name=object_name,
-                angle_threshold=angle_threshold
-            )
+            result = handler.face_group_analysis(object_name=object_name, angle_threshold=angle_threshold)
             group_count = len(result.get("face_groups", []))
             ctx_info(ctx, f"Analyzed {group_count} face groups in '{object_name}'")
             return json.dumps(result, indent=2)
@@ -276,7 +251,7 @@ def extraction_face_group_analysis(
     return route_tool_call(
         tool_name="extraction_face_group_analysis",
         params={"object_name": object_name, "angle_threshold": angle_threshold},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -285,7 +260,7 @@ async def extraction_render_angles(
     object_name: str,
     angles: Optional[List[str]] = None,
     resolution: int = 512,
-    output_dir: str = "/tmp/extraction_renders"
+    output_dir: str = "/tmp/extraction_renders",
 ) -> str:
     """
     [OBJECT MODE][SAFE] Renders object from multiple angles for LLM Vision analysis.
@@ -309,12 +284,14 @@ async def extraction_render_angles(
     Returns:
         JSON with render paths for each angle
     """
+
     def _format_render_result(payload: Dict[str, Any]) -> str:
         render_count = len(payload.get("renders", []))
         ctx_info(ctx, f"Rendered {render_count} views of '{object_name}'")
         return json.dumps(payload, indent=2)
 
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> Dict[str, Any]:
             handler = get_extraction_handler()
             return handler.render_angles(
@@ -349,10 +326,7 @@ async def extraction_render_angles(
         handler = get_extraction_handler()
         try:
             result = handler.render_angles(
-                object_name=object_name,
-                angles=angles,
-                resolution=resolution,
-                output_dir=output_dir
+                object_name=object_name, angles=angles, resolution=resolution, output_dir=output_dir
             )
             render_count = len(result.get("renders", []))
             ctx_info(ctx, f"Rendered {render_count} views of '{object_name}'")
@@ -365,11 +339,6 @@ async def extraction_render_angles(
 
     return route_tool_call(
         tool_name="extraction_render_angles",
-        params={
-            "object_name": object_name,
-            "angles": angles,
-            "resolution": resolution,
-            "output_dir": output_dir
-        },
-        direct_executor=execute
+        params={"object_name": object_name, "angles": angles, "resolution": resolution, "output_dir": output_dir},
+        direct_executor=execute,
     )

@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import asyncio
+from dataclasses import dataclass, field
 
 from server.adapters.mcp.session_capabilities import (
+    SessionCapabilityState,
     apply_visibility_for_session_state,
     clear_session_goal_state,
     get_session_capability_state,
     infer_phase_from_router_status,
-    record_router_execution_outcome,
     merge_resolved_params_with_session_answers,
-    SessionCapabilityState,
+    record_router_execution_outcome,
     update_session_from_router_goal,
 )
 from server.adapters.mcp.session_phase import (
@@ -138,10 +138,7 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
 
     calls = ctx.state["_visibility_calls"]
     assert calls[0] == ("reset_visibility", {})
-    assert any(
-        name == "enable_components" and call["tags"] == {"phase:build"}
-        for name, call in calls[1:]
-    )
+    assert any(name == "enable_components" and call["tags"] == {"phase:build"} for name, call in calls[1:])
 
 
 def test_update_session_from_router_goal_persists_pending_elicitation_fields():

@@ -4,25 +4,25 @@ Tool Dispatcher for Router Integration.
 Maps tool names to their handler methods for router-based execution.
 """
 
-from typing import Dict, Any, Callable, Optional
 import logging
+from typing import Any, Callable, Dict, Optional
 
 from server.adapters.mcp.platform.name_resolution import resolve_canonical_tool_name
 from server.infrastructure.di import (
-    get_scene_handler,
-    get_modeling_handler,
-    get_mesh_handler,
-    get_collection_handler,
-    get_material_handler,
-    get_uv_handler,
-    get_curve_handler,
-    get_system_handler,
-    get_sculpt_handler,
-    get_baking_handler,
-    get_lattice_handler,
-    get_extraction_handler,
-    get_text_handler,
     get_armature_handler,
+    get_baking_handler,
+    get_collection_handler,
+    get_curve_handler,
+    get_extraction_handler,
+    get_lattice_handler,
+    get_material_handler,
+    get_mesh_handler,
+    get_modeling_handler,
+    get_scene_handler,
+    get_sculpt_handler,
+    get_system_handler,
+    get_text_handler,
+    get_uv_handler,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,147 +61,159 @@ class ToolDispatcher:
         """
         # Scene tools
         scene = get_scene_handler()
-        self._safe_update(scene, {
-            "scene_list_objects": "list_objects",
-            "scene_delete_object": "delete_object",
-            "scene_clean_scene": "clean_scene",
-            "scene_duplicate_object": "duplicate_object",
-            "scene_set_active_object": "set_active_object",
-            "scene_get_mode": "get_mode",
-            "scene_list_selection": "list_selection",
-            "scene_inspect_object": "inspect_object",
-            "scene_snapshot_state": "snapshot_state",
-            # NOTE: scene_compare_snapshot is NOT mapped here because it uses
-            # SnapshotDiffService (pure Python, no RPC to Blender needed).
-            "scene_inspect_material_slots": "inspect_material_slots",
-            "scene_inspect_mesh_topology": "inspect_mesh_topology",
-            "scene_inspect_modifiers": "inspect_modifiers",
-            "scene_get_constraints": "get_constraints",
-            "scene_create_light": "create_light",
-            "scene_create_camera": "create_camera",
-            "scene_create_empty": "create_empty",
-            "scene_rename_object": "rename_object",
-            "scene_hide_object": "hide_object",
-            "scene_show_all_objects": "show_all_objects",
-            "scene_isolate_object": "isolate_object",
-            "scene_camera_orbit": "camera_orbit",
-            "scene_camera_focus": "camera_focus",
-            "scene_get_custom_properties": "get_custom_properties",
-            "scene_set_custom_property": "set_custom_property",
-            "scene_get_hierarchy": "get_hierarchy",
-            "scene_get_bounding_box": "get_bounding_box",
-            "scene_get_origin_info": "get_origin_info",
-        })
+        self._safe_update(
+            scene,
+            {
+                "scene_list_objects": "list_objects",
+                "scene_delete_object": "delete_object",
+                "scene_clean_scene": "clean_scene",
+                "scene_duplicate_object": "duplicate_object",
+                "scene_set_active_object": "set_active_object",
+                "scene_get_mode": "get_mode",
+                "scene_list_selection": "list_selection",
+                "scene_inspect_object": "inspect_object",
+                "scene_snapshot_state": "snapshot_state",
+                # NOTE: scene_compare_snapshot is NOT mapped here because it uses
+                # SnapshotDiffService (pure Python, no RPC to Blender needed).
+                "scene_inspect_material_slots": "inspect_material_slots",
+                "scene_inspect_mesh_topology": "inspect_mesh_topology",
+                "scene_inspect_modifiers": "inspect_modifiers",
+                "scene_get_constraints": "get_constraints",
+                "scene_create_light": "create_light",
+                "scene_create_camera": "create_camera",
+                "scene_create_empty": "create_empty",
+                "scene_rename_object": "rename_object",
+                "scene_hide_object": "hide_object",
+                "scene_show_all_objects": "show_all_objects",
+                "scene_isolate_object": "isolate_object",
+                "scene_camera_orbit": "camera_orbit",
+                "scene_camera_focus": "camera_focus",
+                "scene_get_custom_properties": "get_custom_properties",
+                "scene_set_custom_property": "set_custom_property",
+                "scene_get_hierarchy": "get_hierarchy",
+                "scene_get_bounding_box": "get_bounding_box",
+                "scene_get_origin_info": "get_origin_info",
+            },
+        )
 
         # System tools
         system = get_system_handler()
-        self._safe_update(system, {
-            "system_set_mode": "set_mode",
-            "system_undo": "undo",
-            "system_redo": "redo",
-            "system_save_file": "save_file",
-            "system_new_file": "new_file",
-            "system_snapshot": "snapshot",
-            # Export tools
-            "export_glb": "export_glb",
-            "export_fbx": "export_fbx",
-            "export_obj": "export_obj",
-            # Import tools
-            "import_obj": "import_obj",
-            "import_fbx": "import_fbx",
-            "import_glb": "import_glb",
-            "import_image_as_plane": "import_image_as_plane",
-        })
+        self._safe_update(
+            system,
+            {
+                "system_set_mode": "set_mode",
+                "system_undo": "undo",
+                "system_redo": "redo",
+                "system_save_file": "save_file",
+                "system_new_file": "new_file",
+                "system_snapshot": "snapshot",
+                # Export tools
+                "export_glb": "export_glb",
+                "export_fbx": "export_fbx",
+                "export_obj": "export_obj",
+                # Import tools
+                "import_obj": "import_obj",
+                "import_fbx": "import_fbx",
+                "import_glb": "import_glb",
+                "import_image_as_plane": "import_image_as_plane",
+            },
+        )
 
         # Modeling tools
         modeling = get_modeling_handler()
-        self._safe_update(modeling, {
-            "modeling_create_primitive": "create_primitive",
-            "modeling_transform_object": "transform_object",
-            "modeling_add_modifier": "add_modifier",
-            "modeling_apply_modifier": "apply_modifier",
-            "modeling_list_modifiers": "get_modifiers",
-            "modeling_get_modifier_data": "get_modifier_data",
-            "modeling_convert_to_mesh": "convert_to_mesh",
-            "modeling_join_objects": "join_objects",
-            "modeling_separate_object": "separate_object",
-            "modeling_set_origin": "set_origin",
-            # Metaball tools
-            "metaball_create": "metaball_create",
-            "metaball_add_element": "metaball_add_element",
-            "metaball_to_mesh": "metaball_to_mesh",
-            # Skin modifier tools
-            "skin_create_skeleton": "skin_create_skeleton",
-            "skin_set_radius": "skin_set_radius",
-        })
+        self._safe_update(
+            modeling,
+            {
+                "modeling_create_primitive": "create_primitive",
+                "modeling_transform_object": "transform_object",
+                "modeling_add_modifier": "add_modifier",
+                "modeling_apply_modifier": "apply_modifier",
+                "modeling_list_modifiers": "get_modifiers",
+                "modeling_get_modifier_data": "get_modifier_data",
+                "modeling_convert_to_mesh": "convert_to_mesh",
+                "modeling_join_objects": "join_objects",
+                "modeling_separate_object": "separate_object",
+                "modeling_set_origin": "set_origin",
+                # Metaball tools
+                "metaball_create": "metaball_create",
+                "metaball_add_element": "metaball_add_element",
+                "metaball_to_mesh": "metaball_to_mesh",
+                # Skin modifier tools
+                "skin_create_skeleton": "skin_create_skeleton",
+                "skin_set_radius": "skin_set_radius",
+            },
+        )
 
         # Mesh tools
         mesh = get_mesh_handler()
-        self._safe_update(mesh, {
-            "mesh_select_all": "select_all",
-            "mesh_select_by_index": "select_by_index",
-            "mesh_select_linked": "select_linked",
-            "mesh_select_more": "select_more",
-            "mesh_select_less": "select_less",
-            "mesh_select_boundary": "select_boundary",
-            "mesh_select_loop": "select_loop",
-            "mesh_select_ring": "select_ring",
-            "mesh_select_by_location": "select_by_location",
-            "mesh_get_vertex_data": "get_vertex_data",
-            "mesh_get_edge_data": "get_edge_data",
-            "mesh_get_face_data": "get_face_data",
-            "mesh_get_uv_data": "get_uv_data",
-            "mesh_get_loop_normals": "get_loop_normals",
-            "mesh_get_vertex_group_weights": "get_vertex_group_weights",
-            "mesh_get_attributes": "get_attributes",
-            "mesh_get_shape_keys": "get_shape_keys",
-            "mesh_delete_selected": "delete_selected",
-            "mesh_extrude_region": "extrude_region",
-            "mesh_fill_holes": "fill_holes",
-            "mesh_bevel": "bevel",
-            "mesh_loop_cut": "loop_cut",
-            "mesh_inset": "inset",
-            "mesh_boolean": "boolean",
-            "mesh_merge_by_distance": "merge_by_distance",
-            "mesh_subdivide": "subdivide",
-            "mesh_smooth": "smooth_vertices",
-            "mesh_flatten": "flatten_vertices",
-            "mesh_randomize": "randomize",
-            "mesh_shrink_fatten": "shrink_fatten",
-            "mesh_transform_selected": "transform_selected",
-            "mesh_bridge_edge_loops": "bridge_edge_loops",
-            "mesh_duplicate_selected": "duplicate_selected",
-            "mesh_bisect": "bisect",
-            "mesh_edge_slide": "edge_slide",
-            "mesh_vert_slide": "vert_slide",
-            "mesh_triangulate": "triangulate",
-            "mesh_remesh_voxel": "remesh_voxel",
-            "mesh_spin": "spin",
-            "mesh_screw": "screw",
-            "mesh_add_vertex": "add_vertex",
-            "mesh_add_edge_face": "add_edge_face",
-            "mesh_list_groups": "list_groups",
-            "mesh_create_vertex_group": "create_vertex_group",
-            "mesh_assign_to_group": "assign_to_group",
-            "mesh_remove_from_group": "remove_from_group",
-            "mesh_edge_crease": "edge_crease",
-            "mesh_bevel_weight": "bevel_weight",
-            "mesh_mark_sharp": "mark_sharp",
-            "mesh_dissolve": "dissolve",
-            "mesh_tris_to_quads": "tris_to_quads",
-            "mesh_normals_make_consistent": "normals_make_consistent",
-            "mesh_decimate": "decimate",
-            "mesh_knife_project": "knife_project",
-            "mesh_rip": "rip",
-            "mesh_split": "split",
-            "mesh_edge_split": "edge_split",
-            "mesh_set_proportional_edit": "set_proportional_edit",
-            "mesh_symmetrize": "symmetrize",
-            "mesh_grid_fill": "grid_fill",
-            "mesh_poke_faces": "poke_faces",
-            "mesh_beautify_fill": "beautify_fill",
-            "mesh_mirror": "mirror",
-        })
+        self._safe_update(
+            mesh,
+            {
+                "mesh_select_all": "select_all",
+                "mesh_select_by_index": "select_by_index",
+                "mesh_select_linked": "select_linked",
+                "mesh_select_more": "select_more",
+                "mesh_select_less": "select_less",
+                "mesh_select_boundary": "select_boundary",
+                "mesh_select_loop": "select_loop",
+                "mesh_select_ring": "select_ring",
+                "mesh_select_by_location": "select_by_location",
+                "mesh_get_vertex_data": "get_vertex_data",
+                "mesh_get_edge_data": "get_edge_data",
+                "mesh_get_face_data": "get_face_data",
+                "mesh_get_uv_data": "get_uv_data",
+                "mesh_get_loop_normals": "get_loop_normals",
+                "mesh_get_vertex_group_weights": "get_vertex_group_weights",
+                "mesh_get_attributes": "get_attributes",
+                "mesh_get_shape_keys": "get_shape_keys",
+                "mesh_delete_selected": "delete_selected",
+                "mesh_extrude_region": "extrude_region",
+                "mesh_fill_holes": "fill_holes",
+                "mesh_bevel": "bevel",
+                "mesh_loop_cut": "loop_cut",
+                "mesh_inset": "inset",
+                "mesh_boolean": "boolean",
+                "mesh_merge_by_distance": "merge_by_distance",
+                "mesh_subdivide": "subdivide",
+                "mesh_smooth": "smooth_vertices",
+                "mesh_flatten": "flatten_vertices",
+                "mesh_randomize": "randomize",
+                "mesh_shrink_fatten": "shrink_fatten",
+                "mesh_transform_selected": "transform_selected",
+                "mesh_bridge_edge_loops": "bridge_edge_loops",
+                "mesh_duplicate_selected": "duplicate_selected",
+                "mesh_bisect": "bisect",
+                "mesh_edge_slide": "edge_slide",
+                "mesh_vert_slide": "vert_slide",
+                "mesh_triangulate": "triangulate",
+                "mesh_remesh_voxel": "remesh_voxel",
+                "mesh_spin": "spin",
+                "mesh_screw": "screw",
+                "mesh_add_vertex": "add_vertex",
+                "mesh_add_edge_face": "add_edge_face",
+                "mesh_list_groups": "list_groups",
+                "mesh_create_vertex_group": "create_vertex_group",
+                "mesh_assign_to_group": "assign_to_group",
+                "mesh_remove_from_group": "remove_from_group",
+                "mesh_edge_crease": "edge_crease",
+                "mesh_bevel_weight": "bevel_weight",
+                "mesh_mark_sharp": "mark_sharp",
+                "mesh_dissolve": "dissolve",
+                "mesh_tris_to_quads": "tris_to_quads",
+                "mesh_normals_make_consistent": "normals_make_consistent",
+                "mesh_decimate": "decimate",
+                "mesh_knife_project": "knife_project",
+                "mesh_rip": "rip",
+                "mesh_split": "split",
+                "mesh_edge_split": "edge_split",
+                "mesh_set_proportional_edit": "set_proportional_edit",
+                "mesh_symmetrize": "symmetrize",
+                "mesh_grid_fill": "grid_fill",
+                "mesh_poke_faces": "poke_faces",
+                "mesh_beautify_fill": "beautify_fill",
+                "mesh_mirror": "mirror",
+            },
+        )
 
         # Mega-tools compatibility: Router emits these tool names.
         def _mesh_select(
@@ -255,106 +267,136 @@ class ToolDispatcher:
 
         # Material tools
         material = get_material_handler()
-        self._safe_update(material, {
-            "material_list": "list_materials",
-            "material_list_by_object": "list_by_object",
-            "material_create": "create_material",
-            "material_assign": "assign_material",
-            "material_set_params": "set_material_params",
-            "material_set_texture": "set_material_texture",
-            "material_inspect_nodes": "inspect_nodes",
-        })
+        self._safe_update(
+            material,
+            {
+                "material_list": "list_materials",
+                "material_list_by_object": "list_by_object",
+                "material_create": "create_material",
+                "material_assign": "assign_material",
+                "material_set_params": "set_material_params",
+                "material_set_texture": "set_material_texture",
+                "material_inspect_nodes": "inspect_nodes",
+            },
+        )
 
         # UV tools
         uv = get_uv_handler()
-        self._safe_update(uv, {
-            "uv_list_maps": "list_maps",
-            "uv_unwrap": "unwrap",
-            "uv_pack_islands": "pack_islands",
-            "uv_create_seam": "create_seam",
-        })
+        self._safe_update(
+            uv,
+            {
+                "uv_list_maps": "list_maps",
+                "uv_unwrap": "unwrap",
+                "uv_pack_islands": "pack_islands",
+                "uv_create_seam": "create_seam",
+            },
+        )
 
         # Collection tools
         collection = get_collection_handler()
-        self._safe_update(collection, {
-            "collection_list": "list_collections",
-            "collection_list_objects": "list_objects",
-            "collection_manage": "manage_collection",
-        })
+        self._safe_update(
+            collection,
+            {
+                "collection_list": "list_collections",
+                "collection_list_objects": "list_objects",
+                "collection_manage": "manage_collection",
+            },
+        )
 
         # Curve tools
         curve = get_curve_handler()
-        self._safe_update(curve, {
-            "curve_create": "create",
-            "curve_to_mesh": "to_mesh",
-            "curve_get_data": "get_data",
-        })
+        self._safe_update(
+            curve,
+            {
+                "curve_create": "create",
+                "curve_to_mesh": "to_mesh",
+                "curve_get_data": "get_data",
+            },
+        )
 
         # Sculpt tools
         sculpt = get_sculpt_handler()
-        self._safe_update(sculpt, {
-            "sculpt_auto": "auto_sculpt",
-            "sculpt_brush_smooth": "brush_smooth",
-            "sculpt_brush_grab": "brush_grab",
-            "sculpt_brush_crease": "brush_crease",
-            "sculpt_brush_clay": "brush_clay",
-            "sculpt_brush_inflate": "brush_inflate",
-            "sculpt_brush_blob": "brush_blob",
-            "sculpt_brush_snake_hook": "brush_snake_hook",
-            "sculpt_brush_draw": "brush_draw",
-            "sculpt_brush_pinch": "brush_pinch",
-            "sculpt_enable_dyntopo": "enable_dyntopo",
-            "sculpt_disable_dyntopo": "disable_dyntopo",
-            "sculpt_dyntopo_flood_fill": "dyntopo_flood_fill",
-        })
+        self._safe_update(
+            sculpt,
+            {
+                "sculpt_auto": "auto_sculpt",
+                "sculpt_brush_smooth": "brush_smooth",
+                "sculpt_brush_grab": "brush_grab",
+                "sculpt_brush_crease": "brush_crease",
+                "sculpt_brush_clay": "brush_clay",
+                "sculpt_brush_inflate": "brush_inflate",
+                "sculpt_brush_blob": "brush_blob",
+                "sculpt_brush_snake_hook": "brush_snake_hook",
+                "sculpt_brush_draw": "brush_draw",
+                "sculpt_brush_pinch": "brush_pinch",
+                "sculpt_enable_dyntopo": "enable_dyntopo",
+                "sculpt_disable_dyntopo": "disable_dyntopo",
+                "sculpt_dyntopo_flood_fill": "dyntopo_flood_fill",
+            },
+        )
 
         # Baking tools
         baking = get_baking_handler()
-        self._safe_update(baking, {
-            "bake_normal_map": "bake_normal_map",
-            "bake_ao": "bake_ao",
-            "bake_combined": "bake_combined",
-            "bake_diffuse": "bake_diffuse",
-        })
+        self._safe_update(
+            baking,
+            {
+                "bake_normal_map": "bake_normal_map",
+                "bake_ao": "bake_ao",
+                "bake_combined": "bake_combined",
+                "bake_diffuse": "bake_diffuse",
+            },
+        )
 
         # Lattice tools
         lattice = get_lattice_handler()
-        self._safe_update(lattice, {
-            "lattice_create": "create",
-            "lattice_bind": "bind",
-            "lattice_edit_point": "edit_point",
-            "lattice_get_points": "get_points",
-        })
+        self._safe_update(
+            lattice,
+            {
+                "lattice_create": "create",
+                "lattice_bind": "bind",
+                "lattice_edit_point": "edit_point",
+                "lattice_get_points": "get_points",
+            },
+        )
 
         # Extraction tools
         extraction = get_extraction_handler()
-        self._safe_update(extraction, {
-            "extraction_deep_topology": "deep_topology",
-            "extraction_component_separate": "component_separate",
-            "extraction_detect_symmetry": "detect_symmetry",
-            "extraction_edge_loop_analysis": "edge_loop_analysis",
-            "extraction_face_group_analysis": "face_group_analysis",
-            "extraction_render_angles": "render_angles",
-        })
+        self._safe_update(
+            extraction,
+            {
+                "extraction_deep_topology": "deep_topology",
+                "extraction_component_separate": "component_separate",
+                "extraction_detect_symmetry": "detect_symmetry",
+                "extraction_edge_loop_analysis": "edge_loop_analysis",
+                "extraction_face_group_analysis": "face_group_analysis",
+                "extraction_render_angles": "render_angles",
+            },
+        )
 
         # Text tools
         text = get_text_handler()
-        self._safe_update(text, {
-            "text_create": "create",
-            "text_edit": "edit",
-            "text_to_mesh": "to_mesh",
-        })
+        self._safe_update(
+            text,
+            {
+                "text_create": "create",
+                "text_edit": "edit",
+                "text_to_mesh": "to_mesh",
+            },
+        )
 
         # Armature tools
         armature = get_armature_handler()
-        self._safe_update(armature, {
-            "armature_create": "create",
-            "armature_add_bone": "add_bone",
-            "armature_bind": "bind",
-            "armature_pose_bone": "pose_bone",
-            "armature_weight_paint_assign": "weight_paint_assign",
-            "armature_get_data": "get_data",
-        })
+        self._safe_update(
+            armature,
+            {
+                "armature_create": "create",
+                "armature_add_bone": "add_bone",
+                "armature_bind": "bind",
+                "armature_pose_bone": "pose_bone",
+                "armature_weight_paint_assign": "weight_paint_assign",
+                "armature_get_data": "get_data",
+            },
+        )
 
     def execute(self, tool_name: str, params: Dict[str, Any]) -> str:
         """Execute a tool by name with given parameters.

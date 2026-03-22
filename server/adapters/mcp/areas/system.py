@@ -1,6 +1,7 @@
 from typing import Any, Dict, Literal, Optional
+
 from fastmcp import Context
-from server.adapters.mcp.visibility.tags import get_capability_tags
+
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
@@ -8,6 +9,7 @@ from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
     run_rpc_background_job,
 )
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_system_handler
 
 SYSTEM_PUBLIC_TOOL_NAMES = (
@@ -80,6 +82,7 @@ async def export_glb(
         apply_modifiers: Apply modifiers before export
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().export_glb(
                 filepath=filepath,
@@ -125,9 +128,16 @@ async def export_glb(
 
     return route_tool_call(
         tool_name="export_glb",
-        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "export_materials": export_materials, "apply_modifiers": apply_modifiers},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "export_animations": export_animations,
+            "export_materials": export_materials,
+            "apply_modifiers": apply_modifiers,
+        },
+        direct_executor=execute,
     )
+
 
 async def export_fbx(
     ctx: Context,
@@ -153,6 +163,7 @@ async def export_fbx(
         mesh_smooth_type: Smoothing export method (OFF, FACE, EDGE)
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().export_fbx(
                 filepath=filepath,
@@ -198,8 +209,14 @@ async def export_fbx(
 
     return route_tool_call(
         tool_name="export_fbx",
-        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "apply_modifiers": apply_modifiers, "mesh_smooth_type": mesh_smooth_type},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "export_animations": export_animations,
+            "apply_modifiers": apply_modifiers,
+            "mesh_smooth_type": mesh_smooth_type,
+        },
+        direct_executor=execute,
     )
 
 
@@ -231,6 +248,7 @@ async def export_obj(
         triangulate: Convert quads/ngons to triangles
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().export_obj(
                 filepath=filepath,
@@ -282,8 +300,16 @@ async def export_obj(
 
     return route_tool_call(
         tool_name="export_obj",
-        params={"filepath": filepath, "export_selected": export_selected, "apply_modifiers": apply_modifiers, "export_materials": export_materials, "export_uvs": export_uvs, "export_normals": export_normals, "triangulate": triangulate},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "apply_modifiers": apply_modifiers,
+            "export_materials": export_materials,
+            "export_uvs": export_uvs,
+            "export_normals": export_normals,
+            "triangulate": triangulate,
+        },
+        direct_executor=execute,
     )
 
 
@@ -316,6 +342,7 @@ async def import_obj(
         up_axis: Up axis in Blender (Y = Y-up standard)
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().import_obj(
                 filepath=filepath,
@@ -364,8 +391,15 @@ async def import_obj(
 
     return route_tool_call(
         tool_name="import_obj",
-        params={"filepath": filepath, "use_split_objects": use_split_objects, "use_split_groups": use_split_groups, "global_scale": global_scale, "forward_axis": forward_axis, "up_axis": up_axis},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "use_split_objects": use_split_objects,
+            "use_split_groups": use_split_groups,
+            "global_scale": global_scale,
+            "forward_axis": forward_axis,
+            "up_axis": up_axis,
+        },
+        direct_executor=execute,
     )
 
 
@@ -395,6 +429,7 @@ async def import_fbx(
         global_scale: Scale factor for imported geometry (1.0 = original size)
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().import_fbx(
                 filepath=filepath,
@@ -443,8 +478,15 @@ async def import_fbx(
 
     return route_tool_call(
         tool_name="import_fbx",
-        params={"filepath": filepath, "use_custom_normals": use_custom_normals, "use_image_search": use_image_search, "ignore_leaf_bones": ignore_leaf_bones, "automatic_bone_orientation": automatic_bone_orientation, "global_scale": global_scale},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "use_custom_normals": use_custom_normals,
+            "use_image_search": use_image_search,
+            "ignore_leaf_bones": ignore_leaf_bones,
+            "automatic_bone_orientation": automatic_bone_orientation,
+            "global_scale": global_scale,
+        },
+        direct_executor=execute,
     )
 
 
@@ -470,6 +512,7 @@ async def import_glb(
         import_shading: How to handle shading (NORMALS = use file normals, FLAT, SMOOTH)
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().import_glb(
                 filepath=filepath,
@@ -512,8 +555,13 @@ async def import_glb(
 
     return route_tool_call(
         tool_name="import_glb",
-        params={"filepath": filepath, "import_pack_images": import_pack_images, "merge_vertices": merge_vertices, "import_shading": import_shading},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "import_pack_images": import_pack_images,
+            "merge_vertices": merge_vertices,
+            "import_shading": import_shading,
+        },
+        direct_executor=execute,
     )
 
 
@@ -548,6 +596,7 @@ async def import_image_as_plane(
         use_transparency: Use alpha channel for transparency (PNG with alpha)
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             return get_system_handler().import_image_as_plane(
                 filepath=filepath,
@@ -599,8 +648,16 @@ async def import_image_as_plane(
 
     return route_tool_call(
         tool_name="import_image_as_plane",
-        params={"filepath": filepath, "name": name, "location": location, "size": size, "align_axis": align_axis, "shader": shader, "use_transparency": use_transparency},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "name": name,
+            "location": location,
+            "size": size,
+            "align_axis": align_axis,
+            "shader": shader,
+            "use_transparency": use_transparency,
+        },
+        direct_executor=execute,
     )
 
 
@@ -631,7 +688,7 @@ def system_set_mode(
     return route_tool_call(
         tool_name="system_set_mode",
         params={"mode": mode, "object_name": object_name},
-        direct_executor=lambda: get_system_handler().set_mode(mode, object_name)
+        direct_executor=lambda: get_system_handler().set_mode(mode, object_name),
     )
 
 
@@ -648,9 +705,7 @@ def system_undo(ctx: Context, steps: int = 1) -> str:
         steps: Number of steps to undo (default: 1, max: 10)
     """
     return route_tool_call(
-        tool_name="system_undo",
-        params={"steps": steps},
-        direct_executor=lambda: get_system_handler().undo(steps)
+        tool_name="system_undo", params={"steps": steps}, direct_executor=lambda: get_system_handler().undo(steps)
     )
 
 
@@ -667,9 +722,7 @@ def system_redo(ctx: Context, steps: int = 1) -> str:
         steps: Number of steps to redo (default: 1, max: 10)
     """
     return route_tool_call(
-        tool_name="system_redo",
-        params={"steps": steps},
-        direct_executor=lambda: get_system_handler().redo(steps)
+        tool_name="system_redo", params={"steps": steps}, direct_executor=lambda: get_system_handler().redo(steps)
     )
 
 
@@ -696,7 +749,7 @@ def system_save_file(
     return route_tool_call(
         tool_name="system_save_file",
         params={"filepath": filepath, "compress": compress},
-        direct_executor=lambda: get_system_handler().save_file(filepath, compress)
+        direct_executor=lambda: get_system_handler().save_file(filepath, compress),
     )
 
 
@@ -714,7 +767,7 @@ def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     return route_tool_call(
         tool_name="system_new_file",
         params={"load_ui": load_ui},
-        direct_executor=lambda: get_system_handler().new_file(load_ui)
+        direct_executor=lambda: get_system_handler().new_file(load_ui),
     )
 
 
@@ -749,5 +802,5 @@ def system_snapshot(
     return route_tool_call(
         tool_name="system_snapshot",
         params={"action": action, "name": name},
-        direct_executor=lambda: get_system_handler().snapshot(action, name)
+        direct_executor=lambda: get_system_handler().snapshot(action, name),
     )

@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 AUDIENCE_LEGACY = "legacy"
 AUDIENCE_LLM_GUIDED = "llm_guided"
 

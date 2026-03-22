@@ -1,10 +1,11 @@
 """
 Unit tests for scene_hide_object (TASK-043-2)
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.scene import SceneHandler
 
 
@@ -37,7 +38,7 @@ class TestHideObject:
         """Test hiding object in viewport."""
         result = self.handler.hide_object("Cube", hide=True, hide_render=False)
 
-        assert self.cube.hide_viewport == True
+        assert self.cube.hide_viewport
         assert "hidden" in result.lower() or "Cube" in result
 
     def test_show_object_viewport(self):
@@ -46,15 +47,15 @@ class TestHideObject:
 
         result = self.handler.hide_object("Cube", hide=False, hide_render=False)
 
-        assert self.cube.hide_viewport == False
+        assert not self.cube.hide_viewport
         assert "visible" in result.lower() or "Cube" in result
 
     def test_hide_object_render(self):
         """Test hiding object in both viewport and render."""
-        result = self.handler.hide_object("Cube", hide=True, hide_render=True)
+        self.handler.hide_object("Cube", hide=True, hide_render=True)
 
-        assert self.cube.hide_viewport == True
-        assert self.cube.hide_render == True
+        assert self.cube.hide_viewport
+        assert self.cube.hide_render
 
     def test_hide_object_not_found(self):
         """Test hiding non-existent object raises error."""

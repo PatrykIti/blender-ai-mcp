@@ -10,8 +10,8 @@ from typing import Any
 from fastmcp.server.transforms import ToolTransform
 from fastmcp.tools.tool_transform import ToolTransformConfig
 
-from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
+from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
 from server.adapters.mcp.platform.public_contracts import get_public_contract
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.transforms.public_params import build_public_param_transforms

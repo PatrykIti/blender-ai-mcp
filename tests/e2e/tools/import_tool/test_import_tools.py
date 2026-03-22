@@ -12,12 +12,11 @@ Test workflow:
 
 import os
 import tempfile
+
 import pytest
-
-from server.application.tool_handlers.system_handler import SystemToolHandler
-from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
-
+from server.application.tool_handlers.scene_handler import SceneToolHandler
+from server.application.tool_handlers.system_handler import SystemToolHandler
 
 # Skip all tests if Blender is not running
 pytestmark = pytest.mark.e2e
@@ -62,17 +61,10 @@ def clean_scene(scene_handler):
 class TestImportOBJ:
     """E2E tests for OBJ import."""
 
-    def test_import_obj_roundtrip(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_obj_roundtrip(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test export cube to OBJ, clear scene, import, verify."""
         # Create a cube
-        modeling_handler.create_primitive(
-            primitive_type="CUBE",
-            name="TestCube",
-            size=2.0,
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="CUBE", name="TestCube", size=2.0, location=[0, 0, 0])
 
         # Export to OBJ
         obj_path = os.path.join(temp_dir, "test_cube.obj")
@@ -90,9 +82,7 @@ class TestImportOBJ:
         objects = scene_handler.list_objects()
         assert len([o for o in objects if "Cube" in o.get("name", "")]) > 0
 
-    def test_import_obj_with_scale(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_obj_with_scale(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test OBJ import with custom scale."""
         # Create and export cube
         modeling_handler.create_primitive(primitive_type="CUBE", name="ScaleCube")
@@ -109,16 +99,10 @@ class TestImportOBJ:
 class TestImportFBX:
     """E2E tests for FBX import."""
 
-    def test_import_fbx_roundtrip(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_fbx_roundtrip(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test export to FBX, clear scene, import, verify."""
         # Create a sphere
-        modeling_handler.create_primitive(
-            primitive_type="UV_SPHERE",
-            name="TestSphere",
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="UV_SPHERE", name="TestSphere", location=[0, 0, 0])
 
         # Export to FBX
         fbx_path = os.path.join(temp_dir, "test_sphere.fbx")
@@ -140,16 +124,10 @@ class TestImportFBX:
 class TestImportGLB:
     """E2E tests for GLB/GLTF import."""
 
-    def test_import_glb_roundtrip(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_glb_roundtrip(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test export to GLB, clear scene, import, verify."""
         # Create a cylinder
-        modeling_handler.create_primitive(
-            primitive_type="CYLINDER",
-            name="TestCylinder",
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="CYLINDER", name="TestCylinder", location=[0, 0, 0])
 
         # Export to GLB
         glb_path = os.path.join(temp_dir, "test_cylinder.glb")
@@ -167,9 +145,7 @@ class TestImportGLB:
         objects = scene_handler.list_objects()
         assert len(objects) > 0
 
-    def test_import_gltf_separate(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_gltf_separate(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test GLTF import with separate file format."""
         # Create object
         modeling_handler.create_primitive(primitive_type="CONE", name="TestCone")
@@ -187,25 +163,20 @@ class TestImportGLB:
 class TestImportImageAsPlane:
     """E2E tests for image as plane import."""
 
-    def test_import_image_as_plane(
-        self, clean_scene, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_image_as_plane(self, clean_scene, system_handler, scene_handler, temp_dir):
         """Test importing an image as a textured plane."""
         # Create a simple test image (1x1 pixel PNG)
         try:
             from PIL import Image
-            img = Image.new('RGBA', (100, 100), color=(255, 0, 0, 255))
+
+            img = Image.new("RGBA", (100, 100), color=(255, 0, 0, 255))
             img_path = os.path.join(temp_dir, "test_image.png")
             img.save(img_path)
         except ImportError:
             pytest.skip("PIL not installed, skipping image import test")
 
         # Import image as plane
-        result = system_handler.import_image_as_plane(
-            filepath=img_path,
-            name="RefImage",
-            shader="PRINCIPLED"
-        )
+        result = system_handler.import_image_as_plane(filepath=img_path, name="RefImage", shader="PRINCIPLED")
 
         assert "Successfully imported" in result or "imported" in result.lower()
 
@@ -229,7 +200,7 @@ class TestImportErrorHandling:
         """Test importing file with wrong format."""
         # Create a text file with .obj extension
         fake_obj = os.path.join(temp_dir, "fake.obj")
-        with open(fake_obj, 'w') as f:
+        with open(fake_obj, "w") as f:
             f.write("This is not a valid OBJ file")
 
         # This should either fail or import nothing
@@ -244,16 +215,10 @@ class TestImportErrorHandling:
 class TestImportIntegration:
     """Integration tests combining import with other operations."""
 
-    def test_import_modify_export(
-        self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir
-    ):
+    def test_import_modify_export(self, clean_scene, modeling_handler, system_handler, scene_handler, temp_dir):
         """Test full workflow: create -> export -> import -> modify -> export."""
         # Create original object
-        modeling_handler.create_primitive(
-            primitive_type="CUBE",
-            name="WorkflowCube",
-            size=1.0
-        )
+        modeling_handler.create_primitive(primitive_type="CUBE", name="WorkflowCube", size=1.0)
 
         # Export
         original_path = os.path.join(temp_dir, "original.obj")

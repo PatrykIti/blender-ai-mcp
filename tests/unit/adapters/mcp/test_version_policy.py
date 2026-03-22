@@ -1,7 +1,6 @@
 """Tests for TASK-091 version policy and contract-line matrix."""
 
 import pytest
-
 from server.adapters.mcp.version_policy import (
     CONTRACT_LINE_LEGACY_V1,
     CONTRACT_LINE_LLM_GUIDED_V1,

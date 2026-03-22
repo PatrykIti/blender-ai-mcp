@@ -1,15 +1,15 @@
-import socket
-import threading
+import inspect
 import json
+import os
 import queue
+import socket
+import struct
+import threading
 import time
 import traceback
-import struct
-import os
 import uuid
-import inspect
 from dataclasses import dataclass, field
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
 from blender_addon.application.handlers.job_utils import JobCancelledError
 
@@ -19,11 +19,9 @@ try:
 except ImportError:
     bpy = None
 
-HOST = "0.0.0.0" # Listen on all interfaces within container
+HOST = "0.0.0.0"  # Listen on all interfaces within container
 PORT = 8765
-DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(
-    os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0")
-)
+DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0"))
 
 # If enabled, the addon will push an explicit undo step after each mutating RPC command.
 # This makes `system_undo(steps=1)` behave more like "undo the last MCP tool call"
@@ -126,19 +124,22 @@ def _safe_undo_push(message: str) -> None:
     except Exception:
         pass
 
+
 def send_msg(sock, msg):
     # Prefix each message with a 4-byte length (network byte order)
-    msg = struct.pack('>I', len(msg)) + msg
+    msg = struct.pack(">I", len(msg)) + msg
     sock.sendall(msg)
+
 
 def recv_msg(sock):
     # Read message length and unpack it into an integer
     raw_msglen = recvall(sock, 4)
     if not raw_msglen:
         return None
-    msglen = struct.unpack('>I', raw_msglen)[0]
+    msglen = struct.unpack(">I", raw_msglen)[0]
     # Read the message data
     return recvall(sock, msglen)
+
 
 def recvall(sock, n):
     # Helper function to recv n bytes or return None if EOF is hit
@@ -172,6 +173,7 @@ class BackgroundJob:
     finished_at: float | None = None
     updated_at: float = field(default_factory=time.time)
 
+
 class BlenderRpcServer:
     def __init__(self, host=HOST, port=PORT):
         self.host = host
@@ -181,7 +183,7 @@ class BlenderRpcServer:
         self.running = False
         self.command_registry = {}
         self.background_command_registry = {}
-        
+
         # Queue for results from main thread
         self.result_queues = {}  # request_id -> Queue
         self.background_jobs: Dict[str, BackgroundJob] = {}
@@ -199,16 +201,16 @@ class BlenderRpcServer:
     def start(self):
         if self.running:
             return
-        
+
         self.running = True
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+
         try:
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(1)
             print(f"[BlenderRpc] Server started on {self.host}:{self.port}")
-            
+
             self.server_thread = threading.Thread(target=self._accept_loop, daemon=True)
             self.server_thread.start()
         except Exception as e:
@@ -220,7 +222,7 @@ class BlenderRpcServer:
         if self.server_socket:
             try:
                 self.server_socket.close()
-            except:
+            except Exception:
                 pass
         with self._jobs_lock:
             self.background_jobs.clear()
@@ -234,7 +236,7 @@ class BlenderRpcServer:
                     conn, addr = self.server_socket.accept()
                 except socket.timeout:
                     continue
-                
+
                 print(f"[BlenderRpc] Connected by {addr}")
                 self._handle_client(conn)
             except Exception as e:
@@ -248,18 +250,18 @@ class BlenderRpcServer:
                     data = recv_msg(conn)
                     if not data:
                         break
-                    
+
                     try:
-                        message = json.loads(data.decode('utf-8'))
+                        message = json.loads(data.decode("utf-8"))
                         response = self._process_request(message)
-                        
-                        response_data = json.dumps(response).encode('utf-8')
+
+                        response_data = json.dumps(response).encode("utf-8")
                         send_msg(conn, response_data)
-                        
+
                     except json.JSONDecodeError:
                         err = {"status": "error", "error": "Invalid JSON"}
-                        send_msg(conn, json.dumps(err).encode('utf-8'))
-                        
+                        send_msg(conn, json.dumps(err).encode("utf-8"))
+
                 except Exception as e:
                     print(f"[BlenderRpc] Client handler error: {e}")
                     break
@@ -406,15 +408,9 @@ class BlenderRpcServer:
                 result=result,
                 finished_at=time.time(),
                 progress_current=(
-                    tracked.progress_total or tracked.progress_current or 1
-                    if tracked is not None
-                    else 1
+                    tracked.progress_total or tracked.progress_current or 1 if tracked is not None else 1
                 ),
-                progress_total=(
-                    tracked.progress_total or tracked.progress_current or 1
-                    if tracked is not None
-                    else 1
-                ),
+                progress_total=(tracked.progress_total or tracked.progress_current or 1 if tracked is not None else 1),
                 status_message="Completed",
                 error=None,
             )
@@ -576,7 +572,7 @@ class BlenderRpcServer:
             return {
                 "request_id": request_id,
                 "status": "ok",
-                "result": {"version": bpy.app.version_string if bpy else "Mock Blender"}
+                "result": {"version": bpy.app.version_string if bpy else "Mock Blender"},
             }
 
         if cmd in {"rpc.launch_job", "rpc.get_job", "rpc.cancel_job", "rpc.collect_job"}:
@@ -625,13 +621,11 @@ class BlenderRpcServer:
                 "error_code": "timeout",
                 "error_boundary": "addon_execution",
             }
-        
+
         del self.result_queues[request_id]
-        
-        return {
-            "request_id": request_id,
-            **response_payload
-        }
+
+        return {"request_id": request_id, **response_payload}
+
 
 # Singleton instance
 rpc_server = BlenderRpcServer()

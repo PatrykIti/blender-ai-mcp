@@ -5,10 +5,6 @@ TASK-046-6
 """
 
 import pytest
-import json
-from pathlib import Path
-from datetime import datetime
-
 from server.router.application.learning.feedback_collector import (
     FeedbackCollector,
     FeedbackEntry,

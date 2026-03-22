@@ -4,8 +4,9 @@ Tests for Expression Evaluator.
 TASK-041-7
 """
 
-import pytest
 import math
+
+import pytest
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 
 
@@ -29,11 +30,13 @@ class TestExpressionEvaluatorInit:
 
     def test_set_context_direct_values(self):
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({
-            "width": 3.0,
-            "height": 6.0,
-            "depth": 1.0,
-        })
+        evaluator.set_context(
+            {
+                "width": 3.0,
+                "height": 6.0,
+                "depth": 1.0,
+            }
+        )
 
         context = evaluator.get_context()
         assert context["width"] == 3.0
@@ -42,13 +45,15 @@ class TestExpressionEvaluatorInit:
 
     def test_set_context_proportions(self):
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({
-            "proportions": {
-                "aspect_xy": 0.5,
-                "is_flat": True,
-                "is_tall": False,
+        evaluator.set_context(
+            {
+                "proportions": {
+                    "aspect_xy": 0.5,
+                    "is_flat": True,
+                    "is_tall": False,
+                }
             }
-        })
+        )
 
         context = evaluator.get_context()
         assert context["proportions_aspect_xy"] == 0.5
@@ -294,7 +299,7 @@ class TestEdgeCases:
 
     def test_very_large_number(self, evaluator):
         result = evaluator.evaluate("10 ** 100")
-        assert result == pytest.approx(10 ** 100)
+        assert result == pytest.approx(10**100)
 
 
 class TestRealWorldExamples:

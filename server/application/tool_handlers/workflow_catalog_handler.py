@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from server.domain.tools.workflow_catalog import IWorkflowCatalogTool
+from server.router.domain.interfaces.i_vector_store import VectorNamespace
 from server.router.domain.interfaces.i_workflow_intent_classifier import (
     IWorkflowIntentClassifier,
 )
-from server.router.domain.interfaces.i_vector_store import VectorNamespace
 from server.router.infrastructure.workflow_loader import WorkflowLoader
 
 logger = logging.getLogger(__name__)
@@ -372,11 +372,7 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
                 session["indexed_chunks"][int(chunk_index)] = chunk_data
 
         session["bytes_received"] += len(chunk_data)
-        received = (
-            len(session["indexed_chunks"])
-            if session["use_indexed"]
-            else len(session["chunks"])
-        )
+        received = len(session["indexed_chunks"]) if session["use_indexed"] else len(session["chunks"])
 
         return {
             "status": "chunk_received",
@@ -405,9 +401,7 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         total_chunks = session.get("total_chunks")
         if session["use_indexed"]:
             if total_chunks is not None and len(session["indexed_chunks"]) < total_chunks:
-                missing = sorted(
-                    set(range(int(total_chunks))) - set(session["indexed_chunks"].keys())
-                )
+                missing = sorted(set(range(int(total_chunks))) - set(session["indexed_chunks"].keys()))
                 return {
                     "status": "error",
                     "message": "Missing chunks for session",
@@ -476,11 +470,7 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
             "files": [str(p) for p in existing_files],
             "vector_store_records": len(vector_ids),
         }
-        has_conflict = bool(
-            conflicts["definition_loaded"]
-            or conflicts["files"]
-            or conflicts["vector_store_records"]
-        )
+        has_conflict = bool(conflicts["definition_loaded"] or conflicts["files"] or conflicts["vector_store_records"])
 
         overwrite_value = self._coerce_overwrite(overwrite)
         if has_conflict and overwrite_value is None:

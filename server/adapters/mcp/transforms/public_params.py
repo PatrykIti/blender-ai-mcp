@@ -24,6 +24,7 @@ HIDDEN_ARGUMENTS: dict[tuple[str, str], set[str]] = {
         "include_bones",
         "modifier_name",
         "include_node_tree",
+        "assistant_summary",
     },
     (
         AUDIENCE_LLM_GUIDED,
@@ -45,6 +46,37 @@ HIDDEN_ARGUMENTS: dict[tuple[str, str], set[str]] = {
         "selected_only",
         "uv_layer",
         "include_deltas",
+        "assistant_summary",
+    },
+    (
+        AUDIENCE_LLM_GUIDED,
+        "scene_snapshot_state",
+    ): {
+        "assistant_summary",
+    },
+    (
+        AUDIENCE_LLM_GUIDED,
+        "scene_compare_snapshot",
+    ): {
+        "assistant_summary",
+    },
+    (
+        AUDIENCE_LLM_GUIDED,
+        "scene_get_hierarchy",
+    ): {
+        "assistant_summary",
+    },
+    (
+        AUDIENCE_LLM_GUIDED,
+        "scene_get_bounding_box",
+    ): {
+        "assistant_summary",
+    },
+    (
+        AUDIENCE_LLM_GUIDED,
+        "scene_get_origin_info",
+    ): {
+        "assistant_summary",
     },
 }
 

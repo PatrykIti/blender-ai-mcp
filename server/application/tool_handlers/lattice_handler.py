@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.lattice import ILatticeTool
 

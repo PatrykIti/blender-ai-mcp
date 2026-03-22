@@ -5,17 +5,17 @@
 
 from __future__ import annotations
 
+import json
 from contextlib import contextmanager
 from dataclasses import dataclass
-import json
 from typing import Any, Iterator
 
 from opentelemetry import trace
-from opentelemetry.trace import ProxyTracerProvider
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import ProxyTracerProvider
 
 
 @dataclass(frozen=True)

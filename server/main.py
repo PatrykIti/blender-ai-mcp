@@ -8,6 +8,7 @@ Author: Patryk Ciechański (https://github.com/PatrykIti)
 
 import logging
 import os
+
 from server.infrastructure.config import get_config
 from server.infrastructure.telemetry import initialize_telemetry_from_config
 
@@ -15,10 +16,7 @@ from server.infrastructure.telemetry import initialize_telemetry_from_config
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 log_level = getattr(logging, log_level_name, logging.INFO)
 
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 if __name__ == "__main__":
     config = get_config()

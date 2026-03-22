@@ -40,10 +40,7 @@ def build_capability_public_contracts(
         contract_line=CONTRACT_LINE_LEGACY_V1,
         audience=AUDIENCE_LEGACY,
         version=get_contract_line_spec(CONTRACT_LINE_LEGACY_V1).version,
-        tool_name_map=tuple(
-            (tool_name, get_public_tool_name(tool_name, AUDIENCE_LEGACY))
-            for tool_name in tool_names
-        ),
+        tool_name_map=tuple((tool_name, get_public_tool_name(tool_name, AUDIENCE_LEGACY)) for tool_name in tool_names),
     )
     llm_guided_v1_contract = CapabilityPublicContract(
         contract_line=CONTRACT_LINE_LLM_GUIDED_V1,
@@ -56,8 +53,7 @@ def build_capability_public_contracts(
         audience=AUDIENCE_LLM_GUIDED,
         version=get_contract_line_spec(CONTRACT_LINE_LLM_GUIDED_V2).version,
         tool_name_map=tuple(
-            (tool_name, get_public_tool_name(tool_name, AUDIENCE_LLM_GUIDED))
-            for tool_name in tool_names
+            (tool_name, get_public_tool_name(tool_name, AUDIENCE_LLM_GUIDED)) for tool_name in tool_names
         ),
     )
     return (legacy_contract, llm_guided_v1_contract, llm_guided_v2_contract)
@@ -117,6 +113,4 @@ def get_public_contract(
         if matching:
             return max(matching, key=lambda contract: int(contract.version))
 
-    raise ValueError(
-        f"Could not resolve public contract for capability '{manifest_entry.capability_id}'"
-    )
+    raise ValueError(f"Could not resolve public contract for capability '{manifest_entry.capability_id}'")

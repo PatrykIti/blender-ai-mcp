@@ -5,16 +5,16 @@ TASK-051: Confidence-Based Workflow Adaptation.
 TASK-053: EnsembleResult compatibility tests.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.engines.workflow_adapter import (
-    WorkflowAdapter,
     AdaptationResult,
+    WorkflowAdapter,
 )
-from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
-from server.router.infrastructure.config import RouterConfig
+from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
 from server.router.domain.entities.ensemble import EnsembleResult
+from server.router.infrastructure.config import RouterConfig
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ class TestWorkflowAdapterHighConfidence:
         )
 
         assert result.confidence_level == "HIGH"
-        assert result.requires_adaptation is False if hasattr(result, 'requires_adaptation') else True
+        assert result.requires_adaptation is False if hasattr(result, "requires_adaptation") else True
 
 
 class TestWorkflowAdapterLowConfidence:

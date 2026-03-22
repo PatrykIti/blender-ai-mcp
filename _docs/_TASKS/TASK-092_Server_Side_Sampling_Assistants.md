@@ -4,7 +4,9 @@
 **Category:** FastMCP LLM Reliability  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083, TASK-089, TASK-095  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** The MCP adapter layer now has a bounded assistant runner with typed `success` / `unavailable` / `masked_error` / `rejected_by_policy` envelopes, optional summaries on `scene_inspect`, `mesh_inspect`, `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, and `scene_get_origin_info`, plus bounded repair suggestions on `router_*` and `workflow_catalog` recovery paths. Within the currently identified analytical surfaces, the TASK-092 rollout is complete.
 
 ---
 
@@ -122,6 +124,8 @@ This remains the umbrella task. The original scope stays unchanged.
 3. Add a very small first set of analytical assistants.
 4. Integrate them with router and inspection flows under budget and masking rules.
 5. Add tests and docs focused on bounded behavior, not agentic expansion.
+6. Extend bounded summaries to other structured scene-state inspection surfaces.
+7. Extend bounded recovery guidance to workflow-catalog import flows.
 
 Implementation is decomposed into:
 
@@ -132,3 +136,5 @@ Implementation is decomposed into:
 | 3 | [TASK-092-03](./TASK-092-03_Inspection_Summarizer_and_Repair_Suggester_Assistants.md) | Add the first analytical assistants |
 | 4 | [TASK-092-04](./TASK-092-04_Router_Integration_Masking_and_Budget_Control.md) | Integrate assistants with router flows and budgets |
 | 5 | [TASK-092-05](./TASK-092-05_Sampling_Assistant_Tests_and_Documentation.md) | Add tests and documentation for assistant usage |
+| 6 | [TASK-092-06](./TASK-092-06_Scene_State_Assistant_Summaries.md) | Extend bounded summaries to structured scene-state read tools |
+| 7 | [TASK-092-07](./TASK-092-07_Workflow_Catalog_Recovery_Assistant_Guidance.md) | Extend bounded recovery guidance to workflow-catalog import flows |

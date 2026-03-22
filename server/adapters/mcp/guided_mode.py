@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from fastmcp import Context
 from fastmcp.utilities.versions import VersionSpec
 
-from server.adapters.mcp.client_profiles import ClientProfilePreset, get_client_profile_preset
+from server.adapters.mcp.client_profiles import get_client_profile_preset
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED

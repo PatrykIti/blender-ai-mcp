@@ -5,17 +5,13 @@ Manages caching of tool embeddings for fast intent classification.
 """
 
 import hashlib
+import importlib.util
+import logging
 import pickle
 from pathlib import Path
-from typing import Dict, Any, Optional
-import logging
+from typing import Any, Dict, Optional
 
-try:
-    import numpy as np
-    NUMPY_AVAILABLE = True
-except ImportError:
-    NUMPY_AVAILABLE = False
-
+NUMPY_AVAILABLE = importlib.util.find_spec("numpy") is not None
 
 logger = logging.getLogger(__name__)
 

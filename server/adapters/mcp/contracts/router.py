@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
+from server.adapters.mcp.sampling.result_types import RepairSuggestionAssistantContract
 
 
 class RouterPolicyContextContract(MCPContract):
@@ -47,6 +48,7 @@ class RouterGoalResponseContract(MCPContract):
     elicitation_action: Literal["accept", "decline", "cancel", "unavailable"] | None = None
     elicitation_answers: dict[str, Any] | None = None
     policy_context: RouterPolicyContextContract | None = None
+    repair_suggestion: RepairSuggestionAssistantContract | None = None
 
 
 class RouterStatusContract(MCPContract):
@@ -77,6 +79,8 @@ class RouterStatusContract(MCPContract):
     router_failure_policy: str | None = None
     last_router_disposition: str | None = None
     last_router_error: str | None = None
+    assistant_diagnostics: dict[str, Any] | None = None
+    repair_suggestion: RepairSuggestionAssistantContract | None = None
     timeout_policy: dict[str, Any] | None = None
     task_runtime: dict[str, Any] | None = None
     telemetry: dict[str, Any] | None = None

@@ -57,10 +57,7 @@ def build_clarification_plan(
         if choices is not None:
             choices = tuple(str(choice) for choice in choices)
         value_type = unresolved.get("type", "string")
-        allows_multiple = bool(
-            unresolved.get("allows_multiple")
-            or value_type in {"list[str]", "array", "list"}
-        )
+        allows_multiple = bool(unresolved.get("allows_multiple") or value_type in {"list[str]", "array", "list"})
         requirements.append(
             ClarificationRequirement(
                 field_name=unresolved["param"],
@@ -92,9 +89,7 @@ def build_fallback_payload(
     """Build the typed `needs_input` fallback payload for non-elicitation surfaces."""
 
     question_set_hash = sha1(
-        f"{plan.goal}:{plan.workflow_name}:{','.join(req.field_name for req in plan.requirements)}".encode(
-            "utf-8"
-        )
+        f"{plan.goal}:{plan.workflow_name}:{','.join(req.field_name for req in plan.requirements)}".encode("utf-8")
     ).hexdigest()[:12]
     return ClarificationFallbackPayload(
         request_id=request_id,

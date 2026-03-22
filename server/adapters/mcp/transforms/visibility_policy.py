@@ -46,8 +46,6 @@ def build_visibility_rules(
     if resolved_phase == SessionPhase.BUILD:
         rules.append({"enabled": True, "components": {"tool"}, "tags": {phase_tag(SessionPhase.BUILD)}})
     elif resolved_phase == SessionPhase.INSPECT_VALIDATE:
-        rules.append(
-            {"enabled": True, "components": {"tool"}, "tags": {phase_tag(SessionPhase.INSPECT_VALIDATE)}}
-        )
+        rules.append({"enabled": True, "components": {"tool"}, "tags": {phase_tag(SessionPhase.INSPECT_VALIDATE)}})
 
     return rules

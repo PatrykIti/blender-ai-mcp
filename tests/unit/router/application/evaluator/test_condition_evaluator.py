@@ -48,11 +48,13 @@ class TestEqualityComparisons:
     @pytest.fixture
     def evaluator(self):
         e = ConditionEvaluator()
-        e.set_context({
-            "current_mode": "OBJECT",
-            "active_object": "Cube",
-            "object_count": 5,
-        })
+        e.set_context(
+            {
+                "current_mode": "OBJECT",
+                "active_object": "Cube",
+                "object_count": 5,
+            }
+        )
         return e
 
     def test_equal_string(self, evaluator):
@@ -82,11 +84,13 @@ class TestNumericComparisons:
     @pytest.fixture
     def evaluator(self):
         e = ConditionEvaluator()
-        e.set_context({
-            "object_count": 5,
-            "selected_verts": 10,
-            "selected_faces": 0,
-        })
+        e.set_context(
+            {
+                "object_count": 5,
+                "selected_verts": 10,
+                "selected_faces": 0,
+            }
+        )
         return e
 
     def test_greater_than(self, evaluator):
@@ -121,10 +125,12 @@ class TestBooleanVariables:
     @pytest.fixture
     def evaluator(self):
         e = ConditionEvaluator()
-        e.set_context({
-            "has_selection": True,
-            "is_active": False,
-        })
+        e.set_context(
+            {
+                "has_selection": True,
+                "is_active": False,
+            }
+        )
         return e
 
     def test_true_variable(self, evaluator):
@@ -146,11 +152,13 @@ class TestLogicalOperators:
     @pytest.fixture
     def evaluator(self):
         e = ConditionEvaluator()
-        e.set_context({
-            "current_mode": "EDIT",
-            "has_selection": True,
-            "object_count": 5,
-        })
+        e.set_context(
+            {
+                "current_mode": "EDIT",
+                "has_selection": True,
+                "object_count": 5,
+            }
+        )
         return e
 
     def test_and_both_true(self, evaluator):
@@ -249,11 +257,13 @@ class TestSimulateStepEffect:
     @pytest.fixture
     def evaluator(self):
         e = ConditionEvaluator()
-        e.set_context({
-            "current_mode": "OBJECT",
-            "has_selection": False,
-            "object_count": 1,
-        })
+        e.set_context(
+            {
+                "current_mode": "OBJECT",
+                "has_selection": False,
+                "object_count": 1,
+            }
+        )
         return e
 
     def test_simulate_mode_change(self, evaluator):
@@ -351,10 +361,12 @@ class TestRealWorldConditions:
     def test_workflow_simulation(self):
         """Test: simulate a workflow with conditional steps."""
         evaluator = ConditionEvaluator()
-        evaluator.set_context({
-            "current_mode": "OBJECT",
-            "has_selection": False,
-        })
+        evaluator.set_context(
+            {
+                "current_mode": "OBJECT",
+                "has_selection": False,
+            }
+        )
 
         # Step 1: Switch to EDIT mode (condition: not in EDIT)
         step1_should_run = evaluator.evaluate("current_mode != 'EDIT'")

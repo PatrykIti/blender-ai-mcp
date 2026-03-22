@@ -2,23 +2,24 @@
 Unit tests for UV Tools (TASK-024)
 Tests UVHandler methods with mocked bpy module.
 """
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
+
 import math
+import sys
+from unittest.mock import MagicMock
+
+import pytest
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
 
 import bpy
-
 from blender_addon.application.handlers.uv import UVHandler
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def uv_handler():
@@ -31,8 +32,8 @@ def mock_mesh_object():
     """Sets up a mock mesh object for UV operations."""
     mock_obj = MagicMock()
     mock_obj.name = "TestMesh"
-    mock_obj.type = 'MESH'
-    mock_obj.mode = 'OBJECT'
+    mock_obj.type = "MESH"
+    mock_obj.mode = "OBJECT"
     mock_obj.data.uv_layers = [MagicMock(name="UVMap")]
 
     # Setup bpy.data.objects as MagicMock
@@ -75,6 +76,7 @@ def mock_no_active_object():
 # uv_unwrap Tests
 # =============================================================================
 
+
 class TestUVUnwrap:
     """Tests for uv_unwrap functionality."""
 
@@ -83,27 +85,19 @@ class TestUVUnwrap:
         result = uv_handler.unwrap(object_name="TestMesh")
 
         bpy.ops.uv.smart_project.assert_called_once_with(
-            angle_limit=math.radians(66.0),
-            island_margin=0.02,
-            scale_to_bounds=True
+            angle_limit=math.radians(66.0), island_margin=0.02, scale_to_bounds=True
         )
         assert "TestMesh" in result
         assert "SMART_PROJECT" in result
 
     def test_unwrap_smart_project_custom_params(self, uv_handler, mock_mesh_object):
         """Test SMART_PROJECT unwrap with custom parameters."""
-        result = uv_handler.unwrap(
-            object_name="TestMesh",
-            method="SMART_PROJECT",
-            angle_limit=45.0,
-            island_margin=0.05,
-            scale_to_bounds=False
+        uv_handler.unwrap(
+            object_name="TestMesh", method="SMART_PROJECT", angle_limit=45.0, island_margin=0.05, scale_to_bounds=False
         )
 
         bpy.ops.uv.smart_project.assert_called_once_with(
-            angle_limit=math.radians(45.0),
-            island_margin=0.05,
-            scale_to_bounds=False
+            angle_limit=math.radians(45.0), island_margin=0.05, scale_to_bounds=False
         )
 
     def test_unwrap_cube_project(self, uv_handler, mock_mesh_object):
@@ -131,19 +125,16 @@ class TestUVUnwrap:
         """Test standard UNWRAP method."""
         result = uv_handler.unwrap(object_name="TestMesh", method="UNWRAP")
 
-        bpy.ops.uv.unwrap.assert_called_once_with(
-            method='ANGLE_BASED',
-            margin=0.02
-        )
+        bpy.ops.uv.unwrap.assert_called_once_with(method="ANGLE_BASED", margin=0.02)
         assert "UNWRAP" in result
 
     def test_unwrap_sets_edit_mode(self, uv_handler, mock_mesh_object):
         """Test that unwrap enters Edit mode if not already in it."""
-        mock_mesh_object.mode = 'OBJECT'
+        mock_mesh_object.mode = "OBJECT"
 
         uv_handler.unwrap(object_name="TestMesh")
 
-        bpy.ops.object.mode_set.assert_called_with(mode='EDIT')
+        bpy.ops.object.mode_set.assert_called_with(mode="EDIT")
 
     def test_unwrap_object_not_found(self, uv_handler, mock_no_active_object):
         """Test error when object doesn't exist."""
@@ -154,7 +145,7 @@ class TestUVUnwrap:
 
     def test_unwrap_not_a_mesh(self, uv_handler, mock_mesh_object):
         """Test error when object is not a mesh."""
-        mock_mesh_object.type = 'CAMERA'
+        mock_mesh_object.type = "CAMERA"
 
         with pytest.raises(ValueError) as exc_info:
             uv_handler.unwrap(object_name="TestMesh")
@@ -186,40 +177,28 @@ class TestUVUnwrap:
 # uv_pack_islands Tests
 # =============================================================================
 
+
 class TestUVPackIslands:
     """Tests for uv_pack_islands functionality."""
 
     def test_pack_islands_default_params(self, uv_handler, mock_mesh_object):
         """Test pack islands with default parameters."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
         result = uv_handler.pack_islands(object_name="TestMesh")
 
-        bpy.ops.uv.select_all.assert_called_once_with(action='SELECT')
-        bpy.ops.uv.pack_islands.assert_called_once_with(
-            margin=0.02,
-            rotate=True,
-            scale=True
-        )
+        bpy.ops.uv.select_all.assert_called_once_with(action="SELECT")
+        bpy.ops.uv.pack_islands.assert_called_once_with(margin=0.02, rotate=True, scale=True)
         assert "TestMesh" in result
         assert "Packed" in result
 
     def test_pack_islands_custom_params(self, uv_handler, mock_mesh_object):
         """Test pack islands with custom parameters."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
-        result = uv_handler.pack_islands(
-            object_name="TestMesh",
-            margin=0.05,
-            rotate=False,
-            scale=False
-        )
+        uv_handler.pack_islands(object_name="TestMesh", margin=0.05, rotate=False, scale=False)
 
-        bpy.ops.uv.pack_islands.assert_called_once_with(
-            margin=0.05,
-            rotate=False,
-            scale=False
-        )
+        bpy.ops.uv.pack_islands.assert_called_once_with(margin=0.05, rotate=False, scale=False)
 
     def test_pack_islands_object_not_found(self, uv_handler, mock_no_active_object):
         """Test error when object doesn't exist."""
@@ -230,7 +209,7 @@ class TestUVPackIslands:
 
     def test_pack_islands_not_a_mesh(self, uv_handler, mock_mesh_object):
         """Test error when object is not a mesh."""
-        mock_mesh_object.type = 'LIGHT'
+        mock_mesh_object.type = "LIGHT"
 
         with pytest.raises(ValueError) as exc_info:
             uv_handler.pack_islands(object_name="TestMesh")
@@ -239,11 +218,11 @@ class TestUVPackIslands:
 
     def test_pack_islands_enters_edit_mode(self, uv_handler, mock_mesh_object):
         """Test that pack_islands enters Edit mode if needed."""
-        mock_mesh_object.mode = 'OBJECT'
+        mock_mesh_object.mode = "OBJECT"
 
         uv_handler.pack_islands(object_name="TestMesh")
 
-        bpy.ops.object.mode_set.assert_called_with(mode='EDIT')
+        bpy.ops.object.mode_set.assert_called_with(mode="EDIT")
 
     def test_pack_islands_no_active_object(self, uv_handler, mock_no_active_object):
         """Test error when no active object and no object_name."""
@@ -257,12 +236,13 @@ class TestUVPackIslands:
 # uv_create_seam Tests
 # =============================================================================
 
+
 class TestUVCreateSeam:
     """Tests for uv_create_seam functionality."""
 
     def test_create_seam_mark(self, uv_handler, mock_mesh_object):
         """Test marking seams on selected edges."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
         result = uv_handler.create_seam(object_name="TestMesh", action="mark")
 
@@ -272,7 +252,7 @@ class TestUVCreateSeam:
 
     def test_create_seam_clear(self, uv_handler, mock_mesh_object):
         """Test clearing seams from selected edges."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
         result = uv_handler.create_seam(object_name="TestMesh", action="clear")
 
@@ -282,7 +262,7 @@ class TestUVCreateSeam:
 
     def test_create_seam_invalid_action(self, uv_handler, mock_mesh_object):
         """Test error when invalid action is specified."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
         with pytest.raises(ValueError) as exc_info:
             uv_handler.create_seam(object_name="TestMesh", action="invalid")
@@ -298,7 +278,7 @@ class TestUVCreateSeam:
 
     def test_create_seam_not_a_mesh(self, uv_handler, mock_mesh_object):
         """Test error when object is not a mesh."""
-        mock_mesh_object.type = 'EMPTY'
+        mock_mesh_object.type = "EMPTY"
 
         with pytest.raises(ValueError) as exc_info:
             uv_handler.create_seam(object_name="TestMesh")
@@ -307,15 +287,15 @@ class TestUVCreateSeam:
 
     def test_create_seam_enters_edit_mode(self, uv_handler, mock_mesh_object):
         """Test that create_seam enters Edit mode if needed."""
-        mock_mesh_object.mode = 'OBJECT'
+        mock_mesh_object.mode = "OBJECT"
 
         uv_handler.create_seam(object_name="TestMesh")
 
-        bpy.ops.object.mode_set.assert_called_with(mode='EDIT')
+        bpy.ops.object.mode_set.assert_called_with(mode="EDIT")
 
     def test_create_seam_uses_active_object(self, uv_handler, mock_mesh_object):
         """Test that active object is used when object_name is None."""
-        mock_mesh_object.mode = 'EDIT'
+        mock_mesh_object.mode = "EDIT"
 
         result = uv_handler.create_seam(object_name=None)
 

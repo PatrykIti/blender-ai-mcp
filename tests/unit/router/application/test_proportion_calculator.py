@@ -4,16 +4,14 @@ Unit tests for Proportion Calculator.
 Tests for proportion calculation utilities.
 """
 
-import pytest
-
 from server.router.application.analyzers.proportion_calculator import (
     calculate_proportions,
+    get_dimensions_from_dict,
     get_proportion_summary,
     is_phone_like_proportions,
-    is_tower_like_proportions,
     is_table_like_proportions,
+    is_tower_like_proportions,
     is_wheel_like_proportions,
-    get_dimensions_from_dict,
 )
 from server.router.domain.entities.scene_context import ProportionInfo
 

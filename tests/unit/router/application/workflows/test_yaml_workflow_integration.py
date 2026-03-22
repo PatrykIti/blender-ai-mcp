@@ -12,13 +12,12 @@ TASK-041-15
 TASK-050: Updated to not depend on specific builtin workflows (YAML-based now).
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.router import SupervisorRouter
-from server.router.application.workflows.registry import WorkflowRegistry, get_workflow_registry
 from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
-from server.router.domain.entities.scene_context import SceneContext, TopologyInfo, ProportionInfo
+from server.router.application.workflows.registry import WorkflowRegistry
 
 
 class TestYAMLWorkflowLoading:
@@ -325,8 +324,8 @@ class TestMixedParameterTypes:
                 WorkflowStep(
                     tool="mesh_bevel",
                     params={
-                        "offset": "$AUTO_BEVEL",      # AUTO
-                        "segments": 3,              # Literal
+                        "offset": "$AUTO_BEVEL",  # AUTO
+                        "segments": 3,  # Literal
                     },
                     condition="current_mode == 'EDIT'",  # Condition
                 ),
@@ -334,7 +333,7 @@ class TestMixedParameterTypes:
                     tool="mesh_inset",
                     params={
                         "thickness": "$CALCULATE(min_dim * 0.03)",  # CALCULATE
-                        "depth": "$AUTO_EXTRUDE_SMALL",            # AUTO
+                        "depth": "$AUTO_EXTRUDE_SMALL",  # AUTO
                     },
                 ),
                 WorkflowStep(
@@ -364,7 +363,7 @@ class TestMixedParameterTypes:
 
         # Step 2: CALCULATE + AUTO
         assert calls[1].params["thickness"] == pytest.approx(0.015)  # 0.5 * 0.03
-        assert calls[1].params["depth"] == pytest.approx(0.025)      # 5% of 0.5
+        assert calls[1].params["depth"] == pytest.approx(0.025)  # 5% of 0.5
 
         # Step 3: AUTO returning list
         scale = calls[2].params["scale"]

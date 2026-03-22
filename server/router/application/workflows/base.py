@@ -8,10 +8,10 @@ TASK-055: Added parameters field for interactive parameter resolution.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from server.router.domain.entities.parameter import ParameterSchema
+    pass
 
 
 @dataclass
@@ -71,20 +71,27 @@ class WorkflowStep:
         """
         # Store known fields for introspection
         self._known_fields = {
-            "tool", "params", "description", "condition",
-            "optional", "disable_adaptation", "tags",
-            "id", "depends_on", "timeout", "max_retries",
-            "retry_delay", "on_failure", "priority",
+            "tool",
+            "params",
+            "description",
+            "condition",
+            "optional",
+            "disable_adaptation",
+            "tags",
+            "id",
+            "depends_on",
+            "timeout",
+            "max_retries",
+            "retry_delay",
+            "on_failure",
+            "priority",
             "loop",
         }
 
         # TASK-056-4: Validate on_failure
         valid_on_failure = {"fail", "skip", "retry"}
         if self.on_failure not in valid_on_failure:
-            raise ValueError(
-                f"Invalid on_failure value '{self.on_failure}'. "
-                f"Must be one of: {valid_on_failure}"
-            )
+            raise ValueError(f"Invalid on_failure value '{self.on_failure}'. Must be one of: {valid_on_failure}")
 
         # TASK-056-4: Validate timeout
         if self.timeout is not None and self.timeout <= 0:
@@ -135,10 +142,12 @@ class WorkflowStep:
 
         # TASK-055-FIX-6: Include dynamic attributes
         for attr_name in dir(self):
-            if (not attr_name.startswith("_") and
-                attr_name not in self._known_fields and
-                attr_name not in {"to_dict"} and
-                not callable(getattr(self, attr_name))):
+            if (
+                not attr_name.startswith("_")
+                and attr_name not in self._known_fields
+                and attr_name not in {"to_dict"}
+                and not callable(getattr(self, attr_name))
+            ):
                 result[attr_name] = getattr(self, attr_name)
 
         return result
@@ -198,8 +207,7 @@ class WorkflowDefinition:
         if self.parameters:
             # Convert ParameterSchema objects to dicts if needed
             result["parameters"] = {
-                k: (v.to_dict() if hasattr(v, "to_dict") else v)
-                for k, v in self.parameters.items()
+                k: (v.to_dict() if hasattr(v, "to_dict") else v) for k, v in self.parameters.items()
             }
         return result
 

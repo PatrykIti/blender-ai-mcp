@@ -6,13 +6,11 @@ Tests lightweight language detection for semantic matching.
 TASK-050: Multi-Embedding Workflow System
 """
 
-import pytest
-
 from server.router.infrastructure.language_detector import (
+    LANGUAGE_MARKERS,
+    LANGUAGE_PATTERNS,
     detect_language,
     get_supported_languages,
-    LANGUAGE_PATTERNS,
-    LANGUAGE_MARKERS,
 )
 
 

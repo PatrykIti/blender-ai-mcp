@@ -1,4 +1,5 @@
 from typing import Optional
+
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.system import ISystemTool
 

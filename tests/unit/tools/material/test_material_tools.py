@@ -3,16 +3,16 @@ Unit tests for Material Tools (TASK-023)
 
 Tests material creation, assignment, parameter modification, and texture binding.
 """
-import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
+
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
 
 import bpy
-
 from blender_addon.application.handlers.material import MaterialHandler
 
 
@@ -75,10 +75,7 @@ class TestMaterialCreate(unittest.TestCase):
         bpy.data.materials.new.return_value = mock_mat
 
         # Execute with RGB color (should auto-add alpha)
-        result = self.handler.create_material(
-            name="ColorMat",
-            base_color=[1.0, 0.0, 0.0]
-        )
+        result = self.handler.create_material(name="ColorMat", base_color=[1.0, 0.0, 0.0])
 
         # Verify material was created
         bpy.data.materials.new.assert_called_with(name="ColorMat")
@@ -105,13 +102,10 @@ class TestMaterialCreate(unittest.TestCase):
         bpy.data.materials.new.return_value = mock_mat
 
         # Execute with alpha < 1.0
-        result = self.handler.create_material(
-            name="TransparentMat",
-            alpha=0.5
-        )
+        result = self.handler.create_material(name="TransparentMat", alpha=0.5)
 
         # Verify blend method was set (shadow_method removed in Blender 4.2+)
-        self.assertEqual(mock_mat.blend_method, 'BLEND')
+        self.assertEqual(mock_mat.blend_method, "BLEND")
         self.assertIn("Created material", result)
 
 
@@ -137,7 +131,7 @@ class TestMaterialAssign(unittest.TestCase):
         # Setup mock object
         mock_obj = MagicMock()
         mock_obj.name = "Cube"
-        mock_obj.mode = 'OBJECT'
+        mock_obj.mode = "OBJECT"
         mock_obj.material_slots = []
         mock_obj.data.materials = MagicMock()
         mock_obj.data.materials.append = MagicMock()
@@ -145,10 +139,7 @@ class TestMaterialAssign(unittest.TestCase):
         bpy.data.objects.get.return_value = mock_obj
 
         # Execute
-        result = self.handler.assign_material(
-            material_name="TestMat",
-            object_name="Cube"
-        )
+        result = self.handler.assign_material(material_name="TestMat", object_name="Cube")
 
         # Verify
         mock_obj.data.materials.append.assert_called_with(mock_mat)
@@ -172,10 +163,7 @@ class TestMaterialAssign(unittest.TestCase):
         bpy.data.objects.get.return_value = None
 
         with self.assertRaises(ValueError) as context:
-            self.handler.assign_material(
-                material_name="TestMat",
-                object_name="NonExistent"
-            )
+            self.handler.assign_material(material_name="TestMat", object_name="NonExistent")
 
         self.assertIn("not found", str(context.exception))
 
@@ -189,7 +177,7 @@ class TestMaterialAssign(unittest.TestCase):
         # Setup mock object in Edit Mode
         mock_obj = MagicMock()
         mock_obj.name = "Cube"
-        mock_obj.mode = 'EDIT'
+        mock_obj.mode = "EDIT"
 
         # Material already in slot
         mock_slot = MagicMock()
@@ -200,11 +188,7 @@ class TestMaterialAssign(unittest.TestCase):
         bpy.data.objects.get.return_value = mock_obj
 
         # Execute
-        result = self.handler.assign_material(
-            material_name="FaceMat",
-            object_name="Cube",
-            assign_to_selection=True
-        )
+        result = self.handler.assign_material(material_name="FaceMat", object_name="Cube", assign_to_selection=True)
 
         # Verify
         bpy.ops.object.material_slot_assign.assert_called()
@@ -226,7 +210,7 @@ class TestMaterialSetParams(unittest.TestCase):
         mock_mat.node_tree = MagicMock()
 
         mock_bsdf = MagicMock()
-        mock_bsdf.type = 'BSDF_PRINCIPLED'
+        mock_bsdf.type = "BSDF_PRINCIPLED"
         mock_roughness_input = MagicMock()
         mock_bsdf.inputs = {
             "Roughness": mock_roughness_input,
@@ -241,10 +225,7 @@ class TestMaterialSetParams(unittest.TestCase):
         bpy.data.materials.get.return_value = mock_mat
 
         # Execute
-        result = self.handler.set_material_params(
-            material_name="TestMat",
-            roughness=0.8
-        )
+        result = self.handler.set_material_params(material_name="TestMat", roughness=0.8)
 
         # Verify
         self.assertIn("Updated", result)
@@ -257,7 +238,7 @@ class TestMaterialSetParams(unittest.TestCase):
         mock_mat.node_tree = MagicMock()
 
         mock_bsdf = MagicMock()
-        mock_bsdf.type = 'BSDF_PRINCIPLED'
+        mock_bsdf.type = "BSDF_PRINCIPLED"
         mock_bsdf.inputs = {
             "Roughness": MagicMock(),
             "Metallic": MagicMock(),
@@ -271,11 +252,7 @@ class TestMaterialSetParams(unittest.TestCase):
         bpy.data.materials.get.return_value = mock_mat
 
         # Execute
-        result = self.handler.set_material_params(
-            material_name="TestMat",
-            roughness=0.2,
-            metallic=1.0
-        )
+        result = self.handler.set_material_params(material_name="TestMat", roughness=0.2, metallic=1.0)
 
         # Verify both params mentioned
         self.assertIn("roughness", result)
@@ -286,10 +263,7 @@ class TestMaterialSetParams(unittest.TestCase):
         bpy.data.materials.get.return_value = None
 
         with self.assertRaises(ValueError) as context:
-            self.handler.set_material_params(
-                material_name="NonExistent",
-                roughness=0.5
-            )
+            self.handler.set_material_params(material_name="NonExistent", roughness=0.5)
 
         self.assertIn("not found", str(context.exception))
 
@@ -300,7 +274,7 @@ class TestMaterialSetParams(unittest.TestCase):
         mock_mat.node_tree = MagicMock()
 
         mock_bsdf = MagicMock()
-        mock_bsdf.type = 'BSDF_PRINCIPLED'
+        mock_bsdf.type = "BSDF_PRINCIPLED"
         mock_bsdf.inputs = {}
 
         mock_mat.node_tree.nodes = [mock_bsdf]
@@ -329,7 +303,7 @@ class TestMaterialSetTexture(unittest.TestCase):
         mock_mat.node_tree = MagicMock()
 
         mock_bsdf = MagicMock()
-        mock_bsdf.type = 'BSDF_PRINCIPLED'
+        mock_bsdf.type = "BSDF_PRINCIPLED"
         mock_bsdf.location = (0, 0)
         mock_bsdf.inputs = {
             "Base Color": MagicMock(),
@@ -354,9 +328,7 @@ class TestMaterialSetTexture(unittest.TestCase):
 
         # Execute
         result = self.handler.set_material_texture(
-            material_name="TestMat",
-            texture_path="/path/to/texture.png",
-            input_name="Base Color"
+            material_name="TestMat", texture_path="/path/to/texture.png", input_name="Base Color"
         )
 
         # Verify
@@ -373,7 +345,7 @@ class TestMaterialSetTexture(unittest.TestCase):
         mock_mat.node_tree = MagicMock()
 
         mock_bsdf = MagicMock()
-        mock_bsdf.type = 'BSDF_PRINCIPLED'
+        mock_bsdf.type = "BSDF_PRINCIPLED"
         mock_bsdf.location = (0, 0)
         mock_bsdf.inputs = {
             "Normal": MagicMock(),
@@ -402,10 +374,7 @@ class TestMaterialSetTexture(unittest.TestCase):
 
         # Execute
         result = self.handler.set_material_texture(
-            material_name="TestMat",
-            texture_path="/path/to/normal.png",
-            input_name="Normal",
-            color_space="Non-Color"
+            material_name="TestMat", texture_path="/path/to/normal.png", input_name="Normal", color_space="Non-Color"
         )
 
         # Verify normal map node was created
@@ -417,13 +386,10 @@ class TestMaterialSetTexture(unittest.TestCase):
         bpy.data.materials.get.return_value = None
 
         with self.assertRaises(ValueError) as context:
-            self.handler.set_material_texture(
-                material_name="NonExistent",
-                texture_path="/path/to/texture.png"
-            )
+            self.handler.set_material_texture(material_name="NonExistent", texture_path="/path/to/texture.png")
 
         self.assertIn("not found", str(context.exception))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

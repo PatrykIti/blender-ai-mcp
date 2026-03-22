@@ -4,14 +4,12 @@ MCP Integration Adapter.
 Hooks the Router Supervisor into the MCP server tool execution pipeline.
 """
 
-from typing import Dict, Any, List, Callable, Awaitable, Optional, Set
-from functools import wraps
-import asyncio
 import logging
+from functools import wraps
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
 
 from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +136,7 @@ class MCPRouterIntegration:
             except Exception as e:
                 self._error_count += 1
                 logger.error(f"Router processing failed (fail-fast, no fallback): {e}")
-                return (
-                    "[ROUTER ERROR] Router processing failed (fail-fast, no fallback). "
-                    f"{type(e).__name__}: {e}"
-                )
+                return f"[ROUTER ERROR] Router processing failed (fail-fast, no fallback). {type(e).__name__}: {e}"
 
         return wrapped_executor
 
@@ -157,6 +152,7 @@ class MCPRouterIntegration:
         Returns:
             Wrapped executor that routes through supervisor.
         """
+
         @wraps(executor)
         def wrapped_executor(tool_name: str, params: Dict[str, Any]) -> str:
             self._execution_count += 1
@@ -186,10 +182,7 @@ class MCPRouterIntegration:
             except Exception as e:
                 self._error_count += 1
                 logger.error(f"Router processing failed (fail-fast, no fallback): {e}")
-                return (
-                    "[ROUTER ERROR] Router processing failed (fail-fast, no fallback). "
-                    f"{type(e).__name__}: {e}"
-                )
+                return f"[ROUTER ERROR] Router processing failed (fail-fast, no fallback). {type(e).__name__}: {e}"
 
         return wrapped_executor
 
@@ -327,6 +320,7 @@ def with_router(
         async def my_tool(params):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> str:
@@ -341,9 +335,7 @@ def with_router(
 
             # Route through integration
             if integration.enabled and not integration.should_bypass(tool_name):
-                corrected_tools = integration.router.process_llm_tool_call(
-                    tool_name, params
-                )
+                corrected_tools = integration.router.process_llm_tool_call(tool_name, params)
 
                 # If unchanged, call original
                 if len(corrected_tools) == 1 and corrected_tools[0]["tool"] == tool_name:
@@ -365,4 +357,5 @@ def with_router(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

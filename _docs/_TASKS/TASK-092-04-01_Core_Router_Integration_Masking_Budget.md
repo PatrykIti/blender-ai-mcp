@@ -1,7 +1,7 @@
 # TASK-092-04-01: Core Router Integration, Masking, and Budget Control
 
 **Parent:** [TASK-092-04](./TASK-092-04_Router_Integration_Masking_and_Budget_Control.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-092-03](./TASK-092-03_Inspection_Summarizer_and_Repair_Suggester_Assistants.md)
 

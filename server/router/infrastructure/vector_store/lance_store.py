@@ -10,13 +10,13 @@ TASK-047-2
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
     WeightedSearchResult,
 )
 
@@ -32,10 +32,7 @@ except ImportError:
     LANCEDB_AVAILABLE = False
     lancedb = None  # type: ignore
     pa = None  # type: ignore
-    logger.warning(
-        "lancedb or pyarrow not installed. "
-        "Vector store will use in-memory fallback."
-    )
+    logger.warning("lancedb or pyarrow not installed. Vector store will use in-memory fallback.")
 
 DEFAULT_DB_PATH = Path.home() / ".cache" / "blender-ai-mcp" / "vector_store"
 
@@ -135,16 +132,14 @@ class LanceVectorStore(IVectorStore):
                         "namespace": r.namespace.value,
                         "vector": r.vector,
                         "text": r.text,
-                        "metadata": json.dumps(r.metadata).encode('utf-8'),  # Convert to bytes
+                        "metadata": json.dumps(r.metadata).encode("utf-8"),  # Convert to bytes
                     }
                 )
 
             # Delete existing records with same IDs in same namespace
             for r in records:
                 try:
-                    self._table.delete(
-                        f"id = '{r.id}' AND namespace = '{r.namespace.value}'"
-                    )
+                    self._table.delete(f"id = '{r.id}' AND namespace = '{r.namespace.value}'")
                 except Exception:
                     pass  # Record may not exist
 
@@ -174,9 +169,7 @@ class LanceVectorStore(IVectorStore):
     ) -> List[SearchResult]:
         """Search for similar vectors using HNSW."""
         if self._use_fallback:
-            return self._search_fallback(
-                query_vector, namespace, top_k, threshold, metadata_filter
-            )
+            return self._search_fallback(query_vector, namespace, top_k, threshold, metadata_filter)
 
         try:
             # Build WHERE clause for namespace filter only
@@ -185,12 +178,7 @@ class LanceVectorStore(IVectorStore):
             # Execute search without metadata filters (filter in Python instead)
             # Fetch more results to account for filtering
             fetch_limit = top_k * 10 if metadata_filter else top_k
-            results = (
-                self._table.search(query_vector)
-                .where(where)
-                .limit(fetch_limit)
-                .to_list()
-            )
+            results = self._table.search(query_vector).where(where).limit(fetch_limit).to_list()
 
             # Convert to SearchResult with Python-side metadata filtering
             output = []
@@ -211,7 +199,7 @@ class LanceVectorStore(IVectorStore):
                         # Decode bytes to string, then parse JSON
                         metadata_bytes = r["metadata"]
                         if isinstance(metadata_bytes, bytes):
-                            metadata_str = metadata_bytes.decode('utf-8')
+                            metadata_str = metadata_bytes.decode("utf-8")
                         else:
                             metadata_str = metadata_bytes
                         metadata = json.loads(metadata_str)
@@ -245,9 +233,7 @@ class LanceVectorStore(IVectorStore):
 
         except Exception as e:
             logger.error(f"Search failed: {e}")
-            return self._search_fallback(
-                query_vector, namespace, top_k, threshold, metadata_filter
-            )
+            return self._search_fallback(query_vector, namespace, top_k, threshold, metadata_filter)
 
     def _search_fallback(
         self,
@@ -319,12 +305,8 @@ class LanceVectorStore(IVectorStore):
             count = 0
             for id_ in ids:
                 try:
-                    before = self._table.count_rows(
-                        f"id = '{id_}' AND namespace = '{namespace.value}'"
-                    )
-                    self._table.delete(
-                        f"id = '{id_}' AND namespace = '{namespace.value}'"
-                    )
+                    before = self._table.count_rows(f"id = '{id_}' AND namespace = '{namespace.value}'")
+                    self._table.delete(f"id = '{id_}' AND namespace = '{namespace.value}'")
                     count += before
                 except Exception:
                     pass
@@ -452,20 +434,12 @@ class LanceVectorStore(IVectorStore):
             List of record IDs.
         """
         if self._use_fallback:
-            return [
-                r.id
-                for r in self._fallback_store.values()
-                if r.namespace == namespace
-            ]
+            return [r.id for r in self._fallback_store.values() if r.namespace == namespace]
 
         try:
             # Query all records in namespace
             results = (
-                self._table.search()
-                .where(f"namespace = '{namespace.value}'")
-                .select(["id"])
-                .limit(10000)
-                .to_list()
+                self._table.search().where(f"namespace = '{namespace.value}'").select(["id"]).limit(10000).to_list()
             )
             return [r["id"] for r in results]
         except Exception as e:
@@ -502,9 +476,7 @@ class LanceVectorStore(IVectorStore):
             List of WeightedSearchResult sorted by final_score.
         """
         if self._use_fallback:
-            return self._search_workflows_weighted_fallback(
-                query_vector, query_language, top_k, min_score
-            )
+            return self._search_workflows_weighted_fallback(query_vector, query_language, top_k, min_score)
 
         try:
             # Search with higher limit to get multiple embeddings per workflow
@@ -526,7 +498,7 @@ class LanceVectorStore(IVectorStore):
                         # Decode bytes to string, then parse JSON
                         metadata_bytes = row["metadata"]
                         if isinstance(metadata_bytes, bytes):
-                            metadata_str = metadata_bytes.decode('utf-8')
+                            metadata_str = metadata_bytes.decode("utf-8")
                         else:
                             metadata_str = metadata_bytes
                         metadata = json.loads(metadata_str)
@@ -549,10 +521,7 @@ class LanceVectorStore(IVectorStore):
                 final_score = raw_score * source_weight * language_boost
 
                 # Keep best match per workflow
-                if (
-                    workflow_id not in workflow_matches
-                    or final_score > workflow_matches[workflow_id].final_score
-                ):
+                if workflow_id not in workflow_matches or final_score > workflow_matches[workflow_id].final_score:
                     workflow_matches[workflow_id] = WeightedSearchResult(
                         workflow_id=workflow_id,
                         raw_score=raw_score,
@@ -577,9 +546,7 @@ class LanceVectorStore(IVectorStore):
 
         except Exception as e:
             logger.error(f"Weighted search failed: {e}")
-            return self._search_workflows_weighted_fallback(
-                query_vector, query_language, top_k, min_score
-            )
+            return self._search_workflows_weighted_fallback(query_vector, query_language, top_k, min_score)
 
     def _search_workflows_weighted_fallback(
         self,
@@ -624,10 +591,7 @@ class LanceVectorStore(IVectorStore):
                 final_score = raw_score * source_weight * language_boost
 
                 # Keep best match per workflow
-                if (
-                    workflow_id not in workflow_matches
-                    or final_score > workflow_matches[workflow_id].final_score
-                ):
+                if workflow_id not in workflow_matches or final_score > workflow_matches[workflow_id].final_score:
                     workflow_matches[workflow_id] = WeightedSearchResult(
                         workflow_id=workflow_id,
                         raw_score=raw_score,
@@ -692,7 +656,7 @@ class LanceVectorStore(IVectorStore):
                         # Decode bytes to string, then parse JSON
                         metadata_bytes = r["metadata"]
                         if isinstance(metadata_bytes, bytes):
-                            metadata_str = metadata_bytes.decode('utf-8')
+                            metadata_str = metadata_bytes.decode("utf-8")
                         else:
                             metadata_str = metadata_bytes
                         metadata = json.loads(metadata_str)

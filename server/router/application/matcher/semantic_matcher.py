@@ -8,11 +8,11 @@ is kept for backward compatibility. This new SemanticMatcher is specifically
 designed for ensemble matching.
 """
 
-from typing import Dict, Any, Optional, TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from server.router.domain.interfaces.matcher import IMatcher
 from server.router.domain.entities.ensemble import MatcherResult
+from server.router.domain.interfaces.matcher import IMatcher
 from server.router.infrastructure.config import RouterConfig
 
 if TYPE_CHECKING:
@@ -143,7 +143,7 @@ class SemanticMatcher(IMatcher):
                 workflow_name=None,
                 confidence=0.0,
                 weight=self.weight,
-                metadata={"error": "Not initialized"}
+                metadata={"error": "Not initialized"},
             )
 
         # Use classifier's find_best_match_with_confidence
@@ -161,8 +161,7 @@ class SemanticMatcher(IMatcher):
             best_fallback = result["fallback_candidates"][0]
             workflow_id = best_fallback.get("workflow_id")
             logger.debug(
-                f"SemanticMatcher: Using fallback candidate {workflow_id} "
-                f"(score={score:.3f}, level={confidence_level})"
+                f"SemanticMatcher: Using fallback candidate {workflow_id} (score={score:.3f}, level={confidence_level})"
             )
 
         # Return match if we have a workflow (regardless of confidence_level)
@@ -177,7 +176,7 @@ class SemanticMatcher(IMatcher):
                     "source_type": result.get("source_type"),
                     "matched_text": result.get("matched_text"),
                     "language_detected": result.get("language_detected"),
-                }
+                },
             )
 
         # No match at all (score is 0 or no candidates)
@@ -186,5 +185,5 @@ class SemanticMatcher(IMatcher):
             workflow_name=None,
             confidence=0.0,
             weight=self.weight,
-            metadata={"confidence_level": confidence_level}
+            metadata={"confidence_level": confidence_level},
         )

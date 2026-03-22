@@ -78,6 +78,13 @@ Current public argument aliases on `llm-guided`:
 
 The legacy/internal names remain the canonical internal contract used by router and dispatcher internals.
 
+Current hidden/expert-only arguments on `llm-guided` include:
+
+- `inspect_scene`: `detailed`, `include_disabled`, `modifier_name`, `assistant_summary`, and similar backend-only inspection flags
+- `mesh_inspect`: `selected_only`, `uv_layer`, `include_deltas`, `assistant_summary`
+- `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, and `scene_get_origin_info`: `assistant_summary`
+- `browse_workflows`: import/ranking internals such as `top_k`, `threshold`, and chunk/session controls
+
 ### Search-First Discovery
 
 `llm-guided` now defaults to a search-first tool surface.
@@ -140,6 +147,22 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 
 On structured surfaces, these tools expose native structured payloads aligned with declared schemas.
 Compatibility surfaces can still preserve deterministic text fallback where explicitly required.
+
+### Server-Side Sampling Assistants Baseline
+
+The server now has a bounded first-pass sampling-assistant layer for analytical help inside an active MCP request.
+
+Current baseline:
+
+- `scene_inspect`, `mesh_inspect`, `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, and `scene_get_origin_info` can attach an optional bounded `assistant_summary` envelope on internal/expert paths
+- `router_set_goal` and `router_get_status` can attach bounded structured `repair_suggestion` guidance on error/recovery states
+- `workflow_catalog` can attach bounded structured `repair_suggestion` guidance on import recovery states
+- assistant terminal statuses are explicit: `success`, `unavailable`, `masked_error`, `rejected_by_policy`
+
+Sampling assistants are intentionally constrained:
+
+- allowed: inspection summarization, compact diagnostic explanation, repair suggestion drafting
+- forbidden: autonomous destructive planning, hidden router-policy substitution, scene-truth decisions without inspection payloads, detached background reasoning
 
 ### Versioned Surface Baseline
 
@@ -276,6 +299,14 @@ To see the current E2E test count:
 ```bash
 poetry run pytest tests/e2e --collect-only
 ```
+
+**Pre-commit hooks**:
+```bash
+poetry run pre-commit install --hook-type pre-commit --hook-type pre-push
+poetry run pre-commit run --all-files
+```
+
+The `pre-commit` stage covers repository hygiene, YAML/JSON/TOML validation, GitHub workflow validation, router metadata schema checks, and `ruff` lint/format. The `pre-push` stage additionally runs `poetry check --strict --lock`, unit tests, and the addon build.
 
 | Type | Coverage |
 |------|----------|

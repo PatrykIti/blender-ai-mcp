@@ -5,11 +5,12 @@ Exposes texture baking operations as MCP tools for AI models.
 """
 
 from typing import Any, Dict, Optional
+
 from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_baking_handler
 
 BAKING_PUBLIC_TOOL_NAMES = (
@@ -23,9 +24,7 @@ BAKING_PUBLIC_TOOL_NAMES = (
 def register_baking_tools(target: Any) -> Dict[str, Any]:
     """Register public baking tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, BAKING_PUBLIC_TOOL_NAMES, tags=get_capability_tags("baking")
-    )
+    return register_existing_tools(globals(), target, BAKING_PUBLIC_TOOL_NAMES, tags=get_capability_tags("baking"))
 
 
 def bake_normal_map(
@@ -36,7 +35,7 @@ def bake_normal_map(
     high_poly_source: Optional[str] = None,
     cage_extrusion: float = 0.1,
     margin: int = 16,
-    normal_space: str = "TANGENT"
+    normal_space: str = "TANGENT",
 ) -> str:
     """
     [OBJECT MODE][REQUIRES UV][CYCLES] Bakes normal map to texture file.
@@ -77,7 +76,7 @@ def bake_normal_map(
             "high_poly_source": high_poly_source,
             "cage_extrusion": cage_extrusion,
             "margin": margin,
-            "normal_space": normal_space
+            "normal_space": normal_space,
         },
         direct_executor=lambda: get_baking_handler().bake_normal_map(
             object_name=object_name,
@@ -86,8 +85,8 @@ def bake_normal_map(
             high_poly_source=high_poly_source,
             cage_extrusion=cage_extrusion,
             margin=margin,
-            normal_space=normal_space
-        )
+            normal_space=normal_space,
+        ),
     )
 
 
@@ -98,7 +97,7 @@ def bake_ao(
     resolution: int = 1024,
     samples: int = 128,
     distance: float = 1.0,
-    margin: int = 16
+    margin: int = 16,
 ) -> str:
     """
     [OBJECT MODE][REQUIRES UV][CYCLES] Bakes ambient occlusion map to texture file.
@@ -132,7 +131,7 @@ def bake_ao(
             "resolution": resolution,
             "samples": samples,
             "distance": distance,
-            "margin": margin
+            "margin": margin,
         },
         direct_executor=lambda: get_baking_handler().bake_ao(
             object_name=object_name,
@@ -140,8 +139,8 @@ def bake_ao(
             resolution=resolution,
             samples=samples,
             distance=distance,
-            margin=margin
-        )
+            margin=margin,
+        ),
     )
 
 
@@ -154,7 +153,7 @@ def bake_combined(
     margin: int = 16,
     use_pass_direct: bool = True,
     use_pass_indirect: bool = True,
-    use_pass_color: bool = True
+    use_pass_color: bool = True,
 ) -> str:
     """
     [OBJECT MODE][REQUIRES UV][CYCLES] Bakes combined render to texture file.
@@ -189,7 +188,7 @@ def bake_combined(
             "margin": margin,
             "use_pass_direct": use_pass_direct,
             "use_pass_indirect": use_pass_indirect,
-            "use_pass_color": use_pass_color
+            "use_pass_color": use_pass_color,
         },
         direct_executor=lambda: get_baking_handler().bake_combined(
             object_name=object_name,
@@ -199,18 +198,12 @@ def bake_combined(
             margin=margin,
             use_pass_direct=use_pass_direct,
             use_pass_indirect=use_pass_indirect,
-            use_pass_color=use_pass_color
-        )
+            use_pass_color=use_pass_color,
+        ),
     )
 
 
-def bake_diffuse(
-    ctx: Context,
-    object_name: str,
-    output_path: str,
-    resolution: int = 1024,
-    margin: int = 16
-) -> str:
+def bake_diffuse(ctx: Context, object_name: str, output_path: str, resolution: int = 1024, margin: int = 16) -> str:
     """
     [OBJECT MODE][REQUIRES UV][CYCLES] Bakes diffuse/albedo color to texture file.
 
@@ -232,16 +225,8 @@ def bake_diffuse(
     """
     return route_tool_call(
         tool_name="bake_diffuse",
-        params={
-            "object_name": object_name,
-            "output_path": output_path,
-            "resolution": resolution,
-            "margin": margin
-        },
+        params={"object_name": object_name, "output_path": output_path, "resolution": resolution, "margin": margin},
         direct_executor=lambda: get_baking_handler().bake_diffuse(
-            object_name=object_name,
-            output_path=output_path,
-            resolution=resolution,
-            margin=margin
-        )
+            object_name=object_name, output_path=output_path, resolution=resolution, margin=margin
+        ),
     )

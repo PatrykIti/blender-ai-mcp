@@ -1,7 +1,7 @@
 # TASK-092-04: Router Integration, Masking, and Budget Control
 
 **Parent:** [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-092-03](./TASK-092-03_Inspection_Summarizer_and_Repair_Suggester_Assistants.md)
 

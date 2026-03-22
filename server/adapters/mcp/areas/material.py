@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
+
 from fastmcp import Context
+
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_material_handler
 
 MATERIAL_PUBLIC_TOOL_NAMES = (
@@ -21,9 +23,7 @@ MATERIAL_PUBLIC_TOOL_NAMES = (
 def register_material_tools(target: Any) -> Dict[str, Any]:
     """Register public material tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, MATERIAL_PUBLIC_TOOL_NAMES, tags=get_capability_tags("material")
-    )
+    return register_existing_tools(globals(), target, MATERIAL_PUBLIC_TOOL_NAMES, tags=get_capability_tags("material"))
 
 
 def material_list(ctx: Context, include_unassigned: bool = True) -> str:
@@ -35,6 +35,7 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
     Args:
         include_unassigned: If True, includes materials not assigned to any object
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -61,7 +62,9 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
 
                 if "base_color" in mat:
                     rgb = mat["base_color"]
-                    lines.append(f"      Color: RGB{rgb}, Roughness: {mat.get('roughness', 'N/A')}, Metallic: {mat.get('metallic', 'N/A')}")
+                    lines.append(
+                        f"      Color: RGB{rgb}, Roughness: {mat.get('roughness', 'N/A')}, Metallic: {mat.get('metallic', 'N/A')}"
+                    )
 
             ctx_info(ctx, f"Listed {len(materials)} materials")
             return "\n".join(lines)
@@ -69,9 +72,7 @@ def material_list(ctx: Context, include_unassigned: bool = True) -> str:
             return str(e)
 
     return route_tool_call(
-        tool_name="material_list",
-        params={"include_unassigned": include_unassigned},
-        direct_executor=execute
+        tool_name="material_list", params={"include_unassigned": include_unassigned}, direct_executor=execute
     )
 
 
@@ -85,6 +86,7 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
         object_name: Name of the object to query
         include_indices: If True, attempts to include face-level assignment info
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -96,10 +98,7 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
             if slot_count == 0:
                 return f"Object '{object_name}' has no material slots."
 
-            lines = [
-                f"Object: {object_name}",
-                f"Material Slots ({slot_count}):"
-            ]
+            lines = [f"Object: {object_name}", f"Material Slots ({slot_count}):"]
 
             for slot in slots:
                 mat_name = slot.get("material_name") or "<empty>"
@@ -122,7 +121,7 @@ def material_list_by_object(ctx: Context, object_name: str, include_indices: boo
     return route_tool_call(
         tool_name="material_list_by_object",
         params={"object_name": object_name, "include_indices": include_indices},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -150,6 +149,7 @@ def material_create(
         emission_strength: Emission strength
         alpha: Alpha/opacity 0-1
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -178,9 +178,9 @@ def material_create(
             "roughness": roughness,
             "emission_color": emission_color,
             "emission_strength": emission_strength,
-            "alpha": alpha
+            "alpha": alpha,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -205,6 +205,7 @@ def material_assign(
         slot_index: Material slot index (default: auto)
         assign_to_selection: If True and in Edit Mode, assign to selected faces
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -228,9 +229,9 @@ def material_assign(
             "material_name": material_name,
             "object_name": object_name,
             "slot_index": slot_index,
-            "assign_to_selection": assign_to_selection
+            "assign_to_selection": assign_to_selection,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -260,6 +261,7 @@ def material_set_params(
         emission_strength: New emission strength
         alpha: New alpha/opacity 0-1
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -289,9 +291,9 @@ def material_set_params(
             "roughness": roughness,
             "emission_color": emission_color,
             "emission_strength": emission_strength,
-            "alpha": alpha
+            "alpha": alpha,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -315,6 +317,7 @@ def material_set_texture(
         input_name: BSDF input ('Base Color', 'Roughness', 'Normal', 'Metallic', 'Emission Color')
         color_space: Color space ('sRGB' for color, 'Non-Color' for data maps)
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -338,9 +341,9 @@ def material_set_texture(
             "material_name": material_name,
             "texture_path": texture_path,
             "input_name": input_name,
-            "color_space": color_space
+            "color_space": color_space,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -362,6 +365,7 @@ def material_inspect_nodes(
         material_name: Name of the material to inspect
         include_connections: Include node connections/links (default True)
     """
+
     def execute():
         handler = get_material_handler()
         try:
@@ -421,9 +425,6 @@ def material_inspect_nodes(
 
     return route_tool_call(
         tool_name="material_inspect_nodes",
-        params={
-            "material_name": material_name,
-            "include_connections": include_connections
-        },
-        direct_executor=execute
+        params={"material_name": material_name, "include_connections": include_connections},
+        direct_executor=execute,
     )

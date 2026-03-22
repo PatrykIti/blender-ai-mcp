@@ -4,7 +4,7 @@ Proportion Calculator.
 Utility for calculating object proportions from dimensions.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.entities.scene_context import ProportionInfo
 

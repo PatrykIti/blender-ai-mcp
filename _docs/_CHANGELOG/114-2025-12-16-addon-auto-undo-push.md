@@ -34,4 +34,3 @@ The addon now best-effort inserts an undo boundary after successful **mutating**
 ```bash
 poetry run pytest tests/unit/ -q
 ```
-

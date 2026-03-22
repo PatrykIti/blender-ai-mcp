@@ -14,7 +14,7 @@ class IBakingTool(ABC):
         high_poly_source: Optional[str] = None,
         cage_extrusion: float = 0.1,
         margin: int = 16,
-        normal_space: str = "TANGENT"
+        normal_space: str = "TANGENT",
     ) -> str:
         """
         Bakes normal map from high-poly to low-poly or from geometry.
@@ -38,7 +38,7 @@ class IBakingTool(ABC):
         resolution: int = 1024,
         samples: int = 128,
         distance: float = 1.0,
-        margin: int = 16
+        margin: int = 16,
     ) -> str:
         """
         Bakes ambient occlusion map.
@@ -63,7 +63,7 @@ class IBakingTool(ABC):
         margin: int = 16,
         use_pass_direct: bool = True,
         use_pass_indirect: bool = True,
-        use_pass_color: bool = True
+        use_pass_color: bool = True,
     ) -> str:
         """
         Bakes combined render (full material + lighting) to texture.
@@ -81,13 +81,7 @@ class IBakingTool(ABC):
         pass
 
     @abstractmethod
-    def bake_diffuse(
-        self,
-        object_name: str,
-        output_path: str,
-        resolution: int = 1024,
-        margin: int = 16
-    ) -> str:
+    def bake_diffuse(self, object_name: str, output_path: str, resolution: int = 1024, margin: int = 16) -> str:
         """
         Bakes diffuse/albedo color only.
 

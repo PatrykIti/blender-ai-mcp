@@ -10,10 +10,8 @@ between tests is essential.
 """
 
 import pytest
-from typing import Optional
-
-from server.router.application.router import SupervisorRouter
 from server.router.application.classifier.intent_classifier import IntentClassifier
+from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -42,8 +40,9 @@ def shared_classifier(router_config, request):
     # Explicit cleanup when session ends
     def cleanup():
         import gc
+
         # Clear any cached data
-        if hasattr(classifier, '_model'):
+        if hasattr(classifier, "_model"):
             del classifier._model
         gc.collect()
 

@@ -3,6 +3,7 @@ E2E Tests for extraction_detect_symmetry (TASK-044-3)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 
 
@@ -50,7 +51,7 @@ def test_detect_symmetry_with_tolerance(extraction_handler, test_cube):
 def test_detect_symmetry_not_found(extraction_handler):
     """Test symmetry detection on non-existent object."""
     try:
-        result = extraction_handler.detect_symmetry("NonExistentObject12345")
+        extraction_handler.detect_symmetry("NonExistentObject12345")
         pytest.fail("Should have raised an error")
 
     except RuntimeError as e:

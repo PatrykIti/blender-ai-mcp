@@ -14,7 +14,6 @@ from server.adapters.mcp.tasks.progress import (
     build_progress_snapshot,
 )
 
-
 BackgroundJobStatus = str
 
 

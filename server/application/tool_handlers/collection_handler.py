@@ -1,4 +1,5 @@
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.collection import ICollectionTool
 
@@ -13,12 +14,10 @@ class CollectionToolHandler(ICollectionTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False) -> Dict[str, Any]:
-        args = {
-            "collection_name": collection_name,
-            "recursive": recursive,
-            "include_hidden": include_hidden
-        }
+    def list_objects(
+        self, collection_name: str, recursive: bool = True, include_hidden: bool = False
+    ) -> Dict[str, Any]:
+        args = {"collection_name": collection_name, "recursive": recursive, "include_hidden": include_hidden}
         response = self.rpc.send_request("collection.list_objects", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")

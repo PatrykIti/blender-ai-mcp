@@ -1,7 +1,7 @@
 # TASK-092-02: Assistant Runner with Typed Result Wrappers
 
 **Parent:** [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 

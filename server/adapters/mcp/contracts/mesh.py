@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.sampling.result_types import InspectionSummaryAssistantContract
 
 
 class MeshInspectResponseContract(MCPContract):
@@ -34,3 +35,4 @@ class MeshInspectResponseContract(MCPContract):
     summary: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None

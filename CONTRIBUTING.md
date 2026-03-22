@@ -70,6 +70,10 @@ Do not blur those layers when extending the repo.
 ```bash
 poetry install --no-interaction
 ```
+4. Install repo hooks:
+```bash
+poetry run pre-commit install --hook-type pre-commit --hook-type pre-push
+```
 
 More details:
 - `_docs/_DEV/README.md`
@@ -79,10 +83,15 @@ More details:
 
 - **Type Hints**: Fully typed Python 3.10+.
 - **Docstrings**: Tool docstrings are part of the product (LLMs use them) — keep them accurate and explicit.
-- **Formatting**: Keep formatting consistent with nearby code (no project-wide formatter is enforced).
+- **Formatting**: Use the repo `pre-commit` hooks and `ruff` as the canonical formatter/linter baseline.
 - **Error Handling**: Never crash the server. Catch exceptions and return meaningful error strings to the AI.
 
 ## 🧪 Tests
+
+**Code quality**:
+```bash
+poetry run pre-commit run --all-files
+```
 
 **Unit tests** (no Blender required):
 ```bash
@@ -94,10 +103,11 @@ PYTHONPATH=. poetry run pytest tests/unit/ -v
 python3 scripts/run_e2e_tests.py
 ```
 
-CI runs unit tests and also verifies the addon + Docker build (see `.github/workflows/pr_checks.yml`).
+CI runs `pre-commit`, unit tests, and also verifies the addon + Docker build (see `.github/workflows/pr_checks.yml`).
 
 ## 📦 Pull Requests
 
 - Please link the PR to an Issue or Task ID.
+- Ensure `poetry run pre-commit run --all-files` passes.
 - Ensure unit tests pass (`PYTHONPATH=. poetry run pytest tests/unit/ -v`).
 - Update documentation if you added new features.

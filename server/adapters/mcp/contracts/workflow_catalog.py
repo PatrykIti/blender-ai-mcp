@@ -9,6 +9,7 @@ from typing import Any
 
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
+from server.adapters.mcp.sampling.result_types import RepairSuggestionAssistantContract
 
 
 class WorkflowCatalogResponseContract(MCPContract):
@@ -37,4 +38,5 @@ class WorkflowCatalogResponseContract(MCPContract):
     suggestions: list[str] | None = None
     session_id: str | None = None
     clarification: ClarificationFallbackPayload | None = None
+    repair_suggestion: RepairSuggestionAssistantContract | None = None
     error: str | None = None

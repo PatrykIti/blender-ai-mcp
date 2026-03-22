@@ -7,16 +7,16 @@ Replaces the fallback-based SemanticWorkflowMatcher.match() flow with
 parallel ensemble matching.
 """
 
-from typing import List, Optional, Dict, Any, TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from server.router.domain.interfaces.matcher import IMatcher
-from server.router.domain.entities.ensemble import MatcherResult, EnsembleResult
-from server.router.domain.entities.scene_context import SceneContext
-from server.router.application.matcher.keyword_matcher import KeywordMatcher
-from server.router.application.matcher.semantic_matcher import SemanticMatcher
-from server.router.application.matcher.pattern_matcher import PatternMatcher
 from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
+from server.router.application.matcher.keyword_matcher import KeywordMatcher
+from server.router.application.matcher.pattern_matcher import PatternMatcher
+from server.router.application.matcher.semantic_matcher import SemanticMatcher
+from server.router.domain.entities.ensemble import EnsembleResult, MatcherResult
+from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.interfaces.matcher import IMatcher
 from server.router.infrastructure.config import RouterConfig
 from server.router.infrastructure.logger import RouterLogger
 
@@ -59,11 +59,7 @@ class EnsembleMatcher:
             aggregator: Aggregator for combining results.
             config: Router configuration.
         """
-        self._matchers: List[IMatcher] = [
-            keyword_matcher,
-            semantic_matcher,
-            pattern_matcher
-        ]
+        self._matchers: List[IMatcher] = [keyword_matcher, semantic_matcher, pattern_matcher]
         self._aggregator = aggregator
         self._config = config or RouterConfig()
         self._router_logger = RouterLogger()
@@ -79,8 +75,8 @@ class EnsembleMatcher:
         """
         for matcher in self._matchers:
             # Check if matcher has initialize method and hasn't been initialized
-            if hasattr(matcher, 'initialize') and callable(matcher.initialize):
-                if hasattr(matcher, 'is_initialized') and not matcher.is_initialized():
+            if hasattr(matcher, "initialize") and callable(matcher.initialize):
+                if hasattr(matcher, "is_initialized") and not matcher.is_initialized():
                     matcher.initialize(registry)
 
         self._is_initialized = True
@@ -142,13 +138,15 @@ class EnsembleMatcher:
                 logger.exception(f"Matcher '{matcher.name}' failed: {e}")
                 self._router_logger.log_error(matcher.name, str(e))
                 # Add failed result with zero confidence
-                results.append(MatcherResult(
-                    matcher_name=matcher.name,
-                    workflow_name=None,
-                    confidence=0.0,
-                    weight=matcher.weight,
-                    metadata={"error": str(e)}
-                ))
+                results.append(
+                    MatcherResult(
+                        matcher_name=matcher.name,
+                        workflow_name=None,
+                        confidence=0.0,
+                        weight=matcher.weight,
+                        metadata={"error": str(e)},
+                    )
+                )
 
         # Aggregate results
         ensemble_result = self._aggregator.aggregate(results, prompt)
@@ -176,15 +174,11 @@ class EnsembleMatcher:
         return {
             "is_initialized": self._is_initialized,
             "matchers": [
-                {
-                    "name": m.name,
-                    "weight": m.weight,
-                    "initialized": getattr(m, 'is_initialized', lambda: True)()
-                }
+                {"name": m.name, "weight": m.weight, "initialized": getattr(m, "is_initialized", lambda: True)()}
                 for m in self._matchers
             ],
             "config": {
                 "pattern_boost": EnsembleAggregator.PATTERN_BOOST,
                 "composition_threshold": EnsembleAggregator.COMPOSITION_THRESHOLD,
-            }
+            },
         }

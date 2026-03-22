@@ -5,14 +5,14 @@ Abstract interface for detecting geometry patterns.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import List, Optional
 
-from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.pattern import (
-    PatternType,
     DetectedPattern,
     PatternMatchResult,
+    PatternType,
 )
+from server.router.domain.entities.scene_context import SceneContext
 
 
 class IPatternDetector(ABC):

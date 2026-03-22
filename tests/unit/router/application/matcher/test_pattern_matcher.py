@@ -4,9 +4,9 @@ Tests for PatternMatcher.
 TASK-053-5: Tests for pattern matching extracted from SemanticWorkflowMatcher.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.pattern_matcher import PatternMatcher
 from server.router.domain.entities.ensemble import MatcherResult
 

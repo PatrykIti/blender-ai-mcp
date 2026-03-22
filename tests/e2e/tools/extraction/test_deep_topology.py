@@ -3,6 +3,7 @@ E2E Tests for extraction_deep_topology (TASK-044-1)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 
 
@@ -54,7 +55,7 @@ def test_deep_topology_feature_detection(extraction_handler, test_cube):
 def test_deep_topology_not_found(extraction_handler):
     """Test deep topology on non-existent object."""
     try:
-        result = extraction_handler.deep_topology("NonExistentObject12345")
+        extraction_handler.deep_topology("NonExistentObject12345")
         pytest.fail("Should have raised an error")
 
     except RuntimeError as e:

@@ -3,6 +3,7 @@ E2E Tests for scene_camera_focus (TASK-043-6)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 

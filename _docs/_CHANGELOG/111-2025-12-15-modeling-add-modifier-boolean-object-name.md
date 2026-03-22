@@ -44,4 +44,3 @@ This unblocks a common asset workflow: create cutter → Boolean difference → 
 ```bash
 poetry run pytest tests/unit/tools/modeling -q
 ```
-

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from server.router.application.matcher.semantic_workflow_matcher import MatchResult
 from server.router.domain.entities.confidence_policy import (
     ConfidenceBand,
     NormalizedConfidence,
@@ -13,8 +14,6 @@ from server.router.domain.entities.correction_policy import (
     classify_override_rule,
 )
 from server.router.domain.entities.ensemble import EnsembleResult
-from server.router.application.matcher.semantic_workflow_matcher import MatchResult
-
 
 _WORKFLOW_CONFIDENCE_BANDS = {
     "HIGH": ConfidenceBand.HIGH,

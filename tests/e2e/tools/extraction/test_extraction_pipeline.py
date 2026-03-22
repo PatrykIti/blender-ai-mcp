@@ -6,6 +6,7 @@ deep_topology -> detect_symmetry -> edge_loop_analysis -> face_group_analysis
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 
 
@@ -87,8 +88,12 @@ def test_extraction_for_workflow_generation(extraction_handler, test_cube):
 
         print("✅ All workflow generation data is available!")
         print(f"  Base: {topology['base_primitive']} (confidence: {topology['primitive_confidence']})")
-        print(f"  Features: bevel={topology['has_beveled_edges']}, inset={topology['has_inset_faces']}, extrude={topology['has_extrusions']}")
-        print(f"  Symmetry: X={symmetry['x_confidence']:.2f}, Y={symmetry['y_confidence']:.2f}, Z={symmetry['z_confidence']:.2f}")
+        print(
+            f"  Features: bevel={topology['has_beveled_edges']}, inset={topology['has_inset_faces']}, extrude={topology['has_extrusions']}"
+        )
+        print(
+            f"  Symmetry: X={symmetry['x_confidence']:.2f}, Y={symmetry['y_confidence']:.2f}, Z={symmetry['z_confidence']:.2f}"
+        )
 
     except RuntimeError as e:
         error_msg = str(e).lower()

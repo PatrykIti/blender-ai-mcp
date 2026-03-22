@@ -3,6 +3,7 @@ E2E Tests for extraction_face_group_analysis (TASK-044-5)
 
 These tests require a running Blender instance with the addon loaded.
 """
+
 import pytest
 
 
@@ -38,7 +39,7 @@ def test_face_group_analysis_feature_detection(extraction_handler, test_cube):
         assert "has_insets" in result
         assert "has_extrusions" in result
 
-        print(f"✓ face_group_analysis feature detection:")
+        print("✓ face_group_analysis feature detection:")
         print(f"  Insets: {result['detected_insets']} (has_insets: {result['has_insets']})")
         print(f"  Extrusions: {result['detected_extrusions']} (has_extrusions: {result['has_extrusions']})")
 
@@ -67,7 +68,7 @@ def test_face_group_analysis_with_angle_threshold(extraction_handler, test_cube)
 def test_face_group_analysis_not_found(extraction_handler):
     """Test face group analysis on non-existent object."""
     try:
-        result = extraction_handler.face_group_analysis("NonExistentObject12345")
+        extraction_handler.face_group_analysis("NonExistentObject12345")
         pytest.fail("Should have raised an error")
 
     except RuntimeError as e:

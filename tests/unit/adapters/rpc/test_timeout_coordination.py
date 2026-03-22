@@ -62,7 +62,10 @@ def test_rpc_server_uses_request_timeout_budget(monkeypatch):
     server = BlenderRpcServer()
     server.command_registry["demo.cmd"] = lambda **kwargs: "ok"
 
-    monkeypatch.setattr("blender_addon.infrastructure.rpc_server.bpy", SimpleNamespace(app=SimpleNamespace(timers=SimpleNamespace(register=lambda fn: None))))
+    monkeypatch.setattr(
+        "blender_addon.infrastructure.rpc_server.bpy",
+        SimpleNamespace(app=SimpleNamespace(timers=SimpleNamespace(register=lambda fn: None))),
+    )
     monkeypatch.setattr(queue.Queue, "get", lambda self, timeout=None: (_ for _ in ()).throw(queue.Empty()))
 
     response = server._process_request(

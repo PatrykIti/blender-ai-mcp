@@ -8,8 +8,7 @@ TASK-046: Extended with semantic matching methods.
 TASK-055: Extended with parameter resolution methods.
 """
 
-import json
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from server.domain.tools.router import IRouterTool
 from server.router.application.confidence_normalization import (
@@ -260,10 +259,7 @@ class RouterToolHandler(IRouterTool):
                 if not isinstance(raw, str):
                     return raw
                 value = raw.strip()
-                if (
-                    (value.startswith('"') and value.endswith('"'))
-                    or (value.startswith("'") and value.endswith("'"))
-                ):
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                     value = value[1:-1].strip()
                 if schema.enum and all(isinstance(v, str) for v in schema.enum):
                     enum_map = {v.strip().lower(): v for v in schema.enum}
@@ -346,7 +342,7 @@ class RouterToolHandler(IRouterTool):
                     )
 
         # Step 4: Get existing modifiers from ensemble matching
-        existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
+        existing_modifiers = getattr(router, "_pending_modifiers", {}) or {}
         merged_modifiers = {**explicit_params, **existing_modifiers} if explicit_params else existing_modifiers
 
         # Step 5: Resolve parameters using three-tier system
@@ -397,16 +393,18 @@ class RouterToolHandler(IRouterTool):
         if result.needs_llm_input or invalid_params:
             unresolved_list = []
             for unresolved in result.unresolved:
-                unresolved_list.append({
-                    "param": unresolved.name,
-                    "type": unresolved.schema.type,
-                    "description": unresolved.schema.description,
-                    "range": list(unresolved.schema.range) if unresolved.schema.range else None,
-                    "enum": unresolved.schema.enum,
-                    "default": unresolved.schema.default,
-                    "context": unresolved.context,
-                    "semantic_hints": unresolved.schema.semantic_hints,
-                })
+                unresolved_list.append(
+                    {
+                        "param": unresolved.name,
+                        "type": unresolved.schema.type,
+                        "description": unresolved.schema.description,
+                        "range": list(unresolved.schema.range) if unresolved.schema.range else None,
+                        "enum": unresolved.schema.enum,
+                        "default": unresolved.schema.default,
+                        "context": unresolved.context,
+                        "semantic_hints": unresolved.schema.semantic_hints,
+                    }
+                )
 
             if invalid_params:
                 # Put invalid inputs at the front, avoid duplicates
@@ -464,10 +462,10 @@ class RouterToolHandler(IRouterTool):
 
         # Get semantic hints
         hints = []
-        if hasattr(schema, 'semantic_hints'):
+        if hasattr(schema, "semantic_hints"):
             hints = schema.semantic_hints
         elif isinstance(schema, dict):
-            hints = schema.get('semantic_hints', [])
+            hints = schema.get("semantic_hints", [])
 
         # Try to find matching hint in goal
         goal_lower = goal.lower()

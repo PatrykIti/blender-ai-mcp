@@ -5,12 +5,10 @@ TASK-046-4
 """
 
 import pytest
-from typing import Dict, List, Tuple
-
 from server.router.application.inheritance.proportion_inheritance import (
+    InheritedProportions,
     ProportionInheritance,
     ProportionRule,
-    InheritedProportions,
 )
 
 

@@ -1,10 +1,11 @@
-import os
 import asyncio
+import os
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 from fastmcp.utilities.types import Image
+
 # Update import to new location
 from server.adapters.mcp.areas import scene as mcp_scene
 

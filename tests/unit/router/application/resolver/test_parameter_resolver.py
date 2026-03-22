@@ -4,16 +4,13 @@ Unit tests for ParameterResolver.
 TASK-055-3
 """
 
-import pytest
 from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
 
+import pytest
 from server.router.application.resolver.parameter_resolver import ParameterResolver
 from server.router.domain.entities.parameter import (
-    ParameterResolutionResult,
     ParameterSchema,
     StoredMapping,
-    UnresolvedParameter,
 )
 from server.router.domain.interfaces.i_parameter_resolver import IParameterStore
 from server.router.domain.interfaces.i_workflow_intent_classifier import (
@@ -52,14 +49,10 @@ class MockClassifier(IWorkflowIntentClassifier):
     def load_workflow_embeddings(self, workflows: Dict[str, Any]) -> None:
         pass
 
-    def find_similar(
-        self, prompt: str, top_k: int = 3, threshold: float = 0.0
-    ) -> List[tuple]:
+    def find_similar(self, prompt: str, top_k: int = 3, threshold: float = 0.0) -> List[tuple]:
         return []
 
-    def find_best_match(
-        self, prompt: str, min_confidence: float = 0.5
-    ) -> Optional[tuple]:
+    def find_best_match(self, prompt: str, min_confidence: float = 0.5) -> Optional[tuple]:
         return None
 
     def get_generalization_candidates(
@@ -141,9 +134,7 @@ class MockParameterStore(IParameterStore):
     ) -> List[StoredMapping]:
         return list(self._mappings.values())
 
-    def delete_mapping(
-        self, context: str, parameter_name: str, workflow_name: str
-    ) -> bool:
+    def delete_mapping(self, context: str, parameter_name: str, workflow_name: str) -> bool:
         key = f"{workflow_name}:{parameter_name}"
         if key in self._mappings:
             del self._mappings[key]
@@ -230,9 +221,7 @@ class TestParameterResolverTier1:
         assert result.resolution_sources["leg_angle_left"] == "yaml_modifier"
         assert result.resolution_sources["leg_angle_right"] == "yaml_modifier"
 
-    def test_yaml_modifier_overrides_learned(
-        self, resolver, mock_store, sample_parameters
-    ):
+    def test_yaml_modifier_overrides_learned(self, resolver, mock_store, sample_parameters):
         """Test YAML modifier takes priority over learned mapping."""
         # Add a learned mapping with different value
         mock_store.add_mapping(
@@ -261,9 +250,7 @@ class TestParameterResolverTier1:
 class TestParameterResolverTier2:
     """Tests for TIER 2: Learned mapping resolution."""
 
-    def test_learned_mapping_used_when_no_yaml(
-        self, resolver, mock_store, mock_classifier, sample_parameters
-    ):
+    def test_learned_mapping_used_when_no_yaml(self, resolver, mock_store, mock_classifier, sample_parameters):
         """Test learned mapping is used when no YAML modifier exists."""
         mock_store.add_mapping(
             context="prostymi nogami",
@@ -288,9 +275,7 @@ class TestParameterResolverTier2:
         assert result.resolved["leg_angle_left"] == 0
         assert result.resolution_sources["leg_angle_left"] == "learned"
 
-    def test_usage_incremented_when_mapping_used(
-        self, resolver, mock_store, mock_classifier, sample_parameters
-    ):
+    def test_usage_incremented_when_mapping_used(self, resolver, mock_store, mock_classifier, sample_parameters):
         """Test usage count is incremented when mapping is reused."""
         mock_store.add_mapping(
             context="test context",
@@ -342,9 +327,7 @@ class TestParameterResolverTier2:
 class TestParameterResolverTier3:
     """Tests for TIER 3: Unresolved parameters."""
 
-    def test_unresolved_when_prompt_relates_to_param(
-        self, resolver, mock_classifier, sample_parameters
-    ):
+    def test_unresolved_when_prompt_relates_to_param(self, resolver, mock_classifier, sample_parameters):
         """Test parameter marked unresolved when prompt relates to it."""
         # Set high similarity for prompt and hint
         mock_classifier.set_similarity(
@@ -366,9 +349,7 @@ class TestParameterResolverTier3:
         assert result.unresolved[0].name == "leg_angle_left"
         assert result.unresolved[0].relevance > 0.5
 
-    def test_default_when_prompt_doesnt_relate(
-        self, resolver, mock_classifier, sample_parameters
-    ):
+    def test_default_when_prompt_doesnt_relate(self, resolver, mock_classifier, sample_parameters):
         """Test default value used when prompt doesn't mention parameter."""
         # Low similarity for all
         mock_classifier._default_similarity = 0.2
@@ -385,9 +366,7 @@ class TestParameterResolverTier3:
         assert result.resolved["top_width"] == 1.5
         assert result.resolution_sources["top_width"] == "default"
 
-    def test_computed_param_not_defaulted_to_none_when_irrelevant(
-        self, resolver, mock_classifier
-    ):
+    def test_computed_param_not_defaulted_to_none_when_irrelevant(self, resolver, mock_classifier):
         """Computed params should be deferred (not set to default=None)."""
         mock_classifier._default_similarity = 0.2
 
@@ -510,9 +489,7 @@ class TestParameterResolverRelevance:
         )
 
         # "straight" appears literally in prompt
-        relevance = resolver.calculate_relevance(
-            "table with straight legs", schema
-        )
+        relevance = resolver.calculate_relevance("table with straight legs", schema)
 
         assert relevance >= 0.8
 
@@ -609,9 +586,7 @@ class TestParameterResolverStoreValue:
 class TestParameterResolverIntegration:
     """Integration tests for complete resolution flow."""
 
-    def test_multiple_parameters_mixed_resolution(
-        self, resolver, mock_store, mock_classifier, sample_parameters
-    ):
+    def test_multiple_parameters_mixed_resolution(self, resolver, mock_store, mock_classifier, sample_parameters):
         """Test resolving multiple parameters with different sources."""
         # Setup: one learned mapping
         mock_store.add_mapping(

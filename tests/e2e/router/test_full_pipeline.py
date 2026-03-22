@@ -7,8 +7,6 @@ Requires running Blender instance.
 TASK-039-23
 """
 
-import pytest
-
 from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
 
@@ -48,16 +46,15 @@ class TestFullPipeline:
 
         # Count successes
         successes = [e for e in all_executed if e["success"]]
-        assert len(successes) >= len(session_tools), \
+        assert len(successes) >= len(session_tools), (
             f"Should execute at least {len(session_tools)} tools, got {len(successes)}"
+        )
 
     def test_pipeline_with_intent_classification(self, router, rpc_client, clean_scene):
         """Test: Pipeline with prompt-based intent classification."""
         # Process with natural language prompt
         tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.5},
-            prompt="extrude the top face of the phone to create a button"
+            "mesh_extrude_region", {"depth": 0.5}, prompt="extrude the top face of the phone to create a button"
         )
 
         assert len(tools) > 0, "Should return at least one tool"
@@ -92,10 +89,7 @@ class TestErrorRecovery:
         """Test: Invalid tool name is handled gracefully."""
         # This might raise or return empty
         try:
-            tools = router.process_llm_tool_call(
-                "nonexistent_tool_xyz",
-                {"param": "value"}
-            )
+            tools = router.process_llm_tool_call("nonexistent_tool_xyz", {"param": "value"})
             # If it doesn't raise, should return something
             assert isinstance(tools, list)
         except Exception:
@@ -173,15 +167,9 @@ class TestRouterConfiguration:
 
         # Even with matching pattern, shouldn't expand
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]})
 
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": -0.02},
-            prompt="create phone screen"
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": -0.02}, prompt="create phone screen")
 
         # Should NOT expand to full workflow
         assert len(tools) <= 5, "Should not expand to full workflow"
@@ -196,10 +184,7 @@ class TestConcurrentOperations:
 
         for i in range(3):
             # Create object
-            tools = router.process_llm_tool_call(
-                "modeling_create_primitive",
-                {"primitive_type": "CUBE"}
-            )
+            tools = router.process_llm_tool_call("modeling_create_primitive", {"primitive_type": "CUBE"})
 
             for tool in tools:
                 area = tool["tool"].split("_")[0]
@@ -213,9 +198,7 @@ class TestConcurrentOperations:
 
             # Move it
             try:
-                rpc_client.send_request("modeling.transform_object", {
-                    "location": [i * 2, 0, 0]
-                })
+                rpc_client.send_request("modeling.transform_object", {"location": [i * 2, 0, 0]})
             except Exception:
                 pass
 

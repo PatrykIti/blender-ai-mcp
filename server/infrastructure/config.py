@@ -1,5 +1,7 @@
 import os
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 
 class Config(BaseModel):
     """Application Configuration"""
@@ -35,6 +37,7 @@ class Config(BaseModel):
         if self.MCP_TASK_TIMEOUT_SECONDS < self.MCP_TOOL_TIMEOUT_SECONDS:
             raise ValueError("MCP_TASK_TIMEOUT_SECONDS must be >= MCP_TOOL_TIMEOUT_SECONDS")
         return self
+
 
 def get_config() -> Config:
     """Returns configuration loaded from environment variables."""

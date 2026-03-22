@@ -7,7 +7,6 @@ import asyncio
 import pytest
 from fastmcp import FastMCP
 from fastmcp.tools.tool import TaskConfig
-
 from server.adapters.mcp.factory import build_server
 
 

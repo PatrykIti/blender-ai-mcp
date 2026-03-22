@@ -1,6 +1,8 @@
 from typing import List, Optional
+
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.mesh import IMeshTool
+
 
 class MeshToolHandler(IMeshTool):
     def __init__(self, rpc_client: IRpcClient):
@@ -12,14 +14,16 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def delete_selected(self, type: str = 'VERT') -> str:
+    def delete_selected(self, type: str = "VERT") -> str:
         response = self.rpc.send_request("mesh.delete_selected", {"type": type})
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def select_by_index(self, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
-        response = self.rpc.send_request("mesh.select_by_index", {"indices": indices, "type": type, "selection_mode": selection_mode})
+    def select_by_index(self, indices: List[int], type: str = "VERT", selection_mode: str = "SET") -> str:
+        response = self.rpc.send_request(
+            "mesh.select_by_index", {"indices": indices, "type": type, "selection_mode": selection_mode}
+        )
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
@@ -37,7 +41,7 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = 'EDGES') -> str:
+    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = "EDGES") -> str:
         args = {"offset": offset, "segments": segments, "profile": profile, "affect": affect}
         response = self.rpc.send_request("mesh.bevel", args)
         if response.status == "error":
@@ -58,7 +62,7 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def boolean(self, operation: str, solver: str = 'FAST') -> str:
+    def boolean(self, operation: str, solver: str = "FAST") -> str:
         args = {"operation": operation, "solver": solver}
         response = self.rpc.send_request("mesh.boolean", args)
         if response.status == "error":
@@ -93,7 +97,7 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> dict:
+    def list_groups(self, object_name: str, group_type: str = "VERTEX") -> dict:
         args = {"object_name": object_name, "group_type": group_type}
         response = self.rpc.send_request("mesh.list_groups", args)
         if response.status == "error":
@@ -133,11 +137,7 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     def get_vertex_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if offset is not None:
@@ -150,11 +150,7 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     def get_edge_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if offset is not None:
@@ -167,11 +163,7 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     def get_face_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if offset is not None:
@@ -189,7 +181,7 @@ class MeshToolHandler(IMeshTool):
         uv_layer: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if uv_layer is not None:
@@ -204,11 +196,7 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     def get_loop_normals(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if offset is not None:
@@ -226,7 +214,7 @@ class MeshToolHandler(IMeshTool):
         group_name: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if group_name is not None:
@@ -246,7 +234,7 @@ class MeshToolHandler(IMeshTool):
         attribute_name: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> dict:
         args = {"object_name": object_name, "selected_only": selected_only}
         if attribute_name is not None:
@@ -261,11 +249,7 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     def get_shape_keys(
-        self,
-        object_name: str,
-        include_deltas: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, include_deltas: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> dict:
         args = {"object_name": object_name, "include_deltas": include_deltas}
         if offset is not None:
@@ -277,14 +261,14 @@ class MeshToolHandler(IMeshTool):
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = "VERT") -> str:
         args = {"axis": axis, "min_coord": min_coord, "max_coord": max_coord, "mode": mode}
         response = self.rpc.send_request("mesh.select_by_location", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def select_boundary(self, mode: str = 'EDGE') -> str:
+    def select_boundary(self, mode: str = "EDGE") -> str:
         args = {"mode": mode}
         response = self.rpc.send_request("mesh.select_boundary", args)
         if response.status == "error":
@@ -331,13 +315,15 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     # TASK-018-1: Mesh Bisect Tool
-    def bisect(self, plane_co: list, plane_no: list, clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+    def bisect(
+        self, plane_co: list, plane_no: list, clear_inner: bool = False, clear_outer: bool = False, fill: bool = False
+    ) -> str:
         args = {
             "plane_co": plane_co,
             "plane_no": plane_no,
             "clear_inner": clear_inner,
             "clear_outer": clear_outer,
-            "fill": fill
+            "fill": fill,
         }
         response = self.rpc.send_request("mesh.bisect", args)
         if response.status == "error":
@@ -376,11 +362,7 @@ class MeshToolHandler(IMeshTool):
 
     # TASK-019-1: Mesh Transform Selected Tool
     def transform_selected(
-        self,
-        translate: list = None,
-        rotate: list = None,
-        scale: list = None,
-        pivot: str = 'MEDIAN_POINT'
+        self, translate: list = None, rotate: list = None, scale: list = None, pivot: str = "MEDIAN_POINT"
     ) -> str:
         args = {"pivot": pivot}
         if translate:
@@ -396,18 +378,9 @@ class MeshToolHandler(IMeshTool):
 
     # TASK-019-2: Mesh Bridge Edge Loops Tool
     def bridge_edge_loops(
-        self,
-        number_cuts: int = 0,
-        interpolation: str = 'LINEAR',
-        smoothness: float = 0.0,
-        twist: int = 0
+        self, number_cuts: int = 0, interpolation: str = "LINEAR", smoothness: float = 0.0, twist: int = 0
     ) -> str:
-        args = {
-            "number_cuts": number_cuts,
-            "interpolation": interpolation,
-            "smoothness": smoothness,
-            "twist": twist
-        }
+        args = {"number_cuts": number_cuts, "interpolation": interpolation, "smoothness": smoothness, "twist": twist}
         response = self.rpc.send_request("mesh.bridge_edge_loops", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -425,19 +398,9 @@ class MeshToolHandler(IMeshTool):
 
     # TASK-021-3: Mesh Spin Tool
     def spin(
-        self,
-        steps: int = 12,
-        angle: float = 6.283185,
-        axis: str = 'Z',
-        center: list = None,
-        dupli: bool = False
+        self, steps: int = 12, angle: float = 6.283185, axis: str = "Z", center: list = None, dupli: bool = False
     ) -> str:
-        args = {
-            "steps": steps,
-            "angle": angle,
-            "axis": axis,
-            "dupli": dupli
-        }
+        args = {"steps": steps, "angle": angle, "axis": axis, "dupli": dupli}
         if center:
             args["center"] = center
         response = self.rpc.send_request("mesh.spin", args)
@@ -446,20 +409,8 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     # TASK-021-4: Mesh Screw Tool
-    def screw(
-        self,
-        steps: int = 12,
-        turns: int = 1,
-        axis: str = 'Z',
-        center: list = None,
-        offset: float = 0.0
-    ) -> str:
-        args = {
-            "steps": steps,
-            "turns": turns,
-            "axis": axis,
-            "offset": offset
-        }
+    def screw(self, steps: int = 12, turns: int = 1, axis: str = "Z", center: list = None, offset: float = 0.0) -> str:
+        args = {"steps": steps, "turns": turns, "axis": axis, "offset": offset}
         if center:
             args["center"] = center
         response = self.rpc.send_request("mesh.screw", args)
@@ -511,13 +462,13 @@ class MeshToolHandler(IMeshTool):
         dissolve_type: str = "limited",
         angle_limit: float = 5.0,
         use_face_split: bool = False,
-        use_boundary_tear: bool = False
+        use_boundary_tear: bool = False,
     ) -> str:
         args = {
             "dissolve_type": dissolve_type,
             "angle_limit": angle_limit,
             "use_face_split": use_face_split,
-            "use_boundary_tear": use_boundary_tear
+            "use_boundary_tear": use_boundary_tear,
         }
         response = self.rpc.send_request("mesh.dissolve", args)
         if response.status == "error":
@@ -525,15 +476,8 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     # TASK-030-2: Mesh Tris To Quads Tool
-    def tris_to_quads(
-        self,
-        face_threshold: float = 40.0,
-        shape_threshold: float = 40.0
-    ) -> str:
-        args = {
-            "face_threshold": face_threshold,
-            "shape_threshold": shape_threshold
-        }
+    def tris_to_quads(self, face_threshold: float = 40.0, shape_threshold: float = 40.0) -> str:
+        args = {"face_threshold": face_threshold, "shape_threshold": shape_threshold}
         response = self.rpc.send_request("mesh.tris_to_quads", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -548,17 +492,8 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     # TASK-030-4: Mesh Decimate Tool
-    def decimate(
-        self,
-        ratio: float = 0.5,
-        use_symmetry: bool = False,
-        symmetry_axis: str = "X"
-    ) -> str:
-        args = {
-            "ratio": ratio,
-            "use_symmetry": use_symmetry,
-            "symmetry_axis": symmetry_axis
-        }
+    def decimate(self, ratio: float = 0.5, use_symmetry: bool = False, symmetry_axis: str = "X") -> str:
+        args = {"ratio": ratio, "use_symmetry": use_symmetry, "symmetry_axis": symmetry_axis}
         response = self.rpc.send_request("mesh.decimate", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -631,7 +566,9 @@ class MeshToolHandler(IMeshTool):
         return response.result
 
     # TASK-036-3: Mesh Poke Faces Tool
-    def poke_faces(self, offset: float = 0.0, use_relative_offset: bool = False, center_mode: str = "MEDIAN_WEIGHTED") -> str:
+    def poke_faces(
+        self, offset: float = 0.0, use_relative_offset: bool = False, center_mode: str = "MEDIAN_WEIGHTED"
+    ) -> str:
         args = {"offset": offset, "use_relative_offset": use_relative_offset, "center_mode": center_mode}
         response = self.rpc.send_request("mesh.poke_faces", args)
         if response.status == "error":

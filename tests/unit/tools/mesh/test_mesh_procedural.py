@@ -2,18 +2,18 @@
 Tests for TASK-021 (Phase 2.6 - Curves & Procedural) mesh tools.
 Pure pytest style - uses conftest.py fixtures.
 """
-import pytest
+
 from unittest.mock import MagicMock
 
-import bpy
 import bmesh
-
+import bpy
+import pytest
 from blender_addon.application.handlers.mesh import MeshHandler
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mesh_handler():
@@ -25,8 +25,8 @@ def mesh_handler():
 def mock_edit_mode():
     """Sets up basic edit mode mocks."""
     bpy.context.active_object = MagicMock()
-    bpy.context.active_object.type = 'MESH'
-    bpy.context.active_object.mode = 'EDIT'
+    bpy.context.active_object.type = "MESH"
+    bpy.context.active_object.mode = "EDIT"
     bpy.ops.object.mode_set = MagicMock()
     return bpy.context.active_object
 
@@ -88,6 +88,7 @@ def mock_scene_with_cursor():
 # TASK-021-3: mesh_spin tests
 # =============================================================================
 
+
 class TestMeshSpin:
     """Tests for mesh_spin tool."""
 
@@ -102,7 +103,7 @@ class TestMeshSpin:
             angle=6.283185,
             center=(0, 0, 0),
             axis=(0, 0, 1),  # Z axis
-            dupli=False
+            dupli=False,
         )
         assert "Spin complete" in result
 
@@ -128,10 +129,10 @@ class TestMeshSpin:
         """Should spin around X axis."""
         bpy.ops.mesh.spin = MagicMock()
 
-        result = mesh_handler.spin(axis='X')
+        result = mesh_handler.spin(axis="X")
 
         call_args = bpy.ops.mesh.spin.call_args
-        assert call_args[1]['axis'] == (1, 0, 0)
+        assert call_args[1]["axis"] == (1, 0, 0)
         assert "around X" in result
 
     def test_spin_with_custom_center(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
@@ -141,7 +142,7 @@ class TestMeshSpin:
         result = mesh_handler.spin(center=[1, 2, 3])
 
         call_args = bpy.ops.mesh.spin.call_args
-        assert call_args[1]['center'] == (1, 2, 3)
+        assert call_args[1]["center"] == (1, 2, 3)
         assert "[1, 2, 3]" in result
 
     def test_spin_dupli_mode(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
@@ -151,7 +152,7 @@ class TestMeshSpin:
         result = mesh_handler.spin(dupli=True)
 
         call_args = bpy.ops.mesh.spin.call_args
-        assert call_args[1]['dupli'] == True
+        assert call_args[1]["dupli"]
         assert "duplicate mode" in result
 
     def test_spin_no_selection_raises(self, mesh_handler, mock_edit_mode, mock_bmesh_empty, mock_scene_with_cursor):
@@ -159,15 +160,18 @@ class TestMeshSpin:
         with pytest.raises(ValueError, match="No geometry selected"):
             mesh_handler.spin()
 
-    def test_spin_invalid_axis_raises(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
+    def test_spin_invalid_axis_raises(
+        self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor
+    ):
         """Should raise ValueError for invalid axis."""
         with pytest.raises(ValueError, match="Invalid axis"):
-            mesh_handler.spin(axis='W')
+            mesh_handler.spin(axis="W")
 
 
 # =============================================================================
 # TASK-021-4: mesh_screw tests
 # =============================================================================
+
 
 class TestMeshScrew:
     """Tests for mesh_screw tool."""
@@ -178,13 +182,7 @@ class TestMeshScrew:
 
         result = mesh_handler.screw()
 
-        bpy.ops.mesh.screw.assert_called_with(
-            steps=12,
-            turns=1,
-            center=(0, 0, 0),
-            axis=(0, 0, 1),
-            screw_offset=0.0
-        )
+        bpy.ops.mesh.screw.assert_called_with(steps=12, turns=1, center=(0, 0, 0), axis=(0, 0, 1), screw_offset=0.0)
         assert "Screw complete" in result
 
     def test_screw_multiple_turns(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
@@ -194,7 +192,7 @@ class TestMeshScrew:
         result = mesh_handler.screw(turns=3)
 
         call_args = bpy.ops.mesh.screw.call_args
-        assert call_args[1]['turns'] == 3
+        assert call_args[1]["turns"] == 3
         assert "3 turn(s)" in result
 
     def test_screw_with_offset(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
@@ -204,17 +202,17 @@ class TestMeshScrew:
         result = mesh_handler.screw(offset=0.5)
 
         call_args = bpy.ops.mesh.screw.call_args
-        assert call_args[1]['screw_offset'] == 0.5
+        assert call_args[1]["screw_offset"] == 0.5
         assert "offset=0.5" in result
 
     def test_screw_around_y_axis(self, mesh_handler, mock_edit_mode, mock_bmesh_with_verts, mock_scene_with_cursor):
         """Should screw around Y axis."""
         bpy.ops.mesh.screw = MagicMock()
 
-        result = mesh_handler.screw(axis='Y')
+        result = mesh_handler.screw(axis="Y")
 
         call_args = bpy.ops.mesh.screw.call_args
-        assert call_args[1]['axis'] == (0, 1, 0)
+        assert call_args[1]["axis"] == (0, 1, 0)
         assert "around Y" in result
 
     def test_screw_no_selection_raises(self, mesh_handler, mock_edit_mode, mock_bmesh_empty, mock_scene_with_cursor):
@@ -226,6 +224,7 @@ class TestMeshScrew:
 # =============================================================================
 # TASK-021-5: mesh_add_vertex tests
 # =============================================================================
+
 
 class TestMeshAddVertex:
     """Tests for mesh_add_vertex tool."""
@@ -266,6 +265,7 @@ class TestMeshAddVertex:
 # TASK-021-5: mesh_add_edge_face tests
 # =============================================================================
 
+
 class TestMeshAddEdgeFace:
     """Tests for mesh_add_edge_face tool."""
 
@@ -281,12 +281,7 @@ class TestMeshAddEdgeFace:
     def test_add_face_from_three_plus_verts(self, mesh_handler, mock_edit_mode):
         """Should create face from 3+ selected vertices."""
         mock_bm = MagicMock()
-        mock_bm.verts = [
-            MagicMock(select=True),
-            MagicMock(select=True),
-            MagicMock(select=True),
-            MagicMock(select=True)
-        ]
+        mock_bm.verts = [MagicMock(select=True), MagicMock(select=True), MagicMock(select=True), MagicMock(select=True)]
         bmesh.from_edit_mesh = MagicMock(return_value=mock_bm)
         bpy.ops.mesh.edge_face_add = MagicMock()
 

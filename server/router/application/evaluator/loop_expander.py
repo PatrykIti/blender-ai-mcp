@@ -13,7 +13,7 @@ import dataclasses
 import itertools
 import logging
 import re
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Sequence
 
 from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 from server.router.application.workflows.base import WorkflowStep
@@ -57,16 +57,11 @@ class LoopExpander:
                 i += 1
 
             if len(expanded) > self._max_expanded_steps:
-                raise ValueError(
-                    f"Loop expansion produced {len(expanded)} steps "
-                    f"(limit={self._max_expanded_steps})."
-                )
+                raise ValueError(f"Loop expansion produced {len(expanded)} steps (limit={self._max_expanded_steps}).")
 
         return expanded
 
-    def _consume_group_block(
-        self, steps: Sequence[WorkflowStep], start_index: int, group: str
-    ) -> List[WorkflowStep]:
+    def _consume_group_block(self, steps: Sequence[WorkflowStep], start_index: int, group: str) -> List[WorkflowStep]:
         block: List[WorkflowStep] = []
         i = start_index
         while i < len(steps):
@@ -153,9 +148,7 @@ class LoopExpander:
             if not isinstance(ranges_spec, (list, tuple)) or not ranges_spec:
                 raise ValueError(f"Invalid loop.ranges (expected non-empty list): {ranges_spec!r}")
             if len(vars_) != len(ranges_spec):
-                raise ValueError(
-                    f"loop.variables and loop.ranges length mismatch: {len(vars_)} vs {len(ranges_spec)}"
-                )
+                raise ValueError(f"loop.variables and loop.ranges length mismatch: {len(vars_)} vs {len(ranges_spec)}")
 
             vars_list = list(vars_)
             if any((not isinstance(v, str) or not v) for v in vars_list):
@@ -276,4 +269,3 @@ class LoopExpander:
             if name in self._step_field_names:
                 continue
             yield name, value
-

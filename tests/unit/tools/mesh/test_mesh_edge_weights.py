@@ -7,19 +7,18 @@ Tests:
 - mesh_mark_sharp
 """
 
-import unittest
-from unittest.mock import MagicMock, PropertyMock
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -47,8 +46,8 @@ class TestMeshEdgeCrease(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
 
         # Setup BMesh mock with custom edge sequence
@@ -130,8 +129,8 @@ class TestMeshBevelWeight(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
 
         # Setup BMesh mock
@@ -204,8 +203,8 @@ class TestMeshMarkSharp(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.mark_sharp = MagicMock()
 
@@ -272,5 +271,5 @@ class TestMeshMarkSharp(unittest.TestCase):
         self.assertIn("No edges selected", str(context.exception))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

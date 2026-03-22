@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from server.adapters.mcp.factory import build_server
 
 

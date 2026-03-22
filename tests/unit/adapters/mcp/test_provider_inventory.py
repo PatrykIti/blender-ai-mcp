@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
 from server.adapters.mcp.areas.armature import ARMATURE_PUBLIC_TOOL_NAMES, register_armature_tools
 from server.adapters.mcp.areas.baking import BAKING_PUBLIC_TOOL_NAMES, register_baking_tools
 from server.adapters.mcp.areas.collection import COLLECTION_PUBLIC_TOOL_NAMES, register_collection_tools
@@ -15,17 +14,15 @@ from server.adapters.mcp.areas.extraction import EXTRACTION_PUBLIC_TOOL_NAMES, r
 from server.adapters.mcp.areas.lattice import LATTICE_PUBLIC_TOOL_NAMES, register_lattice_tools
 from server.adapters.mcp.areas.material import MATERIAL_PUBLIC_TOOL_NAMES, register_material_tools
 from server.adapters.mcp.areas.mesh import register_mesh_tools
+from server.adapters.mcp.areas.modeling import register_modeling_tools
 from server.adapters.mcp.areas.router import register_router_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.areas.sculpt import SCULPT_PUBLIC_TOOL_NAMES, register_sculpt_tools
 from server.adapters.mcp.areas.system import SYSTEM_PUBLIC_TOOL_NAMES, register_system_tools
 from server.adapters.mcp.areas.text import TEXT_PUBLIC_TOOL_NAMES, register_text_tools
 from server.adapters.mcp.areas.uv import UV_PUBLIC_TOOL_NAMES, register_uv_tools
-from server.adapters.mcp.areas.modeling import register_modeling_tools
 from server.adapters.mcp.areas.workflow_catalog import register_workflow_tools
-from server.adapters.mcp.providers import core_tools
-from server.adapters.mcp.providers import internal_tools, router_tools, workflow_tools
-
+from server.adapters.mcp.providers import core_tools, internal_tools, router_tools, workflow_tools
 
 EXPECTED_MODELING_TOOLS = {
     "modeling_create_primitive",

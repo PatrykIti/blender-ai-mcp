@@ -1,4 +1,5 @@
 """Tests for MCP adapter utilities."""
+
 import pytest
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 
@@ -8,17 +9,17 @@ class TestParseCoordinate:
 
     def test_parse_string_with_floats(self):
         """Should parse JSON string with floats."""
-        result = parse_coordinate('[0.0, 0.0, 2.0]')
+        result = parse_coordinate("[0.0, 0.0, 2.0]")
         assert result == [0.0, 0.0, 2.0]
 
     def test_parse_string_with_integers(self):
         """Should parse JSON string with integers and convert to floats."""
-        result = parse_coordinate('[1, 2, 3]')
+        result = parse_coordinate("[1, 2, 3]")
         assert result == [1.0, 2.0, 3.0]
 
     def test_parse_string_with_negative_values(self):
         """Should parse JSON string with negative values."""
-        result = parse_coordinate('[-1.5, 2.5, -3.0]')
+        result = parse_coordinate("[-1.5, 2.5, -3.0]")
         assert result == [-1.5, 2.5, -3.0]
 
     def test_parse_list_directly(self):
@@ -93,7 +94,7 @@ class TestParseDict:
     def test_parse_string_not_dict(self):
         """Should raise ValueError when JSON string doesn't contain a dict."""
         with pytest.raises(ValueError, match="Expected a dictionary"):
-            parse_dict('[1, 2, 3]')
+            parse_dict("[1, 2, 3]")
 
     def test_parse_empty_string(self):
         """Should raise ValueError for empty string."""

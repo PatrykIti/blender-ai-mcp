@@ -54,8 +54,9 @@ Current public argument aliases:
 
 Current hidden/expert-only arguments on `llm-guided` include:
 
-- `inspect_scene`: `detailed`, `include_disabled`, `modifier_name`, and other backend-only inspection flags
-- `mesh_inspect`: `selected_only`, `uv_layer`, `include_deltas`
+- `inspect_scene`: `detailed`, `include_disabled`, `modifier_name`, `assistant_summary`, and other backend-only inspection flags
+- `mesh_inspect`: `selected_only`, `uv_layer`, `include_deltas`, `assistant_summary`
+- `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, and `scene_get_origin_info`: `assistant_summary`
 - `browse_workflows`: `top_k`, `threshold`, chunk/session import internals, and related expert-only knobs
 
 Router and dispatcher internals still operate on canonical internal names.
@@ -127,6 +128,37 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `workflow_catalog`
 
 These tools return native structured payloads on contract-enabled paths and use the shared contract helpers/output-schema policy instead of prose-first JSON-string wrappers.
+
+## Server-Side Sampling Assistants Baseline
+
+The MCP adapter layer now has a bounded sampling-assistant baseline for analytical/recovery helpers inside one active MCP request.
+
+Current assistant-enabled paths:
+
+- `scene_inspect(..., assistant_summary=True)` on internal/expert paths
+- `mesh_inspect(..., assistant_summary=True)` on internal/expert paths
+- `scene_snapshot_state(..., assistant_summary=True)` on internal/expert paths
+- `scene_compare_snapshot(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_hierarchy(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_bounding_box(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_origin_info(..., assistant_summary=True)` on internal/expert paths
+- `router_set_goal()` when the goal flow ends in `no_match` or `error`
+- `router_get_status()` when the latest router/session diagnostics indicate a recovery path
+- `workflow_catalog()` when import-oriented flows enter `needs_input`, `skipped`, or explicit error states
+
+Current typed assistant statuses:
+
+- `success`
+- `unavailable`
+- `masked_error`
+- `rejected_by_policy`
+
+Governance notes:
+
+- assistants are request-bound and reject background-task execution
+- assistants are adapter-scoped helpers, not a fifth truth/policy authority
+- assistants may summarize inspection contracts or draft repair guidance from diagnostics
+- assistants must not replace router safety policy or inspection truth
 
 ## Versioned Client Surface Baseline
 

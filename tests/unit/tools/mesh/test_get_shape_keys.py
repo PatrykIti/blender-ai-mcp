@@ -1,16 +1,16 @@
 """Tests for mesh shape key introspection."""
+
+import sys
 import unittest
 from unittest.mock import MagicMock
-import sys
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
 import bpy
-
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -32,8 +32,8 @@ class TestMeshGetShapeKeys(unittest.TestCase):
 
     def test_get_shape_keys_with_deltas(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'EDIT'
+        obj.type = "MESH"
+        obj.mode = "EDIT"
 
         basis_point0 = MagicMock()
         basis_point0.co = Vec(0.0, 0.0, 0.0)
@@ -71,5 +71,5 @@ class TestMeshGetShapeKeys(unittest.TestCase):
         assert result["shape_keys"][1]["deltas"] == [{"vert": 0, "delta": [0.1, 0.0, 0.0]}]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

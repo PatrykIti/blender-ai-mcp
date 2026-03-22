@@ -4,6 +4,7 @@ Shared fixtures for extraction E2E tests.
 These fixtures create test objects before tests run, ensuring
 tests don't fail because expected objects don't exist in the scene.
 """
+
 import pytest
 from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -47,12 +48,7 @@ def test_cube(modeling_handler, scene_handler):
         pass  # Object didn't exist, that's fine
 
     # Create the test cube
-    modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
 
     yield name
 
@@ -85,17 +81,12 @@ def test_cube_with_components(modeling_handler, scene_handler):
             pass
 
     # Create two cubes at different positions
-    modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=1.0,
-        location=[0, 0, 0],
-        name=cube1_name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=1.0, location=[0, 0, 0], name=cube1_name)
     modeling_handler.create_primitive(
         primitive_type="CUBE",
         size=1.0,
         location=[5, 0, 0],  # Far apart so they don't merge
-        name=cube2_name
+        name=cube2_name,
     )
 
     # Join them into one object

@@ -12,6 +12,12 @@
 
 - Align FastMCP task runtime to `fastmcp 3.1.1` + `pydocket 0.18.2`, add explicit runtime guards, and remove the old local compatibility shim
 
+### Chores
+
+- Add a repo-level `pre-commit` baseline with hygiene checks, `ruff` lint/format, GitHub workflow and router metadata schema validation, plus `pre-push` hooks for Poetry validation, unit tests, and addon build verification
+
+- Add bounded server-side sampling assistants for inspection summaries and router repair suggestions with typed status envelopes and explicit governance limits
+
 ## v2.2.0 (2026-03-20)
 
 ### Features

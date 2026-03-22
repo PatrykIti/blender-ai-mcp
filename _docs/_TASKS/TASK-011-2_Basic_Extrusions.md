@@ -27,4 +27,3 @@ Implement the most fundamental modeling operations: Extruding geometry and filli
 - [x] Update Addon `MeshHandler`.
 - [x] Register `mesh_extrude_region`, `mesh_fill_holes`.
 - [x] Tests.
-

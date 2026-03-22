@@ -92,4 +92,3 @@ class TestModelingGetModifierData:
         assert entry["node_tree"]["name"] == "GN_Shell"
         assert entry["node_tree"]["inputs"][0]["name"] == "Bevel"
         assert entry["node_tree"]["outputs"][0]["name"] == "Geometry"
-

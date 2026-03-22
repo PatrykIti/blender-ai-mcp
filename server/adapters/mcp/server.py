@@ -10,9 +10,10 @@ Author: Patryk Ciechański (PatrykIti)
 import logging
 import signal
 import sys
+
 from server.adapters.mcp.factory import build_server
-from server.infrastructure.di import is_router_enabled, get_router
 from server.infrastructure.config import get_config
+from server.infrastructure.di import is_router_enabled
 
 logger = logging.getLogger(__name__)
 

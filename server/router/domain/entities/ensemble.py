@@ -9,7 +9,7 @@ weighted consensus.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -38,9 +38,9 @@ class MatcherResult:
         """Validate field values and clamp for floating point precision."""
         # Clamp confidence to handle floating point precision issues (e.g., 1.0000000000000002)
         if self.confidence > 1.0 and self.confidence < 1.0 + 1e-9:
-            object.__setattr__(self, 'confidence', 1.0)
+            object.__setattr__(self, "confidence", 1.0)
         elif self.confidence < 0.0 and self.confidence > -1e-9:
-            object.__setattr__(self, 'confidence', 0.0)
+            object.__setattr__(self, "confidence", 0.0)
 
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
@@ -126,9 +126,7 @@ class EnsembleResult:
 
         valid_levels = {"HIGH", "MEDIUM", "LOW", "NONE"}
         if self.confidence_level not in valid_levels:
-            raise ValueError(
-                f"Confidence level must be one of {valid_levels}, got {self.confidence_level}"
-            )
+            raise ValueError(f"Confidence level must be one of {valid_levels}, got {self.confidence_level}")
 
     @property
     def confidence(self) -> float:

@@ -5,20 +5,18 @@ TASK-046-2: Initial tests
 TASK-047: Updated for LanceDB integration
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
-from pathlib import Path
-import tempfile
+from unittest.mock import MagicMock, patch
 
+import pytest
 from server.router.application.classifier.workflow_intent_classifier import (
-    WorkflowIntentClassifier,
     EMBEDDINGS_AVAILABLE,
+    WorkflowIntentClassifier,
 )
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
 )
 from server.router.infrastructure.config import RouterConfig
 
@@ -217,15 +215,17 @@ class TestWorkflowIntentClassifier:
     def test_clear_cache(self, classifier, mock_store):
         """Test clearing cache."""
         # Add some records
-        mock_store.upsert([
-            VectorRecord(
-                id="test_workflow",
-                namespace=VectorNamespace.WORKFLOWS,
-                vector=[0.0] * 768,
-                text="test",
-                metadata={},
-            )
-        ])
+        mock_store.upsert(
+            [
+                VectorRecord(
+                    id="test_workflow",
+                    namespace=VectorNamespace.WORKFLOWS,
+                    vector=[0.0] * 768,
+                    text="test",
+                    metadata={},
+                )
+            ]
+        )
 
         result = classifier.clear_cache()
 
@@ -235,10 +235,12 @@ class TestWorkflowIntentClassifier:
     def test_find_similar_with_mock_results(self, classifier, mock_store, mock_workflows):
         """Test find_similar returns mock search results."""
         # Setup mock results
-        mock_store.set_search_results([
-            SearchResult(id="phone_workflow", score=0.9, text="phone", metadata={}),
-            SearchResult(id="table_workflow", score=0.7, text="table", metadata={}),
-        ])
+        mock_store.set_search_results(
+            [
+                SearchResult(id="phone_workflow", score=0.9, text="phone", metadata={}),
+                SearchResult(id="table_workflow", score=0.7, text="table", metadata={}),
+            ]
+        )
 
         # Load workflows to set _is_loaded
         classifier.load_workflow_embeddings(mock_workflows)
@@ -288,7 +290,7 @@ class TestWorkflowIntentClassifierWithTFIDF:
         }
 
         # Patch to force TF-IDF fallback
-        with patch.object(classifier, '_load_model', return_value=False):
+        with patch.object(classifier, "_load_model", return_value=False):
             classifier.load_workflow_embeddings(workflows)
 
         return classifier
@@ -334,12 +336,12 @@ class TestWorkflowIntentClassifierInterface:
         classifier = WorkflowIntentClassifier(vector_store=mock_store)
 
         # Check all required methods exist
-        assert hasattr(classifier, 'load_workflow_embeddings')
-        assert hasattr(classifier, 'find_similar')
-        assert hasattr(classifier, 'find_best_match')
-        assert hasattr(classifier, 'get_generalization_candidates')
-        assert hasattr(classifier, 'get_embedding')
-        assert hasattr(classifier, 'similarity')
-        assert hasattr(classifier, 'is_loaded')
-        assert hasattr(classifier, 'get_info')
-        assert hasattr(classifier, 'clear_cache')
+        assert hasattr(classifier, "load_workflow_embeddings")
+        assert hasattr(classifier, "find_similar")
+        assert hasattr(classifier, "find_best_match")
+        assert hasattr(classifier, "get_generalization_candidates")
+        assert hasattr(classifier, "get_embedding")
+        assert hasattr(classifier, "similarity")
+        assert hasattr(classifier, "is_loaded")
+        assert hasattr(classifier, "get_info")
+        assert hasattr(classifier, "clear_cache")

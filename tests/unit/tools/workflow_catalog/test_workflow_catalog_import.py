@@ -2,12 +2,11 @@ import json
 from pathlib import Path
 
 import pytest
-
 from server.application.tool_handlers.workflow_catalog_handler import (
     WorkflowCatalogToolHandler,
 )
-from server.router.infrastructure.workflow_loader import WorkflowLoader
 from server.router.domain.interfaces.i_vector_store import VectorNamespace
+from server.router.infrastructure.workflow_loader import WorkflowLoader
 
 
 class DummyWorkflowClassifier:
@@ -57,13 +56,7 @@ def _write_workflow_json(path: Path, name: str) -> None:
 
 
 def _write_workflow_yaml(path: Path, name: str) -> None:
-    content = (
-        f"name: {name}\n"
-        "steps:\n"
-        "  - tool: modeling_create_primitive\n"
-        "    params:\n"
-        "      primitive_type: Cube\n"
-    )
+    content = f"name: {name}\nsteps:\n  - tool: modeling_create_primitive\n    params:\n      primitive_type: Cube\n"
     path.write_text(content, encoding="utf-8")
 
 
@@ -166,9 +159,7 @@ def test_import_workflow_overwrite_removes_files_and_embeddings(workflow_setup):
     incoming_file = incoming_dir / "chair.json"
     _write_workflow_json(incoming_file, "chair_workflow")
 
-    vector_store = DummyVectorStore(
-        ids=["chair_workflow", "chair_workflow__sample_prompt__0"]
-    )
+    vector_store = DummyVectorStore(ids=["chair_workflow", "chair_workflow__sample_prompt__0"])
     handler = WorkflowCatalogToolHandler(
         workflow_loader=loader,
         workflow_classifier=DummyWorkflowClassifier(),

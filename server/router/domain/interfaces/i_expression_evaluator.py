@@ -6,7 +6,7 @@ Defines contract for safe expression evaluation used by workflow system.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class IExpressionEvaluator(ABC):

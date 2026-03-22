@@ -7,19 +7,14 @@ TASK-047: Updated for LanceDB integration
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
-from pathlib import Path
-import tempfile
-
 from server.router.application.classifier.intent_classifier import (
-    IntentClassifier,
     EMBEDDINGS_AVAILABLE,
+    IntentClassifier,
 )
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
 )
 from server.router.infrastructure.config import RouterConfig
 
@@ -314,15 +309,17 @@ class TestIntentClassifierClearCache:
     def test_clear_cache(self, classifier, mock_store, sample_metadata):
         """Test clearing the cache."""
         # Add some records first
-        mock_store.upsert([
-            VectorRecord(
-                id="test_tool",
-                namespace=VectorNamespace.TOOLS,
-                vector=[0.0] * 768,
-                text="test",
-                metadata={},
-            )
-        ])
+        mock_store.upsert(
+            [
+                VectorRecord(
+                    id="test_tool",
+                    namespace=VectorNamespace.TOOLS,
+                    vector=[0.0] * 768,
+                    text="test",
+                    metadata={},
+                )
+            ]
+        )
 
         result = classifier.clear_cache()
 
@@ -338,7 +335,7 @@ class TestTfidfFallback:
         # This will use TF-IDF if sentence-transformers not installed
         classifier.load_tool_embeddings(sample_metadata)
 
-        info = classifier.get_model_info()
+        classifier.get_model_info()
         # Either embeddings or TF-IDF should be working
         assert classifier.is_loaded()
 
@@ -393,11 +390,11 @@ class TestIntentClassifierInterface:
         classifier = IntentClassifier(vector_store=mock_store)
 
         # Check all required methods exist
-        assert hasattr(classifier, 'predict')
-        assert hasattr(classifier, 'predict_top_k')
-        assert hasattr(classifier, 'load_tool_embeddings')
-        assert hasattr(classifier, 'is_loaded')
-        assert hasattr(classifier, 'get_embedding')
-        assert hasattr(classifier, 'similarity')
-        assert hasattr(classifier, 'get_model_info')
-        assert hasattr(classifier, 'clear_cache')
+        assert hasattr(classifier, "predict")
+        assert hasattr(classifier, "predict_top_k")
+        assert hasattr(classifier, "load_tool_embeddings")
+        assert hasattr(classifier, "is_loaded")
+        assert hasattr(classifier, "get_embedding")
+        assert hasattr(classifier, "similarity")
+        assert hasattr(classifier, "get_model_info")
+        assert hasattr(classifier, "clear_cache")

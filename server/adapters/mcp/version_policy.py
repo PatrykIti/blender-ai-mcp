@@ -9,7 +9,6 @@ from dataclasses import dataclass
 
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LEGACY, AUDIENCE_LLM_GUIDED
 
-
 CONTRACT_LINE_LEGACY_V1 = "legacy-v1"
 CONTRACT_LINE_LLM_GUIDED_V1 = "llm-guided-v1"
 CONTRACT_LINE_LLM_GUIDED_V2 = "llm-guided-v2"

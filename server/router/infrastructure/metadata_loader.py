@@ -4,12 +4,12 @@ Tool Metadata Loader.
 Loads tool metadata from per-tool JSON files for router decision making.
 """
 
-import json
 import hashlib
-from pathlib import Path
-from typing import Dict, Optional, List, Any
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -236,10 +236,7 @@ class MetadataLoader:
         if not self._cache:
             self.load_all()
 
-        return [
-            tool for tool in self._cache.values()
-            if tool.mode_required == mode or tool.mode_required == "ANY"
-        ]
+        return [tool for tool in self._cache.values() if tool.mode_required == mode or tool.mode_required == "ANY"]
 
     def get_tools_by_category(self, category: str) -> List[ToolMetadata]:
         """Get all tools in a specific category.
@@ -253,10 +250,7 @@ class MetadataLoader:
         if not self._cache:
             self.load_all()
 
-        return [
-            tool for tool in self._cache.values()
-            if tool.category == category
-        ]
+        return [tool for tool in self._cache.values() if tool.category == category]
 
     def get_tools_requiring_selection(self) -> List[str]:
         """Get names of all tools that require selection.
@@ -267,10 +261,7 @@ class MetadataLoader:
         if not self._cache:
             self.load_all()
 
-        return [
-            tool.tool_name for tool in self._cache.values()
-            if tool.selection_required
-        ]
+        return [tool.tool_name for tool in self._cache.values() if tool.selection_required]
 
     def search_by_keyword(self, keyword: str) -> List[ToolMetadata]:
         """Search tools by keyword.
@@ -285,10 +276,7 @@ class MetadataLoader:
             self.load_all()
 
         keyword_lower = keyword.lower()
-        return [
-            tool for tool in self._cache.values()
-            if any(keyword_lower in kw.lower() for kw in tool.keywords)
-        ]
+        return [tool for tool in self._cache.values() if any(keyword_lower in kw.lower() for kw in tool.keywords)]
 
     def get_all_sample_prompts(self) -> Dict[str, List[str]]:
         """Get all sample prompts mapped to tool names.
@@ -299,11 +287,7 @@ class MetadataLoader:
         if not self._cache:
             self.load_all()
 
-        return {
-            tool.tool_name: tool.sample_prompts
-            for tool in self._cache.values()
-            if tool.sample_prompts
-        }
+        return {tool.tool_name: tool.sample_prompts for tool in self._cache.values() if tool.sample_prompts}
 
     def _load_file(self, file_path: Path) -> Optional[ToolMetadata]:
         """Load metadata from a single JSON file.
@@ -341,39 +325,47 @@ class MetadataLoader:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
-            errors.append(ValidationError(
-                file_path=str(file_path),
-                error_type="json_parse_error",
-                message=str(e),
-            ))
+            errors.append(
+                ValidationError(
+                    file_path=str(file_path),
+                    error_type="json_parse_error",
+                    message=str(e),
+                )
+            )
             return errors
 
         # Required fields
         required = ["tool_name", "category", "mode_required"]
-        for field in required:
-            if field not in data:
-                errors.append(ValidationError(
-                    file_path=str(file_path),
-                    error_type="missing_required_field",
-                    message=f"Missing required field: {field}",
-                ))
+        for required_field in required:
+            if required_field not in data:
+                errors.append(
+                    ValidationError(
+                        file_path=str(file_path),
+                        error_type="missing_required_field",
+                        message=f"Missing required field: {required_field}",
+                    )
+                )
 
         # Valid category
         if "category" in data and data["category"] not in self.AREAS:
-            errors.append(ValidationError(
-                file_path=str(file_path),
-                error_type="invalid_category",
-                message=f"Invalid category: {data['category']}",
-            ))
+            errors.append(
+                ValidationError(
+                    file_path=str(file_path),
+                    error_type="invalid_category",
+                    message=f"Invalid category: {data['category']}",
+                )
+            )
 
         # Valid mode
         valid_modes = ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE", "ANY"]
         if "mode_required" in data and data["mode_required"] not in valid_modes:
-            errors.append(ValidationError(
-                file_path=str(file_path),
-                error_type="invalid_mode",
-                message=f"Invalid mode_required: {data['mode_required']}",
-            ))
+            errors.append(
+                ValidationError(
+                    file_path=str(file_path),
+                    error_type="invalid_mode",
+                    message=f"Invalid mode_required: {data['mode_required']}",
+                )
+            )
 
         return errors
 

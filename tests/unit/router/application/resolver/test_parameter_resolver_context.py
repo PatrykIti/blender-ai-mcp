@@ -14,6 +14,7 @@ def resolver():
     """Create ParameterResolver instance for testing."""
     # Mock classifier (not used in context extraction tests)
     from unittest.mock import MagicMock
+
     classifier = MagicMock()
     store = MagicMock()
     return ParameterResolver(classifier, store)
@@ -28,7 +29,7 @@ def sample_schema():
         range=[-1.57, 1.57],
         default=0.0,
         description="Rotation angle for table legs",
-        semantic_hints=["legs", "angle", "rotation"]
+        semantic_hints=["legs", "angle", "rotation"],
     )
 
 
@@ -109,9 +110,10 @@ class TestTier1SentenceExtraction:
         # Create very long prompt with hint in middle
         long_prompt = (
             "This is a very long preamble that goes on and on about various details "
-            "regarding outdoor furniture construction techniques and best practices. " * 3 +
-            "The table should have X-shaped legs for maximum stability and aesthetic appeal. " +
-            "Here is more content after the hint that continues with additional specifications. " * 3
+            "regarding outdoor furniture construction techniques and best practices. "
+            * 3
+            + "The table should have X-shaped legs for maximum stability and aesthetic appeal. "
+            + "Here is more content after the hint that continues with additional specifications. " * 3
         )
 
         context = resolver.extract_context(long_prompt, sample_schema)
@@ -145,9 +147,9 @@ class TestTier2ExpandedWindow:
     def test_short_sentence_under_100_chars(self, resolver, sample_schema):
         """Very short sentence should trigger TIER 2 fallback."""
         prompt = (
-            "Here is lots of preamble text that goes on for quite a while. " * 5 +
-            "Short legs note. " +  # Short sentence < 100 chars
-            "And then more content continues after the short sentence. " * 5
+            "Here is lots of preamble text that goes on for quite a while. " * 5
+            + "Short legs note. "  # Short sentence < 100 chars
+            + "And then more content continues after the short sentence. " * 5
         )
 
         context = resolver.extract_context(prompt, sample_schema)
@@ -207,7 +209,7 @@ class TestEdgeCases:
             type="float",
             default=0.0,
             description="Test parameter",
-            semantic_hints=["missing", "absent", "legs", "rotation"]  # "legs" is 3rd
+            semantic_hints=["missing", "absent", "legs", "rotation"],  # "legs" is 3rd
         )
         prompt = "Create a table with angled legs for stability." * 8
 
@@ -286,6 +288,5 @@ class TestContextQuality:
             prompt = f"Create a table with {prompt_phrase} for stability." * 8
             context = resolver.extract_context(prompt, sample_schema)
 
-            assert expected_modifier.lower() in context.lower(), \
-                f"Failed to preserve '{expected_modifier}' in context"
+            assert expected_modifier.lower() in context.lower(), f"Failed to preserve '{expected_modifier}' in context"
             assert "legs" in context.lower()

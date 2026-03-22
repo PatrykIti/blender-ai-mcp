@@ -12,9 +12,9 @@ from server.adapters.mcp.platform.capability_manifest import (
     get_capability_manifest,
 )
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
-from server.router.infrastructure.metadata_loader import MetadataLoader, ToolMetadata
-from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 from server.adapters.mcp.platform.public_contracts import get_public_contract
+from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
+from server.router.infrastructure.metadata_loader import MetadataLoader, ToolMetadata
 
 from .taxonomy import normalize_discovery_category
 

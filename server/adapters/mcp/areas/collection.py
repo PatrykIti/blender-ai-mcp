@@ -1,9 +1,11 @@
 from typing import Any, Dict, Literal, Optional
+
 from fastmcp import Context
+
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_collection_handler
 
 COLLECTION_PUBLIC_TOOL_NAMES = (
@@ -33,6 +35,7 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
     Args:
         include_objects: If True, includes object names within each collection.
     """
+
     def execute():
         handler = get_collection_handler()
         try:
@@ -72,17 +75,12 @@ def collection_list(ctx: Context, include_objects: bool = False) -> str:
             return str(e)
 
     return route_tool_call(
-        tool_name="collection_list",
-        params={"include_objects": include_objects},
-        direct_executor=execute
+        tool_name="collection_list", params={"include_objects": include_objects}, direct_executor=execute
     )
 
 
 def collection_list_objects(
-    ctx: Context,
-    collection_name: str,
-    recursive: bool = True,
-    include_hidden: bool = False
+    ctx: Context, collection_name: str, recursive: bool = True, include_hidden: bool = False
 ) -> str:
     """
     [COLLECTION][SAFE][READ-ONLY] Lists objects inside a collection.
@@ -97,13 +95,12 @@ def collection_list_objects(
         recursive: If True, includes objects from child collections (default True)
         include_hidden: If True, includes hidden objects (default False)
     """
+
     def execute():
         handler = get_collection_handler()
         try:
             result = handler.list_objects(
-                collection_name=collection_name,
-                recursive=recursive,
-                include_hidden=include_hidden
+                collection_name=collection_name, recursive=recursive, include_hidden=include_hidden
             )
 
             objects = result.get("objects", [])
@@ -114,7 +111,7 @@ def collection_list_objects(
 
             lines = [
                 f"Collection: {collection_name}",
-                f"Objects ({object_count}, recursive={recursive}, hidden={include_hidden}):"
+                f"Objects ({object_count}, recursive={recursive}, hidden={include_hidden}):",
             ]
 
             for obj in objects:
@@ -127,9 +124,7 @@ def collection_list_objects(
                 vis_str = f" [{', '.join(visibility)}]" if visibility else ""
                 selected_str = " [selected]" if obj.get("selected") else ""
 
-                lines.append(
-                    f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}"
-                )
+                lines.append(f"  • {obj['name']} ({obj['type']}) @ {obj['location']}{vis_str}{selected_str}")
 
             ctx_info(ctx, f"Listed {object_count} objects from collection '{collection_name}'")
             return "\n".join(lines)
@@ -141,12 +136,8 @@ def collection_list_objects(
 
     return route_tool_call(
         tool_name="collection_list_objects",
-        params={
-            "collection_name": collection_name,
-            "recursive": recursive,
-            "include_hidden": include_hidden
-        },
-        direct_executor=execute
+        params={"collection_name": collection_name, "recursive": recursive, "include_hidden": include_hidden},
+        direct_executor=execute,
     )
 
 
@@ -178,6 +169,7 @@ def collection_manage(
         parent_name: Parent collection for 'create' action (defaults to Scene Collection)
         object_name: Object name for move/link/unlink actions
     """
+
     def execute():
         handler = get_collection_handler()
         try:
@@ -203,7 +195,7 @@ def collection_manage(
             "collection_name": collection_name,
             "new_name": new_name,
             "parent_name": parent_name,
-            "object_name": object_name
+            "object_name": object_name,
         },
-        direct_executor=execute
+        direct_executor=execute,
     )

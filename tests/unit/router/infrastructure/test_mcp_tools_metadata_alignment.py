@@ -38,8 +38,7 @@ def _extract_mcp_tool_signatures(areas_dir: Path) -> dict[str, set[str] | None]:
                 continue
 
             if not any(
-                isinstance(target, ast.Name) and target.id.endswith("_PUBLIC_TOOL_NAMES")
-                for target in node.targets
+                isinstance(target, ast.Name) and target.id.endswith("_PUBLIC_TOOL_NAMES") for target in node.targets
             ):
                 continue
 
@@ -154,38 +153,23 @@ def _extract_router_emitted_tool_names(router_dir: Path) -> set[str]:
 
 def test_tools_metadata_tool_names_exist_in_mcp():
     repo_root = _find_repo_root(Path(__file__).resolve().parent)
-    mcp_signatures = _extract_mcp_tool_signatures(
-        repo_root / "server" / "adapters" / "mcp" / "areas"
-    )
-    dispatcher_tools = _extract_dispatcher_tool_names(
-        repo_root / "server" / "adapters" / "mcp" / "dispatcher.py"
-    )
-    tools_metadata = _iter_tools_metadata(
-        repo_root / "server" / "router" / "infrastructure" / "tools_metadata"
-    )
+    mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")
+    dispatcher_tools = _extract_dispatcher_tool_names(repo_root / "server" / "adapters" / "mcp" / "dispatcher.py")
+    tools_metadata = _iter_tools_metadata(repo_root / "server" / "router" / "infrastructure" / "tools_metadata")
 
     unknown = []
     for tool_name, json_file, _param_names in tools_metadata:
         if tool_name not in mcp_signatures and tool_name not in dispatcher_tools:
             unknown.append(f"- {tool_name} ({json_file.relative_to(repo_root)})")
 
-    assert not unknown, (
-        "Tools metadata references non-existent MCP tools/dispatcher handlers:\n"
-        + "\n".join(unknown)
-    )
+    assert not unknown, "Tools metadata references non-existent MCP tools/dispatcher handlers:\n" + "\n".join(unknown)
 
 
 def test_tools_metadata_parameters_match_mcp_signatures():
     repo_root = _find_repo_root(Path(__file__).resolve().parent)
-    mcp_signatures = _extract_mcp_tool_signatures(
-        repo_root / "server" / "adapters" / "mcp" / "areas"
-    )
-    dispatcher_tools = _extract_dispatcher_tool_names(
-        repo_root / "server" / "adapters" / "mcp" / "dispatcher.py"
-    )
-    tools_metadata = _iter_tools_metadata(
-        repo_root / "server" / "router" / "infrastructure" / "tools_metadata"
-    )
+    mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")
+    dispatcher_tools = _extract_dispatcher_tool_names(repo_root / "server" / "adapters" / "mcp" / "dispatcher.py")
+    tools_metadata = _iter_tools_metadata(repo_root / "server" / "router" / "infrastructure" / "tools_metadata")
 
     missing = []
     mismatches = []
@@ -201,10 +185,7 @@ def test_tools_metadata_parameters_match_mcp_signatures():
 
         extra_params = sorted(meta_params - sig_params)
         if extra_params:
-            mismatches.append(
-                f"- {tool_name} ({json_file.relative_to(repo_root)}): "
-                f"unknown params: {extra_params}"
-            )
+            mismatches.append(f"- {tool_name} ({json_file.relative_to(repo_root)}): unknown params: {extra_params}")
 
     assert not (missing or mismatches), (
         "Tools metadata is out of sync with MCP tool signatures:\n"
@@ -215,19 +196,11 @@ def test_tools_metadata_parameters_match_mcp_signatures():
 
 def test_router_emitted_tool_names_exist_in_mcp():
     repo_root = _find_repo_root(Path(__file__).resolve().parent)
-    mcp_signatures = _extract_mcp_tool_signatures(
-        repo_root / "server" / "adapters" / "mcp" / "areas"
-    )
-    dispatcher_tools = _extract_dispatcher_tool_names(
-        repo_root / "server" / "adapters" / "mcp" / "dispatcher.py"
-    )
+    mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")
+    dispatcher_tools = _extract_dispatcher_tool_names(repo_root / "server" / "adapters" / "mcp" / "dispatcher.py")
     emitted = _extract_router_emitted_tool_names(repo_root / "server" / "router")
 
-    unknown = sorted(
-        tool
-        for tool in emitted
-        if tool not in mcp_signatures and tool not in dispatcher_tools
-    )
+    unknown = sorted(tool for tool in emitted if tool not in mcp_signatures and tool not in dispatcher_tools)
 
     assert not unknown, (
         "Router code emits tool_name values not present in MCP tools/dispatcher handlers:\n"
@@ -239,12 +212,8 @@ def test_public_aliases_resolve_to_known_internal_tools():
     """Public aliases must resolve to canonical tool ids known to MCP or dispatcher internals."""
 
     repo_root = _find_repo_root(Path(__file__).resolve().parent)
-    mcp_signatures = _extract_mcp_tool_signatures(
-        repo_root / "server" / "adapters" / "mcp" / "areas"
-    )
-    dispatcher_tools = _extract_dispatcher_tool_names(
-        repo_root / "server" / "adapters" / "mcp" / "dispatcher.py"
-    )
+    mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")
+    dispatcher_tools = _extract_dispatcher_tool_names(repo_root / "server" / "adapters" / "mcp" / "dispatcher.py")
 
     unknown = sorted(
         public_name
@@ -252,7 +221,6 @@ def test_public_aliases_resolve_to_known_internal_tools():
         if internal_name not in mcp_signatures and internal_name not in dispatcher_tools
     )
 
-    assert not unknown, (
-        "Public aliases resolve to unknown internal MCP/dispatcher tool ids:\n"
-        + "\n".join(f"- {name}" for name in unknown)
+    assert not unknown, "Public aliases resolve to unknown internal MCP/dispatcher tool ids:\n" + "\n".join(
+        f"- {name}" for name in unknown
     )

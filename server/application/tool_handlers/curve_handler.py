@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.curve import ICurveTool
 
@@ -10,11 +11,7 @@ class CurveToolHandler(ICurveTool):
         self.rpc = rpc_client
 
     # TASK-021-1: Curve Create Tool
-    def create_curve(
-        self,
-        curve_type: str = 'BEZIER',
-        location: Optional[List[float]] = None
-    ) -> str:
+    def create_curve(self, curve_type: str = "BEZIER", location: Optional[List[float]] = None) -> str:
         args = {"curve_type": curve_type}
         if location:
             args["location"] = location

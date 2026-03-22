@@ -3,16 +3,15 @@
 Tests SystemHandler import methods after consolidation.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 import sys
+from unittest.mock import MagicMock, patch
 
+import pytest
 from blender_addon.application.handlers.job_utils import JobCancelledError
 from blender_addon.application.handlers.system import SystemHandler
 
-
 # Get the mock_bpy from sys.modules (set by conftest.py)
-mock_bpy = sys.modules['bpy']
+mock_bpy = sys.modules["bpy"]
 
 
 class TestImportOBJ:
@@ -27,13 +26,13 @@ class TestImportOBJ:
         mock_bpy.data.objects.keys.return_value = []
         self.handler = SystemHandler()
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_obj_basic(self, mock_exists):
         """Test basic OBJ import."""
         mock_exists.return_value = True
         mock_bpy.data.objects.keys.side_effect = [
             [],  # before import
-            ['ImportedMesh']  # after import
+            ["ImportedMesh"],  # after import
         ]
 
         result = self.handler.import_obj(filepath="/path/to/model.obj")
@@ -42,7 +41,7 @@ class TestImportOBJ:
         assert "Successfully imported" in result
         assert "ImportedMesh" in result
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_obj_file_not_found(self, mock_exists):
         """Test OBJ import with missing file."""
         mock_exists.return_value = False
@@ -52,21 +51,17 @@ class TestImportOBJ:
 
         assert "OBJ file not found" in str(excinfo.value)
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_obj_with_scale(self, mock_exists):
         """Test OBJ import with custom scale."""
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [[], ['Mesh']]
+        mock_bpy.data.objects.keys.side_effect = [[], ["Mesh"]]
 
-        result = self.handler.import_obj(
-            filepath="/path/to/model.obj",
-            global_scale=2.0,
-            use_split_objects=False
-        )
+        self.handler.import_obj(filepath="/path/to/model.obj", global_scale=2.0, use_split_objects=False)
 
         call_kwargs = mock_bpy.ops.wm.obj_import.call_args[1]
-        assert call_kwargs['global_scale'] == 2.0
-        assert call_kwargs['use_split_objects'] is False
+        assert call_kwargs["global_scale"] == 2.0
+        assert call_kwargs["use_split_objects"] is False
 
 
 class TestImportFBX:
@@ -81,14 +76,11 @@ class TestImportFBX:
         mock_bpy.data.objects.keys.return_value = []
         self.handler = SystemHandler()
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_fbx_basic(self, mock_exists):
         """Test basic FBX import."""
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [
-            [],
-            ['Character', 'Armature']
-        ]
+        mock_bpy.data.objects.keys.side_effect = [[], ["Character", "Armature"]]
 
         result = self.handler.import_fbx(filepath="/path/to/character.fbx")
 
@@ -96,7 +88,7 @@ class TestImportFBX:
         assert "Successfully imported" in result
         assert "Character" in result
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_fbx_file_not_found(self, mock_exists):
         """Test FBX import with missing file."""
         mock_exists.return_value = False
@@ -106,23 +98,20 @@ class TestImportFBX:
 
         assert "FBX file not found" in str(excinfo.value)
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_fbx_with_options(self, mock_exists):
         """Test FBX import with custom options."""
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
+        mock_bpy.data.objects.keys.side_effect = [[], ["Model"]]
 
-        result = self.handler.import_fbx(
-            filepath="/path/to/model.fbx",
-            use_custom_normals=False,
-            ignore_leaf_bones=True,
-            global_scale=0.01
+        self.handler.import_fbx(
+            filepath="/path/to/model.fbx", use_custom_normals=False, ignore_leaf_bones=True, global_scale=0.01
         )
 
         call_kwargs = mock_bpy.ops.import_scene.fbx.call_args[1]
-        assert call_kwargs['use_custom_normals'] is False
-        assert call_kwargs['ignore_leaf_bones'] is True
-        assert call_kwargs['global_scale'] == 0.01
+        assert call_kwargs["use_custom_normals"] is False
+        assert call_kwargs["ignore_leaf_bones"] is True
+        assert call_kwargs["global_scale"] == 0.01
 
 
 class TestImportGLB:
@@ -137,14 +126,11 @@ class TestImportGLB:
         mock_bpy.data.objects.keys.return_value = []
         self.handler = SystemHandler()
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_glb_basic(self, mock_exists):
         """Test basic GLB import."""
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [
-            [],
-            ['SceneRoot', 'Mesh']
-        ]
+        mock_bpy.data.objects.keys.side_effect = [[], ["SceneRoot", "Mesh"]]
 
         result = self.handler.import_glb(filepath="/path/to/model.glb")
 
@@ -152,7 +138,7 @@ class TestImportGLB:
         assert "Successfully imported" in result
         assert "Mesh" in result
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_glb_file_not_found(self, mock_exists):
         """Test GLB import with missing file."""
         mock_exists.return_value = False
@@ -162,30 +148,27 @@ class TestImportGLB:
 
         assert "GLB/GLTF file not found" in str(excinfo.value)
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_glb_with_options(self, mock_exists):
         """Test GLB import with custom options."""
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
+        mock_bpy.data.objects.keys.side_effect = [[], ["Model"]]
 
-        result = self.handler.import_glb(
-            filepath="/path/to/model.gltf",
-            import_pack_images=False,
-            merge_vertices=True,
-            import_shading="SMOOTH"
+        self.handler.import_glb(
+            filepath="/path/to/model.gltf", import_pack_images=False, merge_vertices=True, import_shading="SMOOTH"
         )
 
         call_kwargs = mock_bpy.ops.import_scene.gltf.call_args[1]
-        assert call_kwargs['import_pack_images'] is False
-        assert call_kwargs['merge_vertices'] is True
-        assert call_kwargs['import_shading'] == "SMOOTH"
+        assert call_kwargs["import_pack_images"] is False
+        assert call_kwargs["merge_vertices"] is True
+        assert call_kwargs["import_shading"] == "SMOOTH"
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_glb_reports_progress_for_background_job_hooks(self, mock_exists):
         """GLB import should emit coarse progress milestones when callbacks are provided."""
 
         mock_exists.return_value = True
-        mock_bpy.data.objects.keys.side_effect = [[], ['Model']]
+        mock_bpy.data.objects.keys.side_effect = [[], ["Model"]]
         progress_events = []
 
         result = self.handler.import_glb(
@@ -199,7 +182,7 @@ class TestImportGLB:
         assert progress_events[0] == (0, 3, "Validating GLB/GLTF import file")
         assert progress_events[-1] == (3, 3, "GLB/GLTF import complete")
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_obj_honors_cooperative_cancellation(self, mock_exists):
         """Import handlers should stop early when background cancellation is requested."""
 
@@ -235,7 +218,7 @@ class TestImportImageAsPlane:
 
         # Mock plane object created by primitive_plane_add
         self.mock_plane = MagicMock()
-        self.mock_plane.name = 'TestPlane'
+        self.mock_plane.name = "TestPlane"
         self.mock_plane.data.materials = []
         mock_bpy.context.active_object = self.mock_plane
 
@@ -249,7 +232,7 @@ class TestImportImageAsPlane:
 
         self.handler = SystemHandler()
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_basic(self, mock_exists):
         """Test basic image as plane import."""
         mock_exists.return_value = True
@@ -264,7 +247,7 @@ class TestImportImageAsPlane:
         mock_bpy.data.materials.new.assert_called_once()
         assert "Successfully imported" in result
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_file_not_found(self, mock_exists):
         """Test image import with missing file."""
         mock_exists.return_value = False
@@ -274,16 +257,13 @@ class TestImportImageAsPlane:
 
         assert "Image file not found" in str(excinfo.value)
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_with_custom_name(self, mock_exists):
         """Test image import with custom plane name."""
         mock_exists.return_value = True
 
-        result = self.handler.import_image_as_plane(
-            filepath="/path/to/image.png",
-            name="RefImage",
-            location=[1.0, 2.0, 0.0],
-            size=2.0
+        self.handler.import_image_as_plane(
+            filepath="/path/to/image.png", name="RefImage", location=[1.0, 2.0, 0.0], size=2.0
         )
 
         # Verify plane was created
@@ -293,7 +273,7 @@ class TestImportImageAsPlane:
         # Verify location was set
         assert self.mock_plane.location == [1.0, 2.0, 0.0]
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_creates_material(self, mock_exists):
         """Test that import creates a material with shader nodes."""
         mock_exists.return_value = True
@@ -304,7 +284,7 @@ class TestImportImageAsPlane:
         mock_bpy.data.materials.new.assert_called_once()
         assert "Successfully imported" in result
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_reports_progress_for_background_job_hooks(self, mock_exists):
         """Image-as-plane import should emit coarse progress milestones when callbacks are provided."""
 
@@ -322,7 +302,7 @@ class TestImportImageAsPlane:
         assert progress_events[0] == (0, 4, "Validating image file")
         assert progress_events[-1] == (4, 4, "Image-as-plane import complete")
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_import_image_honors_cooperative_cancellation(self, mock_exists):
         """Image-as-plane import should stop early when background cancellation is requested."""
 

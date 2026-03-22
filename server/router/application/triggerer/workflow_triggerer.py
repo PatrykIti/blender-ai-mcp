@@ -10,10 +10,10 @@ TASK-041-0b
 """
 
 import logging
-from typing import Dict, Any, Optional, Callable, List
+from typing import Any, Callable, Dict, List, Optional
 
-from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.pattern import DetectedPattern
+from server.router.domain.entities.scene_context import SceneContext
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ class WorkflowTriggerer:
         """
         if self._registry is None:
             from server.router.application.workflows.registry import get_workflow_registry
+
             self._registry = get_workflow_registry()
         return self._registry
 

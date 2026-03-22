@@ -21,7 +21,9 @@ def test_native_prompt_components_are_available_on_built_server():
 
     async def run():
         prompts = await server.list_prompts()
-        rendered = await server.render_prompt("recommended_prompts", {"surface_profile": "llm-guided", "session_phase": "planning"})
+        rendered = await server.render_prompt(
+            "recommended_prompts", {"surface_profile": "llm-guided", "session_phase": "planning"}
+        )
         return {prompt.name for prompt in prompts}, rendered
 
     names, rendered = asyncio.run(run())

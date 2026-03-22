@@ -1,8 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
+
 from fastmcp import Context
-from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.adapters.mcp.utils import parse_coordinate, parse_dict
+
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.utils import parse_coordinate, parse_dict
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_modeling_handler
 
 MODELING_PUBLIC_TOOL_NAMES = (
@@ -48,10 +50,7 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
         "skin_create_skeleton": _skin_create_skeleton_impl,
         "skin_set_radius": _skin_set_radius_impl,
     }
-    return {
-        tool_name: _register_tool(target, impls[tool_name], tool_name)
-        for tool_name in MODELING_PUBLIC_TOOL_NAMES
-    }
+    return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
 
 
 def _modeling_create_primitive_impl(
@@ -61,7 +60,7 @@ def _modeling_create_primitive_impl(
     size: float = 2.0,
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
-    name: str = None
+    name: str = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -76,6 +75,7 @@ def _modeling_create_primitive_impl(
         rotation: [rx, ry, rz] rotation in radians. Can be a list or string.
         name: Optional name for the new object.
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -87,8 +87,15 @@ def _modeling_create_primitive_impl(
 
     return route_tool_call(
         tool_name="modeling_create_primitive",
-        params={"primitive_type": primitive_type, "radius": radius, "size": size, "location": location, "rotation": rotation, "name": name},
-        direct_executor=execute
+        params={
+            "primitive_type": primitive_type,
+            "radius": radius,
+            "size": size,
+            "location": location,
+            "rotation": rotation,
+            "name": name,
+        },
+        direct_executor=execute,
     )
 
 
@@ -99,7 +106,7 @@ def modeling_create_primitive(
     size: float = 2.0,
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
     rotation: Union[str, List[float]] = [0.0, 0.0, 0.0],
-    name: str = None
+    name: str = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
@@ -130,7 +137,7 @@ def _modeling_transform_object_impl(
     name: str,
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
-    scale: Union[str, List[float], None] = None
+    scale: Union[str, List[float], None] = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -143,6 +150,7 @@ def _modeling_transform_object_impl(
         rotation: New [rx, ry, rz] rotation in radians (optional). Can be a list or string.
         scale: New [sx, sy, sz] scale factors (optional). Can be a list or string.
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -156,7 +164,7 @@ def _modeling_transform_object_impl(
     return route_tool_call(
         tool_name="modeling_transform_object",
         params={"name": name, "location": location, "rotation": rotation, "scale": scale},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -165,7 +173,7 @@ def modeling_transform_object(
     name: str,
     location: Union[str, List[float], None] = None,
     rotation: Union[str, List[float], None] = None,
-    scale: Union[str, List[float], None] = None
+    scale: Union[str, List[float], None] = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Transforms (move, rotate, scale) an existing object.
@@ -182,10 +190,7 @@ def modeling_transform_object(
 
 
 def _modeling_add_modifier_impl(
-    ctx: Context,
-    name: str,
-    modifier_type: str,
-    properties: Union[str, Dict[str, Any], None] = None
+    ctx: Context, name: str, modifier_type: str, properties: Union[str, Dict[str, Any], None] = None
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
@@ -200,6 +205,7 @@ def _modeling_add_modifier_impl(
             BOOLEAN note: to set the cutter/target object, pass `{"object": "<ObjectName>"}` (or alias `object_name`)
             where the value is the name of an existing Blender object.
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -211,15 +217,12 @@ def _modeling_add_modifier_impl(
     return route_tool_call(
         tool_name="modeling_add_modifier",
         params={"name": name, "modifier_type": modifier_type, "properties": properties},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
 def modeling_add_modifier(
-    ctx: Context,
-    name: str,
-    modifier_type: str,
-    properties: Union[str, Dict[str, Any], None] = None
+    ctx: Context, name: str, modifier_type: str, properties: Union[str, Dict[str, Any], None] = None
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
@@ -237,11 +240,7 @@ def modeling_add_modifier(
     return _modeling_add_modifier_impl(ctx, name, modifier_type, properties)
 
 
-def _modeling_apply_modifier_impl(
-    ctx: Context,
-    name: str, 
-    modifier_name: str
-) -> str:
+def _modeling_apply_modifier_impl(ctx: Context, name: str, modifier_name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Applies a modifier, making its changes permanent to the mesh.
 
@@ -254,15 +253,11 @@ def _modeling_apply_modifier_impl(
     return route_tool_call(
         tool_name="modeling_apply_modifier",
         params={"name": name, "modifier_name": modifier_name},
-        direct_executor=lambda: get_modeling_handler().apply_modifier(name, modifier_name)
+        direct_executor=lambda: get_modeling_handler().apply_modifier(name, modifier_name),
     )
 
 
-def modeling_apply_modifier(
-    ctx: Context,
-    name: str, 
-    modifier_name: str
-) -> str:
+def modeling_apply_modifier(ctx: Context, name: str, modifier_name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Applies a modifier, making its changes permanent to the mesh.
 
@@ -275,10 +270,7 @@ def modeling_apply_modifier(
     return _modeling_apply_modifier_impl(ctx, name, modifier_name)
 
 
-def _modeling_convert_to_mesh_impl(
-    ctx: Context,
-    name: str
-) -> str:
+def _modeling_convert_to_mesh_impl(ctx: Context, name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Converts a non-mesh object (Curve, Text, Surface) to a mesh.
 
@@ -290,14 +282,11 @@ def _modeling_convert_to_mesh_impl(
     return route_tool_call(
         tool_name="modeling_convert_to_mesh",
         params={"name": name},
-        direct_executor=lambda: get_modeling_handler().convert_to_mesh(name)
+        direct_executor=lambda: get_modeling_handler().convert_to_mesh(name),
     )
 
 
-def modeling_convert_to_mesh(
-    ctx: Context,
-    name: str
-) -> str:
+def modeling_convert_to_mesh(ctx: Context, name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Converts a non-mesh object (Curve, Text, Surface) to a mesh.
 
@@ -309,10 +298,7 @@ def modeling_convert_to_mesh(
     return _modeling_convert_to_mesh_impl(ctx, name)
 
 
-def _modeling_join_objects_impl(
-    ctx: Context,
-    object_names: List[str]
-) -> str:
+def _modeling_join_objects_impl(ctx: Context, object_names: List[str]) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Joins multiple mesh objects into a single mesh.
     IMPORTANT: The LAST object in the list becomes the Active Object (Base).
@@ -325,14 +311,11 @@ def _modeling_join_objects_impl(
     return route_tool_call(
         tool_name="modeling_join_objects",
         params={"object_names": object_names},
-        direct_executor=lambda: get_modeling_handler().join_objects(object_names)
+        direct_executor=lambda: get_modeling_handler().join_objects(object_names),
     )
 
 
-def modeling_join_objects(
-    ctx: Context,
-    object_names: List[str]
-) -> str:
+def modeling_join_objects(ctx: Context, object_names: List[str]) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Joins multiple mesh objects into a single mesh.
     IMPORTANT: The LAST object in the list becomes the Active Object (Base).
@@ -345,11 +328,7 @@ def modeling_join_objects(
     return _modeling_join_objects_impl(ctx, object_names)
 
 
-def _modeling_separate_object_impl(
-    ctx: Context,
-    name: str,
-    type: str = "LOOSE"
-) -> str:
+def _modeling_separate_object_impl(ctx: Context, name: str, type: str = "LOOSE") -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
 
@@ -359,6 +338,7 @@ def _modeling_separate_object_impl(
         name: The name of the object to separate.
         type: The separation method: "LOOSE", "SELECTED", or "MATERIAL".
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -368,17 +348,11 @@ def _modeling_separate_object_impl(
             return str(e)
 
     return route_tool_call(
-        tool_name="modeling_separate_object",
-        params={"name": name, "type": type},
-        direct_executor=execute
+        tool_name="modeling_separate_object", params={"name": name, "type": type}, direct_executor=execute
     )
 
 
-def modeling_separate_object(
-    ctx: Context,
-    name: str,
-    type: str = "LOOSE"
-) -> str:
+def modeling_separate_object(ctx: Context, name: str, type: str = "LOOSE") -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
 
@@ -391,10 +365,7 @@ def modeling_separate_object(
     return _modeling_separate_object_impl(ctx, name, type)
 
 
-def _modeling_list_modifiers_impl(
-    ctx: Context,
-    name: str
-) -> str:
+def _modeling_list_modifiers_impl(ctx: Context, name: str) -> str:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Lists all modifiers currently on the specified object.
 
@@ -403,6 +374,7 @@ def _modeling_list_modifiers_impl(
     Args:
         name: The name of the object.
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -411,17 +383,10 @@ def _modeling_list_modifiers_impl(
         except RuntimeError as e:
             return str(e)
 
-    return route_tool_call(
-        tool_name="modeling_list_modifiers",
-        params={"name": name},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="modeling_list_modifiers", params={"name": name}, direct_executor=execute)
 
 
-def modeling_list_modifiers(
-    ctx: Context,
-    name: str
-) -> str:
+def modeling_list_modifiers(ctx: Context, name: str) -> str:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Lists all modifiers currently on the specified object.
 
@@ -435,10 +400,7 @@ def modeling_list_modifiers(
 
 # Internal function - exposed via scene_inspect mega tool
 def _modeling_get_modifier_data(
-    ctx: Context,
-    object_name: str,
-    modifier_name: Optional[str] = None,
-    include_node_tree: bool = False
+    ctx: Context, object_name: str, modifier_name: Optional[str] = None, include_node_tree: bool = False
 ) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
@@ -450,11 +412,7 @@ def _modeling_get_modifier_data(
         return {"error": str(e)}
 
 
-def _modeling_set_origin_impl(
-    ctx: Context,
-    name: str,
-    type: str
-) -> str:
+def _modeling_set_origin_impl(ctx: Context, name: str, type: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Sets the origin point of an object.
 
@@ -467,15 +425,11 @@ def _modeling_set_origin_impl(
     return route_tool_call(
         tool_name="modeling_set_origin",
         params={"name": name, "type": type},
-        direct_executor=lambda: get_modeling_handler().set_origin(name, type)
+        direct_executor=lambda: get_modeling_handler().set_origin(name, type),
     )
 
 
-def modeling_set_origin(
-    ctx: Context,
-    name: str,
-    type: str
-) -> str:
+def modeling_set_origin(ctx: Context, name: str, type: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Sets the origin point of an object.
 
@@ -529,6 +483,7 @@ def _metaball_create_impl(
         metaball_create(name="Heart", element_type="ELLIPSOID", radius=1.5)
         metaball_create(name="Tumor", resolution=0.1) -> Higher quality
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -546,8 +501,15 @@ def _metaball_create_impl(
 
     return route_tool_call(
         tool_name="metaball_create",
-        params={"name": name, "location": location, "element_type": element_type, "radius": radius, "resolution": resolution, "threshold": threshold},
-        direct_executor=execute
+        params={
+            "name": name,
+            "location": location,
+            "element_type": element_type,
+            "radius": radius,
+            "resolution": resolution,
+            "threshold": threshold,
+        },
+        direct_executor=execute,
     )
 
 
@@ -625,6 +587,7 @@ def _metaball_add_element_impl(
         metaball_add_element("Heart", location=[0.5, 0, 0.3], radius=0.8)
         metaball_add_element("Vessel", element_type="CAPSULE", radius=0.2)
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -641,8 +604,14 @@ def _metaball_add_element_impl(
 
     return route_tool_call(
         tool_name="metaball_add_element",
-        params={"metaball_name": metaball_name, "element_type": element_type, "location": location, "radius": radius, "stiffness": stiffness},
-        direct_executor=execute
+        params={
+            "metaball_name": metaball_name,
+            "element_type": element_type,
+            "location": location,
+            "radius": radius,
+            "stiffness": stiffness,
+        },
+        direct_executor=execute,
     )
 
 
@@ -708,7 +677,9 @@ def _metaball_to_mesh_impl(
     return route_tool_call(
         tool_name="metaball_to_mesh",
         params={"metaball_name": metaball_name, "apply_resolution": apply_resolution},
-        direct_executor=lambda: get_modeling_handler().metaball_to_mesh(metaball_name=metaball_name, apply_resolution=apply_resolution)
+        direct_executor=lambda: get_modeling_handler().metaball_to_mesh(
+            metaball_name=metaball_name, apply_resolution=apply_resolution
+        ),
     )
 
 
@@ -769,6 +740,7 @@ def _skin_create_skeleton_impl(
         skin_create_skeleton(name="Artery", vertices=[[0,0,0], [0,0,1], [0.3,0,1.5]])
         skin_create_skeleton(name="Branch", vertices=[[0,0,0], [0,0,1], [0.5,0,1.5], [-0.5,0,1.5]], edges=[[0,1], [1,2], [1,3]])
     """
+
     def execute():
         handler = get_modeling_handler()
         try:
@@ -787,7 +759,7 @@ def _skin_create_skeleton_impl(
     return route_tool_call(
         tool_name="skin_create_skeleton",
         params={"name": name, "vertices": vertices, "edges": edges, "location": location},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -850,7 +822,9 @@ def _skin_set_radius_impl(
     return route_tool_call(
         tool_name="skin_set_radius",
         params={"object_name": object_name, "vertex_index": vertex_index, "radius_x": radius_x, "radius_y": radius_y},
-        direct_executor=lambda: get_modeling_handler().skin_set_radius(object_name=object_name, vertex_index=vertex_index, radius_x=radius_x, radius_y=radius_y)
+        direct_executor=lambda: get_modeling_handler().skin_set_radius(
+            object_name=object_name, vertex_index=vertex_index, radius_x=radius_x, radius_y=radius_y
+        ),
     )
 
 

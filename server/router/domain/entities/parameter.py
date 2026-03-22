@@ -9,7 +9,7 @@ TASK-055
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -47,50 +47,36 @@ class ParameterSchema:
         """Validate parameter schema."""
         valid_types = {"float", "int", "bool", "string"}
         if self.type not in valid_types:
-            raise ValueError(
-                f"Invalid parameter type '{self.type}'. "
-                f"Must be one of: {valid_types}"
-            )
+            raise ValueError(f"Invalid parameter type '{self.type}'. Must be one of: {valid_types}")
 
         if self.range is not None:
             if len(self.range) != 2:
-                raise ValueError(
-                    f"Range must be a tuple of (min, max), got: {self.range}"
-                )
+                raise ValueError(f"Range must be a tuple of (min, max), got: {self.range}")
             if self.range[0] > self.range[1]:
-                raise ValueError(
-                    f"Range min ({self.range[0]}) must be <= max ({self.range[1]})"
-                )
+                raise ValueError(f"Range min ({self.range[0]}) must be <= max ({self.range[1]})")
 
         # TASK-056-3: Validate enum constraints
         if self.enum is not None:
             if not isinstance(self.enum, list):
-                raise ValueError(
-                    f"Enum must be a list of allowed values, got: {type(self.enum)}"
-                )
+                raise ValueError(f"Enum must be a list of allowed values, got: {type(self.enum)}")
             if len(self.enum) == 0:
                 raise ValueError("Enum list cannot be empty")
 
             # Validate default is in enum if both specified
             if self.default is not None and self.default not in self.enum:
-                raise ValueError(
-                    f"Default value '{self.default}' must be in enum: {self.enum}"
-                )
+                raise ValueError(f"Default value '{self.default}' must be in enum: {self.enum}")
 
         # TASK-056-5: Validate computed parameters
         if self.computed is not None:
             if not isinstance(self.computed, str):
-                raise ValueError(
-                    f"Computed expression must be a string, got: {type(self.computed)}"
-                )
+                raise ValueError(f"Computed expression must be a string, got: {type(self.computed)}")
             if not self.computed.strip():
                 raise ValueError("Computed expression cannot be empty")
 
             # Computed parameters shouldn't have default values
             if self.default is not None:
                 raise ValueError(
-                    "Computed parameters cannot have default values "
-                    "(they are calculated from other parameters)"
+                    "Computed parameters cannot have default values (they are calculated from other parameters)"
                 )
 
     def validate_value(self, value: Any) -> bool:
@@ -203,9 +189,7 @@ class StoredMapping:
         if not self.context:
             raise ValueError("Context cannot be empty")
         if not 0.0 <= self.similarity <= 1.0:
-            raise ValueError(
-                f"Similarity must be between 0.0 and 1.0, got: {self.similarity}"
-            )
+            raise ValueError(f"Similarity must be between 0.0 and 1.0, got: {self.similarity}")
         if not self.workflow_name:
             raise ValueError("Workflow name cannot be empty")
         if not self.parameter_name:
@@ -220,9 +204,7 @@ class StoredMapping:
             "workflow_name": self.workflow_name,
             "parameter_name": self.parameter_name,
             "usage_count": self.usage_count,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
         }
 
 
@@ -249,9 +231,7 @@ class UnresolvedParameter:
     def __post_init__(self) -> None:
         """Validate unresolved parameter."""
         if not 0.0 <= self.relevance <= 1.0:
-            raise ValueError(
-                f"Relevance must be between 0.0 and 1.0, got: {self.relevance}"
-            )
+            raise ValueError(f"Relevance must be between 0.0 and 1.0, got: {self.relevance}")
 
     def to_question_dict(self) -> Dict[str, Any]:
         """Convert to question format for LLM interaction.

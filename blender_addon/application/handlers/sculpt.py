@@ -1,5 +1,6 @@
-import bpy
 from typing import List, Optional
+
+import bpy
 
 
 class SculptHandler:
@@ -27,16 +28,13 @@ class SculptHandler:
         else:
             obj = bpy.context.active_object
 
-        if not obj or obj.type != 'MESH':
-            raise ValueError(
-                f"Object '{object_name or 'active'}' is not a mesh. "
-                f"Type: {obj.type if obj else 'None'}"
-            )
+        if not obj or obj.type != "MESH":
+            raise ValueError(f"Object '{object_name or 'active'}' is not a mesh. Type: {obj.type if obj else 'None'}")
 
         previous_mode = obj.mode
 
-        if previous_mode != 'SCULPT':
-            bpy.ops.object.mode_set(mode='SCULPT')
+        if previous_mode != "SCULPT":
+            bpy.ops.object.mode_set(mode="SCULPT")
 
         return obj, previous_mode
 
@@ -59,11 +57,11 @@ class SculptHandler:
         sculpt.use_symmetry_z = False
 
         if use_symmetry:
-            if axis == 'X':
+            if axis == "X":
                 sculpt.use_symmetry_x = True
-            elif axis == 'Y':
+            elif axis == "Y":
                 sculpt.use_symmetry_y = True
-            elif axis == 'Z':
+            elif axis == "Z":
                 sculpt.use_symmetry_z = True
 
     # ==========================================================================
@@ -107,17 +105,15 @@ class SculptHandler:
         # RELAX_FACE_SETS, SURFACE_SMOOTH, SHARPEN, ENHANCE_DETAILS, ERASE_DISPLACEMENT
         operation = operation.upper()
         filter_map = {
-            'SMOOTH': 'SMOOTH',
-            'INFLATE': 'INFLATE',
-            'FLATTEN': 'SURFACE_SMOOTH',  # FLATTEN removed in Blender 5.0
-            'SHARPEN': 'SHARPEN',
+            "SMOOTH": "SMOOTH",
+            "INFLATE": "INFLATE",
+            "FLATTEN": "SURFACE_SMOOTH",  # FLATTEN removed in Blender 5.0
+            "SHARPEN": "SHARPEN",
         }
 
         if operation not in filter_map:
-            valid_ops = ', '.join(filter_map.keys())
-            raise ValueError(
-                f"Invalid operation '{operation}'. Valid: {valid_ops}"
-            )
+            valid_ops = ", ".join(filter_map.keys())
+            raise ValueError(f"Invalid operation '{operation}'. Valid: {valid_ops}")
 
         filter_type = filter_map[operation]
 
@@ -127,8 +123,7 @@ class SculptHandler:
 
         symmetry_str = f" (symmetry: {symmetry_axis})" if use_symmetry else ""
         return (
-            f"Applied {operation.lower()} to '{obj.name}' "
-            f"({iterations} iterations, strength={strength}){symmetry_str}"
+            f"Applied {operation.lower()} to '{obj.name}' ({iterations} iterations, strength={strength}){symmetry_str}"
         )
 
     # ==========================================================================
@@ -288,7 +283,7 @@ class SculptHandler:
             brush.size = int(radius * 200)
             brush.strength = strength
             # Crease brush has a pinch factor in its settings
-            if hasattr(brush, 'crease_pinch_factor'):
+            if hasattr(brush, "crease_pinch_factor"):
                 brush.crease_pinch_factor = pinch
 
         location_str = f" at {location}" if location else ""
@@ -408,9 +403,7 @@ class SculptHandler:
             brush.strength = strength
 
         return (
-            f"Blob brush ready on '{obj.name}' "
-            f"(radius={radius}, strength={strength}). "
-            f"Creates rounded organic bulges."
+            f"Blob brush ready on '{obj.name}' (radius={radius}, strength={strength}). Creates rounded organic bulges."
         )
 
     # ==========================================================================
@@ -550,7 +543,7 @@ class SculptHandler:
         obj, previous_mode = self._ensure_sculpt_mode(object_name)
 
         # Validate detail mode
-        valid_modes = ['RELATIVE', 'CONSTANT', 'BRUSH', 'MANUAL']
+        valid_modes = ["RELATIVE", "CONSTANT", "BRUSH", "MANUAL"]
         detail_mode = detail_mode.upper()
         if detail_mode not in valid_modes:
             raise ValueError(f"Invalid detail mode: {detail_mode}. Valid: {valid_modes}")
@@ -566,11 +559,11 @@ class SculptHandler:
         sculpt.detail_type_method = detail_mode
 
         # Set detail size based on mode
-        if detail_mode == 'RELATIVE':
+        if detail_mode == "RELATIVE":
             sculpt.detail_size = detail_size  # Pixels
-        elif detail_mode == 'CONSTANT':
+        elif detail_mode == "CONSTANT":
             sculpt.constant_detail_resolution = detail_size  # Blender units (inverted)
-        elif detail_mode == 'BRUSH':
+        elif detail_mode == "BRUSH":
             sculpt.detail_percent = detail_size  # Percentage
 
         # Set shading
@@ -597,10 +590,7 @@ class SculptHandler:
         # Check if dyntopo is enabled
         if bpy.context.sculpt_object.use_dynamic_topology_sculpting:
             bpy.ops.sculpt.dynamic_topology_toggle()
-            return (
-                f"Dynamic Topology disabled on '{obj.name}'. "
-                f"Consider mesh_remesh_voxel for clean topology."
-            )
+            return f"Dynamic Topology disabled on '{obj.name}'. Consider mesh_remesh_voxel for clean topology."
         else:
             return f"Dynamic Topology was not enabled on '{obj.name}'."
 
@@ -617,10 +607,7 @@ class SculptHandler:
 
         # Check if dyntopo is enabled
         if not bpy.context.sculpt_object.use_dynamic_topology_sculpting:
-            raise ValueError(
-                f"Dynamic Topology is not enabled on '{obj.name}'. "
-                f"Enable it first with enable_dyntopo()."
-            )
+            raise ValueError(f"Dynamic Topology is not enabled on '{obj.name}'. Enable it first with enable_dyntopo().")
 
         # Flood fill detail
         bpy.ops.sculpt.detail_flood_fill()

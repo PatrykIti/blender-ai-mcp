@@ -8,17 +8,15 @@ TASK-055-0
 TASK-055-FIX: Removed list_mappings and delete_mapping from interface.
 """
 
-import pytest
 from abc import ABC
 
-from server.router.domain.interfaces.i_parameter_resolver import (
-    IParameterStore,
-    IParameterResolver,
-)
+import pytest
 from server.router.domain.entities.parameter import (
-    ParameterSchema,
-    StoredMapping,
     ParameterResolutionResult,
+)
+from server.router.domain.interfaces.i_parameter_resolver import (
+    IParameterResolver,
+    IParameterStore,
 )
 
 
@@ -135,8 +133,8 @@ class TestInterfaceImports:
     def test_imports_from_interfaces_package(self):
         """Test that interfaces can be imported from package."""
         from server.router.domain.interfaces import (
-            IParameterStore,
             IParameterResolver,
+            IParameterStore,
         )
 
         assert IParameterStore is not None
@@ -145,10 +143,10 @@ class TestInterfaceImports:
     def test_imports_from_entities_package(self):
         """Test that entities can be imported from package."""
         from server.router.domain.entities import (
+            ParameterResolutionResult,
             ParameterSchema,
             StoredMapping,
             UnresolvedParameter,
-            ParameterResolutionResult,
         )
 
         assert ParameterSchema is not None

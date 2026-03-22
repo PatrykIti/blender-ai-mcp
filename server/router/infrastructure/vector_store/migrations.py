@@ -10,7 +10,7 @@ TASK-047-3
 import logging
 import pickle
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
@@ -135,9 +135,7 @@ class PickleToLanceMigration:
                     continue
 
                 if len(vector) != 768:
-                    logger.warning(
-                        f"Skipping {key}: wrong vector dimension {len(vector)}"
-                    )
+                    logger.warning(f"Skipping {key}: wrong vector dimension {len(vector)}")
                     continue
 
                 records.append(

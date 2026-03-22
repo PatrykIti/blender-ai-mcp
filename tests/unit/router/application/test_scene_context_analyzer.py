@@ -4,12 +4,11 @@ Unit tests for Scene Context Analyzer.
 Tests for SceneContextAnalyzer implementation.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
 from server.router.application.analyzers.scene_context_analyzer import SceneContextAnalyzer
-from server.router.domain.entities.scene_context import SceneContext, ObjectInfo, TopologyInfo
+from server.router.domain.entities.scene_context import SceneContext, TopologyInfo
 
 
 def make_rpc_response(result, status="ok"):
@@ -138,10 +137,12 @@ class TestSceneContextAnalyzerWithRPC:
         """Test has_selection from RPC."""
         mock_rpc = MagicMock()
         # Addon format: scene.list_selection returns selected_object_names list
-        mock_rpc.send_request.return_value = make_rpc_response({
-            "selected_object_names": ["Cube"],
-            "mode": "OBJECT",
-        })
+        mock_rpc.send_request.return_value = make_rpc_response(
+            {
+                "selected_object_names": ["Cube"],
+                "mode": "OBJECT",
+            }
+        )
         analyzer = SceneContextAnalyzer(rpc_client=mock_rpc)
 
         has_sel = analyzer.has_selection()
@@ -156,25 +157,31 @@ class TestSceneContextAnalyzerWithRPC:
         # Addon returns active_object and selected_object_names from scene.get_mode
         def mock_send_request(method, params=None):
             if method == "scene.get_mode":
-                return make_rpc_response({
-                    "mode": "OBJECT",
-                    "active_object": "Cube",
-                    "selected_object_names": ["Cube"],
-                })
-            elif method == "scene.list_objects":
-                return make_rpc_response([
+                return make_rpc_response(
                     {
-                        "name": "Cube",
-                        "type": "MESH",
-                        "location": [0.0, 0.0, 0.0],
+                        "mode": "OBJECT",
+                        "active_object": "Cube",
+                        "selected_object_names": ["Cube"],
                     }
-                ])
+                )
+            elif method == "scene.list_objects":
+                return make_rpc_response(
+                    [
+                        {
+                            "name": "Cube",
+                            "type": "MESH",
+                            "location": [0.0, 0.0, 0.0],
+                        }
+                    ]
+                )
             elif method == "scene.inspect_object":
-                return make_rpc_response({
-                    "dimensions": [2.0, 2.0, 2.0],
-                    "material_slots": [{"material_name": "Material"}],
-                    "modifiers": [],
-                })
+                return make_rpc_response(
+                    {
+                        "dimensions": [2.0, 2.0, 2.0],
+                        "material_slots": [{"material_name": "Material"}],
+                        "modifiers": [],
+                    }
+                )
             return make_rpc_response({})
 
         mock_rpc.send_request.side_effect = mock_send_request
@@ -290,11 +297,13 @@ class TestSceneContextAnalyzerCacheUpdate:
         # Addon returns active_object and selected_object_names from scene.get_mode
         def mock_send_request(method, params=None):
             if method == "scene.get_mode":
-                return make_rpc_response({
-                    "mode": "OBJECT",
-                    "active_object": "Cube",
-                    "selected_object_names": ["Cube"],
-                })
+                return make_rpc_response(
+                    {
+                        "mode": "OBJECT",
+                        "active_object": "Cube",
+                        "selected_object_names": ["Cube"],
+                    }
+                )
             elif method == "scene.list_objects":
                 return make_rpc_response([{"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]}])
             elif method == "scene.inspect_object":
@@ -326,11 +335,13 @@ class TestSceneContextAnalyzerCacheUpdate:
         # Addon returns active_object and selected_object_names from scene.get_mode
         def mock_send_request(method, params=None):
             if method == "scene.get_mode":
-                return make_rpc_response({
-                    "mode": "OBJECT",
-                    "active_object": "Cube",
-                    "selected_object_names": ["Cube"],
-                })
+                return make_rpc_response(
+                    {
+                        "mode": "OBJECT",
+                        "active_object": "Cube",
+                        "selected_object_names": ["Cube"],
+                    }
+                )
             elif method == "scene.list_objects":
                 return make_rpc_response([{"name": "Cube", "type": "MESH", "location": [0.0, 0.0, 0.0]}])
             elif method == "scene.inspect_object":
@@ -358,19 +369,23 @@ class TestSceneContextAnalyzerCacheUpdate:
 
         def mock_send_request(method, params=None):
             if method == "scene.get_mode":
-                return make_rpc_response({
-                    "mode": "EDIT_MESH",
-                    "active_object": "Cube",
-                    "selected_object_names": ["Cube"],
-                })
+                return make_rpc_response(
+                    {
+                        "mode": "EDIT_MESH",
+                        "active_object": "Cube",
+                        "selected_object_names": ["Cube"],
+                    }
+                )
             if method == "scene.list_selection":
-                return make_rpc_response({
-                    "mode": "EDIT_MESH",
-                    "selected_object_names": ["Cube"],
-                    "edit_mode_vertex_count": 4,
-                    "edit_mode_edge_count": 0,
-                    "edit_mode_face_count": 0,
-                })
+                return make_rpc_response(
+                    {
+                        "mode": "EDIT_MESH",
+                        "selected_object_names": ["Cube"],
+                        "edit_mode_vertex_count": 4,
+                        "edit_mode_edge_count": 0,
+                        "edit_mode_face_count": 0,
+                    }
+                )
             return make_rpc_response({})
 
         mock_rpc.send_request.side_effect = mock_send_request

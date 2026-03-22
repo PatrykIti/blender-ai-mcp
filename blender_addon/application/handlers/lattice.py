@@ -1,5 +1,6 @@
-import bpy
 from typing import List, Optional, Union
+
+import bpy
 from mathutils import Vector
 
 
@@ -46,16 +47,12 @@ class LatticeHandler:
         valid_interpolations = ["KEY_LINEAR", "KEY_CARDINAL", "KEY_CATMULL_ROM", "KEY_BSPLINE"]
         interpolation = interpolation.upper()
         if interpolation not in valid_interpolations:
-            raise ValueError(
-                f"Invalid interpolation: {interpolation}. Valid: {valid_interpolations}"
-            )
+            raise ValueError(f"Invalid interpolation: {interpolation}. Valid: {valid_interpolations}")
 
         # Validate point counts (Blender allows 2-64)
         for axis_name, value in [("U", points_u), ("V", points_v), ("W", points_w)]:
             if not (2 <= value <= 64):
-                raise ValueError(
-                    f"points_{axis_name.lower()} must be between 2 and 64, got {value}"
-                )
+                raise ValueError(f"points_{axis_name.lower()} must be between 2 and 64, got {value}")
 
         # Calculate position and scale based on target object
         lattice_location = location
@@ -111,11 +108,11 @@ class LatticeHandler:
         bpy.context.collection.objects.link(lattice_obj)
 
         # Ensure we're in Object Mode before selection operations
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Select and make active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         lattice_obj.select_set(True)
         bpy.context.view_layer.objects.active = lattice_obj
 
@@ -154,33 +151,24 @@ class LatticeHandler:
         obj = bpy.data.objects[object_name]
         lattice_obj = bpy.data.objects[lattice_name]
 
-        if lattice_obj.type != 'LATTICE':
-            raise ValueError(
-                f"Object '{lattice_name}' is not a lattice (type: {lattice_obj.type})"
-            )
+        if lattice_obj.type != "LATTICE":
+            raise ValueError(f"Object '{lattice_name}' is not a lattice (type: {lattice_obj.type})")
 
         # Validate vertex group if provided
         if vertex_group:
-            if obj.type != 'MESH':
-                raise ValueError(
-                    f"Vertex groups require mesh object, but '{object_name}' is {obj.type}"
-                )
+            if obj.type != "MESH":
+                raise ValueError(f"Vertex groups require mesh object, but '{object_name}' is {obj.type}")
             if vertex_group not in obj.vertex_groups:
-                raise ValueError(
-                    f"Vertex group '{vertex_group}' not found on object '{object_name}'"
-                )
+                raise ValueError(f"Vertex group '{vertex_group}' not found on object '{object_name}'")
 
         # Add Lattice modifier
-        modifier = obj.modifiers.new(name=f"Lattice_{lattice_name}", type='LATTICE')
+        modifier = obj.modifiers.new(name=f"Lattice_{lattice_name}", type="LATTICE")
         modifier.object = lattice_obj
 
         if vertex_group:
             modifier.vertex_group = vertex_group
 
-        result = (
-            f"Bound '{object_name}' to lattice '{lattice_name}' "
-            f"(modifier: '{modifier.name}')"
-        )
+        result = f"Bound '{object_name}' to lattice '{lattice_name}' (modifier: '{modifier.name}')"
         if vertex_group:
             result += f" with vertex group '{vertex_group}'"
 
@@ -203,10 +191,8 @@ class LatticeHandler:
 
         lattice_obj = bpy.data.objects[lattice_name]
 
-        if lattice_obj.type != 'LATTICE':
-            raise ValueError(
-                f"Object '{lattice_name}' is not a lattice (type: {lattice_obj.type})"
-            )
+        if lattice_obj.type != "LATTICE":
+            raise ValueError(f"Object '{lattice_name}' is not a lattice (type: {lattice_obj.type})")
 
         lattice_data = lattice_obj.data
         total_points = len(lattice_data.points)
@@ -220,9 +206,7 @@ class LatticeHandler:
         # Validate indices
         for idx in indices:
             if idx < 0 or idx >= total_points:
-                raise ValueError(
-                    f"Point index {idx} out of range (0 to {total_points - 1})"
-                )
+                raise ValueError(f"Point index {idx} out of range (0 to {total_points - 1})")
 
         offset_vec = Vector(offset)
 
@@ -240,15 +224,9 @@ class LatticeHandler:
         lattice_data.update_tag()
 
         if relative:
-            return (
-                f"Moved {len(indices)} point(s) on '{lattice_name}' by offset {list(offset)} "
-                f"(indices: {indices})"
-            )
+            return f"Moved {len(indices)} point(s) on '{lattice_name}' by offset {list(offset)} (indices: {indices})"
         else:
-            return (
-                f"Set {len(indices)} point(s) on '{lattice_name}' to position {list(offset)} "
-                f"(indices: {indices})"
-            )
+            return f"Set {len(indices)} point(s) on '{lattice_name}' to position {list(offset)} (indices: {indices})"
 
     def get_points(self, object_name: str) -> dict:
         """
@@ -258,16 +236,15 @@ class LatticeHandler:
             raise ValueError(f"Lattice '{object_name}' not found")
 
         lattice_obj = bpy.data.objects[object_name]
-        if lattice_obj.type != 'LATTICE':
+        if lattice_obj.type != "LATTICE":
             raise ValueError(f"Object '{object_name}' is not a lattice (type: {lattice_obj.type})")
 
         lattice_data = lattice_obj.data
         points = []
         for point in lattice_data.points:
-            points.append({
-                "co": _vector_to_list(point.co),
-                "co_deform": _vector_to_list(getattr(point, "co_deform", None))
-            })
+            points.append(
+                {"co": _vector_to_list(point.co), "co_deform": _vector_to_list(getattr(point, "co_deform", None))}
+            )
 
         return {
             "object_name": lattice_obj.name,
@@ -278,5 +255,5 @@ class LatticeHandler:
             "interpolation_v": lattice_data.interpolation_type_v,
             "interpolation_w": lattice_data.interpolation_type_w,
             "point_count": len(points),
-            "points": points
+            "points": points,
         }

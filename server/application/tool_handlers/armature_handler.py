@@ -5,7 +5,7 @@ TASK-037: Armature & Rigging
 Bridges MCP adapter to Blender addon via RPC.
 """
 
-from typing import Optional, List
+from typing import List, Optional
 
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.armature import IArmatureTool
@@ -27,7 +27,7 @@ class ArmatureToolHandler(IArmatureTool):
         name: str = "Armature",
         location: Optional[List[float]] = None,
         bone_name: str = "Bone",
-        bone_length: float = 1.0
+        bone_length: float = 1.0,
     ) -> str:
         """Creates an armature with an initial bone.
 
@@ -40,12 +40,7 @@ class ArmatureToolHandler(IArmatureTool):
         Returns:
             Success message with armature details.
         """
-        args = {
-            "name": name,
-            "location": location,
-            "bone_name": bone_name,
-            "bone_length": bone_length
-        }
+        args = {"name": name, "location": location, "bone_name": bone_name, "bone_length": bone_length}
         response = self.rpc.send_request("armature.create", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -58,7 +53,7 @@ class ArmatureToolHandler(IArmatureTool):
         head: List[float],
         tail: List[float],
         parent_bone: Optional[str] = None,
-        use_connect: bool = False
+        use_connect: bool = False,
     ) -> str:
         """Adds a new bone to an existing armature.
 
@@ -79,19 +74,14 @@ class ArmatureToolHandler(IArmatureTool):
             "head": head,
             "tail": tail,
             "parent_bone": parent_bone,
-            "use_connect": use_connect
+            "use_connect": use_connect,
         }
         response = self.rpc.send_request("armature.add_bone", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
         return response.result
 
-    def bind(
-        self,
-        mesh_name: str,
-        armature_name: str,
-        bind_type: str = "AUTO"
-    ) -> str:
+    def bind(self, mesh_name: str, armature_name: str, bind_type: str = "AUTO") -> str:
         """Binds a mesh to an armature with automatic weights.
 
         Args:
@@ -102,11 +92,7 @@ class ArmatureToolHandler(IArmatureTool):
         Returns:
             Success message with binding details.
         """
-        args = {
-            "mesh_name": mesh_name,
-            "armature_name": armature_name,
-            "bind_type": bind_type
-        }
+        args = {"mesh_name": mesh_name, "armature_name": armature_name, "bind_type": bind_type}
         response = self.rpc.send_request("armature.bind", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -118,7 +104,7 @@ class ArmatureToolHandler(IArmatureTool):
         bone_name: str,
         rotation: Optional[List[float]] = None,
         location: Optional[List[float]] = None,
-        scale: Optional[List[float]] = None
+        scale: Optional[List[float]] = None,
     ) -> str:
         """Poses an armature bone.
 
@@ -137,7 +123,7 @@ class ArmatureToolHandler(IArmatureTool):
             "bone_name": bone_name,
             "rotation": rotation,
             "location": location,
-            "scale": scale
+            "scale": scale,
         }
         response = self.rpc.send_request("armature.pose_bone", args)
         if response.status == "error":
@@ -145,11 +131,7 @@ class ArmatureToolHandler(IArmatureTool):
         return response.result
 
     def weight_paint_assign(
-        self,
-        object_name: str,
-        vertex_group: str,
-        weight: float = 1.0,
-        mode: str = "REPLACE"
+        self, object_name: str, vertex_group: str, weight: float = 1.0, mode: str = "REPLACE"
     ) -> str:
         """Assigns weights to selected vertices.
 
@@ -162,12 +144,7 @@ class ArmatureToolHandler(IArmatureTool):
         Returns:
             Success message with weight details.
         """
-        args = {
-            "object_name": object_name,
-            "vertex_group": vertex_group,
-            "weight": weight,
-            "mode": mode
-        }
+        args = {"object_name": object_name, "vertex_group": vertex_group, "weight": weight, "mode": mode}
         response = self.rpc.send_request("armature.weight_paint_assign", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")
@@ -175,10 +152,7 @@ class ArmatureToolHandler(IArmatureTool):
 
     def get_data(self, object_name: str, include_pose: bool = False) -> str:
         """Returns armature bones and hierarchy (optional pose data)."""
-        args = {
-            "object_name": object_name,
-            "include_pose": include_pose
-        }
+        args = {"object_name": object_name, "include_pose": include_pose}
         response = self.rpc.send_request("armature.get_data", args)
         if response.status == "error":
             raise RuntimeError(f"Blender Error: {response.error}")

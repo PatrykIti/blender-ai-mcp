@@ -1,5 +1,7 @@
 import math
+
 import bpy
+
 
 class UVHandler:
     """Application service for UV operations."""
@@ -12,16 +14,12 @@ class UVHandler:
         obj = bpy.data.objects[object_name]
 
         # Validate that this is a mesh object
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
 
         # Check if object has mesh data
-        if not obj.data or not hasattr(obj.data, 'uv_layers'):
-            return {
-                "object_name": object_name,
-                "uv_map_count": 0,
-                "uv_maps": []
-            }
+        if not obj.data or not hasattr(obj.data, "uv_layers"):
+            return {"object_name": object_name, "uv_map_count": 0, "uv_maps": []}
 
         uv_maps_data = []
         uv_layers = obj.data.uv_layers
@@ -43,11 +41,7 @@ class UVHandler:
 
             uv_maps_data.append(uv_map_info)
 
-        return {
-            "object_name": object_name,
-            "uv_map_count": len(uv_maps_data),
-            "uv_maps": uv_maps_data
-        }
+        return {"object_name": object_name, "uv_map_count": len(uv_maps_data), "uv_maps": uv_maps_data}
 
     def unwrap(
         self,
@@ -80,17 +74,16 @@ class UVHandler:
         if obj is None:
             raise ValueError("No active object. Specify object_name or select an object.")
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{obj.name}' is not a mesh (type: {obj.type})")
 
         # Store current mode to restore later if needed
-        original_mode = obj.mode
 
         # Ensure object is active and in Edit Mode
         bpy.context.view_layer.objects.active = obj
 
-        if obj.mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if obj.mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         # Ensure we're in face select mode for UV operations
         bpy.context.tool_settings.mesh_select_mode = (False, False, True)
@@ -102,27 +95,16 @@ class UVHandler:
         # Perform unwrap based on method
         if method == "SMART_PROJECT":
             bpy.ops.uv.smart_project(
-                angle_limit=math.radians(angle_limit),
-                island_margin=island_margin,
-                scale_to_bounds=scale_to_bounds
+                angle_limit=math.radians(angle_limit), island_margin=island_margin, scale_to_bounds=scale_to_bounds
             )
         elif method == "CUBE":
-            bpy.ops.uv.cube_project(
-                scale_to_bounds=scale_to_bounds
-            )
+            bpy.ops.uv.cube_project(scale_to_bounds=scale_to_bounds)
         elif method == "CYLINDER":
-            bpy.ops.uv.cylinder_project(
-                scale_to_bounds=scale_to_bounds
-            )
+            bpy.ops.uv.cylinder_project(scale_to_bounds=scale_to_bounds)
         elif method == "SPHERE":
-            bpy.ops.uv.sphere_project(
-                scale_to_bounds=scale_to_bounds
-            )
+            bpy.ops.uv.sphere_project(scale_to_bounds=scale_to_bounds)
         elif method == "UNWRAP":
-            bpy.ops.uv.unwrap(
-                method='ANGLE_BASED',
-                margin=island_margin
-            )
+            bpy.ops.uv.unwrap(method="ANGLE_BASED", margin=island_margin)
         else:
             raise ValueError(f"Unknown unwrap method: {method}")
 
@@ -157,24 +139,20 @@ class UVHandler:
         if obj is None:
             raise ValueError("No active object. Specify object_name or select an object.")
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{obj.name}' is not a mesh (type: {obj.type})")
 
         # Ensure object is active and in Edit Mode
         bpy.context.view_layer.objects.active = obj
 
-        if obj.mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if obj.mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         # Select all UVs in UV editor
-        bpy.ops.uv.select_all(action='SELECT')
+        bpy.ops.uv.select_all(action="SELECT")
 
         # Pack islands
-        bpy.ops.uv.pack_islands(
-            margin=margin,
-            rotate=rotate,
-            scale=scale
-        )
+        bpy.ops.uv.pack_islands(margin=margin, rotate=rotate, scale=scale)
 
         return f"Packed UV islands for '{obj.name}'"
 
@@ -203,14 +181,14 @@ class UVHandler:
         if obj is None:
             raise ValueError("No active object. Specify object_name or select an object.")
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{obj.name}' is not a mesh (type: {obj.type})")
 
         # Ensure object is active and in Edit Mode
         bpy.context.view_layer.objects.active = obj
 
-        if obj.mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if obj.mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         # Ensure edge select mode
         bpy.context.tool_settings.mesh_select_mode = (False, True, False)

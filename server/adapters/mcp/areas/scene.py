@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastmcp import Context
 from fastmcp.utilities.types import Image
+
+from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.scene import (
     SceneBoundingBoxContract,
     SceneContextResponseContract,
@@ -16,18 +18,19 @@ from server.adapters.mcp.contracts.scene import (
     SceneSnapshotDiffContract,
     SceneSnapshotStateContract,
 )
-from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
+from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
     run_rpc_background_job,
 )
 from server.adapters.mcp.utils import parse_coordinate
-from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
-from server.infrastructure.di import get_scene_handler
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.application.services.snapshot_diff import get_snapshot_diff_service
+from server.infrastructure.di import get_scene_handler
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 SCENE_PUBLIC_TOOL_NAMES = (
@@ -85,10 +88,49 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 def register_scene_tools(target: Any) -> Dict[str, Any]:
     """Register public scene tools on a FastMCP server or LocalProvider."""
 
-    return {
-        tool_name: _register_existing_tool(target, tool_name)
-        for tool_name in SCENE_PUBLIC_TOOL_NAMES
-    }
+    return {tool_name: _register_existing_tool(target, tool_name) for tool_name in SCENE_PUBLIC_TOOL_NAMES}
+
+
+async def _maybe_attach_scene_inspection_assistant(
+    ctx: Context,
+    contract: SceneInspectResponseContract,
+    *,
+    object_name: str | None,
+) -> SceneInspectResponseContract:
+    """Attach a bounded assistant summary to a scene inspection response."""
+
+    if contract.error:
+        return contract
+
+    outcome = await run_inspection_summary_assistant(
+        ctx,
+        action=contract.action,
+        object_name=object_name,
+        payload=contract.model_dump(exclude_none=True),
+    )
+    return contract.model_copy(update={"assistant": to_inspection_assistant_contract(outcome)})
+
+
+async def _maybe_attach_scene_state_assistant(
+    ctx: Context,
+    contract,
+    *,
+    subject: str,
+    object_name: str | None = None,
+):
+    """Attach a bounded assistant summary to a structured scene-state contract."""
+
+    if getattr(contract, "error", None):
+        return contract
+
+    outcome = await run_inspection_summary_assistant(
+        ctx,
+        action=subject,
+        object_name=object_name,
+        payload=contract.model_dump(exclude_none=True),
+    )
+    return contract.model_copy(update={"assistant": to_inspection_assistant_contract(outcome)})
+
 
 # ... Scene Tools ...
 def scene_list_objects(ctx: Context) -> str:
@@ -97,6 +139,7 @@ def scene_list_objects(ctx: Context) -> str:
 
     Workflow: READ-ONLY | START → understand scene
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -106,11 +149,8 @@ def scene_list_objects(ctx: Context) -> str:
         except RuntimeError as e:
             return str(e)
 
-    return route_tool_call(
-        tool_name="scene_list_objects",
-        params={},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="scene_list_objects", params={}, direct_executor=execute)
+
 
 def scene_delete_object(name: str, ctx: Context) -> str:
     """
@@ -125,8 +165,9 @@ def scene_delete_object(name: str, ctx: Context) -> str:
     return route_tool_call(
         tool_name="scene_delete_object",
         params={"name": name},
-        direct_executor=lambda: get_scene_handler().delete_object(name)
+        direct_executor=lambda: get_scene_handler().delete_object(name),
     )
+
 
 def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str:
     """
@@ -142,8 +183,9 @@ def scene_clean_scene(ctx: Context, keep_lights_and_cameras: bool = True) -> str
     return route_tool_call(
         tool_name="scene_clean_scene",
         params={"keep_lights_and_cameras": keep_lights_and_cameras},
-        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras)
+        direct_executor=lambda: get_scene_handler().clean_scene(keep_lights_and_cameras),
     )
+
 
 def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List[float], None] = None) -> str:
     """
@@ -155,6 +197,7 @@ def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List
         name: Name of the object to duplicate.
         translation: Optional [x, y, z] vector to move the copy. Can be a list or string '[1.0, 2.0, 3.0]'.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -164,10 +207,9 @@ def scene_duplicate_object(ctx: Context, name: str, translation: Union[str, List
             return str(e)
 
     return route_tool_call(
-        tool_name="scene_duplicate_object",
-        params={"name": name, "translation": translation},
-        direct_executor=execute
+        tool_name="scene_duplicate_object", params={"name": name, "translation": translation}, direct_executor=execute
     )
+
 
 def scene_set_active_object(ctx: Context, name: str) -> str:
     """
@@ -182,14 +224,11 @@ def scene_set_active_object(ctx: Context, name: str) -> str:
     return route_tool_call(
         tool_name="scene_set_active_object",
         params={"name": name},
-        direct_executor=lambda: get_scene_handler().set_active_object(name)
+        direct_executor=lambda: get_scene_handler().set_active_object(name),
     )
 
 
-def scene_context(
-    ctx: Context,
-    action: Literal["mode", "selection"]
-) -> SceneContextResponseContract:
+def scene_context(ctx: Context, action: Literal["mode", "selection"]) -> SceneContextResponseContract:
     """
     [SCENE][READ-ONLY][SAFE] Quick context queries for scene state.
 
@@ -203,6 +242,7 @@ def scene_context(
         scene_context(action="mode")
         scene_context(action="selection")
     """
+
     def execute():
         if action == "mode":
             return SceneContextResponseContract(
@@ -220,11 +260,7 @@ def scene_context(
                 error=f"Unknown action '{action}'. Valid actions: mode, selection",
             )
 
-    return route_tool_call(
-        tool_name="scene_context",
-        params={"action": action},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="scene_context", params={"action": action}, direct_executor=execute)
 
 
 # Internal function - exposed via scene_context mega tool
@@ -265,7 +301,7 @@ def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
     return summary
 
 
-def scene_inspect(
+async def scene_inspect(
     ctx: Context,
     action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"],
     object_name: Optional[str] = None,
@@ -275,7 +311,8 @@ def scene_inspect(
     include_empty_slots: bool = True,
     include_bones: bool = False,
     modifier_name: Optional[str] = None,
-    include_node_tree: bool = False
+    include_node_tree: bool = False,
+    assistant_summary: bool = False,
 ) -> SceneInspectResponseContract:
     """
     [SCENE][READ-ONLY][SAFE] Detailed inspection queries for objects and scene.
@@ -287,6 +324,7 @@ def scene_inspect(
     - "materials": No params required. Returns material slot audit. Optional: material_filter, include_empty_slots.
     - "constraints": Requires object_name. Returns object (and optional bone) constraints.
     - "modifier_data": Requires object_name. Returns full modifier properties (optional modifier_name, include_node_tree).
+    - assistant_summary: Optional bounded server-side summary of the structured inspection payload.
 
     Workflow: READ-ONLY | USE → detailed analysis before export or debugging
 
@@ -299,6 +337,7 @@ def scene_inspect(
         scene_inspect(action="constraints", object_name="Rig", include_bones=True)
         scene_inspect(action="modifier_data", object_name="Cube", modifier_name="Bevel")
     """
+
     def execute():
         if action == "object":
             if object_name is None:
@@ -356,7 +395,7 @@ def scene_inspect(
                 ),
             )
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_inspect",
         params={
             "action": action,
@@ -368,8 +407,18 @@ def scene_inspect(
             "include_bones": include_bones,
             "modifier_name": modifier_name,
             "include_node_tree": include_node_tree,
+            "assistant_summary": assistant_summary,
         },
-        direct_executor=execute
+        direct_executor=execute,
+    )
+    if not isinstance(result, SceneInspectResponseContract):
+        return SceneInspectResponseContract(action=action, error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_inspection_assistant(
+        ctx,
+        result,
+        object_name=object_name,
     )
 
 
@@ -411,9 +460,7 @@ def _format_viewport_output(
     if mode_val in {"FILE", "MARKDOWN"}:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"viewport_{timestamp}.jpg"
-        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
-            filename
-        )
+        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(filename)
         image_bytes = base64.b64decode(b64_data)
         internal_file.write_bytes(image_bytes)
         internal_latest.write_bytes(image_bytes)
@@ -436,9 +483,7 @@ def _format_viewport_output(
             f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
         )
 
-    return (
-        f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
-    )
+    return f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
 
 
 async def scene_get_viewport(
@@ -477,6 +522,7 @@ async def scene_get_viewport(
         output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
     if is_background_task_context(ctx):
+
         def _foreground_rpc() -> str:
             handler = get_scene_handler()
             return handler.get_viewport(width, height, shading, camera_name, focus_target)
@@ -525,14 +571,23 @@ async def scene_get_viewport(
 
     return route_tool_call(
         tool_name="scene_get_viewport",
-        params={"width": width, "height": height, "shading": shading, "camera_name": camera_name, "focus_target": focus_target, "output_mode": output_mode},
-        direct_executor=execute
+        params={
+            "width": width,
+            "height": height,
+            "shading": shading,
+            "camera_name": camera_name,
+            "focus_target": focus_target,
+            "output_mode": output_mode,
+        },
+        direct_executor=execute,
     )
 
-def scene_snapshot_state(
+
+async def scene_snapshot_state(
     ctx: Context,
     include_mesh_stats: bool = False,
-    include_materials: bool = False
+    include_materials: bool = False,
+    assistant_summary: bool = False,
 ) -> SceneSnapshotStateContract:
     """
     [SCENE][SAFE][READ-ONLY] Captures a lightweight JSON snapshot of the scene state.
@@ -546,14 +601,15 @@ def scene_snapshot_state(
     Args:
         include_mesh_stats: If True, includes vertex/edge/face counts for mesh objects.
         include_materials: If True, includes material names assigned to objects.
+        assistant_summary: If True, attaches a bounded assistant summary for the snapshot payload.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
-            contract = SceneSnapshotStateContract.model_validate(handler.snapshot_state(
-                include_mesh_stats=include_mesh_stats,
-                include_materials=include_materials
-            ))
+            contract = SceneSnapshotStateContract.model_validate(
+                handler.snapshot_state(include_mesh_stats=include_mesh_stats, include_materials=include_materials)
+            )
             snapshot = contract.snapshot
             snapshot_hash = contract.hash
             object_count = snapshot.get("object_count", 0)
@@ -562,17 +618,28 @@ def scene_snapshot_state(
         except RuntimeError as e:
             return SceneSnapshotStateContract(error=str(e))
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_snapshot_state",
-        params={"include_mesh_stats": include_mesh_stats, "include_materials": include_materials},
-        direct_executor=execute
+        params={
+            "include_mesh_stats": include_mesh_stats,
+            "include_materials": include_materials,
+            "assistant_summary": assistant_summary,
+        },
+        direct_executor=execute,
     )
+    if not isinstance(result, SceneSnapshotStateContract):
+        return SceneSnapshotStateContract(error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_state_assistant(ctx, result, subject="scene_snapshot_state")
 
-def scene_compare_snapshot(
+
+async def scene_compare_snapshot(
     ctx: Context,
     baseline_snapshot: str,
     target_snapshot: str,
-    ignore_minor_transforms: float = 0.0
+    ignore_minor_transforms: float = 0.0,
+    assistant_summary: bool = False,
 ) -> SceneSnapshotDiffContract:
     """
     [SCENE][SAFE][READ-ONLY] Compares two scene snapshots and returns a diff summary.
@@ -587,16 +654,20 @@ def scene_compare_snapshot(
         baseline_snapshot: JSON string of the baseline snapshot
         target_snapshot: JSON string of the target snapshot
         ignore_minor_transforms: Threshold for ignoring small transform changes (default 0.0)
+        assistant_summary: If True, attaches a bounded assistant summary for the diff payload.
     """
+
     def execute():
         diff_service = get_snapshot_diff_service()
 
         try:
-            result = SceneSnapshotDiffContract.model_validate(diff_service.compare_snapshots(
-                baseline_snapshot=baseline_snapshot,
-                target_snapshot=target_snapshot,
-                ignore_minor_transforms=ignore_minor_transforms
-            ))
+            result = SceneSnapshotDiffContract.model_validate(
+                diff_service.compare_snapshots(
+                    baseline_snapshot=baseline_snapshot,
+                    target_snapshot=target_snapshot,
+                    ignore_minor_transforms=ignore_minor_transforms,
+                )
+            )
         except ValueError as e:
             return SceneSnapshotDiffContract(error=str(e))
         ctx_info(
@@ -605,17 +676,26 @@ def scene_compare_snapshot(
         )
         return result
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_compare_snapshot",
-        params={"baseline_snapshot": baseline_snapshot, "target_snapshot": target_snapshot, "ignore_minor_transforms": ignore_minor_transforms},
-        direct_executor=execute
+        params={
+            "baseline_snapshot": baseline_snapshot,
+            "target_snapshot": target_snapshot,
+            "ignore_minor_transforms": ignore_minor_transforms,
+            "assistant_summary": assistant_summary,
+        },
+        direct_executor=execute,
     )
+    if not isinstance(result, SceneSnapshotDiffContract):
+        return SceneSnapshotDiffContract(error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_state_assistant(ctx, result, subject="scene_compare_snapshot")
+
 
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_material_slots(
-    ctx: Context,
-    material_filter: Optional[str] = None,
-    include_empty_slots: bool = True
+    ctx: Context, material_filter: Optional[str] = None, include_empty_slots: bool = True
 ) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Audits material slot assignments across the entire scene.
@@ -633,8 +713,7 @@ def _scene_inspect_material_slots(
     handler = get_scene_handler()
     try:
         result = handler.inspect_material_slots(
-            material_filter=material_filter,
-            include_empty_slots=include_empty_slots
+            material_filter=material_filter, include_empty_slots=include_empty_slots
         )
         ctx_info(
             ctx,
@@ -645,12 +724,9 @@ def _scene_inspect_material_slots(
     except RuntimeError as e:
         return {"error": str(e)}
 
+
 # Internal function - exposed via scene_inspect mega tool
-def _scene_inspect_mesh_topology(
-    ctx: Context,
-    object_name: str,
-    detailed: bool = False
-) -> Dict[str, Any]:
+def _scene_inspect_mesh_topology(ctx: Context, object_name: str, detailed: bool = False) -> Dict[str, Any]:
     """
     [MESH][SAFE][READ-ONLY] Reports detailed topology stats for a given mesh.
 
@@ -669,12 +745,11 @@ def _scene_inspect_mesh_topology(
         return stats
     except RuntimeError as e:
         return {"error": str(e)}
-    
+
+
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_modifiers(
-    ctx: Context,
-    object_name: Optional[str] = None,
-    include_disabled: bool = True
+    ctx: Context, object_name: Optional[str] = None, include_disabled: bool = True
 ) -> Dict[str, Any]:
     """
     [SCENE][SAFE][READ-ONLY] Lists modifier stacks with key settings.
@@ -692,19 +767,15 @@ def _scene_inspect_modifiers(
         result = handler.inspect_modifiers(object_name, include_disabled)
         ctx_info(
             ctx,
-            f"Inspected modifiers: {result.get('modifier_count', 0)} on "
-            f"{result.get('object_count', 0)} objects",
+            f"Inspected modifiers: {result.get('modifier_count', 0)} on {result.get('object_count', 0)} objects",
         )
         return result
     except RuntimeError as e:
         return {"error": str(e)}
 
+
 # Internal function - exposed via scene_inspect mega tool
-def _scene_get_constraints(
-    ctx: Context,
-    object_name: str,
-    include_bones: bool = False
-) -> Dict[str, Any]:
+def _scene_get_constraints(ctx: Context, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
     """
@@ -717,10 +788,7 @@ def _scene_get_constraints(
 
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_modifier_data(
-    ctx: Context,
-    object_name: str,
-    modifier_name: Optional[str] = None,
-    include_node_tree: bool = False
+    ctx: Context, object_name: str, modifier_name: Optional[str] = None, include_node_tree: bool = False
 ) -> Dict[str, Any]:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns full modifier properties.
@@ -728,7 +796,6 @@ def _scene_inspect_modifier_data(
     from server.adapters.mcp.areas.modeling import _modeling_get_modifier_data
 
     return _modeling_get_modifier_data(ctx, object_name, modifier_name, include_node_tree)
-
 
 
 def scene_create(
@@ -746,8 +813,10 @@ def scene_create(
     clip_start: Optional[float] = None,
     clip_end: Optional[float] = None,
     # Empty params:
-    empty_type: Literal["PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"] = "PLAIN_AXES",
-    size: float = 1.0
+    empty_type: Literal[
+        "PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"
+    ] = "PLAIN_AXES",
+    size: float = 1.0,
 ) -> str:
     """
     [SCENE][SAFE] Creates scene helper objects (lights, cameras, empties).
@@ -769,6 +838,7 @@ def scene_create(
         scene_create(action="camera", location=[0, -10, 5], rotation=[1.0, 0, 0])
         scene_create(action="empty", empty_type="ARROWS", location=[0, 0, 2])
     """
+
     def execute():
         if action == "light":
             return _scene_create_light(ctx, light_type, energy, color, location, name)
@@ -781,8 +851,21 @@ def scene_create(
 
     return route_tool_call(
         tool_name="scene_create",
-        params={"action": action, "location": location, "rotation": rotation, "name": name, "light_type": light_type, "energy": energy, "color": color, "lens": lens, "clip_start": clip_start, "clip_end": clip_end, "empty_type": empty_type, "size": size},
-        direct_executor=execute
+        params={
+            "action": action,
+            "location": location,
+            "rotation": rotation,
+            "name": name,
+            "light_type": light_type,
+            "energy": energy,
+            "color": color,
+            "lens": lens,
+            "clip_start": clip_start,
+            "clip_end": clip_end,
+            "empty_type": empty_type,
+            "size": size,
+        },
+        direct_executor=execute,
     )
 
 
@@ -793,7 +876,7 @@ def _scene_create_light(
     energy: float = 1000.0,
     color: Union[str, List[float]] = [1.0, 1.0, 1.0],
     location: Union[str, List[float]] = [0.0, 0.0, 5.0],
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> str:
     """
     [SCENE][SAFE] Creates a light source.
@@ -824,7 +907,7 @@ def _scene_create_camera(
     lens: float = 50.0,
     clip_start: Optional[float] = None,
     clip_end: Optional[float] = None,
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> str:
     """
     [SCENE][SAFE] Creates a camera object.
@@ -854,7 +937,7 @@ def _scene_create_empty(
     type: str,
     size: float = 1.0,
     location: Union[str, List[float]] = [0.0, 0.0, 0.0],
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> str:
     """
     [SCENE][SAFE] Creates an Empty object (useful for grouping or tracking).
@@ -874,6 +957,7 @@ def _scene_create_empty(
     except (RuntimeError, ValueError) as e:
         return str(e)
 
+
 def scene_set_mode(ctx: Context, mode: str) -> str:
     """
     [SCENE][SAFE] Sets the interaction mode (OBJECT, EDIT, SCULPT, POSE, WEIGHT_PAINT, TEXTURE_PAINT).
@@ -883,6 +967,7 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
     Args:
         mode: The target mode (case-insensitive).
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -892,14 +977,11 @@ def scene_set_mode(ctx: Context, mode: str) -> str:
         except RuntimeError as e:
             return str(e)
 
-    return route_tool_call(
-        tool_name="scene_set_mode",
-        params={"mode": mode},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="scene_set_mode", params={"mode": mode}, direct_executor=execute)
 
 
 # TASK-043: Scene Utility Tools
+
 
 def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
     """
@@ -914,6 +996,7 @@ def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
     Returns:
         Success message with old and new name, or error if object not found
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -922,18 +1005,11 @@ def scene_rename_object(ctx: Context, old_name: str, new_name: str) -> str:
             return str(e)
 
     return route_tool_call(
-        tool_name="scene_rename_object",
-        params={"old_name": old_name, "new_name": new_name},
-        direct_executor=execute
+        tool_name="scene_rename_object", params={"old_name": old_name, "new_name": new_name}, direct_executor=execute
     )
 
 
-def scene_hide_object(
-    ctx: Context,
-    object_name: str,
-    hide: bool = True,
-    hide_render: bool = False
-) -> str:
+def scene_hide_object(ctx: Context, object_name: str, hide: bool = True, hide_render: bool = False) -> str:
     """
     [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Hides or shows an object.
 
@@ -947,6 +1023,7 @@ def scene_hide_object(
     Returns:
         Success message with visibility state
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -957,7 +1034,7 @@ def scene_hide_object(
     return route_tool_call(
         tool_name="scene_hide_object",
         params={"object_name": object_name, "hide": hide, "hide_render": hide_render},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
@@ -973,6 +1050,7 @@ def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
     Returns:
         Count of objects made visible
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -981,16 +1059,11 @@ def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
             return str(e)
 
     return route_tool_call(
-        tool_name="scene_show_all_objects",
-        params={"include_render": include_render},
-        direct_executor=execute
+        tool_name="scene_show_all_objects", params={"include_render": include_render}, direct_executor=execute
     )
 
 
-def scene_isolate_object(
-    ctx: Context,
-    object_name: Union[str, List[str]]
-) -> str:
+def scene_isolate_object(ctx: Context, object_name: Union[str, List[str]]) -> str:
     """
     [OBJECT MODE][SCENE][NON-DESTRUCTIVE] Isolates object(s) by hiding all others.
 
@@ -1002,6 +1075,7 @@ def scene_isolate_object(
     Returns:
         Count of objects hidden
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1015,9 +1089,7 @@ def scene_isolate_object(
             return str(e)
 
     return route_tool_call(
-        tool_name="scene_isolate_object",
-        params={"object_name": object_name},
-        direct_executor=execute
+        tool_name="scene_isolate_object", params={"object_name": object_name}, direct_executor=execute
     )
 
 
@@ -1026,7 +1098,7 @@ def scene_camera_orbit(
     angle_horizontal: float = 0.0,
     angle_vertical: float = 0.0,
     target_object: Optional[str] = None,
-    target_point: Union[str, List[float], None] = None
+    target_point: Union[str, List[float], None] = None,
 ) -> str:
     """
     [OBJECT MODE][SCENE][SAFE] Orbits viewport camera around target.
@@ -1042,6 +1114,7 @@ def scene_camera_orbit(
     Returns:
         New camera position and angles
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1052,17 +1125,17 @@ def scene_camera_orbit(
 
     return route_tool_call(
         tool_name="scene_camera_orbit",
-        params={"angle_horizontal": angle_horizontal, "angle_vertical": angle_vertical,
-                "target_object": target_object, "target_point": target_point},
-        direct_executor=execute
+        params={
+            "angle_horizontal": angle_horizontal,
+            "angle_vertical": angle_vertical,
+            "target_object": target_object,
+            "target_point": target_point,
+        },
+        direct_executor=execute,
     )
 
 
-def scene_camera_focus(
-    ctx: Context,
-    object_name: str,
-    zoom_factor: float = 1.0
-) -> str:
+def scene_camera_focus(ctx: Context, object_name: str, zoom_factor: float = 1.0) -> str:
     """
     [OBJECT MODE][SCENE][SAFE] Focuses viewport camera on object.
 
@@ -1075,6 +1148,7 @@ def scene_camera_focus(
     Returns:
         Success message
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1085,16 +1159,14 @@ def scene_camera_focus(
     return route_tool_call(
         tool_name="scene_camera_focus",
         params={"object_name": object_name, "zoom_factor": zoom_factor},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
 # TASK-045: Object Inspection Tools
 
-def scene_get_custom_properties(
-    ctx: Context,
-    object_name: str
-) -> SceneCustomPropertiesContract | str:
+
+def scene_get_custom_properties(ctx: Context, object_name: str) -> SceneCustomPropertiesContract | str:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets custom properties (metadata) from an object.
 
@@ -1110,11 +1182,11 @@ def scene_get_custom_properties(
     Returns:
         JSON with custom properties including property names, values, and count.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
             result = SceneCustomPropertiesContract.model_validate(handler.get_custom_properties(object_name))
-            props = result.properties
             count = result.property_count
 
             ctx_info(ctx, f"Retrieved {count} custom properties from '{object_name}'")
@@ -1123,9 +1195,7 @@ def scene_get_custom_properties(
             return SceneCustomPropertiesContract(error=str(e), object_name=object_name)
 
     return route_tool_call(
-        tool_name="scene_get_custom_properties",
-        params={"object_name": object_name},
-        direct_executor=execute
+        tool_name="scene_get_custom_properties", params={"object_name": object_name}, direct_executor=execute
     )
 
 
@@ -1134,7 +1204,7 @@ def scene_set_custom_property(
     object_name: str,
     property_name: str,
     property_value: Union[str, int, float, bool],
-    delete: bool = False
+    delete: bool = False,
 ) -> str:
     """
     [OBJECT MODE][NON-DESTRUCTIVE] Sets or deletes a custom property on an object.
@@ -1153,6 +1223,7 @@ def scene_set_custom_property(
     Returns:
         Success message with property details
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1162,16 +1233,21 @@ def scene_set_custom_property(
 
     return route_tool_call(
         tool_name="scene_set_custom_property",
-        params={"object_name": object_name, "property_name": property_name,
-                "property_value": property_value, "delete": delete},
-        direct_executor=execute
+        params={
+            "object_name": object_name,
+            "property_name": property_name,
+            "property_value": property_value,
+            "delete": delete,
+        },
+        direct_executor=execute,
     )
 
 
-def scene_get_hierarchy(
+async def scene_get_hierarchy(
     ctx: Context,
     object_name: Optional[str] = None,
-    include_transforms: bool = False
+    include_transforms: bool = False,
+    assistant_summary: bool = False,
 ) -> SceneHierarchyContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets parent-child hierarchy for objects.
@@ -1184,10 +1260,12 @@ def scene_get_hierarchy(
     Args:
         object_name: Specific object to query (None for full scene)
         include_transforms: Include local/world transform offsets
+        assistant_summary: If True, attaches a bounded assistant summary for the hierarchy payload.
 
     Returns:
         JSON with hierarchy information including parent, children, depth, and path.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1197,17 +1275,32 @@ def scene_get_hierarchy(
         except RuntimeError as e:
             return SceneHierarchyContract(error=str(e))
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_get_hierarchy",
-        params={"object_name": object_name, "include_transforms": include_transforms},
-        direct_executor=execute
+        params={
+            "object_name": object_name,
+            "include_transforms": include_transforms,
+            "assistant_summary": assistant_summary,
+        },
+        direct_executor=execute,
+    )
+    if not isinstance(result, SceneHierarchyContract):
+        return SceneHierarchyContract(error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_state_assistant(
+        ctx,
+        result,
+        subject="scene_get_hierarchy",
+        object_name=object_name,
     )
 
 
-def scene_get_bounding_box(
+async def scene_get_bounding_box(
     ctx: Context,
     object_name: str,
-    world_space: bool = True
+    world_space: bool = True,
+    assistant_summary: bool = False,
 ) -> SceneBoundingBoxContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets bounding box corners for an object.
@@ -1219,10 +1312,12 @@ def scene_get_bounding_box(
     Args:
         object_name: Name of the object to query
         world_space: If True, returns world coordinates. If False, local coordinates.
+        assistant_summary: If True, attaches a bounded assistant summary for the bounding-box payload.
 
     Returns:
         JSON with bounding box data including min, max, center, dimensions, corners, and volume.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1232,16 +1327,31 @@ def scene_get_bounding_box(
         except RuntimeError as e:
             return SceneBoundingBoxContract(error=str(e))
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_get_bounding_box",
-        params={"object_name": object_name, "world_space": world_space},
-        direct_executor=execute
+        params={
+            "object_name": object_name,
+            "world_space": world_space,
+            "assistant_summary": assistant_summary,
+        },
+        direct_executor=execute,
+    )
+    if not isinstance(result, SceneBoundingBoxContract):
+        return SceneBoundingBoxContract(error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_state_assistant(
+        ctx,
+        result,
+        subject="scene_get_bounding_box",
+        object_name=object_name,
     )
 
 
-def scene_get_origin_info(
+async def scene_get_origin_info(
     ctx: Context,
-    object_name: str
+    object_name: str,
+    assistant_summary: bool = False,
 ) -> SceneOriginInfoContract:
     """
     [OBJECT MODE][SAFE][READ-ONLY] Gets origin (pivot point) information for an object.
@@ -1253,10 +1363,12 @@ def scene_get_origin_info(
 
     Args:
         object_name: Name of the object to query
+        assistant_summary: If True, attaches a bounded assistant summary for the origin payload.
 
     Returns:
         JSON with origin information including world/local position, relative bbox position, and suggestions.
     """
+
     def execute():
         handler = get_scene_handler()
         try:
@@ -1266,8 +1378,18 @@ def scene_get_origin_info(
         except RuntimeError as e:
             return SceneOriginInfoContract(error=str(e))
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_get_origin_info",
-        params={"object_name": object_name},
-        direct_executor=execute
+        params={"object_name": object_name, "assistant_summary": assistant_summary},
+        direct_executor=execute,
+    )
+    if not isinstance(result, SceneOriginInfoContract):
+        return SceneOriginInfoContract(error=str(result))
+    if not assistant_summary:
+        return result
+    return await _maybe_attach_scene_state_assistant(
+        ctx,
+        result,
+        subject="scene_get_origin_info",
+        object_name=object_name,
     )

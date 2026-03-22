@@ -72,7 +72,7 @@ def mesh_extrude_region(ctx: Context, move: List[float] = None) -> str:
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Extrudes selected geometry.
     WARNING: If 'move' is None, new geometry is created in-place (overlapping).
     Always provide 'move' vector or follow up with transform.
-    
+
     Args:
         move: Optional [x, y, z] vector to move extruded region.
     """
@@ -86,12 +86,12 @@ def mesh_boolean(ctx: Context, operation: str = 'DIFFERENCE', solver: str = 'FAS
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Boolean operation on selected geometry.
     Formula: Unselected - Selected (for DIFFERENCE).
     TIP: For object-level booleans, prefer 'modeling_add_modifier(BOOLEAN)' (safer).
-    
+
     Workflow:
       1. Select 'Cutter' geometry.
       2. Deselect 'Base' geometry.
       3. Run tool.
-    
+
     Args:
         operation: 'INTERSECT', 'UNION', 'DIFFERENCE'.
         solver: 'FAST' or 'EXACT'.
@@ -104,7 +104,7 @@ def select_by_index(self, indices, type='VERT', selection_mode='SET'):
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Select geometry elements by index.
     Uses BMesh for precise indexing. Indices are 0-based.
-    
+
     Args:
         indices: List of integer indices.
         type: 'VERT', 'EDGE', 'FACE'.

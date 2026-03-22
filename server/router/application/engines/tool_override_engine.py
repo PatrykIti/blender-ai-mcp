@@ -4,16 +4,16 @@ Tool Override Engine Implementation.
 Determines if a tool should be replaced with a better alternative.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
-from server.router.domain.interfaces.i_override_engine import IOverrideEngine
-from server.router.domain.entities.scene_context import SceneContext
-from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.domain.entities.override_decision import (
     OverrideDecision,
     OverrideReason,
     ReplacementTool,
 )
+from server.router.domain.entities.pattern import DetectedPattern
+from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.interfaces.i_override_engine import IOverrideEngine
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -74,7 +74,13 @@ class ToolOverrideEngine(IOverrideEngine):
                 },
                 {
                     "tool_name": "mesh_select_targeted",
-                    "params": {"action": "by_location", "axis": "Z", "min_coord": 0.0, "max_coord": 9999.0, "element_type": "VERT"},
+                    "params": {
+                        "action": "by_location",
+                        "axis": "Z",
+                        "min_coord": 0.0,
+                        "max_coord": 9999.0,
+                        "element_type": "VERT",
+                    },
                     "description": "Select upper vertices",
                 },
                 {
@@ -158,18 +164,22 @@ class ToolOverrideEngine(IOverrideEngine):
         """
         replacement_tools = []
         for tool_def in rule["replacement_tools"]:
-            replacement_tools.append(ReplacementTool(
-                tool_name=tool_def["tool_name"],
-                params=tool_def.get("params", {}),
-                inherit_params=tool_def.get("inherit_params", []),
-                description=tool_def.get("description", ""),
-            ))
+            replacement_tools.append(
+                ReplacementTool(
+                    tool_name=tool_def["tool_name"],
+                    params=tool_def.get("params", {}),
+                    inherit_params=tool_def.get("inherit_params", []),
+                    description=tool_def.get("description", ""),
+                )
+            )
 
-        reasons = [OverrideReason(
-            rule_name=rule["rule_name"],
-            description=f"Override triggered by rule: {rule['rule_name']}",
-            pattern_match=rule.get("trigger_pattern"),
-        )]
+        reasons = [
+            OverrideReason(
+                rule_name=rule["rule_name"],
+                description=f"Override triggered by rule: {rule['rule_name']}",
+                pattern_match=rule.get("trigger_pattern"),
+            )
+        ]
 
         return OverrideDecision.override_with_tools(replacement_tools, reasons)
 

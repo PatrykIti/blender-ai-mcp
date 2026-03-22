@@ -5,9 +5,10 @@ TASK-037: Armature & Rigging
 Direct Blender API implementation.
 """
 
-import bpy
 import math
-from typing import Optional, List
+from typing import List, Optional
+
+import bpy
 
 
 def _vector_to_list(value):
@@ -36,7 +37,7 @@ class ArmatureHandler:
         name: str = "Armature",
         location: Optional[List[float]] = None,
         bone_name: str = "Bone",
-        bone_length: float = 1.0
+        bone_length: float = 1.0,
     ) -> str:
         """
         [OBJECT MODE][SCENE] Creates armature with initial bone.
@@ -51,8 +52,8 @@ class ArmatureHandler:
             Success message with armature details.
         """
         # Ensure Object Mode
-        if bpy.context.active_object and bpy.context.active_object.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.active_object and bpy.context.active_object.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Parse location
         loc = tuple(location) if location else (0, 0, 0)
@@ -64,14 +65,14 @@ class ArmatureHandler:
         armature.data.name = name
 
         # Rename the initial bone
-        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode="EDIT")
         edit_bone = armature.data.edit_bones[0]
         edit_bone.name = bone_name
 
         # Set bone length (tail position relative to head)
         edit_bone.tail = (edit_bone.head[0], edit_bone.head[1], edit_bone.head[2] + bone_length)
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         return f"Created armature '{name}' at {loc} with bone '{bone_name}' (length={bone_length})"
 
@@ -82,7 +83,7 @@ class ArmatureHandler:
         head: List[float],
         tail: List[float],
         parent_bone: Optional[str] = None,
-        use_connect: bool = False
+        use_connect: bool = False,
     ) -> str:
         """
         [EDIT MODE on armature] Adds bone to armature.
@@ -103,12 +104,12 @@ class ArmatureHandler:
             raise ValueError(f"Armature '{armature_name}' not found")
 
         armature = bpy.data.objects[armature_name]
-        if armature.type != 'ARMATURE':
+        if armature.type != "ARMATURE":
             raise ValueError(f"Object '{armature_name}' is not an armature (type: {armature.type})")
 
         # Set as active and enter Edit Mode
         bpy.context.view_layer.objects.active = armature
-        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode="EDIT")
 
         # Create new bone
         edit_bone = armature.data.edit_bones.new(bone_name)
@@ -118,23 +119,18 @@ class ArmatureHandler:
         # Set parent if specified
         if parent_bone:
             if parent_bone not in armature.data.edit_bones:
-                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.object.mode_set(mode="OBJECT")
                 raise ValueError(f"Parent bone '{parent_bone}' not found in armature '{armature_name}'")
             edit_bone.parent = armature.data.edit_bones[parent_bone]
             edit_bone.use_connect = use_connect
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         parent_info = f", parent='{parent_bone}'" if parent_bone else ""
         connect_info = ", connected" if use_connect else ""
         return f"Added bone '{bone_name}' to '{armature_name}' (head={head}, tail={tail}{parent_info}{connect_info})"
 
-    def bind(
-        self,
-        mesh_name: str,
-        armature_name: str,
-        bind_type: str = "AUTO"
-    ) -> str:
+    def bind(self, mesh_name: str, armature_name: str, bind_type: str = "AUTO") -> str:
         """
         [OBJECT MODE] Binds mesh to armature with automatic weights.
 
@@ -155,9 +151,9 @@ class ArmatureHandler:
         mesh = bpy.data.objects[mesh_name]
         armature = bpy.data.objects[armature_name]
 
-        if mesh.type != 'MESH':
+        if mesh.type != "MESH":
             raise ValueError(f"Object '{mesh_name}' is not a mesh (type: {mesh.type})")
-        if armature.type != 'ARMATURE':
+        if armature.type != "ARMATURE":
             raise ValueError(f"Object '{armature_name}' is not an armature (type: {armature.type})")
 
         # Validate bind_type
@@ -167,11 +163,11 @@ class ArmatureHandler:
             raise ValueError(f"Invalid bind_type '{bind_type}'. Must be one of: {valid_types}")
 
         # Ensure Object Mode
-        if bpy.context.active_object and bpy.context.active_object.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.active_object and bpy.context.active_object.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Deselect all, then select mesh and armature
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         mesh.select_set(True)
         armature.select_set(True)
         bpy.context.view_layer.objects.active = armature
@@ -179,11 +175,11 @@ class ArmatureHandler:
         # Parent with appropriate method
         try:
             if bind_type == "AUTO":
-                bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+                bpy.ops.object.parent_set(type="ARMATURE_AUTO")
             elif bind_type == "ENVELOPE":
-                bpy.ops.object.parent_set(type='ARMATURE_ENVELOPE')
+                bpy.ops.object.parent_set(type="ARMATURE_ENVELOPE")
             else:  # EMPTY
-                bpy.ops.object.parent_set(type='ARMATURE')
+                bpy.ops.object.parent_set(type="ARMATURE")
         except RuntimeError as e:
             raise RuntimeError(f"Binding failed: {e}")
 
@@ -198,7 +194,7 @@ class ArmatureHandler:
         bone_name: str,
         rotation: Optional[List[float]] = None,
         location: Optional[List[float]] = None,
-        scale: Optional[List[float]] = None
+        scale: Optional[List[float]] = None,
     ) -> str:
         """
         [POSE MODE] Poses armature bone.
@@ -218,16 +214,16 @@ class ArmatureHandler:
             raise ValueError(f"Armature '{armature_name}' not found")
 
         armature = bpy.data.objects[armature_name]
-        if armature.type != 'ARMATURE':
+        if armature.type != "ARMATURE":
             raise ValueError(f"Object '{armature_name}' is not an armature (type: {armature.type})")
 
         # Enter Pose Mode
         bpy.context.view_layer.objects.active = armature
-        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.object.mode_set(mode="POSE")
 
         # Find pose bone
         if bone_name not in armature.pose.bones:
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode="OBJECT")
             raise ValueError(f"Bone '{bone_name}' not found in armature '{armature_name}'")
 
         bone = armature.pose.bones[bone_name]
@@ -236,7 +232,7 @@ class ArmatureHandler:
         changes = []
         if rotation is not None:
             # Convert degrees to radians
-            bone.rotation_mode = 'XYZ'
+            bone.rotation_mode = "XYZ"
             bone.rotation_euler = [math.radians(r) for r in rotation]
             changes.append(f"rotation={rotation}")
 
@@ -249,19 +245,15 @@ class ArmatureHandler:
             changes.append(f"scale={scale}")
 
         if not changes:
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode="OBJECT")
             return f"No changes applied to bone '{bone_name}'"
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         return f"Posed bone '{bone_name}' in '{armature_name}': {', '.join(changes)}"
 
     def weight_paint_assign(
-        self,
-        object_name: str,
-        vertex_group: str,
-        weight: float = 1.0,
-        mode: str = "REPLACE"
+        self, object_name: str, vertex_group: str, weight: float = 1.0, mode: str = "REPLACE"
     ) -> str:
         """
         [WEIGHT PAINT/EDIT MODE][SELECTION-BASED] Assigns weights to selected vertices.
@@ -280,7 +272,7 @@ class ArmatureHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         # Validate mode
@@ -303,28 +295,28 @@ class ArmatureHandler:
 
         # Store current mode and switch to Edit Mode to get selection
         previous_mode = obj.mode
-        if previous_mode != 'EDIT':
-            bpy.ops.object.mode_set(mode='EDIT')
+        if previous_mode != "EDIT":
+            bpy.ops.object.mode_set(mode="EDIT")
 
         # Get selected vertices
-        bpy.ops.object.mode_set(mode='OBJECT')  # Need object mode to read selection
+        bpy.ops.object.mode_set(mode="OBJECT")  # Need object mode to read selection
         selected_verts = [v.index for v in obj.data.vertices if v.select]
 
         if not selected_verts:
-            if previous_mode != 'OBJECT':
+            if previous_mode != "OBJECT":
                 bpy.ops.object.mode_set(mode=previous_mode)
             raise ValueError("No vertices selected. Select vertices in Edit Mode first.")
 
         # Assign weights
         if mode == "REPLACE":
-            vg.add(selected_verts, weight, 'REPLACE')
+            vg.add(selected_verts, weight, "REPLACE")
         elif mode == "ADD":
-            vg.add(selected_verts, weight, 'ADD')
+            vg.add(selected_verts, weight, "ADD")
         else:  # SUBTRACT
-            vg.add(selected_verts, weight, 'SUBTRACT')
+            vg.add(selected_verts, weight, "SUBTRACT")
 
         # Restore mode
-        if previous_mode != 'OBJECT':
+        if previous_mode != "OBJECT":
             bpy.ops.object.mode_set(mode=previous_mode)
 
         return f"Assigned weight {weight} to {len(selected_verts)} vertices in group '{vertex_group}' (mode={mode})"
@@ -337,23 +329,23 @@ class ArmatureHandler:
             raise ValueError(f"Armature '{object_name}' not found")
 
         armature_obj = bpy.data.objects[object_name]
-        if armature_obj.type != 'ARMATURE':
-            raise ValueError(
-                f"Object '{object_name}' is not an armature (type: {armature_obj.type})"
-            )
+        if armature_obj.type != "ARMATURE":
+            raise ValueError(f"Object '{object_name}' is not an armature (type: {armature_obj.type})")
 
         bones = []
         for bone in armature_obj.data.bones:
-            bones.append({
-                "name": bone.name,
-                "head": _vector_to_list(bone.head_local),
-                "tail": _vector_to_list(bone.tail_local),
-                "roll": bone.roll,
-                "parent": bone.parent.name if bone.parent else None,
-                "use_connect": bone.use_connect,
-                "use_deform": getattr(bone, "use_deform", None),
-                "inherit_scale": getattr(bone, "inherit_scale", None)
-            })
+            bones.append(
+                {
+                    "name": bone.name,
+                    "head": _vector_to_list(bone.head_local),
+                    "tail": _vector_to_list(bone.tail_local),
+                    "roll": bone.roll,
+                    "parent": bone.parent.name if bone.parent else None,
+                    "use_connect": bone.use_connect,
+                    "use_deform": getattr(bone, "use_deform", None),
+                    "inherit_scale": getattr(bone, "inherit_scale", None),
+                }
+            )
 
         pose_data = []
         if include_pose and armature_obj.pose:
@@ -362,19 +354,14 @@ class ArmatureHandler:
                     "name": pose_bone.name,
                     "location": _vector_to_list(pose_bone.location),
                     "scale": _vector_to_list(pose_bone.scale),
-                    "rotation_mode": pose_bone.rotation_mode
+                    "rotation_mode": pose_bone.rotation_mode,
                 }
-                if pose_bone.rotation_mode == 'QUATERNION':
+                if pose_bone.rotation_mode == "QUATERNION":
                     entry["rotation_quaternion"] = _vector_to_list(pose_bone.rotation_quaternion)
-                elif pose_bone.rotation_mode == 'AXIS_ANGLE':
+                elif pose_bone.rotation_mode == "AXIS_ANGLE":
                     entry["rotation_axis_angle"] = _vector_to_list(pose_bone.rotation_axis_angle)
                 else:
                     entry["rotation_euler"] = _vector_to_list(pose_bone.rotation_euler)
                 pose_data.append(entry)
 
-        return {
-            "object_name": armature_obj.name,
-            "bone_count": len(bones),
-            "bones": bones,
-            "pose": pose_data
-        }
+        return {"object_name": armature_obj.name, "bone_count": len(bones), "bones": bones, "pose": pose_data}

@@ -3,8 +3,8 @@ from typing import Any, Dict, List, Literal, Optional
 from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_sculpt_handler
 
 SCULPT_PUBLIC_TOOL_NAMES = (
@@ -27,9 +27,7 @@ SCULPT_PUBLIC_TOOL_NAMES = (
 def register_sculpt_tools(target: Any) -> Dict[str, Any]:
     """Register public sculpt tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, SCULPT_PUBLIC_TOOL_NAMES, tags=get_capability_tags("sculpt")
-    )
+    return register_existing_tools(globals(), target, SCULPT_PUBLIC_TOOL_NAMES, tags=get_capability_tags("sculpt"))
 
 
 # ==============================================================================
@@ -77,8 +75,22 @@ def sculpt_auto(
     """
     return route_tool_call(
         tool_name="sculpt_auto",
-        params={"operation": operation, "object_name": object_name, "strength": strength, "iterations": iterations, "use_symmetry": use_symmetry, "symmetry_axis": symmetry_axis},
-        direct_executor=lambda: get_sculpt_handler().auto_sculpt(object_name=object_name, operation=operation, strength=strength, iterations=iterations, use_symmetry=use_symmetry, symmetry_axis=symmetry_axis)
+        params={
+            "operation": operation,
+            "object_name": object_name,
+            "strength": strength,
+            "iterations": iterations,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=lambda: get_sculpt_handler().auto_sculpt(
+            object_name=object_name,
+            operation=operation,
+            strength=strength,
+            iterations=iterations,
+            use_symmetry=use_symmetry,
+            symmetry_axis=symmetry_axis,
+        ),
     )
 
 
@@ -110,7 +122,9 @@ def sculpt_brush_smooth(
     return route_tool_call(
         tool_name="sculpt_brush_smooth",
         params={"object_name": object_name, "location": location, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_smooth(object_name=object_name, location=location, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_smooth(
+            object_name=object_name, location=location, radius=radius, strength=strength
+        ),
     )
 
 
@@ -142,8 +156,20 @@ def sculpt_brush_grab(
     """
     return route_tool_call(
         tool_name="sculpt_brush_grab",
-        params={"object_name": object_name, "from_location": from_location, "to_location": to_location, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_grab(object_name=object_name, from_location=from_location, to_location=to_location, radius=radius, strength=strength)
+        params={
+            "object_name": object_name,
+            "from_location": from_location,
+            "to_location": to_location,
+            "radius": radius,
+            "strength": strength,
+        },
+        direct_executor=lambda: get_sculpt_handler().brush_grab(
+            object_name=object_name,
+            from_location=from_location,
+            to_location=to_location,
+            radius=radius,
+            strength=strength,
+        ),
     )
 
 
@@ -178,8 +204,16 @@ def sculpt_brush_crease(
     """
     return route_tool_call(
         tool_name="sculpt_brush_crease",
-        params={"object_name": object_name, "location": location, "radius": radius, "strength": strength, "pinch": pinch},
-        direct_executor=lambda: get_sculpt_handler().brush_crease(object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch)
+        params={
+            "object_name": object_name,
+            "location": location,
+            "radius": radius,
+            "strength": strength,
+            "pinch": pinch,
+        },
+        direct_executor=lambda: get_sculpt_handler().brush_crease(
+            object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch
+        ),
     )
 
 
@@ -213,7 +247,9 @@ def sculpt_brush_clay(
     return route_tool_call(
         tool_name="sculpt_brush_clay",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_clay(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_clay(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -242,7 +278,9 @@ def sculpt_brush_inflate(
     return route_tool_call(
         tool_name="sculpt_brush_inflate",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_inflate(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_inflate(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -271,7 +309,9 @@ def sculpt_brush_blob(
     return route_tool_call(
         tool_name="sculpt_brush_blob",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_blob(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_blob(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -305,7 +345,9 @@ def sculpt_brush_snake_hook(
     return route_tool_call(
         tool_name="sculpt_brush_snake_hook",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_snake_hook(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_snake_hook(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -334,7 +376,9 @@ def sculpt_brush_draw(
     return route_tool_call(
         tool_name="sculpt_brush_draw",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_draw(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_draw(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -363,7 +407,9 @@ def sculpt_brush_pinch(
     return route_tool_call(
         tool_name="sculpt_brush_pinch",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_pinch(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_pinch(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -409,8 +455,18 @@ def sculpt_enable_dyntopo(
     """
     return route_tool_call(
         tool_name="sculpt_enable_dyntopo",
-        params={"object_name": object_name, "detail_mode": detail_mode, "detail_size": detail_size, "use_smooth_shading": use_smooth_shading},
-        direct_executor=lambda: get_sculpt_handler().enable_dyntopo(object_name=object_name, detail_mode=detail_mode, detail_size=detail_size, use_smooth_shading=use_smooth_shading)
+        params={
+            "object_name": object_name,
+            "detail_mode": detail_mode,
+            "detail_size": detail_size,
+            "use_smooth_shading": use_smooth_shading,
+        },
+        direct_executor=lambda: get_sculpt_handler().enable_dyntopo(
+            object_name=object_name,
+            detail_mode=detail_mode,
+            detail_size=detail_size,
+            use_smooth_shading=use_smooth_shading,
+        ),
     )
 
 
@@ -434,7 +490,7 @@ def sculpt_disable_dyntopo(
     return route_tool_call(
         tool_name="sculpt_disable_dyntopo",
         params={"object_name": object_name},
-        direct_executor=lambda: get_sculpt_handler().disable_dyntopo(object_name=object_name)
+        direct_executor=lambda: get_sculpt_handler().disable_dyntopo(object_name=object_name),
     )
 
 
@@ -458,5 +514,5 @@ def sculpt_dyntopo_flood_fill(
     return route_tool_call(
         tool_name="sculpt_dyntopo_flood_fill",
         params={"object_name": object_name},
-        direct_executor=lambda: get_sculpt_handler().dyntopo_flood_fill(object_name=object_name)
+        direct_executor=lambda: get_sculpt_handler().dyntopo_flood_fill(object_name=object_name),
     )

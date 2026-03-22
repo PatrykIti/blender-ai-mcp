@@ -7,15 +7,14 @@ TASK-050: Updated for YAML-based workflows (no more Python builtin workflows).
 """
 
 import pytest
-
-from server.router.application.workflows.registry import (
-    WorkflowRegistry,
-    get_workflow_registry,
-)
 from server.router.application.workflows.base import (
     BaseWorkflow,
     WorkflowDefinition,
     WorkflowStep,
+)
+from server.router.application.workflows.registry import (
+    WorkflowRegistry,
+    get_workflow_registry,
 )
 from server.router.domain.entities.tool_call import CorrectedToolCall
 
@@ -78,6 +77,7 @@ class TestWorkflowRegistry:
 
     def test_register_custom_workflow(self, registry):
         """Test registering a custom workflow class."""
+
         class CustomWorkflow(BaseWorkflow):
             @property
             def name(self):

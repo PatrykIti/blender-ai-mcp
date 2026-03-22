@@ -7,18 +7,15 @@ TASK-055: Added tests for parameters section parsing.
 """
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
-
+from server.router.domain.entities.parameter import ParameterSchema
 from server.router.infrastructure.workflow_loader import (
     WorkflowLoader,
     WorkflowValidationError,
     get_workflow_loader,
 )
-from server.router.application.workflows.base import WorkflowDefinition
-from server.router.domain.entities.parameter import ParameterSchema
 
 
 class TestWorkflowLoader:
@@ -400,7 +397,11 @@ class TestRealCustomWorkflows:
         # Need 5 parents to reach project root
         custom_dir = (
             Path(__file__).parent.parent.parent.parent.parent
-            / "server" / "router" / "application" / "workflows" / "custom"
+            / "server"
+            / "router"
+            / "application"
+            / "workflows"
+            / "custom"
         )
 
         if not custom_dir.exists():
@@ -418,7 +419,11 @@ class TestRealCustomWorkflows:
         # Need 5 parents to reach project root
         custom_dir = (
             Path(__file__).parent.parent.parent.parent.parent
-            / "server" / "router" / "application" / "workflows" / "custom"
+            / "server"
+            / "router"
+            / "application"
+            / "workflows"
+            / "custom"
         )
 
         if not custom_dir.exists():
@@ -738,6 +743,7 @@ class TestWorkflowLoaderHintsModifiersValidation:
     def test_no_warning_when_modifier_sets_param(self, loader, temp_dir, caplog):
         """Test no warning when modifier explicitly sets parameter."""
         import logging
+
         caplog.set_level(logging.DEBUG)
 
         workflow_data = {
@@ -766,11 +772,10 @@ class TestWorkflowLoaderHintsModifiersValidation:
         # Debug message about modifier taking priority is expected
         assert "modifier will take priority" in caplog.text
 
-    def test_warning_when_hint_matches_modifier_no_param(
-        self, loader, temp_dir, caplog
-    ):
+    def test_warning_when_hint_matches_modifier_no_param(self, loader, temp_dir, caplog):
         """Test warning when hint matches modifier but modifier doesn't set param."""
         import logging
+
         caplog.set_level(logging.WARNING)
 
         workflow_data = {
@@ -798,6 +803,7 @@ class TestWorkflowLoaderHintsModifiersValidation:
     def test_no_overlap_no_warning(self, loader, temp_dir, caplog):
         """Test no warning when no overlap between hints and modifiers."""
         import logging
+
         caplog.set_level(logging.DEBUG)
 
         workflow_data = {

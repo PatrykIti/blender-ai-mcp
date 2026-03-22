@@ -4,13 +4,13 @@ Tool Interceptor Implementation.
 Captures and records LLM tool calls for router processing.
 """
 
+import uuid
 from collections import deque
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-import uuid
+from typing import Any, Dict, List, Optional
 
-from server.router.domain.interfaces.i_interceptor import IToolInterceptor
 from server.router.domain.entities.tool_call import InterceptedToolCall
+from server.router.domain.interfaces.i_interceptor import IToolInterceptor
 
 
 class ToolInterceptor(IToolInterceptor):

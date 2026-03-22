@@ -8,10 +8,10 @@ TASK-060: Consolidates ExpressionEvaluator and ConditionEvaluator logic.
 """
 
 import ast
+import logging
 import math
 import operator
-import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.interfaces.i_expression_evaluator import IExpressionEvaluator
 
@@ -465,9 +465,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
         # Ensure all args are numeric for math functions
         for arg in args:
             if isinstance(arg, str):
-                raise ValueError(
-                    f"Function '{func_name}' requires numeric arguments, got string"
-                )
+                raise ValueError(f"Function '{func_name}' requires numeric arguments, got string")
 
         # Special handling for functions that need integer arguments
         if func_name == "round" and len(args) == 2:
@@ -505,11 +503,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
     # === Computed Parameters (preserved from ExpressionEvaluator) ===
 
-    def resolve_computed_parameters(
-        self,
-        schemas: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def resolve_computed_parameters(self, schemas: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
         """Resolve all computed parameters in dependency order.
 
         TASK-056-5: Evaluates computed parameter expressions using topological
@@ -529,9 +523,7 @@ class UnifiedEvaluator(IExpressionEvaluator):
 
         # Extract computed parameters
         computed_params = {
-            name: schema
-            for name, schema in schemas.items()
-            if hasattr(schema, "computed") and schema.computed
+            name: schema for name, schema in schemas.items() if hasattr(schema, "computed") and schema.computed
         }
 
         if not computed_params:
@@ -558,15 +550,10 @@ class UnifiedEvaluator(IExpressionEvaluator):
             value = self.evaluate_safe(expr, default=None)
 
             if value is None:
-                raise ValueError(
-                    f"Failed to compute parameter '{param_name}' "
-                    f"with expression: {expr}"
-                )
+                raise ValueError(f"Failed to compute parameter '{param_name}' with expression: {expr}")
 
             resolved[param_name] = value
-            logger.debug(
-                f"Computed parameter '{param_name}' = {value} (from: {expr})"
-            )
+            logger.debug(f"Computed parameter '{param_name}' = {value} (from: {expr})")
 
         return resolved
 

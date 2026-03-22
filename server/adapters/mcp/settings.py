@@ -8,7 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal
 
-
 ProviderBuilder = Callable[[], Any]
 DeliveryMode = Literal["structured_first", "compatibility"]
 

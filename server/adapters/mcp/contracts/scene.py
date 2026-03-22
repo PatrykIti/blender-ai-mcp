@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.sampling.result_types import InspectionSummaryAssistantContract
 
 
 class SceneModeContract(MCPContract):
@@ -37,12 +38,14 @@ class SceneInspectResponseContract(MCPContract):
     action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"]
     payload: dict[str, Any] | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None
 
 
 class SceneSnapshotStateContract(MCPContract):
     snapshot: dict[str, Any] | None = None
     hash: str | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None
 
 
 class SceneSnapshotDiffContract(MCPContract):
@@ -55,6 +58,7 @@ class SceneSnapshotDiffContract(MCPContract):
     target_timestamp: str | None = None
     has_changes: bool | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None
 
 
 class SceneCustomPropertiesContract(MCPContract):
@@ -67,13 +71,16 @@ class SceneCustomPropertiesContract(MCPContract):
 class SceneHierarchyContract(MCPContract):
     payload: dict[str, Any] | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None
 
 
 class SceneBoundingBoxContract(MCPContract):
     payload: dict[str, Any] | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None
 
 
 class SceneOriginInfoContract(MCPContract):
     payload: dict[str, Any] | None = None
     error: str | None = None
+    assistant: InspectionSummaryAssistantContract | None = None

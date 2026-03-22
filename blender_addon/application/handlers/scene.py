@@ -1,31 +1,29 @@
-import bpy
 import base64
-import tempfile
-import os
 import math
+import os
+import tempfile
 from typing import Callable
+
+import bpy
 
 from blender_addon.application.handlers.job_utils import raise_if_cancelled
 
+
 class SceneHandler:
     """Application service for scene operations."""
-    
+
     def list_objects(self):
         """Returns a list of objects in the scene."""
         objects = []
         for obj in bpy.context.scene.objects:
-            objects.append({
-                "name": obj.name,
-                "type": obj.type,
-                "location": [round(c, 3) for c in obj.location]
-            })
+            objects.append({"name": obj.name, "type": obj.type, "location": [round(c, 3) for c in obj.location]})
         return objects
 
     def delete_object(self, name):
         """Deletes an object by name."""
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
         bpy.data.objects.remove(obj, do_unlink=True)
         return {"deleted": name}
@@ -36,30 +34,42 @@ class SceneHandler:
         If keep_lights_and_cameras is True, preserves LIGHT and CAMERA objects.
         """
         # Ensure we're in OBJECT mode before deleting
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Select all objects
-        bpy.ops.object.select_all(action='DESELECT')
-        
+        bpy.ops.object.select_all(action="DESELECT")
+
         to_delete = []
         for obj in bpy.context.scene.objects:
             if keep_lights_and_cameras:
                 # Delete only geometry/helper types
-                if obj.type in ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'HAIR', 'POINTCLOUD', 'VOLUME', 'EMPTY', 'LATTICE', 'ARMATURE']:
+                if obj.type in [
+                    "MESH",
+                    "CURVE",
+                    "SURFACE",
+                    "META",
+                    "FONT",
+                    "HAIR",
+                    "POINTCLOUD",
+                    "VOLUME",
+                    "EMPTY",
+                    "LATTICE",
+                    "ARMATURE",
+                ]:
                     to_delete.append(obj)
             else:
                 # Delete everything
                 to_delete.append(obj)
-                
+
         for obj in to_delete:
             bpy.data.objects.remove(obj, do_unlink=True)
-            
+
         # If hard reset, also clear collections (optional but good for full reset)
         if not keep_lights_and_cameras:
-             for col in bpy.data.collections:
-                 if col.users == 0: # Remove orphans
-                     bpy.data.collections.remove(col)
+            for col in bpy.data.collections:
+                if col.users == 0:  # Remove orphans
+                    bpy.data.collections.remove(col)
 
         return {"count": len(to_delete), "kept_environment": keep_lights_and_cameras}
 
@@ -71,39 +81,35 @@ class SceneHandler:
         obj = bpy.data.objects[name]
 
         # Ensure we're in OBJECT mode
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Deselect all, select target
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        
+
         # Duplicate
         bpy.ops.object.duplicate()
         new_obj = bpy.context.view_layer.objects.active
-        
+
         # Translate if needed
         if translation:
-             bpy.ops.transform.translate(value=translation)
-             
-        return {
-            "original": name,
-            "new_object": new_obj.name,
-            "location": [round(c, 3) for c in new_obj.location]
-        }
+            bpy.ops.transform.translate(value=translation)
+
+        return {"original": name, "new_object": new_obj.name, "location": [round(c, 3) for c in new_obj.location]}
 
     def set_active_object(self, name):
         """Sets the active object."""
         if name not in bpy.data.objects:
-             raise ValueError(f"Object '{name}' not found")
+            raise ValueError(f"Object '{name}' not found")
 
         # Ensure we're in OBJECT mode
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         obj = bpy.data.objects[name]
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
         return {"active": name}
@@ -128,7 +134,7 @@ class SceneHandler:
             "active_object": active_name,
             "active_object_type": active_type,
             "selected_object_names": selected_names,
-            "selection_count": len(selected_names)
+            "selection_count": len(selected_names),
         }
 
     def list_selection(self):
@@ -148,7 +154,7 @@ class SceneHandler:
 
         if mode.startswith("EDIT"):
             obj = getattr(bpy.context, "edit_object", None) or getattr(bpy.context, "active_object", None)
-            if obj and obj.type == 'MESH':
+            if obj and obj.type == "MESH":
                 try:
                     import bmesh
 
@@ -235,7 +241,7 @@ class SceneHandler:
         return custom
 
     def _gather_mesh_stats(self, obj):
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             return None
 
         mesh = None
@@ -293,14 +299,14 @@ class SceneHandler:
         raise_if_cancelled(is_cancelled)
         if progress_callback is not None:
             progress_callback(0, 1, "Preparing viewport capture")
-        
+
         # 0. Ensure Object Mode (Safety check for render operators)
         original_mode = None
         if bpy.context.active_object:
             original_mode = bpy.context.active_object.mode
-            if original_mode != 'OBJECT':
+            if original_mode != "OBJECT":
                 try:
-                    bpy.ops.object.mode_set(mode='OBJECT')
+                    bpy.ops.object.mode_set(mode="OBJECT")
                 except Exception:
                     pass
 
@@ -318,15 +324,15 @@ class SceneHandler:
             view_area = None
             view_space = None
             view_region = None
-            
+
             for area in bpy.context.screen.areas:
-                if area.type == 'VIEW_3D':
+                if area.type == "VIEW_3D":
                     view_area = area
                     for space in area.spaces:
-                        if space.type == 'VIEW_3D':
+                        if space.type == "VIEW_3D":
                             view_space = space
                     for region in area.regions:
-                        if region.type == 'WINDOW':
+                        if region.type == "WINDOW":
                             view_region = region
                     break
 
@@ -337,24 +343,24 @@ class SceneHandler:
             original_camera = scene.camera
             original_engine = scene.render.engine
             original_file_format = scene.render.image_settings.file_format
-            
+
             if view_space:
                 original_shading_type = view_space.shading.type
-            
+
             original_active = bpy.context.view_layer.objects.active
             original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
 
             # 3. Setup Render Settings
             scene.render.resolution_x = width
             scene.render.resolution_y = height
-            scene.render.image_settings.file_format = 'JPEG'
+            scene.render.image_settings.file_format = "JPEG"
             scene.render.filepath = render_filepath_base
 
             # 4. Apply Shading (for OpenGL/Workbench)
             # Validate shading type
-            valid_shading = {'WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'}
-            target_shading = shading.upper() if shading.upper() in valid_shading else 'SOLID'
-            
+            valid_shading = {"WIREFRAME", "SOLID", "MATERIAL", "RENDERED"}
+            target_shading = shading.upper() if shading.upper() in valid_shading else "SOLID"
+
             if view_space:
                 view_space.shading.type = target_shading
 
@@ -368,28 +374,28 @@ class SceneHandler:
                         scene.camera = bpy.data.objects[camera_name]
                     else:
                         raise ValueError(f"Camera '{camera_name}' not found.")
-                
+
                 # Case B: Dynamic View (User Perspective)
                 else:
                     # Create temp camera
                     bpy.ops.object.camera_add()
                     temp_camera_obj = bpy.context.active_object
                     scene.camera = temp_camera_obj
-                    
+
                     # Deselect all first
-                    bpy.ops.object.select_all(action='DESELECT')
-                    
+                    bpy.ops.object.select_all(action="DESELECT")
+
                     # Select target(s) for framing
                     if focus_target:
                         if focus_target in bpy.data.objects:
                             target_obj = bpy.data.objects[focus_target]
                             target_obj.select_set(True)
                         else:
-                             bpy.ops.object.select_all(action='SELECT')
+                            bpy.ops.object.select_all(action="SELECT")
                     else:
                         # No target -> Select all visible objects
-                        bpy.ops.object.select_all(action='SELECT')
-                    
+                        bpy.ops.object.select_all(action="SELECT")
+
                     # Frame the camera to selection
                     if view_area and view_region:
                         with bpy.context.temp_override(area=view_area, region=view_region):
@@ -402,15 +408,15 @@ class SceneHandler:
 
                 # 6. Render Strategy
                 render_success = False
-                
+
                 # Strategy A: OpenGL Render (Fastest, requires Context)
                 # Only attempt if we found a valid 3D View context
                 if view_area and view_region:
                     try:
                         with bpy.context.temp_override(area=view_area, region=view_region):
-                             # write_still=True forces write to filepath
-                             bpy.ops.render.opengl(write_still=True)
-                        
+                            # write_still=True forces write to filepath
+                            bpy.ops.render.opengl(write_still=True)
+
                         if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
                             render_success = True
                     except Exception as e:
@@ -420,19 +426,19 @@ class SceneHandler:
                 if not render_success:
                     print("[Viewport] Fallback to Workbench render...")
                     try:
-                        scene.render.engine = 'BLENDER_WORKBENCH'
+                        scene.render.engine = "BLENDER_WORKBENCH"
                         # Configure Workbench to match requested style roughly
-                        scene.display.shading.light = 'STUDIO'
-                        scene.display.shading.color_type = 'MATERIAL'
-                        
-                        if target_shading == 'WIREFRAME':
-                            # Workbench doesn't have direct "wireframe mode" global setting easily accessible via simple API in 4.0+ 
+                        scene.display.shading.light = "STUDIO"
+                        scene.display.shading.color_type = "MATERIAL"
+
+                        if target_shading == "WIREFRAME":
+                            # Workbench doesn't have direct "wireframe mode" global setting easily accessible via simple API in 4.0+
                             # without tweaking display settings, but rendering as is usually gives Solid.
                             # We can try to enable wireframe overlay if needed, but basic Workbench is usually SOLID.
-                            pass 
-                        
+                            pass
+
                         bpy.ops.render.render(write_still=True)
-                        
+
                         if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
                             render_success = True
                     except Exception as e:
@@ -442,12 +448,12 @@ class SceneHandler:
                 if not render_success:
                     print("[Viewport] Fallback to Cycles render...")
                     try:
-                        scene.render.engine = 'CYCLES'
-                        scene.cycles.device = 'CPU'
-                        scene.cycles.samples = 1 # Extremely fast, noisy but visible
+                        scene.render.engine = "CYCLES"
+                        scene.cycles.device = "CPU"
+                        scene.cycles.samples = 1  # Extremely fast, noisy but visible
                         scene.cycles.preview_samples = 1
                         bpy.ops.render.render(write_still=True)
-                        
+
                         if os.path.exists(expected_output) and os.path.getsize(expected_output) > 0:
                             render_success = True
                     except Exception as e:
@@ -455,16 +461,18 @@ class SceneHandler:
 
                 # 7. Read Result
                 if not render_success:
-                    raise RuntimeError("Render failed: Could not generate viewport image using OpenGL, Workbench, or Cycles.")
+                    raise RuntimeError(
+                        "Render failed: Could not generate viewport image using OpenGL, Workbench, or Cycles."
+                    )
                 raise_if_cancelled(is_cancelled)
 
                 b64_data = ""
                 with open(expected_output, "rb") as f:
                     data = f.read()
-                    b64_data = base64.b64encode(data).decode('utf-8')
+                    b64_data = base64.b64encode(data).decode("utf-8")
                 if progress_callback is not None:
                     progress_callback(1, 1, "Viewport capture complete")
-                
+
                 return b64_data
 
             finally:
@@ -473,9 +481,9 @@ class SceneHandler:
                     os.remove(expected_output)
                 try:
                     os.rmdir(temp_dir)
-                except:
+                except Exception:
                     pass
-                
+
                 # 9. Restore State
                 scene.render.resolution_x = original_res_x
                 scene.render.resolution_y = original_res_y
@@ -483,50 +491,58 @@ class SceneHandler:
                 scene.camera = original_camera
                 scene.render.engine = original_engine
                 scene.render.image_settings.file_format = original_file_format
-                
+
                 if view_space:
                     view_space.shading.type = original_shading_type
-                
+
                 # Restore selection
-                bpy.ops.object.select_all(action='DESELECT')
+                bpy.ops.object.select_all(action="DESELECT")
                 for obj in original_selected:
                     try:
                         obj.select_set(True)
-                    except:
-                        pass 
-                
+                    except Exception:
+                        pass
+
                 if original_active and original_active.name in bpy.data.objects:
                     bpy.context.view_layer.objects.active = original_active
-                    
+
                 # Cleanup temp camera
                 if temp_camera_obj:
                     bpy.data.objects.remove(temp_camera_obj, do_unlink=True)
         finally:
             # 10. Restore Mode
-            if original_mode and original_mode != 'OBJECT':
+            if original_mode and original_mode != "OBJECT":
                 if bpy.context.active_object:
-                     try:
-                         bpy.ops.object.mode_set(mode=original_mode)
-                     except Exception:
-                         pass
+                    try:
+                        bpy.ops.object.mode_set(mode=original_mode)
+                    except Exception:
+                        pass
 
-    def create_light(self, type='POINT', energy=1000.0, color=(1.0, 1.0, 1.0), location=(0.0, 0.0, 0.0), name=None):
+    def create_light(self, type="POINT", energy=1000.0, color=(1.0, 1.0, 1.0), location=(0.0, 0.0, 0.0), name=None):
         """Creates a light source."""
         # Create light data
         light_data = bpy.data.lights.new(name=name if name else "Light", type=type)
         light_data.energy = energy
         light_data.color = color
-        
+
         # Create object
         light_obj = bpy.data.objects.new(name=name if name else "Light", object_data=light_data)
         light_obj.location = location
-        
+
         # Link to collection
         bpy.context.collection.objects.link(light_obj)
-        
+
         return light_obj.name
 
-    def create_camera(self, location=(0.0, -10.0, 0.0), rotation=(1.57, 0.0, 0.0), lens=50.0, clip_start=0.1, clip_end=100.0, name=None):
+    def create_camera(
+        self,
+        location=(0.0, -10.0, 0.0),
+        rotation=(1.57, 0.0, 0.0),
+        lens=50.0,
+        clip_start=0.1,
+        clip_end=100.0,
+        name=None,
+    ):
         """Creates a camera."""
         # Create camera data
         cam_data = bpy.data.cameras.new(name=name if name else "Camera")
@@ -535,33 +551,33 @@ class SceneHandler:
             cam_data.clip_start = clip_start
         if clip_end is not None:
             cam_data.clip_end = clip_end
-            
+
         # Create object
         cam_obj = bpy.data.objects.new(name=name if name else "Camera", object_data=cam_data)
         cam_obj.location = location
         cam_obj.rotation_euler = rotation
-        
+
         # Link to collection
         bpy.context.collection.objects.link(cam_obj)
-        
+
         return cam_obj.name
 
-    def create_empty(self, type='PLAIN_AXES', size=1.0, location=(0.0, 0.0, 0.0), name=None):
+    def create_empty(self, type="PLAIN_AXES", size=1.0, location=(0.0, 0.0, 0.0), name=None):
         """Creates an empty object."""
         empty_obj = bpy.data.objects.new(name if name else "Empty", None)
         empty_obj.empty_display_type = type
         empty_obj.empty_display_size = size
         empty_obj.location = location
-        
+
         # Link to collection
         bpy.context.collection.objects.link(empty_obj)
-        
+
         return empty_obj.name
 
-    def set_mode(self, mode='OBJECT'):
+    def set_mode(self, mode="OBJECT"):
         """Switch Blender context mode."""
         mode = mode.upper()
-        valid_modes = ['OBJECT', 'EDIT', 'SCULPT', 'VERTEX_PAINT', 'WEIGHT_PAINT', 'TEXTURE_PAINT', 'POSE']
+        valid_modes = ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE"]
 
         if mode not in valid_modes:
             raise ValueError(f"Invalid mode '{mode}'. Valid: {valid_modes}")
@@ -572,32 +588,36 @@ class SceneHandler:
             return f"Already in {mode} mode"
 
         active_obj = bpy.context.active_object
-        
-        if mode != 'OBJECT' and not active_obj:
-             raise ValueError(f"Cannot enter {mode} mode: no active object")
+
+        if mode != "OBJECT" and not active_obj:
+            raise ValueError(f"Cannot enter {mode} mode: no active object")
 
         # Validate object type for specific modes
-        if mode == 'EDIT':
-            valid_types = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'LATTICE', 'ARMATURE']
+        if mode == "EDIT":
+            valid_types = ["MESH", "CURVE", "SURFACE", "META", "FONT", "LATTICE", "ARMATURE"]
             if active_obj.type not in valid_types:
                 raise ValueError(
                     f"Cannot enter {mode} mode: active object '{active_obj.name}' "
                     f"is type '{active_obj.type}'. Supported types: {', '.join(valid_types)}"
                 )
-        elif mode == 'SCULPT':
-             if active_obj.type != 'MESH':
-                 raise ValueError(f"Cannot enter SCULPT mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only MESH supported.")
-        elif mode == 'POSE':
-             if active_obj.type != 'ARMATURE':
-                 raise ValueError(f"Cannot enter POSE mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only ARMATURE supported.")
+        elif mode == "SCULPT":
+            if active_obj.type != "MESH":
+                raise ValueError(
+                    f"Cannot enter SCULPT mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only MESH supported."
+                )
+        elif mode == "POSE":
+            if active_obj.type != "ARMATURE":
+                raise ValueError(
+                    f"Cannot enter POSE mode: active object '{active_obj.name}' is type '{active_obj.type}'. Only ARMATURE supported."
+                )
 
         bpy.ops.object.mode_set(mode=mode)
         return f"Switched to {mode} mode"
 
     def snapshot_state(self, include_mesh_stats=False, include_materials=False):
         """Captures a lightweight JSON snapshot of the scene state."""
-        import json
         import hashlib
+        import json
         from datetime import datetime
 
         # Collect object data in deterministic order (alphabetical by name)
@@ -612,28 +632,22 @@ class SceneHandler:
                 "parent": obj.parent.name if obj.parent else None,
                 "visible": not obj.hide_get(),
                 "selected": obj.select_get(),
-                "collections": [col.name for col in obj.users_collection]
+                "collections": [col.name for col in obj.users_collection],
             }
 
             # Optional: Include modifiers info
             if obj.modifiers:
-                obj_data["modifiers"] = [
-                    {"name": mod.name, "type": mod.type}
-                    for mod in obj.modifiers
-                ]
+                obj_data["modifiers"] = [{"name": mod.name, "type": mod.type} for mod in obj.modifiers]
 
             # Optional: Include mesh stats
-            if include_mesh_stats and obj.type == 'MESH':
+            if include_mesh_stats and obj.type == "MESH":
                 mesh_stats = self._gather_mesh_stats(obj)
                 if mesh_stats:
                     obj_data["mesh_stats"] = mesh_stats
 
             # Optional: Include material info
             if include_materials and obj.material_slots:
-                obj_data["materials"] = [
-                    slot.material.name if slot.material else None
-                    for slot in obj.material_slots
-                ]
+                obj_data["materials"] = [slot.material.name if slot.material else None for slot in obj.material_slots]
 
             objects_data.append(obj_data)
 
@@ -643,7 +657,7 @@ class SceneHandler:
             "object_count": len(objects_data),
             "objects": objects_data,
             "active_object": bpy.context.active_object.name if bpy.context.active_object else None,
-            "mode": getattr(bpy.context, "mode", "UNKNOWN")
+            "mode": getattr(bpy.context, "mode", "UNKNOWN"),
         }
 
         # Compute hash for change detection (SHA256 of scene state, excluding timestamp)
@@ -652,31 +666,28 @@ class SceneHandler:
             "object_count": snapshot["object_count"],
             "objects": snapshot["objects"],
             "active_object": snapshot["active_object"],
-            "mode": snapshot["mode"]
+            "mode": snapshot["mode"],
         }
         state_json = json.dumps(state_for_hash, sort_keys=True)
-        snapshot_hash = hashlib.sha256(state_json.encode('utf-8')).hexdigest()
+        snapshot_hash = hashlib.sha256(state_json.encode("utf-8")).hexdigest()
 
         # Return snapshot with hash
-        return {
-            "hash": snapshot_hash,
-            "snapshot": snapshot
-        }
+        return {"hash": snapshot_hash, "snapshot": snapshot}
 
     def inspect_mesh_topology(self, object_name, detailed=False):
         """Reports detailed topology stats for a given mesh."""
         if object_name not in bpy.data.objects:
-             raise ValueError(f"Object '{object_name}' not found")
-        
+            raise ValueError(f"Object '{object_name}' not found")
+
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
-             raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
-        
+        if obj.type != "MESH":
+            raise ValueError(f"Object '{object_name}' is not a MESH (type: {obj.type})")
+
         import bmesh
-        
+
         # Create a new BMesh to inspect data safely without affecting the scene
         bm = bmesh.new()
-        
+
         try:
             # Load mesh data
             # Note: If object is in Edit Mode, this gets the underlying mesh data
@@ -685,11 +696,11 @@ class SceneHandler:
             # but that requires being in Edit Mode context.
             # For a general introspection tool, looking at obj.data is standard.
             bm.from_mesh(obj.data)
-            
+
             bm.verts.ensure_lookup_table()
             bm.edges.ensure_lookup_table()
             bm.faces.ensure_lookup_table()
-            
+
             stats = {
                 "object_name": obj.name,
                 "vertex_count": len(bm.verts),
@@ -703,7 +714,7 @@ class SceneHandler:
                 "loose_vertices": 0 if detailed else None,
                 "loose_edges": 0 if detailed else None,
             }
-            
+
             # Face type counts
             for f in bm.faces:
                 v_count = len(f.verts)
@@ -713,20 +724,21 @@ class SceneHandler:
                     stats["quad_count"] += 1
                 else:
                     stats["ngon_count"] += 1
-            
+
             if detailed:
                 # Non-manifold edges (wire edges or edges shared by >2 faces)
                 # is_manifold property handles this check
                 stats["non_manifold_edges"] = sum(1 for e in bm.edges if not e.is_manifold)
-                
+
                 # Loose geometry
                 stats["loose_vertices"] = sum(1 for v in bm.verts if not v.link_edges)
                 stats["loose_edges"] = sum(1 for e in bm.edges if not e.link_faces)
-            
+
             return stats
-            
+
         finally:
             bm.free()
+
     def inspect_material_slots(self, material_filter=None, include_empty_slots=True):
         """Audits material slot assignments across the entire scene."""
         slot_data = []
@@ -735,7 +747,7 @@ class SceneHandler:
         # Iterate all objects in deterministic order
         for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
             # Only process objects that can have materials
-            if not hasattr(obj, 'material_slots') or len(obj.material_slots) == 0:
+            if not hasattr(obj, "material_slots") or len(obj.material_slots) == 0:
                 continue
 
             for slot_idx, slot in enumerate(obj.material_slots):
@@ -755,7 +767,7 @@ class SceneHandler:
                     "slot_index": slot_idx,
                     "slot_name": slot.name,
                     "material_name": mat_name,
-                    "is_empty": mat_name is None
+                    "is_empty": mat_name is None,
                 }
 
                 # Add warnings for problematic slots
@@ -780,16 +792,12 @@ class SceneHandler:
             "assigned_slots": assigned_count,
             "empty_slots": empty_count,
             "warnings": warnings,
-            "slots": slot_data
+            "slots": slot_data,
         }
 
     def inspect_modifiers(self, object_name=None, include_disabled=True):
         """Audits modifier stacks for a specific object or the entire scene."""
-        result = {
-            "object_count": 0,
-            "modifier_count": 0,
-            "objects": []
-        }
+        result = {"object_count": 0, "modifier_count": 0, "objects": []}
 
         objects_to_check = []
         if object_name:
@@ -821,35 +829,32 @@ class SceneHandler:
                 }
 
                 # Extract key properties based on type
-                if mod.type == 'SUBSURF':
+                if mod.type == "SUBSURF":
                     mod_info["levels"] = mod.levels
                     mod_info["render_levels"] = mod.render_levels
-                elif mod.type == 'BEVEL':
+                elif mod.type == "BEVEL":
                     mod_info["width"] = mod.width
                     mod_info["segments"] = mod.segments
                     mod_info["limit_method"] = mod.limit_method
-                elif mod.type == 'MIRROR':
+                elif mod.type == "MIRROR":
                     mod_info["use_axis"] = [mod.use_axis[0], mod.use_axis[1], mod.use_axis[2]]
                     mod_info["mirror_object"] = mod.mirror_object.name if mod.mirror_object else None
-                elif mod.type == 'BOOLEAN':
+                elif mod.type == "BOOLEAN":
                     mod_info["operation"] = mod.operation
                     mod_info["object"] = mod.object.name if mod.object else None
                     mod_info["solver"] = mod.solver
-                elif mod.type == 'ARRAY':
+                elif mod.type == "ARRAY":
                     mod_info["count"] = mod.count
                     mod_info["use_relative_offset"] = mod.use_relative_offset
                     mod_info["use_constant_offset"] = mod.use_constant_offset
-                elif mod.type == 'SOLIDIFY':
+                elif mod.type == "SOLIDIFY":
                     mod_info["thickness"] = mod.thickness
                     mod_info["offset"] = mod.offset
 
                 modifiers.append(mod_info)
 
             if modifiers:
-                result["objects"].append({
-                    "name": obj.name,
-                    "modifiers": modifiers
-                })
+                result["objects"].append({"name": obj.name, "modifiers": modifiers})
                 result["modifier_count"] += len(modifiers)
                 result["object_count"] += 1
 
@@ -866,22 +871,19 @@ class SceneHandler:
         constraints = self._serialize_constraints(getattr(obj, "constraints", []))
         bone_constraints = []
 
-        if include_bones and obj.type == 'ARMATURE':
+        if include_bones and obj.type == "ARMATURE":
             pose = getattr(obj, "pose", None)
             if pose and hasattr(pose, "bones"):
                 for bone in pose.bones:
                     bone_list = self._serialize_constraints(getattr(bone, "constraints", []))
                     if bone_list:
-                        bone_constraints.append({
-                            "bone_name": bone.name,
-                            "constraints": bone_list
-                        })
+                        bone_constraints.append({"bone_name": bone.name, "constraints": bone_list})
 
         return {
             "object_name": object_name,
             "constraint_count": len(constraints),
             "constraints": constraints,
-            "bone_constraints": bone_constraints
+            "bone_constraints": bone_constraints,
         }
 
     def _serialize_constraints(self, constraints):
@@ -902,15 +904,10 @@ class SceneHandler:
 
             properties[prop.identifier] = self._serialize_constraint_value(value, prop, object_refs, seen_refs)
 
-        return {
-            "name": constraint.name,
-            "type": constraint.type,
-            "properties": properties,
-            "object_refs": object_refs
-        }
+        return {"name": constraint.name, "type": constraint.type, "properties": properties, "object_refs": object_refs}
 
     def _serialize_constraint_value(self, value, prop, object_refs, seen_refs):
-        if prop.type == 'POINTER':
+        if prop.type == "POINTER":
             if value is None:
                 return None
             if hasattr(value, "name"):
@@ -921,7 +918,7 @@ class SceneHandler:
                 return value.name
             return str(value)
 
-        if prop.type == 'COLLECTION':
+        if prop.type == "COLLECTION":
             items = []
             try:
                 for item in value:
@@ -1039,7 +1036,7 @@ class SceneHandler:
 
     def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
         """Orbits viewport camera around target."""
-        from mathutils import Matrix, Vector, Euler
+        from mathutils import Matrix, Vector
 
         # Get orbit center
         if target_object:
@@ -1053,14 +1050,12 @@ class SceneHandler:
             center = Vector((0, 0, 0))
 
         # Find 3D viewport
-        view_area = None
         rv3d = None
 
         for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
-                view_area = area
+            if area.type == "VIEW_3D":
                 for space in area.spaces:
-                    if space.type == 'VIEW_3D':
+                    if space.type == "VIEW_3D":
                         rv3d = space.region_3d
                         break
                 break
@@ -1074,9 +1069,9 @@ class SceneHandler:
 
         # Apply rotation to view
         # Horizontal rotation (around Z axis)
-        rot_h = Matrix.Rotation(h_rad, 4, 'Z')
+        rot_h = Matrix.Rotation(h_rad, 4, "Z")
         # Vertical rotation (around local X axis)
-        rot_v = Matrix.Rotation(v_rad, 4, 'X')
+        rot_v = Matrix.Rotation(v_rad, 4, "X")
 
         # Combine rotations with existing view rotation
         rv3d.view_rotation = rv3d.view_rotation @ rot_h.to_quaternion()
@@ -1099,9 +1094,9 @@ class SceneHandler:
         rv3d = None
 
         for area in bpy.context.screen.areas:
-            if area.type == 'VIEW_3D':
+            if area.type == "VIEW_3D":
                 for space in area.spaces:
-                    if space.type == 'VIEW_3D':
+                    if space.type == "VIEW_3D":
                         rv3d = space.region_3d
                         break
                 break
@@ -1110,7 +1105,7 @@ class SceneHandler:
             return "No 3D viewport found. Camera focus requires an active 3D view."
 
         # Calculate object center and size from bounding box
-        if obj.type == 'MESH' and obj.data:
+        if obj.type == "MESH" and obj.data:
             # Get world-space bounding box
             bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
             center = sum(bbox_corners, Vector()) / 8
@@ -1152,7 +1147,7 @@ class SceneHandler:
                 # Convert to JSON-serializable types
                 if isinstance(value, (int, float, str, bool)):
                     properties[key] = value
-                elif hasattr(value, '__iter__') and not isinstance(value, str):
+                elif hasattr(value, "__iter__") and not isinstance(value, str):
                     # Convert vectors/arrays to lists
                     try:
                         properties[key] = list(value)
@@ -1163,11 +1158,7 @@ class SceneHandler:
         except Exception as e:
             raise ValueError(f"Failed to read custom properties: {e}")
 
-        return {
-            "object_name": object_name,
-            "property_count": len(properties),
-            "properties": properties
-        }
+        return {"object_name": object_name, "property_count": len(properties), "properties": properties}
 
     def set_custom_property(self, object_name, property_name, property_value, delete=False):
         """Sets or deletes a custom property on an object."""
@@ -1188,13 +1179,10 @@ class SceneHandler:
 
     def get_hierarchy(self, object_name=None, include_transforms=False):
         """Gets parent-child hierarchy for objects."""
+
         def build_hierarchy(obj, include_transforms):
             """Recursively builds hierarchy dict for an object."""
-            node = {
-                "name": obj.name,
-                "type": obj.type,
-                "children": []
-            }
+            node = {"name": obj.name, "type": obj.type, "children": []}
 
             if include_transforms:
                 node["location"] = self._vec_to_list(obj.location)
@@ -1223,10 +1211,7 @@ class SceneHandler:
                 parent_chain.append(current.name)
                 current = current.parent
 
-            return {
-                "root": hierarchy,
-                "parent_chain": parent_chain
-            }
+            return {"root": hierarchy, "parent_chain": parent_chain}
         else:
             # Get all root objects (no parent)
             roots = []
@@ -1234,10 +1219,7 @@ class SceneHandler:
                 if obj.parent is None:
                     roots.append(build_hierarchy(obj, include_transforms))
 
-            return {
-                "root_count": len(roots),
-                "hierarchy": roots
-            }
+            return {"root_count": len(roots), "hierarchy": roots}
 
     def get_bounding_box(self, object_name, world_space=True):
         """Gets bounding box corners for an object."""
@@ -1257,28 +1239,16 @@ class SceneHandler:
             corners = [Vector(corner) for corner in bbox]
 
         # Calculate min/max
-        min_corner = [
-            min(c[0] for c in corners),
-            min(c[1] for c in corners),
-            min(c[2] for c in corners)
-        ]
-        max_corner = [
-            max(c[0] for c in corners),
-            max(c[1] for c in corners),
-            max(c[2] for c in corners)
-        ]
+        min_corner = [min(c[0] for c in corners), min(c[1] for c in corners), min(c[2] for c in corners)]
+        max_corner = [max(c[0] for c in corners), max(c[1] for c in corners), max(c[2] for c in corners)]
 
         # Calculate center and dimensions
         center = [
             (min_corner[0] + max_corner[0]) / 2,
             (min_corner[1] + max_corner[1]) / 2,
-            (min_corner[2] + max_corner[2]) / 2
+            (min_corner[2] + max_corner[2]) / 2,
         ]
-        dimensions = [
-            max_corner[0] - min_corner[0],
-            max_corner[1] - min_corner[1],
-            max_corner[2] - min_corner[2]
-        ]
+        dimensions = [max_corner[0] - min_corner[0], max_corner[1] - min_corner[1], max_corner[2] - min_corner[2]]
 
         return {
             "object_name": object_name,
@@ -1287,7 +1257,7 @@ class SceneHandler:
             "max": [round(v, 4) for v in max_corner],
             "center": [round(v, 4) for v in center],
             "dimensions": [round(v, 4) for v in dimensions],
-            "corners": [[round(c, 4) for c in corner] for corner in corners]
+            "corners": [[round(c, 4) for c in corner] for corner in corners],
         }
 
     def get_origin_info(self, object_name):
@@ -1318,7 +1288,11 @@ class SceneHandler:
         else:
             # Check if at bottom center
             min_z = min(c[2] for c in corners)
-            if abs(origin[2] - min_z) < 0.001 and abs(offset_from_center[0]) < 0.001 and abs(offset_from_center[1]) < 0.001:
+            if (
+                abs(origin[2] - min_z) < 0.001
+                and abs(offset_from_center[0]) < 0.001
+                and abs(offset_from_center[1]) < 0.001
+            ):
                 origin_type = "BOTTOM_CENTER"
 
         return {
@@ -1326,5 +1300,5 @@ class SceneHandler:
             "origin_world": [round(v, 4) for v in origin],
             "bbox_center": [round(v, 4) for v in bbox_center],
             "offset_from_center": [round(v, 4) for v in offset_from_center],
-            "estimated_type": origin_type
+            "estimated_type": origin_type,
         }

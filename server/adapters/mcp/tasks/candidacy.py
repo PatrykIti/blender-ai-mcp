@@ -11,7 +11,6 @@ from typing import Literal
 
 from fastmcp.tools.tool import TaskConfig
 
-
 ExecutionMode = Literal["foreground_only", "task_optional", "task_required"]
 
 

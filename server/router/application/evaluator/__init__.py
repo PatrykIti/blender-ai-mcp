@@ -9,19 +9,19 @@ TASK-041-13: ProportionResolver for $AUTO_* parameters
 TASK-060: UnifiedEvaluator as core implementation
 """
 
-from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
-from server.router.application.evaluator.expression_evaluator import (
-    ExpressionEvaluator,
-)
 from server.router.application.evaluator.condition_evaluator import (
     ConditionEvaluator,
 )
-from server.router.application.evaluator.proportion_resolver import (
-    ProportionResolver,
+from server.router.application.evaluator.expression_evaluator import (
+    ExpressionEvaluator,
 )
 from server.router.application.evaluator.loop_expander import (
     LoopExpander,
 )
+from server.router.application.evaluator.proportion_resolver import (
+    ProportionResolver,
+)
+from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 
 __all__ = [
     "UnifiedEvaluator",

@@ -9,7 +9,7 @@ TASK-060: Refactored to delegate to UnifiedEvaluator.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 
@@ -134,8 +134,7 @@ class ConditionEvaluator:
 
         try:
             logger.debug(
-                f"Evaluating condition '{condition}' with context keys: "
-                f"{list(self._unified.get_context().keys())}"
+                f"Evaluating condition '{condition}' with context keys: {list(self._unified.get_context().keys())}"
             )
             result = self._unified.evaluate_as_bool(condition)
             logger.debug(f"Condition '{condition}' evaluated to {result}")

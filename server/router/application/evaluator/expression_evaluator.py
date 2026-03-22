@@ -8,9 +8,9 @@ TASK-041-7: Original implementation
 TASK-060: Refactored to delegate to UnifiedEvaluator.
 """
 
-import re
 import logging
-from typing import Dict, Any, Optional
+import re
+from typing import Any, Dict, Optional
 
 from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 
@@ -208,11 +208,7 @@ class ExpressionEvaluator:
                 resolved[key] = self.resolve_param_value(value)
         return resolved
 
-    def resolve_computed_parameters(
-        self,
-        schemas: Dict[str, Any],
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def resolve_computed_parameters(self, schemas: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
         """Resolve all computed parameters in dependency order.
 
         TASK-056-5: Delegates to UnifiedEvaluator.

@@ -1,10 +1,11 @@
 """
 Unit tests for scene_rename_object (TASK-043-1)
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.scene import SceneHandler
 
 

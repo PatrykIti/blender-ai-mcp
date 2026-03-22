@@ -13,7 +13,7 @@ class MaterialHandler:
         # Build assignment count dictionary
         assignment_counts = {}
         for obj in bpy.data.objects:
-            if hasattr(obj, 'material_slots'):
+            if hasattr(obj, "material_slots"):
                 for slot in obj.material_slots:
                     if slot.material:
                         mat_name = slot.material.name
@@ -27,27 +27,23 @@ class MaterialHandler:
             if not include_unassigned and assigned_count == 0:
                 continue
 
-            mat_data = {
-                "name": mat.name,
-                "use_nodes": mat.use_nodes,
-                "assigned_object_count": assigned_count
-            }
+            mat_data = {"name": mat.name, "use_nodes": mat.use_nodes, "assigned_object_count": assigned_count}
 
             # Try to extract Principled BSDF parameters
             if mat.use_nodes and mat.node_tree:
                 principled = None
                 for node in mat.node_tree.nodes:
-                    if node.type == 'BSDF_PRINCIPLED':
+                    if node.type == "BSDF_PRINCIPLED":
                         principled = node
                         break
 
                 if principled:
                     try:
-                        base_color = principled.inputs['Base Color'].default_value
+                        base_color = principled.inputs["Base Color"].default_value
                         mat_data["base_color"] = [round(c, 3) for c in base_color[:3]]
                         mat_data["alpha"] = round(base_color[3], 3) if len(base_color) > 3 else 1.0
-                        mat_data["roughness"] = round(principled.inputs['Roughness'].default_value, 3)
-                        mat_data["metallic"] = round(principled.inputs['Metallic'].default_value, 3)
+                        mat_data["roughness"] = round(principled.inputs["Roughness"].default_value, 3)
+                        mat_data["metallic"] = round(principled.inputs["Metallic"].default_value, 3)
                     except Exception:
                         pass
 
@@ -67,7 +63,7 @@ class MaterialHandler:
                 "slot_index": idx,
                 "slot_name": slot.name,
                 "material_name": slot.material.name if slot.material else None,
-                "uses_nodes": slot.material.use_nodes if slot.material else False
+                "uses_nodes": slot.material.use_nodes if slot.material else False,
             }
 
             # Optionally include material indices (face assignment would require bmesh in Edit Mode)
@@ -77,11 +73,7 @@ class MaterialHandler:
 
             slots_data.append(slot_info)
 
-        return {
-            "object_name": object_name,
-            "slot_count": len(slots_data),
-            "slots": slots_data
-        }
+        return {"object_name": object_name, "slot_count": len(slots_data), "slots": slots_data}
 
     # TASK-023-1: material_create
     def create_material(
@@ -137,7 +129,7 @@ class MaterialHandler:
 
         # Set alpha/transparency
         if alpha < 1.0:
-            mat.blend_method = 'BLEND'
+            mat.blend_method = "BLEND"
             # Note: shadow_method was removed in Blender 4.2+
             bsdf.inputs["Alpha"].default_value = max(0.0, min(1.0, alpha))
 
@@ -178,7 +170,7 @@ class MaterialHandler:
                 raise ValueError("No active object selected")
 
         # Check if object can have materials
-        if not hasattr(obj.data, 'materials'):
+        if not hasattr(obj.data, "materials"):
             raise ValueError(f"Object '{obj.name}' cannot have materials (type: {obj.type})")
 
         # Check if material is already in a slot
@@ -200,7 +192,7 @@ class MaterialHandler:
                 existing_slot_idx = len(obj.material_slots) - 1
 
         # Handle Edit Mode face assignment
-        if assign_to_selection and obj.mode == 'EDIT':
+        if assign_to_selection and obj.mode == "EDIT":
             obj.active_material_index = existing_slot_idx
             bpy.ops.object.material_slot_assign()
             return f"Assigned '{material_name}' to selected faces on '{obj.name}'"
@@ -244,7 +236,7 @@ class MaterialHandler:
         # Find Principled BSDF node
         bsdf = None
         for node in mat.node_tree.nodes:
-            if node.type == 'BSDF_PRINCIPLED':
+            if node.type == "BSDF_PRINCIPLED":
                 bsdf = node
                 break
 
@@ -285,10 +277,10 @@ class MaterialHandler:
         if alpha is not None:
             bsdf.inputs["Alpha"].default_value = max(0.0, min(1.0, alpha))
             if alpha < 1.0:
-                mat.blend_method = 'BLEND'
+                mat.blend_method = "BLEND"
                 # Note: shadow_method was removed in Blender 4.2+
             else:
-                mat.blend_method = 'OPAQUE'
+                mat.blend_method = "OPAQUE"
             modified.append("alpha")
 
         if not modified:
@@ -330,7 +322,7 @@ class MaterialHandler:
         # Find Principled BSDF node
         bsdf = None
         for node in nodes:
-            if node.type == 'BSDF_PRINCIPLED':
+            if node.type == "BSDF_PRINCIPLED":
                 bsdf = node
                 break
 
@@ -366,7 +358,9 @@ class MaterialHandler:
 
         # Standard connection
         if input_name not in bsdf.inputs:
-            raise ValueError(f"Unknown BSDF input: '{input_name}'. Valid: Base Color, Metallic, Roughness, Emission Color, Alpha, Normal")
+            raise ValueError(
+                f"Unknown BSDF input: '{input_name}'. Valid: Base Color, Metallic, Roughness, Emission Color, Alpha, Normal"
+            )
 
         # For single-value inputs (Roughness, Metallic), use non-color output if available
         output_socket = "Color"
@@ -397,12 +391,7 @@ class MaterialHandler:
         if not mat:
             raise ValueError(f"Material '{material_name}' not found")
 
-        result = {
-            "material_name": material_name,
-            "uses_nodes": mat.use_nodes,
-            "nodes": [],
-            "connections": []
-        }
+        result = {"material_name": material_name, "uses_nodes": mat.use_nodes, "nodes": [], "connections": []}
 
         if not mat.use_nodes or not mat.node_tree:
             return result
@@ -419,21 +408,17 @@ class MaterialHandler:
                 "label": node.label if node.label else None,
                 "location": [round(node.location[0], 1), round(node.location[1], 1)],
                 "inputs": [],
-                "outputs": []
+                "outputs": [],
             }
 
             # Gather input socket info
             for inp in node.inputs:
-                inp_info = {
-                    "name": inp.name,
-                    "type": inp.type,
-                    "is_linked": inp.is_linked
-                }
+                inp_info = {"name": inp.name, "type": inp.type, "is_linked": inp.is_linked}
                 # Get default value if available
-                if hasattr(inp, 'default_value'):
+                if hasattr(inp, "default_value"):
                     try:
                         val = inp.default_value
-                        if hasattr(val, '__iter__') and not isinstance(val, str):
+                        if hasattr(val, "__iter__") and not isinstance(val, str):
                             inp_info["default_value"] = [round(v, 4) if isinstance(v, float) else v for v in val]
                         elif isinstance(val, float):
                             inp_info["default_value"] = round(val, 4)
@@ -445,11 +430,7 @@ class MaterialHandler:
 
             # Gather output socket info
             for out in node.outputs:
-                out_info = {
-                    "name": out.name,
-                    "type": out.type,
-                    "is_linked": out.is_linked
-                }
+                out_info = {"name": out.name, "type": out.type, "is_linked": out.is_linked}
                 node_info["outputs"].append(out_info)
 
             result["nodes"].append(node_info)
@@ -461,7 +442,7 @@ class MaterialHandler:
                     "from_node": link.from_node.name,
                     "from_socket": link.from_socket.name,
                     "to_node": link.to_node.name,
-                    "to_socket": link.to_socket.name
+                    "to_socket": link.to_socket.name,
                 }
                 result["connections"].append(conn_info)
 

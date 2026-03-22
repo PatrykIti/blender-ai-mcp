@@ -13,22 +13,19 @@ TASK-055-FIX: Updated for unified router_set_goal interface.
 These tests run with mock router (no Blender connection required).
 """
 
-import pytest
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
-from server.application.tool_handlers.router_handler import RouterToolHandler
+import pytest
 from server.router.application.resolver.parameter_resolver import ParameterResolver
 from server.router.application.resolver.parameter_store import ParameterStore
 from server.router.domain.entities.parameter import (
     ParameterSchema,
-    ParameterResolutionResult,
-    StoredMapping,
 )
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
     WeightedSearchResult,
 )
 
@@ -100,16 +97,11 @@ class MockVectorStore(IVectorStore):
         """Count records in namespace."""
         if namespace is None:
             return len(self._records)
-        return sum(
-            1 for r in self._records.values() if r.namespace == namespace
-        )
+        return sum(1 for r in self._records.values() if r.namespace == namespace)
 
     def list_ids(self, namespace: VectorNamespace) -> List[str]:
         """List all record IDs in namespace."""
-        return [
-            r.id for r in self._records.values()
-            if r.namespace == namespace
-        ]
+        return [r.id for r in self._records.values() if r.namespace == namespace]
 
     def get_stats(self) -> Dict[str, Any]:
         """Get storage statistics."""
@@ -128,10 +120,7 @@ class MockVectorStore(IVectorStore):
             count = len(self._records)
             self._records.clear()
             return count
-        keys_to_delete = [
-            k for k, r in self._records.items()
-            if r.namespace == namespace
-        ]
+        keys_to_delete = [k for k, r in self._records.items() if r.namespace == namespace]
         for key in keys_to_delete:
             del self._records[key]
         return len(keys_to_delete)
@@ -167,10 +156,7 @@ class MockVectorStore(IVectorStore):
         Note: This is not part of IVectorStore interface but is used by
         ParameterStore.list_mappings().
         """
-        return [
-            r.id for r in self._records.values()
-            if r.namespace == namespace
-        ]
+        return [r.id for r in self._records.values() if r.namespace == namespace]
 
 
 class MockWorkflowClassifier:
@@ -198,6 +184,7 @@ class MockWorkflowClassifier:
         """Get fake embedding for text."""
         # Generate a simple hash-based embedding
         import hashlib
+
         h = hashlib.md5(text.lower().encode()).digest()
         # Create 768-dim vector from hash
         embedding = []
@@ -308,9 +295,7 @@ class TestInteractiveParameterResolutionE2E:
             ),
         }
 
-    def test_tier1_yaml_modifiers_resolved(
-        self, mock_resolver, table_workflow_params
-    ):
+    def test_tier1_yaml_modifiers_resolved(self, mock_resolver, table_workflow_params):
         """Test that YAML modifiers (tier 1) are resolved first."""
         existing_modifiers = {
             "leg_angle_left": 0.0,
@@ -338,9 +323,7 @@ class TestInteractiveParameterResolutionE2E:
         assert "top_width" in result.resolved
         assert result.resolution_sources["top_width"] == "default"
 
-    def test_tier2_learned_mapping_used(
-        self, mock_resolver, mock_store, table_workflow_params
-    ):
+    def test_tier2_learned_mapping_used(self, mock_resolver, mock_store, table_workflow_params):
         """Test that learned mappings (tier 2) are used when no YAML modifier."""
         # First, store a learned mapping
         mock_store.store_mapping(
@@ -366,17 +349,13 @@ class TestInteractiveParameterResolutionE2E:
 
         # Should use learned mapping
         # Note: depends on classifier similarity score
-        learned_params = [
-            k for k, v in result.resolution_sources.items()
-            if v == "learned_mapping"
-        ]
+        [k for k, v in result.resolution_sources.items() if v == "learned_mapping"]
         # At minimum, should have some resolution happening
         assert len(result.resolved) > 0 or len(result.unresolved) > 0
 
-    def test_tier3_unresolved_for_llm(
-        self, mock_resolver, table_workflow_params
-    ):
+    def test_tier3_unresolved_for_llm(self, mock_resolver, table_workflow_params):
         """Test that unresolved parameters are flagged for LLM input."""
+
         # Clear any stored mappings by using a fresh resolver
         class LowSimilarityClassifier:
             """Classifier that returns low similarity - nothing matches."""
@@ -411,9 +390,7 @@ class TestInteractiveParameterResolutionE2E:
         total_items = len(result.resolved) + len(result.unresolved)
         assert total_items == len(table_workflow_params)
 
-    def test_store_resolved_value_persists(
-        self, mock_resolver, mock_store, table_workflow_params
-    ):
+    def test_store_resolved_value_persists(self, mock_resolver, mock_store, table_workflow_params):
         """Test that storing a resolved value makes it available for future use."""
         # Store a value
         result = mock_resolver.store_resolved_value(
@@ -435,9 +412,7 @@ class TestInteractiveParameterResolutionE2E:
         assert mapping is not None, "Stored mapping should be findable"
         assert mapping.value == 0.0
 
-    def test_store_invalid_value_rejected(
-        self, mock_resolver, table_workflow_params
-    ):
+    def test_store_invalid_value_rejected(self, mock_resolver, table_workflow_params):
         """Test that invalid values are rejected during storage."""
         result = mock_resolver.store_resolved_value(
             context="extreme angle",
@@ -449,9 +424,7 @@ class TestInteractiveParameterResolutionE2E:
 
         assert "Error" in result or "invalid" in result.lower()
 
-    def test_complete_interactive_flow(
-        self, mock_resolver, mock_store, table_workflow_params
-    ):
+    def test_complete_interactive_flow(self, mock_resolver, mock_store, table_workflow_params):
         """Test the complete interactive resolution flow."""
         # Step 1: First request with some YAML modifiers
         modifiers = {"leg_angle_left": 0.0}
@@ -570,9 +543,7 @@ class TestParameterResolutionEdgeCases:
         """Create vector store for edge case tests."""
         return MockVectorStore()
 
-    def test_empty_parameters_returns_complete(
-        self, edge_classifier, edge_vector_store
-    ):
+    def test_empty_parameters_returns_complete(self, edge_classifier, edge_vector_store):
         """Test that empty parameters dict returns complete result."""
         store = ParameterStore(
             vector_store=edge_vector_store,
@@ -592,9 +563,7 @@ class TestParameterResolutionEdgeCases:
         assert len(result.resolved) == 0
         assert len(result.unresolved) == 0
 
-    def test_all_params_from_modifiers(
-        self, edge_classifier, edge_vector_store
-    ):
+    def test_all_params_from_modifiers(self, edge_classifier, edge_vector_store):
         """Test when all parameters come from YAML modifiers."""
         store = ParameterStore(
             vector_store=edge_vector_store,
@@ -618,9 +587,7 @@ class TestParameterResolutionEdgeCases:
         assert result.resolved == {"param1": 1.0, "param2": 5}
         assert len(result.unresolved) == 0
 
-    def test_none_existing_modifiers_treated_as_empty(
-        self, edge_classifier, edge_vector_store
-    ):
+    def test_none_existing_modifiers_treated_as_empty(self, edge_classifier, edge_vector_store):
         """Test that None existing_modifiers is treated as empty dict."""
         store = ParameterStore(
             vector_store=edge_vector_store,

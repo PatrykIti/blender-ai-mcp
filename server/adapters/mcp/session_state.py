@@ -46,7 +46,7 @@ def _resolve_sync_awaitable(result, default=None):
         return result
 
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(result)
 

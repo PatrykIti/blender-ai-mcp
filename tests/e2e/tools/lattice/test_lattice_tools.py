@@ -6,8 +6,10 @@ Tests the complete workflow:
 2. Taper workflow (tower example)
 3. Vertex group binding
 """
-import pytest
+
 import time
+
+import pytest
 from server.application.tool_handlers.lattice_handler import LatticeToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
@@ -403,7 +405,7 @@ def test_complete_taper_workflow(lattice_handler, modeling_handler, scene_handle
         print("✓ Complete taper workflow successful:")
         print(f"  - Created tower: {tower_name}")
         print(f"  - Created and fitted lattice: {lattice_name}")
-        print(f"  - Bound and deformed: tapered top points")
+        print("  - Bound and deformed: tapered top points")
 
         # Cleanup
         scene_handler.delete_object(lattice_name)

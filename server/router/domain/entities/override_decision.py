@@ -5,7 +5,7 @@ Data class for tool override decisions.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -170,10 +170,12 @@ class OverrideDecision:
         """Create a workflow expansion decision."""
         return cls(
             should_override=True,
-            reasons=[OverrideReason(
-                rule_name="workflow_expansion",
-                description=reason,
-            )],
+            reasons=[
+                OverrideReason(
+                    rule_name="workflow_expansion",
+                    description=reason,
+                )
+            ],
             replacement_tools=tools,
             is_workflow_expansion=True,
             workflow_name=workflow_name,

@@ -10,14 +10,16 @@ Tested tools:
 - bake_combined
 - bake_diffuse
 """
-import pytest
+
 import os
 import tempfile
+
+import pytest
 from server.application.tool_handlers.baking_handler import BakingToolHandler
+from server.application.tool_handlers.material_handler import MaterialToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 from server.application.tool_handlers.uv_handler import UVToolHandler
-from server.application.tool_handlers.material_handler import MaterialToolHandler
 
 
 @pytest.fixture
@@ -54,6 +56,7 @@ def material_handler(rpc_client):
 # Setup Helpers
 # ==============================================================================
 
+
 def create_test_object_with_uv(modeling_handler, scene_handler, uv_handler, name="E2E_BakeTest"):
     """Creates a test object with UV map for baking."""
     try:
@@ -63,15 +66,11 @@ def create_test_object_with_uv(modeling_handler, scene_handler, uv_handler, name
         pass  # Object didn't exist
 
     # Create UV sphere (better for baking than cube)
-    result = modeling_handler.create_primitive(
-        primitive_type="UV_SPHERE",
-        radius=1.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    result = modeling_handler.create_primitive(primitive_type="UV_SPHERE", radius=1.0, location=[0, 0, 0], name=name)
 
     # Parse actual object name from result (format: "Created UV_SPHERE named 'ActualName'")
     import re
+
     match = re.search(r"named '([^']+)'", result)
     actual_name = match.group(1) if match else name
 
@@ -90,6 +89,7 @@ def get_temp_output_path(suffix=".png"):
 # TASK-031-1: bake_normal_map Tests
 # ==============================================================================
 
+
 def test_bake_normal_self(baking_handler, modeling_handler, scene_handler, uv_handler):
     """Test normal map self-bake from object's own geometry."""
     try:
@@ -98,11 +98,7 @@ def test_bake_normal_self(baking_handler, modeling_handler, scene_handler, uv_ha
         output_path = get_temp_output_path("_normal.png")
 
         # Test
-        result = baking_handler.bake_normal_map(
-            object_name=obj_name,
-            output_path=output_path,
-            resolution=512
-        )
+        result = baking_handler.bake_normal_map(object_name=obj_name, output_path=output_path, resolution=512)
 
         # Verify
         assert "normal map" in result.lower()
@@ -123,6 +119,7 @@ def test_bake_normal_self(baking_handler, modeling_handler, scene_handler, uv_ha
 def test_bake_normal_high_to_low(baking_handler, modeling_handler, scene_handler, uv_handler):
     """Test normal map baking from high-poly to low-poly."""
     import re
+
     try:
         # Create low-poly target directly (UV_SPHERE has built-in UVs)
         try:
@@ -130,10 +127,7 @@ def test_bake_normal_high_to_low(baking_handler, modeling_handler, scene_handler
         except RuntimeError:
             pass
         low_result = modeling_handler.create_primitive(
-            primitive_type="UV_SPHERE",
-            radius=1.0,
-            location=[0, 0, 0],
-            name="E2E_H2L_LowPoly"
+            primitive_type="UV_SPHERE", radius=1.0, location=[0, 0, 0], name="E2E_H2L_LowPoly"
         )
         match = re.search(r"named '([^']+)'", low_result)
         low_poly = match.group(1) if match else "E2E_H2L_LowPoly"
@@ -144,10 +138,7 @@ def test_bake_normal_high_to_low(baking_handler, modeling_handler, scene_handler
         except RuntimeError:
             pass
         high_result = modeling_handler.create_primitive(
-            primitive_type="UV_SPHERE",
-            radius=1.05,
-            location=[0, 0, 0],
-            name="E2E_H2L_HighPoly"
+            primitive_type="UV_SPHERE", radius=1.05, location=[0, 0, 0], name="E2E_H2L_HighPoly"
         )
         match = re.search(r"named '([^']+)'", high_result)
         high_poly = match.group(1) if match else "E2E_H2L_HighPoly"
@@ -160,7 +151,7 @@ def test_bake_normal_high_to_low(baking_handler, modeling_handler, scene_handler
             output_path=output_path,
             resolution=512,
             high_poly_source=high_poly,
-            cage_extrusion=0.1
+            cage_extrusion=0.1,
         )
 
         # Verify
@@ -184,10 +175,7 @@ def test_bake_normal_no_uv_error(baking_handler, modeling_handler, scene_handler
         output_path = get_temp_output_path("_nouv.png")
 
         # Test - should raise error for non-existent object
-        baking_handler.bake_normal_map(
-            object_name="NonExistentObject_12345",
-            output_path=output_path
-        )
+        baking_handler.bake_normal_map(object_name="NonExistentObject_12345", output_path=output_path)
         assert False, "Expected error for non-existent object"
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -203,6 +191,7 @@ def test_bake_normal_no_uv_error(baking_handler, modeling_handler, scene_handler
 # TASK-031-2: bake_ao Tests
 # ==============================================================================
 
+
 def test_bake_ao_default(baking_handler, modeling_handler, scene_handler, uv_handler):
     """Test AO baking with default parameters."""
     try:
@@ -215,7 +204,7 @@ def test_bake_ao_default(baking_handler, modeling_handler, scene_handler, uv_han
             object_name=obj_name,
             output_path=output_path,
             resolution=512,
-            samples=32  # Low samples for faster test
+            samples=32,  # Low samples for faster test
         )
 
         # Verify
@@ -237,6 +226,7 @@ def test_bake_ao_default(baking_handler, modeling_handler, scene_handler, uv_han
 # TASK-031-3: bake_combined Tests
 # ==============================================================================
 
+
 def test_bake_combined_default(baking_handler, modeling_handler, scene_handler, uv_handler, material_handler):
     """Test combined baking with default parameters."""
     try:
@@ -244,14 +234,8 @@ def test_bake_combined_default(baking_handler, modeling_handler, scene_handler, 
         obj_name = create_test_object_with_uv(modeling_handler, scene_handler, uv_handler, "E2E_CombinedBake1")
 
         # Add a material for better combined bake
-        material_handler.create_material(
-            name="E2E_BakeMaterial",
-            base_color=[0.8, 0.2, 0.2, 1.0]
-        )
-        material_handler.assign_material(
-            object_name=obj_name,
-            material_name="E2E_BakeMaterial"
-        )
+        material_handler.create_material(name="E2E_BakeMaterial", base_color=[0.8, 0.2, 0.2, 1.0])
+        material_handler.assign_material(object_name=obj_name, material_name="E2E_BakeMaterial")
 
         output_path = get_temp_output_path("_combined.png")
 
@@ -260,7 +244,7 @@ def test_bake_combined_default(baking_handler, modeling_handler, scene_handler, 
             object_name=obj_name,
             output_path=output_path,
             resolution=512,
-            samples=32  # Low samples for faster test
+            samples=32,  # Low samples for faster test
         )
 
         # Verify
@@ -281,6 +265,7 @@ def test_bake_combined_default(baking_handler, modeling_handler, scene_handler, 
 # TASK-031-4: bake_diffuse Tests
 # ==============================================================================
 
+
 def test_bake_diffuse_default(baking_handler, modeling_handler, scene_handler, uv_handler, material_handler):
     """Test diffuse baking with default parameters."""
     try:
@@ -288,23 +273,13 @@ def test_bake_diffuse_default(baking_handler, modeling_handler, scene_handler, u
         obj_name = create_test_object_with_uv(modeling_handler, scene_handler, uv_handler, "E2E_DiffuseBake1")
 
         # Add a material
-        material_handler.create_material(
-            name="E2E_DiffuseMaterial",
-            base_color=[0.2, 0.8, 0.2, 1.0]
-        )
-        material_handler.assign_material(
-            object_name=obj_name,
-            material_name="E2E_DiffuseMaterial"
-        )
+        material_handler.create_material(name="E2E_DiffuseMaterial", base_color=[0.2, 0.8, 0.2, 1.0])
+        material_handler.assign_material(object_name=obj_name, material_name="E2E_DiffuseMaterial")
 
         output_path = get_temp_output_path("_diffuse.png")
 
         # Test
-        result = baking_handler.bake_diffuse(
-            object_name=obj_name,
-            output_path=output_path,
-            resolution=512
-        )
+        result = baking_handler.bake_diffuse(object_name=obj_name, output_path=output_path, resolution=512)
 
         # Verify
         assert "diffuse map" in result.lower()
@@ -324,6 +299,7 @@ def test_bake_diffuse_default(baking_handler, modeling_handler, scene_handler, u
 # Integration Workflow Tests
 # ==============================================================================
 
+
 def test_workflow_game_asset_baking(baking_handler, modeling_handler, scene_handler, uv_handler, material_handler):
     """
     Integration test: Complete game asset baking workflow.
@@ -335,44 +311,25 @@ def test_workflow_game_asset_baking(baking_handler, modeling_handler, scene_hand
 
         # Add material
         material_handler.create_material(
-            name="E2E_GameMaterial",
-            base_color=[0.6, 0.4, 0.2, 1.0],
-            metallic=0.0,
-            roughness=0.7
+            name="E2E_GameMaterial", base_color=[0.6, 0.4, 0.2, 1.0], metallic=0.0, roughness=0.7
         )
-        material_handler.assign_material(
-            object_name=obj_name,
-            material_name="E2E_GameMaterial"
-        )
+        material_handler.assign_material(object_name=obj_name, material_name="E2E_GameMaterial")
 
         # Bake normal map
         normal_path = get_temp_output_path("_game_normal.png")
-        normal_result = baking_handler.bake_normal_map(
-            object_name=obj_name,
-            output_path=normal_path,
-            resolution=512
-        )
+        normal_result = baking_handler.bake_normal_map(object_name=obj_name, output_path=normal_path, resolution=512)
         assert "normal map" in normal_result.lower()
         print(f"  Step 1 - Normal: {normal_result}")
 
         # Bake AO
         ao_path = get_temp_output_path("_game_ao.png")
-        ao_result = baking_handler.bake_ao(
-            object_name=obj_name,
-            output_path=ao_path,
-            resolution=512,
-            samples=32
-        )
+        ao_result = baking_handler.bake_ao(object_name=obj_name, output_path=ao_path, resolution=512, samples=32)
         assert "ao map" in ao_result.lower()
         print(f"  Step 2 - AO: {ao_result}")
 
         # Bake diffuse
         diffuse_path = get_temp_output_path("_game_diffuse.png")
-        diffuse_result = baking_handler.bake_diffuse(
-            object_name=obj_name,
-            output_path=diffuse_path,
-            resolution=512
-        )
+        diffuse_result = baking_handler.bake_diffuse(object_name=obj_name, output_path=diffuse_path, resolution=512)
         assert "diffuse map" in diffuse_result.lower()
         print(f"  Step 3 - Diffuse: {diffuse_result}")
 

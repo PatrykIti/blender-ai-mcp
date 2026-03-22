@@ -3,11 +3,6 @@
 
 """Explicit MCP area registrars used by provider-based composition."""
 
-from .mesh import register_mesh_tools
-from .modeling import register_modeling_tools
-from .router import register_router_tools
-from .scene import register_scene_tools
-from .workflow_catalog import register_workflow_tools
 from .armature import register_armature_tools
 from .baking import register_baking_tools
 from .collection import register_collection_tools
@@ -15,10 +10,15 @@ from .curve import register_curve_tools
 from .extraction import register_extraction_tools
 from .lattice import register_lattice_tools
 from .material import register_material_tools
+from .mesh import register_mesh_tools
+from .modeling import register_modeling_tools
+from .router import register_router_tools
+from .scene import register_scene_tools
 from .sculpt import register_sculpt_tools
 from .system import register_system_tools
 from .text import register_text_tools
 from .uv import register_uv_tools
+from .workflow_catalog import register_workflow_tools
 
 __all__ = [
     "register_armature_tools",

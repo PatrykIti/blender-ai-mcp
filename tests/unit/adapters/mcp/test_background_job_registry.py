@@ -41,6 +41,7 @@ def test_background_job_registry_tracks_identity_progress_and_completion():
     assert stored_again is not None
     assert stored_again.payload == {"ok": True}
 
+
 def test_task_runtime_report_matches_current_supported_pair():
     """Current environment should resolve to the supported FastMCP+Docket task pair."""
 

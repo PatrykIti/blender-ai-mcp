@@ -3,6 +3,7 @@
 Provides low-level control over Blender state: mode switching,
 undo/redo, file operations, and snapshot checkpoints.
 """
+
 import os
 import tempfile
 from datetime import datetime
@@ -62,9 +63,7 @@ class SystemHandler:
 
         # Check if already in target mode
         if current_mode == mode or current_mode.startswith(mode):
-            active_name = (
-                bpy.context.active_object.name if bpy.context.active_object else "None"
-            )
+            active_name = bpy.context.active_object.name if bpy.context.active_object else "None"
             return f"Already in {mode} mode (active: {active_name})"
 
         active_obj = bpy.context.active_object
@@ -197,9 +196,7 @@ class SystemHandler:
             else:
                 # Generate temp path for unsaved file
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filepath = os.path.join(
-                    tempfile.gettempdir(), f"blender_ai_autosave_{timestamp}.blend"
-                )
+                filepath = os.path.join(tempfile.gettempdir(), f"blender_ai_autosave_{timestamp}.blend")
                 bpy.ops.wm.save_as_mainfile(filepath=filepath, compress=compress)
                 return f"Saved unsaved file to '{filepath}'"
 
@@ -276,9 +273,7 @@ class SystemHandler:
                 name = datetime.now().strftime("%Y%m%d_%H%M%S")
 
             # Sanitize name (remove dangerous characters)
-            safe_name = "".join(
-                c for c in name if c.isalnum() or c in ("_", "-")
-            ).rstrip()
+            safe_name = "".join(c for c in name if c.isalnum() or c in ("_", "-")).rstrip()
             if not safe_name:
                 safe_name = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -314,9 +309,7 @@ class SystemHandler:
                 filepath = os.path.join(self.SNAPSHOT_DIR, f"{snap_name}.blend")
                 try:
                     mtime = os.path.getmtime(filepath)
-                    mtime_str = datetime.fromtimestamp(mtime).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
+                    mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                     size_mb = os.path.getsize(filepath) / (1024 * 1024)
                     snapshot_info.append(f"  - {snap_name} ({mtime_str}, {size_mb:.1f}MB)")
                 except OSError:
@@ -478,7 +471,7 @@ class SystemHandler:
             raise RuntimeError(f"Directory not writable: {dir_path}")
 
         # Check objects in scene
-        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == 'MESH']
+        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == "MESH"]
         if not mesh_objects:
             raise RuntimeError("No mesh objects in scene to export")
         raise_if_cancelled(is_cancelled)
@@ -499,7 +492,7 @@ class SystemHandler:
         )
 
         # Verify export succeeded
-        if result != {'FINISHED'}:
+        if result != {"FINISHED"}:
             raise RuntimeError(f"OBJ export failed with result: {result}")
         raise_if_cancelled(is_cancelled)
         if progress_callback is not None:
@@ -513,8 +506,7 @@ class SystemHandler:
 
         if not os.path.exists(filepath):
             raise RuntimeError(
-                f"OBJ export reported success but file was not created: {filepath}. "
-                f"Files in dir: {files_in_dir}"
+                f"OBJ export reported success but file was not created: {filepath}. Files in dir: {files_in_dir}"
             )
         if progress_callback is not None:
             progress_callback(4, 4, "OBJ export complete")
@@ -678,6 +670,7 @@ class SystemHandler:
         Works without external addons (compatible with Blender 4.0+).
         """
         import math
+
         raise_if_cancelled(is_cancelled)
         if progress_callback is not None:
             progress_callback(0, 4, "Validating image file")
@@ -744,41 +737,41 @@ class SystemHandler:
 
         # Create nodes based on shader type
         # Output node
-        output_node = nodes.new('ShaderNodeOutputMaterial')
+        output_node = nodes.new("ShaderNodeOutputMaterial")
         output_node.location = (400, 0)
 
         # Image texture node
-        tex_node = nodes.new('ShaderNodeTexImage')
+        tex_node = nodes.new("ShaderNodeTexImage")
         tex_node.image = img
         tex_node.location = (-300, 0)
 
         if shader == "EMISSION":
             # Emission shader
-            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node = nodes.new("ShaderNodeEmission")
             emission_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
-            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], emission_node.inputs["Color"])
+            links.new(emission_node.outputs["Emission"], output_node.inputs["Surface"])
 
         elif shader == "SHADELESS":
             # Shadeless (Background shader in Cycles, or just emission)
             # Use emission with strength 1 for shadeless look
-            emission_node = nodes.new('ShaderNodeEmission')
-            emission_node.inputs['Strength'].default_value = 1.0
+            emission_node = nodes.new("ShaderNodeEmission")
+            emission_node.inputs["Strength"].default_value = 1.0
             emission_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
-            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], emission_node.inputs["Color"])
+            links.new(emission_node.outputs["Emission"], output_node.inputs["Surface"])
 
         else:  # PRINCIPLED (default)
             # Principled BSDF
-            bsdf_node = nodes.new('ShaderNodeBsdfPrincipled')
+            bsdf_node = nodes.new("ShaderNodeBsdfPrincipled")
             bsdf_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], bsdf_node.inputs['Base Color'])
-            links.new(bsdf_node.outputs['BSDF'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], bsdf_node.inputs["Base Color"])
+            links.new(bsdf_node.outputs["BSDF"], output_node.inputs["Surface"])
 
             # Handle transparency
             if use_transparency:
-                mat.blend_method = 'BLEND'
-                links.new(tex_node.outputs['Alpha'], bsdf_node.inputs['Alpha'])
+                mat.blend_method = "BLEND"
+                links.new(tex_node.outputs["Alpha"], bsdf_node.inputs["Alpha"])
 
         # Assign material to plane
         if plane.data.materials:

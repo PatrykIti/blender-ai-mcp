@@ -4,12 +4,12 @@ Router Logger.
 Logging and telemetry for router decisions.
 """
 
-import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime
-from dataclasses import dataclass, field, asdict
-from enum import Enum
 import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from server.infrastructure.telemetry import emit_router_event_span
 
@@ -138,7 +138,7 @@ class RouterLogger:
 
         # Trim events if over limit
         if len(self._events) > self.max_events:
-            self._events = self._events[-self.max_events:]
+            self._events = self._events[-self.max_events :]
 
     def log_intercept(
         self,
@@ -165,9 +165,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(
-            f"[ROUTER] Intercepted: {tool_name} params={json.dumps(params, default=str)}"
-        )
+        self.logger.info(f"[ROUTER] Intercepted: {tool_name} params={json.dumps(params, default=str)}")
 
     def log_context_analyzed(
         self,
@@ -196,8 +194,7 @@ class RouterLogger:
         self._add_event(event)
 
         self.logger.info(
-            f"[ROUTER] Context: mode={mode}, active={active_object}, "
-            f"selection={has_selection}, objects={object_count}"
+            f"[ROUTER] Context: mode={mode}, active={active_object}, selection={has_selection}, objects={object_count}"
         )
 
     def log_pattern_detected(
@@ -223,9 +220,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(
-            f"[ROUTER] Pattern: {pattern_name} (confidence={confidence:.2f})"
-        )
+        self.logger.info(f"[ROUTER] Pattern: {pattern_name} (confidence={confidence:.2f})")
 
     def log_correction(
         self,
@@ -252,9 +247,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(
-            f"[ROUTER] Correction: {original_tool} → {', '.join(corrections)}"
-        )
+        self.logger.info(f"[ROUTER] Correction: {original_tool} → {', '.join(corrections)}")
 
     def log_override(
         self,
@@ -282,9 +275,7 @@ class RouterLogger:
         self._add_event(event)
 
         replacement_names = [t.get("tool", "unknown") for t in replacement_tools]
-        self.logger.info(
-            f"[ROUTER] Override: {original_tool} → {', '.join(replacement_names)} ({reason})"
-        )
+        self.logger.info(f"[ROUTER] Override: {original_tool} → {', '.join(replacement_names)} ({reason})")
 
     def log_workflow_expanded(
         self,
@@ -311,9 +302,7 @@ class RouterLogger:
         )
         self._add_event(event)
 
-        self.logger.info(
-            f"[ROUTER] Workflow: {workflow_name} ({step_count} steps)"
-        )
+        self.logger.info(f"[ROUTER] Workflow: {workflow_name} ({step_count} steps)")
 
     def log_firewall(
         self,

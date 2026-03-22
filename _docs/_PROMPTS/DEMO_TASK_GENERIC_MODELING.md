@@ -36,4 +36,3 @@ OUTPUT / REPORT
 - Call out any areas that need my approval before proceeding.
 ```
 ```
-

@@ -41,4 +41,3 @@ Synchronous MCP tools now use a safe bridge that schedules `ctx.info()` correctl
 ```bash
 poetry run pytest tests/unit/ -q
 ```
-

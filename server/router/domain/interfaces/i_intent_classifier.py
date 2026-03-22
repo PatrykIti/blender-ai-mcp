@@ -5,7 +5,7 @@ Abstract interface for classifying user intent to tools.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class IIntentClassifier(ABC):

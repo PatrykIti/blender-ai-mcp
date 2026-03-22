@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any
 
 from fastmcp import Context
 
-from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import (
     get_session_value,
@@ -18,6 +17,7 @@ from server.adapters.mcp.session_state import (
     set_session_value,
     set_session_value_async,
 )
+from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 
 if TYPE_CHECKING:
     from server.adapters.mcp.guided_mode import VisibilityDiagnostics
@@ -178,7 +178,11 @@ def update_session_from_router_goal(
     current_partial_answers.update(provided_answers or {})
 
     if status == "needs_input":
-        pending_elicitation_id = f"elic_{clarification.get('question_set_id')}" if clarification.get("question_set_id") else current.pending_elicitation_id
+        pending_elicitation_id = (
+            f"elic_{clarification.get('question_set_id')}"
+            if clarification.get("question_set_id")
+            else current.pending_elicitation_id
+        )
         pending_workflow_name = router_result.get("workflow") or current.pending_workflow_name
         pending_question_set_id = clarification.get("question_set_id") or current.pending_question_set_id
         last_elicitation_action = router_result.get("elicitation_action") or current.last_elicitation_action

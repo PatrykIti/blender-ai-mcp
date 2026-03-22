@@ -38,12 +38,8 @@ SURFACE_PROFILES: Final[tuple[str, ...]] = (
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[4]
 AREAS_DIR: Final[Path] = REPO_ROOT / "server" / "adapters" / "mcp" / "areas"
 AREAS_INIT_PATH: Final[Path] = AREAS_DIR / "__init__.py"
-ROUTER_METADATA_DIR: Final[Path] = (
-    REPO_ROOT / "server" / "router" / "infrastructure" / "tools_metadata"
-)
-METADATA_LOADER_PATH: Final[Path] = (
-    REPO_ROOT / "server" / "router" / "infrastructure" / "metadata_loader.py"
-)
+ROUTER_METADATA_DIR: Final[Path] = REPO_ROOT / "server" / "router" / "infrastructure" / "tools_metadata"
+METADATA_LOADER_PATH: Final[Path] = REPO_ROOT / "server" / "router" / "infrastructure" / "metadata_loader.py"
 
 ContextImportStyle = Literal["fastmcp", "mcp.server.fastmcp", "none"]
 
@@ -197,9 +193,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         uses_ctx_info_bridge=True,
         router_metadata_directory=False,
         metadata_loader_covered=True,
-        notes=(
-            "Router tool exposure is public but intentionally outside MetadataLoader.AREAS.",
-        ),
+        notes=("Router tool exposure is public but intentionally outside MetadataLoader.AREAS.",),
     ),
     SurfaceModule(
         area="scene",
@@ -273,9 +267,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         uses_ctx_info_bridge=True,
         router_metadata_directory=False,
         metadata_loader_covered=False,
-        notes=(
-            "Workflow catalog is public but intentionally outside MetadataLoader.AREAS.",
-        ),
+        notes=("Workflow catalog is public but intentionally outside MetadataLoader.AREAS.",),
     ),
 )
 
@@ -327,9 +319,7 @@ def get_filesystem_area_modules(base_dir: Path = AREAS_DIR) -> tuple[str, ...]:
 
     return tuple(
         sorted(
-            path.stem
-            for path in base_dir.glob("*.py")
-            if path.name != "__init__.py" and not path.stem.startswith("_")
+            path.stem for path in base_dir.glob("*.py") if path.name != "__init__.py" and not path.stem.startswith("_")
         )
     )
 
@@ -365,9 +355,7 @@ def get_metadata_loader_gap_areas(
 
     return tuple(
         sorted(
-            module.area
-            for module in modules
-            if module.router_metadata_directory and not module.metadata_loader_covered
+            module.area for module in modules if module.router_metadata_directory and not module.metadata_loader_covered
         )
     )
 
@@ -385,10 +373,7 @@ def get_metadata_loader_areas() -> tuple[str, ...]:
             if not isinstance(statement, ast.Assign):
                 continue
 
-            if not any(
-                isinstance(target, ast.Name) and target.id == "AREAS"
-                for target in statement.targets
-            ):
+            if not any(isinstance(target, ast.Name) and target.id == "AREAS" for target in statement.targets):
                 continue
 
             return tuple(sorted(ast.literal_eval(statement.value)))

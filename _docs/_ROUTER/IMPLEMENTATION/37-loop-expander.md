@@ -194,4 +194,3 @@ So loops/interpolation work identically for adapted workflows.
 - `32-workflow-adapter.md` (adaptation step selection)
 - `_docs/_ROUTER/WORKFLOWS/yaml-workflow-guide.md` (authoring guide)
 - `_docs/_ROUTER/WORKFLOWS/workflow-execution-pipeline.md` (two-filter mental model)
-

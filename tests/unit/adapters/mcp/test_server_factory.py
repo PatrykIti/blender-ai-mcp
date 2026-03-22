@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastmcp import FastMCP
-
 from server.adapters.mcp.factory import build_server
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 from server.adapters.mcp.surfaces import SURFACE_PROFILES, get_surface_profile
@@ -68,8 +67,6 @@ def test_build_server_can_use_explicit_contract_line_override():
 
 def test_build_server_fails_clearly_when_task_runtime_pair_is_unsupported(monkeypatch):
     """Task-capable surfaces should fail fast on an unsupported FastMCP+Docket pair."""
-
-    from server.adapters.mcp.tasks.runtime_policy import TaskRuntimeReport
 
     monkeypatch.setattr(
         "server.adapters.mcp.factory.validate_task_runtime_or_raise",

@@ -4,8 +4,8 @@ Router Helper for MCP Tools.
 Provides utilities for routing tool calls through SupervisorRouter.
 """
 
-from typing import Dict, Any, List, Optional, Callable
 import logging
+from typing import Any, Callable, Dict, List, Optional
 
 from server.adapters.mcp.contracts.correction_audit import (
     CorrectionAuditEventContract,
@@ -13,16 +13,15 @@ from server.adapters.mcp.contracts.correction_audit import (
     CorrectionIntentContract,
     CorrectionVerificationContract,
 )
+from server.adapters.mcp.dispatcher import get_dispatcher
 from server.adapters.mcp.execution_context import MCPExecutionContext
-from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
+from server.adapters.mcp.execution_report import ExecutionStep, MCPExecutionReport
 from server.adapters.mcp.session_capabilities import record_router_execution_outcome
 from server.adapters.mcp.session_state import set_session_value
 from server.infrastructure.config import get_config
-from server.infrastructure.di import get_postcondition_registry, get_scene_handler
-from server.infrastructure.di import is_router_enabled, get_router
-from server.adapters.mcp.dispatcher import get_dispatcher
-from server.router.infrastructure.logger import get_router_logger
+from server.infrastructure.di import get_postcondition_registry, get_router, get_scene_handler, is_router_enabled
 from server.router.domain.entities.correction_policy import CorrectionCategory
+from server.router.infrastructure.logger import get_router_logger
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,10 @@ def _build_correction_audit_events(
 
         if corrected_tool_name == "system_set_mode" and original_tool_name != "system_set_mode":
             category = "precondition_mode"
-        elif corrected_tool_name in {"mesh_select", "mesh_select_targeted"} and original_tool_name not in {"mesh_select", "mesh_select_targeted"}:
+        elif corrected_tool_name in {"mesh_select", "mesh_select_targeted"} and original_tool_name not in {
+            "mesh_select",
+            "mesh_select_targeted",
+        }:
             category = "precondition_selection"
         elif corrected_tool_name == "scene_set_active_object" and original_tool_name != "scene_set_active_object":
             category = "precondition_active_object"
@@ -191,10 +193,7 @@ def _apply_postcondition_verification(
         try:
             if requirement.verification_key == "verify_mode":
                 mode_payload = scene_handler.get_mode()
-                expected_mode = (
-                    event.execution.params.get("mode")
-                    or event.intent.corrected_params.get("mode")
-                )
+                expected_mode = event.execution.params.get("mode") or event.intent.corrected_params.get("mode")
                 actual_mode = mode_payload.get("mode")
                 status = "passed" if expected_mode == actual_mode else "failed"
                 details = {"expected_mode": expected_mode, "actual_mode": actual_mode}
@@ -205,10 +204,7 @@ def _apply_postcondition_verification(
                 details = {"selection_count": selection_count}
             elif requirement.verification_key == "verify_active_object":
                 mode_payload = scene_handler.get_mode()
-                expected_object = (
-                    event.execution.params.get("name")
-                    or event.intent.corrected_params.get("name")
-                )
+                expected_object = event.execution.params.get("name") or event.intent.corrected_params.get("name")
                 actual_object = mode_payload.get("active_object")
                 status = "passed" if expected_object == actual_object else "failed"
                 details = {"expected_object": expected_object, "actual_object": actual_object}
@@ -329,16 +325,12 @@ def route_tool_call_report(
 
             if tool_to_execute == tool_name and index == len(corrected_tools) - 1:
                 result = (
-                    direct_executor()
-                    if tool_params == params
-                    else dispatcher.execute(tool_to_execute, tool_params)
+                    direct_executor() if tool_params == params else dispatcher.execute(tool_to_execute, tool_params)
                 )
             else:
                 result = dispatcher.execute(tool_to_execute, tool_params)
 
-            steps.append(
-                ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result)
-            )
+            steps.append(ExecutionStep(tool_name=tool_to_execute, params=tool_params, result=result))
 
         audit_events = _build_correction_audit_events(
             original_tool_name=tool_name,
@@ -504,4 +496,5 @@ def get_router_status() -> Dict[str, Any]:
         "component_status": router.get_component_status(),
         "stats": router.get_stats(),
         "config": str(router.get_config()),
+        "assistant_diagnostics": router.get_assistant_diagnostics(),
     }
