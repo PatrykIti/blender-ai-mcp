@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 22 tasks (~200 sub-tasks)
-- **In Progress:** 3 tasks
+- **To Do:** 21 tasks (~200 sub-tasks)
+- **In Progress:** 4 tasks
 - **Done:** 141
 
 ## 🧭 Terminology Guardrails
@@ -22,7 +22,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | Tool Search as the primary discovery model |
 | [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | Per-session visibility and phase-based capability exposure |
 | [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | First-class clarification flow for router/workflow inputs |
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | Non-blocking jobs for imports, renders, analysis, reconstruction |
@@ -68,6 +67,7 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Platform baseline is implemented and green; task stays open for deferred validation/docs slices and compatibility cleanup |
+| [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | Infra `084-01..04` is implemented on a preview search surface; rollout/default activation still gated by TASK-085 and TASK-091 |
 | [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | `llm-guided` public baseline is implemented and documented; remaining open parity slice depends on TASK-084/TASK-091 |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 

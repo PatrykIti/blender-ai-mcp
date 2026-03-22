@@ -1,7 +1,7 @@
 # TASK-084-03: Search Document Enrichment from Metadata and Docstrings
 
 **Parent:** [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Build rich search documents from metadata, docstrings, parameter names, and parameter descriptions so discovery works on intent-level language rather than tool names alone.
+
+## Completion Summary
+
+This slice is now closed.
+
+- search documents are built from public names, aliases, docstrings, parameter names/descriptions, tags, categories, and metadata-loader enrichment
+- the search transform uses those enriched documents instead of relying only on raw tool names
+- tests cover action-level discovery relevance on the preview search surface
 
 ---
 

@@ -67,7 +67,7 @@ def test_runtime_inventory_tracks_singleton_and_context_import_coupling():
 
 
 def test_runtime_inventory_tracks_router_metadata_coverage_gaps():
-    """Inventory should capture router-metadata families missing from MetadataLoader.AREAS."""
+    """Inventory should stay aligned with the current metadata-loader coverage."""
 
     metadata_directories = set(get_router_metadata_directories())
     metadata_loader_areas = set(get_metadata_loader_areas())
@@ -76,7 +76,7 @@ def test_runtime_inventory_tracks_router_metadata_coverage_gaps():
         module.area for module in MCP_SURFACE_MODULES if module.router_metadata_directory
     }
     assert set(get_metadata_loader_gap_areas()) == (metadata_directories - metadata_loader_areas)
-    assert set(get_metadata_loader_gap_areas()) == {"armature", "extraction", "text"}
+    assert set(get_metadata_loader_gap_areas()) == set()
 
 
 def test_runtime_inventory_baseline_matches_pyproject():

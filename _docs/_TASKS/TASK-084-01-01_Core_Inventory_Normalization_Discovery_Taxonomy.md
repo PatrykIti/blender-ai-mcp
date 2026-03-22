@@ -1,7 +1,7 @@
 # TASK-084-01-01: Core Tool Inventory Normalization and Discovery Taxonomy
 
 **Parent:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Implement the core code changes for **Tool Inventory Normalization and Discovery Taxonomy**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- `server/adapters/mcp/discovery/tool_inventory.py` and `taxonomy.py` provide the canonical inventory/taxonomy layer
+- manifest-owned discovery metadata replaces ad hoc discovery ownership
+- metadata loader enrichment coverage now includes the previously-missing router areas needed for discovery docs
 
 ---
 

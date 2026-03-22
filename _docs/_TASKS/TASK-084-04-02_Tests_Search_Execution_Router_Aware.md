@@ -1,7 +1,7 @@
 # TASK-084-04-02: Tests and Docs Search Execution and Router-Aware Call Path
 
 **Parent:** [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-04-01](./TASK-084-04-01_Core_Search_Execution_Router_Aware.md)
 
@@ -10,6 +10,16 @@
 ## Objective
 
 Add tests and documentation updates for **Search Execution and Router-Aware Call Path**.
+
+## Current State
+
+Current preview-surface tests cover:
+
+- public-name search results
+- direct public alias vs `call_tool` parity
+- pinned-entry search surface behavior
+
+This slice remains open because auth/visibility parity and finalized router-failure disposition tests still belong to the later rollout phase with TASK-085 and TASK-091.
 
 ---
 

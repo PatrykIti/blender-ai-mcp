@@ -1,7 +1,7 @@
 # TASK-084-01: Public Capability Inventory and Discovery Taxonomy
 
 **Parent:** [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 
@@ -10,6 +10,15 @@
 ## Objective
 
 Expand the platform manifest scaffold into one canonical discovery inventory for the public MCP-facing capability surface: categories, tags, aliases, and visibility flags for capabilities that should actually participate in public discovery.
+
+## Completion Summary
+
+This slice is now closed.
+
+- the platform capability manifest now owns discovery category and pinned-default metadata
+- a canonical discovery inventory is built from the public manifest with router metadata as enrichment only
+- metadata loader coverage was extended so enrichment is no longer missing `armature`, `extraction`, or `text`
+- tests cover uniqueness, alias normalization, pinned defaults, and metadata enrichment coverage
 
 ---
 

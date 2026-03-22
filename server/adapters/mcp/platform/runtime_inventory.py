@@ -83,10 +83,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
-        metadata_loader_covered=False,
-        notes=(
-            "Router metadata exists on disk but MetadataLoader.AREAS does not include this family.",
-        ),
+        metadata_loader_covered=True,
+        notes=(),
     ),
     SurfaceModule(
         area="baking",
@@ -134,10 +132,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=True,
-        metadata_loader_covered=False,
-        notes=(
-            "Router metadata exists on disk but MetadataLoader.AREAS does not include this family.",
-        ),
+        metadata_loader_covered=True,
+        notes=(),
     ),
     SurfaceModule(
         area="lattice",
@@ -197,7 +193,7 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         context_import_style="fastmcp",
         uses_ctx_info_bridge=True,
         router_metadata_directory=False,
-        metadata_loader_covered=False,
+        metadata_loader_covered=True,
         notes=(
             "Router tool exposure is public but intentionally outside MetadataLoader.AREAS.",
         ),
@@ -248,10 +244,8 @@ MCP_SURFACE_MODULES: Final[tuple[SurfaceModule, ...]] = (
         context_import_style="fastmcp",
         uses_ctx_info_bridge=False,
         router_metadata_directory=True,
-        metadata_loader_covered=False,
-        notes=(
-            "Router metadata exists on disk but MetadataLoader.AREAS does not include this family.",
-        ),
+        metadata_loader_covered=True,
+        notes=(),
     ),
     SurfaceModule(
         area="uv",

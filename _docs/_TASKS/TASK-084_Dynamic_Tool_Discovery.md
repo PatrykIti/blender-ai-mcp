@@ -4,7 +4,9 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (mandatory platform baseline). Integration / rollout gates: TASK-085 (session-visibility parity on adaptive surfaces), TASK-086 (public surface baseline), TASK-091 (default public rollout / coexistence gate)
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
+
+**Current State:** The discovery infrastructure layer is now implemented: a canonical public discovery inventory exists, router metadata enrichment is normalized, enriched search documents are built from manifest/docstrings/metadata, and a search-enabled preview surface can expose `search_tools` / `call_tool` with pinned entry tools and direct-vs-proxy parity tests. The default `llm-guided` surface still keeps `search_enabled=False` intentionally. This umbrella remains open because default public rollout, visibility parity, fail-closed policy rollout, and legacy-vs-guided coexistence benchmarking still depend on TASK-085 and TASK-091.
 
 ---
 

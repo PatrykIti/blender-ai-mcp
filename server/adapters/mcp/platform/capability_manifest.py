@@ -39,6 +39,9 @@ class CapabilityManifestEntry:
     tool_names: tuple[str, ...]
     tags: tuple[str, ...]
     public_contracts: tuple[CapabilityPublicContract, ...]
+    discovery_category: str
+    pinned_tools: tuple[str, ...] = ()
+    hidden_from_search_tools: tuple[str, ...] = ()
 
 
 CAPABILITY_MANIFEST = (
@@ -48,6 +51,7 @@ CAPABILITY_MANIFEST = (
         SCENE_PUBLIC_TOOL_NAMES,
         get_capability_tags("scene"),
         build_capability_public_contracts("scene", SCENE_PUBLIC_TOOL_NAMES),
+        "scene",
     ),
     CapabilityManifestEntry(
         "mesh",
@@ -55,6 +59,7 @@ CAPABILITY_MANIFEST = (
         MESH_PUBLIC_TOOL_NAMES,
         get_capability_tags("mesh"),
         build_capability_public_contracts("mesh", MESH_PUBLIC_TOOL_NAMES),
+        "mesh",
     ),
     CapabilityManifestEntry(
         "modeling",
@@ -62,6 +67,7 @@ CAPABILITY_MANIFEST = (
         MODELING_PUBLIC_TOOL_NAMES,
         get_capability_tags("modeling"),
         build_capability_public_contracts("modeling", MODELING_PUBLIC_TOOL_NAMES),
+        "modeling",
     ),
     CapabilityManifestEntry(
         "material",
@@ -69,6 +75,7 @@ CAPABILITY_MANIFEST = (
         MATERIAL_PUBLIC_TOOL_NAMES,
         get_capability_tags("material"),
         build_capability_public_contracts("material", MATERIAL_PUBLIC_TOOL_NAMES),
+        "material",
     ),
     CapabilityManifestEntry(
         "uv",
@@ -76,6 +83,7 @@ CAPABILITY_MANIFEST = (
         UV_PUBLIC_TOOL_NAMES,
         get_capability_tags("uv"),
         build_capability_public_contracts("uv", UV_PUBLIC_TOOL_NAMES),
+        "uv",
     ),
     CapabilityManifestEntry(
         "collection",
@@ -83,6 +91,7 @@ CAPABILITY_MANIFEST = (
         COLLECTION_PUBLIC_TOOL_NAMES,
         get_capability_tags("collection"),
         build_capability_public_contracts("collection", COLLECTION_PUBLIC_TOOL_NAMES),
+        "collection",
     ),
     CapabilityManifestEntry(
         "curve",
@@ -90,6 +99,7 @@ CAPABILITY_MANIFEST = (
         CURVE_PUBLIC_TOOL_NAMES,
         get_capability_tags("curve"),
         build_capability_public_contracts("curve", CURVE_PUBLIC_TOOL_NAMES),
+        "curve",
     ),
     CapabilityManifestEntry(
         "lattice",
@@ -97,6 +107,7 @@ CAPABILITY_MANIFEST = (
         LATTICE_PUBLIC_TOOL_NAMES,
         get_capability_tags("lattice"),
         build_capability_public_contracts("lattice", LATTICE_PUBLIC_TOOL_NAMES),
+        "lattice",
     ),
     CapabilityManifestEntry(
         "sculpt",
@@ -104,6 +115,7 @@ CAPABILITY_MANIFEST = (
         SCULPT_PUBLIC_TOOL_NAMES,
         get_capability_tags("sculpt"),
         build_capability_public_contracts("sculpt", SCULPT_PUBLIC_TOOL_NAMES),
+        "sculpt",
     ),
     CapabilityManifestEntry(
         "baking",
@@ -111,6 +123,7 @@ CAPABILITY_MANIFEST = (
         BAKING_PUBLIC_TOOL_NAMES,
         get_capability_tags("baking"),
         build_capability_public_contracts("baking", BAKING_PUBLIC_TOOL_NAMES),
+        "baking",
     ),
     CapabilityManifestEntry(
         "text",
@@ -118,6 +131,7 @@ CAPABILITY_MANIFEST = (
         TEXT_PUBLIC_TOOL_NAMES,
         get_capability_tags("text"),
         build_capability_public_contracts("text", TEXT_PUBLIC_TOOL_NAMES),
+        "text",
     ),
     CapabilityManifestEntry(
         "armature",
@@ -125,6 +139,7 @@ CAPABILITY_MANIFEST = (
         ARMATURE_PUBLIC_TOOL_NAMES,
         get_capability_tags("armature"),
         build_capability_public_contracts("armature", ARMATURE_PUBLIC_TOOL_NAMES),
+        "armature",
     ),
     CapabilityManifestEntry(
         "system",
@@ -132,6 +147,7 @@ CAPABILITY_MANIFEST = (
         SYSTEM_PUBLIC_TOOL_NAMES,
         get_capability_tags("system"),
         build_capability_public_contracts("system", SYSTEM_PUBLIC_TOOL_NAMES),
+        "system",
     ),
     CapabilityManifestEntry(
         "extraction",
@@ -139,6 +155,7 @@ CAPABILITY_MANIFEST = (
         EXTRACTION_PUBLIC_TOOL_NAMES,
         get_capability_tags("extraction"),
         build_capability_public_contracts("extraction", EXTRACTION_PUBLIC_TOOL_NAMES),
+        "extraction",
     ),
     CapabilityManifestEntry(
         "router",
@@ -146,6 +163,8 @@ CAPABILITY_MANIFEST = (
         ROUTER_PUBLIC_TOOL_NAMES,
         get_capability_tags("router"),
         build_capability_public_contracts("router", ROUTER_PUBLIC_TOOL_NAMES),
+        "router",
+        pinned_tools=("router_set_goal", "router_get_status"),
     ),
     CapabilityManifestEntry(
         "workflow_catalog",
@@ -153,6 +172,8 @@ CAPABILITY_MANIFEST = (
         WORKFLOW_PUBLIC_TOOL_NAMES,
         get_capability_tags("workflow_catalog"),
         build_capability_public_contracts("workflow_catalog", WORKFLOW_PUBLIC_TOOL_NAMES),
+        "workflow",
+        pinned_tools=("workflow_catalog",),
     ),
 )
 

@@ -25,3 +25,5 @@ class SurfaceProfileSettings:
     instructions: str | None = None
     transform_builders: tuple[Callable[[], Any], ...] = field(default_factory=tuple)
     delivery_mode: DeliveryMode = "structured_first"
+    search_enabled: bool = False
+    search_max_results: int = 5

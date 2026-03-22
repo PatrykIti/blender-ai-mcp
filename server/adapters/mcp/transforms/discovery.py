@@ -7,14 +7,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from server.adapters.mcp.discovery import build_search_transform
 from server.adapters.mcp.settings import SurfaceProfileSettings
 
 
 def build_discovery_transform(surface: SurfaceProfileSettings) -> Any | None:
     """Build the discovery stage for a surface profile.
 
-    TASK-084 and TASK-094 populate this with search- or code-mode-specific
-    transforms once the factory baseline is stable.
+    TASK-084 populates this with the search-first discovery infrastructure.
+    Default rollout can stay disabled at the surface-profile level until the
+    product-level rollout gate is intentionally opened.
     """
 
-    return None
+    return build_search_transform(surface)

@@ -118,6 +118,9 @@ class MetadataLoader:
         "lattice",
         "sculpt",
         "baking",
+        "armature",
+        "extraction",
+        "text",
     ]
 
     def __init__(self, metadata_dir: Optional[Path] = None):
@@ -364,7 +367,7 @@ class MetadataLoader:
             ))
 
         # Valid mode
-        valid_modes = ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "ANY"]
+        valid_modes = ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE", "ANY"]
         if "mode_required" in data and data["mode_required"] not in valid_modes:
             errors.append(ValidationError(
                 file_path=str(file_path),

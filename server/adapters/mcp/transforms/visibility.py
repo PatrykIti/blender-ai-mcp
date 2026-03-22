@@ -21,6 +21,12 @@ def build_visibility_transform(surface: SurfaceProfileSettings) -> Any | None:
     session-driven visibility controls.
     """
 
+    # TASK-084 infrastructure phase: when search discovery is enabled on a
+    # preview surface, keep visibility out of the way until TASK-085 defines
+    # how adaptive visibility and discovery should interact.
+    if surface.search_enabled:
+        return None
+
     rules = build_visibility_rules(surface.name, SessionPhase.BOOTSTRAP)
     if not rules:
         return None

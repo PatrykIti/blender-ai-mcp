@@ -1,7 +1,7 @@
 # TASK-084-02-01: Core Search Transform and Pinned Entry Surface
 
 **Parent:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
@@ -10,6 +10,16 @@
 ## Objective
 
 Implement the core code changes for **Search Transform and Pinned Entry Surface**.
+
+## Current State
+
+The preview search surface is implemented in code:
+
+- search-enabled surfaces can materialize `search_tools` and `call_tool`
+- pinned entry tools are resolved on the shaped public surface
+- search now operates on enriched public documents rather than raw internal tool names
+
+This slice remains open because it is not yet the default public `llm-guided` rollout.
 
 ---
 

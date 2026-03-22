@@ -1,7 +1,7 @@
 # TASK-084-02-02: Tests and Docs Search Transform and Pinned Entry Surface
 
 **Parent:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-02-01](./TASK-084-02-01_Core_Search_Transform_Pinned_Entry.md)
 
@@ -10,6 +10,16 @@
 ## Objective
 
 Add tests and documentation updates for **Search Transform and Pinned Entry Surface**.
+
+## Current State
+
+Preview-surface tests exist for:
+
+- pinned-entry-only `list_tools`
+- public-name search results
+- `call_tool` parity with direct public alias execution
+
+This slice remains open because benchmark/docs work and default-rollout comparisons against legacy surfaces belong to the later rollout phase, not the current infrastructure phase.
 
 ---
 

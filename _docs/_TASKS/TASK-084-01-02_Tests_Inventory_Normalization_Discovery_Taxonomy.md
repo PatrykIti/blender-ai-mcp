@@ -1,7 +1,7 @@
 # TASK-084-01-02: Tests and Docs Tool Inventory Normalization and Discovery Taxonomy
 
 **Parent:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-01-01](./TASK-084-01-01_Core_Inventory_Normalization_Discovery_Taxonomy.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Tool Inventory Normalization and Discovery Taxonomy**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests now cover public discovery inventory uniqueness, alias normalization, pinned defaults, and metadata enrichment coverage
+- runtime-inventory checks were updated to reflect the resolved metadata-loader gap
 
 ---
 

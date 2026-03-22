@@ -14,7 +14,7 @@
     "category": {
       "type": "string",
       "description": "Tool category/area",
-      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking", "armature"]
+      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking", "armature", "extraction", "text"]
     },
     "mode_required": {
       "type": "string",

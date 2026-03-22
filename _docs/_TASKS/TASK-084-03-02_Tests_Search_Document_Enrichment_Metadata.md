@@ -1,7 +1,7 @@
 # TASK-084-03-02: Tests and Docs Search Document Enrichment from Metadata and Docstrings
 
 **Parent:** [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-03-01](./TASK-084-03-01_Core_Search_Document_Enrichment_Metadata.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Search Document Enrichment from Metadata and Docstrings**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- discovery tests now cover enriched public-name search behavior on the preview surface
+- metadata/document enrichment is exercised through the search-surface and tool-inventory test suite
 
 ---
 

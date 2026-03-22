@@ -1,7 +1,7 @@
 # TASK-084-03-01: Core Search Document Enrichment from Metadata and Docstrings
 
 **Parent:** [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Implement the core code changes for **Search Document Enrichment from Metadata and Docstrings**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- `server/adapters/mcp/discovery/search_documents.py` builds enriched search text from the public discovery inventory, docstrings, metadata, and parameter schemas
+- the preview search transform indexes those enriched documents on the shaped public surface
 
 ---
 

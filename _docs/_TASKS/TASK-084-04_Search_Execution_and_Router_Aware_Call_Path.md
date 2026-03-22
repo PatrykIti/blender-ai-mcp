@@ -1,7 +1,7 @@
 # TASK-084-04: Search Execution and Router-Aware Call Path
 
 **Parent:** [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md)
 
@@ -10,6 +10,16 @@
 ## Objective
 
 Ensure that tools discovered through search execute through the same router and dispatcher policy path as directly listed tools.
+
+## Current State
+
+The preview search surface now proves the basic execution path:
+
+- discovered-tool execution goes through the built-in `call_tool` proxy
+- public alias resolution works through the same canonical-name path as direct calls
+- direct public alias calls and proxied calls are parity-tested on the preview surface
+
+This slice remains open because one explicit per-surface router-failure disposition and full auth/visibility parity belong to the later product rollout phase.
 
 ---
 
