@@ -26,3 +26,4 @@ Define the Code Mode experiment scope, success criteria, and hard guardrails bef
 
 - Code Mode is explicitly scoped as experimental
 - write-heavy or destructive Blender operations are excluded from the default experiment
+- the experiment explicitly forbids raw Python / `bpy` execution and uses only the composed MCP surface as its orchestration substrate

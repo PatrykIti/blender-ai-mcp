@@ -28,6 +28,7 @@ Implement the core code changes for **Code Mode Experiment Design and Guardrails
 - deliver explicit experimental Code Mode behavior with guardrails
 - limit pilot surface to approved read-heavy workflows
 - produce measurable comparison artifacts against classic tool loops
+- preserve the repo invariant that Code Mode orchestrates MCP capabilities only and never opens raw Python / Blender execution
 
 ### Implementation Checklist
 
@@ -37,6 +38,7 @@ Implement the core code changes for **Code Mode Experiment Design and Guardrails
 - touch `_docs/_MCP_SERVER/README.md` with explicit change notes and boundary rationale
 - add or update focused regression coverage for the slice behavior
 - capture before/after evidence tied to the slice outputs
+- make the raw-execution ban explicit in both code-facing config and operator-facing docs
 
 ### Review Notes To Attach
 
@@ -50,6 +52,7 @@ Implement the core code changes for **Code Mode Experiment Design and Guardrails
 
 - code-mode experiment boundaries are explicit and enforceable
 - write/destructive operations are blocked where required
+- raw Python / `bpy` execution is unavailable on the experiment surface
 - benchmark artifacts are reproducible and linked to recommendations
 - slice remains profile-scoped and opt-in only
 

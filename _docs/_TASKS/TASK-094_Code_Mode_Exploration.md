@@ -69,6 +69,11 @@ For this repo, Code Mode should remain:
 - profile-scoped
 - read-heavy first
 
+Hard safety rule:
+
+- Code Mode may orchestrate only the existing MCP product surface: tools, prompts, and resources exposed through the composed FastMCP server
+- Code Mode must not expose or execute raw Blender Python, direct `bpy` snippets, arbitrary Python execution, shell commands, or any bypass path around the MCP tool contract
+
 Code Mode research does not require search-first rollout to exist.
 If TASK-084 is available, it may be used as a secondary benchmark comparison, but it is not a prerequisite for experiment guardrails or the first read-only pilot surface.
 
@@ -99,6 +104,7 @@ This task does not cover:
 
 - making Code Mode the default for all clients
 - replacing the router or all normal tools
+- exposing raw Python or raw Blender execution as an orchestration shortcut
 
 ---
 
@@ -119,6 +125,7 @@ But because Blender writes are high-impact, the feature should be treated carefu
 - The team has a clear answer on where Code Mode helps and where it should stay out of the critical path.
 - Experimental value is separated from production-default decisions.
 - The project gains a research path for lower-context orchestration at catalog scale.
+- the experiment preserves the repo invariant that Blender work happens through explicit MCP capabilities rather than raw code execution
 
 ---
 

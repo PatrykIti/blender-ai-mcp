@@ -184,6 +184,27 @@ Do not add a custom discovery proxy unless there is a proven gap in the built-in
 
 ---
 
+## Code Mode Guardrails
+
+For this repo, Code Mode is an orchestration experiment on top of the MCP product surface, not a license to execute raw code.
+
+It may use only:
+
+- tools exposed on the composed FastMCP surface
+- prompts or resources intentionally exposed on that same surface
+
+It must not expose or execute:
+
+- raw Blender Python
+- direct `bpy` snippets
+- arbitrary Python evaluation
+- shell commands
+- any bypass path around the existing MCP tool contract
+
+Read-only first is a capability-level constraint, not just prompt guidance.
+
+---
+
 ## Router-Aware Execution Failure Policy
 
 Router-aware execution must declare an explicit failure disposition per public surface.

@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** Router Safety  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-085, TASK-087, TASK-095  
+**Dependencies:** TASK-087, TASK-095. Integration gate: TASK-085 for session-state-backed persistence/transparency rollout in TASK-096-05.  
 **Status:** ⬜ To Do
 
 ---
@@ -74,6 +74,12 @@ Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md
 
 This policy must consume normalized confidence and explicit risk classes, not raw matcher-specific scores or implicit router heuristics.
 
+Dependency rule:
+
+- waves 1 through 4 are router-policy hardening work and should not be blocked on session-adaptive visibility rollout
+- TASK-085 becomes a concrete integration gate only where this task persists policy context or exposes operator transparency through session state
+- in practice, TASK-096-05 is the slice that consumes TASK-085 session-state primitives directly
+
 Runtime wiring rule:
 
 - when a new runtime policy component/provider is introduced, update dependency wiring in `server/infrastructure/di.py` explicitly
@@ -140,8 +146,14 @@ This remains the umbrella task. The original scope stays unchanged.
 2. Normalize confidence signals across matcher and correction engines.
 3. Add one explicit policy engine for auto-fix, ask, or block decisions.
 4. Route medium-confidence cases into typed clarification.
-5. Persist the decision context and expose it for operators and tests.
+5. Persist the decision context and expose it for operators and tests through session-backed state once TASK-085 session primitives exist.
 6. Add telemetry and docs for the resulting behavior.
+
+Critical path note:
+
+- TASK-096-01 through TASK-096-04 form the core router policy path
+- TASK-096-05 is the session-integration path gated by TASK-085
+- TASK-096-06 closes the loop after both policy and session-backed transparency are in place
 
 Implementation is decomposed into:
 

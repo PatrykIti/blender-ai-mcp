@@ -9,7 +9,7 @@
 
 ## Objective
 
-Create one canonical discovery inventory for the public MCP-facing capability surface: categories, tags, aliases, and visibility flags for capabilities that should actually participate in public discovery.
+Expand the platform manifest scaffold into one canonical discovery inventory for the public MCP-facing capability surface: categories, tags, aliases, and visibility flags for capabilities that should actually participate in public discovery.
 
 ---
 
@@ -27,13 +27,14 @@ Create one canonical discovery inventory for the public MCP-facing capability su
 
 ### New Files To Create
 
-- `server/adapters/mcp/platform/capability_manifest.py`
 - `server/adapters/mcp/discovery/tool_inventory.py`
 - `server/adapters/mcp/discovery/taxonomy.py`
 - `tests/unit/adapters/mcp/test_tool_inventory.py`
 
 ### Existing Files To Update
 
+- `server/adapters/mcp/platform/capability_manifest.py`
+  - extend the baseline scaffold introduced in TASK-083 into the canonical discovery/source manifest
 - `server/router/infrastructure/metadata_loader.py`
   - expose router hints only as optional enrichment
 - `server/router/infrastructure/tools_metadata/_schema.json`
@@ -78,6 +79,7 @@ class DiscoveryEntry:
 3. Keep router metadata as enrichment only.
 4. Keep dispatcher/router compatibility names out of the public discovery inventory unless they are explicitly exposed on a public surface.
 5. Add tests proving every public MCP-visible capability is represented exactly once.
+6. Preserve compatibility with the minimal scaffold created in TASK-083 rather than creating a second competing manifest source.
 
 ---
 

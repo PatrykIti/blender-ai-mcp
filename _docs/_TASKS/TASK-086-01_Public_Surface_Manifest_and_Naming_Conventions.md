@@ -30,7 +30,7 @@ Define which tools and parameters are public, how they should be named for LLM c
 
 ### Ownership Rule
 
-Do not create a second standalone manifest that competes with the shared platform capability manifest created in TASK-084-01.
+Do not create a second standalone manifest that competes with the shared platform capability manifest scaffolded in TASK-083 and normalized in TASK-084-01.
 
 ---
 

@@ -42,6 +42,7 @@ Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit c
 - `server/adapters/mcp/factory.py`
 - `server/adapters/mcp/surfaces.py`
 - `server/adapters/mcp/settings.py`
+- `server/adapters/mcp/platform/capability_manifest.py`
 - `tests/unit/adapters/mcp/test_server_factory.py`
 
 ### Surface Profile Baseline
@@ -52,6 +53,19 @@ The composition root should treat these as surface profiles, not versions:
 - `llm-guided`
 - `internal-debug`
 - `code-mode-pilot`
+
+### Manifest Scaffold Rule
+
+This task establishes the minimal platform-owned manifest scaffold required by the factory/bootstrap baseline.
+
+At this stage the manifest should:
+
+- exist outside router metadata
+- be loadable by the composition root
+- carry stable capability identifiers and room for later public metadata
+
+It does not need to complete discovery taxonomy, aliases, or full audience/phase tagging yet.
+Those are expanded in TASK-084 and TASK-086 on top of this scaffold.
 
 ### YAGNI Rule
 
@@ -102,8 +116,9 @@ def build_server(surface_config, di) -> FastMCP:
 1. Replace singleton bootstrap with `build_server(surface_profile=...)`.
 2. Define the initial profile matrix and default `LocalProvider` sets.
 3. Move startup configuration into one settings object.
-4. Keep a compatibility shim for `instance.py` only until all areas stop depending on the global singleton.
-5. Add profile bootstrap tests before adding any new transform behavior.
+4. Introduce the minimal platform manifest scaffold so later discovery and public-surface work extend one shared source of truth.
+5. Keep a compatibility shim for `instance.py` only until all areas stop depending on the global singleton.
+6. Add profile bootstrap tests before adding any new transform behavior.
 
 ---
 
@@ -122,3 +137,4 @@ def build_server(surface_config, di) -> FastMCP:
 - more than one server surface can be built from the same runtime
 - `instance.py` is no longer the central runtime composition primitive
 - the first factory path does not require a repo-specific provider framework beyond reusable `LocalProvider` groups / registrars
+- the composition root owns a minimal platform manifest scaffold outside router metadata for later discovery and public-contract work

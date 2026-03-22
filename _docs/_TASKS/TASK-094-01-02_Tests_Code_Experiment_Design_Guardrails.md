@@ -26,8 +26,9 @@ Add tests and documentation updates for **Code Mode Experiment Design and Guardr
 
 1. read-only happy path: code mode can orchestrate approved read workflows.
 2. guardrail path: write/destructive operations are blocked in the pilot surface.
-3. discovery flow path: search/schema/execute loop returns deterministic outputs.
-4. fallback comparison path: classic tool loop still works for same benchmark scenarios.
+3. raw-execution guardrail path: raw Python / `bpy` execution is unavailable on the pilot surface.
+4. discovery flow path: search/schema/execute loop returns deterministic outputs.
+5. fallback comparison path: classic tool loop still works for same benchmark scenarios.
 
 ### Metrics To Capture
 

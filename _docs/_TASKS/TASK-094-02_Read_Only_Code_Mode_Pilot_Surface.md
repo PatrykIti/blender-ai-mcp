@@ -25,6 +25,7 @@ Build a read-only pilot surface for discovery, inspection, and workflow explorat
 
 Code Mode pilot work belongs to the MCP platform composition layer.
 Do not fork or rewrite business handlers just to expose a read-only Code Mode surface.
+The pilot may orchestrate only existing MCP capabilities on the composed server surface and must not expose raw Python or direct `bpy` execution.
 
 ---
 
@@ -41,3 +42,4 @@ Do not fork or rewrite business handlers just to expose a read-only Code Mode su
 
 - the pilot surface does not expose direct destructive write paths by default
 - pilot behavior is delivered through profile composition and transforms, not handler-layer forks
+- the pilot surface preserves the tools-only execution model and does not create a raw-code escape hatch

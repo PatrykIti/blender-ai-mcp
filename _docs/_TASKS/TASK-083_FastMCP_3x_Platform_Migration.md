@@ -71,11 +71,17 @@ Follow the shared platform model in [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTM
 
 For this task series, the migration baseline must establish:
 
-- one canonical platform manifest outside router metadata
+- one canonical platform manifest seam and minimal scaffold outside router metadata
 - a clear distinction between surface profile, contract version, and session phase
 - provider-based composition as the runtime source of truth
 - built-in FastMCP transforms as the default shaping mechanism before custom wrappers are considered
 - reusable `LocalProvider` groups and registration seams as the default migration path before introducing repo-specific custom provider abstractions
+
+Interpretation for this umbrella:
+
+- TASK-083 establishes the runtime-owned manifest seam and bootstrap scaffold
+- TASK-084 populates and normalizes that scaffold for discovery inventory use
+- TASK-086 attaches public naming and contract metadata to the same shared manifest
 
 ---
 
@@ -138,7 +144,7 @@ This remains the umbrella task. The original business scope stays unchanged.
 
 1. Audit current 2.x coupling, supported Python/runtime baseline, and missing inventory coverage.
 2. Extract reusable `LocalProvider` groups / registrars and remove side-effect-only registration assumptions.
-3. Replace the singleton bootstrap with a server factory and surface profiles.
+3. Replace the singleton bootstrap with a server factory, surface profiles, and a minimal platform manifest scaffold owned by the MCP platform layer.
 4. Lock a deterministic transform order that later tasks extend rather than bypass.
 5. Normalize context, session, and execution reporting for async-capable platform features.
 6. Add regression coverage for profiles, providers, transforms, and bootstrap behavior.
@@ -169,6 +175,7 @@ Before starting broad implementation of TASK-084 through TASK-097, the following
   - bootstrap uses `build_server(surface_profile=...)` instead of global side-effect registration
   - profile selection is explicit in config (`legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`)
   - unit smoke tests prove at least two profiles can boot from the same provider set
+  - one minimal platform manifest scaffold exists outside router metadata and is wired into the platform bootstrap as the future source of public capability metadata
 - **Gate B (after TASK-083-04): Transform Pipeline Gate**
   - transform order is deterministic and covered by snapshot/regression tests
   - naming/visibility/version shaping happens in the transform chain, not in ad hoc adapter wrappers

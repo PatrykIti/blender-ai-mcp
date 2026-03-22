@@ -30,6 +30,7 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 - deliver explicit experimental Code Mode behavior with guardrails
 - limit pilot surface to approved read-heavy workflows
 - produce measurable comparison artifacts against classic tool loops
+- preserve the tools-only execution model with no raw Python / `bpy` path
 
 ### Implementation Checklist
 
@@ -45,6 +46,7 @@ Implement the core code changes for **Read-Only Code Mode Pilot Surface**.
 
 Keep this slice in MCP platform composition.
 Do not rewrite scene/mesh/workflow handlers only to make Code Mode read-only.
+Do not introduce any raw-code execution seam; the pilot must orchestrate only existing MCP-visible capabilities.
 
 ### Review Notes To Attach
 
@@ -58,6 +60,7 @@ Do not rewrite scene/mesh/workflow handlers only to make Code Mode read-only.
 
 - code-mode experiment boundaries are explicit and enforceable
 - write/destructive operations are blocked where required
+- raw Python / `bpy` execution remains unavailable on the pilot surface
 - benchmark artifacts are reproducible and linked to recommendations
 - slice remains profile-scoped and opt-in only
 - business handler logic remains unchanged unless a separate domain task explicitly requires it
