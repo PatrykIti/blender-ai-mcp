@@ -48,6 +48,13 @@ Communication happens via **JSON-RPC over TCP sockets**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for deep dive.
 
+Current FastMCP platform baseline:
+
+- explicit server factory and surface profiles
+- reusable provider groups instead of one flat bootstrap registry
+- deterministic transform pipeline scaffold
+- shared session/execution bridge for later visibility, elicitation, and task features
+
 ### Runtime Responsibility Model
 
 The project intentionally separates four different responsibilities:

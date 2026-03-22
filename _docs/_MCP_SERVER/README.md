@@ -11,6 +11,8 @@ Documentation for the MCP Server (Client Side).
   - Maps the current flat/runtime-coupled MCP server to the target provider/factory/transform model for TASK-083 through TASK-097.
 - **[Runtime Baseline Matrix](./runtime_baseline_matrix.md)**
   - Defines the supported Python and FastMCP baseline for the migration series, including 3.1+ feature gates.
+- **[FastMCP 3.x Composition Model](./fastmcp_3x_composition.md)**
+  - Documents provider groups, surface profiles, transform ordering, and the platform regression harness added during TASK-083.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
@@ -27,6 +29,7 @@ For this task series:
 - the current runtime inventory lives in `server/adapters/mcp/platform/runtime_inventory.py`
 
 The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
+The composition document linked above is the canonical reference for the current factory/provider/transform baseline.
 
 ## Runtime Baseline
 

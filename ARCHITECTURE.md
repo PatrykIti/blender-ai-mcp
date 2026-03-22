@@ -67,10 +67,29 @@ A Python application that exposes tools to the AI model and acts as a client for
 - **Infrastructure**: DI Container and Configuration.
 
 Current state:
-- The runtime currently uses a strong FastMCP 2.x adapter surface.
+- The runtime now boots through an explicit FastMCP 3.x factory path with reusable provider groups and a deterministic transform pipeline scaffold.
 
 Strategic direction:
 - Move toward FastMCP 3.x platform capabilities for discovery, visibility, versioned surfaces, prompts, and richer client interaction patterns.
+
+### FastMCP 3.x Composition Model
+
+The MCP platform layer now has four explicit composition seams:
+
+- **Provider groups**: reusable `core_tools`, `router_tools`, `workflow_tools`, and `internal_tools` provider builders
+- **Surface profiles**: `legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`
+- **Platform manifest**: one minimal capability manifest outside router metadata
+- **Transform pipeline**: one ordered scaffold for versioning, naming, prompt bridging, visibility, and discovery
+
+This is important because the repo is no longer just “one FastMCP singleton + decorators”.
+It is now moving toward:
+
+- one composition root
+- multiple public surfaces
+- future version coexistence
+- future search- and visibility-driven shaping
+
+See [_docs/_MCP_SERVER/fastmcp_3x_composition.md](_docs/_MCP_SERVER/fastmcp_3x_composition.md).
 
 ### 2. Blender Addon (Server Side)
 A plugin running inside Blender's Python environment (`bpy`).

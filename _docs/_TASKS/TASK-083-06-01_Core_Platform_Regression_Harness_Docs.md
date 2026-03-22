@@ -1,7 +1,7 @@
 # TASK-083-06-01: Core Platform Regression Harness and Docs
 
 **Parent:** [TASK-083-06](./TASK-083-06_Platform_Regression_Harness_and_Docs.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
