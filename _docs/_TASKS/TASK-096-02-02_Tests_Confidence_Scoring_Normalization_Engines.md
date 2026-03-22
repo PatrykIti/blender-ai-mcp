@@ -1,7 +1,7 @@
 # TASK-096-02-02: Tests and Docs Confidence Scoring Normalization Across Engines
 
 **Parent:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-096-02-01](./TASK-096-02-01_Core_Confidence_Scoring_Normalization_Engines.md)
 

@@ -1,7 +1,7 @@
 # TASK-096-02-01: Core Confidence Scoring Normalization Across Engines
 
 **Parent:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-096-01](./TASK-096-01_Correction_Taxonomy_and_Risk_Matrix.md)
 
