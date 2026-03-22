@@ -18,6 +18,8 @@ Task board for the project. Update statuses in markdown files.
 ## 🚨 To Do
 
 ### FastMCP Platform & LLM UX
+Execution note: this track currently spans TASK-083 through TASK-097 inclusive, including TASK-085 and TASK-090 through TASK-092. The table order is roadmap order, not a strict serial execution order; the delivery path is dependency-driven. TASK-094 remains an experimental track and is not part of the default critical path.
+
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Providers + transforms as the new server base |
@@ -31,7 +33,7 @@ Task board for the project. Update statuses in markdown files.
 | [TASK-091](./TASK-091_Versioned_Client_Surfaces.md) | **Versioned Client Surfaces for Safe API Evolution** | 🔴 High | Legacy and LLM-first surfaces can coexist |
 | [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | Bounded internal reasoning helpers for analysis and recovery |
 | [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md) | **Observability, Timeouts, and Pagination** | 🟡 Medium | Better tracing, safer execution, cleaner component listings |
-| [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration |
+| [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration; not on the default critical path |
 | [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md) | **LaBSE Semantic Layer Boundaries** | 🔴 High | Formal boundary between semantic retrieval and execution truth |
 | [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md) | **Confidence Policy for Auto-Correction** | 🔴 High | Govern when the router may fix, ask, or block |
 | [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md) | **Transparent Correction Audit and Postconditions** | 🔴 High | Make corrections explicit and verify important repairs |
