@@ -1,7 +1,7 @@
 # TASK-090-01-01: Core Prompt Asset Inventory and Taxonomy
 
 **Parent:** [TASK-090-01](./TASK-090-01_Prompt_Asset_Inventory_and_Taxonomy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 

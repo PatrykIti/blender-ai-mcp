@@ -70,13 +70,15 @@ Current visible entry set on `llm-guided`:
 - `router_set_goal`
 - `router_get_status`
 - `browse_workflows`
+- `list_prompts`
+- `get_prompt`
 - `search_tools`
 - `call_tool`
 
 Measured baseline from the current unit suite:
 
-- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
-- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+- `legacy-flat`: `161` visible tools
+- `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
 
@@ -177,6 +179,16 @@ Current payload-pagination coverage includes:
 - `mesh_inspect`
 - `workflow_catalog(action="list")`
 - `workflow_catalog(action="search")`
+
+## Prompt Layer Baseline
+
+The prompt layer is now part of the MCP product surface:
+
+- native prompt components expose curated prompt assets from `_docs/_PROMPTS`
+- tool-only clients can use:
+  - `list_prompts`
+  - `get_prompt`
+- `recommended_prompts` provides phase/profile-aware recommendations
 
 ## Background Task Mode Baseline
 

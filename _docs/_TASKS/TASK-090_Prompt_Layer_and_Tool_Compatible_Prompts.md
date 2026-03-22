@@ -4,7 +4,9 @@
 **Category:** FastMCP Prompt UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has a curated prompt catalog, native FastMCP prompt components, canonical bridge tools (`list_prompts`, `get_prompt`) for tool-only clients, a dynamic `recommended_prompts` product that reacts to surface profile and session phase, and tests/docs covering prompt access across prompt-capable and tool-only clients.
 
 ---
 

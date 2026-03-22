@@ -1,7 +1,7 @@
 # TASK-090-04-01: Core Session-Aware Prompt Selection
 
 **Parent:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md)
 

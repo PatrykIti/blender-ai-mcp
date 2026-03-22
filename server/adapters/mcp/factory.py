@@ -58,6 +58,12 @@ def build_server(
         instructions=surface.instructions,
     )
 
+    from server.adapters.mcp.transforms.prompts_bridge import build_prompts_bridge_transform
+
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+
     # Factory-owned bootstrap metadata used by tests and later TASK-083/084/086 work.
     server._bam_surface_profile = surface.name
     server._bam_capability_manifest = get_capability_manifest()

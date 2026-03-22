@@ -1,7 +1,7 @@
 # TASK-090-04-02: Tests and Docs Session-Aware Prompt Selection
 
 **Parent:** [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-090-04-01](./TASK-090-04-01_Core_Session_Aware_Prompt_Selection.md)
 

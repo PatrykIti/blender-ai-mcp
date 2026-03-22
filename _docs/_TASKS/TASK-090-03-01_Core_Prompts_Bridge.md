@@ -1,7 +1,7 @@
 # TASK-090-03-01: Core Prompts as Tools Bridge
 
 **Parent:** [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md)
 

@@ -1,7 +1,7 @@
 # TASK-090-03: Prompts as Tools Bridge
 
 **Parent:** [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md)
 
@@ -44,3 +44,8 @@ For tool-only `llm-guided` surfaces:
 
 - tool-only clients can access prompt products without copying markdown outside the server
 - bridge tool naming is explicit and stable (`list_prompts`, `get_prompt`)
+
+## Completion Summary
+
+- canonical bridge tools `list_prompts` and `get_prompt` are available on tool-only surfaces
+- `llm-guided` search-first surface now exposes those bridge tools explicitly

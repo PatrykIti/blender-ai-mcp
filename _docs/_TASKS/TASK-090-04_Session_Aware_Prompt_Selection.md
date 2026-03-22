@@ -1,7 +1,7 @@
 # TASK-090-04: Session-Aware Prompt Selection
 
 **Parent:** [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-090-02](./TASK-090-02_FastMCP_Prompt_Provider_and_Rendering.md)
 
@@ -40,6 +40,11 @@ Do not introduce ad hoc prompt-only tags such as `phase:repair` before that phas
 ## Acceptance Criteria
 
 - the prompt layer reacts to session context instead of behaving like a flat static library
+
+## Completion Summary
+
+- dynamic `recommended_prompts` now reacts to surface profile and session phase
+- recommendation logic is catalog-driven instead of living only in markdown docs
 
 ---
 

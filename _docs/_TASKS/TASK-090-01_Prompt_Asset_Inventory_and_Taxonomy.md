@@ -1,7 +1,7 @@
 # TASK-090-01: Prompt Asset Inventory and Taxonomy
 
 **Parent:** [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 
@@ -44,3 +44,7 @@ Inventory the existing prompt assets and assign each one to an operating mode, a
 ## Acceptance Criteria
 
 - every prompt asset has ownership, tags, and a target operating mode
+
+## Completion Summary
+
+- curated prompt assets from `_docs/_PROMPTS` are now inventoried in prompt catalog code with operating mode, audience, phase, and profile tags

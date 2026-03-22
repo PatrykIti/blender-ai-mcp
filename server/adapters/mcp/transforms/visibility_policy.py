@@ -28,6 +28,19 @@ def build_visibility_rules(
     rules: list[dict[str, Any]] = [
         {"enabled": False, "components": {"tool"}, "match_all": True},
         {"enabled": True, "components": {"tool"}, "tags": {ENTRY_GUIDED}},
+        {"enabled": True, "components": {"tool"}, "names": {"list_prompts", "get_prompt"}},
+        {
+            "enabled": True,
+            "components": {"prompt"},
+            "names": {
+                "getting_started",
+                "workflow_router_first",
+                "manual_tools_no_router",
+                "demo_low_poly_medieval_well",
+                "demo_generic_modeling",
+                "recommended_prompts",
+            },
+        },
     ]
 
     if resolved_phase == SessionPhase.BUILD:

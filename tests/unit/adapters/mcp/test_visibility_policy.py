@@ -81,6 +81,8 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[0]["enabled"] is False
     assert bootstrap_rules[0]["match_all"] is True
     assert bootstrap_rules[1]["tags"] == {ENTRY_GUIDED}
+    assert bootstrap_rules[2]["names"] == {"list_prompts", "get_prompt"}
+    assert bootstrap_rules[3]["components"] == {"prompt"}
     assert build_rules[-1]["tags"] == {phase_tag(SessionPhase.BUILD)}
     assert inspect_rules[-1]["tags"] == {phase_tag(SessionPhase.INSPECT_VALIDATE)}
 
@@ -91,5 +93,5 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     guided_transforms = materialize_transforms(get_surface_profile("llm-guided"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
-    assert len(guided_transforms) == 5
+    assert len(guided_transforms) == 7
     assert len(legacy_transforms) == 1

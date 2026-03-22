@@ -10,6 +10,7 @@ from fastmcp import FastMCP
 from server.adapters.mcp.factory import build_server, build_surface_providers
 from server.adapters.mcp.surfaces import resolve_surface_contract_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline
+from server.adapters.mcp.transforms.prompts_bridge import build_prompts_bridge_transform
 
 
 def _tool_names(server) -> set[str]:
@@ -35,7 +36,7 @@ def _build_preview_server(surface_profile: str, contract_line: str) -> FastMCP:
         for stage in build_surface_transform_pipeline(surface)
         if stage.transform is not None and stage.name != "visibility"
     ]
-    return FastMCP(
+    server = FastMCP(
         surface.server_name,
         providers=providers,
         transforms=transforms,
@@ -43,6 +44,10 @@ def _build_preview_server(surface_profile: str, contract_line: str) -> FastMCP:
         tasks=surface.tasks_enabled,
         instructions=surface.instructions,
     )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    return server
 
 
 def _build_no_discovery_server(surface_profile: str, contract_line: str) -> FastMCP:
@@ -53,7 +58,7 @@ def _build_no_discovery_server(surface_profile: str, contract_line: str) -> Fast
         for stage in build_surface_transform_pipeline(surface)
         if stage.transform is not None and stage.name not in {"visibility", "discovery"}
     ]
-    return FastMCP(
+    server = FastMCP(
         surface.server_name,
         providers=providers,
         transforms=transforms,
@@ -61,6 +66,10 @@ def _build_no_discovery_server(surface_profile: str, contract_line: str) -> Fast
         tasks=surface.tasks_enabled,
         instructions=surface.instructions,
     )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
+    return server
 
 
 def test_llm_guided_defaults_to_v2_contract_line():

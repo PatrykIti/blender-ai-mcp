@@ -1,7 +1,7 @@
 # TASK-090-05-01: Core Prompt QA, Examples, and Documentation
 
 **Parent:** [TASK-090-05](./TASK-090-05_Prompt_QA_Examples_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-090-03](./TASK-090-03_Prompts_As_Tools_Bridge.md), [TASK-090-04](./TASK-090-04_Session_Aware_Prompt_Selection.md)
 

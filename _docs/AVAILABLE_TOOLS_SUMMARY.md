@@ -49,10 +49,24 @@ Task-capable heavy-operation rollout on task-enabled surfaces:
 - `import_glb`
 - `import_image_as_plane`
 
+Prompt bridge tools on tool-only surfaces:
+
+- `list_prompts`
+- `get_prompt`
+
+Native prompt products:
+
+- `getting_started`
+- `workflow_router_first`
+- `manual_tools_no_router`
+- `demo_low_poly_medieval_well`
+- `demo_generic_modeling`
+- `recommended_prompts`
+
 Measured current baseline:
 
-- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
-- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+- `legacy-flat`: `161` visible tools
+- `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
 

@@ -16,6 +16,7 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline, materialize_transforms
 from server.adapters.mcp.transforms.discovery import build_discovery_transform
+from server.adapters.mcp.transforms.prompts_bridge import build_prompts_bridge_transform
 from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules
 
 
@@ -31,6 +32,9 @@ def _build_search_enabled_server() -> FastMCP:
         tasks=search_surface.tasks_enabled,
         instructions=search_surface.instructions,
     )
+    prompts_bridge = build_prompts_bridge_transform(search_surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
     server._bam_surface_profile = search_surface.name
     return server
 
@@ -59,6 +63,9 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
         tasks=surface.tasks_enabled,
         instructions=surface.instructions,
     )
+    prompts_bridge = build_prompts_bridge_transform(surface, provider=server)
+    if prompts_bridge is not None:
+        server.add_transform(prompts_bridge)
     server._bam_surface_profile = surface.name
     return server
 
@@ -96,6 +103,8 @@ def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
         "router_set_goal",
         "router_get_status",
         "browse_workflows",
+        "list_prompts",
+        "get_prompt",
         "search_tools",
         "call_tool",
     }
@@ -180,8 +189,8 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 159
-    assert guided_count == 5
+    assert legacy_count == 161
+    assert guided_count == 7
     assert guided_bytes < legacy_bytes
 
 
