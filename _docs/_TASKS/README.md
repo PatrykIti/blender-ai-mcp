@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 15 tasks (~200 sub-tasks)
+- **To Do:** 17 tasks (~230 sub-tasks)
 - **In Progress:** 3 tasks
 - **Done:** 148
 
@@ -18,10 +18,12 @@ Task board for the project. Update statuses in markdown files.
 ## 🚨 To Do
 
 ### FastMCP Platform & LLM UX
-Execution note: this track currently spans TASK-083 through TASK-097 inclusive, including TASK-085 and TASK-090 through TASK-092. The table order is roadmap order, not a strict serial execution order; the delivery path is dependency-driven. TASK-094 remains an experimental track and is not part of the default critical path.
+Execution note: this track currently spans TASK-083 through TASK-099 inclusive, including TASK-085 and TASK-090 through TASK-092. The table order is roadmap order, not a strict serial execution order; the delivery path is dependency-driven. TASK-094 remains an experimental track and is not part of the default critical path.
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md) | **Background Task Adoption for Import and Export Operations** | 🔴 High | Extend TASK-088 task mode to system import/export tools |
+| [TASK-099](./TASK-099_FastMCP_Docket_Runtime_Alignment_and_Shims_Removal.md) | **FastMCP-Docket Runtime Alignment and Shims Removal** | 🔴 High | Remove local task-runtime shim through explicit upstream version alignment |
 | [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md) | **Prompt Layer and Tool-Compatible Prompt Delivery** | 🟡 Medium | Prompts as first-class server product, including tool-only clients |
 | [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | Bounded internal reasoning helpers for analysis and recovery |
 | [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | Experimental track for code-driven orchestration; not on the default critical path |
@@ -408,3 +410,21 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-097-04` | [postcondition mapping and verification trigger](./TASK-097-04-01-01_Postcondition_Mapping_and_Verification_Trigger.md), [inspection call bridge and result evaluation](./TASK-097-04-01-02_Inspection_Call_Bridge_and_Result_Evaluation.md), [core](./TASK-097-04-01_Core_Inspection_Verification_Integration.md), [tests](./TASK-097-04-02_Tests_Inspection_Verification_Integration.md), [overview](./TASK-097-04_Inspection_Based_Verification_Integration.md) | Inspection-based verification integration |
 | `TASK-097-05` | [core](./TASK-097-05-01_Core_Audit_Exposure_MCP_Responses.md), [tests](./TASK-097-05-02_Tests_Audit_Exposure_MCP_Responses.md), [overview](./TASK-097-05_Audit_Exposure_in_MCP_Responses_and_Logs.md) | Audit exposure in MCP responses and logs |
 | `TASK-097-06` | [core](./TASK-097-06-01_Core_Correction_Audit_Tests_Documentation.md), [tests](./TASK-097-06-02_Tests_Correction_Audit_Tests_Documentation.md), [overview](./TASK-097-06_Correction_Audit_Tests_and_Documentation.md) | Correction audit tests and documentation |
+
+### TASK-098 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-098-01` | [addon export job adoption](./TASK-098-01-01-01_Addon_Export_Job_Adoption.md), [async export MCP entrypoints](./TASK-098-01-01-02_Async_Export_MCP_Entrypoints.md), [core](./TASK-098-01-01_Core_Export_Task_Mode_Adoption.md), [tests](./TASK-098-01-02_Tests_Export_Task_Mode_Adoption.md), [overview](./TASK-098-01_Export_Task_Mode_Adoption.md) | Export task-mode adoption |
+| `TASK-098-02` | [addon import job adoption](./TASK-098-02-01-01_Addon_Import_Job_Adoption.md), [async import MCP entrypoints](./TASK-098-02-01-02_Async_Import_MCP_Entrypoints.md), [core](./TASK-098-02-01_Core_Import_Task_Mode_Adoption.md), [tests](./TASK-098-02-02_Tests_Import_Task_Mode_Adoption.md), [overview](./TASK-098-02_Import_Task_Mode_Adoption.md) | Import task-mode adoption |
+| `TASK-098-03` | [core](./TASK-098-03-01_Core_Import_Image_As_Plane_Candidacy_Adoption.md), [tests](./TASK-098-03-02_Tests_Import_Image_As_Plane_Compatibility_Polish.md), [overview](./TASK-098-03_Import_Image_As_Plane_and_Compatibility_Polish.md) | `import_image_as_plane` candidacy and compatibility polish |
+| `TASK-098-04` | [core](./TASK-098-04-01_Core_Operations_Rollback_Documentation.md), [tests](./TASK-098-04-02_Tests_Operations_Rollback_Documentation.md), [overview](./TASK-098-04_Operations_Rollback_and_Documentation.md) | Operations, rollback, and documentation |
+
+### TASK-099 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-099-01` | [core](./TASK-099-01-01_Core_Runtime_Version_Audit.md), [tests](./TASK-099-01-02_Tests_Runtime_Reproduction_Harness.md), [overview](./TASK-099-01_Compatibility_Matrix_and_Reproduction_Harness.md) | Compatibility matrix and reproduction harness |
+| `TASK-099-02` | [runtime version guards and error surfaces](./TASK-099-02-01-01_Runtime_Version_Guards_and_Error_Surfaces.md), [shims containment and instrumentation](./TASK-099-02-01-02_Shims_Containment_and_Instrumentation.md), [core](./TASK-099-02-01_Core_Runtime_Guards_and_Containment.md), [tests](./TASK-099-02-02_Tests_Runtime_Guards_and_Containment.md), [overview](./TASK-099-02_Runtime_Guards_and_Shim_Containment.md) | Runtime guards and shim containment |
+| `TASK-099-03` | [FastMCP Docket version selection](./TASK-099-03-01-01_FastMCP_Docket_Version_Selection.md), [real task runtime validation](./TASK-099-03-01-02_Real_Task_Runtime_Validation.md), [core](./TASK-099-03-01_Core_Upstream_Version_Alignment.md), [tests](./TASK-099-03-02_Tests_Upstream_Version_Alignment.md), [overview](./TASK-099-03_Upstream_Version_Alignment_and_Validation.md) | Upstream version alignment and validation |
+| `TASK-099-04` | [core](./TASK-099-04-01_Core_Shims_Removal.md), [tests](./TASK-099-04-02_Tests_Shims_Removal_and_Release_Documentation.md), [overview](./TASK-099-04_Shims_Removal_and_Release_Documentation.md) | Shim removal and release documentation |
