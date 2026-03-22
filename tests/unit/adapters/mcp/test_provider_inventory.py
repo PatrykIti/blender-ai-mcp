@@ -6,9 +6,20 @@ from dataclasses import dataclass
 
 import pytest
 
+from server.adapters.mcp.areas.armature import ARMATURE_PUBLIC_TOOL_NAMES, register_armature_tools
+from server.adapters.mcp.areas.baking import BAKING_PUBLIC_TOOL_NAMES, register_baking_tools
+from server.adapters.mcp.areas.collection import COLLECTION_PUBLIC_TOOL_NAMES, register_collection_tools
+from server.adapters.mcp.areas.curve import CURVE_PUBLIC_TOOL_NAMES, register_curve_tools
+from server.adapters.mcp.areas.extraction import EXTRACTION_PUBLIC_TOOL_NAMES, register_extraction_tools
+from server.adapters.mcp.areas.lattice import LATTICE_PUBLIC_TOOL_NAMES, register_lattice_tools
+from server.adapters.mcp.areas.material import MATERIAL_PUBLIC_TOOL_NAMES, register_material_tools
 from server.adapters.mcp.areas.mesh import register_mesh_tools
 from server.adapters.mcp.areas.router import register_router_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
+from server.adapters.mcp.areas.sculpt import SCULPT_PUBLIC_TOOL_NAMES, register_sculpt_tools
+from server.adapters.mcp.areas.system import SYSTEM_PUBLIC_TOOL_NAMES, register_system_tools
+from server.adapters.mcp.areas.text import TEXT_PUBLIC_TOOL_NAMES, register_text_tools
+from server.adapters.mcp.areas.uv import UV_PUBLIC_TOOL_NAMES, register_uv_tools
 from server.adapters.mcp.areas.modeling import register_modeling_tools
 from server.adapters.mcp.areas.workflow_catalog import register_workflow_tools
 from server.adapters.mcp.providers import core_tools
@@ -121,6 +132,20 @@ EXPECTED_ROUTER_TOOLS = {
 
 EXPECTED_WORKFLOW_TOOLS = {"workflow_catalog"}
 
+ADDITIONAL_AREA_REGISTRARS = [
+    ("material", register_material_tools, set(MATERIAL_PUBLIC_TOOL_NAMES)),
+    ("uv", register_uv_tools, set(UV_PUBLIC_TOOL_NAMES)),
+    ("collection", register_collection_tools, set(COLLECTION_PUBLIC_TOOL_NAMES)),
+    ("curve", register_curve_tools, set(CURVE_PUBLIC_TOOL_NAMES)),
+    ("lattice", register_lattice_tools, set(LATTICE_PUBLIC_TOOL_NAMES)),
+    ("sculpt", register_sculpt_tools, set(SCULPT_PUBLIC_TOOL_NAMES)),
+    ("baking", register_baking_tools, set(BAKING_PUBLIC_TOOL_NAMES)),
+    ("text", register_text_tools, set(TEXT_PUBLIC_TOOL_NAMES)),
+    ("armature", register_armature_tools, set(ARMATURE_PUBLIC_TOOL_NAMES)),
+    ("system", register_system_tools, set(SYSTEM_PUBLIC_TOOL_NAMES)),
+    ("extraction", register_extraction_tools, set(EXTRACTION_PUBLIC_TOOL_NAMES)),
+]
+
 
 @dataclass
 class RegisteredTool:
@@ -206,14 +231,48 @@ def test_register_workflow_tools_registers_expected_public_surface():
     assert set(target.registered) == EXPECTED_WORKFLOW_TOOLS
 
 
+@pytest.mark.parametrize(
+    ("area_name", "registrar", "expected_tools"),
+    ADDITIONAL_AREA_REGISTRARS,
+)
+def test_additional_area_registrars_register_expected_public_surface(
+    area_name,
+    registrar,
+    expected_tools,
+):
+    """Remaining area registrars should expose the expected public tool names."""
+
+    target = FakeRegistrarTarget()
+
+    registered = registrar(target)
+
+    assert set(registered) == expected_tools, area_name
+    assert set(target.registered) == expected_tools, area_name
+
+
 def test_register_core_tools_delegates_to_modeling_slice():
-    """The first core provider slice should contain scene, mesh, and modeling families."""
+    """The core provider slice should contain the full reusable public core tool surface."""
 
     target = FakeRegistrarTarget()
 
     registered = core_tools.register_core_tools(target)
 
-    expected = EXPECTED_SCENE_TOOLS | EXPECTED_MESH_TOOLS | EXPECTED_MODELING_TOOLS
+    expected = (
+        EXPECTED_SCENE_TOOLS
+        | EXPECTED_MESH_TOOLS
+        | EXPECTED_MODELING_TOOLS
+        | set(MATERIAL_PUBLIC_TOOL_NAMES)
+        | set(UV_PUBLIC_TOOL_NAMES)
+        | set(COLLECTION_PUBLIC_TOOL_NAMES)
+        | set(CURVE_PUBLIC_TOOL_NAMES)
+        | set(LATTICE_PUBLIC_TOOL_NAMES)
+        | set(SCULPT_PUBLIC_TOOL_NAMES)
+        | set(BAKING_PUBLIC_TOOL_NAMES)
+        | set(TEXT_PUBLIC_TOOL_NAMES)
+        | set(ARMATURE_PUBLIC_TOOL_NAMES)
+        | set(SYSTEM_PUBLIC_TOOL_NAMES)
+        | set(EXTRACTION_PUBLIC_TOOL_NAMES)
+    )
 
     assert set(registered) == expected
     assert set(target.registered) == expected
@@ -229,7 +288,22 @@ def test_build_core_tools_provider_uses_local_provider_when_available(monkeypatc
 
     provider = core_tools.build_core_tools_provider()
 
-    expected = EXPECTED_SCENE_TOOLS | EXPECTED_MESH_TOOLS | EXPECTED_MODELING_TOOLS
+    expected = (
+        EXPECTED_SCENE_TOOLS
+        | EXPECTED_MESH_TOOLS
+        | EXPECTED_MODELING_TOOLS
+        | set(MATERIAL_PUBLIC_TOOL_NAMES)
+        | set(UV_PUBLIC_TOOL_NAMES)
+        | set(COLLECTION_PUBLIC_TOOL_NAMES)
+        | set(CURVE_PUBLIC_TOOL_NAMES)
+        | set(LATTICE_PUBLIC_TOOL_NAMES)
+        | set(SCULPT_PUBLIC_TOOL_NAMES)
+        | set(BAKING_PUBLIC_TOOL_NAMES)
+        | set(TEXT_PUBLIC_TOOL_NAMES)
+        | set(ARMATURE_PUBLIC_TOOL_NAMES)
+        | set(SYSTEM_PUBLIC_TOOL_NAMES)
+        | set(EXTRACTION_PUBLIC_TOOL_NAMES)
+    )
 
     assert isinstance(provider, FakeLocalProvider)
     assert set(provider.registered) == expected

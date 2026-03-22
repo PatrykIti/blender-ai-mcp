@@ -1,9 +1,22 @@
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_collection_handler
+
+COLLECTION_PUBLIC_TOOL_NAMES = (
+    "collection_list",
+    "collection_list_objects",
+    "collection_manage",
+)
+
+
+def register_collection_tools(target: Any) -> Dict[str, Any]:
+    """Register public collection tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, COLLECTION_PUBLIC_TOOL_NAMES)
 
 
 @mcp.tool()

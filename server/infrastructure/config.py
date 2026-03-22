@@ -14,6 +14,10 @@ class Config(BaseModel):
     ROUTER_ENABLED: bool = Field(default=True, description="Enable Router Supervisor for LLM tool calls")
     ROUTER_LOG_DECISIONS: bool = Field(default=True, description="Log router decisions")
 
+    # MCP Surface / Factory
+    MCP_SURFACE_PROFILE: str = Field(default="legacy-flat", description="Bootstrap surface profile")
+    MCP_LIST_PAGE_SIZE: int = Field(default=100, description="Default MCP list page size")
+
 def get_config() -> Config:
     """Returns configuration loaded from environment variables."""
     return Config(
@@ -21,4 +25,6 @@ def get_config() -> Config:
         BLENDER_RPC_PORT=int(os.getenv("BLENDER_RPC_PORT", 8765)),
         ROUTER_ENABLED=os.getenv("ROUTER_ENABLED", "true").lower() in ("true", "1", "yes"),
         ROUTER_LOG_DECISIONS=os.getenv("ROUTER_LOG_DECISIONS", "true").lower() in ("true", "1", "yes"),
+        MCP_SURFACE_PROFILE=os.getenv("MCP_SURFACE_PROFILE", "legacy-flat"),
+        MCP_LIST_PAGE_SIZE=int(os.getenv("MCP_LIST_PAGE_SIZE", 100)),
     )

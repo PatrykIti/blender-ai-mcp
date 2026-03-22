@@ -1,10 +1,33 @@
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastmcp import Context
 
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_sculpt_handler
+
+SCULPT_PUBLIC_TOOL_NAMES = (
+    "sculpt_auto",
+    "sculpt_brush_smooth",
+    "sculpt_brush_grab",
+    "sculpt_brush_crease",
+    "sculpt_brush_clay",
+    "sculpt_brush_inflate",
+    "sculpt_brush_blob",
+    "sculpt_brush_snake_hook",
+    "sculpt_brush_draw",
+    "sculpt_brush_pinch",
+    "sculpt_enable_dyntopo",
+    "sculpt_disable_dyntopo",
+    "sculpt_dyntopo_flood_fill",
+)
+
+
+def register_sculpt_tools(target: Any) -> Dict[str, Any]:
+    """Register public sculpt tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, SCULPT_PUBLIC_TOOL_NAMES)
 
 
 # ==============================================================================

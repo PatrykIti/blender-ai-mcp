@@ -1,9 +1,23 @@
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_uv_handler
+
+UV_PUBLIC_TOOL_NAMES = (
+    "uv_list_maps",
+    "uv_unwrap",
+    "uv_pack_islands",
+    "uv_create_seam",
+)
+
+
+def register_uv_tools(target: Any) -> Dict[str, Any]:
+    """Register public UV tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, UV_PUBLIC_TOOL_NAMES)
 
 @mcp.tool()
 def uv_list_maps(

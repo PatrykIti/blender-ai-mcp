@@ -5,6 +5,24 @@ from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_modeling_handler
 
+MODELING_PUBLIC_TOOL_NAMES = (
+    "modeling_create_primitive",
+    "modeling_transform_object",
+    "modeling_add_modifier",
+    "modeling_apply_modifier",
+    "modeling_convert_to_mesh",
+    "modeling_join_objects",
+    "modeling_separate_object",
+    "modeling_list_modifiers",
+    "modeling_set_origin",
+    "metaball_create",
+    "metaball_add_element",
+    "metaball_to_mesh",
+    "skin_create_skeleton",
+    "skin_set_radius",
+)
+
+
 def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
     """Register one modeling tool on a FastMCP-compatible target."""
 
@@ -14,49 +32,25 @@ def _register_tool(target: Any, fn: Any, tool_name: str) -> Any:
 def register_modeling_tools(target: Any) -> Dict[str, Any]:
     """Register public modeling tools on a FastMCP server or LocalProvider."""
 
+    impls = {
+        "modeling_create_primitive": _modeling_create_primitive_impl,
+        "modeling_transform_object": _modeling_transform_object_impl,
+        "modeling_add_modifier": _modeling_add_modifier_impl,
+        "modeling_apply_modifier": _modeling_apply_modifier_impl,
+        "modeling_convert_to_mesh": _modeling_convert_to_mesh_impl,
+        "modeling_join_objects": _modeling_join_objects_impl,
+        "modeling_separate_object": _modeling_separate_object_impl,
+        "modeling_list_modifiers": _modeling_list_modifiers_impl,
+        "modeling_set_origin": _modeling_set_origin_impl,
+        "metaball_create": _metaball_create_impl,
+        "metaball_add_element": _metaball_add_element_impl,
+        "metaball_to_mesh": _metaball_to_mesh_impl,
+        "skin_create_skeleton": _skin_create_skeleton_impl,
+        "skin_set_radius": _skin_set_radius_impl,
+    }
     return {
-        "modeling_create_primitive": _register_tool(
-            target, _modeling_create_primitive_impl, "modeling_create_primitive"
-        ),
-        "modeling_transform_object": _register_tool(
-            target, _modeling_transform_object_impl, "modeling_transform_object"
-        ),
-        "modeling_add_modifier": _register_tool(
-            target, _modeling_add_modifier_impl, "modeling_add_modifier"
-        ),
-        "modeling_apply_modifier": _register_tool(
-            target, _modeling_apply_modifier_impl, "modeling_apply_modifier"
-        ),
-        "modeling_convert_to_mesh": _register_tool(
-            target, _modeling_convert_to_mesh_impl, "modeling_convert_to_mesh"
-        ),
-        "modeling_join_objects": _register_tool(
-            target, _modeling_join_objects_impl, "modeling_join_objects"
-        ),
-        "modeling_separate_object": _register_tool(
-            target, _modeling_separate_object_impl, "modeling_separate_object"
-        ),
-        "modeling_list_modifiers": _register_tool(
-            target, _modeling_list_modifiers_impl, "modeling_list_modifiers"
-        ),
-        "modeling_set_origin": _register_tool(
-            target, _modeling_set_origin_impl, "modeling_set_origin"
-        ),
-        "metaball_create": _register_tool(
-            target, _metaball_create_impl, "metaball_create"
-        ),
-        "metaball_add_element": _register_tool(
-            target, _metaball_add_element_impl, "metaball_add_element"
-        ),
-        "metaball_to_mesh": _register_tool(
-            target, _metaball_to_mesh_impl, "metaball_to_mesh"
-        ),
-        "skin_create_skeleton": _register_tool(
-            target, _skin_create_skeleton_impl, "skin_create_skeleton"
-        ),
-        "skin_set_radius": _register_tool(
-            target, _skin_set_radius_impl, "skin_set_radius"
-        ),
+        tool_name: _register_tool(target, impls[tool_name], tool_name)
+        for tool_name in MODELING_PUBLIC_TOOL_NAMES
     }
 
 

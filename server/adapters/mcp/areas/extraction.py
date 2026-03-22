@@ -5,12 +5,28 @@ deep topology analysis, component detection, symmetry detection, and
 multi-angle rendering for LLM Vision.
 """
 import json
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from fastmcp import Context
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_extraction_handler
+
+EXTRACTION_PUBLIC_TOOL_NAMES = (
+    "extraction_deep_topology",
+    "extraction_component_separate",
+    "extraction_detect_symmetry",
+    "extraction_edge_loop_analysis",
+    "extraction_face_group_analysis",
+    "extraction_render_angles",
+)
+
+
+def register_extraction_tools(target: Any) -> Dict[str, Any]:
+    """Register public extraction tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, EXTRACTION_PUBLIC_TOOL_NAMES)
 
 
 @mcp.tool()

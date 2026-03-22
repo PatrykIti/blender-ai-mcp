@@ -1,9 +1,23 @@
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate
 from server.infrastructure.di import get_lattice_handler
+
+LATTICE_PUBLIC_TOOL_NAMES = (
+    "lattice_create",
+    "lattice_bind",
+    "lattice_edit_point",
+    "lattice_get_points",
+)
+
+
+def register_lattice_tools(target: Any) -> Dict[str, Any]:
+    """Register public lattice tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, LATTICE_PUBLIC_TOOL_NAMES)
 
 
 @mcp.tool()

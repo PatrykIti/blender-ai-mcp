@@ -1,9 +1,32 @@
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 from fastmcp import Context
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_system_handler
+
+SYSTEM_PUBLIC_TOOL_NAMES = (
+    "export_glb",
+    "export_fbx",
+    "export_obj",
+    "import_obj",
+    "import_fbx",
+    "import_glb",
+    "import_image_as_plane",
+    "system_set_mode",
+    "system_undo",
+    "system_redo",
+    "system_save_file",
+    "system_new_file",
+    "system_snapshot",
+)
+
+
+def register_system_tools(target: Any) -> Dict[str, Any]:
+    """Register public system tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, SYSTEM_PUBLIC_TOOL_NAMES)
 
 
 # === Export Tools ===

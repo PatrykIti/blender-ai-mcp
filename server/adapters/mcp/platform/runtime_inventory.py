@@ -360,7 +360,11 @@ def get_filesystem_area_modules(base_dir: Path = AREAS_DIR) -> tuple[str, ...]:
     """Return all MCP area modules currently present on disk."""
 
     return tuple(
-        sorted(path.stem for path in base_dir.glob("*.py") if path.name != "__init__.py")
+        sorted(
+            path.stem
+            for path in base_dir.glob("*.py")
+            if path.name != "__init__.py" and not path.stem.startswith("_")
+        )
     )
 
 

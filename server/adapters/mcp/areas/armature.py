@@ -5,12 +5,28 @@ TASK-037: Armature & Rigging
 Exposes armature tools via FastMCP.
 """
 
-from typing import Literal
+from typing import Any, Dict, Literal
 from mcp.server.fastmcp import Context
 
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.router_helper import route_tool_call
 from server.infrastructure.di import get_armature_handler
+
+ARMATURE_PUBLIC_TOOL_NAMES = (
+    "armature_create",
+    "armature_add_bone",
+    "armature_bind",
+    "armature_pose_bone",
+    "armature_weight_paint_assign",
+    "armature_get_data",
+)
+
+
+def register_armature_tools(target: Any) -> Dict[str, Any]:
+    """Register public armature tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, ARMATURE_PUBLIC_TOOL_NAMES)
 
 
 def get_handler():
