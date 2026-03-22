@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 26 tasks (~200 sub-tasks)
-- **In Progress:** 1 task
+- **To Do:** 25 tasks (~200 sub-tasks)
+- **In Progress:** 2 tasks
 - **Done:** 139
 
 ## 🧭 Terminology Guardrails
@@ -22,7 +22,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Providers + transforms as the new server base |
 | [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | Tool Search as the primary discovery model |
 | [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | Per-session visibility and phase-based capability exposure |
 | [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | Rename/reshape public MCP surfaces without rewriting business logic |
@@ -71,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Gate 0 audit baseline complete; provider/factory migration in progress |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---

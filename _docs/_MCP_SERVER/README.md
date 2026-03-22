@@ -7,9 +7,36 @@ Documentation for the MCP Server (Client Side).
 - **[Clean Architecture](./clean_architecture.md)**
   - Detailed description of layers and control flow (DI).
   - Dependency separation principles implemented in version 0.1.5.
+- **[FastMCP 3.x Migration Matrix](./fastmcp_3x_migration_matrix.md)**
+  - Maps the current flat/runtime-coupled MCP server to the target provider/factory/transform model for TASK-083 through TASK-097.
+- **[Runtime Baseline Matrix](./runtime_baseline_matrix.md)**
+  - Defines the supported Python and FastMCP baseline for the migration series, including 3.1+ feature gates.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
+
+## FastMCP 3.x Migration Baseline
+
+The MCP server is in the middle of a platform migration tracked by `TASK-083` through `TASK-097`.
+
+For this task series:
+
+- the runtime baseline is **FastMCP 3.0+**
+- the supported server baseline is **Python 3.11+**
+- **FastMCP 3.1+** is a feature gate for downstream work that needs built-in Tool Search / BM25 or Code Mode
+- the current runtime inventory lives in `server/adapters/mcp/platform/runtime_inventory.py`
+
+The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
+
+## Runtime Baseline
+
+The current support policy for the migration track is:
+
+- **Supported**: Python `3.11+` with FastMCP `>=3.0,<4.0`
+- **Feature-gated**: Python `3.11+` with FastMCP `>=3.1,<4.0` for `TASK-084` and `TASK-094`
+- **Not supported for TASK-083+ migration work**: Python `3.10`
+
+This keeps the runtime policy aligned with the repo's practical dependency set (`sentence-transformers`, `lancedb`, `pyarrow`) and with the FastMCP 3.x migration work.
 
 ## 🚀 Running (Docker)
 

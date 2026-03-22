@@ -1,7 +1,7 @@
 # blender-ai-mcp
 
 [![License: BUSL-1.1](https://img.shields.io/badge/License-BUSL--1.1-lightgrey.svg)](./LICENSE.md)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
 
@@ -68,10 +68,10 @@ See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BO
 ## ✅ Support Matrix
 
 - **Blender**: tested on **Blender 5.0** (E2E). The addon declares minimum **Blender 4.0**, but 4.x support is best-effort.
-- **Python (MCP server)**: **3.11** is the CI baseline. **3.10+** works for core tools, but Router semantic features (LaBSE/LanceDB) require **3.11+**.
+- **Python (MCP server)**: **3.11+** is the supported baseline for the FastMCP 3.x migration track and for full repo functionality.
 - **OS**: macOS / Windows / Linux (Docker recommended). On Linux, use host networking or proper host resolution for `BLENDER_RPC_HOST`.
 - **Memory**: Router semantic matching uses a local LaBSE model (~2GB RAM).
-- **FastMCP runtime**: current repo baseline is **FastMCP 2.x**; strategic migration to **FastMCP 3.x** platform features is tracked in `_docs/_TASKS/TASK-083` through `TASK-097`.
+- **FastMCP runtime**: migration baseline is **FastMCP 3.0+**. Features that depend on **FastMCP 3.1+** (notably Tool Search / BM25 and Code Mode work in `TASK-084` and `TASK-094`) are gated separately.
 
 ## 🧪 Testing
 
