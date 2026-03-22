@@ -68,6 +68,21 @@ This matrix is intentionally conservative:
 - medium-risk corrections should generally move toward clarification unless later policy explicitly allows them
 - high-risk and critical categories must not rely on raw semantic confidence alone
 
+## Operator-Facing Policy Fields
+
+Current operator-facing policy context should expose these fields consistently:
+
+- `decision`
+- `reason`
+- `source`
+- `score`
+- `band`
+- `risk`
+- optional `metadata`
+
+Those fields are the minimum transparency payload expected from session memory,
+router status, and future audit/reporting layers.
+
 This matrix is the input for:
 
 - `TASK-096-02` confidence normalization

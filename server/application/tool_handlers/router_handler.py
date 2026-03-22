@@ -59,6 +59,20 @@ class RouterToolHandler(IRouterTool):
         self._workflow_loader = workflow_loader
         self._correction_policy_engine = correction_policy_engine or CorrectionPolicyEngine()
 
+    @staticmethod
+    def _policy_context_dict(decision) -> dict[str, Any]:
+        """Convert policy decisions into a serializable transparency payload."""
+
+        return {
+            "decision": decision.decision.value,
+            "reason": decision.reason,
+            "source": decision.confidence.source,
+            "score": decision.confidence.score,
+            "band": decision.confidence.band.value,
+            "risk": decision.confidence.risk.value,
+            "metadata": decision.confidence.metadata,
+        }
+
     def set_goal(
         self,
         goal: str,
@@ -164,6 +178,7 @@ class RouterToolHandler(IRouterTool):
                     ],
                     "resolution_sources": {},
                     "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+                    "policy_context": self._policy_context_dict(policy_decision),
                     "message": (
                         f"Workflow '{matched_workflow}' is only a medium-confidence match. "
                         "Please confirm or refine the requested workflow before execution."
@@ -200,6 +215,7 @@ class RouterToolHandler(IRouterTool):
                         ],
                         "resolution_sources": {},
                         "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+                        "policy_context": self._policy_context_dict(policy_decision),
                         "message": (
                             f"Workflow '{matched_workflow}' is only a medium-confidence match. "
                             "Please confirm or refine the requested workflow before execution."

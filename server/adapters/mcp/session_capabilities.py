@@ -17,6 +17,7 @@ from server.adapters.mcp.session_state import get_session_value, set_session_val
 SESSION_GOAL_KEY = "goal"
 SESSION_PENDING_CLARIFICATION_KEY = "pending_clarification"
 SESSION_LAST_ROUTER_STATUS_KEY = "last_router_status"
+SESSION_POLICY_CONTEXT_KEY = "policy_context"
 SESSION_SURFACE_PROFILE_KEY = "surface_profile"
 SESSION_CONTRACT_VERSION_KEY = "contract_version"
 
@@ -29,6 +30,7 @@ class SessionCapabilityState:
     goal: str | None = None
     pending_clarification: dict[str, Any] | None = None
     last_router_status: str | None = None
+    policy_context: dict[str, Any] | None = None
     surface_profile: str | None = None
     contract_version: str | None = None
 
@@ -61,6 +63,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         goal=get_session_value(ctx, SESSION_GOAL_KEY),
         pending_clarification=get_session_value(ctx, SESSION_PENDING_CLARIFICATION_KEY),
         last_router_status=get_session_value(ctx, SESSION_LAST_ROUTER_STATUS_KEY),
+        policy_context=get_session_value(ctx, SESSION_POLICY_CONTEXT_KEY),
         surface_profile=get_session_value(ctx, SESSION_SURFACE_PROFILE_KEY),
         contract_version=get_session_value(ctx, SESSION_CONTRACT_VERSION_KEY),
     )
@@ -73,6 +76,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_GOAL_KEY, state.goal)
     set_session_value(ctx, SESSION_PENDING_CLARIFICATION_KEY, state.pending_clarification)
     set_session_value(ctx, SESSION_LAST_ROUTER_STATUS_KEY, state.last_router_status)
+    set_session_value(ctx, SESSION_POLICY_CONTEXT_KEY, state.policy_context)
     set_session_value(ctx, SESSION_SURFACE_PROFILE_KEY, state.surface_profile)
     set_session_value(ctx, SESSION_CONTRACT_VERSION_KEY, state.contract_version)
 
@@ -95,6 +99,7 @@ def update_session_from_router_goal(
         goal=goal,
         pending_clarification=pending,
         last_router_status=status,
+        policy_context=router_result.get("policy_context"),
         surface_profile=current.surface_profile,
         contract_version=current.contract_version,
     )
@@ -111,6 +116,7 @@ def clear_session_goal_state(ctx: Context) -> SessionCapabilityState:
         goal=None,
         pending_clarification=None,
         last_router_status=None,
+        policy_context=None,
         surface_profile=current.surface_profile,
         contract_version=current.contract_version,
     )

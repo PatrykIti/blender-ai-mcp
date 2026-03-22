@@ -70,6 +70,7 @@ def test_update_session_from_router_goal_persists_goal_and_clarification_state()
     assert state.goal == "chair"
     assert state.pending_clarification == [{"param": "height"}]
     assert get_session_capability_state(ctx).last_router_status == "needs_input"
+    assert get_session_capability_state(ctx).policy_context is None
 
 
 def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
@@ -83,3 +84,28 @@ def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
     assert state.phase == SessionPhase.PLANNING
     assert state.goal is None
     assert state.pending_clarification is None
+    assert state.policy_context is None
+
+
+def test_update_session_from_router_goal_persists_policy_context():
+    """Session state should keep the last explicit policy decision for operator transparency."""
+
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "needs_input",
+            "policy_context": {
+                "decision": "ask",
+                "reason": "medium confidence",
+                "source": "workflow_match",
+                "score": 0.7,
+                "band": "medium",
+                "risk": "high",
+            },
+        },
+    )
+
+    assert state.policy_context["decision"] == "ask"

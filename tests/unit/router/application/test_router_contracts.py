@@ -6,7 +6,11 @@ import asyncio
 
 from server.adapters.mcp.areas.router import router_get_status, router_set_goal
 from server.adapters.mcp.areas.workflow_catalog import workflow_catalog
-from server.adapters.mcp.contracts.router import RouterGoalResponseContract, RouterStatusContract
+from server.adapters.mcp.contracts.router import (
+    RouterGoalResponseContract,
+    RouterPolicyContextContract,
+    RouterStatusContract,
+)
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 
 
@@ -87,3 +91,26 @@ def test_router_get_status_returns_structured_contract(monkeypatch):
     assert isinstance(result, RouterStatusContract)
     assert result.enabled is True
     assert result.stats["total_calls"] == 3
+
+
+def test_router_goal_contract_accepts_policy_context():
+    """router_set_goal contract should carry structured policy transparency when present."""
+
+    contract = RouterGoalResponseContract(
+        status="needs_input",
+        workflow="chair_workflow",
+        resolved={},
+        unresolved=[],
+        resolution_sources={},
+        message="confirm",
+        policy_context=RouterPolicyContextContract(
+            decision="ask",
+            reason="medium confidence",
+            source="workflow_match",
+            score=0.7,
+            band="medium",
+            risk="high",
+        ),
+    )
+
+    assert contract.policy_context.decision == "ask"

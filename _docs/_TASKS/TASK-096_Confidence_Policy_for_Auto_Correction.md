@@ -4,7 +4,7 @@
 **Category:** Router Safety  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-087, TASK-095. Integration gate: TASK-085 for session-state-backed persistence/transparency rollout in TASK-096-05.  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done  
 
 ---
 

@@ -85,3 +85,23 @@ def test_policy_engine_blocks_critical_or_no_confidence_cases():
 
     assert critical.decision == PolicyDecision.BLOCK
     assert none.decision == PolicyDecision.BLOCK
+
+
+def test_policy_decision_exposes_operator_trace_fields():
+    """Policy decisions should expose stable operator-facing transparency fields."""
+
+    engine = CorrectionPolicyEngine()
+    decision = engine.decide(
+        make_confidence(
+            score=0.7,
+            band=ConfidenceBand.MEDIUM,
+            risk=CorrectionRisk.MEDIUM,
+        )
+    )
+
+    trace = decision.to_dict()
+
+    assert trace["decision"] == "ask"
+    assert trace["source"] == "test"
+    assert trace["band"] == "medium"
+    assert trace["risk"] == "medium"

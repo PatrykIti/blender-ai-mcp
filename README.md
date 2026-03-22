@@ -70,6 +70,12 @@ Important:
 - Router helps answer “how do we execute this safely?”
 - Inspection tools answer “what is actually true in Blender right now?”
 
+Current router policy direction:
+
+- normalized confidence signals feed explicit `auto-fix / ask / block` decisions
+- medium-confidence reinterpretation is escalated into structured clarification
+- policy context is being surfaced to session state and router status for operator transparency
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ## ✅ Support Matrix

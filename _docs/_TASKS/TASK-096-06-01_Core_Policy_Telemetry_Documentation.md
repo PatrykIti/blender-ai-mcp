@@ -1,7 +1,7 @@
 # TASK-096-06-01: Core Policy Tests, Telemetry, and Documentation
 
 **Parent:** [TASK-096-06](./TASK-096-06_Policy_Tests_Telemetry_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-096-04](./TASK-096-04_Medium_Confidence_Elicitation_and_Escalation.md), [TASK-096-05](./TASK-096-05_Session_Memory_and_Operator_Transparency.md)
 

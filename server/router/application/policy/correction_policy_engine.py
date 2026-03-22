@@ -25,6 +25,19 @@ class CorrectionPolicyDecision:
     reason: str
     confidence: NormalizedConfidence
 
+    def to_dict(self) -> dict:
+        """Return a serializable operator-facing policy trace."""
+
+        return {
+            "decision": self.decision.value,
+            "reason": self.reason,
+            "source": self.confidence.source,
+            "score": self.confidence.score,
+            "band": self.confidence.band.value,
+            "risk": self.confidence.risk.value,
+            "metadata": self.confidence.metadata,
+        }
+
 
 class CorrectionPolicyEngine:
     """Maps normalized confidence + risk into auto-fix / ask / block."""

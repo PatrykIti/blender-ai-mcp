@@ -11,6 +11,18 @@ from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 
 
+class RouterPolicyContextContract(MCPContract):
+    """Structured policy transparency context for router/operator surfaces."""
+
+    decision: str
+    reason: str
+    source: str
+    score: float
+    band: str
+    risk: str
+    metadata: dict[str, Any] | None = None
+
+
 class RouterGoalErrorContract(MCPContract):
     """Structured error details for router goal handling."""
 
@@ -34,6 +46,7 @@ class RouterGoalResponseContract(MCPContract):
     clarification: ClarificationFallbackPayload | None = None
     elicitation_action: Literal["accept", "decline", "cancel", "unavailable"] | None = None
     elicitation_answers: dict[str, Any] | None = None
+    policy_context: RouterPolicyContextContract | None = None
 
 
 class RouterStatusContract(MCPContract):
@@ -46,3 +59,8 @@ class RouterStatusContract(MCPContract):
     stats: dict[str, Any] | None = None
     config: str | None = None
     message: str | None = None
+    current_goal: str | None = None
+    current_phase: str | None = None
+    pending_clarification: dict[str, Any] | list[dict[str, Any]] | None = None
+    last_router_status: str | None = None
+    policy_context: RouterPolicyContextContract | None = None

@@ -26,6 +26,7 @@ from server.adapters.mcp.elicitation_contracts import (
     build_fallback_payload,
     coerce_elicitation_answers,
 )
+from server.adapters.mcp.session_capabilities import get_session_capability_state
 from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state,
     update_session_from_router_goal,
@@ -211,7 +212,18 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
     - Router statistics
     - Component status
     """
-    return RouterStatusContract.model_validate(get_router_status())
+    session = get_session_capability_state(ctx)
+    status_payload = get_router_status()
+    status_payload.update(
+        {
+            "current_goal": session.goal,
+            "current_phase": session.phase.value,
+            "pending_clarification": session.pending_clarification,
+            "last_router_status": session.last_router_status,
+            "policy_context": session.policy_context,
+        }
+    )
+    return RouterStatusContract.model_validate(status_payload)
 
 
 @mcp.tool()

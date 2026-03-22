@@ -1,7 +1,7 @@
 # TASK-096-06: Policy Tests, Telemetry, and Documentation
 
 **Parent:** [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-096-04](./TASK-096-04_Medium_Confidence_Elicitation_and_Escalation.md), [TASK-096-05](./TASK-096-05_Session_Memory_and_Operator_Transparency.md)
 

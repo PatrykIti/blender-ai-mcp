@@ -28,6 +28,7 @@ class MCPExecutionReport(MCPContract):
     router_applied: bool
     steps: tuple[ExecutionStep, ...] = ()
     error: str | None = None
+    policy_context: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a structured dict representation."""

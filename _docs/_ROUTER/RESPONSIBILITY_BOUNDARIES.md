@@ -212,6 +212,12 @@ The intended system contract is:
 - **Router** decides what is safe and how execution should be corrected.
 - **Inspection / Assertion** decides what is true and whether the result is acceptable.
 
+For correction policy specifically:
+
+- normalized confidence and explicit risk classes should feed one router policy decision
+- that decision should resolve to `auto-fix`, `ask`, or `block`
+- operator-visible policy context should surface the chosen path and rationale
+
 This separation should hold even when the same request touches all four layers.
 
 ---
