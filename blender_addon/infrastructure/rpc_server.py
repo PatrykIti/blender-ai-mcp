@@ -16,6 +16,9 @@ except ImportError:
 
 HOST = "0.0.0.0" # Listen on all interfaces within container
 PORT = 8765
+DEFAULT_EXECUTION_TIMEOUT_SECONDS = float(
+    os.environ.get("ADDON_EXECUTION_TIMEOUT_SECONDS", "30.0")
+)
 
 # If enabled, the addon will push an explicit undo step after each mutating RPC command.
 # This makes `system_undo(steps=1)` behave more like "undo the last MCP tool call"
@@ -228,6 +231,7 @@ class BlenderRpcServer:
         request_id = message.get("request_id")
         cmd = message.get("cmd")
         args = message.get("args", {})
+        timeout_seconds = message.get("timeout_seconds")
 
         if not request_id or not cmd:
             return {"status": "error", "error": "Missing request_id or cmd", "request_id": request_id}
@@ -268,8 +272,12 @@ class BlenderRpcServer:
 
         # Wait for result (blocking the network thread, not the main thread)
         try:
-            # Timeout after 30 seconds (increased for heavy renders)
-            response_payload = result_queue.get(timeout=30.0)
+            effective_timeout = (
+                float(timeout_seconds)
+                if isinstance(timeout_seconds, (int, float)) and timeout_seconds > 0
+                else DEFAULT_EXECUTION_TIMEOUT_SECONDS
+            )
+            response_payload = result_queue.get(timeout=effective_timeout)
         except queue.Empty:
             response_payload = {"status": "error", "error": "Command timed out"}
         

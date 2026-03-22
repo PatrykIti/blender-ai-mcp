@@ -48,7 +48,12 @@ def get_rpc_client() -> IRpcClient:
     global _rpc_client_instance
     if _rpc_client_instance is None:
         config = get_config()
-        _rpc_client_instance = RpcClient(host=config.BLENDER_RPC_HOST, port=config.BLENDER_RPC_PORT)
+        _rpc_client_instance = RpcClient(
+            host=config.BLENDER_RPC_HOST,
+            port=config.BLENDER_RPC_PORT,
+            rpc_timeout_seconds=config.RPC_TIMEOUT_SECONDS,
+            addon_execution_timeout_seconds=config.ADDON_EXECUTION_TIMEOUT_SECONDS,
+        )
     return _rpc_client_instance
 
 def get_scene_handler() -> ISceneTool:

@@ -6,6 +6,7 @@ class RpcRequest(BaseModel):
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     cmd: str
     args: Dict[str, Any] = Field(default_factory=dict)
+    timeout_seconds: Optional[float] = None
 
 class RpcResponse(BaseModel):
     request_id: str

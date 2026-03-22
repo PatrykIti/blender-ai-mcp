@@ -1,7 +1,7 @@
 # TASK-093-02-01-02: RPC and Addon Timeout Coordination
 
 **Parent:** [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)  
 

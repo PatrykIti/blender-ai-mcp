@@ -4,7 +4,7 @@
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (platform baseline). Task-mode-specific timeout / diagnostics rollout depends on TASK-088-02.
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
 
 ---
 

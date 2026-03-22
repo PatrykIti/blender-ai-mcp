@@ -31,11 +31,19 @@ def recvall(sock, n):
     return data
 
 class RpcClient(IRpcClient):
-    def __init__(self, host: str, port: int):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        *,
+        rpc_timeout_seconds: float = 30.0,
+        addon_execution_timeout_seconds: float = 30.0,
+    ):
         self.host = host
         self.port = port
         self.socket = None
-        self.timeout = 30.0 # Increased timeout for renders
+        self.timeout = rpc_timeout_seconds
+        self.addon_execution_timeout_seconds = addon_execution_timeout_seconds
 
     def connect(self):
         try:
@@ -63,7 +71,11 @@ class RpcClient(IRpcClient):
         if args is None:
             args = {}
 
-        request = RpcRequest(cmd=cmd, args=args)
+        request = RpcRequest(
+            cmd=cmd,
+            args=args,
+            timeout_seconds=self.addon_execution_timeout_seconds,
+        )
         
         # Auto-reconnect logic
         if not self.socket:

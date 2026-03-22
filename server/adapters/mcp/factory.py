@@ -10,10 +10,12 @@ from fastmcp import FastMCP
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.surfaces import get_surface_profile
+from server.adapters.mcp.timeout_policy import build_timeout_policy
 from server.adapters.mcp.transforms import (
     build_surface_transform_pipeline,
     materialize_transforms,
 )
+from server.infrastructure.config import get_config
 
 
 def build_surface_providers(surface: SurfaceProfileSettings) -> list[object]:
@@ -25,10 +27,17 @@ def build_surface_providers(surface: SurfaceProfileSettings) -> list[object]:
 def build_server(surface_profile: str = "legacy-flat") -> FastMCP:
     """Build a FastMCP server from the configured surface profile."""
 
+    config = get_config()
     surface = get_surface_profile(surface_profile)
     providers = build_surface_providers(surface)
     pipeline = build_surface_transform_pipeline(surface)
     transforms = materialize_transforms(surface)
+    timeout_policy = build_timeout_policy(
+        tool_timeout_seconds=config.MCP_TOOL_TIMEOUT_SECONDS,
+        task_timeout_seconds=config.MCP_TASK_TIMEOUT_SECONDS,
+        rpc_timeout_seconds=config.RPC_TIMEOUT_SECONDS,
+        addon_execution_timeout_seconds=config.ADDON_EXECUTION_TIMEOUT_SECONDS,
+    )
 
     server = FastMCP(
         surface.server_name,
@@ -44,5 +53,6 @@ def build_server(surface_profile: str = "legacy-flat") -> FastMCP:
     server._bam_capability_manifest = get_capability_manifest()
     server._bam_transform_count = len(transforms)
     server._bam_transform_pipeline = tuple(stage.name for stage in pipeline)
+    server._bam_timeout_policy = timeout_policy
 
     return server

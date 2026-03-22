@@ -1,7 +1,7 @@
 # TASK-093-02-01-01: Platform Timeout Policy and Config
 
 **Parent:** [TASK-093-02-01](./TASK-093-02-01_Core_Timeout.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)  
 
