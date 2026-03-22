@@ -1,7 +1,7 @@
 # TASK-085-04-01: Core Client Profiles and Guided Mode Presets
 
 **Parent:** [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)
 

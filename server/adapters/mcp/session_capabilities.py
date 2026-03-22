@@ -6,13 +6,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastmcp import Context
 
 from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.session_state import get_session_value, set_session_value
+
+if TYPE_CHECKING:
+    from server.adapters.mcp.guided_mode import VisibilityDiagnostics
 
 SESSION_GOAL_KEY = "goal"
 SESSION_PENDING_CLARIFICATION_KEY = "pending_clarification"
@@ -85,6 +88,9 @@ def update_session_from_router_goal(
     ctx: Context,
     goal: str,
     router_result: dict[str, Any],
+    *,
+    surface_profile: str | None = None,
+    contract_version: str | None = None,
 ) -> SessionCapabilityState:
     """Update session capability state from a router_set_goal response."""
 
@@ -100,14 +106,19 @@ def update_session_from_router_goal(
         pending_clarification=pending,
         last_router_status=status,
         policy_context=router_result.get("policy_context"),
-        surface_profile=current.surface_profile,
-        contract_version=current.contract_version,
+        surface_profile=surface_profile or current.surface_profile,
+        contract_version=contract_version or current.contract_version,
     )
     set_session_capability_state(ctx, state)
     return state
 
 
-def clear_session_goal_state(ctx: Context) -> SessionCapabilityState:
+def clear_session_goal_state(
+    ctx: Context,
+    *,
+    surface_profile: str | None = None,
+    contract_version: str | None = None,
+) -> SessionCapabilityState:
     """Clear goal-specific session state and return the session to planning."""
 
     current = get_session_capability_state(ctx)
@@ -117,8 +128,24 @@ def clear_session_goal_state(ctx: Context) -> SessionCapabilityState:
         pending_clarification=None,
         last_router_status=None,
         policy_context=None,
-        surface_profile=current.surface_profile,
-        contract_version=current.contract_version,
+        surface_profile=surface_profile or current.surface_profile,
+        contract_version=contract_version or current.contract_version,
     )
     set_session_capability_state(ctx, state)
     return state
+
+
+async def apply_visibility_for_session_state(
+    ctx: Context,
+    state: SessionCapabilityState,
+) -> VisibilityDiagnostics:
+    """Apply native session visibility rules for the current capability state."""
+
+    from server.adapters.mcp.guided_mode import apply_session_visibility
+
+    surface_profile = state.surface_profile or "legacy-flat"
+    return await apply_session_visibility(
+        ctx,
+        surface_profile=surface_profile,
+        phase=state.phase,
+    )

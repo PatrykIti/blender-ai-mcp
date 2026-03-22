@@ -1,7 +1,7 @@
 # TASK-085-03: Router-Driven Phase Transitions
 
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)
 

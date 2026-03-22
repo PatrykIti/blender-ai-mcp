@@ -9,10 +9,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from server.adapters.mcp.settings import SurfaceProfileSettings
-from .discovery import build_discovery_transform
-from .naming import build_naming_transform
-from .prompts_bridge import build_prompts_bridge_transform
-from .visibility import build_visibility_transform
 
 
 @dataclass(frozen=True)
@@ -37,6 +33,11 @@ def build_surface_transform_pipeline(
     surface: SurfaceProfileSettings,
 ) -> tuple[TransformStage, ...]:
     """Return the ordered transform pipeline for a surface profile."""
+
+    from .discovery import build_discovery_transform
+    from .naming import build_naming_transform
+    from .prompts_bridge import build_prompts_bridge_transform
+    from .visibility import build_visibility_transform
 
     return (
         TransformStage("version_filter", build_version_filter_transform(surface)),

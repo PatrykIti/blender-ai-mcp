@@ -61,6 +61,12 @@ class RouterStatusContract(MCPContract):
     message: str | None = None
     current_goal: str | None = None
     current_phase: str | None = None
+    surface_profile: str | None = None
     pending_clarification: dict[str, Any] | list[dict[str, Any]] | None = None
     last_router_status: str | None = None
     policy_context: RouterPolicyContextContract | None = None
+    visibility_rules: list[dict[str, Any]] | None = None
+    visible_capabilities: list[str] | None = None
+    visible_entry_capabilities: list[str] | None = None
+    hidden_capability_count: int | None = None
+    hidden_category_counts: dict[str, int] | None = None

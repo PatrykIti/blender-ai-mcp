@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import asyncio
 
 from server.adapters.mcp.session_capabilities import (
+    apply_visibility_for_session_state,
     clear_session_goal_state,
     get_session_capability_state,
     infer_phase_from_router_status,
+    SessionCapabilityState,
     update_session_from_router_goal,
 )
 from server.adapters.mcp.session_phase import (
@@ -28,6 +31,15 @@ class FakeContext:
 
     def set_state(self, key: str, value, *, serializable: bool = True) -> None:
         self.state[key] = value
+
+    async def reset_visibility(self) -> None:
+        self.state["_visibility_calls"] = [("reset_visibility", {})]
+
+    async def enable_components(self, **kwargs) -> None:
+        self.state.setdefault("_visibility_calls", []).append(("enable_components", kwargs))
+
+    async def disable_components(self, **kwargs) -> None:
+        self.state.setdefault("_visibility_calls", []).append(("disable_components", kwargs))
 
 
 def test_session_phase_coercion_uses_canonical_subset_defaults():
@@ -109,3 +121,22 @@ def test_update_session_from_router_goal_persists_policy_context():
     )
 
     assert state.policy_context["decision"] == "ask"
+
+
+def test_apply_visibility_for_session_state_uses_stored_surface_profile():
+    """Session visibility should be derived from the persisted surface profile and phase."""
+
+    ctx = FakeContext()
+    state = SessionCapabilityState(
+        phase=SessionPhase.BUILD,
+        surface_profile="llm-guided",
+    )
+
+    asyncio.run(apply_visibility_for_session_state(ctx, state))
+
+    calls = ctx.state["_visibility_calls"]
+    assert calls[0] == ("reset_visibility", {})
+    assert any(
+        name == "enable_components" and call["tags"] == {"phase:build"}
+        for name, call in calls[1:]
+    )

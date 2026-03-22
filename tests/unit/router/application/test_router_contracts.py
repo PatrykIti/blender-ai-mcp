@@ -27,6 +27,15 @@ class DummyContext:
     def info(self, message, logger_name=None, extra=None):
         return None
 
+    async def reset_visibility(self):
+        return None
+
+    async def enable_components(self, **kwargs):
+        return None
+
+    async def disable_components(self, **kwargs):
+        return None
+
 
 def test_router_set_goal_returns_structured_contract(monkeypatch):
     """router_set_goal should return a typed contract instead of JSON text."""
@@ -91,6 +100,9 @@ def test_router_get_status_returns_structured_contract(monkeypatch):
     assert isinstance(result, RouterStatusContract)
     assert result.enabled is True
     assert result.stats["total_calls"] == 3
+    assert result.surface_profile == "legacy-flat"
+    assert "router" in result.visible_capabilities
+    assert result.hidden_capability_count == 0
 
 
 def test_router_goal_contract_accepts_policy_context():

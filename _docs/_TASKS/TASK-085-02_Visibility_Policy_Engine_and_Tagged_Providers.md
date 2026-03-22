@@ -1,7 +1,7 @@
 # TASK-085-02: Visibility Policy Engine and Tagged Providers
 
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md), [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 

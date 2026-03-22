@@ -1,7 +1,7 @@
 # TASK-085-05: Visibility Observability, Tests, and Docs
 
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md), [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Make visibility decisions observable, testable, and documented.
+
+## Completion Summary
+
+This slice is now closed.
+
+- guided visibility diagnostics are exposed through `router_get_status()`
+- tests cover diagnostics and session visibility application
+- README, MCP docs, and prompt docs now describe the current guided visibility baseline
 
 ---
 

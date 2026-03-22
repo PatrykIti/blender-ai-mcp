@@ -61,6 +61,19 @@ Current hidden/expert-only arguments on `llm-guided` include:
 Router and dispatcher internals still operate on canonical internal names.
 The public alias layer is a transform concern, not a second business-logic path.
 
+## Session-Adaptive Visibility Baseline
+
+The `llm-guided` surface now has a first complete guided-mode visibility baseline:
+
+- canonical coarse phases: `bootstrap`, `planning`, `build`, `inspect_validate`
+- guided entry surface at bootstrap/planning centered on `router_*` and `workflow_catalog`
+- deterministic phase/profile visibility rules owned by FastMCP platform code, not by router metadata
+- native FastMCP session visibility application via `enable_components`, `disable_components`, and `reset_visibility`
+- operator-facing visibility diagnostics exposed through `router_get_status()`
+
+This visibility baseline is complete for guided-mode surface shaping.
+Search-first default rollout remains a separate TASK-084 concern.
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

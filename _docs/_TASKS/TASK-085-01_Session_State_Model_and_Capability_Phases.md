@@ -1,7 +1,7 @@
 # TASK-085-01: Session State Model and Capability Phases
 
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 

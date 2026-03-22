@@ -1,7 +1,7 @@
 # TASK-085-04: Client Profiles and Guided Mode Presets
 
 **Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Introduce visibility presets for different clients and a guided-mode surface that reduces active action space without removing deeper capabilities from the repo.
+
+## Completion Summary
+
+This slice is now closed.
+
+- explicit client profile presets exist for `legacy-flat`, `llm-guided`, `internal-debug`, and `code-mode-pilot`
+- guided-mode diagnostics are computed from the canonical manifest + phase policy rather than ad hoc lists
+- tests cover profile alignment and guided defaults
 
 ---
 

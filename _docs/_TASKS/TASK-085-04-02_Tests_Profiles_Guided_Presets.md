@@ -1,7 +1,7 @@
 # TASK-085-04-02: Tests and Docs Client Profiles and Guided Mode Presets
 
 **Parent:** [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-04-01](./TASK-085-04-01_Core_Profiles_Guided_Presets.md)
 
@@ -10,6 +10,12 @@
 ## Objective
 
 Add tests and documentation updates for **Client Profiles and Guided Mode Presets**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover preset/profile alignment and guided-mode defaults for the first-pass client profiles
 
 ---
 

@@ -8,6 +8,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > `check_scene`, `inspect_scene`, and `browse_workflows`.
 > Legacy/internal surfaces may still expose the canonical internal names
 > (`scene_context`, `scene_inspect`, `workflow_catalog`).
+>
+> `llm-guided` also starts from a small guided entry surface and expands with
+> coarse session phases (`bootstrap` / `planning` / `build` / `inspect_validate`).
 
 ## How to use (Claude / ChatGPT)
 

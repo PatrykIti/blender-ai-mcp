@@ -28,9 +28,11 @@ from server.adapters.mcp.elicitation_contracts import (
 )
 from server.adapters.mcp.session_capabilities import get_session_capability_state
 from server.adapters.mcp.session_capabilities import (
+    apply_visibility_for_session_state,
     clear_session_goal_state,
     update_session_from_router_goal,
 )
+from server.adapters.mcp.guided_mode import build_visibility_diagnostics
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import get_router_status
@@ -174,7 +176,13 @@ async def router_set_goal(
                 resolved_params=result.get("elicitation_answers"),
             )
 
-    update_session_from_router_goal(ctx, goal, result)
+    state = update_session_from_router_goal(
+        ctx,
+        goal,
+        result,
+        surface_profile=get_config().MCP_SURFACE_PROFILE,
+    )
+    await apply_visibility_for_session_state(ctx, state)
 
     # Log to context
     status = result.get("status", "unknown")
@@ -210,20 +218,28 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
     - Component status
     """
     session = get_session_capability_state(ctx)
+    surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
+    diagnostics = build_visibility_diagnostics(surface_profile, session.phase)
     status_payload = get_router_status()
     status_payload.update(
         {
             "current_goal": session.goal,
             "current_phase": session.phase.value,
+            "surface_profile": surface_profile,
             "pending_clarification": session.pending_clarification,
             "last_router_status": session.last_router_status,
             "policy_context": session.policy_context,
+            "visibility_rules": [dict(rule) for rule in diagnostics.rules],
+            "visible_capabilities": list(diagnostics.visible_capability_ids),
+            "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),
+            "hidden_capability_count": len(diagnostics.hidden_capability_ids),
+            "hidden_category_counts": diagnostics.hidden_category_counts,
         }
     )
     return RouterStatusContract.model_validate(status_payload)
 
 
-def router_clear_goal(ctx: Context) -> str:
+async def router_clear_goal(ctx: Context) -> str:
     """
     [SYSTEM][SAFE] Clear the current modeling goal.
 
@@ -232,7 +248,11 @@ def router_clear_goal(ctx: Context) -> str:
     """
     handler = get_router_handler()
     result = handler.clear_goal()
-    clear_session_goal_state(ctx)
+    state = clear_session_goal_state(
+        ctx,
+        surface_profile=get_config().MCP_SURFACE_PROFILE,
+    )
+    await apply_visibility_for_session_state(ctx, state)
     ctx_info(ctx, "[ROUTER] Goal cleared")
     return result
 

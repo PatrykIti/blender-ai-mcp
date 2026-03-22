@@ -1,7 +1,7 @@
 # TASK-085-02-02: Tests and Docs Visibility Policy Engine and Tagged Providers
 
 **Parent:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-085-02-01](./TASK-085-02-01_Core_Visibility_Engine_Tagged_Providers.md)
 
@@ -10,6 +10,12 @@
 ## Objective
 
 Add tests and documentation updates for **Visibility Policy Engine and Tagged Providers**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover deterministic profile/phase rules, tagged providers, and current guided-surface transform behavior
 
 ---
 

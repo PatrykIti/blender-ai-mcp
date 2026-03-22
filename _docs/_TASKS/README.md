@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 21 tasks (~200 sub-tasks)
+- **To Do:** 20 tasks (~200 sub-tasks)
 - **In Progress:** 4 tasks
-- **Done:** 141
+- **Done:** 142
 
 ## 🧭 Terminology Guardrails
 
@@ -22,7 +22,6 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | Per-session visibility and phase-based capability exposure |
 | [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | First-class clarification flow for router/workflow inputs |
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | Non-blocking jobs for imports, renders, analysis, reconstruction |
 | [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | Structured state exchange for critical tools |
@@ -77,6 +76,7 @@ Execution note: this track currently spans TASK-083 through TASK-097 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md) | **Session-Adaptive Tool Visibility** | 🔴 High | 2026-03-22 |
 | [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md) | **Transparent Correction Audit and Postconditions** | 🔴 High | 2026-03-22 |
 | [TASK-096](./TASK-096_Confidence_Policy_for_Auto_Correction.md) | **Confidence Policy for Auto-Correction** | 🔴 High | 2026-03-22 |
 | [TASK-075](./TASK-075_Workflow_Catalog_Import.md) | **Workflow Catalog Import (YAML/JSON, inline/chunked)** | 🟡 Medium | 2025-12-20 |

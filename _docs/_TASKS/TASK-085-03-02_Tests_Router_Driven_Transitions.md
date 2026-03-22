@@ -1,7 +1,7 @@
 # TASK-085-03-02: Tests and Docs Router-Driven Phase Transitions
 
 **Parent:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-085-03-01](./TASK-085-03-01_Core_Router_Driven_Transitions.md)
 
@@ -10,6 +10,12 @@
 ## Objective
 
 Add tests and documentation updates for **Router-Driven Phase Transitions**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover coarse router phase hints and router status observability for the guided-mode phase model
 
 ---
 

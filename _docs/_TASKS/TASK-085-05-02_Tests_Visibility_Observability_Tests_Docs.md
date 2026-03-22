@@ -1,7 +1,7 @@
 # TASK-085-05-02: Tests and Docs Visibility Observability, Tests, and Docs
 
 **Parent:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-05-01](./TASK-085-05-01_Core_Visibility_Observability_Tests_Docs.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Visibility Observability, Tests, and Docs**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover guided visibility diagnostics and native session visibility application
+- product docs now explain the current guided-mode visibility baseline
 
 ---
 

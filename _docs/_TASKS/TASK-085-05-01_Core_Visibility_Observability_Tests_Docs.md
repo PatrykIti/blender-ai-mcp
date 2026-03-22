@@ -1,7 +1,7 @@
 # TASK-085-05-01: Core Visibility Observability, Tests, and Docs
 
 **Parent:** [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md), [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md)
 

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import inspect
+
 from fastmcp import Context
 from server.adapters.mcp.session_state import (
     get_session_phase,
@@ -11,11 +14,25 @@ from server.adapters.mcp.session_state import (
 )
 
 
+def _fire_and_forget(result) -> None:
+    """Await async FastMCP context operations when possible, else degrade silently."""
+
+    if not inspect.isawaitable(result):
+        return
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+
+    loop.create_task(result)
+
+
 def ctx_info(ctx: Context, message: str) -> None:
     """Best-effort INFO message to the connected MCP client."""
 
     try:
-        ctx.info(message)
+        _fire_and_forget(ctx.info(message))
     except Exception:
         return
 
@@ -24,7 +41,7 @@ def ctx_warning(ctx: Context, message: str) -> None:
     """Best-effort WARNING message to the connected MCP client."""
 
     try:
-        ctx.warning(message)
+        _fire_and_forget(ctx.warning(message))
     except Exception:
         return
 
@@ -33,7 +50,7 @@ def ctx_error(ctx: Context, message: str) -> None:
     """Best-effort ERROR message to the connected MCP client."""
 
     try:
-        ctx.error(message)
+        _fire_and_forget(ctx.error(message))
     except Exception:
         return
 
@@ -47,7 +64,7 @@ def ctx_progress(
     """Best-effort progress reporting for long-running interactions."""
 
     try:
-        ctx.report_progress(progress=progress, total=total, message=message)
+        _fire_and_forget(ctx.report_progress(progress=progress, total=total, message=message))
     except Exception:
         return
 

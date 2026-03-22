@@ -108,6 +108,29 @@ Current correction transparency baseline:
 
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
+### Session-Adaptive Guided Mode
+
+The current `llm-guided` surface uses a coarse first-pass phase model:
+
+- `bootstrap`
+- `planning`
+- `build`
+- `inspect_validate`
+
+Guided-mode behavior:
+
+- `bootstrap` / `planning`: keep the visible surface intentionally tiny and centered on guided entry capabilities
+- `build`: expose build-oriented capability groups
+- `inspect_validate`: elevate inspection/validation-oriented capability groups
+
+`router_get_status()` now exposes visibility diagnostics such as:
+
+- current phase
+- active surface profile
+- visible capability ids
+- visible guided entry capabilities
+- hidden capability counts by category
+
 ## ✅ Support Matrix
 
 - **Blender**: tested on **Blender 5.0** (E2E). The addon declares minimum **Blender 4.0**, but 4.x support is best-effort.

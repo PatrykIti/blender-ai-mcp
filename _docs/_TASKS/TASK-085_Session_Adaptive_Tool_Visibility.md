@@ -4,7 +4,9 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has a canonical coarse phase model, deterministic visibility rules, session-scoped visibility application through native FastMCP APIs, router-driven phase hints, explicit client profile presets, guided-mode diagnostics, and tests/docs covering the current guided visibility baseline. Search-first rollout remains a separate TASK-084 concern rather than unfinished visibility work.
 
 ---
 
