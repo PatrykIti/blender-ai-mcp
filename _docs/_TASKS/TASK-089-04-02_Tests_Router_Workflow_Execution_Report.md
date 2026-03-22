@@ -1,7 +1,7 @@
 # TASK-089-04-02: Tests and Docs Router, Workflow, and Execution Report Contracts
 
 **Parent:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-089-04-01](./TASK-089-04-01_Core_Router_Workflow_Execution_Report.md)
 

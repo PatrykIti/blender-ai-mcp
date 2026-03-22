@@ -10,6 +10,7 @@ from typing import Any, Dict, Literal, Optional
 
 from fastmcp import Context
 
+from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
@@ -63,7 +64,7 @@ def workflow_catalog(
     chunk_data: Optional[str] = None,
     chunk_index: Optional[int] = None,
     total_chunks: Optional[int] = None,
-) -> str:
+) -> WorkflowCatalogResponseContract:
     """
     [SYSTEM][SAFE] Browse, search, and import workflow definitions (no execution).
 
@@ -109,32 +110,30 @@ def workflow_catalog(
         if action == "list":
             result: Dict[str, Any] = handler.list_workflows()
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Listed {result.get('count', 0)} workflows")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="list", **result)
 
         if action == "get":
             if not workflow_name:
-                return json.dumps(
-                    {"error": "workflow_name required for get action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="get",
+                    error="workflow_name required for get action",
                 )
             result = handler.get_workflow(workflow_name)
             if "error" in result:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Get failed: {workflow_name}")
             else:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Fetched: {workflow_name}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="get", **result)
 
         if action == "search":
             if not query:
-                return json.dumps(
-                    {"error": "query required for search action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="search",
+                    error="query required for search action",
                 )
             result = handler.search_workflows(query=query, top_k=top_k, threshold=threshold)
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Search '{query[:40]}...' -> {result.get('count', 0)} results")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="search", **result)
 
         if action == "import":
             if filepath:
@@ -147,10 +146,9 @@ def workflow_catalog(
                     source_name=source_name,
                 )
             else:
-                return json.dumps(
-                    {"error": "filepath or content required for import action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import",
+                    error="filepath or content required for import action",
                 )
             status = result.get("status", "unknown")
             if status == "imported":
@@ -161,7 +159,7 @@ def workflow_catalog(
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
             else:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="import", **result)
 
         if action == "import_init":
             result = handler.begin_import_session(
@@ -170,20 +168,18 @@ def workflow_catalog(
                 total_chunks=total_chunks,
             )
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Import session: {result.get('session_id')}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="import_init", **result)
 
         if action == "import_append":
             if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_append"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import_append",
+                    error="session_id required for import_append",
                 )
             if chunk_data is None:
-                return json.dumps(
-                    {"error": "chunk_data required for import_append"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import_append",
+                    error="chunk_data required for import_append",
                 )
             result = handler.append_import_chunk(
                 session_id=session_id,
@@ -191,14 +187,13 @@ def workflow_catalog(
                 chunk_index=chunk_index,
                 total_chunks=total_chunks,
             )
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="import_append", **result)
 
         if action == "import_finalize":
             if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_finalize"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import_finalize",
+                    error="session_id required for import_finalize",
                 )
             result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
             status = result.get("status", "unknown")
@@ -210,20 +205,19 @@ def workflow_catalog(
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
             else:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="import_finalize", **result)
 
         if action == "import_abort":
             if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_abort"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import_abort",
+                    error="session_id required for import_abort",
                 )
             result = handler.abort_import_session(session_id=session_id)
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="import_abort", **result)
 
-        return json.dumps({"error": f"Unknown action: {action}"}, indent=2, ensure_ascii=False)
+        return WorkflowCatalogResponseContract(action=action, error=f"Unknown action: {action}")
 
     except Exception as e:
         logger.error(f"workflow_catalog error: {e}")
-        return json.dumps({"error": str(e)}, indent=2, ensure_ascii=False)
+        return WorkflowCatalogResponseContract(action=action, error=str(e))

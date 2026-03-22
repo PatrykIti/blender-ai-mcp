@@ -16,6 +16,7 @@ import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
 from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
+from server.adapters.mcp.contracts.router import RouterGoalResponseContract
 from server.adapters.mcp.elicitation_contracts import (
     build_clarification_plan,
     build_elicitation_response_type,
@@ -108,7 +109,7 @@ async def router_set_goal(
     ctx: Context,
     goal: str,
     resolved_params: Optional[Dict[str, Any]] = None,
-) -> str:
+) -> RouterGoalResponseContract:
     """
     [SYSTEM][CRITICAL] Tell the Router what you're building.
 
@@ -192,7 +193,7 @@ async def router_set_goal(
         if not plan.is_empty:
             result["clarification"] = build_fallback_payload(plan).model_dump()
 
-    return json.dumps(result, indent=2, ensure_ascii=False)
+    return RouterGoalResponseContract.model_validate(result)
 
 
 @mcp.tool()
