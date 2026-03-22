@@ -7,12 +7,70 @@ Provides utilities for routing tool calls through SupervisorRouter.
 from typing import Dict, Any, List, Optional, Callable
 import logging
 
+from server.adapters.mcp.contracts.correction_audit import (
+    CorrectionAuditEventContract,
+    CorrectionExecutionContract,
+    CorrectionIntentContract,
+    CorrectionVerificationContract,
+)
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
 from server.infrastructure.di import is_router_enabled, get_router
 from server.adapters.mcp.dispatcher import get_dispatcher
 
 logger = logging.getLogger(__name__)
+
+
+def _build_correction_audit_events(
+    *,
+    original_tool_name: str,
+    original_params: Dict[str, Any],
+    corrected_tools: List[Dict[str, Any]],
+    steps: List[ExecutionStep],
+    policy_context: dict[str, Any] | None = None,
+) -> tuple[CorrectionAuditEventContract, ...]:
+    """Build coarse audit events for router-applied sequence changes."""
+
+    if not corrected_tools or not steps:
+        return ()
+
+    if len(corrected_tools) > 1:
+        category = "workflow_expansion"
+    else:
+        corrected_tool = corrected_tools[0]["tool"]
+        corrected_params = corrected_tools[0]["params"]
+        if corrected_tool != original_tool_name:
+            category = "tool_override"
+        elif corrected_params != original_params:
+            category = "parameter_rewrite"
+        else:
+            return ()
+
+    events: list[CorrectionAuditEventContract] = []
+    for index, (tool, step) in enumerate(zip(corrected_tools, steps), 1):
+        events.append(
+            CorrectionAuditEventContract(
+                event_id=f"audit_{index}",
+                decision=policy_context.get("decision") if policy_context else None,
+                reason=policy_context.get("reason") if policy_context else None,
+                confidence=policy_context,
+                intent=CorrectionIntentContract(
+                    original_tool_name=original_tool_name,
+                    original_params=original_params,
+                    corrected_tool_name=tool["tool"],
+                    corrected_params=tool["params"],
+                    category=category,
+                ),
+                execution=CorrectionExecutionContract(
+                    tool_name=step.tool_name,
+                    params=step.params,
+                    result=step.result,
+                    error=step.error,
+                ),
+                verification=CorrectionVerificationContract(),
+            )
+        )
+    return tuple(events)
 
 
 def route_tool_call_report(
@@ -89,6 +147,12 @@ def route_tool_call_report(
             router_enabled=True,
             router_applied=True,
             steps=tuple(steps),
+            audit_events=_build_correction_audit_events(
+                original_tool_name=tool_name,
+                original_params=params,
+                corrected_tools=corrected_tools,
+                steps=steps,
+            ),
         )
 
     except Exception as e:

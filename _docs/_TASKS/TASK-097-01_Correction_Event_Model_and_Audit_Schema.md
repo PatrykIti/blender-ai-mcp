@@ -1,7 +1,7 @@
 # TASK-097-01: Correction Event Model and Audit Schema
 
 **Parent:** [TASK-097](./TASK-097_Transparent_Correction_Audit_and_Postconditions.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md), [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)
 

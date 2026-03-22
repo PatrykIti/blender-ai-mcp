@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.contracts.correction_audit import CorrectionAuditEventContract
 from server.adapters.mcp.execution_context import MCPExecutionContext
 
 
@@ -29,6 +30,7 @@ class MCPExecutionReport(MCPContract):
     steps: tuple[ExecutionStep, ...] = ()
     error: str | None = None
     policy_context: dict[str, Any] | None = None
+    audit_events: tuple[CorrectionAuditEventContract, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         """Return a structured dict representation."""
