@@ -4,7 +4,7 @@
 **Category:** Router Semantics  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (policy / audit baseline). Integration gates: TASK-084 (discovery handoff), TASK-089 (inspection-contract handoff)
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
 
 ---
 
