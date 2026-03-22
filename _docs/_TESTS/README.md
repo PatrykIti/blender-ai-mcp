@@ -95,6 +95,13 @@ Background task mode now has focused unit coverage for:
   - `scene_get_viewport`
   - `extraction_render_angles`
   - `workflow_catalog(import_finalize)`
+  - `export_glb`
+  - `export_fbx`
+  - `export_obj`
+  - `import_obj`
+  - `import_fbx`
+  - `import_glb`
+  - `import_image_as_plane`
 
 Primary local validation commands for TASK-088:
 
@@ -106,6 +113,14 @@ poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adap
 
 Task-mode regression is intentionally unit/integration focused for now.
 No Blender-backed E2E suite has been added yet for background task submission itself.
+
+Primary local validation commands for TASK-098 extension work:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_candidacy.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/tools/export/test_export_tools.py tests/unit/tools/import_tool/test_import_handler.py -q
+
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_versioned_surface.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/rpc/test_background_job_lifecycle.py tests/unit/adapters/rpc/test_timeout_coordination.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
+```
 
 ---
 

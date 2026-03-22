@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 16 tasks (~230 sub-tasks)
-- **In Progress:** 4 tasks
-- **Done:** 148
+- **In Progress:** 3 tasks
+- **Done:** 149
 
 ## 🧭 Terminology Guardrails
 
@@ -62,7 +62,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Platform baseline is implemented and green; task stays open for deferred validation/docs slices and compatibility cleanup |
-| [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md) | **Background Task Adoption for Import and Export Operations** | 🔴 High | Export/import family is task-capable; `import_image_as_plane` and operations/docs closeout remain open |
 | [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md) | **Observability, Timeouts, and Pagination** | 🟡 Medium | Telemetry/bootstrap and timeout policy are done; pagination and diagnostics surface slices remain open |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
@@ -72,6 +71,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md) | **Background Task Adoption for Import and Export Operations** | 🔴 High | 2026-03-22 |
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | 2026-03-22 |
 | [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | 2026-03-22 |
 | [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | 2026-03-22 |

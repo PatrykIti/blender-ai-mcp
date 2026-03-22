@@ -74,3 +74,4 @@ def test_guided_surface_exposes_adopted_task_capable_tools():
     assert by_name["import_obj"] == "optional"
     assert by_name["import_fbx"] == "optional"
     assert by_name["import_glb"] == "optional"
+    assert by_name["import_image_as_plane"] == "optional"

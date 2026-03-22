@@ -669,6 +669,8 @@ class SystemHandler:
         align_axis: str = "Z+",
         shader: str = "PRINCIPLED",
         use_transparency: bool = True,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Imports image as a textured plane.
 
@@ -676,6 +678,9 @@ class SystemHandler:
         Works without external addons (compatible with Blender 4.0+).
         """
         import math
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 4, "Validating image file")
 
         # Validate file exists
         if not os.path.exists(filepath):
@@ -684,6 +689,9 @@ class SystemHandler:
         # Load the image
         img = bpy.data.images.load(filepath)
         img_width, img_height = img.size
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(1, 4, "Creating plane geometry")
 
         # Calculate aspect ratio for plane dimensions
         aspect = img_width / img_height if img_height > 0 else 1.0
@@ -720,6 +728,9 @@ class SystemHandler:
         }
         rotation = rotation_map.get(align_axis, (0, 0, 0))
         plane.rotation_euler = rotation
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 4, "Building image material")
 
         # Create material
         mat_name = f"{base_name}_Material"
@@ -776,5 +787,7 @@ class SystemHandler:
             plane.data.materials.append(mat)
 
         # Ensure proper UV mapping (plane already has UVs from primitive)
+        if progress_callback is not None:
+            progress_callback(4, 4, "Image-as-plane import complete")
 
         return f"Successfully imported image as plane '{plane.name}' from '{filepath}'"

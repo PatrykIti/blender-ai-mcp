@@ -1,7 +1,7 @@
 # TASK-098-03-01: Core Import Image As Plane Candidacy and Adoption
 
 **Parent:** [TASK-098-03](./TASK-098-03_Import_Image_As_Plane_and_Compatibility_Polish.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-098-02](./TASK-098-02_Import_Task_Mode_Adoption.md)
 

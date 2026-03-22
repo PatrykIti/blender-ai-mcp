@@ -70,6 +70,13 @@ TASK_CANDIDACY_MATRIX: tuple[TaskCandidacy, ...] = (
         rationale="GLB/GLTF import can take long enough on asset-heavy scenes that progress and cancellation should be observable.",
     ),
     TaskCandidacy(
+        operation_key="import.image_as_plane",
+        execution_mode="task_optional",
+        backend_kind="addon_job",
+        adopted=True,
+        rationale="Image-as-plane import performs file loading plus geometry/material creation and should participate in the same observable background model as other import paths.",
+    ),
+    TaskCandidacy(
         operation_key="export.glb",
         execution_mode="task_optional",
         backend_kind="addon_job",
@@ -103,6 +110,7 @@ _TOOL_TASK_CONFIGS = {
     "import_obj": TaskConfig(mode="optional", poll_interval=timedelta(seconds=1)),
     "import_fbx": TaskConfig(mode="optional", poll_interval=timedelta(seconds=1)),
     "import_glb": TaskConfig(mode="optional", poll_interval=timedelta(seconds=1)),
+    "import_image_as_plane": TaskConfig(mode="optional", poll_interval=timedelta(seconds=1)),
 }
 
 

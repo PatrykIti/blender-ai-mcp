@@ -1,7 +1,7 @@
 # TASK-098-03: Import Image As Plane and Compatibility Polish
 
 **Parent:** [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-098-02](./TASK-098-02_Import_Task_Mode_Adoption.md)
 
@@ -54,3 +54,8 @@ So this slice should not inherit candidacy automatically just because it lives i
 
 - `import_image_as_plane` has an explicit, documented task-mode stance
 - compatibility/docs polish is complete for the import/export extension wave
+
+## Completion Summary
+
+- `import_image_as_plane` now participates in the same `TaskConfig(mode="optional")` rollout model as the rest of the import family
+- addon/background hooks, MCP bridge wiring, and regression coverage are in place

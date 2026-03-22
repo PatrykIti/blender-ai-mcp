@@ -4,9 +4,9 @@
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-088, TASK-093-02  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Current State:** `TASK-098-01` and `TASK-098-02` are now implemented in code: export and import tools use explicit async MCP entrypoints with `TaskConfig(mode="optional")`, addon-side background job registration, and the shared TASK-088 bridge. `TASK-098-03` (`import_image_as_plane`) and `TASK-098-04` (operations/rollback/docs closeout) remain open.
+**Completion Summary:** This task is now closed. The system import/export family uses explicit async MCP entrypoints with `TaskConfig(mode="optional")`, addon-side background job registration, and the shared TASK-088 bridge. That now includes `export_glb`, `export_fbx`, `export_obj`, `import_obj`, `import_fbx`, `import_glb`, and `import_image_as_plane`, plus task-mode docs/rollback guidance and regression notes.
 
 ---
 

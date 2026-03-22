@@ -166,13 +166,20 @@ Operational baseline now includes:
 
 ### Background Task Mode Baseline
 
-The first background-task rollout is now in place for heavy operations on task-capable surfaces.
+The current background-task rollout now covers the first heavy-operation set plus the system import/export family on task-capable surfaces.
 
 Adopted task-capable entrypoints:
 
 - `scene_get_viewport`
 - `extraction_render_angles`
 - `workflow_catalog(action="import_finalize")`
+- `export_glb`
+- `export_fbx`
+- `export_obj`
+- `import_obj`
+- `import_fbx`
+- `import_glb`
+- `import_image_as_plane`
 
 Current behavior:
 

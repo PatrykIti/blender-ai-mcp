@@ -1,7 +1,7 @@
 # TASK-098-04-01: Core Operations Rollback Documentation
 
 **Parent:** [TASK-098-04](./TASK-098-04_Operations_Rollback_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-098-03](./TASK-098-03_Import_Image_As_Plane_and_Compatibility_Polish.md)
 

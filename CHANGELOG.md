@@ -8,6 +8,8 @@
 
 - Add first background task mode rollout for heavy MCP operations (`scene_get_viewport`, `extraction_render_angles`, and `workflow_catalog(import_finalize)`) with explicit RPC job lifecycle, task bookkeeping, and sync fallback behavior
 
+- Extend task mode to the system import/export family (`export_glb`, `export_fbx`, `export_obj`, `import_obj`, `import_fbx`, `import_glb`, `import_image_as_plane`) on task-capable surfaces
+
 ## v2.2.0 (2026-03-20)
 
 ### Features

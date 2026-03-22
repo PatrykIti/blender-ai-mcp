@@ -303,3 +303,33 @@ class TestImportImageAsPlane:
         # Verify material was created
         mock_bpy.data.materials.new.assert_called_once()
         assert "Successfully imported" in result
+
+    @patch('os.path.exists')
+    def test_import_image_reports_progress_for_background_job_hooks(self, mock_exists):
+        """Image-as-plane import should emit coarse progress milestones when callbacks are provided."""
+
+        mock_exists.return_value = True
+        progress_events = []
+
+        result = self.handler.import_image_as_plane(
+            filepath="/path/to/image.png",
+            progress_callback=lambda current, total=None, message=None: progress_events.append(
+                (current, total, message)
+            ),
+        )
+
+        assert "Successfully imported" in result
+        assert progress_events[0] == (0, 4, "Validating image file")
+        assert progress_events[-1] == (4, 4, "Image-as-plane import complete")
+
+    @patch('os.path.exists')
+    def test_import_image_honors_cooperative_cancellation(self, mock_exists):
+        """Image-as-plane import should stop early when background cancellation is requested."""
+
+        mock_exists.return_value = True
+
+        with pytest.raises(JobCancelledError):
+            self.handler.import_image_as_plane(
+                filepath="/path/to/image.png",
+                is_cancelled=lambda: True,
+            )

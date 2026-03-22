@@ -21,6 +21,7 @@ def test_task_candidacy_matrix_classifies_initial_heavy_operations():
     assert get_task_candidacy("scene_get_viewport").adopted is True
     assert get_task_candidacy("workflow_catalog.import_finalize").backend_kind == "server_local"
     assert get_task_candidacy("import.glb").adopted is True
+    assert get_task_candidacy("import.image_as_plane").adopted is True
     assert get_task_candidacy("export.obj").execution_mode == "task_optional"
 
 
@@ -32,17 +33,20 @@ def test_adopted_tools_expose_explicit_optional_task_configs():
     workflow_config = get_tool_task_config("workflow_catalog")
     export_config = get_tool_task_config("export_glb")
     import_config = get_tool_task_config("import_obj")
+    image_plane_config = get_tool_task_config("import_image_as_plane")
 
     assert scene_config is not None
     assert extraction_config is not None
     assert workflow_config is not None
     assert export_config is not None
     assert import_config is not None
+    assert image_plane_config is not None
 
     assert scene_config.mode == "optional"
     assert extraction_config.mode == "optional"
     assert workflow_config.mode == "optional"
     assert export_config.mode == "optional"
     assert import_config.mode == "optional"
+    assert image_plane_config.mode == "optional"
 
     assert int(scene_config.poll_interval.total_seconds()) == 1

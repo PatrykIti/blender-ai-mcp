@@ -1,7 +1,7 @@
 # TASK-098-04: Operations, Rollback, and Documentation
 
 **Parent:** [TASK-098](./TASK-098_Background_Task_Adoption_for_Import_Export.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-098-03](./TASK-098-03_Import_Image_As_Plane_and_Compatibility_Polish.md)
 
@@ -44,3 +44,9 @@ This closing slice should document how the extension changes the existing import
 
 - rollback/operations guidance exists for the import/export task-mode extension
 - final regression/docs state is consistent across repo docs and task docs
+
+## Completion Summary
+
+- repo docs now describe the import/export task-mode extension on top of the existing TASK-088 baseline
+- validation commands and regression notes are recorded in `_docs/_TESTS/README.md`
+- task docs and board state are synchronized with the final rollout scope

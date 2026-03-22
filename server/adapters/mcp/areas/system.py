@@ -517,7 +517,7 @@ async def import_glb(
     )
 
 
-def import_image_as_plane(
+async def import_image_as_plane(
     ctx: Context,
     filepath: str,
     name: Optional[str] = None,
@@ -547,6 +547,39 @@ def import_image_as_plane(
         shader: Material shader type (PRINCIPLED = PBR, SHADELESS = unlit, EMISSION = glowing)
         use_transparency: Use alpha channel for transparency (PNG with alpha)
     """
+    if is_background_task_context(ctx):
+        def _foreground_rpc() -> str:
+            return get_system_handler().import_image_as_plane(
+                filepath=filepath,
+                name=name,
+                location=location,
+                size=size,
+                align_axis=align_axis,
+                shader=shader,
+                use_transparency=use_transparency,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="import_image_as_plane",
+            rpc_cmd="import.image_as_plane",
+            rpc_args={
+                "filepath": filepath,
+                "name": name,
+                "location": location,
+                "size": size,
+                "align_axis": align_axis,
+                "shader": shader,
+                "use_transparency": use_transparency,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching image-as-plane import from '{filepath}'",
+            completion_message=f"Completed image-as-plane import from '{filepath}'",
+        )
+        ctx_info(ctx, f"Imported image as plane from: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:

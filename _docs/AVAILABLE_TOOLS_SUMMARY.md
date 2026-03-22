@@ -41,6 +41,13 @@ Task-capable heavy-operation rollout on task-enabled surfaces:
 - `scene_get_viewport`
 - `extraction_render_angles`
 - `workflow_catalog(action="import_finalize")`
+- `export_glb`
+- `export_fbx`
+- `export_obj`
+- `import_obj`
+- `import_fbx`
+- `import_glb`
+- `import_image_as_plane`
 
 Measured current baseline:
 

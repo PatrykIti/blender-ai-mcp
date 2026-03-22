@@ -284,6 +284,7 @@ def register():
         rpc_server.register_background_handler("import.obj", system_handler.import_obj)
         rpc_server.register_background_handler("import.fbx", system_handler.import_fbx)
         rpc_server.register_background_handler("import.glb", system_handler.import_glb)
+        rpc_server.register_background_handler("import.image_as_plane", system_handler.import_image_as_plane)
 
         # TASK-033: Lattice Deformation Tools
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
