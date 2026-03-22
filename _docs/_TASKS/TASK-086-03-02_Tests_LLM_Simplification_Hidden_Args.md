@@ -1,7 +1,7 @@
 # TASK-086-03-02: Tests and Docs LLM-First Surface Simplification and Hidden Args
 
 **Parent:** [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-03-01](./TASK-086-03-01_Core_LLM_Simplification_Hidden_Args.md)
 
