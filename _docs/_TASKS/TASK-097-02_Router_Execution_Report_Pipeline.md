@@ -26,7 +26,7 @@ Extend the base execution report from TASK-089-04 so router output and `route_to
 
 1. Reuse the base execution-report contract from TASK-089-04 instead of redefining it.
 2. Add correction-audit fields and references to the correction event model from TASK-097-01.
-3. Extend execution reporting with verification-ready status fields and placeholders that later subtasks can populate.
+3. Extend execution reporting with verification-ready status fields, plus explicit router-failure disposition fields so fail-open / fail-closed behavior is visible instead of inferred.
 4. Add adapter rendering tests for structured and summary variants.
 
 ### Boundary Rule
@@ -53,3 +53,4 @@ Postcondition trigger logic and inspection verification orchestration remain in:
 
 - multi-step execution is represented as structured data as well as optional summary text
 - the extended audit/verification fields remain backward-compatible with the base execution-report contract from TASK-089-04
+- router-failure disposition is explicit in the report instead of being hidden behind implementation-specific fallbacks

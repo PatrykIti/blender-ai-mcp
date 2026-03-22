@@ -19,6 +19,7 @@ Expose an operational diagnostics surface for maintainers and clients.
   - active surface or profile
   - active contract line
   - router summary
+  - router failure policy / last failure disposition
   - task counts
   - timeout config
   - visibility phase
@@ -43,5 +44,5 @@ Expose an operational diagnostics surface for maintainers and clients.
 ## Atomic Work Items
 
 1. Define the diagnostics payload contract.
-2. Expose profile, contract line, phase, timeout, and task state.
+2. Expose profile, contract line, phase, timeout, task state, and router failure policy / last failure disposition.
 3. Add one test proving diagnostics reflect session-phase and profile changes.

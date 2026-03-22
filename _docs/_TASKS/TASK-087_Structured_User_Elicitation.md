@@ -70,6 +70,15 @@ For this repo:
 - workflow context and partial answers must survive across the next interaction step
 - elicitation must remain request-bound to an active MCP request (no out-of-band elicitation after request completion)
 
+### Ownership Rule
+
+For `router_set_goal` and similar missing-input flows:
+
+- TASK-087 owns clarification semantics: question models, partial-answer persistence, native elicitation mapping, and the typed `needs_input` payload content
+- TASK-089 owns the broader adapter-facing response envelopes, `outputSchema`, and execution-report contracts that carry those clarification payloads
+
+Do not define a second, competing clarification-question schema in TASK-089.
+
 ---
 
 ## FastMCP Features To Use

@@ -3,7 +3,7 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083, TASK-086  
+**Dependencies:** TASK-083 (platform baseline), TASK-086 (public surface baseline), TASK-091 (default public rollout / coexistence gate)
 **Status:** ⬜ To Do
 
 ---
@@ -78,6 +78,14 @@ Hard gate:
 - default rollout on the public `llm-guided` surface is additionally blocked until:
   - the shaped public surface from TASK-086 exists and is stable enough to index intentionally
   - TASK-091 defines the coexistence/rollback path for comparing discovery-first behavior against legacy behavior
+
+### Critical Path Rule
+
+This task has two different dependency moments and they must stay explicit:
+
+- **Discovery infrastructure work** may begin once the TASK-083 composition / transform baseline exists and the shared public manifest is available for the capabilities being indexed
+- **Public search indexing and naming validation** must target the baseline public surface established by TASK-086, not the raw internal registration names
+- **Default public rollout** of search-first `llm-guided` behavior is gated by TASK-091 so coexistence and rollback against legacy behavior are defined up front
 
 Do not introduce a custom search proxy unless the built-in call path proves insufficient.
 

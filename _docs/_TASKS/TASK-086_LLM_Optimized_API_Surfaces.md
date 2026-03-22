@@ -71,6 +71,15 @@ This task should rely on built-in FastMCP public-surface shaping:
 
 Do not fork business logic or duplicate router execution paths to create LLM-friendly naming.
 
+This task establishes the first stable baseline public `llm-guided` contract line.
+That line is:
+
+- the public surface that TASK-084 discovery infrastructure should index
+- the baseline public surface that TASK-091 later versions for coexistence and rollback
+
+Do not wait for TASK-091 to create this baseline.
+Versioning layers on after the baseline public line is clear enough to compare safely.
+
 ---
 
 ## FastMCP Features To Use

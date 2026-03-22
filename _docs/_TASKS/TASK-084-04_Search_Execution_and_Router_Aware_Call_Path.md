@@ -45,6 +45,18 @@ def execute_discovered_tool(name, params, ctx):
 Do not add a custom discovery execution proxy unless a concrete FastMCP limitation appears in testing.
 The default assumption should be that discovered-tool execution goes through the standard transform and middleware chain.
 
+### Failure Policy Rule
+
+This task must define one explicit router-failure disposition per public surface.
+
+Recommended baseline for this repo:
+
+- `llm-guided` and other guided router-governed surfaces are **fail-closed** on router-processing failure
+- those guided surfaces return a typed router / execution-report error instead of silently bypassing to direct execution
+- `legacy-flat` or other explicit compatibility surfaces may allow **fail-open** behavior only as a documented compatibility mode, and only if direct calls and discovered `call_tool` calls use the same disposition
+
+Do not let `route_tool_call(...)` and middleware-style integration keep different implicit failure behavior once discovered execution is part of the product surface.
+
 ---
 
 ## Layered Subtasks
@@ -60,6 +72,7 @@ The default assumption should be that discovered-tool execution goes through the
 
 - search discovery does not bypass router safety policy
 - discovered-call execution remains behaviorally equivalent to direct calls
+- direct calls and discovered calls share the same router-failure policy on a given surface
 
 ---
 
@@ -68,3 +81,4 @@ The default assumption should be that discovered-tool execution goes through the
 1. Document the canonical execution path for direct and discovered calls.
 2. Prove that router interception still happens for discovered tools.
 3. Prove that public alias resolution and hidden arguments still behave correctly when called through `call_tool`.
+4. Define and test the router-failure disposition for guided and compatibility surfaces so direct and discovered calls stay aligned.

@@ -77,6 +77,11 @@ Activation gate:
 - do not start broad component versioning work until one non-versioned `llm-guided` public line is stable enough to compare against legacy behavior
 - use versioning only when there is an actual coexistence or migration burden, not as a substitute for finishing TASK-086 / TASK-089 first
 
+Ordering rule:
+
+- component versioning is not a prerequisite for discovery plumbing or non-default search validation
+- component versioning becomes mandatory when a reshaped public line, such as discovery-first `llm-guided`, needs coexistence and rollback against legacy behavior
+
 ---
 
 ## FastMCP Features To Use

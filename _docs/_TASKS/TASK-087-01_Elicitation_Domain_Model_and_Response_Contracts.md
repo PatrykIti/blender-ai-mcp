@@ -52,6 +52,13 @@ class ClarificationPlan:
 
 MCP-specific fields such as `request_id`, `question_set_id`, and protocol actions belong in the adapter mapping layer, not in router domain entities.
 
+### Ownership Rule
+
+This subtask owns the domain-neutral clarification plan and the typed missing-input payload for unresolved fields.
+
+It does not own the broader success / no-match / error envelope for `router_set_goal`.
+That adapter-facing wrapper belongs to TASK-089-04 and must reuse these clarification models rather than redefining them.
+
 ---
 
 ## Layered Subtasks
@@ -68,6 +75,7 @@ MCP-specific fields such as `request_id`, `question_set_id`, and protocol action
 - unresolved parameters can be mapped into typed clarification requirements
 - domain/application models stay free of MCP protocol identifiers and action enums
 - the adapter layer can map the same clarification plan to native `ctx.elicit(...)` or to a typed `needs_input` fallback
+- TASK-089-04 can embed or reference the same clarification model without introducing schema drift
 
 ---
 
@@ -76,4 +84,4 @@ MCP-specific fields such as `request_id`, `question_set_id`, and protocol action
 1. Define domain-neutral clarification requirement and clarification plan models derived from `ParameterSchema`.
 2. Keep MCP request IDs, question-set IDs, and protocol action handling in `server/adapters/mcp/elicitation_contracts.py`.
 3. Define serializable persistence rules for partial answers and unresolved fields.
-4. Add adapter tests proving the same clarification plan can drive native elicitation and compatibility fallback.
+4. Add adapter tests proving the same clarification plan can drive native elicitation, compatibility fallback, and the adapter-facing wrapper used by TASK-089-04 without schema drift.

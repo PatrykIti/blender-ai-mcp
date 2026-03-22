@@ -73,6 +73,15 @@ Initial rollout rule:
 - start with coarse phases only
 - do not attempt whole-catalog phase orchestration in the first pass
 
+Phase taxonomy rule:
+
+- canonical phase vocabulary for this task family is: `bootstrap`, `planning`, `workflow_resolution`, `build`, `inspect_validate`, `repair`, `export_handoff`
+- the first rollout uses only: `bootstrap`, `planning`, `build`, `inspect_validate`
+- `workflow_resolution` is folded into `planning` until finer-grained phase handling proves useful
+- `repair` is folded into `inspect_validate` for the first pass
+- `export_handoff` remains reserved for later rollout and diagnostics
+- do not introduce alternate labels such as plain `inspect` as a parallel phase name
+
 ---
 
 ## FastMCP Features To Use
@@ -148,7 +157,10 @@ Implementation is decomposed into:
 
 ### Repo-Specific Focus
 
+- future `server/adapters/mcp/platform/**`
+- future `server/adapters/mcp/transforms/**`
+- future `server/adapters/mcp/factory.py`
+- future `server/adapters/mcp/session_*.py`
+- `server/adapters/mcp/context_utils.py`
 - `server/router/application/router.py`
 - `server/application/tool_handlers/router_handler.py`
-- `server/adapters/mcp/context_utils.py`
-- `server/adapters/mcp/router_helper.py`

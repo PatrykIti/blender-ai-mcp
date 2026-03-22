@@ -15,9 +15,10 @@ Implement the core code changes for **Session State Model and Capability Phases*
 
 ## Repository Touchpoints
 
-- `server/router/application/router.py`
-- `server/application/tool_handlers/router_handler.py`
-- `server/adapters/mcp/context_utils.py`
+- `server/adapters/mcp/session_phase.py`
+- `server/adapters/mcp/session_capabilities.py`
+- `server/router/application/router.py` (phase hints only)
+- `server/application/tool_handlers/router_handler.py` (phase hints only)
 
 ---
 
@@ -39,13 +40,13 @@ Implement the core code changes for **Session State Model and Capability Phases*
 ## Acceptance Criteria
 
 - phases are explicit, serializable, and not hidden inside private router fields
-- the first implementation uses a coarse phase model only
+- the first implementation uses the canonical coarse subset only: `bootstrap`, `planning`, `build`, `inspect_validate`
 
 ---
 
 ## Atomic Work Items
 
 1. Define the minimal session-state schema and default values.
-2. Add coarse phase helpers for the first guided entry surface only.
+2. Add coarse phase helpers for the first guided entry surface only, using the canonical subset names.
 3. Keep bootstrap profile/version config outside mutable session state.
 4. Add tests for persistence and reset behavior across turns.

@@ -28,6 +28,7 @@ Implement the core code changes for **Router Execution Report Pipeline**.
 
 - materialize structured execution/audit/postcondition behavior for correction paths
 - expose auditable outcomes to responses/logs with deterministic fields
+- expose router-failure disposition explicitly so operators can tell whether execution was routed, blocked, or bypassed-by-policy
 
 ### Boundary Rule
 
@@ -61,12 +62,13 @@ Do not implement postcondition trigger mapping or verification orchestration her
 - slice integrates with policy and contract layers without ambiguity
 - trigger and orchestration ownership stays outside this slice (TASK-097-03/097-04)
 - runtime report collaborator wiring remains DI-owned and explicit
+- router-failure disposition is explicit and not recoverable only by reading logs or code paths
 
 ---
 
 ## Atomic Work Items
 
-1. Implement audit/report field mapping and propagation in listed touchpoints.
+1. Implement audit/report field mapping, including router-failure disposition, in listed touchpoints.
 2. Add tests for report completeness across direct, corrected, blocked, and needs-input paths.
 3. Capture before/after audit payload examples for corrected executions.
 4. Document handoff contract to TASK-097-03/097-04 for postcondition trigger and verification ownership.

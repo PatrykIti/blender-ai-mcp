@@ -29,6 +29,7 @@ Implement the core code changes for **Operational Status and Diagnostics Surface
   - active surface or profile
   - active contract line
   - router summary
+  - router failure policy / last failure disposition
   - task counts
   - timeout config
   - visibility phase
@@ -42,5 +43,5 @@ Implement the core code changes for **Operational Status and Diagnostics Surface
 ## Atomic Work Items
 
 1. Define the diagnostics payload contract.
-2. Expose profile, contract line, phase, timeout, and task state.
+2. Expose profile, contract line, phase, timeout, task state, and router failure policy / last failure disposition.
 3. Add one test proving diagnostics reflect session-phase and profile changes.

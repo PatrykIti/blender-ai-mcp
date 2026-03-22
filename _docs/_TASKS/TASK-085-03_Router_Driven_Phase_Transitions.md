@@ -27,8 +27,13 @@ Feed router state changes into coarse session phase transitions without moving d
 - emit phase hints such as:
   - `planning` after `router_set_goal` resolves or requests clarification
   - `build` when workflow execution or expansion starts
-  - `inspect` when the guided surface hands off into inspection / validation flows
+  - `inspect_validate` when the guided surface hands off into inspection / validation flows
 - let the FastMCP platform layer persist the final phase in session state
+
+### Taxonomy Rule
+
+Router hints must align with the canonical first-pass subset from TASK-085-01.
+`workflow_resolution` remains a future split of `planning`, not a competing first-pass hint.
 
 ---
 
@@ -40,7 +45,7 @@ if router_result.executed_workflow:
 elif router_result.needs_input or router_result.pending_workflow:
     phase_hint = "planning"
 elif router_result.inspection_recommended:
-    phase_hint = "inspect"
+    phase_hint = "inspect_validate"
 ```
 
 ---
@@ -58,4 +63,5 @@ elif router_result.inspection_recommended:
 
 - the router provides coarse phase hints only
 - the visibility layer remains the owner of what becomes visible
+- the first hint set uses canonical subset names rather than alternate phase labels
 - the first implementation does not require broad phase orchestration across the full tool catalog

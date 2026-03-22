@@ -26,7 +26,7 @@ Implement the core code changes for **Session-Aware Prompt Selection**.
 
 - add prompt tags such as:
   - `phase:planning`
-  - `phase:repair`
+  - `phase:inspect_validate`
   - `profile:llm-guided`
 - expose recommended prompts by phase or profile
 ---
@@ -39,5 +39,5 @@ Implement the core code changes for **Session-Aware Prompt Selection**.
 ## Atomic Work Items
 
 1. Align prompt profile tags with the canonical surface profile names.
-2. Add one recommendation path by phase and one by profile.
+2. Add one recommendation path by canonical phase and one by profile.
 3. Add tests that prompt recommendations change when session phase changes.

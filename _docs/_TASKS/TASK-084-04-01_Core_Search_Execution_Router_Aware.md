@@ -29,6 +29,9 @@ Implement the core code changes for **Search Execution and Router-Aware Call Pat
   - search proxy execution
   - router-emitted internal tool calls
 - use the built-in FastMCP `call_tool` proxy for discovered-tool execution
+- define explicit router-failure policy per surface:
+  - fail-closed on guided router-governed surfaces
+  - explicit fail-open only on documented compatibility surfaces
 - add parity tests for direct call vs discovered-call behavior
 ---
 
@@ -36,6 +39,7 @@ Implement the core code changes for **Search Execution and Router-Aware Call Pat
 
 - search discovery does not bypass router safety policy
 - discovered-call execution remains behaviorally equivalent to direct calls
+- direct calls and discovered calls expose the same router-failure disposition on a given surface
 ---
 
 ## Atomic Work Items
@@ -43,3 +47,4 @@ Implement the core code changes for **Search Execution and Router-Aware Call Pat
 1. Document the canonical execution path for direct and discovered calls.
 2. Prove that router interception still happens for discovered tools.
 3. Prove that public alias resolution and hidden arguments still behave correctly when called through `call_tool`.
+4. Implement and test one explicit router-failure policy per surface so discovered execution cannot silently diverge from direct execution.

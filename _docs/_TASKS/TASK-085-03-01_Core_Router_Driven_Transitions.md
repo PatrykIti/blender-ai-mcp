@@ -27,7 +27,7 @@ Implement the core code changes for **Router-Driven Phase Transitions**.
 - emit phase hints such as:
   - `planning` after `router_set_goal` resolves or requests clarification
   - `build` when workflow execution or expansion starts
-  - `inspect` when the guided surface hands off into inspection / validation flows
+  - `inspect_validate` when the guided surface hands off into inspection / validation flows
 - let the FastMCP platform layer persist the final phase in session state
 
 ---
@@ -36,6 +36,7 @@ Implement the core code changes for **Router-Driven Phase Transitions**.
 
 - the router provides coarse phase hints only
 - the visibility layer remains the owner of what becomes visible
+- the first hint set uses the canonical subset names from TASK-085-01
 
 ---
 

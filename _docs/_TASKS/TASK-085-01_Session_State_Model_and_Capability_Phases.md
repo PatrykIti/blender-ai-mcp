@@ -15,9 +15,11 @@ Define an explicit session state model and a deliberately small first-pass phase
 
 ## Repository Touchpoints
 
-- `server/router/application/router.py`
-- `server/application/tool_handlers/router_handler.py`
-- `server/adapters/mcp/context_utils.py`
+- future `server/adapters/mcp/session_phase.py`
+- future `server/adapters/mcp/session_capabilities.py`
+- future `server/adapters/mcp/factory.py`
+- `server/router/application/router.py` (phase hints only)
+- `server/application/tool_handlers/router_handler.py` (phase hints only)
 
 ---
 
@@ -43,10 +45,19 @@ class SessionPhase(StrEnum):
     BOOTSTRAP = "bootstrap"
     PLANNING = "planning"
     BUILD = "build"
-    INSPECT = "inspect"
+    INSPECT_VALIDATE = "inspect_validate"
 ```
 
-Optional future extensions such as `repair` or `export_handoff` should not block the first rollout.
+Optional future extensions such as `workflow_resolution`, `repair`, or `export_handoff` should not block the first rollout.
+
+### Canonical Taxonomy Rule
+
+Use a subset of the canonical phase names from `FASTMCP_3X_IMPLEMENTATION_MODEL.md`.
+
+- first-pass active subset: `bootstrap`, `planning`, `build`, `inspect_validate`
+- `workflow_resolution` remains a reserved future split of `planning`
+- `repair` remains a reserved future split of `inspect_validate`
+- do not introduce alternate labels such as plain `inspect`
 
 ### State Model Rule
 
@@ -74,12 +85,13 @@ In particular:
 
 - phases are explicit, serializable, and not hidden inside private router fields
 - the first phase model is intentionally coarse and small enough to operate reliably on the current sync-heavy repo
+- the first phase model uses canonical subset names rather than a competing taxonomy
 
 ---
 
 ## Atomic Work Items
 
 1. Define the minimal session-state schema and default values.
-2. Add coarse phase helpers only for the first guided entry surface.
+2. Add coarse phase helpers only for the first guided entry surface, using the canonical subset `bootstrap` / `planning` / `build` / `inspect_validate`.
 3. Add tests for persistence and reset behavior across turns.
 4. Do not introduce fine-grained workflow phases until the coarse model proves useful.

@@ -22,6 +22,11 @@ Primary runtime seam for router-aware MCP execution is:
 `server/router/adapters/mcp_integration.py` is a secondary middleware-style adapter path.
 It should be kept behaviorally aligned where used, but runtime-critical verification behavior must be defined first on the primary `route_tool_call` path.
 
+### Failure-Policy Rule
+
+- surfaces that claim router-governed safety or verification must not silently downgrade to direct execution after router-processing failure
+- any explicit compatibility fail-open mode must be reported as `bypassed_by_policy` (or equivalent) and must not claim verified router-correction semantics
+
 ---
 
 ## Atomic Work Items
@@ -44,3 +49,4 @@ It should be kept behaviorally aligned where used, but runtime-critical verifica
 ## Acceptance Criteria
 
 - high-risk verification depends on inspection-layer truth, not semantic guesswork
+- guided router-governed paths do not claim verified success after an undisclosed router bypass

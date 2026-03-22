@@ -32,7 +32,7 @@ Implement the core code changes for **Visibility Policy Engine and Tagged Provid
 - introduce tags such as:
   - `phase:planning`
   - `phase:build`
-  - `phase:inspect`
+  - `phase:inspect_validate`
   - `audience:legacy`
   - `audience:llm`
   - `entry:guided`
@@ -58,6 +58,7 @@ Router metadata may inform policy, but it is not the canonical visibility regist
 - visibility rules are deterministic and testable
 - provider tags become the canonical grouping mechanism for visibility decisions
 - the first implementation scopes visibility adaptation to the guided entry surface
+- the first implementation uses canonical phase tags rather than alternate labels such as `phase:inspect`
 
 ---
 

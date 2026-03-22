@@ -68,7 +68,7 @@ They are not the same as profiles.
 
 Per-session runtime state used to adapt what is visible or emphasized.
 
-Recommended baseline phases:
+Recommended canonical phase vocabulary for this repo:
 
 - `bootstrap`
 - `planning`
@@ -77,6 +77,14 @@ Recommended baseline phases:
 - `inspect_validate`
 - `repair`
 - `export_handoff`
+
+First-pass rollout rule:
+
+- the initial guided rollout must use a strict subset of this canonical vocabulary rather than introducing alternate phase names
+- recommended first subset: `bootstrap`, `planning`, `build`, `inspect_validate`
+- `workflow_resolution` is folded into `planning` until finer-grained visibility control proves useful
+- `repair` is folded into `inspect_validate` for the first pass
+- `export_handoff` remains reserved for later rollout and diagnostics
 
 ### Renderer
 
@@ -173,6 +181,25 @@ Do not manually add `search_tools` and `call_tool` to the pinned list.
 The search transform creates them.
 
 Do not add a custom discovery proxy unless there is a proven gap in the built-in `call_tool` behavior.
+
+---
+
+## Router-Aware Execution Failure Policy
+
+Router-aware execution must declare an explicit failure disposition per public surface.
+
+Recommended baseline for this repo:
+
+- `llm-guided`, `internal-debug`, and other router-governed guided surfaces should be **fail-closed** on router-processing failure
+- those guided surfaces should return a typed router / execution-report error instead of silently bypassing router policy
+- `legacy-flat` or other explicit compatibility surfaces may allow **fail-open** behavior only when that mode is documented as a compatibility tradeoff rather than a router-safety guarantee
+
+Parity rule:
+
+- direct public tool calls and discovered-tool `call_tool` execution on the same surface must use the same router-failure policy
+- the primary `route_tool_call(...)` seam and any secondary middleware seam must report the same disposition semantics: executed via router, blocked, or bypassed-by-policy
+
+Treat this as product behavior, not as an incidental implementation detail.
 
 ---
 
@@ -308,15 +335,21 @@ Do not collapse these into one implementation task without explicitly separating
 ## Recommended Delivery Order
 
 1. Platform composition root, providers, and shared manifest
-2. Search-first discovery
-3. Session visibility and guided surfaces
-4. Public surface reshaping and argument simplification
+2. Public naming and argument baseline for one baseline `llm-guided` contract line
+3. Search infrastructure and pinned entry surface on that shaped public line
+4. Session visibility and guided surfaces on the canonical phase taxonomy
 5. Structured elicitation and background task foundations
 6. Structured output contracts and renderers
-7. Versioned public contracts
-8. Telemetry, timeouts, and diagnostics
+7. Versioned public contracts plus default discovery-first rollout / coexistence matrix
+8. Telemetry, timeouts, diagnostics, and explicit failure-policy reporting
 9. Sampling assistants and Code Mode experiments
 10. Confidence policy and correction audit hardening
+
+Ordering note:
+
+- step 3 may build discovery infrastructure and run non-default validation once the shaped public line from step 2 exists
+- the final composed surface still follows the transform order above: version filtering before public reshaping, then search on the resulting public surface
+- step 7 is the gate for making discovery-first the default public `llm-guided` experience alongside legacy coexistence / rollback
 
 ### Blocking Migration Gates Before TASK-084+
 

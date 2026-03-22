@@ -70,6 +70,13 @@ For this repo:
 - stop serializing structured payloads to JSON text in MCP adapters as the first migration move
 - do not introduce a custom renderer subsystem before native FastMCP structured delivery is used correctly
 
+For router clarification flows:
+
+- TASK-087 defines clarification semantics and the typed `needs_input` content model
+- TASK-089 defines adapter-facing structured delivery, `structuredContent`, `outputSchema`, and execution-report envelopes that reference or embed those clarification models
+
+Do not create a second clarification-question schema in this task family.
+
 ### MCP Contract Delivery DoD
 
 For contract-enabled tools in this task scope:

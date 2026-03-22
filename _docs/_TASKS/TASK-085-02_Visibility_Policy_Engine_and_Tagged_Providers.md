@@ -22,7 +22,7 @@ Implement deterministic visibility filtering around component tags, audience, an
 - introduce tags such as:
   - `phase:planning`
   - `phase:build`
-  - `phase:inspect`
+  - `phase:inspect_validate`
   - `audience:legacy`
   - `audience:llm`
   - `entry:guided`
@@ -31,6 +31,11 @@ Implement deterministic visibility filtering around component tags, audience, an
 
 Visibility tags should come from the shared platform capability manifest and provider registration.
 Router metadata may inform policy, but it is not the canonical visibility registry.
+
+### Phase Taxonomy Rule
+
+Use the canonical phase vocabulary from TASK-085-01.
+For the first rollout, activate only the subset `planning`, `build`, and `inspect_validate` on top of the implicit `bootstrap` default.
 
 ---
 
@@ -61,6 +66,7 @@ def is_visible(component, phase, profile):
 - visibility rules are deterministic and testable
 - provider tags become the canonical grouping mechanism for visibility decisions
 - the first implementation operates on the guided entry surface before expanding to the deeper catalog
+- the first implementation uses canonical phase tags rather than alternate labels such as `phase:inspect`
 
 ---
 
