@@ -1,7 +1,7 @@
 # TASK-096-03-01: Core Auto-Fix, Ask, Block Policy Engine
 
 **Parent:** [TASK-096-03](./TASK-096-03_Auto_Fix_Ask_Block_Policy_Engine.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-096-02](./TASK-096-02_Confidence_Scoring_Normalization_Across_Engines.md)
 
