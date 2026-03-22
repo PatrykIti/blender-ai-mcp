@@ -19,6 +19,7 @@ poetry.lock
 .mypy_cache
 .pytest_cache
 .ruff_cache
+.coverage
 
 .claude
 CLAUDE.md
