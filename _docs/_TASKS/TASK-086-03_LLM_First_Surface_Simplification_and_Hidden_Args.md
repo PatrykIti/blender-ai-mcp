@@ -1,7 +1,7 @@
 # TASK-086-03: LLM-First Surface Simplification and Hidden Args
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Hide backend-only arguments and expose only the parameters that an LLM should realistically provide on the `llm-guided` surface.
+
+## Completion Summary
+
+This slice is now closed.
+
+- `llm-guided` hides avoidable technical noise on the high-value public tools already covered by the alias layer
+- tests verify the current hidden-argument behavior
+- docs/prompts now use the simplified public surface consistently for the currently-aliased tools
 
 ---
 

@@ -55,6 +55,29 @@ Current FastMCP platform baseline:
 - deterministic transform pipeline scaffold
 - shared session/execution bridge for later visibility, elicitation, and task features
 
+### LLM-Guided Public Surface
+
+The `llm-guided` surface now exposes a first cleaner public contract line on top of the same internal capabilities.
+
+Current public tool aliases on `llm-guided`:
+
+| Internal tool | `llm-guided` public name |
+|---|---|
+| `scene_context` | `check_scene` |
+| `scene_inspect` | `inspect_scene` |
+| `workflow_catalog` | `browse_workflows` |
+
+Current public argument aliases on `llm-guided`:
+
+| Tool | Internal arg | `llm-guided` public arg |
+|---|---|---|
+| `check_scene` | `action` | `query` |
+| `inspect_scene` | `object_name` | `target_object` |
+| `browse_workflows` | `workflow_name` | `name` |
+| `browse_workflows` | `query` | `search_query` |
+
+The legacy/internal names remain the canonical internal contract used by router and dispatcher internals.
+
 ### Runtime Responsibility Model
 
 The project intentionally separates four different responsibilities:

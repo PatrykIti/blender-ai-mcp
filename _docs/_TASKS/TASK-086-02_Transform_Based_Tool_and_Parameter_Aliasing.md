@@ -11,6 +11,16 @@
 
 Apply tool-name and parameter-name aliasing through the transform pipeline instead of duplicating handler logic or forking the business layer.
 
+## Current State
+
+The core aliasing layer is implemented and tested for direct public-surface behavior:
+
+- tool aliases and argument aliases are applied through transforms
+- hidden/expert-only arguments are hidden on `llm-guided`
+- dispatcher/name-resolution compatibility is covered for direct alias use
+
+This slice remains open because parity for search-discovered calls and future versioned public lines depends on TASK-084 and TASK-091.
+
 ---
 
 ## Planned Work

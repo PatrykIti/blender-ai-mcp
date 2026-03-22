@@ -6,6 +6,8 @@
 **Dependencies:** TASK-083  
 **Status:** 🚧 In Progress
 
+**Current State:** The first stable `llm-guided` public line is implemented and documented: manifest-owned public contracts exist, transform-based aliases and hidden-argument rules are live, dispatcher/router compatibility is tested, and public docs/prompts now describe the new surface. This umbrella remains open because the search-discovered/versioned parity slice still depends on TASK-084 and TASK-091.
+
 ---
 
 ## Objective

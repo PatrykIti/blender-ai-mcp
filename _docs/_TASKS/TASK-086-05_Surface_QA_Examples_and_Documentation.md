@@ -1,7 +1,7 @@
 # TASK-086-05: Surface QA, Examples, and Documentation
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md), [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Close the surface-optimization work with clarity-focused tests, examples, and documentation.
+
+## Completion Summary
+
+This slice is now closed for the current `llm-guided` public baseline.
+
+- README, MCP docs, tools summary, and prompt templates now describe the public alias layer
+- docs/examples use the current public aliases for the currently-aliased tools
+- docs-consistency tests guard the examples against drift
 
 ---
 

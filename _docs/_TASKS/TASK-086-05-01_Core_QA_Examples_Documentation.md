@@ -1,7 +1,7 @@
 # TASK-086-05-01: Core Surface QA, Examples, and Documentation
 
 **Parent:** [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md), [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Implement the core code changes for **Surface QA, Examples, and Documentation**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- public docs now describe the `llm-guided` alias layer
+- prompt examples were updated to use the current public aliases where they exist
 
 ---
 

@@ -30,3 +30,16 @@ def test_dispatcher_accepts_public_aliases_via_canonical_resolution():
 
     assert dispatcher.execute("browse_workflows", {"action": "list"}) == "workflow:list"
     assert dispatcher.has_tool("browse_workflows") is True
+
+
+def test_unknown_public_alias_falls_back_to_deterministic_dispatcher_error():
+    """Unknown aliases should not resolve silently to some unrelated internal tool."""
+
+    dispatcher = ToolDispatcher.__new__(ToolDispatcher)
+    dispatcher._tool_map = {
+        "workflow_catalog": lambda action=None: f"workflow:{action}",
+    }
+
+    assert resolve_canonical_tool_name("unknown_alias") == "unknown_alias"
+    assert dispatcher.has_tool("unknown_alias") is False
+    assert dispatcher.execute("unknown_alias", {}) == "Error: Tool 'unknown_alias' not found in dispatcher."

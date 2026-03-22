@@ -20,9 +20,9 @@ WORKFLOW SELECTION (MANDATORY)
    - If a goal is already set, ask the user whether to continue it or router_clear_goal() and start fresh.
 
 2) Optional: preview likely matches (if available in your client)
-   - workflow_catalog(action="search", query="<user prompt>", top_k=5, threshold=0.0)
+   - browse_workflows(action="search", search_query="<user prompt>")
    - If you want to inspect steps without executing anything:
-       * workflow_catalog(action="get", workflow_name="<workflow_name>")
+       * browse_workflows(action="get", name="<workflow_name>")
    - Use this only as a hint.
    - ~~Router is the source of truth.~~
    - Router is the execution-policy layer; inspection tools are the source of truth for actual Blender state.
@@ -47,7 +47,7 @@ WORKFLOW SELECTION (MANDATORY)
 RELIABILITY (STILL REQUIRED)
 - Even with Router corrections, verify major milestones:
    * scene_list_objects()
-   * scene_inspect(action="object", object_name=...)
+   * inspect_scene(action="object", target_object=...)
    * scene_get_bounding_box(object_name=..., world_space=True)
    * Treat these inspection results as authoritative over prior semantic assumptions
 - For shape-critical parts (round vs boxy, holes/openings, clearances), do quick visual QA using visibility tools:

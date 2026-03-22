@@ -2,8 +2,12 @@
 
 Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP server.
 
-> Note: depending on your client, tool names may appear namespaced (e.g. `mcp__bleder-ai-mcp__scene_inspect`)
-> but the underlying tool identifiers match the ones referenced below (e.g. `scene_inspect`).
+> Note: depending on your client, tool names may appear namespaced
+> (e.g. `mcp__bleder-ai-mcp__inspect_scene`).
+> On the `llm-guided` surface, prefer the public aliases used below:
+> `check_scene`, `inspect_scene`, and `browse_workflows`.
+> Legacy/internal surfaces may still expose the canonical internal names
+> (`scene_context`, `scene_inspect`, `workflow_catalog`).
 
 ## How to use (Claude / ChatGPT)
 

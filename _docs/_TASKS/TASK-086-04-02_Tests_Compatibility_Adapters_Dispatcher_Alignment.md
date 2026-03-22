@@ -1,7 +1,7 @@
 # TASK-086-04-02: Tests and Docs Compatibility Adapters and Dispatcher Alignment
 
 **Parent:** [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-04-01](./TASK-086-04-01_Core_Compatibility_Adapters_Dispatcher_Alignment.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Compatibility Adapters and Dispatcher Alignment**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover canonical alias resolution, invalid alias behavior, dispatcher compatibility, and metadata alignment
+- docs now explain that aliasing is a public-surface concern while router/dispatcher internals stay canonical
 
 ---
 

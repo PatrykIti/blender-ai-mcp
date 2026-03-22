@@ -11,6 +11,17 @@
 
 Add tests and documentation updates for **Transform-Based Tool and Parameter Aliasing**.
 
+## Current State
+
+The currently-available direct public-surface checks are implemented and passing:
+
+- alias happy path
+- hidden-argument path
+- invalid alias path
+- dispatcher/router compatibility for canonical-name resolution
+
+This slice remains open because the remaining parity scenarios for search-discovered calls and versioned public lines belong to the downstream TASK-084 / TASK-091 integration path rather than the current baseline.
+
 ---
 
 ## Repository Touchpoints

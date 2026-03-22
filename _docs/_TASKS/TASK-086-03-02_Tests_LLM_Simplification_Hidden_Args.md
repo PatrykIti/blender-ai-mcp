@@ -1,7 +1,7 @@
 # TASK-086-03-02: Tests and Docs LLM-First Surface Simplification and Hidden Args
 
 **Parent:** [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-03-01](./TASK-086-03-01_Core_LLM_Simplification_Hidden_Args.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Add tests and documentation updates for **LLM-First Surface Simplification and Hidden Args**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests verify that hidden/expert-only arguments are not exposed on the current `llm-guided` surface
+- docs and prompt templates now avoid the hidden args for the aliased public tools
+- the current validation path runs through aliasing, name-resolution, and docs-consistency tests
 
 ---
 

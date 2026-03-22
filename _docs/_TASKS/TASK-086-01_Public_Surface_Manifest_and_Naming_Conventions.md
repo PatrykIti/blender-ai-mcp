@@ -1,7 +1,7 @@
 # TASK-086-01: Public Surface Manifest and Naming Conventions
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md), [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Define which tools and parameters are public, how they should be named for LLM consumption, and which audience or version each surface element belongs to.
+
+## Completion Summary
+
+This slice is now closed.
+
+- the shared capability manifest carries explicit public contract lines
+- naming decisions are manifest-owned rather than hidden in wrappers
+- tests cover internal-to-public contract metadata and naming-rule resolution
 
 ---
 

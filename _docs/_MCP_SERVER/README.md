@@ -31,6 +31,36 @@ For this task series:
 The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
 The composition document linked above is the canonical reference for the current factory/provider/transform baseline.
 
+## LLM-Guided Public Surface Baseline
+
+The first `llm-guided` public contract line is now available on top of the canonical internal tool surface.
+
+Current public tool aliases:
+
+| Internal tool | `llm-guided` public name |
+|---|---|
+| `scene_context` | `check_scene` |
+| `scene_inspect` | `inspect_scene` |
+| `workflow_catalog` | `browse_workflows` |
+
+Current public argument aliases:
+
+| Tool | Internal arg | `llm-guided` public arg |
+|---|---|---|
+| `check_scene` | `action` | `query` |
+| `inspect_scene` | `object_name` | `target_object` |
+| `browse_workflows` | `workflow_name` | `name` |
+| `browse_workflows` | `query` | `search_query` |
+
+Current hidden/expert-only arguments on `llm-guided` include:
+
+- `inspect_scene`: `detailed`, `include_disabled`, `modifier_name`, and other backend-only inspection flags
+- `mesh_inspect`: `selected_only`, `uv_layer`, `include_deltas`
+- `browse_workflows`: `top_k`, `threshold`, chunk/session import internals, and related expert-only knobs
+
+Router and dispatcher internals still operate on canonical internal names.
+The public alias layer is a transform concern, not a second business-logic path.
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

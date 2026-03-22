@@ -1,7 +1,7 @@
 # TASK-086-05-02: Tests and Docs Surface QA, Examples, and Documentation
 
 **Parent:** [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-086-05-01](./TASK-086-05-01_Core_QA_Examples_Documentation.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add tests and documentation updates for **Surface QA, Examples, and Documentation**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- docs-consistency tests now guard the current public alias examples
+- the `llm-guided` public docs are synchronized across README, MCP docs, tools summary, and prompt templates
 
 ---
 

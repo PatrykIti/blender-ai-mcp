@@ -1,7 +1,7 @@
 # TASK-086-04: Compatibility Adapters and Dispatcher Alignment
 
 **Parent:** [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Keep the aliased public surface compatible with router internals, dispatcher execution, and metadata alignment tests.
+
+## Completion Summary
+
+This slice is now closed.
+
+- canonical-name resolution exists for public alias -> internal tool mapping
+- dispatcher compatibility for aliased calls is covered by tests
+- metadata alignment tests understand the public/internal distinction without breaking router internals
 
 ---
 

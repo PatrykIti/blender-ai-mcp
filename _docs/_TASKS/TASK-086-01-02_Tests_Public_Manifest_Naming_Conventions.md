@@ -1,7 +1,7 @@
 # TASK-086-01-02: Tests and Docs Public Surface Manifest and Naming Conventions
 
 **Parent:** [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-086-01-01](./TASK-086-01-01_Core_Public_Manifest_Naming_Conventions.md)
 
@@ -10,6 +10,14 @@
 ## Objective
 
 Add tests and documentation updates for **Public Surface Manifest and Naming Conventions**.
+
+## Completion Summary
+
+This slice is now closed.
+
+- tests cover manifest contract metadata and explicit naming rules
+- public docs now describe the `llm-guided` alias layer and current argument renames
+- validation currently runs through the public-surface unit suite around manifest, aliasing, name resolution, and docs consistency
 
 ---
 

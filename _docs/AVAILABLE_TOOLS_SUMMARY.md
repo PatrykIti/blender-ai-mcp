@@ -6,6 +6,26 @@ For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `
 
 ---
 
+## LLM-Guided Public Aliases
+
+The `llm-guided` surface keeps the same internal capabilities but exposes a smaller first public contract line for a few high-value entry tools.
+
+| Internal tool | `llm-guided` public name | Public arg changes |
+|---|---|---|
+| `scene_context` | `check_scene` | `action` -> `query` |
+| `scene_inspect` | `inspect_scene` | `object_name` -> `target_object` |
+| `workflow_catalog` | `browse_workflows` | `workflow_name` -> `name`, `query` -> `search_query` |
+
+Current hidden/expert-only arguments on `llm-guided`:
+
+- `inspect_scene`: hides `detailed`, `include_disabled`, `modifier_name`, and similar backend-only inspection flags
+- `mesh_inspect`: hides `selected_only`, `uv_layer`, `include_deltas`
+- `browse_workflows`: hides ranking/import session internals such as `top_k`, `threshold`, `session_id`, and chunk controls
+
+The router and dispatcher still use canonical internal tool names.
+
+---
+
 ## 🧠 LLM Context Optimization - Mega Tools
 
 > **Unified tools that consolidate multiple related operations to reduce LLM context usage.**
