@@ -10,6 +10,7 @@ class CorrectionCategory(StrEnum):
     """High-level category of a router correction."""
 
     PRECONDITION_MODE = "precondition_mode"
+    PRECONDITION_ACTIVE_OBJECT = "precondition_active_object"
     PRECONDITION_SELECTION = "precondition_selection"
     PARAMETER_ALIAS = "parameter_alias"
     PARAMETER_CLAMP = "parameter_clamp"
@@ -51,6 +52,12 @@ CORRECTION_MATRIX: dict[CorrectionCategory, CorrectionClassification] = {
         risk=CorrectionRisk.MEDIUM,
         auto_safe=False,
         rationale="Selection injection changes execution target and may affect unintended geometry.",
+    ),
+    CorrectionCategory.PRECONDITION_ACTIVE_OBJECT: CorrectionClassification(
+        category=CorrectionCategory.PRECONDITION_ACTIVE_OBJECT,
+        risk=CorrectionRisk.HIGH,
+        auto_safe=False,
+        rationale="Active-object correction changes which object receives the operation.",
     ),
     CorrectionCategory.PARAMETER_ALIAS: CorrectionClassification(
         category=CorrectionCategory.PARAMETER_ALIAS,
@@ -108,6 +115,8 @@ def classify_correction_token(token: str) -> CorrectionClassification:
 
     if token.startswith("mode_switch:") or token == "injected_mode_switch":
         return get_correction_classification(CorrectionCategory.PRECONDITION_MODE)
+    if token.startswith("active_object_switch:") or token == "injected_active_object":
+        return get_correction_classification(CorrectionCategory.PRECONDITION_ACTIVE_OBJECT)
     if token == "auto_select_all" or token == "injected_selection":
         return get_correction_classification(CorrectionCategory.PRECONDITION_SELECTION)
     if token.startswith("alias_"):
