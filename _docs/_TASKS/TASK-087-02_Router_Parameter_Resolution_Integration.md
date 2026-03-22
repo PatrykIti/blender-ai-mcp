@@ -1,7 +1,7 @@
 # TASK-087-02: Router Parameter Resolution Integration
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-087-01](./TASK-087-01_Elicitation_Domain_Model_and_Response_Contracts.md)
 

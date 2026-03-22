@@ -15,6 +15,13 @@ TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
+from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
+from server.adapters.mcp.elicitation_contracts import (
+    build_clarification_plan,
+    build_elicitation_response_type,
+    build_fallback_payload,
+    coerce_elicitation_answers,
+)
 from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state,
     update_session_from_router_goal,
@@ -22,6 +29,7 @@ from server.adapters.mcp.session_capabilities import (
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
+from server.infrastructure.config import get_config
 from server.infrastructure.di import get_router_handler
 
 ROUTER_PUBLIC_TOOL_NAMES = (
@@ -51,8 +59,52 @@ def register_router_tools(target: Any) -> Dict[str, Any]:
     }
 
 
+async def _maybe_elicit_router_answers(
+    ctx: Context,
+    goal: str,
+    result: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Attempt native FastMCP elicitation for missing router parameters."""
+
+    if get_config().MCP_SURFACE_PROFILE != "llm-guided":
+        return result
+
+    if result.get("status") != "needs_input":
+        return result
+
+    plan = build_clarification_plan(
+        goal=goal,
+        workflow_name=result.get("workflow") or "unknown_workflow",
+        unresolved_fields=result.get("unresolved", []),
+    )
+    if plan.is_empty:
+        return result
+
+    fallback_payload = build_fallback_payload(plan)
+    result["clarification"] = fallback_payload.model_dump()
+
+    try:
+        response = await ctx.elicit(
+            message=f"Missing parameters for workflow '{plan.workflow_name}'",
+            response_type=build_elicitation_response_type(plan),
+        )
+    except Exception:
+        result["elicitation_action"] = "unavailable"
+        return result
+
+    if isinstance(response, AcceptedElicitation):
+        result["elicitation_action"] = "accept"
+        result["elicitation_answers"] = coerce_elicitation_answers(response.data)
+    elif isinstance(response, DeclinedElicitation):
+        result["elicitation_action"] = "decline"
+    elif isinstance(response, CancelledElicitation):
+        result["elicitation_action"] = "cancel"
+
+    return result
+
+
 @mcp.tool()
-def router_set_goal(
+async def router_set_goal(
     ctx: Context,
     goal: str,
     resolved_params: Optional[Dict[str, Any]] = None,
@@ -109,6 +161,15 @@ def router_set_goal(
     """
     handler = get_router_handler()
     result = handler.set_goal(goal, resolved_params)
+
+    if resolved_params is None and result.get("status") == "needs_input":
+        result = await _maybe_elicit_router_answers(ctx, goal, result)
+        if result.get("elicitation_action") == "accept":
+            result = handler.set_goal(
+                goal,
+                resolved_params=result.get("elicitation_answers"),
+            )
+
     update_session_from_router_goal(ctx, goal, result)
 
     # Log to context
@@ -121,6 +182,15 @@ def router_set_goal(
         ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> {unresolved_count} params need input")
     else:
         ctx_info(ctx, f"[ROUTER] Goal set: {goal} -> status: {status}")
+
+    if result.get("status") == "needs_input" and "clarification" not in result:
+        plan = build_clarification_plan(
+            goal=goal,
+            workflow_name=result.get("workflow") or "unknown_workflow",
+            unresolved_fields=result.get("unresolved", []),
+        )
+        if not plan.is_empty:
+            result["clarification"] = build_fallback_payload(plan).model_dump()
 
     return json.dumps(result, indent=2, ensure_ascii=False)
 

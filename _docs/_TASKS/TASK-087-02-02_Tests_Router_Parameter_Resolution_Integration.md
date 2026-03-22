@@ -1,7 +1,7 @@
 # TASK-087-02-02: Tests and Docs Router Parameter Resolution Integration
 
 **Parent:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-087-02-01](./TASK-087-02-01_Core_Router_Parameter_Resolution_Integration.md)
 

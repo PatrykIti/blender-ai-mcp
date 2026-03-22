@@ -1,7 +1,7 @@
 # TASK-087-01: Clarification Requirements Model and MCP Elicitation Mapping
 
 **Parent:** [TASK-087](./TASK-087_Structured_User_Elicitation.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 

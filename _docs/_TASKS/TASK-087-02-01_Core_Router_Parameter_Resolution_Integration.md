@@ -1,7 +1,7 @@
 # TASK-087-02-01: Core Router Parameter Resolution Integration
 
 **Parent:** [TASK-087-02](./TASK-087-02_Router_Parameter_Resolution_Integration.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-087-01](./TASK-087-01_Elicitation_Domain_Model_and_Response_Contracts.md)
 
