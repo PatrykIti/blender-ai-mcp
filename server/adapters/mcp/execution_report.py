@@ -5,14 +5,13 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.execution_context import MCPExecutionContext
 
 
-@dataclass(frozen=True)
-class ExecutionStep:
+class ExecutionStep(MCPContract):
     """One executed tool step in a router-aware call path."""
 
     tool_name: str
@@ -21,20 +20,19 @@ class ExecutionStep:
     error: str | None = None
 
 
-@dataclass(frozen=True)
-class MCPExecutionReport:
+class MCPExecutionReport(MCPContract):
     """Structured report for one adapter-level tool execution."""
 
     context: MCPExecutionContext
     router_enabled: bool
     router_applied: bool
-    steps: tuple[ExecutionStep, ...] = field(default_factory=tuple)
+    steps: tuple[ExecutionStep, ...] = ()
     error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a structured dict representation."""
 
-        return asdict(self)
+        return self.model_dump()
 
     def to_legacy_text(self) -> str:
         """Render the report as the existing string-based MCP adapter contract."""

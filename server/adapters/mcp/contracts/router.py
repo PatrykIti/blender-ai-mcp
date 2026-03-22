@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
-
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 
@@ -39,6 +37,12 @@ class RouterGoalResponseContract(MCPContract):
 
 
 class RouterStatusContract(MCPContract):
-    """Structured contract placeholder for router_get_status."""
+    """Structured contract for router_get_status."""
 
-    model_config = ConfigDict(extra="allow")
+    enabled: bool
+    initialized: bool | None = None
+    ready: bool | None = None
+    component_status: dict[str, bool] | None = None
+    stats: dict[str, Any] | None = None
+    config: str | None = None
+    message: str | None = None

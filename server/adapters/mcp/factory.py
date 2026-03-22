@@ -54,5 +54,6 @@ def build_server(surface_profile: str = "legacy-flat") -> FastMCP:
     server._bam_transform_count = len(transforms)
     server._bam_transform_pipeline = tuple(stage.name for stage in pipeline)
     server._bam_timeout_policy = timeout_policy
+    server._bam_delivery_mode = surface.delivery_mode
 
     return server

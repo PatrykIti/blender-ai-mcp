@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
+from server.adapters.mcp.contracts.base import MCPContract
 
-@dataclass(frozen=True)
-class MCPExecutionContext:
+
+class MCPExecutionContext(MCPContract):
     """Normalized execution context for one adapter-level tool call."""
 
     tool_name: str

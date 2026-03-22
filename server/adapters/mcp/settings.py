@@ -6,10 +6,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 
 ProviderBuilder = Callable[[], Any]
+DeliveryMode = Literal["structured_first", "compatibility"]
 
 
 @dataclass(frozen=True)
@@ -23,3 +24,4 @@ class SurfaceProfileSettings:
     tasks_enabled: bool = False
     instructions: str | None = None
     transform_builders: tuple[Callable[[], Any], ...] = field(default_factory=tuple)
+    delivery_mode: DeliveryMode = "structured_first"

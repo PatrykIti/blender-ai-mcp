@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 
-from server.adapters.mcp.areas.router import router_set_goal
+from server.adapters.mcp.areas.router import router_get_status, router_set_goal
 from server.adapters.mcp.areas.workflow_catalog import workflow_catalog
-from server.adapters.mcp.contracts.router import RouterGoalResponseContract
+from server.adapters.mcp.contracts.router import RouterGoalResponseContract, RouterStatusContract
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 
 
@@ -64,3 +64,26 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     assert isinstance(result, WorkflowCatalogResponseContract)
     assert result.action == "list"
     assert result.count == 1
+
+
+def test_router_get_status_returns_structured_contract(monkeypatch):
+    """router_get_status should return a typed status contract instead of prose text."""
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_router_status",
+        lambda: {
+            "enabled": True,
+            "initialized": True,
+            "ready": True,
+            "component_status": {"classifier": True},
+            "stats": {"total_calls": 3},
+            "config": "RouterConfig(...)",
+        },
+    )
+
+    callable_router_get_status = getattr(router_get_status, "fn", router_get_status)
+    result = callable_router_get_status(DummyContext())
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.enabled is True
+    assert result.stats["total_calls"] == 3

@@ -25,6 +25,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=100,
         tasks_enabled=False,
+        delivery_mode="compatibility",
     ),
     "llm-guided": SurfaceProfileSettings(
         name="llm-guided",
@@ -36,6 +37,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=50,
         tasks_enabled=True,
+        delivery_mode="structured_first",
     ),
     "internal-debug": SurfaceProfileSettings(
         name="internal-debug",
@@ -48,6 +50,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=100,
         tasks_enabled=True,
+        delivery_mode="structured_first",
     ),
     "code-mode-pilot": SurfaceProfileSettings(
         name="code-mode-pilot",
@@ -60,6 +63,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=50,
         tasks_enabled=True,
+        delivery_mode="structured_first",
     ),
 }
 

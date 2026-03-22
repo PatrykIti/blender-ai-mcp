@@ -16,7 +16,10 @@ import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
 from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
-from server.adapters.mcp.contracts.router import RouterGoalResponseContract
+from server.adapters.mcp.contracts.router import (
+    RouterGoalResponseContract,
+    RouterStatusContract,
+)
 from server.adapters.mcp.elicitation_contracts import (
     build_clarification_plan,
     build_elicitation_response_type,
@@ -30,6 +33,7 @@ from server.adapters.mcp.session_capabilities import (
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.router_helper import get_router_status
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_router_handler
 
@@ -197,7 +201,7 @@ async def router_set_goal(
 
 
 @mcp.tool()
-def router_get_status(ctx: Context) -> str:
+def router_get_status(ctx: Context) -> RouterStatusContract:
     """
     [SYSTEM][SAFE] Get current Router Supervisor status.
 
@@ -207,8 +211,7 @@ def router_get_status(ctx: Context) -> str:
     - Router statistics
     - Component status
     """
-    handler = get_router_handler()
-    return handler.get_status()
+    return RouterStatusContract.model_validate(get_router_status())
 
 
 @mcp.tool()

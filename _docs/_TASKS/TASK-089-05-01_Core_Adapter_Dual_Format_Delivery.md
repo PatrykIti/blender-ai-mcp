@@ -1,7 +1,7 @@
 # TASK-089-05-01: Core Adapter Dual-Format Delivery Strategy
 
 **Parent:** [TASK-089-05](./TASK-089-05_Adapter_Dual_Format_Delivery_Strategy.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md), [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md), [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md)
 
