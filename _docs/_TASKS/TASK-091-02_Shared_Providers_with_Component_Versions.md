@@ -1,7 +1,7 @@
 # TASK-091-02: Shared Providers with Component Versions
 
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Attach versions to shared provider components so more than one public contract can coexist without duplicating handler implementations.
+
+## Completion Summary
+
+This slice is now closed.
+
+- selected public-evolution capabilities now expose explicit component versions on shared providers
+- handler implementations remain shared; versioning lives at the provider/component layer
 
 ---
 

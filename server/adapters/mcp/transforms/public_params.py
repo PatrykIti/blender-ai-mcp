@@ -52,8 +52,13 @@ HIDDEN_ARGUMENTS: dict[tuple[str, str], set[str]] = {
 def build_public_param_transforms(
     tool_name: str,
     audience: str,
+    *,
+    contract_line: str | None = None,
 ) -> dict[str, ArgTransformConfig]:
     """Build argument transform configs for a public contract audience."""
+
+    if contract_line == "llm-guided-v1":
+        return {}
 
     transforms: dict[str, ArgTransformConfig] = {}
 

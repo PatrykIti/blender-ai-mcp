@@ -5,18 +5,22 @@ from server.adapters.mcp.platform.name_resolution import (
     get_llm_guided_alias_map,
     resolve_canonical_tool_name,
 )
+from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V1, CONTRACT_LINE_LLM_GUIDED_V2
 
 
 def test_llm_guided_alias_map_resolves_public_names():
     """Public aliases should resolve back to canonical internal tool ids."""
 
-    alias_map = get_llm_guided_alias_map()
+    alias_map = get_llm_guided_alias_map(contract_line=CONTRACT_LINE_LLM_GUIDED_V2)
+    legacy_guided_alias_map = get_llm_guided_alias_map(contract_line=CONTRACT_LINE_LLM_GUIDED_V1)
 
     assert alias_map["check_scene"] == "scene_context"
     assert alias_map["inspect_scene"] == "scene_inspect"
     assert alias_map["browse_workflows"] == "workflow_catalog"
+    assert legacy_guided_alias_map["scene_context"] == "scene_context"
 
-    assert resolve_canonical_tool_name("check_scene") == "scene_context"
+    assert resolve_canonical_tool_name("check_scene", contract_line=CONTRACT_LINE_LLM_GUIDED_V2) == "scene_context"
+    assert resolve_canonical_tool_name("scene_context", contract_line=CONTRACT_LINE_LLM_GUIDED_V1) == "scene_context"
     assert resolve_canonical_tool_name("workflow_catalog") == "workflow_catalog"
 
 

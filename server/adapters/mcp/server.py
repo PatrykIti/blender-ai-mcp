@@ -46,6 +46,7 @@ def run(surface_profile: str | None = None):
     else:
         logger.info("Router Supervisor DISABLED - direct tool execution mode")
     logger.info("MCP surface profile: %s", selected_surface)
+    logger.info("MCP contract line: %s", getattr(server, "_bam_contract_line", None))
 
     try:
         server.run()

@@ -19,6 +19,7 @@ from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.version_policy import get_versioned_tool_versions
 from server.infrastructure.di import get_scene_handler
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -55,6 +56,17 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
+    versions = get_versioned_tool_versions(tool_name)
+    if versions:
+        registered = None
+        for version in versions:
+            registered = target.tool(
+                fn,
+                name=tool_name,
+                version=version,
+                tags=set(get_capability_tags("scene")),
+            )
+        return registered
     return target.tool(fn, name=tool_name, tags=set(get_capability_tags("scene")))
 
 

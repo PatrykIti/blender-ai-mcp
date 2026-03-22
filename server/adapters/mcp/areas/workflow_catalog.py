@@ -13,6 +13,7 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.elicitation_contracts import build_fallback_payload
+from server.adapters.mcp.version_policy import get_versioned_tool_versions
 from server.router.domain.entities.elicitation import ClarificationPlan, ClarificationRequirement
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_workflow_catalog_handler
@@ -27,6 +28,17 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
+    versions = get_versioned_tool_versions(tool_name)
+    if versions:
+        registered = None
+        for version in versions:
+            registered = target.tool(
+                fn,
+                name=tool_name,
+                version=version,
+                tags=set(get_capability_tags("workflow_catalog")),
+            )
+        return registered
     return target.tool(fn, name=tool_name, tags=set(get_capability_tags("workflow_catalog")))
 
 

@@ -12,6 +12,7 @@ from fastmcp.tools.tool_transform import ToolTransformConfig
 
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
+from server.adapters.mcp.platform.public_contracts import get_public_contract
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.transforms.public_params import build_public_param_transforms
 
@@ -28,13 +29,17 @@ def build_naming_transform(surface: SurfaceProfileSettings) -> Any | None:
     transforms: dict[str, ToolTransformConfig] = {}
 
     for entry in get_capability_manifest():
-        contract = next(
-            contract
-            for contract in entry.public_contracts
-            if contract.audience == AUDIENCE_LLM_GUIDED
+        contract = get_public_contract(
+            entry,
+            contract_line=surface.default_contract_line,
+            audience=AUDIENCE_LLM_GUIDED,
         )
         for internal_name, public_name in contract.tool_name_map:
-            arg_transforms = build_public_param_transforms(internal_name, AUDIENCE_LLM_GUIDED)
+            arg_transforms = build_public_param_transforms(
+                internal_name,
+                AUDIENCE_LLM_GUIDED,
+                contract_line=surface.default_contract_line,
+            )
             if public_name == internal_name and not arg_transforms:
                 continue
             transforms[internal_name] = ToolTransformConfig(

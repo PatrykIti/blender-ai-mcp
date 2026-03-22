@@ -1,7 +1,7 @@
 # TASK-091-05: Versioned Surface Tests and Documentation
 
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-091-04](./TASK-091-04_Client_Selection_and_Bootstrap_Configuration.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Add coexistence tests and migration documentation for the versioned-surface model.
+
+## Completion Summary
+
+This slice is now closed.
+
+- coexistence/rollback tests now cover the current versioned surface baseline
+- public docs describe the contract-line matrix and the guided-surface rollback path
 
 ---
 

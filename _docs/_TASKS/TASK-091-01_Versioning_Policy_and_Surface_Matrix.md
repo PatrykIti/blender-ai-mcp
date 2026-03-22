@@ -1,7 +1,7 @@
 # TASK-091-01: Versioning Policy and Surface Matrix
 
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Define the surface matrix and the lifecycle rules for public component versions.
+
+## Completion Summary
+
+This slice is now closed.
+
+- the repo has an explicit surface-profile matrix and contract-line matrix
+- contract-line selection is platform-owned rather than scattered across transforms or adapters
 
 ---
 

@@ -14,6 +14,7 @@ from fastmcp.tools.tool import Tool
 
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
 from server.adapters.mcp.settings import SurfaceProfileSettings
+from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
 
 from .search_documents import build_search_documents
 from .tool_inventory import build_discovery_entry_map, get_pinned_public_tools
@@ -68,8 +69,9 @@ def build_search_transform(surface: SurfaceProfileSettings) -> BM25SearchTransfo
         return None
 
     audience = AUDIENCE_LLM_GUIDED if surface.name == "llm-guided" else AUDIENCE_LLM_GUIDED
-    pinned = list(get_pinned_public_tools(audience=audience))
-    entry_map = build_discovery_entry_map(audience=audience)
+    contract_line = surface.default_contract_line or CONTRACT_LINE_LLM_GUIDED_V2
+    pinned = list(get_pinned_public_tools(audience=audience, contract_line=contract_line))
+    entry_map = build_discovery_entry_map(audience=audience, contract_line=contract_line)
 
     return BlenderDiscoverySearchTransform(
         max_results=surface.search_max_results,

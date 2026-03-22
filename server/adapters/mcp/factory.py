@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
 from server.adapters.mcp.settings import SurfaceProfileSettings
-from server.adapters.mcp.surfaces import get_surface_profile
+from server.adapters.mcp.surfaces import resolve_surface_contract_profile
 from server.adapters.mcp.timeout_policy import build_timeout_policy
 from server.adapters.mcp.transforms import (
     build_surface_transform_pipeline,
@@ -24,11 +24,19 @@ def build_surface_providers(surface: SurfaceProfileSettings) -> list[object]:
     return [builder() for builder in surface.provider_builders]
 
 
-def build_server(surface_profile: str = "legacy-flat") -> FastMCP:
+def build_server(
+    surface_profile: str = "legacy-flat",
+    *,
+    contract_line: str | None = None,
+) -> FastMCP:
     """Build a FastMCP server from the configured surface profile."""
 
     config = get_config()
-    surface = get_surface_profile(surface_profile)
+    selected_contract_line = contract_line or config.MCP_DEFAULT_CONTRACT_LINE
+    surface = resolve_surface_contract_profile(
+        surface_profile,
+        contract_line=selected_contract_line,
+    )
     providers = build_surface_providers(surface)
     pipeline = build_surface_transform_pipeline(surface)
     transforms = materialize_transforms(surface)
@@ -55,5 +63,6 @@ def build_server(surface_profile: str = "legacy-flat") -> FastMCP:
     server._bam_transform_pipeline = tuple(stage.name for stage in pipeline)
     server._bam_timeout_policy = timeout_policy
     server._bam_delivery_mode = surface.delivery_mode
+    server._bam_contract_line = surface.default_contract_line
 
     return server

@@ -1,7 +1,7 @@
 # TASK-091-03: Version-Filtered Server Composition
 
 **Parent:** [TASK-091](./TASK-091_Versioned_Client_Surfaces.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-091-02](./TASK-091-02_Shared_Providers_with_Component_Versions.md)
 
@@ -10,6 +10,13 @@
 ## Objective
 
 Compose separate public surfaces through version filtering instead of forking the entire tool catalog.
+
+## Completion Summary
+
+This slice is now closed.
+
+- built-in `VersionFilter` is now part of surface composition
+- version filtering coexists with profile selection and does not replace naming or visibility policy
 
 ---
 

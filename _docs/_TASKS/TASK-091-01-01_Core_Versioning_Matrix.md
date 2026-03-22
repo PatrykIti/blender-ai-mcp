@@ -1,7 +1,7 @@
 # TASK-091-01-01: Core Versioning Policy and Surface Matrix
 
 **Parent:** [TASK-091-01](./TASK-091-01_Versioning_Policy_and_Surface_Matrix.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md), [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md), [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md)
 

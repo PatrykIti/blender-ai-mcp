@@ -27,3 +27,5 @@ class SurfaceProfileSettings:
     delivery_mode: DeliveryMode = "structured_first"
     search_enabled: bool = False
     search_max_results: int = 5
+    default_contract_line: str | None = None
+    allowed_contract_lines: tuple[str, ...] = field(default_factory=tuple)

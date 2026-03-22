@@ -67,6 +67,15 @@ def register_router_tools(target: Any) -> Dict[str, Any]:
     }
 
 
+def _get_runtime_contract_line(ctx: Context) -> str | None:
+    """Best-effort current contract-line lookup from the running server."""
+
+    try:
+        return getattr(ctx.fastmcp, "_bam_contract_line", None)
+    except Exception:
+        return None
+
+
 async def _maybe_elicit_router_answers(
     ctx: Context,
     goal: str,
@@ -224,6 +233,7 @@ async def router_set_goal(
         result,
         provided_answers=merged_resolved_params,
         surface_profile=get_config().MCP_SURFACE_PROFILE,
+        contract_version=_get_runtime_contract_line(ctx),
     )
     await apply_visibility_for_session_state(ctx, state)
 
@@ -253,6 +263,7 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
     """
     session = get_session_capability_state(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
+    contract_line = session.contract_version or _get_runtime_contract_line(ctx)
     diagnostics = build_visibility_diagnostics(surface_profile, session.phase)
     status_payload = get_router_status()
     status_payload.update(
@@ -260,6 +271,7 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
             "current_goal": session.goal,
             "current_phase": session.phase.value,
             "surface_profile": surface_profile,
+            "contract_version": contract_line,
             "pending_clarification": session.pending_clarification,
             "pending_question_set_id": session.pending_question_set_id,
             "partial_answers": session.partial_answers,
@@ -288,6 +300,7 @@ async def router_clear_goal(ctx: Context) -> str:
     state = clear_session_goal_state(
         ctx,
         surface_profile=get_config().MCP_SURFACE_PROFILE,
+        contract_version=_get_runtime_contract_line(ctx),
     )
     await apply_visibility_for_session_state(ctx, state)
     ctx_info(ctx, "[ROUTER] Goal cleared")

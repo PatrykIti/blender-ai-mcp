@@ -122,6 +122,17 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 On structured surfaces, these tools expose native structured payloads aligned with declared schemas.
 Compatibility surfaces can still preserve deterministic text fallback where explicitly required.
 
+### Versioned Surface Baseline
+
+Public surface evolution now has an explicit coexistence path:
+
+- `legacy-flat` defaults to contract line `legacy-v1`
+- `llm-guided` defaults to contract line `llm-guided-v2`
+- `llm-guided-v1` remains selectable as a rollback / compatibility line for the guided surface
+
+Selected public-evolution capabilities such as `scene_context`, `scene_inspect`, and `workflow_catalog`
+now expose explicit component versions, while unchanged capabilities remain unversioned and shared.
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ### Session-Adaptive Guided Mode

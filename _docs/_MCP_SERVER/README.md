@@ -103,6 +103,25 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 
 These tools return native structured payloads on contract-enabled paths and use the shared contract helpers/output-schema policy instead of prose-first JSON-string wrappers.
 
+## Versioned Client Surface Baseline
+
+The repo now has an explicit contract-line matrix on top of the existing surface profiles:
+
+| Surface Profile | Default Contract Line |
+|---|---|
+| `legacy-flat` | `legacy-v1` |
+| `llm-guided` | `llm-guided-v2` |
+| `internal-debug` | `llm-guided-v2` |
+| `code-mode-pilot` | `llm-guided-v2` |
+
+Current guided-surface rollback/coexistence path:
+
+- `llm-guided-v1` = earlier guided public line
+- `llm-guided-v2` = current guided public line
+
+Bootstrap/config can override the default contract line through `MCP_DEFAULT_CONTRACT_LINE`.
+Version filtering is applied in the transform pipeline; profile selection and contract-line selection remain separate axes.
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

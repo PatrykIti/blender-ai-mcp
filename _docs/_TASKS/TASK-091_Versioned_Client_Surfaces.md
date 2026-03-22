@@ -4,7 +4,9 @@
 **Category:** FastMCP Platform  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083, TASK-086, TASK-089  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has an explicit contract-line matrix, versioned coexistence for the public-evolution capabilities, built-in `VersionFilter` composition in the transform pipeline, bootstrap selection through `MCP_DEFAULT_CONTRACT_LINE`, and tests/docs proving safe coexistence and rollback between `legacy-v1`, `llm-guided-v1`, and `llm-guided-v2`.
 
 ---
 

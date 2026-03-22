@@ -1,7 +1,7 @@
 # TASK-091-04-01: Core Client Selection and Bootstrap Configuration
 
 **Parent:** [TASK-091-04](./TASK-091-04_Client_Selection_and_Bootstrap_Configuration.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-091-03](./TASK-091-03_Version_Filtered_Server_Composition.md)
 

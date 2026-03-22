@@ -13,6 +13,8 @@ from server.adapters.mcp.platform.capability_manifest import (
 )
 from server.adapters.mcp.platform.naming_rules import AUDIENCE_LLM_GUIDED
 from server.router.infrastructure.metadata_loader import MetadataLoader, ToolMetadata
+from server.adapters.mcp.version_policy import CONTRACT_LINE_LLM_GUIDED_V2
+from server.adapters.mcp.platform.public_contracts import get_public_contract
 
 from .taxonomy import normalize_discovery_category
 
@@ -36,11 +38,13 @@ class DiscoveryEntry:
 def _resolve_public_contract(
     entry: CapabilityManifestEntry,
     audience: str,
+    contract_line: str | None,
 ) -> tuple[tuple[str, str], ...]:
-    for contract in entry.public_contracts:
-        if contract.audience == audience:
-            return contract.tool_name_map
-    return ()
+    return get_public_contract(
+        entry,
+        contract_line=contract_line,
+        audience=audience,
+    ).tool_name_map
 
 
 def _build_aliases(
@@ -63,6 +67,7 @@ def _build_aliases(
 def build_discovery_inventory(
     *,
     audience: str = AUDIENCE_LLM_GUIDED,
+    contract_line: str | None = CONTRACT_LINE_LLM_GUIDED_V2,
     metadata_loader: MetadataLoader | None = None,
 ) -> tuple[DiscoveryEntry, ...]:
     """Build the canonical discovery inventory for one public audience."""
@@ -74,7 +79,7 @@ def build_discovery_inventory(
     seen_public_names: set[str] = set()
 
     for manifest_entry in manifest:
-        tool_name_map = _resolve_public_contract(manifest_entry, audience)
+        tool_name_map = _resolve_public_contract(manifest_entry, audience, contract_line)
         if not tool_name_map:
             continue
 
@@ -105,6 +110,7 @@ def build_discovery_inventory(
 def build_discovery_entry_map(
     *,
     audience: str = AUDIENCE_LLM_GUIDED,
+    contract_line: str | None = CONTRACT_LINE_LLM_GUIDED_V2,
     metadata_loader: MetadataLoader | None = None,
 ) -> dict[str, DiscoveryEntry]:
     """Return discovery entries keyed by public tool name."""
@@ -113,6 +119,7 @@ def build_discovery_entry_map(
         entry.public_name: entry
         for entry in build_discovery_inventory(
             audience=audience,
+            contract_line=contract_line,
             metadata_loader=metadata_loader,
         )
     }
@@ -121,6 +128,7 @@ def build_discovery_entry_map(
 def get_pinned_public_tools(
     *,
     audience: str = AUDIENCE_LLM_GUIDED,
+    contract_line: str | None = CONTRACT_LINE_LLM_GUIDED_V2,
     metadata_loader: MetadataLoader | None = None,
 ) -> tuple[str, ...]:
     """Return the pinned public tools for an audience."""
@@ -129,6 +137,7 @@ def get_pinned_public_tools(
         entry.public_name
         for entry in build_discovery_inventory(
             audience=audience,
+            contract_line=contract_line,
             metadata_loader=metadata_loader,
         )
         if entry.pinned and not entry.hidden_from_search

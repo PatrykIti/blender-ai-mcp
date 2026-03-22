@@ -16,6 +16,7 @@ class Config(BaseModel):
 
     # MCP Surface / Factory
     MCP_SURFACE_PROFILE: str = Field(default="legacy-flat", description="Bootstrap surface profile")
+    MCP_DEFAULT_CONTRACT_LINE: str | None = Field(default=None, description="Optional default public contract line")
     MCP_LIST_PAGE_SIZE: int = Field(default=100, description="Default MCP list page size")
     MCP_TOOL_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="Foreground MCP tool timeout")
     MCP_TASK_TIMEOUT_SECONDS: float = Field(default=300.0, gt=0, description="Background MCP task timeout")
@@ -40,6 +41,7 @@ def get_config() -> Config:
         ROUTER_ENABLED=os.getenv("ROUTER_ENABLED", "true").lower() in ("true", "1", "yes"),
         ROUTER_LOG_DECISIONS=os.getenv("ROUTER_LOG_DECISIONS", "true").lower() in ("true", "1", "yes"),
         MCP_SURFACE_PROFILE=os.getenv("MCP_SURFACE_PROFILE", "legacy-flat"),
+        MCP_DEFAULT_CONTRACT_LINE=os.getenv("MCP_DEFAULT_CONTRACT_LINE") or None,
         MCP_LIST_PAGE_SIZE=int(os.getenv("MCP_LIST_PAGE_SIZE", 100)),
         MCP_TOOL_TIMEOUT_SECONDS=float(os.getenv("MCP_TOOL_TIMEOUT_SECONDS", 30.0)),
         MCP_TASK_TIMEOUT_SECONDS=float(os.getenv("MCP_TASK_TIMEOUT_SECONDS", 300.0)),

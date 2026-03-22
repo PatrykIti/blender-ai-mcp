@@ -53,3 +53,11 @@ def test_factory_bootstrap_no_longer_imports_areas_side_effect_registry():
 
     assert "import server.adapters.mcp.areas" not in server_source
     assert "from server.adapters.mcp.instance import mcp" not in server_source
+
+
+def test_build_server_can_use_explicit_contract_line_override():
+    """Factory should surface the selected contract line explicitly for versioned surfaces."""
+
+    server = build_server("llm-guided", contract_line="llm-guided-v1")
+
+    assert server._bam_contract_line == "llm-guided-v1"

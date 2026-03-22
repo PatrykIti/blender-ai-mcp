@@ -26,7 +26,22 @@ def build_version_filter_transform(surface: SurfaceProfileSettings) -> Any | Non
     version rules once public contract lines exist.
     """
 
-    return None
+    if surface.default_contract_line is None:
+        return None
+
+    from fastmcp.server.transforms.version_filter import VersionFilter
+
+    from server.adapters.mcp.version_policy import get_contract_line_spec
+
+    spec = get_contract_line_spec(surface.default_contract_line)
+    if spec.version_gte is None and spec.version_lt is None:
+        return None
+
+    return VersionFilter(
+        version_gte=spec.version_gte,
+        version_lt=spec.version_lt,
+        include_unversioned=spec.include_unversioned,
+    )
 
 
 def build_surface_transform_pipeline(
