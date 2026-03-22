@@ -24,4 +24,4 @@ def test_llm_guided_profile_uses_guided_mode_defaults():
     assert preset.guided_mode is True
     assert preset.default_phase == SessionPhase.BOOTSTRAP
     assert preset.entry_capability_ids == ("router", "workflow_catalog")
-    assert preset.search_enabled_by_default is False
+    assert preset.search_enabled_by_default is True

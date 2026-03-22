@@ -10,8 +10,11 @@ from server.adapters.mcp.platform.runtime_inventory import (
     AREAS_DIR,
     AREAS_INIT_PATH,
     FASTMCP_BASELINE,
+    FASTMCP_DEPENDENCY_DECLARATION,
     MCP_RUNTIME_COUPLINGS,
     MCP_SURFACE_MODULES,
+    PYDOCKET_BASELINE,
+    PYDOCKET_DEPENDENCY_DECLARATION,
     REPO_ROOT,
     ROUTER_METADATA_DIR,
     SUPPORTED_PYTHON_BASELINE,
@@ -87,7 +90,8 @@ def test_runtime_inventory_baseline_matches_pyproject():
     dependencies = project["dependencies"]
 
     assert project["requires-python"] == SUPPORTED_PYTHON_BASELINE
-    assert f"fastmcp ({FASTMCP_BASELINE})" in dependencies
+    assert f"{FASTMCP_DEPENDENCY_DECLARATION} ({FASTMCP_BASELINE})" in dependencies
+    assert f"{PYDOCKET_DEPENDENCY_DECLARATION} ({PYDOCKET_BASELINE})" in dependencies
 
 
 def test_runtime_inventory_documents_required_coupling_points():

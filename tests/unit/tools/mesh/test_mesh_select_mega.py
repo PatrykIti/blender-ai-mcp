@@ -16,7 +16,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_all.return_value = "All selected"
-        result = mesh_select.fn(self.mock_ctx, action="all")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="all")
 
         mock_select_all.assert_called_once_with(self.mock_ctx, deselect=False)
         assert result == "All selected"
@@ -28,7 +29,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_all.return_value = "All deselected"
-        result = mesh_select.fn(self.mock_ctx, action="none")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="none")
 
         mock_select_all.assert_called_once_with(self.mock_ctx, deselect=True)
         assert result == "All deselected"
@@ -40,7 +42,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_linked.return_value = "Linked selected"
-        result = mesh_select.fn(self.mock_ctx, action="linked")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="linked")
 
         mock_select_linked.assert_called_once_with(self.mock_ctx)
         assert result == "Linked selected"
@@ -52,7 +55,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_more.return_value = "Selection expanded"
-        result = mesh_select.fn(self.mock_ctx, action="more")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="more")
 
         mock_select_more.assert_called_once_with(self.mock_ctx)
         assert result == "Selection expanded"
@@ -64,7 +68,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_less.return_value = "Selection contracted"
-        result = mesh_select.fn(self.mock_ctx, action="less")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="less")
 
         mock_select_less.assert_called_once_with(self.mock_ctx)
         assert result == "Selection contracted"
@@ -76,7 +81,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_boundary.return_value = "Boundary selected"
-        result = mesh_select.fn(self.mock_ctx, action="boundary")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="boundary")
 
         mock_select_boundary.assert_called_once_with(self.mock_ctx, mode="EDGE")
         assert result == "Boundary selected"
@@ -88,7 +94,8 @@ class TestMeshSelectMega:
         from server.adapters.mcp.areas.mesh import mesh_select
 
         mock_select_boundary.return_value = "Boundary vertices selected"
-        result = mesh_select.fn(self.mock_ctx, action="boundary", boundary_mode="VERT")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="boundary", boundary_mode="VERT")
 
         mock_select_boundary.assert_called_once_with(self.mock_ctx, mode="VERT")
         assert result == "Boundary vertices selected"
@@ -98,7 +105,8 @@ class TestMeshSelectMega:
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.mesh import mesh_select
 
-        result = mesh_select.fn(self.mock_ctx, action="invalid")
+        callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
+        result = callable_mesh_select(self.mock_ctx, action="invalid")
 
         assert "Unknown action" in result
         assert "invalid" in result

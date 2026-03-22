@@ -16,7 +16,8 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         mock_select_by_index.return_value = "Selected by index"
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="by_index",
             indices=[0, 1, 2],
@@ -34,7 +35,8 @@ class TestMeshSelectTargetedMega:
         """Test action='by_index' without indices returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(self.mock_ctx, action="by_index")
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(self.mock_ctx, action="by_index")
 
         assert "Error" in result
         assert "indices" in result
@@ -46,7 +48,8 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         mock_select_loop.return_value = "Loop selected"
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="loop",
             edge_index=5
@@ -60,7 +63,8 @@ class TestMeshSelectTargetedMega:
         """Test action='loop' without edge_index returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(self.mock_ctx, action="loop")
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(self.mock_ctx, action="loop")
 
         assert "Error" in result
         assert "edge_index" in result
@@ -72,7 +76,8 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         mock_select_ring.return_value = "Ring selected"
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="ring",
             edge_index=3
@@ -86,7 +91,8 @@ class TestMeshSelectTargetedMega:
         """Test action='ring' without edge_index returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(self.mock_ctx, action="ring")
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(self.mock_ctx, action="ring")
 
         assert "Error" in result
         assert "edge_index" in result
@@ -98,7 +104,8 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         mock_select_by_location.return_value = "Selected by location"
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="by_location",
             axis="Z",
@@ -117,7 +124,8 @@ class TestMeshSelectTargetedMega:
         """Test action='by_location' without axis returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="by_location",
             min_coord=0.5,
@@ -132,7 +140,8 @@ class TestMeshSelectTargetedMega:
         """Test action='by_location' without coords returns error."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="by_location",
             axis="Z"
@@ -145,7 +154,8 @@ class TestMeshSelectTargetedMega:
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
-        result = mesh_select_targeted.fn(self.mock_ctx, action="invalid")
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(self.mock_ctx, action="invalid")
 
         assert "Unknown action" in result
         assert "invalid" in result
@@ -161,7 +171,8 @@ class TestMeshSelectTargetedMega:
         from server.adapters.mcp.areas.mesh import mesh_select_targeted
 
         mock_select_by_index.return_value = "Faces selected"
-        result = mesh_select_targeted.fn(
+        callable_mesh_select_targeted = getattr(mesh_select_targeted, "fn", mesh_select_targeted)
+        result = callable_mesh_select_targeted(
             self.mock_ctx,
             action="by_index",
             indices=[0, 1],

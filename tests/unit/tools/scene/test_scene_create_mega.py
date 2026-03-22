@@ -15,7 +15,8 @@ class TestSceneCreateMega:
         from server.adapters.mcp.areas.scene import scene_create
 
         mock_create_light.return_value = "Light created"
-        result = scene_create.fn(
+        callable_scene_create = getattr(scene_create, "fn", scene_create)
+        result = callable_scene_create(
             self.mock_ctx,
             action="light",
             light_type="SUN",
@@ -32,7 +33,8 @@ class TestSceneCreateMega:
         from server.adapters.mcp.areas.scene import scene_create
 
         mock_create_camera.return_value = "Camera created"
-        result = scene_create.fn(
+        callable_scene_create = getattr(scene_create, "fn", scene_create)
+        result = callable_scene_create(
             self.mock_ctx,
             action="camera",
             location=[0, -10, 5],
@@ -49,7 +51,8 @@ class TestSceneCreateMega:
         from server.adapters.mcp.areas.scene import scene_create
 
         mock_create_empty.return_value = "Empty created"
-        result = scene_create.fn(
+        callable_scene_create = getattr(scene_create, "fn", scene_create)
+        result = callable_scene_create(
             self.mock_ctx,
             action="empty",
             empty_type="ARROWS",
@@ -63,7 +66,8 @@ class TestSceneCreateMega:
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.scene import scene_create
 
-        result = scene_create.fn(self.mock_ctx, action="invalid")
+        callable_scene_create = getattr(scene_create, "fn", scene_create)
+        result = callable_scene_create(self.mock_ctx, action="invalid")
 
         assert "Unknown action" in result
         assert "invalid" in result
@@ -77,7 +81,8 @@ class TestSceneCreateMega:
         from server.adapters.mcp.areas.scene import scene_create
 
         mock_create_light.return_value = "Light created"
-        result = scene_create.fn(self.mock_ctx, action="light")
+        callable_scene_create = getattr(scene_create, "fn", scene_create)
+        result = callable_scene_create(self.mock_ctx, action="light")
 
         mock_create_light.assert_called_once()
         # Verify default light_type is POINT

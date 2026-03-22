@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [127](./127-2026-03-22-fastmcp-3x-test-alignment.md) | 2026-03-22 | **FastMCP 3.x test alignment after MCP server migration** | - |
 | [126](./126-2026-03-20-runtime-boundaries-fastmcp-3x-strategy.md) | 2026-03-20 | **Runtime boundaries + FastMCP 3.x strategy docs** | - |
 | [125](./125-2025-12-21-workflow-catalog-inline-chunked-import.md) | 2025-12-21 | **Workflow catalog inline + chunked import** | - |
 | [124](./124-2025-12-21-mesh-inspect-paging.md) | 2025-12-21 | **Mesh inspect paging** | - |
