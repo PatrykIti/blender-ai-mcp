@@ -1,7 +1,7 @@
 # TASK-085-01-02: Tests and Docs Session State Model and Capability Phases
 
 **Parent:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md)  
-**Status:** ⬜ Planned  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-085-01-01](./TASK-085-01-01_Core_Session_State_Capability.md)
 

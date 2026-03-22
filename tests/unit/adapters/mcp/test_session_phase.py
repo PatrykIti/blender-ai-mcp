@@ -1,0 +1,85 @@
+"""Tests for session phase and capability state helpers."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from server.adapters.mcp.session_capabilities import (
+    clear_session_goal_state,
+    get_session_capability_state,
+    infer_phase_from_router_status,
+    update_session_from_router_goal,
+)
+from server.adapters.mcp.session_phase import (
+    FIRST_PASS_ACTIVE_PHASES,
+    SessionPhase,
+    coerce_session_phase,
+)
+
+
+@dataclass
+class FakeContext:
+    """Minimal Context-like state store for unit tests."""
+
+    state: dict[str, object] = field(default_factory=dict)
+
+    def get_state(self, key: str):
+        return self.state.get(key)
+
+    def set_state(self, key: str, value, *, serializable: bool = True) -> None:
+        self.state[key] = value
+
+
+def test_session_phase_coercion_uses_canonical_subset_defaults():
+    """Unknown values should collapse back to bootstrap instead of inventing phase labels."""
+
+    assert coerce_session_phase(None) == SessionPhase.BOOTSTRAP
+    assert coerce_session_phase("planning") == SessionPhase.PLANNING
+    assert coerce_session_phase("inspect") == SessionPhase.BOOTSTRAP
+    assert FIRST_PASS_ACTIVE_PHASES == (
+        SessionPhase.BOOTSTRAP,
+        SessionPhase.PLANNING,
+        SessionPhase.BUILD,
+        SessionPhase.INSPECT_VALIDATE,
+    )
+
+
+def test_infer_phase_from_router_status_uses_coarse_first_pass_mapping():
+    """Router statuses should map onto the coarse first-pass phase set."""
+
+    assert infer_phase_from_router_status("needs_input") == SessionPhase.PLANNING
+    assert infer_phase_from_router_status("no_match") == SessionPhase.PLANNING
+    assert infer_phase_from_router_status("ready") == SessionPhase.BUILD
+
+
+def test_update_session_from_router_goal_persists_goal_and_clarification_state():
+    """router_set_goal responses should update session state consistently."""
+
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "needs_input",
+            "unresolved": [{"param": "height"}],
+        },
+    )
+
+    assert state.phase == SessionPhase.PLANNING
+    assert state.goal == "chair"
+    assert state.pending_clarification == [{"param": "height"}]
+    assert get_session_capability_state(ctx).last_router_status == "needs_input"
+
+
+def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
+    """Clearing the current goal should reset goal-scoped state but keep the session usable."""
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "chair", {"status": "ready"})
+
+    state = clear_session_goal_state(ctx)
+
+    assert state.phase == SessionPhase.PLANNING
+    assert state.goal is None
+    assert state.pending_clarification is None

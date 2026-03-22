@@ -15,6 +15,10 @@ TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 import json
 from typing import Any, Dict, List, Optional
 from fastmcp import Context
+from server.adapters.mcp.session_capabilities import (
+    clear_session_goal_state,
+    update_session_from_router_goal,
+)
 from server.adapters.mcp.instance import mcp
 from server.adapters.mcp.context_utils import ctx_info
 from server.infrastructure.di import get_router_handler
@@ -104,6 +108,7 @@ def router_set_goal(
     """
     handler = get_router_handler()
     result = handler.set_goal(goal, resolved_params)
+    update_session_from_router_goal(ctx, goal, result)
 
     # Log to context
     status = result.get("status", "unknown")
@@ -144,6 +149,7 @@ def router_clear_goal(ctx: Context) -> str:
     """
     handler = get_router_handler()
     result = handler.clear_goal()
+    clear_session_goal_state(ctx)
     ctx_info(ctx, "[ROUTER] Goal cleared")
     return result
 

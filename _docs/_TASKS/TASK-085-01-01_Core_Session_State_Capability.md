@@ -1,7 +1,7 @@
 # TASK-085-01-01: Core Session State Model and Capability Phases
 
 **Parent:** [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
