@@ -211,17 +211,17 @@ class ToolCorrectionEngine(ICorrectionEngine):
                     max_val = self._get_dimension_relative_max(context, self._config.bevel_max_ratio)
 
                 if isinstance(original_value, (int, float)):
-                    clamped_value = max(min_val, min(max_val, original_value))
-                    if clamped_value != original_value:
-                        clamped[param_name] = clamped_value
-                        corrections.append(f"clamp_{param_name}:{original_value}->{clamped_value}")
+                    clamped_numeric = max(min_val, min(max_val, original_value))
+                    if clamped_numeric != original_value:
+                        clamped[param_name] = clamped_numeric
+                        corrections.append(f"clamp_{param_name}:{original_value}->{clamped_numeric}")
                 elif isinstance(original_value, (list, tuple)) and all(
                     isinstance(v, (int, float)) for v in original_value
                 ):
-                    clamped_value = [max(min_val, min(max_val, v)) for v in original_value]
-                    if clamped_value != list(original_value):
-                        clamped[param_name] = clamped_value
-                        corrections.append(f"clamp_{param_name}:{original_value}->{clamped_value}")
+                    clamped_sequence = [max(min_val, min(max_val, v)) for v in original_value]
+                    if clamped_sequence != list(original_value):
+                        clamped[param_name] = clamped_sequence
+                        corrections.append(f"clamp_{param_name}:{original_value}->{clamped_sequence}")
 
         return clamped, corrections
 

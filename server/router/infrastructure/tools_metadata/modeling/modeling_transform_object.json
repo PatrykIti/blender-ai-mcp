@@ -3,7 +3,14 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["transform", "move", "rotate", "scale", "position", "object"],
+  "keywords": [
+    "transform",
+    "move",
+    "rotate",
+    "scale",
+    "position",
+    "object"
+  ],
   "sample_prompts": [
     "move the object",
     "rotate object 90 degrees",
@@ -18,22 +25,25 @@
       "description": "Name of the object"
     },
     "location": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "New position [x, y, z]"
     },
     "rotation": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Rotation in radians [x, y, z]"
     },
     "scale": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Scale factors [x, y, z]"
     }
   },
-  "related_tools": ["modeling_create_primitive", "scene_set_active_object"],
+  "related_tools": [
+    "modeling_create_primitive",
+    "scene_set_active_object"
+  ],
   "patterns": [],
   "description": "Transforms (move, rotate, scale) an existing object."
 }

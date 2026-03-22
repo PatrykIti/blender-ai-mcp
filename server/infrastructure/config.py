@@ -1,12 +1,13 @@
 import os
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Config(BaseModel):
+class Config(BaseSettings):
     """Application Configuration"""
 
-    model_config = ConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env")
 
     # Blender RPC Connection
     BLENDER_RPC_HOST: str = Field(default="127.0.0.1", description="Host where Blender Addon is running")

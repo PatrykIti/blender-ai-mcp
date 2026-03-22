@@ -506,6 +506,9 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
         try:
             from sklearn.metrics.pairwise import cosine_similarity
 
+            if self._tfidf_vectorizer is None or self._tfidf_matrix is None:
+                return []
+
             prompt_vec = self._tfidf_vectorizer.transform([prompt])
             similarities = cosine_similarity(prompt_vec, self._tfidf_matrix)[0]
 
@@ -565,7 +568,7 @@ class WorkflowIntentClassifier(IWorkflowIntentClassifier):
             - fallback_candidates: List of generalization candidates if NONE
             - language_detected: Detected query language
         """
-        result = {
+        result: Dict[str, Any] = {
             "workflow_id": None,
             "score": 0.0,
             "confidence_level": "NONE",

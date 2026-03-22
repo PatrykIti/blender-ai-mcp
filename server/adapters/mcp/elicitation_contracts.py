@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from hashlib import sha1
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, create_model
 
@@ -124,11 +124,11 @@ def build_elicitation_response_type(plan: ClarificationPlan) -> type[BaseModel]:
         field_type: Any
         choices = requirement.choices
         if requirement.allows_multiple and choices:
-            field_type = list[Literal.__getitem__(choices)]
+            field_type = list[str]
         elif requirement.allows_multiple:
             field_type = list[str]
         elif choices:
-            field_type = Literal.__getitem__(choices)
+            field_type = cast(Any, Literal.__getitem__(choices))
         elif requirement.value_type == "float":
             field_type = float
         elif requirement.value_type == "int":
@@ -151,7 +151,7 @@ def build_elicitation_response_type(plan: ClarificationPlan) -> type[BaseModel]:
         )
 
     model_name = f"{plan.workflow_name.title().replace('_', '')}ClarificationAnswers"
-    return create_model(model_name, **model_fields)  # type: ignore[call-arg]
+    return create_model(model_name, **cast(Any, model_fields))
 
 
 def coerce_elicitation_answers(data: Any) -> dict[str, Any]:

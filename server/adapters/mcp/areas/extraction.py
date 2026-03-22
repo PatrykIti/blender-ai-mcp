@@ -38,7 +38,7 @@ def register_extraction_tools(target: Any) -> Dict[str, Any]:
     for tool_name in EXTRACTION_PUBLIC_TOOL_NAMES:
         tool = globals()[tool_name]
         fn = getattr(tool, "fn", tool)
-        kwargs = {"name": tool_name, "tags": set(tag_set)}
+        kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(tag_set)}
         task_config = get_tool_task_config(tool_name)
         if task_config is not None:
             kwargs["task"] = task_config
@@ -292,14 +292,15 @@ async def extraction_render_angles(
 
     if is_background_task_context(ctx):
 
-        def _foreground_rpc() -> Dict[str, Any]:
+        def _foreground_rpc() -> str:
             handler = get_extraction_handler()
-            return handler.render_angles(
+            payload = handler.render_angles(
                 object_name=object_name,
                 angles=angles,
                 resolution=resolution,
                 output_dir=output_dir,
             )
+            return _format_render_result(payload)
 
         def _format_result(payload: Any) -> str:
             if not isinstance(payload, dict):

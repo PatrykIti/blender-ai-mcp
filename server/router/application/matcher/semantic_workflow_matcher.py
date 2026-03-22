@@ -151,7 +151,7 @@ class SemanticWorkflowMatcher:
         self._registry = registry
 
         # Build workflow dict for classifier
-        workflows = {}
+        workflows: Dict[str, Any] = {}
         for name in registry.get_all_workflows():
             workflow = registry.get_workflow(name)
             if workflow:

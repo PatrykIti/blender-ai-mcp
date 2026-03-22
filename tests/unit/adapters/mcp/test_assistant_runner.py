@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from typing import Any
 
 from server.adapters.mcp.contracts.base import MCPContract
 from server.adapters.mcp.sampling.assistant_runner import run_typed_assistant
@@ -53,7 +54,7 @@ class FakeContext:
 
 
 def _policy(**overrides) -> AssistantPolicy:
-    payload = {
+    payload: dict[str, Any] = {
         "assistant_name": "test_assistant",
         "responsibility": "diagnostic_summary",
         "max_input_chars": 2000,

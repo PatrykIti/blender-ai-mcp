@@ -38,10 +38,14 @@ class FakeContext:
         self.state["_visibility_calls"] = [("reset_visibility", {})]
 
     async def enable_components(self, **kwargs) -> None:
-        self.state.setdefault("_visibility_calls", []).append(("enable_components", kwargs))
+        calls = self.state.setdefault("_visibility_calls", [])
+        assert isinstance(calls, list)
+        calls.append(("enable_components", kwargs))
 
     async def disable_components(self, **kwargs) -> None:
-        self.state.setdefault("_visibility_calls", []).append(("disable_components", kwargs))
+        calls = self.state.setdefault("_visibility_calls", [])
+        assert isinstance(calls, list)
+        calls.append(("disable_components", kwargs))
 
 
 def test_session_phase_coercion_uses_canonical_subset_defaults():

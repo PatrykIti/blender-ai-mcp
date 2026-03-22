@@ -18,7 +18,7 @@ CONTRACT_ENABLED_TOOLS = {
 
 # Explicit, narrow compatibility exceptions for profiles that still need
 # deterministic text-heavy behavior for selected tools.
-LEGACY_TEXT_EXCEPTIONS = {
+LEGACY_TEXT_EXCEPTIONS: dict[str, set[str]] = {
     "legacy-flat": set(),
 }
 

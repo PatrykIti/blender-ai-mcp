@@ -5,7 +5,7 @@ Utilities for exploring and importing YAML/JSON workflows without executing them
 """
 
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, cast
 
 from fastmcp import Context
 
@@ -39,19 +39,19 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
     if versions:
         registered = None
         for version in versions:
-            kwargs = {
+            version_kwargs: Dict[str, Any] = {
                 "name": tool_name,
                 "version": version,
                 "tags": set(get_capability_tags("workflow_catalog")),
             }
             if task_config is not None:
-                kwargs["task"] = task_config
-            registered = target.tool(fn, **kwargs)
+                version_kwargs["task"] = task_config
+            registered = target.tool(fn, **version_kwargs)
         return registered
-    kwargs = {"name": tool_name, "tags": set(get_capability_tags("workflow_catalog"))}
+    base_kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(get_capability_tags("workflow_catalog"))}
     if task_config is not None:
-        kwargs["task"] = task_config
-    return target.tool(fn, **kwargs)
+        base_kwargs["task"] = task_config
+    return target.tool(fn, **base_kwargs)
 
 
 def register_workflow_tools(target: Any) -> Dict[str, Any]:
@@ -277,7 +277,7 @@ async def workflow_catalog(
             return await _maybe_attach_workflow_repair_suggestion(
                 ctx,
                 action=action,
-                contract=contract,
+                contract=cast(WorkflowCatalogResponseContract, contract),
             )
 
         if action == "list":

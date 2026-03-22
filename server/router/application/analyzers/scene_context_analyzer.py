@@ -320,8 +320,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
     def _get_mode_data_rpc(self) -> Dict[str, Any]:
         """Get full mode data via RPC (includes active_object, selected_object_names)."""
+        client = self._rpc_client
+        if client is None:
+            return {"mode": "OBJECT"}
         try:
-            response = self._rpc_client.send_request("scene.get_mode", {})
+            response = client.send_request("scene.get_mode", {})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result
@@ -337,8 +340,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
     def _get_objects_rpc(self) -> List[Dict[str, Any]]:
         """Get objects list via RPC."""
+        client = self._rpc_client
+        if client is None:
+            return []
         try:
-            response = self._rpc_client.send_request("scene.list_objects", {})
+            response = client.send_request("scene.list_objects", {})
             # RpcResponse has .status and .result
             if response.status == "ok":
                 if isinstance(response.result, list):
@@ -351,8 +357,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
     def _get_selection_rpc(self) -> Dict[str, Any]:
         """Get selection info via RPC."""
+        client = self._rpc_client
+        if client is None:
+            return {}
         try:
-            response = self._rpc_client.send_request("scene.list_selection", {})
+            response = client.send_request("scene.list_selection", {})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result
@@ -366,8 +375,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
         selection_data: Optional[Dict[str, Any]] = None,
     ) -> Optional[TopologyInfo]:
         """Get mesh topology via RPC."""
+        client = self._rpc_client
+        if client is None:
+            return None
         try:
-            response = self._rpc_client.send_request("scene.inspect_mesh_topology", {"object_name": object_name})
+            response = client.send_request("scene.inspect_mesh_topology", {"object_name": object_name})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 result = response.result
@@ -401,8 +413,11 @@ class SceneContextAnalyzer(ISceneAnalyzer):
 
     def _get_inspect_rpc(self, object_name: str) -> Dict[str, Any]:
         """Get object inspection data via RPC."""
+        client = self._rpc_client
+        if client is None:
+            return {}
         try:
-            response = self._rpc_client.send_request("scene.inspect_object", {"object_name": object_name})
+            response = client.send_request("scene.inspect_object", {"object_name": object_name})
             # RpcResponse has .status and .result
             if response.status == "ok" and isinstance(response.result, dict):
                 return response.result

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BUSL-1.1
 # ruff: noqa: E402
 
+from typing import Any
+
 bl_info = {
     "name": "Blender AI MCP",
     "author": "Patryk Ciechański",
@@ -21,6 +23,21 @@ except ImportError:
 
 from .infrastructure.rpc_server import rpc_server
 
+SceneHandler: Any = None
+ModelingHandler: Any = None
+MeshHandler: Any = None
+CollectionHandler: Any = None
+MaterialHandler: Any = None
+UVHandler: Any = None
+CurveHandler: Any = None
+SystemHandler: Any = None
+SculptHandler: Any = None
+BakingHandler: Any = None
+LatticeHandler: Any = None
+ExtractionHandler: Any = None
+TextHandler: Any = None
+ArmatureHandler: Any = None
+
 # Import Application Handlers
 try:
     from .application.handlers.armature import ArmatureHandler
@@ -38,20 +55,7 @@ try:
     from .application.handlers.text import TextHandler
     from .application.handlers.uv import UVHandler
 except ImportError:
-    SceneHandler = None
-    ModelingHandler = None
-    MeshHandler = None
-    CollectionHandler = None
-    MaterialHandler = None
-    UVHandler = None
-    CurveHandler = None
-    SystemHandler = None
-    SculptHandler = None
-    BakingHandler = None
-    LatticeHandler = None
-    ExtractionHandler = None
-    TextHandler = None
-    ArmatureHandler = None
+    pass
 
 
 def register():

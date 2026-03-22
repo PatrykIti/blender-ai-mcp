@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 
     YAML_AVAILABLE = True
 except ImportError:

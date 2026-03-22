@@ -7,10 +7,12 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+LocalProvider: Any = None
+
 try:
     from fastmcp.server.providers import LocalProvider
 except ImportError:  # pragma: no cover - exercised through explicit guard
-    LocalProvider = None
+    pass
 
 
 def register_internal_tools(target: Any) -> Dict[str, Any]:

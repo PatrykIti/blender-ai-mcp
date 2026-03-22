@@ -23,7 +23,7 @@ def register_existing_tools(
     for tool_name in tool_names:
         tool = module_globals[tool_name]
         fn = getattr(tool, "fn", tool)
-        kwargs = {"name": tool_name}
+        kwargs: Dict[str, Any] = {"name": tool_name}
         if tag_set:
             kwargs["tags"] = set(tag_set)
         registered[tool_name] = target.tool(fn, **kwargs)

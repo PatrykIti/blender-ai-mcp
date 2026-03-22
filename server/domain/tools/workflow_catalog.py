@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 class IWorkflowCatalogTool(ABC):
@@ -84,6 +84,9 @@ class IWorkflowCatalogTool(ABC):
         self,
         session_id: str,
         overwrite: Optional[bool] = None,
+        *,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> Dict[str, Any]:
         """Finalize a chunked workflow import session."""
         raise NotImplementedError

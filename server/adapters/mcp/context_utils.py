@@ -23,11 +23,11 @@ def _fire_and_forget(result) -> None:
         return
 
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         return
 
-    loop.create_task(result)
+    asyncio.ensure_future(result)
 
 
 def ctx_info(ctx: Context, message: str) -> None:

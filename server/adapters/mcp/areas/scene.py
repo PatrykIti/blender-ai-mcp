@@ -70,19 +70,19 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
     if versions:
         registered = None
         for version in versions:
-            kwargs = {
+            version_kwargs: Dict[str, Any] = {
                 "name": tool_name,
                 "version": version,
                 "tags": set(get_capability_tags("scene")),
             }
             if task_config is not None:
-                kwargs["task"] = task_config
-            registered = target.tool(fn, **kwargs)
+                version_kwargs["task"] = task_config
+            registered = target.tool(fn, **version_kwargs)
         return registered
-    kwargs = {"name": tool_name, "tags": set(get_capability_tags("scene"))}
+    base_kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(get_capability_tags("scene"))}
     if task_config is not None:
-        kwargs["task"] = task_config
-    return target.tool(fn, **kwargs)
+        base_kwargs["task"] = task_config
+    return target.tool(fn, **base_kwargs)
 
 
 def register_scene_tools(target: Any) -> Dict[str, Any]:
@@ -277,7 +277,7 @@ def _scene_get_mode(ctx: Context) -> Dict[str, Any]:
     try:
         response = handler.get_mode()
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
     return response
 
@@ -296,7 +296,7 @@ def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
     try:
         summary = handler.list_selection()
     except RuntimeError as e:
-        return str(e)
+        return {"error": str(e)}
 
     return summary
 
@@ -926,6 +926,8 @@ def _scene_create_camera(
     try:
         parsed_location = parse_coordinate(location)
         parsed_rotation = parse_coordinate(rotation)
+        if parsed_location is None or parsed_rotation is None:
+            return "Invalid location or rotation coordinate payload."
         return handler.create_camera(parsed_location, parsed_rotation, lens, clip_start, clip_end, name)
     except (RuntimeError, ValueError) as e:
         return str(e)

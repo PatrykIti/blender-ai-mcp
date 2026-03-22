@@ -399,7 +399,7 @@ class ProportionInheritance:
         Returns:
             List of rule names across all workflows.
         """
-        rules = set()
+        rules: set[str] = set()
         for proportions in self.WORKFLOW_PROPORTIONS.values():
             rules.update(proportions.keys())
         for proportions in self._custom_proportions.values():

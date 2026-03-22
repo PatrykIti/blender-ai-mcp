@@ -12,7 +12,7 @@ TASK-046: Extended with semantic matching tools.
 TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
@@ -229,7 +229,7 @@ async def _maybe_elicit_router_answers(
     try:
         response = await ctx.elicit(
             message=f"Missing parameters for workflow '{plan.workflow_name}'",
-            response_type=build_elicitation_response_type(plan),
+            response_type=cast(Any, build_elicitation_response_type(plan)),
         )
     except Exception:
         result["elicitation_action"] = "unavailable"
@@ -469,7 +469,7 @@ def router_find_similar_workflows(
         -> 1. chair_workflow: ████████████████░░░░ 85.0%
            2. table_workflow: ████████████░░░░░░░░ 62.0%
     """
-    handler = get_router_handler()
+    handler = cast(Any, get_router_handler())
     return handler.find_similar_workflows_formatted(prompt, top_k)
 
 
@@ -497,7 +497,7 @@ def router_get_inherited_proportions(
             [0.5, 0.5, 0.9]
         )
     """
-    handler = get_router_handler()
+    handler = cast(Any, get_router_handler())
     return handler.get_proportions_formatted(workflow_names, dimensions)
 
 

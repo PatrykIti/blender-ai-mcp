@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 class IModelingTool(ABC):
@@ -9,8 +9,8 @@ class IModelingTool(ABC):
         primitive_type: str,
         radius: float = 1.0,
         size: float = 2.0,
-        location: List[float] = (0.0, 0.0, 0.0),
-        rotation: List[float] = (0.0, 0.0, 0.0),
+        location: Sequence[float] = (0.0, 0.0, 0.0),
+        rotation: Sequence[float] = (0.0, 0.0, 0.0),
         name: Optional[str] = None,
     ) -> str:
         """Creates a primitive object (cube, sphere, etc)."""

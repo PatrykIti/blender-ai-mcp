@@ -6,13 +6,14 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Sequence, TypeVar
+from typing import Any, Sequence, TypeVar, cast
 
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_request_id, ctx_sampling_capability
 from server.adapters.mcp.contracts.base import MCPContract, to_contract
 from server.adapters.mcp.sampling.result_types import (
+    AssistantCapabilitySource,
     AssistantPolicy,
     AssistantRunResult,
     InspectionSummaryContract,
@@ -165,13 +166,17 @@ async def run_typed_assistant(
         needs_tools=bool(requested_tools),
     )
     if not available:
+        resolved_capability_source = cast(
+            AssistantCapabilitySource,
+            capability_source or "unavailable",
+        )
         return AssistantRunResult(
             status="unavailable",
             assistant_name=policy.assistant_name,
             message="Sampling is unavailable on the active MCP request.",
             budget=budget,
             request_id=request_id,
-            capability_source=capability_source or "unavailable",
+            capability_source=resolved_capability_source,
             rejection_reason=rejection_reason,
         )
 
@@ -199,23 +204,31 @@ async def run_typed_assistant(
                 rejection_reason="sampling_capability_missing",
             )
 
+        resolved_capability_source = cast(
+            AssistantCapabilitySource,
+            capability_source or "unknown",
+        )
         return AssistantRunResult(
             status="masked_error",
             assistant_name=policy.assistant_name,
             message=_masked_message(policy) if policy.mask_error_details else error_message,
             budget=budget,
             request_id=request_id,
-            capability_source=capability_source or "unknown",
+            capability_source=resolved_capability_source,
             rejection_reason="sampling_execution_failed",
         )
 
+    resolved_capability_source = cast(
+        AssistantCapabilitySource,
+        capability_source or "unknown",
+    )
     return AssistantRunResult(
         status="success",
         assistant_name=policy.assistant_name,
         message=f"{policy.assistant_name} completed.",
         budget=budget,
         request_id=request_id,
-        capability_source=capability_source or "unknown",
+        capability_source=resolved_capability_source,
         result=to_contract(result_type, sampled.result),
     )
 

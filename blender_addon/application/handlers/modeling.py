@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List
 
 import bpy
 
@@ -228,7 +228,7 @@ class ModelingHandler:
         joined_obj = bpy.context.active_object
         return {"name": joined_obj.name, "joined_count": len(object_names)}
 
-    def separate_object(self, name, type="LOOSE") -> List[str]:
+    def separate_object(self, name, type="LOOSE") -> Dict[str, Any]:
         """
         [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
         """

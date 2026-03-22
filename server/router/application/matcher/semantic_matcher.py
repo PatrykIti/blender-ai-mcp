@@ -89,7 +89,7 @@ class SemanticMatcher(IMatcher):
         Args:
             registry: Workflow registry containing workflows to index.
         """
-        workflows = {}
+        workflows: Dict[str, Any] = {}
         for name in registry.get_all_workflows():
             workflow = registry.get_workflow(name)
             if workflow:

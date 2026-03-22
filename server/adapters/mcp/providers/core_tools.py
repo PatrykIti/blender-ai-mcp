@@ -26,10 +26,12 @@ from server.adapters.mcp.areas.system import register_system_tools
 from server.adapters.mcp.areas.text import register_text_tools
 from server.adapters.mcp.areas.uv import register_uv_tools
 
+LocalProvider: Any = None
+
 try:
     from fastmcp.server.providers import LocalProvider
 except ImportError:  # pragma: no cover - exercised through explicit guard
-    LocalProvider = None
+    pass
 
 
 def register_core_tools(target: Any) -> Dict[str, Any]:

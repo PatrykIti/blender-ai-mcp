@@ -3,7 +3,14 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["spin", "lathe", "revolve", "circular", "vase", "bowl"],
+  "keywords": [
+    "spin",
+    "lathe",
+    "revolve",
+    "circular",
+    "vase",
+    "bowl"
+  ],
   "sample_prompts": [
     "spin the geometry",
     "create a lathe shape",
@@ -20,16 +27,20 @@
     "angle": {
       "type": "float",
       "default": 6.283185,
-      "description": "Total angle in radians (6.28 = 360°)"
+      "description": "Total angle in radians (6.28 = 360\u00b0)"
     },
     "axis": {
       "type": "enum",
-      "options": ["X", "Y", "Z"],
+      "options": [
+        "X",
+        "Y",
+        "Z"
+      ],
       "default": "Z",
       "description": "Axis to spin around"
     },
     "center": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Center point for spin"
     },
@@ -39,7 +50,12 @@
       "description": "Duplicate instead of extrude"
     }
   },
-  "related_tools": ["mesh_select", "mesh_merge_by_distance"],
-  "patterns": ["wheel_like:tire_profile"],
+  "related_tools": [
+    "mesh_select",
+    "mesh_merge_by_distance"
+  ],
+  "patterns": [
+    "wheel_like:tire_profile"
+  ],
   "description": "Spins/lathes selected geometry around an axis."
 }

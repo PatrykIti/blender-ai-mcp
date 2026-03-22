@@ -308,7 +308,12 @@ class BlenderRpcServer:
         """Schedule a background job without blocking the RPC network loop."""
 
         if bpy:
-            bpy.app.timers.register(lambda: (self._run_background_job(job_id), None)[1])
+
+            def run_on_main_thread() -> None:
+                self._run_background_job(job_id)
+                return None
+
+            bpy.app.timers.register(run_on_main_thread)
             return
 
         threading.Thread(
@@ -463,7 +468,7 @@ class BlenderRpcServer:
                     "error_boundary": "addon_execution",
                 }
 
-            job = BackgroundJob(
+            background_job = BackgroundJob(
                 job_id=uuid.uuid4().hex,
                 cmd=cmd,
                 args=args.get("args", {}) or {},
@@ -476,12 +481,12 @@ class BlenderRpcServer:
                 status_message=f"Queued {cmd}",
             )
             with self._jobs_lock:
-                self.background_jobs[job.job_id] = job
-            self._schedule_background_job(job.job_id)
+                self.background_jobs[background_job.job_id] = background_job
+            self._schedule_background_job(background_job.job_id)
             return {
                 "request_id": request_id,
                 "status": "ok",
-                "result": self._build_job_snapshot(job),
+                "result": self._build_job_snapshot(background_job),
             }
 
         if not isinstance(job_id, str) or not job_id:
@@ -493,8 +498,8 @@ class BlenderRpcServer:
                 "error_boundary": "addon_execution",
             }
 
-        job = self._get_background_job(job_id)
-        if job is None:
+        tracked_job = self._get_background_job(job_id)
+        if tracked_job is None:
             return {
                 "request_id": request_id,
                 "status": "error",
@@ -507,34 +512,34 @@ class BlenderRpcServer:
             return {
                 "request_id": request_id,
                 "status": "ok",
-                "result": self._build_job_snapshot(job),
+                "result": self._build_job_snapshot(tracked_job),
             }
 
         if rpc_cmd == "rpc.cancel_job":
-            if job.status in {"completed", "failed", "cancelled"}:
+            if tracked_job.status in {"completed", "failed", "cancelled"}:
                 return {
                     "request_id": request_id,
                     "status": "ok",
-                    "result": self._build_job_snapshot(job),
+                    "result": self._build_job_snapshot(tracked_job),
                 }
             self._update_background_job(
                 job_id,
                 cancel_requested=True,
-                status="cancelling" if job.status == "running" else "cancelled",
-                cancelled=job.status != "running",
+                status="cancelling" if tracked_job.status == "running" else "cancelled",
+                cancelled=tracked_job.status != "running",
                 error="Cancellation requested",
-                finished_at=time.time() if job.status != "running" else job.finished_at,
+                finished_at=time.time() if tracked_job.status != "running" else tracked_job.finished_at,
                 status_message="Cancellation requested",
             )
-            updated = self._get_background_job(job_id)
+            updated_job = self._get_background_job(job_id)
             return {
                 "request_id": request_id,
                 "status": "ok",
-                "result": self._build_job_snapshot(updated or job),
+                "result": self._build_job_snapshot(updated_job or tracked_job),
             }
 
         if rpc_cmd == "rpc.collect_job":
-            if job.status != "completed":
+            if tracked_job.status != "completed":
                 return {
                     "request_id": request_id,
                     "status": "error",
@@ -545,7 +550,7 @@ class BlenderRpcServer:
             return {
                 "request_id": request_id,
                 "status": "ok",
-                "result": self._build_job_snapshot(job, include_result=True),
+                "result": self._build_job_snapshot(tracked_job, include_result=True),
             }
 
         return {
@@ -579,7 +584,7 @@ class BlenderRpcServer:
             return self._handle_background_rpc(cmd, request_id, args, timeout_seconds)
 
         # Dispatch to Main Thread via Timer
-        result_queue = queue.Queue()
+        result_queue: queue.Queue[Dict[str, Any]] = queue.Queue()
         self.result_queues[request_id] = result_queue
 
         # Define the execution wrapper

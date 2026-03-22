@@ -3,7 +3,15 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["hide", "show", "visible", "invisible", "hidden", "visibility", "object"],
+  "keywords": [
+    "hide",
+    "show",
+    "visible",
+    "invisible",
+    "hidden",
+    "visibility",
+    "object"
+  ],
   "sample_prompts": [
     "hide the cube",
     "make the object invisible",
@@ -12,11 +20,27 @@
     "unhide the sphere"
   ],
   "parameters": {
-    "object_name": {"type": "string", "required": true, "description": "Name of the object to hide/show"},
-    "hide": {"type": "boolean", "default": true, "description": "True to hide, False to show"},
-    "hide_render": {"type": "boolean", "default": false, "description": "If True, also hide in renders"}
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Name of the object to hide/show"
+    },
+    "hide": {
+      "type": "bool",
+      "default": true,
+      "description": "True to hide, False to show"
+    },
+    "hide_render": {
+      "type": "bool",
+      "default": false,
+      "description": "If True, also hide in renders"
+    }
   },
-  "related_tools": ["scene_show_all_objects", "scene_isolate_object", "scene_list_objects"],
+  "related_tools": [
+    "scene_show_all_objects",
+    "scene_isolate_object",
+    "scene_list_objects"
+  ],
   "patterns": [],
   "description": "Hides or shows an object in the viewport and/or render."
 }

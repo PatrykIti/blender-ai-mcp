@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from collections.abc import Awaitable
 
 from fastmcp import Context
 
@@ -45,10 +46,13 @@ def _resolve_sync_awaitable(result, default=None):
     if not inspect.isawaitable(result):
         return result
 
+    async def _await_value(awaitable: Awaitable[object]) -> object:
+        return await awaitable
+
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(result)
+        return asyncio.run(_await_value(result))
 
     if inspect.iscoroutine(result):
         result.close()
@@ -60,12 +64,16 @@ def _dispatch_awaitable(result) -> None:
         return
 
     try:
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
-        asyncio.run(result)
+
+        async def _await_value(awaitable: Awaitable[object]) -> object:
+            return await awaitable
+
+        asyncio.run(_await_value(result))
         return
 
-    loop.create_task(result)
+    asyncio.ensure_future(result)
 
 
 async def get_session_value_async(ctx: Context, key: str, default=None):

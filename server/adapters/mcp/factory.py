@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from fastmcp import FastMCP
 
 from server.adapters.mcp.platform.capability_manifest import get_capability_manifest
@@ -19,7 +21,7 @@ from server.adapters.mcp.transforms import (
 from server.infrastructure.config import get_config
 
 
-def build_surface_providers(surface: SurfaceProfileSettings) -> list[object]:
+def build_surface_providers(surface: SurfaceProfileSettings) -> list[Any]:
     """Build provider instances for a surface profile."""
 
     return [builder() for builder in surface.provider_builders]
@@ -49,7 +51,7 @@ def build_server(
         addon_execution_timeout_seconds=config.ADDON_EXECUTION_TIMEOUT_SECONDS,
     )
 
-    server = FastMCP(
+    server: Any = FastMCP(
         surface.server_name,
         providers=providers,
         transforms=transforms,
@@ -74,4 +76,4 @@ def build_server(
     server._bam_contract_line = surface.default_contract_line
     server._bam_task_runtime_report = task_runtime_report
 
-    return server
+    return cast(FastMCP, server)

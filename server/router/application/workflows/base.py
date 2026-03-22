@@ -110,7 +110,7 @@ class WorkflowStep:
 
         Includes both standard fields and dynamic semantic filter attributes.
         """
-        result = {
+        result: Dict[str, Any] = {
             "tool": self.tool,
             "params": dict(self.params),
             "description": self.description,
@@ -189,7 +189,7 @@ class WorkflowDefinition:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert workflow to dictionary representation."""
-        result = {
+        result: Dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "trigger_pattern": self.trigger_pattern,

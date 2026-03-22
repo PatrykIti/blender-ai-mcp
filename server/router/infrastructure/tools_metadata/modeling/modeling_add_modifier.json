@@ -3,7 +3,16 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["modifier", "add", "subsurf", "bevel", "mirror", "boolean", "array", "solidify"],
+  "keywords": [
+    "modifier",
+    "add",
+    "subsurf",
+    "bevel",
+    "mirror",
+    "boolean",
+    "array",
+    "solidify"
+  ],
   "sample_prompts": [
     "add subdivision modifier",
     "add bevel modifier",
@@ -23,12 +32,18 @@
       "description": "Modifier type (SUBSURF, BEVEL, MIRROR, BOOLEAN, etc.)"
     },
     "properties": {
-      "type": "dict",
+      "type": "object",
       "default": null,
       "description": "Modifier properties to set. For BOOLEAN, set the target via {\"object\": \"CutterObjectName\"} (alias: \"object_name\")."
     }
   },
-  "related_tools": ["modeling_apply_modifier", "modeling_list_modifiers"],
-  "patterns": ["phone_like:rounded_edges", "tower_like:mirrored"],
+  "related_tools": [
+    "modeling_apply_modifier",
+    "modeling_list_modifiers"
+  ],
+  "patterns": [
+    "phone_like:rounded_edges",
+    "tower_like:mirrored"
+  ],
   "description": "Adds a non-destructive modifier to an object."
 }

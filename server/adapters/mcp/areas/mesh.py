@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
 from fastmcp import Context
 
@@ -775,7 +775,7 @@ async def mesh_inspect(
         direct_executor=execute,
     )
     if not isinstance(result, MeshInspectResponseContract):
-        return MeshInspectResponseContract(action=action, error=str(result))
+        return MeshInspectResponseContract(action=cast(Any, action), error=str(result))
     if not assistant_summary:
         return result
     return await _maybe_attach_mesh_inspection_assistant(ctx, result)
@@ -786,7 +786,7 @@ def _to_mesh_inspect_contract(action: str, payload: Dict[str, Any]) -> MeshInspe
     """Normalize mesh introspection payloads into one structured envelope."""
 
     if "error" in payload:
-        return MeshInspectResponseContract(action=action, error=payload["error"])
+        return MeshInspectResponseContract(action=cast(Any, action), error=payload["error"])
 
     if action == "summary":
         return MeshInspectResponseContract(
@@ -824,7 +824,7 @@ def _to_mesh_inspect_contract(action: str, payload: Dict[str, Any]) -> MeshInspe
     }
 
     return MeshInspectResponseContract(
-        action=action,
+        action=cast(Any, action),
         object_name=payload.get("object_name"),
         total=payload.get("filtered_count"),
         returned=payload.get("returned_count"),

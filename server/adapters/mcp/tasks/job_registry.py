@@ -90,7 +90,7 @@ class BackgroundJobRegistry:
     ) -> BackgroundJobRecord | None:
         """Update progress bookkeeping for a tracked task."""
 
-        updates = {
+        updates: dict[str, object] = {
             "progress": build_progress_snapshot(current=current, total=total, message=message),
         }
         if status is not None:

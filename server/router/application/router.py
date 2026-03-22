@@ -451,13 +451,17 @@ class SupervisorRouter:
         )
 
         if should_adapt:
+            match_result = self._last_match_result
+            if match_result is None:
+                return []
+
             # Get workflow definition for adaptation
             definition = registry.get_definition(workflow_name)
             if definition:
                 # Adapt workflow based on confidence level
                 adapted_steps, adaptation_result = self._workflow_adapter.adapt(
                     definition=definition,
-                    confidence_level=self._last_match_result.confidence_level,
+                    confidence_level=match_result.confidence_level,
                     user_prompt=self._current_goal or "",
                 )
                 self._last_adaptation_result = adaptation_result
@@ -488,7 +492,7 @@ class SupervisorRouter:
                     self.logger.log_info(
                         f"Adapted workflow '{workflow_name}': "
                         f"{adaptation_result.original_step_count} -> {adaptation_result.adapted_step_count} steps "
-                        f"(confidence: {self._last_match_result.confidence_level}, "
+                        f"(confidence: {match_result.confidence_level}, "
                         f"strategy: {adaptation_result.adaptation_strategy})"
                     )
                     # Clear pending workflow and modifiers after expansion
@@ -1149,7 +1153,11 @@ class SupervisorRouter:
                 pass  # Context already has pattern via _detect_pattern
 
         # Run ensemble matching
-        result = self._ensemble_matcher.match(goal, context)
+        ensemble_matcher = self._ensemble_matcher
+        if ensemble_matcher is None:
+            return None
+
+        result = ensemble_matcher.match(goal, context)
 
         if result.workflow_name:
             self._pending_workflow = result.workflow_name
@@ -1276,14 +1284,18 @@ class SupervisorRouter:
         )
 
         if should_adapt:
-            # Adapt workflow based on confidence level
-            adapted_steps, adaptation_result = self._workflow_adapter.adapt(
-                definition=definition,
-                confidence_level=self._last_match_result.confidence_level,
-                user_prompt=self._current_goal or "",
-            )
-            self._last_adaptation_result = adaptation_result
-            steps_to_execute = adapted_steps
+            match_result = self._last_match_result
+            if match_result is None:
+                steps_to_execute = definition.steps
+            else:
+                # Adapt workflow based on confidence level
+                adapted_steps, adaptation_result = self._workflow_adapter.adapt(
+                    definition=definition,
+                    confidence_level=match_result.confidence_level,
+                    user_prompt=self._current_goal or "",
+                )
+                self._last_adaptation_result = adaptation_result
+                steps_to_execute = adapted_steps
         else:
             steps_to_execute = definition.steps
 

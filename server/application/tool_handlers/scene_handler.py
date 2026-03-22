@@ -1,5 +1,10 @@
 from typing import Any, Dict, List, Optional
 
+from server.application.tool_handlers._rpc_utils import (
+    require_dict_result,
+    require_list_of_dicts_result,
+    require_str_result,
+)
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.scene import ISceneTool
 
@@ -9,10 +14,7 @@ class SceneToolHandler(ISceneTool):
         self.rpc = rpc_client
 
     def list_objects(self) -> List[Dict[str, Any]]:
-        response = self.rpc.send_request("scene.list_objects")
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_list_of_dicts_result(self.rpc.send_request("scene.list_objects"))
 
     def delete_object(self, name: str) -> str:
         response = self.rpc.send_request("scene.delete_object", {"name": name})
@@ -27,10 +29,9 @@ class SceneToolHandler(ISceneTool):
         return f"Scene cleaned. (Kept lights/cameras: {keep_lights_and_cameras})"
 
     def duplicate_object(self, name: str, translation: Optional[List[float]] = None) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.duplicate_object", {"name": name, "translation": translation})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_dict_result(
+            self.rpc.send_request("scene.duplicate_object", {"name": name, "translation": translation})
+        )
 
     def set_active_object(self, name: str) -> str:
         response = self.rpc.send_request("scene.set_active_object", {"name": name})
@@ -54,19 +55,13 @@ class SceneToolHandler(ISceneTool):
             "camera_name": camera_name,
             "focus_target": focus_target,
         }
-        response = self.rpc.send_request("scene.get_viewport", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.get_viewport", args))
 
     def create_light(
         self, type: str, energy: float, color: List[float], location: List[float], name: Optional[str] = None
     ) -> str:
         args = {"type": type, "energy": energy, "color": color, "location": location, "name": name}
-        response = self.rpc.send_request("scene.create_light", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.create_light", args))
 
     def create_camera(
         self,
@@ -85,118 +80,73 @@ class SceneToolHandler(ISceneTool):
             "clip_end": clip_end,
             "name": name,
         }
-        response = self.rpc.send_request("scene.create_camera", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.create_camera", args))
 
     def create_empty(self, type: str, size: float, location: List[float], name: Optional[str] = None) -> str:
         args = {"type": type, "size": size, "location": location, "name": name}
-        response = self.rpc.send_request("scene.create_empty", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.create_empty", args))
 
     def set_mode(self, mode: str) -> str:
-        response = self.rpc.send_request("scene.set_mode", {"mode": mode})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.set_mode", {"mode": mode}))
 
     def get_mode(self) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.get_mode")
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        if not isinstance(response.result, dict):
-            raise RuntimeError("Blender Error: Invalid payload for scene_get_mode")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.get_mode"))
 
     def list_selection(self) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.list_selection")
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        if not isinstance(response.result, dict):
-            raise RuntimeError("Blender Error: Invalid payload for scene_list_selection")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.list_selection"))
 
     def inspect_object(self, name: str) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.inspect_object", {"name": name})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        if not isinstance(response.result, dict):
-            raise RuntimeError("Blender Error: Invalid payload for scene_inspect_object")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.inspect_object", {"name": name}))
 
     def snapshot_state(self, include_mesh_stats: bool = False, include_materials: bool = False) -> Dict[str, Any]:
         args = {"include_mesh_stats": include_mesh_stats, "include_materials": include_materials}
-        response = self.rpc.send_request("scene.snapshot_state", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        if not isinstance(response.result, dict):
-            raise RuntimeError("Blender Error: Invalid payload for scene_snapshot_state")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.snapshot_state", args))
 
     def inspect_material_slots(
         self, material_filter: Optional[str] = None, include_empty_slots: bool = True
     ) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.inspect_material_slots",
-            {"material_filter": material_filter, "include_empty_slots": include_empty_slots},
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.inspect_material_slots",
+                {"material_filter": material_filter, "include_empty_slots": include_empty_slots},
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def inspect_mesh_topology(self, object_name: str, detailed: bool = False) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.inspect_mesh_topology", {"object_name": object_name, "detailed": detailed}
+        return require_dict_result(
+            self.rpc.send_request("scene.inspect_mesh_topology", {"object_name": object_name, "detailed": detailed})
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def inspect_modifiers(self, object_name: Optional[str] = None, include_disabled: bool = True) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.inspect_modifiers", {"object_name": object_name, "include_disabled": include_disabled}
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.inspect_modifiers", {"object_name": object_name, "include_disabled": include_disabled}
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.get_constraints", {"object_name": object_name, "include_bones": include_bones}
+        return require_dict_result(
+            self.rpc.send_request("scene.get_constraints", {"object_name": object_name, "include_bones": include_bones})
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     # TASK-043: Scene Utility Tools
     def rename_object(self, old_name: str, new_name: str) -> str:
-        response = self.rpc.send_request("scene.rename_object", {"old_name": old_name, "new_name": new_name})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request("scene.rename_object", {"old_name": old_name, "new_name": new_name})
+        )
 
     def hide_object(self, object_name: str, hide: bool = True, hide_render: bool = False) -> str:
-        response = self.rpc.send_request(
-            "scene.hide_object", {"object_name": object_name, "hide": hide, "hide_render": hide_render}
+        return require_str_result(
+            self.rpc.send_request(
+                "scene.hide_object", {"object_name": object_name, "hide": hide, "hide_render": hide_render}
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def show_all_objects(self, include_render: bool = False) -> str:
-        response = self.rpc.send_request("scene.show_all_objects", {"include_render": include_render})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.show_all_objects", {"include_render": include_render}))
 
     def isolate_object(self, object_names: List[str]) -> str:
-        response = self.rpc.send_request("scene.isolate_object", {"object_names": object_names})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("scene.isolate_object", {"object_names": object_names}))
 
     def camera_orbit(
         self,
@@ -205,66 +155,53 @@ class SceneToolHandler(ISceneTool):
         target_object: Optional[str] = None,
         target_point: Optional[List[float]] = None,
     ) -> str:
-        response = self.rpc.send_request(
-            "scene.camera_orbit",
-            {
-                "angle_horizontal": angle_horizontal,
-                "angle_vertical": angle_vertical,
-                "target_object": target_object,
-                "target_point": target_point,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "scene.camera_orbit",
+                {
+                    "angle_horizontal": angle_horizontal,
+                    "angle_vertical": angle_vertical,
+                    "target_object": target_object,
+                    "target_point": target_point,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def camera_focus(self, object_name: str, zoom_factor: float = 1.0) -> str:
-        response = self.rpc.send_request("scene.camera_focus", {"object_name": object_name, "zoom_factor": zoom_factor})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request("scene.camera_focus", {"object_name": object_name, "zoom_factor": zoom_factor})
+        )
 
     # TASK-045: Object Inspection Tools
     def get_custom_properties(self, object_name: str) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.get_custom_properties", {"object_name": object_name})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.get_custom_properties", {"object_name": object_name}))
 
     def set_custom_property(
         self, object_name: str, property_name: str, property_value: Any, delete: bool = False
     ) -> str:
-        response = self.rpc.send_request(
-            "scene.set_custom_property",
-            {
-                "object_name": object_name,
-                "property_name": property_name,
-                "property_value": property_value,
-                "delete": delete,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "scene.set_custom_property",
+                {
+                    "object_name": object_name,
+                    "property_name": property_name,
+                    "property_value": property_value,
+                    "delete": delete,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def get_hierarchy(self, object_name: Optional[str] = None, include_transforms: bool = False) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.get_hierarchy", {"object_name": object_name, "include_transforms": include_transforms}
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.get_hierarchy", {"object_name": object_name, "include_transforms": include_transforms}
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def get_bounding_box(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
-        response = self.rpc.send_request(
-            "scene.get_bounding_box", {"object_name": object_name, "world_space": world_space}
+        return require_dict_result(
+            self.rpc.send_request("scene.get_bounding_box", {"object_name": object_name, "world_space": world_space})
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def get_origin_info(self, object_name: str) -> Dict[str, Any]:
-        response = self.rpc.send_request("scene.get_origin_info", {"object_name": object_name})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_dict_result(self.rpc.send_request("scene.get_origin_info", {"object_name": object_name}))

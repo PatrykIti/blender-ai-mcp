@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [129](./129-2026-03-22-router-metadata-schema-alignment.md) | 2026-03-22 | **Router metadata schema alignment for full pre-commit validation** | - |
+| [128](./128-2026-03-22-mypy-baseline-and-precommit-typing.md) | 2026-03-22 | **Full-repo mypy baseline and pre-commit typing hook** | - |
 | [127](./127-2026-03-22-fastmcp-3x-test-alignment.md) | 2026-03-22 | **FastMCP 3.x test alignment after MCP server migration** | - |
 | [126](./126-2026-03-20-runtime-boundaries-fastmcp-3x-strategy.md) | 2026-03-20 | **Runtime boundaries + FastMCP 3.x strategy docs** | - |
 | [125](./125-2025-12-21-workflow-catalog-inline-chunked-import.md) | 2025-12-21 | **Workflow catalog inline + chunked import** | - |

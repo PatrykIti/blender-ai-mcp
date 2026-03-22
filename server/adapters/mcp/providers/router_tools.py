@@ -9,10 +9,12 @@ from typing import Any, Dict
 
 from server.adapters.mcp.areas.router import register_router_tools
 
+LocalProvider: Any = None
+
 try:
     from fastmcp.server.providers import LocalProvider
 except ImportError:  # pragma: no cover - exercised through explicit guard
-    LocalProvider = None
+    pass
 
 
 def register_router_provider_tools(target: Any) -> Dict[str, Any]:

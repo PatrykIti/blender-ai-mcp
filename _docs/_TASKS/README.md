@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 12 tasks (~220 sub-tasks)
 - **In Progress:** 2 tasks
-- **Done:** 154
+- **Done:** 155
 
 ## 🧭 Terminology Guardrails
 
@@ -66,6 +66,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-100](./TASK-100_Router_Metadata_Schema_Alignment.md) | **Router Metadata Schema Alignment for Pre-commit Validation** | 🔴 High | 2026-03-22 |
 | [TASK-092](./TASK-092_Server_Side_Sampling_Assistants.md) | **Server-Side Sampling Assistants** | 🟡 Medium | 2026-03-22 |
 | [TASK-095](./TASK-095_LaBSE_Semantic_Layer_Boundaries.md) | **LaBSE Semantic Layer Boundaries** | 🔴 High | 2026-03-22 |
 | [TASK-090](./TASK-090_Prompt_Layer_and_Tool_Compatible_Prompts.md) | **Prompt Layer and Tool-Compatible Prompt Delivery** | 🟡 Medium | 2026-03-22 |

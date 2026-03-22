@@ -4,7 +4,11 @@
   "title": "Tool Metadata Schema",
   "description": "Schema for individual tool metadata JSON files",
   "type": "object",
-  "required": ["tool_name", "category", "mode_required"],
+  "required": [
+    "tool_name",
+    "category",
+    "mode_required"
+  ],
   "properties": {
     "tool_name": {
       "type": "string",
@@ -14,12 +18,36 @@
     "category": {
       "type": "string",
       "description": "Tool category/area",
-      "enum": ["scene", "system", "modeling", "mesh", "material", "uv", "curve", "collection", "lattice", "sculpt", "baking", "armature", "extraction", "text"]
+      "enum": [
+        "scene",
+        "system",
+        "modeling",
+        "mesh",
+        "material",
+        "uv",
+        "curve",
+        "collection",
+        "lattice",
+        "sculpt",
+        "baking",
+        "armature",
+        "extraction",
+        "text"
+      ]
     },
     "mode_required": {
       "type": "string",
       "description": "Blender mode required for this tool",
-      "enum": ["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE", "ANY"]
+      "enum": [
+        "OBJECT",
+        "EDIT",
+        "SCULPT",
+        "VERTEX_PAINT",
+        "WEIGHT_PAINT",
+        "TEXTURE_PAINT",
+        "POSE",
+        "ANY"
+      ]
     },
     "selection_required": {
       "type": "boolean",
@@ -49,18 +77,32 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["string", "int", "float", "bool", "enum", "array", "vector3"]
+            "enum": [
+              "string",
+              "int",
+              "float",
+              "bool",
+              "enum",
+              "array",
+              "vector3",
+              "object",
+              "scalar"
+            ]
           },
           "default": {},
           "range": {
             "type": "array",
-            "items": {"type": "number"},
+            "items": {
+              "type": "number"
+            },
             "minItems": 2,
             "maxItems": 2
           },
           "options": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
           "required": {
             "type": "boolean",

@@ -1,5 +1,10 @@
 from typing import Any, Dict, List, Optional
 
+from server.application.tool_handlers._rpc_utils import (
+    require_dict_result,
+    require_list_of_dicts_result,
+    require_str_result,
+)
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.material import IMaterialTool
 
@@ -14,17 +19,13 @@ class MaterialToolHandler(IMaterialTool):
         self.rpc = rpc_client
 
     def list_materials(self, include_unassigned: bool = True) -> List[Dict[str, Any]]:
-        response = self.rpc.send_request("material.list", {"include_unassigned": include_unassigned})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_list_of_dicts_result(
+            self.rpc.send_request("material.list", {"include_unassigned": include_unassigned})
+        )
 
     def list_by_object(self, object_name: str, include_indices: bool = False) -> Dict[str, Any]:
         args = {"object_name": object_name, "include_indices": include_indices}
-        response = self.rpc.send_request("material.list_by_object", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_dict_result(self.rpc.send_request("material.list_by_object", args))
 
     # TASK-023-1: material_create
     def create_material(
@@ -46,10 +47,7 @@ class MaterialToolHandler(IMaterialTool):
             "emission_strength": emission_strength,
             "alpha": alpha,
         }
-        response = self.rpc.send_request("material.create", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("material.create", args))
 
     # TASK-023-2: material_assign
     def assign_material(
@@ -65,10 +63,7 @@ class MaterialToolHandler(IMaterialTool):
             "slot_index": slot_index,
             "assign_to_selection": assign_to_selection,
         }
-        response = self.rpc.send_request("material.assign", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("material.assign", args))
 
     # TASK-023-3: material_set_params
     def set_material_params(
@@ -90,10 +85,7 @@ class MaterialToolHandler(IMaterialTool):
             "emission_strength": emission_strength,
             "alpha": alpha,
         }
-        response = self.rpc.send_request("material.set_params", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("material.set_params", args))
 
     # TASK-023-4: material_set_texture
     def set_material_texture(
@@ -109,10 +101,7 @@ class MaterialToolHandler(IMaterialTool):
             "input_name": input_name,
             "color_space": color_space,
         }
-        response = self.rpc.send_request("material.set_texture", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("material.set_texture", args))
 
     # TASK-045-6: material_inspect_nodes
     def inspect_nodes(
@@ -124,7 +113,4 @@ class MaterialToolHandler(IMaterialTool):
             "material_name": material_name,
             "include_connections": include_connections,
         }
-        response = self.rpc.send_request("material.inspect_nodes", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_dict_result(self.rpc.send_request("material.inspect_nodes", args))

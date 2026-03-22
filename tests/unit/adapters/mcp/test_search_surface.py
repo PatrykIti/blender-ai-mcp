@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import replace
+from typing import Any, cast
 
 import pytest
 from fastmcp import FastMCP
@@ -23,7 +24,7 @@ def _build_search_enabled_server() -> FastMCP:
     base_surface = get_surface_profile("llm-guided")
     search_surface = replace(base_surface, search_enabled=True, search_max_results=5)
 
-    server = FastMCP(
+    server: Any = FastMCP(
         search_surface.server_name,
         providers=build_surface_providers(search_surface),
         transforms=materialize_transforms(search_surface),
@@ -35,7 +36,7 @@ def _build_search_enabled_server() -> FastMCP:
     if prompts_bridge is not None:
         server.add_transform(prompts_bridge)
     server._bam_surface_profile = search_surface.name
-    return server
+    return cast(FastMCP, server)
 
 
 def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
@@ -54,7 +55,7 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
         else:
             transforms.append(transform)
 
-    server = FastMCP(
+    server: Any = FastMCP(
         surface.server_name,
         providers=build_surface_providers(surface),
         transforms=transforms,
@@ -66,7 +67,7 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
     if prompts_bridge is not None:
         server.add_transform(prompts_bridge)
     server._bam_surface_profile = surface.name
-    return server
+    return cast(FastMCP, server)
 
 
 def _decode_tool_result(result):

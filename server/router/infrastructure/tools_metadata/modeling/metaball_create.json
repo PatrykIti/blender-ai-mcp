@@ -3,7 +3,14 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["metaball", "blob", "organic", "merge", "ball", "capsule"],
+  "keywords": [
+    "metaball",
+    "blob",
+    "organic",
+    "merge",
+    "ball",
+    "capsule"
+  ],
   "sample_prompts": [
     "create a metaball",
     "make blob shapes",
@@ -17,13 +24,19 @@
       "description": "Name for the metaball object"
     },
     "location": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "World position [x, y, z]"
     },
     "element_type": {
       "type": "enum",
-      "options": ["BALL", "CAPSULE", "PLANE", "ELLIPSOID", "CUBE"],
+      "options": [
+        "BALL",
+        "CAPSULE",
+        "PLANE",
+        "ELLIPSOID",
+        "CUBE"
+      ],
       "default": "BALL",
       "description": "Type of metaball element"
     },
@@ -43,7 +56,10 @@
       "description": "Merge threshold"
     }
   },
-  "related_tools": ["metaball_add_element", "metaball_to_mesh"],
+  "related_tools": [
+    "metaball_add_element",
+    "metaball_to_mesh"
+  ],
   "patterns": [],
   "description": "Creates a metaball object for organic blob shapes."
 }

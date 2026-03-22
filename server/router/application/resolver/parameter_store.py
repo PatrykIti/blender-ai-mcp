@@ -105,6 +105,9 @@ class ParameterStore(IParameterStore):
         """
         # Generate embedding for context
         embedding = self._classifier.get_embedding(context)
+        if embedding is None:
+            logger.warning("Skipping parameter mapping store because embedding generation returned None")
+            return
 
         # Create record ID
         record_id = self._generate_record_id(context, parameter_name, workflow_name)
@@ -162,6 +165,8 @@ class ParameterStore(IParameterStore):
 
         # Generate embedding for prompt
         query_embedding = self._classifier.get_embedding(prompt)
+        if query_embedding is None:
+            return None
 
         # Search with metadata filter for parameter and workflow
         metadata_filter = {
@@ -252,6 +257,9 @@ class ParameterStore(IParameterStore):
 
         # Get current embedding
         embedding = self._classifier.get_embedding(mapping.context)
+        if embedding is None:
+            logger.warning("Skipping parameter mapping usage update because embedding generation returned None")
+            return
 
         # Update metadata with incremented usage
         metadata = {

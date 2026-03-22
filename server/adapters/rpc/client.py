@@ -100,6 +100,8 @@ class RpcClient(IRpcClient):
 
         try:
             # Keep the socket boundary explicit per request.
+            if self.socket is None:
+                raise ConnectionResetError("RPC socket is not connected")
             self.socket.settimeout(self.timeout)
 
             # Send

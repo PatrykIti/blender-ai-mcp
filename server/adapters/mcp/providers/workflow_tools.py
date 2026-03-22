@@ -9,10 +9,12 @@ from typing import Any, Dict
 
 from server.adapters.mcp.areas.workflow_catalog import register_workflow_tools
 
+LocalProvider: Any = None
+
 try:
     from fastmcp.server.providers import LocalProvider
 except ImportError:  # pragma: no cover - exercised through explicit guard
-    LocalProvider = None
+    pass
 
 
 def register_workflow_provider_tools(target: Any) -> Dict[str, Any]:

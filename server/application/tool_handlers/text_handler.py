@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
+from server.application.tool_handlers._rpc_utils import require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.text import ITextTool
 
@@ -39,10 +40,7 @@ class TextToolHandler(ITextTool):
         if font:
             args["font"] = font
 
-        response = self.rpc.send_request("text.create", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("text.create", args))
 
     # TASK-034-2: text_edit
     def edit(
@@ -56,7 +54,7 @@ class TextToolHandler(ITextTool):
         align_x: Optional[str] = None,
         align_y: Optional[str] = None,
     ) -> str:
-        args = {"object_name": object_name}
+        args: Dict[str, Any] = {"object_name": object_name}
         if text is not None:
             args["text"] = text
         if size is not None:
@@ -72,10 +70,7 @@ class TextToolHandler(ITextTool):
         if align_y is not None:
             args["align_y"] = align_y
 
-        response = self.rpc.send_request("text.edit", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("text.edit", args))
 
     # TASK-034-3: text_to_mesh
     def to_mesh(
@@ -87,7 +82,4 @@ class TextToolHandler(ITextTool):
             "object_name": object_name,
             "keep_original": keep_original,
         }
-        response = self.rpc.send_request("text.to_mesh", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("text.to_mesh", args))

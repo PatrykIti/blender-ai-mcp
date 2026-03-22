@@ -3,7 +3,12 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["duplicate", "copy", "clone", "geometry"],
+  "keywords": [
+    "duplicate",
+    "copy",
+    "clone",
+    "geometry"
+  ],
   "sample_prompts": [
     "duplicate selected geometry",
     "copy the selection",
@@ -12,12 +17,15 @@
   ],
   "parameters": {
     "translate": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Optional offset [x, y, z] for duplicated geometry"
     }
   },
-  "related_tools": ["mesh_select", "mesh_transform_selected"],
+  "related_tools": [
+    "mesh_select",
+    "mesh_transform_selected"
+  ],
   "patterns": [],
   "description": "Duplicates selected geometry within the same mesh."
 }

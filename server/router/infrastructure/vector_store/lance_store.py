@@ -114,6 +114,11 @@ class LanceVectorStore(IVectorStore):
             logger.error(f"Failed to ensure table: {e}")
             self._use_fallback = True
 
+    def _require_table(self) -> Any:
+        if self._table is None:
+            raise RuntimeError("LanceDB table is not initialized")
+        return self._table
+
     def upsert(self, records: List[VectorRecord]) -> int:
         """Insert or update records."""
         if not records:
@@ -123,6 +128,7 @@ class LanceVectorStore(IVectorStore):
             return self._upsert_fallback(records)
 
         try:
+            table = self._require_table()
             # Convert to dicts for LanceDB
             data = []
             for r in records:
@@ -139,12 +145,12 @@ class LanceVectorStore(IVectorStore):
             # Delete existing records with same IDs in same namespace
             for r in records:
                 try:
-                    self._table.delete(f"id = '{r.id}' AND namespace = '{r.namespace.value}'")
+                    table.delete(f"id = '{r.id}' AND namespace = '{r.namespace.value}'")
                 except Exception:
                     pass  # Record may not exist
 
             # Insert new records
-            self._table.add(data)
+            table.add(data)
             logger.debug(f"Upserted {len(records)} records")
             return len(records)
 
@@ -172,13 +178,14 @@ class LanceVectorStore(IVectorStore):
             return self._search_fallback(query_vector, namespace, top_k, threshold, metadata_filter)
 
         try:
+            table = self._require_table()
             # Build WHERE clause for namespace filter only
             where = f"namespace = '{namespace.value}'"
 
             # Execute search without metadata filters (filter in Python instead)
             # Fetch more results to account for filtering
             fetch_limit = top_k * 10 if metadata_filter else top_k
-            results = self._table.search(query_vector).where(where).limit(fetch_limit).to_list()
+            results = table.search(query_vector).where(where).limit(fetch_limit).to_list()
 
             # Convert to SearchResult with Python-side metadata filtering
             output = []
@@ -302,11 +309,12 @@ class LanceVectorStore(IVectorStore):
             return self._delete_fallback(ids, namespace)
 
         try:
+            table = self._require_table()
             count = 0
             for id_ in ids:
                 try:
-                    before = self._table.count_rows(f"id = '{id_}' AND namespace = '{namespace.value}'")
-                    self._table.delete(f"id = '{id_}' AND namespace = '{namespace.value}'")
+                    before = table.count_rows(f"id = '{id_}' AND namespace = '{namespace.value}'")
+                    table.delete(f"id = '{id_}' AND namespace = '{namespace.value}'")
                     count += before
                 except Exception:
                     pass
@@ -334,9 +342,10 @@ class LanceVectorStore(IVectorStore):
             return self._count_fallback(namespace)
 
         try:
+            table = self._require_table()
             if namespace:
-                return self._table.count_rows(f"namespace = '{namespace.value}'")
-            return self._table.count_rows()
+                return table.count_rows(f"namespace = '{namespace.value}'")
+            return table.count_rows()
         except Exception as e:
             logger.error(f"Failed to count records: {e}")
             return self._count_fallback(namespace)
@@ -371,8 +380,9 @@ class LanceVectorStore(IVectorStore):
             return True  # No index to rebuild
 
         try:
+            table = self._require_table()
             # LanceDB auto-manages indexes, but we can force optimization
-            self._table.create_index(
+            table.create_index(
                 metric="cosine",
                 num_partitions=256,
                 num_sub_vectors=96,
@@ -390,13 +400,14 @@ class LanceVectorStore(IVectorStore):
             return self._clear_fallback(namespace)
 
         try:
+            table = self._require_table()
             before = self.count(namespace)
 
             if namespace:
-                self._table.delete(f"namespace = '{namespace.value}'")
+                table.delete(f"namespace = '{namespace.value}'")
             else:
                 # Delete all records
-                self._table.delete("id IS NOT NULL")
+                table.delete("id IS NOT NULL")
 
             after = self.count(namespace)
             deleted = before - after
@@ -437,10 +448,9 @@ class LanceVectorStore(IVectorStore):
             return [r.id for r in self._fallback_store.values() if r.namespace == namespace]
 
         try:
+            table = self._require_table()
             # Query all records in namespace
-            results = (
-                self._table.search().where(f"namespace = '{namespace.value}'").select(["id"]).limit(10000).to_list()
-            )
+            results = table.search().where(f"namespace = '{namespace.value}'").select(["id"]).limit(10000).to_list()
             return [r["id"] for r in results]
         except Exception as e:
             logger.error(f"Failed to get IDs: {e}")
@@ -479,9 +489,10 @@ class LanceVectorStore(IVectorStore):
             return self._search_workflows_weighted_fallback(query_vector, query_language, top_k, min_score)
 
         try:
+            table = self._require_table()
             # Search with higher limit to get multiple embeddings per workflow
             raw_results = (
-                self._table.search(query_vector)
+                table.search(query_vector)
                 .where(f"namespace = '{VectorNamespace.WORKFLOWS.value}'")
                 .limit(top_k * 20)  # Get more results for grouping
                 .to_list()
@@ -639,9 +650,10 @@ class LanceVectorStore(IVectorStore):
             return len(workflow_ids)
 
         try:
+            table = self._require_table()
             # Get all workflow records and extract unique workflow_ids
             results = (
-                self._table.search()
+                table.search()
                 .where(f"namespace = '{VectorNamespace.WORKFLOWS.value}'")
                 .select(["id", "metadata"])
                 .limit(10000)

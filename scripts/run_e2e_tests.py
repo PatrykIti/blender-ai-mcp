@@ -367,6 +367,7 @@ def run_e2e_tests(verbose: bool = True) -> Tuple[bool, str]:
         )
 
         # Capture output while streaming to console
+        assert process.stdout is not None
         output_lines = []
         for line in process.stdout:
             print(line, end="")  # Print to console

@@ -3,7 +3,14 @@
   "category": "extraction",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["symmetry", "mirror", "symmetric", "axis", "detect", "extraction"],
+  "keywords": [
+    "symmetry",
+    "mirror",
+    "symmetric",
+    "axis",
+    "detect",
+    "extraction"
+  ],
   "sample_prompts": [
     "check for symmetry",
     "is the mesh symmetric",
@@ -11,10 +18,22 @@
     "find symmetry planes"
   ],
   "parameters": {
-    "object_name": {"type": "string", "required": true, "description": "Object to analyze"},
-    "tolerance": {"type": "number", "required": false, "default": 0.001, "description": "Distance tolerance for symmetry matching"}
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Object to analyze"
+    },
+    "tolerance": {
+      "type": "float",
+      "required": false,
+      "default": 0.001,
+      "description": "Distance tolerance for symmetry matching"
+    }
   },
-  "related_tools": ["modeling_add_modifier", "extraction_deep_topology"],
+  "related_tools": [
+    "modeling_add_modifier",
+    "extraction_deep_topology"
+  ],
   "patterns": [],
   "description": "Detects symmetry planes in mesh geometry along X, Y, Z axes."
 }

@@ -7,6 +7,7 @@ Task: TASK-061
 import ast
 import json
 from pathlib import Path
+from typing import List
 
 from server.adapters.mcp.platform.name_resolution import get_llm_guided_alias_map
 
@@ -49,23 +50,23 @@ def _extract_mcp_tool_signatures(areas_dir: Path) -> dict[str, set[str] | None]:
                 if isinstance(element, ast.Constant) and isinstance(element.value, str):
                     public_tool_names.add(element.value)
 
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        for function_node in ast.walk(tree):
+            if not isinstance(function_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
 
-            if node.name not in public_tool_names:
+            if function_node.name not in public_tool_names:
                 continue
 
-            tool_name = node.name
+            tool_name = function_node.name
 
-            if node.args.kwarg is not None:
+            if function_node.args.kwarg is not None:
                 signatures[tool_name] = None
                 continue
 
-            param_names = []
-            param_names.extend(arg.arg for arg in node.args.posonlyargs)
-            param_names.extend(arg.arg for arg in node.args.args)
-            param_names.extend(arg.arg for arg in node.args.kwonlyargs)
+            param_names: List[str] = []
+            param_names.extend(arg.arg for arg in function_node.args.posonlyargs)
+            param_names.extend(arg.arg for arg in function_node.args.args)
+            param_names.extend(arg.arg for arg in function_node.args.kwonlyargs)
 
             signatures[tool_name] = {p for p in param_names if p != "ctx"}
 

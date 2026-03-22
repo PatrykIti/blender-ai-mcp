@@ -5,7 +5,7 @@ Provides utilities for routing tool calls through SupervisorRouter.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from server.adapters.mcp.contracts.correction_audit import (
     CorrectionAuditEventContract,
@@ -348,7 +348,7 @@ def route_tool_call_report(
             steps=tuple(steps),
             audit_events=audit_events,
             audit_ids=_extract_audit_ids(audit_events),
-            verification_status=verification_status,
+            verification_status=cast(Any, verification_status),
         )
         _record_router_execution_report(report)
         _log_audit_exposure(report)

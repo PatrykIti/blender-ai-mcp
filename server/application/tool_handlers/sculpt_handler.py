@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from server.application.tool_handlers._rpc_utils import require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.sculpt import ISculptTool
 
@@ -28,10 +29,7 @@ class SculptToolHandler(ISculptTool):
             "use_symmetry": use_symmetry,
             "symmetry_axis": symmetry_axis,
         }
-        response = self.rpc.send_request("sculpt.auto", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.auto", args))
 
     def brush_smooth(
         self,
@@ -47,10 +45,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_smooth", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_smooth", args))
 
     def brush_grab(
         self,
@@ -68,10 +63,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_grab", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_grab", args))
 
     def brush_crease(
         self,
@@ -89,10 +81,7 @@ class SculptToolHandler(ISculptTool):
             "strength": strength,
             "pinch": pinch,
         }
-        response = self.rpc.send_request("sculpt.brush_crease", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_crease", args))
 
     # ==========================================================================
     # TASK-038-2: Core Sculpt Brushes
@@ -110,10 +99,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_clay", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_clay", args))
 
     def brush_inflate(
         self,
@@ -127,10 +113,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_inflate", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_inflate", args))
 
     def brush_blob(
         self,
@@ -144,10 +127,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_blob", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_blob", args))
 
     # ==========================================================================
     # TASK-038-3: Detail Sculpt Brushes
@@ -165,10 +145,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_snake_hook", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_snake_hook", args))
 
     def brush_draw(
         self,
@@ -182,10 +159,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_draw", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_draw", args))
 
     def brush_pinch(
         self,
@@ -199,10 +173,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_pinch", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_pinch", args))
 
     # ==========================================================================
     # TASK-038-4: Dynamic Topology (Dyntopo)
@@ -222,10 +193,7 @@ class SculptToolHandler(ISculptTool):
             "detail_size": detail_size,
             "use_smooth_shading": use_smooth_shading,
         }
-        response = self.rpc.send_request("sculpt.enable_dyntopo", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.enable_dyntopo", args))
 
     def disable_dyntopo(
         self,
@@ -235,10 +203,7 @@ class SculptToolHandler(ISculptTool):
         args = {
             "object_name": object_name,
         }
-        response = self.rpc.send_request("sculpt.disable_dyntopo", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.disable_dyntopo", args))
 
     def dyntopo_flood_fill(
         self,
@@ -248,7 +213,4 @@ class SculptToolHandler(ISculptTool):
         args = {
             "object_name": object_name,
         }
-        response = self.rpc.send_request("sculpt.dyntopo_flood_fill", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.dyntopo_flood_fill", args))

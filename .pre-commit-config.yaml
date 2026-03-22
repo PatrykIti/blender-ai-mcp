@@ -58,6 +58,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^(pyproject\.toml|poetry\.lock)$
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        pass_filenames: false
+        files: ^(server|blender_addon|tests|scripts)/.*\.py$
       - id: unit-tests
         name: unit-tests
         entry: poetry run pytest tests/unit/ -q

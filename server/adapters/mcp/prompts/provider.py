@@ -18,10 +18,12 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.session_state import get_session_value_async
 from server.infrastructure.config import get_config
 
+LocalProvider: Any = None
+
 try:
     from fastmcp.server.providers import LocalProvider
 except ImportError:  # pragma: no cover - explicit guard via tests
-    LocalProvider = None
+    pass
 
 
 def register_prompt_assets(target: Any) -> Dict[str, Any]:

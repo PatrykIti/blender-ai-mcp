@@ -7,7 +7,7 @@ and multi-angle rendering for the Automatic Workflow Extraction System.
 import math
 import os
 from collections import defaultdict
-from typing import Callable
+from typing import Any, Callable, Dict, cast
 
 import bmesh
 import bpy
@@ -629,7 +629,7 @@ class ExtractionHandler:
             total_angles = len(angles)
             for index, angle_name in enumerate(angles, 1):
                 raise_if_cancelled(is_cancelled)
-                preset = self.ANGLE_PRESETS[angle_name]
+                preset = cast(Dict[str, Any], self.ANGLE_PRESETS[angle_name])
 
                 # Position camera
                 rotation = Euler(preset["rotation"])

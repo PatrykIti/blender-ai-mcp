@@ -60,7 +60,7 @@ class DummyContext:
         self.session = SessionStub()
         self.request_id = "req_router"
         self.sample_result = None
-        self.state = {}
+        self.state: dict[str, object] = {}
 
     async def elicit(self, *args, **kwargs):
         raise RuntimeError("not used")

@@ -198,7 +198,7 @@ class ExpressionEvaluator:
         Returns:
             New dictionary with resolved values.
         """
-        resolved = {}
+        resolved: Dict[str, Any] = {}
         for key, value in params.items():
             if isinstance(value, list):
                 resolved[key] = [self.resolve_param_value(v) for v in value]

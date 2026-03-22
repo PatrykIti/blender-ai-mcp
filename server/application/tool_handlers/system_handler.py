@@ -1,5 +1,6 @@
 from typing import Optional
 
+from server.application.tool_handlers._rpc_utils import require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.system import ISystemTool
 
@@ -24,27 +25,20 @@ class SystemToolHandler(ISystemTool):
         object_name: Optional[str] = None,
     ) -> str:
         """Switches Blender mode for the active or specified object."""
-        response = self.rpc.send_request(
-            "system.set_mode",
-            {"mode": mode, "object_name": object_name},
+        return require_str_result(
+            self.rpc.send_request(
+                "system.set_mode",
+                {"mode": mode, "object_name": object_name},
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def undo(self, steps: int = 1) -> str:
         """Undoes the last operation(s)."""
-        response = self.rpc.send_request("system.undo", {"steps": steps})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("system.undo", {"steps": steps}))
 
     def redo(self, steps: int = 1) -> str:
         """Redoes previously undone operation(s)."""
-        response = self.rpc.send_request("system.redo", {"steps": steps})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("system.redo", {"steps": steps}))
 
     def save_file(
         self,
@@ -52,20 +46,16 @@ class SystemToolHandler(ISystemTool):
         compress: bool = True,
     ) -> str:
         """Saves the current Blender file."""
-        response = self.rpc.send_request(
-            "system.save_file",
-            {"filepath": filepath, "compress": compress},
+        return require_str_result(
+            self.rpc.send_request(
+                "system.save_file",
+                {"filepath": filepath, "compress": compress},
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def new_file(self, load_ui: bool = False) -> str:
         """Creates a new Blender file (clears current scene)."""
-        response = self.rpc.send_request("system.new_file", {"load_ui": load_ui})
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("system.new_file", {"load_ui": load_ui}))
 
     def snapshot(
         self,
@@ -73,13 +63,12 @@ class SystemToolHandler(ISystemTool):
         name: Optional[str] = None,
     ) -> str:
         """Manages quick save/restore checkpoints."""
-        response = self.rpc.send_request(
-            "system.snapshot",
-            {"action": action, "name": name},
+        return require_str_result(
+            self.rpc.send_request(
+                "system.snapshot",
+                {"action": action, "name": name},
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     # === Export Tools ===
 
@@ -92,19 +81,18 @@ class SystemToolHandler(ISystemTool):
         apply_modifiers: bool = True,
     ) -> str:
         """Exports scene or selected objects to GLB/GLTF format."""
-        response = self.rpc.send_request(
-            "export.glb",
-            {
-                "filepath": filepath,
-                "export_selected": export_selected,
-                "export_animations": export_animations,
-                "export_materials": export_materials,
-                "apply_modifiers": apply_modifiers,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "export.glb",
+                {
+                    "filepath": filepath,
+                    "export_selected": export_selected,
+                    "export_animations": export_animations,
+                    "export_materials": export_materials,
+                    "apply_modifiers": apply_modifiers,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def export_fbx(
         self,
@@ -115,19 +103,18 @@ class SystemToolHandler(ISystemTool):
         mesh_smooth_type: str = "FACE",
     ) -> str:
         """Exports scene or selected objects to FBX format."""
-        response = self.rpc.send_request(
-            "export.fbx",
-            {
-                "filepath": filepath,
-                "export_selected": export_selected,
-                "export_animations": export_animations,
-                "apply_modifiers": apply_modifiers,
-                "mesh_smooth_type": mesh_smooth_type,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "export.fbx",
+                {
+                    "filepath": filepath,
+                    "export_selected": export_selected,
+                    "export_animations": export_animations,
+                    "apply_modifiers": apply_modifiers,
+                    "mesh_smooth_type": mesh_smooth_type,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def export_obj(
         self,
@@ -140,21 +127,20 @@ class SystemToolHandler(ISystemTool):
         triangulate: bool = False,
     ) -> str:
         """Exports scene or selected objects to OBJ format."""
-        response = self.rpc.send_request(
-            "export.obj",
-            {
-                "filepath": filepath,
-                "export_selected": export_selected,
-                "apply_modifiers": apply_modifiers,
-                "export_materials": export_materials,
-                "export_uvs": export_uvs,
-                "export_normals": export_normals,
-                "triangulate": triangulate,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "export.obj",
+                {
+                    "filepath": filepath,
+                    "export_selected": export_selected,
+                    "apply_modifiers": apply_modifiers,
+                    "export_materials": export_materials,
+                    "export_uvs": export_uvs,
+                    "export_normals": export_normals,
+                    "triangulate": triangulate,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     # === Import Tools ===
 
@@ -168,20 +154,19 @@ class SystemToolHandler(ISystemTool):
         up_axis: str = "Y",
     ) -> str:
         """Imports OBJ file."""
-        response = self.rpc.send_request(
-            "import.obj",
-            {
-                "filepath": filepath,
-                "use_split_objects": use_split_objects,
-                "use_split_groups": use_split_groups,
-                "global_scale": global_scale,
-                "forward_axis": forward_axis,
-                "up_axis": up_axis,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "import.obj",
+                {
+                    "filepath": filepath,
+                    "use_split_objects": use_split_objects,
+                    "use_split_groups": use_split_groups,
+                    "global_scale": global_scale,
+                    "forward_axis": forward_axis,
+                    "up_axis": up_axis,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def import_fbx(
         self,
@@ -193,20 +178,19 @@ class SystemToolHandler(ISystemTool):
         global_scale: float = 1.0,
     ) -> str:
         """Imports FBX file."""
-        response = self.rpc.send_request(
-            "import.fbx",
-            {
-                "filepath": filepath,
-                "use_custom_normals": use_custom_normals,
-                "use_image_search": use_image_search,
-                "ignore_leaf_bones": ignore_leaf_bones,
-                "automatic_bone_orientation": automatic_bone_orientation,
-                "global_scale": global_scale,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "import.fbx",
+                {
+                    "filepath": filepath,
+                    "use_custom_normals": use_custom_normals,
+                    "use_image_search": use_image_search,
+                    "ignore_leaf_bones": ignore_leaf_bones,
+                    "automatic_bone_orientation": automatic_bone_orientation,
+                    "global_scale": global_scale,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def import_glb(
         self,
@@ -216,18 +200,17 @@ class SystemToolHandler(ISystemTool):
         import_shading: str = "NORMALS",
     ) -> str:
         """Imports GLB/GLTF file."""
-        response = self.rpc.send_request(
-            "import.glb",
-            {
-                "filepath": filepath,
-                "import_pack_images": import_pack_images,
-                "merge_vertices": merge_vertices,
-                "import_shading": import_shading,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "import.glb",
+                {
+                    "filepath": filepath,
+                    "import_pack_images": import_pack_images,
+                    "merge_vertices": merge_vertices,
+                    "import_shading": import_shading,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
 
     def import_image_as_plane(
         self,
@@ -240,18 +223,17 @@ class SystemToolHandler(ISystemTool):
         use_transparency: bool = True,
     ) -> str:
         """Imports image as a textured plane."""
-        response = self.rpc.send_request(
-            "import.image_as_plane",
-            {
-                "filepath": filepath,
-                "name": name,
-                "location": location,
-                "size": size,
-                "align_axis": align_axis,
-                "shader": shader,
-                "use_transparency": use_transparency,
-            },
+        return require_str_result(
+            self.rpc.send_request(
+                "import.image_as_plane",
+                {
+                    "filepath": filepath,
+                    "name": name,
+                    "location": location,
+                    "size": size,
+                    "align_axis": align_axis,
+                    "shader": shader,
+                    "use_transparency": use_transparency,
+                },
+            )
         )
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result

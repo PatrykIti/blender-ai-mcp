@@ -38,7 +38,7 @@ def register_system_tools(target: Any) -> Dict[str, Any]:
     for tool_name in SYSTEM_PUBLIC_TOOL_NAMES:
         tool = globals()[tool_name]
         fn = getattr(tool, "fn", tool)
-        kwargs = {"name": tool_name, "tags": set(tag_set)}
+        kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(tag_set)}
         task_config = get_tool_task_config(tool_name)
         if task_config is not None:
             kwargs["task"] = task_config

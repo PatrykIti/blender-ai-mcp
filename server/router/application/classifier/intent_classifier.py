@@ -220,6 +220,9 @@ class IntentClassifier(IIntentClassifier):
         try:
             from sklearn.metrics.pairwise import cosine_similarity
 
+            if self._tfidf_vectorizer is None or self._tfidf_matrix is None:
+                return []
+
             # Transform prompt
             prompt_vec = self._tfidf_vectorizer.transform([prompt])
 
