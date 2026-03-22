@@ -74,3 +74,13 @@ class RouterStatusContract(MCPContract):
     visible_entry_capabilities: list[str] | None = None
     hidden_capability_count: int | None = None
     hidden_category_counts: dict[str, int] | None = None
+    router_failure_policy: str | None = None
+    last_router_disposition: str | None = None
+    last_router_error: str | None = None
+    timeout_policy: dict[str, Any] | None = None
+    task_runtime: dict[str, Any] | None = None
+    telemetry: dict[str, Any] | None = None
+    list_page_size: int | None = None
+    background_job_count: int | None = None
+    background_job_counts_by_status: dict[str, int] | None = None
+    background_jobs: list[dict[str, Any]] | None = None

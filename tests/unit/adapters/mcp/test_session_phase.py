@@ -10,6 +10,7 @@ from server.adapters.mcp.session_capabilities import (
     clear_session_goal_state,
     get_session_capability_state,
     infer_phase_from_router_status,
+    record_router_execution_outcome,
     merge_resolved_params_with_session_answers,
     SessionCapabilityState,
     update_session_from_router_goal,
@@ -181,3 +182,19 @@ def test_merge_resolved_params_with_session_answers_prefers_new_values():
     merged = merge_resolved_params_with_session_answers(ctx, {"height": 3.0, "depth": 0.5})
 
     assert merged == {"width": 1.0, "height": 3.0, "depth": 0.5}
+
+
+def test_record_router_execution_outcome_persists_last_disposition_and_error():
+    """Operational diagnostics should keep the last router execution disposition in session state."""
+
+    ctx = FakeContext()
+
+    state = record_router_execution_outcome(
+        ctx,
+        router_disposition="failed_closed_error",
+        error="Router processing failed",
+    )
+
+    assert state.last_router_disposition == "failed_closed_error"
+    assert state.last_router_error == "Router processing failed"
+    assert get_session_capability_state(ctx).last_router_disposition == "failed_closed_error"

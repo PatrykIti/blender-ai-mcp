@@ -1,7 +1,7 @@
 # TASK-093-04: Operational Status and Diagnostics Surface
 
 **Parent:** [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md), [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)
 
@@ -38,6 +38,11 @@ Expose an operational diagnostics surface for maintainers and clients.
 ## Acceptance Criteria
 
 - debugging runtime state no longer requires guesswork
+
+## Completion Summary
+
+- `router_get_status()` now exposes active surface/profile, contract line, timeout policy, task runtime pair, telemetry bootstrap state, router failure policy, last router disposition/error, and background job summaries
+- diagnostics now read from live session state and factory-attached runtime metadata instead of relying on implicit assumptions
 
 ---
 

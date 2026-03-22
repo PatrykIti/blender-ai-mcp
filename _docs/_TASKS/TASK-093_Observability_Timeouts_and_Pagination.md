@@ -4,9 +4,9 @@
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (platform baseline). Task-mode-specific timeout / diagnostics rollout depends on TASK-088-02.
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Current State:** `TASK-093-01` and `TASK-093-02` are now complete: the repo has OTEL bootstrap, repo-specific router spans, explicit timeout boundary names, timeout policy diagnostics, and tests/docs for telemetry + timeout foundations. The umbrella remains open for pagination, diagnostics surface, and operations-focused documentation slices.
+**Completion Summary:** This task is now closed. The repo has OTEL bootstrap, explicit timeout taxonomy, operational diagnostics through `router_get_status()`, task-runtime pair reporting, background-job summaries, surface/component pagination policy, and payload pagination for workflow-heavy responses. Tests and docs now cover telemetry, timeout policy, diagnostics surface, and pagination expectations.
 
 ---
 

@@ -28,30 +28,29 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         self._vector_store = vector_store
         self._import_sessions: Dict[str, Dict[str, Any]] = {}
 
-    def list_workflows(self) -> Dict[str, Any]:
+    def list_workflows(
+        self,
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> Dict[str, Any]:
         workflows = self._workflow_loader.load_all()
-        items: List[Dict[str, Any]] = []
-
-        for workflow_name in sorted(workflows.keys()):
-            workflow = workflows[workflow_name]
-            items.append(
-                {
-                    "name": workflow.name,
-                    "description": workflow.description,
-                    "category": workflow.category,
-                    "version": workflow.version,
-                    "steps_count": len(workflow.steps),
-                    "trigger_keywords_count": len(getattr(workflow, "trigger_keywords", []) or []),
-                    "sample_prompts_count": len(getattr(workflow, "sample_prompts", []) or []),
-                    "parameters_count": len(getattr(workflow, "parameters", {}) or {}),
-                }
-            )
-
-        return {
-            "workflows_dir": str(self._workflow_loader.workflows_dir),
-            "count": len(items),
-            "workflows": items,
-        }
+        return self._paginate_workflow_items(
+            workflows=workflows,
+            items_builder=lambda workflow_name, workflow: {
+                "name": workflow.name,
+                "description": workflow.description,
+                "category": workflow.category,
+                "version": workflow.version,
+                "steps_count": len(workflow.steps),
+                "trigger_keywords_count": len(getattr(workflow, "trigger_keywords", []) or []),
+                "sample_prompts_count": len(getattr(workflow, "sample_prompts", []) or []),
+                "parameters_count": len(getattr(workflow, "parameters", {}) or {}),
+            },
+            offset=offset,
+            limit=limit,
+            payload_key="workflows",
+            extra={"workflows_dir": str(self._workflow_loader.workflows_dir)},
+        )
 
     def get_workflow(self, workflow_name: str) -> Dict[str, Any]:
         workflows = self._workflow_loader.load_all()
@@ -77,10 +76,21 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         query: str,
         top_k: int = 5,
         threshold: float = 0.0,
+        offset: int = 0,
+        limit: int | None = None,
     ) -> Dict[str, Any]:
         workflows = self._workflow_loader.load_all()
         if not workflows:
-            return {"error": "No workflows available", "count": 0, "results": []}
+            return {
+                "error": "No workflows available",
+                "count": 0,
+                "total": 0,
+                "returned": 0,
+                "offset": max(offset, 0),
+                "limit": limit,
+                "has_more": False,
+                "results": [],
+            }
 
         semantic_results: List[Tuple[str, float]] = []
         search_type = "keyword"
@@ -116,12 +126,75 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         else:
             results = self._search_workflows_keyword(workflows, query, top_k)
 
+        paged_results, returned, effective_offset, effective_limit, has_more = self._slice_items(
+            results,
+            offset=offset,
+            limit=limit,
+        )
+
         return {
             "query": query,
             "search_type": search_type,
-            "count": len(results),
-            "results": results,
+            "count": returned,
+            "total": len(results),
+            "returned": returned,
+            "offset": effective_offset,
+            "limit": effective_limit,
+            "has_more": has_more,
+            "results": paged_results,
         }
+
+    def _paginate_workflow_items(
+        self,
+        *,
+        workflows: Dict[str, Any],
+        items_builder,
+        offset: int,
+        limit: int | None,
+        payload_key: str,
+        extra: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        items: List[Dict[str, Any]] = []
+
+        for workflow_name in sorted(workflows.keys()):
+            workflow = workflows[workflow_name]
+            items.append(items_builder(workflow_name, workflow))
+
+        paged_items, returned, effective_offset, effective_limit, has_more = self._slice_items(
+            items,
+            offset=offset,
+            limit=limit,
+        )
+
+        payload = {
+            "count": returned,
+            "total": len(items),
+            "returned": returned,
+            "offset": effective_offset,
+            "limit": effective_limit,
+            "has_more": has_more,
+            payload_key: paged_items,
+        }
+        if extra:
+            payload.update(extra)
+        return payload
+
+    def _slice_items(
+        self,
+        items: List[Dict[str, Any]],
+        *,
+        offset: int,
+        limit: int | None,
+    ) -> tuple[List[Dict[str, Any]], int, int, int | None, bool]:
+        effective_offset = max(offset, 0)
+        effective_limit = None if limit is None else max(limit, 0)
+        if effective_limit is None:
+            paged = items[effective_offset:]
+        else:
+            paged = items[effective_offset : effective_offset + effective_limit]
+        returned = len(paged)
+        has_more = (effective_offset + returned) < len(items)
+        return paged, returned, effective_offset, effective_limit, has_more
 
     def _search_workflows_keyword(
         self,

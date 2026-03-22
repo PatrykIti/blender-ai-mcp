@@ -13,7 +13,11 @@ class IWorkflowCatalogTool(ABC):
     """
 
     @abstractmethod
-    def list_workflows(self) -> Dict[str, Any]:
+    def list_workflows(
+        self,
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> Dict[str, Any]:
         """List all available workflows with summary metadata."""
         raise NotImplementedError
 
@@ -28,6 +32,8 @@ class IWorkflowCatalogTool(ABC):
         query: str,
         top_k: int = 5,
         threshold: float = 0.0,
+        offset: int = 0,
+        limit: int | None = None,
     ) -> Dict[str, Any]:
         """Search for workflows similar to a query (no execution)."""
         raise NotImplementedError

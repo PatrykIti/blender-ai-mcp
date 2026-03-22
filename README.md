@@ -163,6 +163,26 @@ Operational baseline now includes:
   - `mcp_task`
 - `rpc_client`
 - `addon_execution`
+- `router_get_status()` now exposes operational diagnostics for:
+  - active surface/profile
+  - active contract line
+  - timeout policy
+  - task runtime pair
+  - telemetry bootstrap state
+  - background job counts and job summaries
+
+### Pagination Baseline
+
+Operational pagination now has two explicit layers:
+
+- component pagination through surface `list_page_size`
+- payload pagination through structured contracts
+
+Current payload pagination coverage includes:
+
+- `mesh_inspect`
+- `workflow_catalog(action="list")`
+- `workflow_catalog(action="search")`
 
 ### Background Task Mode Baseline
 

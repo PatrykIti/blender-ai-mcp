@@ -78,6 +78,8 @@ async def workflow_catalog(
     query: Optional[str] = None,
     top_k: int = 5,
     threshold: float = 0.0,
+    offset: int = 0,
+    limit: Optional[int] = None,
     filepath: Optional[str] = None,
     overwrite: Optional[bool] = None,
     content: Optional[str] = None,
@@ -107,6 +109,8 @@ async def workflow_catalog(
       query: Search query for search action
       top_k: Number of results for search (default 5)
       threshold: Minimum similarity score (0.0 disables filtering)
+      offset: Optional pagination offset for list/search responses
+      limit: Optional pagination limit for list/search responses
       filepath: Workflow file path for import action
       overwrite: Overwrite existing workflow if name conflicts (import only)
       content: Inline YAML/JSON workflow definition
@@ -215,7 +219,7 @@ async def workflow_catalog(
             )
 
         if action == "list":
-            result: Dict[str, Any] = handler.list_workflows()
+            result: Dict[str, Any] = handler.list_workflows(offset=offset, limit=limit)
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Listed {result.get('count', 0)} workflows")
             return WorkflowCatalogResponseContract(action="list", **result)
 
@@ -238,7 +242,13 @@ async def workflow_catalog(
                     action="search",
                     error="query required for search action",
                 )
-            result = handler.search_workflows(query=query, top_k=top_k, threshold=threshold)
+            result = handler.search_workflows(
+                query=query,
+                top_k=top_k,
+                threshold=threshold,
+                offset=offset,
+                limit=limit,
+            )
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Search '{query[:40]}...' -> {result.get('count', 0)} results")
             return WorkflowCatalogResponseContract(action="search", **result)
 

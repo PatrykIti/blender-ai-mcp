@@ -26,19 +26,21 @@ from server.adapters.mcp.elicitation_contracts import (
     build_fallback_payload,
     coerce_elicitation_answers,
 )
-from server.adapters.mcp.session_capabilities import get_session_capability_state
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
-    clear_session_goal_state,
-    merge_resolved_params_with_session_answers,
-    update_session_from_router_goal,
+    clear_session_goal_state_async,
+    get_session_capability_state_async,
+    merge_resolved_params_with_session_answers_async,
+    update_session_from_router_goal_async,
 )
 from server.adapters.mcp.guided_mode import build_visibility_diagnostics
+from server.adapters.mcp.tasks.job_registry import get_background_job_registry
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import get_router_status
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_router_handler
+from server.infrastructure.telemetry import get_telemetry_state
 
 ROUTER_PUBLIC_TOOL_NAMES = (
     "router_set_goal",
@@ -76,6 +78,71 @@ def _get_runtime_contract_line(ctx: Context) -> str | None:
         return None
 
 
+def _build_background_job_diagnostics() -> tuple[int, dict[str, int], list[dict[str, Any]]]:
+    """Return background job diagnostics from the shared task registry."""
+
+    jobs = [job.to_dict() for job in get_background_job_registry().list()]
+    counts_by_status: dict[str, int] = {}
+    for job in jobs:
+        status = str(job.get("status") or "unknown")
+        counts_by_status[status] = counts_by_status.get(status, 0) + 1
+    return len(jobs), counts_by_status, jobs
+
+
+def _build_telemetry_diagnostics() -> dict[str, Any]:
+    """Return a diagnostics-friendly telemetry snapshot."""
+
+    state = get_telemetry_state()
+    return {
+        "enabled": state.enabled,
+        "service_name": state.service_name,
+        "exporter": state.exporter,
+        "provider_configured": state.provider is not None,
+        "memory_exporter_enabled": state.memory_exporter is not None,
+    }
+
+
+def _build_task_runtime_diagnostics(ctx: Context) -> dict[str, Any] | None:
+    """Return the active task-runtime diagnostics for the current server surface."""
+
+    try:
+        report = getattr(ctx.fastmcp, "_bam_task_runtime_report", None)
+    except Exception:
+        report = None
+
+    if report is None:
+        return None
+    try:
+        return report.to_dict()
+    except Exception:
+        return None
+
+
+def _build_timeout_policy_diagnostics(ctx: Context) -> dict[str, Any] | None:
+    """Return timeout policy diagnostics attached by the factory."""
+
+    try:
+        policy = getattr(ctx.fastmcp, "_bam_timeout_policy", None)
+    except Exception:
+        policy = None
+
+    if policy is None:
+        return None
+    try:
+        return policy.to_dict()
+    except Exception:
+        return None
+
+
+def _get_list_page_size(ctx: Context) -> int | None:
+    """Return the current server list page size when available."""
+
+    try:
+        return getattr(ctx.fastmcp, "list_page_size", None)
+    except Exception:
+        return None
+
+
 async def _maybe_elicit_router_answers(
     ctx: Context,
     goal: str,
@@ -89,7 +156,7 @@ async def _maybe_elicit_router_answers(
     if result.get("status") != "needs_input":
         return result
 
-    session = get_session_capability_state(ctx)
+    session = await get_session_capability_state_async(ctx)
     plan = build_clarification_plan(
         goal=goal,
         workflow_name=result.get("workflow") or "unknown_workflow",
@@ -197,7 +264,7 @@ async def router_set_goal(
         -> {"status": "ready", ...}  # Learned from previous interaction
     """
     handler = get_router_handler()
-    merged_resolved_params = merge_resolved_params_with_session_answers(ctx, resolved_params)
+    merged_resolved_params = await merge_resolved_params_with_session_answers_async(ctx, resolved_params)
     result = handler.set_goal(goal, merged_resolved_params)
 
     if resolved_params is None and result.get("status") == "needs_input":
@@ -221,13 +288,14 @@ async def router_set_goal(
                 request_id = getattr(ctx, "request_id", None)
             except Exception:
                 request_id = None
+            session = await get_session_capability_state_async(ctx)
             result["clarification"] = build_fallback_payload(
                 plan,
                 request_id=request_id if isinstance(request_id, str) else None,
-                question_set_id=get_session_capability_state(ctx).pending_question_set_id,
+                question_set_id=session.pending_question_set_id,
             ).model_dump()
 
-    state = update_session_from_router_goal(
+    state = await update_session_from_router_goal_async(
         ctx,
         goal,
         result,
@@ -251,7 +319,7 @@ async def router_set_goal(
     return RouterGoalResponseContract.model_validate(result)
 
 
-def router_get_status(ctx: Context) -> RouterStatusContract:
+async def router_get_status(ctx: Context) -> RouterStatusContract:
     """
     [SYSTEM][SAFE] Get current Router Supervisor status.
 
@@ -261,11 +329,12 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
     - Router statistics
     - Component status
     """
-    session = get_session_capability_state(ctx)
+    session = await get_session_capability_state_async(ctx)
     surface_profile = session.surface_profile or get_config().MCP_SURFACE_PROFILE
     contract_line = session.contract_version or _get_runtime_contract_line(ctx)
     diagnostics = build_visibility_diagnostics(surface_profile, session.phase)
     status_payload = get_router_status()
+    background_job_count, background_job_counts_by_status, background_jobs = _build_background_job_diagnostics()
     status_payload.update(
         {
             "current_goal": session.goal,
@@ -277,12 +346,22 @@ def router_get_status(ctx: Context) -> RouterStatusContract:
             "partial_answers": session.partial_answers,
             "last_elicitation_action": session.last_elicitation_action,
             "last_router_status": session.last_router_status,
+            "last_router_disposition": session.last_router_disposition,
+            "last_router_error": session.last_router_error,
             "policy_context": session.policy_context,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],
             "visible_capabilities": list(diagnostics.visible_capability_ids),
             "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),
             "hidden_capability_count": len(diagnostics.hidden_capability_ids),
             "hidden_category_counts": diagnostics.hidden_category_counts,
+            "router_failure_policy": "fail_closed" if surface_profile != "legacy-flat" else "fail_open",
+            "timeout_policy": _build_timeout_policy_diagnostics(ctx),
+            "task_runtime": _build_task_runtime_diagnostics(ctx),
+            "telemetry": _build_telemetry_diagnostics(),
+            "list_page_size": _get_list_page_size(ctx),
+            "background_job_count": background_job_count,
+            "background_job_counts_by_status": background_job_counts_by_status,
+            "background_jobs": background_jobs,
         }
     )
     return RouterStatusContract.model_validate(status_payload)
@@ -297,7 +376,7 @@ async def router_clear_goal(ctx: Context) -> str:
     """
     handler = get_router_handler()
     result = handler.clear_goal()
-    state = clear_session_goal_state(
+    state = await clear_session_goal_state_async(
         ctx,
         surface_profile=get_config().MCP_SURFACE_PROFILE,
         contract_version=_get_runtime_contract_line(ctx),

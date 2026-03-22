@@ -1,7 +1,7 @@
 # TASK-093-05: Operations Tests and Documentation
 
 **Parent:** [TASK-093](./TASK-093_Observability_Timeouts_and_Pagination.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md), [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md)
 
@@ -34,3 +34,8 @@ Add operations-oriented regression coverage and documentation for telemetry, tim
 ## Acceptance Criteria
 
 - operational diagnostics and limits are both documented and tested
+
+## Completion Summary
+
+- repo docs now describe operational diagnostics, timeout policy, task runtime pair, and pagination behavior
+- test docs now include focused validation commands for diagnostics/pagination slices

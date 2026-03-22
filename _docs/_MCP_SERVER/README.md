@@ -157,6 +157,26 @@ The platform now has the first operations baseline for telemetry and timeout pol
   - `mcp_task`
   - `rpc_client`
   - `addon_execution`
+- `router_get_status()` now exposes:
+  - active surface/profile
+  - active contract line
+  - timeout policy snapshot
+  - task runtime pair
+  - telemetry bootstrap state
+  - background job counts and job summaries
+
+## Pagination Baseline
+
+Pagination is now split explicitly between:
+
+- component pagination via surface `list_page_size`
+- payload pagination via structured contract fields such as `offset`, `limit`, `returned`, `total`, and `has_more`
+
+Current payload-pagination coverage includes:
+
+- `mesh_inspect`
+- `workflow_catalog(action="list")`
+- `workflow_catalog(action="search")`
 
 ## Background Task Mode Baseline
 

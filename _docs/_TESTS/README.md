@@ -128,6 +128,12 @@ Primary local validation commands for TASK-099 runtime alignment:
 poetry run pytest tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
 ```
 
+Primary local validation commands for TASK-093 diagnostics/pagination:
+
+```bash
+poetry run pytest tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_timeout_policy.py tests/unit/tools/workflow_catalog/test_workflow_catalog_import.py tests/unit/adapters/mcp/test_pagination_policy.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

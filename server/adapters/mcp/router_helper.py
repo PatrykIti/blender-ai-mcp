@@ -15,6 +15,8 @@ from server.adapters.mcp.contracts.correction_audit import (
 )
 from server.adapters.mcp.execution_context import MCPExecutionContext
 from server.adapters.mcp.execution_report import MCPExecutionReport, ExecutionStep
+from server.adapters.mcp.session_capabilities import record_router_execution_outcome
+from server.adapters.mcp.session_state import set_session_value
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_postcondition_registry, get_scene_handler
 from server.infrastructure.di import is_router_enabled, get_router
@@ -23,6 +25,9 @@ from server.router.infrastructure.logger import get_router_logger
 from server.router.domain.entities.correction_policy import CorrectionCategory
 
 logger = logging.getLogger(__name__)
+
+SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
+SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 
 
 def _get_active_surface_profile() -> str:
@@ -125,6 +130,33 @@ def _log_audit_exposure(report: MCPExecutionReport) -> None:
         verification_status=report.verification_status,
         audit_ids=list(report.audit_ids),
     )
+
+
+def _record_router_execution_report(report: MCPExecutionReport) -> None:
+    """Persist the last router execution outcome in session state when available."""
+
+    try:
+        from fastmcp.server.context import _current_context  # type: ignore
+
+        current_ctx = _current_context.get(None)
+    except Exception:
+        current_ctx = None
+
+    if current_ctx is None:
+        return
+
+    try:
+        record_router_execution_outcome(
+            current_ctx,
+            router_disposition=report.router_disposition,
+            error=report.error,
+        )
+    except Exception:
+        try:
+            set_session_value(current_ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, report.router_disposition)
+            set_session_value(current_ctx, SESSION_LAST_ROUTER_ERROR_KEY, report.error)
+        except Exception:
+            return
 
 
 def _apply_postcondition_verification(
@@ -231,6 +263,7 @@ def route_tool_call_report(
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
             audit_ids=(),
         )
+        _record_router_execution_report(report)
         _log_audit_exposure(report)
         return report
 
@@ -245,6 +278,7 @@ def route_tool_call_report(
                 error="Router is enabled but not initialized for this guided surface.",
                 audit_ids=(),
             )
+            _record_router_execution_report(report)
             _log_audit_exposure(report)
             return report
 
@@ -257,6 +291,7 @@ def route_tool_call_report(
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
             audit_ids=(),
         )
+        _record_router_execution_report(report)
         _log_audit_exposure(report)
         return report
 
@@ -274,6 +309,7 @@ def route_tool_call_report(
                     steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
                     audit_ids=(),
                 )
+                _record_router_execution_report(report)
                 _log_audit_exposure(report)
                 return report
 
@@ -322,6 +358,7 @@ def route_tool_call_report(
             audit_ids=_extract_audit_ids(audit_events),
             verification_status=verification_status,
         )
+        _record_router_execution_report(report)
         _log_audit_exposure(report)
         return report
 
@@ -336,6 +373,7 @@ def route_tool_call_report(
                 error=f"Router processing failed for {tool_name}: {e}",
                 audit_ids=(),
             )
+            _record_router_execution_report(report)
             _log_audit_exposure(report)
             return report
 
@@ -348,6 +386,7 @@ def route_tool_call_report(
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=fallback_result),),
             audit_ids=(),
         )
+        _record_router_execution_report(report)
         _log_audit_exposure(report)
         return report
 

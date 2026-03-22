@@ -16,6 +16,11 @@ class WorkflowCatalogResponseContract(MCPContract):
 
     action: str
     count: int | None = None
+    total: int | None = None
+    returned: int | None = None
+    offset: int | None = None
+    limit: int | None = None
+    has_more: bool | None = None
     workflows_dir: str | None = None
     workflows: list[dict[str, Any]] | None = None
     workflow_name: str | None = None

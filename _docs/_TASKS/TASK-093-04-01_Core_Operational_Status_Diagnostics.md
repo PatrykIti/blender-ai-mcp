@@ -1,7 +1,7 @@
 # TASK-093-04-01: Core Operational Status and Diagnostics Surface
 
 **Parent:** [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md), [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)
 

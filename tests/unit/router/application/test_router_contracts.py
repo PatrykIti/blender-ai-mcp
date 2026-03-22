@@ -13,9 +13,44 @@ from server.adapters.mcp.contracts.router import (
     RouterStatusContract,
 )
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
+from server.adapters.mcp.tasks.job_registry import reset_background_job_registry_for_tests
+from server.adapters.mcp.tasks.runtime_policy import TaskRuntimeReport
 
 
 class DummyContext:
+    def __init__(self) -> None:
+        self.fastmcp = type(
+            "ServerStub",
+            (),
+            {
+                "list_page_size": 50,
+                "_bam_timeout_policy": type(
+                    "TimeoutPolicyStub",
+                    (),
+                    {
+                        "to_dict": lambda self: {
+                            "tool_timeout_seconds": 30.0,
+                            "task_timeout_seconds": 300.0,
+                            "rpc_timeout_seconds": 30.0,
+                            "addon_execution_timeout_seconds": 30.0,
+                            "boundary_names": (
+                                "mcp_tool",
+                                "mcp_task",
+                                "rpc_client",
+                                "addon_execution",
+                            ),
+                        }
+                    },
+                )(),
+                "_bam_task_runtime_report": TaskRuntimeReport(
+                    fastmcp_version="3.1.1",
+                    pydocket_version="0.18.2",
+                    tasks_required=True,
+                    supported=True,
+                ),
+            },
+        )()
+
     async def elicit(self, *args, **kwargs):
         raise RuntimeError("not used")
 
@@ -67,8 +102,17 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     """workflow_catalog should return a typed contract instead of JSON text."""
 
     class Handler:
-        def list_workflows(self):
-            return {"workflows_dir": "/tmp", "count": 1, "workflows": [{"name": "chair"}]}
+        def list_workflows(self, offset=0, limit=None):
+            return {
+                "workflows_dir": "/tmp",
+                "count": 1,
+                "total": 3,
+                "returned": 1,
+                "offset": 1,
+                "limit": 1,
+                "has_more": True,
+                "workflows": [{"name": "chair"}],
+            }
 
     monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
 
@@ -78,6 +122,9 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     assert isinstance(result, WorkflowCatalogResponseContract)
     assert result.action == "list"
     assert result.count == 1
+    assert result.total == 3
+    assert result.returned == 1
+    assert result.has_more is True
 
 
 def test_workflow_catalog_import_needs_input_can_carry_typed_clarification(monkeypatch):
@@ -113,6 +160,8 @@ def test_workflow_catalog_import_needs_input_can_carry_typed_clarification(monke
 def test_router_get_status_returns_structured_contract(monkeypatch):
     """router_get_status should return a typed status contract instead of prose text."""
 
+    reset_background_job_registry_for_tests()
+
     monkeypatch.setattr(
         "server.adapters.mcp.areas.router.get_router_status",
         lambda: {
@@ -126,7 +175,7 @@ def test_router_get_status_returns_structured_contract(monkeypatch):
     )
 
     callable_router_get_status = getattr(router_get_status, "fn", router_get_status)
-    result = callable_router_get_status(DummyContext())
+    result = asyncio.run(callable_router_get_status(DummyContext()))
 
     assert isinstance(result, RouterStatusContract)
     assert result.enabled is True
@@ -136,6 +185,12 @@ def test_router_get_status_returns_structured_contract(monkeypatch):
     assert result.hidden_capability_count == 0
     assert result.pending_question_set_id is None
     assert result.partial_answers is None
+    assert result.router_failure_policy == "fail_open"
+    assert result.timeout_policy["task_timeout_seconds"] == 300.0
+    assert result.task_runtime["pydocket_version"] == "0.18.2"
+    assert result.telemetry["enabled"] is False
+    assert result.list_page_size == 50
+    assert result.background_job_count == 0
 
 
 def test_router_goal_contract_accepts_policy_context():
