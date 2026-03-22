@@ -1,7 +1,7 @@
 # TASK-088-06-02: Tests and Docs Task Mode Operations and Docs
 
 **Parent:** [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-088-06-01](./TASK-088-06-01_Core_Task_Mode_Operations_Docs.md)
 
@@ -62,3 +62,10 @@ Add tests and documentation updates for **Task Mode Tests, Operations, and Docs*
 2. Run the target suites, collect metric outputs, and compare to baseline values.
 3. Update docs with regression matrix, metric table, and migration/compatibility notes.
 4. Verify adjacent surfaces for spillover regressions and document the result.
+
+## Completion Summary
+
+- registration guard coverage now proves that sync functions cannot be registered with task mode enabled
+- task-mode semantics coverage now includes `forbidden`, `optional`, and `required`
+- addon-side lifecycle coverage now includes explicit `launch`, `poll`, `cancel`, and `collect` verbs
+- local validation command and result were recorded in the companion TASK-088 test/docs leaf and `_docs/_TESTS/README.md`

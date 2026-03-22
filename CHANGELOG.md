@@ -2,6 +2,12 @@
 
 <!-- version list -->
 
+## Unreleased
+
+### Features
+
+- Add first background task mode rollout for heavy MCP operations (`scene_get_viewport`, `extraction_render_angles`, and `workflow_catalog(import_finalize)`) with explicit RPC job lifecycle, task bookkeeping, and sync fallback behavior
+
 ## v2.2.0 (2026-03-20)
 
 ### Features

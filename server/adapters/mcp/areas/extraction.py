@@ -6,11 +6,17 @@ multi-angle rendering for LLM Vision.
 """
 import json
 from typing import Any, Dict, List, Optional
+
 from fastmcp import Context
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.tasks.candidacy import get_tool_task_config
+from server.adapters.mcp.tasks.task_bridge import (
+    is_background_task_context,
+    run_rpc_background_job,
+)
 from server.infrastructure.di import get_extraction_handler
 
 EXTRACTION_PUBLIC_TOOL_NAMES = (
@@ -26,9 +32,17 @@ EXTRACTION_PUBLIC_TOOL_NAMES = (
 def register_extraction_tools(target: Any) -> Dict[str, Any]:
     """Register public extraction tools on a FastMCP server or LocalProvider."""
 
-    return register_existing_tools(
-        globals(), target, EXTRACTION_PUBLIC_TOOL_NAMES, tags=get_capability_tags("extraction")
-    )
+    registered: Dict[str, Any] = {}
+    tag_set = set(get_capability_tags("extraction"))
+    for tool_name in EXTRACTION_PUBLIC_TOOL_NAMES:
+        tool = globals()[tool_name]
+        fn = getattr(tool, "fn", tool)
+        kwargs = {"name": tool_name, "tags": set(tag_set)}
+        task_config = get_tool_task_config(tool_name)
+        if task_config is not None:
+            kwargs["task"] = task_config
+        registered[tool_name] = target.tool(fn, **kwargs)
+    return registered
 
 
 def extraction_deep_topology(
@@ -266,7 +280,7 @@ def extraction_face_group_analysis(
     )
 
 
-def extraction_render_angles(
+async def extraction_render_angles(
     ctx: Context,
     object_name: str,
     angles: Optional[List[str]] = None,
@@ -295,6 +309,42 @@ def extraction_render_angles(
     Returns:
         JSON with render paths for each angle
     """
+    def _format_render_result(payload: Dict[str, Any]) -> str:
+        render_count = len(payload.get("renders", []))
+        ctx_info(ctx, f"Rendered {render_count} views of '{object_name}'")
+        return json.dumps(payload, indent=2)
+
+    if is_background_task_context(ctx):
+        def _foreground_rpc() -> Dict[str, Any]:
+            handler = get_extraction_handler()
+            return handler.render_angles(
+                object_name=object_name,
+                angles=angles,
+                resolution=resolution,
+                output_dir=output_dir,
+            )
+
+        def _format_result(payload: Any) -> str:
+            if not isinstance(payload, dict):
+                raise RuntimeError("Background extraction render job returned an invalid payload")
+            return _format_render_result(payload)
+
+        return await run_rpc_background_job(
+            ctx,
+            tool_name="extraction_render_angles",
+            rpc_cmd="extraction.render_angles",
+            rpc_args={
+                "object_name": object_name,
+                "angles": angles,
+                "resolution": resolution,
+                "output_dir": output_dir,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_result,
+            start_message=f"Launching multi-angle render for '{object_name}'",
+            completion_message=f"Completed multi-angle render for '{object_name}'",
+        )
+
     def execute():
         handler = get_extraction_handler()
         try:

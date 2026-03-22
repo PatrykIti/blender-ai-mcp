@@ -158,6 +158,24 @@ The platform now has the first operations baseline for telemetry and timeout pol
   - `rpc_client`
   - `addon_execution`
 
+## Background Task Mode Baseline
+
+The first task-mode rollout now covers the initial heavy-operation slice on task-capable surfaces.
+
+Adopted endpoints:
+
+- `scene_get_viewport`
+- `extraction_render_angles`
+- `workflow_catalog(action="import_finalize")`
+
+Current product semantics:
+
+- adopted tools register explicit `TaskConfig(mode="optional")`
+- task-capable surfaces can submit them as background work without changing canonical tool names
+- legacy/foreground clients keep a synchronous fallback path
+- Blender-backed task mode now uses explicit RPC verbs for launch, poll, cancel, and collect
+- workflow import finalization uses the same MCP-side task bookkeeping without requiring addon RPC
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

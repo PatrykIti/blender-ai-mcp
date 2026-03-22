@@ -1,7 +1,7 @@
 # TASK-088-02: Async Task Bridge and Job Registry
 
 **Parent:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md)
 
@@ -18,7 +18,7 @@ Build the FastMCP task bridge and a job registry for long-running operations.
 - create:
   - `server/adapters/mcp/tasks/job_registry.py`
   - `server/adapters/mcp/tasks/task_bridge.py`
-  - `tests/unit/adapters/mcp/test_job_registry.py`
+  - `tests/unit/adapters/mcp/test_background_job_registry.py`
 
 ### Scope Rule
 
@@ -71,6 +71,12 @@ The bridge is not complete if only one of these identities exists.
 
 - the server can register, track, and complete background jobs explicitly
 - bridge behavior is validated on an async, task-capable runtime path (not sync-only stubs)
+
+## Completion Summary
+
+- added `server/adapters/mcp/tasks/job_registry.py`, `progress.py`, `result_store.py`, and `task_bridge.py`
+- the bridge now tracks both FastMCP `task_id` and addon-side `job_id` when Blender-backed execution is used
+- added runtime compatibility patching for the current FastMCP/Docket symbol drift so task progress plumbing remains usable in this repo baseline
 
 ---
 

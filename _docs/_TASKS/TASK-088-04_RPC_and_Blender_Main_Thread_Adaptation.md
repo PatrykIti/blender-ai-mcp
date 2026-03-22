@@ -1,7 +1,7 @@
 # TASK-088-04: RPC and Blender Main-Thread Adaptation
 
 **Parent:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md), [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md)
 
@@ -57,6 +57,16 @@ Timeout values, boundary names, and fallback semantics come from TASK-093-02 and
 ## Acceptance Criteria
 
 - background jobs no longer depend on one blocking `result_queue.get(timeout=30.0)` model
+
+## Completion Summary
+
+- added explicit RPC verbs:
+  - `rpc.launch_job`
+  - `rpc.get_job`
+  - `rpc.cancel_job`
+  - `rpc.collect_job`
+- addon runtime now keeps independent background job state instead of coupling long-running work to the foreground `result_queue.get(timeout=...)` path
+- cooperative timeout/cancel checks now consume the shared timeout budget during background execution instead of inventing a parallel timeout taxonomy
 
 ---
 

@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
+
 from fastmcp import Context
 from fastmcp.utilities.types import Image
 from server.adapters.mcp.contracts.scene import (
@@ -17,6 +18,11 @@ from server.adapters.mcp.contracts.scene import (
 )
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.tasks.candidacy import get_tool_task_config
+from server.adapters.mcp.tasks.task_bridge import (
+    is_background_task_context,
+    run_rpc_background_job,
+)
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
@@ -56,18 +62,24 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
+    task_config = get_tool_task_config(tool_name)
     versions = get_versioned_tool_versions(tool_name)
     if versions:
         registered = None
         for version in versions:
-            registered = target.tool(
-                fn,
-                name=tool_name,
-                version=version,
-                tags=set(get_capability_tags("scene")),
-            )
+            kwargs = {
+                "name": tool_name,
+                "version": version,
+                "tags": set(get_capability_tags("scene")),
+            }
+            if task_config is not None:
+                kwargs["task"] = task_config
+            registered = target.tool(fn, **kwargs)
         return registered
-    return target.tool(fn, name=tool_name, tags=set(get_capability_tags("scene")))
+    kwargs = {"name": tool_name, "tags": set(get_capability_tags("scene"))}
+    if task_config is not None:
+        kwargs["task"] = task_config
+    return target.tool(fn, **kwargs)
 
 
 def register_scene_tools(target: Any) -> Dict[str, Any]:
@@ -377,7 +389,59 @@ def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
     return report
 
 
-def scene_get_viewport(
+def _format_viewport_output(
+    b64_data: str,
+    *,
+    width: int,
+    height: int,
+    shading: str,
+    output_mode: str | None,
+) -> Union[Image, str]:
+    """Format a base64 viewport payload into the requested MCP delivery shape."""
+
+    mode_val = (output_mode or "IMAGE").upper()
+
+    if mode_val == "IMAGE":
+        image_bytes = base64.b64decode(b64_data)
+        return Image(data=image_bytes, format="jpeg")
+
+    if mode_val == "BASE64":
+        return b64_data
+
+    if mode_val in {"FILE", "MARKDOWN"}:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"viewport_{timestamp}.jpg"
+        internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
+            filename
+        )
+        image_bytes = base64.b64decode(b64_data)
+        internal_file.write_bytes(image_bytes)
+        internal_latest.write_bytes(image_bytes)
+
+        header = (
+            f"Viewport render saved.\n\n"
+            f"Timestamped file: {external_file}\n"
+            f"Latest file: {external_latest}\n\n"
+            f"Resolution: {width}x{height}, shading: {shading}."
+        )
+
+        if mode_val == "FILE":
+            return header
+
+        data_url = f"data:image/jpeg;base64,{b64_data}"
+        return (
+            f"Viewport render saved to: {external_latest}\n\n"
+            f"**Preview ({width}x{height}, {shading} mode):**\n\n"
+            f"![Viewport]({data_url})\n\n"
+            f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
+        )
+
+    return (
+        f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
+    )
+
+
+async def scene_get_viewport(
     ctx: Context,
     width: int = 1024,
     height: int = 768,
@@ -412,52 +476,51 @@ def scene_get_viewport(
             None/"USER_PERSPECTIVE".
         output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
+    if is_background_task_context(ctx):
+        def _foreground_rpc() -> str:
+            handler = get_scene_handler()
+            return handler.get_viewport(width, height, shading, camera_name, focus_target)
+
+        def _format_result(payload: Any) -> Union[Image, str]:
+            if not isinstance(payload, str):
+                raise RuntimeError("Background viewport job returned an invalid payload")
+            return _format_viewport_output(
+                payload,
+                width=width,
+                height=height,
+                shading=shading,
+                output_mode=output_mode,
+            )
+
+        return await run_rpc_background_job(
+            ctx,
+            tool_name="scene_get_viewport",
+            rpc_cmd="scene.get_viewport",
+            rpc_args={
+                "width": width,
+                "height": height,
+                "shading": shading,
+                "camera_name": camera_name,
+                "focus_target": focus_target,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_result,
+            start_message="Launching viewport capture in Blender",
+            completion_message="Viewport capture completed",
+        )
+
     def execute():
         handler = get_scene_handler()
         try:
             b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
         except RuntimeError as e:
             return str(e)
-
-        mode_val = (output_mode or "IMAGE").upper()
-
-        if mode_val == "IMAGE":
-            image_bytes = base64.b64decode(b64_data)
-            return Image(data=image_bytes, format="jpeg")
-
-        if mode_val == "BASE64":
-            return b64_data
-
-        if mode_val in {"FILE", "MARKDOWN"}:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"viewport_{timestamp}.jpg"
-            internal_file, internal_latest, external_file, external_latest = get_viewport_output_paths(
-                filename
-            )
-            image_bytes = base64.b64decode(b64_data)
-            internal_file.write_bytes(image_bytes)
-            internal_latest.write_bytes(image_bytes)
-
-            header = (
-                f"Viewport render saved.\n\n"
-                f"Timestamped file: {external_file}\n"
-                f"Latest file: {external_latest}\n\n"
-                f"Resolution: {width}x{height}, shading: {shading}."
-            )
-
-            if mode_val == "FILE":
-                return header
-
-            data_url = f"data:image/jpeg;base64,{b64_data}"
-            return (
-                f"Viewport render saved to: {external_latest}\n\n"
-                f"**Preview ({width}x{height}, {shading} mode):**\n\n"
-                f"![Viewport]({data_url})\n\n"
-                f"*Note: If you cannot see the image above, open the file at: {external_latest}*"
-            )
-
-        return (
-            f"Invalid output_mode '{mode_val}'. Allowed values are: IMAGE, BASE64, FILE, MARKDOWN."
+        return _format_viewport_output(
+            b64_data,
+            width=width,
+            height=height,
+            shading=shading,
+            output_mode=output_mode,
         )
 
     return route_tool_call(

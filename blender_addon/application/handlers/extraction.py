@@ -6,11 +6,14 @@ and multi-angle rendering for the Automatic Workflow Extraction System.
 import math
 import os
 from collections import defaultdict
+from typing import Callable
 
 import bpy
 import bmesh
 from mathutils import Vector, Euler
 from mathutils.kdtree import KDTree
+
+from blender_addon.application.handlers.job_utils import raise_if_cancelled
 
 
 class ExtractionHandler:
@@ -573,7 +576,9 @@ class ExtractionHandler:
         object_name: str,
         angles: list = None,
         resolution: int = 512,
-        output_dir: str = "/tmp/extraction_renders"
+        output_dir: str = "/tmp/extraction_renders",
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> dict:
         """Renders object from multiple angles for LLM Vision analysis.
 
@@ -593,6 +598,9 @@ class ExtractionHandler:
 
         if angles is None:
             angles = ["front", "back", "left", "right", "top", "iso"]
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, len(angles), "Preparing multi-angle render job")
 
         # Validate angles
         valid_angles = set(self.ANGLE_PRESETS.keys())
@@ -632,7 +640,9 @@ class ExtractionHandler:
         renders = []
 
         try:
-            for angle_name in angles:
+            total_angles = len(angles)
+            for index, angle_name in enumerate(angles, 1):
+                raise_if_cancelled(is_cancelled)
                 preset = self.ANGLE_PRESETS[angle_name]
 
                 # Position camera
@@ -669,6 +679,8 @@ class ExtractionHandler:
                     "angle": angle_name,
                     "path": filepath
                 })
+                if progress_callback is not None:
+                    progress_callback(index, total_angles, f"Rendered {angle_name} view")
 
         finally:
             # Restore visibility

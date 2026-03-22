@@ -4,7 +4,7 @@
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (platform baseline). Cross-task integration gate: TASK-093-02 (shared timeout policy consumed by RPC/job adaptation).
-**Status:** ⬜ To Do
+**Status:** ✅ Done
 
 ---
 
@@ -135,6 +135,22 @@ Without background tasks, those features become harder to ship cleanly.
 - Long operations feel like a supported product pattern rather than an operational edge case.
 - Task-mode entrypoints are explicitly async and validated against a runtime with task support enabled.
 - Task execution mode behavior (`optional`/`required`/`forbidden`) is explicitly defined, tested, and documented per adopted endpoint.
+
+## Completion Summary
+
+- added an explicit task candidacy matrix in platform code for the initial heavy-operation set plus deferred import/export classifications
+- implemented one shared MCP task bridge, in-memory job registry, and result store keyed by FastMCP task identity
+- added explicit addon/server RPC verbs for `launch`, `poll`, `cancel`, and `collect`
+- added addon-side job lifecycle primitives for `scene.get_viewport` and `extraction.render_angles`, including cooperative progress/cancel hooks
+- adopted task mode on selected async MCP entrypoints:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+- kept synchronous fallback behavior for foreground/legacy surfaces
+- added task-mode registration tests, runtime compatibility coverage, job lifecycle tests, and adopted-tool regression coverage
+
+Import/export paths were intentionally left at the classification stage in this task.
+That is consistent with the original acceptance criteria, which required the first render, extraction, and workflow-import slices to be adopted before optional import/export extensions.
 
 ---
 

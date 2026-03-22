@@ -13,6 +13,11 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.elicitation_contracts import build_fallback_payload
+from server.adapters.mcp.tasks.candidacy import get_tool_task_config
+from server.adapters.mcp.tasks.task_bridge import (
+    is_background_task_context,
+    run_local_background_operation,
+)
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
 from server.router.domain.entities.elicitation import ClarificationPlan, ClarificationRequirement
 from server.adapters.mcp.visibility.tags import get_capability_tags
@@ -28,18 +33,24 @@ def _register_existing_tool(target: Any, tool_name: str) -> Any:
 
     tool = globals()[tool_name]
     fn = getattr(tool, "fn", tool)
+    task_config = get_tool_task_config(tool_name)
     versions = get_versioned_tool_versions(tool_name)
     if versions:
         registered = None
         for version in versions:
-            registered = target.tool(
-                fn,
-                name=tool_name,
-                version=version,
-                tags=set(get_capability_tags("workflow_catalog")),
-            )
+            kwargs = {
+                "name": tool_name,
+                "version": version,
+                "tags": set(get_capability_tags("workflow_catalog")),
+            }
+            if task_config is not None:
+                kwargs["task"] = task_config
+            registered = target.tool(fn, **kwargs)
         return registered
-    return target.tool(fn, name=tool_name, tags=set(get_capability_tags("workflow_catalog")))
+    kwargs = {"name": tool_name, "tags": set(get_capability_tags("workflow_catalog"))}
+    if task_config is not None:
+        kwargs["task"] = task_config
+    return target.tool(fn, **kwargs)
 
 
 def register_workflow_tools(target: Any) -> Dict[str, Any]:
@@ -51,7 +62,7 @@ def register_workflow_tools(target: Any) -> Dict[str, Any]:
     }
 
 
-def workflow_catalog(
+async def workflow_catalog(
     ctx: Context,
     action: Literal[
         "list",
@@ -150,6 +161,59 @@ def workflow_catalog(
             ).model_dump()
             return result
 
+        def _finalize_import_foreground() -> WorkflowCatalogResponseContract:
+            if not session_id:
+                return WorkflowCatalogResponseContract(
+                    action="import_finalize",
+                    error="session_id required for import_finalize",
+                )
+            result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
+            result = _with_import_clarification(result)
+            status = result.get("status", "unknown")
+            if status == "imported":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
+            elif status == "needs_input":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import needs input: {result.get('workflow_name')}")
+            elif status == "skipped":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
+            else:
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
+            return WorkflowCatalogResponseContract(action="import_finalize", **result)
+
+        if action == "import_finalize" and is_background_task_context(ctx):
+            if not session_id:
+                return WorkflowCatalogResponseContract(
+                    action="import_finalize",
+                    error="session_id required for import_finalize",
+                )
+
+            def _background_finalize(
+                progress_callback,
+                is_cancelled,
+            ) -> Dict[str, Any]:
+                return handler.finalize_import_session(
+                    session_id=session_id,
+                    overwrite=overwrite,
+                    progress_callback=progress_callback,
+                    is_cancelled=is_cancelled,
+                )
+
+            def _format_background_finalize(result: Any) -> WorkflowCatalogResponseContract:
+                if not isinstance(result, dict):
+                    raise RuntimeError("workflow_catalog import_finalize returned an invalid background payload")
+                enriched = _with_import_clarification(result)
+                return WorkflowCatalogResponseContract(action="import_finalize", **enriched)
+
+            return await run_local_background_operation(
+                ctx,
+                tool_name="workflow_catalog.import_finalize",
+                foreground_executor=_finalize_import_foreground,
+                background_executor=_background_finalize,
+                result_formatter=_format_background_finalize,
+                start_message="Starting workflow import finalization",
+                completion_message="Workflow import finalization completed",
+            )
+
         if action == "list":
             result: Dict[str, Any] = handler.list_workflows()
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Listed {result.get('count', 0)} workflows")
@@ -234,23 +298,7 @@ def workflow_catalog(
             return WorkflowCatalogResponseContract(action="import_append", **result)
 
         if action == "import_finalize":
-            if not session_id:
-                return WorkflowCatalogResponseContract(
-                    action="import_finalize",
-                    error="session_id required for import_finalize",
-                )
-            result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
-            result = _with_import_clarification(result)
-            status = result.get("status", "unknown")
-            if status == "imported":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
-            elif status == "needs_input":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import needs input: {result.get('workflow_name')}")
-            elif status == "skipped":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
-            else:
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
-            return WorkflowCatalogResponseContract(action="import_finalize", **result)
+            return _finalize_import_foreground()
 
         if action == "import_abort":
             if not session_id:

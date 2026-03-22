@@ -1,4 +1,5 @@
 import os
+import asyncio
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
@@ -7,7 +8,7 @@ from fastmcp.utilities.types import Image
 # Update import to new location
 from server.adapters.mcp.areas import scene as mcp_scene
 
-SCENE_GET_VIEWPORT = mcp_scene.scene_get_viewport.fn
+SCENE_GET_VIEWPORT = getattr(mcp_scene.scene_get_viewport, "fn", mcp_scene.scene_get_viewport)
 
 
 class TestMcpViewportOutputModes(unittest.TestCase):
@@ -20,7 +21,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         handler.get_viewport.return_value = "aGVsbG8="  # "hello" in base64
         mock_get_scene_handler.return_value = handler
 
-        result = SCENE_GET_VIEWPORT(self.ctx)
+        result = asyncio.run(SCENE_GET_VIEWPORT(self.ctx))
 
         self.assertIsInstance(result, Image)
         handler.get_viewport.assert_called_once()
@@ -31,7 +32,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         handler.get_viewport.return_value = "dGVzdF9iYXNlNjQ="
         mock_get_scene_handler.return_value = handler
 
-        result = SCENE_GET_VIEWPORT(self.ctx, output_mode="BASE64")
+        result = asyncio.run(SCENE_GET_VIEWPORT(self.ctx, output_mode="BASE64"))
 
         self.assertEqual(result, "dGVzdF9iYXNlNjQ=")
 
@@ -50,12 +51,14 @@ class TestMcpViewportOutputModes(unittest.TestCase):
                 },
                 clear=False,
             ):
-                result = SCENE_GET_VIEWPORT(
-                    self.ctx,
-                    width=800,
-                    height=600,
-                    shading="SOLID",
-                    output_mode="FILE",
+                result = asyncio.run(
+                    SCENE_GET_VIEWPORT(
+                        self.ctx,
+                        width=800,
+                        height=600,
+                        shading="SOLID",
+                        output_mode="FILE",
+                    )
                 )
 
         self.assertIn("Timestamped file:", result)
@@ -70,12 +73,14 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         handler.get_viewport.return_value = "dGVzdF9pbWFnZQ=="
         mock_get_scene_handler.return_value = handler
 
-        result = SCENE_GET_VIEWPORT(
-            self.ctx,
-            width=640,
-            height=480,
-            shading="WIREFRAME",
-            output_mode="MARKDOWN",
+        result = asyncio.run(
+            SCENE_GET_VIEWPORT(
+                self.ctx,
+                width=640,
+                height=480,
+                shading="WIREFRAME",
+                output_mode="MARKDOWN",
+            )
         )
 
         self.assertIn("![Viewport](data:image/jpeg;base64,", result)
@@ -88,7 +93,7 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         handler.get_viewport.return_value = "dGVzdF9pbWFnZQ=="
         mock_get_scene_handler.return_value = handler
 
-        result = SCENE_GET_VIEWPORT(self.ctx, output_mode="INVALID")
+        result = asyncio.run(SCENE_GET_VIEWPORT(self.ctx, output_mode="INVALID"))
 
         self.assertIsInstance(result, str)
         self.assertIn("Invalid output_mode", result)

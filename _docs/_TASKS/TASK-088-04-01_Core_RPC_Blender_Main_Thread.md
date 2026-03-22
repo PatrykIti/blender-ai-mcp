@@ -1,7 +1,7 @@
 # TASK-088-04-01: Core RPC and Blender Main-Thread Adaptation
 
 **Parent:** [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md)
 

@@ -73,7 +73,7 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
 
     callable_workflow_catalog = getattr(workflow_catalog, "fn", workflow_catalog)
-    result = callable_workflow_catalog(DummyContext(), action="list")
+    result = asyncio.run(callable_workflow_catalog(DummyContext(), action="list"))
 
     assert isinstance(result, WorkflowCatalogResponseContract)
     assert result.action == "list"
@@ -101,7 +101,9 @@ def test_workflow_catalog_import_needs_input_can_carry_typed_clarification(monke
     monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
 
     callable_workflow_catalog = getattr(workflow_catalog, "fn", workflow_catalog)
-    result = callable_workflow_catalog(DummyContext(), action="import", content="{}", content_type="json")
+    result = asyncio.run(
+        callable_workflow_catalog(DummyContext(), action="import", content="{}", content_type="json")
+    )
 
     assert isinstance(result, WorkflowCatalogResponseContract)
     assert result.status == "needs_input"

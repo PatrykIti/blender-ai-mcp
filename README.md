@@ -161,8 +161,26 @@ Operational baseline now includes:
 - explicit timeout boundaries:
   - `mcp_tool`
   - `mcp_task`
-  - `rpc_client`
-  - `addon_execution`
+- `rpc_client`
+- `addon_execution`
+
+### Background Task Mode Baseline
+
+The first background-task rollout is now in place for heavy operations on task-capable surfaces.
+
+Adopted task-capable entrypoints:
+
+- `scene_get_viewport`
+- `extraction_render_angles`
+- `workflow_catalog(action="import_finalize")`
+
+Current behavior:
+
+- adopted endpoints use explicit async MCP adapters with `TaskConfig(mode="optional")`
+- task-enabled surfaces can submit these paths as background work
+- non-task and compatibility surfaces keep understandable foreground fallback behavior
+- Blender-backed task mode uses explicit RPC lifecycle verbs for launch, poll, cancel, and result collection
+- workflow import finalization uses the same task bookkeeping on the server side without forcing Blender RPC
 
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 

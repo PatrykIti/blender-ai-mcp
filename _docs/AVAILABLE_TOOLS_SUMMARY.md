@@ -36,6 +36,12 @@ Default `llm-guided` entry surface:
 - `search_tools`
 - `call_tool`
 
+Task-capable heavy-operation rollout on task-enabled surfaces:
+
+- `scene_get_viewport`
+- `extraction_render_angles`
+- `workflow_catalog(action="import_finalize")`
+
 Measured current baseline:
 
 - `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`

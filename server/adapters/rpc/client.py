@@ -127,3 +127,36 @@ class RpcClient(IRpcClient):
                 error_code="unexpected_error",
                 error_boundary="rpc_client",
             )
+
+    def launch_background_job(
+        self,
+        cmd: str,
+        args: Optional[Dict[str, Any]] = None,
+        *,
+        timeout_seconds: Optional[float] = None,
+    ) -> RpcResponse:
+        """Launch a background-capable addon job through the explicit RPC control plane."""
+
+        return self.send_request(
+            "rpc.launch_job",
+            {
+                "cmd": cmd,
+                "args": args or {},
+            },
+            timeout_seconds=timeout_seconds,
+        )
+
+    def get_background_job_status(self, job_id: str) -> RpcResponse:
+        """Poll background job status without collecting the final result payload."""
+
+        return self.send_request("rpc.get_job", {"job_id": job_id})
+
+    def cancel_background_job(self, job_id: str) -> RpcResponse:
+        """Request cancellation for an existing background addon job."""
+
+        return self.send_request("rpc.cancel_job", {"job_id": job_id})
+
+    def collect_background_job_result(self, job_id: str) -> RpcResponse:
+        """Collect the final result payload for a completed background addon job."""
+
+        return self.send_request("rpc.collect_job", {"job_id": job_id})

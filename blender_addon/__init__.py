@@ -88,6 +88,7 @@ def register():
         rpc_server.register_handler("scene.inspect_modifiers", scene_handler.inspect_modifiers)
         rpc_server.register_handler("scene.get_constraints", scene_handler.get_constraints)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
+        rpc_server.register_background_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
@@ -291,6 +292,7 @@ def register():
         rpc_server.register_handler("extraction.edge_loop_analysis", extraction_handler.edge_loop_analysis)
         rpc_server.register_handler("extraction.face_group_analysis", extraction_handler.face_group_analysis)
         rpc_server.register_handler("extraction.render_angles", extraction_handler.render_angles)
+        rpc_server.register_background_handler("extraction.render_angles", extraction_handler.render_angles)
 
         # TASK-034: Text & Annotations
         rpc_server.register_handler("text.create", text_handler.create)

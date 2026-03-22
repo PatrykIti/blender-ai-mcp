@@ -1,7 +1,7 @@
 # TASK-088-01: Heavy Operation Inventory and Task Candidacy
 
 **Parent:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-05](./TASK-083-05_Context_Session_and_Execution_Bridge.md)
 
@@ -46,3 +46,9 @@ Classify which operations should remain foreground, which should support optiona
 ## Acceptance Criteria
 
 - every heavy tool has an explicit execution mode classification
+
+## Completion Summary
+
+- added a shared candidacy matrix in `server/adapters/mcp/tasks/candidacy.py`
+- classified the adopted first-wave endpoints (`scene_get_viewport`, `extraction_render_angles`, `workflow_catalog.import_finalize`) as `task_optional`
+- classified import/export paths explicitly as deferred foreground-only entries for the next rollout wave

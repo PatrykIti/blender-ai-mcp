@@ -2,7 +2,7 @@ import difflib
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from server.domain.tools.workflow_catalog import IWorkflowCatalogTool
 from server.router.domain.interfaces.i_workflow_intent_classifier import (
@@ -317,10 +317,17 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
         self,
         session_id: str,
         overwrite: Optional[bool] = None,
+        *,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> Dict[str, Any]:
+        if progress_callback is not None:
+            progress_callback(0, 4, "Validating workflow import session")
         session = self._import_sessions.get(session_id)
         if session is None:
             return {"status": "error", "message": "Unknown session_id"}
+        if is_cancelled is not None and is_cancelled():
+            return {"status": "cancelled", "message": "Workflow import cancelled before assembly"}
 
         total_chunks = session.get("total_chunks")
         if session["use_indexed"]:
@@ -342,13 +349,22 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
                 }
             chunks = list(session["chunks"])
 
+        if progress_callback is not None:
+            progress_callback(1, 4, "Assembling workflow import content")
         content = "".join(chunks)
+        if is_cancelled is not None and is_cancelled():
+            return {"status": "cancelled", "message": "Workflow import cancelled before parsing content"}
+
+        if progress_callback is not None:
+            progress_callback(2, 4, "Loading workflow definition")
         result = self.import_workflow_content(
             content=content,
             content_type=session.get("content_type"),
             overwrite=overwrite,
             source_name=session.get("source_name") or f"session:{session_id}",
         )
+        if progress_callback is not None:
+            progress_callback(3, 4, "Finalizing import session state")
         result["source_type"] = "chunked"
         result["session_id"] = session_id
         result["received_chunks"] = len(chunks)
@@ -356,6 +372,12 @@ class WorkflowCatalogToolHandler(IWorkflowCatalogTool):
 
         if result.get("status") != "needs_input":
             self._import_sessions.pop(session_id, None)
+        if progress_callback is not None:
+            progress_callback(
+                4,
+                4,
+                f"Workflow import {result.get('status', 'completed')}",
+            )
         return result
 
     def abort_import_session(self, session_id: str) -> Dict[str, Any]:

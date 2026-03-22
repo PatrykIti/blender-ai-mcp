@@ -75,6 +75,40 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 
 ---
 
+## TASK-088 Background Task Coverage
+
+Background task mode now has focused unit coverage for:
+
+- candidacy inventory and adopted endpoint classification
+- task/runtime compatibility shims for the current FastMCP+Docket baseline
+- background job registry and result store bookkeeping
+- task-mode registration semantics:
+  - `forbidden`
+  - `optional`
+  - `required`
+- addon-side RPC lifecycle:
+  - launch
+  - poll
+  - cancel
+  - collect
+- adopted tool paths for:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+
+Primary local validation commands for TASK-088:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_candidacy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/adapters/rpc/test_background_job_lifecycle.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/scene/test_mcp_viewport_output.py -q
+
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_versioned_surface.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/rpc/test_timeout_coordination.py tests/unit/tools/extraction/test_render_angles.py -q
+```
+
+Task-mode regression is intentionally unit/integration focused for now.
+No Blender-backed E2E suite has been added yet for background task submission itself.
+
+---
+
 ## E2E Test Runner Workflow
 
 ```

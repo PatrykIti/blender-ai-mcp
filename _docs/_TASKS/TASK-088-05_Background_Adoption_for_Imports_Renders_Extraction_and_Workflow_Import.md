@@ -1,7 +1,7 @@
 # TASK-088-05: Background Adoption for Imports, Renders, Extraction, and Workflow Import
 
 **Parent:** [TASK-088](./TASK-088_Background_Tasks_and_Progress.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md), [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md)
 
@@ -61,3 +61,10 @@ Each adopted candidate must include an explicit async MCP entrypoint on task-cap
 
 - at least one render path, one extraction path, and one workflow-import path support task mode
 - adopted paths are explicitly async task-capable on selected surfaces, with documented fallback on non-task surfaces
+
+## Completion Summary
+
+- adopted one render path: `scene_get_viewport`
+- adopted one extraction path: `extraction_render_angles`
+- adopted one workflow-import path: `workflow_catalog(import_finalize)`
+- all adopted MCP entrypoints now use explicit `async def` + `TaskConfig(mode="optional")` on task-capable surfaces while preserving understandable foreground fallback behavior

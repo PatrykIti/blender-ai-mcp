@@ -3,6 +3,9 @@ import base64
 import tempfile
 import os
 import math
+from typing import Callable
+
+from blender_addon.application.handlers.job_utils import raise_if_cancelled
 
 class SceneHandler:
     """Application service for scene operations."""
@@ -275,9 +278,21 @@ class SceneHandler:
 
         return stats
 
-    def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
+    def get_viewport(
+        self,
+        width=1024,
+        height=768,
+        shading="SOLID",
+        camera_name=None,
+        focus_target=None,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
+    ):
         """Returns a base64 encoded OpenGL render of the viewport."""
         scene = bpy.context.scene
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 1, "Preparing viewport capture")
         
         # 0. Ensure Object Mode (Safety check for render operators)
         original_mode = None
@@ -441,11 +456,14 @@ class SceneHandler:
                 # 7. Read Result
                 if not render_success:
                     raise RuntimeError("Render failed: Could not generate viewport image using OpenGL, Workbench, or Cycles.")
+                raise_if_cancelled(is_cancelled)
 
                 b64_data = ""
                 with open(expected_output, "rb") as f:
                     data = f.read()
                     b64_data = base64.b64encode(data).decode('utf-8')
+                if progress_callback is not None:
+                    progress_callback(1, 1, "Viewport capture complete")
                 
                 return b64_data
 
