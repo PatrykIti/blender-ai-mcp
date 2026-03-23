@@ -1690,6 +1690,12 @@ enabled_tools = [
 *   **Linux:** Use `--network host` with `127.0.0.1` (as shown in the second config).
 *   **Troubleshooting:** If the MCP server starts but cannot connect to Blender (timeout errors), ensure Blender is running with the addon enabled and that port `8765` is not blocked.
 
+**Recent Stability Notes:**
+- Blender addon ZIP installation now uses package-relative imports consistently, fixing `No module named 'blender_addon'` on enable.
+- Docker image builds now include prompt assets and the required telemetry/runtime dependency set for embedding precomputation.
+- `workflow_catalog(import*)` structured contracts now accept the richer import metadata returned by the handler (`saved_path`, overwrite/removal stats, embedding reload flags).
+- `router_set_goal(..., resolved_params={"workflow_confirmation": ...})` now consumes valid workflow confirmations instead of looping back to the same clarification state.
+
 <details>
 <summary><strong>Viewport Output Modes &amp; Temp Directory Mapping</strong></summary>
 

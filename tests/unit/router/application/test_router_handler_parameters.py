@@ -551,6 +551,46 @@ class TestSetGoalUnified:
         assert result["workflow"] == "picnic_table"
         assert result["unresolved"][0]["param"] == "workflow_confirmation"
 
+    def test_set_goal_medium_confidence_match_accepts_workflow_confirmation(
+        self, handler, mock_loader, mock_router
+    ):
+        """A confirmed medium-confidence workflow should proceed instead of looping."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "picnic_table"},
+        )
+
+        assert result["status"] == "ready"
+        assert result["workflow"] == "picnic_table"
+        assert result["unresolved"] == []
+
+    def test_set_goal_medium_confidence_match_rejects_invalid_workflow_confirmation(
+        self, handler, mock_loader, mock_router
+    ):
+        """Invalid workflow confirmations should stay in clarification instead of auto-running."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "other_workflow"},
+        )
+
+        assert result["status"] == "needs_input"
+        assert result["unresolved"][0]["param"] == "workflow_confirmation"
+        assert "Invalid workflow confirmation" in result["unresolved"][0]["error"]
+
 
 class TestExtractContextForParam:
     """Tests for _extract_context_for_param helper method."""

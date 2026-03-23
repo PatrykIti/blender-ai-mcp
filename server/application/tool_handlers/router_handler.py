@@ -72,6 +72,72 @@ class RouterToolHandler(IRouterTool):
             "metadata": decision.confidence.metadata,
         }
 
+    @staticmethod
+    def _workflow_confirmation_unresolved(
+        *,
+        matched_workflow: str,
+        goal: str,
+        error: str | None = None,
+        policy_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Build the explicit workflow-confirmation clarification payload."""
+
+        return {
+            "status": "needs_input",
+            "workflow": matched_workflow,
+            "resolved": {},
+            "unresolved": [
+                {
+                    "param": "workflow_confirmation",
+                    "type": "string",
+                    "description": "Confirm or refine the workflow choice before execution",
+                    "enum": [matched_workflow],
+                    "default": matched_workflow,
+                    "context": goal,
+                    "semantic_hints": [],
+                    **({"error": error} if error else {}),
+                }
+            ],
+            "resolution_sources": {},
+            "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+            **({"policy_context": policy_context} if policy_context else {}),
+            "message": (
+                f"Workflow '{matched_workflow}' is only a medium-confidence match. "
+                "Please confirm or refine the requested workflow before execution."
+            ),
+        }
+
+    @staticmethod
+    def _consume_workflow_confirmation(
+        *,
+        matched_workflow: str,
+        goal: str,
+        resolved_params: Optional[Dict[str, Any]],
+        policy_context: dict[str, Any] | None = None,
+    ) -> tuple[bool, dict[str, Any] | None, dict[str, Any] | None]:
+        """Validate and strip workflow_confirmation before normal parameter handling."""
+
+        if not resolved_params or "workflow_confirmation" not in resolved_params:
+            return False, resolved_params, RouterToolHandler._workflow_confirmation_unresolved(
+                matched_workflow=matched_workflow,
+                goal=goal,
+                policy_context=policy_context,
+            )
+
+        raw_confirmation = resolved_params.get("workflow_confirmation")
+        confirmation = str(raw_confirmation).strip() if raw_confirmation is not None else ""
+
+        if confirmation != matched_workflow:
+            return False, resolved_params, RouterToolHandler._workflow_confirmation_unresolved(
+                matched_workflow=matched_workflow,
+                goal=goal,
+                error=f"Invalid workflow confirmation: {raw_confirmation!r}",
+                policy_context=policy_context,
+            )
+
+        remaining = {key: value for key, value in resolved_params.items() if key != "workflow_confirmation"}
+        return True, remaining or None, None
+
     def set_goal(
         self,
         goal: str,
@@ -156,33 +222,27 @@ class RouterToolHandler(IRouterTool):
             normalized_confidence = normalize_ensemble_result(ensemble_result)
             policy_decision = self._correction_policy_engine.decide(normalized_confidence)
             if policy_decision.decision == PolicyDecision.ASK:
-                return {
-                    "status": "needs_input",
-                    "workflow": matched_workflow,
-                    "resolved": {},
-                    "unresolved": [
-                        {
-                            "param": "workflow_confirmation",
-                            "type": "string",
-                            "description": "Confirm or refine the workflow choice before execution",
-                            "enum": [matched_workflow],
-                            "default": matched_workflow,
-                            "context": goal,
-                            "semantic_hints": [],
-                            "error": (
-                                f"Medium-confidence workflow match ({normalized_confidence.score:.3f}, "
-                                f"band={normalized_confidence.band}) requires confirmation."
-                            ),
-                        }
-                    ],
-                    "resolution_sources": {},
-                    "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
-                    "policy_context": self._policy_context_dict(policy_decision),
-                    "message": (
-                        f"Workflow '{matched_workflow}' is only a medium-confidence match. "
-                        "Please confirm or refine the requested workflow before execution."
-                    ),
-                }
+                confirmation_accepted, resolved_params, confirmation_response = self._consume_workflow_confirmation(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    resolved_params=resolved_params,
+                    policy_context=self._policy_context_dict(policy_decision),
+                )
+                if not confirmation_accepted:
+                    response = confirmation_response or {}
+                    unresolved = response.get("unresolved") or []
+                    if unresolved:
+                        existing_error = unresolved[0].get("error")
+                        medium_confidence_error = (
+                            f"Medium-confidence workflow match ({normalized_confidence.score:.3f}, "
+                            f"band={normalized_confidence.band}) requires confirmation."
+                        )
+                        unresolved[0]["error"] = (
+                            f"{existing_error} {medium_confidence_error}".strip()
+                            if existing_error
+                            else medium_confidence_error
+                        )
+                    return response
         else:
             last_match = getattr(router, "_last_match_result", None)
             if last_match is not None:
@@ -193,33 +253,27 @@ class RouterToolHandler(IRouterTool):
                 )
                 policy_decision = self._correction_policy_engine.decide(normalized_confidence)
                 if policy_decision.decision == PolicyDecision.ASK:
-                    return {
-                        "status": "needs_input",
-                        "workflow": matched_workflow,
-                        "resolved": {},
-                        "unresolved": [
-                            {
-                                "param": "workflow_confirmation",
-                                "type": "string",
-                                "description": "Confirm or refine the workflow choice before execution",
-                                "enum": [matched_workflow],
-                                "default": matched_workflow,
-                                "context": goal,
-                                "semantic_hints": [],
-                                "error": (
-                                    f"Medium-confidence workflow match "
-                                    f"(band={normalized_confidence.band}) requires confirmation."
-                                ),
-                            }
-                        ],
-                        "resolution_sources": {},
-                        "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
-                        "policy_context": self._policy_context_dict(policy_decision),
-                        "message": (
-                            f"Workflow '{matched_workflow}' is only a medium-confidence match. "
-                            "Please confirm or refine the requested workflow before execution."
-                        ),
-                    }
+                    confirmation_accepted, resolved_params, confirmation_response = self._consume_workflow_confirmation(
+                        matched_workflow=matched_workflow,
+                        goal=goal,
+                        resolved_params=resolved_params,
+                        policy_context=self._policy_context_dict(policy_decision),
+                    )
+                    if not confirmation_accepted:
+                        response = confirmation_response or {}
+                        unresolved = response.get("unresolved") or []
+                        if unresolved:
+                            existing_error = unresolved[0].get("error")
+                            medium_confidence_error = (
+                                f"Medium-confidence workflow match "
+                                f"(band={normalized_confidence.band}) requires confirmation."
+                            )
+                            unresolved[0]["error"] = (
+                                f"{existing_error} {medium_confidence_error}".strip()
+                                if existing_error
+                                else medium_confidence_error
+                            )
+                        return response
 
         # Step 2: Get workflow definition and parameters
         loader = self._workflow_loader

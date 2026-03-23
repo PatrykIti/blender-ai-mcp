@@ -12,6 +12,16 @@
 
 - Align FastMCP task runtime to `fastmcp 3.1.1` + `pydocket 0.18.2`, add explicit runtime guards, and remove the old local compatibility shim
 
+### Bug Fixes
+
+- Fix Blender addon ZIP imports so the installed package no longer fails with `No module named 'blender_addon'`
+
+- Fix Docker image build/runtime by shipping prompt assets and the missing OpenTelemetry SDK dependency needed during embedding precomputation
+
+- Fix `workflow_catalog(import*)` contract validation so imported responses can carry saved-path and overwrite metadata without failing Pydantic validation
+
+- Fix `router_set_goal` medium-confidence confirmation follow-up so explicit `workflow_confirmation` answers are consumed instead of looping back to the same question
+
 ### Chores
 
 - Add a repo-level `pre-commit` baseline with hygiene checks, `ruff` lint/format, GitHub workflow and router metadata schema validation, plus `pre-push` hooks for Poetry validation, unit tests, and addon build verification

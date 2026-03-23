@@ -184,3 +184,46 @@ def test_router_set_goal_reuses_question_set_id_after_cancel(monkeypatch):
     second = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
 
     assert first.clarification.question_set_id == second.clarification.question_set_id
+
+
+def test_router_set_goal_accepts_explicit_workflow_confirmation(monkeypatch):
+    """Explicit workflow_confirmation answers should break the medium-confidence confirmation loop."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "legacy-flat"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            if resolved_params and resolved_params.get("workflow_confirmation") == "chair_workflow":
+                return {
+                    "status": "ready",
+                    "workflow": "chair_workflow",
+                    "resolved": {},
+                    "unresolved": [],
+                    "resolution_sources": {},
+                    "message": "ok",
+                    "executed": 0,
+                }
+            return {
+                "status": "needs_input",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [{"param": "workflow_confirmation", "type": "string", "description": "Confirm workflow"}],
+                "resolution_sources": {},
+                "message": "confirm workflow",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+
+    ctx = FakeContext(response=DeclinedElicitation())
+    result = asyncio.run(
+        router_area.router_set_goal(
+            ctx,
+            goal="chair",
+            resolved_params={"workflow_confirmation": "chair_workflow"},
+        )
+    )
+
+    assert result.status == "ready"
