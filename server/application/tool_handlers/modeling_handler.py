@@ -48,7 +48,7 @@ class ModelingToolHandler(IModelingTool):
         if scale:
             args["scale"] = scale
 
-        require_str_result(self.rpc.send_request("modeling.transform_object", args))
+        require_dict_result(self.rpc.send_request("modeling.transform_object", args))
         return f"Transformed object '{name}'"
 
     def add_modifier(self, name: str, modifier_type: str, properties: Optional[Dict[str, Any]] = None) -> str:
