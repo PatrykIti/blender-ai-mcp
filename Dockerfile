@@ -35,6 +35,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 
 # Copy the rest of the application
 COPY server /app/server
+COPY _docs/_PROMPTS /app/_docs/_PROMPTS
 
 # Pre-compute tool/workflow embeddings and store in LanceDB
 # This avoids ~30s embedding computation on every container start

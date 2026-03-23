@@ -22,7 +22,8 @@ dependencies = [
     "sentence-transformers (>=5.1.2,<6.0.0) ; python_version >= \"3.11\"",
     "lancedb (>=0.3.0,<1.0.0) ; python_version >= \"3.11\"",
     "pyarrow (>=14.0.0) ; python_version >= \"3.11\"",
-    "pydantic-monty (>=0.0.7,<0.0.8)"
+    "pydantic-monty (>=0.0.7,<0.0.8)",
+    "opentelemetry-sdk (>=1.40.0,<2.0.0)"
 ]
 
 
