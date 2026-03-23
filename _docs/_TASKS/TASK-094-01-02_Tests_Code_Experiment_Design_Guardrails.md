@@ -1,7 +1,7 @@
 # TASK-094-01-02: Tests and Docs Code Mode Experiment Design and Guardrails
 
 **Parent:** [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-094-01-01](./TASK-094-01-01_Core_Code_Experiment_Design_Guardrails.md)
 

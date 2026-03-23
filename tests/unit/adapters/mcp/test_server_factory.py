@@ -38,14 +38,23 @@ def test_build_server_builds_alternate_surface_profile():
 
     guided = build_server("llm-guided")
     debug = build_server("internal-debug")
+    code_mode = build_server("code-mode-pilot")
 
     assert guided._bam_surface_profile == "llm-guided"
     assert debug._bam_surface_profile == "internal-debug"
+    assert code_mode._bam_surface_profile == "code-mode-pilot"
     assert guided.name == get_surface_profile("llm-guided").server_name
     assert debug.name == get_surface_profile("internal-debug").server_name
+    assert code_mode.name == get_surface_profile("code-mode-pilot").server_name
     assert len(debug.providers) > len(guided.providers)
     assert guided._bam_task_runtime_report.tasks_required is True
     assert guided._bam_task_runtime_report.supported is True
+    assert code_mode._bam_code_mode_enabled is True
+    assert code_mode._bam_code_mode_benchmark_baselines == (
+        "legacy-flat",
+        "llm-guided",
+        "code-mode-pilot",
+    )
 
 
 def test_factory_bootstrap_no_longer_imports_areas_side_effect_registry():

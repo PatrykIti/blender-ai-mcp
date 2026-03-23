@@ -75,5 +75,8 @@ def build_server(
     server._bam_delivery_mode = surface.delivery_mode
     server._bam_contract_line = surface.default_contract_line
     server._bam_task_runtime_report = task_runtime_report
+    server._bam_code_mode_enabled = surface.code_mode_enabled
+    server._bam_code_mode_allowed_tools = surface.code_mode_allowed_tools
+    server._bam_code_mode_benchmark_baselines = surface.code_mode_benchmark_baselines
 
     return cast(FastMCP, server)

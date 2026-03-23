@@ -21,7 +21,7 @@ def build_visibility_transform(surface: SurfaceProfileSettings) -> Any | None:
     session-driven visibility controls.
     """
 
-    rules = build_visibility_rules(surface.name, SessionPhase.BOOTSTRAP)
+    rules = build_visibility_rules(surface, SessionPhase.BOOTSTRAP)
     if not rules:
         return None
     return create_visibility_transforms(rules)

@@ -81,7 +81,33 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=50,
         tasks_enabled=True,
+        instructions=(
+            "Experimental Code Mode pilot. "
+            "Use only the visible read-only MCP capabilities, prompts, and resources. "
+            "Do not attempt geometry-destructive or write-heavy flows on this surface."
+        ),
         delivery_mode="structured_first",
+        code_mode_enabled=True,
+        code_mode_allowed_tools=(
+            "check_scene",
+            "inspect_scene",
+            "mesh_inspect",
+            "scene_snapshot_state",
+            "scene_compare_snapshot",
+            "scene_get_hierarchy",
+            "scene_get_bounding_box",
+            "scene_get_origin_info",
+            "router_get_status",
+            "router_find_similar_workflows",
+            "router_get_inherited_proportions",
+            "list_prompts",
+            "get_prompt",
+        ),
+        code_mode_benchmark_baselines=(
+            "legacy-flat",
+            "llm-guided",
+            "code-mode-pilot",
+        ),
         default_contract_line=get_default_contract_line("code-mode-pilot"),
         allowed_contract_lines=SURFACE_ALLOWED_CONTRACT_LINES["code-mode-pilot"],
     ),

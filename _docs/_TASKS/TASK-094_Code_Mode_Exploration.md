@@ -4,7 +4,9 @@
 **Category:** FastMCP Research  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (platform baseline). Optional comparison input: TASK-084 (search-first discovery baseline, when available).
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
+
+**Progress Summary:** Benchmark baselines are now named explicitly as `legacy-flat`, `llm-guided`, and `code-mode-pilot`. The first implementation slice is in place: guardrails are explicit in surface configuration, `code-mode-pilot` uses experimental FastMCP `CodeMode`, the pilot is read-only by visibility allowlist, prompt bridge tools remain available, and the sandbox dependency fails fast when unavailable. Benchmark execution and the final decision memo remain open.
 
 ---
 

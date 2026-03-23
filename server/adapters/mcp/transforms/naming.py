@@ -23,7 +23,7 @@ def build_naming_transform(surface: SurfaceProfileSettings) -> Any | None:
     TASK-086 populates this with real ToolTransform / ArgTransform rules.
     """
 
-    if surface.name != "llm-guided":
+    if surface.name not in {"llm-guided", "code-mode-pilot"}:
         return None
 
     transforms: dict[str, ToolTransformConfig] = {}

@@ -222,6 +222,33 @@ The prompt layer is now part of the MCP product surface:
   - `get_prompt`
 - `recommended_prompts` provides phase/profile-aware recommendations
 
+## Code Mode Pilot Baseline
+
+The repo now has a first experimental `code-mode-pilot` surface.
+
+Current guardrails:
+
+- the pilot is explicit, opt-in, and profile-scoped
+- the pilot uses FastMCP `CodeMode` on top of the existing composed MCP surface
+- the pilot keeps a read-only allowlist by visibility policy before Code Mode collapses the catalog
+- the sandbox dependency fails fast if `pydantic-monty` is unavailable
+- prompt bridge tools remain available (`list_prompts`, `get_prompt`) alongside Code Mode meta-tools
+
+Current pilot meta-tool surface:
+
+- `search`
+- `get_schema`
+- `tags`
+- `execute`
+- `list_prompts`
+- `get_prompt`
+
+Current benchmark baselines for the experiment:
+
+- `legacy-flat`
+- `llm-guided`
+- `code-mode-pilot`
+
 ## Background Task Mode Baseline
 
 The current task-mode rollout now covers the initial heavy-operation slice plus the system import/export family on task-capable surfaces.

@@ -156,6 +156,12 @@ Primary local validation commands for TASK-092 sampling assistants:
 poetry run pytest tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_aliasing_transform.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/mesh/test_mesh_inspect_mega.py tests/unit/tools/mesh/test_mesh_contracts.py tests/unit/tools/workflow_catalog/test_workflow_catalog_assistants.py -q
 ```
 
+Primary local validation commands for TASK-094 guardrails and read-only pilot:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

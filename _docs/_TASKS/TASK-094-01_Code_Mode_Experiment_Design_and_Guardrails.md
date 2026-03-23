@@ -1,7 +1,7 @@
 # TASK-094-01: Code Mode Experiment Design and Guardrails
 
 **Parent:** [TASK-094](./TASK-094_Code_Mode_Exploration.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)
 

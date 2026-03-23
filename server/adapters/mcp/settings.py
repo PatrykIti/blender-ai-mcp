@@ -26,5 +26,8 @@ class SurfaceProfileSettings:
     delivery_mode: DeliveryMode = "structured_first"
     search_enabled: bool = False
     search_max_results: int = 5
+    code_mode_enabled: bool = False
+    code_mode_allowed_tools: tuple[str, ...] = field(default_factory=tuple)
+    code_mode_benchmark_baselines: tuple[str, ...] = field(default_factory=tuple)
     default_contract_line: str | None = None
     allowed_contract_lines: tuple[str, ...] = field(default_factory=tuple)

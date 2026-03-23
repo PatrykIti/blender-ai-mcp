@@ -86,6 +86,12 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert build_rules[-1]["tags"] == {phase_tag(SessionPhase.BUILD)}
     assert inspect_rules[-1]["tags"] == {phase_tag(SessionPhase.INSPECT_VALIDATE)}
 
+    code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)
+    assert code_mode_rules[0]["enabled"] is False
+    assert code_mode_rules[0]["match_all"] is True
+    assert "scene_snapshot_state" in code_mode_rules[1]["names"]
+    assert "mesh_extrude_region" not in code_mode_rules[1]["names"]
+
 
 def test_llm_guided_surface_materializes_visibility_transforms():
     """llm-guided should carry concrete visibility transforms while legacy-flat stays unfiltered."""

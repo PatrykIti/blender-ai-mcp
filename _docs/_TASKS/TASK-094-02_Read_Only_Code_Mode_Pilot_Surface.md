@@ -1,7 +1,7 @@
 # TASK-094-02: Read-Only Code Mode Pilot Surface
 
 **Parent:** [TASK-094](./TASK-094_Code_Mode_Exploration.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-094-01](./TASK-094-01_Code_Mode_Experiment_Design_and_Guardrails.md)
 
