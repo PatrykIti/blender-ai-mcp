@@ -13,7 +13,7 @@ def test_surface_profiles_keep_explicit_component_list_page_sizes():
     guided = get_surface_profile("llm-guided")
     debug = get_surface_profile("internal-debug")
 
-    assert legacy.list_page_size == 100
+    assert legacy.list_page_size == 250
     assert guided.list_page_size == 50
     assert debug.list_page_size == 100
 
@@ -24,5 +24,5 @@ def test_factory_applies_component_list_page_size_to_server():
     legacy = build_server("legacy-flat")
     guided = build_server("llm-guided")
 
-    assert legacy._list_page_size == 100
+    assert legacy._list_page_size == 250
     assert guided._list_page_size == 50

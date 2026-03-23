@@ -31,7 +31,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
             build_workflow_tools_provider,
             build_prompt_assets_provider,
         ),
-        list_page_size=100,
+        list_page_size=250,
         tasks_enabled=False,
         delivery_mode="compatibility",
         default_contract_line=get_default_contract_line("legacy-flat"),

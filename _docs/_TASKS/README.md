@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 11 tasks (~210 sub-tasks)
 - **In Progress:** 1 tasks
-- **Done:** 161
+- **Done:** 162
 
 ## 🧭 Terminology Guardrails
 
@@ -64,6 +64,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-105](./TASK-105_Legacy_Flat_List_Tools_Pagination_Compatibility.md) | **Legacy-Flat List Tools Pagination Compatibility** | 🟡 Medium | 2026-03-23 |
 | [TASK-104](./TASK-104_Model_Facing_Workflow_Confirmation.md) | **Model-Facing Workflow Confirmation Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | 2026-03-23 |
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | 2026-03-23 |
