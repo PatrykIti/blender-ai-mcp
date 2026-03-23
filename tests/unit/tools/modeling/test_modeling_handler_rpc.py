@@ -59,6 +59,26 @@ class TestModelingHandlerRpcContracts(unittest.TestCase):
         self.assertEqual(result, [{"name": "Bevel", "type": "BEVEL"}])
         self.assertEqual(rpc.calls[0], ("modeling.get_modifiers", {"name": "House_Walls"}))
 
+    def test_add_modifier_accepts_dict_payload_from_addon(self):
+        rpc = DummyRpc(
+            {
+                "modeling.add_modifier": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result={"modifier": "Subsurf"},
+                )
+            }
+        )
+        handler = ModelingToolHandler(rpc)
+
+        result = handler.add_modifier("House_Walls", "SUBSURF", {"levels": 1})
+
+        self.assertEqual(result, "Added modifier 'SUBSURF' to 'House_Walls'")
+        self.assertEqual(
+            rpc.calls[0],
+            ("modeling.add_modifier", {"name": "House_Walls", "modifier_type": "SUBSURF", "properties": {"levels": 1}}),
+        )
+
     def test_get_modifiers_rejects_non_dict_items(self):
         rpc = DummyRpc(
             {

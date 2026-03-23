@@ -769,7 +769,7 @@ Organic shaping and sculpt workflows.
 |------|-------------|--------|
 | `sculpt_auto` | High-level sculpt operation (mesh filters) | ✅ |
 | `sculpt_brush_smooth` | Smooth brush | ✅ |
-| `sculpt_brush_grab` | Grab brush | ✅ |
+| `sculpt_brush_grab` | Grab brush setup only | ✅ |
 | `sculpt_brush_crease` | Crease brush | ✅ |
 
 #### Organic Brushes

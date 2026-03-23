@@ -53,7 +53,7 @@ class ModelingToolHandler(IModelingTool):
 
     def add_modifier(self, name: str, modifier_type: str, properties: Optional[Dict[str, Any]] = None) -> str:
         args = {"name": name, "modifier_type": modifier_type, "properties": properties or {}}
-        require_str_result(self.rpc.send_request("modeling.add_modifier", args))
+        require_dict_result(self.rpc.send_request("modeling.add_modifier", args))
         return f"Added modifier '{modifier_type}' to '{name}'"
 
     def apply_modifier(self, name: str, modifier_name: str) -> str:

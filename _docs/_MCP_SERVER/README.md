@@ -412,7 +412,7 @@ Geometry creation and editing.
 |-----------|-----------|-------------|
 | `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
-| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). |
+| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
 | `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |
 | `modeling_convert_to_mesh` | `name` (str) | Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh. |
 | `modeling_join_objects` | `object_names` (list[str]) | Joins multiple mesh objects into a single one. |
@@ -508,7 +508,7 @@ Sculpt Mode operations for organic shape manipulation.
 |-----------|-----------|-------------|
 | `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. Recommended for AI workflows. |
 | `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. |
-| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. |
+| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Configures the Grab brush for manual interaction only. It does not execute a sculpt stroke or modify geometry by itself. |
 | `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
 | `sculpt_brush_clay` | `radius`, `strength` | Sets up clay brush for adding material (muscle mass, fat deposits). |
 | `sculpt_brush_inflate` | `radius`, `strength` | Sets up inflate brush for pushing geometry outward (tumors, swelling). |

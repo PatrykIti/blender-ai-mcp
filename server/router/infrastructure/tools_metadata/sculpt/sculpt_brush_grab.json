@@ -14,5 +14,5 @@
   },
   "related_tools": ["sculpt_brush_smooth", "sculpt_brush_snake_hook"],
   "patterns": [],
-  "description": "Grabs and moves geometry from one location to another."
+  "description": "Configures the Grab brush for manual interaction only; does not execute a sculpt stroke or modify geometry by itself."
 }

@@ -137,22 +137,27 @@ def sculpt_brush_grab(
     strength: float = 0.5,
 ) -> str:
     """
-    [SCULPT MODE][DESTRUCTIVE] Grabs and moves geometry from one location to another.
+    [SCULPT MODE][SETUP-ONLY][NON-DESTRUCTIVE] Configures the Grab brush for manual interaction.
 
-    Note: Programmatic brush strokes are complex. For reliable results, consider using
-    mesh tools like mesh_transform_selected with careful vertex selection.
+    This tool does not execute a sculpt stroke. It only switches to the Grab brush,
+    applies radius/strength settings, and records the intended from/to locations in
+    the returned message for operator context.
+
+    For reliable programmatic geometry changes, prefer mesh tools like
+    mesh_transform_selected with careful vertex selection.
 
     Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
 
     Args:
         object_name: Target object (default: active object)
-        from_location: Start position [x, y, z] for grab
-        to_location: End position [x, y, z] where to move
+        from_location: Intended start position [x, y, z] for a manual grab stroke
+        to_location: Intended end position [x, y, z] for a manual grab stroke
         radius: Brush radius (default 0.1)
         strength: Brush strength 0-1 (default 0.5)
 
     Examples:
         sculpt_brush_grab(from_location=[0,0,0], to_location=[0,0,0.5], radius=0.2)
+        -> configures the brush only; does not move geometry by itself
     """
     return route_tool_call(
         tool_name="sculpt_brush_grab",

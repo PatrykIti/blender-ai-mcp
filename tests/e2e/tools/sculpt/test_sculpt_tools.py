@@ -246,7 +246,8 @@ class TestSculptBrushGrabE2E:
             result = sculpt_handler.brush_grab(object_name=obj_name, radius=0.2, strength=0.7)
 
             assert isinstance(result, str)
-            assert "grab brush ready" in result.lower()
+            assert "grab brush configured" in result.lower()
+            assert "no geometry was modified" in result.lower()
             print(f"[PASSED] sculpt_brush_grab: {result}")
 
         except RuntimeError as e:
@@ -271,7 +272,8 @@ class TestSculptBrushGrabE2E:
             )
 
             assert isinstance(result, str)
-            assert "grab brush ready" in result.lower()
+            assert "grab brush configured" in result.lower()
+            assert "manual interaction is required" in result.lower()
             print(f"[PASSED] sculpt_brush_grab with locations: {result}")
 
         except RuntimeError as e:

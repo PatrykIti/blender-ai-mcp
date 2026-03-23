@@ -261,7 +261,8 @@ class TestSculptBrushGrab:
 
         bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Grab")
         assert mock_sculpt_context.brush.strength == 0.7
-        assert "Grab brush ready" in result
+        assert "Grab brush configured" in result
+        assert "No geometry was modified" in result
 
     def test_brush_grab_with_locations(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
         """Should include from/to locations in result message."""
@@ -272,6 +273,7 @@ class TestSculptBrushGrab:
 
         assert "[0, 0, 0]" in result
         assert "[0, 0, 1]" in result
+        assert "Manual interaction is required" in result
 
 
 # =============================================================================

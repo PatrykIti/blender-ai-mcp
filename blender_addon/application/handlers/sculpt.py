@@ -193,10 +193,10 @@ class SculptHandler:
         strength: float = 0.5,
     ) -> str:
         """
-        Grabs and moves geometry from one location to another.
+        Configures the Grab brush for manual interaction.
 
-        Note: Programmatic brush strokes are complex in Blender.
-        This sets up the brush.
+        Note: Programmatic grab strokes are not executed here.
+        This only sets up the brush and context for a human-driven stroke.
 
         Args:
             object_name: Target object (default: active object)
@@ -230,9 +230,9 @@ class SculptHandler:
         from_str = f" from {from_location}" if from_location else ""
         to_str = f" to {to_location}" if to_location else ""
         return (
-            f"Grab brush ready on '{obj.name}' "
+            f"Grab brush configured on '{obj.name}' "
             f"(radius={radius}, strength={strength}){from_str}{to_str}. "
-            f"Note: Programmatic grab strokes require manual interaction."
+            f"No geometry was modified. Manual interaction is required to perform the grab stroke."
         )
 
     # ==========================================================================

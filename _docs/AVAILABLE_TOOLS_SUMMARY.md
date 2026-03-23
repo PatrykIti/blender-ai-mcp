@@ -237,7 +237,7 @@ None.
 |-----------|-----------|-------------|--------|
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
-| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). | ✅ Done |
+| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). Successful addon responses carry structured modifier metadata. | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
@@ -408,7 +408,7 @@ None.
 |-----------|-----------|-------------|--------|
 | `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. | ✅ Done |
 | `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. | ✅ Done |
-| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. | ✅ Done |
+| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Configures the Grab brush for manual interaction only; does not execute a stroke or modify geometry by itself. | ✅ Done |
 | `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. | ✅ Done |
 | `sculpt_brush_clay` | `object_name`, `radius`, `strength` | Clay brush for adding material (muscle mass, fat deposits). | ✅ Done |
 | `sculpt_brush_inflate` | `object_name`, `radius`, `strength` | Inflate brush for pushing geometry outward (swelling, tumors). | ✅ Done |

@@ -64,6 +64,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-111](./TASK-111_Modeling_Modifier_RPC_Alignment_And_Sculpt_Grab_Boundary.md) | **Modeling Modifier RPC Alignment and Sculpt Grab Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-110](./TASK-110_Legacy_Manual_Surface_Boundary.md) | **Legacy Manual Surface Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-109](./TASK-109_Scene_Camera_Parameter_UX_Clarification.md) | **Scene Camera Parameter UX Clarification** | 🟡 Medium | 2026-03-23 |
 | [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | 2026-03-23 |
