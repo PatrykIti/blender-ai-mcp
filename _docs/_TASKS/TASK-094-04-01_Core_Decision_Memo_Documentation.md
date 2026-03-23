@@ -1,7 +1,7 @@
 # TASK-094-04-01: Core Decision Memo and Documentation
 
 **Parent:** [TASK-094-04](./TASK-094-04_Decision_Memo_and_Documentation.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)
 

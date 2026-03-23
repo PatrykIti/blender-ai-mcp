@@ -22,8 +22,8 @@ def test_mcp_docs_describe_code_mode_pilot_baseline():
         assert expected in text
 
 
-def test_task_board_marks_task_094_in_progress():
+def test_task_board_marks_task_094_done():
     text = (REPO_ROOT / "_docs" / "_TASKS" / "README.md").read_text(encoding="utf-8")
 
     assert "Code Mode Exploration for Large-Scale Orchestration" in text
-    assert "Guardrails and read-only pilot are implemented" in text
+    assert "| [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | 2026-03-23 |" in text

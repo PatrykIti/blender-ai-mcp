@@ -1,7 +1,7 @@
 # TASK-094-03-01: Core Evaluation Harness and Benchmark Scenarios
 
 **Parent:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-094-02](./TASK-094-02_Read_Only_Code_Mode_Pilot_Surface.md)
 

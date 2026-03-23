@@ -162,6 +162,12 @@ Primary local validation commands for TASK-094 guardrails and read-only pilot:
 poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py -q
 ```
 
+Primary local validation commands for TASK-094 benchmark and decision memo:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py tests/unit/adapters/mcp/test_code_mode_benchmarks.py tests/unit/adapters/mcp/test_code_mode_pilot_docs.py tests/unit/adapters/mcp/test_code_mode_decision_docs.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

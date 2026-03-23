@@ -1,7 +1,7 @@
 # TASK-094-04: Decision Memo and Documentation
 
 **Parent:** [TASK-094](./TASK-094_Code_Mode_Exploration.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** [TASK-094-03](./TASK-094-03_Evaluation_Harness_and_Benchmark_Scenarios.md)
 
@@ -25,3 +25,22 @@ Record the final recommendation on where Code Mode helps and where it should sta
 ## Acceptance Criteria
 
 - there is one explicit product recommendation grounded in experiment results
+
+---
+
+## Current Recommendation
+
+Go decision:
+
+- keep `code-mode-pilot` as an experimental read-only surface
+
+No-go decisions:
+
+- do not make Code Mode the default product path
+- do not use Code Mode as the primary path for geometry-destructive or write-heavy Blender operations
+
+Evidence basis:
+
+- `legacy-flat` remains the broad compatibility/control baseline
+- `llm-guided` remains the primary production baseline
+- `code-mode-pilot` materially reduces the catalog/round-trip shape for read-heavy orchestration by collapsing the visible surface to discovery meta-tools plus prompt bridge helpers

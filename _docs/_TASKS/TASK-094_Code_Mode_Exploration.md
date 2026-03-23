@@ -4,9 +4,9 @@
 **Category:** FastMCP Research  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083 (platform baseline). Optional comparison input: TASK-084 (search-first discovery baseline, when available).
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Summary:** Benchmark baselines are now named explicitly as `legacy-flat`, `llm-guided`, and `code-mode-pilot`. The first implementation slice is in place: guardrails are explicit in surface configuration, `code-mode-pilot` uses experimental FastMCP `CodeMode`, the pilot is read-only by visibility allowlist, prompt bridge tools remain available, and the sandbox dependency fails fast when unavailable. Benchmark execution and the final decision memo remain open.
+**Completion Summary:** Benchmark baselines are named explicitly as `legacy-flat`, `llm-guided`, and `code-mode-pilot`. The experimental `code-mode-pilot` surface is implemented with explicit guardrails, a read-only allowlist, FastMCP `CodeMode`, prompt bridge support, fail-fast sandbox dependency checks, benchmark harness coverage, and an explicit go/no-go recommendation. The result is a go for an opt-in read-only pilot and a no-go for making Code Mode the default path for write/destructive Blender work.
 
 ---
 

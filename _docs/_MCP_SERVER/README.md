@@ -249,6 +249,12 @@ Current benchmark baselines for the experiment:
 - `llm-guided`
 - `code-mode-pilot`
 
+Current recommendation:
+
+- keep `code-mode-pilot` as an experimental read-only surface
+- keep `llm-guided` as the primary production baseline
+- do not promote Code Mode to the default execution path for write/destructive Blender work
+
 ## Background Task Mode Baseline
 
 The current task-mode rollout now covers the initial heavy-operation slice plus the system import/export family on task-capable surfaces.

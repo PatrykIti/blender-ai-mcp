@@ -164,6 +164,25 @@ Sampling assistants are intentionally constrained:
 - allowed: inspection summarization, compact diagnostic explanation, repair suggestion drafting
 - forbidden: autonomous destructive planning, hidden router-policy substitution, scene-truth decisions without inspection payloads, detached background reasoning
 
+### Code Mode Decision
+
+Current recommendation after the first pilot and benchmark slice:
+
+- Go decision: keep `code-mode-pilot` as an experimental read-only surface
+- No-go decision: do not make Code Mode the default path for geometry-destructive or write-heavy Blender flows
+
+Current benchmark baselines:
+
+- `legacy-flat`
+- `llm-guided`
+- `code-mode-pilot`
+
+Current product interpretation:
+
+- `legacy-flat` remains the broad compatibility/control baseline
+- `llm-guided` remains the primary production path for discovery-first orchestration
+- `code-mode-pilot` is useful as an optional path for multi-step analytical/read-heavy flows where collapsing the visible surface to `search` / `get_schema` / `tags` / `execute` can reduce orchestration round-trips
+
 ### Versioned Surface Baseline
 
 Public surface evolution now has an explicit coexistence path:
