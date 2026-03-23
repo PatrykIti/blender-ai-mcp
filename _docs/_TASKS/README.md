@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 11 tasks (~225 sub-tasks)
-- **In Progress:** 2 tasks
-- **Done:** 164
+- **In Progress:** 1 tasks
+- **Done:** 165
 
 ## 🧭 Terminology Guardrails
 
@@ -57,7 +57,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
-| [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | Initial batch landed for `_rpc_utils`, representative handler RPC alignment, missing MCP area main paths, and phase-shaped search regressions |
 
 ---
 
@@ -65,7 +64,9 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-110](./TASK-110_Legacy_Manual_Surface_Boundary.md) | **Legacy Manual Surface Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-109](./TASK-109_Scene_Camera_Parameter_UX_Clarification.md) | **Scene Camera Parameter UX Clarification** | 🟡 Medium | 2026-03-23 |
+| [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | 2026-03-23 |
 | [TASK-107](./TASK-107_Workflow_Catalog_Get_Contract_Alignment.md) | **Workflow Catalog Get Contract Alignment** | 🟡 Medium | 2026-03-23 |
 | [TASK-106](./TASK-106_Modeling_Transform_RPC_Result_Alignment.md) | **Modeling Transform RPC Result Alignment** | 🟡 Medium | 2026-03-23 |
 | [TASK-105](./TASK-105_Legacy_Flat_List_Tools_Pagination_Compatibility.md) | **Legacy-Flat List Tools Pagination Compatibility** | 🟡 Medium | 2026-03-23 |

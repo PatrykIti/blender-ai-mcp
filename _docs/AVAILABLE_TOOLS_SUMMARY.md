@@ -66,6 +66,7 @@ Native prompt products:
 
 Measured current baseline:
 
+- `legacy-manual`: `154` visible tools, without router/workflow namespace exposure
 - `legacy-flat`: `161` visible tools
 - `llm-guided`: `7` visible tools
 

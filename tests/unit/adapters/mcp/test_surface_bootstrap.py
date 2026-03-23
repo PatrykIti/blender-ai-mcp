@@ -15,6 +15,15 @@ def test_default_surface_bootstrap_succeeds():
     assert len(server.providers) >= 4
 
 
+def test_legacy_manual_surface_bootstrap_succeeds_without_router_or_workflows():
+    """legacy-manual should bootstrap as a narrower manual-only compatibility surface."""
+
+    server = build_server("legacy-manual")
+
+    assert server._bam_surface_profile == "legacy-manual"
+    assert len(server.providers) < 4
+
+
 def test_invalid_surface_profile_fails_loudly():
     """Invalid surface profile should fail with a deterministic bootstrap error."""
 

@@ -27,7 +27,7 @@ def build_visibility_rules(
 
     resolved_phase = coerce_session_phase(phase)
 
-    if resolved_surface in {"legacy-flat", "internal-debug"}:
+    if resolved_surface in {"legacy-manual", "legacy-flat", "internal-debug"}:
         return []
 
     if resolved_surface == "code-mode-pilot":

@@ -22,6 +22,24 @@ from server.adapters.mcp.version_policy import (
 )
 
 SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
+    "legacy-manual": SurfaceProfileSettings(
+        name="legacy-manual",
+        server_name="blender-ai-mcp",
+        provider_builders=(
+            build_core_tools_provider,
+            build_prompt_assets_provider,
+        ),
+        list_page_size=250,
+        tasks_enabled=False,
+        instructions=(
+            "Manual legacy MCP surface. Router and workflow catalog tools are intentionally not exposed here. "
+            "Use direct scene, modeling, mesh, material, UV, collection, import/export, and inspection tools. "
+            "If you need workflow execution or router-assisted planning, switch to the legacy-flat or llm-guided surface."
+        ),
+        delivery_mode="compatibility",
+        default_contract_line=get_default_contract_line("legacy-manual"),
+        allowed_contract_lines=SURFACE_ALLOWED_CONTRACT_LINES["legacy-manual"],
+    ),
     "legacy-flat": SurfaceProfileSettings(
         name="legacy-flat",
         server_name="blender-ai-mcp",

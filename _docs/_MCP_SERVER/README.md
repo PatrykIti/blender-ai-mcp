@@ -78,6 +78,7 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
+- `legacy-manual`: `154` visible tools, router/workflow capabilities omitted from the namespace
 - `legacy-flat`: `161` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
@@ -166,6 +167,7 @@ The repo now has an explicit contract-line matrix on top of the existing surface
 
 | Surface Profile | Default Contract Line |
 |---|---|
+| `legacy-manual` | `legacy-v1` |
 | `legacy-flat` | `legacy-v1` |
 | `llm-guided` | `llm-guided-v2` |
 | `internal-debug` | `llm-guided-v2` |
@@ -251,6 +253,7 @@ Current benchmark baselines for the experiment:
 
 Current recommendation:
 
+- keep `legacy-manual` as the direct manual surface with no router/workflow exposure
 - keep `code-mode-pilot` as an experimental read-only surface
 - keep `llm-guided` as the primary production baseline
 - do not promote Code Mode to the default execution path for write/destructive Blender work

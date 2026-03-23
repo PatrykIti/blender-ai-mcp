@@ -19,6 +19,7 @@ CONTRACT_ENABLED_TOOLS = {
 # Explicit, narrow compatibility exceptions for profiles that still need
 # deterministic text-heavy behavior for selected tools.
 LEGACY_TEXT_EXCEPTIONS: dict[str, set[str]] = {
+    "legacy-manual": set(),
     "legacy-flat": set(),
 }
 
@@ -34,7 +35,7 @@ def to_compat_dict(value: BaseModel | dict) -> dict:
 def get_delivery_mode(surface_profile: str) -> str:
     """Return the delivery policy for a surface profile."""
 
-    return "compatibility" if surface_profile == "legacy-flat" else "structured_first"
+    return "compatibility" if surface_profile in {"legacy-manual", "legacy-flat"} else "structured_first"
 
 
 def should_prefer_native_structured_delivery(

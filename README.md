@@ -91,8 +91,9 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-flat`: `159` visible tools, about `204590` JSON bytes in `list_tools`
-- `llm-guided`: `5` visible tools, about `16621` JSON bytes in `list_tools`
+- `legacy-manual`: `154` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `161` visible tools, including router/workflow on the broad compatibility surface
+- `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
 
@@ -179,6 +180,7 @@ Current benchmark baselines:
 
 Current product interpretation:
 
+- `legacy-manual` is the direct manual-control surface with no router or workflow namespace leakage
 - `legacy-flat` remains the broad compatibility/control baseline
 - `llm-guided` remains the primary production path for discovery-first orchestration
 - `code-mode-pilot` is useful as an optional path for multi-step analytical/read-heavy flows where collapsing the visible surface to `search` / `get_schema` / `tags` / `execute` can reduce orchestration round-trips
@@ -187,6 +189,7 @@ Current product interpretation:
 
 Public surface evolution now has an explicit coexistence path:
 
+- `legacy-manual` defaults to contract line `legacy-v1`
 - `legacy-flat` defaults to contract line `legacy-v1`
 - `llm-guided` defaults to contract line `llm-guided-v2`
 - `llm-guided-v1` remains selectable as a rollback / compatibility line for the guided surface
@@ -1013,7 +1016,8 @@ We recommend using Docker to run the MCP Server.
 Current recommendation after the FastMCP 3.1 migration:
 
 - use `MCP_SURFACE_PROFILE=llm-guided` for normal LLM usage
-- use `MCP_SURFACE_PROFILE=legacy-flat` only for broad compatibility / low-level debugging
+- use `MCP_SURFACE_PROFILE=legacy-manual` for direct manual tool calling without router/workflow helpers
+- use `MCP_SURFACE_PROFILE=legacy-flat` when you want broad compatibility plus router/workflow tools on the legacy surface
 - if you want to test a locally built image, replace `ghcr.io/patrykiti/blender-ai-mcp:latest` with `blender-ai-mcp:local`
 - map `/tmp` if you want host-visible file outputs from viewport or other file-returning tools
 - `legacy-flat` now uses a larger single-page `tools/list` catalog by default, as a compatibility workaround for clients that ignore MCP `nextCursor`

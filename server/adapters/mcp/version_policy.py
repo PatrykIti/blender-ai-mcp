@@ -53,6 +53,7 @@ CONTRACT_LINE_SPECS: dict[str, ContractLineSpec] = {
 
 
 SURFACE_DEFAULT_CONTRACT_LINES: dict[str, str] = {
+    "legacy-manual": CONTRACT_LINE_LEGACY_V1,
     "legacy-flat": CONTRACT_LINE_LEGACY_V1,
     "llm-guided": CONTRACT_LINE_LLM_GUIDED_V2,
     "internal-debug": CONTRACT_LINE_LLM_GUIDED_V2,
@@ -61,6 +62,7 @@ SURFACE_DEFAULT_CONTRACT_LINES: dict[str, str] = {
 
 
 SURFACE_ALLOWED_CONTRACT_LINES: dict[str, tuple[str, ...]] = {
+    "legacy-manual": (CONTRACT_LINE_LEGACY_V1,),
     "legacy-flat": (CONTRACT_LINE_LEGACY_V1,),
     "llm-guided": (CONTRACT_LINE_LLM_GUIDED_V1, CONTRACT_LINE_LLM_GUIDED_V2),
     "internal-debug": (

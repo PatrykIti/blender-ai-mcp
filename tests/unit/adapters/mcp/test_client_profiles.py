@@ -25,3 +25,13 @@ def test_llm_guided_profile_uses_guided_mode_defaults():
     assert preset.default_phase == SessionPhase.BOOTSTRAP
     assert preset.entry_capability_ids == ("router", "workflow_catalog")
     assert preset.search_enabled_by_default is True
+
+
+def test_legacy_manual_profile_stays_non_guided_and_router_free():
+    """legacy-manual should expose a direct manual surface without router entry capabilities."""
+
+    preset = get_client_profile_preset("legacy-manual")
+
+    assert preset.guided_mode is False
+    assert preset.entry_capability_ids == ()
+    assert preset.search_enabled_by_default is False

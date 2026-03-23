@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [138](./138-2026-03-23-coverage-expansion-contracts-mcp-areas-rpc-surface-runtime.md) | 2026-03-23 | **Coverage expansion for contracts, MCP areas, RPC alignment, and surface runtime** | - |
+| [137](./137-2026-03-23-legacy-manual-surface-boundary.md) | 2026-03-23 | **Legacy manual surface boundary** | - |
 | [136](./136-2026-03-23-scene-camera-parameter-ux-clarification.md) | 2026-03-23 | **Scene camera parameter UX clarification** | - |
 | [135](./135-2026-03-23-workflow-catalog-get-contract-alignment.md) | 2026-03-23 | **Workflow catalog get contract alignment** | - |
 | [134](./134-2026-03-23-modeling-transform-rpc-result-alignment.md) | 2026-03-23 | **Modeling transform RPC result alignment** | - |

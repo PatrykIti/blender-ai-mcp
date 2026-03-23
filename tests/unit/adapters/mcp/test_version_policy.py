@@ -13,12 +13,14 @@ from server.adapters.mcp.version_policy import (
 
 
 def test_surface_default_contract_lines_are_explicit():
+    assert get_default_contract_line("legacy-manual") == CONTRACT_LINE_LEGACY_V1
     assert get_default_contract_line("legacy-flat") == CONTRACT_LINE_LEGACY_V1
     assert get_default_contract_line("llm-guided") == CONTRACT_LINE_LLM_GUIDED_V2
 
 
 def test_contract_line_override_must_match_allowed_surface_matrix():
     assert resolve_contract_line("llm-guided", CONTRACT_LINE_LLM_GUIDED_V1) == CONTRACT_LINE_LLM_GUIDED_V1
+    assert resolve_contract_line("legacy-manual", CONTRACT_LINE_LEGACY_V1) == CONTRACT_LINE_LEGACY_V1
 
     with pytest.raises(ValueError, match="not allowed"):
         resolve_contract_line("legacy-flat", CONTRACT_LINE_LLM_GUIDED_V2)

@@ -23,6 +23,14 @@ class ClientProfilePreset:
 
 
 CLIENT_PROFILE_PRESETS: dict[str, ClientProfilePreset] = {
+    "legacy-manual": ClientProfilePreset(
+        name="legacy-manual",
+        guided_mode=False,
+        default_phase=SessionPhase.BOOTSTRAP,
+        description="Manual compatibility surface exposing direct tools without router or workflow helpers.",
+        entry_capability_ids=(),
+        search_enabled_by_default=False,
+    ),
     "legacy-flat": ClientProfilePreset(
         name="legacy-flat",
         guided_mode=False,

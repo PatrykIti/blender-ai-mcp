@@ -72,6 +72,7 @@ def test_registrars_apply_manifest_tags_to_registered_tools():
 def test_visibility_rules_are_profile_and_phase_deterministic():
     """Visibility policy should produce deterministic rules for profile/phase pairs."""
 
+    assert build_visibility_rules("legacy-manual", SessionPhase.BOOTSTRAP) == []
     assert build_visibility_rules("legacy-flat", SessionPhase.BOOTSTRAP) == []
 
     bootstrap_rules = build_visibility_rules("llm-guided", SessionPhase.BOOTSTRAP)
@@ -97,7 +98,9 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     """llm-guided should carry concrete visibility transforms while legacy-flat stays unfiltered."""
 
     guided_transforms = materialize_transforms(get_surface_profile("llm-guided"))
+    manual_transforms = materialize_transforms(get_surface_profile("legacy-manual"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
     assert len(guided_transforms) == 7
+    assert len(manual_transforms) == 1
     assert len(legacy_transforms) == 1

@@ -14,6 +14,7 @@ def test_get_surface_profile_returns_expected_profiles():
     """Surface lookup should expose the baseline profile matrix."""
 
     assert set(SURFACE_PROFILES) == {
+        "legacy-manual",
         "legacy-flat",
         "llm-guided",
         "internal-debug",
@@ -36,17 +37,22 @@ def test_build_server_builds_default_surface():
 def test_build_server_builds_alternate_surface_profile():
     """Factory should build multiple surface profiles from reusable provider groups."""
 
+    manual = build_server("legacy-manual")
     guided = build_server("llm-guided")
     debug = build_server("internal-debug")
     code_mode = build_server("code-mode-pilot")
 
+    assert manual._bam_surface_profile == "legacy-manual"
     assert guided._bam_surface_profile == "llm-guided"
     assert debug._bam_surface_profile == "internal-debug"
     assert code_mode._bam_surface_profile == "code-mode-pilot"
+    assert manual.name == get_surface_profile("legacy-manual").server_name
     assert guided.name == get_surface_profile("llm-guided").server_name
     assert debug.name == get_surface_profile("internal-debug").server_name
     assert code_mode.name == get_surface_profile("code-mode-pilot").server_name
+    assert len(manual.providers) < len(guided.providers)
     assert len(debug.providers) > len(guided.providers)
+    assert "Router and workflow catalog tools are intentionally not exposed" in manual.instructions
     assert guided._bam_task_runtime_report.tasks_required is True
     assert guided._bam_task_runtime_report.supported is True
     assert "background tasks" in guided.instructions
