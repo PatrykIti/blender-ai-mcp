@@ -42,7 +42,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Programmatic Sculpting
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | Deterministic sculpt-like tools for LLM clients; keep `sculpt_brush_*` as compatibility/manual setup tools |
+| [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | Deterministic sculpt-like tools for LLM clients; replace brush-dependent sculpt tools where needed instead of carrying a compatibility track |
 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |

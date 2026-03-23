@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [140](./140-2026-03-23-programmatic-sculpt-replacement-policy.md) | 2026-03-23 | **Programmatic sculpt replacement policy** | - |
 | [139](./139-2026-03-23-modeling-modifier-rpc-and-sculpt-grab-boundary.md) | 2026-03-23 | **Modeling modifier RPC alignment and sculpt grab boundary** | - |
 | [138](./138-2026-03-23-coverage-expansion-contracts-mcp-areas-rpc-surface-runtime.md) | 2026-03-23 | **Coverage expansion for contracts, MCP areas, RPC alignment, and surface runtime** | - |
 | [137](./137-2026-03-23-legacy-manual-surface-boundary.md) | 2026-03-23 | **Legacy manual surface boundary** | - |

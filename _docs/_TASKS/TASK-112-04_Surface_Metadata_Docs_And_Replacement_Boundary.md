@@ -1,4 +1,4 @@
-# TASK-112-04: Surface Metadata, Docs, and Compatibility Boundary
+# TASK-112-04: Surface Metadata, Docs, and Replacement Boundary
 
 **Priority:** 🟡 Medium  
 **Category:** MCP UX  
@@ -10,7 +10,7 @@
 
 ## Objective
 
-Make the new sculpt path visible and make the old brush path clearly non-primary for LLM clients.
+Make the new sculpt path visible and explicitly replace the old brush path where it is not fit for LLM automation.
 
 ---
 
@@ -20,8 +20,8 @@ Make the new sculpt path visible and make the old brush path clearly non-primary
 - update router metadata under `server/router/infrastructure/tools_metadata/sculpt/`
 - update prompt docs if they reference sculpt flows
 - explicitly mark old `sculpt_brush_*` tools as:
-  - manual/setup-only where applicable
-  - compatibility tools, not preferred automated path
+  - replaced by deterministic sculpt-region tools where applicable
+  - non-primary and removable from the public LLM-facing sculpt path
 - ensure new programmatic sculpt tools are the recommended LLM-facing tools
 
 ---
@@ -30,4 +30,4 @@ Make the new sculpt path visible and make the old brush path clearly non-primary
 
 - docs do not imply that brush setup tools are the best automation path
 - metadata examples prefer programmatic sculpt tools
-- compatibility story is explicit instead of implicit
+- replacement/removal posture is explicit instead of leaving a vague compatibility story

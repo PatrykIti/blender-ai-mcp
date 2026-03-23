@@ -36,12 +36,12 @@ Do **not** make UI-brush stroke emulation the main LLM path.
 Instead:
 
 - keep `sculpt_auto` as-is
-- keep existing `sculpt_brush_*` as compatibility/manual-assist tools
+- replace the brush-dependent `sculpt_brush_*` tools that are not suitable for automation
 - add a new family of **programmatic region sculpt tools** for LLM use
 
-The new family should become the preferred write-side sculpt surface for LLM workflows.
+The new family should become the write-side sculpt surface for LLM workflows.
 
-Current `sculpt_brush_*` tools should not be hard-removed immediately. They should remain available for compatibility/manual setups, but they should no longer be treated as the primary path for automated sculpting.
+There is no compatibility objective here for the non-programmatic brush tools that need replacement. If a brush-style tool cannot be made deterministic and automation-safe, it should be replaced in the public LLM-facing sculpt surface instead of preserved as a first-class path.
 
 ---
 
@@ -108,8 +108,8 @@ Possible later extensions:
 3. [TASK-112-03](./TASK-112-03_Programmatic_Smooth_Inflate_Pinch_Tools.md)  
    local smooth/inflate/pinch tools built on the shared region engine
 
-4. [TASK-112-04](./TASK-112-04_Surface_Metadata_Docs_And_Compatibility_Boundary.md)  
-   metadata, docs, routing hints, and compatibility posture for old `sculpt_brush_*`
+4. [TASK-112-04](./TASK-112-04_Surface_Metadata_Docs_And_Replacement_Boundary.md)  
+   metadata, docs, routing hints, and replacement/removal posture for old `sculpt_brush_*`
 
 5. [TASK-112-05](./TASK-112-05_Tests_For_Programmatic_Sculpt_Tools.md)  
    unit + e2e coverage for deterministic sculpt region tools
@@ -120,5 +120,5 @@ Possible later extensions:
 
 - the repo has at least one deterministic, LLM-safe sculpt deformation tool (`sculpt_deform_region`)
 - local sculpt operations no longer depend on hidden manual brush interaction for core LLM use cases
-- old `sculpt_brush_*` tools remain explicitly documented as manual/setup-only where applicable
+- brush-dependent sculpt tools that are not suitable for LLM automation are explicitly replaced or downgraded out of the recommended public sculpt path
 - docs, metadata, and tests reflect the new recommended sculpt path

@@ -34,11 +34,11 @@ Add `sculpt_deform_region` as the deterministic replacement for `sculpt_brush_gr
 
 ---
 
-## Compatibility Decision
+## Replacement Decision
 
-- do **not** remove `sculpt_brush_grab` in this task
-- `sculpt_brush_grab` stays as manual/setup-only
-- `sculpt_deform_region` becomes the recommended automated path
+- `sculpt_deform_region` is the public automated replacement for `sculpt_brush_grab`
+- `sculpt_brush_grab` should not remain a first-class LLM-facing sculpt write tool after this lands
+- if needed, keep a narrow internal/manual helper only until callers are migrated, then remove it from the recommended surface
 
 ---
 
@@ -46,4 +46,4 @@ Add `sculpt_deform_region` as the deterministic replacement for `sculpt_brush_gr
 
 - `sculpt_deform_region` works end-to-end through addon, handler, adapter, and docs
 - it can cover the main “grab/pull local area” workflow without UI brush strokes
-- the old grab brush is no longer the recommended LLM path
+- the old grab brush is no longer part of the recommended public sculpt write path
