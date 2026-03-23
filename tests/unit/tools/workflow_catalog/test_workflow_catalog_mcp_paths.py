@@ -114,3 +114,33 @@ def test_workflow_catalog_background_finalize_uses_local_background_operation(mo
     assert result.status == "needs_input"
     assert result.clarification is not None
     assert result.repair_suggestion is not None
+
+
+def test_workflow_catalog_finalize_imported_preserves_chunk_metadata(monkeypatch):
+    class Handler:
+        def finalize_import_session(self, **kwargs):
+            return {
+                "status": "imported",
+                "workflow_name": "simple_house_workflow",
+                "message": "ok",
+                "saved_path": "/tmp/simple_house_workflow.yaml",
+                "source_path": "simple_house.yaml",
+                "overwritten": False,
+                "removed_files": [],
+                "removed_embeddings": 0,
+                "workflows_dir": "/tmp",
+                "embeddings_reloaded": True,
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    result = asyncio.run(
+        workflow_catalog(
+            DummyContext(),
+            action="import_finalize",
+            session_id="sess-1",
+        )
+    )
+
+    assert result.status == "imported"
+    assert result.saved_path == "/tmp/simple_house_workflow.yaml"

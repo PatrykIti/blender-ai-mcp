@@ -189,6 +189,38 @@ def test_workflow_catalog_import_needs_input_can_carry_typed_clarification(monke
     assert result.repair_suggestion.status == "success"
 
 
+def test_workflow_catalog_imported_response_accepts_import_metadata(monkeypatch):
+    """workflow_catalog import should accept the richer imported payload metadata."""
+
+    class Handler:
+        def import_workflow_content(self, **kwargs):
+            return {
+                "status": "imported",
+                "workflow_name": "simple_house_workflow",
+                "message": "ok",
+                "source_type": "inline",
+                "content_type": "yaml",
+                "saved_path": "/tmp/simple_house_workflow.yaml",
+                "source_path": "simple_house.yaml",
+                "overwritten": False,
+                "removed_files": [],
+                "removed_embeddings": 0,
+                "workflows_dir": "/tmp",
+                "embeddings_reloaded": True,
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    callable_workflow_catalog = getattr(workflow_catalog, "fn", workflow_catalog)
+    result = asyncio.run(callable_workflow_catalog(DummyContext(), action="import", content="{}", content_type="yaml"))
+
+    assert isinstance(result, WorkflowCatalogResponseContract)
+    assert result.status == "imported"
+    assert result.saved_path == "/tmp/simple_house_workflow.yaml"
+    assert result.overwritten is False
+    assert result.embeddings_reloaded is True
+
+
 def test_router_get_status_returns_structured_contract(monkeypatch):
     """router_get_status should return a typed status contract instead of prose text."""
 
