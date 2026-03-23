@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 11 tasks (~210 sub-tasks)
+- **To Do:** 12 tasks (~225 sub-tasks)
 - **In Progress:** 1 tasks
 - **Done:** 164
 
@@ -22,6 +22,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | Cross-cutting regression wave for contract parity, MCP wrappers, handler RPC narrowing, and shaped surface behavior |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
