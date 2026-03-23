@@ -1004,6 +1004,96 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 
 We recommend using Docker to run the MCP Server.
 
+Current recommendation after the FastMCP 3.1 migration:
+
+- use `MCP_SURFACE_PROFILE=llm-guided` for normal LLM usage
+- use `MCP_SURFACE_PROFILE=legacy-flat` only for broad compatibility / low-level debugging
+- if you want to test a locally built image, replace `ghcr.io/patrykiti/blender-ai-mcp:latest` with `blender-ai-mcp:local`
+- map `/tmp` if you want host-visible file outputs from viewport or other file-returning tools
+
+### Recommended Guided Config (Current)
+
+For day-to-day LLM usage, prefer the guided surface with the small entry set:
+
+- `router_set_goal`
+- `router_get_status`
+- `browse_workflows`
+- `search_tools`
+- `call_tool`
+- `list_prompts`
+- `get_prompt`
+
+Example `cline_mcp_settings.json` / `.mcp.json` style config on macOS/Windows:
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "/tmp:/tmp",
+        "-e", "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+        "-e", "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+        "-e", "ROUTER_ENABLED=true",
+        "-e", "MCP_SURFACE_PROFILE=llm-guided",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "router_set_goal",
+        "router_get_status",
+        "browse_workflows",
+        "search_tools",
+        "call_tool",
+        "list_prompts",
+        "get_prompt"
+      ]
+    }
+  }
+}
+```
+
+Example `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.blender-ai-mcp]
+command = "docker"
+args = [
+  "run",
+  "-i",
+  "--rm",
+  "-v",
+  "/tmp:/tmp",
+  "-e",
+  "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+  "-e",
+  "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+  "-e",
+  "ROUTER_ENABLED=true",
+  "-e",
+  "MCP_SURFACE_PROFILE=llm-guided",
+  "-e",
+  "BLENDER_RPC_HOST=host.docker.internal",
+  "ghcr.io/patrykiti/blender-ai-mcp:latest"
+]
+env = {}
+enabled_tools = [
+  "router_set_goal",
+  "router_get_status",
+  "browse_workflows",
+  "search_tools",
+  "call_tool",
+  "list_prompts",
+  "get_prompt"
+]
+```
+
+The larger examples below remain useful as broad compatibility references, but they are no longer the recommended default profile.
+
 <details>
 <summary><strong>Cline / Claude Code — <code>cline_mcp_settings.json</code> (macOS/Windows)</strong></summary>
 
