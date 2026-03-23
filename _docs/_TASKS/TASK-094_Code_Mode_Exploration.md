@@ -75,7 +75,7 @@ Hard safety rule:
 - Code Mode must not expose or execute raw Blender Python, direct `bpy` snippets, arbitrary Python execution, shell commands, or any bypass path around the MCP tool contract
 
 Code Mode research does not require search-first rollout to exist.
-If TASK-084 is available, it may be used as a secondary benchmark comparison, but it is not a prerequisite for experiment guardrails or the first read-only pilot surface.
+If TASK-084 is available, it should be used as the named `llm-guided` search-first comparison baseline, but it is not a prerequisite for experiment guardrails or the first read-only pilot surface.
 
 Hard gate:
 
@@ -137,7 +137,11 @@ This remains the umbrella task. The original scope stays unchanged.
 
 1. Define experiment guardrails and exclusion rules.
 2. Build a read-only pilot surface on top of the same provider set.
-3. Benchmark discovery and orchestration cost against classic tool loops, with optional secondary comparison against search-first discovery when TASK-084 is available.
+3. Benchmark discovery and orchestration cost against explicit named baselines:
+   - `legacy-flat`
+   - `llm-guided`
+   - `code-mode-pilot`
+   `llm-guided` remains the primary modern comparison baseline; `legacy-flat` stays as compatibility/control context.
 4. Record an explicit go/no-go decision with retained constraints.
 
 Implementation is decomposed into:

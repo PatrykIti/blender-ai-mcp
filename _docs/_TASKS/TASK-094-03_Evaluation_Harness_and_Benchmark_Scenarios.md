@@ -9,7 +9,11 @@
 
 ## Objective
 
-Benchmark Code Mode against classic tool loops on realistic read-heavy orchestration scenarios.
+Benchmark Code Mode against realistic read-heavy orchestration scenarios on explicit named baselines:
+
+- `legacy-flat`
+- `llm-guided`
+- `code-mode-pilot`
 
 If TASK-084 search-first discovery is already available, include it as an optional secondary comparison.
 It is not a prerequisite for the primary Code Mode evaluation path.
@@ -27,4 +31,4 @@ It is not a prerequisite for the primary Code Mode evaluation path.
 
 ## Acceptance Criteria
 
-- the repo has a measurable comparison for context cost and workflow quality
+- the repo has a measurable comparison for context cost and workflow quality across `legacy-flat`, `llm-guided`, and `code-mode-pilot`

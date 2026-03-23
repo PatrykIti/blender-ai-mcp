@@ -26,7 +26,10 @@ Implement the core code changes for **Evaluation Harness and Benchmark Scenarios
 
 - deliver explicit experimental Code Mode behavior with guardrails
 - limit pilot surface to approved read-heavy workflows
-- produce measurable comparison artifacts against classic tool loops
+- produce measurable comparison artifacts against explicit named baselines:
+  - `legacy-flat`
+  - `llm-guided`
+  - `code-mode-pilot`
 
 ### Implementation Checklist
 
