@@ -11,7 +11,7 @@ from typing import Callable
 
 import bpy
 
-from blender_addon.application.handlers.job_utils import raise_if_cancelled
+from .job_utils import raise_if_cancelled
 
 
 class SystemHandler:

@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict
 
-from blender_addon.application.handlers.job_utils import JobCancelledError
+from ..application.handlers.job_utils import JobCancelledError
 
 # Try importing bpy, but allow running outside blender for testing
 try:

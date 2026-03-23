@@ -14,7 +14,7 @@ import bpy
 from mathutils import Euler, Vector
 from mathutils.kdtree import KDTree
 
-from blender_addon.application.handlers.job_utils import raise_if_cancelled
+from .job_utils import raise_if_cancelled
 
 
 class ExtractionHandler:
