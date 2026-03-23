@@ -1144,7 +1144,8 @@ def scene_camera_focus(ctx: Context, object_name: str, zoom_factor: float = 1.0)
     Workflow: AFTER → scene_set_active_object | USE FOR → centering view on component
 
     Args:
-        object_name: Object to focus on
+        object_name: Object to focus on. Use `object_name` here; do not use `target`,
+            `target_object`, or `focus_target`.
         zoom_factor: 1.0 = fit to view, <1.0 = zoom out, >1.0 = zoom in
 
     Returns:

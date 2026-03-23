@@ -79,6 +79,10 @@ RELIABILITY PROTOCOL (MANDATORY)
        * contact/gap: relevant min/max coordinates match (touch) or differ by the intended gap
        * containment: if a part must sit inside another, ensure its bbox is within the other bbox (minus clearance)
    - If uncertain, do a visual sanity check:
+       * parameter map reminder:
+           - `scene_camera_focus(object_name=...)`
+           - `scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`
+           - `scene_get_viewport(shading=..., focus_target=..., output_mode="IMAGE")`
        * scene_camera_focus(object_name=...)
        * scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=...)
        * scene_get_viewport(shading="SOLID" or "MATERIAL", focus_target=..., output_mode="IMAGE")

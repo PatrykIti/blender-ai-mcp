@@ -393,7 +393,7 @@ Object Mode operations for scene management and inspection.
 | `scene_clean_scene` | Remove all objects | ✅ |
 | `scene_duplicate_object` | Duplicate object | ✅ |
 | `scene_set_active_object` | Set active object | ✅ |
-| `scene_get_viewport` | Capture viewport image (AI vision) | ✅ |
+| `scene_get_viewport` | Capture viewport image (`focus_target`) | ✅ |
 | `scene_get_mode` | Report current Blender mode | ✅ |
 | `scene_list_selection` | List selected objects/components | ✅ |
 | `scene_inspect_object` | Detailed object info | ✅ |
@@ -406,8 +406,8 @@ Object Mode operations for scene management and inspection.
 | `scene_hide_object` | Hide/show object in viewport | ✅ |
 | `scene_show_all_objects` | Show all hidden objects | ✅ |
 | `scene_isolate_object` | Isolate object (hide all others) | ✅ |
-| `scene_camera_orbit` | Orbit viewport around target | ✅ |
-| `scene_camera_focus` | Focus viewport on object | ✅ |
+| `scene_camera_orbit` | Orbit viewport around target (`target_object`/`target_point`) | ✅ |
+| `scene_camera_focus` | Focus viewport on object (`object_name`) | ✅ |
 | `scene_get_custom_properties` | Get object metadata/custom properties | ✅ |
 | `scene_set_custom_property` | Set/delete custom property on object | ✅ |
 | `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |

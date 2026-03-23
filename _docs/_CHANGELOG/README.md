@@ -6,6 +6,10 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [136](./136-2026-03-23-scene-camera-parameter-ux-clarification.md) | 2026-03-23 | **Scene camera parameter UX clarification** | - |
+| [135](./135-2026-03-23-workflow-catalog-get-contract-alignment.md) | 2026-03-23 | **Workflow catalog get contract alignment** | - |
+| [134](./134-2026-03-23-modeling-transform-rpc-result-alignment.md) | 2026-03-23 | **Modeling transform RPC result alignment** | - |
+| [133](./133-2026-03-23-legacy-flat-single-page-tool-catalog.md) | 2026-03-23 | **Legacy-flat single-page tool catalog** | - |
 | [132](./132-2026-03-23-coverage-expansion-scene-workflow-catalog-vector-store-rpc.md) | 2026-03-23 | **Coverage expansion for scene MCP area, workflow catalog, vector store, and RPC server** | - |
 | [131](./131-2026-03-23-coverage-expansion-extraction-system-and-scripts.md) | 2026-03-23 | **Coverage expansion for extraction handler, system MCP area, and tooling scripts** | - |
 | [130](./130-2026-03-23-coverage-expansion-tooling-and-mcp-areas.md) | 2026-03-23 | **Coverage expansion for tooling scripts, addon bootstrap, and MCP areas** | - |

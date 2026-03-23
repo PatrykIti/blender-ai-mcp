@@ -23,3 +23,21 @@ def test_legacy_flat_first_page_contains_full_catalog_without_next_cursor():
 
     assert tool_count == 161
     assert next_cursor is None
+
+
+def test_legacy_flat_camera_focus_description_clarifies_parameter_name():
+    """The public tool description should steer clients toward object_name for camera focus."""
+
+    async def run():
+        server = build_server("legacy-flat")
+        result = await server._list_tools_mcp(
+            ListToolsRequest(method="tools/list", params=PaginatedRequestParams())
+        )
+        tool = next(tool for tool in result.tools if tool.name == "scene_camera_focus")
+        return tool.description
+
+    description = asyncio.run(run())
+
+    assert "object_name" in description
+    assert "target_object" in description
+    assert "focus_target" in description

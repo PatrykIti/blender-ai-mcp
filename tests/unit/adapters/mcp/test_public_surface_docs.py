@@ -76,3 +76,6 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'check_scene(query="mode")' in manual_prompt
     assert 'check_scene(query="selection")' in manual_prompt
     assert 'inspect_scene(action="object", target_object=...)' in manual_prompt
+    assert "`scene_camera_focus(object_name=...)`" in manual_prompt
+    assert "`scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`" in manual_prompt
+    assert '`scene_get_viewport(shading=..., focus_target=..., output_mode="IMAGE")`' in manual_prompt
