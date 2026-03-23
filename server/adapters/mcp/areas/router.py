@@ -181,6 +181,16 @@ def _build_repair_diagnostics(
     return {key: value for key, value in diagnostics.items() if value is not None}
 
 
+def _contains_model_facing_workflow_confirmation(result: Dict[str, Any]) -> bool:
+    """Return True when clarification should stay model-facing instead of eliciting the human."""
+
+    unresolved = result.get("unresolved") or []
+    for item in unresolved:
+        if isinstance(item, dict) and item.get("param") == "workflow_confirmation":
+            return True
+    return False
+
+
 async def _maybe_elicit_router_answers(
     ctx: Context,
     goal: str,
@@ -192,6 +202,9 @@ async def _maybe_elicit_router_answers(
         return result
 
     if result.get("status") != "needs_input":
+        return result
+
+    if _contains_model_facing_workflow_confirmation(result):
         return result
 
     session = await get_session_capability_state_async(ctx)

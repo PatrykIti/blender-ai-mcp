@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 11 tasks (~210 sub-tasks)
 - **In Progress:** 1 tasks
-- **Done:** 160
+- **Done:** 161
 
 ## 🧭 Terminology Guardrails
 
@@ -64,6 +64,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-104](./TASK-104_Model_Facing_Workflow_Confirmation.md) | **Model-Facing Workflow Confirmation Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-094](./TASK-094_Code_Mode_Exploration.md) | **Code Mode Exploration for Large-Scale Orchestration** | 🟡 Medium | 2026-03-23 |
 | [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | 2026-03-23 |
 | [TASK-103](./TASK-103_Coverage_Expansion_For_Scene_Workflow_Catalog_Vector_Store_And_RPC.md) | **Coverage Expansion for Scene MCP Area, Workflow Catalog, Lance Store, and RPC Server** | 🟡 Medium | 2026-03-23 |

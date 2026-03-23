@@ -1695,6 +1695,7 @@ enabled_tools = [
 - Docker image builds now include prompt assets and the required telemetry/runtime dependency set for embedding precomputation.
 - `workflow_catalog(import*)` structured contracts now accept the richer import metadata returned by the handler (`saved_path`, overwrite/removal stats, embedding reload flags).
 - `router_set_goal(..., resolved_params={"workflow_confirmation": ...})` now consumes valid workflow confirmations instead of looping back to the same clarification state.
+- medium-confidence `workflow_confirmation` now stays model-facing: the outer LLM answers it via follow-up `router_set_goal(...)` instead of native human elicitation prompting the operator directly.
 
 <details>
 <summary><strong>Viewport Output Modes &amp; Temp Directory Mapping</strong></summary>

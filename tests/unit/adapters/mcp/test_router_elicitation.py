@@ -82,6 +82,33 @@ def test_maybe_elicit_router_answers_decline_keeps_fallback_payload(monkeypatch)
     assert "clarification" in result
 
 
+def test_maybe_elicit_router_answers_skips_native_elicitation_for_workflow_confirmation(monkeypatch):
+    """workflow_confirmation should stay model-facing instead of prompting the human directly."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    initial = {
+        "status": "needs_input",
+        "workflow": "chair_workflow",
+        "unresolved": [
+            {
+                "param": "workflow_confirmation",
+                "type": "string",
+                "description": "Confirm workflow",
+                "enum": ["chair_workflow"],
+                "default": "chair_workflow",
+            }
+        ],
+    }
+    ctx = FakeContext(response=AcceptedElicitation(data=None))
+
+    result = __import__("asyncio").run(router_area._maybe_elicit_router_answers(ctx, "chair", initial))
+
+    assert result is initial
+    assert ctx.calls == []
+    assert "elicitation_action" not in result
+
+
 def test_router_set_goal_cancel_persists_pending_elicitation_state(monkeypatch):
     """Cancelled elicitation should keep pending state for the next request."""
 
@@ -227,3 +254,51 @@ def test_router_set_goal_accepts_explicit_workflow_confirmation(monkeypatch):
     )
 
     assert result.status == "ready"
+
+
+def test_router_set_goal_workflow_confirmation_stays_model_facing_on_llm_guided(monkeypatch):
+    """Medium-confidence workflow confirmation should not trigger native human elicitation."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            if resolved_params and resolved_params.get("workflow_confirmation") == "chair_workflow":
+                return {
+                    "status": "ready",
+                    "workflow": "chair_workflow",
+                    "resolved": {},
+                    "unresolved": [],
+                    "resolution_sources": {},
+                    "message": "ok",
+                    "executed": 0,
+                }
+            return {
+                "status": "needs_input",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [
+                    {
+                        "param": "workflow_confirmation",
+                        "type": "string",
+                        "description": "Confirm workflow",
+                        "enum": ["chair_workflow"],
+                        "default": "chair_workflow",
+                    }
+                ],
+                "resolution_sources": {},
+                "message": "confirm workflow",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+
+    ctx = FakeContext(response=AcceptedElicitation(data=None))
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
+
+    assert result.status == "needs_input"
+    assert result.elicitation_action is None
+    assert result.clarification is not None
+    assert ctx.calls == []
