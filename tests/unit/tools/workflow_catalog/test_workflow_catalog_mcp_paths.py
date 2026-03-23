@@ -106,6 +106,37 @@ def test_workflow_catalog_get_returns_steps_count(monkeypatch):
     assert result.steps_count == 15
 
 
+def test_workflow_catalog_import_append_accepts_chunk_progress_metadata(monkeypatch):
+    class Handler:
+        def append_import_chunk(self, **kwargs):
+            return {
+                "status": "receiving",
+                "session_id": kwargs["session_id"],
+                "received_chunks": 1,
+                "total_chunks": kwargs["total_chunks"],
+                "bytes_received": len(kwargs["chunk_data"]),
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    result = asyncio.run(
+        workflow_catalog(
+            DummyContext(),
+            action="import_append",
+            session_id="sess-1",
+            chunk_data="abc",
+            chunk_index=0,
+            total_chunks=3,
+        )
+    )
+
+    assert result.status == "receiving"
+    assert result.session_id == "sess-1"
+    assert result.received_chunks == 1
+    assert result.total_chunks == 3
+    assert result.bytes_received == 3
+
+
 def test_workflow_catalog_background_finalize_uses_local_background_operation(monkeypatch):
     class Handler:
         def finalize_import_session(self, **kwargs):

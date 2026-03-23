@@ -58,6 +58,38 @@ def test_execution_report_can_carry_audit_events():
     assert report.verification_status == "not_requested"
 
 
+def test_correction_audit_contract_accepts_nested_dict_payload():
+    """Contract validation should accept the nested payload shape emitted to MCP clients."""
+
+    event = CorrectionAuditEventContract(
+        event_id="audit_7",
+        decision="ask",
+        reason="mode correction required",
+        confidence={"score": 0.72, "band": "medium"},
+        intent={
+            "original_tool_name": "mesh_extrude_region",
+            "original_params": {"move": [0, 0, 1]},
+            "corrected_tool_name": "system_set_mode",
+            "corrected_params": {"mode": "EDIT"},
+            "category": "precondition_mode",
+        },
+        execution={
+            "tool_name": "system_set_mode",
+            "params": {"mode": "EDIT"},
+            "result": {"mode": "EDIT"},
+            "error": None,
+        },
+        verification={
+            "status": "passed",
+            "details": {"mode": "EDIT"},
+        },
+    )
+
+    assert event.intent.corrected_tool_name == "system_set_mode"
+    assert event.execution.result == {"mode": "EDIT"}
+    assert event.verification.status == "passed"
+
+
 def test_postcondition_verification_passes_for_mode_correction(monkeypatch):
     """High-risk mode corrections should verify against scene truth."""
 

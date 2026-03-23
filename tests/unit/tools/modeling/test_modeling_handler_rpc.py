@@ -42,6 +42,38 @@ class TestModelingHandlerRpcContracts(unittest.TestCase):
             ("modeling.transform_object", {"name": "House_Walls", "scale": [3, 2, 1.5]}),
         )
 
+    def test_get_modifiers_accepts_list_of_dicts_payload(self):
+        rpc = DummyRpc(
+            {
+                "modeling.get_modifiers": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result=[{"name": "Bevel", "type": "BEVEL"}],
+                )
+            }
+        )
+        handler = ModelingToolHandler(rpc)
+
+        result = handler.get_modifiers("House_Walls")
+
+        self.assertEqual(result, [{"name": "Bevel", "type": "BEVEL"}])
+        self.assertEqual(rpc.calls[0], ("modeling.get_modifiers", {"name": "House_Walls"}))
+
+    def test_get_modifiers_rejects_non_dict_items(self):
+        rpc = DummyRpc(
+            {
+                "modeling.get_modifiers": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result=["Bevel"],
+                )
+            }
+        )
+        handler = ModelingToolHandler(rpc)
+
+        with self.assertRaisesRegex(RuntimeError, "Expected a list of objects in RPC result"):
+            handler.get_modifiers("House_Walls")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,7 +4,7 @@
 **Category:** Testing / Coverage Hardening  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-089, TASK-093, TASK-101, TASK-103, TASK-105, TASK-106, TASK-107  
-**Status:** ⬜ To Do
+**Status:** 🚧 In Progress
 
 ---
 
@@ -42,6 +42,15 @@ Turn the remaining high-risk test gaps into explicit regression matrices so the 
 - handler/addon result mismatches before runtime failures
 - area-wrapper regressions before they leak into public MCP behavior
 - surface-profile visibility/listing regressions before they change discovery UX
+
+## Progress Update
+
+The first implementation batch is now in place:
+
+- direct unit coverage for `_rpc_utils.py`
+- representative server-side RPC alignment tests for `scene`, `collection`, `material`, and `uv` handlers
+- additional MCP area main-path tests for `armature`, `baking`, `curve`, `lattice`, `sculpt`, `text`, and `uv`
+- regression coverage for workflow-catalog chunk-progress payloads, correction-audit nested contract payloads, and phase-shaped search results
 
 ---
 

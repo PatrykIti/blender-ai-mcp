@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 12 tasks (~225 sub-tasks)
-- **In Progress:** 1 tasks
+- **To Do:** 11 tasks (~225 sub-tasks)
+- **In Progress:** 2 tasks
 - **Done:** 164
 
 ## 🧭 Terminology Guardrails
@@ -22,7 +22,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | Cross-cutting regression wave for contract parity, MCP wrappers, handler RPC narrowing, and shaped surface behavior |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -58,6 +57,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
+| [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md) | **Coverage Expansion for Contracts, MCP Areas, RPC Alignment, and Surface Runtime** | 🟡 Medium | Initial batch landed for `_rpc_utils`, representative handler RPC alignment, missing MCP area main paths, and phase-shaped search regressions |
 
 ---
 

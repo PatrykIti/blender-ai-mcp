@@ -138,6 +138,27 @@ def test_build_phase_search_uses_public_alias_names_for_discovered_tools():
     assert all(tool["name"] != "scene_inspect" for tool in payload)
 
 
+def test_phase_search_results_follow_visibility_profile_changes():
+    """Search results should swap build-only and inspect-only capabilities by session phase."""
+
+    build_server = _build_phase_search_server(SessionPhase.BUILD)
+    inspect_server = _build_phase_search_server(SessionPhase.INSPECT_VALIDATE)
+
+    async def run():
+        build_result = await build_server.call_tool("search_tools", {"query": "create cube primitive light camera"})
+        inspect_result = await inspect_server.call_tool("search_tools", {"query": "create cube primitive light camera"})
+        return _decode_tool_result(build_result), _decode_tool_result(inspect_result)
+
+    build_payload, inspect_payload = asyncio.run(run())
+    build_names = {tool["name"] for tool in build_payload}
+    inspect_names = {tool["name"] for tool in inspect_payload}
+
+    assert "modeling_create_primitive" in build_names
+    assert "bake_ao" not in build_names
+    assert "bake_ao" in inspect_names
+    assert "modeling_create_primitive" not in inspect_names
+
+
 def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     """call_tool should execute the same public alias path as a direct surface call."""
 
