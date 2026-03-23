@@ -4,9 +4,9 @@
 **Category:** FastMCP Platform  
 **Estimated Effort:** Large  
 **Dependencies:** None  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Current Baseline Summary:** The platform baseline is implemented: area modules no longer register through the global singleton, the runtime composes surfaces through providers/factory/manifest, the transform scaffold exists, the session/execution bridge exists, and the TASK-083 regression harness is green. This umbrella remains open because some nested validation/docs deliverables are intentionally not literal `done` yet, and some full-scope checks only become meaningful once downstream tasks such as TASK-084, TASK-087, TASK-088, TASK-089, TASK-090, TASK-091, and TASK-095 populate the currently-placeholder platform stages.
+**Completion Summary:** The platform baseline is fully closed: runtime composition is provider/factory/manifest based, the deterministic transform scaffold is populated and regression-covered, the session/execution bridge is validated against downstream interaction tasks, the legacy `instance.py` decorator shim has been removed, and platform docs now describe the no-shim FastMCP 3.x baseline directly.
 
 ---
 
@@ -145,12 +145,12 @@ That requires a server base that can present different capabilities in different
 - session/execution bridge primitives are implemented
 - the TASK-083 platform regression suite is green
 
-### What Is Intentionally Still Open
+### Closure Evidence
 
-- deeper tests/docs slices that asked for metric capture or broader evidence tables, not just green code
-- transform-stage interaction checks that only become meaningful once discovery/version/prompt stages are populated by later tasks
-- richer context/elicitation/task-mode validation that depends on TASK-087, TASK-088, and TASK-093
-- cleanup removal of the temporary legacy decorator shim once external compatibility is no longer needed
+- downstream tasks that originally blocked fuller validation are now complete: `TASK-084`, `TASK-087`, `TASK-088`, `TASK-089`, `TASK-090`, `TASK-091`, `TASK-093`, and `TASK-095`
+- transform-stage interaction checks now exist against real versioning, prompt bridge, visibility, and discovery stages
+- interaction-heavy bridge validation is now exercised through elicitation, task mode, diagnostics, and structured delivery paths
+- the legacy decorator shim has been removed from runtime and source tree
 
 ---
 

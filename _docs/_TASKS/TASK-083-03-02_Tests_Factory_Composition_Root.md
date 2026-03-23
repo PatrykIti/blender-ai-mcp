@@ -1,7 +1,7 @@
 # TASK-083-03-02: Tests and Docs Server Factory and Composition Root
 
 **Parent:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-03-01](./TASK-083-03-01_Core_Factory_Composition_Root.md)
 
@@ -15,7 +15,7 @@ Add tests and documentation updates for **Server Factory and Composition Root**.
 
 Factory/bootstrap regression tests exist and pass for default and alternate profiles, invalid profile failure, and no-side-effect startup.
 
-This slice remains open because the docs/metrics part is not being treated as fully closed yet, and the legacy decorator shim still exists as a temporary compatibility layer rather than being fully removed.
+This slice is now closed. Factory/bootstrap regression scenarios, docs coverage, and no-shim validation are all present.
 
 ---
 

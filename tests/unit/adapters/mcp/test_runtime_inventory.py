@@ -92,6 +92,7 @@ def test_runtime_inventory_documents_required_coupling_points():
 
     coupling_files = {coupling.file_path for coupling in MCP_RUNTIME_COUPLINGS}
 
+    assert not (REPO_ROOT / "server" / "adapters" / "mcp" / "instance.py").exists()
     assert {
         "pyproject.toml",
         "server/adapters/mcp/router_helper.py",

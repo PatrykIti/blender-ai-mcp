@@ -15,7 +15,6 @@ Use this document together with `server/adapters/mcp/platform/runtime_inventory.
 | Location | State after migration | Follow-up |
 |---|---|---|
 | `pyproject.toml` | Explicit Python/FastMCP baseline for the migration series | `TASK-084` / `TASK-094` still require moving the active runtime line to `>=3.1,<4.0` |
-| `server/adapters/mcp/instance.py` | Legacy decorator shim only; not part of runtime composition | none in `TASK-083`; future cleanup can delete the shim when no external compatibility need remains |
 | `server/adapters/mcp/server.py` | Startup delegates to `build_server(surface_profile=...)` | none in `TASK-083` |
 | `server/adapters/mcp/areas/__init__.py` | Explicit registrar exports only; no side-effect bootstrap imports | none in `TASK-083` |
 | `server/adapters/mcp/areas/*.py` | Plain tool callables plus `register_*_tools(...)` seams; no global singleton registration | none in `TASK-083` |
@@ -24,12 +23,12 @@ Use this document together with `server/adapters/mcp/platform/runtime_inventory.
 | `server/router/adapters/mcp_integration.py` | Composed-surface baseline works, but structured execution/report alignment continues | `TASK-089` |
 | `server/router/infrastructure/metadata_loader.py` | Metadata coverage gaps remain explicit and audited | `TASK-084`, `TASK-086` |
 
-## Remaining Gaps After TASK-083
+## Post-TASK-083 Follow-Through
 
-| Gap | Current state | Why it matters |
+| Item | Current state | Why it matters |
 |---|---|---|
-| Metadata loader gap | `MetadataLoader.AREAS` omits `armature`, `extraction`, and `text` despite metadata directories existing on disk | Router metadata and MCP exposure are already out of sync |
-| Router execution ownership gap | Router-aware execution still routes through adapter helper code instead of a platform-owned execution layer | Needed for later policy/audit hardening without bypass seams |
+| Decorator shim removal | Completed; runtime composition no longer depends on `server/adapters/mcp/instance.py` | Confirms the migration no longer keeps a transitional singleton/decorator seam alive |
+| Router execution ownership coupling | Router-aware execution still routes through adapter helper code instead of a platform-owned execution layer | Still worth documenting, but no longer blocks the TASK-083 baseline closure |
 
 ## Source Of Truth
 

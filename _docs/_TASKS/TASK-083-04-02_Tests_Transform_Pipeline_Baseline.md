@@ -1,7 +1,7 @@
 # TASK-083-04-02: Tests and Docs Transform Pipeline Baseline
 
 **Parent:** [TASK-083-04](./TASK-083-04_Transform_Pipeline_Baseline.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-04-01](./TASK-083-04-01_Core_Transform_Pipeline_Baseline.md)
 
@@ -15,7 +15,7 @@ Add tests and documentation updates for **Transform Pipeline Baseline**.
 
 The deterministic transform order is implemented and tested at the scaffold level.
 
-This slice remains open because several fuller scenarios listed below only make sense after downstream tasks populate the currently-placeholder versioning, prompt bridge, discovery, and richer visibility stages.
+This slice is now closed. The fuller scenarios now exist against real versioning, prompt bridge, discovery, and visibility stages.
 
 ---
 

@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 12 tasks (~220 sub-tasks)
-- **In Progress:** 2 tasks
-- **Done:** 158
+- **In Progress:** 1 tasks
+- **Done:** 159
 
 ## 🧭 Terminology Guardrails
 
@@ -57,7 +57,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | Platform baseline is implemented and green; task stays open for deferred validation/docs slices and compatibility cleanup |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---
@@ -66,6 +65,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md) | **FastMCP 3.x Platform Migration** | 🔴 High | 2026-03-23 |
 | [TASK-103](./TASK-103_Coverage_Expansion_For_Scene_Workflow_Catalog_Vector_Store_And_RPC.md) | **Coverage Expansion for Scene MCP Area, Workflow Catalog, Lance Store, and RPC Server** | 🟡 Medium | 2026-03-23 |
 | [TASK-102](./TASK-102_Coverage_Expansion_For_Extraction_System_And_Scripts.md) | **Coverage Expansion for Extraction Handler, System MCP Area, and Tooling Scripts** | 🟡 Medium | 2026-03-23 |
 | [TASK-101](./TASK-101_Coverage_Expansion_For_Tooling_And_MCP_Areas.md) | **Coverage Expansion for Tooling Scripts, Addon Bootstrap, and MCP Areas** | 🟡 Medium | 2026-03-23 |

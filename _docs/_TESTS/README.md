@@ -144,6 +144,12 @@ Primary local validation commands for TASK-095 semantic boundary hardening:
 poetry run pytest tests/unit/router/infrastructure/test_semantic_boundary_audit.py tests/unit/router/infrastructure/test_semantic_boundary_telemetry.py tests/unit/router/application/test_correction_audit.py tests/unit/router/application/resolver/test_parameter_resolver.py tests/unit/router/application/matcher/test_semantic_workflow_matcher.py tests/unit/router/application/matcher/test_ensemble_aggregator.py -q
 ```
 
+Primary local validation commands for TASK-083 platform closure:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_platform_migration_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_runtime_inventory.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_surface_bootstrap.py tests/unit/adapters/mcp/test_surface_inventory.py tests/unit/adapters/mcp/test_surface_compatibility.py tests/unit/adapters/mcp/test_transform_pipeline.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/adapters/test_mcp_integration.py -q
+```
+
 Primary local validation commands for TASK-092 sampling assistants:
 
 ```bash

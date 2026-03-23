@@ -1,7 +1,7 @@
 # TASK-083-02-02: Tests and Docs Provider-Based Component Inventory
 
 **Parent:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-02-01](./TASK-083-02-01_Core_Provider_Component_Inventory.md)
 
@@ -15,7 +15,7 @@ Add tests and documentation updates for **Provider-Based Component Inventory**.
 
 Baseline provider inventory tests exist and pass, including registrar/provider coverage and a guard that area modules no longer depend on the global singleton decorator path.
 
-This slice remains open because it still overhangs on explicit evidence/metrics-style documentation rather than raw code correctness alone, and because final removal of the temporary compatibility shim is intentionally deferred.
+This slice is now closed. The provider inventory regression/docs baseline is in place and no longer depends on a deferred compatibility shim removal.
 
 ---
 

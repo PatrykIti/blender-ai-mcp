@@ -1,7 +1,7 @@
 # TASK-083-02: Provider-Based Component Inventory
 
 **Parent:** [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-01](./TASK-083-01_FastMCP_3x_Dependency_and_Runtime_Audit.md)
 
@@ -15,7 +15,7 @@ Replace the current flat registration mindset with reusable registration seams a
 
 The core provider-based migration is implemented in code: area modules expose `register_*_tools(...)`, reusable provider builders exist, and the in-repo runtime no longer depends on `server.adapters.mcp.instance.mcp`.
 
-This task remains open because the tests/docs slice is not being treated as literally closed yet, and the temporary compatibility shim in `instance.py` is still present until it can be removed safely.
+This task is now closed. Provider-based registration is the runtime source of truth, the tests/docs slice is in place, and the old `instance.py` compatibility shim is gone.
 
 ---
 

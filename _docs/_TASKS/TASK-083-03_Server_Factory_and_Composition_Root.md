@@ -1,7 +1,7 @@
 # TASK-083-03: Server Factory and Composition Root
 
 **Parent:** [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-02](./TASK-083-02_Provider_Based_Component_Inventory.md)
 
@@ -15,7 +15,7 @@ Replace the singleton `mcp = FastMCP("blender-ai-mcp")` model with an explicit c
 
 The composition root is implemented in code: server startup uses `build_server(surface_profile=...)`, surface profiles are explicit, and the platform manifest scaffold is wired into the factory/bootstrap path.
 
-This task remains open because the compatibility shim in `instance.py` still exists as a temporary external-safety layer, and the tests/docs slice is not being treated as fully closed yet.
+This task is now closed. The composition root is the runtime source of truth, the related tests/docs slice is complete, and the legacy `instance.py` shim has been removed.
 
 ---
 
@@ -123,7 +123,7 @@ def build_server(surface_config, di) -> FastMCP:
 2. Define the initial profile matrix and default `LocalProvider` sets.
 3. Move startup configuration into one settings object.
 4. Introduce the minimal platform manifest scaffold so later discovery and public-surface work extend one shared source of truth.
-5. Keep a compatibility shim for `instance.py` only until all areas stop depending on the global singleton.
+5. Remove any transitional `instance.py` shim once all areas stop depending on the global singleton.
 6. Add profile bootstrap tests before adding any new transform behavior.
 
 ---

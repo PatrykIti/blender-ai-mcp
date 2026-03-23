@@ -1,7 +1,7 @@
 # TASK-083-04: Transform Pipeline Baseline
 
 **Parent:** [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 
@@ -15,7 +15,7 @@ Introduce a base transform pipeline that becomes the canonical place for naming,
 
 The deterministic transform scaffold is implemented and wired into server composition. The baseline order is enforced in code and covered by tests.
 
-This task remains open because several checks described in the tests/docs slice only become meaningful when later tasks populate currently-placeholder stages such as discovery, prompt bridge, version filtering, and fuller visibility interactions.
+This task is now closed. Later platform tasks have populated discovery, prompt bridge, versioning, and richer visibility interactions, so the transform-pipeline validation is no longer scaffold-only.
 
 ---
 

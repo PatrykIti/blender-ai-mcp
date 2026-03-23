@@ -30,7 +30,7 @@ Current provider groups:
   - reserved for internal/helper-only platform capabilities
 
 Area modules now expose `register_*_tools(target)` seams so the same tool definitions can be mounted on a `FastMCP` server or a `LocalProvider`.
-The legacy `server/adapters/mcp/instance.py` module is now only a decorator shim and is no longer part of runtime composition.
+The old `server/adapters/mcp/instance.py` decorator shim has been removed; runtime composition is now factory/provider based only.
 
 ## Surface Profiles
 
@@ -105,3 +105,9 @@ poetry run pytest \
   tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py \
   tests/unit/router/adapters/test_mcp_integration.py -q
 ```
+
+Latest closure validation:
+
+- command above passes on the current baseline
+- latest local result: `88 passed`
+- closure expectation met: `100%` pass rate with `0` side-effect bootstrap paths and `0` global-singleton area imports

@@ -1,7 +1,7 @@
 # TASK-083-05: Context, Session, and Execution Bridge
 
 **Parent:** [TASK-083](./TASK-083_FastMCP_3x_Platform_Migration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** [TASK-083-03](./TASK-083-03_Server_Factory_and_Composition_Root.md)
 
@@ -15,7 +15,7 @@ Normalize how adapter tools use `Context`, session state, and execution metadata
 
 The baseline bridge primitives are implemented: session helpers, execution context, execution report, and sync-compatible context utilities all exist and are covered by tests.
 
-This task remains open because broader interaction coverage for elicitation, task mode, and richer operational behavior depends on downstream work in TASK-087, TASK-088, and TASK-093.
+This task is now closed. The downstream interaction tasks that originally blocked broader validation are complete, and the bridge now has real elicitation, task-mode, and diagnostics coverage.
 
 ---
 
