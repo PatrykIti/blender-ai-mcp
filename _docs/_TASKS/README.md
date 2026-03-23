@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 11 tasks (~225 sub-tasks)
+- **To Do:** 12 tasks (~230 sub-tasks)
 - **In Progress:** 1 tasks
 - **Done:** 165
 
@@ -38,6 +38,11 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+
+### Programmatic Sculpting
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | Deterministic sculpt-like tools for LLM clients; keep `sculpt_brush_*` as compatibility/manual setup tools |
 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
