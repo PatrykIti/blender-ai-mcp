@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [130](./130-2026-03-23-coverage-expansion-tooling-and-mcp-areas.md) | 2026-03-23 | **Coverage expansion for tooling scripts, addon bootstrap, and MCP areas** | - |
 | [129](./129-2026-03-22-router-metadata-schema-alignment.md) | 2026-03-22 | **Router metadata schema alignment for full pre-commit validation** | - |
 | [128](./128-2026-03-22-mypy-baseline-and-precommit-typing.md) | 2026-03-22 | **Full-repo mypy baseline and pre-commit typing hook** | - |
 | [127](./127-2026-03-22-fastmcp-3x-test-alignment.md) | 2026-03-22 | **FastMCP 3.x test alignment after MCP server migration** | - |

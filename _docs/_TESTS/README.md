@@ -38,8 +38,12 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 905+ | ~5-6 seconds |
+| Unit Tests | 2389 | ~28 seconds |
 | E2E Tests | 142 | ~12 seconds |
+
+Current repo-wide unit coverage (`server + blender_addon + scripts`):
+
+- `72%`
 
 ## Test Coverage by Area
 
