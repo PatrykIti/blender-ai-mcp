@@ -1,7 +1,7 @@
 # TASK-108-02: Main Action Path Coverage for MCP Areas
 
 **Parent:** [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md)  
-**Status:** ⬜ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** TASK-101, TASK-103
 
@@ -50,3 +50,16 @@ Add a deliberate main-path regression test for every MCP area module so the publ
 - mega-tool areas cover action dispatch, not only registration/import behavior
 - areas returning structured payloads keep deterministic dict/model outputs under test
 - user-facing error or validation paths are covered wherever wrapper logic exists
+
+## Completion Summary
+
+The MCP area regression matrix now covers all public area modules with at least one main-path behavior test, including the previously missing:
+
+- `modeling`
+- `armature`
+- `baking`
+- `curve`
+- `lattice`
+- `sculpt`
+- `text`
+- `uv`

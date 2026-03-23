@@ -90,6 +90,31 @@ def test_lattice_create_parses_string_location_and_delegates(monkeypatch):
     assert calls["kwargs"]["points_w"] == 4
 
 
+def test_modeling_create_primitive_parses_string_vectors_and_delegates(monkeypatch):
+    calls = {}
+
+    class Handler:
+        def create_primitive(self, primitive_type, radius, size, location, rotation, name):
+            calls["args"] = (primitive_type, radius, size, location, rotation, name)
+            return "Created Cube named 'Block'"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.route_tool_call", _direct_route)
+
+    from server.adapters.mcp.areas.modeling import modeling_create_primitive
+
+    result = modeling_create_primitive(
+        MagicMock(),
+        primitive_type="Cube",
+        location="[1, 2, 3]",
+        rotation="[0, 0, 1.57]",
+        name="Block",
+    )
+
+    assert result == "Created Cube named 'Block'"
+    assert calls["args"] == ("Cube", 1.0, 2.0, [1.0, 2.0, 3.0], [0.0, 0.0, 1.57], "Block")
+
+
 def test_sculpt_auto_main_path_delegates_to_handler(monkeypatch):
     calls = {}
 

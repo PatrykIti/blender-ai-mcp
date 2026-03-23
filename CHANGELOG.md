@@ -2,6 +2,12 @@
 
 <!-- version list -->
 
+## Unreleased
+
+### Testing
+
+- Expand regression coverage for MCP contracts, MCP area main paths, server-side RPC result alignment, and FastMCP surface runtime behavior
+
 ## v2.2.0 (2026-03-20)
 
 ### Features

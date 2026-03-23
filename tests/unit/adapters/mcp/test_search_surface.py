@@ -70,6 +70,36 @@ def _build_phase_search_server(phase: SessionPhase) -> FastMCP:
     return cast(FastMCP, server)
 
 
+def _build_phase_visible_server(phase: SessionPhase) -> FastMCP:
+    surface = replace(get_surface_profile("llm-guided"), search_enabled=False)
+    base_pipeline = build_surface_transform_pipeline(surface)
+    transforms = []
+    for stage in base_pipeline:
+        if stage.name == "visibility":
+            transforms.extend(create_visibility_transforms(build_visibility_rules(surface.name, phase)))
+            continue
+        if stage.name == "discovery":
+            continue
+        transform = stage.transform
+        if transform is None:
+            continue
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        else:
+            transforms.append(transform)
+
+    server: Any = FastMCP(
+        surface.server_name,
+        providers=build_surface_providers(surface),
+        transforms=transforms,
+        list_page_size=surface.list_page_size,
+        tasks=surface.tasks_enabled,
+        instructions=surface.instructions,
+    )
+    server._bam_surface_profile = surface.name
+    return cast(FastMCP, server)
+
+
 def _decode_tool_result(result):
     structured = getattr(result, "structured_content", None)
     if structured is not None:
@@ -157,6 +187,27 @@ def test_phase_search_results_follow_visibility_profile_changes():
     assert "bake_ao" not in build_names
     assert "bake_ao" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
+
+
+def test_phase_shaped_list_tools_follow_visibility_without_discovery():
+    """Visibility policy should affect the actual listed tools even without discovery collapse."""
+
+    build_server = _build_phase_visible_server(SessionPhase.BUILD)
+    inspect_server = _build_phase_visible_server(SessionPhase.INSPECT_VALIDATE)
+
+    async def run():
+        build_names = {tool.name for tool in await build_server.list_tools()}
+        inspect_names = {tool.name for tool in await inspect_server.list_tools()}
+        return build_names, inspect_names
+
+    build_names, inspect_names = asyncio.run(run())
+
+    assert "modeling_create_primitive" in build_names
+    assert "bake_ao" not in build_names
+    assert "bake_ao" in inspect_names
+    assert "modeling_create_primitive" not in inspect_names
+    assert "inspect_scene" in build_names
+    assert "inspect_scene" in inspect_names
 
 
 def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):

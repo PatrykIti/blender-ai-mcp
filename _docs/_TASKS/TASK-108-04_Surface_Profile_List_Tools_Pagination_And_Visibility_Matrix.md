@@ -1,7 +1,7 @@
 # TASK-108-04: Surface Profile, List Tools, Pagination, and Visibility Matrix
 
 **Parent:** [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md)  
-**Status:** ⬜ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Depends On:** TASK-083, TASK-093, TASK-105
 
@@ -45,3 +45,12 @@ Expand runtime-facing FastMCP tests so profile shaping, `list_tools`, component 
 - `legacy-flat` keeps its compatibility-first listing behavior while shaped surfaces keep constrained exposure
 - visibility diagnostics, applied session visibility, and actual `list_tools` output stay consistent
 - pagination regressions on the first page or cursor emission are caught by targeted unit tests
+
+## Completion Summary
+
+Expanded the runtime matrix with regression checks for:
+
+- phased `search_tools` results on `llm-guided`
+- phased `list_tools` results after applying visibility without discovery collapse
+- `legacy-flat` first-page no-cursor compatibility behavior
+- `internal-debug` first-page cursor-preserving pagination behavior

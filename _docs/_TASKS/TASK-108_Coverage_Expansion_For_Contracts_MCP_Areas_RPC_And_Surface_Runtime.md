@@ -4,7 +4,7 @@
 **Category:** Testing / Coverage Hardening  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-089, TASK-093, TASK-101, TASK-103, TASK-105, TASK-106, TASK-107  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
 ---
 
@@ -43,14 +43,16 @@ Turn the remaining high-risk test gaps into explicit regression matrices so the 
 - area-wrapper regressions before they leak into public MCP behavior
 - surface-profile visibility/listing regressions before they change discovery UX
 
-## Progress Update
+## Completion Summary
 
-The first implementation batch is now in place:
+This coverage wave is now closed.
 
-- direct unit coverage for `_rpc_utils.py`
-- representative server-side RPC alignment tests for `scene`, `collection`, `material`, and `uv` handlers
-- additional MCP area main-path tests for `armature`, `baking`, `curve`, `lattice`, `sculpt`, `text`, and `uv`
-- regression coverage for workflow-catalog chunk-progress payloads, correction-audit nested contract payloads, and phase-shaped search results
+Delivered test coverage includes:
+
+- contract payload parity for `scene`, `mesh`, `router`, `workflow_catalog`, and `correction_audit`
+- main public action-path tests across all MCP area modules, including previously missing `modeling`, `armature`, `baking`, `curve`, `lattice`, `sculpt`, `text`, and `uv`
+- direct `_rpc_utils.py` regression coverage plus representative server-side handler narrowing for `scene`, `collection`, `material`, `uv`, and `modeling`
+- runtime matrix checks for `legacy-flat`, `internal-debug`, and phased `llm-guided` surfaces covering `list_tools`, `search_tools`, visibility shaping, and first-page cursor behavior
 
 ---
 
@@ -90,6 +92,18 @@ This task does not cover:
 - every MCP area module has at least one main-path regression test on its public surface
 - RPC result helper expectations are explicitly covered for representative handlers
 - surface profiles keep their expected listing, visibility, and pagination behavior under unit-test coverage
+
+## Validation
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_contract_base.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_pagination_policy.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/router/application/test_router_contracts.py tests/unit/router/application/test_correction_audit.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/mesh/test_mesh_contracts.py tests/unit/tools/workflow_catalog/test_workflow_catalog_mcp_paths.py tests/unit/tools/workflow_catalog/test_workflow_catalog_assistants.py tests/unit/tools/collection/test_collection_mcp_tools.py tests/unit/tools/material/test_material_mcp_tools.py tests/unit/tools/extraction/test_extraction_mcp_tools.py tests/unit/tools/system/test_system_mcp_tools.py tests/unit/tools/modeling/test_modeling_handler_rpc.py tests/unit/tools/test_rpc_utils.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/test_mcp_area_main_paths.py -q
+poetry run ruff check tests/unit/adapters/mcp/test_contract_payload_parity.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/router/application/test_correction_audit.py tests/unit/tools/modeling/test_modeling_handler_rpc.py tests/unit/tools/workflow_catalog/test_workflow_catalog_mcp_paths.py tests/unit/tools/test_rpc_utils.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/tools/test_mcp_area_main_paths.py
+```
+
+Result:
+
+- targeted regression suite: `152 passed`
+- targeted lint checks: `All checks passed`
 
 ---
 

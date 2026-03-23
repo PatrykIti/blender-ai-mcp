@@ -1,7 +1,7 @@
 # TASK-108-01: Contract Payload Parity Across MCP Contracts
 
 **Parent:** [TASK-108](./TASK-108_Coverage_Expansion_For_Contracts_MCP_Areas_RPC_And_Surface_Runtime.md)  
-**Status:** ⬜ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** TASK-089, TASK-107
 
@@ -43,3 +43,15 @@ Prove that every structured MCP contract still accepts the payload shapes actual
 - contract validation covers both structured-first and compatibility-sensitive paths where the surface supports both
 - known drift-prone top-level fields such as pagination and summary metadata are pinned by tests
 - contract failures remain explicit and localized to the violated field set
+
+## Completion Summary
+
+Added an explicit parity matrix for representative payloads across:
+
+- `scene`
+- `mesh`
+- `router`
+- `workflow_catalog`
+- `correction_audit`
+
+The contract suite now validates both direct construction paths and MCP-returned response envelopes for the current structured surface.
