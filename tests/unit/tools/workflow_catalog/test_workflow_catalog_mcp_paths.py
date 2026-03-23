@@ -83,6 +83,29 @@ def test_workflow_catalog_parameter_validation_paths(monkeypatch):
     assert abort_result.session_id == "sess-1"
 
 
+def test_workflow_catalog_get_returns_steps_count(monkeypatch):
+    class Handler:
+        def get_workflow(self, workflow_name):
+            return {
+                "workflow_name": workflow_name,
+                "steps_count": 15,
+                "workflow": {"name": workflow_name, "steps": []},
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    result = asyncio.run(
+        workflow_catalog(
+            DummyContext(),
+            action="get",
+            workflow_name="simple_house_workflow",
+        )
+    )
+
+    assert result.workflow_name == "simple_house_workflow"
+    assert result.steps_count == 15
+
+
 def test_workflow_catalog_background_finalize_uses_local_background_operation(monkeypatch):
     class Handler:
         def finalize_import_session(self, **kwargs):

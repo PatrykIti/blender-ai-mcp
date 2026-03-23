@@ -25,6 +25,7 @@ class WorkflowCatalogResponseContract(MCPContract):
     workflows_dir: str | None = None
     workflows: list[dict[str, Any]] | None = None
     workflow_name: str | None = None
+    steps_count: int | None = None
     workflow: dict[str, Any] | None = None
     results: list[dict[str, Any]] | None = None
     query: str | None = None

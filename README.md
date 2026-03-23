@@ -1701,6 +1701,7 @@ enabled_tools = [
 - Blender addon ZIP installation now uses package-relative imports consistently, fixing `No module named 'blender_addon'` on enable.
 - Docker image builds now include prompt assets and the required telemetry/runtime dependency set for embedding precomputation.
 - `workflow_catalog(import*)` structured contracts now accept the richer import metadata returned by the handler (`saved_path`, overwrite/removal stats, embedding reload flags).
+- `workflow_catalog(action="get")` now accepts the top-level `steps_count` field returned by the handler instead of failing contract validation.
 - `router_set_goal(..., resolved_params={"workflow_confirmation": ...})` now consumes valid workflow confirmations instead of looping back to the same clarification state.
 - `modeling_transform_object(...)` no longer fails on successful Blender transforms because the server-side handler now accepts the addon’s structured dict payload.
 - medium-confidence `workflow_confirmation` now stays model-facing: the outer LLM answers it via follow-up `router_set_goal(...)` instead of native human elicitation prompting the operator directly.

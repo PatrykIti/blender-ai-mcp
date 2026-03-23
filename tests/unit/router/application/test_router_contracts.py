@@ -146,6 +146,27 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     assert result.has_more is True
 
 
+def test_workflow_catalog_get_accepts_steps_count_metadata(monkeypatch):
+    """workflow_catalog get should accept the top-level steps_count field."""
+
+    class Handler:
+        def get_workflow(self, workflow_name):
+            return {
+                "workflow_name": workflow_name,
+                "steps_count": 15,
+                "workflow": {"name": workflow_name, "steps": []},
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    callable_workflow_catalog = getattr(workflow_catalog, "fn", workflow_catalog)
+    result = asyncio.run(callable_workflow_catalog(DummyContext(), action="get", workflow_name="simple_house_workflow"))
+
+    assert isinstance(result, WorkflowCatalogResponseContract)
+    assert result.workflow_name == "simple_house_workflow"
+    assert result.steps_count == 15
+
+
 def test_workflow_catalog_import_needs_input_can_carry_typed_clarification(monkeypatch):
     """workflow_catalog should accept typed clarification payloads for tool-only fallback flows."""
 
