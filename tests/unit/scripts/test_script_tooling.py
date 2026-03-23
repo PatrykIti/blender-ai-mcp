@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 import types
+import urllib.error
 import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -95,6 +96,91 @@ def test_wait_for_rpc_server_retries_until_ready(monkeypatch):
     assert module.wait_for_rpc_server(timeout=3) is True
 
 
+def test_find_blender_path_uses_custom_and_path_lookup(tmp_path, monkeypatch):
+    module = _load_script("run_e2e_tests")
+
+    custom = tmp_path / "Blender"
+    custom.write_text("")
+    assert module.find_blender_path(str(custom)) == str(custom)
+
+    monkeypatch.setattr(module.sys, "platform", "linux")
+    monkeypatch.setitem(module.BLENDER_PATHS, "linux", "/missing/blender")
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda *args, **kwargs: types.SimpleNamespace(returncode=0, stdout="/usr/local/bin/blender\n"),
+    )
+    assert module.find_blender_path() == "/usr/local/bin/blender"
+
+
+def test_check_install_uninstall_helpers_use_subprocess(monkeypatch):
+    module = _load_script("run_e2e_tests")
+
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        MagicMock(
+            side_effect=[
+                types.SimpleNamespace(stdout="ADDON_STATUS: INSTALLED", stderr=""),
+                types.SimpleNamespace(stdout="UNINSTALL_STATUS: SUCCESS", stderr=""),
+                types.SimpleNamespace(stdout="INSTALL_STATUS: SUCCESS", stderr=""),
+            ]
+        ),
+    )
+
+    assert module.check_addon_installed("/Applications/Blender") is True
+    assert module.uninstall_addon("/Applications/Blender") is True
+    assert module.install_addon("/Applications/Blender") is True
+
+
+def test_run_blender_with_rpc_and_kill_process(monkeypatch):
+    module = _load_script("run_e2e_tests")
+
+    process = MagicMock()
+    process.pid = 123
+    process.wait.return_value = 0
+
+    monkeypatch.setattr(module.subprocess, "Popen", lambda *args, **kwargs: process)
+    monkeypatch.setattr(module, "wait_for_rpc_server", lambda timeout=module.RPC_TIMEOUT: True)
+    monkeypatch.setattr(module.os, "getpgid", lambda pid: pid)
+    kill_calls = []
+    monkeypatch.setattr(module.os, "killpg", lambda pgid, sig: kill_calls.append((pgid, sig)))
+
+    started_process, ready = module.run_blender_with_rpc("/Applications/Blender")
+    assert started_process is process
+    assert ready is True
+
+    module.kill_blender_process(process)
+    assert kill_calls
+
+
+def test_save_test_log_and_main_happy_path(tmp_path, monkeypatch):
+    module = _load_script("run_e2e_tests")
+
+    addon_output = tmp_path / "outputs" / "blender_ai_mcp.zip"
+    addon_output.parent.mkdir(parents=True)
+    addon_output.write_bytes(b"zip")
+    e2e_dir = tmp_path / "tests" / "e2e"
+    e2e_dir.mkdir(parents=True)
+
+    monkeypatch.setattr(module, "ADDON_OUTPUT", addon_output)
+    monkeypatch.setattr(module, "E2E_TESTS_DIR", e2e_dir)
+    monkeypatch.setattr(module, "find_blender_path", lambda _path=None: "/Applications/Blender")
+    monkeypatch.setattr(module, "check_addon_installed", lambda _path: False)
+    monkeypatch.setattr(module, "install_addon", lambda _path: True)
+    monkeypatch.setattr(module, "run_blender_with_rpc", lambda _path: (MagicMock(), True))
+    monkeypatch.setattr(module, "run_e2e_tests", lambda verbose=True: (True, "OK"))
+    monkeypatch.setattr(module, "kill_blender_process", lambda process: None)
+    monkeypatch.setattr(module.sys, "argv", ["run_e2e_tests.py", "--skip-build", "--quiet"])
+
+    result = module.main()
+    assert result == 0
+
+    logs = sorted(e2e_dir.glob("e2e_test_PASSED_*.log"))
+    assert logs
+    assert "Status: PASSED" in logs[0].read_text()
+
+
 def test_run_e2e_tests_verbose_streams_output(monkeypatch):
     module = _load_script("run_e2e_tests")
 
@@ -153,3 +239,55 @@ def test_translate_docs_helpers_cover_local_parsing_paths(tmp_path):
         )
         == "Hello World"
     )
+
+
+def test_translate_docs_openai_translate_handles_success_and_retry(monkeypatch):
+    module = _load_script("translate_docs")
+    cfg = module.OpenAIConfig(api_key="secret", model="gpt-test", api="responses", endpoint="https://example.test")
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"output":[{"content":[{"text":"Translated"}]}]}'
+
+    attempts = {"count": 0}
+
+    def fake_urlopen(req, timeout):
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise urllib.error.URLError("temporary")
+        return FakeResponse()
+
+    monkeypatch.setattr(module.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(module.time, "sleep", lambda _seconds: None)
+
+    assert module.openai_translate(cfg, "tekst") == "Translated\n"
+    assert attempts["count"] == 2
+
+
+def test_translate_docs_main_dry_run_and_output_root(tmp_path, monkeypatch, capsys):
+    module = _load_script("translate_docs")
+
+    root = tmp_path / "_docs"
+    root.mkdir()
+    (root / "pl.md").write_text("To jest stół.\n", encoding="utf-8")
+    (root / "en.md").write_text("This is already English.\n", encoding="utf-8")
+    output_root = tmp_path / "_docs_en"
+
+    dry_run_result = module.main(["--root", str(root), "--dry-run"])
+    assert dry_run_result == 0
+    dry_run_output = capsys.readouterr().out
+    assert "pl.md" in dry_run_output
+
+    monkeypatch.setenv("OPENAI_API_KEY", "secret")
+    monkeypatch.setattr(module, "openai_translate", lambda cfg, source_text: "Translated doc\n")
+
+    result = module.main(["--root", str(root), "--output-root", str(output_root)])
+    assert result == 0
+    assert (output_root / "pl.md").read_text(encoding="utf-8") == "Translated doc\n"
+    assert (output_root / "en.md").read_text(encoding="utf-8") == "This is already English.\n"

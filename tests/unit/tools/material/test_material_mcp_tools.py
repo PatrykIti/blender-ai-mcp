@@ -77,3 +77,88 @@ def test_material_assign_reports_missing_material(monkeypatch):
     result = material_assign(MagicMock(), material_name="Ghost", object_name="Cube")
 
     assert "Use material_list to verify the material name" in result
+
+
+def test_material_set_params_updates_material(monkeypatch):
+    from server.adapters.mcp.areas.material import material_set_params
+
+    handler = MagicMock()
+    handler.set_material_params.return_value = "Updated"
+
+    monkeypatch.setattr("server.adapters.mcp.areas.material.get_material_handler", lambda: handler)
+    monkeypatch.setattr("server.adapters.mcp.areas.material.ctx_info", lambda ctx, message: None)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.material.route_tool_call",
+        lambda **kwargs: kwargs["direct_executor"](),
+    )
+
+    result = material_set_params(MagicMock(), material_name="Hero", metallic=0.9, roughness=0.1)
+
+    handler.set_material_params.assert_called_once_with(
+        material_name="Hero",
+        base_color=None,
+        metallic=0.9,
+        roughness=0.1,
+        emission_color=None,
+        emission_strength=None,
+        alpha=None,
+    )
+    assert result == "Updated"
+
+
+def test_material_set_texture_reports_missing_material(monkeypatch):
+    from server.adapters.mcp.areas.material import material_set_texture
+
+    handler = MagicMock()
+    handler.set_material_texture.side_effect = RuntimeError("Material 'Ghost' not found")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.material.get_material_handler", lambda: handler)
+    monkeypatch.setattr("server.adapters.mcp.areas.material.ctx_info", lambda ctx, message: None)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.material.route_tool_call",
+        lambda **kwargs: kwargs["direct_executor"](),
+    )
+
+    result = material_set_texture(MagicMock(), material_name="Ghost", texture_path="/tmp/tex.png")
+
+    assert "Use material_list to verify the material name" in result
+
+
+def test_material_inspect_nodes_formats_nodes_and_connections(monkeypatch):
+    from server.adapters.mcp.areas.material import material_inspect_nodes
+
+    handler = MagicMock()
+    handler.inspect_nodes.return_value = {
+        "uses_nodes": True,
+        "nodes": [
+            {
+                "name": "Principled BSDF",
+                "type": "BSDF_PRINCIPLED",
+                "inputs": [
+                    {"name": "Base Color", "default_value": [1.0, 0.5, 0.25, 1.0], "is_linked": False},
+                    {"name": "Roughness", "default_value": 0.3, "is_linked": False},
+                ],
+            }
+        ],
+        "connections": [
+            {
+                "from_node": "Image Texture",
+                "from_socket": "Color",
+                "to_node": "Principled BSDF",
+                "to_socket": "Base Color",
+            }
+        ],
+    }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.material.get_material_handler", lambda: handler)
+    monkeypatch.setattr("server.adapters.mcp.areas.material.ctx_info", lambda ctx, message: None)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.material.route_tool_call",
+        lambda **kwargs: kwargs["direct_executor"](),
+    )
+
+    result = material_inspect_nodes(MagicMock(), material_name="Hero")
+
+    assert "Material: Hero" in result
+    assert "Principled BSDF (BSDF_PRINCIPLED)" in result
+    assert "Image Texture.Color" in result
