@@ -280,6 +280,12 @@ Current product semantics:
 - Blender-backed task mode now uses explicit RPC verbs for launch, poll, cancel, and collect
 - workflow import finalization uses the same MCP-side task bookkeeping without requiring addon RPC
 
+Task-capable profile guidance is now included directly in the surface instructions for:
+
+- `llm-guided`
+- `internal-debug`
+- `code-mode-pilot`
+
 ## Correction Audit Exposure Baseline
 
 Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:

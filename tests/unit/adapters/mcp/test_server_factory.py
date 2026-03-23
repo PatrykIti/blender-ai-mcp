@@ -49,12 +49,16 @@ def test_build_server_builds_alternate_surface_profile():
     assert len(debug.providers) > len(guided.providers)
     assert guided._bam_task_runtime_report.tasks_required is True
     assert guided._bam_task_runtime_report.supported is True
+    assert "background tasks" in guided.instructions
+    assert "background tasks" in debug.instructions
     assert code_mode._bam_code_mode_enabled is True
     assert code_mode._bam_code_mode_benchmark_baselines == (
         "legacy-flat",
         "llm-guided",
         "code-mode-pilot",
     )
+    assert "Current entry tools are router_set_goal" in guided.instructions
+    assert "task-capable" in code_mode.instructions
 
 
 def test_factory_bootstrap_no_longer_imports_areas_side_effect_registry():

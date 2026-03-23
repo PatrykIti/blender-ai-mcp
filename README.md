@@ -251,6 +251,12 @@ Current behavior:
 - Blender-backed task mode uses explicit RPC lifecycle verbs for launch, poll, cancel, and result collection
 - workflow import finalization uses the same task bookkeeping on the server side without forcing Blender RPC
 
+Task-capable profile guidance now lives directly in the surface instructions for:
+
+- `llm-guided`
+- `internal-debug`
+- `code-mode-pilot`
+
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
 
 ### Session-Adaptive Guided Mode

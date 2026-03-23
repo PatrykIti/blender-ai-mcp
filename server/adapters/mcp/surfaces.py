@@ -48,6 +48,16 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=50,
         tasks_enabled=True,
+        instructions=(
+            "Guided MCP surface. Start from router_set_goal or router_get_status. "
+            "Current entry tools are router_set_goal, router_get_status, browse_workflows, "
+            "search_tools, call_tool, list_prompts, and get_prompt. "
+            "Other capability families can unlock progressively by session phase. "
+            "Use search_tools/call_tool for discovery on the shaped public surface. "
+            "If you want a manual non-router workflow, load the prompt 'manual_tools_no_router'. "
+            "This surface is task-capable: adopted heavy tools can run as background tasks with progress, "
+            "poll, cancel, and foreground fallback semantics."
+        ),
         delivery_mode="structured_first",
         search_enabled=True,
         default_contract_line=get_default_contract_line("llm-guided"),
@@ -65,6 +75,11 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=100,
         tasks_enabled=True,
+        instructions=(
+            "Internal debug surface. Broad maintainer-oriented access with structured-first delivery. "
+            "This surface is task-capable: adopted heavy tools can run as background tasks with progress, "
+            "poll, cancel, and foreground fallback semantics."
+        ),
         delivery_mode="structured_first",
         default_contract_line=get_default_contract_line("internal-debug"),
         allowed_contract_lines=SURFACE_ALLOWED_CONTRACT_LINES["internal-debug"],
@@ -84,7 +99,8 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         instructions=(
             "Experimental Code Mode pilot. "
             "Use only the visible read-only MCP capabilities, prompts, and resources. "
-            "Do not attempt geometry-destructive or write-heavy flows on this surface."
+            "Do not attempt geometry-destructive or write-heavy flows on this surface. "
+            "This surface is task-capable, but keep background task usage aligned with the visible read-only pilot tools."
         ),
         delivery_mode="structured_first",
         code_mode_enabled=True,

@@ -2,32 +2,6 @@
 
 <!-- version list -->
 
-## Unreleased
-
-### Features
-
-- Add first background task mode rollout for heavy MCP operations (`scene_get_viewport`, `extraction_render_angles`, and `workflow_catalog(import_finalize)`) with explicit RPC job lifecycle, task bookkeeping, and sync fallback behavior
-
-- Extend task mode to the system import/export family (`export_glb`, `export_fbx`, `export_obj`, `import_obj`, `import_fbx`, `import_glb`, `import_image_as_plane`) on task-capable surfaces
-
-- Align FastMCP task runtime to `fastmcp 3.1.1` + `pydocket 0.18.2`, add explicit runtime guards, and remove the old local compatibility shim
-
-### Bug Fixes
-
-- Fix Blender addon ZIP imports so the installed package no longer fails with `No module named 'blender_addon'`
-
-- Fix Docker image build/runtime by shipping prompt assets and the missing OpenTelemetry SDK dependency needed during embedding precomputation
-
-- Fix `workflow_catalog(import*)` contract validation so imported responses can carry saved-path and overwrite metadata without failing Pydantic validation
-
-- Fix `router_set_goal` medium-confidence confirmation follow-up so explicit `workflow_confirmation` answers are consumed instead of looping back to the same question
-
-### Chores
-
-- Add a repo-level `pre-commit` baseline with hygiene checks, `ruff` lint/format, GitHub workflow and router metadata schema validation, plus `pre-push` hooks for Poetry validation, unit tests, and addon build verification
-
-- Add bounded server-side sampling assistants for inspection summaries and router repair suggestions with typed status envelopes and explicit governance limits
-
 ## v2.2.0 (2026-03-20)
 
 ### Features

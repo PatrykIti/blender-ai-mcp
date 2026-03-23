@@ -65,6 +65,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme
     assert "browse_workflows" in prompt_readme
+    assert "search_tools" in prompt_readme
+    assert "call_tool" in prompt_readme
+    assert "manual_tools_no_router" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt

@@ -11,6 +11,12 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 >
 > `llm-guided` also starts from a small guided entry surface and expands with
 > coarse session phases (`bootstrap` / `planning` / `build` / `inspect_validate`).
+> The current guided entry surface is:
+> `router_set_goal`, `router_get_status`, `browse_workflows`, `search_tools`,
+> `call_tool`, `list_prompts`, and `get_prompt`.
+> Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
+> public surface, and use `manual_tools_no_router` when you explicitly want a
+> manual non-router operating mode.
 >
 > On elicitation-capable clients, missing workflow parameters may be presented as
 > structured clarification UI instead of free-form chat questions. Tool-only clients
