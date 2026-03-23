@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 12 tasks (~220 sub-tasks)
 - **In Progress:** 2 tasks
-- **Done:** 157
+- **Done:** 158
 
 ## 🧭 Terminology Guardrails
 
@@ -66,6 +66,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-103](./TASK-103_Coverage_Expansion_For_Scene_Workflow_Catalog_Vector_Store_And_RPC.md) | **Coverage Expansion for Scene MCP Area, Workflow Catalog, Lance Store, and RPC Server** | 🟡 Medium | 2026-03-23 |
 | [TASK-102](./TASK-102_Coverage_Expansion_For_Extraction_System_And_Scripts.md) | **Coverage Expansion for Extraction Handler, System MCP Area, and Tooling Scripts** | 🟡 Medium | 2026-03-23 |
 | [TASK-101](./TASK-101_Coverage_Expansion_For_Tooling_And_MCP_Areas.md) | **Coverage Expansion for Tooling Scripts, Addon Bootstrap, and MCP Areas** | 🟡 Medium | 2026-03-23 |
 | [TASK-100](./TASK-100_Router_Metadata_Schema_Alignment.md) | **Router Metadata Schema Alignment for Pre-commit Validation** | 🔴 High | 2026-03-22 |
