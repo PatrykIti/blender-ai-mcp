@@ -4,7 +4,7 @@
 **Category:** Router Supervisor Enhancement
 **Estimated Effort:** Medium
 **Dependencies:** TASK-053 (Ensemble Matcher System)
-**Status:** ⏳ To Do
+**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
 
 ---
 
@@ -32,7 +32,7 @@ After TASK-053 implementation review, these improvements were identified:
 - [TASK-055-FIX](./TASK-055-FIX_Unified_Parameter_Resolution.md) Bug 3 - Score normalization fix
 - See `_docs/_CHANGELOG/102-2025-12-08-ensemble-modifier-fixes.md` for implementation details
 
-> **Strategic alignment note (2026-03-24):** This task remains relevant only as **router internal quality/observability/performance** work. It should not be treated as defining the public MCP surface model. Public surface strategy is now governed by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md).
+> **Historical note:** Keep this file only as historical context until the matcher/router strategy is rewritten under `TASK-113`.
 
 ---
 

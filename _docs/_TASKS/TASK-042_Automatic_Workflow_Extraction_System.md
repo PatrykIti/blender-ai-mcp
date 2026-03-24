@@ -1,12 +1,16 @@
 # Plan: Automatic Workflow Extraction System
 
+**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
+**Superseded On:** 2026-03-24  
+**Reason:** This task was planned under older assumptions about workflow extraction, LLM vision, and public tool usage. It will be rewritten later under the new tool-layering, goal-first, and measure/assert architecture.
+
 ## Summary
 
 System for automatic workflow extraction from 3D models for blender-ai-mcp. Analyzes existing 3D models and generates YAML workflow definitions compatible with Router Supervisor.
 
 **Goal**: Import 3D model → Analyze structure → Generate YAML workflow → Register in Router
 
-> **Strategic alignment note (2026-03-24):** This task remains relevant as an **internal workflow-authoring/extraction** track. It does not define the public MCP surface strategy. Any vision or analysis outputs from this track should align with [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md), especially the measure/assert truth model and goal-first orchestration policy.
+> **Historical note:** Keep this file only as historical context until the workflow extraction track is rewritten under `TASK-113`.
 
 ### User decisions:
 - **Scope**: Full implementation (all 6 phases including LLM Vision)

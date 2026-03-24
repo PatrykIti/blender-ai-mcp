@@ -3,9 +3,10 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 11 tasks (~240 sub-tasks)
+- **To Do:** 1 tasks (~120 sub-tasks)
 - **In Progress:** 0 tasks
 - **Done:** 167
+- **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
 
@@ -27,9 +28,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | 🔴 High | Still relevant as internal workflow DSL work; public surface policy is now governed by TASK-113 |
-| [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | Still relevant as router internals/observability work; not a public surface strategy task after TASK-113 |
-| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | Still relevant as internal workflow-authoring/extraction track; vision output must follow TASK-113 measure/assert boundaries |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -42,13 +40,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-076](./TASK-076_Mesh_Build_Mega_Tool.md) | **Mesh Build Mega Tool (Core Topology)** | 🔴 High | Write-side reconstruction for vertices/edges/faces |
-| [TASK-077](./TASK-077_Mesh_Build_Surface_Data.md) | **Mesh Build Surface Data (UVs, Materials, Attributes)** | 🔴 High | UVs + material indices + attributes |
-| [TASK-078](./TASK-078_Mesh_Build_Deformation_Data.md) | **Mesh Build Deformation Data (Normals, Weights, Shape Keys)** | 🔴 High | Custom normals + weights + shape keys |
-| [TASK-079](./TASK-079_Node_Graph_Build_Tools.md) | **Node Graph Build Tools (Material + Geometry Nodes)** | 🔴 High | Rebuild shader/GN graphs |
-| [TASK-080](./TASK-080_Image_Asset_Tools.md) | **Image Asset Tools (List, Load, Export, Pack)** | 🟡 Medium | Texture asset pipeline |
-| [TASK-081](./TASK-081_Scene_Render_World_Settings.md) | **Scene Render + World Settings (Inspect & Apply)** | 🟡 Medium | Render + world settings |
-| [TASK-082](./TASK-082_Animation_and_Drivers_Tools.md) | **Animation and Driver Tools (Inspect + Build)** | 🟡 Medium | Actions, FCurves, drivers, NLA |
 
 ---
 
@@ -88,6 +79,23 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-088](./TASK-088_Background_Tasks_and_Progress.md) | **Background Tasks and Progress for Heavy Blender Work** | 🔴 High | 2026-03-22 |
 | [TASK-086](./TASK-086_LLM_Optimized_API_Surfaces.md) | **LLM-Optimized API Surfaces** | 🔴 High | 2026-03-22 |
 | [TASK-084](./TASK-084_Dynamic_Tool_Discovery.md) | **Dynamic Tool Discovery for Large Catalogs** | 🔴 High | 2026-03-22 |
+
+---
+
+## ⛔ Superseded
+
+| ID | Title | Replaced By | Notes |
+|----|-------|-------------|-------|
+| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Old workflow/DSL framing will be rewritten later under the new tool-layering architecture |
+| [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Old router/matcher framing will be rewritten later under the new goal-first and surface strategy |
+| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Old extraction/vision framing will be rewritten later under the new measure/assert and vision-boundary strategy |
+| [TASK-076](./TASK-076_Mesh_Build_Mega_Tool.md) | **Mesh Build Mega Tool (Core Topology)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but the old mega-tool-first reconstruction framing will be rewritten under the new layered tool architecture |
+| [TASK-077](./TASK-077_Mesh_Build_Surface_Data.md) | **Mesh Build Surface Data (UVs, Materials, Attributes)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but its current `mesh_build` expansion plan reflects the old architecture |
+| [TASK-078](./TASK-078_Mesh_Build_Deformation_Data.md) | **Mesh Build Deformation Data (Normals, Weights, Shape Keys)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but its old mega-tool framing will be rewritten under the new architecture |
+| [TASK-079](./TASK-079_Node_Graph_Build_Tools.md) | **Node Graph Build Tools (Material + Geometry Nodes)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but the old single-mega-tool framing will be rewritten under the new layered surface model |
+| [TASK-080](./TASK-080_Image_Asset_Tools.md) | **Image Asset Tools (List, Load, Export, Pack)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but it will be rewritten to align with the new atomic/macro/workflow strategy |
+| [TASK-081](./TASK-081_Scene_Render_World_Settings.md) | **Scene Render + World Settings (Inspect & Apply)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but the current write-side mega-tool framing is no longer canonical |
+| [TASK-082](./TASK-082_Animation_and_Drivers_Tools.md) | **Animation and Driver Tools (Inspect + Build)** | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | Business intent remains valid, but the current task must be rewritten under the new layered tool architecture |
 | [TASK-091](./TASK-091_Versioned_Client_Surfaces.md) | **Versioned Client Surfaces for Safe API Evolution** | 🔴 High | 2026-03-22 |
 | [TASK-089](./TASK-089_Typed_Contracts_and_Structured_Responses.md) | **Typed Contracts and Structured Responses** | 🔴 High | 2026-03-22 |
 | [TASK-087](./TASK-087_Structured_User_Elicitation.md) | **Structured User Elicitation for Missing Parameters** | 🔴 High | 2026-03-22 |

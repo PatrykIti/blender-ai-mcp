@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [147](./147-2026-03-24-supersede-reconstruction-legacy-task-forms.md) | 2026-03-24 | **Supersede legacy reconstruction task forms** | - |
+| [146](./146-2026-03-24-supersede-router-workflow-legacy-tasks.md) | 2026-03-24 | **Supersede legacy router/workflow planning tasks** | - |
 | [145](./145-2026-03-24-router-workflow-task-triage.md) | 2026-03-24 | **Router/workflow task triage against new tool strategy** | - |
 | [144](./144-2026-03-24-tool-layering-goal-first-strategy-planning.md) | 2026-03-24 | **Tool layering and goal-first strategy planning** | - |
 | [143](./143-2026-03-24-final-public-sculpt-surface-replacement.md) | 2026-03-24 | **Final public sculpt surface replacement** | - |
