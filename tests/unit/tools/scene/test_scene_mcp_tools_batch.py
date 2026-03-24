@@ -103,6 +103,11 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     handler.get_hierarchy.return_value = {"roots": [{"name": "Cube"}]}
     handler.get_bounding_box.return_value = {"min": [0, 0, 0], "max": [1, 1, 1]}
     handler.get_origin_info.return_value = {"origin_world": [0, 0, 0]}
+    handler.measure_distance.return_value = {"distance": 2.0, "reference": "ORIGIN"}
+    handler.measure_dimensions.return_value = {"dimensions": [1.0, 2.0, 3.0], "volume": 6.0}
+    handler.measure_gap.return_value = {"gap": 0.5, "relation": "separated"}
+    handler.measure_alignment.return_value = {"is_aligned": True, "aligned_axes": ["Y", "Z"]}
+    handler.measure_overlap.return_value = {"overlaps": False, "relation": "disjoint"}
 
     monkeypatch.setattr(scene_area, "get_scene_handler", lambda: handler)
     monkeypatch.setattr(scene_area, "ctx_info", lambda ctx, message: None)
@@ -128,3 +133,15 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
         0,
         0,
     ]
+    assert scene_area.scene_measure_distance(MagicMock(), from_object="Cube", to_object="Sphere").payload["distance"] == 2.0
+    assert scene_area.scene_measure_dimensions(MagicMock(), object_name="Cube").payload["volume"] == 6.0
+    assert scene_area.scene_measure_gap(MagicMock(), from_object="Cube", to_object="Sphere").payload["gap"] == 0.5
+    assert (
+        scene_area.scene_measure_alignment(MagicMock(), from_object="Cube", to_object="Sphere", axes=["Y", "Z"])
+        .payload["is_aligned"]
+        is True
+    )
+    assert (
+        scene_area.scene_measure_overlap(MagicMock(), from_object="Cube", to_object="Sphere").payload["relation"]
+        == "disjoint"
+    )

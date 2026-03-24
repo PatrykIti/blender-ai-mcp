@@ -103,8 +103,8 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-manual`: `150` visible tools, router/workflow omitted from the namespace
-- `legacy-flat`: `157` visible tools, including router/workflow on the broad compatibility surface
+- `legacy-manual`: `155` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `162` visible tools, including router/workflow on the broad compatibility surface
 - `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
@@ -187,6 +187,15 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 - `scene_inspect`
 - `scene_snapshot_state`
 - `scene_compare_snapshot`
+- `scene_get_custom_properties`
+- `scene_get_hierarchy`
+- `scene_get_bounding_box`
+- `scene_get_origin_info`
+- `scene_measure_distance`
+- `scene_measure_dimensions`
+- `scene_measure_gap`
+- `scene_measure_alignment`
+- `scene_measure_overlap`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -462,6 +471,11 @@ Object Mode operations for scene management and inspection.
 | `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
 | `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
 | `scene_get_origin_info` | Get origin/pivot point info | ✅ |
+| `scene_measure_distance` | Measure truth-layer distance between two objects | ✅ |
+| `scene_measure_dimensions` | Measure object dimensions and volume | ✅ |
+| `scene_measure_gap` | Measure gap/contact state between two objects | ✅ |
+| `scene_measure_alignment` | Measure bbox alignment across chosen axes | ✅ |
+| `scene_measure_overlap` | Measure overlap/intersection between two objects | ✅ |
 
 ---
 
@@ -1190,6 +1204,11 @@ The larger examples below remain useful as broad compatibility references, but t
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
+        "scene_measure_distance",
+        "scene_measure_dimensions",
+        "scene_measure_gap",
+        "scene_measure_alignment",
+        "scene_measure_overlap",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -1368,6 +1387,11 @@ The larger examples below remain useful as broad compatibility references, but t
         "scene_get_hierarchy",
         "scene_get_bounding_box",
         "scene_get_origin_info",
+        "scene_measure_distance",
+        "scene_measure_dimensions",
+        "scene_measure_gap",
+        "scene_measure_alignment",
+        "scene_measure_overlap",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -1595,6 +1619,11 @@ enabled_tools = [
   "scene_get_hierarchy",
   "scene_get_bounding_box",
   "scene_get_origin_info",
+  "scene_measure_distance",
+  "scene_measure_dimensions",
+  "scene_measure_gap",
+  "scene_measure_alignment",
+  "scene_measure_overlap",
   "collection_list",
   "collection_list_objects",
   "collection_manage",

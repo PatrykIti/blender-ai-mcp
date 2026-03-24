@@ -1,0 +1,16 @@
+{
+  "tool_name": "scene_measure_gap",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["gap", "contact", "clearance", "touching", "spacing", "fit", "measure"],
+  "sample_prompts": ["is there a gap between these parts", "check contact between objects", "measure clearance"],
+  "parameters": {
+    "from_object": {"type": "string", "required": true},
+    "to_object": {"type": "string", "required": true},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["scene_measure_distance", "scene_measure_alignment", "scene_measure_overlap"],
+  "patterns": [],
+  "description": "Measures the nearest bbox gap/contact state between two objects."
+}

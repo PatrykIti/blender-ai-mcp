@@ -176,3 +176,35 @@ class ISceneTool(ABC):
     def get_origin_info(self, object_name: str) -> Dict[str, Any]:
         """Gets origin (pivot point) information for an object."""
         pass
+
+    @abstractmethod
+    def measure_distance(self, from_object: str, to_object: str, reference: str = "ORIGIN") -> Dict[str, Any]:
+        """Measures distance between two scene objects."""
+        pass
+
+    @abstractmethod
+    def measure_dimensions(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
+        """Measures dimensions for one scene object."""
+        pass
+
+    @abstractmethod
+    def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> Dict[str, Any]:
+        """Measures the nearest gap/contact state between two scene objects."""
+        pass
+
+    @abstractmethod
+    def measure_alignment(
+        self,
+        from_object: str,
+        to_object: str,
+        axes: Optional[List[str]] = None,
+        reference: str = "CENTER",
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        """Measures object alignment across one or more axes."""
+        pass
+
+    @abstractmethod
+    def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> Dict[str, Any]:
+        """Measures whether two scene objects overlap."""
+        pass

@@ -192,13 +192,16 @@ Expected standard view set when visual comparison matters:
 - iso
 - focus-target view when needed
 
-The next deterministic verification family should cover:
+The first implemented deterministic verification slice now includes:
 
-- dimensions
-- distance
-- gap/contact
-- overlap/intersection
-- alignment
+- `scene_measure_dimensions`
+- `scene_measure_distance`
+- `scene_measure_gap`
+- `scene_measure_overlap`
+- `scene_measure_alignment`
+
+The broader truth layer should continue to expand with:
+
 - proportion
 - symmetry
 - containment
@@ -227,8 +230,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `150` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `157` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `155` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `162` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -272,6 +275,11 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `scene_get_hierarchy`
 - `scene_get_bounding_box`
 - `scene_get_origin_info`
+- `scene_measure_distance`
+- `scene_measure_dimensions`
+- `scene_measure_gap`
+- `scene_measure_alignment`
+- `scene_measure_overlap`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -523,6 +531,11 @@ Managing objects at the scene level.
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
+| `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
+| `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
+| `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest world-space bbox gap/contact state between two objects. |
+| `scene_measure_alignment` | `from_object` (str), `to_object` (str), `axes` (array), `reference` (str), `tolerance` (float) | Measures bbox alignment deltas on chosen axes using CENTER/MIN/MAX references. |
+| `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures bbox overlap/touching state plus intersection dimensions and volume. |
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 

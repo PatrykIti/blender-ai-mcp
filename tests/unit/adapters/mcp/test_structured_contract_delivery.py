@@ -59,6 +59,53 @@ class SceneHandler:
             "suggestions": [],
         }
 
+    def measure_distance(self, from_object, to_object, reference="ORIGIN"):
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "reference": reference,
+            "distance": 2.0,
+            "units": "blender_units",
+        }
+
+    def measure_dimensions(self, object_name, world_space=True):
+        return {
+            "object_name": object_name,
+            "world_space": world_space,
+            "dimensions": [1.0, 2.0, 3.0],
+            "volume": 6.0,
+            "units": "blender_units",
+        }
+
+    def measure_gap(self, from_object, to_object, tolerance=0.0001):
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "gap": 0.5,
+            "relation": "separated",
+            "units": "blender_units",
+        }
+
+    def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "axes": axes or ["X", "Y", "Z"],
+            "reference": reference,
+            "is_aligned": True,
+            "aligned_axes": axes or ["X", "Y", "Z"],
+            "units": "blender_units",
+        }
+
+    def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "overlaps": False,
+            "relation": "disjoint",
+            "units": "blender_units",
+        }
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -161,6 +208,36 @@ def test_scene_read_contract_tools_deliver_structured_content(monkeypatch):
     assert _unwrap_structured(hierarchy)["payload"]["total_objects"] == 1
     assert _unwrap_structured(bbox)["payload"]["volume"] == 1.0
     assert _unwrap_structured(origin)["payload"]["origin_world"] == [0, 0, 0]
+
+
+def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):
+    """Truth-layer measurement tools should surface structured contracts instead of prose blobs."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        distance = await server.call_tool(
+            "scene_measure_distance", {"from_object": "Cube", "to_object": "Sphere", "reference": "ORIGIN"}
+        )
+        dimensions = await server.call_tool("scene_measure_dimensions", {"object_name": "Cube"})
+        gap = await server.call_tool("scene_measure_gap", {"from_object": "Cube", "to_object": "Sphere"})
+        alignment = await server.call_tool(
+            "scene_measure_alignment",
+            {"from_object": "Cube", "to_object": "Sphere", "axes": ["Y", "Z"]},
+        )
+        overlap = await server.call_tool("scene_measure_overlap", {"from_object": "Cube", "to_object": "Sphere"})
+        return distance, dimensions, gap, alignment, overlap
+
+    distance, dimensions, gap, alignment, overlap = asyncio.run(run())
+
+    assert _unwrap_structured(distance)["payload"]["distance"] == 2.0
+    assert _unwrap_structured(dimensions)["payload"]["volume"] == 6.0
+    assert _unwrap_structured(gap)["payload"]["relation"] == "separated"
+    assert _unwrap_structured(alignment)["payload"]["is_aligned"] is True
+    assert _unwrap_structured(overlap)["payload"]["relation"] == "disjoint"
 
 
 def test_mesh_inspect_contract_delivers_structured_content(monkeypatch):

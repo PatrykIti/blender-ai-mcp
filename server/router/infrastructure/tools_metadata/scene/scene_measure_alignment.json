@@ -1,0 +1,18 @@
+{
+  "tool_name": "scene_measure_alignment",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["alignment", "aligned", "centered", "flush", "level", "same height", "measure"],
+  "sample_prompts": ["check alignment", "are these parts aligned", "measure center alignment"],
+  "parameters": {
+    "from_object": {"type": "string", "required": true},
+    "to_object": {"type": "string", "required": true},
+    "axes": {"type": "array", "default": null},
+    "reference": {"type": "enum", "default": "CENTER", "options": ["CENTER", "MIN", "MAX"]},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["scene_measure_distance", "scene_measure_gap", "scene_measure_overlap"],
+  "patterns": [],
+  "description": "Measures bbox alignment across chosen axes using CENTER, MIN, or MAX references."
+}

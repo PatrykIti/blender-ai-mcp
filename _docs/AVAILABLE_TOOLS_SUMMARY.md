@@ -82,8 +82,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `150` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `157` visible tools
+- `legacy-manual`: `155` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `162` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -96,7 +96,7 @@ Interpretation rule for future tool waves:
 
 - inventory existence does not imply public-default exposure
 - macro/workflow tools are preferred for normal LLM-facing surfaces
-- deterministic measure/assert tool families should be treated as part of the truth layer once added
+- deterministic measure/assert tool families belong to the truth layer once available
 
 ---
 
@@ -112,6 +112,11 @@ The current structured-contract baseline covers:
 - `scene_get_hierarchy`
 - `scene_get_bounding_box`
 - `scene_get_origin_info`
+- `scene_measure_distance`
+- `scene_measure_dimensions`
+- `scene_measure_gap`
+- `scene_measure_alignment`
+- `scene_measure_overlap`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -197,6 +202,11 @@ None.
 | `scene_get_hierarchy` | `object_name` (optional), `include_transforms` | Gets parent-child hierarchy for object or full scene tree. | ✅ Done |
 | `scene_get_bounding_box` | `object_name`, `world_space` | Gets bounding box corners, min/max, center, dimensions, volume. | ✅ Done |
 | `scene_get_origin_info` | `object_name` | Gets origin (pivot point) information relative to geometry. | ✅ Done |
+| `scene_measure_distance` | `from_object`, `to_object`, `reference` | Measures origin or bbox-center distance between two objects. | ✅ Done |
+| `scene_measure_dimensions` | `object_name`, `world_space` | Measures object dimensions and volume from its bounding box. | ✅ Done |
+| `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |
+| `scene_measure_alignment` | `from_object`, `to_object`, `axes`, `reference`, `tolerance` | Measures bbox alignment across chosen axes. | ✅ Done |
+| `scene_measure_overlap` | `from_object`, `to_object`, `tolerance` | Measures bbox overlap/touching state and intersection volume. | ✅ Done |
 
 **Deprecated (now internal, use mega tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`

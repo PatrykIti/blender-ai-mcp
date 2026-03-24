@@ -84,3 +84,28 @@ class SceneOriginInfoContract(MCPContract):
     payload: dict[str, Any] | None = None
     error: str | None = None
     assistant: InspectionSummaryAssistantContract | None = None
+
+
+class SceneMeasureDistanceContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneMeasureDimensionsContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneMeasureGapContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneMeasureAlignmentContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
+class SceneMeasureOverlapContract(MCPContract):
+    payload: dict[str, Any] | None = None
+    error: str | None = None

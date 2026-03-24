@@ -1,0 +1,15 @@
+{
+  "tool_name": "scene_measure_dimensions",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["dimensions", "size", "width", "height", "depth", "scale", "measure"],
+  "sample_prompts": ["measure object dimensions", "what size is this object", "check width and height"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "world_space": {"type": "bool", "default": true}
+  },
+  "related_tools": ["scene_get_bounding_box", "scene_measure_distance", "scene_measure_gap"],
+  "patterns": [],
+  "description": "Measures object dimensions and volume from its bounding box."
+}

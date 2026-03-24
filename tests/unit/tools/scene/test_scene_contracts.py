@@ -6,6 +6,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
     SceneInspectResponseContract,
+    SceneMeasureAlignmentContract,
+    SceneMeasureDimensionsContract,
+    SceneMeasureDistanceContract,
+    SceneMeasureGapContract,
+    SceneMeasureOverlapContract,
     SceneModeContract,
     SceneOriginInfoContract,
     SceneSelectionContract,
@@ -114,3 +119,57 @@ def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads(
     assert hierarchy.payload["total_objects"] == 1
     assert bbox.payload["max"] == [1, 1, 1]
     assert origin.payload["origin_world"] == [0, 0, 0]
+
+
+def test_scene_measure_contracts_validate_machine_readable_truth_payloads():
+    """Measure/assert scene contracts should keep deterministic payloads structured."""
+
+    distance = SceneMeasureDistanceContract(
+        payload={
+            "from_object": "Cube",
+            "to_object": "Sphere",
+            "distance": 2.5,
+            "units": "blender_units",
+        }
+    )
+    dimensions = SceneMeasureDimensionsContract(
+        payload={
+            "object_name": "Cube",
+            "dimensions": [2.0, 1.0, 1.0],
+            "volume": 2.0,
+            "units": "blender_units",
+        }
+    )
+    gap = SceneMeasureGapContract(
+        payload={
+            "from_object": "Cube",
+            "to_object": "Sphere",
+            "gap": 0.25,
+            "relation": "separated",
+            "units": "blender_units",
+        }
+    )
+    alignment = SceneMeasureAlignmentContract(
+        payload={
+            "from_object": "Cube",
+            "to_object": "Sphere",
+            "is_aligned": True,
+            "aligned_axes": ["Y", "Z"],
+            "units": "blender_units",
+        }
+    )
+    overlap = SceneMeasureOverlapContract(
+        payload={
+            "from_object": "Cube",
+            "to_object": "Sphere",
+            "overlaps": False,
+            "relation": "disjoint",
+            "units": "blender_units",
+        }
+    )
+
+    assert distance.payload["distance"] == 2.5
+    assert dimensions.payload["volume"] == 2.0
+    assert gap.payload["relation"] == "separated"
+    assert alignment.payload["is_aligned"] is True
+    assert overlap.payload["overlaps"] is False

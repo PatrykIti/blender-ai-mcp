@@ -205,3 +205,56 @@ class SceneToolHandler(ISceneTool):
 
     def get_origin_info(self, object_name: str) -> Dict[str, Any]:
         return require_dict_result(self.rpc.send_request("scene.get_origin_info", {"object_name": object_name}))
+
+    def measure_distance(self, from_object: str, to_object: str, reference: str = "ORIGIN") -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.measure_distance",
+                {"from_object": from_object, "to_object": to_object, "reference": reference},
+            )
+        )
+
+    def measure_dimensions(self, object_name: str, world_space: bool = True) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.measure_dimensions",
+                {"object_name": object_name, "world_space": world_space},
+            )
+        )
+
+    def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.measure_gap",
+                {"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+            )
+        )
+
+    def measure_alignment(
+        self,
+        from_object: str,
+        to_object: str,
+        axes: Optional[List[str]] = None,
+        reference: str = "CENTER",
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.measure_alignment",
+                {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "axes": axes,
+                    "reference": reference,
+                    "tolerance": tolerance,
+                },
+            )
+        )
+
+    def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.measure_overlap",
+                {"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+            )
+        )

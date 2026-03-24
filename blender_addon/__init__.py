@@ -112,6 +112,11 @@ def register():
         rpc_server.register_handler("scene.get_hierarchy", scene_handler.get_hierarchy)
         rpc_server.register_handler("scene.get_bounding_box", scene_handler.get_bounding_box)
         rpc_server.register_handler("scene.get_origin_info", scene_handler.get_origin_info)
+        rpc_server.register_handler("scene.measure_distance", scene_handler.measure_distance)
+        rpc_server.register_handler("scene.measure_dimensions", scene_handler.measure_dimensions)
+        rpc_server.register_handler("scene.measure_gap", scene_handler.measure_gap)
+        rpc_server.register_handler("scene.measure_alignment", scene_handler.measure_alignment)
+        rpc_server.register_handler("scene.measure_overlap", scene_handler.measure_overlap)
 
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)

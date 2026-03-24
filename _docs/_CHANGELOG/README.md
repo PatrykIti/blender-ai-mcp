@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [158](./158-2026-03-24-first-measure-assert-tool-wave.md) | 2026-03-24 | **First measure/assert tool wave** | - |
+| [157](./157-2026-03-24-first-measure-assert-wave-planning.md) | 2026-03-24 | **First measure/assert wave planning** | - |
 | [156](./156-2026-03-24-public-surface-wording-alignment.md) | 2026-03-24 | **Public surface wording alignment** | - |
 | [155](./155-2026-03-24-existing-tool-audit-backlog-and-measure-plan.md) | 2026-03-24 | **Existing-tool audit backlog and measure/assert plan** | - |
 | [154](./154-2026-03-24-metadata-and-truth-audit-findings.md) | 2026-03-24 | **Metadata and truth-model audit findings** | - |

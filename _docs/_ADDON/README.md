@@ -85,6 +85,11 @@ Technical details.
 | `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
 | `scene.get_bounding_box` | `get_bounding_box` | Gets bounding box corners in world/local space. |
 | `scene.get_origin_info` | `get_origin_info` | Gets origin (pivot point) information for an object. |
+| `scene.measure_distance` | `measure_distance` | Measures origin/bbox-center distance between two objects. |
+| `scene.measure_dimensions` | `measure_dimensions` | Measures object dimensions and volume from its bounding box. |
+| `scene.measure_gap` | `measure_gap` | Measures nearest bbox gap/contact state between two objects. |
+| `scene.measure_alignment` | `measure_alignment` | Measures bbox alignment across chosen axes. |
+| `scene.measure_overlap` | `measure_overlap` | Measures bbox overlap/touching state and intersection volume. |
 
 ### Collection (`application/handlers/collection.py`)
 

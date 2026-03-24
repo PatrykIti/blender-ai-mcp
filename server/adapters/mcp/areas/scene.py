@@ -12,6 +12,11 @@ from server.adapters.mcp.contracts.scene import (
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
     SceneInspectResponseContract,
+    SceneMeasureAlignmentContract,
+    SceneMeasureDimensionsContract,
+    SceneMeasureDistanceContract,
+    SceneMeasureGapContract,
+    SceneMeasureOverlapContract,
     SceneModeContract,
     SceneOriginInfoContract,
     SceneSelectionContract,
@@ -57,6 +62,11 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_get_hierarchy",
     "scene_get_bounding_box",
     "scene_get_origin_info",
+    "scene_measure_distance",
+    "scene_measure_dimensions",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_measure_overlap",
 )
 
 
@@ -1396,3 +1406,227 @@ async def scene_get_origin_info(
         subject="scene_get_origin_info",
         object_name=object_name,
     )
+
+
+def scene_measure_distance(
+    ctx: Context,
+    from_object: str,
+    to_object: str,
+    reference: Literal["ORIGIN", "BBOX_CENTER"] = "ORIGIN",
+) -> SceneMeasureDistanceContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Measures distance between two objects.
+
+    Workflow: READ-ONLY | USE FOR → spacing, fit, proportion verification
+
+    Measures either origin-to-origin or bounding-box-center distance.
+
+    Args:
+        from_object: Source object name
+        to_object: Target object name
+        reference: Distance reference mode: ORIGIN or BBOX_CENTER
+
+    Returns:
+        Structured distance payload with reference points, axis delta, and units.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = SceneMeasureDistanceContract(payload=handler.measure_distance(from_object, to_object, reference))
+            ctx_info(ctx, f"Measured {reference.lower()} distance between '{from_object}' and '{to_object}'")
+            return result
+        except RuntimeError as e:
+            return SceneMeasureDistanceContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_measure_distance",
+        params={"from_object": from_object, "to_object": to_object, "reference": reference},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureDistanceContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureDistanceContract(payload=result)
+    return SceneMeasureDistanceContract(error=str(result))
+
+
+def scene_measure_dimensions(
+    ctx: Context,
+    object_name: str,
+    world_space: bool = True,
+) -> SceneMeasureDimensionsContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Measures object dimensions from its bounding box.
+
+    Workflow: READ-ONLY | USE FOR → proportions, scaling checks, truth-layer verification
+
+    Args:
+        object_name: Object to measure
+        world_space: If True, measures transformed world dimensions. If False, measures local dimensions.
+
+    Returns:
+        Structured dimensions payload with units and volume estimate.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = SceneMeasureDimensionsContract(payload=handler.measure_dimensions(object_name, world_space))
+            ctx_info(ctx, f"Measured dimensions for '{object_name}'")
+            return result
+        except RuntimeError as e:
+            return SceneMeasureDimensionsContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_measure_dimensions",
+        params={"object_name": object_name, "world_space": world_space},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureDimensionsContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureDimensionsContract(payload=result)
+    return SceneMeasureDimensionsContract(error=str(result))
+
+
+def scene_measure_gap(
+    ctx: Context,
+    from_object: str,
+    to_object: str,
+    tolerance: float = 0.0001,
+) -> SceneMeasureGapContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Measures the nearest gap/contact state between two objects.
+
+    Workflow: READ-ONLY | USE FOR → clearance, contact, and fit verification
+
+    Uses world-space axis-aligned bounds. `gap=0` means the objects either touch or overlap;
+    inspect `relation` to distinguish `contact` from `overlapping`.
+
+    Args:
+        from_object: Source object name
+        to_object: Target object name
+        tolerance: Contact threshold in Blender units
+
+    Returns:
+        Structured gap payload with per-axis separation and relation classification.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = SceneMeasureGapContract(payload=handler.measure_gap(from_object, to_object, tolerance))
+            ctx_info(ctx, f"Measured gap between '{from_object}' and '{to_object}'")
+            return result
+        except RuntimeError as e:
+            return SceneMeasureGapContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_measure_gap",
+        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureGapContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureGapContract(payload=result)
+    return SceneMeasureGapContract(error=str(result))
+
+
+def scene_measure_alignment(
+    ctx: Context,
+    from_object: str,
+    to_object: str,
+    axes: List[str] | None = None,
+    reference: Literal["CENTER", "MIN", "MAX"] = "CENTER",
+    tolerance: float = 0.0001,
+) -> SceneMeasureAlignmentContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Measures alignment between two objects across chosen axes.
+
+    Workflow: READ-ONLY | USE FOR → centerline, flush-edge, and level checks
+
+    Compares world-space bounding-box `CENTER`, `MIN`, or `MAX` positions on the requested axes.
+
+    Args:
+        from_object: Source object name
+        to_object: Target object name
+        axes: Axes to compare (defaults to X, Y, Z)
+        reference: Alignment reference: CENTER, MIN, or MAX
+        tolerance: Alignment threshold in Blender units
+
+    Returns:
+        Structured alignment payload with per-axis deltas and aligned/misaligned axes.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = SceneMeasureAlignmentContract(
+                payload=handler.measure_alignment(from_object, to_object, axes, reference, tolerance)
+            )
+            ctx_info(ctx, f"Measured alignment between '{from_object}' and '{to_object}'")
+            return result
+        except RuntimeError as e:
+            return SceneMeasureAlignmentContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_measure_alignment",
+        params={
+            "from_object": from_object,
+            "to_object": to_object,
+            "axes": axes,
+            "reference": reference,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureAlignmentContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureAlignmentContract(payload=result)
+    return SceneMeasureAlignmentContract(error=str(result))
+
+
+def scene_measure_overlap(
+    ctx: Context,
+    from_object: str,
+    to_object: str,
+    tolerance: float = 0.0001,
+) -> SceneMeasureOverlapContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Measures overlap/intersection between two objects.
+
+    Workflow: READ-ONLY | USE FOR → collision, clipping, and fit verification
+
+    Uses world-space axis-aligned bounds to classify objects as `overlap`, `touching`, or `disjoint`.
+
+    Args:
+        from_object: Source object name
+        to_object: Target object name
+        tolerance: Touch/intersection threshold in Blender units
+
+    Returns:
+        Structured overlap payload with intersection dimensions and overlap volume.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            result = SceneMeasureOverlapContract(payload=handler.measure_overlap(from_object, to_object, tolerance))
+            ctx_info(ctx, f"Measured overlap between '{from_object}' and '{to_object}'")
+            return result
+        except RuntimeError as e:
+            return SceneMeasureOverlapContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_measure_overlap",
+        params={"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneMeasureOverlapContract):
+        return result
+    if isinstance(result, dict):
+        return SceneMeasureOverlapContract(payload=result)
+    return SceneMeasureOverlapContract(error=str(result))

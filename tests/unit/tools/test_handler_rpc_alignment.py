@@ -82,3 +82,44 @@ def test_uv_list_maps_aligns_with_object_payload_and_args():
 
     assert result["uv_map_count"] == 1
     assert rpc.calls == [("uv.list_maps", {"object_name": "Wall", "include_island_counts": True})]
+
+
+def test_scene_measure_tools_align_with_rpc_commands_and_args():
+    rpc = DummyRpc(
+        {
+            "scene.measure_distance": _ok({"distance": 2.0, "reference": "ORIGIN"}),
+            "scene.measure_dimensions": _ok({"dimensions": [1.0, 2.0, 3.0], "volume": 6.0}),
+            "scene.measure_gap": _ok({"gap": 0.5, "relation": "separated"}),
+            "scene.measure_alignment": _ok({"is_aligned": True, "aligned_axes": ["Y", "Z"]}),
+            "scene.measure_overlap": _ok({"overlaps": False, "relation": "disjoint"}),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    distance = handler.measure_distance("Cube", "Sphere", reference="ORIGIN")
+    dimensions = handler.measure_dimensions("Cube", world_space=False)
+    gap = handler.measure_gap("Cube", "Sphere", tolerance=0.01)
+    alignment = handler.measure_alignment("Cube", "Sphere", axes=["Y", "Z"], reference="CENTER", tolerance=0.01)
+    overlap = handler.measure_overlap("Cube", "Sphere", tolerance=0.01)
+
+    assert distance["distance"] == 2.0
+    assert dimensions["volume"] == 6.0
+    assert gap["relation"] == "separated"
+    assert alignment["is_aligned"] is True
+    assert overlap["overlaps"] is False
+    assert rpc.calls == [
+        ("scene.measure_distance", {"from_object": "Cube", "to_object": "Sphere", "reference": "ORIGIN"}),
+        ("scene.measure_dimensions", {"object_name": "Cube", "world_space": False}),
+        ("scene.measure_gap", {"from_object": "Cube", "to_object": "Sphere", "tolerance": 0.01}),
+        (
+            "scene.measure_alignment",
+            {
+                "from_object": "Cube",
+                "to_object": "Sphere",
+                "axes": ["Y", "Z"],
+                "reference": "CENTER",
+                "tolerance": 0.01,
+            },
+        ),
+        ("scene.measure_overlap", {"from_object": "Cube", "to_object": "Sphere", "tolerance": 0.01}),
+    ]

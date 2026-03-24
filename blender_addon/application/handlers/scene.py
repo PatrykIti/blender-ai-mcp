@@ -1223,71 +1223,38 @@ class SceneHandler:
 
     def get_bounding_box(self, object_name, world_space=True):
         """Gets bounding box corners for an object."""
-        from mathutils import Vector
-
-        obj = bpy.data.objects.get(object_name)
-        if obj is None:
-            raise ValueError(f"Object '{object_name}' not found")
-
-        # Get bounding box corners
-        bbox = obj.bound_box
-
-        if world_space:
-            # Transform to world space
-            corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
-        else:
-            corners = [Vector(corner) for corner in bbox]
-
-        # Calculate min/max
-        min_corner = [min(c[0] for c in corners), min(c[1] for c in corners), min(c[2] for c in corners)]
-        max_corner = [max(c[0] for c in corners), max(c[1] for c in corners), max(c[2] for c in corners)]
-
-        # Calculate center and dimensions
-        center = [
-            (min_corner[0] + max_corner[0]) / 2,
-            (min_corner[1] + max_corner[1]) / 2,
-            (min_corner[2] + max_corner[2]) / 2,
-        ]
-        dimensions = [max_corner[0] - min_corner[0], max_corner[1] - min_corner[1], max_corner[2] - min_corner[2]]
+        obj = self._get_object_or_raise(object_name)
+        bbox_data = self._get_bbox_data(obj, world_space=world_space)
 
         return {
             "object_name": object_name,
             "world_space": world_space,
-            "min": [round(v, 4) for v in min_corner],
-            "max": [round(v, 4) for v in max_corner],
-            "center": [round(v, 4) for v in center],
-            "dimensions": [round(v, 4) for v in dimensions],
-            "corners": [[round(c, 4) for c in corner] for corner in corners],
+            "min": self._round_values(bbox_data["min"], precision=4),
+            "max": self._round_values(bbox_data["max"], precision=4),
+            "center": self._round_values(bbox_data["center"], precision=4),
+            "dimensions": self._round_values(bbox_data["dimensions"], precision=4),
+            "corners": [self._round_values(corner, precision=4) for corner in bbox_data["corners"]],
         }
 
     def get_origin_info(self, object_name):
         """Gets origin (pivot point) information for an object."""
-        from mathutils import Vector
+        import math
 
-        obj = bpy.data.objects.get(object_name)
-        if obj is None:
-            raise ValueError(f"Object '{object_name}' not found")
-
-        # Origin is at obj.location in world space
-        origin = obj.location.copy()
-
-        # Calculate bounding box center for comparison
-        bbox = obj.bound_box
-        corners = [obj.matrix_world @ Vector(corner) for corner in bbox]
-        bbox_center = sum(corners, Vector()) / 8
-
-        # Calculate offset from bbox center
-        offset_from_center = origin - bbox_center
+        obj = self._get_object_or_raise(object_name)
+        origin = [float(obj.location[i]) for i in range(3)]
+        bbox_data = self._get_bbox_data(obj, world_space=True)
+        bbox_center = bbox_data["center"]
+        offset_from_center = [origin[i] - bbox_center[i] for i in range(3)]
 
         # Determine origin type (approximate)
         origin_type = "CUSTOM"
-        offset_magnitude = offset_from_center.length
+        offset_magnitude = math.sqrt(sum(value * value for value in offset_from_center))
 
         if offset_magnitude < 0.001:
             origin_type = "CENTER"
         else:
             # Check if at bottom center
-            min_z = min(c[2] for c in corners)
+            min_z = bbox_data["min"][2]
             if (
                 abs(origin[2] - min_z) < 0.001
                 and abs(offset_from_center[0]) < 0.001
@@ -1297,8 +1264,248 @@ class SceneHandler:
 
         return {
             "object_name": object_name,
-            "origin_world": [round(v, 4) for v in origin],
-            "bbox_center": [round(v, 4) for v in bbox_center],
-            "offset_from_center": [round(v, 4) for v in offset_from_center],
+            "origin_world": self._round_values(origin, precision=4),
+            "bbox_center": self._round_values(bbox_center, precision=4),
+            "offset_from_center": self._round_values(offset_from_center, precision=4),
             "estimated_type": origin_type,
         }
+
+    def measure_distance(self, from_object, to_object, reference="ORIGIN"):
+        """Measures distance between two objects using one reference point mode."""
+        import math
+
+        source = self._get_object_or_raise(from_object)
+        target = self._get_object_or_raise(to_object)
+
+        reference_mode = str(reference).upper()
+        if reference_mode == "ORIGIN":
+            source_point = [float(source.location[i]) for i in range(3)]
+            target_point = [float(target.location[i]) for i in range(3)]
+        elif reference_mode == "BBOX_CENTER":
+            source_point = self._get_bbox_data(source, world_space=True)["center"]
+            target_point = self._get_bbox_data(target, world_space=True)["center"]
+        else:
+            raise ValueError("reference must be ORIGIN or BBOX_CENTER")
+
+        delta = [target_point[i] - source_point[i] for i in range(3)]
+        distance = math.sqrt(sum(value * value for value in delta))
+
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "reference": reference_mode,
+            "distance": round(float(distance), 6),
+            "delta": self._round_values(delta),
+            "from_point": self._round_values(source_point),
+            "to_point": self._round_values(target_point),
+            "units": "blender_units",
+        }
+
+    def measure_dimensions(self, object_name, world_space=True):
+        """Measures object dimensions in Blender units."""
+        bbox_data = self._get_bbox_data(self._get_object_or_raise(object_name), world_space=world_space)
+        dimensions = bbox_data["dimensions"]
+        volume = dimensions[0] * dimensions[1] * dimensions[2]
+
+        return {
+            "object_name": object_name,
+            "world_space": world_space,
+            "dimensions": self._round_values(dimensions),
+            "volume": round(float(volume), 6),
+            "units": "blender_units",
+        }
+
+    def measure_gap(self, from_object, to_object, tolerance=0.0001):
+        """Measures the nearest gap/contact state between two objects."""
+        import math
+
+        source_bbox = self._get_bbox_data(self._get_object_or_raise(from_object), world_space=True)
+        target_bbox = self._get_bbox_data(self._get_object_or_raise(to_object), world_space=True)
+
+        axis_gap = [
+            self._axis_gap(
+                source_bbox["min"][axis_index],
+                source_bbox["max"][axis_index],
+                target_bbox["min"][axis_index],
+                target_bbox["max"][axis_index],
+            )
+            for axis_index in range(3)
+        ]
+        overlap_dimensions = [
+            self._axis_overlap(
+                source_bbox["min"][axis_index],
+                source_bbox["max"][axis_index],
+                target_bbox["min"][axis_index],
+                target_bbox["max"][axis_index],
+            )
+            for axis_index in range(3)
+        ]
+        gap_distance = math.sqrt(sum(value * value for value in axis_gap))
+
+        if gap_distance > tolerance:
+            relation = "separated"
+        elif all(value > tolerance for value in overlap_dimensions):
+            relation = "overlapping"
+        else:
+            relation = "contact"
+
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "gap": round(float(gap_distance), 6),
+            "axis_gap": self._round_axis_mapping(axis_gap),
+            "relation": relation,
+            "tolerance": round(float(tolerance), 6),
+            "units": "blender_units",
+        }
+
+    def measure_alignment(self, from_object, to_object, axes=None, reference="CENTER", tolerance=0.0001):
+        """Measures object alignment across one or more axes."""
+        source_bbox = self._get_bbox_data(self._get_object_or_raise(from_object), world_space=True)
+        target_bbox = self._get_bbox_data(self._get_object_or_raise(to_object), world_space=True)
+
+        normalized_axes = self._normalize_axes(axes)
+        reference_mode = str(reference).upper()
+        if reference_mode not in {"CENTER", "MIN", "MAX"}:
+            raise ValueError("reference must be CENTER, MIN, or MAX")
+
+        point_key = {"CENTER": "center", "MIN": "min", "MAX": "max"}[reference_mode]
+        axis_indices = {"X": 0, "Y": 1, "Z": 2}
+        delta_map = {
+            axis.lower(): round(
+                float(target_bbox[point_key][axis_indices[axis]] - source_bbox[point_key][axis_indices[axis]]), 6
+            )
+            for axis in normalized_axes
+        }
+        aligned_axes = [axis for axis in normalized_axes if abs(delta_map[axis.lower()]) <= tolerance]
+        misaligned_axes = [axis for axis in normalized_axes if axis not in aligned_axes]
+        max_abs_delta = max((abs(delta_map[axis.lower()]) for axis in normalized_axes), default=0.0)
+
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "reference": reference_mode,
+            "axes": normalized_axes,
+            "deltas": delta_map,
+            "aligned_axes": aligned_axes,
+            "misaligned_axes": misaligned_axes,
+            "is_aligned": len(aligned_axes) == len(normalized_axes),
+            "max_abs_delta": round(float(max_abs_delta), 6),
+            "tolerance": round(float(tolerance), 6),
+            "units": "blender_units",
+        }
+
+    def measure_overlap(self, from_object, to_object, tolerance=0.0001):
+        """Measures overlap/intersection between two objects."""
+        source_bbox = self._get_bbox_data(self._get_object_or_raise(from_object), world_space=True)
+        target_bbox = self._get_bbox_data(self._get_object_or_raise(to_object), world_space=True)
+
+        intersection_min = [
+            max(source_bbox["min"][axis_index], target_bbox["min"][axis_index]) for axis_index in range(3)
+        ]
+        intersection_max = [
+            min(source_bbox["max"][axis_index], target_bbox["max"][axis_index]) for axis_index in range(3)
+        ]
+        overlap_dimensions = [
+            max(0.0, intersection_max[axis_index] - intersection_min[axis_index]) for axis_index in range(3)
+        ]
+        overlaps = all(value > tolerance for value in overlap_dimensions)
+        gap_axes = [
+            self._axis_gap(
+                source_bbox["min"][axis_index],
+                source_bbox["max"][axis_index],
+                target_bbox["min"][axis_index],
+                target_bbox["max"][axis_index],
+            )
+            for axis_index in range(3)
+        ]
+        touching = not overlaps and all(value <= tolerance for value in gap_axes)
+        overlap_volume = 0.0
+        if overlaps:
+            overlap_volume = overlap_dimensions[0] * overlap_dimensions[1] * overlap_dimensions[2]
+
+        if overlaps:
+            relation = "overlap"
+        elif touching:
+            relation = "touching"
+        else:
+            relation = "disjoint"
+
+        return {
+            "from_object": from_object,
+            "to_object": to_object,
+            "overlaps": overlaps,
+            "touching": touching,
+            "relation": relation,
+            "overlap_dimensions": self._round_values(overlap_dimensions),
+            "overlap_volume": round(float(overlap_volume), 6),
+            "intersection_min": self._round_values(intersection_min) if overlaps else None,
+            "intersection_max": self._round_values(intersection_max) if overlaps else None,
+            "tolerance": round(float(tolerance), 6),
+            "units": "blender_units",
+        }
+
+    def _get_object_or_raise(self, object_name):
+        """Returns an object or raises a clear value error."""
+        obj = bpy.data.objects.get(object_name)
+        if obj is None:
+            raise ValueError(f"Object '{object_name}' not found")
+        return obj
+
+    def _get_bbox_data(self, obj, world_space=True):
+        """Returns raw bounding-box data for an object."""
+        from mathutils import Vector
+
+        corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box] if world_space else [
+            Vector(corner) for corner in obj.bound_box
+        ]
+        min_corner = [float(min(corner[index] for corner in corners)) for index in range(3)]
+        max_corner = [float(max(corner[index] for corner in corners)) for index in range(3)]
+        center = [(min_corner[index] + max_corner[index]) / 2.0 for index in range(3)]
+        dimensions = [max_corner[index] - min_corner[index] for index in range(3)]
+
+        return {
+            "min": min_corner,
+            "max": max_corner,
+            "center": center,
+            "dimensions": dimensions,
+            "corners": corners,
+        }
+
+    def _normalize_axes(self, axes):
+        """Normalizes axis list input for alignment measurements."""
+        if axes is None:
+            return ["X", "Y", "Z"]
+
+        normalized = [str(axis).upper() for axis in axes]
+        invalid = [axis for axis in normalized if axis not in {"X", "Y", "Z"}]
+        if invalid:
+            invalid_axes = ", ".join(sorted(set(invalid)))
+            raise ValueError(f"axes must contain only X, Y, or Z. Invalid values: {invalid_axes}")
+        if not normalized:
+            raise ValueError("axes must contain at least one axis")
+        return normalized
+
+    def _axis_gap(self, source_min, source_max, target_min, target_max):
+        """Returns the positive separation between intervals on one axis."""
+        if source_max < target_min:
+            return float(target_min - source_max)
+        if target_max < source_min:
+            return float(source_min - target_max)
+        return 0.0
+
+    def _axis_overlap(self, source_min, source_max, target_min, target_max):
+        """Returns the overlap depth between intervals on one axis."""
+        return max(0.0, float(min(source_max, target_max) - max(source_min, target_min)))
+
+    def _round_axis_mapping(self, values, precision=6):
+        """Rounds XYZ values into an axis-keyed dictionary."""
+        return {
+            "x": round(float(values[0]), precision),
+            "y": round(float(values[1]), precision),
+            "z": round(float(values[2]), precision),
+        }
+
+    def _round_values(self, values, precision=6):
+        """Rounds a vector/list of numeric values."""
+        return [round(float(value), precision) for value in values]

@@ -1,0 +1,16 @@
+{
+  "tool_name": "scene_measure_overlap",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["overlap", "intersect", "intersection", "collision", "clipping", "measure"],
+  "sample_prompts": ["do these objects overlap", "check intersection", "measure clipping between parts"],
+  "parameters": {
+    "from_object": {"type": "string", "required": true},
+    "to_object": {"type": "string", "required": true},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["scene_measure_gap", "scene_measure_alignment", "scene_measure_distance"],
+  "patterns": [],
+  "description": "Measures bbox overlap/touching state plus intersection dimensions and volume."
+}
