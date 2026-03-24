@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [155](./155-2026-03-24-existing-tool-audit-backlog-and-measure-plan.md) | 2026-03-24 | **Existing-tool audit backlog and measure/assert plan** | - |
+| [154](./154-2026-03-24-metadata-and-truth-audit-findings.md) | 2026-03-24 | **Metadata and truth-model audit findings** | - |
 | [153](./153-2026-03-24-initial-existing-tool-audit-findings.md) | 2026-03-24 | **Initial existing-tool audit findings** | - |
 | [152](./152-2026-03-24-existing-tool-audit-planning.md) | 2026-03-24 | **Existing tool audit planning** | - |
 | [151](./151-2026-03-24-instructions-prompts-and-doc-migration-map.md) | 2026-03-24 | **Instructions, prompts, and documentation migration map** | - |

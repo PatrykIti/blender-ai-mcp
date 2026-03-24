@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks (~120 sub-tasks)
+- **To Do:** 0 tasks (~110 sub-tasks)
 - **In Progress:** 0 tasks
-- **Done:** 168
+- **Done:** 169
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-114](./TASK-114_Existing_Tool_Surface_Audit_And_Alignment.md) | **Existing Tool Surface Audit and Alignment** | 🔴 High | Post-`TASK-113` execution wave: audit current tools, wording, prompts, metadata, and surface drift before further code/tool additions |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -54,6 +53,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-114](./TASK-114_Existing_Tool_Surface_Audit_And_Alignment.md) | **Existing Tool Surface Audit and Alignment** | 🔴 High | 2026-03-24 |
 | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | **Tool Layering, Goal-First, and Vision-Assertion Strategy** | 🔴 High | 2026-03-24 |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | 2025-12-11 |
 | [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | 2026-03-24 |

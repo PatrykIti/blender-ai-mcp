@@ -4,9 +4,9 @@
 **Category:** Product Audit / Tool Surface Hardening  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The first audit pass is underway. Public MCP-facing wording drift and prompt/surface drift are being converted into explicit fix registers before any further tool-family additions.
+**Completion Summary:** The existing-tool audit is complete. The repo now has explicit findings for public tool semantics, prompt/surface drift, metadata/discovery drift, verification/truth-model gaps, and a prioritized follow-up plan for wording fixes plus the first measure/assert code wave.
 
 ---
 
