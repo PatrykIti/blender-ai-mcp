@@ -1,7 +1,7 @@
 # TASK-113-07-02: Router, Addon, and Test Docs Migration Map
 
 **Parent:** [TASK-113-07](./TASK-113-07_Documentation_Migration_And_Delivery_Roadmap.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
 ---
@@ -35,3 +35,4 @@ List the architecture/supporting docs that must be brought into line once the us
 ## Acceptance Criteria
 
 - supporting architecture docs no longer contradict the new user-facing tool strategy
+**Completion Summary:** The next architecture/supporting doc wave is now enumerated explicitly: `_docs/_ROUTER/*`, `_docs/_ADDON/README.md`, `_docs/_TESTS/README.md`, and `_docs/TOOLS*`.

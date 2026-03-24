@@ -1,7 +1,8 @@
 # Demo Task Prompt: Low‑Poly Medieval Well
 
 Use this as the **user request** (`TASK:`) together with the system prompt from:
-- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md` (recommended)
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md` (manual exception)
 
 ---
 

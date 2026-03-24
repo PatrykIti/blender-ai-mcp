@@ -1,8 +1,8 @@
 # Demo Task Prompt: Generic Modeling Template
 
 Use this as the **user request** (TASK prompt). Pair it with one of:
-- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md` (manual tool-calling)
-- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md` (workflow-first)
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md` (recommended normal production path)
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md` (manual exception path)
 
 ---
 

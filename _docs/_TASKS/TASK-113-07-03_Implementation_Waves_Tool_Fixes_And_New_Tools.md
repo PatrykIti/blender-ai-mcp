@@ -1,7 +1,7 @@
 # TASK-113-07-03: Implementation Waves, Tool Fixes, and New Tools
 
 **Parent:** [TASK-113-07](./TASK-113-07_Documentation_Migration_And_Delivery_Roadmap.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -26,3 +26,4 @@ Define the post-documentation execution order for actual product/tool work.
 ## Acceptance Criteria
 
 - the repo has one explicit sequence for “what we fix first” after the strategy docs are in place
+**Completion Summary:** The post-doc execution order is now explicit: existing tool fixes/docstring rewrites, measure/assert atomics, macro tools, workflow tools, vision compare tooling, then further surface hiding/discovery refinement.

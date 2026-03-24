@@ -1,7 +1,7 @@
 # TASK-113-07-01: Root, MCP, and Tool Docs Migration Map
 
 **Parent:** [TASK-113-07](./TASK-113-07_Documentation_Migration_And_Delivery_Roadmap.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -34,3 +34,4 @@ List the exact user-facing docs that must be updated first.
 ## Acceptance Criteria
 
 - the highest-signal user-facing docs present the new model first
+**Completion Summary:** The highest-signal user-facing docs that had to move first are now explicit: `README.md`, `_docs/_MCP_SERVER/README.md`, `_docs/AVAILABLE_TOOLS_SUMMARY.md`, and `_docs/_PROMPTS/README.md`.

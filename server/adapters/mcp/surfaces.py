@@ -32,9 +32,11 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         list_page_size=250,
         tasks_enabled=False,
         instructions=(
-            "Manual legacy MCP surface. Router and workflow catalog tools are intentionally not exposed here. "
+            "Manual legacy MCP surface. Broad low-level access for maintainer/manual work. "
+            "Router and workflow catalog tools are intentionally not exposed here. "
+            "Goal-first is not required on this surface. "
             "Use direct scene, modeling, mesh, material, UV, collection, import/export, and inspection tools. "
-            "If you need workflow execution or router-assisted planning, switch to the legacy-flat or llm-guided surface."
+            "This is not the preferred production LLM path; if you want goal-first workflow/macro guidance, use llm-guided."
         ),
         delivery_mode="compatibility",
         default_contract_line=get_default_contract_line("legacy-manual"),
@@ -51,6 +53,11 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         ),
         list_page_size=250,
         tasks_enabled=False,
+        instructions=(
+            "Legacy compatibility/control surface. Broad public catalog including router and workflow tools. "
+            "This surface is not the preferred long-term production LLM path. "
+            "If you use router/workflow capabilities here, start from router_set_goal first; otherwise treat this as a compatibility or maintainer-oriented surface."
+        ),
         delivery_mode="compatibility",
         default_contract_line=get_default_contract_line("legacy-flat"),
         allowed_contract_lines=SURFACE_ALLOWED_CONTRACT_LINES["legacy-flat"],
@@ -67,12 +74,14 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         list_page_size=50,
         tasks_enabled=True,
         instructions=(
-            "Guided MCP surface. Start from router_set_goal or router_get_status. "
+            "Guided MCP surface. Start from router_set_goal first; this is the required production session bootstrap. "
             "Current entry tools are router_set_goal, router_get_status, browse_workflows, "
             "search_tools, call_tool, list_prompts, and get_prompt. "
+            "Prefer workflow/macro paths over raw low-level atomics. "
             "Other capability families can unlock progressively by session phase. "
             "Use search_tools/call_tool for discovery on the shaped public surface. "
             "If you want a manual non-router workflow, load the prompt 'manual_tools_no_router'. "
+            "Verify meaningful changes with inspection and, when appropriate, before/after capture plus deterministic measure/assert tooling. "
             "This surface is task-capable: adopted heavy tools can run as background tasks with progress, "
             "poll, cancel, and foreground fallback semantics."
         ),
@@ -95,6 +104,8 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         tasks_enabled=True,
         instructions=(
             "Internal debug surface. Broad maintainer-oriented access with structured-first delivery. "
+            "This surface may expose internal/hidden layers and is not representative of the normal production public catalog. "
+            "Goal-first is optional here. "
             "This surface is task-capable: adopted heavy tools can run as background tasks with progress, "
             "poll, cancel, and foreground fallback semantics."
         ),
@@ -118,6 +129,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
             "Experimental Code Mode pilot. "
             "Use only the visible read-only MCP capabilities, prompts, and resources. "
             "Do not attempt geometry-destructive or write-heavy flows on this surface. "
+            "This is not the normal production write path. Goal-first is optional here. "
             "This surface is task-capable, but keep background task usage aligned with the visible read-only pilot tools."
         ),
         delivery_mode="structured_first",

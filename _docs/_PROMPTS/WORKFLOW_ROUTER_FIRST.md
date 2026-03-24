@@ -38,7 +38,8 @@ WORKFLOW SELECTION (MANDATORY)
            * Call router_set_goal(goal, resolved_params={...}) with the user answers.
            * Repeat until status == "ready".
        - If status == "ready":
-           * Proceed with modeling. Prefer minimal/high-level tool calls and let Router expand/correct them.
+           * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
+           * Do not treat the whole internal catalog as the default action space.
        - If status == "no_match" or "disabled":
            * Ask the user whether to:
                A) continue in MANUAL mode (use the “Manual Modeling Prompt”), or
@@ -47,11 +48,17 @@ WORKFLOW SELECTION (MANDATORY)
            * Stop and surface the error message (Router malfunction). Ask user to open a GitHub issue with logs/stack trace.
 
 RELIABILITY (STILL REQUIRED)
+- Treat visual interpretation as support, not truth.
 - Even with Router corrections, verify major milestones:
    * scene_list_objects()
    * inspect_scene(action="object", target_object=...)
    * scene_get_bounding_box(object_name=..., world_space=True)
    * Treat these inspection results as authoritative over prior semantic assumptions
+- Where shape/fit changes matter, prefer a before/action/after verification pattern:
+   * capture before
+   * perform change
+   * capture after
+   * compare and summarize
 - For shape-critical parts (round vs boxy, holes/openings, clearances), do quick visual QA using visibility tools:
    * scene_isolate_object(object_name=...)
    * scene_get_viewport(shading="SOLID", focus_target=..., output_mode="IMAGE") or extraction_render_angles(object_name=...)

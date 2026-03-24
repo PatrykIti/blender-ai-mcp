@@ -19,6 +19,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
 > public surface, and use `manual_tools_no_router` when you explicitly want a
 > manual non-router operating mode.
+> Prefer workflow/macro tools over raw low-level atomics, and treat
+> before/after capture plus deterministic verification as the normal way to
+> judge whether a change is actually correct.
 >
 > On elicitation-capable clients, missing workflow parameters may be presented as
 > structured clarification UI instead of free-form chat questions. Tool-only clients
@@ -48,3 +51,8 @@ Model a smartphone with separate parts: body, screen, camera bump, 3 lenses, pow
 - **Workflow-first (Router Supervisor)** → [`WORKFLOW_ROUTER_FIRST.md`](./WORKFLOW_ROUTER_FIRST.md)
 - **Demo task: low-poly medieval well** → [`DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`](./DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md)
 - **Demo task: generic modeling template** → [`DEMO_TASK_GENERIC_MODELING.md`](./DEMO_TASK_GENERIC_MODELING.md)
+
+Interpretation:
+
+- normal production LLM usage should prefer the workflow-first path
+- manual/no-router mode is an explicit exception, not the default product model

@@ -4,9 +4,9 @@
 **Category:** Product Strategy / MCP Surface Architecture  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-084, TASK-085, TASK-086, TASK-090, TASK-091, TASK-112  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The first three documentation waves are now complete: canonical policy source, superseded-notation rule, surface exposure matrix, hidden atomic layer rules, `set_goal`-first policy, macro/workflow boundaries, and the vision/measure/assert model are all documented. Remaining work is the prompt/instruction rewrite completion pass and the exact `_docs/` migration roadmap.
+**Completion Summary:** The documentation rollout is complete: canonical policy source, superseded-notation rule, surface exposure matrix, hidden atomic layer rules, `set_goal`-first policy, macro/workflow boundaries, vision/measure/assert model, prompt/instruction rewrite, and exact `_docs/` migration roadmap are now documented.
 
 ---
 

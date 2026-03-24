@@ -1,7 +1,7 @@
 # TASK-113-06: Surface Instructions and Prompt Layer Rewrite
 
 **Parent:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** TASK-113-02, TASK-113-03, TASK-113-05
 
@@ -37,3 +37,4 @@ Rewrite surface `instructions` and MCP prompt assets so they teach the new opera
 
 - prompt/instruction layer teaches the intended product model directly
 - old “here is the whole flat catalog, choose anything” mentality no longer dominates prompts
+**Completion Summary:** Surface `instructions` now explicitly reflect the new product posture by profile, and prompt docs teach workflow/macro-first, goal-first, and verify-after-change behavior instead of flat-catalog usage.

@@ -18,6 +18,7 @@ MODE: MANUAL TOOLS ONLY (NO ROUTER / NO WORKFLOWS)
 - Never call: router_set_goal, router_get_status, router_clear_goal.
 - Do not use/assume any existing workflows. You must plan and execute the modeling steps yourself.
 - This mode is an explicit exception to the normal goal-first production rule.
+- This mode is for manual/maintainer-style operation, not the preferred production LLM surface.
 
 ASSET STRUCTURE
 - Build the asset as multiple separate objects (parts). Do NOT join all parts into one mesh.

@@ -1,7 +1,7 @@
 # TASK-113-06-02: Prompt Library Rewrite Targets
 
 **Parent:** [TASK-113-06](./TASK-113-06_Surface_Instructions_And_Prompt_Layer_Rewrite.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -35,3 +35,4 @@ List the exact prompt asset rewrites required by the new strategy.
 
 - prompt assets explicitly steer toward the new operating model
 - old prompt guidance does not implicitly preserve the flat-catalog approach
+**Completion Summary:** Prompt library docs now frame workflow-first as the normal production path, manual/no-router as an explicit exception, and verification/goal-first behavior as part of the intended operating model.
