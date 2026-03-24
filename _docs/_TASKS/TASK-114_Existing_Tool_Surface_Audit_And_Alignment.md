@@ -4,7 +4,9 @@
 **Category:** Product Audit / Tool Surface Hardening  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The first audit pass is underway. Public MCP-facing wording drift and prompt/surface drift are being converted into explicit fix registers before any further tool-family additions.
 
 ---
 
