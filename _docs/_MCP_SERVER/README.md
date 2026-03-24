@@ -147,6 +147,70 @@ Once a goal is set, downstream layers should be able to rely on:
 This context model is part of the current architecture direction and should be
 preserved as later tool and vision waves are added.
 
+## Macro vs Workflow Tool Rules
+
+Current product direction:
+
+- **macro tools** are the preferred default LLM-facing layer
+- **workflow/mega tools** are bounded process tools, not catch-all “do anything” tools
+
+Macro tools should:
+
+- represent one meaningful task responsibility
+- orchestrate atomic tools internally when needed
+- return task-relevant structured outputs
+
+Workflow/mega tools should:
+
+- remain bounded
+- orchestrate macro tools, atomic tools, rule checks, and verification
+- return structured reports that answer:
+  - what changed
+  - what passed
+  - what failed
+  - what to do next if verification failed
+
+## Vision, Measurement, and Assertion
+
+The intended verification model is:
+
+- vision = interpretation support
+- measurement/assertion = truth layer
+
+Preferred before/after analysis contract:
+
+1. before capture
+2. action/change
+3. after capture
+4. structured compare/summary
+
+Expected standard view set when visual comparison matters:
+
+- front
+- side
+- top
+- iso
+- focus-target view when needed
+
+The next deterministic verification family should cover:
+
+- dimensions
+- distance
+- gap/contact
+- overlap/intersection
+- alignment
+- proportion
+- symmetry
+- containment
+
+Lightweight vision models are acceptable for:
+
+- summarizing visual change
+- localizing likely issues
+- comparing before/after imagery
+
+They should not override deterministic measure/assert results.
+
 ## Search-First Discovery Rollout
 
 The default `llm-guided` surface now runs search-first discovery by default.

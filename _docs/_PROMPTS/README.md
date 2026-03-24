@@ -23,6 +23,10 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > On elicitation-capable clients, missing workflow parameters may be presented as
 > structured clarification UI instead of free-form chat questions. Tool-only clients
 > receive a typed `needs_input` fallback payload instead.
+>
+> For normal production usage, prefer workflow/macro tools over raw low-level
+> atomics, and treat before/after capture plus deterministic verification as the
+> standard way to judge whether a change is actually correct.
 
 ## How to use (Claude / ChatGPT)
 

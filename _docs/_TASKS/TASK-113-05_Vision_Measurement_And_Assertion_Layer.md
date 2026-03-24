@@ -1,7 +1,7 @@
 # TASK-113-05: Vision, Measurement, and Assertion Layer
 
 **Parent:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** TASK-113-03, TASK-113-04
 
@@ -34,3 +34,4 @@ Define how visual interpretation, deterministic measurement, and explicit assert
 
 - the repo has a documented answer to “how does the LLM know if the result is correct?”
 - new verification work is guided by one documented architecture instead of ad hoc patches
+**Completion Summary:** The docs now define the verification model explicitly: before/after multiview capture as a platform pattern, deterministic measure/assert as the truth layer, and vision as interpretation support rather than the final authority.

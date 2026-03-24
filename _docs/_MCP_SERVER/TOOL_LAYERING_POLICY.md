@@ -75,12 +75,37 @@ A task-oriented tool built from atomic tools that still has one clear responsibi
 
 Macro tools are the preferred default public working layer for normal LLM usage.
 
+Macro-tool rules:
+
+- one meaningful task responsibility
+- may orchestrate atomic tools internally
+- should return task-relevant structured outputs
+- should be understandable in one sentence
+- should not expand into open-ended process engines
+
 ### Workflow Tool
 
 A bounded process tool that orchestrates macro tools, atomic tools, rules,
 verification, and optionally vision before/after analysis.
 
 A workflow tool is not an open-ended “do anything” tool.
+
+Workflow/mega-tool rules:
+
+- must remain bounded
+- may orchestrate:
+  - atomic tools
+  - macro tools
+  - rules/policy checks
+  - before/after capture
+  - measure/assert calls
+  - vision interpretation
+- must return a structured report describing:
+  - what was attempted
+  - what changed
+  - what passed
+  - what failed
+  - recommended next step when verification fails
 
 ### Public Surface
 
@@ -183,6 +208,51 @@ Vision can help:
 - compare before/after views
 
 Vision must not replace deterministic inspection/measurement/assertion when correctness matters.
+
+### 4b. Before/After Capture Is A Platform Pattern
+
+For meaningful visual verification flows, the preferred pattern is:
+
+1. before capture
+2. action/change
+3. after capture
+4. structured compare/summary
+
+The view set should be consistent and intentional. Typical standard views:
+
+- front
+- side
+- top
+- iso
+- focus-target view when needed
+
+### 4c. Measurement/Assertion Is The Truth Layer
+
+The expected deterministic verification family should cover at least:
+
+- dimensions
+- distance
+- gap/contact
+- overlap/intersection
+- alignment
+- proportion
+- symmetry
+- containment
+
+Vision may help interpret and localize problems, but deterministic
+measurement/assertion should remain the final truth source.
+
+### 4d. Lightweight Vision Model Guidance
+
+Lightweight vision models are acceptable when the task is:
+
+- compare before/after views
+- summarize visible changes
+- localize likely visual issues
+- provide compact human/LLM-readable interpretation
+
+They should not be treated as the final authority on geometric correctness when
+measure/assert tools can answer the question directly.
 
 ### 4a. Session Context Must Survive Beyond The Initial Goal Call
 

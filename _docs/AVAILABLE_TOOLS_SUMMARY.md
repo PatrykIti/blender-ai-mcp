@@ -92,6 +92,12 @@ This section is descriptive, not normative. Hidden atomic tools may still appear
 in the inventory because they exist in the runtime/repo, even when they should
 not be part of the normal public LLM-facing surface.
 
+Interpretation rule for future tool waves:
+
+- inventory existence does not imply public-default exposure
+- macro/workflow tools are preferred for normal LLM-facing surfaces
+- deterministic measure/assert tool families should be treated as part of the truth layer once added
+
 ---
 
 ## Structured Contract Surfaces

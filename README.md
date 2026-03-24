@@ -139,6 +139,18 @@ Normal production-oriented LLM use is now expected to be:
 Hidden atomic tools remain important internally, but they are no longer the
 preferred public interface for production-oriented LLM surfaces.
 
+Normal product direction for tools:
+
+- atomic tools: implementation substrate / hidden by default
+- macro tools: preferred default LLM-facing layer
+- workflow/mega tools: bounded process tools with explicit verification and structured reporting
+
+Normal verification direction:
+
+- use before/after capture when visual change matters
+- use vision to interpret what changed
+- use deterministic measurement/assertion as the final truth layer
+
 ### Runtime Responsibility Model
 
 The project intentionally separates four different responsibilities:

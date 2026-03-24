@@ -1,7 +1,7 @@
 # TASK-113-05-01: Multiview Before/After Capture Contract
 
 **Parent:** [TASK-113-05](./TASK-113-05_Vision_Measurement_And_Assertion_Layer.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -41,3 +41,4 @@ Possible standard views:
 ## Acceptance Criteria
 
 - “snapshot before and after” becomes a documented platform contract, not an improvised habit
+**Completion Summary:** The standard before/action/after capture pattern and the intended canonical view set are now documented as a platform contract rather than an ad hoc workflow habit.

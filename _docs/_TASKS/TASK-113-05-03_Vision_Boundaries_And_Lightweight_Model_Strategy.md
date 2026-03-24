@@ -1,7 +1,7 @@
 # TASK-113-05-03: Vision Boundaries and Lightweight Model Strategy
 
 **Parent:** [TASK-113-05](./TASK-113-05_Vision_Measurement_And_Assertion_Layer.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
 ---
@@ -35,3 +35,4 @@ Define how vision should help without taking over correctness responsibility.
 ## Acceptance Criteria
 
 - the repo has explicit guidance for when to use vision, and when not to trust it as final authority
+**Completion Summary:** The docs now define when lightweight vision is useful, what it may do, and why it must not override deterministic measure/assert results when correctness matters.

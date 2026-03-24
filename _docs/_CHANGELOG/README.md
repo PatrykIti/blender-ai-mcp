@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [150](./150-2026-03-24-macro-workflow-and-vision-assert-docs.md) | 2026-03-24 | **Macro/workflow and vision/assert docs** | - |
 | [149](./149-2026-03-24-hidden-atomic-and-goal-first-docs.md) | 2026-03-24 | **Hidden atomic layer and goal-first docs** | - |
 | [148](./148-2026-03-24-tool-layering-policy-foundation.md) | 2026-03-24 | **Tool layering policy foundation** | - |
 | [147](./147-2026-03-24-supersede-reconstruction-legacy-task-forms.md) | 2026-03-24 | **Supersede legacy reconstruction task forms** | - |

@@ -1,7 +1,7 @@
 # TASK-113-05-02: Measurement and Assertion Tool Family
 
 **Parent:** [TASK-113-05](./TASK-113-05_Vision_Measurement_And_Assertion_Layer.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -38,3 +38,4 @@ Define the deterministic truth layer that should sit under visual interpretation
 
 - the repo has a documented deterministic verification family to build next
 - vision is clearly documented as secondary to measurement/assertion for truth
+**Completion Summary:** The next deterministic truth/tool family is now explicitly defined in docs: dimensions, distance, gap/contact, overlap, alignment, proportion, symmetry, and containment.

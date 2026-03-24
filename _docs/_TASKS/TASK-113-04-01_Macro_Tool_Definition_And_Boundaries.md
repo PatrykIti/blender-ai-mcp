@@ -1,7 +1,7 @@
 # TASK-113-04-01: Macro Tool Definition and Boundaries
 
 **Parent:** [TASK-113-04](./TASK-113-04_Macro_And_Workflow_Tool_Design_Rules.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
@@ -32,3 +32,4 @@ Define the default LLM-facing tool layer: macro tools.
 ## Acceptance Criteria
 
 - future contributors can distinguish a macro tool from both an atomic helper and a workflow process tool
+**Completion Summary:** Macro tools are now explicitly documented as the default LLM-facing layer: one meaningful task responsibility, possibly orchestrating atomics internally, but not open-ended process engines.
