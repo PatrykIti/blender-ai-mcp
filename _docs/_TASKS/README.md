@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 10 tasks (~220 sub-tasks)
+- **To Do:** 11 tasks (~240 sub-tasks)
 - **In Progress:** 1 tasks
 - **Done:** 166
 
@@ -22,6 +22,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | **Tool Layering, Goal-First, and Vision-Assertion Strategy** | 🔴 High | Canonical policy and rollout plan for layered tools, small public surfaces, `set_goal`-first orchestration, and vision/assert-based verification |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -441,3 +442,15 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-099-02` | [runtime version guards and error surfaces](./TASK-099-02-01-01_Runtime_Version_Guards_and_Error_Surfaces.md), [shims containment and instrumentation](./TASK-099-02-01-02_Shims_Containment_and_Instrumentation.md), [core](./TASK-099-02-01_Core_Runtime_Guards_and_Containment.md), [tests](./TASK-099-02-02_Tests_Runtime_Guards_and_Containment.md), [overview](./TASK-099-02_Runtime_Guards_and_Shim_Containment.md) | Runtime guards and shim containment |
 | `TASK-099-03` | [FastMCP Docket version selection](./TASK-099-03-01-01_FastMCP_Docket_Version_Selection.md), [real task runtime validation](./TASK-099-03-01-02_Real_Task_Runtime_Validation.md), [core](./TASK-099-03-01_Core_Upstream_Version_Alignment.md), [tests](./TASK-099-03-02_Tests_Upstream_Version_Alignment.md), [overview](./TASK-099-03_Upstream_Version_Alignment_and_Validation.md) | Upstream version alignment and validation |
 | `TASK-099-04` | [core](./TASK-099-04-01_Core_Shims_Removal.md), [tests](./TASK-099-04-02_Tests_Shims_Removal_and_Release_Documentation.md), [overview](./TASK-099-04_Shims_Removal_and_Release_Documentation.md) | Shim removal and release documentation |
+
+### TASK-113 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-113-01` | [policy/terminology overview](./TASK-113-01_Tool_Layering_Policy_And_Terminology.md), [canonical policy doc ownership](./TASK-113-01-01_Canonical_Policy_Doc_And_Ownership.md), [historical superseded markers](./TASK-113-01-02_Historical_Superseded_Markers_And_Notation.md) | Canonical tool-layering policy, ownership, and historical notation rules |
+| `TASK-113-02` | [surface exposure overview](./TASK-113-02_Surface_Exposure_Matrix_And_Hidden_Atomic_Layer.md), [profile surface matrix](./TASK-113-02-01_Profile_Surface_Exposure_Matrix.md), [hidden atomic layer/discovery rules](./TASK-113-02-02_Hidden_Atomic_Layer_And_Discovery_Rules.md), [public catalog curation](./TASK-113-02-03_Public_Catalog_Curation_And_Escape_Hatches.md) | Public/private surface exposure, hidden atomic layer, and escape-hatch rules |
+| `TASK-113-03` | [goal-first overview](./TASK-113-03_Goal_First_Orchestration_And_Session_Contract.md), [set-goal-first requirement](./TASK-113-03-01_Set_Goal_First_Requirement.md), [session/vision context](./TASK-113-03-02_Session_Context_Router_Status_And_Vision_Context.md) | Goal-first orchestration and session-context contract |
+| `TASK-113-04` | [macro/workflow overview](./TASK-113-04_Macro_And_Workflow_Tool_Design_Rules.md), [macro boundaries](./TASK-113-04-01_Macro_Tool_Definition_And_Boundaries.md), [workflow/mega-tool contract](./TASK-113-04-02_Workflow_Mega_Tool_Process_And_Report_Contract.md) | Macro tool and workflow/mega-tool design rules |
+| `TASK-113-05` | [vision/assert overview](./TASK-113-05_Vision_Measurement_And_Assertion_Layer.md), [multiview capture contract](./TASK-113-05-01_Multiview_Before_After_Capture_Contract.md), [measurement/assertion family](./TASK-113-05-02_Measurement_And_Assertion_Tool_Family.md), [vision/lightweight-model boundaries](./TASK-113-05-03_Vision_Boundaries_And_Lightweight_Model_Strategy.md) | Vision, before/after capture, and deterministic measure/assert strategy |
+| `TASK-113-06` | [instructions/prompt overview](./TASK-113-06_Surface_Instructions_And_Prompt_Layer_Rewrite.md), [surface instructions rewrite targets](./TASK-113-06-01_Surface_Instructions_Rewrite_Targets.md), [prompt library rewrite targets](./TASK-113-06-02_Prompt_Library_Rewrite_Targets.md) | Surface instruction and prompt-layer rewrite plan |
+| `TASK-113-07` | [docs migration overview](./TASK-113-07_Documentation_Migration_And_Delivery_Roadmap.md), [root/MCP/tools migration map](./TASK-113-07-01_Root_MCP_And_Tools_Docs_Migration_Map.md), [router/addon/tests migration map](./TASK-113-07-02_Router_Addon_And_Test_Docs_Migration_Map.md), [implementation waves](./TASK-113-07-03_Implementation_Waves_Tool_Fixes_And_New_Tools.md) | Exact documentation migration plan and post-doc implementation roadmap |

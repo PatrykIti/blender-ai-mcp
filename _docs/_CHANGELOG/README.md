@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [144](./144-2026-03-24-tool-layering-goal-first-strategy-planning.md) | 2026-03-24 | **Tool layering and goal-first strategy planning** | - |
 | [143](./143-2026-03-24-final-public-sculpt-surface-replacement.md) | 2026-03-24 | **Final public sculpt surface replacement** | - |
 | [142](./142-2026-03-23-programmatic-sculpt-region-wave.md) | 2026-03-23 | **Programmatic sculpt region wave** | - |
 | [141](./141-2026-03-23-programmatic-sculpt-deform-region-foundation.md) | 2026-03-23 | **Programmatic sculpt deform-region foundation** | - |
