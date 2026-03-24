@@ -20,7 +20,7 @@ def test_legacy_flat_first_page_contains_full_catalog_without_next_cursor():
 
     tool_count, next_cursor = asyncio.run(run())
 
-    assert tool_count == 161
+    assert tool_count == 157
     assert next_cursor is None
 
 
@@ -59,7 +59,7 @@ def test_legacy_manual_first_page_omits_router_and_workflow_tools():
     assert "router_clear_goal" not in names
     assert "workflow_catalog" not in names
     assert "modeling_create_primitive" in names
-    assert tool_count == 154
+    assert tool_count == 150
     assert next_cursor is None
 
 

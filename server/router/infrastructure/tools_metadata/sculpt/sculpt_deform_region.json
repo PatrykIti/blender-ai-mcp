@@ -3,11 +3,12 @@
   "category": "sculpt",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["sculpt", "deform", "grab", "move", "pull", "region"],
+  "keywords": ["sculpt", "deform", "grab", "move", "pull", "snake hook", "region"],
   "sample_prompts": [
     "deform a local region",
     "pull part of the mesh upward",
-    "move a sculpt area deterministically"
+    "move a sculpt area deterministically",
+    "snake hook a protrusion"
   ],
   "parameters": {
     "object_name": {"type": "string", "default": null},

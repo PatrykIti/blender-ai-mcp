@@ -65,6 +65,36 @@ class ISculptTool(ABC):
         """
         pass
 
+    @abstractmethod
+    def crease_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        depth: float = 0.1,
+        pinch: float = 0.5,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """
+        Deterministically creates a local crease/groove region.
+
+        Args:
+            object_name: Target object (default: active object)
+            center: World-space center of influence [x, y, z]
+            radius: Radius of influence
+            depth: Inward displacement amount along local normals
+            pinch: Additional contraction toward the center (0-1)
+            falloff: Falloff curve ('SMOOTH', 'LINEAR', 'SHARP', 'CONSTANT')
+            use_symmetry: Mirror the deformation across an axis
+            symmetry_axis: Symmetry axis (X, Y, Z)
+
+        Returns:
+            Success message describing the crease performed.
+        """
+        pass
+
     # ==========================================================================
     # TASK-027-2: sculpt_brush_smooth
     # ==========================================================================

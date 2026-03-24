@@ -596,6 +596,82 @@ class SculptHandler:
         finally:
             self._restore_mode(previous_mode)
 
+    def crease_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        depth: float = 0.1,
+        pinch: float = 0.5,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> dict:
+        """Deterministically create a local crease/groove region."""
+
+        if center is None:
+            raise ValueError("center is required")
+        if radius <= 0:
+            raise ValueError("radius must be > 0")
+
+        clamped_pinch = max(0.0, min(1.0, pinch))
+        center_xyz = self._coerce_xyz(center)
+
+        obj, previous_mode = self._ensure_mesh_object_mode(object_name)
+
+        try:
+            center_local = self._world_point_to_local(obj, center_xyz)
+            affected_vertices = 0
+
+            for vertex in getattr(obj.data, "vertices", []):
+                vertex_co = self._coerce_xyz(vertex.co)
+                base_weight, chosen_center, _mirrored = self._strongest_region_source(
+                    vertex_co=vertex_co,
+                    center=center_local,
+                    radius=radius,
+                    falloff=falloff,
+                    use_symmetry=use_symmetry,
+                    symmetry_axis=symmetry_axis,
+                )
+                if base_weight <= 0:
+                    continue
+
+                normal_source = getattr(vertex, "normal", None)
+                if normal_source is not None:
+                    inward_normal = tuple(
+                        -component for component in self._normalize_vector(self._coerce_xyz(normal_source))
+                    )
+                else:
+                    inward_normal = self._normalize_vector(
+                        tuple(chosen_center[axis] - vertex_co[axis] for axis in range(3))
+                    )
+
+                to_center = self._normalize_vector(tuple(chosen_center[axis] - vertex_co[axis] for axis in range(3)))
+                new_co = tuple(
+                    vertex_co[axis]
+                    + (inward_normal[axis] * depth + to_center[axis] * depth * clamped_pinch) * base_weight
+                    for axis in range(3)
+                )
+                self._set_xyz(vertex.co, new_co)
+                affected_vertices += 1
+
+            if hasattr(obj.data, "update"):
+                obj.data.update()
+
+            return {
+                "object_name": obj.name,
+                "affected_vertices": affected_vertices,
+                "radius": radius,
+                "depth": depth,
+                "pinch": clamped_pinch,
+                "falloff": falloff.upper(),
+                "use_symmetry": use_symmetry,
+                "symmetry_axis": symmetry_axis.upper() if use_symmetry else None,
+                "center": list(center_xyz),
+            }
+        finally:
+            self._restore_mode(previous_mode)
+
     # ==========================================================================
     # TASK-027-2: sculpt_brush_smooth
     # ==========================================================================

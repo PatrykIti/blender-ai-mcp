@@ -60,6 +60,35 @@ class SculptToolHandler(ISculptTool):
             f"falloff={result['falloff']}, strength={result['strength']})"
         )
 
+    def crease_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        depth: float = 0.1,
+        pinch: float = 0.5,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically create a local crease/groove region."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "depth": depth,
+            "pinch": pinch,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.crease_region", args))
+        return (
+            f"Creased region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, depth={result['depth']}, "
+            f"pinch={result['pinch']}, radius={result['radius']}, falloff={result['falloff']})"
+        )
+
     def smooth_region(
         self,
         object_name: Optional[str] = None,

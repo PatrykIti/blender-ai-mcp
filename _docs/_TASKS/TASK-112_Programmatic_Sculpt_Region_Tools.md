@@ -4,9 +4,17 @@
 **Category:** Sculpt / LLM Reliability  
 **Estimated Effort:** Medium  
 **Dependencies:** None  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** `TASK-112-01`, `TASK-112-02`, `TASK-112-03`, and `TASK-112-05` are implemented. The repo now has a deterministic first-wave sculpt-region tool family (`sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, `sculpt_pinch_region`) plus unit/e2e coverage. Remaining work is mainly broader surface rationalization for the still-brush-dependent specialist sculpt tools.
+**Completion Summary:** The repo now has a deterministic regional sculpt surface for LLM clients:
+
+- `sculpt_deform_region`
+- `sculpt_crease_region`
+- `sculpt_smooth_region`
+- `sculpt_inflate_region`
+- `sculpt_pinch_region`
+
+Brush-dependent sculpt setup tools were removed from the public MCP sculpt surface where deterministic replacements now exist. The remaining sculpt surface is now geometry-driven instead of brush-event-driven.
 
 ---
 
@@ -115,6 +123,9 @@ Possible later extensions:
 
 5. [TASK-112-05](./TASK-112-05_Tests_For_Programmatic_Sculpt_Tools.md)  
    unit + e2e coverage for deterministic sculpt region tools
+
+6. [TASK-112-06](./TASK-112-06_Programmatic_Crease_Region_And_Final_Public_Surface_Cleanup.md)  
+   final crease replacement plus removal of remaining brush-dependent sculpt tools from the public surface
 
 ---
 

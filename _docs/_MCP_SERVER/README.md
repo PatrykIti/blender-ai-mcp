@@ -78,8 +78,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `154` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `161` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `150` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `157` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -508,19 +508,15 @@ Sculpt Mode operations for organic shape manipulation.
 |-----------|-----------|-------------|
 | `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. Recommended for AI workflows. |
 | `sculpt_deform_region` | `center`, `radius`, `delta`, `strength`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically deforms a local mesh region. Programmatic replacement for brush-style grab behavior. |
+| `sculpt_crease_region` | `center`, `radius`, `depth`, `pinch`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically creates a local crease/groove region. Programmatic replacement for brush-style crease behavior. |
 | `sculpt_smooth_region` | `center`, `radius`, `strength`, `iterations`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically smooths a local mesh region using edge-adjacency averaging. |
 | `sculpt_inflate_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically inflates or deflates a local mesh region. |
 | `sculpt_pinch_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically pinches a local mesh region toward the influence center. |
-| `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
-| `sculpt_brush_clay` | `radius`, `strength` | Sets up clay brush for adding material (muscle mass, fat deposits). |
-| `sculpt_brush_blob` | `radius`, `strength` | Sets up blob brush for creating rounded organic bulges. |
-| `sculpt_brush_snake_hook` | `radius`, `strength` | Sets up snake hook brush for pulling tendrils (blood vessels, nerves). |
-| `sculpt_brush_draw` | `radius`, `strength` | Sets up draw brush for basic sculpting. |
 | `sculpt_enable_dyntopo` | `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology for automatic geometry addition. |
 | `sculpt_disable_dyntopo` | *none* | Disables Dynamic Topology. |
 | `sculpt_dyntopo_flood_fill` | *none* | Applies current detail level to entire mesh. |
 
-> **Note:** For reliable AI workflows, use `sculpt_auto`, `sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, and `sculpt_pinch_region`. Remaining brush tools are no longer the primary programmatic sculpt path.
+> **Note:** For reliable AI workflows, use `sculpt_auto`, `sculpt_deform_region`, `sculpt_crease_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, and `sculpt_pinch_region`.
 
 ### Export Tools
 File export operations.

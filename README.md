@@ -91,8 +91,8 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-manual`: `154` visible tools, router/workflow omitted from the namespace
-- `legacy-flat`: `161` visible tools, including router/workflow on the broad compatibility surface
+- `legacy-manual`: `150` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `157` visible tools, including router/workflow on the broad compatibility surface
 - `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
@@ -769,18 +769,14 @@ Organic shaping and sculpt workflows.
 |------|-------------|--------|
 | `sculpt_auto` | High-level sculpt operation (mesh filters) | ✅ |
 | `sculpt_deform_region` | Deterministic local sculpt deformation | ✅ |
+| `sculpt_crease_region` | Deterministic local crease/groove | ✅ |
 | `sculpt_smooth_region` | Deterministic local smoothing | ✅ |
 | `sculpt_inflate_region` | Deterministic local inflate/deflate | ✅ |
 | `sculpt_pinch_region` | Deterministic local pinch | ✅ |
-| `sculpt_brush_crease` | Crease brush | ✅ |
 
 #### Organic Brushes
 | Tool | Description | Status |
 |------|-------------|--------|
-| `sculpt_brush_clay` | Add clay-like material | ✅ |
-| `sculpt_brush_blob` | Create organic bulges | ✅ |
-| `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | ✅ |
-| `sculpt_brush_draw` | Basic sculpt draw | ✅ |
 
 #### Dynamic Topology
 | Tool | Description | Status |
@@ -1228,12 +1224,8 @@ The larger examples below remain useful as broad compatibility references, but t
         "sculpt_auto",
         "sculpt_smooth_region",
         "sculpt_deform_region",
-        "sculpt_brush_crease",
-        "sculpt_brush_clay",
+        "sculpt_crease_region",
         "sculpt_inflate_region",
-        "sculpt_brush_blob",
-        "sculpt_brush_snake_hook",
-        "sculpt_brush_draw",
         "sculpt_pinch_region",
         "sculpt_enable_dyntopo",
         "sculpt_disable_dyntopo",
@@ -1410,12 +1402,8 @@ The larger examples below remain useful as broad compatibility references, but t
         "sculpt_auto",
         "sculpt_smooth_region",
         "sculpt_deform_region",
-        "sculpt_brush_crease",
-        "sculpt_brush_clay",
+        "sculpt_crease_region",
         "sculpt_inflate_region",
-        "sculpt_brush_blob",
-        "sculpt_brush_snake_hook",
-        "sculpt_brush_draw",
         "sculpt_pinch_region",
         "sculpt_enable_dyntopo",
         "sculpt_disable_dyntopo",
@@ -1641,12 +1629,8 @@ enabled_tools = [
   "sculpt_auto",
   "sculpt_smooth_region",
   "sculpt_deform_region",
-  "sculpt_brush_crease",
-  "sculpt_brush_clay",
+  "sculpt_crease_region",
   "sculpt_inflate_region",
-  "sculpt_brush_blob",
-  "sculpt_brush_snake_hook",
-  "sculpt_brush_draw",
   "sculpt_pinch_region",
   "sculpt_enable_dyntopo",
   "sculpt_disable_dyntopo",

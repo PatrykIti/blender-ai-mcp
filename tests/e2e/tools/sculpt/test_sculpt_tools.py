@@ -178,6 +178,37 @@ class TestSculptDeformRegionE2E:
         finally:
             cleanup_test_object(scene_handler, obj_name)
 
+    def test_crease_region_changes_bounding_box(self, sculpt_handler, modeling_handler, scene_handler):
+        """Crease region should indent the mesh measurably."""
+
+        obj_name = "E2E_SculptCreaseRegion"
+        try:
+            create_test_sphere(modeling_handler, scene_handler, obj_name)
+            before = scene_handler.get_bounding_box(obj_name)
+
+            result = sculpt_handler.crease_region(
+                object_name=obj_name,
+                center=[0.0, 0.0, 1.0],
+                radius=0.6,
+                depth=0.2,
+                pinch=0.5,
+                falloff="SMOOTH",
+            )
+            after = scene_handler.get_bounding_box(obj_name)
+
+            assert isinstance(result, str)
+            assert "creased region" in result.lower()
+            assert after["max"][2] < before["max"][2]
+            print(f"[PASSED] sculpt_crease_region: {result}")
+
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "could not connect" in error_msg or "unknown command" in error_msg:
+                pytest.skip(f"Blender not available: {e}")
+            raise
+        finally:
+            cleanup_test_object(scene_handler, obj_name)
+
     def test_sculpt_auto_inflate(self, sculpt_handler, modeling_handler, scene_handler):
         """Test inflate operation."""
         obj_name = "E2E_SculptInflate"

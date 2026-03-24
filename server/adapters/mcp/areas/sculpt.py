@@ -11,14 +11,10 @@ from server.infrastructure.di import get_sculpt_handler
 SCULPT_PUBLIC_TOOL_NAMES = (
     "sculpt_auto",
     "sculpt_deform_region",
+    "sculpt_crease_region",
     "sculpt_smooth_region",
     "sculpt_inflate_region",
     "sculpt_pinch_region",
-    "sculpt_brush_crease",
-    "sculpt_brush_clay",
-    "sculpt_brush_blob",
-    "sculpt_brush_snake_hook",
-    "sculpt_brush_draw",
     "sculpt_enable_dyntopo",
     "sculpt_disable_dyntopo",
     "sculpt_dyntopo_flood_fill",
@@ -429,6 +425,56 @@ def sculpt_pinch_region(
             "center": center,
             "radius": radius,
             "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
+def sculpt_crease_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    depth: float = 0.1,
+    pinch: float = 0.5,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Creates a local crease/groove region.
+
+    This is the programmatic replacement for brush-style crease behavior.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.crease_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                depth=depth,
+                pinch=pinch,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_crease_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "depth": depth,
+            "pinch": pinch,
             "falloff": falloff,
             "use_symmetry": use_symmetry,
             "symmetry_axis": symmetry_axis,

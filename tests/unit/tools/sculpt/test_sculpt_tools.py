@@ -418,6 +418,25 @@ class TestSculptRegionTools:
         assert result["affected_vertices"] >= 1
         assert vertices[2].co[0] < before
 
+    def test_crease_region_moves_vertices_inward(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Crease should indent vertices inward and toward the center."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[0].co[2]
+
+        result = sculpt_handler.crease_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.2,
+            depth=0.15,
+            pinch=0.5,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[0].co[2] < before
+
 
 # =============================================================================
 # TASK-027-3: sculpt_brush_grab tests

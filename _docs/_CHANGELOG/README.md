@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [143](./143-2026-03-24-final-public-sculpt-surface-replacement.md) | 2026-03-24 | **Final public sculpt surface replacement** | - |
 | [142](./142-2026-03-23-programmatic-sculpt-region-wave.md) | 2026-03-23 | **Programmatic sculpt region wave** | - |
 | [141](./141-2026-03-23-programmatic-sculpt-deform-region-foundation.md) | 2026-03-23 | **Programmatic sculpt deform-region foundation** | - |
 | [140](./140-2026-03-23-programmatic-sculpt-replacement-policy.md) | 2026-03-23 | **Programmatic sculpt replacement policy** | - |

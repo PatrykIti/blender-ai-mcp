@@ -66,8 +66,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `154` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `161` visible tools
+- `legacy-manual`: `150` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `157` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -408,14 +408,10 @@ None.
 |-----------|-----------|-------------|--------|
 | `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. | ✅ Done |
 | `sculpt_deform_region` | `center`, `radius`, `delta`, `strength`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically deforms a local mesh region. Programmatic replacement for brush-style grab behavior. | ✅ Done |
+| `sculpt_crease_region` | `center`, `radius`, `depth`, `pinch`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically creates a local crease/groove region. Programmatic replacement for brush-style crease behavior. | ✅ Done |
 | `sculpt_smooth_region` | `center`, `radius`, `strength`, `iterations`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically smooths a local mesh region using edge-adjacency averaging. | ✅ Done |
 | `sculpt_inflate_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically inflates or deflates a local mesh region. | ✅ Done |
 | `sculpt_pinch_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically pinches a local mesh region toward the influence center. | ✅ Done |
-| `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. | ✅ Done |
-| `sculpt_brush_clay` | `object_name`, `radius`, `strength` | Clay brush for adding material (muscle mass, fat deposits). | ✅ Done |
-| `sculpt_brush_blob` | `object_name`, `radius`, `strength` | Blob brush for creating rounded organic bulges. | ✅ Done |
-| `sculpt_brush_snake_hook` | `object_name`, `radius`, `strength` | Snake hook for pulling tendrils (blood vessels, nerves). | ✅ Done |
-| `sculpt_brush_draw` | `object_name`, `radius`, `strength` | Basic draw brush for general sculpting. | ✅ Done |
 | `sculpt_enable_dyntopo` | `object_name`, `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology with RELATIVE/CONSTANT/BRUSH/MANUAL modes. | ✅ Done |
 | `sculpt_disable_dyntopo` | `object_name` | Disables Dynamic Topology. | ✅ Done |
 | `sculpt_dyntopo_flood_fill` | `object_name` | Applies current detail level to entire mesh. | ✅ Done |

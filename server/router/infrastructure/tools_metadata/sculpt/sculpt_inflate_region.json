@@ -3,11 +3,14 @@
   "category": "sculpt",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["sculpt", "inflate", "deflate", "region", "expand", "swell"],
+  "keywords": ["sculpt", "inflate", "deflate", "region", "expand", "swell", "clay", "blob", "draw"],
   "sample_prompts": [
     "inflate a sculpt region",
     "expand the mesh locally",
-    "deflate a local area"
+    "deflate a local area",
+    "add clay-like volume",
+    "create a blob bulge",
+    "draw material onto the surface"
   ],
   "parameters": {
     "object_name": {"type": "string", "default": null},

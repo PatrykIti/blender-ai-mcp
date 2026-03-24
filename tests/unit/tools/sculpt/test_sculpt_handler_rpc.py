@@ -155,6 +155,36 @@ class TestSculptHandlerRpcContracts(unittest.TestCase):
         self.assertIn("Pinched region on 'Head'", result)
         self.assertIn("amount=0.15", result)
 
+    def test_crease_region_accepts_dict_payload_from_addon(self):
+        rpc = DummyRpc(
+            {
+                "sculpt.crease_region": RpcResponse(
+                    request_id="abc",
+                    status="ok",
+                    result={
+                        "object_name": "Head",
+                        "affected_vertices": 9,
+                        "depth": 0.1,
+                        "pinch": 0.5,
+                        "radius": 0.3,
+                        "falloff": "SMOOTH",
+                    },
+                )
+            }
+        )
+        handler = SculptToolHandler(rpc)
+
+        result = handler.crease_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.3,
+            depth=0.1,
+            pinch=0.5,
+        )
+
+        self.assertIn("Creased region on 'Head'", result)
+        self.assertIn("depth=0.1", result)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,7 +4,9 @@
 **Category:** MCP UX  
 **Estimated Effort:** Small  
 **Dependencies:** TASK-112-02, TASK-112-03  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Public docs, inventories, local config examples, and router sculpt metadata now point at the deterministic region tools instead of the removed brush-dependent public names.
 
 ---
 
