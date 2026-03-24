@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 11 tasks (~240 sub-tasks)
-- **In Progress:** 1 tasks
-- **Done:** 166
+- **In Progress:** 0 tasks
+- **Done:** 167
 
 ## 🧭 Terminology Guardrails
 
@@ -27,10 +27,9 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | 🔴 High | Loop parameter + $FORMAT() for simplified YAML workflows |
-| [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming** | 🟡 Medium | simple_table.yaml: rename parameters + adaptive plank count + fractional planks |
-| [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | 8 sub-tasks: telemetry/metrics + async parallel execution (TASK-054-1 obsolete - replaced by TASK-055-FIX Bug 3) |
-| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | 6 phases: import → analyze → decompose → map → generate YAML → LLM Vision |
+| [TASK-058](./TASK-058_Loop_System_String_Interpolation.md) | **Loop System & String Interpolation** | 🔴 High | Still relevant as internal workflow DSL work; public surface policy is now governed by TASK-113 |
+| [TASK-054](./TASK-054_Ensemble_Matcher_Enhancements.md) | **Ensemble Matcher Enhancements** | 🟡 Medium | Still relevant as router internals/observability work; not a public surface strategy task after TASK-113 |
+| [TASK-042](./TASK-042_Automatic_Workflow_Extraction_System.md) | **Automatic Workflow Extraction System** | 🔴 High | Still relevant as internal workflow-authoring/extraction track; vision output must follow TASK-113 measure/assert boundaries |
 
 ### Mesh Introspection
 | ID | Title | Priority | Notes |
@@ -57,7 +56,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---
 
@@ -65,6 +63,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | 2025-12-11 |
 | [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | 2026-03-24 |
 | [TASK-111](./TASK-111_Modeling_Modifier_RPC_Alignment_And_Sculpt_Grab_Boundary.md) | **Modeling Modifier RPC Alignment and Sculpt Grab Boundary** | 🟡 Medium | 2026-03-23 |
 | [TASK-110](./TASK-110_Legacy_Manual_Surface_Boundary.md) | **Legacy Manual Surface Boundary** | 🟡 Medium | 2026-03-23 |

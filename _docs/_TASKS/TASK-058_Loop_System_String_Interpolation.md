@@ -6,6 +6,8 @@ Extension of the workflow system with **loops** and **string interpolation** so 
 
 Key assumption: **nothing can "bypass the pipeline"** (especially the adaptation from TASK-051). Loops/interpolation must work identically in the standard and adaptive paths.
 
+> **Strategic alignment note (2026-03-24):** This task remains relevant, but it is now explicitly an **internal workflow DSL** task. It no longer defines the preferred public MCP tool surface. Public surface policy, tool layering, and goal-first orchestration are governed by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md).
+
 ---
 
 ## DSL Assumptions (TASK-058)

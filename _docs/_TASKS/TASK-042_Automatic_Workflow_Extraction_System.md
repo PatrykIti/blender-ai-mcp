@@ -6,6 +6,8 @@ System for automatic workflow extraction from 3D models for blender-ai-mcp. Anal
 
 **Goal**: Import 3D model → Analyze structure → Generate YAML workflow → Register in Router
 
+> **Strategic alignment note (2026-03-24):** This task remains relevant as an **internal workflow-authoring/extraction** track. It does not define the public MCP surface strategy. Any vision or analysis outputs from this track should align with [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md), especially the measure/assert truth model and goal-first orchestration policy.
+
 ### User decisions:
 - **Scope**: Full implementation (all 6 phases including LLM Vision)
 - **Output**: `server/router/application/workflows/custom/`
