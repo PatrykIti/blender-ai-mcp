@@ -35,6 +35,36 @@ class ISculptTool(ABC):
         """
         pass
 
+    @abstractmethod
+    def deform_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        delta: Optional[List[float]] = None,
+        strength: float = 1.0,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """
+        Deterministically deforms a local region of mesh vertices.
+
+        Args:
+            object_name: Target object (default: active object)
+            center: World-space center of influence [x, y, z]
+            radius: Radius of influence
+            delta: World-space displacement vector [x, y, z]
+            strength: Blend factor 0-1
+            falloff: Falloff curve ('SMOOTH', 'LINEAR', 'SHARP', 'CONSTANT')
+            use_symmetry: Mirror the deformation across an axis
+            symmetry_axis: Symmetry axis (X, Y, Z)
+
+        Returns:
+            Success message describing the deformation performed.
+        """
+        pass
+
     # ==========================================================================
     # TASK-027-2: sculpt_brush_smooth
     # ==========================================================================

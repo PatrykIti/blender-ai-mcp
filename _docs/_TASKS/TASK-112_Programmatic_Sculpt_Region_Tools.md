@@ -4,7 +4,9 @@
 **Category:** Sculpt / LLM Reliability  
 **Estimated Effort:** Medium  
 **Dependencies:** None  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** `TASK-112-01`, `TASK-112-02`, `TASK-112-03`, and `TASK-112-05` are implemented. The repo now has a deterministic first-wave sculpt-region tool family (`sculpt_deform_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, `sculpt_pinch_region`) plus unit/e2e coverage. Remaining work is mainly broader surface rationalization for the still-brush-dependent specialist sculpt tools.
 
 ---
 

@@ -768,19 +768,19 @@ Organic shaping and sculpt workflows.
 | Tool | Description | Status |
 |------|-------------|--------|
 | `sculpt_auto` | High-level sculpt operation (mesh filters) | ✅ |
-| `sculpt_brush_smooth` | Smooth brush | ✅ |
-| `sculpt_brush_grab` | Grab brush setup only | ✅ |
+| `sculpt_deform_region` | Deterministic local sculpt deformation | ✅ |
+| `sculpt_smooth_region` | Deterministic local smoothing | ✅ |
+| `sculpt_inflate_region` | Deterministic local inflate/deflate | ✅ |
+| `sculpt_pinch_region` | Deterministic local pinch | ✅ |
 | `sculpt_brush_crease` | Crease brush | ✅ |
 
 #### Organic Brushes
 | Tool | Description | Status |
 |------|-------------|--------|
 | `sculpt_brush_clay` | Add clay-like material | ✅ |
-| `sculpt_brush_inflate` | Inflate/deflate areas | ✅ |
 | `sculpt_brush_blob` | Create organic bulges | ✅ |
 | `sculpt_brush_snake_hook` | Pull long tendrils (vessels, nerves) | ✅ |
 | `sculpt_brush_draw` | Basic sculpt draw | ✅ |
-| `sculpt_brush_pinch` | Pinch geometry together | ✅ |
 
 #### Dynamic Topology
 | Tool | Description | Status |
@@ -1226,15 +1226,15 @@ The larger examples below remain useful as broad compatibility references, but t
         "export_fbx",
         "export_obj",
         "sculpt_auto",
-        "sculpt_brush_smooth",
-        "sculpt_brush_grab",
+        "sculpt_smooth_region",
+        "sculpt_deform_region",
         "sculpt_brush_crease",
         "sculpt_brush_clay",
-        "sculpt_brush_inflate",
+        "sculpt_inflate_region",
         "sculpt_brush_blob",
         "sculpt_brush_snake_hook",
         "sculpt_brush_draw",
-        "sculpt_brush_pinch",
+        "sculpt_pinch_region",
         "sculpt_enable_dyntopo",
         "sculpt_disable_dyntopo",
         "sculpt_dyntopo_flood_fill",
@@ -1408,15 +1408,15 @@ The larger examples below remain useful as broad compatibility references, but t
         "export_fbx",
         "export_obj",
         "sculpt_auto",
-        "sculpt_brush_smooth",
-        "sculpt_brush_grab",
+        "sculpt_smooth_region",
+        "sculpt_deform_region",
         "sculpt_brush_crease",
         "sculpt_brush_clay",
-        "sculpt_brush_inflate",
+        "sculpt_inflate_region",
         "sculpt_brush_blob",
         "sculpt_brush_snake_hook",
         "sculpt_brush_draw",
-        "sculpt_brush_pinch",
+        "sculpt_pinch_region",
         "sculpt_enable_dyntopo",
         "sculpt_disable_dyntopo",
         "sculpt_dyntopo_flood_fill",
@@ -1639,15 +1639,15 @@ enabled_tools = [
   "export_fbx",
   "export_obj",
   "sculpt_auto",
-  "sculpt_brush_smooth",
-  "sculpt_brush_grab",
+  "sculpt_smooth_region",
+  "sculpt_deform_region",
   "sculpt_brush_crease",
   "sculpt_brush_clay",
-  "sculpt_brush_inflate",
+  "sculpt_inflate_region",
   "sculpt_brush_blob",
   "sculpt_brush_snake_hook",
   "sculpt_brush_draw",
-  "sculpt_brush_pinch",
+  "sculpt_pinch_region",
   "sculpt_enable_dyntopo",
   "sculpt_disable_dyntopo",
   "sculpt_dyntopo_flood_fill",

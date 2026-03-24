@@ -10,7 +10,7 @@
     "radius": {"type": "float", "default": 0.1},
     "strength": {"type": "float", "default": 0.5}
   },
-  "related_tools": ["sculpt_brush_clay", "sculpt_brush_smooth"],
+  "related_tools": ["sculpt_brush_clay", "sculpt_smooth_region"],
   "patterns": [],
   "description": "Sets up Draw brush for basic sculpting."
 }

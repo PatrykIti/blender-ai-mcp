@@ -1,0 +1,25 @@
+{
+  "tool_name": "sculpt_deform_region",
+  "category": "sculpt",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["sculpt", "deform", "grab", "move", "pull", "region"],
+  "sample_prompts": [
+    "deform a local region",
+    "pull part of the mesh upward",
+    "move a sculpt area deterministically"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "center": {"type": "array"},
+    "radius": {"type": "float", "default": 0.5},
+    "delta": {"type": "array"},
+    "strength": {"type": "float", "default": 1.0, "range": [0.0, 1.0]},
+    "falloff": {"type": "enum", "options": ["SMOOTH", "LINEAR", "SHARP", "CONSTANT"], "default": "SMOOTH"},
+    "use_symmetry": {"type": "bool", "default": false},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_auto", "mesh_transform_selected", "mesh_inspect"],
+  "patterns": [],
+  "description": "Deterministically deforms a local mesh region using a weighted delta vector. This is the programmatic replacement for brush-style grab behavior."
+}

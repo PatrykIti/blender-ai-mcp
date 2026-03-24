@@ -4,7 +4,9 @@
 **Category:** Sculpt Core  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-112  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Added a shared deterministic region/falloff engine inside the addon sculpt handler. The engine now covers radius-based vertex collection, `SMOOTH` / `LINEAR` / `SHARP` / `CONSTANT` falloff weighting, optional symmetry mirroring, and reusable helper logic for later programmatic sculpt tools.
 
 ---
 

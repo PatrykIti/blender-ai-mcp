@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from server.application.tool_handlers._rpc_utils import require_str_result
+from server.application.tool_handlers._rpc_utils import require_dict_result, require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.sculpt import ISculptTool
 
@@ -30,6 +30,118 @@ class SculptToolHandler(ISculptTool):
             "symmetry_axis": symmetry_axis,
         }
         return require_str_result(self.rpc.send_request("sculpt.auto", args))
+
+    def deform_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        delta: Optional[List[float]] = None,
+        strength: float = 1.0,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically deforms a local region of mesh vertices."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "delta": delta,
+            "strength": strength,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.deform_region", args))
+        return (
+            f"Deformed region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, radius={result['radius']}, "
+            f"falloff={result['falloff']}, strength={result['strength']})"
+        )
+
+    def smooth_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        strength: float = 0.5,
+        iterations: int = 1,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically smooth a local region of mesh vertices."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "strength": strength,
+            "iterations": iterations,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.smooth_region", args))
+        return (
+            f"Smoothed region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, iterations={result['iterations']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
+
+    def inflate_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        amount: float = 0.2,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically inflate or deflate a local region."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.inflate_region", args))
+        return (
+            f"Inflated region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, amount={result['amount']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
+
+    def pinch_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        amount: float = 0.2,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically pinch a local region toward the influence center."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.pinch_region", args))
+        return (
+            f"Pinched region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, amount={result['amount']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
 
     def brush_smooth(
         self,

@@ -78,6 +78,106 @@ class TestSculptAutoE2E:
         finally:
             cleanup_test_object(scene_handler, obj_name)
 
+
+# =============================================================================
+# TASK-112-02: sculpt_deform_region tests
+# =============================================================================
+
+
+class TestSculptDeformRegionE2E:
+    """E2E tests for programmatic regional sculpt deformation."""
+
+    def test_deform_region_changes_bounding_box(self, sculpt_handler, modeling_handler, scene_handler):
+        """Programmatic deform tool should change real geometry, not only brush state."""
+
+        obj_name = "E2E_SculptDeform"
+        try:
+            create_test_sphere(modeling_handler, scene_handler, obj_name)
+            before = scene_handler.get_bounding_box(obj_name)
+
+            result = sculpt_handler.deform_region(
+                object_name=obj_name,
+                center=[0.0, 0.0, 1.0],
+                radius=0.45,
+                delta=[0.0, 0.0, 0.35],
+                strength=1.0,
+                falloff="SMOOTH",
+            )
+            after = scene_handler.get_bounding_box(obj_name)
+
+            assert isinstance(result, str)
+            assert "deformed region" in result.lower()
+            assert after["max"][2] > before["max"][2]
+            print(f"[PASSED] sculpt_deform_region: {result}")
+
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "could not connect" in error_msg or "unknown command" in error_msg:
+                pytest.skip(f"Blender not available: {e}")
+            raise
+        finally:
+            cleanup_test_object(scene_handler, obj_name)
+
+    def test_inflate_region_changes_bounding_box(self, sculpt_handler, modeling_handler, scene_handler):
+        """Inflate region should expand the mesh measurably."""
+
+        obj_name = "E2E_SculptInflateRegion"
+        try:
+            create_test_sphere(modeling_handler, scene_handler, obj_name)
+            before = scene_handler.get_bounding_box(obj_name)
+
+            result = sculpt_handler.inflate_region(
+                object_name=obj_name,
+                center=[0.0, 0.0, 0.0],
+                radius=1.5,
+                amount=0.2,
+                falloff="CONSTANT",
+            )
+            after = scene_handler.get_bounding_box(obj_name)
+
+            assert isinstance(result, str)
+            assert "inflated region" in result.lower()
+            assert after["max"][2] > before["max"][2]
+            print(f"[PASSED] sculpt_inflate_region: {result}")
+
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "could not connect" in error_msg or "unknown command" in error_msg:
+                pytest.skip(f"Blender not available: {e}")
+            raise
+        finally:
+            cleanup_test_object(scene_handler, obj_name)
+
+    def test_pinch_region_changes_bounding_box(self, sculpt_handler, modeling_handler, scene_handler):
+        """Pinch region should contract the mesh measurably."""
+
+        obj_name = "E2E_SculptPinchRegion"
+        try:
+            create_test_sphere(modeling_handler, scene_handler, obj_name)
+            before = scene_handler.get_bounding_box(obj_name)
+
+            result = sculpt_handler.pinch_region(
+                object_name=obj_name,
+                center=[0.0, 0.0, 0.0],
+                radius=1.5,
+                amount=0.2,
+                falloff="CONSTANT",
+            )
+            after = scene_handler.get_bounding_box(obj_name)
+
+            assert isinstance(result, str)
+            assert "pinched region" in result.lower()
+            assert after["max"][2] < before["max"][2]
+            print(f"[PASSED] sculpt_pinch_region: {result}")
+
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "could not connect" in error_msg or "unknown command" in error_msg:
+                pytest.skip(f"Blender not available: {e}")
+            raise
+        finally:
+            cleanup_test_object(scene_handler, obj_name)
+
     def test_sculpt_auto_inflate(self, sculpt_handler, modeling_handler, scene_handler):
         """Test inflate operation."""
         obj_name = "E2E_SculptInflate"

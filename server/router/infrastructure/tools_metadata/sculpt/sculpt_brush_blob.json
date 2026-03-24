@@ -10,7 +10,7 @@
     "radius": {"type": "float", "default": 0.1},
     "strength": {"type": "float", "default": 0.5}
   },
-  "related_tools": ["sculpt_brush_inflate", "sculpt_brush_clay"],
+  "related_tools": ["sculpt_inflate_region", "sculpt_brush_clay"],
   "patterns": [],
   "description": "Sets up Blob brush for creating rounded organic bulges."
 }

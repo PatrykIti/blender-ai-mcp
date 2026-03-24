@@ -67,6 +67,44 @@ def mock_mesh_object_sculpt_mode(mock_sculpt_tool_settings):
     return mock_obj
 
 
+class MockVertex:
+    """Simple vertex container with mutable Vector-like coordinates."""
+
+    def __init__(self, coords, normal=(0.0, 0.0, 1.0)):
+        from mathutils import Vector
+
+        self.co = Vector(coords)
+        self.normal = Vector(normal)
+
+
+class MockEdge:
+    """Simple edge container exposing vertex indices."""
+
+    def __init__(self, left: int, right: int):
+        self.vertices = (left, right)
+
+
+@pytest.fixture
+def mock_mesh_object_with_vertices(mock_sculpt_tool_settings):
+    """Mesh object fixture with editable vertex coordinates for deform tests."""
+
+    mock_obj = MagicMock()
+    mock_obj.name = "Head"
+    mock_obj.type = "MESH"
+    mock_obj.mode = "OBJECT"
+    mock_obj.matrix_world = None
+    mock_obj.data = MagicMock()
+    mock_obj.data.vertices = [
+        MockVertex((0.0, 0.0, 1.0)),
+        MockVertex((0.1, 0.0, 1.0)),
+        MockVertex((0.8, 0.0, 1.0)),
+    ]
+    mock_obj.data.edges = [MockEdge(0, 1), MockEdge(1, 2)]
+    bpy.context.active_object = mock_obj
+    bpy.data.objects = {"Head": mock_obj}
+    return mock_obj
+
+
 @pytest.fixture
 def mock_sculpt_context(mock_sculpt_tool_settings):
     """Sets up mock sculpt context with brush (depends on mock_sculpt_tool_settings)."""
@@ -242,6 +280,143 @@ class TestSculptBrushSmooth:
         # Strength should be clamped to 0.0
         sculpt_handler.brush_smooth(strength=-0.5)
         assert mock_sculpt_context.brush.strength == 0.0
+
+
+# =============================================================================
+# TASK-112-01/02: sculpt_deform_region tests
+# =============================================================================
+
+
+class TestSculptDeformRegion:
+    """Tests for deterministic sculpt region deformation."""
+
+    def test_falloff_weight_variants(self, sculpt_handler):
+        """Shared falloff engine should produce deterministic weight curves."""
+
+        assert sculpt_handler._falloff_weight(0.0, 1.0, "CONSTANT") == 1.0
+        assert sculpt_handler._falloff_weight(0.5, 1.0, "LINEAR") == pytest.approx(0.5)
+        assert sculpt_handler._falloff_weight(0.5, 1.0, "SHARP") == pytest.approx(0.25)
+        assert sculpt_handler._falloff_weight(1.0, 1.0, "SMOOTH") == 0.0
+
+    def test_deform_region_moves_vertices_inside_radius(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Vertices inside the region should move along the weighted delta."""
+
+        bpy.ops.object.mode_set = MagicMock()
+
+        result = sculpt_handler.deform_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.25,
+            delta=[0.0, 0.0, 0.2],
+            strength=1.0,
+            falloff="LINEAR",
+        )
+
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        assert result["affected_vertices"] == 2
+        assert vertices[0].co[2] == pytest.approx(1.2)
+        assert vertices[1].co[2] > 1.0
+        assert vertices[2].co[2] == pytest.approx(1.0)
+
+    def test_deform_region_supports_symmetry(self, sculpt_handler, mock_sculpt_tool_settings):
+        """Symmetry should mirror center and delta on the chosen axis."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        mock_obj = MagicMock()
+        mock_obj.name = "Head"
+        mock_obj.type = "MESH"
+        mock_obj.mode = "OBJECT"
+        mock_obj.matrix_world = None
+        mock_obj.data = MagicMock()
+        mock_obj.data.vertices = [
+            MockVertex((0.25, 0.0, 0.0)),
+            MockVertex((-0.25, 0.0, 0.0)),
+        ]
+        bpy.context.active_object = mock_obj
+        bpy.data.objects = {"Head": mock_obj}
+
+        result = sculpt_handler.deform_region(
+            object_name="Head",
+            center=[0.25, 0.0, 0.0],
+            radius=0.2,
+            delta=[0.1, 0.0, 0.0],
+            strength=1.0,
+            falloff="CONSTANT",
+            use_symmetry=True,
+            symmetry_axis="X",
+        )
+
+        assert result["affected_vertices"] == 2
+        assert mock_obj.data.vertices[0].co[0] > 0.25
+        assert mock_obj.data.vertices[1].co[0] < -0.25
+
+    def test_deform_region_rejects_missing_center_or_delta(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Core region tool should fail loudly on missing geometry parameters."""
+
+        with pytest.raises(ValueError, match="center is required"):
+            sculpt_handler.deform_region(object_name="Head", delta=[0.0, 0.0, 0.1])
+
+        with pytest.raises(ValueError, match="delta is required"):
+            sculpt_handler.deform_region(object_name="Head", center=[0.0, 0.0, 1.0])
+
+
+class TestSculptRegionTools:
+    """Tests for programmatic smooth/inflate/pinch region tools."""
+
+    def test_smooth_region_relaxes_vertices_toward_neighbors(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Local smoothing should move the middle vertex toward the neighbor average."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        vertices[1].co[2] = 2.0
+
+        result = sculpt_handler.smooth_region(
+            object_name="Head",
+            center=[0.1, 0.0, 2.0],
+            radius=0.3,
+            strength=1.0,
+            iterations=1,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[1].co[2] < 2.0
+
+    def test_inflate_region_uses_vertex_normals(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Inflate should move vertices along normals within the selected region."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[0].co[2]
+
+        result = sculpt_handler.inflate_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.2,
+            amount=0.25,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[0].co[2] > before
+
+    def test_pinch_region_moves_vertices_toward_center(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Pinch should contract vertices toward the chosen center."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[2].co[0]
+
+        result = sculpt_handler.pinch_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=1.0,
+            amount=0.2,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[2].co[0] < before
 
 
 # =============================================================================

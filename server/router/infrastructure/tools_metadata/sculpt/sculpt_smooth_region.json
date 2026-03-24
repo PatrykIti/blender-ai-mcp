@@ -1,0 +1,25 @@
+{
+  "tool_name": "sculpt_smooth_region",
+  "category": "sculpt",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["sculpt", "smooth", "region", "relax", "soften"],
+  "sample_prompts": [
+    "smooth a local sculpt region",
+    "soften the mesh around a point",
+    "relax a noisy sculpt area"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "center": {"type": "array"},
+    "radius": {"type": "float", "default": 0.5},
+    "strength": {"type": "float", "default": 0.5, "range": [0.0, 1.0]},
+    "iterations": {"type": "int", "default": 1},
+    "falloff": {"type": "enum", "options": ["SMOOTH", "LINEAR", "SHARP", "CONSTANT"], "default": "SMOOTH"},
+    "use_symmetry": {"type": "bool", "default": false},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_auto", "sculpt_deform_region", "mesh_inspect"],
+  "patterns": [],
+  "description": "Deterministically smooths a local mesh region using edge-adjacency averaging."
+}

@@ -1,0 +1,24 @@
+{
+  "tool_name": "sculpt_inflate_region",
+  "category": "sculpt",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["sculpt", "inflate", "deflate", "region", "expand", "swell"],
+  "sample_prompts": [
+    "inflate a sculpt region",
+    "expand the mesh locally",
+    "deflate a local area"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "center": {"type": "array"},
+    "radius": {"type": "float", "default": 0.5},
+    "amount": {"type": "float", "default": 0.2},
+    "falloff": {"type": "enum", "options": ["SMOOTH", "LINEAR", "SHARP", "CONSTANT"], "default": "SMOOTH"},
+    "use_symmetry": {"type": "bool", "default": false},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_deform_region", "sculpt_pinch_region", "mesh_inspect"],
+  "patterns": [],
+  "description": "Deterministically inflates or deflates a local mesh region."
+}

@@ -226,6 +226,10 @@ def register():
 
         # TASK-027: Sculpting Tools
         rpc_server.register_handler("sculpt.auto", sculpt_handler.auto_sculpt)
+        rpc_server.register_handler("sculpt.deform_region", sculpt_handler.deform_region)
+        rpc_server.register_handler("sculpt.smooth_region", sculpt_handler.smooth_region)
+        rpc_server.register_handler("sculpt.inflate_region", sculpt_handler.inflate_region)
+        rpc_server.register_handler("sculpt.pinch_region", sculpt_handler.pinch_region)
         rpc_server.register_handler("sculpt.brush_smooth", sculpt_handler.brush_smooth)
         rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
         rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)

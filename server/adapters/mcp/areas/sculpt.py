@@ -4,20 +4,21 @@ from fastmcp import Context
 
 from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_sculpt_handler
 
 SCULPT_PUBLIC_TOOL_NAMES = (
     "sculpt_auto",
-    "sculpt_brush_smooth",
-    "sculpt_brush_grab",
+    "sculpt_deform_region",
+    "sculpt_smooth_region",
+    "sculpt_inflate_region",
+    "sculpt_pinch_region",
     "sculpt_brush_crease",
     "sculpt_brush_clay",
-    "sculpt_brush_inflate",
     "sculpt_brush_blob",
     "sculpt_brush_snake_hook",
     "sculpt_brush_draw",
-    "sculpt_brush_pinch",
     "sculpt_enable_dyntopo",
     "sculpt_disable_dyntopo",
     "sculpt_dyntopo_flood_fill",
@@ -94,6 +95,75 @@ def sculpt_auto(
     )
 
 
+def sculpt_deform_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    delta: List[float] | str | None = None,
+    strength: float = 1.0,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Deforms a local mesh region by a weighted delta vector.
+
+    This is the programmatic replacement for brush-style grab deformation.
+    It operates directly on mesh data, not on viewport-driven brush strokes,
+    so it is stable and suitable for LLM automation.
+
+    Workflow: BEFORE -> inspect_scene / mesh_inspect | AFTER -> scene_snapshot_state / scene_compare_snapshot
+
+    Args:
+        object_name: Target object (default: active object)
+        center: World-space center of influence [x, y, z]
+        radius: Radius of influence in Blender units
+        delta: World-space displacement vector [x, y, z]
+        strength: Blend factor 0-1 applied to the weighted deformation
+        falloff: Weight curve inside the radius (`SMOOTH`, `LINEAR`, `SHARP`, `CONSTANT`)
+        use_symmetry: If True, mirrors the deformation across the chosen axis
+        symmetry_axis: Symmetry axis (`X`, `Y`, `Z`)
+
+    Examples:
+        sculpt_deform_region(object_name="Head", center=[0,0,1], radius=0.35, delta=[0,0,0.2])
+        sculpt_deform_region(object_name="Arm", center=[0.5,0,0], radius=0.2, delta=[0.1,0,0], use_symmetry=True, symmetry_axis="X")
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            parsed_delta = parse_coordinate(delta)
+            return handler.deform_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                delta=parsed_delta,
+                strength=strength,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_deform_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "delta": delta,
+            "strength": strength,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
 def sculpt_brush_smooth(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -125,6 +195,57 @@ def sculpt_brush_smooth(
         direct_executor=lambda: get_sculpt_handler().brush_smooth(
             object_name=object_name, location=location, radius=radius, strength=strength
         ),
+    )
+
+
+def sculpt_smooth_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    strength: float = 0.5,
+    iterations: int = 1,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Smooths a local mesh region using edge-adjacency averaging.
+
+    This is the programmatic replacement for brush-style smooth setup. It operates
+    directly on mesh data and is suitable for repeatable LLM-driven workflows.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.smooth_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                strength=strength,
+                iterations=iterations,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_smooth_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "strength": strength,
+            "iterations": iterations,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
     )
 
 
@@ -178,6 +299,53 @@ def sculpt_brush_grab(
     )
 
 
+def sculpt_inflate_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    amount: float = 0.2,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Inflates or deflates a local mesh region.
+
+    This is the programmatic replacement for brush-style local inflate behavior.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.inflate_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                amount=amount,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_inflate_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
 def sculpt_brush_crease(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -219,6 +387,53 @@ def sculpt_brush_crease(
         direct_executor=lambda: get_sculpt_handler().brush_crease(
             object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch
         ),
+    )
+
+
+def sculpt_pinch_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    amount: float = 0.2,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Pinches a local mesh region toward the influence center.
+
+    This is the programmatic replacement for brush-style pinch setup.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.pinch_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                amount=amount,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_pinch_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
     )
 
 

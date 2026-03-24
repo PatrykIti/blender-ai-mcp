@@ -1,0 +1,24 @@
+{
+  "tool_name": "sculpt_pinch_region",
+  "category": "sculpt",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["sculpt", "pinch", "tighten", "contract", "region"],
+  "sample_prompts": [
+    "pinch a sculpt region",
+    "tighten geometry around a point",
+    "contract the mesh locally"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "center": {"type": "array"},
+    "radius": {"type": "float", "default": 0.5},
+    "amount": {"type": "float", "default": 0.2},
+    "falloff": {"type": "enum", "options": ["SMOOTH", "LINEAR", "SHARP", "CONSTANT"], "default": "SMOOTH"},
+    "use_symmetry": {"type": "bool", "default": false},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_deform_region", "sculpt_inflate_region", "mesh_inspect"],
+  "patterns": [],
+  "description": "Deterministically pinches a local mesh region toward the influence center."
+}

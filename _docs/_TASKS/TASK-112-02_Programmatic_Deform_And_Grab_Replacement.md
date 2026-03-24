@@ -4,7 +4,9 @@
 **Category:** Sculpt Write Path  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-112-01  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Added `sculpt_deform_region` end-to-end across domain, handler, addon, MCP adapter, dispatcher, metadata, docs, and tests. This tool is now the public programmatic replacement for `sculpt_brush_grab` on the MCP surface.
 
 ---
 

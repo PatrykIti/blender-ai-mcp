@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 12 tasks (~230 sub-tasks)
-- **In Progress:** 1 tasks
+- **To Do:** 11 tasks (~225 sub-tasks)
+- **In Progress:** 2 tasks
 - **Done:** 165
 
 ## 🧭 Terminology Guardrails
@@ -61,6 +61,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-112](./TASK-112_Programmatic_Sculpt_Region_Tools.md) | **Programmatic Sculpt Region Tools** | 🟡 Medium | `112-01` and `112-02` done; continuing replacement wave for brush-dependent sculpt tools |
 | [TASK-055-FIX-7](./TASK-055-FIX-7_Dynamic_Plank_System_Simple_Table.md) | **Dynamic Plank System + Parameter Renaming for simple_table.yaml** | 🟡 Medium | Phase 1: Parameter renaming + Phase 2: 15 conditional planks |
 
 ---

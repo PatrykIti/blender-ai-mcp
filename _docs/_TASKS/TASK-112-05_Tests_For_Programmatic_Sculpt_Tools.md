@@ -4,7 +4,9 @@
 **Category:** Testing  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-112-02, TASK-112-03  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Added focused unit coverage for the region engine and the new sculpt handlers, plus Blender-backed e2e smoke coverage for `sculpt_deform_region`, `sculpt_inflate_region`, and `sculpt_pinch_region`.
 
 ---
 

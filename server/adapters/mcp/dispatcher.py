@@ -320,6 +320,10 @@ class ToolDispatcher:
             sculpt,
             {
                 "sculpt_auto": "auto_sculpt",
+                "sculpt_deform_region": "deform_region",
+                "sculpt_smooth_region": "smooth_region",
+                "sculpt_inflate_region": "inflate_region",
+                "sculpt_pinch_region": "pinch_region",
                 "sculpt_brush_smooth": "brush_smooth",
                 "sculpt_brush_grab": "brush_grab",
                 "sculpt_brush_crease": "brush_crease",

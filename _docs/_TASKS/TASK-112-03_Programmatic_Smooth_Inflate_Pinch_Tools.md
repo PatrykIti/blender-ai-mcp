@@ -4,7 +4,9 @@
 **Category:** Sculpt Write Path  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-112-01  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Added `sculpt_smooth_region`, `sculpt_inflate_region`, and `sculpt_pinch_region` across domain, handler, addon, MCP adapter, dispatcher, metadata, docs, and tests. These tools now cover the core local smoothing and local expand/contract workflows without relying on brush-stroke UI paths.
 
 ---
 
