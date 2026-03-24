@@ -266,14 +266,15 @@ async def router_set_goal(
     resolved_params: Optional[Dict[str, Any]] = None,
 ) -> RouterGoalResponseContract:
     """
-    [SYSTEM][CRITICAL] Tell the Router what you're building.
+    [SYSTEM][CRITICAL] Set the active build goal for the current router session.
 
-    IMPORTANT: Call this FIRST before ANY modeling operation!
+    On goal-first guided surfaces, call this before build operations so the
+    router can select a workflow, resolve parameters, and shape the session.
 
-    This is the ONLY tool needed for workflow interaction:
-    1. First call: Set goal, Router matches workflow and resolves parameters
-    2. If unresolved params exist: Returns questions for you to answer
-    3. Second call: Provide resolved_params dict, Router stores and executes
+    Normal interaction flow:
+    1. First call sets the goal, matches a workflow, and resolves what it can.
+    2. If unresolved params remain, the response returns what still needs input.
+    3. Follow-up calls pass `resolved_params` so the router can continue.
 
     The Router uses a three-tier resolution system:
     1. YAML modifiers (highest priority) - explicit mappings in workflow definition
@@ -380,13 +381,13 @@ async def router_set_goal(
 
 async def router_get_status(ctx: Context) -> RouterStatusContract:
     """
-    [SYSTEM][SAFE] Get current Router Supervisor status.
+    [SYSTEM][SAFE] Get the current router session and diagnostics state.
 
     Returns information about:
-    - Current goal (if set)
-    - Pending workflow
-    - Router statistics
-    - Component status
+    - current goal and phase
+    - pending workflow/clarification state
+    - visibility/session diagnostics
+    - router statistics and component status
     - Bounded repair guidance when the latest router state indicates a failure/recovery path
     """
     session = await get_session_capability_state_async(ctx)

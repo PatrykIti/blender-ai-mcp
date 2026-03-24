@@ -4,7 +4,9 @@
 **Category:** Product Wording / Surface Semantics  
 **Estimated Effort:** Small  
 **Dependencies:** TASK-114  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
+
+**Completion Summary:** The first public-surface wording cleanup wave is now complete. The highest-signal docs and MCP adapter docstrings no longer lead with the old “mega tools / LLM context optimization” framing, `modeling_add_modifier` is described as a controlled object-level non-destructive tool, and `router_*` wording now reflects goal-first session bootstrap and diagnostics semantics.
 
 ---
 
@@ -42,9 +44,7 @@ This wave does **not** yet implement new measure/assert tools.
 - `modeling_add_modifier` wording is updated to the new layered product model
 - router MCP tool wording aligns with goal-first production semantics
 
-## Progress Update
-
-The first P0 wording pass is implemented locally:
+## Result
 
 - public grouped-tool framing replaced the old “LLM context optimization / mega tools” language in the highest-signal docs
 - `modeling_add_modifier` wording now aligns better with the new layered product model

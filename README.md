@@ -143,7 +143,7 @@ Normal product direction for tools:
 
 - atomic tools: implementation substrate / hidden by default
 - macro tools: preferred default LLM-facing layer
-- workflow/mega tools: bounded process tools with explicit verification and structured reporting
+- workflow tools: bounded process tools with explicit verification and structured reporting
 
 Normal verification direction:
 
@@ -492,7 +492,7 @@ Object Mode operations for creating and transforming objects.
 |------|-------------|--------|
 | `modeling_create_primitive` | Create cube, sphere, cylinder, etc. | ✅ |
 | `modeling_transform_object` | Move, rotate, scale objects | ✅ |
-| `modeling_add_modifier` | Add modifier to object | ✅ |
+| `modeling_add_modifier` | Add a non-destructive object modifier | ✅ |
 | `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
 | `modeling_list_modifiers` | List modifiers on object | ✅ |
 | `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
@@ -1027,8 +1027,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 
 > The repo exposes a small number of grouped public tools for high-frequency
 > scene/mesh interaction.
-> Historically these were introduced as “mega tools” for context reduction, but
-> they should now be read through the newer layered model from `TASK-113`:
+> They should now be read through the newer layered model from `TASK-113`:
 > grouped public tools above a hidden/internal atomic layer.
 > Internal action handlers still exist behind them and remain available to the
 > router and internal execution paths.
@@ -1036,17 +1035,17 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 <details>
 <summary><strong>Grouped Public Tools</strong></summary>
 
-### Scene Mega Tools
+### Grouped Scene Tools
 
-| Mega Tool | Actions | Savings | Status |
+| Grouped Tool | Actions | Savings | Status |
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
 | `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -5 | ✅ |
 
-### Mesh Mega Tools
+### Grouped Mesh Tools
 
-| Mega Tool | Actions | Savings | Status |
+| Grouped Tool | Actions | Savings | Status |
 |-----------|---------|---------|--------|
 | `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |

@@ -152,7 +152,7 @@ preserved as later tool and vision waves are added.
 Current product direction:
 
 - **macro tools** are the preferred default LLM-facing layer
-- **workflow/mega tools** are bounded process tools, not catch-all “do anything” tools
+- **workflow tools** are bounded process tools, not catch-all “do anything” tools
 
 Macro tools should:
 
@@ -160,7 +160,7 @@ Macro tools should:
 - orchestrate atomic tools internally when needed
 - return task-relevant structured outputs
 
-Workflow/mega tools should:
+Workflow tools should:
 
 - remain bounded
 - orchestrate macro tools, atomic tools, rule checks, and verification
@@ -494,8 +494,7 @@ docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
 ### 🧠 Grouped Public Tools
 
 These grouped tools are part of the current public working layer.
-Historically they were introduced as “mega tools” for context reduction, but
-they should now be understood through the layered policy in
+They should now be understood through the layered policy in
 `TOOL_LAYERING_POLICY.md`: grouped public tools above a hidden/internal atomic
 layer.
 
@@ -578,7 +577,7 @@ Geometry creation and editing.
 |-----------|-----------|-------------|
 | `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
-| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
+| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
 | `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |
 | `modeling_convert_to_mesh` | `name` (str) | Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh. |
 | `modeling_join_objects` | `object_names` (list[str]) | Joins multiple mesh objects into a single one. |
@@ -771,8 +770,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match/disabled/error), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
-| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, and any unresolved inputs for follow-up calls. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

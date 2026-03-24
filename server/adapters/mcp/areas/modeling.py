@@ -194,7 +194,7 @@ def _modeling_add_modifier_impl(
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
-    Object-level modifier entrypoint for controlled non-destructive operations.
+    Use this object-level modifier tool when you want a controlled non-destructive stack change.
 
     Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier
 
@@ -226,7 +226,7 @@ def modeling_add_modifier(
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
-    Object-level modifier entrypoint for controlled non-destructive operations.
+    Use this object-level modifier tool when you want a controlled non-destructive stack change.
 
     Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier
 
@@ -398,7 +398,7 @@ def modeling_list_modifiers(ctx: Context, name: str) -> str:
     return _modeling_list_modifiers_impl(ctx, name)
 
 
-# Internal function - exposed via scene_inspect mega tool
+# Internal function - exposed through grouped scene inspection
 def _modeling_get_modifier_data(
     ctx: Context, object_name: str, modifier_name: Optional[str] = None, include_node_tree: bool = False
 ) -> Dict[str, Any]:

@@ -4,8 +4,8 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 0 tasks (~110 sub-tasks)
-- **In Progress:** 1 tasks
-- **Done:** 170
+- **In Progress:** 0 tasks
+- **Done:** 171
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -46,7 +46,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | First post-audit fix wave: grouped public tool framing plus modeling/router wording cleanup |
 
 ---
 
@@ -54,6 +53,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | 2026-03-24 |
 | [TASK-116](./TASK-116_First_Measure_Assert_Code_Wave.md) | **First Measure/Assert Code Wave** | 🔴 High | 2026-03-24 |
 | [TASK-114](./TASK-114_Existing_Tool_Surface_Audit_And_Alignment.md) | **Existing Tool Surface Audit and Alignment** | 🔴 High | 2026-03-24 |
 | [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | **Tool Layering, Goal-First, and Vision-Assertion Strategy** | 🔴 High | 2026-03-24 |

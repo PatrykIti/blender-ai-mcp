@@ -151,8 +151,7 @@ Assistant envelopes are structured and use explicit terminal statuses:
 ## 🧠 Grouped Public Tools
 
 > These grouped tools are part of the current public working layer.
-> Historically they were introduced as “mega tools” for context reduction, but
-> they should now be understood through the layered model from `TASK-113`:
+> They should now be understood through the layered model from `TASK-113`:
 > grouped public tools above a hidden/internal atomic layer.
 > Internal action handlers still exist behind them and remain available to the
 > router and internal execution paths.
@@ -208,7 +207,7 @@ None.
 | `scene_measure_alignment` | `from_object`, `to_object`, `axes`, `reference`, `tolerance` | Measures bbox alignment across chosen axes. | ✅ Done |
 | `scene_measure_overlap` | `from_object`, `to_object`, `tolerance` | Measures bbox overlap/touching state and intersection volume. | ✅ Done |
 
-**Deprecated (now internal, use mega tools):**
+**Deprecated (now internal, use grouped public tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
 - ~~`scene_list_selection`~~ → Use `scene_context(action="selection")`
 - ~~`scene_create_light`~~ → Use `scene_create(action="light", ...)`
@@ -275,7 +274,7 @@ None.
 |-----------|-----------|-------------|--------|
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
-| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a modifier to an object (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). Successful addon responses carry structured modifier metadata. | ✅ Done |
+| `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a non-destructive object modifier (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). Successful addon responses carry structured modifier metadata. | ✅ Done |
 | `modeling_apply_modifier` | `name`, `modifier_name` | Applies (finalizes) a modifier permanently to the mesh. | ✅ Done |
 | `modeling_list_modifiers` | `name` | Lists all modifiers on an object. | ✅ Done |
 | `modeling_convert_to_mesh` | `name` | Converts Curve/Text/Surface objects to Mesh. | ✅ Done |
@@ -288,7 +287,7 @@ None.
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
 
-**Deprecated (now internal, use mega tools):**
+**Deprecated (now internal, use grouped public tools):**
 - ~~`modeling_get_modifier_data`~~ → Use `scene_inspect(action="modifier_data", ...)`
 
 ---
@@ -369,7 +368,7 @@ None.
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
-**Deprecated (now internal, use mega tools):**
+**Deprecated (now internal, use grouped public tools):**
 - ~~`mesh_get_vertex_data`~~ → Use `mesh_inspect(action="vertices", ...)`
 - ~~`mesh_get_edge_data`~~ → Use `mesh_inspect(action="edges", ...)`
 - ~~`mesh_get_face_data`~~ → Use `mesh_inspect(action="faces", ...)`
@@ -379,7 +378,7 @@ None.
 - ~~`mesh_get_attributes`~~ → Use `mesh_inspect(action="attributes", ...)`
 - ~~`mesh_get_shape_keys`~~ → Use `mesh_inspect(action="shape_keys", ...)`
 
-**Deprecated (now internal, use mega tools):**
+**Deprecated (now internal, use grouped public tools):**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
 - ~~`mesh_select_linked`~~ → Use `mesh_select(action="linked")`
 - ~~`mesh_select_more`~~ → Use `mesh_select(action="more")`
@@ -557,14 +556,14 @@ None.
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `workflow_catalog` | `action` (list/get/search/import/import_init/import_append/import_finalize/import_abort), `workflow_name`, `query`, `top_k`, `threshold`, `filepath`, `overwrite`, `content`, `content_type`, `source_name`, `session_id`, `chunk_data`, `chunk_index`, `total_chunks` | Lists/searches/inspects workflow definitions and imports YAML/JSON via file path, inline content, or chunked sessions. Returns `needs_input` when a name conflict requires overwrite confirmation. | ✅ Done |
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns status (ready/needs_input/no_match/disabled/error), resolved params with sources, unresolved params needing input. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. | ✅ Done |
-| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). | ✅ Done |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, and unresolved inputs for follow-up calls. | ✅ Done |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, and router/component stats. | ✅ Done |
 | `router_clear_goal` | *none* | Clears the current modeling goal. | ✅ Done |
 
 **Use Cases:**
 - Preview/search similar workflows and inspect their steps
 - Setting modeling goals for intelligent workflow expansion
-- Unified parameter resolution through single tool (TASK-055-FIX)
+- Goal-first session bootstrap and follow-up parameter resolution through one entry tool
 
 ---
 
