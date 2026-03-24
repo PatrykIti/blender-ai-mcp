@@ -95,6 +95,58 @@ High-level intended posture:
 
 For the governing rules behind this matrix, use the canonical policy doc above.
 
+## Hidden Atomic Layer And Escape Hatches
+
+Production-oriented public surfaces should not behave as though every internal
+tool is a normal public discovery candidate.
+
+Current governing rules:
+
+- atomic tools are primarily the implementation substrate
+- macro/workflow tools should dominate the public LLM-facing action space
+- discovery should not leak hidden atomic tools into normal bootstrap usage
+- any public single-purpose atomic tools should be explicit escape hatches, not
+  the default surface model
+
+Typical public escape hatches that remain acceptable:
+
+- `router_set_goal`
+- `router_get_status`
+- truth/inspection essentials
+- explicit measure/assert tools as they are introduced
+
+The canonical policy file above governs this rule set.
+
+## Goal-First Requirement
+
+For normal production-oriented LLM surfaces, the expected interaction model is:
+
+1. `router_set_goal(...)`
+2. use the shaped public surface in the context of that goal
+3. perform verification and before/after analysis against the active goal
+
+Current exception surfaces:
+
+- `legacy-manual`
+- `internal-debug`
+- `code-mode-pilot`
+
+These may intentionally skip strict goal-first usage, but they are not the
+default product path for normal LLM operation.
+
+## Session Context Contract
+
+Once a goal is set, downstream layers should be able to rely on:
+
+- active goal / user intent
+- current modeling phase
+- current target object/component when known
+- expected verification criteria
+- the frame of reference for before/after visual interpretation
+
+This context model is part of the current architecture direction and should be
+preserved as later tool and vision waves are added.
+
 ## Search-First Discovery Rollout
 
 The default `llm-guided` surface now runs search-first discovery by default.

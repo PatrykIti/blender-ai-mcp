@@ -1,11 +1,11 @@
 # TASK-113-02: Surface Exposure Matrix and Hidden Atomic Layer
 
 **Parent:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** TASK-113-01
 
-**Progress Update:** The first profile/surface exposure matrix is now documented in the canonical policy docs and linked from the main MCP docs. Remaining work covers hidden atomic discovery rules and escape-hatch curation.
+**Completion Summary:** The first profile/surface exposure matrix is now documented, and the hidden atomic layer plus public escape-hatch rules are explicitly defined in the canonical policy and MCP docs.
 
 ---
 

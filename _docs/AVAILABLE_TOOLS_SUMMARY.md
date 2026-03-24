@@ -14,6 +14,12 @@ For that, use:
 
 - [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
 
+Interpretation rule:
+
+- this file may describe the full available inventory
+- that does **not** mean the whole inventory should be public on production-oriented LLM surfaces
+- public exposure is governed by the policy doc and surface matrix, not by inventory existence alone
+
 ---
 
 ## LLM-Guided Public Aliases
@@ -81,6 +87,10 @@ Measured current baseline:
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
+
+This section is descriptive, not normative. Hidden atomic tools may still appear
+in the inventory because they exist in the runtime/repo, even when they should
+not be part of the normal public LLM-facing surface.
 
 ---
 

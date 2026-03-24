@@ -1,8 +1,10 @@
 # TASK-113-03-01: Set Goal First Requirement
 
 **Parent:** [TASK-113-03](./TASK-113-03_Goal_First_Orchestration_And_Session_Contract.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The requirement is now stated at product-doc level: `router_set_goal(...)` is the default production entrypoint, while manual/debug/experimental surfaces are the explicit exceptions.
 
 ---
 

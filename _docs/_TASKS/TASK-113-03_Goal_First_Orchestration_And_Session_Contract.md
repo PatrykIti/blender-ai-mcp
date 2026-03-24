@@ -1,7 +1,7 @@
 # TASK-113-03: Goal-First Orchestration and Session Contract
 
 **Parent:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** TASK-113-01, TASK-113-02
 
@@ -35,3 +35,4 @@ Make `set_goal`-first behavior a product rule for normal LLM surfaces, not just 
 
 - the repo has an explicit product policy for `set_goal`-first orchestration
 - surface docs and prompt docs agree on when it is mandatory vs optional
+**Completion Summary:** The docs now state clearly that normal production-oriented LLM usage should start from `router_set_goal(...)`, that exceptions must be explicit, and that later tools/vision should interpret changes in the context of an active session goal.

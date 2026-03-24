@@ -14,6 +14,8 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > The current guided entry surface is:
 > `router_set_goal`, `router_get_status`, `browse_workflows`, `search_tools`,
 > `call_tool`, `list_prompts`, and `get_prompt`.
+> On production-oriented surfaces, start from `router_set_goal(...)` first and
+> treat the rest of the public surface in the context of that active goal.
 > Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
 > public surface, and use `manual_tools_no_router` when you explicitly want a
 > manual non-router operating mode.

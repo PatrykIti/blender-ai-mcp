@@ -118,6 +118,42 @@ They should not expose the entire low-level catalog by default.
 Atomic tools should be hidden for most normal LLM-facing surfaces unless there
 is a specific escape-hatch reason to expose them.
 
+Hidden atomic tools may still be:
+
+- used internally by macro/workflow tools
+- exposed on maintainer/debug surfaces
+- reachable through narrowly-scoped compatibility or internal execution paths
+
+But they should not define the normal public product surface.
+
+### 2a. Discovery Must Respect The Hidden Atomic Layer
+
+Discovery/search must not behave as if every internal tool is a normal public
+candidate.
+
+Rules:
+
+- prefer workflow/macro tools ahead of raw atomic tools
+- do not leak hidden atomic tools into normal bootstrap catalogs
+- if an atomic tool is discoverable publicly at all, that must be an explicit
+  exception rather than the default behavior
+
+### 2b. Escape Hatches Must Be Explicit
+
+Some single-purpose tools are still worth exposing publicly.
+
+Typical public escape hatches:
+
+- `router_set_goal`
+- `router_get_status`
+- essential truth/inspection tools
+- explicit measure/assert tools as they are introduced
+- a very small number of operational recovery tools where the product value
+  clearly outweighs the surface-cost
+
+These are exceptions to the layering model, not evidence that the atomic layer
+should stay broadly public.
+
 ### 3. Goal-First by Default
 
 Normal LLM production surfaces should begin from `router_set_goal(...)`.
@@ -128,6 +164,16 @@ The server should know:
 - which phase it is in
 - what kind of verification or visual interpretation should apply
 
+For normal production-oriented LLM surfaces, `router_set_goal(...)` should be
+treated as the required session bootstrap unless the surface is explicitly
+documented as an exception.
+
+Current exception surfaces that may legitimately skip strict goal-first usage:
+
+- maintainer/debug surfaces
+- narrow manual/test surfaces
+- experimental non-production surfaces with a different documented model
+
 ### 4. Vision Is Support, Not Truth
 
 Vision can help:
@@ -137,6 +183,20 @@ Vision can help:
 - compare before/after views
 
 Vision must not replace deterministic inspection/measurement/assertion when correctness matters.
+
+### 4a. Session Context Must Survive Beyond The Initial Goal Call
+
+Once a goal is set, later tools and analysis layers should be able to rely on a
+minimal session context contract:
+
+- active goal / user intent
+- current modeling phase
+- current target object/component when known
+- expected verification criteria
+- the frame of reference for before/after visual analysis
+
+This context is part of the product contract, not an incidental side-effect of
+router internals.
 
 ### 5. Mega Tools Must Be Bounded
 

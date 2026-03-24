@@ -1,8 +1,10 @@
 # TASK-113-03-02: Session Context, Router Status, and Vision Context
 
 **Parent:** [TASK-113-03](./TASK-113-03_Goal_First_Orchestration_And_Session_Contract.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** The docs now define the expected session-context contract after a goal is set: active goal, phase, current target when known, verification criteria, and the interpretation frame for before/after vision.
 
 ---
 

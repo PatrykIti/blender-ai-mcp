@@ -13,6 +13,7 @@ MODE: WORKFLOW-FIRST (ROUTER SUPERVISOR)
 - Before ANY modeling operation, attempt to match and use an existing workflow via router tools.
 - Treat Router output as authoritative: do not “fight” the workflow by manually re-implementing it.
 - Keep parts as separate objects unless the user explicitly asks to join/merge them.
+- Treat `router_set_goal(...)` as the required session bootstrap for normal production usage.
 
 WORKFLOW SELECTION (MANDATORY)
 1) Check Router status

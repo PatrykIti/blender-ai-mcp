@@ -1,8 +1,10 @@
 # TASK-113-02-03: Public Catalog Curation and Escape Hatches
 
 **Parent:** [TASK-113-02](./TASK-113-02_Surface_Exposure_Matrix_And_Hidden_Atomic_Layer.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** The docs now define escape-hatch public atomics as explicit exceptions rather than the default surface model, with `router_set_goal`, `router_get_status`, and truth/inspection tools called out as the typical allowed class.
 
 ---
 

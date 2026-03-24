@@ -129,6 +129,16 @@ High-level intended surface posture:
 
 For the governing rules behind this matrix, use the canonical policy doc above.
 
+Normal production-oriented LLM use is now expected to be:
+
+1. `router_set_goal(...)`
+2. operate on the small shaped public surface
+3. verify using inspection/measurement/assertion
+4. use vision as interpretation support, not as the final truth source
+
+Hidden atomic tools remain important internally, but they are no longer the
+preferred public interface for production-oriented LLM surfaces.
+
 ### Runtime Responsibility Model
 
 The project intentionally separates four different responsibilities:
