@@ -1,0 +1,199 @@
+# Tool Layering Policy
+
+Canonical policy for the MCP product surface.
+
+If another doc disagrees with this file about:
+
+- what should be public vs hidden
+- how tools are layered
+- when `router_set_goal(...)` is expected
+- how vision should be used
+- what counts as the truth layer
+
+this file wins.
+
+---
+
+## Purpose
+
+The repo no longer treats the full flat tool catalog as the preferred public
+LLM interface.
+
+The product direction is now:
+
+- keep low-level power available internally
+- expose a smaller, more meaningful public action space
+- make normal LLM usage goal-first
+- use vision as interpretation support
+- use deterministic measurement/assertion as the truth layer
+
+This policy exists so contributors do not need to reconstruct the intended tool
+model from old tasks, old prompts, or scattered notes.
+
+---
+
+## Ownership
+
+This file is the canonical policy source for:
+
+- tool layering (`atomic` / `macro` / `workflow`)
+- public-surface exposure rules
+- hidden atomic layer rules
+- goal-first orchestration rules
+- vision vs measure/assert boundaries
+- historical supersession notation
+
+The following docs should defer to this file instead of redefining policy:
+
+- [README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/README.md)
+- [_docs/_MCP_SERVER/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/README.md)
+- [_docs/AVAILABLE_TOOLS_SUMMARY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/AVAILABLE_TOOLS_SUMMARY.md)
+- [ARCHITECTURE.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/ARCHITECTURE.md)
+- [_docs/_DEV/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_DEV/README.md)
+
+These other docs remain important, but they are reference/inventory/implementation docs, not the policy source.
+
+---
+
+## Core Terms
+
+### Atomic Tool
+
+Small, deterministic, precise, individually testable.
+
+Atomic tools exist mainly as:
+
+- implementation substrate
+- internal/debug power layer
+- building blocks for macro/workflow tools
+
+Atomic tools should not be the default public interface on production-oriented LLM surfaces.
+
+### Macro Tool
+
+A task-oriented tool built from atomic tools that still has one clear responsibility.
+
+Macro tools are the preferred default public working layer for normal LLM usage.
+
+### Workflow Tool
+
+A bounded process tool that orchestrates macro tools, atomic tools, rules,
+verification, and optionally vision before/after analysis.
+
+A workflow tool is not an open-ended “do anything” tool.
+
+### Public Surface
+
+The intentionally exposed MCP catalog for a given profile/surface.
+
+Public surfaces are product decisions, not accidental byproducts of what exists internally.
+
+### Hidden Atomic Layer
+
+Low-level/internal tools that may exist and remain usable by maintainers or
+specialized execution paths, but are not part of the normal public LLM-facing catalog.
+
+### Truth Layer
+
+Deterministic measurement/assertion and inspection.
+
+Vision is not the final authority on correctness.
+
+---
+
+## Product Rules
+
+### 1. Small Public Catalogs
+
+Production-oriented LLM surfaces should expose:
+
+- workflow tools
+- macro tools
+- a very small number of essential single-purpose tools
+
+They should not expose the entire low-level catalog by default.
+
+### 2. Hidden Atomic Layer by Default
+
+Atomic tools should be hidden for most normal LLM-facing surfaces unless there
+is a specific escape-hatch reason to expose them.
+
+### 3. Goal-First by Default
+
+Normal LLM production surfaces should begin from `router_set_goal(...)`.
+
+The server should know:
+
+- what the LLM is trying to do
+- which phase it is in
+- what kind of verification or visual interpretation should apply
+
+### 4. Vision Is Support, Not Truth
+
+Vision can help:
+
+- summarize what changed
+- localize likely issues
+- compare before/after views
+
+Vision must not replace deterministic inspection/measurement/assertion when correctness matters.
+
+### 5. Mega Tools Must Be Bounded
+
+“Mega tool” is acceptable only when it represents a bounded domain/process.
+
+It must not become a giant ambiguous catch-all tool.
+
+### 6. Business Intent vs Legacy Form
+
+Old task docs may still describe valid business goals while using obsolete tool-surface assumptions.
+
+When that happens, mark them as superseded in form, not necessarily obsolete in business value.
+
+---
+
+## Surface Matrix
+
+This is the intended product posture for the current known surfaces.
+
+| Surface | Public Layer | Goal-First | Intended Use |
+|---|---|---|---|
+| `legacy-manual` | broad manual/control surface | no | maintainer/manual operation, troubleshooting, direct low-level access |
+| `legacy-flat` | compatibility/control surface | optional | compatibility clients, broad control, legacy behavior |
+| `llm-guided` | small curated public catalog | yes | normal production LLM usage |
+| `internal-debug` | debug/maintainer surface | optional | diagnostics, maintainer access, broader internals |
+| `code-mode-pilot` | experimental read-only analytical surface | no | analysis-heavy experiments, not normal write/destructive production use |
+
+Interpretation:
+
+- `llm-guided` is the main product surface for normal LLM usage
+- `legacy-*` surfaces are not the target model for long-term product ergonomics
+- `internal-debug` and `legacy-manual` may expose much more than normal production surfaces
+
+---
+
+## Documentation Notation
+
+When an old doc is no longer architecturally current:
+
+- prefer a visible banner such as:
+  - `Status: ⛔ Superseded by TASK-113`
+- preserve the old content if it is historically useful
+- do not silently rewrite old docs to pretend the old plan never existed
+- use strike-throughs sparingly
+- prefer a short supersession note with a backlink to the current policy/task
+
+---
+
+## Immediate Implications
+
+Until the rest of `_docs/` is migrated:
+
+- treat this file as the policy source
+- treat older task docs that assume flat public exposure as historical
+- do not design new public surfaces around the “everything visible” model
+- design new tool families assuming:
+  - hidden atomic layer
+  - macro/workflow-first public surface
+  - goal-first orchestration
+  - vision + measure/assert cooperation

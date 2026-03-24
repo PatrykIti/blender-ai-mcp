@@ -58,6 +58,7 @@ This split is intentional:
 - Inspection must remain the final authority on actual Blender state.
 
 See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
+See [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md) for the canonical product policy on layered tools, small public surfaces, hidden atomic tools, and `set_goal`-first orchestration.
 
 ### 1. MCP Server (Client Side)
 A Python application that exposes tools to the AI model and acts as a client for the Blender Addon.

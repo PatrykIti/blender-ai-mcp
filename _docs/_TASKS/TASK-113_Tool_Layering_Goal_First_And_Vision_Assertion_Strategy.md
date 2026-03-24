@@ -4,7 +4,9 @@
 **Category:** Product Strategy / MCP Surface Architecture  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-084, TASK-085, TASK-086, TASK-090, TASK-091, TASK-112  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The first documentation foundation wave is complete: a canonical tool-layering policy source now exists, the repo has an explicit historical superseded-notation rule, and the first profile/surface exposure matrix is documented and linked from the main docs.
 
 ---
 

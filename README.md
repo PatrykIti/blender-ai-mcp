@@ -55,6 +55,18 @@ Current FastMCP platform baseline:
 - deterministic transform pipeline scaffold
 - shared session/execution bridge for later visibility, elicitation, and task features
 
+Current canonical product policy for tool layering and public surfaces:
+
+- [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
+
+Use that document as the source of truth for:
+
+- `atomic / macro / workflow` layering
+- hidden atomic tools
+- small public LLM-facing catalogs
+- `router_set_goal(...)` as the default production entrypoint
+- vision vs measure/assert boundaries
+
 ### LLM-Guided Public Surface
 
 The `llm-guided` surface now exposes a first cleaner public contract line on top of the same internal capabilities.
@@ -104,6 +116,18 @@ The visible `llm-guided` entry set is:
 - `call_tool`
 
 Build and inspection tools stay discoverable on demand and remain constrained by guided visibility/session phase rules.
+
+High-level intended surface posture:
+
+| Surface | Public Layer | Goal-First |
+|---|---|---|
+| `legacy-manual` | broad manual/control | no |
+| `legacy-flat` | compatibility/control | optional |
+| `llm-guided` | small curated public catalog | yes |
+| `internal-debug` | debug/maintainer | optional |
+| `code-mode-pilot` | experimental read-only analytical surface | no |
+
+For the governing rules behind this matrix, use the canonical policy doc above.
 
 ### Runtime Responsibility Model
 

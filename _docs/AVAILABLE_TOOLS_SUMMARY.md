@@ -4,6 +4,16 @@ This document lists all currently implemented tools available for the AI, groupe
 Planned tools are marked as 🚧.
 For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `SCENE_TOOLS_ARCHITECTURE.md`.
 
+This file is an inventory/reference doc, not the canonical policy source for:
+
+- what should be public vs hidden
+- how tools are layered
+- when `router_set_goal(...)` is expected
+
+For that, use:
+
+- [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
+
 ---
 
 ## LLM-Guided Public Aliases

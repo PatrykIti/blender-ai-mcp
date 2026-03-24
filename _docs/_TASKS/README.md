@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks (~120 sub-tasks)
-- **In Progress:** 0 tasks
+- **To Do:** 0 tasks (~110 sub-tasks)
+- **In Progress:** 1 tasks
 - **Done:** 167
 - **Superseded:** 10
 
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | **Tool Layering, Goal-First, and Vision-Assertion Strategy** | 🔴 High | Canonical policy and rollout plan for layered tools, small public surfaces, `set_goal`-first orchestration, and vision/assert-based verification |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -47,6 +46,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md) | **Tool Layering, Goal-First, and Vision-Assertion Strategy** | 🔴 High | First wave done: canonical policy doc, superseded notation rule, and initial surface/profile exposure matrix are now in place |
 
 ---
 

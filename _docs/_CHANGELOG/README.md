@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [148](./148-2026-03-24-tool-layering-policy-foundation.md) | 2026-03-24 | **Tool layering policy foundation** | - |
 | [147](./147-2026-03-24-supersede-reconstruction-legacy-task-forms.md) | 2026-03-24 | **Supersede legacy reconstruction task forms** | - |
 | [146](./146-2026-03-24-supersede-router-workflow-legacy-tasks.md) | 2026-03-24 | **Supersede legacy router/workflow planning tasks** | - |
 | [145](./145-2026-03-24-router-workflow-task-triage.md) | 2026-03-24 | **Router/workflow task triage against new tool strategy** | - |

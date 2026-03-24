@@ -2,6 +2,13 @@
 
 This folder contains developer-facing docs for working on the MCP server + Blender addon.
 
+Before adding or reshaping public tools/surfaces, read:
+
+- [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
+
+That file is the canonical policy source for layered tools, hidden atomic tools,
+goal-first behavior, and vision/assert boundaries.
+
 ## Local Setup
 
 ```bash

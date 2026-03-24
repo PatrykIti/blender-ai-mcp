@@ -1,9 +1,11 @@
 # TASK-113-01: Tool Layering Policy and Terminology
 
 **Parent:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
 **Depends On:** None
+
+**Completion Summary:** The repo now has one canonical policy source for tool layering and one explicit historical-notation rule for superseded docs/tasks. Main docs now point back to that policy instead of redefining the architecture locally.
 
 ---
 

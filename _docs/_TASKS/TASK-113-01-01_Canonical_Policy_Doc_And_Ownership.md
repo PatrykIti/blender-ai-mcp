@@ -1,8 +1,10 @@
 # TASK-113-01-01: Canonical Policy Doc and Ownership
 
 **Parent:** [TASK-113-01](./TASK-113-01_Tool_Layering_Policy_And_Terminology.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The canonical policy source is now [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md), and the main architecture/reference docs link back to it explicitly.
 
 ---
 

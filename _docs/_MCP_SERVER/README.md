@@ -13,9 +13,28 @@ Documentation for the MCP Server (Client Side).
   - Defines the supported Python and FastMCP baseline for the migration series, including 3.1+ feature gates.
 - **[FastMCP 3.x Composition Model](./fastmcp_3x_composition.md)**
   - Documents provider groups, surface profiles, transform ordering, and the platform regression harness added during TASK-083.
+- **[Tool Layering Policy](./TOOL_LAYERING_POLICY.md)**
+  - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
+
+## Canonical Tool Policy
+
+The canonical policy for:
+
+- layered tools (`atomic` / `macro` / `workflow`)
+- small public LLM-facing catalogs
+- hidden atomic tools
+- `router_set_goal(...)` as the default production entrypoint
+- vision vs measure/assert boundaries
+
+lives here:
+
+- [Tool Layering Policy](./TOOL_LAYERING_POLICY.md)
+
+This README is a surface/runtime reference doc. If it conflicts with the policy
+doc above, the policy doc wins.
 
 ## FastMCP 3.x Migration Baseline
 
@@ -61,6 +80,20 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Router and dispatcher internals still operate on canonical internal names.
 The public alias layer is a transform concern, not a second business-logic path.
+
+## Surface Exposure Matrix
+
+High-level intended posture:
+
+| Surface | Public Layer | Goal-First | Use |
+|---|---|---|---|
+| `legacy-manual` | broad manual/control | no | maintainer/manual direct usage |
+| `legacy-flat` | compatibility/control | optional | compatibility and broad control |
+| `llm-guided` | small curated public catalog | yes | normal production LLM usage |
+| `internal-debug` | debug/maintainer | optional | maintainer/debug |
+| `code-mode-pilot` | experimental read-only analytical surface | no | analytical experiments |
+
+For the governing rules behind this matrix, use the canonical policy doc above.
 
 ## Search-First Discovery Rollout
 

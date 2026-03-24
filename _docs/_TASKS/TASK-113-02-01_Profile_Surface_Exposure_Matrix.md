@@ -1,8 +1,10 @@
 # TASK-113-02-01: Profile Surface Exposure Matrix
 
 **Parent:** [TASK-113-02](./TASK-113-02_Surface_Exposure_Matrix_And_Hidden_Atomic_Layer.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The intended posture for `legacy-manual`, `legacy-flat`, `llm-guided`, `internal-debug`, and `code-mode-pilot` is now documented and linked from the canonical policy source and MCP docs.
 
 ---
 

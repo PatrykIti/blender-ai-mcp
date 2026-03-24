@@ -1,8 +1,10 @@
 # TASK-113-01-02: Historical Superseded Markers and Notation
 
 **Parent:** [TASK-113-01](./TASK-113-01_Tool_Layering_Policy_And_Terminology.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** The repo now has an explicit superseded-notation rule: use a visible status/banner with a backlink to the newer governing task/policy instead of silently rewriting historical docs.
 
 ---
 
