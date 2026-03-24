@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [152](./152-2026-03-24-existing-tool-audit-planning.md) | 2026-03-24 | **Existing tool audit planning** | - |
 | [151](./151-2026-03-24-instructions-prompts-and-doc-migration-map.md) | 2026-03-24 | **Instructions, prompts, and documentation migration map** | - |
 | [150](./150-2026-03-24-macro-workflow-and-vision-assert-docs.md) | 2026-03-24 | **Macro/workflow and vision/assert docs** | - |
 | [149](./149-2026-03-24-hidden-atomic-and-goal-first-docs.md) | 2026-03-24 | **Hidden atomic layer and goal-first docs** | - |

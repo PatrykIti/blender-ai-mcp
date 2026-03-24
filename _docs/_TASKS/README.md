@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks (~100 sub-tasks)
+- **To Do:** 1 tasks (~120 sub-tasks)
 - **In Progress:** 0 tasks
 - **Done:** 168
 - **Superseded:** 10
@@ -23,6 +23,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-114](./TASK-114_Existing_Tool_Surface_Audit_And_Alignment.md) | **Existing Tool Surface Audit and Alignment** | 🔴 High | Post-`TASK-113` execution wave: audit current tools, wording, prompts, metadata, and surface drift before further code/tool additions |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
