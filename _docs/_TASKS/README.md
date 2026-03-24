@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks (~110 sub-tasks)
-- **In Progress:** 0 tasks
+- **To Do:** 0 tasks (~100 sub-tasks)
+- **In Progress:** 1 tasks
 - **Done:** 169
 - **Superseded:** 10
 
@@ -46,6 +46,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | First post-audit fix wave: grouped public tool framing plus modeling/router wording cleanup |
 
 ---
 

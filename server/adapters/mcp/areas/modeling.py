@@ -194,9 +194,9 @@ def _modeling_add_modifier_impl(
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
-    Preferred method for booleans, subdivision, mirroring (non-destructive stack).
+    Object-level modifier entrypoint for controlled non-destructive operations.
 
-    Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier | ALT TO → mesh_boolean
+    Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier
 
     Args:
         name: Object name.
@@ -226,9 +226,9 @@ def modeling_add_modifier(
 ) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds a modifier to an object.
-    Preferred method for booleans, subdivision, mirroring (non-destructive stack).
+    Object-level modifier entrypoint for controlled non-destructive operations.
 
-    Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier | ALT TO → mesh_boolean
+    Workflow: NON-DESTRUCTIVE | AFTER → modeling_apply_modifier
 
     Args:
         name: Object name.

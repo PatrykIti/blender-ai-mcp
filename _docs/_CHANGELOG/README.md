@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [156](./156-2026-03-24-public-surface-wording-alignment.md) | 2026-03-24 | **Public surface wording alignment** | - |
 | [155](./155-2026-03-24-existing-tool-audit-backlog-and-measure-plan.md) | 2026-03-24 | **Existing-tool audit backlog and measure/assert plan** | - |
 | [154](./154-2026-03-24-metadata-and-truth-audit-findings.md) | 2026-03-24 | **Metadata and truth-model audit findings** | - |
 | [153](./153-2026-03-24-initial-existing-tool-audit-findings.md) | 2026-03-24 | **Initial existing-tool audit findings** | - |

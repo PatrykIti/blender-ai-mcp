@@ -143,16 +143,18 @@ Assistant envelopes are structured and use explicit terminal statuses:
 
 ---
 
-## 🧠 LLM Context Optimization - Mega Tools
+## 🧠 Grouped Public Tools
 
-> **Unified tools that consolidate multiple related operations to reduce LLM context usage.**
-> Original tools are kept as internal functions and routed via mega tools.
-> Only mega tools are registered as MCP tools (`@mcp.tool`); standalone action handlers live in the
-> Blender addon unless a compatibility wrapper is required.
+> These grouped tools are part of the current public working layer.
+> Historically they were introduced as “mega tools” for context reduction, but
+> they should now be understood through the layered model from `TASK-113`:
+> grouped public tools above a hidden/internal atomic layer.
+> Internal action handlers still exist behind them and remain available to the
+> router and internal execution paths.
 
 ### Implemented
 
-| Mega Tool | Actions | Replaces | Status |
+| Grouped Tool | Actions | Replaces | Status |
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
@@ -165,7 +167,7 @@ Assistant envelopes are structured and use explicit terminal statuses:
 
 None.
 
-**Total Savings (current):** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
+**Current grouped public set:** 6 high-frequency grouped tools.
 
 ---
 
@@ -176,9 +178,9 @@ None.
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
-| `scene_context` | `action` (mode/selection) | **MEGA TOOL** - Quick context queries (mode, selection state). | ✅ Done |
-| `scene_create` | `action` (light/camera/empty), params | **MEGA TOOL** - Creates scene helper objects (lights, cameras, empties). | ✅ Done |
-| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data), params | **MEGA TOOL** - Detailed inspection queries for objects and scene. | ✅ Done |
+| `scene_context` | `action` (mode/selection) | Grouped context queries (mode, selection state). | ✅ Done |
+| `scene_create` | `action` (light/camera/empty), params | Grouped creation tool for lights, cameras, and empties. | ✅ Done |
+| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data), params | Grouped inspection tool for objects and scene state. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |
@@ -308,8 +310,8 @@ None.
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
-| `mesh_select` | `action` (all/none/linked/more/less/boundary) | **MEGA TOOL** - Simple selection operations. | ✅ Done |
-| `mesh_select_targeted` | `action` (by_index/loop/ring/by_location), params | **MEGA TOOL** - Targeted selection operations with parameters. | ✅ Done |
+| `mesh_select` | `action` (all/none/linked/more/less/boundary) | Grouped selection operations. | ✅ Done |
+| `mesh_select_targeted` | `action` (by_index/loop/ring/by_location), params | Grouped targeted selection operations. | ✅ Done |
 | `mesh_delete_selected` | `type` (VERT/EDGE/FACE) | Deletes selected elements. | ✅ Done |
 | `mesh_extrude_region` | `move` | Extrudes selected region. | ✅ Done |
 | `mesh_fill_holes` | *none* | Fills holes (F key). | ✅ Done |

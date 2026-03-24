@@ -1009,15 +1009,18 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 
 ---
 
-## 🧠 LLM Context Optimization
+## 🧠 Grouped Public Tools
 
-> Unified "mega tools" that consolidate multiple related operations to reduce LLM context usage.
-> Mega tools are wrappers only; action-level handlers live as internal functions backed by Blender addon RPC.
-> Standalone MCP tools are exposed only where explicitly listed.
-> Router can still execute internal actions via handler mappings and per-tool JSON metadata.
+> The repo exposes a small number of grouped public tools for high-frequency
+> scene/mesh interaction.
+> Historically these were introduced as “mega tools” for context reduction, but
+> they should now be read through the newer layered model from `TASK-113`:
+> grouped public tools above a hidden/internal atomic layer.
+> Internal action handlers still exist behind them and remain available to the
+> router and internal execution paths.
 
 <details>
-<summary><strong>Mega Tools (LLM Context Optimization)</strong></summary>
+<summary><strong>Grouped Public Tools</strong></summary>
 
 ### Scene Mega Tools
 
@@ -1035,7 +1038,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 | `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
 | `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | -7 | ✅ |
 
-**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context).
+**Current grouped public set:** 6 high-frequency grouped tools.
 
 `mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
 

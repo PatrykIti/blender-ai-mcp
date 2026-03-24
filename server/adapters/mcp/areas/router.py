@@ -1,8 +1,9 @@
 """
 Router MCP Tools.
 
-Tools for interacting with the Router Supervisor system.
-These tools allow the LLM to communicate its intent to the router.
+Tools for goal-first session bootstrap and router-aware workflow/status interaction.
+On production-oriented surfaces, these tools anchor the active goal/session
+context instead of acting as optional decoration around a flat catalog.
 
 Follows Clean Architecture pattern:
 - MCP adapter layer calls Application layer (RouterToolHandler)

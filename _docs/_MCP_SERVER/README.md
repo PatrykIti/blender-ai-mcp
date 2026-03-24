@@ -483,11 +483,15 @@ docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
 
 ## 🛠 Available Tools
 
-### 🧠 Mega Tools (LLM Context Optimization)
+### 🧠 Grouped Public Tools
 
-Unified tools that consolidate multiple related operations to reduce LLM context usage.
+These grouped tools are part of the current public working layer.
+Historically they were introduced as “mega tools” for context reduction, but
+they should now be understood through the layered policy in
+`TOOL_LAYERING_POLICY.md`: grouped public tools above a hidden/internal atomic
+layer.
 
-| Mega Tool | Actions | Description |
+| Grouped Tool | Actions | Description |
 |-----------|---------|-------------|
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
@@ -496,7 +500,7 @@ Unified tools that consolidate multiple related operations to reduce LLM context
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |
 
-**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
+**Current grouped public set:** 6 high-frequency grouped tools.
 
 ### Scene Tools
 Managing objects at the scene level.
@@ -519,7 +523,7 @@ Managing objects at the scene level.
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
-> **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
+> **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 
 ### Collection Tools
@@ -630,7 +634,7 @@ Low-level geometry manipulation.
 
 > **Note:** Mesh introspection tools (`mesh_get_*`) are consolidated into `mesh_inspect` for MCP clients. Router can still call internal actions via handler metadata.
 
-> **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
+> **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into grouped public tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
 ### Curve Tools
 Curve creation and conversion.
