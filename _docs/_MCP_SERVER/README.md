@@ -507,7 +507,7 @@ layer.
 |-----------|---------|-------------|
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | Detailed inspection queries for objects. |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | Detailed inspection queries for objects plus scene-level render/color/world state. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |

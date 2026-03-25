@@ -35,7 +35,17 @@ class SceneContextResponseContract(MCPContract):
 
 
 class SceneInspectResponseContract(MCPContract):
-    action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"]
+    action: Literal[
+        "object",
+        "topology",
+        "modifiers",
+        "materials",
+        "constraints",
+        "modifier_data",
+        "render",
+        "color_management",
+        "world",
+    ]
     payload: dict[str, Any] | None = None
     error: str | None = None
     assistant: InspectionSummaryAssistantContract | None = None

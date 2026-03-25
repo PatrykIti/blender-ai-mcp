@@ -190,3 +190,27 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
             },
         ),
     ]
+
+
+def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
+    rpc = DummyRpc(
+        {
+            "scene.inspect_render_settings": _ok({"render_engine": "BLENDER_EEVEE_NEXT"}),
+            "scene.inspect_color_management": _ok({"view_transform": "AgX"}),
+            "scene.inspect_world": _ok({"world_name": "Studio"}),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    render = handler.inspect_render_settings()
+    color = handler.inspect_color_management()
+    world = handler.inspect_world()
+
+    assert render["render_engine"] == "BLENDER_EEVEE_NEXT"
+    assert color["view_transform"] == "AgX"
+    assert world["world_name"] == "Studio"
+    assert rpc.calls == [
+        ("scene.inspect_render_settings", None),
+        ("scene.inspect_color_management", None),
+        ("scene.inspect_world", None),
+    ]

@@ -4,7 +4,9 @@
 **Category:** Scene Surface Expansion  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113, TASK-114, TASK-117  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The first read-side slice is now implemented: grouped `scene_inspect` supports `render`, `color_management`, and `world` actions based on Blender 5.x scene/world settings. The remaining work is the grouped write-side `scene_configure` surface, node-graph boundary, and final delivery wave.
 
 ---
 

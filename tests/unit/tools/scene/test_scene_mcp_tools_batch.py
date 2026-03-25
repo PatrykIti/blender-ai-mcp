@@ -59,15 +59,33 @@ def test_scene_inspect_supports_multiple_actions(monkeypatch):
         "server.adapters.mcp.areas.scene._scene_inspect_modifiers",
         lambda ctx, object_name, include_disabled: {"modifier_count": 2},
     )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_inspect_render_settings",
+        lambda ctx: {"render_engine": "BLENDER_EEVEE_NEXT"},
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_inspect_color_management",
+        lambda ctx: {"view_transform": "AgX"},
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_inspect_world",
+        lambda ctx: {"world_name": "Studio"},
+    )
 
     object_result = asyncio.run(scene_inspect(MagicMock(), action="object", object_name="Cube"))
     topology_result = asyncio.run(scene_inspect(MagicMock(), action="topology", object_name="Cube", detailed=True))
     modifiers_result = asyncio.run(scene_inspect(MagicMock(), action="modifiers"))
+    render_result = asyncio.run(scene_inspect(MagicMock(), action="render"))
+    color_result = asyncio.run(scene_inspect(MagicMock(), action="color_management"))
+    world_result = asyncio.run(scene_inspect(MagicMock(), action="world"))
 
     assert isinstance(object_result, SceneInspectResponseContract)
     assert object_result.payload["object_name"] == "Cube"
     assert topology_result.payload["vertex_count"] == 8
     assert modifiers_result.payload["modifier_count"] == 2
+    assert render_result.payload["render_engine"] == "BLENDER_EEVEE_NEXT"
+    assert color_result.payload["view_transform"] == "AgX"
+    assert world_result.payload["world_name"] == "Studio"
 
 
 def test_scene_create_helpers_handle_parsing_and_errors(monkeypatch):

@@ -4,7 +4,7 @@ Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
 - **To Do:** 1 tasks (~130 sub-tasks)
-- **In Progress:** 0 tasks
+- **In Progress:** 1 tasks
 - **Done:** 172
 - **Superseded:** 10
 
@@ -47,6 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Read-side slice is done; remaining scope is `scene_configure`, world/node-graph boundary, and delivery coverage |
 
 ---
 

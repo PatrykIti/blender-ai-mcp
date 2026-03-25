@@ -108,6 +108,21 @@ class ISceneTool(ABC):
         pass
 
     @abstractmethod
+    def inspect_render_settings(self) -> Dict[str, Any]:
+        """Returns render settings relevant to scene reconstruction."""
+        pass
+
+    @abstractmethod
+    def inspect_color_management(self) -> Dict[str, Any]:
+        """Returns color-management settings relevant to scene appearance."""
+        pass
+
+    @abstractmethod
+    def inspect_world(self) -> Dict[str, Any]:
+        """Returns world/background settings relevant to scene appearance."""
+        pass
+
+    @abstractmethod
     def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
         """Returns object (and optional bone) constraints."""
         pass

@@ -173,6 +173,15 @@ class SceneHandler:
             "units": "ratio",
         }
 
+    def inspect_render_settings(self):
+        return {"render_engine": "BLENDER_EEVEE_NEXT", "resolution": {"x": 1920, "y": 1080, "percentage": 100}}
+
+    def inspect_color_management(self):
+        return {"display_device": "sRGB", "view_transform": "AgX", "look": "None"}
+
+    def inspect_world(self):
+        return {"world_name": "Studio", "use_nodes": False, "color": [0.05, 0.05, 0.05]}
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -275,6 +284,27 @@ def test_scene_read_contract_tools_deliver_structured_content(monkeypatch):
     assert _unwrap_structured(hierarchy)["payload"]["total_objects"] == 1
     assert _unwrap_structured(bbox)["payload"]["volume"] == 1.0
     assert _unwrap_structured(origin)["payload"]["origin_world"] == [0, 0, 0]
+
+
+def test_scene_inspect_scene_state_actions_deliver_structured_content(monkeypatch):
+    """Grouped scene_inspect should also surface structured scene-level state actions."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        render = await server.call_tool("scene_inspect", {"action": "render"})
+        color = await server.call_tool("scene_inspect", {"action": "color_management"})
+        world = await server.call_tool("scene_inspect", {"action": "world"})
+        return render, color, world
+
+    render, color, world = asyncio.run(run())
+
+    assert _unwrap_structured(render)["payload"]["render_engine"] == "BLENDER_EEVEE_NEXT"
+    assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
+    assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
 
 
 def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):

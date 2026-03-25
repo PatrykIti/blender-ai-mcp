@@ -172,6 +172,48 @@ class TestSceneInspectMega:
         assert isinstance(result, SceneInspectResponseContract)
         assert result.action == "modifier_data"
 
+    @patch("server.adapters.mcp.areas.scene._scene_inspect_render_settings")
+    def test_action_render_routes_correctly(self, mock_render):
+        """Test action='render' routes to _scene_inspect_render_settings."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+
+        callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
+        mock_render.return_value = {"render_engine": "BLENDER_EEVEE_NEXT"}
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="render"))
+
+        mock_render.assert_called_once_with(self.mock_ctx)
+        assert isinstance(result, SceneInspectResponseContract)
+        assert result.action == "render"
+        assert result.payload["render_engine"] == "BLENDER_EEVEE_NEXT"
+
+    @patch("server.adapters.mcp.areas.scene._scene_inspect_color_management")
+    def test_action_color_management_routes_correctly(self, mock_color):
+        """Test action='color_management' routes to _scene_inspect_color_management."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+
+        callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
+        mock_color.return_value = {"view_transform": "AgX"}
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="color_management"))
+
+        mock_color.assert_called_once_with(self.mock_ctx)
+        assert isinstance(result, SceneInspectResponseContract)
+        assert result.action == "color_management"
+        assert result.payload["view_transform"] == "AgX"
+
+    @patch("server.adapters.mcp.areas.scene._scene_inspect_world")
+    def test_action_world_routes_correctly(self, mock_world):
+        """Test action='world' routes to _scene_inspect_world."""
+        from server.adapters.mcp.areas.scene import scene_inspect
+
+        callable_scene_inspect = getattr(scene_inspect, "fn", scene_inspect)
+        mock_world.return_value = {"world_name": "Studio"}
+        result = asyncio.run(callable_scene_inspect(self.mock_ctx, action="world"))
+
+        mock_world.assert_called_once_with(self.mock_ctx)
+        assert isinstance(result, SceneInspectResponseContract)
+        assert result.action == "world"
+        assert result.payload["world_name"] == "Studio"
+
     def test_invalid_action_returns_error(self):
         """Test invalid action returns helpful error message."""
         from server.adapters.mcp.areas.scene import scene_inspect
@@ -188,6 +230,9 @@ class TestSceneInspectMega:
         assert "materials" in result.error
         assert "constraints" in result.error
         assert "modifier_data" in result.error
+        assert "render" in result.error
+        assert "color_management" in result.error
+        assert "world" in result.error
 
     @patch("server.adapters.mcp.areas.scene.run_inspection_summary_assistant")
     @patch("server.adapters.mcp.areas.scene._scene_inspect_object")

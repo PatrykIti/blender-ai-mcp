@@ -324,7 +324,17 @@ def _scene_list_selection(ctx: Context) -> Dict[str, Any]:
 
 async def scene_inspect(
     ctx: Context,
-    action: Literal["object", "topology", "modifiers", "materials", "constraints", "modifier_data"],
+    action: Literal[
+        "object",
+        "topology",
+        "modifiers",
+        "materials",
+        "constraints",
+        "modifier_data",
+        "render",
+        "color_management",
+        "world",
+    ],
     object_name: Optional[str] = None,
     detailed: bool = False,
     include_disabled: bool = True,
@@ -345,6 +355,9 @@ async def scene_inspect(
     - "materials": No params required. Returns material slot audit. Optional: material_filter, include_empty_slots.
     - "constraints": Requires object_name. Returns object (and optional bone) constraints.
     - "modifier_data": Requires object_name. Returns full modifier properties (optional modifier_name, include_node_tree).
+    - "render": No params required. Returns render-engine/output/resolution settings.
+    - "color_management": No params required. Returns display/view/sequencer color-management settings.
+    - "world": No params required. Returns active world/background state and node summary when available.
     - assistant_summary: Optional bounded server-side summary of the structured inspection payload.
 
     Workflow: READ-ONLY | USE → detailed analysis before export or debugging
@@ -357,6 +370,9 @@ async def scene_inspect(
         scene_inspect(action="materials", material_filter="Wood")
         scene_inspect(action="constraints", object_name="Rig", include_bones=True)
         scene_inspect(action="modifier_data", object_name="Cube", modifier_name="Bevel")
+        scene_inspect(action="render")
+        scene_inspect(action="color_management")
+        scene_inspect(action="world")
     """
 
     def execute():
@@ -407,12 +423,21 @@ async def scene_inspect(
                 action="modifier_data",
                 payload=_scene_inspect_modifier_data(ctx, object_name, modifier_name, include_node_tree),
             )
+        elif action == "render":
+            return SceneInspectResponseContract(action="render", payload=_scene_inspect_render_settings(ctx))
+        elif action == "color_management":
+            return SceneInspectResponseContract(
+                action="color_management",
+                payload=_scene_inspect_color_management(ctx),
+            )
+        elif action == "world":
+            return SceneInspectResponseContract(action="world", payload=_scene_inspect_world(ctx))
         else:
             return SceneInspectResponseContract(
                 action="object",
                 error=(
                     f"Unknown action '{action}'. Valid actions: object, topology, modifiers, "
-                    "materials, constraints, modifier_data"
+                    "materials, constraints, modifier_data, render, color_management, world"
                 ),
             )
 
@@ -457,6 +482,48 @@ def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
     return report
+
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_render_settings(ctx: Context) -> Dict[str, Any]:
+    """
+    [SCENE][SAFE][READ-ONLY] Returns structured render settings for the active scene.
+
+    Workflow: READ-ONLY | USE → capture scene-level render configuration
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.inspect_render_settings()
+    except RuntimeError as e:
+        return {"error": str(e)}
+
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_color_management(ctx: Context) -> Dict[str, Any]:
+    """
+    [SCENE][SAFE][READ-ONLY] Returns structured color-management settings for the active scene.
+
+    Workflow: READ-ONLY | USE → capture scene appearance/display configuration
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.inspect_color_management()
+    except RuntimeError as e:
+        return {"error": str(e)}
+
+
+# Internal function - exposed via scene_inspect mega tool
+def _scene_inspect_world(ctx: Context) -> Dict[str, Any]:
+    """
+    [SCENE][SAFE][READ-ONLY] Returns structured world/background settings for the active scene.
+
+    Workflow: READ-ONLY | USE → inspect scene background and world configuration
+    """
+    handler = get_scene_handler()
+    try:
+        return handler.inspect_world()
+    except RuntimeError as e:
+        return {"error": str(e)}
 
 
 def _format_viewport_output(

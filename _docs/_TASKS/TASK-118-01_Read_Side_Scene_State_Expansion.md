@@ -1,8 +1,10 @@
 # TASK-118-01: Read-Side Scene State Expansion
 
 **Parent:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Grouped `scene_inspect` now supports deterministic read-side scene-state actions for `render`, `color_management`, and `world`, with structured payloads, metadata updates, and regression coverage.
 
 ---
 

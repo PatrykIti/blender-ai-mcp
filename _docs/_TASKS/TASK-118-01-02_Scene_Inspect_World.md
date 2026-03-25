@@ -1,8 +1,10 @@
 # TASK-118-01-02: Scene Inspect World
 
 **Parent:** [TASK-118-01](./TASK-118-01_Read_Side_Scene_State_Expansion.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_inspect(action="world")` is now implemented with structured world/background state, including node-based world summary fields when available.
 
 ---
 

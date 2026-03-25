@@ -1051,7 +1051,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 |-----------|---------|---------|--------|
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data | -5 | ✅ |
+| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data, render, color_management, world | -5 | ✅ |
 
 ### Grouped Mesh Tools
 

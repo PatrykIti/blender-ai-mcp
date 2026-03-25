@@ -860,6 +860,77 @@ class SceneHandler:
 
         return result
 
+    def inspect_render_settings(self):
+        """Returns structured render settings for the active scene."""
+        scene = bpy.context.scene
+        render = scene.render
+        image_settings = getattr(render, "image_settings", None)
+        cycles = getattr(scene, "cycles", None)
+
+        return {
+            "render_engine": getattr(render, "engine", None),
+            "resolution": {
+                "x": getattr(render, "resolution_x", None),
+                "y": getattr(render, "resolution_y", None),
+                "percentage": getattr(render, "resolution_percentage", None),
+            },
+            "filepath": getattr(render, "filepath", None),
+            "use_file_extension": getattr(render, "use_file_extension", None),
+            "film_transparent": getattr(render, "film_transparent", None),
+            "image_settings": {
+                "file_format": getattr(image_settings, "file_format", None),
+                "color_mode": getattr(image_settings, "color_mode", None),
+                "color_depth": getattr(image_settings, "color_depth", None),
+            },
+            "cycles": {
+                "device": getattr(cycles, "device", None),
+                "samples": getattr(cycles, "samples", None),
+                "preview_samples": getattr(cycles, "preview_samples", None),
+            },
+        }
+
+    def inspect_color_management(self):
+        """Returns structured color-management settings for the active scene."""
+        scene = bpy.context.scene
+        display_settings = getattr(scene, "display_settings", None)
+        view_settings = getattr(scene, "view_settings", None)
+        sequencer_settings = getattr(scene, "sequencer_colorspace_settings", None)
+
+        return {
+            "display_device": getattr(display_settings, "display_device", None),
+            "view_transform": getattr(view_settings, "view_transform", None),
+            "look": getattr(view_settings, "look", None),
+            "exposure": getattr(view_settings, "exposure", None),
+            "gamma": getattr(view_settings, "gamma", None),
+            "use_curve_mapping": getattr(view_settings, "use_curve_mapping", None),
+            "sequencer_color_space": getattr(sequencer_settings, "name", None),
+        }
+
+    def inspect_world(self):
+        """Returns structured world/background settings for the active scene."""
+        scene = bpy.context.scene
+        world = getattr(scene, "world", None)
+        if world is None:
+            return {
+                "world_name": None,
+                "use_nodes": False,
+                "color": None,
+                "node_tree_name": None,
+                "background": None,
+            }
+
+        background = None
+        if getattr(world, "use_nodes", False) and getattr(world, "node_tree", None) is not None:
+            background = self._inspect_world_background_node(world.node_tree)
+
+        return {
+            "world_name": getattr(world, "name", None),
+            "use_nodes": getattr(world, "use_nodes", False),
+            "color": self._vec_to_list(getattr(world, "color", (0.0, 0.0, 0.0))),
+            "node_tree_name": getattr(getattr(world, "node_tree", None), "name", None),
+            "background": background,
+        }
+
     def get_constraints(self, object_name, include_bones=False):
         """
         [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
@@ -1771,3 +1842,27 @@ class SceneHandler:
             "details": details,
         }
         return {key: value for key, value in payload.items() if value is not None}
+
+    def _inspect_world_background_node(self, node_tree):
+        """Extracts a compact summary of the first world background node when present."""
+        for node in getattr(node_tree, "nodes", []) or []:
+            node_type = getattr(node, "type", None)
+            node_idname = getattr(node, "bl_idname", None)
+            if node_type != "BACKGROUND" and node_idname != "ShaderNodeBackground":
+                continue
+
+            color_input = self._get_node_input_default(node, "Color")
+            strength_input = self._get_node_input_default(node, "Strength")
+            return {
+                "node_name": getattr(node, "name", None),
+                "color": self._vec_to_list(color_input) if color_input is not None else None,
+                "strength": round(float(strength_input), 6) if isinstance(strength_input, (int, float)) else strength_input,
+            }
+        return None
+
+    def _get_node_input_default(self, node, input_name):
+        """Returns a node input default value by socket name when available."""
+        for socket in getattr(node, "inputs", []) or []:
+            if getattr(socket, "name", None) == input_name:
+                return getattr(socket, "default_value", None)
+        return None
