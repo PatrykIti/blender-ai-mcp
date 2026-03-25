@@ -9,11 +9,21 @@ from typing import Any
 
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.settings import SurfaceProfileSettings
-from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, phase_tag
+from server.adapters.mcp.visibility.tags import phase_tag
+
+GUIDED_ENTRY_TOOLS: tuple[str, ...] = (
+    "router_set_goal",
+    "router_get_status",
+    "workflow_catalog",
+    "browse_workflows",
+)
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
+    "scene_context",
     "check_scene",
+    "scene_inspect",
     "inspect_scene",
+    "scene_configure",
     "configure_scene",
     "scene_create",
     "scene_list_objects",
@@ -119,8 +129,11 @@ GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
 )
 
 GUIDED_INSPECT_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
+    "scene_context",
     "check_scene",
+    "scene_inspect",
     "inspect_scene",
+    "scene_configure",
     "configure_scene",
     "scene_list_objects",
     "scene_snapshot_state",
@@ -197,7 +210,7 @@ def build_visibility_rules(
 
     rules: list[dict[str, Any]] = [
         {"enabled": False, "components": {"tool"}, "match_all": True},
-        {"enabled": True, "components": {"tool"}, "tags": {ENTRY_GUIDED}},
+        {"enabled": True, "components": {"tool"}, "names": set(GUIDED_ENTRY_TOOLS)},
         {"enabled": True, "components": {"tool"}, "names": {"list_prompts", "get_prompt"}},
         {
             "enabled": True,

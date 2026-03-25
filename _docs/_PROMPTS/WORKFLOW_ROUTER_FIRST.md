@@ -18,7 +18,7 @@ MODE: WORKFLOW-FIRST (ROUTER SUPERVISOR)
 WORKFLOW SELECTION (MANDATORY)
 1) Check Router status
    - router_get_status()
-   - If a goal is already set, ask the user whether to continue it or router_clear_goal() and start fresh.
+   - If a goal is already set, ask the user whether to continue it or replace it by calling router_set_goal(...) with the new goal.
 
 2) Optional: preview likely matches (if available in your client)
    - browse_workflows(action="search", search_query="<user prompt>")
@@ -68,7 +68,7 @@ RELIABILITY (STILL REQUIRED)
 - Use scene snapshots around risky/destructive steps (apply modifiers, remesh, big deletes) and undo on unexpected diffs.
 
 WRAP-UP
-- When the asset is done, call router_clear_goal() so it won’t affect the next request.
+- When the asset is done, treat the next request as a fresh goal-first bootstrap instead of assuming the previous goal should keep driving the session.
 ```
 
 ---

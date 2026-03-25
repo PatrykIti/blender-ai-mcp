@@ -12,6 +12,7 @@ from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
+    GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
     build_visibility_rules,
 )
@@ -85,7 +86,7 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
 
     assert bootstrap_rules[0]["enabled"] is False
     assert bootstrap_rules[0]["match_all"] is True
-    assert bootstrap_rules[1]["tags"] == {ENTRY_GUIDED}
+    assert bootstrap_rules[1]["names"] == set(GUIDED_ENTRY_TOOLS)
     assert bootstrap_rules[2]["names"] == {"list_prompts", "get_prompt"}
     assert bootstrap_rules[3]["components"] == {"prompt"}
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)

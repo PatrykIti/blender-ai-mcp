@@ -213,6 +213,11 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "extraction_render_angles" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
     assert "armature_create" not in inspect_names
+    assert "router_clear_goal" not in build_names
+    assert "router_feedback" not in build_names
+    assert "router_find_similar_workflows" not in build_names
+    assert "router_get_inherited_proportions" not in build_names
+    assert "router_clear_goal" not in inspect_names
     assert "inspect_scene" in build_names
     assert "inspect_scene" in inspect_names
 
