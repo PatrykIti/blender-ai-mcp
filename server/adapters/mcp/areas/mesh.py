@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional, Union, cast
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
-from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
+from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract, MeshSelectionResponseContract
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
@@ -105,7 +105,7 @@ def mesh_select(
     ctx: Context,
     action: Literal["all", "none", "linked", "more", "less", "boundary"],
     boundary_mode: Literal["EDGE", "VERT"] = "EDGE",
-) -> str:
+) -> MeshSelectionResponseContract:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Simple selection operations for mesh geometry.
 
@@ -126,25 +126,41 @@ def mesh_select(
         mesh_select(action="boundary", boundary_mode="EDGE")
     """
 
-    def execute():
+    def execute() -> MeshSelectionResponseContract:
         if action == "all":
-            return _mesh_select_all(ctx, deselect=False)
+            message = _mesh_select_all(ctx, deselect=False)
         elif action == "none":
-            return _mesh_select_all(ctx, deselect=True)
+            message = _mesh_select_all(ctx, deselect=True)
         elif action == "linked":
-            return _mesh_select_linked(ctx)
+            message = _mesh_select_linked(ctx)
         elif action == "more":
-            return _mesh_select_more(ctx)
+            message = _mesh_select_more(ctx)
         elif action == "less":
-            return _mesh_select_less(ctx)
+            message = _mesh_select_less(ctx)
         elif action == "boundary":
-            return _mesh_select_boundary(ctx, mode=boundary_mode)
+            message = _mesh_select_boundary(ctx, mode=boundary_mode)
         else:
-            return f"Unknown action '{action}'. Valid actions: all, none, linked, more, less, boundary"
+            return MeshSelectionResponseContract(
+                action="all",
+                error=f"Unknown action '{action}'. Valid actions: all, none, linked, more, less, boundary",
+            )
 
-    return route_tool_call(
+        return _build_mesh_selection_contract(
+            action=action,
+            message=message,
+            operation={"boundary_mode": boundary_mode} if action == "boundary" else {},
+        )
+
+    result = route_tool_call(
         tool_name="mesh_select", params={"action": action, "boundary_mode": boundary_mode}, direct_executor=execute
     )
+    if isinstance(result, MeshSelectionResponseContract):
+        return result
+    if isinstance(result, dict):
+        if "error" in result and result.get("payload") is None:
+            return MeshSelectionResponseContract(action=action, error=str(result["error"]))
+        return MeshSelectionResponseContract(action=action, payload=result)
+    return MeshSelectionResponseContract(action=action, error=str(result))
 
 
 def mesh_select_targeted(
@@ -160,7 +176,7 @@ def mesh_select_targeted(
     axis: Optional[Literal["X", "Y", "Z"]] = None,
     min_coord: Optional[float] = None,
     max_coord: Optional[float] = None,
-) -> str:
+) -> MeshSelectionResponseContract:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Targeted selection operations for mesh geometry.
 
@@ -181,27 +197,70 @@ def mesh_select_targeted(
         mesh_select_targeted(action="by_location", axis="X", min_coord=-1.0, max_coord=0.0, element_type="FACE")
     """
 
-    def execute():
+    def execute() -> MeshSelectionResponseContract:
         if action == "by_index":
             if indices is None:
-                return "Error: 'by_index' action requires 'indices' parameter (list of integers)."
-            return _mesh_select_by_index(ctx, indices, element_type, selection_mode)
-        elif action == "loop":
+                return MeshSelectionResponseContract(
+                    action="by_index",
+                    error="Error: 'by_index' action requires 'indices' parameter (list of integers).",
+                )
+            message = _mesh_select_by_index(ctx, indices, element_type, selection_mode)
+            return _build_mesh_selection_contract(
+                action="by_index",
+                message=message,
+                operation={
+                    "indices": indices,
+                    "element_type": element_type,
+                    "selection_mode": selection_mode,
+                },
+            )
+        if action == "loop":
             if edge_index is None:
-                return "Error: 'loop' action requires 'edge_index' parameter (integer)."
-            return _mesh_select_loop(ctx, edge_index)
-        elif action == "ring":
+                return MeshSelectionResponseContract(
+                    action="loop",
+                    error="Error: 'loop' action requires 'edge_index' parameter (integer).",
+                )
+            message = _mesh_select_loop(ctx, edge_index)
+            return _build_mesh_selection_contract(
+                action="loop",
+                message=message,
+                operation={"edge_index": edge_index},
+            )
+        if action == "ring":
             if edge_index is None:
-                return "Error: 'ring' action requires 'edge_index' parameter (integer)."
-            return _mesh_select_ring(ctx, edge_index)
-        elif action == "by_location":
+                return MeshSelectionResponseContract(
+                    action="ring",
+                    error="Error: 'ring' action requires 'edge_index' parameter (integer).",
+                )
+            message = _mesh_select_ring(ctx, edge_index)
+            return _build_mesh_selection_contract(
+                action="ring",
+                message=message,
+                operation={"edge_index": edge_index},
+            )
+        if action == "by_location":
             if axis is None or min_coord is None or max_coord is None:
-                return "Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord' parameters."
-            return _mesh_select_by_location(ctx, axis, min_coord, max_coord, element_type)
-        else:
-            return f"Unknown action '{action}'. Valid actions: by_index, loop, ring, by_location"
+                return MeshSelectionResponseContract(
+                    action="by_location",
+                    error="Error: 'by_location' action requires 'axis', 'min_coord', and 'max_coord' parameters.",
+                )
+            message = _mesh_select_by_location(ctx, axis, min_coord, max_coord, element_type)
+            return _build_mesh_selection_contract(
+                action="by_location",
+                message=message,
+                operation={
+                    "axis": axis,
+                    "min_coord": min_coord,
+                    "max_coord": max_coord,
+                    "element_type": element_type,
+                },
+            )
+        return MeshSelectionResponseContract(
+            action="by_index",
+            error=f"Unknown action '{action}'. Valid actions: by_index, loop, ring, by_location",
+        )
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="mesh_select_targeted",
         params={
             "action": action,
@@ -214,6 +273,38 @@ def mesh_select_targeted(
             "max_coord": max_coord,
         },
         direct_executor=execute,
+    )
+    if isinstance(result, MeshSelectionResponseContract):
+        return result
+    if isinstance(result, dict):
+        if "error" in result and result.get("payload") is None:
+            return MeshSelectionResponseContract(action=action, error=str(result["error"]))
+        return MeshSelectionResponseContract(action=action, payload=result)
+    return MeshSelectionResponseContract(action=action, error=str(result))
+
+
+def _build_mesh_selection_contract(
+    *,
+    action: str,
+    message: str,
+    operation: Dict[str, Any],
+) -> MeshSelectionResponseContract:
+    """Build a structured selection response with post-action selection context."""
+
+    selection_summary = None
+    try:
+        selection_summary = get_scene_handler().list_selection()
+    except Exception:
+        selection_summary = None
+
+    payload = {
+        "message": message,
+        "selection_summary": selection_summary,
+        "operation": operation or None,
+    }
+    return MeshSelectionResponseContract(
+        action=cast(Any, action),
+        payload={key: value for key, value in payload.items() if value is not None},
     )
 
 

@@ -15,6 +15,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
+    SceneCreateResponseContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -997,7 +998,7 @@ def scene_create(
         "PLAIN_AXES", "ARROWS", "SINGLE_ARROW", "CIRCLE", "CUBE", "SPHERE", "CONE", "IMAGE"
     ] = "PLAIN_AXES",
     size: float = 1.0,
-) -> str:
+) -> SceneCreateResponseContract:
     """
     [SCENE][SAFE] Creates scene helper objects (lights, cameras, empties).
 
@@ -1019,17 +1020,71 @@ def scene_create(
         scene_create(action="empty", empty_type="ARROWS", location=[0, 0, 2])
     """
 
-    def execute():
+    def execute() -> SceneCreateResponseContract:
         if action == "light":
-            return _scene_create_light(ctx, light_type, energy, color, location, name)
-        elif action == "camera":
-            return _scene_create_camera(ctx, location, rotation, lens, clip_start, clip_end, name)
-        elif action == "empty":
-            return _scene_create_empty(ctx, empty_type, size, location, name)
-        else:
-            return f"Unknown action '{action}'. Valid actions: light, camera, empty"
+            try:
+                parsed_color = parse_coordinate(color) or [1.0, 1.0, 1.0]
+                parsed_location = parse_coordinate(location) or [0.0, 0.0, 5.0]
+                created_name = _scene_create_light(ctx, light_type, energy, parsed_color, parsed_location, name)
+                return SceneCreateResponseContract(
+                    action="light",
+                    payload={
+                        "object_name": created_name,
+                        "object_type": "LIGHT",
+                        "light_type": light_type,
+                        "energy": energy,
+                        "color": parsed_color,
+                        "location": parsed_location,
+                    },
+                )
+            except (RuntimeError, ValueError) as e:
+                return SceneCreateResponseContract(action="light", error=str(e))
+        if action == "camera":
+            try:
+                parsed_location = parse_coordinate(location)
+                parsed_rotation = parse_coordinate(rotation)
+                if parsed_location is None or parsed_rotation is None:
+                    return SceneCreateResponseContract(
+                        action="camera",
+                        error="Invalid location or rotation coordinate payload.",
+                    )
+                created_name = _scene_create_camera(ctx, parsed_location, parsed_rotation, lens, clip_start, clip_end, name)
+                return SceneCreateResponseContract(
+                    action="camera",
+                    payload={
+                        "object_name": created_name,
+                        "object_type": "CAMERA",
+                        "location": parsed_location,
+                        "rotation": parsed_rotation,
+                        "lens": lens,
+                        "clip_start": clip_start,
+                        "clip_end": clip_end,
+                    },
+                )
+            except (RuntimeError, ValueError) as e:
+                return SceneCreateResponseContract(action="camera", error=str(e))
+        if action == "empty":
+            try:
+                parsed_location = parse_coordinate(location) or [0.0, 0.0, 0.0]
+                created_name = _scene_create_empty(ctx, empty_type, size, parsed_location, name)
+                return SceneCreateResponseContract(
+                    action="empty",
+                    payload={
+                        "object_name": created_name,
+                        "object_type": "EMPTY",
+                        "empty_type": empty_type,
+                        "size": size,
+                        "location": parsed_location,
+                    },
+                )
+            except (RuntimeError, ValueError) as e:
+                return SceneCreateResponseContract(action="empty", error=str(e))
+        return SceneCreateResponseContract(
+            action="light",
+            error=f"Unknown action '{action}'. Valid actions: light, camera, empty",
+        )
 
-    return route_tool_call(
+    result = route_tool_call(
         tool_name="scene_create",
         params={
             "action": action,
@@ -1047,6 +1102,13 @@ def scene_create(
         },
         direct_executor=execute,
     )
+    if isinstance(result, SceneCreateResponseContract):
+        return result
+    if isinstance(result, dict):
+        if "error" in result and result.get("payload") is None:
+            return SceneCreateResponseContract(action=action, error=str(result["error"]))
+        return SceneCreateResponseContract(action=action, payload=result)
+    return SceneCreateResponseContract(action=action, error=str(result))
 
 
 # Internal function - exposed via scene_create mega tool

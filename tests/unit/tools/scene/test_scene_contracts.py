@@ -9,6 +9,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
+    SceneCreateResponseContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -90,6 +91,22 @@ def test_scene_configure_contract_carries_structured_payload_or_error():
 
     assert payload.payload["render_engine"] == "CYCLES"
     assert "not found" in error.error
+
+
+def test_scene_create_contract_carries_structured_payload_or_error():
+    """Scene create contract should keep grouped helper-object creation machine-readable."""
+
+    payload = SceneCreateResponseContract(
+        action="light",
+        payload={"object_name": "KeyLight", "object_type": "LIGHT"},
+    )
+    error = SceneCreateResponseContract(
+        action="camera",
+        error="Invalid location or rotation coordinate payload.",
+    )
+
+    assert payload.payload["object_name"] == "KeyLight"
+    assert "Invalid location" in error.error
 
 
 def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads():

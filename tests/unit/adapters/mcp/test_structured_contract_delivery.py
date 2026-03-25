@@ -17,6 +17,16 @@ class SceneHandler:
             "selection_count": 1,
         }
 
+    def list_selection(self):
+        return {
+            "mode": "EDIT_MESH",
+            "selected_object_names": ["Cube"],
+            "selection_count": 1,
+            "edit_mode_vertex_count": 8,
+            "edit_mode_edge_count": 12,
+            "edit_mode_face_count": 6,
+        }
+
     def snapshot_state(self, include_mesh_stats=False, include_materials=False):
         return {
             "snapshot": {
@@ -239,6 +249,15 @@ class SceneHandler:
             },
         }
 
+    def create_light(self, type, energy, color, location, name=None):
+        return name or "KeyLight"
+
+    def create_camera(self, location, rotation, lens=50.0, clip_start=None, clip_end=None, name=None):
+        return name or "Camera"
+
+    def create_empty(self, type, size, location, name=None):
+        return name or "Locator"
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -287,12 +306,31 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     async def run():
         tools = await server.list_tools()
         by_name = {tool.name: tool for tool in tools}
-        return by_name["scene_context"], by_name["scene_configure"], by_name["mesh_inspect"], by_name["router_set_goal"]
+        return (
+            by_name["scene_context"],
+            by_name["scene_create"],
+            by_name["scene_configure"],
+            by_name["mesh_select"],
+            by_name["mesh_select_targeted"],
+            by_name["mesh_inspect"],
+            by_name["router_set_goal"],
+        )
 
-    scene_context_tool, scene_configure_tool, mesh_inspect_tool, router_tool = asyncio.run(run())
+    (
+        scene_context_tool,
+        scene_create_tool,
+        scene_configure_tool,
+        mesh_select_tool,
+        mesh_select_targeted_tool,
+        mesh_inspect_tool,
+        router_tool,
+    ) = asyncio.run(run())
 
     assert scene_context_tool.output_schema is not None
+    assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
+    assert mesh_select_tool.output_schema is not None
+    assert mesh_select_targeted_tool.output_schema is not None
     assert mesh_inspect_tool.output_schema is not None
     assert router_tool.output_schema is not None
 
@@ -393,6 +431,40 @@ def test_scene_configure_delivers_structured_content(monkeypatch):
     assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
     assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
     assert _unwrap_structured(world)["payload"]["node_graph_handoff"]["required"] is True
+
+
+def test_scene_create_and_mesh_select_deliver_structured_content(monkeypatch):
+    """Grouped scene_create and mesh_select tools should also surface machine-readable payloads."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.mesh.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+    monkeypatch.setattr("server.adapters.mcp.areas.mesh._mesh_select_all", lambda ctx, deselect=False: "All selected")
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.mesh._mesh_select_by_index",
+        lambda ctx, indices, element_type, selection_mode: "Selected by index",
+    )
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        created = await server.call_tool(
+            "scene_create",
+            {"action": "light", "light_type": "SUN", "energy": 5.0, "location": [0, 0, 5]},
+        )
+        selected = await server.call_tool("mesh_select", {"action": "all"})
+        targeted = await server.call_tool(
+            "mesh_select_targeted",
+            {"action": "by_index", "indices": [0, 1], "element_type": "VERT", "selection_mode": "SET"},
+        )
+        return created, selected, targeted
+
+    created, selected, targeted = asyncio.run(run())
+
+    assert _unwrap_structured(created)["payload"]["object_type"] == "LIGHT"
+    assert _unwrap_structured(selected)["payload"]["message"] == "All selected"
+    assert _unwrap_structured(targeted)["payload"]["operation"]["indices"] == [0, 1]
 
 
 def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):

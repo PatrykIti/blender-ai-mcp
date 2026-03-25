@@ -1,6 +1,6 @@
 """Tests for structured mesh contracts."""
 
-from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract
+from server.adapters.mcp.contracts.mesh import MeshInspectResponseContract, MeshSelectionResponseContract
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     InspectionSummaryAssistantContract,
@@ -49,3 +49,20 @@ def test_mesh_contract_supports_summary_and_paged_items():
     assert vertices.returned == 2
     assert vertices.items[0]["index"] == 0
     assert vertices.assistant.result.overview == "Vertex sample"
+
+
+def test_mesh_selection_contract_supports_action_payload_or_error():
+    """Mesh selection contract should keep grouped selection results machine-readable."""
+
+    payload = MeshSelectionResponseContract(
+        action="boundary",
+        payload={"message": "Boundary selected", "selection_summary": {"selection_count": 12}},
+    )
+    error = MeshSelectionResponseContract(
+        action="by_index",
+        error="Error: 'by_index' action requires 'indices' parameter (list of integers).",
+    )
+
+    assert payload.payload["message"] == "Boundary selected"
+    assert payload.payload["selection_summary"]["selection_count"] == 12
+    assert "indices" in error.error

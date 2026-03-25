@@ -192,7 +192,10 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 
 - `scene_context`
 - `scene_inspect`
+- `scene_create`
 - `scene_configure`
+- `mesh_select`
+- `mesh_select_targeted`
 - `scene_snapshot_state`
 - `scene_compare_snapshot`
 - `scene_get_custom_properties`

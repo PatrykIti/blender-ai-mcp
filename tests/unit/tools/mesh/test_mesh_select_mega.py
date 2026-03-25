@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
+from server.adapters.mcp.contracts.mesh import MeshSelectionResponseContract
+
 
 class TestMeshSelectMega:
     """Test mesh_select mega tool routing."""
@@ -20,7 +22,8 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="all")
 
         mock_select_all.assert_called_once_with(self.mock_ctx, deselect=False)
-        assert result == "All selected"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "All selected"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_all")
@@ -33,7 +36,8 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="none")
 
         mock_select_all.assert_called_once_with(self.mock_ctx, deselect=True)
-        assert result == "All deselected"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "All deselected"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_linked")
@@ -46,7 +50,8 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="linked")
 
         mock_select_linked.assert_called_once_with(self.mock_ctx)
-        assert result == "Linked selected"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "Linked selected"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_more")
@@ -59,7 +64,8 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="more")
 
         mock_select_more.assert_called_once_with(self.mock_ctx)
-        assert result == "Selection expanded"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "Selection expanded"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_less")
@@ -72,7 +78,8 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="less")
 
         mock_select_less.assert_called_once_with(self.mock_ctx)
-        assert result == "Selection contracted"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "Selection contracted"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_boundary")
@@ -85,7 +92,9 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="boundary")
 
         mock_select_boundary.assert_called_once_with(self.mock_ctx, mode="EDGE")
-        assert result == "Boundary selected"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "Boundary selected"
+        assert result.payload["operation"]["boundary_mode"] == "EDGE"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     @patch("server.adapters.mcp.areas.mesh._mesh_select_boundary")
@@ -98,7 +107,9 @@ class TestMeshSelectMega:
         result = callable_mesh_select(self.mock_ctx, action="boundary", boundary_mode="VERT")
 
         mock_select_boundary.assert_called_once_with(self.mock_ctx, mode="VERT")
-        assert result == "Boundary vertices selected"
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert result.payload["message"] == "Boundary vertices selected"
+        assert result.payload["operation"]["boundary_mode"] == "VERT"
 
     @patch("server.adapters.mcp.router_helper.is_router_enabled", return_value=False)
     def test_invalid_action_returns_error(self, mock_router_enabled):
@@ -108,11 +119,12 @@ class TestMeshSelectMega:
         callable_mesh_select = getattr(mesh_select, "fn", mesh_select)
         result = callable_mesh_select(self.mock_ctx, action="invalid")
 
-        assert "Unknown action" in result
-        assert "invalid" in result
-        assert "all" in result
-        assert "none" in result
-        assert "linked" in result
-        assert "more" in result
-        assert "less" in result
-        assert "boundary" in result
+        assert isinstance(result, MeshSelectionResponseContract)
+        assert "Unknown action" in result.error
+        assert "invalid" in result.error
+        assert "all" in result.error
+        assert "none" in result.error
+        assert "linked" in result.error
+        assert "more" in result.error
+        assert "less" in result.error
+        assert "boundary" in result.error

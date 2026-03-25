@@ -36,3 +36,22 @@ class MeshInspectResponseContract(MCPContract):
     metadata: dict[str, Any] | None = None
     error: str | None = None
     assistant: InspectionSummaryAssistantContract | None = None
+
+
+class MeshSelectionResponseContract(MCPContract):
+    """Structured envelope for grouped mesh selection tools."""
+
+    action: Literal[
+        "all",
+        "none",
+        "linked",
+        "more",
+        "less",
+        "boundary",
+        "by_index",
+        "loop",
+        "ring",
+        "by_location",
+    ]
+    payload: dict[str, Any] | None = None
+    error: str | None = None
