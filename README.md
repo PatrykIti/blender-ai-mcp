@@ -456,112 +456,33 @@ Our goal is to enable AI to model complex 3D assets—from organs and biological
 
 ---
 
-<details>
-<summary><strong>Scene Tools (`scene_*`) — ✅</strong></summary>
+The root `README.md` is no longer the canonical full tool catalog.
+Its job is to explain the product surface and working model.
 
-Object Mode operations for scene management and inspection.
+Current product-facing layers:
 
-| Tool | Description | Status |
-|------|-------------|--------|
-| `scene_configure` | Grouped render/color/world configuration | ✅ |
-| `scene_list_objects` | List all objects in scene | ✅ |
-| `scene_delete_object` | Delete object by name | ✅ |
-| `scene_clean_scene` | Remove all objects | ✅ |
-| `scene_duplicate_object` | Duplicate object | ✅ |
-| `scene_set_active_object` | Set active object | ✅ |
-| `scene_get_viewport` | Capture viewport image (`focus_target`) | ✅ |
-| `scene_get_mode` | Report current Blender mode | ✅ |
-| `scene_list_selection` | List selected objects/components | ✅ |
-| `scene_inspect_object` | Detailed object info | ✅ |
-| `scene_snapshot_state` | Capture scene snapshot | ✅ |
-| `scene_compare_snapshot` | Compare two snapshots | ✅ |
-| `scene_inspect_material_slots` | Material slot assignments | ✅ |
-| `scene_inspect_mesh_topology` | Topology stats | ✅ |
-| `scene_inspect_modifiers` | Modifier stack info | ✅ |
-| `scene_rename_object` | Rename object by name | ✅ |
-| `scene_hide_object` | Hide/show object in viewport | ✅ |
-| `scene_show_all_objects` | Show all hidden objects | ✅ |
-| `scene_isolate_object` | Isolate object (hide all others) | ✅ |
-| `scene_camera_orbit` | Orbit viewport around target (`target_object`/`target_point`) | ✅ |
-| `scene_camera_focus` | Focus viewport on object (`object_name`) | ✅ |
-| `scene_get_custom_properties` | Get object metadata/custom properties | ✅ |
-| `scene_set_custom_property` | Set/delete custom property on object | ✅ |
-| `scene_get_hierarchy` | Get parent-child hierarchy | ✅ |
-| `scene_get_bounding_box` | Get precise bounding box corners | ✅ |
-| `scene_get_origin_info` | Get origin/pivot point info | ✅ |
-| `scene_measure_distance` | Measure truth-layer distance between two objects | ✅ |
-| `scene_measure_dimensions` | Measure object dimensions and volume | ✅ |
-| `scene_measure_gap` | Measure gap/contact state between two objects | ✅ |
-| `scene_measure_alignment` | Measure bbox alignment across chosen axes | ✅ |
-| `scene_measure_overlap` | Measure overlap/intersection between two objects | ✅ |
-| `scene_assert_contact` | Assert pass/fail contact relation between two objects | ✅ |
-| `scene_assert_dimensions` | Assert pass/fail dimensions against expected size | ✅ |
-| `scene_assert_containment` | Assert containment and clearance inside another object | ✅ |
-| `scene_assert_symmetry` | Assert mirrored symmetry between two objects | ✅ |
-| `scene_assert_proportion` | Assert ratio/proportion against expected value | ✅ |
+| Layer | Main tools / surfaces | Role |
+|---|---|---|
+| Goal-first entry | `router_set_goal`, `router_get_status`, `browse_workflows`, `search_tools`, `call_tool` | Start and steer normal `llm-guided` sessions |
+| Grouped public tools | `check_scene`, `inspect_scene`, `configure_scene`, `scene_create`, `mesh_select`, `mesh_select_targeted`, `mesh_inspect` | High-frequency scene/mesh work without exposing the whole atomic catalog |
+| Macro layer | `macro_cutout_recess` | First bounded multi-step modeling tool above atomics and below workflows |
+| Truth layer | `scene_measure_*`, `scene_assert_*` | Deterministic validation and pass/fail checks |
 
----
+Current implemented capability families:
 
-Note: `scene_get_constraints` is now internal to `scene_inspect(action="constraints")`.
+| Family | Current role |
+|---|---|
+| `scene_*` | grouped inspection/configuration, snapshots, visibility, measurement, and assertions |
+| `modeling_*` | primitive creation, object transforms, and modifier workflows |
+| `mesh_*` | edit-mode atomic geometry operations and grouped mesh introspection |
+| `material_*`, `uv_*`, `collection_*` | materials, UV work, and scene organization |
+| `curve_*`, `lattice_*`, `text_*`, `armature_*`, `sculpt_*` | specialist families mainly for broader/manual/internal paths until the macro layer grows further |
+| `import_*`, `export_*`, `extraction_*`, `system_*` | interchange, capture/analysis, and environment/runtime operations |
 
-</details>
+For the canonical detailed inventory, use:
 
-<details>
-<summary><strong>Macro Tools (`macro_*`) — ✅</strong></summary>
-
-Bounded multi-step tools above the atomic layer and below full workflows.
-
-| Tool | Description | Status |
-|------|-------------|--------|
-| `macro_cutout_recess` | Create one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. | ✅ |
-
----
-
-</details>
-
-<details>
-<summary><strong>Modeling Tools (`modeling_*`) — ✅</strong></summary>
-
-Object Mode operations for creating and transforming objects.
-
-| Tool | Description | Status |
-|------|-------------|--------|
-| `modeling_create_primitive` | Create cube, sphere, cylinder, etc. | ✅ |
-| `modeling_transform_object` | Move, rotate, scale objects | ✅ |
-| `modeling_add_modifier` | Add a non-destructive object modifier | ✅ |
-| `modeling_apply_modifier` | Apply (bake) modifier | ✅ |
-| `modeling_list_modifiers` | List modifiers on object | ✅ |
-| `modeling_convert_to_mesh` | Convert curve/text to mesh | ✅ |
-| `modeling_join_objects` | Join multiple objects | ✅ |
-| `modeling_separate_object` | Separate by loose parts/material | ✅ |
-| `modeling_set_origin` | Set object origin point | ✅ |
-
-Note: `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")`.
-
-#### Lattice Deformation
-| Tool | Description | Status |
-|------|-------------|--------|
-| `lattice_create` | Create lattice fitted to object | ✅ |
-| `lattice_bind` | Bind object to lattice deformer | ✅ |
-| `lattice_edit_point` | Move lattice control points | ✅ |
-| `lattice_get_points` | Get lattice point positions | ✅ |
-
-#### Text Objects
-| Tool | Description | Status |
-|------|-------------|--------|
-| `text_create` | Create 3D text object | ✅ |
-| `text_edit` | Modify text content and properties | ✅ |
-| `text_to_mesh` | Convert text to mesh for export | ✅ |
-
-#### Skin Modifier (Tubular Structures)
-| Tool | Description | Status |
-|------|-------------|--------|
-| `skin_create_skeleton` | Create skeleton for skin modifier | ✅ |
-| `skin_set_radius` | Set skin radius at vertices | ✅ |
-
----
-
-</details>
+- [_docs/_MCP_SERVER/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/README.md)
+- [_docs/AVAILABLE_TOOLS_SUMMARY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/AVAILABLE_TOOLS_SUMMARY.md)
 
 <details>
 <summary><strong>Mesh Tools (`mesh_*`) — ✅</strong></summary>
@@ -956,16 +877,16 @@ Use this when you want the LLM to **prefer existing YAML workflows** and only fa
 
 ```text
 1) Optional: import external workflow YAML/JSON
-   workflow_catalog(action="import", filepath="/path/to/workflow.yaml")
-   workflow_catalog(action="import", content="<yaml or json>", content_type="yaml")
-   workflow_catalog(action="import_init", content_type="json", source_name="chair.json", total_chunks=2)
-   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
-   workflow_catalog(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
-   workflow_catalog(action="import_finalize", session_id="...", overwrite=true)
+   browse_workflows(action="import", filepath="/path/to/workflow.yaml")
+   browse_workflows(action="import", content="<yaml or json>", content_type="yaml")
+   browse_workflows(action="import_init", content_type="json", source_name="chair.json", total_chunks=2)
+   browse_workflows(action="import_append", session_id="...", chunk_data="...", chunk_index=0)
+   browse_workflows(action="import_append", session_id="...", chunk_data="...", chunk_index=1)
+   browse_workflows(action="import_finalize", session_id="...", overwrite=true)
    - if status == "needs_input": repeat with overwrite=true or overwrite=false
 
 2) Optional: preview likely workflow matches
-   workflow_catalog(action="search", query="<your prompt>", top_k=5, threshold=0.0)
+   browse_workflows(action="search", search_query="<your prompt>", top_k=5, threshold=0.0)
 
 3) Set the goal (mandatory)
    router_set_goal(goal="<your prompt including modifiers>")
@@ -1056,43 +977,6 @@ config = RouterConfig(auto_mode_switch=False, auto_selection=False)
 # Performance mode (longer cache)
 config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 ```
-
----
-
-## 🧠 Grouped Public Tools
-
-> The repo exposes a small number of grouped public tools for high-frequency
-> scene/mesh interaction.
-> They should now be read through the newer layered model from `TASK-113`:
-> grouped public tools above a hidden/internal atomic layer.
-> Internal action handlers still exist behind them and remain available to the
-> router and internal execution paths.
-
-<details>
-<summary><strong>Grouped Public Tools</strong></summary>
-
-### Grouped Scene Tools
-
-| Grouped Tool | Actions | Savings | Status |
-|-----------|---------|---------|--------|
-| `scene_context` | mode, selection | -1 | ✅ |
-| `scene_create` | light, camera, empty | -2 | ✅ |
-| `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data, render, color_management, world | -5 | ✅ |
-| `scene_configure` | render, color_management, world | new | ✅ |
-
-### Grouped Mesh Tools
-
-| Grouped Tool | Actions | Savings | Status |
-|-----------|---------|---------|--------|
-| `mesh_select` | all, none, linked, more, less, boundary | -4 | ✅ |
-| `mesh_select_targeted` | by_index, loop, ring, by_location | -3 | ✅ |
-| `mesh_inspect` | vertices, edges, faces, uvs, normals, attributes, shape_keys, group_weights, summary | -7 | ✅ |
-
-**Current grouped public set:** 6 high-frequency grouped tools.
-
-`mesh_inspect.summary` sources (recommended): `scene_inspect(topology)`, `uv_list_maps`, `mesh_get_shape_keys`, `mesh_get_loop_normals`, `mesh_list_groups`, `modeling_list_modifiers`.
-
-</details>
 
 ---
 
