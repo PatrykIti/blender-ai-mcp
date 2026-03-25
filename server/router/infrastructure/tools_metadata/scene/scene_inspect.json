@@ -18,5 +18,5 @@
   },
   "related_tools": ["scene_list_objects", "scene_context", "scene_get_constraints", "modeling_get_modifier_data", "scene_configure"],
   "patterns": [],
-  "description": "Detailed grouped inspection of objects, topology, modifiers, materials, constraints, modifier data, render settings, color management, and world state."
+  "description": "Detailed grouped inspection of objects, topology, modifiers, materials, constraints, modifier data, render settings, color management, and world state, including node-graph handoff fields for node-based worlds."
 }

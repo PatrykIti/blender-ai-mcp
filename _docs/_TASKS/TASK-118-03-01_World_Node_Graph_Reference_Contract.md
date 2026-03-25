@@ -1,8 +1,10 @@
 # TASK-118-03-01: World Node-Graph Reference Contract
 
 **Parent:** [TASK-118-03](./TASK-118-03_World_Node_Graph_Boundary_And_Handoff.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_inspect(action="world")` and the resulting `scene_configure(action="world")` payloads now expose stable `node_graph_reference` and `node_graph_handoff` fields whenever node-based world state needs a future node-graph handoff.
 
 ---
 

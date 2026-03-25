@@ -180,7 +180,35 @@ class SceneHandler:
         return {"display_device": "sRGB", "view_transform": "AgX", "look": "None"}
 
     def inspect_world(self):
-        return {"world_name": "Studio", "use_nodes": False, "color": [0.05, 0.05, 0.05]}
+        return {
+            "world_name": "Studio",
+            "use_nodes": True,
+            "color": [0.05, 0.05, 0.05],
+            "node_tree_name": "World Nodetree",
+            "background": {"node_name": "Background", "color": [0.05, 0.05, 0.05, 1.0], "strength": 1.0},
+            "node_graph_reference": {
+                "graph_type": "world",
+                "owner_name": "Studio",
+                "node_tree_name": "World Nodetree",
+                "background_node_name": "Background",
+            },
+            "node_graph_handoff": {
+                "required": True,
+                "target_tool_family": "node_graph",
+                "reason": "world_uses_nodes",
+                "world_name": "Studio",
+                "node_tree_name": "World Nodetree",
+                "supported_scene_configure_fields": [
+                    "world_name",
+                    "use_nodes",
+                    "color",
+                    "background.color",
+                    "background.strength",
+                ],
+                "unsupported_scope": ["arbitrary_world_nodes", "custom_links", "full_node_topology_rebuild"],
+                "background_node_name": "Background",
+            },
+        }
 
     def configure_render_settings(self, settings):
         return {"render_engine": settings.get("render_engine", "BLENDER_EEVEE_NEXT")}
@@ -189,7 +217,27 @@ class SceneHandler:
         return {"view_transform": settings.get("view_transform", "AgX")}
 
     def configure_world(self, settings):
-        return {"world_name": settings.get("world_name", "Studio"), "use_nodes": settings.get("use_nodes", False)}
+        return {
+            "world_name": settings.get("world_name", "Studio"),
+            "use_nodes": settings.get("use_nodes", False),
+            "node_graph_handoff": {
+                "required": bool(settings.get("use_nodes", False)),
+                "target_tool_family": "node_graph",
+                "reason": "world_uses_nodes" if settings.get("use_nodes", False) else None,
+                "world_name": settings.get("world_name", "Studio"),
+                "node_tree_name": settings.get("node_tree_name"),
+                "supported_scene_configure_fields": [
+                    "world_name",
+                    "use_nodes",
+                    "color",
+                    "background.color",
+                    "background.strength",
+                ],
+                "unsupported_scope": ["arbitrary_world_nodes", "custom_links", "full_node_topology_rebuild"]
+                if settings.get("use_nodes", False)
+                else [],
+            },
+        }
 
 
 class MeshHandler:
@@ -315,6 +363,8 @@ def test_scene_inspect_scene_state_actions_deliver_structured_content(monkeypatc
     assert _unwrap_structured(render)["payload"]["render_engine"] == "BLENDER_EEVEE_NEXT"
     assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
     assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
+    assert _unwrap_structured(world)["payload"]["node_graph_handoff"]["required"] is True
+    assert _unwrap_structured(world)["payload"]["node_graph_reference"]["graph_type"] == "world"
 
 
 def test_scene_configure_delivers_structured_content(monkeypatch):
@@ -331,7 +381,10 @@ def test_scene_configure_delivers_structured_content(monkeypatch):
             "scene_configure",
             {"action": "color_management", "settings": {"view_transform": "AgX"}},
         )
-        world = await server.call_tool("scene_configure", {"action": "world", "settings": {"world_name": "Studio"}})
+        world = await server.call_tool(
+            "scene_configure",
+            {"action": "world", "settings": {"world_name": "Studio", "use_nodes": True}},
+        )
         return render, color, world
 
     render, color, world = asyncio.run(run())
@@ -339,6 +392,7 @@ def test_scene_configure_delivers_structured_content(monkeypatch):
     assert _unwrap_structured(render)["payload"]["render_engine"] == "CYCLES"
     assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
     assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
+    assert _unwrap_structured(world)["payload"]["node_graph_handoff"]["required"] is True
 
 
 def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):

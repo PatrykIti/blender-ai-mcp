@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
 
-**Progress Update:** Metadata, public docs, structured delivery, and unit regression coverage for `scene_configure` are now in place. The remaining gap is Blender-backed read/apply/read roundtrip coverage and the final explicit world/node-graph handoff documentation.
+**Progress Update:** Metadata, public docs, structured delivery, unit regression coverage, and explicit world/node-graph handoff fields are now in place. The remaining gap is Blender-backed read/apply/read roundtrip coverage.
 
 ---
 

@@ -168,7 +168,7 @@ Assistant envelopes are structured and use explicit terminal statuses:
 |-----------|---------|----------|--------|
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data`, read-side scene state inspection | ✅ Done |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data`, read-side scene state inspection with world node-graph handoff fields | ✅ Done |
 | `scene_configure` | `render`, `color_management`, `world` | bounded write-side scene appearance configuration under the grouped tool model | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
@@ -191,8 +191,8 @@ None.
 |-----------|-----------|-------------|--------|
 | `scene_context` | `action` (mode/selection) | Grouped context queries (mode, selection state). | ✅ Done |
 | `scene_create` | `action` (light/camera/empty), params | Grouped creation tool for lights, cameras, and empties. | ✅ Done |
-| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data/render/color_management/world), params | Grouped inspection tool for objects plus scene-level render/color/world state. | ✅ Done |
-| `scene_configure` | `action` (render/color_management/world), `settings` | Grouped write-side tool for render, color-management, and bounded world/background configuration. | ✅ Done |
+| `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data/render/color_management/world), params | Grouped inspection tool for objects plus scene-level render/color/world state, including node-graph handoff fields for node-based worlds. | ✅ Done |
+| `scene_configure` | `action` (render/color_management/world), `settings` | Grouped write-side tool for render, color-management, and bounded world/background configuration. Full node-graph rebuild stays outside this surface. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |

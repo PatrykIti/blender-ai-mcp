@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-114, TASK-117  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The grouped read/write scene-state surface is now in place: `scene_inspect` supports `render`, `color_management`, and `world`, and `scene_configure` now replays bounded render/color/world settings from structured payloads. The remaining work is the explicit world/node-graph boundary handoff and Blender-backed roundtrip coverage.
+**Progress Update:** The grouped read/write scene-state surface is now in place: `scene_inspect` supports `render`, `color_management`, and `world`, `scene_configure` replays bounded render/color/world settings from structured payloads, and world payloads now expose explicit node-graph handoff/reference fields. The remaining work is Blender-backed roundtrip coverage.
 
 ---
 

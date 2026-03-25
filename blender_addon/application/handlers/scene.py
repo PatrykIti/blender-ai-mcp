@@ -917,18 +917,40 @@ class SceneHandler:
                 "color": None,
                 "node_tree_name": None,
                 "background": None,
+                "node_graph_reference": None,
+                "node_graph_handoff": self._build_world_node_graph_handoff(
+                    world_name=None,
+                    node_tree_name=None,
+                    use_nodes=False,
+                    background=None,
+                ),
             }
 
         background = None
         if getattr(world, "use_nodes", False) and getattr(world, "node_tree", None) is not None:
             background = self._inspect_world_background_node(world.node_tree)
 
+        node_tree_name = getattr(getattr(world, "node_tree", None), "name", None)
+        world_name = getattr(world, "name", None)
+        use_nodes = getattr(world, "use_nodes", False)
+
         return {
-            "world_name": getattr(world, "name", None),
-            "use_nodes": getattr(world, "use_nodes", False),
+            "world_name": world_name,
+            "use_nodes": use_nodes,
             "color": self._vec_to_list(getattr(world, "color", (0.0, 0.0, 0.0))),
-            "node_tree_name": getattr(getattr(world, "node_tree", None), "name", None),
+            "node_tree_name": node_tree_name,
             "background": background,
+            "node_graph_reference": self._build_world_node_graph_reference(
+                world_name=world_name,
+                node_tree_name=node_tree_name,
+                background=background,
+            ),
+            "node_graph_handoff": self._build_world_node_graph_handoff(
+                world_name=world_name,
+                node_tree_name=node_tree_name,
+                use_nodes=use_nodes,
+                background=background,
+            ),
         }
 
     def configure_render_settings(self, settings):
@@ -1034,6 +1056,7 @@ class SceneHandler:
         """Applies grouped world/background settings and returns the resulting world snapshot."""
         settings = self._require_mapping(settings, "settings")
         scene = bpy.context.scene
+        self._validate_world_settings_boundary(settings)
 
         if "world_name" in settings:
             world_name = settings["world_name"]
@@ -1065,6 +1088,12 @@ class SceneHandler:
         background = settings.get("background")
         if background is not None:
             background = self._require_mapping(background, "background")
+            unknown_background_keys = set(background) - {"color", "strength", "node_name"}
+            if unknown_background_keys:
+                keys = ", ".join(sorted(unknown_background_keys))
+                raise ValueError(
+                    f"Unsupported background fields: {keys}. Use future node_graph tooling for arbitrary world nodes."
+                )
             if use_nodes_requested is False:
                 raise ValueError("background settings require 'use_nodes' to be true.")
             if not getattr(world, "use_nodes", False):
@@ -2027,6 +2056,73 @@ class SceneHandler:
             lengths = "3 or 4" if allow_alpha else "3"
             raise ValueError(f"'{field_name}' must be a list of {lengths} numeric values")
         return [self._require_float(component, field_name) for component in value]
+
+    def _validate_world_settings_boundary(self, settings):
+        """Rejects world payloads that try to cross into full node-graph authorship."""
+        bounded_keys = {
+            "world_name",
+            "use_nodes",
+            "color",
+            "background",
+            "node_tree_name",
+            "node_graph_reference",
+            "node_graph_handoff",
+        }
+        graph_keys = {"node_tree", "nodes", "links", "node_graph", "graph"}
+
+        if graph_keys & set(settings):
+            keys = ", ".join(sorted(graph_keys & set(settings)))
+            raise ValueError(
+                f"Unsupported world node-graph fields: {keys}. Use future node_graph tooling for graph rebuilds."
+            )
+
+        unknown_keys = set(settings) - bounded_keys
+        if unknown_keys:
+            keys = ", ".join(sorted(unknown_keys))
+            raise ValueError(
+                f"Unsupported world settings: {keys}. Allowed keys: world_name, use_nodes, color, background."
+            )
+
+    def _build_world_node_graph_reference(self, *, world_name, node_tree_name, background):
+        if node_tree_name is None:
+            return None
+        reference = {
+            "graph_type": "world",
+            "owner_name": world_name,
+            "node_tree_name": node_tree_name,
+        }
+        if background is not None:
+            reference["background_node_name"] = background.get("node_name")
+        return reference
+
+    def _build_world_node_graph_handoff(self, *, world_name, node_tree_name, use_nodes, background):
+        required = bool(use_nodes and node_tree_name)
+        payload = {
+            "required": required,
+            "target_tool_family": "node_graph",
+            "reason": "world_uses_nodes" if required else None,
+            "world_name": world_name,
+            "node_tree_name": node_tree_name,
+            "supported_scene_configure_fields": [
+                "world_name",
+                "use_nodes",
+                "color",
+                "background.color",
+                "background.strength",
+            ],
+            "unsupported_scope": (
+                [
+                    "arbitrary_world_nodes",
+                    "custom_links",
+                    "full_node_topology_rebuild",
+                ]
+                if required
+                else []
+            ),
+        }
+        if background is not None:
+            payload["background_node_name"] = background.get("node_name")
+        return payload
 
     def _ensure_world_background_node(self, world):
         """Returns a world Background node and creates a minimal one when absent."""

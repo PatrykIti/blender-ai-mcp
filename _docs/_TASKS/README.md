@@ -47,7 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Read-side and grouped `scene_configure` are done; remaining scope is world/node-graph boundary and Blender-backed roundtrip coverage |
+| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Read-side, grouped `scene_configure`, and world/node-graph handoff are done; remaining scope is Blender-backed roundtrip coverage |
 
 ---
 

@@ -1,8 +1,10 @@
 # TASK-118-03: World Node-Graph Boundary and Handoff
 
 **Parent:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** World inspection/config payloads now expose explicit node-graph reference and handoff fields, and `scene_configure(action="world")` rejects payloads that cross into full node-graph authorship.
 
 ---
 

@@ -132,6 +132,8 @@ def test_configure_world_assigns_world_and_updates_background_node():
     assert background_strength.default_value == 0.75
     assert result["world_name"] == "Studio"
     assert result["background"]["strength"] == 0.75
+    assert result["node_graph_reference"] is None
+    assert result["node_graph_handoff"]["required"] is False
 
 
 def test_configure_world_rejects_background_when_use_nodes_is_false():
@@ -148,3 +150,45 @@ def test_configure_world_rejects_background_when_use_nodes_is_false():
         assert "use_nodes" in str(exc)
     else:
         raise AssertionError("Expected configure_world to reject background settings when use_nodes=False")
+
+
+def test_inspect_world_exposes_node_graph_handoff_for_node_based_worlds():
+    bpy = sys.modules["bpy"]
+
+    background_color = _make_socket("Color", [0.0, 0.0, 0.0, 1.0])
+    background_strength = _make_socket("Strength", 1.0)
+    background_node = SimpleNamespace(
+        type="BACKGROUND",
+        bl_idname="ShaderNodeBackground",
+        name="Background",
+        inputs=[background_color, background_strength],
+    )
+    world = SimpleNamespace(
+        name="Studio",
+        use_nodes=True,
+        color=[0.0, 0.0, 0.0],
+        node_tree=SimpleNamespace(name="World Nodetree", nodes=[background_node]),
+    )
+    bpy.context.scene = SimpleNamespace(world=world)
+
+    handler = SceneHandler()
+    result = handler.inspect_world()
+
+    assert result["node_graph_reference"]["graph_type"] == "world"
+    assert result["node_graph_reference"]["node_tree_name"] == "World Nodetree"
+    assert result["node_graph_handoff"]["required"] is True
+    assert "full_node_topology_rebuild" in result["node_graph_handoff"]["unsupported_scope"]
+
+
+def test_configure_world_rejects_explicit_node_graph_payload():
+    bpy = sys.modules["bpy"]
+    bpy.context.scene = SimpleNamespace(world=SimpleNamespace(name="Studio", use_nodes=False, color=[0.0, 0.0, 0.0]))
+
+    handler = SceneHandler()
+
+    try:
+        handler.configure_world({"node_graph": {"nodes": []}})
+    except ValueError as exc:
+        assert "node_graph" in str(exc)
+    else:
+        raise AssertionError("Expected configure_world to reject explicit node_graph payloads")

@@ -80,10 +80,10 @@ Technical details.
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
 | `scene.inspect_render_settings` | `inspect_render_settings` | Returns grouped render-engine, resolution, output, and sample settings. |
 | `scene.inspect_color_management` | `inspect_color_management` | Returns grouped display/view/sequencer color-management settings. |
-| `scene.inspect_world` | `inspect_world` | Returns world assignment, simple color state, and background-node summary when present. |
+| `scene.inspect_world` | `inspect_world` | Returns world assignment, simple color state, background-node summary, and explicit node-graph handoff/reference fields when nodes are in use. |
 | `scene.configure_render_settings` | `configure_render_settings` | Applies grouped render settings and returns the resulting render snapshot. |
 | `scene.configure_color_management` | `configure_color_management` | Applies grouped color-management settings and returns the resulting snapshot. |
-| `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring. |
+| `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
