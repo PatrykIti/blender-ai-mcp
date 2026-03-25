@@ -230,8 +230,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `157` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `164` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `160` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `167` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -282,6 +282,9 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `scene_measure_overlap`
 - `scene_assert_contact`
 - `scene_assert_dimensions`
+- `scene_assert_containment`
+- `scene_assert_symmetry`
+- `scene_assert_proportion`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -539,6 +542,9 @@ Managing objects at the scene level.
 | `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures bbox overlap/touching state plus intersection dimensions and volume. |
 | `scene_assert_contact` | `from_object` (str), `to_object` (str), `max_gap` (float), `allow_overlap` (bool) | Asserts pass/fail contact relation from measured gap and overlap state. |
 | `scene_assert_dimensions` | `object_name` (str), `expected_dimensions` (array), `tolerance` (float), `world_space` (bool) | Asserts pass/fail dimensions against an expected vector within tolerance. |
+| `scene_assert_containment` | `inner_object` (str), `outer_object` (str), `min_clearance` (float), `tolerance` (float) | Asserts pass/fail containment plus measured clearance/protrusion details. |
+| `scene_assert_symmetry` | `left_object` (str), `right_object` (str), `axis` (str), `mirror_coordinate` (float), `tolerance` (float) | Asserts mirrored symmetry between two objects across a chosen axis. |
+| `scene_assert_proportion` | `object_name` (str), `axis_a` (str), `expected_ratio` (float), `axis_b` (str), `reference_object` (str), `reference_axis` (str), `tolerance` (float), `world_space` (bool) | Asserts pass/fail ratio/proportion against the expected value. |
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 

@@ -132,3 +132,18 @@ class SceneAssertContactContract(MCPContract):
 class SceneAssertDimensionsContract(MCPContract):
     payload: SceneAssertionPayloadContract | None = None
     error: str | None = None
+
+
+class SceneAssertContainmentContract(MCPContract):
+    payload: SceneAssertionPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneAssertSymmetryContract(MCPContract):
+    payload: SceneAssertionPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneAssertProportionContract(MCPContract):
+    payload: SceneAssertionPayloadContract | None = None
+    error: str | None = None

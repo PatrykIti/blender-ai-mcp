@@ -46,3 +46,35 @@ def test_assert_dimensions_compares_expected_vector_with_tolerance():
     assert failing["delta"]["x"] == 0.1
     assert failing["details"]["failed_axes"] == ["X"]
     assert passing["passed"] is True
+
+
+def test_assert_containment_symmetry_and_proportion_cover_spatial_relationships():
+    mock_bpy = sys.modules["bpy"]
+    inner = _make_box("Inner", (0.2, 0.2, 0.2), (0.8, 0.8, 0.8), (0.5, 0.5, 0.5))
+    outer = _make_box("Outer", (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), (0.5, 0.5, 0.5))
+    left = _make_box("Left", (-2.5, -1.0, -1.0), (-1.5, 1.0, 1.0), (-2.0, 0.0, 0.0))
+    right = _make_box("Right", (1.5, -1.0, -1.0), (2.5, 1.0, 1.0), (2.0, 0.0, 0.0))
+    rect = _make_box("Rect", (0.0, 0.0, 0.0), (4.0, 2.0, 1.0), (0.0, 0.0, 0.0))
+    objects = {"Inner": inner, "Outer": outer, "Left": left, "Right": right, "Rect": rect}
+
+    mock_bpy.data.objects = MagicMock()
+    mock_bpy.data.objects.get.side_effect = objects.get
+
+    handler = SceneHandler()
+
+    containment = handler.assert_containment("Inner", "Outer", min_clearance=0.1, tolerance=0.0001)
+    symmetry = handler.assert_symmetry("Left", "Right", axis="X", mirror_coordinate=0.0, tolerance=0.0001)
+    single_object_proportion = handler.assert_proportion(
+        "Rect",
+        axis_a="X",
+        axis_b="Y",
+        expected_ratio=2.0,
+        tolerance=0.0001,
+    )
+
+    assert containment["passed"] is True
+    assert containment["actual"]["min_clearance"] == 0.2
+    assert symmetry["passed"] is True
+    assert symmetry["delta"]["mirror_axis"] == 0.0
+    assert single_object_proportion["passed"] is True
+    assert single_object_proportion["actual"]["ratio"] == 2.0

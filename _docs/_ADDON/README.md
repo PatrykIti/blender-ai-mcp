@@ -92,6 +92,9 @@ Technical details.
 | `scene.measure_overlap` | `measure_overlap` | Measures bbox overlap/touching state and intersection volume. |
 | `scene.assert_contact` | `assert_contact` | Asserts pass/fail contact relation between two objects. |
 | `scene.assert_dimensions` | `assert_dimensions` | Asserts pass/fail dimensions against an expected vector. |
+| `scene.assert_containment` | `assert_containment` | Asserts pass/fail containment plus measured clearance/protrusion details. |
+| `scene.assert_symmetry` | `assert_symmetry` | Asserts mirrored symmetry between two objects across a chosen axis. |
+| `scene.assert_proportion` | `assert_proportion` | Asserts pass/fail ratio/proportion against the expected value. |
 
 ### Collection (`application/handlers/collection.py`)
 

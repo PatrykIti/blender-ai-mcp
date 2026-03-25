@@ -4,9 +4,9 @@
 **Category:** Truth Layer / Scene Verification  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113, TASK-114, TASK-116  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The first implementation slice is already in place: shared assertion result contracts plus `scene_assert_contact` and `scene_assert_dimensions` now exist end-to-end. The remaining work is the higher-order spatial assertion family and the final full-family delivery pass.
+**Completion Summary:** The first assertion family is now implemented end-to-end: `scene_assert_contact`, `scene_assert_dimensions`, `scene_assert_containment`, `scene_assert_symmetry`, and `scene_assert_proportion` all exist across addon, server, MCP, metadata, docs, and regression coverage.
 
 ---
 

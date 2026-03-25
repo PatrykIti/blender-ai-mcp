@@ -1,8 +1,10 @@
 # TASK-117-03-01: Scene Assert Containment
 
 **Parent:** [TASK-117-03](./TASK-117-03_Spatial_Assertions_Containment_Symmetry_Proportion.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_assert_containment` is now implemented as a bbox-based inside/clearance assertion with protrusion reporting per axis.
 
 ---
 

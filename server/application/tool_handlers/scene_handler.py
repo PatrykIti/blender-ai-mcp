@@ -296,3 +296,70 @@ class SceneToolHandler(ISceneTool):
                 },
             )
         )
+
+    def assert_containment(
+        self,
+        inner_object: str,
+        outer_object: str,
+        min_clearance: float = 0.0,
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.assert_containment",
+                {
+                    "inner_object": inner_object,
+                    "outer_object": outer_object,
+                    "min_clearance": min_clearance,
+                    "tolerance": tolerance,
+                },
+            )
+        )
+
+    def assert_symmetry(
+        self,
+        left_object: str,
+        right_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.assert_symmetry",
+                {
+                    "left_object": left_object,
+                    "right_object": right_object,
+                    "axis": axis,
+                    "mirror_coordinate": mirror_coordinate,
+                    "tolerance": tolerance,
+                },
+            )
+        )
+
+    def assert_proportion(
+        self,
+        object_name: str,
+        axis_a: str,
+        expected_ratio: float,
+        axis_b: Optional[str] = None,
+        reference_object: Optional[str] = None,
+        reference_axis: Optional[str] = None,
+        tolerance: float = 0.01,
+        world_space: bool = True,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.assert_proportion",
+                {
+                    "object_name": object_name,
+                    "axis_a": axis_a,
+                    "expected_ratio": expected_ratio,
+                    "axis_b": axis_b,
+                    "reference_object": reference_object,
+                    "reference_axis": reference_axis,
+                    "tolerance": tolerance,
+                    "world_space": world_space,
+                },
+            )
+        )

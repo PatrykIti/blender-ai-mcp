@@ -122,6 +122,26 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
         "actual": {"dimensions": [1.2, 2.0, 3.0]},
         "delta": {"x": 0.2, "y": 0.0, "z": 0.0},
     }
+    handler.assert_containment.return_value = {
+        "assertion": "scene_assert_containment",
+        "passed": True,
+        "subject": "Cube",
+        "target": "Shell",
+        "actual": {"min_clearance": 0.1},
+    }
+    handler.assert_symmetry.return_value = {
+        "assertion": "scene_assert_symmetry",
+        "passed": False,
+        "subject": "Left",
+        "target": "Right",
+        "delta": {"mirror_axis": 0.2},
+    }
+    handler.assert_proportion.return_value = {
+        "assertion": "scene_assert_proportion",
+        "passed": True,
+        "subject": "Cube",
+        "actual": {"ratio": 0.5},
+    }
 
     monkeypatch.setattr(scene_area, "get_scene_handler", lambda: handler)
     monkeypatch.setattr(scene_area, "ctx_info", lambda ctx, message: None)
@@ -164,4 +184,25 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
         scene_area.scene_assert_dimensions(MagicMock(), object_name="Cube", expected_dimensions="[1, 2, 3]")
         .payload.delta["x"]
         == 0.2
+    )
+    assert (
+        scene_area.scene_assert_containment(MagicMock(), inner_object="Cube", outer_object="Shell")
+        .payload.actual["min_clearance"]
+        == 0.1
+    )
+    assert (
+        scene_area.scene_assert_symmetry(MagicMock(), left_object="Left", right_object="Right").payload.delta[
+            "mirror_axis"
+        ]
+        == 0.2
+    )
+    assert (
+        scene_area.scene_assert_proportion(
+            MagicMock(),
+            object_name="Cube",
+            axis_a="X",
+            axis_b="Y",
+            expected_ratio=0.5,
+        ).payload.actual["ratio"]
+        == 0.5
     )

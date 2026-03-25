@@ -72,6 +72,9 @@ EXPECTED_SCENE_TOOLS = {
     "scene_measure_overlap",
     "scene_assert_contact",
     "scene_assert_dimensions",
+    "scene_assert_containment",
+    "scene_assert_symmetry",
+    "scene_assert_proportion",
 }
 
 EXPECTED_MESH_TOOLS = {

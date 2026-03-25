@@ -130,15 +130,24 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
         {
             "scene.assert_contact": _ok({"assertion": "scene_assert_contact", "passed": True}),
             "scene.assert_dimensions": _ok({"assertion": "scene_assert_dimensions", "passed": False}),
+            "scene.assert_containment": _ok({"assertion": "scene_assert_containment", "passed": True}),
+            "scene.assert_symmetry": _ok({"assertion": "scene_assert_symmetry", "passed": False}),
+            "scene.assert_proportion": _ok({"assertion": "scene_assert_proportion", "passed": True}),
         }
     )
     handler = SceneToolHandler(rpc)
 
     contact = handler.assert_contact("Cube", "Sphere", max_gap=0.01, allow_overlap=True)
     dimensions = handler.assert_dimensions("Cube", [1.0, 2.0, 3.0], tolerance=0.01, world_space=False)
+    containment = handler.assert_containment("Inner", "Outer", min_clearance=0.1, tolerance=0.01)
+    symmetry = handler.assert_symmetry("Left", "Right", axis="X", mirror_coordinate=0.0, tolerance=0.01)
+    proportion = handler.assert_proportion("Cube", axis_a="X", axis_b="Y", expected_ratio=0.5, tolerance=0.01)
 
     assert contact["passed"] is True
     assert dimensions["assertion"] == "scene_assert_dimensions"
+    assert containment["assertion"] == "scene_assert_containment"
+    assert symmetry["assertion"] == "scene_assert_symmetry"
+    assert proportion["assertion"] == "scene_assert_proportion"
     assert rpc.calls == [
         (
             "scene.assert_contact",
@@ -151,6 +160,33 @@ def test_scene_assert_tools_align_with_rpc_commands_and_args():
                 "expected_dimensions": [1.0, 2.0, 3.0],
                 "tolerance": 0.01,
                 "world_space": False,
+            },
+        ),
+        (
+            "scene.assert_containment",
+            {"inner_object": "Inner", "outer_object": "Outer", "min_clearance": 0.1, "tolerance": 0.01},
+        ),
+        (
+            "scene.assert_symmetry",
+            {
+                "left_object": "Left",
+                "right_object": "Right",
+                "axis": "X",
+                "mirror_coordinate": 0.0,
+                "tolerance": 0.01,
+            },
+        ),
+        (
+            "scene.assert_proportion",
+            {
+                "object_name": "Cube",
+                "axis_a": "X",
+                "expected_ratio": 0.5,
+                "axis_b": "Y",
+                "reference_object": None,
+                "reference_axis": None,
+                "tolerance": 0.01,
+                "world_space": True,
             },
         ),
     ]

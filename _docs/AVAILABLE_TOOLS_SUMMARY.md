@@ -82,8 +82,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `157` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `164` visible tools
+- `legacy-manual`: `160` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `167` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -119,6 +119,9 @@ The current structured-contract baseline covers:
 - `scene_measure_overlap`
 - `scene_assert_contact`
 - `scene_assert_dimensions`
+- `scene_assert_containment`
+- `scene_assert_symmetry`
+- `scene_assert_proportion`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -210,6 +213,9 @@ None.
 | `scene_measure_overlap` | `from_object`, `to_object`, `tolerance` | Measures bbox overlap/touching state and intersection volume. | ✅ Done |
 | `scene_assert_contact` | `from_object`, `to_object`, `max_gap`, `allow_overlap` | Asserts pass/fail contact relation from measured gap and overlap state. | ✅ Done |
 | `scene_assert_dimensions` | `object_name`, `expected_dimensions`, `tolerance`, `world_space` | Asserts pass/fail dimensions against an expected vector. | ✅ Done |
+| `scene_assert_containment` | `inner_object`, `outer_object`, `min_clearance`, `tolerance` | Asserts pass/fail containment plus measured clearance/protrusion details. | ✅ Done |
+| `scene_assert_symmetry` | `left_object`, `right_object`, `axis`, `mirror_coordinate`, `tolerance` | Asserts mirrored symmetry between two objects across a chosen axis. | ✅ Done |
+| `scene_assert_proportion` | `object_name`, `axis_a`, `expected_ratio`, `axis_b`, `reference_object`, `reference_axis`, `tolerance`, `world_space` | Asserts pass/fail ratio/proportion against the expected value. | ✅ Done |
 
 **Deprecated (now internal, use grouped public tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`

@@ -1,8 +1,10 @@
 # TASK-117-04-02: Unit and E2E Regression Coverage
 
 **Parent:** [TASK-117-04](./TASK-117-04_Metadata_Docs_And_Regression_Coverage.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Unit coverage now protects the full first assertion family, and Blender-backed E2E files were added for the new scene assertion tools.
 
 ---
 

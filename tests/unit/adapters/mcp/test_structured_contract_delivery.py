@@ -131,6 +131,48 @@ class SceneHandler:
             "units": "blender_units",
         }
 
+    def assert_containment(self, inner_object, outer_object, min_clearance=0.0, tolerance=0.0001):
+        return {
+            "assertion": "scene_assert_containment",
+            "passed": True,
+            "subject": inner_object,
+            "target": outer_object,
+            "actual": {"min_clearance": 0.2},
+            "tolerance": tolerance,
+            "units": "blender_units",
+        }
+
+    def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+        return {
+            "assertion": "scene_assert_symmetry",
+            "passed": False,
+            "subject": left_object,
+            "target": right_object,
+            "delta": {"mirror_axis": 0.2},
+            "tolerance": tolerance,
+            "units": "blender_units",
+        }
+
+    def assert_proportion(
+        self,
+        object_name,
+        axis_a,
+        expected_ratio,
+        axis_b=None,
+        reference_object=None,
+        reference_axis=None,
+        tolerance=0.01,
+        world_space=True,
+    ):
+        return {
+            "assertion": "scene_assert_proportion",
+            "passed": True,
+            "subject": object_name,
+            "actual": {"ratio": expected_ratio},
+            "tolerance": tolerance,
+            "units": "ratio",
+        }
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -282,14 +324,29 @@ def test_scene_assert_contract_tools_deliver_structured_content(monkeypatch):
             "scene_assert_dimensions",
             {"object_name": "Cube", "expected_dimensions": [1.0, 2.0, 3.0]},
         )
-        return contact, dimensions
+        containment = await server.call_tool(
+            "scene_assert_containment",
+            {"inner_object": "Cube", "outer_object": "Shell"},
+        )
+        symmetry = await server.call_tool(
+            "scene_assert_symmetry",
+            {"left_object": "Left", "right_object": "Right"},
+        )
+        proportion = await server.call_tool(
+            "scene_assert_proportion",
+            {"object_name": "Cube", "axis_a": "X", "axis_b": "Y", "expected_ratio": 0.5},
+        )
+        return contact, dimensions, containment, symmetry, proportion
 
-    contact, dimensions = asyncio.run(run())
+    contact, dimensions, containment, symmetry, proportion = asyncio.run(run())
 
     assert _unwrap_structured(contact)["payload"]["passed"] is True
     assert _unwrap_structured(contact)["payload"]["actual"]["relation"] == "contact"
     assert _unwrap_structured(dimensions)["payload"]["assertion"] == "scene_assert_dimensions"
     assert _unwrap_structured(dimensions)["payload"]["passed"] is True
+    assert _unwrap_structured(containment)["payload"]["actual"]["min_clearance"] == 0.2
+    assert _unwrap_structured(symmetry)["payload"]["delta"]["mirror_axis"] == 0.2
+    assert _unwrap_structured(proportion)["payload"]["actual"]["ratio"] == 0.5
 
 
 def test_mesh_inspect_contract_delivers_structured_content(monkeypatch):

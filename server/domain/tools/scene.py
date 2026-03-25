@@ -230,3 +230,41 @@ class ISceneTool(ABC):
     ) -> Dict[str, Any]:
         """Asserts that one scene object matches the expected dimensions."""
         pass
+
+    @abstractmethod
+    def assert_containment(
+        self,
+        inner_object: str,
+        outer_object: str,
+        min_clearance: float = 0.0,
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        """Asserts that one scene object is contained within another."""
+        pass
+
+    @abstractmethod
+    def assert_symmetry(
+        self,
+        left_object: str,
+        right_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        tolerance: float = 0.0001,
+    ) -> Dict[str, Any]:
+        """Asserts symmetry between two scene objects across one axis."""
+        pass
+
+    @abstractmethod
+    def assert_proportion(
+        self,
+        object_name: str,
+        axis_a: str,
+        expected_ratio: float,
+        axis_b: Optional[str] = None,
+        reference_object: Optional[str] = None,
+        reference_axis: Optional[str] = None,
+        tolerance: float = 0.01,
+        world_space: bool = True,
+    ) -> Dict[str, Any]:
+        """Asserts that one proportion/ratio matches the expected value."""
+        pass

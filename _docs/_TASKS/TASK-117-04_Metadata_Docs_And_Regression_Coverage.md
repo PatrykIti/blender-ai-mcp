@@ -1,8 +1,10 @@
 # TASK-117-04: Metadata, Docs, and Regression Coverage
 
 **Parent:** [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The full assertion family is now reflected in router metadata, public docs, addon docs, inventory counts, and focused unit/E2E regression coverage.
 
 ---
 

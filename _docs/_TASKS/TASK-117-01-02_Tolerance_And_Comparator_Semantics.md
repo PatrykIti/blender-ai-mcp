@@ -1,8 +1,10 @@
 # TASK-117-01-02: Tolerance and Comparator Semantics
 
 **Parent:** [TASK-117-01](./TASK-117-01_Assertion_Contracts_And_Shared_Semantics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The first assertion family now uses explicit tolerance-aware comparator semantics with stable expected/actual/delta behavior across all implemented `scene_assert_*` tools.
 
 ---
 

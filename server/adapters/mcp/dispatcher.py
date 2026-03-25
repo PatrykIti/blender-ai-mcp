@@ -100,6 +100,9 @@ class ToolDispatcher:
                 "scene_measure_overlap": "measure_overlap",
                 "scene_assert_contact": "assert_contact",
                 "scene_assert_dimensions": "assert_dimensions",
+                "scene_assert_containment": "assert_containment",
+                "scene_assert_symmetry": "assert_symmetry",
+                "scene_assert_proportion": "assert_proportion",
             },
         )
 

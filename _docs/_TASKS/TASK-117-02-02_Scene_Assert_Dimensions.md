@@ -1,8 +1,10 @@
 # TASK-117-02-02: Scene Assert Dimensions
 
 **Parent:** [TASK-117-02](./TASK-117-02_First_Assertion_Tools_Contact_And_Dimensions.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `scene_assert_dimensions` is now implemented with deterministic per-axis comparison, explicit tolerance, and structured expected/actual/delta payloads.
 
 ---
 

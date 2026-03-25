@@ -1,8 +1,10 @@
 # TASK-117-03-03: Scene Assert Proportion
 
 **Parent:** [TASK-117-03](./TASK-117-03_Spatial_Assertions_Containment_Symmetry_Proportion.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_assert_proportion` is now implemented for one-object and cross-object ratio checks with explicit expected ratio and tolerance semantics.
 
 ---
 

@@ -8,8 +8,11 @@ from fastmcp.utilities.types import Image
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.scene import (
     SceneAssertContactContract,
+    SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
     SceneAssertionPayloadContract,
+    SceneAssertProportionContract,
+    SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
@@ -72,6 +75,9 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_measure_overlap",
     "scene_assert_contact",
     "scene_assert_dimensions",
+    "scene_assert_containment",
+    "scene_assert_symmetry",
+    "scene_assert_proportion",
 )
 
 
@@ -1742,3 +1748,177 @@ def scene_assert_dimensions(
     if isinstance(result, dict):
         return SceneAssertDimensionsContract(payload=SceneAssertionPayloadContract.model_validate(result))
     return SceneAssertDimensionsContract(error=str(result))
+
+
+def scene_assert_containment(
+    ctx: Context,
+    inner_object: str,
+    outer_object: str,
+    min_clearance: float = 0.0,
+    tolerance: float = 0.0001,
+) -> SceneAssertContainmentContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Asserts that one object is contained inside another.
+
+    Workflow: READ-ONLY | USE FOR → inset, fit, enclosure, and clearance postconditions
+
+    Args:
+        inner_object: Object that should remain inside
+        outer_object: Container object
+        min_clearance: Required minimum clearance to the container bounds
+        tolerance: Allowed comparison tolerance in Blender units
+
+    Returns:
+        Structured assertion payload with containment pass/fail result and measured clearance/protrusion details.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            payload = SceneAssertionPayloadContract.model_validate(
+                handler.assert_containment(inner_object, outer_object, min_clearance, tolerance)
+            )
+            ctx_info(ctx, f"Asserted containment of '{inner_object}' inside '{outer_object}'")
+            return SceneAssertContainmentContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneAssertContainmentContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_assert_containment",
+        params={
+            "inner_object": inner_object,
+            "outer_object": outer_object,
+            "min_clearance": min_clearance,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertContainmentContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertContainmentContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertContainmentContract(error=str(result))
+
+
+def scene_assert_symmetry(
+    ctx: Context,
+    left_object: str,
+    right_object: str,
+    axis: Literal["X", "Y", "Z"] = "X",
+    mirror_coordinate: float = 0.0,
+    tolerance: float = 0.0001,
+) -> SceneAssertSymmetryContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Asserts symmetry between two objects across a mirror plane.
+
+    Workflow: READ-ONLY | USE FOR → mirrored-part verification and bilateral layout checks
+
+    Args:
+        left_object: First object in the pair
+        right_object: Second object in the pair
+        axis: Mirror axis
+        mirror_coordinate: Coordinate of the mirror plane on that axis
+        tolerance: Allowed comparison tolerance in Blender units
+
+    Returns:
+        Structured assertion payload with center/dimension deltas and pass/fail symmetry result.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            payload = SceneAssertionPayloadContract.model_validate(
+                handler.assert_symmetry(left_object, right_object, axis, mirror_coordinate, tolerance)
+            )
+            ctx_info(ctx, f"Asserted symmetry between '{left_object}' and '{right_object}'")
+            return SceneAssertSymmetryContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneAssertSymmetryContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_assert_symmetry",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertSymmetryContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertSymmetryContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertSymmetryContract(error=str(result))
+
+
+def scene_assert_proportion(
+    ctx: Context,
+    object_name: str,
+    axis_a: Literal["X", "Y", "Z"],
+    expected_ratio: float,
+    axis_b: Literal["X", "Y", "Z"] | None = None,
+    reference_object: str | None = None,
+    reference_axis: Literal["X", "Y", "Z"] | None = None,
+    tolerance: float = 0.01,
+    world_space: bool = True,
+) -> SceneAssertProportionContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Asserts a proportion/ratio against the expected value.
+
+    Workflow: READ-ONLY | USE FOR → proportion postconditions without outer-LLM arithmetic
+
+    Args:
+        object_name: Primary object for the numerator axis
+        axis_a: Numerator axis on the primary object
+        expected_ratio: Expected ratio value
+        axis_b: Optional denominator axis on the same object
+        reference_object: Optional denominator object for cross-object ratios
+        reference_axis: Optional denominator axis on the reference object
+        tolerance: Allowed ratio delta
+        world_space: If True, uses world dimensions. If False, uses local dimensions.
+
+    Returns:
+        Structured assertion payload with expected ratio, actual ratio, and pass/fail result.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            payload = SceneAssertionPayloadContract.model_validate(
+                handler.assert_proportion(
+                    object_name,
+                    axis_a,
+                    expected_ratio,
+                    axis_b,
+                    reference_object,
+                    reference_axis,
+                    tolerance,
+                    world_space,
+                )
+            )
+            ctx_info(ctx, f"Asserted proportion for '{object_name}'")
+            return SceneAssertProportionContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneAssertProportionContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_assert_proportion",
+        params={
+            "object_name": object_name,
+            "axis_a": axis_a,
+            "expected_ratio": expected_ratio,
+            "axis_b": axis_b,
+            "reference_object": reference_object,
+            "reference_axis": reference_axis,
+            "tolerance": tolerance,
+            "world_space": world_space,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertProportionContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertProportionContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertProportionContract(error=str(result))

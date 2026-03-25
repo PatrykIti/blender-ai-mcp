@@ -1,8 +1,10 @@
 # TASK-117-01-01: Shared Assertion Result Envelope
 
 **Parent:** [TASK-117-01](./TASK-117-01_Assertion_Contracts_And_Shared_Semantics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The repo now has one shared assertion payload envelope covering `assertion`, `passed`, `subject/target`, `expected`, `actual`, `delta`, `tolerance`, `units`, and `details`.
 
 ---
 

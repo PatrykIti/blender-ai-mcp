@@ -1506,6 +1506,167 @@ class SceneHandler:
             },
         )
 
+    def assert_containment(self, inner_object, outer_object, min_clearance=0.0, tolerance=0.0001):
+        """Asserts that one object is contained within another."""
+        inner_bbox = self._get_bbox_data(self._get_object_or_raise(inner_object), world_space=True)
+        outer_bbox = self._get_bbox_data(self._get_object_or_raise(outer_object), world_space=True)
+
+        axis_clearances = {}
+        protruding_axes = []
+        min_axis_clearance = None
+        max_protrusion = 0.0
+
+        for axis, index in self._axis_indices().items():
+            lower_clearance = inner_bbox["min"][index] - outer_bbox["min"][index]
+            upper_clearance = outer_bbox["max"][index] - inner_bbox["max"][index]
+            axis_clearance = min(lower_clearance, upper_clearance)
+            axis_clearances[axis.lower()] = round(float(axis_clearance), 6)
+            if axis_clearance < -tolerance:
+                protruding_axes.append(axis)
+                max_protrusion = max(max_protrusion, abs(float(axis_clearance)))
+            if min_axis_clearance is None:
+                min_axis_clearance = axis_clearance
+            else:
+                min_axis_clearance = min(min_axis_clearance, axis_clearance)
+
+        min_axis_clearance = float(min_axis_clearance or 0.0)
+        clearance_shortfall = max(0.0, min_clearance - min_axis_clearance)
+        passed = not protruding_axes and clearance_shortfall <= tolerance
+
+        return self._build_assertion_payload(
+            assertion="scene_assert_containment",
+            subject=inner_object,
+            target=outer_object,
+            passed=passed,
+            expected={"min_clearance": round(float(min_clearance), 6)},
+            actual={"min_clearance": round(float(min_axis_clearance), 6)},
+            delta={
+                "clearance_shortfall": round(float(clearance_shortfall), 6),
+                "max_protrusion": round(float(max_protrusion), 6),
+            },
+            tolerance=tolerance,
+            units="blender_units",
+            details={
+                "axis_clearance": axis_clearances,
+                "protruding_axes": protruding_axes,
+            },
+        )
+
+    def assert_symmetry(self, left_object, right_object, axis="X", mirror_coordinate=0.0, tolerance=0.0001):
+        """Asserts symmetry between two objects across a mirror plane."""
+        axis_name = self._normalize_axis(axis, parameter_name="axis")
+        axis_index = self._axis_indices()[axis_name]
+        left_bbox = self._get_bbox_data(self._get_object_or_raise(left_object), world_space=True)
+        right_bbox = self._get_bbox_data(self._get_object_or_raise(right_object), world_space=True)
+
+        expected_right_axis = (2.0 * float(mirror_coordinate)) - float(left_bbox["center"][axis_index])
+        center_deltas = {}
+        dimension_deltas = {}
+        failed_checks = []
+
+        for candidate_axis, index in self._axis_indices().items():
+            if index == axis_index:
+                continue
+            delta = float(right_bbox["center"][index] - left_bbox["center"][index])
+            center_deltas[candidate_axis.lower()] = round(delta, 6)
+            if abs(delta) > tolerance:
+                failed_checks.append(f"center_{candidate_axis.lower()}")
+
+        for candidate_axis, index in self._axis_indices().items():
+            delta = float(right_bbox["dimensions"][index] - left_bbox["dimensions"][index])
+            dimension_deltas[candidate_axis.lower()] = round(delta, 6)
+            if abs(delta) > tolerance:
+                failed_checks.append(f"dimensions_{candidate_axis.lower()}")
+
+        mirror_delta = float(right_bbox["center"][axis_index] - expected_right_axis)
+        if abs(mirror_delta) > tolerance:
+            failed_checks.append(f"mirror_{axis_name.lower()}")
+
+        return self._build_assertion_payload(
+            assertion="scene_assert_symmetry",
+            subject=left_object,
+            target=right_object,
+            passed=len(failed_checks) == 0,
+            expected={"axis": axis_name, "mirror_coordinate": round(float(mirror_coordinate), 6)},
+            actual={
+                "left_center": self._round_values(left_bbox["center"]),
+                "right_center": self._round_values(right_bbox["center"]),
+                "left_dimensions": self._round_values(left_bbox["dimensions"]),
+                "right_dimensions": self._round_values(right_bbox["dimensions"]),
+            },
+            delta={
+                "mirror_axis": round(mirror_delta, 6),
+                "center": center_deltas,
+                "dimensions": dimension_deltas,
+            },
+            tolerance=tolerance,
+            units="blender_units",
+            details={"failed_checks": failed_checks},
+        )
+
+    def assert_proportion(
+        self,
+        object_name,
+        axis_a,
+        expected_ratio,
+        axis_b=None,
+        reference_object=None,
+        reference_axis=None,
+        tolerance=0.01,
+        world_space=True,
+    ):
+        """Asserts one ratio/proportion against the expected value."""
+        axis_a_name = self._normalize_axis(axis_a, parameter_name="axis_a")
+        axis_a_index = self._axis_indices()[axis_a_name]
+
+        if axis_b is not None and (reference_object is not None or reference_axis is not None):
+            raise ValueError("Use either axis_b or reference_object/reference_axis, not both")
+        if axis_b is None and (reference_object is None or reference_axis is None):
+            raise ValueError("Provide either axis_b or both reference_object and reference_axis")
+
+        source_bbox = self._get_bbox_data(self._get_object_or_raise(object_name), world_space=world_space)
+        numerator = float(source_bbox["dimensions"][axis_a_index])
+
+        if axis_b is not None:
+            axis_b_name = self._normalize_axis(axis_b, parameter_name="axis_b")
+            denominator = float(source_bbox["dimensions"][self._axis_indices()[axis_b_name]])
+            mode = "single_object"
+            target_name = object_name
+            proportion_target = {"axis_b": axis_b_name}
+        else:
+            reference_axis_name = self._normalize_axis(reference_axis, parameter_name="reference_axis")
+            reference_bbox = self._get_bbox_data(self._get_object_or_raise(reference_object), world_space=world_space)
+            denominator = float(reference_bbox["dimensions"][self._axis_indices()[reference_axis_name]])
+            mode = "cross_object"
+            target_name = reference_object
+            proportion_target = {
+                "reference_object": reference_object,
+                "reference_axis": reference_axis_name,
+            }
+
+        if abs(denominator) < 1e-9:
+            raise ValueError("Proportion denominator is zero; cannot compute ratio")
+
+        actual_ratio = numerator / denominator
+        ratio_delta = float(actual_ratio - expected_ratio)
+
+        return self._build_assertion_payload(
+            assertion="scene_assert_proportion",
+            subject=object_name,
+            target=target_name,
+            passed=abs(ratio_delta) <= tolerance,
+            expected={
+                "ratio": round(float(expected_ratio), 6),
+                "axis_a": axis_a_name,
+                **proportion_target,
+            },
+            actual={"ratio": round(float(actual_ratio), 6), "mode": mode},
+            delta={"ratio_delta": round(float(ratio_delta), 6)},
+            tolerance=tolerance,
+            units="ratio",
+            details={"world_space": bool(world_space)},
+        )
+
     def _get_object_or_raise(self, object_name):
         """Returns an object or raises a clear value error."""
         obj = bpy.data.objects.get(object_name)
@@ -1570,6 +1731,17 @@ class SceneHandler:
     def _round_values(self, values, precision=6):
         """Rounds a vector/list of numeric values."""
         return [round(float(value), precision) for value in values]
+
+    def _axis_indices(self):
+        """Returns the canonical axis index mapping."""
+        return {"X": 0, "Y": 1, "Z": 2}
+
+    def _normalize_axis(self, axis, parameter_name="axis"):
+        """Normalizes one axis input and raises a clear error when invalid."""
+        axis_name = str(axis).upper()
+        if axis_name not in self._axis_indices():
+            raise ValueError(f"{parameter_name} must be one of X, Y, or Z")
+        return axis_name
 
     def _build_assertion_payload(
         self,

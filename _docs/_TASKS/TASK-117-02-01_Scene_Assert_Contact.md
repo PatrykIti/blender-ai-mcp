@@ -1,8 +1,10 @@
 # TASK-117-02-01: Scene Assert Contact
 
 **Parent:** [TASK-117-02](./TASK-117-02_First_Assertion_Tools_Contact_And_Dimensions.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `scene_assert_contact` is now implemented on top of gap/overlap measurement with explicit `max_gap` and `allow_overlap` semantics.
 
 ---
 

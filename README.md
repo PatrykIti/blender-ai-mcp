@@ -103,8 +103,8 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-manual`: `157` visible tools, router/workflow omitted from the namespace
-- `legacy-flat`: `164` visible tools, including router/workflow on the broad compatibility surface
+- `legacy-manual`: `160` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `167` visible tools, including router/workflow on the broad compatibility surface
 - `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
@@ -198,6 +198,9 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 - `scene_measure_overlap`
 - `scene_assert_contact`
 - `scene_assert_dimensions`
+- `scene_assert_containment`
+- `scene_assert_symmetry`
+- `scene_assert_proportion`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -480,6 +483,9 @@ Object Mode operations for scene management and inspection.
 | `scene_measure_overlap` | Measure overlap/intersection between two objects | ✅ |
 | `scene_assert_contact` | Assert pass/fail contact relation between two objects | ✅ |
 | `scene_assert_dimensions` | Assert pass/fail dimensions against expected size | ✅ |
+| `scene_assert_containment` | Assert containment and clearance inside another object | ✅ |
+| `scene_assert_symmetry` | Assert mirrored symmetry between two objects | ✅ |
+| `scene_assert_proportion` | Assert ratio/proportion against expected value | ✅ |
 
 ---
 
@@ -1214,6 +1220,9 @@ The larger examples below remain useful as broad compatibility references, but t
         "scene_measure_overlap",
         "scene_assert_contact",
         "scene_assert_dimensions",
+        "scene_assert_containment",
+        "scene_assert_symmetry",
+        "scene_assert_proportion",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -1399,6 +1408,9 @@ The larger examples below remain useful as broad compatibility references, but t
         "scene_measure_overlap",
         "scene_assert_contact",
         "scene_assert_dimensions",
+        "scene_assert_containment",
+        "scene_assert_symmetry",
+        "scene_assert_proportion",
         "collection_list",
         "collection_list_objects",
         "collection_manage",
@@ -1633,6 +1645,9 @@ enabled_tools = [
   "scene_measure_overlap",
   "scene_assert_contact",
   "scene_assert_dimensions",
+  "scene_assert_containment",
+  "scene_assert_symmetry",
+  "scene_assert_proportion",
   "collection_list",
   "collection_list_objects",
   "collection_manage",

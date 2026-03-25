@@ -1,8 +1,10 @@
 # TASK-117-03: Spatial Assertions, Containment, Symmetry, Proportion
 
 **Parent:** [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `scene_assert_containment`, `scene_assert_symmetry`, and `scene_assert_proportion` are now implemented end-to-end on top of the measure layer with shared assertion contracts and regression coverage.
 
 ---
 

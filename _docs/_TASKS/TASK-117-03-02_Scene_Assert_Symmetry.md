@@ -1,8 +1,10 @@
 # TASK-117-03-02: Scene Assert Symmetry
 
 **Parent:** [TASK-117-03](./TASK-117-03_Spatial_Assertions_Containment_Symmetry_Proportion.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_assert_symmetry` is now implemented as a deterministic pair-based symmetry check against a chosen mirror axis and coordinate.
 
 ---
 

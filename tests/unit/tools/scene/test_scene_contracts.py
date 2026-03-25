@@ -2,8 +2,11 @@
 
 from server.adapters.mcp.contracts.scene import (
     SceneAssertContactContract,
+    SceneAssertContainmentContract,
     SceneAssertDimensionsContract,
     SceneAssertionPayloadContract,
+    SceneAssertProportionContract,
+    SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
@@ -211,3 +214,37 @@ def test_scene_assert_contracts_validate_shared_assertion_payloads():
     assert contact.payload.actual["relation"] == "contact"
     assert dimensions.payload.passed is False
     assert dimensions.payload.delta["x"] == 0.1
+
+    containment = SceneAssertContainmentContract(
+        payload=SceneAssertionPayloadContract(
+            assertion="scene_assert_containment",
+            passed=True,
+            subject="Inner",
+            target="Outer",
+            actual={"min_clearance": 0.2},
+            units="blender_units",
+        )
+    )
+    symmetry = SceneAssertSymmetryContract(
+        payload=SceneAssertionPayloadContract(
+            assertion="scene_assert_symmetry",
+            passed=False,
+            subject="Left",
+            target="Right",
+            delta={"mirror_axis": 0.2},
+            units="blender_units",
+        )
+    )
+    proportion = SceneAssertProportionContract(
+        payload=SceneAssertionPayloadContract(
+            assertion="scene_assert_proportion",
+            passed=True,
+            subject="TableLeg",
+            actual={"ratio": 0.25},
+            units="ratio",
+        )
+    )
+
+    assert containment.payload.actual["min_clearance"] == 0.2
+    assert symmetry.payload.delta["mirror_axis"] == 0.2
+    assert proportion.payload.actual["ratio"] == 0.25

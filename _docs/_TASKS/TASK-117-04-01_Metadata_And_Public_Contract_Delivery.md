@@ -1,8 +1,10 @@
 # TASK-117-04-01: Metadata and Public Contract Delivery
 
 **Parent:** [TASK-117-04](./TASK-117-04_Metadata_Docs_And_Regression_Coverage.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The full assertion family is now represented in router metadata, README, MCP docs, addon docs, and tool inventories.
 
 ---
 

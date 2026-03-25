@@ -69,3 +69,36 @@ def test_scene_assert_dimensions(scene_handler, modeling_handler):
             scene_handler.delete_object(cube_name)
         except RuntimeError:
             pass
+
+
+def test_scene_assert_containment_and_symmetry(scene_handler, modeling_handler):
+    inner_name = "E2E_Assert_Inner"
+    outer_name = "E2E_Assert_Outer"
+    left_name = "E2E_Assert_Left"
+    right_name = "E2E_Assert_Right"
+
+    try:
+        for name in (inner_name, outer_name, left_name, right_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
+
+        modeling_handler.create_primitive(primitive_type="CUBE", name=outer_name, size=4.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=inner_name, size=2.0, location=[0, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=left_name, size=2.0, location=[-2, 0, 0])
+        modeling_handler.create_primitive(primitive_type="CUBE", name=right_name, size=2.0, location=[2, 0, 0])
+
+        containment = scene_handler.assert_containment(inner_name, outer_name, min_clearance=0.0, tolerance=0.0001)
+        symmetry = scene_handler.assert_symmetry(left_name, right_name, axis="X", mirror_coordinate=0.0)
+
+        assert containment["passed"] is True
+        assert symmetry["passed"] is True
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+    finally:
+        for name in (inner_name, outer_name, left_name, right_name):
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
