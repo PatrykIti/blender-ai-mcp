@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
 
-**Progress Update:** Grouped configure action coverage, contract delivery checks, router metadata alignment, and addon-side unit coverage are now in place for `scene_configure`. Blender-backed read/apply/read E2E coverage is still outstanding.
+**Progress Update:** Grouped configure action coverage, contract delivery checks, router metadata alignment, addon-side unit coverage, and a dedicated Blender-backed roundtrip test file are now in place for `scene_configure`. What remains is executing that E2E coverage in a real Blender RPC environment as part of normal validation.
 
 ---
 

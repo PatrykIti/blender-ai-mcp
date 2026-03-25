@@ -168,6 +168,14 @@ Primary local validation commands for TASK-094 benchmark and decision memo:
 poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py tests/unit/adapters/mcp/test_code_mode_benchmarks.py tests/unit/adapters/mcp/test_code_mode_pilot_docs.py tests/unit/adapters/mcp/test_code_mode_decision_docs.py -q
 ```
 
+Primary local validation commands for TASK-118 scene render/world/configuration wave:
+
+```bash
+poetry run pytest tests/unit/tools/scene/test_scene_configure_mega.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_runtime_inventory.py tests/unit/adapters/mcp/test_contract_docs.py -q
+
+poetry run pytest tests/e2e/tools/scene/test_scene_configure_roundtrip.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow

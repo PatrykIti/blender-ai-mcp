@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
 
-**Progress Update:** Metadata, public docs, structured delivery, unit regression coverage, and explicit world/node-graph handoff fields are now in place. The remaining gap is Blender-backed read/apply/read roundtrip coverage.
+**Progress Update:** Metadata, public docs, structured delivery, unit regression coverage, explicit world/node-graph handoff fields, and a dedicated Blender-backed roundtrip test file are now in place. The remaining gap is executing that E2E roundtrip coverage in a real Blender RPC environment as part of normal validation.
 
 ---
 
