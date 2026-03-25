@@ -1,8 +1,16 @@
 # Available Tools Summary
 
-This document lists all currently implemented tools available for the AI, grouped by domain.
+This is the runtime inventory for `blender-ai-mcp`: the broadest single view of what the server can currently do across grouped public tools, internal atomics, specialist families, and router/workflow entrypoints.
+
 Planned tools are marked as 🚧.
-For detailed architectural decisions, see `MODELING_TOOLS_ARCHITECTURE.md` and `SCENE_TOOLS_ARCHITECTURE.md`.
+
+Read this file as a **reference map**, not as the recommended first-contact surface for production LLM usage.
+The product story is now:
+
+- start from the guided/goal-first surface
+- prefer grouped public tools and bounded macro/workflow tools
+- keep hidden atomics as substrate and expert escape hatches
+- use measurement/assertion as the truth layer when correctness matters
 
 This file is an inventory/reference doc, not the canonical policy source for:
 
@@ -10,9 +18,11 @@ This file is an inventory/reference doc, not the canonical policy source for:
 - how tools are layered
 - when `router_set_goal(...)` is expected
 
-For that, use:
+For the canonical product framing, use:
 
 - [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
+- [_docs/_MCP_SERVER/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/README.md)
+- [_docs/TOOLS/README.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/TOOLS/README.md)
 
 Interpretation rule:
 
@@ -24,7 +34,7 @@ Interpretation rule:
 
 ## LLM-Guided Public Aliases
 
-The `llm-guided` surface keeps the same internal capabilities but exposes a smaller first public contract line for a few high-value entry tools.
+The `llm-guided` surface keeps the same internal capabilities but exposes a smaller, cleaner public contract line for high-value entry tools.
 
 | Internal tool | `llm-guided` public name | Public arg changes |
 |---|---|---|
@@ -45,6 +55,8 @@ The router and dispatcher still use canonical internal tool names.
 ---
 
 ## Search-First Discovery Rollout
+
+The guided production surface is intentionally search-first.
 
 Default `llm-guided` entry surface:
 
@@ -83,11 +95,16 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `162` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `169` visible tools
+- `legacy-manual`: `163` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `170` visible tools
 - `llm-guided`: `7` visible tools
 
-Discovery respects guided visibility and does not leak hidden tools during bootstrap.
+Why this matters:
+
+- discovery respects guided visibility and does not leak hidden tools during bootstrap
+- the initial tool payload stays intentionally small
+- specialist families do not quietly become the default public path
+
 Specialist families such as armature, sculpt, text, baking, and similar
 maintainer-oriented areas are also intentionally excluded from the normal
 `llm-guided` escape-hatch surface until a stronger macro layer exists.
@@ -109,6 +126,7 @@ Interpretation rule for future tool waves:
 The current structured-contract baseline covers:
 
 - `macro_cutout_recess`
+- `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
 - `scene_create`
@@ -137,6 +155,7 @@ The current structured-contract baseline covers:
 - `workflow_catalog`
 
 These tools are intended to expose stable machine-readable payloads rather than prose-first JSON strings.
+That matters because grouped tools, macro tools, router entrypoints, and truth-layer checks all compose better when results are typed and auditable.
 
 ## Server-Side Sampling Assistants
 
@@ -169,6 +188,9 @@ Assistant envelopes are structured and use explicit terminal statuses:
 > grouped public tools above a hidden/internal atomic layer.
 > Internal action handlers still exist behind them and remain available to the
 > router and internal execution paths.
+>
+> This is the current "middle layer" between the tiny guided bootstrap surface
+> and the broader runtime inventory.
 
 ### Implemented
 
@@ -228,7 +250,7 @@ None.
 | `scene_assert_symmetry` | `left_object`, `right_object`, `axis`, `mirror_coordinate`, `tolerance` | Asserts mirrored symmetry between two objects across a chosen axis. | ✅ Done |
 | `scene_assert_proportion` | `object_name`, `axis_a`, `expected_ratio`, `axis_b`, `reference_object`, `reference_axis`, `tolerance`, `world_space` | Asserts pass/fail ratio/proportion against the expected value. | ✅ Done |
 
-**Deprecated (now internal, use grouped public tools):**
+**Historical atomic paths now primarily internal or grouped-surface backed:**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`
 - ~~`scene_list_selection`~~ → Use `scene_context(action="selection")`
 - ~~`scene_create_light`~~ → Use `scene_create(action="light", ...)`
@@ -294,6 +316,7 @@ None.
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `macro_cutout_recess` | `target_object`, `width`, `height`, `depth`, `face`, `offset`, `mode`, `bevel_width`, `bevel_segments`, `cleanup`, `cutter_name` | Bounded macro for cutter creation, placement, optional bevel, boolean application, and helper cleanup on one target object. | ✅ Done |
+| `macro_relative_layout` | `moving_object`, `reference_object`, `x_mode`, `y_mode`, `z_mode`, `contact_axis`, `contact_side`, `gap`, `offset` | Bounded macro for relative object placement using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform. | ✅ Done |
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a non-destructive object modifier (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). Successful addon responses carry structured modifier metadata. | ✅ Done |
@@ -309,7 +332,7 @@ None.
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. | ✅ Done |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. | ✅ Done |
 
-**Deprecated (now internal, use grouped public tools):**
+**Historical internal read-side path now routed through grouped inspection:**
 - ~~`modeling_get_modifier_data`~~ → Use `scene_inspect(action="modifier_data", ...)`
 
 ---
@@ -390,7 +413,7 @@ None.
 | `mesh_beautify_fill` | `angle_limit` | Rearranges triangles to more uniform triangulation. | ✅ Done |
 | `mesh_mirror` | `axis`, `use_mirror_merge`, `merge_threshold` | Mirrors selected geometry within the same object. | ✅ Done |
 
-**Deprecated (now internal, use grouped public tools):**
+**Historical mesh-inspection atomics now primarily internal or grouped-surface backed:**
 - ~~`mesh_get_vertex_data`~~ → Use `mesh_inspect(action="vertices", ...)`
 - ~~`mesh_get_edge_data`~~ → Use `mesh_inspect(action="edges", ...)`
 - ~~`mesh_get_face_data`~~ → Use `mesh_inspect(action="faces", ...)`
@@ -400,7 +423,7 @@ None.
 - ~~`mesh_get_attributes`~~ → Use `mesh_inspect(action="attributes", ...)`
 - ~~`mesh_get_shape_keys`~~ → Use `mesh_inspect(action="shape_keys", ...)`
 
-**Deprecated (now internal, use grouped public tools):**
+**Historical mesh-selection atomics now primarily internal or grouped-surface backed:**
 - ~~`mesh_select_all`~~ → Use `mesh_select(action="all")` or `mesh_select(action="none")`
 - ~~`mesh_select_linked`~~ → Use `mesh_select(action="linked")`
 - ~~`mesh_select_more`~~ → Use `mesh_select(action="more")`
@@ -572,6 +595,9 @@ None.
 
 ## 🤖 Workflow Catalog & Router Tools (`workflow_catalog`, `router_*`)
 *Tools for browsing/importing workflows and controlling the Router Supervisor.*
+
+This family is the goal-first orchestration entry layer.
+On guided surfaces, `router_set_goal` is the default production starting point and `workflow_catalog`/`browse_workflows` is the main discovery bridge into bounded workflow behavior.
 
 ### Implemented
 
