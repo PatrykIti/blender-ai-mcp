@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks (~110 sub-tasks)
+- **To Do:** 2 tasks (~130 sub-tasks)
 - **In Progress:** 0 tasks
 - **Done:** 171
 - **Superseded:** 10
@@ -23,6 +23,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | Add deterministic `scene_assert_*` tools on top of the new measure layer |
+| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Rewrite the old render/world scene-surface intent under the new layered tool model |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -464,3 +466,21 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-113-05` | [vision/assert overview](./TASK-113-05_Vision_Measurement_And_Assertion_Layer.md), [multiview capture contract](./TASK-113-05-01_Multiview_Before_After_Capture_Contract.md), [measurement/assertion family](./TASK-113-05-02_Measurement_And_Assertion_Tool_Family.md), [vision/lightweight-model boundaries](./TASK-113-05-03_Vision_Boundaries_And_Lightweight_Model_Strategy.md) | Vision, before/after capture, and deterministic measure/assert strategy |
 | `TASK-113-06` | [instructions/prompt overview](./TASK-113-06_Surface_Instructions_And_Prompt_Layer_Rewrite.md), [surface instructions rewrite targets](./TASK-113-06-01_Surface_Instructions_Rewrite_Targets.md), [prompt library rewrite targets](./TASK-113-06-02_Prompt_Library_Rewrite_Targets.md) | Surface instruction and prompt-layer rewrite plan |
 | `TASK-113-07` | [docs migration overview](./TASK-113-07_Documentation_Migration_And_Delivery_Roadmap.md), [root/MCP/tools migration map](./TASK-113-07-01_Root_MCP_And_Tools_Docs_Migration_Map.md), [router/addon/tests migration map](./TASK-113-07-02_Router_Addon_And_Test_Docs_Migration_Map.md), [implementation waves](./TASK-113-07-03_Implementation_Waves_Tool_Fixes_And_New_Tools.md) | Exact documentation migration plan and post-doc implementation roadmap |
+
+### TASK-117 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-117-01` | [overview](./TASK-117-01_Assertion_Contracts_And_Shared_Semantics.md), [shared assertion result envelope](./TASK-117-01-01_Shared_Assertion_Result_Envelope.md), [tolerance and comparator semantics](./TASK-117-01-02_Tolerance_And_Comparator_Semantics.md) | Shared result shape and truth-layer assertion semantics |
+| `TASK-117-02` | [overview](./TASK-117-02_First_Assertion_Tools_Contact_And_Dimensions.md), [scene_assert_contact](./TASK-117-02-01_Scene_Assert_Contact.md), [scene_assert_dimensions](./TASK-117-02-02_Scene_Assert_Dimensions.md) | First two high-frequency assertion tools |
+| `TASK-117-03` | [overview](./TASK-117-03_Spatial_Assertions_Containment_Symmetry_Proportion.md), [scene_assert_containment](./TASK-117-03-01_Scene_Assert_Containment.md), [scene_assert_symmetry](./TASK-117-03-02_Scene_Assert_Symmetry.md), [scene_assert_proportion](./TASK-117-03-03_Scene_Assert_Proportion.md) | Higher-order spatial assertions on top of the measure layer |
+| `TASK-117-04` | [overview](./TASK-117-04_Metadata_Docs_And_Regression_Coverage.md), [metadata and public contracts](./TASK-117-04-01_Metadata_And_Public_Contract_Delivery.md), [unit and e2e regression coverage](./TASK-117-04-02_Unit_And_E2E_Regression_Coverage.md) | Delivery wiring, public docs, and regression strategy |
+
+### TASK-118 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-118-01` | [overview](./TASK-118-01_Read_Side_Scene_State_Expansion.md), [scene_inspect render and color management](./TASK-118-01-01_Scene_Inspect_Render_And_Color_Management.md), [scene_inspect world](./TASK-118-01-02_Scene_Inspect_World.md) | Read-side scene state expansion for render/world appearance |
+| `TASK-118-02` | [overview](./TASK-118-02_Grouped_Scene_Configure_Tool.md), [scene_configure render and color management](./TASK-118-02-01_Scene_Configure_Render_And_Color_Management.md), [scene_configure world](./TASK-118-02-02_Scene_Configure_World.md) | Grouped write-side scene configuration surface |
+| `TASK-118-03` | [overview](./TASK-118-03_World_Node_Graph_Boundary_And_Handoff.md), [world node-graph reference contract](./TASK-118-03-01_World_Node_Graph_Reference_Contract.md), [scene_configure vs node_graph boundary](./TASK-118-03-02_Scene_Configure_Vs_Node_Graph_Boundary.md) | Boundary between scene config surface and future node-graph rebuild flows |
+| `TASK-118-04` | [overview](./TASK-118-04_Metadata_Docs_And_Roundtrip_Coverage.md), [metadata and public surface delivery](./TASK-118-04-01_Metadata_And_Public_Surface_Delivery.md), [unit and e2e roundtrip coverage](./TASK-118-04-02_Unit_And_E2E_Roundtrip_Coverage.md) | Delivery wiring, documentation, and roundtrip validation |
