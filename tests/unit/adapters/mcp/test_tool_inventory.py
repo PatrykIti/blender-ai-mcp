@@ -18,6 +18,7 @@ def test_discovery_inventory_represents_each_public_tool_once():
     assert len(public_names) == len(set(public_names))
     assert "check_scene" in public_names
     assert "inspect_scene" in public_names
+    assert "configure_scene" in public_names
     assert "browse_workflows" in public_names
 
 
@@ -31,6 +32,9 @@ def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
 
     assert entry_map["inspect_scene"].internal_name == "scene_inspect"
     assert "scene_inspect" in entry_map["inspect_scene"].aliases
+
+    assert entry_map["configure_scene"].internal_name == "scene_configure"
+    assert "scene_configure" in entry_map["configure_scene"].aliases
 
     assert entry_map["browse_workflows"].pinned is True
     assert entry_map["router_set_goal"].pinned is True

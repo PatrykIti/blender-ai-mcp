@@ -16,8 +16,10 @@ def test_readme_documents_llm_guided_public_aliases():
         "LLM-Guided Public Surface",
         "check_scene",
         "inspect_scene",
+        "configure_scene",
         "browse_workflows",
         "target_object",
+        "config",
         "search_query",
     ):
         assert expected in text
@@ -32,6 +34,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "LLM-Guided Public Surface Baseline",
         "check_scene",
         "inspect_scene",
+        "configure_scene",
         "browse_workflows",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
@@ -50,6 +53,7 @@ def test_tools_summary_describes_llm_guided_alias_layer():
         "LLM-Guided Public Aliases",
         "check_scene",
         "inspect_scene",
+        "configure_scene",
         "browse_workflows",
     ):
         assert expected in text
@@ -64,6 +68,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
 
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme
+    assert "configure_scene" in prompt_readme
     assert "browse_workflows" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme

@@ -12,11 +12,13 @@ AUDIENCE_LLM_GUIDED = "llm_guided"
 TOOL_NAME_OVERRIDES: dict[tuple[str, str], str] = {
     (AUDIENCE_LLM_GUIDED, "scene_context"): "check_scene",
     (AUDIENCE_LLM_GUIDED, "scene_inspect"): "inspect_scene",
+    (AUDIENCE_LLM_GUIDED, "scene_configure"): "configure_scene",
     (AUDIENCE_LLM_GUIDED, "workflow_catalog"): "browse_workflows",
 }
 ARGUMENT_NAME_OVERRIDES: dict[tuple[str, str, str], str] = {
     (AUDIENCE_LLM_GUIDED, "scene_context", "action"): "query",
     (AUDIENCE_LLM_GUIDED, "scene_inspect", "object_name"): "target_object",
+    (AUDIENCE_LLM_GUIDED, "scene_configure", "settings"): "config",
     (AUDIENCE_LLM_GUIDED, "workflow_catalog", "workflow_name"): "name",
     (AUDIENCE_LLM_GUIDED, "workflow_catalog", "query"): "search_query",
 }

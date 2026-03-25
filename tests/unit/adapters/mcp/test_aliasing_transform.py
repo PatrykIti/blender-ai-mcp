@@ -26,17 +26,21 @@ def test_llm_guided_naming_transform_renames_tools_and_arguments():
 
         check_scene = next(tool for tool in transformed if tool.name == "check_scene")
         inspect_scene = next(tool for tool in transformed if tool.name == "inspect_scene")
+        configure_scene = next(tool for tool in transformed if tool.name == "configure_scene")
         browse_workflows = next(tool for tool in transformed if tool.name == "browse_workflows")
 
-        return check_scene, inspect_scene, browse_workflows
+        return check_scene, inspect_scene, configure_scene, browse_workflows
 
-    check_scene, inspect_scene, browse_workflows = asyncio.run(run())
+    check_scene, inspect_scene, configure_scene, browse_workflows = asyncio.run(run())
 
     assert "query" in check_scene.parameters["properties"]
     assert "action" not in check_scene.parameters["properties"]
 
     assert "target_object" in inspect_scene.parameters["properties"]
     assert "object_name" not in inspect_scene.parameters["properties"]
+
+    assert "config" in configure_scene.parameters["properties"]
+    assert "settings" not in configure_scene.parameters["properties"]
 
     assert "name" in browse_workflows.parameters["properties"]
     assert "search_query" in browse_workflows.parameters["properties"]

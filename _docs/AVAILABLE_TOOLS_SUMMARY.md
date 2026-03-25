@@ -30,6 +30,7 @@ The `llm-guided` surface keeps the same internal capabilities but exposes a smal
 |---|---|---|
 | `scene_context` | `check_scene` | `action` -> `query` |
 | `scene_inspect` | `inspect_scene` | `object_name` -> `target_object` |
+| `scene_configure` | `configure_scene` | `settings` -> `config` |
 | `workflow_catalog` | `browse_workflows` | `workflow_name` -> `name`, `query` -> `search_query` |
 
 Current hidden/expert-only arguments on `llm-guided`:

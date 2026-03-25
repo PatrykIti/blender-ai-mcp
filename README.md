@@ -77,6 +77,7 @@ Current public tool aliases on `llm-guided`:
 |---|---|
 | `scene_context` | `check_scene` |
 | `scene_inspect` | `inspect_scene` |
+| `scene_configure` | `configure_scene` |
 | `workflow_catalog` | `browse_workflows` |
 
 Current public argument aliases on `llm-guided`:
@@ -85,6 +86,7 @@ Current public argument aliases on `llm-guided`:
 |---|---|---|
 | `check_scene` | `action` | `query` |
 | `inspect_scene` | `object_name` | `target_object` |
+| `configure_scene` | `settings` | `config` |
 | `browse_workflows` | `workflow_name` | `name` |
 | `browse_workflows` | `query` | `search_query` |
 

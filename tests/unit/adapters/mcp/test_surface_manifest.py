@@ -51,4 +51,6 @@ def test_naming_rules_are_explicit_even_when_identity_mapped():
     assert get_public_tool_name("router_set_goal", AUDIENCE_LEGACY) == "router_set_goal"
     assert get_public_tool_name("router_set_goal", AUDIENCE_LLM_GUIDED) == "router_set_goal"
     assert get_public_tool_name("scene_context", AUDIENCE_LLM_GUIDED) == "check_scene"
+    assert get_public_tool_name("scene_configure", AUDIENCE_LLM_GUIDED) == "configure_scene"
     assert get_public_arg_name("router_set_goal", "goal", AUDIENCE_LLM_GUIDED) == "goal"
+    assert get_public_arg_name("scene_configure", "settings", AUDIENCE_LLM_GUIDED) == "config"

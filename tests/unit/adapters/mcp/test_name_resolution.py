@@ -16,6 +16,7 @@ def test_llm_guided_alias_map_resolves_public_names():
 
     assert alias_map["check_scene"] == "scene_context"
     assert alias_map["inspect_scene"] == "scene_inspect"
+    assert alias_map["configure_scene"] == "scene_configure"
     assert alias_map["browse_workflows"] == "workflow_catalog"
     assert legacy_guided_alias_map["scene_context"] == "scene_context"
 
