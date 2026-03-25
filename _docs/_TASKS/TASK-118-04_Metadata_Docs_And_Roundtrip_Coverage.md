@@ -1,10 +1,10 @@
 # TASK-118-04: Metadata, Docs, and Roundtrip Coverage
 
 **Parent:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-**Progress Update:** Metadata, public docs, structured delivery, unit regression coverage, explicit world/node-graph handoff fields, and a dedicated Blender-backed roundtrip test file are now in place. The remaining gap is executing that E2E roundtrip coverage in a real Blender RPC environment as part of normal validation.
+**Completion Summary:** Metadata, public docs, structured delivery, unit regression coverage, explicit world/node-graph handoff fields, and Blender-backed roundtrip validation are now in place for the scene render/world/configuration wave.
 
 ---
 

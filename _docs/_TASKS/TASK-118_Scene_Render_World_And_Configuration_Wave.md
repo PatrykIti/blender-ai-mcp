@@ -4,9 +4,9 @@
 **Category:** Scene Surface Expansion  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113, TASK-114, TASK-117  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The grouped read/write scene-state surface is now in place: `scene_inspect` supports `render`, `color_management`, and `world`, `scene_configure` replays bounded render/color/world settings from structured payloads, world payloads expose explicit node-graph handoff/reference fields, and a dedicated Blender-backed roundtrip test file now exists. The remaining work is executing that E2E coverage in a real Blender RPC environment as part of normal validation.
+**Completion Summary:** The grouped read/write scene-state surface is now complete: `scene_inspect` supports `render`, `color_management`, and `world`, `scene_configure` replays bounded render/color/world settings from structured payloads, world payloads expose explicit node-graph handoff/reference fields, and Blender-backed roundtrip coverage has been executed successfully.
 
 ---
 

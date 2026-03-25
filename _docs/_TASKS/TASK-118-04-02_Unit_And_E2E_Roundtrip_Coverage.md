@@ -1,10 +1,10 @@
 # TASK-118-04-02: Unit and E2E Roundtrip Coverage
 
 **Parent:** [TASK-118-04](./TASK-118-04_Metadata_Docs_And_Roundtrip_Coverage.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-**Progress Update:** Grouped configure action coverage, contract delivery checks, router metadata alignment, addon-side unit coverage, and a dedicated Blender-backed roundtrip test file are now in place for `scene_configure`. What remains is executing that E2E coverage in a real Blender RPC environment as part of normal validation.
+**Completion Summary:** Grouped configure action coverage, contract delivery checks, router metadata alignment, addon-side unit coverage, and Blender-backed read/apply/read roundtrip validation are now in place for `scene_configure`.
 
 ---
 

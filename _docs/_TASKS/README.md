@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks (~130 sub-tasks)
-- **In Progress:** 1 tasks
-- **Done:** 172
+- **To Do:** 0 tasks
+- **In Progress:** 0 tasks
+- **Done:** 173
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Rewrite the old render/world scene-surface intent under the new layered tool model |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -47,7 +46,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | Read-side, grouped `scene_configure`, and world/node-graph handoff are done; remaining scope is real-environment execution of Blender-backed roundtrip coverage |
 
 ---
 
@@ -55,6 +53,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
 | [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | 2026-03-24 |
 | [TASK-116](./TASK-116_First_Measure_Assert_Code_Wave.md) | **First Measure/Assert Code Wave** | 🔴 High | 2026-03-24 |
