@@ -305,6 +305,21 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def relative_layout(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_relative_layout",
+            "intent": "layout Leg relative to TableTop",
+            "actions_taken": [
+                {"status": "applied", "action": "apply_relative_layout", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [kwargs.get("moving_object", "Leg")],
+            "verification_recommended": [
+                {"tool_name": "scene_measure_gap", "reason": "Confirm gap/contact after layout", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
 
 def _unwrap_structured(result):
     structured = getattr(result, "structured_content", None)
@@ -325,6 +340,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         by_name = {tool.name: tool for tool in tools}
         return (
             by_name["macro_cutout_recess"],
+            by_name["macro_relative_layout"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -336,6 +352,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
 
     (
         macro_tool,
+        layout_macro_tool,
         scene_context_tool,
         scene_create_tool,
         scene_configure_tool,
@@ -346,6 +363,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     ) = asyncio.run(run())
 
     assert macro_tool.output_schema is not None
+    assert layout_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
@@ -511,6 +529,31 @@ def test_macro_cutout_recess_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_cutout_recess"
     assert payload["actions_taken"][0]["action"] == "create_cutter"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_relative_layout_delivers_structured_content(monkeypatch):
+    """Scene macro tools should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_relative_layout",
+            {
+                "moving_object": "Leg",
+                "reference_object": "TableTop",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_relative_layout"
+    assert payload["actions_taken"][0]["action"] == "apply_relative_layout"
     assert payload["requires_followup"] is True
 
 

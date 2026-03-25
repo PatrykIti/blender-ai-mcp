@@ -18,6 +18,7 @@ class MacroToolHandler(IMacroTool):
         "bottom": (2, 0, 1),
         "top": (2, 0, 1),
     }
+    _AXIS_INDEX: dict[str, int] = {"X": 0, "Y": 1, "Z": 2}
 
     def __init__(self, scene_tool: ISceneTool, modeling_tool: IModelingTool):
         self._scene = scene_tool
@@ -214,11 +215,216 @@ class MacroToolHandler(IMacroTool):
             "requires_followup": True,
         }
 
+    def relative_layout(
+        self,
+        moving_object: str,
+        reference_object: str,
+        x_mode: str = "center",
+        y_mode: str = "center",
+        z_mode: str = "none",
+        contact_axis: Optional[str] = None,
+        contact_side: str = "positive",
+        gap: float = 0.0,
+        offset: Optional[List[float]] = None,
+    ) -> Dict[str, Any]:
+        if moving_object == reference_object:
+            raise ValueError("moving_object and reference_object must be different")
+
+        modes = {
+            "X": self._normalize_layout_mode(x_mode, field_name="x_mode"),
+            "Y": self._normalize_layout_mode(y_mode, field_name="y_mode"),
+            "Z": self._normalize_layout_mode(z_mode, field_name="z_mode"),
+        }
+        resolved_contact_axis = self._normalize_contact_axis(contact_axis)
+        resolved_contact_side = self._normalize_contact_side(contact_side)
+        gap_value = self._require_non_negative(gap, "gap")
+        offset_vector = self._normalize_offset(offset)
+
+        if resolved_contact_axis is None and all(mode == "none" for mode in modes.values()):
+            raise ValueError("macro_relative_layout needs at least one alignment mode or contact_axis")
+
+        reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
+        moving_bbox = self._scene.get_bounding_box(moving_object, world_space=True)
+        moving_center = [float(value) for value in moving_bbox["center"]]
+        reference_center = [float(value) for value in reference_bbox["center"]]
+        moving_half = [float(value) / 2.0 for value in moving_bbox["dimensions"]]
+
+        target_location = list(moving_center)
+        center_axes: list[str] = []
+
+        for axis_name, mode in modes.items():
+            if mode == "none":
+                continue
+            axis_index = self._AXIS_INDEX[axis_name]
+            if mode == "center":
+                target_location[axis_index] = reference_center[axis_index]
+                center_axes.append(axis_name)
+            elif mode == "min":
+                target_location[axis_index] = float(reference_bbox["min"][axis_index]) + moving_half[axis_index]
+            else:
+                target_location[axis_index] = float(reference_bbox["max"][axis_index]) - moving_half[axis_index]
+
+        if resolved_contact_axis is not None:
+            axis_index = self._AXIS_INDEX[resolved_contact_axis]
+            if resolved_contact_side == "positive":
+                target_location[axis_index] = float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+            else:
+                target_location[axis_index] = float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+
+        target_location = [target + delta for target, delta in zip(target_location, offset_vector)]
+        translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
+
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_reference_bounds",
+                "tool_name": "scene_get_bounding_box",
+                "summary": f"Read world-space bounds for '{reference_object}'",
+                "details": {
+                    "object_name": reference_object,
+                    "center": reference_center,
+                    "dimensions": reference_bbox["dimensions"],
+                },
+            },
+            {
+                "status": "applied",
+                "action": "inspect_moving_bounds",
+                "tool_name": "scene_get_bounding_box",
+                "summary": f"Read world-space bounds for '{moving_object}'",
+                "details": {
+                    "object_name": moving_object,
+                    "center": moving_center,
+                    "dimensions": moving_bbox["dimensions"],
+                },
+            },
+        ]
+
+        self._modeling.transform_object(name=moving_object, location=target_location)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "apply_relative_layout",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Moved '{moving_object}' relative to '{reference_object}'",
+                "details": {
+                    "target_location": target_location,
+                    "translation_delta": translation_delta,
+                    "alignment_modes": {axis.lower(): mode for axis, mode in modes.items()},
+                    "contact_axis": resolved_contact_axis,
+                    "contact_side": resolved_contact_side if resolved_contact_axis is not None else None,
+                    "gap": gap_value,
+                    "offset": offset_vector,
+                },
+            }
+        )
+
+        verification_recommended: list[Dict[str, Any]] = [
+            {
+                "tool_name": "inspect_scene",
+                "reason": "Verify the moved part after the bounded layout transform.",
+                "priority": "normal",
+                "arguments_hint": {"action": "object", "target_object": moving_object},
+            },
+            {
+                "tool_name": "scene_get_bounding_box",
+                "reason": "Confirm the moved object's final world-space bounds and footprint.",
+                "priority": "normal",
+                "arguments_hint": {"object_name": moving_object, "world_space": True},
+            },
+        ]
+
+        if center_axes:
+            verification_recommended.append(
+                {
+                    "tool_name": "scene_measure_alignment",
+                    "reason": "Confirm center alignment on the requested axes.",
+                    "priority": "normal",
+                    "arguments_hint": {
+                        "from_object": moving_object,
+                        "to_object": reference_object,
+                        "axes": center_axes,
+                        "reference": "CENTER",
+                    },
+                }
+            )
+
+        if resolved_contact_axis is not None:
+            verification_recommended.append(
+                {
+                    "tool_name": "scene_measure_gap",
+                    "reason": "Confirm the expected gap/contact relation after the layout move.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "from_object": moving_object,
+                        "to_object": reference_object,
+                    },
+                }
+            )
+            if gap_value == 0.0:
+                verification_recommended.append(
+                    {
+                        "tool_name": "scene_assert_contact",
+                        "reason": "Assert that the layout contact is real instead of visually assumed.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "from_object": moving_object,
+                            "to_object": reference_object,
+                            "max_gap": 0.001,
+                            "allow_overlap": False,
+                        },
+                    }
+                )
+
+        verification_recommended.append(
+            {
+                "tool_name": "scene_get_viewport",
+                "reason": "Do a quick visual check of the relative placement before continuing the build.",
+                "priority": "normal",
+                "arguments_hint": {"focus_target": moving_object, "shading": "SOLID"},
+            }
+        )
+
+        intent_parts = [f"x={modes['X']}", f"y={modes['Y']}", f"z={modes['Z']}"]
+        if resolved_contact_axis is not None:
+            intent_parts.append(f"contact {resolved_contact_side} on {resolved_contact_axis}")
+            intent_parts.append(f"gap={gap_value:g}")
+
+        return {
+            "status": "success",
+            "macro_name": "macro_relative_layout",
+            "intent": f"Layout '{moving_object}' relative to '{reference_object}' ({', '.join(intent_parts)})",
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": [moving_object],
+            "verification_recommended": verification_recommended,
+            "requires_followup": True,
+        }
+
     def _normalize_face(self, face: str) -> str:
         value = str(face).lower()
         if value not in self._FACE_SPECS:
             raise ValueError("face must be one of front, back, left, right, top, bottom")
         return value
+
+    def _normalize_layout_mode(self, value: str, field_name: str) -> str:
+        normalized = str(value).lower()
+        if normalized not in {"none", "center", "min", "max"}:
+            raise ValueError(f"{field_name} must be one of none, center, min, max")
+        return normalized
+
+    def _normalize_contact_axis(self, axis: Optional[str]) -> Optional[str]:
+        if axis is None:
+            return None
+        normalized = str(axis).upper()
+        if normalized not in self._AXIS_INDEX:
+            raise ValueError("contact_axis must be one of X, Y, Z")
+        return normalized
+
+    def _normalize_contact_side(self, side: str) -> str:
+        normalized = str(side).lower()
+        if normalized not in {"positive", "negative"}:
+            raise ValueError("contact_side must be one of positive or negative")
+        return normalized
 
     def _normalize_mode(self, mode: str) -> str:
         value = str(mode).lower()
@@ -249,6 +455,12 @@ class MacroToolHandler(IMacroTool):
         if value is None:
             return None
         return self._require_positive(value, field_name)
+
+    def _require_non_negative(self, value: float, field_name: str) -> float:
+        numeric = float(value)
+        if numeric < 0:
+            raise ValueError(f"{field_name} must be >= 0")
+        return numeric
 
     def _require_segments(self, value: int) -> int:
         integer = int(value)

@@ -55,6 +55,7 @@ EXPECTED_SCENE_TOOLS = {
     "scene_snapshot_state",
     "scene_compare_snapshot",
     "scene_create",
+    "macro_relative_layout",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",

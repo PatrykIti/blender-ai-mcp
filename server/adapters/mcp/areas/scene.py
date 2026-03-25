@@ -6,6 +6,7 @@ from fastmcp import Context
 from fastmcp.utilities.types import Image
 
 from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.contracts.scene import (
     SceneAssertContactContract,
     SceneAssertContainmentContract,
@@ -43,7 +44,7 @@ from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.application.services.snapshot_diff import get_snapshot_diff_service
-from server.infrastructure.di import get_scene_handler
+from server.infrastructure.di import get_macro_handler, get_scene_handler
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 SCENE_PUBLIC_TOOL_NAMES = (
@@ -59,6 +60,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_snapshot_state",
     "scene_compare_snapshot",
     "scene_create",
+    "macro_relative_layout",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -113,6 +115,106 @@ def register_scene_tools(target: Any) -> Dict[str, Any]:
     """Register public scene tools on a FastMCP server or LocalProvider."""
 
     return {tool_name: _register_existing_tool(target, tool_name) for tool_name in SCENE_PUBLIC_TOOL_NAMES}
+
+
+def macro_relative_layout(
+    ctx: Context,
+    moving_object: str,
+    reference_object: str,
+    x_mode: Literal["none", "center", "min", "max"] = "center",
+    y_mode: Literal["none", "center", "min", "max"] = "center",
+    z_mode: Literal["none", "center", "min", "max"] = "none",
+    contact_axis: Literal["X", "Y", "Z"] | None = None,
+    contact_side: Literal["positive", "negative"] = "positive",
+    gap: float = 0.0,
+    offset: Union[str, List[float], None] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for relative bbox-based layout between two objects.
+
+    Use this when the intent is "place this part relative to that part" rather than manually
+    inspecting bounding boxes, calculating coordinates, and moving the object yourself.
+
+    Current first slice:
+    - axis-aligned bbox layout only
+    - per-axis alignment modes (`none`, `center`, `min`, `max`)
+    - optional outside-face contact placement on one axis
+    - optional post-layout world offset
+    - deterministic verification hints via measure/assert tools
+
+    Args:
+        moving_object: Existing object that will be moved.
+        reference_object: Existing object that stays fixed and provides the layout reference.
+        x_mode: Alignment rule for the X axis.
+        y_mode: Alignment rule for the Y axis.
+        z_mode: Alignment rule for the Z axis when not using `contact_axis`.
+        contact_axis: Optional axis for outside-face contact/gap placement (`X`, `Y`, `Z`).
+        contact_side: Which side of the reference bbox to place the moving object on.
+        gap: Optional non-negative spacing along the contact axis.
+        offset: Optional world-axis offset `[x, y, z]` applied after the bounded layout placement.
+    """
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().relative_layout(
+                moving_object=moving_object,
+                reference_object=reference_object,
+                x_mode=x_mode,
+                y_mode=y_mode,
+                z_mode=z_mode,
+                contact_axis=contact_axis,
+                contact_side=contact_side,
+                gap=gap,
+                offset=parsed_offset,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_relative_layout",
+                intent=f"layout '{moving_object}' relative to '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_relative_layout",
+        params={
+            "moving_object": moving_object,
+            "reference_object": reference_object,
+            "x_mode": x_mode,
+            "y_mode": y_mode,
+            "z_mode": z_mode,
+            "contact_axis": contact_axis,
+            "contact_side": contact_side,
+            "gap": gap,
+            "offset": offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result
+    if isinstance(result, dict):
+        if result.get("status") == "failed" or result.get("error"):
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_relative_layout",
+                intent=f"layout '{moving_object}' relative to '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(result.get("error") or result),
+            )
+        return MacroExecutionReportContract.model_validate(result)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_relative_layout",
+        intent=f"layout '{moving_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
 
 
 async def _maybe_attach_scene_inspection_assistant(

@@ -25,12 +25,14 @@ def test_contract_enabled_tools_default_to_structured_first_delivery():
 
     assert "scene_context" in CONTRACT_ENABLED_TOOLS
     assert "macro_cutout_recess" in CONTRACT_ENABLED_TOOLS
+    assert "macro_relative_layout" in CONTRACT_ENABLED_TOOLS
     assert "scene_create" in CONTRACT_ENABLED_TOOLS
     assert "scene_configure" in CONTRACT_ENABLED_TOOLS
     assert "mesh_select" in CONTRACT_ENABLED_TOOLS
     assert "mesh_select_targeted" in CONTRACT_ENABLED_TOOLS
     assert should_prefer_native_structured_delivery("llm-guided", "scene_context") is True
     assert should_prefer_native_structured_delivery("llm-guided", "macro_cutout_recess") is True
+    assert should_prefer_native_structured_delivery("llm-guided", "macro_relative_layout") is True
     assert should_prefer_native_structured_delivery("llm-guided", "scene_create") is True
     assert should_prefer_native_structured_delivery("llm-guided", "scene_configure") is True
     assert should_prefer_native_structured_delivery("llm-guided", "mesh_select") is True

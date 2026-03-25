@@ -1,0 +1,33 @@
+{
+  "tool_name": "macro_relative_layout",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["layout", "align", "place", "offset", "contact", "gap"],
+  "sample_prompts": [
+    "place the leg under the tabletop with contact on Z",
+    "align the panel to the housing and leave a small gap",
+    "move this part to the top-right corner of the base"
+  ],
+  "parameters": {
+    "moving_object": {"type": "string", "required": true},
+    "reference_object": {"type": "string", "required": true},
+    "x_mode": {"type": "enum", "options": ["none", "center", "min", "max"], "default": "center"},
+    "y_mode": {"type": "enum", "options": ["none", "center", "min", "max"], "default": "center"},
+    "z_mode": {"type": "enum", "options": ["none", "center", "min", "max"], "default": "none"},
+    "contact_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": null},
+    "contact_side": {"type": "enum", "options": ["positive", "negative"], "default": "positive"},
+    "gap": {"type": "float", "default": 0.0},
+    "offset": {"type": "vector3", "default": [0.0, 0.0, 0.0]}
+  },
+  "related_tools": [
+    "scene_get_bounding_box",
+    "modeling_transform_object",
+    "scene_measure_alignment",
+    "scene_measure_gap",
+    "scene_assert_contact",
+    "scene_get_viewport"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that places one object relative to another using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform."
+}

@@ -20,3 +20,19 @@ class IMacroTool(ABC):
     ) -> Dict[str, Any]:
         """Create a bounded cutter-based recess/cutout on one target object."""
         pass
+
+    @abstractmethod
+    def relative_layout(
+        self,
+        moving_object: str,
+        reference_object: str,
+        x_mode: str = "center",
+        y_mode: str = "center",
+        z_mode: str = "none",
+        contact_axis: Optional[str] = None,
+        contact_side: str = "positive",
+        gap: float = 0.0,
+        offset: Optional[List[float]] = None,
+    ) -> Dict[str, Any]:
+        """Place one object relative to another using bounded bbox alignment/contact rules."""
+        pass
