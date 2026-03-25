@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 3 tasks (~20 sub-tasks)
 - **In Progress:** 0 tasks
 - **Done:** 173
 - **Superseded:** 10
@@ -23,6 +23,9 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | Finish high-value existing-tool cleanup on the public/model-facing surface before adding more abstraction |
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Add bounded macro tools so `llm-guided` can hide more atomics without reducing modeling flexibility |
+| [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Add goal-scoped reference images, before/after capture bundles, and lightweight vision assistance for macro/workflow reports |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -484,3 +487,29 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-118-02` | [overview](./TASK-118-02_Grouped_Scene_Configure_Tool.md), [scene_configure render and color management](./TASK-118-02-01_Scene_Configure_Render_And_Color_Management.md), [scene_configure world](./TASK-118-02-02_Scene_Configure_World.md) | Grouped write-side scene configuration surface |
 | `TASK-118-03` | [overview](./TASK-118-03_World_Node_Graph_Boundary_And_Handoff.md), [world node-graph reference contract](./TASK-118-03-01_World_Node_Graph_Reference_Contract.md), [scene_configure vs node_graph boundary](./TASK-118-03-02_Scene_Configure_Vs_Node_Graph_Boundary.md) | Boundary between scene config surface and future node-graph rebuild flows |
 | `TASK-118-04` | [overview](./TASK-118-04_Metadata_Docs_And_Roundtrip_Coverage.md), [metadata and public surface delivery](./TASK-118-04-01_Metadata_And_Public_Surface_Delivery.md), [unit and e2e roundtrip coverage](./TASK-118-04-02_Unit_And_E2E_Roundtrip_Coverage.md) | Delivery wiring, documentation, and roundtrip validation |
+
+### TASK-119 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-119-01` | [overview](./TASK-119-01_Public_Tool_Semantics_And_Contract_Hardening.md), [grouped tool semantic alignment](./TASK-119-01-01_Grouped_Tool_Semantic_Alignment.md), [output schema and result envelope normalization](./TASK-119-01-02_Output_Schema_And_Result_Envelope_Normalization.md) | Hardening grouped/public tools so semantics, return shapes, and public wording match the post-TASK-113 model |
+| `TASK-119-02` | [overview](./TASK-119-02_Metadata_Discovery_And_Visibility_Drift_Cleanup.md), [router metadata keyword and example normalization](./TASK-119-02-01_Router_Metadata_Keyword_And_Example_Normalization.md), [guided visibility and escape hatch cleanup](./TASK-119-02-02_Guided_Visibility_And_Escape_Hatch_Cleanup.md) | Cleanup of metadata/discovery drift and stricter guided-surface boundaries |
+| `TASK-119-03` | [overview](./TASK-119-03_Docs_Prompts_And_Regression_Hardening.md), [public docs and prompt library closure](./TASK-119-03-01_Public_Docs_And_Prompt_Library_Closure.md), [surface regression and benchmark pack](./TASK-119-03-02_Surface_Regression_And_Benchmark_Pack.md) | Final user-facing alignment plus regression/benchmark coverage for the hardened public surface |
+
+### TASK-120 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-120-01` | [overview](./TASK-120-01_Macro_Candidate_Matrix_And_Shared_Contract.md), [macro candidate extraction and selection rubric](./TASK-120-01-01_Macro_Candidate_Extraction_And_Selection_Rubric.md), [shared macro report envelope and status vocabulary](./TASK-120-01-02_Shared_Macro_Report_Envelope_And_Status_Vocabulary.md) | Macro candidate selection and one shared product/report contract before implementation |
+| `TASK-120-02` | [overview](./TASK-120-02_First_Macro_Wave_Form_Cutout_And_Layout.md), [macro cutout recess tool](./TASK-120-02-01_Macro_Cutout_Recess_Tool.md), [macro relative layout tool](./TASK-120-02-02_Macro_Relative_Layout_Tool.md), [macro finish form tool](./TASK-120-02-03_Macro_Finish_Form_Tool.md) | First bounded macro family for common hard-surface editing/build tasks |
+| `TASK-120-03` | [overview](./TASK-120-03_Guided_Surface_Collapse_And_Discovery_Preference.md), [guided visibility collapse for atomic tools](./TASK-120-03-01_Guided_Visibility_Collapse_For_Atomic_Tools.md), [router and search bias toward macro layer](./TASK-120-03-02_Router_And_Search_Bias_Toward_Macro_Layer.md) | Public-surface reduction once macro tools exist |
+| `TASK-120-04` | [overview](./TASK-120-04_Macro_Validation_And_Adoption.md), [macro regression and benchmark pack](./TASK-120-04-01_Macro_Regression_And_Benchmark_Pack.md), [prompt instruction and workflow integration](./TASK-120-04-02_Prompt_Instruction_And_Workflow_Integration.md) | Validation, rollout, and adoption path for the macro layer |
+
+### TASK-121 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-121-01` | [overview](./TASK-121-01_Vision_Assistant_Boundary_And_Delivery_Contract.md), [vision assistant result envelope and status model](./TASK-121-01-01_Vision_Assistant_Result_Envelope_And_Status_Model.md), [vision policy and truth boundary enforcement](./TASK-121-01-02_Vision_Policy_And_Truth_Boundary_Enforcement.md) | Lightweight vision-assistant contract and hard boundary against router/truth-role drift |
+| `TASK-121-02` | [overview](./TASK-121-02_Goal_And_Reference_Context_Session_Model.md), [goal-scoped reference context in session state](./TASK-121-02-01_Goal_Scoped_Reference_Context_In_Session_State.md), [reference image intake and lifecycle API](./TASK-121-02-02_Reference_Image_Intake_And_Lifecycle_API.md) | Goal-aware reference-image session model and upload/intake path |
+| `TASK-121-03` | [overview](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md), [capture bundle contract and deterministic presets](./TASK-121-03-01_Capture_Bundle_Contract_And_Deterministic_Presets.md), [macro workflow vision integration path](./TASK-121-03-02_Macro_Workflow_Vision_Integration_Path.md) | Before/after capture packaging and integration with macro/workflow reports |
+| `TASK-121-04` | [overview](./TASK-121-04_Lightweight_Vision_Runtime_And_Evaluation.md), [small vision runtime selection and execution policy](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md), [evaluation harness goldens and safety review](./TASK-121-04-02_Evaluation_Harness_Goldens_And_Safety_Review.md) | Runtime/model strategy plus evaluation and governance for the vision layer |
