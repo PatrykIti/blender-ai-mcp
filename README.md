@@ -507,13 +507,25 @@ Note: `scene_get_constraints` is now internal to `scene_inspect(action="constrai
 </details>
 
 <details>
+<summary><strong>Macro Tools (`macro_*`) — ✅</strong></summary>
+
+Bounded multi-step tools above the atomic layer and below full workflows.
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| `macro_cutout_recess` | Create one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. | ✅ |
+
+---
+
+</details>
+
+<details>
 <summary><strong>Modeling Tools (`modeling_*`) — ✅</strong></summary>
 
 Object Mode operations for creating and transforming objects.
 
 | Tool | Description | Status |
 |------|-------------|--------|
-| `macro_cutout_recess` | Bounded macro for cutter/boolean-based recesses and cutouts on one target object | ✅ |
 | `modeling_create_primitive` | Create cube, sphere, cylinder, etc. | ✅ |
 | `modeling_transform_object` | Move, rotate, scale objects | ✅ |
 | `modeling_add_modifier` | Add a non-destructive object modifier | ✅ |

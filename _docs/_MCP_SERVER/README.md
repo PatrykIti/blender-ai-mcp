@@ -594,12 +594,18 @@ Texture coordinate mapping operations.
 | `uv_pack_islands` | `object_name` (str), `margin` (float), `rotate` (bool), `scale` (bool) | Packs UV islands for optimal texture space usage. |
 | `uv_create_seam` | `object_name` (str), `action` (str) | Marks or clears UV seams on selected edges ('mark' or 'clear'). |
 
+### Macro Tools
+Bounded multi-step tools above the atomic layer and below full workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
+
 ### Modeling Tools
 Geometry creation and editing.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Bounded macro that creates and places a cutter, optionally bevels it, applies a boolean recess/cutout, and cleans up the helper object. |
 | `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
 | `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
