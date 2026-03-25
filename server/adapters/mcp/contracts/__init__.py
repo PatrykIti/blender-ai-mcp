@@ -4,6 +4,18 @@
 """Shared structured contract models for MCP adapter responses."""
 
 from .base import MCPContract, to_contract
+from .macro import (
+    MacroActionRecordContract,
+    MacroExecutionReportContract,
+    MacroVerificationRecommendationContract,
+)
 from .output_schema import get_output_schema
 
-__all__ = ["MCPContract", "get_output_schema", "to_contract"]
+__all__ = [
+    "MCPContract",
+    "MacroActionRecordContract",
+    "MacroExecutionReportContract",
+    "MacroVerificationRecommendationContract",
+    "get_output_schema",
+    "to_contract",
+]

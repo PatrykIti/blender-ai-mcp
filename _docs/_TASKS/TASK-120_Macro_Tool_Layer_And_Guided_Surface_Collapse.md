@@ -4,7 +4,9 @@
 **Category:** Product Surface Expansion / Macro Layer  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-113, TASK-114, TASK-119  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The first design slice is now in place: candidate selection has been grounded in existing workflows, and the shared machine-readable macro report envelope exists in code/tests. The next step is implementing the first concrete bounded macro tool.
 
 ---
 

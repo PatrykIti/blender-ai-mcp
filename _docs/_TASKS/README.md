@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks (~14 sub-tasks)
-- **In Progress:** 0 tasks
+- **To Do:** 1 tasks (~10 sub-tasks)
+- **In Progress:** 1 tasks
 - **Done:** 174
 - **Superseded:** 10
 
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Add bounded macro tools so `llm-guided` can hide more atomics without reducing modeling flexibility |
 | [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Add goal-scoped reference images, before/after capture bundles, and lightweight vision assistance for macro/workflow reports |
 
 ### Router & Workflow Extraction
@@ -48,6 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix and shared macro report contract are done; next step is the first concrete bounded macro implementation |
 
 ---
 

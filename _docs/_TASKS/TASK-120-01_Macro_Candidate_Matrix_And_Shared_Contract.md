@@ -1,8 +1,10 @@
 # TASK-120-01: Macro Candidate Matrix and Shared Contract
 
 **Parent:** [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The first bounded macro families are now explicitly selected from existing workflows, and a shared macro report envelope/status model exists in code/tests for later macro implementation work.
 
 ---
 
