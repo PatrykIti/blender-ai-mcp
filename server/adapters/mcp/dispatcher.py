@@ -15,6 +15,7 @@ from server.infrastructure.di import (
     get_curve_handler,
     get_extraction_handler,
     get_lattice_handler,
+    get_macro_handler,
     get_material_handler,
     get_mesh_handler,
     get_modeling_handler,
@@ -151,6 +152,14 @@ class ToolDispatcher:
                 # Skin modifier tools
                 "skin_create_skeleton": "skin_create_skeleton",
                 "skin_set_radius": "skin_set_radius",
+            },
+        )
+
+        macro = get_macro_handler()
+        self._safe_update(
+            macro,
+            {
+                "macro_cutout_recess": "cutout_recess",
             },
         )
 

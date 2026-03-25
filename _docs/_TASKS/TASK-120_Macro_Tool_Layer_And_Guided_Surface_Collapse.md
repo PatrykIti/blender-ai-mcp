@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-114, TASK-119  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The first design slice is now in place: candidate selection has been grounded in existing workflows, and the shared machine-readable macro report envelope exists in code/tests. The next step is implementing the first concrete bounded macro tool.
+**Progress Update:** The first macro-design slice is now in place and the first bounded macro tool exists in code: candidate selection has been grounded in existing workflows, the shared machine-readable macro report envelope exists in code/tests, and `macro_cutout_recess` now provides the first concrete macro implementation. The next step is expanding the macro family with layout/form tools and then using that layer to collapse the guided surface further.
 
 ---
 

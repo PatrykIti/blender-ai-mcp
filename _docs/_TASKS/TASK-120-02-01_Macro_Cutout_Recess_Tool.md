@@ -1,8 +1,10 @@
 # TASK-120-02-01: Macro Cutout/Recess Tool
 
 **Parent:** [TASK-120-02](./TASK-120-02_First_Macro_Wave_Form_Cutout_And_Layout.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `macro_cutout_recess` now exists as a bounded server-side orchestrator over existing atomics: it creates and places a cutter on one bbox face, optionally bevels it, applies a boolean difference, cleans up the helper object, and returns a structured macro report with follow-up verification recommendations.
 
 ---
 
@@ -28,10 +30,16 @@ currently too atomic-heavy for normal LLM usage.
 
 ## Repository Touchpoints
 
-- likely new server-side orchestration in `server/application/services/` or `server/application/tool_handlers/`
-- `server/adapters/mcp/areas/` and `server/adapters/mcp/contracts/`
-- `server/router/infrastructure/tools_metadata/`
-- existing scene/modeling/mesh handlers and their tests
+- `server/domain/tools/macro.py`
+- `server/application/tool_handlers/macro_handler.py`
+- `server/adapters/mcp/areas/modeling.py`
+- `server/adapters/mcp/contracts/macro.py`
+- `server/infrastructure/di.py`
+- `server/adapters/mcp/dispatcher.py`
+- `server/router/infrastructure/tools_metadata/modeling/macro_cutout_recess.json`
+- `tests/unit/tools/macro/`
+- `tests/unit/tools/modeling/`
+- `tests/unit/adapters/mcp/`
 
 ---
 

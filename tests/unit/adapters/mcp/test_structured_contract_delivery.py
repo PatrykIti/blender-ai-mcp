@@ -289,6 +289,23 @@ class ModelingHandler:
         return [{"name": "Bevel"}]
 
 
+class MacroHandler:
+    def cutout_recess(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_cutout_recess",
+            "intent": "recess cutout on BodyShell",
+            "actions_taken": [
+                {"status": "applied", "action": "create_cutter", "tool_name": "modeling_create_primitive"}
+            ],
+            "objects_modified": [kwargs.get("target_object", "BodyShell")],
+            "verification_recommended": [
+                {"tool_name": "inspect_scene", "reason": "Verify target state after cutout", "priority": "normal"}
+            ],
+            "requires_followup": True,
+        }
+
+
 def _unwrap_structured(result):
     structured = getattr(result, "structured_content", None)
     if structured is None:
@@ -307,6 +324,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         tools = await server.list_tools()
         by_name = {tool.name: tool for tool in tools}
         return (
+            by_name["macro_cutout_recess"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -317,6 +335,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         )
 
     (
+        macro_tool,
         scene_context_tool,
         scene_create_tool,
         scene_configure_tool,
@@ -326,6 +345,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         router_tool,
     ) = asyncio.run(run())
 
+    assert macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
@@ -465,6 +485,33 @@ def test_scene_create_and_mesh_select_deliver_structured_content(monkeypatch):
     assert _unwrap_structured(created)["payload"]["object_type"] == "LIGHT"
     assert _unwrap_structured(selected)["payload"]["message"] == "All selected"
     assert _unwrap_structured(targeted)["payload"]["operation"]["indices"] == [0, 1]
+
+
+def test_macro_cutout_recess_delivers_structured_content(monkeypatch):
+    """Macro tools should also expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_cutout_recess",
+            {
+                "target_object": "BodyShell",
+                "width": 0.8,
+                "height": 1.2,
+                "depth": 0.2,
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_cutout_recess"
+    assert payload["actions_taken"][0]["action"] == "create_cutter"
+    assert payload["requires_followup"] is True
 
 
 def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):

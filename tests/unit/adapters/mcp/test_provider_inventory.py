@@ -25,6 +25,7 @@ from server.adapters.mcp.areas.workflow_catalog import register_workflow_tools
 from server.adapters.mcp.providers import core_tools, internal_tools, router_tools, workflow_tools
 
 EXPECTED_MODELING_TOOLS = {
+    "macro_cutout_recess",
     "modeling_create_primitive",
     "modeling_transform_object",
     "modeling_add_modifier",

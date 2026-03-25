@@ -1,8 +1,10 @@
 # TASK-120-02: First Macro Wave, Form, Cutout, and Layout
 
 **Parent:** [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first concrete macro tool, `macro_cutout_recess`, is now implemented end-to-end. The remaining work in this cluster is `macro_relative_layout` and `macro_finish_form`, plus harmonizing how the first macro wave changes guided discovery/visibility assumptions.
 
 ---
 

@@ -1,0 +1,28 @@
+{
+  "tool_name": "macro_cutout_recess",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["cutout", "recess", "boolean", "opening", "seat", "cutter"],
+  "sample_prompts": [
+    "make a rectangular recess on the front face",
+    "cut a speaker opening into the housing",
+    "create a screen seat using a boolean cutter"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": true},
+    "width": {"type": "float", "required": true},
+    "height": {"type": "float", "required": true},
+    "depth": {"type": "float", "required": true},
+    "face": {"type": "enum", "options": ["front", "back", "left", "right", "top", "bottom"], "default": "front"},
+    "offset": {"type": "vector3", "default": [0.0, 0.0, 0.0]},
+    "mode": {"type": "enum", "options": ["recess", "cut_through"], "default": "recess"},
+    "bevel_width": {"type": "float", "default": null},
+    "bevel_segments": {"type": "int", "default": 2},
+    "cleanup": {"type": "enum", "options": ["delete", "hide", "keep"], "default": "delete"},
+    "cutter_name": {"type": "string", "default": null}
+  },
+  "related_tools": ["modeling_create_primitive", "modeling_transform_object", "modeling_add_modifier", "scene_inspect", "scene_get_bounding_box", "scene_get_viewport"],
+  "patterns": [],
+  "description": "Bounded macro that creates a cutter, places it on one bbox face of a target object, optionally bevels it, applies a boolean recess/cutout, and cleans up the helper."
+}

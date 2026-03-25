@@ -237,8 +237,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `161` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `168` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `162` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `169` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -274,6 +274,7 @@ Missing-input handling is now a first-class interaction layer:
 
 The structured-contract layer now covers the high-value state-heavy MCP surfaces:
 
+- `macro_cutout_recess`
 - `scene_context`
 - `scene_inspect`
 - `scene_create`
@@ -598,6 +599,7 @@ Geometry creation and editing.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
+| `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Bounded macro that creates and places a cutter, optionally bevels it, applies a boolean recess/cutout, and cleans up the helper object. |
 | `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
 | `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |

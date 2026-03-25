@@ -15,6 +15,7 @@ CONTRACT_ENABLED_TOOLS = {
     "scene_inspect",
     "scene_create",
     "scene_configure",
+    "macro_cutout_recess",
     "mesh_select",
     "mesh_select_targeted",
     "mesh_inspect",

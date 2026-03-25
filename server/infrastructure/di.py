@@ -5,6 +5,7 @@ from server.application.tool_handlers.collection_handler import CollectionToolHa
 from server.application.tool_handlers.curve_handler import CurveToolHandler
 from server.application.tool_handlers.extraction_handler import ExtractionToolHandler
 from server.application.tool_handlers.lattice_handler import LatticeToolHandler
+from server.application.tool_handlers.macro_handler import MacroToolHandler
 from server.application.tool_handlers.material_handler import MaterialToolHandler
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -24,6 +25,7 @@ from server.domain.tools.collection import ICollectionTool
 from server.domain.tools.curve import ICurveTool
 from server.domain.tools.extraction import IExtractionTool
 from server.domain.tools.lattice import ILatticeTool
+from server.domain.tools.macro import IMacroTool
 from server.domain.tools.material import IMaterialTool
 from server.domain.tools.mesh import IMeshTool
 from server.domain.tools.modeling import IModelingTool
@@ -69,6 +71,11 @@ def get_modeling_handler() -> IModelingTool:
     """Provider for IModelingTool. Injects RpcClient."""
     rpc = get_rpc_client()
     return ModelingToolHandler(rpc)
+
+
+def get_macro_handler() -> IMacroTool:
+    """Provider for IMacroTool. Composes existing scene/modeling handlers server-side."""
+    return MacroToolHandler(get_scene_handler(), get_modeling_handler())
 
 
 def get_mesh_handler() -> IMeshTool:

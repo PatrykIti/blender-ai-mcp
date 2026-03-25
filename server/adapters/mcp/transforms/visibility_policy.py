@@ -54,6 +54,7 @@ GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_assert_containment",
     "scene_assert_symmetry",
     "scene_assert_proportion",
+    "macro_cutout_recess",
     "modeling_create_primitive",
     "modeling_transform_object",
     "modeling_add_modifier",

@@ -2,12 +2,14 @@ from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import Context
 
+from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.infrastructure.di import get_modeling_handler
+from server.infrastructure.di import get_macro_handler, get_modeling_handler
 
 MODELING_PUBLIC_TOOL_NAMES = (
+    "macro_cutout_recess",
     "modeling_create_primitive",
     "modeling_transform_object",
     "modeling_add_modifier",
@@ -35,6 +37,7 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
     """Register public modeling tools on a FastMCP server or LocalProvider."""
 
     impls = {
+        "macro_cutout_recess": _macro_cutout_recess_impl,
         "modeling_create_primitive": _modeling_create_primitive_impl,
         "modeling_transform_object": _modeling_transform_object_impl,
         "modeling_add_modifier": _modeling_add_modifier_impl,
@@ -50,6 +53,115 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
         "skin_create_skeleton": _skin_create_skeleton_impl,
         "skin_set_radius": _skin_set_radius_impl,
     }
+    return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
+
+
+def _macro_cutout_recess_impl(
+    ctx: Context,
+    target_object: str,
+    width: float,
+    height: float,
+    depth: float,
+    face: str = "front",
+    offset: Union[str, List[float], None] = None,
+    mode: str = "recess",
+    bevel_width: Optional[float] = None,
+    bevel_segments: int = 2,
+    cleanup: str = "delete",
+    cutter_name: Optional[str] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for cutter-based recess/cutout creation on one target object.
+
+    Use this when the intent is "make a recess/cutout here" rather than manually chaining
+    primitive creation, transform, bevel, boolean, and cleanup steps yourself.
+
+    Current first slice:
+    - axis-aligned box cutter only
+    - face placement via target world-space bounding box (`front`/`back`/`left`/`right`/`top`/`bottom`)
+    - `recess` or `cut_through` mode
+    - optional bevel on the cutter
+    - cleanup by delete/hide/keep
+
+    Args:
+        target_object: Existing object that will receive the cutout.
+        width: In-plane width of the cutter footprint on the chosen face.
+        height: Secondary in-plane size of the cutter footprint on the chosen face.
+        depth: Recess depth (for `recess`) or minimum sizing hint (for `cut_through`).
+        face: Which bbox face to target (`front`, `back`, `left`, `right`, `top`, `bottom`).
+        offset: Optional world-axis offset `[x, y, z]` applied after face-center placement.
+        mode: `recess` or `cut_through`.
+        bevel_width: Optional bevel width for the cutter.
+        bevel_segments: Segments for the optional bevel.
+        cleanup: What to do with the cutter after boolean (`delete`, `hide`, `keep`).
+        cutter_name: Optional explicit helper object name.
+    """
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().cutout_recess(
+                target_object=target_object,
+                width=width,
+                height=height,
+                depth=depth,
+                face=face,
+                offset=parsed_offset,
+                mode=mode,
+                bevel_width=bevel_width,
+                bevel_segments=bevel_segments,
+                cleanup=cleanup,
+                cutter_name=cutter_name,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_cutout_recess",
+                intent=f"{mode} cutout on '{target_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_cutout_recess",
+        params={
+            "target_object": target_object,
+            "width": width,
+            "height": height,
+            "depth": depth,
+            "face": face,
+            "offset": offset,
+            "mode": mode,
+            "bevel_width": bevel_width,
+            "bevel_segments": bevel_segments,
+            "cleanup": cleanup,
+            "cutter_name": cutter_name,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result
+    if isinstance(result, dict):
+        if result.get("status") == "failed" or result.get("error"):
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_cutout_recess",
+                intent=f"{mode} cutout on '{target_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(result.get("error") or result),
+            )
+        return MacroExecutionReportContract.model_validate(result)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_cutout_recess",
+        intent=f"{mode} cutout on '{target_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
     return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
 
 

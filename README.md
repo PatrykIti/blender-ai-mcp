@@ -105,8 +105,8 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-manual`: `161` visible tools, router/workflow omitted from the namespace
-- `legacy-flat`: `168` visible tools, including router/workflow on the broad compatibility surface
+- `legacy-manual`: `162` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `169` visible tools, including router/workflow on the broad compatibility surface
 - `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
@@ -190,6 +190,7 @@ Current correction transparency baseline:
 
 Critical MCP surfaces now default to machine-readable structured contracts:
 
+- `macro_cutout_recess`
 - `scene_context`
 - `scene_inspect`
 - `scene_create`
@@ -512,6 +513,7 @@ Object Mode operations for creating and transforming objects.
 
 | Tool | Description | Status |
 |------|-------------|--------|
+| `macro_cutout_recess` | Bounded macro for cutter/boolean-based recesses and cutouts on one target object | ✅ |
 | `modeling_create_primitive` | Create cube, sphere, cylinder, etc. | ✅ |
 | `modeling_transform_object` | Move, rotate, scale objects | ✅ |
 | `modeling_add_modifier` | Add a non-destructive object modifier | ✅ |

@@ -83,8 +83,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `161` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `168` visible tools
+- `legacy-manual`: `162` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `169` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -108,6 +108,7 @@ Interpretation rule for future tool waves:
 
 The current structured-contract baseline covers:
 
+- `macro_cutout_recess`
 - `scene_context`
 - `scene_inspect`
 - `scene_create`
@@ -292,6 +293,7 @@ None.
 
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
+| `macro_cutout_recess` | `target_object`, `width`, `height`, `depth`, `face`, `offset`, `mode`, `bevel_width`, `bevel_segments`, `cleanup`, `cutter_name` | Bounded macro for cutter creation, placement, optional bevel, boolean application, and helper cleanup on one target object. | ✅ Done |
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |
 | `modeling_add_modifier` | `name`, `modifier_type`, `properties` | Adds a non-destructive object modifier (BOOLEAN: set `properties.object` / `object_name` to the cutter object's name). Successful addon responses carry structured modifier metadata. | ✅ Done |

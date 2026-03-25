@@ -10,6 +10,7 @@ def test_readme_documents_structured_contract_baseline():
 
     for expected in (
         "Structured Contract Baseline",
+        "macro_cutout_recess",
         "scene_create",
         "scene_configure",
         "mesh_select",
@@ -27,6 +28,7 @@ def test_mcp_docs_list_contract_enabled_surfaces():
 
     for expected in (
         "Structured Contract Baseline",
+        "macro_cutout_recess",
         "scene_create",
         "scene_configure",
         "mesh_select",
@@ -50,6 +52,7 @@ def test_tools_summary_mentions_structured_contract_surfaces():
 
     for expected in (
         "Structured Contract Surfaces",
+        "macro_cutout_recess",
         "scene_create",
         "scene_configure",
         "scene_context",

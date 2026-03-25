@@ -75,7 +75,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
     assert len(bootstrap_names) == 3
-    assert len(build_names) == 107
+    assert len(build_names) == 108
     assert len(inspect_names) == 37
 
     assert bootstrap_names == {"browse_workflows", "router_get_status", "router_set_goal"}
