@@ -1,7 +1,9 @@
 # Collection Tools Architecture
 
 Collection tools manage Blender collections (organizational containers for objects).
-**Each operation is a separate tool** to ensure clarity and avoid context mixing.
+
+This file documents the collection family as a technical/runtime reference.
+These tools are explicit collection-management operations, not part of the normal `llm-guided` bootstrap surface unless surfaced intentionally.
 
 ---
 

@@ -1,6 +1,10 @@
 # Curve Tools Architecture
 
 Curve tools operate on curve objects (Bezier, NURBS, etc.).
+
+This file records the curve family as a specialist technical layer.
+These tools are valuable for direct/manual and reconstruction-oriented flows, but they are not part of the normal guided bootstrap surface by default.
+
 **Context:** These tools primarily operate in **Object Mode**.
 
 ---

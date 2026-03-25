@@ -2,6 +2,9 @@
 
 UV tools handle texture coordinate mapping operations, providing comprehensive UV mapping, unwrapping, and seam management for mesh objects.
 
+This document is a family-level implementation reference.
+The UV family is a specialist/editing layer; public exposure should follow the guided-surface and hidden-atomic rules from the canonical policy docs.
+
 ---
 
 ## 1. uv_list_maps ✅ Done

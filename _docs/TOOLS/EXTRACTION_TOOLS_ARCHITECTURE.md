@@ -1,6 +1,12 @@
 # Extraction Tools Architecture
 
-Analysis tools for the **Automatic Workflow Extraction System** (TASK-042). These tools enable deep topology analysis, component detection, symmetry detection, and multi-angle rendering for LLM Vision integration.
+Analysis tools for the historical **Automatic Workflow Extraction System** (`TASK-042`) and its later reconstruction-oriented follow-ups.
+
+In the current post-`TASK-113` model, this family should be interpreted carefully:
+
+- extraction tools provide analysis, reference capture, and workflow-candidate signals
+- vision-oriented outputs help with interpretation and reconstruction support
+- they do **not** replace inspection/assertion as the truth layer for current Blender state
 
 ## Purpose
 
@@ -8,7 +14,7 @@ The extraction tools are designed to analyze existing 3D models and reverse-engi
 
 1. **Workflow Learning**: Understand how models were constructed
 2. **Automatic Workflow Generation**: Create reproducible modeling workflows from reference models
-3. **LLM Vision Integration**: Provide multi-angle renders for semantic analysis
+3. **Vision Support**: Provide multi-angle renders for interpretation, reference analysis, and reconstruction support
 
 ## Tool Overview
 
@@ -19,7 +25,7 @@ The extraction tools are designed to analyze existing 3D models and reverse-engi
 | `extraction_detect_symmetry` | Object | READ-ONLY | Detects symmetry planes using KDTree |
 | `extraction_edge_loop_analysis` | Object | READ-ONLY | Analyzes edge loops and patterns |
 | `extraction_face_group_analysis` | Object | READ-ONLY | Analyzes face groups by normal/height |
-| `extraction_render_angles` | Object | SAFE | Multi-angle renders for LLM Vision |
+| `extraction_render_angles` | Object | SAFE | Multi-angle renders for interpretation and reference analysis |
 
 ---
 
@@ -216,7 +222,7 @@ Groups faces by normal direction and height, detecting:
 
 **Tags:** `[OBJECT MODE][SAFE]`
 
-Renders the object from multiple predefined angles for LLM Vision semantic analysis.
+Renders the object from multiple predefined angles for interpretation, reference analysis, and reconstruction support.
 
 **Predefined Angles:**
 | Angle | Direction | Description |
@@ -247,7 +253,7 @@ Renders the object from multiple predefined angles for LLM Vision semantic analy
 }
 ```
 
-**Workflow:** `AFTER → component analysis | USE FOR → LLM Vision semantic extraction`
+**Workflow:** `AFTER → component analysis | USE FOR → vision-assisted interpretation / reconstruction support`
 
 ---
 
@@ -267,7 +273,7 @@ Renders the object from multiple predefined angles for LLM Vision semantic analy
    └── extraction_face_group_analysis
 
 4. Visual Analysis
-   └── extraction_render_angles → LLM Vision
+   └── extraction_render_angles → vision-assisted interpretation
 
 5. Workflow Generation
    └── (TASK-042 Phase 2: Pattern matching & workflow synthesis)

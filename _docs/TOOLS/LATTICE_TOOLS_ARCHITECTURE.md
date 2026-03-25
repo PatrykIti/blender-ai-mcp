@@ -6,6 +6,9 @@ This document describes the architecture and implementation details for Lattice 
 
 Lattice tools enable **non-destructive shape manipulation** using a cage of control points. Essential for architectural structures (tapering towers), organic modeling, and animation deformations.
 
+This is a specialist deformation family.
+It should be read as a technical/runtime reference, not as a claim that lattice operations are part of the normal guided bootstrap catalog.
+
 **Key Use Cases:**
 - Eiffel Tower tapering (narrowing towards top)
 - Character body adjustments

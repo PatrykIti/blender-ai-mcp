@@ -1,10 +1,18 @@
-# Mega Tools Architecture
+# Grouped Tool Architecture (Historical "Mega Tools")
 
-Mega tools are unified tools that consolidate multiple related operations to **reduce LLM context usage**.
-They are wrappers only: standalone action handlers still exist and are the source of truth for execution.
+This file keeps the historical filename `MEGA_TOOLS_ARCHITECTURE.md` for continuity.
+
+In the post-`TASK-113` model, these are best understood as the **current grouped public tools**:
+
+- they sit above internal atomic actions
+- they are part of the current high-frequency LLM-facing layer
+- they are **not** the same thing as the future macro layer
+- they exist to shape the product surface, not just to reduce token usage
+
+The underlying action handlers remain the execution substrate and source of truth.
 
 **Implementation pattern (see `scene_context`):**
-- Mega tool is exposed as a single `@mcp.tool`.
+- Grouped tool is exposed as a single `@mcp.tool`.
 - Action-level functions are **internal** (no `@mcp.tool`) and call Blender addon RPC handlers.
 - If a standalone MCP tool is required for workflow compatibility, it should be a thin wrapper
   that calls the same internal action function (no duplicated logic).
@@ -12,18 +20,25 @@ They are wrappers only: standalone action handlers still exist and are the sourc
 
 ---
 
-## 🧠 LLM Context Optimization
+## Layered Role
 
-| Mega Tool | Actions | Replaces | Savings |
+| Grouped tool | Actions | Underlying internal/atomic actions | Product role |
 |-----------|---------|----------|---------|
-| `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | -1 |
-| `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | -2 |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | -5 |
-| `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | -4 |
-| `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | -3 |
-| `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`, `summary` | `mesh_get_*` introspection tools | -7 |
+| `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | fast scene-state entry and branching |
+| `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | grouped helper-object creation |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data` | grouped inspection and read-side scene truth |
+| `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | grouped selection entry for mesh edits |
+| `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | targeted mesh selection entry |
+| `mesh_inspect` | `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights`, `summary` | `mesh_get_*` introspection tools | grouped mesh inspection and structured summaries |
 
-**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
+These grouped tools are the current shaped public layer above internal atomics.
+Their purpose is a clearer public contract, safer discovery, and better composition with goal-first routing and verification.
+
+Macro tools and workflow tools remain separate layers:
+
+- grouped tools = current high-frequency structured public entrypoints
+- macro tools = task-sized default LLM-facing operations above atomics/grouped tools
+- workflow tools = bounded multi-step process tools with explicit reporting and verification
 
 **`mesh_inspect.summary` sources (recommended):**
 - `scene_inspect(action="topology")` → counts
@@ -446,7 +461,7 @@ Targeted selection operations for mesh geometry (with parameters).
 
 # 6. mesh_inspect ✅ Done
 
-Mesh introspection mega tool (summary + raw payloads).
+Grouped mesh introspection tool (summary + raw payloads).
 
 **Tag:** `[MESH][READ-ONLY][SAFE]`
 
@@ -564,7 +579,7 @@ Mesh introspection mega tool (summary + raw payloads).
 
 # Rules
 
-1. **Action-based routing**: Each mega tool uses an `action` parameter to route to internal functions.
+1. **Action-based routing**: Each grouped tool uses an `action` parameter to route to internal functions.
 2. **Internal functions preserved**: Original functions are kept as `_internal_function_name` for backward compatibility.
 3. **Parameter validation**: Mega tools validate required parameters and return helpful error messages.
 4. **Docstring clarity**: Each action is documented with required/optional parameters.

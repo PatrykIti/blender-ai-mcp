@@ -4,15 +4,15 @@ This document describes the architecture and implementation details for Sculpt M
 
 ## Overview
 
-Sculpt tools enable organic shape manipulation through Blender's Sculpt Mode. They are categorized as **lower priority** since they require Sculpt Mode and are more advanced workflows.
+Sculpt tools enable organic shape manipulation through Blender's Sculpt Mode. They are categorized as a **specialist family** since they require Sculpt Mode and are less suitable for the default guided public surface.
 
-**Key Insight:** For AI workflows, mesh filters (`sculpt.mesh_filter`) are more reliable and predictable than programmatic brush strokes. The `sculpt_auto` tool uses this approach for consistent results.
+**Key Insight:** For AI-assisted flows, mesh filters (`sculpt.mesh_filter`) are more reliable and predictable than programmatic brush strokes. The `sculpt_auto` tool uses this approach for consistent results.
 
 ---
 
 ## Tool Categories
 
-### High-Level Operations (Recommended for AI)
+### High-Level Operations (Recommended for direct/expert usage)
 
 | Tool | Operation | Reliability |
 |------|-----------|-------------|
