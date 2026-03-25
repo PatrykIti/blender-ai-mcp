@@ -49,6 +49,7 @@ EXPECTED_SCENE_TOOLS = {
     "scene_set_active_object",
     "scene_context",
     "scene_inspect",
+    "scene_configure",
     "scene_get_viewport",
     "scene_snapshot_state",
     "scene_compare_snapshot",

@@ -230,8 +230,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `160` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `167` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `161` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `168` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -269,6 +269,7 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 
 - `scene_context`
 - `scene_inspect`
+- `scene_configure`
 - `scene_snapshot_state`
 - `scene_compare_snapshot`
 - `scene_get_custom_properties`
@@ -508,17 +509,19 @@ layer.
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | Detailed inspection queries for objects plus scene-level render/color/world state. |
+| `scene_configure` | `render`, `color_management`, `world` | Applies grouped render, color-management, and bounded world/background settings from structured input. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |
 
-**Current grouped public set:** 6 high-frequency grouped tools.
+**Current grouped public set:** 7 high-frequency grouped tools.
 
 ### Scene Tools
 Managing objects at the scene level.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
+| `scene_configure` | `action` (`render`/`color_management`/`world`), `settings` (object) | Applies grouped scene appearance settings. `world` is intentionally bounded and does not author arbitrary world node graphs. |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. Returns error if object does not exist. |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |

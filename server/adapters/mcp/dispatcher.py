@@ -272,8 +272,22 @@ class ToolDispatcher:
                 return mesh.select_by_location(axis, min_coord, max_coord, mode=element_type)
             return f"Error: Unknown action '{action}'."
 
+        def _scene_configure(
+            action: str,
+            settings: Optional[dict[str, Any]] = None,
+        ):
+            payload = settings or {}
+            if action == "render":
+                return scene.configure_render_settings(payload)
+            if action == "color_management":
+                return scene.configure_color_management(payload)
+            if action == "world":
+                return scene.configure_world(payload)
+            return f"Error: Unknown action '{action}'."
+
         self._tool_map["mesh_select"] = _mesh_select
         self._tool_map["mesh_select_targeted"] = _mesh_select_targeted
+        self._tool_map["scene_configure"] = _scene_configure
 
         # Material tools
         material = get_material_handler()

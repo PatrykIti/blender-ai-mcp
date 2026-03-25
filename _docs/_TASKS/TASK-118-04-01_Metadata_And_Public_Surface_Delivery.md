@@ -1,8 +1,10 @@
 # TASK-118-04-01: Metadata and Public Surface Delivery
 
 **Parent:** [TASK-118-04](./TASK-118-04_Metadata_Docs_And_Roundtrip_Coverage.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_configure` is now represented in router metadata, public inventories, MCP docs, addon docs, and task/status docs so the inspect/configure split is explicit across the repo.
 
 ---
 

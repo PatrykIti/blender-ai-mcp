@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-114, TASK-117  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The first read-side slice is now implemented: grouped `scene_inspect` supports `render`, `color_management`, and `world` actions based on Blender 5.x scene/world settings. The remaining work is the grouped write-side `scene_configure` surface, node-graph boundary, and final delivery wave.
+**Progress Update:** The grouped read/write scene-state surface is now in place: `scene_inspect` supports `render`, `color_management`, and `world`, and `scene_configure` now replays bounded render/color/world settings from structured payloads. The remaining work is the explicit world/node-graph boundary handoff and Blender-backed roundtrip coverage.
 
 ---
 

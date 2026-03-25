@@ -103,8 +103,8 @@ Current hidden/expert-only arguments on `llm-guided` include:
 
 Current measurable baseline:
 
-- `legacy-manual`: `160` visible tools, router/workflow omitted from the namespace
-- `legacy-flat`: `167` visible tools, including router/workflow on the broad compatibility surface
+- `legacy-manual`: `161` visible tools, router/workflow omitted from the namespace
+- `legacy-flat`: `168` visible tools, including router/workflow on the broad compatibility surface
 - `llm-guided`: `7` visible tools on the bootstrap entry surface
 
 The visible `llm-guided` entry set is:
@@ -185,6 +185,7 @@ Critical MCP surfaces now default to machine-readable structured contracts:
 
 - `scene_context`
 - `scene_inspect`
+- `scene_configure`
 - `scene_snapshot_state`
 - `scene_compare_snapshot`
 - `scene_get_custom_properties`
@@ -451,6 +452,7 @@ Object Mode operations for scene management and inspection.
 
 | Tool | Description | Status |
 |------|-------------|--------|
+| `scene_configure` | Grouped render/color/world configuration | ✅ |
 | `scene_list_objects` | List all objects in scene | ✅ |
 | `scene_delete_object` | Delete object by name | ✅ |
 | `scene_clean_scene` | Remove all objects | ✅ |
@@ -1052,6 +1054,7 @@ config = RouterConfig(cache_ttl_seconds=2.0, log_decisions=False)
 | `scene_context` | mode, selection | -1 | ✅ |
 | `scene_create` | light, camera, empty | -2 | ✅ |
 | `scene_inspect` | object, topology, modifiers, materials, constraints, modifier_data, render, color_management, world | -5 | ✅ |
+| `scene_configure` | render, color_management, world | new | ✅ |
 
 ### Grouped Mesh Tools
 

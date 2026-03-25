@@ -51,6 +51,12 @@ class SceneInspectResponseContract(MCPContract):
     assistant: InspectionSummaryAssistantContract | None = None
 
 
+class SceneConfigureResponseContract(MCPContract):
+    action: Literal["render", "color_management", "world"]
+    payload: dict[str, Any] | None = None
+    error: str | None = None
+
+
 class SceneSnapshotStateContract(MCPContract):
     snapshot: dict[str, Any] | None = None
     hash: str | None = None

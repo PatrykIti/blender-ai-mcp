@@ -1,8 +1,10 @@
 # TASK-118-02-01: Scene Configure Render and Color Management
 
 **Parent:** [TASK-118-02](./TASK-118-02_Grouped_Scene_Configure_Tool.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_configure(action="render")` and `scene_configure(action="color_management")` now apply grouped scene appearance settings from structured payloads and return the resulting scene-state snapshot.
 
 ---
 

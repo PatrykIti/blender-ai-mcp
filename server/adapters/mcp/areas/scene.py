@@ -14,6 +14,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertProportionContract,
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
+    SceneConfigureResponseContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -52,6 +53,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_set_active_object",
     "scene_context",
     "scene_inspect",
+    "scene_configure",
     "scene_get_viewport",
     "scene_snapshot_state",
     "scene_compare_snapshot",
@@ -468,6 +470,72 @@ async def scene_inspect(
     )
 
 
+def scene_configure(
+    ctx: Context,
+    action: Literal["render", "color_management", "world"],
+    settings: Dict[str, Any],
+) -> SceneConfigureResponseContract:
+    """
+    [SCENE][NON-DESTRUCTIVE] Applies grouped scene-level render, color-management, or world configuration.
+
+    Actions and settings shape:
+    - "render": Accepts fields aligned with `scene_inspect(action="render")`, including render_engine,
+      resolution, filepath, use_file_extension, film_transparent, image_settings, and cycles.
+    - "color_management": Accepts fields aligned with `scene_inspect(action="color_management")`,
+      including display_device, view_transform, look, exposure, gamma, use_curve_mapping, and
+      sequencer_color_space.
+    - "world": Accepts grouped world/background settings such as world_name, use_nodes, color,
+      and background {color, strength}. This tool does not author arbitrary world node graphs.
+
+    Workflow: NON-DESTRUCTIVE | USE → replay scene appearance from structured state
+
+    Examples:
+        scene_configure(action="render", settings={"render_engine": "CYCLES", "cycles": {"samples": 128}})
+        scene_configure(action="color_management", settings={"view_transform": "AgX", "look": "None"})
+        scene_configure(action="world", settings={"world_name": "Studio", "background": {"strength": 0.8}})
+    """
+
+    def execute() -> SceneConfigureResponseContract:
+        if not isinstance(settings, dict):
+            return SceneConfigureResponseContract(action=action, error="'settings' must be an object/dict.")
+
+        try:
+            if action == "render":
+                return SceneConfigureResponseContract(
+                    action="render",
+                    payload=_scene_configure_render_settings(ctx, settings),
+                )
+            if action == "color_management":
+                return SceneConfigureResponseContract(
+                    action="color_management",
+                    payload=_scene_configure_color_management(ctx, settings),
+                )
+            if action == "world":
+                return SceneConfigureResponseContract(
+                    action="world",
+                    payload=_scene_configure_world(ctx, settings),
+                )
+            return SceneConfigureResponseContract(
+                action="render",
+                error=f"Unknown action '{action}'. Valid actions: render, color_management, world",
+            )
+        except (RuntimeError, ValueError) as e:
+            return SceneConfigureResponseContract(action=action, error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_configure",
+        params={"action": action, "settings": settings},
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneConfigureResponseContract):
+        return result
+    if isinstance(result, dict):
+        if "error" in result and result.get("payload") is None:
+            return SceneConfigureResponseContract(action=action, error=str(result["error"]))
+        return SceneConfigureResponseContract(action=action, payload=result)
+    return SceneConfigureResponseContract(action=action, error=str(result))
+
+
 # Internal function - exposed via scene_inspect mega tool
 def _scene_inspect_object(ctx: Context, name: str) -> Dict[str, Any]:
     """
@@ -524,6 +592,30 @@ def _scene_inspect_world(ctx: Context) -> Dict[str, Any]:
         return handler.inspect_world()
     except RuntimeError as e:
         return {"error": str(e)}
+
+
+def _scene_configure_render_settings(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    [SCENE][NON-DESTRUCTIVE] Applies grouped render settings and returns the resulting render snapshot.
+    """
+    handler = get_scene_handler()
+    return handler.configure_render_settings(settings)
+
+
+def _scene_configure_color_management(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    [SCENE][NON-DESTRUCTIVE] Applies grouped color-management settings and returns the resulting snapshot.
+    """
+    handler = get_scene_handler()
+    return handler.configure_color_management(settings)
+
+
+def _scene_configure_world(ctx: Context, settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    [SCENE][NON-DESTRUCTIVE] Applies grouped world/background settings and returns the resulting world snapshot.
+    """
+    handler = get_scene_handler()
+    return handler.configure_world(settings)
 
 
 def _format_viewport_output(

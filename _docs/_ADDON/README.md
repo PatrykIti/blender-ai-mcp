@@ -78,6 +78,12 @@ Technical details.
 | `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
+| `scene.inspect_render_settings` | `inspect_render_settings` | Returns grouped render-engine, resolution, output, and sample settings. |
+| `scene.inspect_color_management` | `inspect_color_management` | Returns grouped display/view/sequencer color-management settings. |
+| `scene.inspect_world` | `inspect_world` | Returns world assignment, simple color state, and background-node summary when present. |
+| `scene.configure_render_settings` | `configure_render_settings` | Applies grouped render settings and returns the resulting render snapshot. |
+| `scene.configure_color_management` | `configure_color_management` | Applies grouped color-management settings and returns the resulting snapshot. |
+| `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |

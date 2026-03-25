@@ -214,3 +214,27 @@ def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
         ("scene.inspect_color_management", None),
         ("scene.inspect_world", None),
     ]
+
+
+def test_scene_configure_handlers_align_with_rpc_commands():
+    rpc = DummyRpc(
+        {
+            "scene.configure_render_settings": _ok({"render_engine": "CYCLES"}),
+            "scene.configure_color_management": _ok({"view_transform": "AgX"}),
+            "scene.configure_world": _ok({"world_name": "Studio"}),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    render = handler.configure_render_settings({"render_engine": "CYCLES"})
+    color = handler.configure_color_management({"view_transform": "AgX"})
+    world = handler.configure_world({"world_name": "Studio"})
+
+    assert render["render_engine"] == "CYCLES"
+    assert color["view_transform"] == "AgX"
+    assert world["world_name"] == "Studio"
+    assert rpc.calls == [
+        ("scene.configure_render_settings", {"settings": {"render_engine": "CYCLES"}}),
+        ("scene.configure_color_management", {"settings": {"view_transform": "AgX"}}),
+        ("scene.configure_world", {"settings": {"world_name": "Studio"}}),
+    ]

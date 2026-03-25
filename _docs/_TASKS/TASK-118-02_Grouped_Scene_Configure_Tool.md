@@ -1,8 +1,10 @@
 # TASK-118-02: Grouped Scene Configure Tool
 
 **Parent:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** The grouped `scene_configure` surface is now implemented for `render`, `color_management`, and bounded `world` updates across domain, RPC, addon, MCP, router metadata, and structured delivery/tests.
 
 ---
 

@@ -10,6 +10,7 @@ def test_readme_documents_structured_contract_baseline():
 
     for expected in (
         "Structured Contract Baseline",
+        "scene_configure",
         "scene_snapshot_state",
         "scene_compare_snapshot",
         "mesh_inspect",
@@ -23,6 +24,7 @@ def test_mcp_docs_list_contract_enabled_surfaces():
 
     for expected in (
         "Structured Contract Baseline",
+        "scene_configure",
         "scene_get_custom_properties",
         "scene_get_hierarchy",
         "scene_get_bounding_box",
@@ -42,6 +44,7 @@ def test_tools_summary_mentions_structured_contract_surfaces():
 
     for expected in (
         "Structured Contract Surfaces",
+        "scene_configure",
         "scene_context",
         "scene_measure_distance",
         "scene_measure_gap",

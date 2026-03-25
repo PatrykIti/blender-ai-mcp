@@ -1,8 +1,10 @@
 # TASK-118-04-02: Unit and E2E Roundtrip Coverage
 
 **Parent:** [TASK-118-04](./TASK-118-04_Metadata_Docs_And_Roundtrip_Coverage.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
+
+**Progress Update:** Grouped configure action coverage, contract delivery checks, router metadata alignment, and addon-side unit coverage are now in place for `scene_configure`. Blender-backed read/apply/read E2E coverage is still outstanding.
 
 ---
 

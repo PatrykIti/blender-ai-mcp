@@ -931,6 +931,159 @@ class SceneHandler:
             "background": background,
         }
 
+    def configure_render_settings(self, settings):
+        """Applies grouped render settings and returns the resulting render snapshot."""
+        settings = self._require_mapping(settings, "settings")
+        scene = bpy.context.scene
+        render = scene.render
+
+        if "render_engine" in settings and settings["render_engine"] is not None:
+            render.engine = self._require_string(settings["render_engine"], "render_engine")
+
+        resolution = settings.get("resolution")
+        if resolution is not None:
+            resolution = self._require_mapping(resolution, "resolution")
+            if "x" in resolution and resolution["x"] is not None:
+                render.resolution_x = self._require_int(resolution["x"], "resolution.x")
+            if "y" in resolution and resolution["y"] is not None:
+                render.resolution_y = self._require_int(resolution["y"], "resolution.y")
+            if "percentage" in resolution and resolution["percentage"] is not None:
+                render.resolution_percentage = self._require_int(resolution["percentage"], "resolution.percentage")
+
+        if "filepath" in settings and settings["filepath"] is not None:
+            render.filepath = self._require_string(settings["filepath"], "filepath")
+        if "use_file_extension" in settings and settings["use_file_extension"] is not None:
+            render.use_file_extension = self._require_bool(settings["use_file_extension"], "use_file_extension")
+        if "film_transparent" in settings and settings["film_transparent"] is not None:
+            render.film_transparent = self._require_bool(settings["film_transparent"], "film_transparent")
+
+        image_settings = settings.get("image_settings")
+        if image_settings is not None:
+            image_settings = self._require_mapping(image_settings, "image_settings")
+            target = getattr(render, "image_settings", None)
+            if target is None:
+                raise ValueError("Render image_settings are not available on this scene.")
+            if "file_format" in image_settings and image_settings["file_format"] is not None:
+                target.file_format = self._require_string(image_settings["file_format"], "image_settings.file_format")
+            if "color_mode" in image_settings and image_settings["color_mode"] is not None:
+                target.color_mode = self._require_string(image_settings["color_mode"], "image_settings.color_mode")
+            if "color_depth" in image_settings and image_settings["color_depth"] is not None:
+                target.color_depth = self._require_string(image_settings["color_depth"], "image_settings.color_depth")
+
+        cycles_settings = settings.get("cycles")
+        if cycles_settings is not None:
+            cycles_settings = self._require_mapping(cycles_settings, "cycles")
+            cycles = getattr(scene, "cycles", None)
+            if cycles is None:
+                raise ValueError("Cycles settings are not available on this scene.")
+            if "device" in cycles_settings and cycles_settings["device"] is not None:
+                cycles.device = self._require_string(cycles_settings["device"], "cycles.device")
+            if "samples" in cycles_settings and cycles_settings["samples"] is not None:
+                cycles.samples = self._require_int(cycles_settings["samples"], "cycles.samples")
+            if "preview_samples" in cycles_settings and cycles_settings["preview_samples"] is not None:
+                cycles.preview_samples = self._require_int(cycles_settings["preview_samples"], "cycles.preview_samples")
+
+        return self.inspect_render_settings()
+
+    def configure_color_management(self, settings):
+        """Applies grouped color-management settings and returns the resulting snapshot."""
+        settings = self._require_mapping(settings, "settings")
+        scene = bpy.context.scene
+        display_settings = getattr(scene, "display_settings", None)
+        view_settings = getattr(scene, "view_settings", None)
+        sequencer_settings = getattr(scene, "sequencer_colorspace_settings", None)
+
+        if "display_device" in settings and settings["display_device"] is not None:
+            if display_settings is None:
+                raise ValueError("display_settings are not available on this scene.")
+            display_settings.display_device = self._require_string(settings["display_device"], "display_device")
+        if "view_transform" in settings and settings["view_transform"] is not None:
+            if view_settings is None:
+                raise ValueError("view_settings are not available on this scene.")
+            view_settings.view_transform = self._require_string(settings["view_transform"], "view_transform")
+        if "look" in settings and settings["look"] is not None:
+            if view_settings is None:
+                raise ValueError("view_settings are not available on this scene.")
+            view_settings.look = self._require_string(settings["look"], "look")
+        if "exposure" in settings and settings["exposure"] is not None:
+            if view_settings is None:
+                raise ValueError("view_settings are not available on this scene.")
+            view_settings.exposure = self._require_float(settings["exposure"], "exposure")
+        if "gamma" in settings and settings["gamma"] is not None:
+            if view_settings is None:
+                raise ValueError("view_settings are not available on this scene.")
+            view_settings.gamma = self._require_float(settings["gamma"], "gamma")
+        if "use_curve_mapping" in settings and settings["use_curve_mapping"] is not None:
+            if view_settings is None:
+                raise ValueError("view_settings are not available on this scene.")
+            view_settings.use_curve_mapping = self._require_bool(
+                settings["use_curve_mapping"],
+                "use_curve_mapping",
+            )
+        if "sequencer_color_space" in settings and settings["sequencer_color_space"] is not None:
+            if sequencer_settings is None:
+                raise ValueError("sequencer_colorspace_settings are not available on this scene.")
+            sequencer_settings.name = self._require_string(
+                settings["sequencer_color_space"],
+                "sequencer_color_space",
+            )
+
+        return self.inspect_color_management()
+
+    def configure_world(self, settings):
+        """Applies grouped world/background settings and returns the resulting world snapshot."""
+        settings = self._require_mapping(settings, "settings")
+        scene = bpy.context.scene
+
+        if "world_name" in settings:
+            world_name = settings["world_name"]
+            if world_name is None:
+                scene.world = None
+            else:
+                name = self._require_string(world_name, "world_name")
+                world = getattr(bpy.data, "worlds", None)
+                resolved_world = world.get(name) if world is not None else None
+                if resolved_world is None:
+                    raise ValueError(f"World '{name}' not found")
+                scene.world = resolved_world
+
+        world = getattr(scene, "world", None)
+        remaining_keys = {key for key in settings if key != "world_name"}
+        if world is None:
+            if remaining_keys:
+                raise ValueError("Scene has no world assigned. Provide 'world_name' before applying world settings.")
+            return self.inspect_world()
+
+        use_nodes_requested = None
+        if "use_nodes" in settings and settings["use_nodes"] is not None:
+            use_nodes_requested = self._require_bool(settings["use_nodes"], "use_nodes")
+            world.use_nodes = use_nodes_requested
+
+        if "color" in settings and settings["color"] is not None:
+            world.color = self._require_color(settings["color"], "color", allow_alpha=False)
+
+        background = settings.get("background")
+        if background is not None:
+            background = self._require_mapping(background, "background")
+            if use_nodes_requested is False:
+                raise ValueError("background settings require 'use_nodes' to be true.")
+            if not getattr(world, "use_nodes", False):
+                world.use_nodes = True
+            background_node = self._ensure_world_background_node(world)
+            if "color" in background and background["color"] is not None:
+                color = self._require_color(background["color"], "background.color", allow_alpha=True)
+                if len(color) == 3:
+                    color = [color[0], color[1], color[2], 1.0]
+                self._set_node_input_default(background_node, "Color", color)
+            if "strength" in background and background["strength"] is not None:
+                self._set_node_input_default(
+                    background_node,
+                    "Strength",
+                    self._require_float(background["strength"], "background.strength"),
+                )
+
+        return self.inspect_world()
+
     def get_constraints(self, object_name, include_bones=False):
         """
         [OBJECT MODE][READ-ONLY][SAFE] Returns object (and optional bone) constraints.
@@ -1843,6 +1996,70 @@ class SceneHandler:
         }
         return {key: value for key, value in payload.items() if value is not None}
 
+    def _require_mapping(self, value, field_name):
+        if not isinstance(value, dict):
+            raise ValueError(f"'{field_name}' must be an object/dict")
+        return value
+
+    def _require_string(self, value, field_name):
+        if not isinstance(value, str):
+            raise ValueError(f"'{field_name}' must be a string")
+        return value
+
+    def _require_bool(self, value, field_name):
+        if not isinstance(value, bool):
+            raise ValueError(f"'{field_name}' must be a boolean")
+        return value
+
+    def _require_int(self, value, field_name):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"'{field_name}' must be a number")
+        return int(value)
+
+    def _require_float(self, value, field_name):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"'{field_name}' must be a number")
+        return float(value)
+
+    def _require_color(self, value, field_name, *, allow_alpha):
+        expected_lengths = {3, 4} if allow_alpha else {3}
+        if not isinstance(value, (list, tuple)) or len(value) not in expected_lengths:
+            lengths = "3 or 4" if allow_alpha else "3"
+            raise ValueError(f"'{field_name}' must be a list of {lengths} numeric values")
+        return [self._require_float(component, field_name) for component in value]
+
+    def _ensure_world_background_node(self, world):
+        """Returns a world Background node and creates a minimal one when absent."""
+        node_tree = getattr(world, "node_tree", None)
+        if node_tree is None:
+            raise ValueError("World node tree is not available.")
+
+        background_node = None
+        output_node = None
+        for node in getattr(node_tree, "nodes", []) or []:
+            node_type = getattr(node, "type", None)
+            node_idname = getattr(node, "bl_idname", None)
+            if background_node is None and (node_type == "BACKGROUND" or node_idname == "ShaderNodeBackground"):
+                background_node = node
+            if output_node is None and (node_type == "OUTPUT_WORLD" or node_idname == "ShaderNodeOutputWorld"):
+                output_node = node
+
+        if background_node is None and hasattr(node_tree.nodes, "new"):
+            background_node = node_tree.nodes.new("ShaderNodeBackground")
+        if output_node is None and hasattr(node_tree.nodes, "new"):
+            output_node = node_tree.nodes.new("ShaderNodeOutputWorld")
+
+        if background_node is None:
+            raise ValueError("World background node is not available.")
+
+        if output_node is not None and hasattr(node_tree, "links") and hasattr(node_tree.links, "new"):
+            try:
+                node_tree.links.new(background_node.outputs["Background"], output_node.inputs["Surface"])
+            except Exception:
+                pass
+
+        return background_node
+
     def _inspect_world_background_node(self, node_tree):
         """Extracts a compact summary of the first world background node when present."""
         for node in getattr(node_tree, "nodes", []) or []:
@@ -1866,3 +2083,11 @@ class SceneHandler:
             if getattr(socket, "name", None) == input_name:
                 return getattr(socket, "default_value", None)
         return None
+
+    def _set_node_input_default(self, node, input_name, value):
+        """Sets a node input default value by socket name when available."""
+        for socket in getattr(node, "inputs", []) or []:
+            if getattr(socket, "name", None) == input_name:
+                socket.default_value = value
+                return
+        raise ValueError(f"World background node is missing '{input_name}' input.")

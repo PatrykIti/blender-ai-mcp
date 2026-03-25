@@ -133,6 +133,15 @@ class SceneToolHandler(ISceneTool):
     def inspect_world(self) -> Dict[str, Any]:
         return require_dict_result(self.rpc.send_request("scene.inspect_world"))
 
+    def configure_render_settings(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        return require_dict_result(self.rpc.send_request("scene.configure_render_settings", {"settings": settings}))
+
+    def configure_color_management(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        return require_dict_result(self.rpc.send_request("scene.configure_color_management", {"settings": settings}))
+
+    def configure_world(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        return require_dict_result(self.rpc.send_request("scene.configure_world", {"settings": settings}))
+
     def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
         return require_dict_result(
             self.rpc.send_request("scene.get_constraints", {"object_name": object_name, "include_bones": include_bones})

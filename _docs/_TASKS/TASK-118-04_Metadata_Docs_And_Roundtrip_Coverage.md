@@ -1,8 +1,10 @@
 # TASK-118-04: Metadata, Docs, and Roundtrip Coverage
 
 **Parent:** [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
+
+**Progress Update:** Metadata, public docs, structured delivery, and unit regression coverage for `scene_configure` are now in place. The remaining gap is Blender-backed read/apply/read roundtrip coverage and the final explicit world/node-graph handoff documentation.
 
 ---
 

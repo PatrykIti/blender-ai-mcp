@@ -182,6 +182,15 @@ class SceneHandler:
     def inspect_world(self):
         return {"world_name": "Studio", "use_nodes": False, "color": [0.05, 0.05, 0.05]}
 
+    def configure_render_settings(self, settings):
+        return {"render_engine": settings.get("render_engine", "BLENDER_EEVEE_NEXT")}
+
+    def configure_color_management(self, settings):
+        return {"view_transform": settings.get("view_transform", "AgX")}
+
+    def configure_world(self, settings):
+        return {"world_name": settings.get("world_name", "Studio"), "use_nodes": settings.get("use_nodes", False)}
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -230,11 +239,12 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     async def run():
         tools = await server.list_tools()
         by_name = {tool.name: tool for tool in tools}
-        return by_name["scene_context"], by_name["mesh_inspect"], by_name["router_set_goal"]
+        return by_name["scene_context"], by_name["scene_configure"], by_name["mesh_inspect"], by_name["router_set_goal"]
 
-    scene_context_tool, mesh_inspect_tool, router_tool = asyncio.run(run())
+    scene_context_tool, scene_configure_tool, mesh_inspect_tool, router_tool = asyncio.run(run())
 
     assert scene_context_tool.output_schema is not None
+    assert scene_configure_tool.output_schema is not None
     assert mesh_inspect_tool.output_schema is not None
     assert router_tool.output_schema is not None
 
@@ -303,6 +313,30 @@ def test_scene_inspect_scene_state_actions_deliver_structured_content(monkeypatc
     render, color, world = asyncio.run(run())
 
     assert _unwrap_structured(render)["payload"]["render_engine"] == "BLENDER_EEVEE_NEXT"
+    assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
+    assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
+
+
+def test_scene_configure_delivers_structured_content(monkeypatch):
+    """Grouped scene_configure should also surface structured write-side payloads."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        render = await server.call_tool("scene_configure", {"action": "render", "settings": {"render_engine": "CYCLES"}})
+        color = await server.call_tool(
+            "scene_configure",
+            {"action": "color_management", "settings": {"view_transform": "AgX"}},
+        )
+        world = await server.call_tool("scene_configure", {"action": "world", "settings": {"world_name": "Studio"}})
+        return render, color, world
+
+    render, color, world = asyncio.run(run())
+
+    assert _unwrap_structured(render)["payload"]["render_engine"] == "CYCLES"
     assert _unwrap_structured(color)["payload"]["view_transform"] == "AgX"
     assert _unwrap_structured(world)["payload"]["world_name"] == "Studio"
 

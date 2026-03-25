@@ -123,6 +123,21 @@ class ISceneTool(ABC):
         pass
 
     @abstractmethod
+    def configure_render_settings(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Applies grouped render settings and returns the resulting state snapshot."""
+        pass
+
+    @abstractmethod
+    def configure_color_management(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Applies grouped color-management settings and returns the resulting state snapshot."""
+        pass
+
+    @abstractmethod
+    def configure_world(self, settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Applies grouped world/background settings and returns the resulting state snapshot."""
+        pass
+
+    @abstractmethod
     def get_constraints(self, object_name: str, include_bones: bool = False) -> Dict[str, Any]:
         """Returns object (and optional bone) constraints."""
         pass

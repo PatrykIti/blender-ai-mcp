@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock
 
-from server.adapters.mcp.contracts.scene import SceneInspectResponseContract
+from server.adapters.mcp.contracts.scene import SceneConfigureResponseContract, SceneInspectResponseContract
 
 
 def _direct_route(**kwargs):
@@ -103,6 +103,33 @@ def test_scene_create_helpers_handle_parsing_and_errors(monkeypatch):
     assert scene_area._scene_create_camera(MagicMock(), "[0,0,5]", "[0,0,0]") == "camera ok"
     assert scene_area._scene_create_empty(MagicMock(), "PLAIN_AXES", location="[1,2,3]") == "empty ok"
     assert "Invalid coordinate format" in scene_area._scene_create_camera(MagicMock(), "invalid", "[0,0,0]")
+
+
+def test_scene_configure_supports_multiple_actions(monkeypatch):
+    from server.adapters.mcp.areas.scene import scene_configure
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.route_tool_call", _direct_route)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_configure_render_settings",
+        lambda ctx, settings: {"render_engine": settings["render_engine"]},
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_configure_color_management",
+        lambda ctx, settings: {"view_transform": settings["view_transform"]},
+    )
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._scene_configure_world",
+        lambda ctx, settings: {"world_name": settings["world_name"]},
+    )
+
+    render_result = scene_configure(MagicMock(), action="render", settings={"render_engine": "CYCLES"})
+    color_result = scene_configure(MagicMock(), action="color_management", settings={"view_transform": "AgX"})
+    world_result = scene_configure(MagicMock(), action="world", settings={"world_name": "Studio"})
+
+    assert isinstance(render_result, SceneConfigureResponseContract)
+    assert render_result.payload["render_engine"] == "CYCLES"
+    assert color_result.payload["view_transform"] == "AgX"
+    assert world_result.payload["world_name"] == "Studio"
 
 
 def test_scene_state_and_utility_wrappers(monkeypatch):

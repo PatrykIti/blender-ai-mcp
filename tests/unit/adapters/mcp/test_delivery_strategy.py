@@ -24,7 +24,9 @@ def test_contract_enabled_tools_default_to_structured_first_delivery():
     """Contract-enabled tools should prefer native structured delivery by default."""
 
     assert "scene_context" in CONTRACT_ENABLED_TOOLS
+    assert "scene_configure" in CONTRACT_ENABLED_TOOLS
     assert should_prefer_native_structured_delivery("llm-guided", "scene_context") is True
+    assert should_prefer_native_structured_delivery("llm-guided", "scene_configure") is True
     assert should_prefer_native_structured_delivery("legacy-flat", "scene_context") is True
 
 

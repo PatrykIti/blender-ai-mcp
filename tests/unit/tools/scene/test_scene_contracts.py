@@ -8,6 +8,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertProportionContract,
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
+    SceneConfigureResponseContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -73,6 +74,22 @@ def test_scene_inspect_contract_carries_structured_payload_or_error():
 
     assert payload.payload["object_name"] == "Cube"
     assert error.error == "object_name required"
+
+
+def test_scene_configure_contract_carries_structured_payload_or_error():
+    """Scene configure contract should keep write-side results machine-readable."""
+
+    payload = SceneConfigureResponseContract(
+        action="render",
+        payload={"render_engine": "CYCLES"},
+    )
+    error = SceneConfigureResponseContract(
+        action="world",
+        error="World 'Studio' not found",
+    )
+
+    assert payload.payload["render_engine"] == "CYCLES"
+    assert "not found" in error.error
 
 
 def test_scene_snapshot_and_related_read_contracts_validate_structured_payloads():

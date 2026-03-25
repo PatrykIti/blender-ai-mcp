@@ -1,8 +1,10 @@
 # TASK-118-02-02: Scene Configure World
 
 **Parent:** [TASK-118-02](./TASK-118-02_Grouped_Scene_Configure_Tool.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `scene_configure(action="world")` now supports bounded world assignment, `use_nodes` toggles, simple world color updates, and simple background color/strength replay without claiming full world node-graph authorship.
 
 ---
 

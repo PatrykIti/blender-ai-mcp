@@ -82,8 +82,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `160` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `167` visible tools
+- `legacy-manual`: `161` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `168` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -106,6 +106,7 @@ The current structured-contract baseline covers:
 
 - `scene_context`
 - `scene_inspect`
+- `scene_configure`
 - `scene_snapshot_state`
 - `scene_compare_snapshot`
 - `scene_get_custom_properties`
@@ -168,6 +169,7 @@ Assistant envelopes are structured and use explicit terminal statuses:
 | `scene_context` | `mode`, `selection` | `scene_get_mode`, `scene_list_selection` | ✅ Done |
 | `scene_create` | `light`, `camera`, `empty` | `scene_create_light`, `scene_create_camera`, `scene_create_empty` | ✅ Done |
 | `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | `scene_inspect_object`, `scene_inspect_mesh_topology`, `scene_inspect_modifiers`, `scene_inspect_material_slots`, `scene_get_constraints`, `modeling_get_modifier_data`, read-side scene state inspection | ✅ Done |
+| `scene_configure` | `render`, `color_management`, `world` | bounded write-side scene appearance configuration under the grouped tool model | ✅ Done |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | `mesh_select_all`, `mesh_select_linked`, `mesh_select_more`, `mesh_select_less`, `mesh_select_boundary` | ✅ Done |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | `mesh_select_by_index`, `mesh_select_loop`, `mesh_select_ring`, `mesh_select_by_location` | ✅ Done |
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | `mesh_get_*` introspection tools | ✅ Done |
@@ -176,7 +178,7 @@ Assistant envelopes are structured and use explicit terminal statuses:
 
 None.
 
-**Current grouped public set:** 6 high-frequency grouped tools.
+**Current grouped public set:** 7 high-frequency grouped tools.
 
 ---
 
@@ -190,6 +192,7 @@ None.
 | `scene_context` | `action` (mode/selection) | Grouped context queries (mode, selection state). | ✅ Done |
 | `scene_create` | `action` (light/camera/empty), params | Grouped creation tool for lights, cameras, and empties. | ✅ Done |
 | `scene_inspect` | `action` (object/topology/modifiers/materials/constraints/modifier_data/render/color_management/world), params | Grouped inspection tool for objects plus scene-level render/color/world state. | ✅ Done |
+| `scene_configure` | `action` (render/color_management/world), `settings` | Grouped write-side tool for render, color-management, and bounded world/background configuration. | ✅ Done |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. | ✅ Done |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. | ✅ Done |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool) | Clears the scene. Can perform a "hard reset" if set to False. | ✅ Done |

@@ -13,6 +13,7 @@ CONTRACT_ENABLED_TOOLS = {
     "workflow_catalog",
     "scene_context",
     "scene_inspect",
+    "scene_configure",
     "mesh_inspect",
 }
 
