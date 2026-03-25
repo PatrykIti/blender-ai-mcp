@@ -526,22 +526,6 @@ Object Mode operations for creating and transforming objects.
 
 Note: `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")`.
 
-Example:
-
-```python
-macro_cutout_recess(
-    target_object="Phone_Body",
-    width=0.06,
-    height=0.08,
-    depth=0.003,
-    face="front",
-    mode="recess",
-    bevel_width=0.0006,
-    bevel_segments=2,
-    cleanup="delete",
-)
-```
-
 #### Lattice Deformation
 | Tool | Description | Status |
 |------|-------------|--------|
