@@ -117,6 +117,11 @@ Typical public escape hatches that remain acceptable:
 - truth/inspection essentials
 - explicit measure/assert tools as they are introduced
 
+On `llm-guided`, the phased escape-hatch layer is intentionally narrower than
+the full runtime inventory. Specialist families such as armature, sculpt, text,
+baking, and similar maintainer-oriented areas stay off the normal guided
+surface until a stronger macro layer exists.
+
 The canonical policy file above governs this rule set.
 
 ## Goal-First Requirement

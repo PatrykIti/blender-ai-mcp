@@ -6,6 +6,7 @@ import asyncio
 
 from server.adapters.mcp.guided_mode import apply_session_visibility, build_visibility_diagnostics
 from server.adapters.mcp.session_phase import SessionPhase
+from server.adapters.mcp.transforms.visibility_policy import GUIDED_INSPECT_ESCAPE_HATCH_TOOLS
 
 
 class FakeAsyncContext:
@@ -42,7 +43,25 @@ def test_guided_mode_build_phase_exposes_build_capabilities_plus_entry_tools():
     assert "modeling" in diagnostics.visible_capability_ids
     assert "mesh" in diagnostics.visible_capability_ids
     assert "scene" in diagnostics.visible_capability_ids
+    assert "material" in diagnostics.visible_capability_ids
     assert "baking" not in diagnostics.visible_capability_ids
+    assert "armature" not in diagnostics.visible_capability_ids
+    assert "sculpt" not in diagnostics.visible_capability_ids
+    assert "text" not in diagnostics.visible_capability_ids
+
+
+def test_guided_mode_inspect_phase_prefers_verification_capabilities_over_build_families():
+    """Inspect/validate phase should expose verification/capture families, not broad build families."""
+
+    diagnostics = build_visibility_diagnostics("llm-guided", SessionPhase.INSPECT_VALIDATE)
+
+    assert "scene" in diagnostics.visible_capability_ids
+    assert "mesh" in diagnostics.visible_capability_ids
+    assert "extraction" in diagnostics.visible_capability_ids
+    assert "modeling" not in diagnostics.visible_capability_ids
+    assert "armature" not in diagnostics.visible_capability_ids
+    assert "sculpt" not in diagnostics.visible_capability_ids
+    assert "system" not in diagnostics.visible_capability_ids
 
 
 def test_legacy_flat_visibility_keeps_full_surface_visible():
@@ -75,5 +94,6 @@ def test_apply_session_visibility_uses_native_fastmcp_session_api():
     assert ctx.calls[1][1]["match_all"] is True
     assert any(name == "enable_components" and call["tags"] == {"entry:guided"} for name, call in ctx.calls[2:])
     assert any(
-        name == "enable_components" and call["tags"] == {"phase:inspect_validate"} for name, call in ctx.calls[2:]
+        name == "enable_components" and call["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
+        for name, call in ctx.calls[2:]
     )

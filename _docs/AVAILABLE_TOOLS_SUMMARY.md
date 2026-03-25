@@ -88,6 +88,9 @@ Measured current baseline:
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
+Specialist families such as armature, sculpt, text, baking, and similar
+maintainer-oriented areas are also intentionally excluded from the normal
+`llm-guided` escape-hatch surface until a stronger macro layer exists.
 
 This section is descriptive, not normative. Hidden atomic tools may still appear
 in the inventory because they exist in the runtime/repo, even when they should

@@ -141,6 +141,11 @@ Normal production-oriented LLM use is now expected to be:
 Hidden atomic tools remain important internally, but they are no longer the
 preferred public interface for production-oriented LLM surfaces.
 
+On `llm-guided`, the phased escape-hatch layer is also intentionally narrower
+than the full runtime catalog: specialist families such as armature, sculpt,
+text, baking, and similar maintainer-oriented tool groups remain outside the
+normal guided surface until a stronger macro layer exists.
+
 Normal product direction for tools:
 
 - atomic tools: implementation substrate / hidden by default

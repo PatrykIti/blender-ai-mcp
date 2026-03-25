@@ -10,7 +10,11 @@ from server.adapters.mcp.platform.capability_manifest import get_capability_mani
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
-from server.adapters.mcp.transforms.visibility_policy import build_visibility_rules
+from server.adapters.mcp.transforms.visibility_policy import (
+    GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
+    GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    build_visibility_rules,
+)
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
 
 
@@ -84,8 +88,8 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[1]["tags"] == {ENTRY_GUIDED}
     assert bootstrap_rules[2]["names"] == {"list_prompts", "get_prompt"}
     assert bootstrap_rules[3]["components"] == {"prompt"}
-    assert build_rules[-1]["tags"] == {phase_tag(SessionPhase.BUILD)}
-    assert inspect_rules[-1]["tags"] == {phase_tag(SessionPhase.INSPECT_VALIDATE)}
+    assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+    assert inspect_rules[-1]["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
 
     code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)
     assert code_mode_rules[0]["enabled"] is False

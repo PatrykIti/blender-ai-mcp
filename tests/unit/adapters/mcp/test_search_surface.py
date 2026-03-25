@@ -176,7 +176,10 @@ def test_phase_search_results_follow_visibility_profile_changes():
 
     async def run():
         build_result = await build_server.call_tool("search_tools", {"query": "create cube primitive light camera"})
-        inspect_result = await inspect_server.call_tool("search_tools", {"query": "create cube primitive light camera"})
+        inspect_result = await inspect_server.call_tool(
+            "search_tools",
+            {"query": "render angles capture inspection before after"},
+        )
         return _decode_tool_result(build_result), _decode_tool_result(inspect_result)
 
     build_payload, inspect_payload = asyncio.run(run())
@@ -184,8 +187,9 @@ def test_phase_search_results_follow_visibility_profile_changes():
     inspect_names = {tool["name"] for tool in inspect_payload}
 
     assert "modeling_create_primitive" in build_names
-    assert "bake_ao" not in build_names
-    assert "bake_ao" in inspect_names
+    assert "armature_create" not in build_names
+    assert "extraction_render_angles" not in build_names
+    assert "extraction_render_angles" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
 
 
@@ -203,9 +207,12 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     build_names, inspect_names = asyncio.run(run())
 
     assert "modeling_create_primitive" in build_names
-    assert "bake_ao" not in build_names
-    assert "bake_ao" in inspect_names
+    assert "armature_create" not in build_names
+    assert "sculpt_auto" not in build_names
+    assert "extraction_render_angles" not in build_names
+    assert "extraction_render_angles" in inspect_names
     assert "modeling_create_primitive" not in inspect_names
+    assert "armature_create" not in inspect_names
     assert "inspect_scene" in build_names
     assert "inspect_scene" in inspect_names
 
