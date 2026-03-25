@@ -615,6 +615,22 @@ Geometry creation and editing.
 | `skin_create_skeleton` | `name`, `vertices`, `edges`, `location` | Creates skeleton mesh with Skin modifier for tubular structures. |
 | `skin_set_radius` | `object_name`, `vertex_index`, `radius_x`, `radius_y` | Sets skin radius at vertices for varying thickness. |
 
+Example:
+
+```python
+macro_cutout_recess(
+    target_object="Phone_Body",
+    width=0.06,
+    height=0.08,
+    depth=0.003,
+    face="front",
+    mode="recess",
+    bevel_width=0.0006,
+    bevel_segments=2,
+    cleanup="delete",
+)
+```
+
 > **Note:** `modeling_get_modifier_data` is now internal to `scene_inspect(action="modifier_data")` for MCP clients.
 
 ### Mesh Tools (Edit Mode)

@@ -1,8 +1,10 @@
 # TASK-120-04: Macro Validation and Adoption
 
 **Parent:** [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first macro ship slice now has user-facing docs/examples and a Blender-backed E2E regression file for `macro_cutout_recess`. The remaining work in this cluster is the broader macro regression/benchmark pack and later prompt/workflow integration once more macro tools exist.
 
 ---
 
@@ -30,6 +32,7 @@ public guidance stack cleanly.
 |------|---------|
 | [TASK-120-04-01](./TASK-120-04-01_Macro_Regression_And_Benchmark_Pack.md) | Protect macro contracts, visibility effects, and public payload size with automated checks |
 | [TASK-120-04-02](./TASK-120-04-02_Prompt_Instruction_And_Workflow_Integration.md) | Update prompts/instructions/workflows so models naturally adopt the macro layer |
+| [TASK-120-04-03](./TASK-120-04-03_First_Macro_E2E_And_Docs_Delivery.md) | Add Blender-backed regression coverage and user-facing docs/examples for the first shipped macro tool |
 
 ---
 

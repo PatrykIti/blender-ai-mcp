@@ -186,6 +186,8 @@ Primary local validation commands for TASK-120 macro candidate/contract setup:
 
 ```bash
 poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/tools/modeling/test_macro_cutout_recess_mcp.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py -q
+
+poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py -q
 ```
 
 ---

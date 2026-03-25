@@ -47,7 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix and shared macro report contract are done; next step is the first concrete bounded macro implementation |
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract are done and `macro_cutout_recess` is shipped; next step is expanding the macro family (`macro_relative_layout`, `macro_finish_form`) |
 
 ---
 
@@ -503,7 +503,7 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-120-01` | [overview](./TASK-120-01_Macro_Candidate_Matrix_And_Shared_Contract.md), [macro candidate extraction and selection rubric](./TASK-120-01-01_Macro_Candidate_Extraction_And_Selection_Rubric.md), [shared macro report envelope and status vocabulary](./TASK-120-01-02_Shared_Macro_Report_Envelope_And_Status_Vocabulary.md) | Macro candidate selection and one shared product/report contract before implementation |
 | `TASK-120-02` | [overview](./TASK-120-02_First_Macro_Wave_Form_Cutout_And_Layout.md), [macro cutout recess tool](./TASK-120-02-01_Macro_Cutout_Recess_Tool.md), [macro relative layout tool](./TASK-120-02-02_Macro_Relative_Layout_Tool.md), [macro finish form tool](./TASK-120-02-03_Macro_Finish_Form_Tool.md) | First bounded macro family for common hard-surface editing/build tasks |
 | `TASK-120-03` | [overview](./TASK-120-03_Guided_Surface_Collapse_And_Discovery_Preference.md), [guided visibility collapse for atomic tools](./TASK-120-03-01_Guided_Visibility_Collapse_For_Atomic_Tools.md), [router and search bias toward macro layer](./TASK-120-03-02_Router_And_Search_Bias_Toward_Macro_Layer.md) | Public-surface reduction once macro tools exist |
-| `TASK-120-04` | [overview](./TASK-120-04_Macro_Validation_And_Adoption.md), [macro regression and benchmark pack](./TASK-120-04-01_Macro_Regression_And_Benchmark_Pack.md), [prompt instruction and workflow integration](./TASK-120-04-02_Prompt_Instruction_And_Workflow_Integration.md) | Validation, rollout, and adoption path for the macro layer |
+| `TASK-120-04` | [overview](./TASK-120-04_Macro_Validation_And_Adoption.md), [macro regression and benchmark pack](./TASK-120-04-01_Macro_Regression_And_Benchmark_Pack.md), [prompt instruction and workflow integration](./TASK-120-04-02_Prompt_Instruction_And_Workflow_Integration.md), [first macro E2E and docs delivery](./TASK-120-04-03_First_Macro_E2E_And_Docs_Delivery.md) | Validation, rollout, and adoption path for the macro layer |
 
 ### TASK-121 Detailed Docs
 
