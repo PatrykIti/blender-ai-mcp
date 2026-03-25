@@ -258,3 +258,41 @@ class SceneToolHandler(ISceneTool):
                 {"from_object": from_object, "to_object": to_object, "tolerance": tolerance},
             )
         )
+
+    def assert_contact(
+        self,
+        from_object: str,
+        to_object: str,
+        max_gap: float = 0.0001,
+        allow_overlap: bool = False,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.assert_contact",
+                {
+                    "from_object": from_object,
+                    "to_object": to_object,
+                    "max_gap": max_gap,
+                    "allow_overlap": allow_overlap,
+                },
+            )
+        )
+
+    def assert_dimensions(
+        self,
+        object_name: str,
+        expected_dimensions: List[float],
+        tolerance: float = 0.0001,
+        world_space: bool = True,
+    ) -> Dict[str, Any]:
+        return require_dict_result(
+            self.rpc.send_request(
+                "scene.assert_dimensions",
+                {
+                    "object_name": object_name,
+                    "expected_dimensions": expected_dimensions,
+                    "tolerance": tolerance,
+                    "world_space": world_space,
+                },
+            )
+        )

@@ -123,3 +123,34 @@ def test_scene_measure_tools_align_with_rpc_commands_and_args():
         ),
         ("scene.measure_overlap", {"from_object": "Cube", "to_object": "Sphere", "tolerance": 0.01}),
     ]
+
+
+def test_scene_assert_tools_align_with_rpc_commands_and_args():
+    rpc = DummyRpc(
+        {
+            "scene.assert_contact": _ok({"assertion": "scene_assert_contact", "passed": True}),
+            "scene.assert_dimensions": _ok({"assertion": "scene_assert_dimensions", "passed": False}),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    contact = handler.assert_contact("Cube", "Sphere", max_gap=0.01, allow_overlap=True)
+    dimensions = handler.assert_dimensions("Cube", [1.0, 2.0, 3.0], tolerance=0.01, world_space=False)
+
+    assert contact["passed"] is True
+    assert dimensions["assertion"] == "scene_assert_dimensions"
+    assert rpc.calls == [
+        (
+            "scene.assert_contact",
+            {"from_object": "Cube", "to_object": "Sphere", "max_gap": 0.01, "allow_overlap": True},
+        ),
+        (
+            "scene.assert_dimensions",
+            {
+                "object_name": "Cube",
+                "expected_dimensions": [1.0, 2.0, 3.0],
+                "tolerance": 0.01,
+                "world_space": False,
+            },
+        ),
+    ]

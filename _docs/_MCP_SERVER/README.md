@@ -230,8 +230,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `155` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `162` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `157` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `164` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -280,6 +280,8 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `scene_measure_gap`
 - `scene_measure_alignment`
 - `scene_measure_overlap`
+- `scene_assert_contact`
+- `scene_assert_dimensions`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -535,6 +537,8 @@ Managing objects at the scene level.
 | `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest world-space bbox gap/contact state between two objects. |
 | `scene_measure_alignment` | `from_object` (str), `to_object` (str), `axes` (array), `reference` (str), `tolerance` (float) | Measures bbox alignment deltas on chosen axes using CENTER/MIN/MAX references. |
 | `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures bbox overlap/touching state plus intersection dimensions and volume. |
+| `scene_assert_contact` | `from_object` (str), `to_object` (str), `max_gap` (float), `allow_overlap` (bool) | Asserts pass/fail contact relation from measured gap and overlap state. |
+| `scene_assert_dimensions` | `object_name` (str), `expected_dimensions` (array), `tolerance` (float), `world_space` (bool) | Asserts pass/fail dimensions against an expected vector within tolerance. |
 > **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 

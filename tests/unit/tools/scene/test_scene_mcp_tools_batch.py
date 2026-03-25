@@ -13,7 +13,7 @@ def _direct_route(**kwargs):
 def test_scene_list_objects_formats_output(monkeypatch):
     from server.adapters.mcp.areas.scene import scene_list_objects
 
-    handler = MagicMock()
+    handler = MagicMock(unsafe=True)
     handler.list_objects.return_value = [{"name": "Cube"}, {"name": "Light"}]
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: handler)
@@ -29,7 +29,7 @@ def test_scene_list_objects_formats_output(monkeypatch):
 def test_scene_duplicate_object_parses_translation_and_reports_error(monkeypatch):
     from server.adapters.mcp.areas.scene import scene_duplicate_object
 
-    handler = MagicMock()
+    handler = MagicMock(unsafe=True)
     handler.duplicate_object.return_value = {"name": "Cube.001"}
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: handler)
@@ -90,7 +90,7 @@ def test_scene_create_helpers_handle_parsing_and_errors(monkeypatch):
 def test_scene_state_and_utility_wrappers(monkeypatch):
     from server.adapters.mcp.areas import scene as scene_area
 
-    handler = MagicMock()
+    handler = MagicMock(unsafe=True)
     handler.snapshot_state.return_value = {"snapshot": {"object_count": 1}, "hash": "abc12345"}
     handler.rename_object.return_value = "rename ok"
     handler.hide_object.return_value = "hide ok"
@@ -108,6 +108,20 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     handler.measure_gap.return_value = {"gap": 0.5, "relation": "separated"}
     handler.measure_alignment.return_value = {"is_aligned": True, "aligned_axes": ["Y", "Z"]}
     handler.measure_overlap.return_value = {"overlaps": False, "relation": "disjoint"}
+    handler.assert_contact.return_value = {
+        "assertion": "scene_assert_contact",
+        "passed": True,
+        "subject": "Cube",
+        "target": "Sphere",
+        "actual": {"gap": 0.0, "relation": "contact"},
+    }
+    handler.assert_dimensions.return_value = {
+        "assertion": "scene_assert_dimensions",
+        "passed": False,
+        "subject": "Cube",
+        "actual": {"dimensions": [1.2, 2.0, 3.0]},
+        "delta": {"x": 0.2, "y": 0.0, "z": 0.0},
+    }
 
     monkeypatch.setattr(scene_area, "get_scene_handler", lambda: handler)
     monkeypatch.setattr(scene_area, "ctx_info", lambda ctx, message: None)
@@ -144,4 +158,10 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     assert (
         scene_area.scene_measure_overlap(MagicMock(), from_object="Cube", to_object="Sphere").payload["relation"]
         == "disjoint"
+    )
+    assert scene_area.scene_assert_contact(MagicMock(), from_object="Cube", to_object="Sphere").payload.passed is True
+    assert (
+        scene_area.scene_assert_dimensions(MagicMock(), object_name="Cube", expected_dimensions="[1, 2, 3]")
+        .payload.delta["x"]
+        == 0.2
     )

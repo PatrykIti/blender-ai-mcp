@@ -1,6 +1,9 @@
 """Tests for structured scene contracts."""
 
 from server.adapters.mcp.contracts.scene import (
+    SceneAssertContactContract,
+    SceneAssertDimensionsContract,
+    SceneAssertionPayloadContract,
     SceneBoundingBoxContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
@@ -173,3 +176,38 @@ def test_scene_measure_contracts_validate_machine_readable_truth_payloads():
     assert gap.payload["relation"] == "separated"
     assert alignment.payload["is_aligned"] is True
     assert overlap.payload["overlaps"] is False
+
+
+def test_scene_assert_contracts_validate_shared_assertion_payloads():
+    """Scene assertion contracts should share one stable machine-readable result envelope."""
+
+    contact = SceneAssertContactContract(
+        payload=SceneAssertionPayloadContract(
+            assertion="scene_assert_contact",
+            passed=True,
+            subject="Cube",
+            target="Sphere",
+            expected={"max_gap": 0.001},
+            actual={"gap": 0.0, "relation": "contact"},
+            delta={"gap_overage": 0.0},
+            tolerance=0.001,
+            units="blender_units",
+        )
+    )
+    dimensions = SceneAssertDimensionsContract(
+        payload=SceneAssertionPayloadContract(
+            assertion="scene_assert_dimensions",
+            passed=False,
+            subject="Cube",
+            expected={"dimensions": [2.0, 2.0, 2.0]},
+            actual={"dimensions": [2.1, 2.0, 2.0]},
+            delta={"x": 0.1, "y": 0.0, "z": 0.0},
+            tolerance=0.01,
+            units="blender_units",
+        )
+    )
+
+    assert contact.payload.passed is True
+    assert contact.payload.actual["relation"] == "contact"
+    assert dimensions.payload.passed is False
+    assert dimensions.payload.delta["x"] == 0.1

@@ -106,6 +106,31 @@ class SceneHandler:
             "units": "blender_units",
         }
 
+    def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+        return {
+            "assertion": "scene_assert_contact",
+            "passed": True,
+            "subject": from_object,
+            "target": to_object,
+            "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+            "actual": {"gap": 0.0, "relation": "contact"},
+            "delta": {"gap_overage": 0.0},
+            "tolerance": max_gap,
+            "units": "blender_units",
+        }
+
+    def assert_dimensions(self, object_name, expected_dimensions, tolerance=0.0001, world_space=True):
+        return {
+            "assertion": "scene_assert_dimensions",
+            "passed": True,
+            "subject": object_name,
+            "expected": {"dimensions": expected_dimensions},
+            "actual": {"dimensions": expected_dimensions},
+            "delta": {"x": 0.0, "y": 0.0, "z": 0.0},
+            "tolerance": tolerance,
+            "units": "blender_units",
+        }
+
 
 class MeshHandler:
     def get_shape_keys(self, object_name, include_deltas=False):
@@ -238,6 +263,33 @@ def test_scene_measure_contract_tools_deliver_structured_content(monkeypatch):
     assert _unwrap_structured(gap)["payload"]["relation"] == "separated"
     assert _unwrap_structured(alignment)["payload"]["is_aligned"] is True
     assert _unwrap_structured(overlap)["payload"]["relation"] == "disjoint"
+
+
+def test_scene_assert_contract_tools_deliver_structured_content(monkeypatch):
+    """Scene assertion tools should surface structured assertion contracts instead of prose blobs."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        contact = await server.call_tool(
+            "scene_assert_contact",
+            {"from_object": "Cube", "to_object": "Sphere", "max_gap": 0.001},
+        )
+        dimensions = await server.call_tool(
+            "scene_assert_dimensions",
+            {"object_name": "Cube", "expected_dimensions": [1.0, 2.0, 3.0]},
+        )
+        return contact, dimensions
+
+    contact, dimensions = asyncio.run(run())
+
+    assert _unwrap_structured(contact)["payload"]["passed"] is True
+    assert _unwrap_structured(contact)["payload"]["actual"]["relation"] == "contact"
+    assert _unwrap_structured(dimensions)["payload"]["assertion"] == "scene_assert_dimensions"
+    assert _unwrap_structured(dimensions)["payload"]["passed"] is True
 
 
 def test_mesh_inspect_contract_delivers_structured_content(monkeypatch):

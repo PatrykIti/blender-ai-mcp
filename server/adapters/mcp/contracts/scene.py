@@ -109,3 +109,26 @@ class SceneMeasureAlignmentContract(MCPContract):
 class SceneMeasureOverlapContract(MCPContract):
     payload: dict[str, Any] | None = None
     error: str | None = None
+
+
+class SceneAssertionPayloadContract(MCPContract):
+    assertion: str
+    passed: bool
+    subject: str
+    target: str | None = None
+    expected: dict[str, Any] | None = None
+    actual: dict[str, Any] | None = None
+    delta: dict[str, Any] | None = None
+    tolerance: float | None = None
+    units: str | None = None
+    details: dict[str, Any] | None = None
+
+
+class SceneAssertContactContract(MCPContract):
+    payload: SceneAssertionPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneAssertDimensionsContract(MCPContract):
+    payload: SceneAssertionPayloadContract | None = None
+    error: str | None = None

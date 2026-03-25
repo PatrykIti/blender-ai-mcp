@@ -1445,6 +1445,67 @@ class SceneHandler:
             "units": "blender_units",
         }
 
+    def assert_contact(self, from_object, to_object, max_gap=0.0001, allow_overlap=False):
+        """Asserts the expected contact relation between two objects."""
+        gap_result = self.measure_gap(from_object, to_object, tolerance=max_gap)
+        relation = str(gap_result["relation"])
+        gap = float(gap_result["gap"])
+        overlaps = relation == "overlapping"
+        passed = gap <= max_gap and (allow_overlap or not overlaps)
+        gap_overage = max(0.0, gap - max_gap)
+
+        return self._build_assertion_payload(
+            assertion="scene_assert_contact",
+            subject=from_object,
+            target=to_object,
+            passed=passed,
+            expected={
+                "max_gap": round(float(max_gap), 6),
+                "allow_overlap": bool(allow_overlap),
+            },
+            actual={
+                "gap": round(float(gap), 6),
+                "relation": relation,
+            },
+            delta={"gap_overage": round(float(gap_overage), 6)},
+            tolerance=max_gap,
+            units="blender_units",
+            details={
+                "axis_gap": gap_result["axis_gap"],
+                "measured_relation": relation,
+                "overlap_rejected": overlaps and not allow_overlap,
+            },
+        )
+
+    def assert_dimensions(self, object_name, expected_dimensions, tolerance=0.0001, world_space=True):
+        """Asserts that object dimensions match the expected vector within tolerance."""
+        if expected_dimensions is None or len(expected_dimensions) != 3:
+            raise ValueError("expected_dimensions must contain exactly 3 values")
+
+        measurement = self.measure_dimensions(object_name, world_space=world_space)
+        actual_dimensions = [float(value) for value in measurement["dimensions"]]
+        expected = [float(value) for value in expected_dimensions]
+        delta = [actual_dimensions[index] - expected[index] for index in range(3)]
+        axis_delta = self._round_axis_mapping(delta)
+        passed_axes = [axis for axis in ("x", "y", "z") if abs(axis_delta[axis]) <= tolerance]
+        failed_axes = [axis.upper() for axis in ("x", "y", "z") if axis not in passed_axes]
+
+        return self._build_assertion_payload(
+            assertion="scene_assert_dimensions",
+            subject=object_name,
+            passed=len(failed_axes) == 0,
+            expected={"dimensions": self._round_values(expected)},
+            actual={"dimensions": self._round_values(actual_dimensions)},
+            delta=axis_delta,
+            tolerance=tolerance,
+            units="blender_units",
+            details={
+                "world_space": bool(world_space),
+                "passed_axes": [axis.upper() for axis in passed_axes],
+                "failed_axes": failed_axes,
+            },
+        )
+
     def _get_object_or_raise(self, object_name):
         """Returns an object or raises a clear value error."""
         obj = bpy.data.objects.get(object_name)
@@ -1509,3 +1570,32 @@ class SceneHandler:
     def _round_values(self, values, precision=6):
         """Rounds a vector/list of numeric values."""
         return [round(float(value), precision) for value in values]
+
+    def _build_assertion_payload(
+        self,
+        *,
+        assertion,
+        subject,
+        passed,
+        target=None,
+        expected=None,
+        actual=None,
+        delta=None,
+        tolerance=None,
+        units=None,
+        details=None,
+    ):
+        """Builds a compact shared payload for scene assertion tools."""
+        payload = {
+            "assertion": assertion,
+            "passed": bool(passed),
+            "subject": subject,
+            "target": target,
+            "expected": expected,
+            "actual": actual,
+            "delta": delta,
+            "tolerance": round(float(tolerance), 6) if tolerance is not None else None,
+            "units": units,
+            "details": details,
+        }
+        return {key: value for key, value in payload.items() if value is not None}

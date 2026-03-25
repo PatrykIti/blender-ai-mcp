@@ -1,8 +1,10 @@
 # TASK-117-02: First Assertion Tools, Contact and Dimensions
 
 **Parent:** [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `scene_assert_contact` and `scene_assert_dimensions` are now implemented end-to-end across addon, handler, MCP adapter, dispatcher, metadata, docs, and regression coverage.
 
 ---
 

@@ -4,7 +4,9 @@
 **Category:** Truth Layer / Scene Verification  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-113, TASK-114, TASK-116  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The first implementation slice is already in place: shared assertion result contracts plus `scene_assert_contact` and `scene_assert_dimensions` now exist end-to-end. The remaining work is the higher-order spatial assertion family and the final full-family delivery pass.
 
 ---
 

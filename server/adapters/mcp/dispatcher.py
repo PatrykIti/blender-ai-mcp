@@ -98,6 +98,8 @@ class ToolDispatcher:
                 "scene_measure_gap": "measure_gap",
                 "scene_measure_alignment": "measure_alignment",
                 "scene_measure_overlap": "measure_overlap",
+                "scene_assert_contact": "assert_contact",
+                "scene_assert_dimensions": "assert_dimensions",
             },
         )
 

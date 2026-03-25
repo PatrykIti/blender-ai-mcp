@@ -29,6 +29,8 @@ def test_mcp_docs_list_contract_enabled_surfaces():
         "scene_get_origin_info",
         "scene_measure_distance",
         "scene_measure_dimensions",
+        "scene_assert_contact",
+        "scene_assert_dimensions",
         "router_get_status",
     ):
         assert expected in text
@@ -42,6 +44,7 @@ def test_tools_summary_mentions_structured_contract_surfaces():
         "scene_context",
         "scene_measure_distance",
         "scene_measure_gap",
+        "scene_assert_contact",
         "mesh_inspect",
         "workflow_catalog",
     ):

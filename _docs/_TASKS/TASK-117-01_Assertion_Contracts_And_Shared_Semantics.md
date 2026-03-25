@@ -1,8 +1,10 @@
 # TASK-117-01: Assertion Contracts and Shared Semantics
 
 **Parent:** [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** A shared assertion result envelope and first-pass comparison semantics now exist in code and structured contracts, and they are already used by the first two scene assertion tools.
 
 ---
 

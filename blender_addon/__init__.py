@@ -117,6 +117,8 @@ def register():
         rpc_server.register_handler("scene.measure_gap", scene_handler.measure_gap)
         rpc_server.register_handler("scene.measure_alignment", scene_handler.measure_alignment)
         rpc_server.register_handler("scene.measure_overlap", scene_handler.measure_overlap)
+        rpc_server.register_handler("scene.assert_contact", scene_handler.assert_contact)
+        rpc_server.register_handler("scene.assert_dimensions", scene_handler.assert_dimensions)
 
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)

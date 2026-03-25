@@ -208,3 +208,25 @@ class ISceneTool(ABC):
     def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001) -> Dict[str, Any]:
         """Measures whether two scene objects overlap."""
         pass
+
+    @abstractmethod
+    def assert_contact(
+        self,
+        from_object: str,
+        to_object: str,
+        max_gap: float = 0.0001,
+        allow_overlap: bool = False,
+    ) -> Dict[str, Any]:
+        """Asserts that two scene objects satisfy the expected contact relation."""
+        pass
+
+    @abstractmethod
+    def assert_dimensions(
+        self,
+        object_name: str,
+        expected_dimensions: List[float],
+        tolerance: float = 0.0001,
+        world_space: bool = True,
+    ) -> Dict[str, Any]:
+        """Asserts that one scene object matches the expected dimensions."""
+        pass

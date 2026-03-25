@@ -90,6 +90,8 @@ Technical details.
 | `scene.measure_gap` | `measure_gap` | Measures nearest bbox gap/contact state between two objects. |
 | `scene.measure_alignment` | `measure_alignment` | Measures bbox alignment across chosen axes. |
 | `scene.measure_overlap` | `measure_overlap` | Measures bbox overlap/touching state and intersection volume. |
+| `scene.assert_contact` | `assert_contact` | Asserts pass/fail contact relation between two objects. |
+| `scene.assert_dimensions` | `assert_dimensions` | Asserts pass/fail dimensions against an expected vector. |
 
 ### Collection (`application/handlers/collection.py`)
 

@@ -82,8 +82,8 @@ Native prompt products:
 
 Measured current baseline:
 
-- `legacy-manual`: `155` visible tools, without router/workflow namespace exposure
-- `legacy-flat`: `162` visible tools
+- `legacy-manual`: `157` visible tools, without router/workflow namespace exposure
+- `legacy-flat`: `164` visible tools
 - `llm-guided`: `7` visible tools
 
 Discovery respects guided visibility and does not leak hidden tools during bootstrap.
@@ -117,6 +117,8 @@ The current structured-contract baseline covers:
 - `scene_measure_gap`
 - `scene_measure_alignment`
 - `scene_measure_overlap`
+- `scene_assert_contact`
+- `scene_assert_dimensions`
 - `mesh_inspect`
 - `router_set_goal`
 - `router_get_status`
@@ -206,6 +208,8 @@ None.
 | `scene_measure_gap` | `from_object`, `to_object`, `tolerance` | Measures bbox gap/contact state between two objects. | ✅ Done |
 | `scene_measure_alignment` | `from_object`, `to_object`, `axes`, `reference`, `tolerance` | Measures bbox alignment across chosen axes. | ✅ Done |
 | `scene_measure_overlap` | `from_object`, `to_object`, `tolerance` | Measures bbox overlap/touching state and intersection volume. | ✅ Done |
+| `scene_assert_contact` | `from_object`, `to_object`, `max_gap`, `allow_overlap` | Asserts pass/fail contact relation from measured gap and overlap state. | ✅ Done |
+| `scene_assert_dimensions` | `object_name`, `expected_dimensions`, `tolerance`, `world_space` | Asserts pass/fail dimensions against an expected vector. | ✅ Done |
 
 **Deprecated (now internal, use grouped public tools):**
 - ~~`scene_get_mode`~~ → Use `scene_context(action="mode")`

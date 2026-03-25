@@ -7,6 +7,9 @@ from fastmcp.utilities.types import Image
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.scene import (
+    SceneAssertContactContract,
+    SceneAssertDimensionsContract,
+    SceneAssertionPayloadContract,
     SceneBoundingBoxContract,
     SceneContextResponseContract,
     SceneCustomPropertiesContract,
@@ -67,6 +70,8 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_measure_gap",
     "scene_measure_alignment",
     "scene_measure_overlap",
+    "scene_assert_contact",
+    "scene_assert_dimensions",
 )
 
 
@@ -1630,3 +1635,110 @@ def scene_measure_overlap(
     if isinstance(result, dict):
         return SceneMeasureOverlapContract(payload=result)
     return SceneMeasureOverlapContract(error=str(result))
+
+
+def scene_assert_contact(
+    ctx: Context,
+    from_object: str,
+    to_object: str,
+    max_gap: float = 0.0001,
+    allow_overlap: bool = False,
+) -> SceneAssertContactContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Asserts that two objects satisfy the expected contact relation.
+
+    Workflow: READ-ONLY | USE FOR → deterministic fit/contact postconditions
+
+    The first wave asserts contact through one explicit threshold: objects pass when
+    their measured gap is within `max_gap`, and overlap is rejected unless
+    `allow_overlap=True`.
+
+    Args:
+        from_object: Source object name
+        to_object: Target object name
+        max_gap: Maximum allowed separation in Blender units
+        allow_overlap: If True, overlap is accepted as a passing relation
+
+    Returns:
+        Structured assertion payload with pass/fail result, expected values, and actual measured relation.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            payload = SceneAssertionPayloadContract.model_validate(
+                handler.assert_contact(from_object, to_object, max_gap, allow_overlap)
+            )
+            ctx_info(ctx, f"Asserted contact between '{from_object}' and '{to_object}'")
+            return SceneAssertContactContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneAssertContactContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_assert_contact",
+        params={
+            "from_object": from_object,
+            "to_object": to_object,
+            "max_gap": max_gap,
+            "allow_overlap": allow_overlap,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertContactContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertContactContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertContactContract(error=str(result))
+
+
+def scene_assert_dimensions(
+    ctx: Context,
+    object_name: str,
+    expected_dimensions: Union[str, List[float]],
+    tolerance: float = 0.0001,
+    world_space: bool = True,
+) -> SceneAssertDimensionsContract:
+    """
+    [OBJECT MODE][SAFE][READ-ONLY] Asserts that object dimensions match an expected vector.
+
+    Workflow: READ-ONLY | USE FOR → explicit size verification without outer-LLM arithmetic
+
+    Args:
+        object_name: Object to verify
+        expected_dimensions: Expected [x, y, z] dimensions as a list or string
+        tolerance: Allowed per-axis difference in Blender units
+        world_space: If True, compares world dimensions. If False, compares local dimensions.
+
+    Returns:
+        Structured assertion payload with expected dimensions, actual dimensions, and per-axis delta.
+    """
+
+    def execute():
+        handler = get_scene_handler()
+        try:
+            parsed_dimensions = parse_coordinate(expected_dimensions)
+            if parsed_dimensions is None:
+                raise ValueError("expected_dimensions must contain exactly 3 numeric values")
+            payload = SceneAssertionPayloadContract.model_validate(
+                handler.assert_dimensions(object_name, parsed_dimensions, tolerance, world_space)
+            )
+            ctx_info(ctx, f"Asserted dimensions for '{object_name}'")
+            return SceneAssertDimensionsContract(payload=payload)
+        except (RuntimeError, ValueError) as e:
+            return SceneAssertDimensionsContract(error=str(e))
+
+    result = route_tool_call(
+        tool_name="scene_assert_dimensions",
+        params={
+            "object_name": object_name,
+            "expected_dimensions": expected_dimensions,
+            "tolerance": tolerance,
+            "world_space": world_space,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, SceneAssertDimensionsContract):
+        return result
+    if isinstance(result, dict):
+        return SceneAssertDimensionsContract(payload=SceneAssertionPayloadContract.model_validate(result))
+    return SceneAssertDimensionsContract(error=str(result))
