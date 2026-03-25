@@ -237,8 +237,8 @@ Current visible entry set on `llm-guided`:
 
 Measured baseline from the current unit suite:
 
-- `legacy-manual`: `162` visible tools, router/workflow capabilities omitted from the namespace
-- `legacy-flat`: `169` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `170` visible tools, now fitting in one `tools/list` page by default for compatibility clients
 - `llm-guided`: `7` visible tools
 
 Search-first behavior now respects guided visibility:
@@ -275,6 +275,7 @@ Missing-input handling is now a first-class interaction layer:
 The structured-contract layer now covers the high-value state-heavy MCP surfaces:
 
 - `macro_cutout_recess`
+- `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
 - `scene_create`
@@ -600,6 +601,7 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
 | `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
+| `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
 
 ### Modeling Tools
 Geometry creation and editing.

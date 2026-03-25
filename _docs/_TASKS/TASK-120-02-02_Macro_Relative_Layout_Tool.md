@@ -1,8 +1,10 @@
 # TASK-120-02-02: Macro Relative Layout Tool
 
 **Parent:** [TASK-120-02](./TASK-120-02_First_Macro_Wave_Form_Cutout_And_Layout.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `macro_relative_layout` now exists as a bounded server-side macro for relative part placement: it reads world-space bounding boxes for a moving and reference object, applies per-axis bbox alignment plus optional outside-face contact/gap placement, performs one deterministic transform, and returns the shared structured macro report with measure/assert follow-up recommendations.
 
 ---
 

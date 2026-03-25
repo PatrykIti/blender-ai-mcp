@@ -47,7 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract are done and `macro_cutout_recess` is shipped; next step is expanding the macro family (`macro_relative_layout`, `macro_finish_form`) |
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract plus `macro_cutout_recess` and `macro_relative_layout` are shipped; next step is `macro_finish_form`, then deeper guided-surface collapse |
 
 ---
 

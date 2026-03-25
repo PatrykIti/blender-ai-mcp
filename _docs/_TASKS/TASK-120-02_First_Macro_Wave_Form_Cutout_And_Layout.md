@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first concrete macro tool, `macro_cutout_recess`, is now implemented end-to-end. The remaining work in this cluster is `macro_relative_layout` and `macro_finish_form`, plus harmonizing how the first macro wave changes guided discovery/visibility assumptions.
+**Progress Update:** The first two concrete macro tools, `macro_cutout_recess` and `macro_relative_layout`, are now implemented end-to-end. The remaining work in this cluster is `macro_finish_form`, plus harmonizing how the first macro wave changes guided discovery/visibility assumptions.
 
 ---
 
