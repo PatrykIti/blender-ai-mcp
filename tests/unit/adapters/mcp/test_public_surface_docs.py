@@ -76,6 +76,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
+    assert "workflow_catalog import" not in workflow_prompt
     assert 'inspect_scene(action="object", target_object=...)' in workflow_prompt
 
     assert 'check_scene(query="mode")' in manual_prompt

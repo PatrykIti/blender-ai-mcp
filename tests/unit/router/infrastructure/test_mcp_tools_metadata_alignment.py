@@ -195,6 +195,26 @@ def test_tools_metadata_parameters_match_mcp_signatures():
     )
 
 
+def test_tools_metadata_related_tools_exist_in_current_runtime():
+    repo_root = _find_repo_root(Path(__file__).resolve().parent)
+    mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")
+    dispatcher_tools = _extract_dispatcher_tool_names(repo_root / "server" / "adapters" / "mcp" / "dispatcher.py")
+    tools_metadata = _iter_tools_metadata(repo_root / "server" / "router" / "infrastructure" / "tools_metadata")
+
+    invalid_related = []
+    for tool_name, json_file, _param_names in tools_metadata:
+        data = json.loads(json_file.read_text(encoding="utf-8"))
+        for related_tool in data.get("related_tools", []) or []:
+            if related_tool not in mcp_signatures and related_tool not in dispatcher_tools:
+                invalid_related.append(
+                    f"- {tool_name} ({json_file.relative_to(repo_root)}): unknown related tool '{related_tool}'"
+                )
+
+    assert not invalid_related, (
+        "Tools metadata references unknown related_tools values:\n" + "\n".join(invalid_related)
+    )
+
+
 def test_router_emitted_tool_names_exist_in_mcp():
     repo_root = _find_repo_root(Path(__file__).resolve().parent)
     mcp_signatures = _extract_mcp_tool_signatures(repo_root / "server" / "adapters" / "mcp" / "areas")

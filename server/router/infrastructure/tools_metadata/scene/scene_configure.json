@@ -3,12 +3,13 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["configure", "render", "world", "background", "color management", "scene settings", "node graph handoff"],
+  "keywords": ["configure", "render", "world", "background", "color management", "scene settings", "replay", "apply settings"],
   "sample_prompts": [
     "set the render engine to cycles",
     "configure scene color management for AgX",
     "set the world background strength to 0.8",
-    "apply scene render settings from this payload"
+    "apply scene render settings from this payload",
+    "replay the inspected scene appearance settings"
   ],
   "parameters": {
     "action": {
@@ -21,7 +22,7 @@
       "required": true
     }
   },
-  "related_tools": ["scene_inspect", "scene_get_viewport", "node_graph_inspect", "node_graph_build"],
+  "related_tools": ["scene_inspect", "scene_snapshot_state", "scene_compare_snapshot", "scene_get_viewport"],
   "patterns": [],
-  "description": "Applies grouped render, color-management, or bounded world/background settings from structured input, while keeping full node-graph rebuilds outside this tool."
+  "description": "Applies grouped render, color-management, or bounded world/background settings from structured input. Pair it with scene_inspect for read/apply/read flows and keep full node-graph rebuilds outside this tool."
 }
