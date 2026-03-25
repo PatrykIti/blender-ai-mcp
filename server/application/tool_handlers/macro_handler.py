@@ -19,6 +19,12 @@ class MacroToolHandler(IMacroTool):
         "top": (2, 0, 1),
     }
     _AXIS_INDEX: dict[str, int] = {"X": 0, "Y": 1, "Z": 2}
+    _FINISH_PRESETS: dict[str, dict[str, float | int | None]] = {
+        "rounded_housing": {"bevel_width": 0.03, "bevel_segments": 3, "subsurf_levels": 2, "thickness": None},
+        "panel_finish": {"bevel_width": 0.01, "bevel_segments": 2, "subsurf_levels": None, "thickness": None},
+        "shell_thicken": {"bevel_width": None, "bevel_segments": None, "subsurf_levels": None, "thickness": 0.03},
+        "smooth_subdivision": {"bevel_width": None, "bevel_segments": None, "subsurf_levels": 2, "thickness": None},
+    }
 
     def __init__(self, scene_tool: ISceneTool, modeling_tool: IModelingTool):
         self._scene = scene_tool
@@ -400,11 +406,192 @@ class MacroToolHandler(IMacroTool):
             "requires_followup": True,
         }
 
+    def finish_form(
+        self,
+        target_object: str,
+        preset: str = "rounded_housing",
+        bevel_width: Optional[float] = None,
+        bevel_segments: Optional[int] = None,
+        subsurf_levels: Optional[int] = None,
+        thickness: Optional[float] = None,
+        solidify_offset: float = 0.0,
+    ) -> Dict[str, Any]:
+        preset_name = self._normalize_finish_preset(preset)
+        solidify_offset_value = float(solidify_offset)
+
+        resolved = self._resolve_finish_preset_parameters(
+            preset_name=preset_name,
+            bevel_width=bevel_width,
+            bevel_segments=bevel_segments,
+            subsurf_levels=subsurf_levels,
+            thickness=thickness,
+            solidify_offset=solidify_offset_value,
+        )
+
+        actions_taken: list[Dict[str, Any]] = []
+        added_stack: list[Dict[str, Any]] = []
+
+        if resolved["bevel_width"] is not None:
+            bevel_width_value = float(resolved["bevel_width"])
+            bevel_segments_value = int(resolved["bevel_segments"])
+            before_names = self._modifier_names(target_object)
+            self._modeling.add_modifier(
+                target_object,
+                "BEVEL",
+                properties={
+                    "width": bevel_width_value,
+                    "segments": bevel_segments_value,
+                    "limit_method": "ANGLE",
+                },
+            )
+            bevel_modifier_name = self._resolve_new_modifier_name(
+                target_object=target_object,
+                before_names=before_names,
+                modifier_type="BEVEL",
+            )
+            actions_taken.append(
+                {
+                    "status": "applied",
+                    "action": "add_bevel_finish",
+                    "tool_name": "modeling_add_modifier",
+                    "summary": f"Added bevel modifier '{bevel_modifier_name}'",
+                    "details": {
+                        "modifier_name": bevel_modifier_name,
+                        "modifier_type": "BEVEL",
+                        "width": bevel_width_value,
+                        "segments": bevel_segments_value,
+                        "limit_method": "ANGLE",
+                    },
+                }
+            )
+            added_stack.append({"name": bevel_modifier_name, "type": "BEVEL"})
+
+        if resolved["thickness"] is not None:
+            thickness_value = float(resolved["thickness"])
+            before_names = self._modifier_names(target_object)
+            self._modeling.add_modifier(
+                target_object,
+                "SOLIDIFY",
+                properties={
+                    "thickness": thickness_value,
+                    "offset": solidify_offset_value,
+                },
+            )
+            solidify_modifier_name = self._resolve_new_modifier_name(
+                target_object=target_object,
+                before_names=before_names,
+                modifier_type="SOLIDIFY",
+            )
+            actions_taken.append(
+                {
+                    "status": "applied",
+                    "action": "add_shell_thickness",
+                    "tool_name": "modeling_add_modifier",
+                    "summary": f"Added solidify modifier '{solidify_modifier_name}'",
+                    "details": {
+                        "modifier_name": solidify_modifier_name,
+                        "modifier_type": "SOLIDIFY",
+                        "thickness": thickness_value,
+                        "offset": solidify_offset_value,
+                    },
+                }
+            )
+            added_stack.append({"name": solidify_modifier_name, "type": "SOLIDIFY"})
+
+        if resolved["subsurf_levels"] is not None:
+            subsurf_levels_value = int(resolved["subsurf_levels"])
+            before_names = self._modifier_names(target_object)
+            self._modeling.add_modifier(
+                target_object,
+                "SUBSURF",
+                properties={
+                    "levels": subsurf_levels_value,
+                    "render_levels": subsurf_levels_value,
+                },
+            )
+            subsurf_modifier_name = self._resolve_new_modifier_name(
+                target_object=target_object,
+                before_names=before_names,
+                modifier_type="SUBSURF",
+            )
+            actions_taken.append(
+                {
+                    "status": "applied",
+                    "action": "add_subdivision_finish",
+                    "tool_name": "modeling_add_modifier",
+                    "summary": f"Added subdivision modifier '{subsurf_modifier_name}'",
+                    "details": {
+                        "modifier_name": subsurf_modifier_name,
+                        "modifier_type": "SUBSURF",
+                        "levels": subsurf_levels_value,
+                        "render_levels": subsurf_levels_value,
+                    },
+                }
+            )
+            added_stack.append({"name": subsurf_modifier_name, "type": "SUBSURF"})
+
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "compose_finish_stack",
+                "tool_name": None,
+                "summary": f"Prepared preset '{preset_name}' on '{target_object}'",
+                "details": {
+                    "preset": preset_name,
+                    "modifier_stack": added_stack,
+                },
+            }
+        )
+
+        verification_recommended: list[Dict[str, Any]] = [
+            {
+                "tool_name": "inspect_scene",
+                "reason": "Verify the modifier stack after applying the finishing preset.",
+                "priority": "normal",
+                "arguments_hint": {"action": "modifiers", "target_object": target_object},
+            },
+            {
+                "tool_name": "scene_get_viewport",
+                "reason": "Do a quick visual check of the silhouette and edge finish.",
+                "priority": "normal",
+                "arguments_hint": {"focus_target": target_object, "shading": "SOLID"},
+            },
+        ]
+
+        if resolved["thickness"] is not None:
+            verification_recommended.append(
+                {
+                    "tool_name": "scene_measure_dimensions",
+                    "reason": "Confirm the outer dimensions after shell thickening.",
+                    "priority": "normal",
+                    "arguments_hint": {"object_name": target_object, "world_space": True},
+                }
+            )
+
+        return {
+            "status": "success",
+            "macro_name": "macro_finish_form",
+            "intent": f"Apply '{preset_name}' finishing preset to '{target_object}'",
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": [target_object],
+            "verification_recommended": verification_recommended,
+            "requires_followup": True,
+        }
+
     def _normalize_face(self, face: str) -> str:
         value = str(face).lower()
         if value not in self._FACE_SPECS:
             raise ValueError("face must be one of front, back, left, right, top, bottom")
         return value
+
+    def _normalize_finish_preset(self, preset: str) -> str:
+        normalized = str(preset).lower()
+        if normalized not in self._FINISH_PRESETS:
+            raise ValueError(
+                "preset must be one of rounded_housing, panel_finish, shell_thicken, smooth_subdivision"
+            )
+        return normalized
 
     def _normalize_layout_mode(self, value: str, field_name: str) -> str:
         normalized = str(value).lower()
@@ -425,6 +612,64 @@ class MacroToolHandler(IMacroTool):
         if normalized not in {"positive", "negative"}:
             raise ValueError("contact_side must be one of positive or negative")
         return normalized
+
+    def _resolve_finish_preset_parameters(
+        self,
+        *,
+        preset_name: str,
+        bevel_width: Optional[float],
+        bevel_segments: Optional[int],
+        subsurf_levels: Optional[int],
+        thickness: Optional[float],
+        solidify_offset: float,
+    ) -> Dict[str, float | int | None]:
+        if preset_name == "rounded_housing":
+            if thickness is not None:
+                raise ValueError("thickness override is only valid for preset 'shell_thicken'")
+            if solidify_offset != 0.0:
+                raise ValueError("solidify_offset is only valid for preset 'shell_thicken'")
+        elif preset_name == "panel_finish":
+            if thickness is not None:
+                raise ValueError("thickness override is only valid for preset 'shell_thicken'")
+            if subsurf_levels is not None:
+                raise ValueError("subsurf_levels override is not valid for preset 'panel_finish'")
+            if solidify_offset != 0.0:
+                raise ValueError("solidify_offset is only valid for preset 'shell_thicken'")
+        elif preset_name == "shell_thicken":
+            if bevel_width is not None or bevel_segments is not None:
+                raise ValueError("bevel overrides are not valid for preset 'shell_thicken'")
+            if subsurf_levels is not None:
+                raise ValueError("subsurf_levels override is not valid for preset 'shell_thicken'")
+        elif preset_name == "smooth_subdivision":
+            if bevel_width is not None or bevel_segments is not None:
+                raise ValueError("bevel overrides are not valid for preset 'smooth_subdivision'")
+            if thickness is not None:
+                raise ValueError("thickness override is only valid for preset 'shell_thicken'")
+            if solidify_offset != 0.0:
+                raise ValueError("solidify_offset is only valid for preset 'shell_thicken'")
+
+        defaults = self._FINISH_PRESETS[preset_name]
+
+        resolved_bevel_width = defaults["bevel_width"]
+        resolved_bevel_segments = defaults["bevel_segments"]
+        resolved_subsurf_levels = defaults["subsurf_levels"]
+        resolved_thickness = defaults["thickness"]
+
+        if bevel_width is not None:
+            resolved_bevel_width = self._require_positive(bevel_width, "bevel_width")
+        if bevel_segments is not None:
+            resolved_bevel_segments = self._require_int_at_least(bevel_segments, "bevel_segments", 1)
+        if subsurf_levels is not None:
+            resolved_subsurf_levels = self._require_int_at_least(subsurf_levels, "subsurf_levels", 1)
+        if thickness is not None:
+            resolved_thickness = self._require_positive(thickness, "thickness")
+
+        return {
+            "bevel_width": resolved_bevel_width,
+            "bevel_segments": resolved_bevel_segments,
+            "subsurf_levels": resolved_subsurf_levels,
+            "thickness": resolved_thickness,
+        }
 
     def _normalize_mode(self, mode: str) -> str:
         value = str(mode).lower()
@@ -461,6 +706,12 @@ class MacroToolHandler(IMacroTool):
         if numeric < 0:
             raise ValueError(f"{field_name} must be >= 0")
         return numeric
+
+    def _require_int_at_least(self, value: int, field_name: str, minimum: int) -> int:
+        integer = int(value)
+        if integer < minimum:
+            raise ValueError(f"{field_name} must be >= {minimum}")
+        return integer
 
     def _require_segments(self, value: int) -> int:
         integer = int(value)

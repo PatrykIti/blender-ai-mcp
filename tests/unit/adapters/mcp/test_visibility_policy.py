@@ -90,6 +90,10 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[2]["names"] == {"list_prompts", "get_prompt"}
     assert bootstrap_rules[3]["components"] == {"prompt"}
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+    assert "macro_finish_form" in build_rules[-1]["names"]
+    assert "modeling_add_modifier" not in build_rules[-1]["names"]
+    assert "modeling_apply_modifier" not in build_rules[-1]["names"]
+    assert "modeling_list_modifiers" not in build_rules[-1]["names"]
     assert inspect_rules[-1]["names"] == set(GUIDED_INSPECT_ESCAPE_HATCH_TOOLS)
 
     code_mode_rules = build_visibility_rules(get_surface_profile("code-mode-pilot"), SessionPhase.BOOTSTRAP)

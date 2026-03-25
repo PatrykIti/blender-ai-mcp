@@ -305,6 +305,21 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def finish_form(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_finish_form",
+            "intent": "apply rounded_housing finishing preset",
+            "actions_taken": [
+                {"status": "applied", "action": "add_bevel_finish", "tool_name": "modeling_add_modifier"}
+            ],
+            "objects_modified": [kwargs.get("target_object", "BodyShell")],
+            "verification_recommended": [
+                {"tool_name": "inspect_scene", "reason": "Verify the finishing stack", "priority": "normal"}
+            ],
+            "requires_followup": True,
+        }
+
     def relative_layout(self, **kwargs):
         return {
             "status": "success",
@@ -340,6 +355,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         by_name = {tool.name: tool for tool in tools}
         return (
             by_name["macro_cutout_recess"],
+            by_name["macro_finish_form"],
             by_name["macro_relative_layout"],
             by_name["scene_context"],
             by_name["scene_create"],
@@ -352,6 +368,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
 
     (
         macro_tool,
+        finish_macro_tool,
         layout_macro_tool,
         scene_context_tool,
         scene_create_tool,
@@ -363,6 +380,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     ) = asyncio.run(run())
 
     assert macro_tool.output_schema is not None
+    assert finish_macro_tool.output_schema is not None
     assert layout_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
@@ -529,6 +547,31 @@ def test_macro_cutout_recess_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_cutout_recess"
     assert payload["actions_taken"][0]["action"] == "create_cutter"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_finish_form_delivers_structured_content(monkeypatch):
+    """Finishing macros should also expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_finish_form",
+            {
+                "target_object": "BodyShell",
+                "preset": "rounded_housing",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_finish_form"
+    assert payload["actions_taken"][0]["action"] == "add_bevel_finish"
     assert payload["requires_followup"] is True
 
 

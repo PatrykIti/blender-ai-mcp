@@ -36,3 +36,17 @@ class IMacroTool(ABC):
     ) -> Dict[str, Any]:
         """Place one object relative to another using bounded bbox alignment/contact rules."""
         pass
+
+    @abstractmethod
+    def finish_form(
+        self,
+        target_object: str,
+        preset: str = "rounded_housing",
+        bevel_width: Optional[float] = None,
+        bevel_segments: Optional[int] = None,
+        subsurf_levels: Optional[int] = None,
+        thickness: Optional[float] = None,
+        solidify_offset: float = 0.0,
+    ) -> Dict[str, Any]:
+        """Apply one bounded finishing preset stack to an object."""
+        pass

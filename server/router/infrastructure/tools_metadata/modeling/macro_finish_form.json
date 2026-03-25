@@ -1,0 +1,24 @@
+{
+  "tool_name": "macro_finish_form",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["finish", "bevel", "subsurf", "solidify", "shell", "smooth"],
+  "sample_prompts": [
+    "give this housing a rounded finish",
+    "add a light panel bevel to this part",
+    "thicken this shell without hand-building the modifier stack"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": true},
+    "preset": {"type": "enum", "options": ["rounded_housing", "panel_finish", "shell_thicken", "smooth_subdivision"], "default": "rounded_housing"},
+    "bevel_width": {"type": "float", "default": null},
+    "bevel_segments": {"type": "int", "default": null},
+    "subsurf_levels": {"type": "int", "default": null},
+    "thickness": {"type": "float", "default": null},
+    "solidify_offset": {"type": "float", "default": 0.0}
+  },
+  "related_tools": ["modeling_add_modifier", "modeling_list_modifiers", "scene_inspect", "scene_get_viewport", "scene_measure_dimensions"],
+  "patterns": [],
+  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify modifier combinations."
+}

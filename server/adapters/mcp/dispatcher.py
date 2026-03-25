@@ -160,6 +160,7 @@ class ToolDispatcher:
             macro,
             {
                 "macro_cutout_recess": "cutout_recess",
+                "macro_finish_form": "finish_form",
                 "macro_relative_layout": "relative_layout",
             },
         )

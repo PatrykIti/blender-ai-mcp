@@ -16,6 +16,7 @@ CONTRACT_ENABLED_TOOLS = {
     "scene_create",
     "scene_configure",
     "macro_cutout_recess",
+    "macro_finish_form",
     "macro_relative_layout",
     "mesh_select",
     "mesh_select_targeted",

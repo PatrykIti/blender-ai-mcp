@@ -26,6 +26,7 @@ from server.adapters.mcp.providers import core_tools, internal_tools, router_too
 
 EXPECTED_MODELING_TOOLS = {
     "macro_cutout_recess",
+    "macro_finish_form",
     "modeling_create_primitive",
     "modeling_transform_object",
     "modeling_add_modifier",

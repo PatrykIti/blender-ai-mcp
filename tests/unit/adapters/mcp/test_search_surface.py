@@ -206,7 +206,13 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
 
     build_names, inspect_names = asyncio.run(run())
 
+    assert "macro_cutout_recess" in build_names
+    assert "macro_finish_form" in build_names
+    assert "macro_relative_layout" in build_names
     assert "modeling_create_primitive" in build_names
+    assert "modeling_add_modifier" not in build_names
+    assert "modeling_apply_modifier" not in build_names
+    assert "modeling_list_modifiers" not in build_names
     assert "armature_create" not in build_names
     assert "sculpt_auto" not in build_names
     assert "extraction_render_angles" not in build_names
@@ -220,6 +226,23 @@ def test_phase_shaped_list_tools_follow_visibility_without_discovery():
     assert "router_clear_goal" not in inspect_names
     assert "inspect_scene" in build_names
     assert "inspect_scene" in inspect_names
+
+
+def test_build_phase_search_prefers_macro_finish_tool_over_hidden_modifier_atomics():
+    """Build-phase discovery should surface the finishing macro while hidden modifier atomics stay undiscoverable."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        return await server.call_tool("search_tools", {"query": "finish housing bevel subdivision shell"})
+
+    payload = _decode_tool_result(asyncio.run(run()))
+    names = {tool["name"] for tool in payload}
+
+    assert "macro_finish_form" in names
+    assert "modeling_add_modifier" not in names
+    assert "modeling_apply_modifier" not in names
+    assert "modeling_list_modifiers" not in names
 
 
 def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
@@ -273,7 +296,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 169
+    assert legacy_count == 171
     assert guided_count == 7
     assert guided_bytes < legacy_bytes
 

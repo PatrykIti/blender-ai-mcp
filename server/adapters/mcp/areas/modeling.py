@@ -10,6 +10,7 @@ from server.infrastructure.di import get_macro_handler, get_modeling_handler
 
 MODELING_PUBLIC_TOOL_NAMES = (
     "macro_cutout_recess",
+    "macro_finish_form",
     "modeling_create_primitive",
     "modeling_transform_object",
     "modeling_add_modifier",
@@ -38,6 +39,7 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
 
     impls = {
         "macro_cutout_recess": _macro_cutout_recess_impl,
+        "macro_finish_form": _macro_finish_form_impl,
         "modeling_create_primitive": _modeling_create_primitive_impl,
         "modeling_transform_object": _modeling_transform_object_impl,
         "modeling_add_modifier": _modeling_add_modifier_impl,
@@ -162,7 +164,96 @@ def _macro_cutout_recess_impl(
         requires_followup=False,
         error=str(result),
     )
-    return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
+
+
+def _macro_finish_form_impl(
+    ctx: Context,
+    target_object: str,
+    preset: str = "rounded_housing",
+    bevel_width: Optional[float] = None,
+    bevel_segments: Optional[int] = None,
+    subsurf_levels: Optional[int] = None,
+    thickness: Optional[float] = None,
+    solidify_offset: float = 0.0,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for common hard-surface finishing presets.
+
+    Use this when the intent is "finish this form" rather than manually deciding and ordering
+    bevel, subdivision, or solidify modifiers yourself.
+
+    Presets:
+    - `rounded_housing`: bevel + subdivision for softened enclosure forms
+    - `panel_finish`: light bevel-only finish for crisp panels
+    - `shell_thicken`: solidify-only shell thickening
+    - `smooth_subdivision`: subdivision-only smoothing preset
+
+    Args:
+        target_object: Existing object that will receive the finishing stack.
+        preset: Bounded finishing preset to apply.
+        bevel_width: Optional override for presets that use bevel.
+        bevel_segments: Optional override for presets that use bevel.
+        subsurf_levels: Optional override for presets that use subdivision.
+        thickness: Optional override for the `shell_thicken` preset.
+        solidify_offset: Optional solidify offset for the `shell_thicken` preset.
+    """
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().finish_form(
+                target_object=target_object,
+                preset=preset,
+                bevel_width=bevel_width,
+                bevel_segments=bevel_segments,
+                subsurf_levels=subsurf_levels,
+                thickness=thickness,
+                solidify_offset=solidify_offset,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_finish_form",
+                intent=f"apply '{preset}' finishing preset to '{target_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_finish_form",
+        params={
+            "target_object": target_object,
+            "preset": preset,
+            "bevel_width": bevel_width,
+            "bevel_segments": bevel_segments,
+            "subsurf_levels": subsurf_levels,
+            "thickness": thickness,
+            "solidify_offset": solidify_offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result
+    if isinstance(result, dict):
+        if result.get("status") == "failed" or result.get("error"):
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_finish_form",
+                intent=f"apply '{preset}' finishing preset to '{target_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(result.get("error") or result),
+            )
+        return MacroExecutionReportContract.model_validate(result)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_finish_form",
+        intent=f"apply '{preset}' finishing preset to '{target_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
 
 
 def _modeling_create_primitive_impl(
