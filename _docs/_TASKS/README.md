@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 3 tasks (~20 sub-tasks)
+- **To Do:** 2 tasks (~14 sub-tasks)
 - **In Progress:** 0 tasks
-- **Done:** 173
+- **Done:** 174
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | Finish high-value existing-tool cleanup on the public/model-facing surface before adding more abstraction |
 | [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Add bounded macro tools so `llm-guided` can hide more atomics without reducing modeling flexibility |
 | [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Add goal-scoped reference images, before/after capture bundles, and lightweight vision assistance for macro/workflow reports |
 
@@ -56,6 +55,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
 | [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | 2026-03-24 |

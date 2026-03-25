@@ -1,8 +1,10 @@
 # TASK-119-02-01: Router Metadata Keyword and Example Normalization
 
 **Parent:** [TASK-119-02](./TASK-119-02_Metadata_Discovery_And_Visibility_Drift_Cleanup.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Router metadata was normalized for the highest-value public layer: keywords, sample prompts, descriptions, and related-tool hints now reflect grouped/public usage and no longer point at stale or non-existent tool paths.
 
 ---
 

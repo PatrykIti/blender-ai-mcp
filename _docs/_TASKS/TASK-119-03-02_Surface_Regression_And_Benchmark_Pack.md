@@ -1,8 +1,10 @@
 # TASK-119-03-02: Surface Regression and Benchmark Pack
 
 **Parent:** [TASK-119-03](./TASK-119-03_Docs_Prompts_And_Regression_Hardening.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The hardened public surface is now protected by a dedicated regression/benchmark pack covering visibility, discovery, docs references, contract baseline expectations, and explicit guided-surface phase benchmarks.
 
 ---
 

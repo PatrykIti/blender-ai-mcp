@@ -1,8 +1,10 @@
 # TASK-119-03: Docs, Prompts, and Regression Hardening
 
 **Parent:** [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Public docs/prompts were aligned with the hardened guided surface and the resulting behavior is now protected by an explicit regression/benchmark pack.
 
 ---
 

@@ -1,8 +1,10 @@
 # TASK-119-01: Public Tool Semantics and Contract Hardening
 
 **Parent:** [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Grouped/public tool semantics and contracts were hardened across the highest-value public layer: alias behavior was normalized and grouped build tools (`scene_create`, `mesh_select`, `mesh_select_targeted`) now expose structured contracts alongside the earlier `scene_*` and `mesh_inspect` surfaces.
 
 ---
 

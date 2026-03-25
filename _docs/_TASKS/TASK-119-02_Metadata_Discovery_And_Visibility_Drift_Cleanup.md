@@ -1,8 +1,10 @@
 # TASK-119-02: Metadata, Discovery, and Visibility Drift Cleanup
 
 **Parent:** [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Router metadata, discovery wording, and guided-surface visibility were tightened: stale examples were cleaned up, invalid `related_tools` references were removed, and the `llm-guided` escape-hatch surface now excludes specialist families and non-entry router maintenance tools by default.
 
 ---
 

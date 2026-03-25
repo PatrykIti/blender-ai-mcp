@@ -1,8 +1,10 @@
 # TASK-119-02-02: Guided Visibility and Escape Hatch Cleanup
 
 **Parent:** [TASK-119-02](./TASK-119-02_Metadata_Discovery_And_Visibility_Drift_Cleanup.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Guided visibility and escape hatches were tightened: `llm-guided` now has a narrower router entry layer and a smaller, more intentional phased escape-hatch surface that excludes specialist families by default.
 
 ---
 

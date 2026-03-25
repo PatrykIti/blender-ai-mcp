@@ -1,8 +1,10 @@
 # TASK-119-01-01: Grouped Tool Semantic Alignment
 
 **Parent:** [TASK-119-01](./TASK-119-01_Public_Tool_Semantics_And_Contract_Hardening.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Grouped/high-value public tools were aligned around the current product model: aliases, examples, and model-facing wording now consistently treat grouped tools as the intended public working layer.
 
 ---
 

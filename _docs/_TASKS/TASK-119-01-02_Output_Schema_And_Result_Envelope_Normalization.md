@@ -1,8 +1,10 @@
 # TASK-119-01-02: Output Schema and Result Envelope Normalization
 
 **Parent:** [TASK-119-01](./TASK-119-01_Public_Tool_Semantics_And_Contract_Hardening.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Output-schema and result-envelope drift was reduced across the grouped/model-facing layer, including structured contracts for `scene_create`, `mesh_select`, and `mesh_select_targeted`.
 
 ---
 

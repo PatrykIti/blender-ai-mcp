@@ -1,8 +1,10 @@
 # TASK-119-03-01: Public Docs and Prompt Library Closure
 
 **Parent:** [TASK-119-03](./TASK-119-03_Docs_Prompts_And_Regression_Hardening.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Public docs and prompt assets were aligned with the hardened guided surface, including alias updates, narrower escape-hatch guidance, and removal of stale internal-path recommendations from workflow-first prompts.
 
 ---
 

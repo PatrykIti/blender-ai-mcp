@@ -4,7 +4,9 @@
 **Category:** Product Surface Hardening  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-113, TASK-114, TASK-115, TASK-116, TASK-117, TASK-118  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** The existing public/model-facing surface is now hardened: aliases, grouped build-tool contracts, metadata/discovery wording, guided escape-hatch visibility, public docs/prompts, and regression/benchmark baselines have all been aligned with the post-`TASK-113` product model.
 
 ---
 
