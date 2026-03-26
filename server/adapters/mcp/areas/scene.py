@@ -35,6 +35,7 @@ from server.adapters.mcp.contracts.scene import (
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.sampling.assistant_runner import run_inspection_summary_assistant
 from server.adapters.mcp.sampling.result_types import to_inspection_assistant_contract
+from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.tasks.candidacy import get_tool_task_config
 from server.adapters.mcp.tasks.task_bridge import (
     is_background_task_context,
@@ -43,9 +44,10 @@ from server.adapters.mcp.tasks.task_bridge import (
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
+from server.adapters.mcp.vision.policy import choose_capture_preset_profile
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.application.services.snapshot_diff import get_snapshot_diff_service
-from server.infrastructure.di import get_macro_handler, get_scene_handler
+from server.infrastructure.di import get_macro_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 SCENE_PUBLIC_TOOL_NAMES = (
@@ -118,6 +120,17 @@ def register_scene_tools(target: Any) -> Dict[str, Any]:
     return {tool_name: _register_existing_tool(target, tool_name) for tool_name in SCENE_PUBLIC_TOOL_NAMES}
 
 
+async def _resolve_macro_capture_profile(ctx: Context) -> str | None:
+    resolver = get_vision_backend_resolver()
+    if not resolver.runtime_config.enabled:
+        return None
+    session = await get_session_capability_state_async(ctx)
+    return choose_capture_preset_profile(
+        reference_image_count=len(session.reference_images or []),
+        max_images=resolver.runtime_config.max_images,
+    )
+
+
 async def macro_relative_layout(
     ctx: Context,
     moving_object: str,
@@ -155,6 +168,8 @@ async def macro_relative_layout(
         offset: Optional world-axis offset `[x, y, z]` applied after the bounded layout placement.
     """
 
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
     def execute() -> MacroExecutionReportContract:
         try:
             parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
@@ -168,6 +183,7 @@ async def macro_relative_layout(
                 contact_side=contact_side,
                 gap=gap,
                 offset=parsed_offset,
+                capture_profile=capture_profile,
             )
             return MacroExecutionReportContract.model_validate(payload)
         except (RuntimeError, ValueError) as e:

@@ -17,7 +17,7 @@ from .capture import (
     build_vision_request_from_capture_bundle,
     select_reference_records_for_target,
 )
-from .policy import choose_capture_preset_profile
+from .policy import choose_reference_target_view, infer_capture_preset_profile
 from .runner import run_vision_assist
 
 
@@ -32,11 +32,8 @@ async def maybe_attach_macro_vision(
 
     session = await get_session_capability_state_async(ctx)
     resolver = get_vision_backend_resolver()
-    capture_profile = choose_capture_preset_profile(
-        reference_image_count=len(session.reference_images or []),
-        max_images=resolver.runtime_config.max_images,
-    )
-    target_view = "target_focus" if capture_profile == "rich" else None
+    capture_profile = infer_capture_preset_profile(report.capture_bundle.preset_names)
+    target_view = choose_reference_target_view(report.capture_bundle.preset_names)
     selected_reference_records = select_reference_records_for_target(
         session.reference_images or [],
         target_object=report.capture_bundle.target_object,

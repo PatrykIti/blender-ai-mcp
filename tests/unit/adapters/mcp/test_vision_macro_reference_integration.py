@@ -120,4 +120,4 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
     assert "other_object_reference" not in (captured["request"].prompt_hint or "")
     assert captured["request"].images[-1].path == "/tmp/ref_stored.png"
     assert "reference_target_view[1]=target_focus" in (captured["request"].prompt_hint or "")
-    assert "capture_profile=compact" in (captured["request"].prompt_hint or "")
+    assert "capture_profile=rich" in (captured["request"].prompt_hint or "")

@@ -48,6 +48,7 @@ class MacroToolHandler(IMacroTool):
         bevel_segments: int = 2,
         cleanup: str = "delete",
         cutter_name: Optional[str] = None,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         face_name = self._normalize_face(face)
         mode_name = self._normalize_mode(mode)
@@ -60,7 +61,12 @@ class MacroToolHandler(IMacroTool):
         bevel_segments_value = self._require_segments(bevel_segments)
         bevel_width_value = self._require_optional_positive(bevel_width, "bevel_width")
         bundle_id = self._make_capture_bundle_id("macro_cutout_recess", target_object)
-        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=target_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=target_object,
+            capture_profile=capture_profile,
+        )
 
         bbox = self._scene.get_bounding_box(target_object, world_space=True)
         cutter_dimensions = self._compute_cutter_dimensions(
@@ -227,7 +233,12 @@ class MacroToolHandler(IMacroTool):
             ],
             "requires_followup": True,
         }
-        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=target_object)
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=target_object,
+            capture_profile=capture_profile,
+        )
         return self._finalize_report(
             report,
             bundle_id=bundle_id,
@@ -247,6 +258,7 @@ class MacroToolHandler(IMacroTool):
         contact_side: str = "positive",
         gap: float = 0.0,
         offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         if moving_object == reference_object:
             raise ValueError("moving_object and reference_object must be different")
@@ -264,7 +276,12 @@ class MacroToolHandler(IMacroTool):
         if resolved_contact_axis is None and all(mode == "none" for mode in modes.values()):
             raise ValueError("macro_relative_layout needs at least one alignment mode or contact_axis")
         bundle_id = self._make_capture_bundle_id("macro_relative_layout", moving_object)
-        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=moving_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=moving_object,
+            capture_profile=capture_profile,
+        )
 
         reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
         moving_bbox = self._scene.get_bounding_box(moving_object, world_space=True)
@@ -422,7 +439,12 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": verification_recommended,
             "requires_followup": True,
         }
-        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=moving_object)
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=moving_object,
+            capture_profile=capture_profile,
+        )
         return self._finalize_report(
             report,
             bundle_id=bundle_id,
@@ -440,6 +462,7 @@ class MacroToolHandler(IMacroTool):
         subsurf_levels: Optional[int] = None,
         thickness: Optional[float] = None,
         solidify_offset: float = 0.0,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         preset_name = self._normalize_finish_preset(preset)
         solidify_offset_value = float(solidify_offset)
@@ -453,7 +476,12 @@ class MacroToolHandler(IMacroTool):
             solidify_offset=solidify_offset_value,
         )
         bundle_id = self._make_capture_bundle_id("macro_finish_form", target_object)
-        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=target_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=target_object,
+            capture_profile=capture_profile,
+        )
 
         actions_taken: list[Dict[str, Any]] = []
         added_stack: list[Dict[str, Any]] = []
@@ -605,7 +633,12 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": verification_recommended,
             "requires_followup": True,
         }
-        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=target_object)
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=target_object,
+            capture_profile=capture_profile,
+        )
         return self._finalize_report(
             report,
             bundle_id=bundle_id,
@@ -623,6 +656,7 @@ class MacroToolHandler(IMacroTool):
         bundle_id: str,
         stage: str,
         target_object: str,
+        capture_profile: str | None,
     ):
         if not get_config().VISION_ENABLED:
             return None
@@ -634,6 +668,7 @@ class MacroToolHandler(IMacroTool):
                 bundle_id=bundle_id,
                 stage=stage,
                 target_object=target_object,
+                preset_profile=(capture_profile or "compact"),
             )
         except Exception:
             return None

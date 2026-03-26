@@ -57,6 +57,8 @@ Current capture-profile policy:
 - default to `compact`
 - promote to `rich` only when the configured image budget is large enough to
   hold the richer before/after bundle plus at least one reference image
+- this profile selection now happens before bundle generation on macro MCP
+  paths, so the generated `capture_bundle` already reflects the chosen profile
 
 ## Local Runtime Setup
 

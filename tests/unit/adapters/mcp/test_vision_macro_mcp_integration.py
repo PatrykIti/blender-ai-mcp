@@ -61,10 +61,19 @@ def test_macro_finish_form_mcp_can_attach_vision_assistant(monkeypatch):
                 "capture_bundle": _capture_bundle(),
             }
 
+    captured = {}
+
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: Handler())
     monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._resolve_macro_capture_profile",
+        lambda ctx: asyncio.sleep(0, result="compact"),
+    )
+    monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling.maybe_attach_macro_vision",
-        lambda ctx, report: asyncio.sleep(0, result=report.model_copy(update={"vision_assistant": _vision_contract()})),
+        lambda ctx, report: asyncio.sleep(
+            0,
+            result=report.model_copy(update={"vision_assistant": _vision_contract()}),
+        ),
     )
 
     result = asyncio.run(_macro_finish_form_impl(MagicMock(), target_object="Housing"))
@@ -73,6 +82,32 @@ def test_macro_finish_form_mcp_can_attach_vision_assistant(monkeypatch):
     assert result.vision_assistant is not None
     assert result.vision_assistant.result is not None
     assert result.vision_assistant.result.backend_kind == "openai_compatible_external"
+
+
+def test_macro_finish_form_mcp_passes_capture_profile_into_handler(monkeypatch):
+    from server.adapters.mcp.areas.modeling import _macro_finish_form_impl
+
+    observed = {}
+
+    class Handler:
+        def finish_form(self, **kwargs):
+            observed.update(kwargs)
+            return {
+                "status": "success",
+                "macro_name": "macro_finish_form",
+                "actions_taken": [{"status": "applied", "action": "add_bevel_finish"}],
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.modeling._resolve_macro_capture_profile",
+        lambda ctx: asyncio.sleep(0, result="rich"),
+    )
+
+    result = asyncio.run(_macro_finish_form_impl(MagicMock(), target_object="Housing"))
+
+    assert result.status == "success"
+    assert observed["capture_profile"] == "rich"
 
 
 def test_macro_relative_layout_mcp_can_attach_vision_assistant(monkeypatch):
@@ -88,6 +123,10 @@ def test_macro_relative_layout_mcp_can_attach_vision_assistant(monkeypatch):
             }
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene._resolve_macro_capture_profile",
+        lambda ctx: asyncio.sleep(0, result="compact"),
+    )
     monkeypatch.setattr(
         "server.adapters.mcp.areas.scene.maybe_attach_macro_vision",
         lambda ctx, report: asyncio.sleep(0, result=report.model_copy(update={"vision_assistant": _vision_contract()})),

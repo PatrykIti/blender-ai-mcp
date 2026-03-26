@@ -4,10 +4,12 @@ from fastmcp import Context
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
+from server.adapters.mcp.vision.policy import choose_capture_preset_profile
 from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.infrastructure.di import get_macro_handler, get_modeling_handler
+from server.infrastructure.di import get_macro_handler, get_modeling_handler, get_vision_backend_resolver
 
 MODELING_PUBLIC_TOOL_NAMES = (
     "macro_cutout_recess",
@@ -59,6 +61,17 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
     return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
 
 
+async def _resolve_macro_capture_profile(ctx: Context) -> str | None:
+    resolver = get_vision_backend_resolver()
+    if not resolver.runtime_config.enabled:
+        return None
+    session = await get_session_capability_state_async(ctx)
+    return choose_capture_preset_profile(
+        reference_image_count=len(session.reference_images or []),
+        max_images=resolver.runtime_config.max_images,
+    )
+
+
 async def _macro_cutout_recess_impl(
     ctx: Context,
     target_object: str,
@@ -100,6 +113,8 @@ async def _macro_cutout_recess_impl(
         cutter_name: Optional explicit helper object name.
     """
 
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
     def execute() -> MacroExecutionReportContract:
         try:
             parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
@@ -115,6 +130,7 @@ async def _macro_cutout_recess_impl(
                 bevel_segments=bevel_segments,
                 cleanup=cleanup,
                 cutter_name=cutter_name,
+                capture_profile=capture_profile,
             )
             return MacroExecutionReportContract.model_validate(payload)
         except (RuntimeError, ValueError) as e:
@@ -200,6 +216,8 @@ async def _macro_finish_form_impl(
         solidify_offset: Optional solidify offset for the `shell_thicken` preset.
     """
 
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
     def execute() -> MacroExecutionReportContract:
         try:
             payload = get_macro_handler().finish_form(
@@ -210,6 +228,7 @@ async def _macro_finish_form_impl(
                 subsurf_levels=subsurf_levels,
                 thickness=thickness,
                 solidify_offset=solidify_offset,
+                capture_profile=capture_profile,
             )
             return MacroExecutionReportContract.model_validate(payload)
         except (RuntimeError, ValueError) as e:

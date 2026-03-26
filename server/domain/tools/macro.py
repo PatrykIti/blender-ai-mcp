@@ -17,6 +17,7 @@ class IMacroTool(ABC):
         bevel_segments: int = 2,
         cleanup: str = "delete",
         cutter_name: Optional[str] = None,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a bounded cutter-based recess/cutout on one target object."""
         pass
@@ -33,6 +34,7 @@ class IMacroTool(ABC):
         contact_side: str = "positive",
         gap: float = 0.0,
         offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Place one object relative to another using bounded bbox alignment/contact rules."""
         pass
@@ -47,6 +49,7 @@ class IMacroTool(ABC):
         subsurf_levels: Optional[int] = None,
         thickness: Optional[float] = None,
         solidify_offset: float = 0.0,
+        capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Apply one bounded finishing preset stack to an object."""
         pass
