@@ -18,7 +18,11 @@ import httpx
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionRuntimeConfig
 from .parsing import parse_vision_output_text
-from .prompting import build_vision_payload_text, build_vision_system_prompt
+from .prompting import (
+    build_local_vision_payload_text,
+    build_vision_payload_text,
+    build_vision_system_prompt,
+)
 
 
 def _media_type_for(path: str, fallback: str) -> str:
@@ -179,7 +183,7 @@ class TransformersLocalVisionBackend(VisionBackend):
                 "role": "user",
                 "content": [
                     *image_items,
-                    {"type": "text", "text": build_vision_payload_text(request)},
+                    {"type": "text", "text": build_local_vision_payload_text(request)},
                 ],
             },
         ]
@@ -299,7 +303,7 @@ class MLXLocalVisionBackend(VisionBackend):
         return mlx_vlm, prompt_utils, utils
 
     def _build_prompt_payload(self, request: VisionRequest) -> str:
-        return build_vision_payload_text(request)
+        return build_local_vision_payload_text(request)
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         mlx_vlm, prompt_utils, _utils = self._ensure_local_components()

@@ -61,6 +61,42 @@ def build_vision_payload_text(request: VisionRequest) -> str:
     return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
 
 
+def build_local_vision_payload_text(request: VisionRequest) -> str:
+    """Return a shorter local-model-oriented payload to reduce echoing."""
+
+    image_lines = [
+        f"- {image.role}: {image.label or image.role}"
+        for image in request.images
+    ]
+    truth_summary = request.truth_summary or {}
+    truth_lines = []
+    if isinstance(truth_summary, dict):
+        for key, value in truth_summary.items():
+            truth_lines.append(f"- {key}: {value}")
+
+    parts = [
+        "TASK:",
+        "Compare before/after images against the goal and any references.",
+        "",
+        f"GOAL: {request.goal}",
+        f"TARGET_OBJECT: {request.target_object or 'none'}",
+        f"PROMPT_HINT: {request.prompt_hint or 'none'}",
+        "IMAGES:",
+        *image_lines,
+    ]
+    if truth_lines:
+        parts.extend(["TRUTH_SUMMARY:", *truth_lines])
+    parts.extend(
+        [
+            "",
+            "Return exactly one JSON object with the required keys only.",
+            "Do not repeat the input payload.",
+            "If uncertain, keep fields conservative but present.",
+        ]
+    )
+    return "\n".join(parts)
+
+
 def expected_json_keys() -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 

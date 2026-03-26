@@ -7,9 +7,14 @@ import argparse
 import asyncio
 import json
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
 from server.adapters.mcp.contracts.vision import (
@@ -189,7 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-tokens", type=int, default=400)
     parser.add_argument("--timeout-seconds", type=float, default=60.0)
     parser.add_argument("--transformers-model", default=os.getenv("VISION_LOCAL_MODEL_ID"))
-    parser.add_argument("--mlx-model", default=os.getenv("VISION_MLX_MODEL_ID"))
+    parser.add_argument("--mlx-model", default=os.getenv("VISION_MLX_MODEL_ID") or "mlx-community/Qwen3-VL-2B-Instruct-4bit")
     parser.add_argument("--external-base-url", default=os.getenv("VISION_EXTERNAL_BASE_URL"))
     parser.add_argument("--external-model", default=os.getenv("VISION_EXTERNAL_MODEL"))
     parser.add_argument("--external-api-key", default=os.getenv("VISION_EXTERNAL_API_KEY"))

@@ -92,6 +92,10 @@ Preliminary runtime status:
   outputs into a bounded structured payload instead of failing immediately
 - output quality is still an open product problem: a successful smoke test does
   not yet mean the returned structured interpretation is useful enough
+- current practical result on the small MLX smoke path:
+  - valid bounded output shape
+  - no crash
+  - but still weak semantic content (`goal_summary` empty, no useful issue/check suggestions)
 
 ## Boundary Rules
 
