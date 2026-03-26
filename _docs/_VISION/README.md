@@ -83,6 +83,14 @@ Practical note:
 - the optional `vision` / `mlx` install groups include that dependency so
   local model loading does not fail on missing processor backends
 
+Preliminary runtime status:
+
+- `mlx_local` has now passed a real smoke test on a small cached/downloaded
+  model path (`mlx-community/Qwen3-VL-2B-Instruct-4bit`)
+- the backend can load the model and complete inference without crashing
+- output quality is still an open product problem: a successful smoke test does
+  not yet mean the returned structured interpretation is useful enough
+
 ## Boundary Rules
 
 The vision layer is not the truth source.
