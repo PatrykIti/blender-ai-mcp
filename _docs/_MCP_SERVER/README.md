@@ -257,6 +257,7 @@ Current visible entry set on `llm-guided`:
 - `router_set_goal`
 - `router_get_status`
 - `browse_workflows`
+- `reference_images`
 - `list_prompts`
 - `get_prompt`
 - `search_tools`
@@ -266,13 +267,20 @@ Measured baseline from the current unit suite:
 
 - `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
 - `legacy-flat`: `170` visible tools, now fitting in one `tools/list` page by default for compatibility clients
-- `llm-guided`: `7` visible tools
+- `llm-guided`: `8` visible tools
 
 Search-first behavior now respects guided visibility:
 
 - hidden tools do not appear in bootstrap-phase search results
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+
+Goal-scoped reference intake is now part of the guided entry layer:
+
+- `reference_images(action="attach", source_path=...)`
+- `reference_images(action="list")`
+- `reference_images(action="remove", reference_id=...)`
+- `reference_images(action="clear")`
 
 ## Session-Adaptive Visibility Baseline
 

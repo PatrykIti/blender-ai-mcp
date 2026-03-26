@@ -18,6 +18,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "inspect_scene",
         "configure_scene",
         "browse_workflows",
+        "reference_images",
         "macro_cutout_recess",
         "macro_relative_layout",
         "macro_finish_form",
@@ -39,6 +40,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "inspect_scene",
         "configure_scene",
         "browse_workflows",
+        "reference_images",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -73,6 +75,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "inspect_scene" in prompt_readme
     assert "configure_scene" in prompt_readme
     assert "browse_workflows" in prompt_readme
+    assert "reference_images" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "manual_tools_no_router" in prompt_readme

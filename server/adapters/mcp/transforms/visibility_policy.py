@@ -16,6 +16,7 @@ GUIDED_ENTRY_TOOLS: tuple[str, ...] = (
     "router_get_status",
     "workflow_catalog",
     "browse_workflows",
+    "reference_images",
 )
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (

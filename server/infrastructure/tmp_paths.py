@@ -54,3 +54,18 @@ def get_viewport_output_paths(filename: str, latest_name: str = "viewport_latest
     external_latest = str(external_dir / latest_name)
 
     return internal_timestamped, internal_latest, external_timestamped, external_latest
+
+
+def get_reference_image_storage_path(filename: str) -> Tuple[Path, str]:
+    """Return internal and external paths for one stored reference image."""
+
+    internal_base_str = os.getenv("BLENDER_AI_TMP_INTERNAL_DIR") or tempfile.gettempdir()
+    external_base_str = os.getenv("BLENDER_AI_TMP_EXTERNAL_DIR") or internal_base_str
+
+    internal_dir = Path(internal_base_str) / "blender-ai-mcp" / "reference-images"
+    internal_dir.mkdir(parents=True, exist_ok=True)
+
+    external_dir = Path(external_base_str) / "blender-ai-mcp" / "reference-images"
+    internal_path = internal_dir / filename
+    external_path = str(external_dir / filename)
+    return internal_path, external_path

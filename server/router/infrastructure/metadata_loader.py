@@ -112,6 +112,7 @@ class MetadataLoader:
         "modeling",
         "mesh",
         "material",
+        "reference",
         "uv",
         "curve",
         "collection",

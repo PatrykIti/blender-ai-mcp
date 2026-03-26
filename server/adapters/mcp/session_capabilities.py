@@ -35,6 +35,7 @@ SESSION_PENDING_QUESTION_SET_ID_KEY = "pending_question_set_id"
 SESSION_LAST_ELICITATION_ACTION_KEY = "last_elicitation_action"
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
+SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,7 @@ class SessionCapabilityState:
     last_elicitation_action: str | None = None
     last_router_disposition: str | None = None
     last_router_error: str | None = None
+    reference_images: list[dict[str, Any]] | None = None
 
 
 def infer_phase_from_router_status(
@@ -95,6 +97,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         last_elicitation_action=get_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY),
         last_router_disposition=get_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=get_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
+        reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
     )
 
 
@@ -116,6 +119,7 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         last_elicitation_action=await get_session_value_async(ctx, SESSION_LAST_ELICITATION_ACTION_KEY),
         last_router_disposition=await get_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=await get_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
+        reference_images=await get_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY),
     )
 
 
@@ -136,6 +140,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_LAST_ELICITATION_ACTION_KEY, state.last_elicitation_action)
     set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
+    set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
 
 
 async def set_session_capability_state_async(ctx: Context, state: SessionCapabilityState) -> None:
@@ -155,6 +160,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_LAST_ELICITATION_ACTION_KEY, state.last_elicitation_action)
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
+    await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
 
 
 def update_session_from_router_goal(
@@ -176,6 +182,7 @@ def update_session_from_router_goal(
     clarification = router_result.get("clarification") or {}
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
+    same_goal = current.goal == goal
 
     if status == "needs_input":
         pending_elicitation_id = (
@@ -209,6 +216,7 @@ def update_session_from_router_goal(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
+        reference_images=current.reference_images if same_goal else None,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -233,6 +241,7 @@ async def update_session_from_router_goal_async(
     clarification = router_result.get("clarification") or {}
     current_partial_answers = dict(current.partial_answers or {})
     current_partial_answers.update(provided_answers or {})
+    same_goal = current.goal == goal
 
     if status == "needs_input":
         pending_elicitation_id = (
@@ -266,6 +275,7 @@ async def update_session_from_router_goal_async(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
+        reference_images=current.reference_images if same_goal else None,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -295,6 +305,7 @@ def clear_session_goal_state(
         last_elicitation_action=None,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
+        reference_images=None,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -324,6 +335,7 @@ async def clear_session_goal_state_async(
         last_elicitation_action=None,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
+        reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -369,6 +381,62 @@ async def apply_visibility_for_session_state(
     )
 
 
+def replace_session_reference_images(
+    ctx: Context,
+    reference_images: list[dict[str, Any]] | None,
+) -> SessionCapabilityState:
+    """Replace the goal-scoped reference images kept in session state."""
+
+    current = get_session_capability_state(ctx)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=reference_images or None,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
+async def replace_session_reference_images_async(
+    ctx: Context,
+    reference_images: list[dict[str, Any]] | None,
+) -> SessionCapabilityState:
+    """Async variant of goal-scoped reference-image replacement."""
+
+    current = await get_session_capability_state_async(ctx)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=reference_images or None,
+    )
+    await set_session_capability_state_async(ctx, state)
+    return state
+
+
 def record_router_execution_outcome(
     ctx: Context,
     *,
@@ -393,6 +461,7 @@ def record_router_execution_outcome(
         last_elicitation_action=current.last_elicitation_action,
         last_router_disposition=router_disposition,
         last_router_error=error,
+        reference_images=current.reference_images,
     )
     set_session_capability_state(ctx, state)
     return state

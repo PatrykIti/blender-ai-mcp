@@ -12,10 +12,12 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > `llm-guided` also starts from a small guided entry surface and expands with
 > coarse session phases (`bootstrap` / `planning` / `build` / `inspect_validate`).
 > The current guided entry surface is:
-> `router_set_goal`, `router_get_status`, `browse_workflows`, `search_tools`,
-> `call_tool`, `list_prompts`, and `get_prompt`.
+> `router_set_goal`, `router_get_status`, `browse_workflows`, `reference_images`,
+> `search_tools`, `call_tool`, `list_prompts`, and `get_prompt`.
 > On production-oriented surfaces, start from `router_set_goal(...)` first and
 > treat the rest of the public surface in the context of that active goal.
+> Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
+> images before asking the bounded vision layer to compare visible change.
 > Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
 > public surface, and use `manual_tools_no_router` when you explicitly want a
 > manual non-router operating mode.

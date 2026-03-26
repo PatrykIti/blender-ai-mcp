@@ -20,6 +20,7 @@ from server.adapters.mcp.areas.lattice import register_lattice_tools
 from server.adapters.mcp.areas.material import register_material_tools
 from server.adapters.mcp.areas.mesh import register_mesh_tools
 from server.adapters.mcp.areas.modeling import register_modeling_tools
+from server.adapters.mcp.areas.reference import register_reference_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.areas.sculpt import register_sculpt_tools
 from server.adapters.mcp.areas.system import register_system_tools
@@ -45,6 +46,7 @@ def register_core_tools(target: Any) -> Dict[str, Any]:
     registered.update(register_extraction_tools(target))
     registered.update(register_lattice_tools(target))
     registered.update(register_material_tools(target))
+    registered.update(register_reference_tools(target))
     registered.update(register_scene_tools(target))
     registered.update(register_mesh_tools(target))
     registered.update(register_modeling_tools(target))

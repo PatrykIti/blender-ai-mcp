@@ -76,11 +76,12 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         instructions=(
             "Guided MCP surface. Start from router_set_goal first; this is the required production session bootstrap. "
             "Current entry tools are router_set_goal, router_get_status, browse_workflows, "
-            "search_tools, call_tool, list_prompts, and get_prompt. "
+            "reference_images, search_tools, call_tool, list_prompts, and get_prompt. "
             "Prefer workflow/macro paths over raw low-level atomics. "
             "When a bounded intent matches, prefer macro_cutout_recess for recess/opening work, "
             "macro_relative_layout for part placement/alignment, and macro_finish_form for finishing stacks "
             "before assembling manual atomic chains. "
+            "Use reference_images to attach/list/remove/clear goal-scoped reference images for later vision comparison. "
             "Other capability families can unlock progressively by session phase. "
             "Use search_tools/call_tool for discovery on the shaped public surface. "
             "If you want a manual non-router workflow, load the prompt 'manual_tools_no_router'. "

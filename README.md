@@ -60,12 +60,14 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts
 - `macro_relative_layout` for align/place/contact-gap part layout
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
+- `reference_images` for goal-scoped reference intake before bounded visual comparison
 
 Current guided bootstrap surface:
 
 - `router_set_goal`
 - `router_get_status`
 - `browse_workflows`
+- `reference_images`
 - `search_tools`
 - `call_tool`
 - `list_prompts`
@@ -82,7 +84,7 @@ Current public aliases on `llm-guided`:
 
 Why that matters:
 
-- the guided profile starts from 7 visible tools instead of the full catalog
+- the guided profile starts from 8 visible tools instead of the full catalog
 - grouped/public tools stay easy to discover
 - hidden atomic tools remain available as infrastructure, not as the default public mental model
 - specialist families stay out of the normal guided entry layer until the macro surface is broader

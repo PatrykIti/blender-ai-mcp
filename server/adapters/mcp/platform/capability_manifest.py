@@ -16,6 +16,7 @@ from server.adapters.mcp.areas.lattice import LATTICE_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.material import MATERIAL_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.mesh import MESH_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.modeling import MODELING_PUBLIC_TOOL_NAMES
+from server.adapters.mcp.areas.reference import REFERENCE_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.router import ROUTER_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.scene import SCENE_PUBLIC_TOOL_NAMES
 from server.adapters.mcp.areas.sculpt import SCULPT_PUBLIC_TOOL_NAMES
@@ -76,6 +77,15 @@ CAPABILITY_MANIFEST = (
         get_capability_tags("material"),
         build_capability_public_contracts("material", MATERIAL_PUBLIC_TOOL_NAMES),
         "material",
+    ),
+    CapabilityManifestEntry(
+        "reference",
+        "core_tools",
+        REFERENCE_PUBLIC_TOOL_NAMES,
+        get_capability_tags("reference"),
+        build_capability_public_contracts("reference", REFERENCE_PUBLIC_TOOL_NAMES),
+        "reference",
+        pinned_tools=("reference_images",),
     ),
     CapabilityManifestEntry(
         "uv",

@@ -1,8 +1,10 @@
 # TASK-121-02-02: Reference Image Intake and Lifecycle API
 
 **Parent:** [TASK-121-02](./TASK-121-02_Goal_And_Reference_Context_Session_Model.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The repo now has a first bounded reference-image intake surface via `reference_images(action=attach|list|remove|clear)`: local image paths are copied into session-scoped temp storage, normalized into one stable metadata shape, and kept reversible through remove/clear actions.
 
 ---
 

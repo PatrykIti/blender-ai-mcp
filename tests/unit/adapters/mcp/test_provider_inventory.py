@@ -15,6 +15,7 @@ from server.adapters.mcp.areas.lattice import LATTICE_PUBLIC_TOOL_NAMES, registe
 from server.adapters.mcp.areas.material import MATERIAL_PUBLIC_TOOL_NAMES, register_material_tools
 from server.adapters.mcp.areas.mesh import register_mesh_tools
 from server.adapters.mcp.areas.modeling import register_modeling_tools
+from server.adapters.mcp.areas.reference import REFERENCE_PUBLIC_TOOL_NAMES, register_reference_tools
 from server.adapters.mcp.areas.router import register_router_tools
 from server.adapters.mcp.areas.scene import register_scene_tools
 from server.adapters.mcp.areas.sculpt import SCULPT_PUBLIC_TOOL_NAMES, register_sculpt_tools
@@ -143,8 +144,10 @@ EXPECTED_ROUTER_TOOLS = {
 }
 
 EXPECTED_WORKFLOW_TOOLS = {"workflow_catalog"}
+EXPECTED_REFERENCE_TOOLS = {"reference_images"}
 
 ADDITIONAL_AREA_REGISTRARS = [
+    ("reference", register_reference_tools, set(REFERENCE_PUBLIC_TOOL_NAMES)),
     ("material", register_material_tools, set(MATERIAL_PUBLIC_TOOL_NAMES)),
     ("uv", register_uv_tools, set(UV_PUBLIC_TOOL_NAMES)),
     ("collection", register_collection_tools, set(COLLECTION_PUBLIC_TOOL_NAMES)),
@@ -273,6 +276,7 @@ def test_register_core_tools_delegates_to_modeling_slice():
         EXPECTED_SCENE_TOOLS
         | EXPECTED_MESH_TOOLS
         | EXPECTED_MODELING_TOOLS
+        | EXPECTED_REFERENCE_TOOLS
         | set(MATERIAL_PUBLIC_TOOL_NAMES)
         | set(UV_PUBLIC_TOOL_NAMES)
         | set(COLLECTION_PUBLIC_TOOL_NAMES)
@@ -304,6 +308,7 @@ def test_build_core_tools_provider_uses_local_provider_when_available(monkeypatc
         EXPECTED_SCENE_TOOLS
         | EXPECTED_MESH_TOOLS
         | EXPECTED_MODELING_TOOLS
+        | EXPECTED_REFERENCE_TOOLS
         | set(MATERIAL_PUBLIC_TOOL_NAMES)
         | set(UV_PUBLIC_TOOL_NAMES)
         | set(COLLECTION_PUBLIC_TOOL_NAMES)

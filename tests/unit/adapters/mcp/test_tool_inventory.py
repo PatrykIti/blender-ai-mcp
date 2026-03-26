@@ -20,6 +20,7 @@ def test_discovery_inventory_represents_each_public_tool_once():
     assert "inspect_scene" in public_names
     assert "configure_scene" in public_names
     assert "browse_workflows" in public_names
+    assert "reference_images" in public_names
 
 
 def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
@@ -37,6 +38,7 @@ def test_discovery_inventory_tracks_aliases_and_pinned_defaults():
     assert "scene_configure" in entry_map["configure_scene"].aliases
 
     assert entry_map["browse_workflows"].pinned is True
+    assert entry_map["reference_images"].pinned is True
     assert entry_map["router_set_goal"].pinned is True
     assert entry_map["router_get_status"].pinned is True
 
@@ -57,4 +59,4 @@ def test_pinned_public_tools_are_resolved_on_public_surface_names():
 
     pinned = get_pinned_public_tools()
 
-    assert pinned == ("router_set_goal", "router_get_status", "browse_workflows")
+    assert pinned == ("reference_images", "router_set_goal", "router_get_status", "browse_workflows")

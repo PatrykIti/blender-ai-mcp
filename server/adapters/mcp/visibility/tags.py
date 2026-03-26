@@ -50,6 +50,12 @@ CAPABILITY_TAGS: dict[str, tuple[str, ...]] = {
         AUDIENCE_LLM,
         *capability_phase_tag(SessionPhase.BUILD, SessionPhase.INSPECT_VALIDATE),
     ),
+    "reference": (
+        AUDIENCE_LEGACY,
+        AUDIENCE_LLM,
+        ENTRY_GUIDED,
+        *capability_phase_tag(SessionPhase.PLANNING, SessionPhase.BUILD),
+    ),
     "uv": (
         AUDIENCE_LEGACY,
         AUDIENCE_LLM,

@@ -130,6 +130,7 @@ def test_default_llm_guided_surface_lists_only_pinned_and_synthetic_tools():
     tool_names = asyncio.run(run())
 
     assert tool_names == {
+        "reference_images",
         "router_set_goal",
         "router_get_status",
         "browse_workflows",
@@ -319,8 +320,8 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 171
-    assert guided_count == 7
+    assert legacy_count == 172
+    assert guided_count == 8
     assert guided_bytes < legacy_bytes
 
 

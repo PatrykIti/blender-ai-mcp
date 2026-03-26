@@ -1,8 +1,10 @@
 # TASK-121-02-01: Goal-Scoped Reference Context in Session State
 
 **Parent:** [TASK-121-02](./TASK-121-02_Goal_And_Reference_Context_Session_Model.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Session capability state now carries goal-scoped reference image records, clears them when the active goal changes, preserves them across follow-up turns on the same goal, and exposes normalized reference context through router status diagnostics.
 
 ---
 

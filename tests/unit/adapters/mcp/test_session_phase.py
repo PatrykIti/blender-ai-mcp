@@ -210,3 +210,35 @@ def test_record_router_execution_outcome_persists_last_disposition_and_error():
     assert state.last_router_disposition == "failed_closed_error"
     assert state.last_router_error == "Router processing failed"
     assert get_session_capability_state(ctx).last_router_disposition == "failed_closed_error"
+
+
+def test_update_session_from_router_goal_clears_reference_images_when_goal_changes():
+    ctx = FakeContext()
+    ctx.state["reference_images"] = [{"reference_id": "ref_1"}]
+
+    state = update_session_from_router_goal(
+        ctx,
+        "new_goal",
+        {
+            "status": "ready",
+        },
+    )
+
+    assert state.reference_images is None
+
+
+def test_update_session_from_router_goal_preserves_reference_images_for_same_goal():
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "chair", {"status": "ready"})
+    ctx.state["reference_images"] = [{"reference_id": "ref_1"}]
+
+    state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "needs_input",
+            "unresolved": [{"param": "height"}],
+        },
+    )
+
+    assert state.reference_images == [{"reference_id": "ref_1"}]

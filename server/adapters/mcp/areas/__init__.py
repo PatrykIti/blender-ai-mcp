@@ -12,6 +12,7 @@ from .lattice import register_lattice_tools
 from .material import register_material_tools
 from .mesh import register_mesh_tools
 from .modeling import register_modeling_tools
+from .reference import register_reference_tools
 from .router import register_router_tools
 from .scene import register_scene_tools
 from .sculpt import register_sculpt_tools
@@ -30,6 +31,7 @@ __all__ = [
     "register_material_tools",
     "register_mesh_tools",
     "register_modeling_tools",
+    "register_reference_tools",
     "register_router_tools",
     "register_sculpt_tools",
     "register_scene_tools",

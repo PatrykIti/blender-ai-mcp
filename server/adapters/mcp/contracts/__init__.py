@@ -10,6 +10,7 @@ from .macro import (
     MacroVerificationRecommendationContract,
 )
 from .output_schema import get_output_schema
+from .reference import ReferenceImageRecordContract, ReferenceImagesResponseContract
 from .vision import VisionCaptureBundleContract, VisionCaptureImageContract
 
 __all__ = [
@@ -17,6 +18,8 @@ __all__ = [
     "MacroActionRecordContract",
     "MacroExecutionReportContract",
     "MacroVerificationRecommendationContract",
+    "ReferenceImageRecordContract",
+    "ReferenceImagesResponseContract",
     "VisionCaptureBundleContract",
     "VisionCaptureImageContract",
     "get_output_schema",

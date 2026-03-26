@@ -31,8 +31,8 @@ def test_guided_mode_bootstrap_visibility_is_tiny_and_entry_only():
 
     diagnostics = build_visibility_diagnostics("llm-guided", SessionPhase.BOOTSTRAP)
 
-    assert diagnostics.visible_capability_ids == ("router", "workflow_catalog")
-    assert diagnostics.visible_entry_capability_ids == ("router", "workflow_catalog")
+    assert diagnostics.visible_capability_ids == ("reference", "router", "workflow_catalog")
+    assert diagnostics.visible_entry_capability_ids == ("reference", "router", "workflow_catalog")
     assert "scene" in diagnostics.hidden_capability_ids
 
 

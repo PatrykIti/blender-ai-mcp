@@ -10,6 +10,7 @@ DISCOVERY_CATEGORIES = {
     "mesh",
     "modeling",
     "material",
+    "reference",
     "uv",
     "collection",
     "curve",

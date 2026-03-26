@@ -1,8 +1,10 @@
 # TASK-121-02: Goal and Reference Context Session Model
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Goal-scoped reference context is now part of the MCP session model: reference image records live alongside the active goal, router status exposes them diagnostically, and the public `reference_images` surface manages attach/list/remove/clear without introducing a persistent asset system.
 
 ---
 

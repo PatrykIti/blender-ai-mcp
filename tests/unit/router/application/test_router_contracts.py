@@ -146,6 +146,41 @@ def test_workflow_catalog_returns_structured_contract(monkeypatch):
     assert result.has_more is True
 
 
+def test_router_get_status_exposes_reference_image_diagnostics(monkeypatch):
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["reference_images"] = [
+        {
+            "reference_id": "ref_1",
+            "goal": "chair",
+            "media_type": "image/png",
+            "source_kind": "local_path",
+            "original_path": "/tmp/ref.png",
+            "stored_path": "/tmp/stored.png",
+            "added_at": "2026-03-26T00:00:00Z",
+        }
+    ]
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.reference_image_count == 1
+    assert result.reference_images is not None
+    assert result.reference_images[0].reference_id == "ref_1"
+
+
 def test_workflow_catalog_get_accepts_steps_count_metadata(monkeypatch):
     """workflow_catalog get should accept the top-level steps_count field."""
 

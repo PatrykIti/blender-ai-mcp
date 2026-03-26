@@ -423,6 +423,8 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "background_job_count": background_job_count,
             "background_job_counts_by_status": background_job_counts_by_status,
             "background_jobs": background_jobs,
+            "reference_image_count": len(session.reference_images or []),
+            "reference_images": list(session.reference_images or []),
         }
     )
     if _should_attach_repair_suggestion(status_payload):
