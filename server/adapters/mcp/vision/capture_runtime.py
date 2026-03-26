@@ -82,50 +82,54 @@ def capture_stage_images(
 ) -> list[VisionCaptureImageContract]:
     """Capture one deterministic stage view-set using the current viewport API."""
 
+    original_state = capture_scene_state(scene_handler)
     captures: list[VisionCaptureImageContract] = []
-
-    for preset in preset_specs:
-        focus_target = target_object if preset.focus_target else None
-        if focus_target and hasattr(scene_handler, "camera_focus"):
-            try:
-                scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)
-            except Exception:
-                pass
-        if focus_target and (preset.orbit_horizontal is not None or preset.orbit_vertical is not None):
-            if hasattr(scene_handler, "camera_orbit"):
+    try:
+        for preset in preset_specs:
+            focus_target = target_object if preset.focus_target else None
+            if focus_target and hasattr(scene_handler, "camera_focus"):
                 try:
-                    scene_handler.camera_orbit(
-                        angle_horizontal=float(preset.orbit_horizontal or 0.0),
-                        angle_vertical=float(preset.orbit_vertical or 0.0),
-                        target_object=focus_target,
-                    )
+                    scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)
                 except Exception:
                     pass
-        b64_data = scene_handler.get_viewport(
-            width=preset.width,
-            height=preset.height,
-            shading=preset.shading,
-            camera_name=None,
-            focus_target=focus_target,
-        )
-        filename = f"{bundle_id}_{stage}_{preset.name}.jpg"
-        latest_name = f"{bundle_id}_{stage}_{preset.name}_latest.jpg"
-        internal_file, _internal_latest, external_file, _external_latest = get_viewport_output_paths(
-            filename,
-            latest_name=latest_name,
-        )
-        internal_file.write_bytes(base64.b64decode(b64_data))
 
-        captures.append(
-            VisionCaptureImageContract(
-                label=f"{preset.name}_{stage}",
-                image_path=str(internal_file),
-                host_visible_path=external_file,
-                preset_name=preset.name,
-                media_type="image/jpeg",
-                view_kind=preset.view_kind,
+            if focus_target and (preset.orbit_horizontal is not None or preset.orbit_vertical is not None):
+                if hasattr(scene_handler, "camera_orbit"):
+                    try:
+                        scene_handler.camera_orbit(
+                            angle_horizontal=float(preset.orbit_horizontal or 0.0),
+                            angle_vertical=float(preset.orbit_vertical or 0.0),
+                            target_object=focus_target,
+                        )
+                    except Exception:
+                        pass
+            b64_data = scene_handler.get_viewport(
+                width=preset.width,
+                height=preset.height,
+                shading=preset.shading,
+                camera_name=None,
+                focus_target=focus_target,
             )
-        )
+            filename = f"{bundle_id}_{stage}_{preset.name}.jpg"
+            latest_name = f"{bundle_id}_{stage}_{preset.name}_latest.jpg"
+            internal_file, _internal_latest, external_file, _external_latest = get_viewport_output_paths(
+                filename,
+                latest_name=latest_name,
+            )
+            internal_file.write_bytes(base64.b64decode(b64_data))
+
+            captures.append(
+                VisionCaptureImageContract(
+                    label=f"{preset.name}_{stage}",
+                    image_path=str(internal_file),
+                    host_visible_path=external_file,
+                    preset_name=preset.name,
+                    media_type="image/jpeg",
+                    view_kind=preset.view_kind,
+                )
+            )
+    finally:
+        restore_scene_state(scene_handler, original_state)
 
     return captures
 
@@ -151,9 +155,18 @@ def capture_scene_state(scene_handler) -> CaptureSceneState:
     except Exception:
         visibility_snapshot = None
 
+    view_state: dict[str, Any] | None = None
+    try:
+        if hasattr(scene_handler, "get_view_state"):
+            candidate = scene_handler.get_view_state()
+            if isinstance(candidate, dict) and candidate.get("available") is True:
+                view_state = candidate
+    except Exception:
+        view_state = None
+
     return CaptureSceneState(
         visibility_snapshot=visibility_snapshot,
-        view_state=None,
+        view_state=view_state,
     )
 
 
@@ -163,6 +176,12 @@ def restore_scene_state(scene_handler, state: CaptureSceneState) -> None:
     Current scaffold restores visibility only. View-state restoration remains an
     explicit future step once a dedicated internal helper exists.
     """
+
+    if state.view_state and hasattr(scene_handler, "restore_view_state"):
+        try:
+            scene_handler.restore_view_state(state.view_state)
+        except Exception:
+            pass
 
     if state.visibility_snapshot:
         for object_name, visible in state.visibility_snapshot.items():

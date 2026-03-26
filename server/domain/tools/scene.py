@@ -179,6 +179,16 @@ class ISceneTool(ABC):
         """Focuses viewport camera on object."""
         pass
 
+    @abstractmethod
+    def get_view_state(self) -> Dict[str, Any]:
+        """Returns a best-effort snapshot of the active 3D viewport state."""
+        pass
+
+    @abstractmethod
+    def restore_view_state(self, view_state: Dict[str, Any]) -> str:
+        """Restores a previously captured 3D viewport state."""
+        pass
+
     # TASK-045: Object Inspection Tools
     @abstractmethod
     def get_custom_properties(self, object_name: str) -> Dict[str, Any]:

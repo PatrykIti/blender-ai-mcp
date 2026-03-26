@@ -190,6 +190,12 @@ class SceneToolHandler(ISceneTool):
             self.rpc.send_request("scene.camera_focus", {"object_name": object_name, "zoom_factor": zoom_factor})
         )
 
+    def get_view_state(self) -> Dict[str, Any]:
+        return require_dict_result(self.rpc.send_request("scene.get_view_state"))
+
+    def restore_view_state(self, view_state: Dict[str, Any]) -> str:
+        return require_str_result(self.rpc.send_request("scene.restore_view_state", {"view_state": view_state}))
+
     # TASK-045: Object Inspection Tools
     def get_custom_properties(self, object_name: str) -> Dict[str, Any]:
         return require_dict_result(self.rpc.send_request("scene.get_custom_properties", {"object_name": object_name}))

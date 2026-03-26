@@ -52,6 +52,8 @@ _NO_UNDO_PUSH_CMDS = {
     "scene.get_origin_info",
     "scene.camera_orbit",
     "scene.camera_focus",
+    "scene.get_view_state",
+    "scene.restore_view_state",
     "scene.isolate_object",
     "scene.hide_object",
     "scene.show_all_objects",

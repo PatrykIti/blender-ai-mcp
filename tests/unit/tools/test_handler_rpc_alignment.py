@@ -216,6 +216,26 @@ def test_scene_inspect_scene_state_handlers_align_with_rpc_commands():
     ]
 
 
+def test_scene_view_state_handlers_align_with_rpc_commands():
+    rpc = DummyRpc(
+        {
+            "scene.get_view_state": _ok({"available": True, "view_distance": 10.0}),
+            "scene.restore_view_state": _ok("Restored 3D viewport state"),
+        }
+    )
+    handler = SceneToolHandler(rpc)
+
+    view_state = handler.get_view_state()
+    restored = handler.restore_view_state({"view_distance": 10.0})
+
+    assert view_state["available"] is True
+    assert restored == "Restored 3D viewport state"
+    assert rpc.calls == [
+        ("scene.get_view_state", None),
+        ("scene.restore_view_state", {"view_state": {"view_distance": 10.0}}),
+    ]
+
+
 def test_scene_configure_handlers_align_with_rpc_commands():
     rpc = DummyRpc(
         {

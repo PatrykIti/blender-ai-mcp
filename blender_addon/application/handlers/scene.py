@@ -1383,6 +1383,81 @@ class SceneHandler:
 
         return f"Focused on '{object_name}' with zoom factor {zoom_factor}"
 
+    def get_view_state(self):
+        """Returns a best-effort snapshot of the active 3D viewport state."""
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == "VIEW_3D":
+                for space in area.spaces:
+                    if space.type == "VIEW_3D":
+                        rv3d = space.region_3d
+                        break
+                break
+
+        if not rv3d:
+            return {"available": False}
+
+        rotation = getattr(rv3d, "view_rotation", None)
+        try:
+            rotation_values = [float(rotation.w), float(rotation.x), float(rotation.y), float(rotation.z)]
+        except Exception:
+            try:
+                rotation_values = [float(value) for value in rotation]
+            except Exception:
+                rotation_values = None
+
+        try:
+            view_location = [float(value) for value in rv3d.view_location]
+        except Exception:
+            view_location = None
+
+        try:
+            view_distance = float(rv3d.view_distance)
+        except Exception:
+            view_distance = None
+
+        view_perspective = getattr(rv3d, "view_perspective", None)
+
+        return {
+            "available": True,
+            "view_location": view_location,
+            "view_distance": view_distance,
+            "view_rotation": rotation_values,
+            "view_perspective": view_perspective,
+        }
+
+    def restore_view_state(self, view_state):
+        """Restores a previously captured 3D viewport state."""
+        from mathutils import Quaternion, Vector
+
+        rv3d = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == "VIEW_3D":
+                for space in area.spaces:
+                    if space.type == "VIEW_3D":
+                        rv3d = space.region_3d
+                        break
+                break
+
+        if not rv3d:
+            return "No 3D viewport found. View-state restore requires an active 3D view."
+
+        if not isinstance(view_state, dict):
+            raise ValueError("view_state must be an object/dict")
+
+        if view_state.get("view_location") is not None:
+            rv3d.view_location = Vector(view_state["view_location"])
+        if view_state.get("view_distance") is not None:
+            rv3d.view_distance = float(view_state["view_distance"])
+        if view_state.get("view_rotation") is not None:
+            rv3d.view_rotation = Quaternion(view_state["view_rotation"])
+        if view_state.get("view_perspective") is not None:
+            rv3d.view_perspective = str(view_state["view_perspective"])
+
+        return "Restored 3D viewport state"
+
     # TASK-045: Object Inspection Tools
     def get_custom_properties(self, object_name):
         """Gets custom properties (metadata) from an object."""

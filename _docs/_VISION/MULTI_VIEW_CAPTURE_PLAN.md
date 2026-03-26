@@ -88,6 +88,8 @@ Current implementation note:
 
 - the repo now has a first internal capture-state scaffold that can snapshot and
   restore visibility from scene snapshot data
+- stage capture now also replays a best-effort saved view state after bounded
+  capture execution when the internal helper is available
 - view-state restoration is still intentionally marked as the next missing
   helper, not solved prematurely with a weak public API
 

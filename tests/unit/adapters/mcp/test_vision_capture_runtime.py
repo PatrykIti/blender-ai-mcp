@@ -18,6 +18,7 @@ class _Handler:
         self.focus_calls: list[dict] = []
         self.orbit_calls: list[dict] = []
         self.hide_calls: list[dict] = []
+        self.restore_view_state_calls: list[dict] = []
 
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         self.calls.append(
@@ -59,6 +60,19 @@ class _Handler:
     def hide_object(self, object_name: str, hide: bool = True, hide_render: bool = False):
         self.hide_calls.append({"object_name": object_name, "hide": hide, "hide_render": hide_render})
         return "hide ok"
+
+    def get_view_state(self):
+        return {
+            "available": True,
+            "view_location": [1.0, 2.0, 3.0],
+            "view_distance": 10.0,
+            "view_rotation": [1.0, 0.0, 0.0, 0.0],
+            "view_perspective": "PERSP",
+        }
+
+    def restore_view_state(self, view_state):
+        self.restore_view_state_calls.append(view_state)
+        return "restored"
 
 
 def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypatch):
@@ -125,7 +139,8 @@ def test_capture_scene_state_collects_visibility_snapshot():
     state = capture_scene_state(handler)
 
     assert state.visibility_snapshot == {"Housing": True, "Panel": False}
-    assert state.view_state is None
+    assert state.view_state is not None
+    assert state.view_state["view_perspective"] == "PERSP"
 
 
 def test_restore_scene_state_replays_visibility_snapshot():
@@ -135,6 +150,34 @@ def test_restore_scene_state_replays_visibility_snapshot():
     restore_scene_state(handler, state)
 
     assert handler.hide_calls == [
+        {"object_name": "Housing", "hide": False, "hide_render": False},
+        {"object_name": "Panel", "hide": True, "hide_render": False},
+    ]
+
+
+def test_capture_stage_images_restores_state_after_capture(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _Handler()
+
+    capture_stage_images(
+        handler,
+        bundle_id="bundle3",
+        stage="before",
+        target_object="Housing",
+    )
+
+    assert handler.restore_view_state_calls == [
+        {
+            "available": True,
+            "view_location": [1.0, 2.0, 3.0],
+            "view_distance": 10.0,
+            "view_rotation": [1.0, 0.0, 0.0, 0.0],
+            "view_perspective": "PERSP",
+        }
+    ]
+    assert handler.hide_calls[-2:] == [
         {"object_name": "Housing", "hide": False, "hide_render": False},
         {"object_name": "Panel", "hide": True, "hide_render": False},
     ]
