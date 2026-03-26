@@ -15,6 +15,7 @@ class VisionCaptureImageContract(MCPContract):
 
     label: str
     image_path: str
+    host_visible_path: str | None = None
     preset_name: str | None = None
     media_type: str = "image/png"
     view_kind: Literal["wide", "focus", "overlay", "reference"] = "wide"

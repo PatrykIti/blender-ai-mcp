@@ -10,6 +10,12 @@ from .backends import (
     create_vision_backend,
 )
 from .capture import build_vision_request_from_capture_bundle
+from .capture_runtime import (
+    DEFAULT_CAPTURE_PRESET_SPECS,
+    CapturePresetSpec,
+    build_capture_bundle,
+    capture_stage_images,
+)
 from .config import (
     VisionBackendKind,
     VisionOpenAICompatibleConfig,
@@ -32,6 +38,10 @@ __all__ = [
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",
     "VISION_ASSIST_POLICY",
+    "CapturePresetSpec",
+    "DEFAULT_CAPTURE_PRESET_SPECS",
+    "build_capture_bundle",
+    "capture_stage_images",
     "build_vision_request_from_capture_bundle",
     "build_vision_runtime_config",
     "create_vision_backend",
