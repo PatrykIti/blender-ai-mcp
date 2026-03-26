@@ -287,6 +287,10 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
     image_path.write_bytes(b"fake-png")
     request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
 
+    class FakeGenerationResult:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
     class FakeMLXVLM:
         @staticmethod
         def load(model_source):
@@ -294,7 +298,9 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
 
         @staticmethod
         def generate(model, processor, *args, **kwargs):
-            return '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+            return FakeGenerationResult(
+                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+            )
 
     class FakePromptUtils:
         @staticmethod

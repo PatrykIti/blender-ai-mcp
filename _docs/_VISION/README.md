@@ -77,6 +77,12 @@ For Apple Silicon local testing, the repo also supports an optional
 poetry install --with mlx --no-interaction
 ```
 
+Practical note:
+
+- some local multimodal processors also need `torchvision` at runtime
+- the optional `vision` / `mlx` install groups include that dependency so
+  local model loading does not fail on missing processor backends
+
 ## Boundary Rules
 
 The vision layer is not the truth source.

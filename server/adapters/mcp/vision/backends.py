@@ -355,7 +355,7 @@ class MLXLocalVisionBackend(VisionBackend):
             )
 
             try:
-                output_text = mlx_vlm.generate(
+                output = mlx_vlm.generate(
                     self._model,
                     self._processor,
                     formatted_prompt,
@@ -364,7 +364,7 @@ class MLXLocalVisionBackend(VisionBackend):
                     max_tokens=self._runtime_config.max_tokens,
                 )
             except TypeError:
-                output_text = mlx_vlm.generate(
+                output = mlx_vlm.generate(
                     self._model,
                     self._processor,
                     prompt=formatted_prompt,
@@ -373,6 +373,7 @@ class MLXLocalVisionBackend(VisionBackend):
                     max_tokens=self._runtime_config.max_tokens,
                 )
 
+            output_text = getattr(output, "text", output)
             if not output_text:
                 raise VisionBackendUnavailableError("MLX local vision runtime returned no output.")
             parsed_content = json.loads(_unwrap_json_text(str(output_text)))
