@@ -16,6 +16,7 @@ from server.adapters.mcp.contracts.vision import (
 from server.infrastructure.tmp_paths import get_viewport_output_paths
 
 CaptureStage = Literal["before", "after"]
+CapturePresetProfile = Literal["compact", "rich"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +28,7 @@ class CapturePresetSpec:
     height: int
     shading: str = "SOLID"
     focus_target: bool = False
+    isolate_target: bool = False
     focus_zoom_factor: float = 1.0
     standard_view: Literal["FRONT", "RIGHT", "TOP"] | None = None
     orbit_horizontal: float | None = None
@@ -42,7 +44,7 @@ class CaptureSceneState:
     view_state: dict[str, Any] | None = None
 
 
-DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
+COMPACT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
     CapturePresetSpec(
         name="context_wide",
         width=1280,
@@ -57,6 +59,7 @@ DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         height=960,
         shading="SOLID",
         focus_target=True,
+        isolate_target=True,
         standard_view="FRONT",
         view_kind="focus",
     ),
@@ -66,6 +69,7 @@ DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         height=960,
         shading="SOLID",
         focus_target=True,
+        isolate_target=True,
         standard_view="RIGHT",
         view_kind="focus",
     ),
@@ -75,10 +79,107 @@ DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         height=960,
         shading="SOLID",
         focus_target=True,
+        isolate_target=True,
         standard_view="TOP",
         view_kind="focus",
     ),
 )
+
+RICH_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
+    CapturePresetSpec(
+        name="context_wide",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=False,
+        view_kind="wide",
+    ),
+    CapturePresetSpec(
+        name="target_focus",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_oblique_left",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        orbit_horizontal=-35.0,
+        orbit_vertical=15.0,
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_oblique_right",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        orbit_horizontal=35.0,
+        orbit_vertical=15.0,
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_front",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        standard_view="FRONT",
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_side",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        standard_view="RIGHT",
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_top",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        standard_view="TOP",
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_detail",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        isolate_target=True,
+        standard_view="FRONT",
+        focus_zoom_factor=1.8,
+        view_kind="focus",
+    ),
+)
+
+CAPTURE_PRESET_PROFILES: dict[CapturePresetProfile, tuple[CapturePresetSpec, ...]] = {
+    "compact": COMPACT_CAPTURE_PRESET_SPECS,
+    "rich": RICH_CAPTURE_PRESET_SPECS,
+}
+
+DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = COMPACT_CAPTURE_PRESET_SPECS
+
+
+def resolve_capture_preset_specs(profile: CapturePresetProfile = "compact") -> tuple[CapturePresetSpec, ...]:
+    """Return the deterministic preset set for a named capture profile."""
+
+    return CAPTURE_PRESET_PROFILES[profile]
 
 
 def capture_stage_images(
@@ -87,17 +188,24 @@ def capture_stage_images(
     bundle_id: str,
     stage: CaptureStage,
     target_object: str | None = None,
-    preset_specs: tuple[CapturePresetSpec, ...] = DEFAULT_CAPTURE_PRESET_SPECS,
+    preset_specs: tuple[CapturePresetSpec, ...] | None = None,
+    preset_profile: CapturePresetProfile = "compact",
 ) -> list[VisionCaptureImageContract]:
     """Capture one deterministic stage view-set using the current viewport API."""
 
+    resolved_preset_specs = preset_specs or resolve_capture_preset_specs(preset_profile)
     original_state = capture_scene_state(scene_handler)
     captures: list[VisionCaptureImageContract] = []
     try:
-        for preset in preset_specs:
+        for preset in resolved_preset_specs:
             focus_target = target_object if preset.focus_target else None
-            if preset is not preset_specs[0]:
+            if preset is not resolved_preset_specs[0]:
                 restore_scene_state(scene_handler, original_state)
+            if focus_target and preset.isolate_target and hasattr(scene_handler, "isolate_object"):
+                try:
+                    scene_handler.isolate_object([focus_target])
+                except Exception:
+                    pass
             if preset.standard_view and hasattr(scene_handler, "set_standard_view"):
                 try:
                     scene_handler.set_standard_view(preset.standard_view)

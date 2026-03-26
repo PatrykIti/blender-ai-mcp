@@ -19,10 +19,22 @@ The repo now has the first implementation scaffolding for the vision layer:
 - local and external backend families
 - bounded `VisionAssistContract` / `VisionAssistantContract`
 - deterministic capture-bundle contracts and initial runtime presets:
-  - `context_wide`
-  - `target_front`
-  - `target_side`
-  - `target_top`
+  - default `compact` profile:
+    - `context_wide`
+    - `target_front`
+    - `target_side`
+    - `target_top`
+  - available `rich` profile scaffold:
+    - `context_wide`
+    - `target_focus`
+    - `target_oblique_left`
+    - `target_oblique_right`
+    - `target_front`
+    - `target_side`
+    - `target_top`
+    - `target_detail`
+- focus-oriented presets now isolate the target object when the scene helper
+  can do so, then restore prior visibility after capture
 - goal-scoped `reference_images` session surface
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists

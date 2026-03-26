@@ -15,11 +15,15 @@ from .capture import (
     select_reference_records_for_target,
 )
 from .capture_runtime import (
+    CAPTURE_PRESET_PROFILES,
+    COMPACT_CAPTURE_PRESET_SPECS,
     DEFAULT_CAPTURE_PRESET_SPECS,
+    RICH_CAPTURE_PRESET_SPECS,
     CapturePresetSpec,
     build_capture_bundle,
     capture_scene_state,
     capture_stage_images,
+    resolve_capture_preset_specs,
     restore_scene_state,
 )
 from .config import (
@@ -61,12 +65,16 @@ __all__ = [
     "VisionTransformersLocalConfig",
     "VISION_ASSIST_POLICY",
     "CapturePresetSpec",
+    "CAPTURE_PRESET_PROFILES",
+    "COMPACT_CAPTURE_PRESET_SPECS",
     "DEFAULT_CAPTURE_PRESET_SPECS",
+    "RICH_CAPTURE_PRESET_SPECS",
     "attach_vision_artifacts",
     "build_reference_capture_images",
     "build_capture_bundle",
     "capture_scene_state",
     "capture_stage_images",
+    "resolve_capture_preset_specs",
     "build_vision_request_from_capture_bundle",
     "select_reference_records_for_target",
     "build_vision_runtime_config",

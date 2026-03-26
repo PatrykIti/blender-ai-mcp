@@ -5,9 +5,12 @@ from __future__ import annotations
 import base64
 
 from server.adapters.mcp.vision import (
+    COMPACT_CAPTURE_PRESET_SPECS,
+    RICH_CAPTURE_PRESET_SPECS,
     build_capture_bundle,
     capture_scene_state,
     capture_stage_images,
+    resolve_capture_preset_specs,
     restore_scene_state,
 )
 
@@ -18,6 +21,7 @@ class _Handler:
         self.focus_calls: list[dict] = []
         self.orbit_calls: list[dict] = []
         self.hide_calls: list[dict] = []
+        self.isolate_calls: list[list[str]] = []
         self.restore_view_state_calls: list[dict] = []
         self.standard_view_calls: list[str] = []
 
@@ -66,6 +70,10 @@ class _Handler:
         self.hide_calls.append({"object_name": object_name, "hide": hide, "hide_render": hide_render})
         return "hide ok"
 
+    def isolate_object(self, object_names):
+        self.isolate_calls.append(list(object_names))
+        return "isolate ok"
+
     def get_view_state(self):
         return {
             "available": True,
@@ -107,9 +115,50 @@ def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypat
     assert handler.calls[2]["focus_target"] == "Housing"
     assert handler.calls[3]["focus_target"] == "Housing"
     assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing", "Housing"]
+    assert handler.isolate_calls == [["Housing"], ["Housing"], ["Housing"]]
     assert handler.standard_view_calls == ["FRONT", "RIGHT", "TOP"]
     assert len(handler.restore_view_state_calls) == 4
     assert handler.orbit_calls == []
+
+
+def test_capture_preset_profiles_resolve_expected_named_sets():
+    assert resolve_capture_preset_specs("compact") == COMPACT_CAPTURE_PRESET_SPECS
+    assert resolve_capture_preset_specs("rich") == RICH_CAPTURE_PRESET_SPECS
+    assert [preset.name for preset in COMPACT_CAPTURE_PRESET_SPECS] == [
+        "context_wide",
+        "target_front",
+        "target_side",
+        "target_top",
+    ]
+    assert [preset.name for preset in RICH_CAPTURE_PRESET_SPECS] == [
+        "context_wide",
+        "target_focus",
+        "target_oblique_left",
+        "target_oblique_right",
+        "target_front",
+        "target_side",
+        "target_top",
+        "target_detail",
+    ]
+
+
+def test_capture_stage_images_can_use_rich_profile(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _Handler()
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_rich",
+        stage="after",
+        target_object="Housing",
+        preset_profile="rich",
+    )
+
+    assert len(captures) == 8
+    assert captures[0].preset_name == "context_wide"
+    assert captures[-1].preset_name == "target_detail"
+    assert len(handler.orbit_calls) == 2
 
 
 def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
