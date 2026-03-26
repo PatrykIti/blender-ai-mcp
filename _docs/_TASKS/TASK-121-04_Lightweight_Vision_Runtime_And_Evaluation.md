@@ -37,6 +37,15 @@ layer.
 | [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md) | Select the lightweight runtime/model strategy and define execution constraints |
 | [TASK-121-04-02](./TASK-121-04-02_Evaluation_Harness_Goldens_And_Safety_Review.md) | Add evaluation datasets, goldens, and governance checks for the vision layer |
 
+### Detailed Leaves
+
+| Leaf | Purpose |
+|------|---------|
+| [TASK-121-04-01-01](./TASK-121-04-01-01_Backend_Comparison_Harness_And_Smoke_Matrix.md) | Build the repeatable harness for comparing backend families on the same input |
+| [TASK-121-04-01-02](./TASK-121-04-01-02_Local_Prompting_And_Parse_Repair_Policy.md) | Harden local prompt design and parse-repair rules |
+| [TASK-121-04-02-01](./TASK-121-04-02-01_Golden_Bundle_Set_And_Scoring_Matrix.md) | Create first reusable goldens and scoring dimensions |
+| [TASK-121-04-02-02](./TASK-121-04-02-02_Runtime_Verdict_And_Governance_Notes.md) | Record verdicts/governance for current backend/model paths |
+
 ---
 
 ## Acceptance Criteria
