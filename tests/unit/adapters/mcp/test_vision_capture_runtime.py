@@ -10,6 +10,8 @@ from server.adapters.mcp.vision import build_capture_bundle, capture_stage_image
 class _Handler:
     def __init__(self) -> None:
         self.calls: list[dict] = []
+        self.focus_calls: list[dict] = []
+        self.orbit_calls: list[dict] = []
 
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         self.calls.append(
@@ -22,6 +24,21 @@ class _Handler:
             }
         )
         return base64.b64encode(b"fake-jpeg").decode("ascii")
+
+    def camera_focus(self, object_name: str, zoom_factor: float = 1.0):
+        self.focus_calls.append({"object_name": object_name, "zoom_factor": zoom_factor})
+        return "focus ok"
+
+    def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
+        self.orbit_calls.append(
+            {
+                "angle_horizontal": angle_horizontal,
+                "angle_vertical": angle_vertical,
+                "target_object": target_object,
+                "target_point": target_point,
+            }
+        )
+        return "orbit ok"
 
 
 def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypatch):
@@ -36,14 +53,26 @@ def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypat
         target_object="Housing",
     )
 
-    assert [capture.preset_name for capture in captures] == ["context_wide", "target_focus"]
+    assert [capture.preset_name for capture in captures] == ["context_wide", "target_focus", "target_oblique"]
     assert captures[0].view_kind == "wide"
     assert captures[1].view_kind == "focus"
+    assert captures[2].view_kind == "focus"
     assert captures[0].host_visible_path is not None
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_context_wide.jpg").exists()
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_focus.jpg").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_oblique.jpg").exists()
     assert handler.calls[0]["focus_target"] is None
     assert handler.calls[1]["focus_target"] == "Housing"
+    assert handler.calls[2]["focus_target"] == "Housing"
+    assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing"]
+    assert handler.orbit_calls == [
+        {
+            "angle_horizontal": 35.0,
+            "angle_vertical": 15.0,
+            "target_object": "Housing",
+            "target_point": None,
+        }
+    ]
 
 
 def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
@@ -66,5 +95,5 @@ def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     assert bundle.bundle_id == "bundle2"
     assert bundle.goal_id == "goal1"
     assert bundle.target_object == "Housing"
-    assert bundle.preset_names == ["context_wide", "target_focus"]
+    assert bundle.preset_names == ["context_wide", "target_focus", "target_oblique"]
     assert bundle.truth_summary == {"dimensions": [1, 2, 3]}

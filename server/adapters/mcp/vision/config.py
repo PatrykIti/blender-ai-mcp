@@ -60,7 +60,7 @@ class VisionRuntimeConfig(BaseModel):
     enabled: bool = False
     provider: VisionBackendKind = "transformers_local"
     allow_on_guided: bool = True
-    max_images: int = Field(default=6, ge=1, le=12)
+    max_images: int = Field(default=8, ge=1, le=12)
     max_tokens: int = Field(default=400, ge=1)
     timeout_seconds: float = Field(default=20.0, gt=0)
     transformers_local: VisionTransformersLocalConfig | None = None

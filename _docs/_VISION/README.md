@@ -21,6 +21,7 @@ The repo now has the first implementation scaffolding for the vision layer:
 - deterministic capture-bundle contracts and initial runtime presets:
   - `context_wide`
   - `target_focus`
+  - `target_oblique`
 - goal-scoped `reference_images` session surface
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
@@ -31,6 +32,12 @@ Current reference-selection behavior:
 - otherwise prefer object-specific references
 - otherwise fall back to generic references for the requested view
 - otherwise fall back to generic session references
+
+Current image-budget assumption:
+
+- the default bounded runtime now assumes up to `8` images per request
+- this leaves room for before/after capture sets plus a small number of
+  goal-scoped reference images
 
 ## Boundary Rules
 

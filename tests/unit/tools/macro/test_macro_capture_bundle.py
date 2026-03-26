@@ -71,9 +71,10 @@ def test_macro_finish_form_attaches_capture_bundle_when_vision_enabled(monkeypat
     assert "capture_bundle" in result
     bundle = result["capture_bundle"]
     assert bundle["target_object"] == "BodyShell"
-    assert bundle["preset_names"] == ["context_wide", "target_focus"]
-    assert len(bundle["captures_before"]) == 2
-    assert len(bundle["captures_after"]) == 2
+    assert bundle["preset_names"] == ["context_wide", "target_focus", "target_oblique"]
+    assert len(bundle["captures_before"]) == 3
+    assert len(bundle["captures_after"]) == 3
     assert bundle["truth_summary"]["dimensions"]["dimensions"] == [1.0, 2.0, 3.0]
     assert scene.viewport_calls[0]["focus_target"] is None
     assert scene.viewport_calls[1]["focus_target"] == "BodyShell"
+    assert scene.viewport_calls[2]["focus_target"] == "BodyShell"

@@ -27,6 +27,9 @@ class CapturePresetSpec:
     height: int
     shading: str = "SOLID"
     focus_target: bool = False
+    focus_zoom_factor: float = 1.0
+    orbit_horizontal: float | None = None
+    orbit_vertical: float | None = None
     view_kind: Literal["wide", "focus"] = "wide"
 
 
@@ -47,6 +50,17 @@ DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         focus_target=True,
         view_kind="focus",
     ),
+    CapturePresetSpec(
+        name="target_oblique",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        focus_zoom_factor=1.0,
+        orbit_horizontal=35.0,
+        orbit_vertical=15.0,
+        view_kind="focus",
+    ),
 )
 
 
@@ -64,6 +78,21 @@ def capture_stage_images(
 
     for preset in preset_specs:
         focus_target = target_object if preset.focus_target else None
+        if focus_target and hasattr(scene_handler, "camera_focus"):
+            try:
+                scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)
+            except Exception:
+                pass
+        if focus_target and (preset.orbit_horizontal is not None or preset.orbit_vertical is not None):
+            if hasattr(scene_handler, "camera_orbit"):
+                try:
+                    scene_handler.camera_orbit(
+                        angle_horizontal=float(preset.orbit_horizontal or 0.0),
+                        angle_vertical=float(preset.orbit_vertical or 0.0),
+                        target_object=focus_target,
+                    )
+                except Exception:
+                    pass
         b64_data = scene_handler.get_viewport(
             width=preset.width,
             height=preset.height,
