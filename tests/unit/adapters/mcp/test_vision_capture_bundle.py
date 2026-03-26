@@ -6,7 +6,11 @@ from server.adapters.mcp.contracts import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
 )
-from server.adapters.mcp.vision import build_vision_request_from_capture_bundle
+from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
+from server.adapters.mcp.vision import (
+    build_vision_request_from_capture_bundle,
+    select_reference_records_for_target,
+)
 
 
 def test_capture_bundle_can_be_converted_into_vision_request():
@@ -52,3 +56,51 @@ def test_capture_bundle_can_be_converted_into_vision_request():
     assert request.metadata["bundle_id"] == "bundle_1"
     assert request.metadata["preset_names"] == ["front", "iso_focus"]
     assert request.truth_summary == {"dimensions": [0.2, 0.1, 0.05]}
+
+
+def test_select_reference_records_prefers_object_specific_matches():
+    generic = ReferenceImageRecordContract(
+        reference_id="ref_generic",
+        goal="rounded housing",
+        media_type="image/png",
+        original_path="/tmp/generic.png",
+        stored_path="/tmp/generic_stored.png",
+        added_at="2026-03-26T00:00:00Z",
+    )
+    specific = ReferenceImageRecordContract(
+        reference_id="ref_specific",
+        goal="rounded housing",
+        target_object="Housing",
+        media_type="image/png",
+        original_path="/tmp/housing.png",
+        stored_path="/tmp/housing_stored.png",
+        added_at="2026-03-26T00:00:01Z",
+    )
+
+    selected = select_reference_records_for_target([generic, specific], target_object="Housing")
+
+    assert [item.reference_id for item in selected] == ["ref_specific"]
+
+
+def test_select_reference_records_falls_back_to_generic_when_no_object_match():
+    generic = ReferenceImageRecordContract(
+        reference_id="ref_generic",
+        goal="rounded housing",
+        media_type="image/png",
+        original_path="/tmp/generic.png",
+        stored_path="/tmp/generic_stored.png",
+        added_at="2026-03-26T00:00:00Z",
+    )
+    other = ReferenceImageRecordContract(
+        reference_id="ref_other",
+        goal="rounded housing",
+        target_object="Panel",
+        media_type="image/png",
+        original_path="/tmp/panel.png",
+        stored_path="/tmp/panel_stored.png",
+        added_at="2026-03-26T00:00:01Z",
+    )
+
+    selected = select_reference_records_for_target([generic, other], target_object="Housing")
+
+    assert [item.reference_id for item in selected] == ["ref_generic"]

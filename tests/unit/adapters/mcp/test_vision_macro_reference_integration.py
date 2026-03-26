@@ -47,11 +47,24 @@ class _Ctx:
                     "reference_id": "ref_1",
                     "goal": "rounded housing",
                     "label": "front_reference",
+                    "target_object": "Housing",
+                    "target_view": "front",
                     "media_type": "image/png",
                     "source_kind": "local_path",
                     "original_path": "/tmp/ref.png",
                     "stored_path": "/tmp/ref_stored.png",
                     "added_at": "2026-03-26T00:00:00Z",
+                },
+                {
+                    "reference_id": "ref_other",
+                    "goal": "rounded housing",
+                    "label": "other_object_reference",
+                    "target_object": "Panel",
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": "/tmp/ref_other.png",
+                    "stored_path": "/tmp/ref_other_stored.png",
+                    "added_at": "2026-03-26T00:00:01Z",
                 }
             ],
         }
@@ -91,3 +104,6 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
     assert captured["request"].goal == "rounded housing"
     assert [image.role for image in captured["request"].images] == ["before", "after", "reference"]
     assert "front_reference" in (captured["request"].prompt_hint or "")
+    assert "other_object_reference" not in (captured["request"].prompt_hint or "")
+    assert captured["request"].images[-1].path == "/tmp/ref_stored.png"
+    assert "reference_target_view[1]=front" in (captured["request"].prompt_hint or "")

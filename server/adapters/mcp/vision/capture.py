@@ -81,3 +81,29 @@ def build_reference_capture_images(
             )
         )
     return tuple(captures)
+
+
+def select_reference_records_for_target(
+    reference_records: Sequence[ReferenceImageRecordContract | dict],
+    *,
+    target_object: str | None,
+) -> tuple[ReferenceImageRecordContract, ...]:
+    """Return the most relevant goal-scoped references for one target object.
+
+    Current selection policy is intentionally simple and deterministic:
+    - if there are references explicitly targeting the current object, prefer only those
+    - otherwise fall back to generic session references
+    - keep insertion order stable
+    """
+
+    resolved = tuple(
+        record if isinstance(record, ReferenceImageRecordContract) else ReferenceImageRecordContract.model_validate(record)
+        for record in reference_records
+    )
+    if target_object is None:
+        return resolved
+
+    targeted = tuple(record for record in resolved if record.target_object == target_object)
+    if targeted:
+        return targeted
+    return tuple(record for record in resolved if record.target_object is None) or resolved
