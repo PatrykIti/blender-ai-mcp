@@ -60,6 +60,23 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "deterministic capture-bundle inputs",
         "goal-scoped reference image context",
         "request-bound attachment of `vision_assistant`",
+        "Multi-View Capture Plan",
+    ):
+        assert expected in text
+
+
+def test_multi_view_capture_plan_docs_exist():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "MULTI_VIEW_CAPTURE_PLAN.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Multi-View Capture Plan",
+        'The long-term target is not "create permanent camera objects everywhere in the',
+        "`scene_get_viewport`",
+        "`scene_camera_focus`",
+        "`scene_camera_orbit`",
+        "`target_front`",
+        "`target_side`",
+        "`target_top`",
     ):
         assert expected in text
 

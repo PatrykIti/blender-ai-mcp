@@ -1,8 +1,10 @@
 # TASK-121-03-01: Capture Bundle Contract and Deterministic Presets
 
 **Parent:** [TASK-121-03](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The repo now has a first deterministic capture-bundle scaffold with current runtime presets (`context_wide`, `target_focus`, `target_oblique`) and a documented path toward a richer multi-view bundle assembled from existing scene camera/viewport atomics without leaving persistent helper cameras in the scene.
 
 ---
 

@@ -54,6 +54,7 @@ Use these docs together with:
 - [Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)
 - [MCP Server Docs](../_MCP_SERVER/README.md)
 - [TASK-121](../_TASKS/TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)
+- [Multi-View Capture Plan](./MULTI_VIEW_CAPTURE_PLAN.md)
 
 ## Implementation Notes
 
