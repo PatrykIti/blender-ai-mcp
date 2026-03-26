@@ -11,6 +11,13 @@ from server.application.tool_handlers.scene_handler import SceneToolHandler
 pytestmark = pytest.mark.e2e
 
 
+def _skip_if_blender_unavailable(error: RuntimeError) -> None:
+    error_msg = str(error).lower()
+    if "could not connect" in error_msg or "is blender running" in error_msg:
+        pytest.skip(f"Blender not available: {error}")
+    raise error
+
+
 @pytest.fixture(scope="session")
 def scene_handler(rpc_client):
     return SceneToolHandler(rpc_client)
@@ -71,7 +78,7 @@ def test_macro_cutout_recess_delete_cleanup_roundtrip(clean_scene, scene_handler
         assert bbox_after["dimensions"] == pytest.approx(baseline_bbox["dimensions"], abs=1e-4)
         assert topology_after["face_count"] > baseline_topology["face_count"]
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_cutout_recess_hide_cleanup_keeps_hidden_helper(clean_scene, scene_handler, modeling_handler, macro_handler):
@@ -101,7 +108,7 @@ def test_macro_cutout_recess_hide_cleanup_keeps_hidden_helper(clean_scene, scene
         assert objects[cutter_name]["visible"] is False
         assert target_name in objects
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_cutout_recess_invalid_recess_depth_raises(clean_scene, scene_handler, modeling_handler, macro_handler):
@@ -120,4 +127,4 @@ def test_macro_cutout_recess_invalid_recess_depth_raises(clean_scene, scene_hand
                 mode="recess",
             )
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)

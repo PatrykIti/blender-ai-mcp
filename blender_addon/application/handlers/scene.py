@@ -630,7 +630,7 @@ class SceneHandler:
                 "rotation": self._vec_to_list(obj.rotation_euler),
                 "scale": self._vec_to_list(obj.scale),
                 "parent": obj.parent.name if obj.parent else None,
-                "visible": not obj.hide_get(),
+                "visible": not bool(getattr(obj, "hide_viewport", False)),
                 "selected": obj.select_get(),
                 "collections": [col.name for col in obj.users_collection],
             }

@@ -58,7 +58,7 @@ class ModelingToolHandler(IModelingTool):
 
     def apply_modifier(self, name: str, modifier_name: str) -> str:
         args = {"name": name, "modifier_name": modifier_name}
-        require_str_result(self.rpc.send_request("modeling.apply_modifier", args))
+        require_dict_result(self.rpc.send_request("modeling.apply_modifier", args))
         return f"Applied modifier '{modifier_name}' to '{name}'"
 
     def convert_to_mesh(self, name: str) -> str:

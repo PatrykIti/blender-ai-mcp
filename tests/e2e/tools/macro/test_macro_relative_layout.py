@@ -11,6 +11,13 @@ from server.application.tool_handlers.scene_handler import SceneToolHandler
 pytestmark = pytest.mark.e2e
 
 
+def _skip_if_blender_unavailable(error: RuntimeError) -> None:
+    error_msg = str(error).lower()
+    if "could not connect" in error_msg or "is blender running" in error_msg:
+        pytest.skip(f"Blender not available: {error}")
+    raise error
+
+
 @pytest.fixture(scope="session")
 def scene_handler(rpc_client):
     return SceneToolHandler(rpc_client)
@@ -74,7 +81,7 @@ def test_macro_relative_layout_places_leg_with_contact_under_tabletop(
         assert gap["relation"] == "contact"
         assert contact["passed"] is True
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_relative_layout_centers_requested_axes(
@@ -109,7 +116,7 @@ def test_macro_relative_layout_centers_requested_axes(
         assert part_bbox["center"][0:2] == pytest.approx(base_bbox["center"][0:2], abs=1e-4)
         assert part_bbox["max"][2] == pytest.approx(base_bbox["max"][2], abs=1e-4)
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_relative_layout_negative_gap_raises(
@@ -132,4 +139,4 @@ def test_macro_relative_layout_negative_gap_raises(
                 gap=-0.01,
             )
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)

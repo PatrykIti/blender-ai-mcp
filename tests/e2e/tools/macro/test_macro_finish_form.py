@@ -11,6 +11,13 @@ from server.application.tool_handlers.scene_handler import SceneToolHandler
 pytestmark = pytest.mark.e2e
 
 
+def _skip_if_blender_unavailable(error: RuntimeError) -> None:
+    error_msg = str(error).lower()
+    if "could not connect" in error_msg or "is blender running" in error_msg:
+        pytest.skip(f"Blender not available: {error}")
+    raise error
+
+
 @pytest.fixture(scope="session")
 def scene_handler(rpc_client):
     return SceneToolHandler(rpc_client)
@@ -62,7 +69,7 @@ def test_macro_finish_form_rounded_housing_adds_bevel_and_subsurf(
         assert "BEVEL" in modifier_types
         assert "SUBSURF" in modifier_types
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_finish_form_shell_thicken_adds_solidify(
@@ -92,7 +99,7 @@ def test_macro_finish_form_shell_thicken_adds_solidify(
         assert solidify["thickness"] == pytest.approx(0.08, abs=1e-4)
         assert solidify["offset"] == pytest.approx(-1.0, abs=1e-4)
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
 
 
 def test_macro_finish_form_invalid_panel_override_raises(
@@ -112,4 +119,4 @@ def test_macro_finish_form_invalid_panel_override_raises(
                 thickness=0.05,
             )
     except RuntimeError as e:
-        pytest.skip(f"Blender not available: {e}")
+        _skip_if_blender_unavailable(e)
