@@ -16,6 +16,7 @@ from .config import (
     VisionRuntimeConfig,
     VisionTransformersLocalConfig,
 )
+from .runner import VISION_ASSIST_POLICY, run_vision_assist
 from .runtime import LazyVisionBackendResolver, build_vision_runtime_config
 
 __all__ = [
@@ -30,7 +31,9 @@ __all__ = [
     "VisionRequest",
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",
+    "VISION_ASSIST_POLICY",
     "build_vision_request_from_capture_bundle",
     "build_vision_runtime_config",
     "create_vision_backend",
+    "run_vision_assist",
 ]

@@ -4,7 +4,9 @@
 **Category:** Vision Assist / Goal Context  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-113, TASK-120  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, and deterministic capture-bundle input types prepared for later scene/macro integration.
 
 ---
 

@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks (~10 sub-tasks)
+- **To Do:** 0 tasks
 - **In Progress:** 1 tasks
 - **Done:** 174
 - **Superseded:** 10
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Add goal-scoped reference images, before/after capture bundles, and lightweight vision assistance for macro/workflow reports |
 
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
@@ -47,6 +46,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Runtime scaffolding is in place for pluggable local/external vision backends plus deterministic capture-bundle inputs; next step is scene/macro integration |
 
 ---
 

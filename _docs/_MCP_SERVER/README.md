@@ -219,6 +219,13 @@ Lightweight vision models are acceptable for:
 - localizing likely issues
 - comparing before/after imagery
 
+Current runtime direction for the vision layer:
+
+- treat vision as an optional adopted capability, not a mandatory bootstrap dependency
+- keep local/external backend choice pluggable
+- prefer deterministic capture bundles plus truth summaries over one ad hoc viewport image
+- keep heavyweight local VLM loading lazy/on-demand instead of tying MCP server startup to it
+
 They should not override deterministic measure/assert results.
 
 ## Search-First Discovery Rollout

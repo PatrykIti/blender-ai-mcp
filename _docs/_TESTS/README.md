@@ -190,6 +190,12 @@ poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/
 poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py tests/e2e/tools/macro/test_macro_finish_form.py tests/e2e/tools/macro/test_macro_relative_layout.py -q
 ```
 
+Primary local validation commands for TASK-121 vision runtime/capture scaffolding:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
+```
+
 ---
 
 ## E2E Test Runner Workflow
