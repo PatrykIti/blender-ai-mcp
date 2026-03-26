@@ -20,10 +20,20 @@ iterated later.
   - visible regression
   - no meaningful change
   - mismatch against reference image
+- run the harness against a model/backend matrix, not only one candidate:
+  - local 3B baseline
+  - local 7B baseline
+  - newer local family candidate when available
+  - external Gemma-comparator path
 - keep goldens around:
   - capture bundles
   - expected likely-issue categories
   - expected recommended deterministic checks
+- score models on product-relevant tasks, not generic VLM hype:
+  - can it distinguish before vs after?
+  - can it identify the dominant visible problem category?
+  - can it recommend the right deterministic next checks?
+  - does it avoid over-claiming geometric truth from images alone?
 - review safety/governance around:
   - false confidence
   - privacy of uploaded references

@@ -20,6 +20,7 @@ an isolated free-floating tool first.
   - reference images
   - capture bundles
   - optional inspect/measure/assert summaries
+- do not call vision first on arbitrary viewport images; integrate it after deterministic capture-bundle creation
 - vision output should recommend deterministic next checks where needed
 - keep request-bound execution; do not turn vision into a background authority
 
@@ -39,3 +40,4 @@ an isolated free-floating tool first.
 
 - macro/workflow reports can carry bounded visual interpretation
 - deterministic follow-up checks remain the preferred way to confirm correctness
+- macro/workflow integrations use stable before/after comparisons rather than one-shot image guessing

@@ -11,6 +11,10 @@
 Choose the lightweight vision runtime/model path and add enough evaluation and
 governance to keep the feature bounded and trustworthy.
 
+The runtime choice must stay pluggable so the repo can compare local open
+models against stronger external endpoints without redesigning the contract
+layer.
+
 ---
 
 ## Repository Touchpoints
@@ -37,3 +41,4 @@ governance to keep the feature bounded and trustworthy.
 
 - the vision layer has an explicit runtime/model strategy
 - lightweight vision behavior is evaluated and governed before broad rollout
+- backend pluggability exists from the start instead of hard-coding one model vendor/runtime

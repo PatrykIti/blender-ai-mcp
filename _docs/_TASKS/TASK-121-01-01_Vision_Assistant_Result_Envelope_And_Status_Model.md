@@ -16,15 +16,22 @@ Define one reusable machine-readable envelope for all vision-assist outputs.
 
 - include fields such as:
   - `status`
+  - `backend_kind`
+  - `backend_name`
+  - `model_name`
   - `goal_summary`
   - `reference_match_summary`
   - `visible_changes`
   - `likely_issues`
   - `recommended_checks`
   - `confidence`
+  - `input_summary`
   - optional `captures_used`
 - keep the output concise and structured enough for macro/workflow reports
 - align status handling with existing assistant-style product semantics where useful
+- make the envelope backend-agnostic so the same contract works for:
+  - local `transformers` runtimes
+  - external OpenAI-compatible vision endpoints
 
 ---
 

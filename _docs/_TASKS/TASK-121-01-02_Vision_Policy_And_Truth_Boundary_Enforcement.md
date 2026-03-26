@@ -19,8 +19,14 @@ not router policy or correctness truth.
   - overriding router safety/policy decisions
   - claiming geometric correctness without deterministic checks
   - acting as the primary discovery/catalog authority
+  - acting on one ad hoc viewport screenshot as if it were sufficient truth about the scene
 - require vision outputs to recommend deterministic follow-up checks when
   correctness matters
+- require macro/workflow integrations to pass:
+  - deterministic before/after capture bundles
+  - active-goal text
+  - reference-image context when present
+  - compact truth summaries (bbox/dimensions/gap/contact/alignment) when relevant
 - keep the responsibility split aligned with
   `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
@@ -39,3 +45,4 @@ not router policy or correctness truth.
 
 - the vision layer has an explicit non-truth, non-policy boundary
 - future integrations cannot quietly turn it into an authority it should not be
+- the product does not regress into “single screenshot guessing” as the default vision path

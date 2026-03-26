@@ -21,11 +21,21 @@ Define one deterministic capture bundle format for before/after visual compariso
   - `captures_after`
   - `target_object`
   - `preset_names`
+  - `truth_summary`
 - define deterministic viewport presets, for example:
   - isometric
   - front
   - side
   - focus-target
+- keep a deliberate view mix instead of one generic screenshot:
+  - at least one wider framing view
+  - at least one target-object-focused view/crop
+  - optional overlay/mask variants if later evaluation needs them
+- keep rendering/capture parameters stable:
+  - fixed shading mode
+  - fixed framing policy
+  - no UI clutter
+  - no random orbit noise
 - keep capture presets reproducible enough for later visual evaluation/goldens
 
 ---
@@ -43,3 +53,4 @@ Define one deterministic capture bundle format for before/after visual compariso
 
 - before/after capture packaging is stable and reusable
 - later vision/evaluation work can rely on deterministic capture presets
+- capture bundles give the vision layer enough structured evidence to compare change, not just describe a single viewport

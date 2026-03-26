@@ -37,3 +37,4 @@ can interpret visual changes against the active build goal.
 
 - active goals can carry reference-image context inside the MCP session model
 - reference-image lifecycle is explicit and bounded before persistent asset management is considered
+- reference context is shaped so local and external vision backends can consume the same normalized session payload

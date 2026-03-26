@@ -22,7 +22,11 @@ Add the first reference-image intake surface for session-scoped use.
 - accept practical inputs such as:
   - local file path
   - uploaded file handle / attachment reference when client/runtime supports it
+- normalize intake into one session-safe internal representation instead of making downstream backends parse arbitrary URLs or one-off file formats
 - store reference metadata plus resolved temp storage paths in a stable session-aware structure
+- keep backend loading separate from reference intake:
+  - reference images resolve to normalized local temp paths / session metadata
+  - model/runtime configuration is handled separately under the vision backend policy
 
 ---
 

@@ -38,6 +38,7 @@ If this wave is done correctly, the repo gains:
 - request-bound vision assistance attached to goal-aware macro/workflow paths
 - session-scoped reference image support
 - deterministic before/after capture bundles for visual comparison
+- a pluggable vision backend path supporting both local and external runtimes
 - a visual interpretation layer that complements, but does not replace, truth tools
 
 ---
@@ -49,9 +50,9 @@ This umbrella covers:
 - one lightweight vision-assist contract and boundary model
 - goal-scoped reference-image session state
 - reference image intake and lifecycle
-- before/after capture packaging
+- before/after capture packaging with deterministic wide and object-focused views
 - macro/workflow integration
-- runtime/model selection and evaluation for the vision layer
+- runtime/model selection and evaluation for the vision layer, including local and external backend options
 
 This umbrella does **not** turn vision into the truth source or router policy owner.
 
@@ -62,6 +63,7 @@ This umbrella does **not** turn vision into the truth source or router policy ow
 - vision assistance is bounded, goal-aware, and request-scoped
 - reference images can be attached to the active modeling goal
 - macro/workflow reports can include visual interpretation and recommended next checks
+- vision quality does not depend on ad hoc single viewport screenshots; it runs on deterministic capture bundles plus truth summaries
 - deterministic inspection/assertion remains the source of correctness
 
 ---
