@@ -18,7 +18,9 @@ from .capture_runtime import (
     DEFAULT_CAPTURE_PRESET_SPECS,
     CapturePresetSpec,
     build_capture_bundle,
+    capture_scene_state,
     capture_stage_images,
+    restore_scene_state,
 )
 from .config import (
     VisionBackendKind,
@@ -63,10 +65,12 @@ __all__ = [
     "attach_vision_artifacts",
     "build_reference_capture_images",
     "build_capture_bundle",
+    "capture_scene_state",
     "capture_stage_images",
     "build_vision_request_from_capture_bundle",
     "select_reference_records_for_target",
     "build_vision_runtime_config",
     "create_vision_backend",
+    "restore_scene_state",
     "run_vision_assist",
 ]

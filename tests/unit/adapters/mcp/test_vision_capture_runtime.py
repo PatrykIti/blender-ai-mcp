@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import base64
 
-from server.adapters.mcp.vision import build_capture_bundle, capture_stage_images
+from server.adapters.mcp.vision import (
+    build_capture_bundle,
+    capture_scene_state,
+    capture_stage_images,
+    restore_scene_state,
+)
 
 
 class _Handler:
@@ -12,6 +17,7 @@ class _Handler:
         self.calls: list[dict] = []
         self.focus_calls: list[dict] = []
         self.orbit_calls: list[dict] = []
+        self.hide_calls: list[dict] = []
 
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         self.calls.append(
@@ -39,6 +45,20 @@ class _Handler:
             }
         )
         return "orbit ok"
+
+    def snapshot_state(self, include_mesh_stats=False, include_materials=False):
+        return {
+            "snapshot": {
+                "objects": [
+                    {"name": "Housing", "visible": True},
+                    {"name": "Panel", "visible": False},
+                ]
+            }
+        }
+
+    def hide_object(self, object_name: str, hide: bool = True, hide_render: bool = False):
+        self.hide_calls.append({"object_name": object_name, "hide": hide, "hide_render": hide_render})
+        return "hide ok"
 
 
 def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypatch):
@@ -97,3 +117,24 @@ def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     assert bundle.target_object == "Housing"
     assert bundle.preset_names == ["context_wide", "target_focus", "target_oblique"]
     assert bundle.truth_summary == {"dimensions": [1, 2, 3]}
+
+
+def test_capture_scene_state_collects_visibility_snapshot():
+    handler = _Handler()
+
+    state = capture_scene_state(handler)
+
+    assert state.visibility_snapshot == {"Housing": True, "Panel": False}
+    assert state.view_state is None
+
+
+def test_restore_scene_state_replays_visibility_snapshot():
+    handler = _Handler()
+    state = capture_scene_state(handler)
+
+    restore_scene_state(handler, state)
+
+    assert handler.hide_calls == [
+        {"object_name": "Housing", "hide": False, "hide_render": False},
+        {"object_name": "Panel", "hide": True, "hide_render": False},
+    ]

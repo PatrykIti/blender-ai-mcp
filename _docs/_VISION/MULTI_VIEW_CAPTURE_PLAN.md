@@ -84,6 +84,13 @@ What is still weak for the true long-term target:
 - exact save/restore of viewport/view state
 - exact save/restore of prior visibility state without lossy fallback
 
+Current implementation note:
+
+- the repo now has a first internal capture-state scaffold that can snapshot and
+  restore visibility from scene snapshot data
+- view-state restoration is still intentionally marked as the next missing
+  helper, not solved prematurely with a weak public API
+
 So the practical implementation path is:
 
 1. keep using current scene atomics for the first bounded multi-view path

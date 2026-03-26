@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
@@ -31,6 +31,14 @@ class CapturePresetSpec:
     orbit_horizontal: float | None = None
     orbit_vertical: float | None = None
     view_kind: Literal["wide", "focus"] = "wide"
+
+
+@dataclass(frozen=True, slots=True)
+class CaptureSceneState:
+    """Internal reversible scene/view state used by capture orchestration."""
+
+    visibility_snapshot: dict[str, bool] | None = None
+    view_state: dict[str, Any] | None = None
 
 
 DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
@@ -120,6 +128,48 @@ def capture_stage_images(
         )
 
     return captures
+
+
+def capture_scene_state(scene_handler) -> CaptureSceneState:
+    """Capture best-effort reversible scene/view state for bounded capture flows.
+
+    Current scaffold stores visibility from `snapshot_state()` when available and
+    leaves `view_state` empty until a dedicated view-state helper exists.
+    """
+
+    visibility_snapshot: dict[str, bool] | None = None
+    try:
+        snapshot = scene_handler.snapshot_state(include_mesh_stats=False, include_materials=False)
+        raw_snapshot = snapshot.get("snapshot", snapshot) if isinstance(snapshot, dict) else {}
+        objects = raw_snapshot.get("objects", []) if isinstance(raw_snapshot, dict) else []
+        if isinstance(objects, list):
+            visibility_snapshot = {
+                str(item["name"]): bool(item.get("visible", True))
+                for item in objects
+                if isinstance(item, dict) and "name" in item
+            }
+    except Exception:
+        visibility_snapshot = None
+
+    return CaptureSceneState(
+        visibility_snapshot=visibility_snapshot,
+        view_state=None,
+    )
+
+
+def restore_scene_state(scene_handler, state: CaptureSceneState) -> None:
+    """Best-effort restore for bounded capture orchestration side effects.
+
+    Current scaffold restores visibility only. View-state restoration remains an
+    explicit future step once a dedicated internal helper exists.
+    """
+
+    if state.visibility_snapshot:
+        for object_name, visible in state.visibility_snapshot.items():
+            try:
+                scene_handler.hide_object(object_name, hide=not visible, hide_render=False)
+            except Exception:
+                continue
 
 
 def build_capture_bundle(
