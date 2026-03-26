@@ -1,8 +1,10 @@
 # TASK-120-04-01: Macro Regression and Benchmark Pack
 
 **Parent:** [TASK-120-04](./TASK-120-04_Macro_Validation_And_Adoption.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The first macro wave is now protected by a focused regression/benchmark pack: shared macro contracts and structured delivery are covered in unit tests, guided-surface benchmark baselines assert payload/tool-count behavior plus reduced finishing decision points on `llm-guided`, and Blender-backed E2E regressions now exist for `macro_cutout_recess`, `macro_finish_form`, and `macro_relative_layout`.
 
 ---
 

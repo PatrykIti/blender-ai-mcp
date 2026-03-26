@@ -22,6 +22,10 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > Prefer workflow/macro tools over raw low-level atomics, and treat
 > before/after capture plus deterministic verification as the normal way to
 > judge whether a change is actually correct.
+> For bounded recess/opening work, prefer `macro_cutout_recess` over manually
+> creating and placing cutters plus boolean cleanup.
+> For bounded relative placement/alignment work, prefer `macro_relative_layout`
+> over transform-by-transform placement.
 > For bounded finishing stacks, prefer `macro_finish_form` over manually
 > chaining `modeling_add_modifier(...)` calls.
 >
@@ -60,3 +64,6 @@ Interpretation:
 - manual/no-router mode is an explicit exception, not the default product model
 - a typical guided macro flow is:
   `router_set_goal(...)` -> `browse_workflows(...)` / `search_tools(...)` -> `macro_finish_form` -> `inspect_scene(...)` + measure/assert verification
+- other first-choice bounded macro paths include:
+  `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
+  `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work

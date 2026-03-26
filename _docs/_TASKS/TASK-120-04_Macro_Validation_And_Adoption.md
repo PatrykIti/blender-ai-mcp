@@ -1,10 +1,10 @@
 # TASK-120-04: Macro Validation and Adoption
 
 **Parent:** [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first macro ship slice now has user-facing docs/examples and a Blender-backed E2E regression file for `macro_cutout_recess`. The remaining work in this cluster is the broader macro regression/benchmark pack and later prompt/workflow integration once more macro tools exist.
+**Completion Summary:** The first macro wave is now validated and adopted into the public product surface: regression/benchmark coverage protects the macro layer, Blender-backed E2E regressions exist for the shipped macros, and prompts/instructions/workflow-facing docs now teach the macro layer as the default bounded working path on `llm-guided`.
 
 ---
 

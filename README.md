@@ -55,6 +55,12 @@ Normal guided flow:
 3. use grouped/public tools such as `check_scene`, `inspect_scene`, or `configure_scene`
 4. verify with inspection plus `scene_measure_*` and `scene_assert_*`
 
+When a bounded modeling intent matches, the default public working layer should be the macro layer:
+
+- `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts
+- `macro_relative_layout` for align/place/contact-gap part layout
+- `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
+
 Current guided bootstrap surface:
 
 - `router_set_goal`

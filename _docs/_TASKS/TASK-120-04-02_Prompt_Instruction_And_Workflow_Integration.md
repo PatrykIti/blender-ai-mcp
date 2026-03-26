@@ -1,8 +1,10 @@
 # TASK-120-04-02: Prompt, Instruction, and Workflow Integration
 
 **Parent:** [TASK-120-04](./TASK-120-04_Macro_Validation_And_Adoption.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The public teaching surface now presents the macro layer as the normal bounded working layer: `llm-guided` runtime instructions explicitly recommend `macro_cutout_recess`, `macro_relative_layout`, and `macro_finish_form` before manual atomic chains, prompt templates now show macro-first examples for cutout/layout/finish flows, and public surface doc tests lock those examples in place.
 
 ---
 

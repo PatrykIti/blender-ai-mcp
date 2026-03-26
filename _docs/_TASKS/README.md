@@ -47,7 +47,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract, the first macro wave, and guided-surface collapse are shipped; next step is TASK-120-04 validation, benchmarking, and adoption hardening |
 
 ---
 
@@ -55,6 +54,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | 2026-03-26 |
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |

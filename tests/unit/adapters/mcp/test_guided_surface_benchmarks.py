@@ -67,6 +67,16 @@ def _legacy_payload_size() -> int:
     return asyncio.run(run())
 
 
+def _surface_tool_names(surface_profile: str) -> set[str]:
+    server = build_server(surface_profile)
+
+    async def run():
+        tools = await server.list_tools()
+        return {tool.name for tool in tools}
+
+    return asyncio.run(run())
+
+
 def test_guided_surface_phase_baselines_stay_intentional():
     """The hardened guided surface should keep distinct, bounded phase footprints."""
 
@@ -111,3 +121,30 @@ def test_guided_surface_phase_payload_sizes_reflect_curated_growth():
 
     assert inspect_bytes < legacy_bytes
     assert build_bytes < legacy_bytes
+
+
+def test_macro_wave_benchmark_reduces_finishing_decision_points_vs_legacy_flat():
+    """The guided macro layer should reduce the visible finishing-tool decision surface."""
+
+    build_names, _ = _tool_names_and_payload_size(SessionPhase.BUILD)
+    legacy_names = _surface_tool_names("legacy-flat")
+
+    legacy_finishing_choices = {
+        "macro_finish_form",
+        "modeling_add_modifier",
+        "modeling_apply_modifier",
+        "modeling_list_modifiers",
+        "mesh_bevel",
+        "mesh_subdivide",
+        "mesh_smooth",
+    } & legacy_names
+    guided_finishing_choices = {
+        "macro_finish_form",
+        "mesh_bevel",
+        "mesh_subdivide",
+        "mesh_smooth",
+    } & build_names
+
+    assert "macro_finish_form" in guided_finishing_choices
+    assert {"modeling_add_modifier", "modeling_apply_modifier", "modeling_list_modifiers"}.isdisjoint(build_names)
+    assert len(guided_finishing_choices) < len(legacy_finishing_choices)

@@ -41,6 +41,8 @@ WORKFLOW SELECTION (MANDATORY)
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
        * For non-entry tools on `llm-guided`, use search_tools / call_tool on the shaped public surface instead of assuming broad direct visibility.
+       * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
+       * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
        * Ask the user whether to:
@@ -59,6 +61,11 @@ RELIABILITY (STILL REQUIRED)
    * inspect_scene(action="object", target_object="Housing")
    * search_tools(query="measure dimensions assert dimensions viewport")
    * call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})
+- Other first-choice bounded macro patterns on the shaped surface:
+   * search_tools(query="align panel housing gap contact placement")
+   * call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})
+   * search_tools(query="cutout recess opening boolean front face")
+   * call_tool(name="macro_cutout_recess", arguments={"target_object":"Housing","width":0.12,"height":0.06,"depth":0.01,"face":"front","mode":"recess"})
 - Even with Router corrections, verify major milestones:
    * inspect_scene(action="object", target_object=...)
    * search_tools(query="bounding box origin info hierarchy")

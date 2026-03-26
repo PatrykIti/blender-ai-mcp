@@ -617,6 +617,8 @@ Example guided macro flow for finishing:
    - `call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})`
 
 If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
+If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
+If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
 
 ### Modeling Tools
 Geometry creation and editing.

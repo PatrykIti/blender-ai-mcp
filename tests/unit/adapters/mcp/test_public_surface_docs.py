@@ -18,6 +18,9 @@ def test_readme_documents_llm_guided_public_aliases():
         "inspect_scene",
         "configure_scene",
         "browse_workflows",
+        "macro_cutout_recess",
+        "macro_relative_layout",
+        "macro_finish_form",
         "target_object",
         "config",
         "search_query",
@@ -78,7 +81,13 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
     assert "workflow_catalog import" not in workflow_prompt
     assert "router_clear_goal()" not in workflow_prompt
+    assert "macro_cutout_recess" in prompt_readme
+    assert "macro_relative_layout" in prompt_readme
     assert "macro_finish_form" in prompt_readme
+    assert 'search_tools(query="align panel housing gap contact placement")' in workflow_prompt
+    assert 'call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})' in workflow_prompt
+    assert 'search_tools(query="cutout recess opening boolean front face")' in workflow_prompt
+    assert 'call_tool(name="macro_cutout_recess", arguments={"target_object":"Housing","width":0.12,"height":0.06,"depth":0.01,"face":"front","mode":"recess"})' in workflow_prompt
     assert 'search_tools(query="finish housing bevel subdivision shell")' in workflow_prompt
     assert 'call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})' in workflow_prompt
     assert 'call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})' in workflow_prompt

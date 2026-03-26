@@ -182,12 +182,12 @@ Primary local validation commands for TASK-119 public-surface hardening:
 poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_name_resolution.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_aliasing_transform.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/tools/scene/test_scene_create_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/mesh/test_mesh_select_mega.py tests/unit/tools/mesh/test_mesh_select_targeted_mega.py tests/unit/tools/mesh/test_mesh_contracts.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py -q
 ```
 
-Primary local validation commands for TASK-120 macro candidate/contract setup:
+Primary local validation commands for TASK-120 macro regression/benchmark pack:
 
 ```bash
-poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/tools/modeling/test_macro_cutout_recess_mcp.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py -q
+poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/tools/macro/test_macro_finish_form.py tests/unit/tools/macro/test_macro_relative_layout.py tests/unit/tools/modeling/test_macro_cutout_recess_mcp.py tests/unit/tools/modeling/test_macro_finish_form_mcp.py tests/unit/tools/scene/test_macro_relative_layout_mcp.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/router/application/test_intent_classifier.py -q
 
-poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py -q
+poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py tests/e2e/tools/macro/test_macro_finish_form.py tests/e2e/tools/macro/test_macro_relative_layout.py -q
 ```
 
 ---

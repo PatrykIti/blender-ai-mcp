@@ -618,7 +618,7 @@ class SceneHandler:
         """Captures a lightweight JSON snapshot of the scene state."""
         import hashlib
         import json
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         # Collect object data in deterministic order (alphabetical by name)
         objects_data = []
@@ -653,7 +653,7 @@ class SceneHandler:
 
         # Build snapshot payload
         snapshot = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "object_count": len(objects_data),
             "objects": objects_data,
             "active_object": bpy.context.active_object.name if bpy.context.active_object else None,

@@ -4,9 +4,9 @@
 **Category:** Product Surface Expansion / Macro Layer  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-113, TASK-114, TASK-119  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The first macro-design slice and guided-surface collapse are now in place: candidate selection has been grounded in existing workflows, the shared machine-readable macro report envelope exists in code/tests, the first bounded macro wave (`macro_cutout_recess`, `macro_relative_layout`, `macro_finish_form`) is shipped, and `llm-guided` discovery/visibility now prefer the macro layer over low-level atomics. The next step is TASK-120-04 validation, benchmarking, prompt integration, and rollout hardening.
+**Completion Summary:** The first bounded macro layer is now complete and integrated into the guided public surface: candidate selection and shared contracts were formalized, the first macro wave (`macro_cutout_recess`, `macro_relative_layout`, `macro_finish_form`) shipped end-to-end, `llm-guided` visibility/discovery now prefer macro paths over low-level atomics, and validation/adoption coverage protects the macro layer through unit tests, benchmarks, E2E regressions, and public prompt/docs guidance.
 
 ---
 
