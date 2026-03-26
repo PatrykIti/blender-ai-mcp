@@ -55,6 +55,8 @@ This umbrella covers:
 - runtime/model selection and evaluation for the vision layer, including local and external backend options
 
 This umbrella does **not** turn vision into the truth source or router policy owner.
+It also does **not** make a heavyweight vision model a mandatory always-loaded
+server dependency in the core MCP bootstrap path.
 
 ---
 
@@ -64,6 +66,7 @@ This umbrella does **not** turn vision into the truth source or router policy ow
 - reference images can be attached to the active modeling goal
 - macro/workflow reports can include visual interpretation and recommended next checks
 - vision quality does not depend on ad hoc single viewport screenshots; it runs on deterministic capture bundles plus truth summaries
+- the main MCP server remains usable without loading a heavyweight vision model at startup
 - deterministic inspection/assertion remains the source of correctness
 
 ---

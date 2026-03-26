@@ -19,8 +19,14 @@ from server.adapters.mcp.sampling.result_types import (
     RepairSuggestionActionContract,
     RepairSuggestionAssistantContract,
     RepairSuggestionContract,
+    VisionAssistantContract,
+    VisionAssistContract,
+    VisionInputSummaryContract,
+    VisionIssueContract,
+    VisionRecommendedCheckContract,
     to_inspection_assistant_contract,
     to_repair_assistant_contract,
+    to_vision_assistant_contract,
 )
 
 __all__ = [
@@ -34,9 +40,15 @@ __all__ = [
     "RepairSuggestionActionContract",
     "RepairSuggestionAssistantContract",
     "RepairSuggestionContract",
+    "VisionAssistantContract",
+    "VisionAssistContract",
+    "VisionInputSummaryContract",
+    "VisionIssueContract",
+    "VisionRecommendedCheckContract",
     "run_inspection_summary_assistant",
     "run_repair_suggestion_assistant",
     "run_typed_assistant",
     "to_inspection_assistant_contract",
     "to_repair_assistant_contract",
+    "to_vision_assistant_contract",
 ]

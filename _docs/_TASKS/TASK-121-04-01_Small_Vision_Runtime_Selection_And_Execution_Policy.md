@@ -22,6 +22,9 @@ run inside the product.
 - build the runtime as a pluggable backend layer with at least:
   - `transformers_local` for local Hugging Face-style models
   - `openai_compatible_external` for external OpenAI-compatible vision endpoints
+- do not load the selected model in the core MCP server bootstrap path
+- treat vision as an adopted optional capability, not a mandatory baseline dependency like LaBSE
+- prefer lazy backend/model initialization on first real vision use
 - keep backend configuration explicit instead of loading “some file from a link”:
   - local backend should accept `model_id` or `model_path`
   - external backend should accept `base_url`, `model`, and auth config
@@ -37,6 +40,9 @@ run inside the product.
   - what data may be sent and stored
 - prefer request-bound foreground execution for the first release; no background authority
 - align the runtime choice with repo ops constraints and product latency goals
+- keep vision failure-tolerant:
+  - unavailable/disabled backends must not break normal macro/workflow execution
+  - startup without any vision runtime configured must remain a first-class supported mode
 
 ---
 
@@ -54,3 +60,4 @@ run inside the product.
 - one explicit lightweight runtime/model strategy is chosen
 - runtime policy is documented before deep integration work continues
 - the product can swap between local and external vision backends without changing the macro/workflow result contract
+- server bootstrap remains lightweight and does not require loading a large local VLM to start the MCP stack

@@ -20,6 +20,7 @@ not router policy or correctness truth.
   - claiming geometric correctness without deterministic checks
   - acting as the primary discovery/catalog authority
   - acting on one ad hoc viewport screenshot as if it were sufficient truth about the scene
+  - becoming an always-loaded mandatory bootstrap dependency like the repo's core semantic layer
 - require vision outputs to recommend deterministic follow-up checks when
   correctness matters
 - require macro/workflow integrations to pass:
@@ -46,3 +47,4 @@ not router policy or correctness truth.
 - the vision layer has an explicit non-truth, non-policy boundary
 - future integrations cannot quietly turn it into an authority it should not be
 - the product does not regress into “single screenshot guessing” as the default vision path
+- the product does not regress into “always load a huge VLM on server start” as the default runtime behavior

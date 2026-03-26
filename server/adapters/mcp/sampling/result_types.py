@@ -16,8 +16,15 @@ AssistantTerminalStatus = Literal[
     "masked_error",
     "rejected_by_policy",
 ]
-AssistantCapabilitySource = Literal["client", "fallback_handler", "unavailable", "unknown"]
-AssistantResponsibility = Literal["inspection_summary", "repair_suggestion", "diagnostic_summary"]
+AssistantCapabilitySource = Literal[
+    "client",
+    "fallback_handler",
+    "local_runtime",
+    "external_runtime",
+    "unavailable",
+    "unknown",
+]
+AssistantResponsibility = Literal["inspection_summary", "repair_suggestion", "diagnostic_summary", "vision_assist"]
 
 
 class AssistantBudgetContract(MCPContract):
@@ -67,6 +74,47 @@ class RepairSuggestionContract(MCPContract):
     truth_source: Literal["router_diagnostics", "inspection_required"] = "router_diagnostics"
 
 
+class VisionIssueContract(MCPContract):
+    """One likely visible issue identified by the bounded vision layer."""
+
+    category: str
+    summary: str
+    severity: Literal["high", "medium", "low"] = "medium"
+
+
+class VisionRecommendedCheckContract(MCPContract):
+    """One deterministic follow-up check recommended after visual interpretation."""
+
+    tool_name: str
+    reason: str
+    priority: Literal["high", "normal"] = "normal"
+
+
+class VisionInputSummaryContract(MCPContract):
+    """Compact summary of the visual inputs used by the backend."""
+
+    before_image_count: int = 0
+    after_image_count: int = 0
+    reference_image_count: int = 0
+    target_object: str | None = None
+
+
+class VisionAssistContract(MCPContract):
+    """Structured bounded vision result for macro/workflow reporting."""
+
+    backend_kind: Literal["transformers_local", "openai_compatible_external", "unknown"] = "unknown"
+    model_name: str | None = None
+    goal_summary: str
+    reference_match_summary: str | None = None
+    visible_changes: list[str]
+    likely_issues: list[VisionIssueContract] = []
+    recommended_checks: list[VisionRecommendedCheckContract] = []
+    confidence: float | None = None
+    captures_used: list[str] = []
+    input_summary: VisionInputSummaryContract | None = None
+    truth_source: Literal["vision_assist"] = "vision_assist"
+
+
 class InspectionSummaryAssistantContract(MCPContract):
     """Structured envelope for inspection-summary assistant executions."""
 
@@ -91,6 +139,19 @@ class RepairSuggestionAssistantContract(MCPContract):
     rejection_reason: str | None = None
     budget: AssistantBudgetContract
     result: RepairSuggestionContract | None = None
+
+
+class VisionAssistantContract(MCPContract):
+    """Structured envelope for bounded vision-assist executions."""
+
+    status: AssistantTerminalStatus
+    assistant_name: str
+    message: str
+    request_id: str | None = None
+    capability_source: AssistantCapabilitySource | None = None
+    rejection_reason: str | None = None
+    budget: AssistantBudgetContract
+    result: VisionAssistContract | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -169,6 +230,23 @@ def to_repair_assistant_contract(
     )
 
 
+def to_vision_assistant_contract(
+    outcome: AssistantRunResult[VisionAssistContract],
+) -> VisionAssistantContract:
+    """Convert a generic runner/runtime outcome into the public vision envelope."""
+
+    return VisionAssistantContract(
+        status=outcome.status,
+        assistant_name=outcome.assistant_name,
+        message=outcome.message,
+        request_id=outcome.request_id,
+        capability_source=outcome.capability_source,
+        rejection_reason=outcome.rejection_reason,
+        budget=outcome.budget,
+        result=cast(VisionAssistContract | None, outcome.result),
+    )
+
+
 __all__ = [
     "AssistantBudgetContract",
     "AssistantCapabilitySource",
@@ -181,6 +259,12 @@ __all__ = [
     "RepairSuggestionActionContract",
     "RepairSuggestionAssistantContract",
     "RepairSuggestionContract",
+    "VisionAssistantContract",
+    "VisionAssistContract",
+    "VisionInputSummaryContract",
+    "VisionIssueContract",
+    "VisionRecommendedCheckContract",
     "to_inspection_assistant_contract",
     "to_repair_assistant_contract",
+    "to_vision_assistant_contract",
 ]

@@ -27,6 +27,7 @@ _ALLOWED_RESPONSIBILITIES = {
     "inspection_summary",
     "repair_suggestion",
     "diagnostic_summary",
+    "vision_assist",
 }
 
 INSPECTION_SUMMARIZER_POLICY = AssistantPolicy(

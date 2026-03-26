@@ -315,6 +315,8 @@ def is_router_enabled() -> bool:
 
 _parameter_store_instance = None
 _parameter_resolver_instance = None
+_vision_runtime_config_instance = None
+_vision_backend_resolver_instance = None
 
 
 def get_parameter_store():
@@ -347,6 +349,35 @@ def get_parameter_resolver():
             store=get_parameter_store(),
         )
     return _parameter_resolver_instance
+
+
+def get_vision_runtime_config():
+    """Provider for typed vision runtime config.
+
+    Lazy and lightweight: configuration only, no model loading.
+    """
+
+    global _vision_runtime_config_instance
+    if _vision_runtime_config_instance is None:
+        from server.adapters.mcp.vision import build_vision_runtime_config
+
+        _vision_runtime_config_instance = build_vision_runtime_config(get_config())
+    return _vision_runtime_config_instance
+
+
+def get_vision_backend_resolver():
+    """Provider for lazy, failure-tolerant vision backend resolution.
+
+    This intentionally does not resolve or load a heavyweight backend during
+    server bootstrap.
+    """
+
+    global _vision_backend_resolver_instance
+    if _vision_backend_resolver_instance is None:
+        from server.adapters.mcp.vision import LazyVisionBackendResolver
+
+        _vision_backend_resolver_instance = LazyVisionBackendResolver(get_vision_runtime_config())
+    return _vision_backend_resolver_instance
 
 
 # --- Router Handler ---
