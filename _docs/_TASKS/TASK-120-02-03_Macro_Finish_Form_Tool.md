@@ -1,8 +1,10 @@
 # TASK-120-02-03: Macro Finish Form Tool
 
 **Parent:** [TASK-120-02](./TASK-120-02_First_Macro_Wave_Form_Cutout_And_Layout.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `macro_finish_form` now exists as a bounded server-side finishing macro: it applies one controlled preset stack for rounded housing, panel finishing, shell thickening, or smooth subdivision, and returns the shared structured macro report with explicit verification follow-ups.
 
 ---
 

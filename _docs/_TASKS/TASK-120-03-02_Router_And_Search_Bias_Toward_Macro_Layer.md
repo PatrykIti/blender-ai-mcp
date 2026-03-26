@@ -1,8 +1,10 @@
 # TASK-120-03-02: Router and Search Bias Toward Macro Layer
 
 **Parent:** [TASK-120-03](./TASK-120-03_Guided_Surface_Collapse_And_Discovery_Preference.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Discovery and router-side metadata now bias toward the macro layer before atomics. `macro_relative_layout` and `macro_finish_form` gained stronger multilingual intent metadata, `search_tools` regression coverage now proves macro-first ranking for Polish and English macro prompts, and the router intent classifier now consumes metadata descriptions plus related-tool hints so the same bias reaches classifier-driven routing.
 
 ---
 

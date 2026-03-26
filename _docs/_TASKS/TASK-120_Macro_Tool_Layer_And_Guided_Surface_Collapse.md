@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-114, TASK-119  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The first macro-design slice is now in place and the first two bounded macro tools exist in code/tests/docs: candidate selection has been grounded in existing workflows, the shared machine-readable macro report envelope exists in code/tests, `macro_cutout_recess` has Blender-backed regression coverage, and `macro_relative_layout` now covers bounded part placement/layout over existing scene/modeling tools. The next step is `macro_finish_form`, then using the broader macro layer to collapse the guided surface further.
+**Progress Update:** The first macro-design slice and guided-surface collapse are now in place: candidate selection has been grounded in existing workflows, the shared machine-readable macro report envelope exists in code/tests, the first bounded macro wave (`macro_cutout_recess`, `macro_relative_layout`, `macro_finish_form`) is shipped, and `llm-guided` discovery/visibility now prefer the macro layer over low-level atomics. The next step is TASK-120-04 validation, benchmarking, prompt integration, and rollout hardening.
 
 ---
 

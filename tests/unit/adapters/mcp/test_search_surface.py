@@ -245,6 +245,29 @@ def test_build_phase_search_prefers_macro_finish_tool_over_hidden_modifier_atomi
     assert "modeling_list_modifiers" not in names
 
 
+@pytest.mark.parametrize(
+    ("query", "expected_tool"),
+    [
+        ("ustaw nogę pod blatem z kontaktem na osi Z", "macro_relative_layout"),
+        ("wyrównaj panel do obudowy i zostaw małą szczelinę", "macro_relative_layout"),
+        ("zaokrąglij obudowę i dodaj lekki bevel oraz subdivision", "macro_finish_form"),
+        ("pogrub tę skorupę jednym makrem wykończenia", "macro_finish_form"),
+    ],
+)
+def test_build_phase_search_prefers_macro_tools_for_polish_macro_queries(query: str, expected_tool: str):
+    """Polish macro-intent queries should surface the bounded macro layer before atomics."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        return await server.call_tool("search_tools", {"query": query})
+
+    payload = _decode_tool_result(asyncio.run(run()))
+
+    assert payload
+    assert payload[0]["name"] == expected_tool
+
+
 def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     """call_tool should execute the same public alias path as a direct surface call."""
 

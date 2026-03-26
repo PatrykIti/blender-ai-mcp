@@ -47,7 +47,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract plus `macro_cutout_recess` and `macro_relative_layout` are shipped; next step is `macro_finish_form`, then deeper guided-surface collapse |
+| [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | Candidate matrix/shared contract, the first macro wave, and guided-surface collapse are shipped; next step is TASK-120-04 validation, benchmarking, and adoption hardening |
 
 ---
 

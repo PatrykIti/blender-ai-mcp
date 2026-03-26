@@ -269,6 +269,15 @@ class IntentClassifier(IIntentClassifier):
             if keywords:
                 texts.append(" ".join(keywords))
 
+            # Add descriptive text and adjacent-tool hints from router metadata.
+            description = tool_meta.get("description")
+            if description:
+                texts.append(str(description))
+
+            related_tools = tool_meta.get("related_tools", [])
+            if related_tools:
+                texts.append(" ".join(str(tool) for tool in related_tools))
+
             # Add tool name (replace underscores with spaces)
             texts.append(tool_name.replace("_", " "))
 

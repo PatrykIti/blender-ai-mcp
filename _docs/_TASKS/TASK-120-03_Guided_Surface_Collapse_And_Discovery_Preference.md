@@ -1,8 +1,10 @@
 # TASK-120-03: Guided Surface Collapse and Discovery Preference
 
 **Parent:** [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The guided public surface is now materially collapsed and macro-biased: visibility hides more low-level atomics behind phased escape hatches, search-first discovery prefers the bounded macro layer, and router/classifier metadata follows the same macro-before-atomic preference.
 
 ---
 

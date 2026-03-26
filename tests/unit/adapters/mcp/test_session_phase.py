@@ -20,6 +20,10 @@ from server.adapters.mcp.session_phase import (
     SessionPhase,
     coerce_session_phase,
 )
+from server.adapters.mcp.transforms.visibility_policy import (
+    GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
+    GUIDED_ENTRY_TOOLS,
+)
 
 
 @dataclass
@@ -142,7 +146,14 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
 
     calls = ctx.state["_visibility_calls"]
     assert calls[0] == ("reset_visibility", {})
-    assert any(name == "enable_components" and call["tags"] == {"phase:build"} for name, call in calls[1:])
+    assert any(
+        name == "enable_components" and call["names"] == set(GUIDED_ENTRY_TOOLS)
+        for name, call in calls[1:]
+    )
+    assert any(
+        name == "enable_components" and call["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
+        for name, call in calls[1:]
+    )
 
 
 def test_update_session_from_router_goal_persists_pending_elicitation_fields():

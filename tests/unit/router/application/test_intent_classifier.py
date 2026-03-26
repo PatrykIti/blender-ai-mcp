@@ -151,6 +151,32 @@ def sample_metadata():
     }
 
 
+@pytest.fixture
+def macro_bias_metadata():
+    """Create metadata that exercises macro-first enrichment paths."""
+
+    return {
+        "macro_relative_layout": {
+            "sample_prompts": [
+                "align the panel to the housing and leave a small gap",
+                "wyrównaj panel do obudowy i zostaw małą szczelinę",
+            ],
+            "keywords": ["align", "gap", "wyrównaj", "szczelina"],
+            "description": "Prefer this macro over manual transform chaining for bounded relative placement.",
+            "related_tools": ["scene_measure_gap", "scene_assert_contact"],
+        },
+        "macro_finish_form": {
+            "sample_prompts": [
+                "give this housing a rounded finish without hand-building the modifier stack",
+                "zaokrąglij obudowę i dodaj lekki bevel oraz subdivision",
+            ],
+            "keywords": ["finish", "rounded", "zaokrąglij", "wygładź"],
+            "description": "Prefer this macro over manual bevel-plus-subdivision chains.",
+            "related_tools": ["inspect_scene", "scene_assert_dimensions"],
+        },
+    }
+
+
 class TestIntentClassifierInit:
     """Tests for IntentClassifier initialization."""
 
@@ -195,6 +221,19 @@ class TestIntentClassifierLoadEmbeddings:
         # Check tool texts were extracted
         assert len(classifier._tool_texts) == 3
         assert "mesh_extrude_region" in classifier._tool_texts
+
+    def test_tool_texts_include_description_and_related_tool_hints(self, classifier, macro_bias_metadata):
+        """Router classifier should consume richer metadata fields used for macro-first biasing."""
+
+        classifier.load_tool_embeddings(macro_bias_metadata)
+
+        layout_texts = classifier._tool_texts["macro_relative_layout"]
+        finish_texts = classifier._tool_texts["macro_finish_form"]
+
+        assert any("manual transform chaining" in text for text in layout_texts)
+        assert any("scene_measure_gap scene_assert_contact" == text for text in layout_texts)
+        assert any("manual bevel-plus-subdivision chains" in text for text in finish_texts)
+        assert any("inspect_scene scene_assert_dimensions" == text for text in finish_texts)
 
 
 class TestIntentClassifierPredict:

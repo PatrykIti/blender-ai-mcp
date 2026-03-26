@@ -3,11 +3,31 @@
   "category": "scene",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["layout", "align", "place", "offset", "contact", "gap"],
+  "keywords": [
+    "layout",
+    "align",
+    "place",
+    "position",
+    "offset",
+    "contact",
+    "gap",
+    "corner",
+    "under",
+    "wyrównaj",
+    "ustaw",
+    "przesuń",
+    "szczelina",
+    "odstęp",
+    "kontakt",
+    "narożnik"
+  ],
   "sample_prompts": [
     "place the leg under the tabletop with contact on Z",
     "align the panel to the housing and leave a small gap",
-    "move this part to the top-right corner of the base"
+    "move this part to the top-right corner of the base",
+    "ustaw nogę pod blatem z kontaktem na osi Z",
+    "wyrównaj panel do obudowy i zostaw małą szczelinę",
+    "przesuń ten element do prawego górnego rogu podstawy"
   ],
   "parameters": {
     "moving_object": {"type": "string", "required": true},
@@ -22,12 +42,13 @@
   },
   "related_tools": [
     "scene_get_bounding_box",
-    "modeling_transform_object",
     "scene_measure_alignment",
     "scene_measure_gap",
     "scene_assert_contact",
-    "scene_get_viewport"
+    "scene_get_viewport",
+    "macro_finish_form",
+    "macro_cutout_recess"
   ],
   "patterns": [],
-  "description": "Bounded macro that places one object relative to another using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform."
+  "description": "Bounded macro that places one object relative to another using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform. Prefer this macro over manual transform-by-transform placement when one relative layout intent matches."
 }

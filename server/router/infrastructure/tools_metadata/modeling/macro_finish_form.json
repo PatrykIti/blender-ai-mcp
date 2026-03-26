@@ -3,11 +3,33 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["finish", "bevel", "subsurf", "solidify", "shell", "smooth", "rounded", "panel", "housing"],
+  "keywords": [
+    "finish",
+    "bevel",
+    "subsurf",
+    "subdivision",
+    "solidify",
+    "shell",
+    "smooth",
+    "rounded",
+    "panel",
+    "housing",
+    "thicken",
+    "wykończenie",
+    "zaokrąglij",
+    "sfazuj",
+    "wygładź",
+    "pogrub",
+    "skorupa",
+    "obudowa"
+  ],
   "sample_prompts": [
     "give this housing a rounded finish without hand-building the modifier stack",
     "apply a light panel finish preset to this part",
-    "thicken this shell with one finishing macro"
+    "thicken this shell with one finishing macro",
+    "zaokrąglij obudowę i dodaj lekki bevel oraz subdivision",
+    "pogrub tę skorupę jednym makrem wykończenia",
+    "wygładź i sfazuj ten obiekt jednym presetem"
   ],
   "parameters": {
     "target_object": {"type": "string", "required": true},
@@ -27,5 +49,5 @@
     "macro_cutout_recess"
   ],
   "patterns": [],
-  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify combinations. Prefer this macro over manual modifier-by-modifier setup when one preset matches the intent."
+  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify combinations. Prefer this macro over manual modifier-by-modifier or bevel-plus-subdivision chaining when one preset matches the intent."
 }

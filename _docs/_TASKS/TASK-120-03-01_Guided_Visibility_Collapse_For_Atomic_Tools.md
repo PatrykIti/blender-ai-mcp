@@ -1,8 +1,10 @@
 # TASK-120-03-01: Guided Visibility Collapse for Atomic Tools
 
 **Parent:** [TASK-120-03](./TASK-120-03_Guided_Surface_Collapse_And_Discovery_Preference.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `llm-guided` visibility is now deliberately smaller and more phase-shaped: bootstrap stays entry-only/search-first, build exposes the bounded macro layer plus targeted escape hatches, and hidden low-level modifier atomics remain unavailable on the shaped public surface.
 
 ---
 
