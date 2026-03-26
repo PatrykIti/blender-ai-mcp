@@ -8,6 +8,7 @@ import importlib
 import pytest
 
 from server.adapters.mcp.vision import (
+    MLXLocalVisionBackend,
     TransformersLocalVisionBackend,
     VisionBackendUnavailableError,
     VisionImageInput,
@@ -43,6 +44,8 @@ def _config(**overrides) -> Config:
         "VISION_LOCAL_MODEL_PATH": None,
         "VISION_LOCAL_DEVICE": "cpu",
         "VISION_LOCAL_DTYPE": "auto",
+        "VISION_MLX_MODEL_ID": None,
+        "VISION_MLX_MODEL_PATH": None,
         "VISION_EXTERNAL_BASE_URL": None,
         "VISION_EXTERNAL_MODEL": None,
         "VISION_EXTERNAL_API_KEY": None,
@@ -250,6 +253,131 @@ def test_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
     monkeypatch.setattr(importlib, "import_module", _fake_import)
 
     backend = TransformersLocalVisionBackend(build_vision_runtime_config(_config()))
+
+    with pytest.raises(VisionBackendUnavailableError, match="valid JSON"):
+        asyncio.run(backend.analyze(request))
+
+
+def test_mlx_local_backend_reports_missing_optional_dependency(monkeypatch, tmp_path):
+    image_path = tmp_path / "mlx.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
+
+    def _fake_import(name: str):
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = MLXLocalVisionBackend(
+        build_vision_runtime_config(
+            _config(
+                VISION_PROVIDER="mlx_local",
+                VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                VISION_LOCAL_MODEL_ID=None,
+            )
+        )
+    )
+
+    with pytest.raises(VisionBackendUnavailableError, match="mlx-vlm"):
+        asyncio.run(backend.analyze(request))
+
+
+def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
+    image_path = tmp_path / "mlx2.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
+
+    class FakeMLXVLM:
+        @staticmethod
+        def load(model_source):
+            return "model", "processor"
+
+        @staticmethod
+        def generate(model, processor, *args, **kwargs):
+            return '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+
+    class FakePromptUtils:
+        @staticmethod
+        def apply_chat_template(processor, config, prompt_payload, num_images=0):
+            return f"PROMPT::{num_images}"
+
+    class FakeUtils:
+        @staticmethod
+        def load_config(model_source):
+            return {"model_source": model_source}
+
+    def _fake_import(name: str):
+        if name == "mlx_vlm":
+            return FakeMLXVLM
+        if name == "mlx_vlm.prompt_utils":
+            return FakePromptUtils
+        if name == "mlx_vlm.utils":
+            return FakeUtils
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = MLXLocalVisionBackend(
+        build_vision_runtime_config(
+            _config(
+                VISION_PROVIDER="mlx_local",
+                VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                VISION_LOCAL_MODEL_ID=None,
+            )
+        )
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    assert result["backend_kind"] == "mlx_local"
+    assert result["model_name"] == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
+    assert result["goal_summary"] == "Closer to the goal."
+
+
+def test_mlx_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
+    image_path = tmp_path / "mlx3.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
+
+    class FakeMLXVLM:
+        @staticmethod
+        def load(model_source):
+            return "model", "processor"
+
+        @staticmethod
+        def generate(model, processor, *args, **kwargs):
+            return "not-json"
+
+    class FakePromptUtils:
+        @staticmethod
+        def apply_chat_template(processor, config, prompt_payload, num_images=0):
+            return "PROMPT"
+
+    class FakeUtils:
+        @staticmethod
+        def load_config(model_source):
+            return {"model_source": model_source}
+
+    def _fake_import(name: str):
+        if name == "mlx_vlm":
+            return FakeMLXVLM
+        if name == "mlx_vlm.prompt_utils":
+            return FakePromptUtils
+        if name == "mlx_vlm.utils":
+            return FakeUtils
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = MLXLocalVisionBackend(
+        build_vision_runtime_config(
+            _config(
+                VISION_PROVIDER="mlx_local",
+                VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                VISION_LOCAL_MODEL_ID=None,
+            )
+        )
+    )
 
     with pytest.raises(VisionBackendUnavailableError, match="valid JSON"):
         asyncio.run(backend.analyze(request))

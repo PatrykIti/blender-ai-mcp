@@ -6,6 +6,7 @@ import pytest
 
 from server.adapters.mcp.vision import (
     LazyVisionBackendResolver,
+    MLXLocalVisionBackend,
     OpenAICompatibleVisionBackend,
     TransformersLocalVisionBackend,
     VisionBackend,
@@ -43,6 +44,8 @@ def _base_config(**overrides) -> Config:
         "VISION_LOCAL_MODEL_PATH": None,
         "VISION_LOCAL_DEVICE": "cpu",
         "VISION_LOCAL_DTYPE": "auto",
+        "VISION_MLX_MODEL_ID": None,
+        "VISION_MLX_MODEL_PATH": None,
         "VISION_EXTERNAL_BASE_URL": None,
         "VISION_EXTERNAL_MODEL": None,
         "VISION_EXTERNAL_API_KEY": None,
@@ -88,6 +91,21 @@ def test_build_vision_runtime_config_supports_external_openai_compatible_backend
     assert runtime.openai_compatible_external.base_url == "http://localhost:8000/v1"
 
 
+def test_build_vision_runtime_config_supports_mlx_local_backend():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="mlx_local",
+        VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.enabled is True
+    assert runtime.provider == "mlx_local"
+    assert runtime.active_model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
+    assert runtime.mlx_local is not None
+
+
 def test_enabled_local_runtime_requires_model_source():
     config = _base_config(
         VISION_ENABLED=True,
@@ -105,6 +123,16 @@ def test_enabled_external_runtime_requires_endpoint_target():
     )
 
     with pytest.raises(ValueError, match="requires openai_compatible_external config"):
+        build_vision_runtime_config(config)
+
+
+def test_enabled_mlx_runtime_requires_model_source():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="mlx_local",
+    )
+
+    with pytest.raises(ValueError, match="requires mlx_local config"):
         build_vision_runtime_config(config)
 
 
@@ -205,3 +233,19 @@ def test_default_resolver_returns_external_stub_backend():
 
     assert isinstance(backend, OpenAICompatibleVisionBackend)
     assert backend.model_name == "gemma-3-27b-vision"
+
+
+def test_default_resolver_returns_mlx_stub_backend():
+    runtime = build_vision_runtime_config(
+        _base_config(
+            VISION_ENABLED=True,
+            VISION_PROVIDER="mlx_local",
+            VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            VISION_LOCAL_MODEL_ID=None,
+        )
+    )
+
+    backend = LazyVisionBackendResolver(runtime).resolve_default()
+
+    assert isinstance(backend, MLXLocalVisionBackend)
+    assert backend.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"

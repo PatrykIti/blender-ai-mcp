@@ -5,6 +5,7 @@
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionImageInput, VisionRequest
 from .backends import (
+    MLXLocalVisionBackend,
     OpenAICompatibleVisionBackend,
     TransformersLocalVisionBackend,
     create_vision_backend,
@@ -28,6 +29,7 @@ from .capture_runtime import (
 )
 from .config import (
     VisionBackendKind,
+    VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
     VisionTransformersLocalConfig,
@@ -58,6 +60,8 @@ __all__ = [
     "VisionBackendUnavailableError",
     "VisionImageInput",
     "LazyVisionBackendResolver",
+    "MLXLocalVisionBackend",
+    "VisionMLXLocalConfig",
     "OpenAICompatibleVisionBackend",
     "TransformersLocalVisionBackend",
     "VisionOpenAICompatibleConfig",

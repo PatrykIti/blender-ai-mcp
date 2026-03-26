@@ -33,6 +33,8 @@ def _config(**overrides) -> Config:
         "VISION_LOCAL_MODEL_PATH": None,
         "VISION_LOCAL_DEVICE": "cpu",
         "VISION_LOCAL_DTYPE": "auto",
+        "VISION_MLX_MODEL_ID": None,
+        "VISION_MLX_MODEL_PATH": None,
         "VISION_EXTERNAL_BASE_URL": None,
         "VISION_EXTERNAL_MODEL": None,
         "VISION_EXTERNAL_API_KEY": None,

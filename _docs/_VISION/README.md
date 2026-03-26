@@ -70,6 +70,13 @@ Install the local vision runtime only when you want to run local VLMs:
 poetry install --with vision --no-interaction
 ```
 
+For Apple Silicon local testing, the repo also supports an optional
+`mlx_local` path:
+
+```bash
+poetry install --with mlx --no-interaction
+```
+
 ## Boundary Rules
 
 The vision layer is not the truth source.

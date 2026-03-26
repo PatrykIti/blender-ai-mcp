@@ -50,6 +50,9 @@ sentencepiece = ">=0.2.0,<0.3.0"
 torch = ">=2.4,<3.0.0"
 transformers = ">=4.56.0,<5.0.0"
 
+[tool.poetry.group.mlx.dependencies]
+mlx-vlm = ">=0.3.9,<0.4.0"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

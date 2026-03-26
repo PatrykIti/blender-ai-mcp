@@ -17,6 +17,7 @@ from server.infrastructure.config import Config
 from .backend import VisionBackend, VisionBackendUnavailableError
 from .backends import create_vision_backend
 from .config import (
+    VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
     VisionTransformersLocalConfig,
@@ -33,6 +34,13 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             model_path=config.VISION_LOCAL_MODEL_PATH,
             device=config.VISION_LOCAL_DEVICE,
             dtype=config.VISION_LOCAL_DTYPE,
+        )
+
+    mlx_local_config = None
+    if config.VISION_MLX_MODEL_ID or config.VISION_MLX_MODEL_PATH:
+        mlx_local_config = VisionMLXLocalConfig(
+            model_id=config.VISION_MLX_MODEL_ID,
+            model_path=config.VISION_MLX_MODEL_PATH,
         )
 
     external_config = None
@@ -52,6 +60,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         max_tokens=config.VISION_MAX_TOKENS,
         timeout_seconds=config.VISION_TIMEOUT_SECONDS,
         transformers_local=local_config,
+        mlx_local=mlx_local_config,
         openai_compatible_external=external_config,
     )
 

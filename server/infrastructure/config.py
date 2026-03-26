@@ -33,7 +33,7 @@ class Config(BaseSettings):
     VISION_ENABLED: bool = Field(default=False, description="Enable bounded vision-assist runtime")
     VISION_PROVIDER: str = Field(
         default="transformers_local",
-        description="Vision backend provider: transformers_local|openai_compatible_external",
+        description="Vision backend provider: transformers_local|mlx_local|openai_compatible_external",
     )
     VISION_ALLOW_ON_GUIDED: bool = Field(default=True, description="Allow vision assistance on llm-guided")
     VISION_MAX_IMAGES: int = Field(default=8, gt=0, description="Maximum images per bounded vision request")
@@ -43,6 +43,8 @@ class Config(BaseSettings):
     VISION_LOCAL_MODEL_PATH: str | None = Field(default=None, description="Local HF vision model path")
     VISION_LOCAL_DEVICE: str = Field(default="cpu", description="Device for local vision backend")
     VISION_LOCAL_DTYPE: str = Field(default="auto", description="Dtype for local vision backend")
+    VISION_MLX_MODEL_ID: str | None = Field(default=None, description="Local MLX vision model id")
+    VISION_MLX_MODEL_PATH: str | None = Field(default=None, description="Local MLX vision model path")
     VISION_EXTERNAL_BASE_URL: str | None = Field(default=None, description="Base URL for external OpenAI-compatible vision")
     VISION_EXTERNAL_MODEL: str | None = Field(default=None, description="Model name for external OpenAI-compatible vision")
     VISION_EXTERNAL_API_KEY: str | None = Field(default=None, description="Inline API key for external vision endpoint")
@@ -65,8 +67,8 @@ class Config(BaseSettings):
     def validate_vision_provider(self):
         """Keep the vision provider vocabulary explicit."""
 
-        if self.VISION_PROVIDER not in {"transformers_local", "openai_compatible_external"}:
-            raise ValueError("VISION_PROVIDER must be one of: transformers_local, openai_compatible_external")
+        if self.VISION_PROVIDER not in {"transformers_local", "mlx_local", "openai_compatible_external"}:
+            raise ValueError("VISION_PROVIDER must be one of: transformers_local, mlx_local, openai_compatible_external")
         return self
 
 
@@ -97,6 +99,8 @@ def get_config() -> Config:
         VISION_LOCAL_MODEL_PATH=os.getenv("VISION_LOCAL_MODEL_PATH") or None,
         VISION_LOCAL_DEVICE=os.getenv("VISION_LOCAL_DEVICE", "cpu"),
         VISION_LOCAL_DTYPE=os.getenv("VISION_LOCAL_DTYPE", "auto"),
+        VISION_MLX_MODEL_ID=os.getenv("VISION_MLX_MODEL_ID") or None,
+        VISION_MLX_MODEL_PATH=os.getenv("VISION_MLX_MODEL_PATH") or None,
         VISION_EXTERNAL_BASE_URL=os.getenv("VISION_EXTERNAL_BASE_URL") or None,
         VISION_EXTERNAL_MODEL=os.getenv("VISION_EXTERNAL_MODEL") or None,
         VISION_EXTERNAL_API_KEY=os.getenv("VISION_EXTERNAL_API_KEY") or None,

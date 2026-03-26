@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-VisionBackendKind = Literal["transformers_local", "openai_compatible_external"]
+VisionBackendKind = Literal["transformers_local", "mlx_local", "openai_compatible_external"]
 
 
 class VisionTransformersLocalConfig(BaseModel):
@@ -52,6 +52,23 @@ class VisionOpenAICompatibleConfig(BaseModel):
         return self
 
 
+class VisionMLXLocalConfig(BaseModel):
+    """Configuration for local Apple Silicon MLX vision runtimes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_id: str | None = None
+    model_path: str | None = None
+
+    @model_validator(mode="after")
+    def validate_source(self) -> "VisionMLXLocalConfig":
+        """Require one explicit model source for MLX runtimes."""
+
+        if not self.model_id and not self.model_path:
+            raise ValueError("mlx_local backend requires model_id or model_path")
+        return self
+
+
 class VisionRuntimeConfig(BaseModel):
     """Top-level runtime configuration for bounded vision assistance."""
 
@@ -64,6 +81,7 @@ class VisionRuntimeConfig(BaseModel):
     max_tokens: int = Field(default=400, ge=1)
     timeout_seconds: float = Field(default=20.0, gt=0)
     transformers_local: VisionTransformersLocalConfig | None = None
+    mlx_local: VisionMLXLocalConfig | None = None
     openai_compatible_external: VisionOpenAICompatibleConfig | None = None
 
     @model_validator(mode="after")
@@ -75,6 +93,9 @@ class VisionRuntimeConfig(BaseModel):
 
         if self.provider == "transformers_local" and self.transformers_local is None:
             raise ValueError("enabled vision runtime with provider=transformers_local requires transformers_local config")
+
+        if self.provider == "mlx_local" and self.mlx_local is None:
+            raise ValueError("enabled vision runtime with provider=mlx_local requires mlx_local config")
 
         if self.provider == "openai_compatible_external" and self.openai_compatible_external is None:
             raise ValueError(
@@ -88,6 +109,8 @@ class VisionRuntimeConfig(BaseModel):
 
         if self.provider == "transformers_local":
             return self.transformers_local
+        if self.provider == "mlx_local":
+            return self.mlx_local
         return self.openai_compatible_external
 
     @property
@@ -98,5 +121,7 @@ class VisionRuntimeConfig(BaseModel):
         if active is None:
             return None
         if isinstance(active, VisionTransformersLocalConfig):
+            return active.model_id or active.model_path
+        if isinstance(active, VisionMLXLocalConfig):
             return active.model_id or active.model_path
         return active.model

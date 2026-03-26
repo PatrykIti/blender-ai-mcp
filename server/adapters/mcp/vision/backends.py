@@ -273,6 +273,124 @@ class TransformersLocalVisionBackend(VisionBackend):
         )
 
 
+class MLXLocalVisionBackend(VisionBackend):
+    """Lazy local backend for Apple Silicon MLX vision runtimes."""
+
+    def __init__(self, runtime_config: VisionRuntimeConfig) -> None:
+        if runtime_config.mlx_local is None:
+            raise VisionBackendUnavailableError("mlx_local backend is not configured.")
+        self._runtime_config = runtime_config
+        self._mlx_config = runtime_config.mlx_local
+        self._runtime_modules: tuple[Any, Any, Any] | None = None
+        self._model: Any | None = None
+        self._processor: Any | None = None
+        self._model_config: Any | None = None
+
+    @property
+    def backend_kind(self):
+        return "mlx_local"
+
+    @property
+    def model_name(self) -> str:
+        return self._mlx_config.model_id or self._mlx_config.model_path or "unknown-mlx-model"
+
+    def _resolve_model_source(self) -> str:
+        return self._mlx_config.model_id or self._mlx_config.model_path or self.model_name
+
+    def _ensure_runtime_modules(self) -> tuple[Any, Any, Any]:
+        if self._runtime_modules is not None:
+            return self._runtime_modules
+
+        try:
+            mlx_vlm = importlib.import_module("mlx_vlm")
+            prompt_utils = importlib.import_module("mlx_vlm.prompt_utils")
+            utils = importlib.import_module("mlx_vlm.utils")
+        except ModuleNotFoundError as exc:
+            raise VisionBackendUnavailableError(
+                "mlx_local backend requires optional runtime dependency: mlx-vlm"
+            ) from exc
+
+        self._runtime_modules = (mlx_vlm, prompt_utils, utils)
+        return self._runtime_modules
+
+    def _ensure_local_components(self) -> tuple[Any, Any, Any]:
+        mlx_vlm, prompt_utils, utils = self._ensure_runtime_modules()
+        if self._model is not None and self._processor is not None and self._model_config is not None:
+            return mlx_vlm, prompt_utils, utils
+
+        model_source = self._resolve_model_source()
+        try:
+            self._model, self._processor = mlx_vlm.load(model_source)
+            self._model_config = utils.load_config(model_source)
+        except Exception as exc:
+            raise VisionBackendUnavailableError(f"Failed to load MLX vision runtime: {exc}") from exc
+
+        return mlx_vlm, prompt_utils, utils
+
+    def _build_prompt_payload(self, request: VisionRequest) -> str:
+        payload = {
+            "goal": request.goal,
+            "target_object": request.target_object,
+            "prompt_hint": request.prompt_hint,
+            "truth_summary": request.truth_summary,
+            "metadata": request.metadata,
+            "images": [{"role": image.role, "label": image.label} for image in request.images],
+        }
+        return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
+
+    async def analyze(self, request: VisionRequest) -> dict[str, object]:
+        mlx_vlm, prompt_utils, _utils = self._ensure_local_components()
+        if self._model is None or self._processor is None or self._model_config is None:
+            raise VisionBackendUnavailableError("MLX local vision runtime failed to initialize.")
+
+        image_paths = [image.path for image in request.images]
+        prompt_payload = self._build_prompt_payload(request)
+
+        try:
+            formatted_prompt = prompt_utils.apply_chat_template(
+                self._processor,
+                self._model_config,
+                prompt_payload,
+                num_images=len(image_paths),
+            )
+
+            try:
+                output_text = mlx_vlm.generate(
+                    self._model,
+                    self._processor,
+                    formatted_prompt,
+                    image_paths,
+                    verbose=False,
+                    max_tokens=self._runtime_config.max_tokens,
+                )
+            except TypeError:
+                output_text = mlx_vlm.generate(
+                    self._model,
+                    self._processor,
+                    prompt=formatted_prompt,
+                    image=image_paths,
+                    verbose=False,
+                    max_tokens=self._runtime_config.max_tokens,
+                )
+
+            if not output_text:
+                raise VisionBackendUnavailableError("MLX local vision runtime returned no output.")
+            parsed_content = json.loads(_unwrap_json_text(str(output_text)))
+        except VisionBackendUnavailableError:
+            raise
+        except json.JSONDecodeError as exc:
+            raise VisionBackendUnavailableError("MLX local vision runtime did not return valid JSON content.") from exc
+        except Exception as exc:
+            raise VisionBackendUnavailableError(f"MLX local vision inference failed: {exc}") from exc
+
+        return _normalize_assist_payload(
+            backend_kind=self.backend_kind,
+            model_name=self.model_name,
+            request=request,
+            parsed=parsed_content,
+        )
+
+
 class OpenAICompatibleVisionBackend(VisionBackend):
     """Lazy external backend stub for OpenAI-compatible vision endpoints."""
 
@@ -393,6 +511,8 @@ def create_vision_backend(runtime_config: VisionRuntimeConfig) -> VisionBackend:
 
     if runtime_config.provider == "transformers_local":
         return TransformersLocalVisionBackend(runtime_config)
+    if runtime_config.provider == "mlx_local":
+        return MLXLocalVisionBackend(runtime_config)
     if runtime_config.provider == "openai_compatible_external":
         return OpenAICompatibleVisionBackend(runtime_config)
     raise VisionBackendUnavailableError(f"Unsupported vision backend provider '{runtime_config.provider}'.")
