@@ -121,6 +121,8 @@ class TransformersLocalVisionBackend(VisionBackend):
         self._runtime_config = runtime_config
         self._local_config = runtime_config.transformers_local
         self._runtime_modules: tuple[Any, Any] | None = None
+        self._processor: Any | None = None
+        self._model: Any | None = None
 
     @property
     def backend_kind(self):
@@ -145,10 +147,129 @@ class TransformersLocalVisionBackend(VisionBackend):
         self._runtime_modules = (transformers, torch)
         return self._runtime_modules
 
+    def _resolve_model_source(self) -> str:
+        return self._local_config.model_id or self._local_config.model_path or self.model_name
+
+    def _resolve_torch_dtype(self, torch_module: Any):
+        dtype_name = str(self._local_config.dtype or "auto").lower()
+        if dtype_name == "auto":
+            return None
+        mapping = {
+            "float32": getattr(torch_module, "float32", None),
+            "float16": getattr(torch_module, "float16", None),
+            "bfloat16": getattr(torch_module, "bfloat16", None),
+        }
+        resolved = mapping.get(dtype_name)
+        if resolved is None:
+            raise VisionBackendUnavailableError(f"Unsupported local vision dtype '{self._local_config.dtype}'")
+        return resolved
+
+    def _ensure_local_components(self) -> tuple[Any, Any, Any]:
+        transformers, torch_module = self._ensure_runtime_modules()
+        if self._processor is not None and self._model is not None:
+            return transformers, torch_module, self._processor
+
+        processor_cls = getattr(transformers, "AutoProcessor", None)
+        model_cls = getattr(transformers, "AutoModelForImageTextToText", None)
+        if processor_cls is None or model_cls is None:
+            raise VisionBackendUnavailableError(
+                "transformers_local backend requires AutoProcessor and AutoModelForImageTextToText support"
+            )
+
+        model_source = self._resolve_model_source()
+        load_kwargs: dict[str, Any] = {}
+        torch_dtype = self._resolve_torch_dtype(torch_module)
+        if torch_dtype is not None:
+            load_kwargs["torch_dtype"] = torch_dtype
+
+        try:
+            self._processor = processor_cls.from_pretrained(model_source)
+            self._model = model_cls.from_pretrained(model_source, **load_kwargs)
+            if self._local_config.device != "auto" and hasattr(self._model, "to"):
+                self._model = self._model.to(self._local_config.device)
+        except Exception as exc:
+            raise VisionBackendUnavailableError(f"Failed to load local vision runtime: {exc}") from exc
+
+        return transformers, torch_module, self._processor
+
+    def _build_local_messages(self, request: VisionRequest) -> list[dict[str, Any]]:
+        image_items = [{"type": "image", "path": image.path} for image in request.images]
+        prompt_payload = {
+            "goal": request.goal,
+            "target_object": request.target_object,
+            "prompt_hint": request.prompt_hint,
+            "truth_summary": request.truth_summary,
+            "metadata": request.metadata,
+            "images": [{"role": image.role, "label": image.label} for image in request.images],
+        }
+        return [
+            {"role": "system", "content": [{"type": "text", "text": _VISION_SYSTEM_PROMPT}]},
+            {
+                "role": "user",
+                "content": [
+                    *image_items,
+                    {"type": "text", "text": json.dumps(prompt_payload, ensure_ascii=True, sort_keys=True, indent=2)},
+                ],
+            },
+        ]
+
+    def _move_inputs_to_device(self, inputs: Any, device: Any) -> Any:
+        if hasattr(inputs, "to"):
+            return inputs.to(device)
+        if isinstance(inputs, dict):
+            moved: dict[str, Any] = {}
+            for key, value in inputs.items():
+                moved[key] = value.to(device) if hasattr(value, "to") else value
+            return moved
+        return inputs
+
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
-        self._ensure_runtime_modules()
-        raise VisionBackendUnavailableError(
-            "transformers_local backend resolved its optional runtime dependencies, but inference is not implemented yet."
+        _transformers, _torch_module, processor = self._ensure_local_components()
+        model = self._model
+        if model is None:
+            raise VisionBackendUnavailableError("Local vision model failed to initialize.")
+        if not hasattr(processor, "apply_chat_template") or not hasattr(processor, "batch_decode"):
+            raise VisionBackendUnavailableError("Local vision processor does not expose the required chat/decode methods.")
+
+        messages = self._build_local_messages(request)
+
+        try:
+            inputs = processor.apply_chat_template(
+                messages,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+                add_generation_prompt=True,
+            )
+            model_device = getattr(model, "device", self._local_config.device)
+            inputs = self._move_inputs_to_device(inputs, model_device)
+            output_ids = model.generate(**inputs, max_new_tokens=self._runtime_config.max_tokens)
+            input_ids = getattr(inputs, "input_ids", None)
+            if input_ids is None and isinstance(inputs, dict):
+                input_ids = inputs.get("input_ids")
+            if input_ids is None:
+                raise VisionBackendUnavailableError("Local vision inputs did not expose input_ids for decoding.")
+            generated_ids = [output[len(prompt_ids) :] for prompt_ids, output in zip(input_ids, output_ids)]
+            output_text = processor.batch_decode(
+                generated_ids,
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True,
+            )
+            if not output_text:
+                raise VisionBackendUnavailableError("Local vision runtime returned no decoded text.")
+            parsed_content = json.loads(_unwrap_json_text(str(output_text[0])))
+        except VisionBackendUnavailableError:
+            raise
+        except json.JSONDecodeError as exc:
+            raise VisionBackendUnavailableError("Local vision runtime did not return valid JSON content.") from exc
+        except Exception as exc:
+            raise VisionBackendUnavailableError(f"Local vision inference failed: {exc}") from exc
+
+        return _normalize_assist_payload(
+            backend_kind=self.backend_kind,
+            model_name=self.model_name,
+            request=request,
+            parsed=parsed_content,
         )
 
 

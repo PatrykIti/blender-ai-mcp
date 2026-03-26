@@ -52,6 +52,16 @@ Current image-budget assumption:
 - this leaves room for before/after capture sets plus a small number of
   goal-scoped reference images
 
+## Local Runtime Setup
+
+The local `transformers_local` backend is intentionally optional.
+
+Install the local vision runtime only when you want to run local VLMs:
+
+```bash
+poetry install --with vision --no-interaction
+```
+
 ## Boundary Rules
 
 The vision layer is not the truth source.

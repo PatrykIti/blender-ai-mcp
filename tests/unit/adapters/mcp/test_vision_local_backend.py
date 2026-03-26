@@ -87,7 +87,7 @@ def test_local_backend_analyze_imports_runtime_lazily_and_fails_cleanly(monkeypa
 
     backend = TransformersLocalVisionBackend(build_vision_runtime_config(_config()))
 
-    with pytest.raises(VisionBackendUnavailableError, match="inference is not implemented yet"):
+    with pytest.raises(VisionBackendUnavailableError, match="AutoProcessor and AutoModelForImageTextToText"):
         asyncio.run(backend.analyze(request))
 
     assert calls == ["transformers", "torch"]
@@ -106,4 +106,150 @@ def test_local_backend_reports_missing_optional_dependencies(monkeypatch, tmp_pa
     backend = TransformersLocalVisionBackend(build_vision_runtime_config(_config()))
 
     with pytest.raises(VisionBackendUnavailableError, match="optional runtime dependencies"):
+        asyncio.run(backend.analyze(request))
+
+
+def test_local_backend_analyze_runs_generic_transformers_flow(monkeypatch, tmp_path):
+    image_path = tmp_path / "before.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="before"),))
+
+    class FakeTensor(list):
+        def to(self, device):
+            return self
+
+    class FakeInputs(dict):
+        def __init__(self):
+            super().__init__({"input_ids": FakeTensor([[1, 2, 3]])})
+            self.input_ids = self["input_ids"]
+
+        def to(self, device):
+            return self
+
+    class FakeProcessor:
+        def __init__(self):
+            self.messages = None
+
+        @classmethod
+        def from_pretrained(cls, model_source):
+            instance = cls()
+            instance.model_source = model_source
+            return instance
+
+        def apply_chat_template(self, messages, **kwargs):
+            self.messages = messages
+            return FakeInputs()
+
+        def batch_decode(self, generated_ids, **kwargs):
+            return [
+                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+            ]
+
+    class FakeModel:
+        device = "cpu"
+
+        @classmethod
+        def from_pretrained(cls, model_source, **kwargs):
+            instance = cls()
+            instance.model_source = model_source
+            instance.kwargs = kwargs
+            return instance
+
+        def to(self, device):
+            self.device = device
+            return self
+
+        def generate(self, **kwargs):
+            return [[1, 2, 3, 4, 5]]
+
+    class FakeTransformers:
+        AutoProcessor = FakeProcessor
+        AutoModelForImageTextToText = FakeModel
+
+    class FakeTorch:
+        float32 = "float32"
+        float16 = "float16"
+        bfloat16 = "bfloat16"
+
+    def _fake_import(name: str):
+        if name == "transformers":
+            return FakeTransformers
+        if name == "torch":
+            return FakeTorch
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = TransformersLocalVisionBackend(
+        build_vision_runtime_config(_config(VISION_LOCAL_DEVICE="cpu", VISION_LOCAL_DTYPE="float16"))
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    assert result["backend_kind"] == "transformers_local"
+    assert result["model_name"] == "Qwen/Qwen3-VL-4B-Instruct"
+    assert result["goal_summary"] == "Closer to the goal."
+    assert result["input_summary"]["before_image_count"] == 1
+    assert backend._processor is not None
+    assert backend._processor.messages is not None
+
+
+def test_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    class FakeInputs(dict):
+        def __init__(self):
+            super().__init__({"input_ids": [[1, 2, 3]]})
+            self.input_ids = self["input_ids"]
+
+        def to(self, device):
+            return self
+
+    class FakeProcessor:
+        @classmethod
+        def from_pretrained(cls, model_source):
+            return cls()
+
+        def apply_chat_template(self, messages, **kwargs):
+            return FakeInputs()
+
+        def batch_decode(self, generated_ids, **kwargs):
+            return ["not-json"]
+
+    class FakeModel:
+        device = "cpu"
+
+        @classmethod
+        def from_pretrained(cls, model_source, **kwargs):
+            return cls()
+
+        def to(self, device):
+            return self
+
+        def generate(self, **kwargs):
+            return [[1, 2, 3, 4]]
+
+    class FakeTransformers:
+        AutoProcessor = FakeProcessor
+        AutoModelForImageTextToText = FakeModel
+
+    class FakeTorch:
+        float32 = "float32"
+        float16 = "float16"
+        bfloat16 = "bfloat16"
+
+    def _fake_import(name: str):
+        if name == "transformers":
+            return FakeTransformers
+        if name == "torch":
+            return FakeTorch
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _fake_import)
+
+    backend = TransformersLocalVisionBackend(build_vision_runtime_config(_config()))
+
+    with pytest.raises(VisionBackendUnavailableError, match="valid JSON"):
         asyncio.run(backend.analyze(request))
