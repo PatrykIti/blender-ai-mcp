@@ -47,6 +47,49 @@ good first multi-view capture path:
 This means the near-term path should prefer composition over inventing a large
 new Blender-side subsystem too early.
 
+## What Still Must Be Created
+
+To reach the real long-term target, the repo still needs one deliberate capture
+orchestration layer on top of the existing atomics.
+
+Recommended shape:
+
+- first build an internal bounded capture orchestrator for:
+  - isolate/focus/orbit/capture/restore
+  - deterministic preset sequencing
+  - before/after bundle assembly
+- only later decide whether that becomes a public MCP tool
+
+Important clarification:
+
+- a full `before/after capture bundle` is naturally tied to a change boundary
+  (for example a macro or workflow step), not to one static instant
+- because of that, the most natural first implementation is:
+  - internal helper / bounded macro-path orchestration
+  - not a broad free-floating public tool that pretends to own both "before"
+    and "after" without controlling the change in between
+
+## Missing Low-Level Capabilities
+
+What we can already do well enough with current atomics:
+
+- focus a target
+- orbit deterministically
+- capture viewport images
+- isolate/show objects
+- collect truth summaries
+
+What is still weak for the true long-term target:
+
+- exact save/restore of viewport/view state
+- exact save/restore of prior visibility state without lossy fallback
+
+So the practical implementation path is:
+
+1. keep using current scene atomics for the first bounded multi-view path
+2. add internal save/restore helpers where state fidelity is insufficient
+3. only later decide whether those helpers deserve public MCP exposure
+
 ## Recommended Product Shape
 
 ### Near-Term
@@ -110,8 +153,10 @@ Vision should interpret the images in that frame, not replace it.
 1. Keep extending deterministic preset coverage on top of the existing
    viewport/camera atomics.
 2. Improve target/view-aware reference selection.
-3. Prove stable before/after bundle generation in unit tests.
-4. Only then consider a richer dedicated scene capture surface or temporary
+3. Add internal save/restore helpers for view/visibility state where the
+   current atomics are insufficient.
+4. Prove stable before/after bundle generation in unit tests.
+5. Only then consider a richer dedicated scene capture surface or temporary
    camera-backed implementation if needed.
 
 ## Non-Goals

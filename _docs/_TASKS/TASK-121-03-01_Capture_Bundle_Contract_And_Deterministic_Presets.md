@@ -33,6 +33,11 @@ Define one deterministic capture bundle format for before/after visual compariso
   - at least one wider framing view
   - at least one target-object-focused view/crop
   - optional overlay/mask variants if later evaluation needs them
+- prefer first implementation as a bounded internal orchestration path around
+  macro/workflow execution rather than a broad free-floating public tool that
+  has to invent both "before" and "after" in isolation
+- add internal save/restore helpers for view and visibility state if current
+  scene atomics are not enough to keep capture side effects bounded
 - keep rendering/capture parameters stable:
   - fixed shading mode
   - fixed framing policy
