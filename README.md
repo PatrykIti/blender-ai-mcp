@@ -135,6 +135,7 @@ The server is moving critical surfaces toward machine-readable payloads instead 
 Current structured-contract baseline includes:
 
 - `macro_cutout_recess`
+- `macro_finish_form`
 - `macro_relative_layout`
 - `scene_create`
 - `scene_configure`

@@ -22,6 +22,8 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > Prefer workflow/macro tools over raw low-level atomics, and treat
 > before/after capture plus deterministic verification as the normal way to
 > judge whether a change is actually correct.
+> For bounded finishing stacks, prefer `macro_finish_form` over manually
+> chaining `modeling_add_modifier(...)` calls.
 >
 > On elicitation-capable clients, missing workflow parameters may be presented as
 > structured clarification UI instead of free-form chat questions. Tool-only clients
@@ -56,3 +58,5 @@ Interpretation:
 
 - normal production LLM usage should prefer the workflow-first path
 - manual/no-router mode is an explicit exception, not the default product model
+- a typical guided macro flow is:
+  `router_set_goal(...)` -> `browse_workflows(...)` / `search_tools(...)` -> `macro_finish_form` -> `inspect_scene(...)` + measure/assert verification

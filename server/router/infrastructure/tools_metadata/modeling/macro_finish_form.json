@@ -3,11 +3,11 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["finish", "bevel", "subsurf", "solidify", "shell", "smooth"],
+  "keywords": ["finish", "bevel", "subsurf", "solidify", "shell", "smooth", "rounded", "panel", "housing"],
   "sample_prompts": [
-    "give this housing a rounded finish",
-    "add a light panel bevel to this part",
-    "thicken this shell without hand-building the modifier stack"
+    "give this housing a rounded finish without hand-building the modifier stack",
+    "apply a light panel finish preset to this part",
+    "thicken this shell with one finishing macro"
   ],
   "parameters": {
     "target_object": {"type": "string", "required": true},
@@ -18,7 +18,14 @@
     "thickness": {"type": "float", "default": null},
     "solidify_offset": {"type": "float", "default": 0.0}
   },
-  "related_tools": ["modeling_add_modifier", "modeling_list_modifiers", "scene_inspect", "scene_get_viewport", "scene_measure_dimensions"],
+  "related_tools": [
+    "scene_inspect",
+    "scene_measure_dimensions",
+    "scene_assert_dimensions",
+    "scene_get_viewport",
+    "macro_relative_layout",
+    "macro_cutout_recess"
+  ],
   "patterns": [],
-  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify modifier combinations."
+  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify combinations. Prefer this macro over manual modifier-by-modifier setup when one preset matches the intent."
 }

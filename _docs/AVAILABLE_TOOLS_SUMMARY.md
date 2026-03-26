@@ -126,6 +126,7 @@ Interpretation rule for future tool waves:
 The current structured-contract baseline covers:
 
 - `macro_cutout_recess`
+- `macro_finish_form`
 - `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
@@ -316,6 +317,7 @@ None.
 | Tool Name | Arguments | Description | Status |
 |-----------|-----------|-------------|--------|
 | `macro_cutout_recess` | `target_object`, `width`, `height`, `depth`, `face`, `offset`, `mode`, `bevel_width`, `bevel_segments`, `cleanup`, `cutter_name` | Bounded macro for cutter creation, placement, optional bevel, boolean application, and helper cleanup on one target object. | ✅ Done |
+| `macro_finish_form` | `target_object`, `preset`, `bevel_width`, `bevel_segments`, `subsurf_levels`, `thickness`, `solidify_offset` | Bounded macro for applying one finishing preset stack such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` without rebuilding the modifier chain manually. | ✅ Done |
 | `macro_relative_layout` | `moving_object`, `reference_object`, `x_mode`, `y_mode`, `z_mode`, `contact_axis`, `contact_side`, `gap`, `offset` | Bounded macro for relative object placement using bbox alignment modes, optional outside-face contact/gap placement, and one deterministic transform. | ✅ Done |
 | `modeling_create_primitive` | `primitive_type`, `size/radius`, `location`, `rotation` | Creates basic shapes (Cube, Sphere, Cylinder, Plane, Cone, Monkey). | ✅ Done |
 | `modeling_transform_object` | `name`, `location`, `rotation`, `scale` | Moves, rotates, or scales an object. | ✅ Done |

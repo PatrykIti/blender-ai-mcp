@@ -78,6 +78,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
     assert "workflow_catalog import" not in workflow_prompt
     assert "router_clear_goal()" not in workflow_prompt
+    assert "macro_finish_form" in prompt_readme
+    assert 'search_tools(query="finish housing bevel subdivision shell")' in workflow_prompt
+    assert 'call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})' in workflow_prompt
+    assert 'call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})' in workflow_prompt
     assert 'inspect_scene(action="object", target_object=...)' in workflow_prompt
 
     assert 'check_scene(query="mode")' in manual_prompt

@@ -41,6 +41,7 @@ WORKFLOW SELECTION (MANDATORY)
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
        * For non-entry tools on `llm-guided`, use search_tools / call_tool on the shaped public surface instead of assuming broad direct visibility.
+       * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
        * Ask the user whether to:
            A) continue in MANUAL mode (use the “Manual Modeling Prompt”), or
@@ -50,6 +51,14 @@ WORKFLOW SELECTION (MANDATORY)
 
 RELIABILITY (STILL REQUIRED)
 - Treat visual interpretation as support, not truth.
+- Typical shaped-surface macro flow:
+   * browse_workflows(action="search", search_query="<goal in user words>")
+   * router_set_goal(goal="<goal in user words>")
+   * search_tools(query="finish housing bevel subdivision shell")
+   * call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})
+   * inspect_scene(action="object", target_object="Housing")
+   * search_tools(query="measure dimensions assert dimensions viewport")
+   * call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})
 - Even with Router corrections, verify major milestones:
    * inspect_scene(action="object", target_object=...)
    * search_tools(query="bounding box origin info hierarchy")

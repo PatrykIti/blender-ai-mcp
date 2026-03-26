@@ -275,6 +275,7 @@ Missing-input handling is now a first-class interaction layer:
 The structured-contract layer now covers the high-value state-heavy MCP surfaces:
 
 - `macro_cutout_recess`
+- `macro_finish_form`
 - `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
@@ -601,7 +602,21 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
 | `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
+| `macro_finish_form` | `target_object` (str), `preset` (str), `bevel_width` (float), `bevel_segments` (int), `subsurf_levels` (int), `thickness` (float), `solidify_offset` (float) | Applies one bounded finishing stack to an object using a preset such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` instead of hand-building the modifier chain. |
 | `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
+
+Example guided macro flow for finishing:
+
+1. `browse_workflows(action="search", search_query="rounded housing finish")`
+2. `router_set_goal(goal="give the housing a rounded finish while keeping the overall size close to the current blockout")`
+3. `search_tools(query="finish housing bevel subdivision shell")`
+4. `call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})`
+5. verify with `inspect_scene(action="object", target_object="Housing")`
+6. then discover and call the right truth-layer check, for example:
+   - `search_tools(query="measure dimensions assert dimensions viewport")`
+   - `call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})`
+
+If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
 
 ### Modeling Tools
 Geometry creation and editing.
