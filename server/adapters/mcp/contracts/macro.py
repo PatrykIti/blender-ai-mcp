@@ -8,6 +8,8 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
+from server.adapters.mcp.contracts.vision import VisionCaptureBundleContract
+from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 
 class MacroActionRecordContract(MCPContract):
@@ -39,6 +41,8 @@ class MacroExecutionReportContract(MCPContract):
     objects_created: list[str] | None = None
     objects_modified: list[str] | None = None
     verification_recommended: list[MacroVerificationRecommendationContract] | None = None
+    capture_bundle: VisionCaptureBundleContract | None = None
+    vision_assistant: VisionAssistantContract | None = None
     requires_followup: bool = False
     error: str | None = None
     assistant: dict[str, Any] | None = None

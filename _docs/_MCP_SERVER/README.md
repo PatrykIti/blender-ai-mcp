@@ -177,6 +177,13 @@ Workflow tools should:
   - what failed
   - what to do next if verification failed
 
+Current contract direction for macro/workflow reports:
+
+- macro report contracts are now being prepared to carry optional
+  `capture_bundle` and `vision_assistant` artifacts
+- this keeps visual interpretation attached to bounded reports instead of
+  exposing vision first as a detached free-floating tool
+
 ## Vision, Measurement, and Assertion
 
 The intended verification model is:
