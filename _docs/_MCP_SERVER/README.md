@@ -186,6 +186,8 @@ Current contract direction for macro/workflow reports:
 - current runtime scaffolding can already attach deterministic `capture_bundle`
   artifacts to macro reports when vision is enabled, even before full model
   inference is wired into those paths
+- MCP macro adapters now have the request-bound attachment point for
+  `vision_assistant` once a macro report already carries a capture bundle
 
 ## Vision, Measurement, and Assertion
 

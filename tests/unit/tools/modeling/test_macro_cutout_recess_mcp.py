@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
@@ -26,12 +27,14 @@ def test_macro_cutout_recess_mcp_tool_returns_structured_contract(monkeypatch):
 
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: Handler())
 
-    result = _macro_cutout_recess_impl(
-        MagicMock(),
-        target_object="BodyShell",
-        width=0.8,
-        height=1.2,
-        depth=0.2,
+    result = asyncio.run(
+        _macro_cutout_recess_impl(
+            MagicMock(),
+            target_object="BodyShell",
+            width=0.8,
+            height=1.2,
+            depth=0.2,
+        )
     )
 
     assert isinstance(result, MacroExecutionReportContract)

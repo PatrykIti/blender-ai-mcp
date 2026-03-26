@@ -5,6 +5,7 @@ from fastmcp import Context
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
+from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_macro_handler, get_modeling_handler
 
@@ -58,7 +59,7 @@ def register_modeling_tools(target: Any) -> Dict[str, Any]:
     return {tool_name: _register_tool(target, impls[tool_name], tool_name) for tool_name in MODELING_PUBLIC_TOOL_NAMES}
 
 
-def _macro_cutout_recess_impl(
+async def _macro_cutout_recess_impl(
     ctx: Context,
     target_object: str,
     width: float,
@@ -144,7 +145,7 @@ def _macro_cutout_recess_impl(
         direct_executor=execute,
     )
     if isinstance(result, MacroExecutionReportContract):
-        return result
+        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
     if isinstance(result, dict):
         if result.get("status") == "failed" or result.get("error"):
             return MacroExecutionReportContract(
@@ -155,7 +156,8 @@ def _macro_cutout_recess_impl(
                 requires_followup=False,
                 error=str(result.get("error") or result),
             )
-        return MacroExecutionReportContract.model_validate(result)
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
     return MacroExecutionReportContract(
         status="failed",
         macro_name="macro_cutout_recess",
@@ -166,7 +168,7 @@ def _macro_cutout_recess_impl(
     )
 
 
-def _macro_finish_form_impl(
+async def _macro_finish_form_impl(
     ctx: Context,
     target_object: str,
     preset: str = "rounded_housing",
@@ -234,7 +236,7 @@ def _macro_finish_form_impl(
         direct_executor=execute,
     )
     if isinstance(result, MacroExecutionReportContract):
-        return result
+        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
     if isinstance(result, dict):
         if result.get("status") == "failed" or result.get("error"):
             return MacroExecutionReportContract(
@@ -245,7 +247,8 @@ def _macro_finish_form_impl(
                 requires_followup=False,
                 error=str(result.get("error") or result),
             )
-        return MacroExecutionReportContract.model_validate(result)
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
     return MacroExecutionReportContract(
         status="failed",
         macro_name="macro_finish_form",

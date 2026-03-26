@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
@@ -26,10 +27,12 @@ def test_macro_relative_layout_mcp_tool_returns_structured_contract(monkeypatch)
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: Handler())
 
-    result = macro_relative_layout(
-        MagicMock(),
-        moving_object="Leg",
-        reference_object="TableTop",
+    result = asyncio.run(
+        macro_relative_layout(
+            MagicMock(),
+            moving_object="Leg",
+            reference_object="TableTop",
+        )
     )
 
     assert isinstance(result, MacroExecutionReportContract)

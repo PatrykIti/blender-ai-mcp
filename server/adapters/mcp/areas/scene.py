@@ -42,6 +42,7 @@ from server.adapters.mcp.tasks.task_bridge import (
 )
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
+from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.di import get_macro_handler, get_scene_handler
@@ -117,7 +118,7 @@ def register_scene_tools(target: Any) -> Dict[str, Any]:
     return {tool_name: _register_existing_tool(target, tool_name) for tool_name in SCENE_PUBLIC_TOOL_NAMES}
 
 
-def macro_relative_layout(
+async def macro_relative_layout(
     ctx: Context,
     moving_object: str,
     reference_object: str,
@@ -195,7 +196,7 @@ def macro_relative_layout(
         direct_executor=execute,
     )
     if isinstance(result, MacroExecutionReportContract):
-        return result
+        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
     if isinstance(result, dict):
         if result.get("status") == "failed" or result.get("error"):
             return MacroExecutionReportContract(
@@ -206,7 +207,8 @@ def macro_relative_layout(
                 requires_followup=False,
                 error=str(result.get("error") or result),
             )
-        return MacroExecutionReportContract.model_validate(result)
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
     return MacroExecutionReportContract(
         status="failed",
         macro_name="macro_relative_layout",

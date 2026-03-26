@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
@@ -26,10 +27,12 @@ def test_macro_finish_form_mcp_tool_returns_structured_contract(monkeypatch):
 
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: Handler())
 
-    result = _macro_finish_form_impl(
-        MagicMock(),
-        target_object="BodyShell",
-        preset="rounded_housing",
+    result = asyncio.run(
+        _macro_finish_form_impl(
+            MagicMock(),
+            target_object="BodyShell",
+            preset="rounded_housing",
+        )
     )
 
     assert isinstance(result, MacroExecutionReportContract)
