@@ -1,8 +1,10 @@
 # TASK-121-04: Lightweight Vision Runtime and Evaluation
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed a first real smoke test, and the next work is shifting from backend plumbing toward real backend comparison, debug harnessing, and stronger prompt/parse policy for local models.
 
 ---
 
@@ -42,3 +44,18 @@ layer.
 - the vision layer has an explicit runtime/model strategy
 - lightweight vision behavior is evaluated and governed before broad rollout
 - backend pluggability exists from the start instead of hard-coding one model vendor/runtime
+
+## Detailed Next Sequence
+
+1. Add a debug harness/script for real backend comparison over the current
+   capture/reference pipeline.
+2. Harden local prompting so local models are explicitly optimized for one
+   bounded JSON contract instead of open-ended description behavior.
+3. Add parse-repair / fallback handling for local outputs that are fenced,
+   partial, empty, or structurally close to the target JSON shape.
+4. Build a repeatable backend matrix around:
+   - `mlx_local`
+   - `transformers_local`
+   - `openai_compatible_external`
+5. Capture qualitative and structured differences before choosing the first
+   production-favored local path.

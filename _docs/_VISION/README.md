@@ -125,3 +125,21 @@ Focused local validation for the current vision/runtime/capture/reference slice:
 ```bash
 poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
 ```
+
+## Debug Harness
+
+The repo now includes a local comparison/debug script:
+
+```bash
+poetry run python scripts/vision_harness.py \
+  --backend mlx_local \
+  --goal "rounded housing" \
+  --bundle-json /path/to/bundle.json \
+  --references-json /path/to/references.json
+```
+
+The harness is intended for:
+
+- comparing `mlx_local`, `transformers_local`, and `openai_compatible_external`
+- checking normalized outputs on the same deterministic bundle
+- catching prompt/parse failures before they are hidden inside a larger MCP flow

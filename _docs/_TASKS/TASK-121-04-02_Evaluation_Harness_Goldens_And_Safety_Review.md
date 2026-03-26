@@ -45,6 +45,8 @@ iterated later.
 
 - `tests/unit/adapters/mcp/`
 - `tests/e2e/`
+- `scripts/`
+- `_docs/_VISION/`
 - `_docs/_TESTS/README.md`
 - `_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md`
 
@@ -54,3 +56,39 @@ iterated later.
 
 - the vision layer has a real evaluation harness, not only qualitative demos
 - governance risks are documented before broad rollout
+
+## Detailed Execution Breakdown
+
+1. Backend comparison harness
+   - run the same deterministic bundle against:
+     - `mlx_local`
+     - `transformers_local`
+     - `openai_compatible_external`
+   - capture both raw and parsed outputs
+
+2. Golden scenarios
+   - minimal synthetic smoke image
+   - one macro finish bundle
+   - one macro layout bundle
+   - one regression / no-meaningful-change bundle
+   - one reference-mismatch bundle
+
+3. Scoring dimensions
+   - JSON validity
+   - field completeness
+   - issue usefulness
+   - deterministic-check usefulness
+   - tendency to hallucinate scene truth
+
+4. Parse-repair evaluation
+   - measure how often local models return:
+     - valid JSON directly
+     - fenced JSON
+     - recoverable malformed JSON
+     - unrecoverable prose
+
+5. Governance notes
+   - document which backend/model combinations are:
+     - stable enough for local experiments
+     - stable enough for guarded feature use
+     - still smoke-test-only

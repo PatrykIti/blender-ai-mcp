@@ -51,7 +51,9 @@ run inside the product.
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
+- `server/adapters/mcp/vision/`
 - `server/adapters/mcp/sampling/`
+- `scripts/`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_TESTS/README.md`
 
@@ -63,3 +65,42 @@ run inside the product.
 - runtime policy is documented before deep integration work continues
 - the product can swap between local and external vision backends without changing the macro/workflow result contract
 - server bootstrap remains lightweight and does not require loading a large local VLM to start the MCP stack
+
+## Detailed Execution Breakdown
+
+1. Runtime families
+   - keep `transformers_local`, `mlx_local`, and `openai_compatible_external`
+     behind one bounded interface
+   - keep each backend optional and lazy
+
+2. Debug harness
+   - add one script that can run the same bundle/reference payload through
+     multiple backends
+   - print/store:
+     - backend name
+     - model name
+     - raw output
+     - parsed output
+     - parse failure reason when relevant
+
+3. Local prompt policy
+   - tighten the system prompt for local models so they optimize for one small
+     JSON object, not conversational explanation
+   - allow backend-specific prompt variants when needed (`mlx_local` vs
+     `transformers_local`)
+
+4. Parse policy
+   - accept:
+     - direct JSON
+     - fenced JSON
+     - near-JSON text that can be deterministically repaired
+   - reject:
+     - prose-only outputs
+     - truth claims beyond the contract boundary
+
+5. Runtime-choice closure
+   - compare at least one real smoke-test candidate per backend family
+   - document whether the first favored local path is:
+     - `mlx_local`
+     - `transformers_local`
+     - or external-first with local still experimental

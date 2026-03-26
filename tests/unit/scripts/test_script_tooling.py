@@ -291,3 +291,55 @@ def test_translate_docs_main_dry_run_and_output_root(tmp_path, monkeypatch, caps
     assert result == 0
     assert (output_root / "pl.md").read_text(encoding="utf-8") == "Translated doc\n"
     assert (output_root / "en.md").read_text(encoding="utf-8") == "This is already English.\n"
+
+
+def test_vision_harness_requires_inputs_and_can_build_bundle_request(tmp_path, monkeypatch, capsys):
+    module = _load_script("vision_harness")
+
+    bundle_path = tmp_path / "bundle.json"
+    bundle_path.write_text(
+        '{"bundle_id":"bundle_1","target_object":"Housing","preset_names":["context_wide"],"captures_before":[{"label":"before_1","image_path":"/tmp/before.jpg","media_type":"image/jpeg"}],"captures_after":[{"label":"after_1","image_path":"/tmp/after.jpg","media_type":"image/jpeg"}]}',
+        encoding="utf-8",
+    )
+    refs_path = tmp_path / "references.json"
+    refs_path.write_text(
+        '{"references":[{"reference_id":"ref_1","goal":"rounded housing","label":"front_reference","media_type":"image/png","source_kind":"local_path","original_path":"/tmp/ref.png","stored_path":"/tmp/ref_stored.png","added_at":"2026-03-26T00:00:00Z"}]}',
+        encoding="utf-8",
+    )
+
+    async def _fake_run(args):
+        request = module._build_request_from_args(args)
+        return [
+            {
+                "backend": "mlx_local",
+                "status": "success",
+                "result": {"goal": request.goal, "image_count": len(request.images)},
+            }
+        ]
+
+    monkeypatch.setattr(module, "_run", _fake_run)
+
+    result = module.main(
+        [
+            "--backend",
+            "mlx_local",
+            "--goal",
+            "rounded housing",
+            "--bundle-json",
+            str(bundle_path),
+            "--references-json",
+            str(refs_path),
+        ]
+    )
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert '"backend": "mlx_local"' in output
+    assert '"image_count": 3' in output
+
+
+def test_vision_harness_rejects_missing_inputs():
+    module = _load_script("vision_harness")
+
+    with pytest.raises(SystemExit):
+        module.main(["--goal", "rounded housing"])
