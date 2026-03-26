@@ -114,6 +114,7 @@ def register():
         rpc_server.register_handler("scene.camera_focus", scene_handler.camera_focus)
         rpc_server.register_handler("scene.get_view_state", scene_handler.get_view_state)
         rpc_server.register_handler("scene.restore_view_state", scene_handler.restore_view_state)
+        rpc_server.register_handler("scene.set_standard_view", scene_handler.set_standard_view)
         # TASK-045: Object Inspection Tools
         rpc_server.register_handler("scene.get_custom_properties", scene_handler.get_custom_properties)
         rpc_server.register_handler("scene.set_custom_property", scene_handler.set_custom_property)

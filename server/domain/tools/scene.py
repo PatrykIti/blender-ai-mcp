@@ -189,6 +189,11 @@ class ISceneTool(ABC):
         """Restores a previously captured 3D viewport state."""
         pass
 
+    @abstractmethod
+    def set_standard_view(self, view_name: str) -> str:
+        """Sets the active 3D viewport to a standard orientation."""
+        pass
+
     # TASK-045: Object Inspection Tools
     @abstractmethod
     def get_custom_properties(self, object_name: str) -> Dict[str, Any]:

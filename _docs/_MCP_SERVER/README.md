@@ -209,8 +209,9 @@ Current scaffold direction:
 
 - the initial deterministic capture scaffold uses a small preset mix the runtime can already produce reliably:
   - `context_wide`
-  - `target_focus`
-  - `target_oblique`
+  - `target_front`
+  - `target_side`
+  - `target_top`
 - broader canonical view sets such as front/side/top/iso remain the target direction as the scene capture path grows
 - capture bundles should carry truth summaries alongside images before the vision layer interprets them
 

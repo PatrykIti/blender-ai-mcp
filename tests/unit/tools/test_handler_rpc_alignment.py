@@ -236,6 +236,16 @@ def test_scene_view_state_handlers_align_with_rpc_commands():
     ]
 
 
+def test_scene_standard_view_handler_aligns_with_rpc_command():
+    rpc = DummyRpc({"scene.set_standard_view": _ok("Set 3D viewport to FRONT view")})
+    handler = SceneToolHandler(rpc)
+
+    result = handler.set_standard_view("FRONT")
+
+    assert result == "Set 3D viewport to FRONT view"
+    assert rpc.calls == [("scene.set_standard_view", {"view_name": "FRONT"})]
+
+
 def test_scene_configure_handlers_align_with_rpc_commands():
     rpc = DummyRpc(
         {

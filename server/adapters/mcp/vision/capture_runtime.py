@@ -28,6 +28,7 @@ class CapturePresetSpec:
     shading: str = "SOLID"
     focus_target: bool = False
     focus_zoom_factor: float = 1.0
+    standard_view: Literal["FRONT", "RIGHT", "TOP"] | None = None
     orbit_horizontal: float | None = None
     orbit_vertical: float | None = None
     view_kind: Literal["wide", "focus"] = "wide"
@@ -51,22 +52,30 @@ DEFAULT_CAPTURE_PRESET_SPECS: tuple[CapturePresetSpec, ...] = (
         view_kind="wide",
     ),
     CapturePresetSpec(
-        name="target_focus",
+        name="target_front",
         width=1280,
         height=960,
         shading="SOLID",
         focus_target=True,
+        standard_view="FRONT",
         view_kind="focus",
     ),
     CapturePresetSpec(
-        name="target_oblique",
+        name="target_side",
         width=1280,
         height=960,
         shading="SOLID",
         focus_target=True,
-        focus_zoom_factor=1.0,
-        orbit_horizontal=35.0,
-        orbit_vertical=15.0,
+        standard_view="RIGHT",
+        view_kind="focus",
+    ),
+    CapturePresetSpec(
+        name="target_top",
+        width=1280,
+        height=960,
+        shading="SOLID",
+        focus_target=True,
+        standard_view="TOP",
         view_kind="focus",
     ),
 )
@@ -87,6 +96,13 @@ def capture_stage_images(
     try:
         for preset in preset_specs:
             focus_target = target_object if preset.focus_target else None
+            if preset is not preset_specs[0]:
+                restore_scene_state(scene_handler, original_state)
+            if preset.standard_view and hasattr(scene_handler, "set_standard_view"):
+                try:
+                    scene_handler.set_standard_view(preset.standard_view)
+                except Exception:
+                    pass
             if focus_target and hasattr(scene_handler, "camera_focus"):
                 try:
                     scene_handler.camera_focus(focus_target, zoom_factor=preset.focus_zoom_factor)

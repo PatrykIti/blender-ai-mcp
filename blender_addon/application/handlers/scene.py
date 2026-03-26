@@ -1458,6 +1458,32 @@ class SceneHandler:
 
         return "Restored 3D viewport state"
 
+    def set_standard_view(self, view_name):
+        """Sets the active 3D viewport to a standard orientation."""
+        resolved = str(view_name).upper()
+        if resolved not in {"FRONT", "RIGHT", "TOP"}:
+            raise ValueError("view_name must be one of FRONT, RIGHT, TOP")
+
+        view_area = None
+        view_region = None
+
+        for area in bpy.context.screen.areas:
+            if area.type == "VIEW_3D":
+                view_area = area
+                for region in area.regions:
+                    if region.type == "WINDOW":
+                        view_region = region
+                        break
+                break
+
+        if not view_area or not view_region:
+            return "No 3D viewport found. Standard view requires an active 3D view."
+
+        with bpy.context.temp_override(area=view_area, region=view_region):
+            bpy.ops.view3d.view_axis(type=resolved)
+
+        return f"Set 3D viewport to {resolved} view"
+
     # TASK-045: Object Inspection Tools
     def get_custom_properties(self, object_name):
         """Gets custom properties (metadata) from an object."""

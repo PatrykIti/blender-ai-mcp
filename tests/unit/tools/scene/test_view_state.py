@@ -48,3 +48,15 @@ class TestViewState:
         assert self.rv3d.view_distance == 8.0
         assert self.rv3d.view_rotation is not None
         assert self.rv3d.view_perspective == "ORTHO"
+
+    def test_set_standard_view_uses_view_axis_operator(self):
+        self.mock_bpy.ops.view3d = MagicMock()
+        self.mock_bpy.context.temp_override = MagicMock()
+        self.mock_bpy.context.temp_override.return_value.__enter__ = MagicMock()
+        self.mock_bpy.context.temp_override.return_value.__exit__ = MagicMock()
+        self.area.regions = [MagicMock(type="WINDOW")]
+
+        result = self.handler.set_standard_view("FRONT")
+
+        self.mock_bpy.ops.view3d.view_axis.assert_called_once_with(type="FRONT")
+        assert "FRONT" in result

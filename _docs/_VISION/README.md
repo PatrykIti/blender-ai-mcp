@@ -20,8 +20,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - bounded `VisionAssistContract` / `VisionAssistantContract`
 - deterministic capture-bundle contracts and initial runtime presets:
   - `context_wide`
-  - `target_focus`
-  - `target_oblique`
+  - `target_front`
+  - `target_side`
+  - `target_top`
 - goal-scoped `reference_images` session surface
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists

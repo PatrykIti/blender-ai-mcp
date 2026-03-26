@@ -19,6 +19,7 @@ class _Handler:
         self.orbit_calls: list[dict] = []
         self.hide_calls: list[dict] = []
         self.restore_view_state_calls: list[dict] = []
+        self.standard_view_calls: list[str] = []
 
     def get_viewport(self, width=1024, height=768, shading="SOLID", camera_name=None, focus_target=None):
         self.calls.append(
@@ -35,6 +36,10 @@ class _Handler:
     def camera_focus(self, object_name: str, zoom_factor: float = 1.0):
         self.focus_calls.append({"object_name": object_name, "zoom_factor": zoom_factor})
         return "focus ok"
+
+    def set_standard_view(self, view_name: str):
+        self.standard_view_calls.append(view_name)
+        return "view ok"
 
     def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
         self.orbit_calls.append(
@@ -87,26 +92,24 @@ def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypat
         target_object="Housing",
     )
 
-    assert [capture.preset_name for capture in captures] == ["context_wide", "target_focus", "target_oblique"]
+    assert [capture.preset_name for capture in captures] == ["context_wide", "target_front", "target_side", "target_top"]
     assert captures[0].view_kind == "wide"
     assert captures[1].view_kind == "focus"
     assert captures[2].view_kind == "focus"
+    assert captures[3].view_kind == "focus"
     assert captures[0].host_visible_path is not None
     assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_context_wide.jpg").exists()
-    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_focus.jpg").exists()
-    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_oblique.jpg").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_front.jpg").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_side.jpg").exists()
+    assert tmp_path.joinpath("internal", "blender-ai-mcp", "bundle1_before_target_top.jpg").exists()
     assert handler.calls[0]["focus_target"] is None
     assert handler.calls[1]["focus_target"] == "Housing"
     assert handler.calls[2]["focus_target"] == "Housing"
-    assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing"]
-    assert handler.orbit_calls == [
-        {
-            "angle_horizontal": 35.0,
-            "angle_vertical": 15.0,
-            "target_object": "Housing",
-            "target_point": None,
-        }
-    ]
+    assert handler.calls[3]["focus_target"] == "Housing"
+    assert [call["object_name"] for call in handler.focus_calls] == ["Housing", "Housing", "Housing"]
+    assert handler.standard_view_calls == ["FRONT", "RIGHT", "TOP"]
+    assert len(handler.restore_view_state_calls) == 4
+    assert handler.orbit_calls == []
 
 
 def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
@@ -129,7 +132,7 @@ def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     assert bundle.bundle_id == "bundle2"
     assert bundle.goal_id == "goal1"
     assert bundle.target_object == "Housing"
-    assert bundle.preset_names == ["context_wide", "target_focus", "target_oblique"]
+    assert bundle.preset_names == ["context_wide", "target_front", "target_side", "target_top"]
     assert bundle.truth_summary == {"dimensions": [1, 2, 3]}
 
 
@@ -168,15 +171,18 @@ def test_capture_stage_images_restores_state_after_capture(tmp_path, monkeypatch
         target_object="Housing",
     )
 
-    assert handler.restore_view_state_calls == [
-        {
+    assert len(handler.restore_view_state_calls) == 4
+    assert all(
+        call
+        == {
             "available": True,
             "view_location": [1.0, 2.0, 3.0],
             "view_distance": 10.0,
             "view_rotation": [1.0, 0.0, 0.0, 0.0],
             "view_perspective": "PERSP",
         }
-    ]
+        for call in handler.restore_view_state_calls
+    )
     assert handler.hide_calls[-2:] == [
         {"object_name": "Housing", "hide": False, "hide_render": False},
         {"object_name": "Panel", "hide": True, "hide_render": False},
