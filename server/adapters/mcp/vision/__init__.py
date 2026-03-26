@@ -9,7 +9,7 @@ from .backends import (
     TransformersLocalVisionBackend,
     create_vision_backend,
 )
-from .capture import build_vision_request_from_capture_bundle
+from .capture import build_reference_capture_images, build_vision_request_from_capture_bundle
 from .capture_runtime import (
     DEFAULT_CAPTURE_PRESET_SPECS,
     CapturePresetSpec,
@@ -57,6 +57,7 @@ __all__ = [
     "CapturePresetSpec",
     "DEFAULT_CAPTURE_PRESET_SPECS",
     "attach_vision_artifacts",
+    "build_reference_capture_images",
     "build_capture_bundle",
     "capture_stage_images",
     "build_vision_request_from_capture_bundle",

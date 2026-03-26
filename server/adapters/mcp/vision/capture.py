@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
@@ -56,3 +57,27 @@ def build_vision_request_from_capture_bundle(
             "preset_names": list(bundle.preset_names),
         },
     )
+
+
+def build_reference_capture_images(
+    reference_records: Sequence[ReferenceImageRecordContract | dict],
+) -> tuple[VisionCaptureImageContract, ...]:
+    """Normalize stored session references into capture-image contracts."""
+
+    captures: list[VisionCaptureImageContract] = []
+    for record in reference_records:
+        resolved = (
+            record
+            if isinstance(record, ReferenceImageRecordContract)
+            else ReferenceImageRecordContract.model_validate(record)
+        )
+        captures.append(
+            VisionCaptureImageContract(
+                label=resolved.label or resolved.reference_id,
+                image_path=resolved.stored_path,
+                host_visible_path=resolved.host_visible_path,
+                media_type=resolved.media_type,
+                view_kind="reference",
+            )
+        )
+    return tuple(captures)
