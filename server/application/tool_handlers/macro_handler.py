@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from uuid import uuid4
 from typing import Any, Dict, List, Optional
 
+from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.vision.capture_runtime import build_capture_bundle, capture_stage_images
+from server.adapters.mcp.vision.reporting import attach_vision_artifacts
 from server.domain.tools.macro import IMacroTool
 from server.domain.tools.modeling import IModelingTool
 from server.domain.tools.scene import ISceneTool
+from server.infrastructure.config import get_config
 
 
 class MacroToolHandler(IMacroTool):
@@ -54,6 +59,8 @@ class MacroToolHandler(IMacroTool):
         depth_value = self._require_positive(depth, "depth")
         bevel_segments_value = self._require_segments(bevel_segments)
         bevel_width_value = self._require_optional_positive(bevel_width, "bevel_width")
+        bundle_id = self._make_capture_bundle_id("macro_cutout_recess", target_object)
+        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=target_object)
 
         bbox = self._scene.get_bounding_box(target_object, world_space=True)
         cutter_dimensions = self._compute_cutter_dimensions(
@@ -191,7 +198,7 @@ class MacroToolHandler(IMacroTool):
                 }
             )
 
-        return {
+        report = {
             "status": "success",
             "macro_name": "macro_cutout_recess",
             "intent": f"{mode_name} cutout on the {face_name} face of '{target_object}'",
@@ -220,6 +227,14 @@ class MacroToolHandler(IMacroTool):
             ],
             "requires_followup": True,
         }
+        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=target_object)
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=target_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
 
     def relative_layout(
         self,
@@ -248,6 +263,8 @@ class MacroToolHandler(IMacroTool):
 
         if resolved_contact_axis is None and all(mode == "none" for mode in modes.values()):
             raise ValueError("macro_relative_layout needs at least one alignment mode or contact_axis")
+        bundle_id = self._make_capture_bundle_id("macro_relative_layout", moving_object)
+        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=moving_object)
 
         reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
         moving_bbox = self._scene.get_bounding_box(moving_object, world_space=True)
@@ -395,7 +412,7 @@ class MacroToolHandler(IMacroTool):
             intent_parts.append(f"contact {resolved_contact_side} on {resolved_contact_axis}")
             intent_parts.append(f"gap={gap_value:g}")
 
-        return {
+        report = {
             "status": "success",
             "macro_name": "macro_relative_layout",
             "intent": f"Layout '{moving_object}' relative to '{reference_object}' ({', '.join(intent_parts)})",
@@ -405,6 +422,14 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": verification_recommended,
             "requires_followup": True,
         }
+        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=moving_object)
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=moving_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
 
     def finish_form(
         self,
@@ -427,6 +452,8 @@ class MacroToolHandler(IMacroTool):
             thickness=thickness,
             solidify_offset=solidify_offset_value,
         )
+        bundle_id = self._make_capture_bundle_id("macro_finish_form", target_object)
+        captures_before = self._maybe_capture_stage(bundle_id=bundle_id, stage="before", target_object=target_object)
 
         actions_taken: list[Dict[str, Any]] = []
         added_stack: list[Dict[str, Any]] = []
@@ -568,7 +595,7 @@ class MacroToolHandler(IMacroTool):
                 }
             )
 
-        return {
+        report = {
             "status": "success",
             "macro_name": "macro_finish_form",
             "intent": f"Apply '{preset_name}' finishing preset to '{target_object}'",
@@ -578,6 +605,74 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": verification_recommended,
             "requires_followup": True,
         }
+        captures_after = self._maybe_capture_stage(bundle_id=bundle_id, stage="after", target_object=target_object)
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=target_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
+    def _make_capture_bundle_id(self, macro_name: str, target_object: str) -> str:
+        return f"{macro_name}_{target_object}_{uuid4().hex[:8]}"
+
+    def _maybe_capture_stage(
+        self,
+        *,
+        bundle_id: str,
+        stage: str,
+        target_object: str,
+    ):
+        if not get_config().VISION_ENABLED:
+            return None
+        if not hasattr(self._scene, "get_viewport"):
+            return None
+        try:
+            captures = capture_stage_images(
+                self._scene,
+                bundle_id=bundle_id,
+                stage=stage,
+                target_object=target_object,
+            )
+        except Exception:
+            return None
+        return captures or None
+
+    def _build_truth_summary(self, target_object: str) -> Dict[str, Any] | None:
+        summary: dict[str, Any] = {}
+        try:
+            summary["dimensions"] = self._scene.measure_dimensions(target_object, world_space=True)
+        except Exception:
+            pass
+        try:
+            summary["bounding_box"] = self._scene.get_bounding_box(target_object, world_space=True)
+        except Exception:
+            pass
+        return summary or None
+
+    def _finalize_report(
+        self,
+        report_data: Dict[str, Any],
+        *,
+        bundle_id: str,
+        target_object: str,
+        captures_before,
+        captures_after,
+    ) -> Dict[str, Any]:
+        report = MacroExecutionReportContract.model_validate(report_data)
+        if not captures_before or not captures_after:
+            return report.model_dump(exclude_none=True)
+
+        capture_bundle = build_capture_bundle(
+            bundle_id=bundle_id,
+            target_object=target_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+            truth_summary=self._build_truth_summary(target_object),
+        )
+        enriched = attach_vision_artifacts(report, capture_bundle=capture_bundle)
+        return enriched.model_dump(exclude_none=True)
 
     def _normalize_face(self, face: str) -> str:
         value = str(face).lower()

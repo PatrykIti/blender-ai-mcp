@@ -183,6 +183,9 @@ Current contract direction for macro/workflow reports:
   `capture_bundle` and `vision_assistant` artifacts
 - this keeps visual interpretation attached to bounded reports instead of
   exposing vision first as a detached free-floating tool
+- current runtime scaffolding can already attach deterministic `capture_bundle`
+  artifacts to macro reports when vision is enabled, even before full model
+  inference is wired into those paths
 
 ## Vision, Measurement, and Assertion
 

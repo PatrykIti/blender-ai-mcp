@@ -23,8 +23,23 @@ from .config import (
     VisionTransformersLocalConfig,
 )
 from .reporting import attach_vision_artifacts
-from .runner import VISION_ASSIST_POLICY, run_vision_assist
 from .runtime import LazyVisionBackendResolver, build_vision_runtime_config
+
+_RUNNER_EXPORTS = {
+    "VISION_ASSIST_POLICY",
+    "run_vision_assist",
+}
+
+
+def __getattr__(name: str):
+    """Resolve runner exports lazily to avoid package-level cycles."""
+
+    if name not in _RUNNER_EXPORTS:
+        raise AttributeError(name)
+
+    from server.adapters.mcp.vision import runner
+
+    return getattr(runner, name)
 
 __all__ = [
     "VisionBackend",

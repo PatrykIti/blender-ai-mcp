@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-120  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, deterministic capture-bundle input types plus initial runtime presets (`context_wide`, `target_focus`), and macro report contracts prepared to carry optional capture/vision artifacts.
+**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, deterministic capture-bundle input types plus initial runtime presets (`context_wide`, `target_focus`), and a first macro-path integration where macro reports can already carry optional `capture_bundle` artifacts when vision is enabled.
 
 ---
 
