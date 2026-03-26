@@ -104,3 +104,61 @@ def test_select_reference_records_falls_back_to_generic_when_no_object_match():
     selected = select_reference_records_for_target([generic, other], target_object="Housing")
 
     assert [item.reference_id for item in selected] == ["ref_generic"]
+
+
+def test_select_reference_records_prefers_target_view_within_object_matches():
+    object_generic = ReferenceImageRecordContract(
+        reference_id="ref_object_generic",
+        goal="rounded housing",
+        target_object="Housing",
+        media_type="image/png",
+        original_path="/tmp/object_generic.png",
+        stored_path="/tmp/object_generic_stored.png",
+        added_at="2026-03-26T00:00:00Z",
+    )
+    object_view = ReferenceImageRecordContract(
+        reference_id="ref_object_view",
+        goal="rounded housing",
+        target_object="Housing",
+        target_view="target_focus",
+        media_type="image/png",
+        original_path="/tmp/object_view.png",
+        stored_path="/tmp/object_view_stored.png",
+        added_at="2026-03-26T00:00:01Z",
+    )
+
+    selected = select_reference_records_for_target(
+        [object_generic, object_view],
+        target_object="Housing",
+        target_view="target_focus",
+    )
+
+    assert [item.reference_id for item in selected] == ["ref_object_view"]
+
+
+def test_select_reference_records_can_fall_back_to_generic_view_match():
+    generic = ReferenceImageRecordContract(
+        reference_id="ref_generic",
+        goal="rounded housing",
+        media_type="image/png",
+        original_path="/tmp/generic.png",
+        stored_path="/tmp/generic_stored.png",
+        added_at="2026-03-26T00:00:00Z",
+    )
+    generic_view = ReferenceImageRecordContract(
+        reference_id="ref_generic_view",
+        goal="rounded housing",
+        target_view="target_focus",
+        media_type="image/png",
+        original_path="/tmp/generic_view.png",
+        stored_path="/tmp/generic_view_stored.png",
+        added_at="2026-03-26T00:00:01Z",
+    )
+
+    selected = select_reference_records_for_target(
+        [generic, generic_view],
+        target_object="Housing",
+        target_view="target_focus",
+    )
+
+    assert [item.reference_id for item in selected] == ["ref_generic_view"]

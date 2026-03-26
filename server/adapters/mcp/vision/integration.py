@@ -30,9 +30,11 @@ async def maybe_attach_macro_vision(
         return report
 
     session = await get_session_capability_state_async(ctx)
+    target_view = "target_focus" if "target_focus" in report.capture_bundle.preset_names else None
     selected_reference_records = select_reference_records_for_target(
         session.reference_images or [],
         target_object=report.capture_bundle.target_object,
+        target_view=target_view,
     )
     reference_images = build_reference_capture_images(selected_reference_records)
     goal = session.goal or report.intent or report.macro_name

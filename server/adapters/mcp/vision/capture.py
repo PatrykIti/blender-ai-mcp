@@ -87,11 +87,14 @@ def select_reference_records_for_target(
     reference_records: Sequence[ReferenceImageRecordContract | dict],
     *,
     target_object: str | None,
+    target_view: str | None = None,
 ) -> tuple[ReferenceImageRecordContract, ...]:
     """Return the most relevant goal-scoped references for one target object.
 
     Current selection policy is intentionally simple and deterministic:
-    - if there are references explicitly targeting the current object, prefer only those
+    - if there are references explicitly targeting the current object and view, prefer only those
+    - otherwise prefer object-specific references
+    - otherwise fall back to generic references matching the requested view
     - otherwise fall back to generic session references
     - keep insertion order stable
     """
@@ -100,10 +103,31 @@ def select_reference_records_for_target(
         record if isinstance(record, ReferenceImageRecordContract) else ReferenceImageRecordContract.model_validate(record)
         for record in reference_records
     )
-    if target_object is None:
+    if target_object is None and target_view is None:
         return resolved
 
-    targeted = tuple(record for record in resolved if record.target_object == target_object)
-    if targeted:
-        return targeted
-    return tuple(record for record in resolved if record.target_object is None) or resolved
+    if target_object is not None and target_view is not None:
+        targeted_view = tuple(
+            record
+            for record in resolved
+            if record.target_object == target_object and record.target_view == target_view
+        )
+        if targeted_view:
+            return targeted_view
+
+    if target_object is not None:
+        targeted = tuple(record for record in resolved if record.target_object == target_object)
+        if targeted:
+            return targeted
+
+    if target_view is not None:
+        generic_view = tuple(
+            record
+            for record in resolved
+            if record.target_object is None and record.target_view == target_view
+        )
+        if generic_view:
+            return generic_view
+
+    generic = tuple(record for record in resolved if record.target_object is None)
+    return generic or resolved

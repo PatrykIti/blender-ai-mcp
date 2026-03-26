@@ -101,6 +101,8 @@ Use these docs depending on what you need:
   - Canonical policy for `atomic / macro / workflow`, hidden atomic tools, goal-first usage, and vision/assert boundaries.
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
   - Surface profiles, guided aliases, versioned contracts, and runtime/platform guidance.
+- [Vision Layer Docs](./_docs/_VISION/README.md)
+  - Runtime/backends, capture bundles, reference images, and macro/workflow vision integration notes.
 - [Available Tools Summary](./_docs/AVAILABLE_TOOLS_SUMMARY.md)
   - Full inventory and grouped/public tool overview.
 - [Tool Architecture Index](./_docs/TOOLS/README.md)

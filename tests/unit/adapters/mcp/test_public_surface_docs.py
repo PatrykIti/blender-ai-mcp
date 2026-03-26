@@ -22,6 +22,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "macro_cutout_recess",
         "macro_relative_layout",
         "macro_finish_form",
+        "Vision Layer Docs",
         "target_object",
         "config",
         "search_query",
@@ -41,10 +42,24 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "configure_scene",
         "browse_workflows",
         "reference_images",
+        "Vision Layer Docs",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
         "`browse_workflows`",
+    ):
+        assert expected in text
+
+
+def test_vision_docs_exist_and_describe_runtime_scope():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "README.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Vision Layer Docs",
+        "pluggable vision backend strategy",
+        "deterministic capture-bundle inputs",
+        "goal-scoped reference image context",
+        "request-bound attachment of `vision_assistant`",
     ):
         assert expected in text
 

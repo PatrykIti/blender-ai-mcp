@@ -15,6 +15,8 @@ Documentation for the MCP Server (Client Side).
   - Documents provider groups, surface profiles, transform ordering, and the platform regression harness added during TASK-083.
 - **[Tool Layering Policy](./TOOL_LAYERING_POLICY.md)**
   - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
+- **[Vision Layer Docs](../_VISION/README.md)**
+  - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
   - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
   - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
