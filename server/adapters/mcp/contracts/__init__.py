@@ -10,12 +10,15 @@ from .macro import (
     MacroVerificationRecommendationContract,
 )
 from .output_schema import get_output_schema
+from .vision import VisionCaptureBundleContract, VisionCaptureImageContract
 
 __all__ = [
     "MCPContract",
     "MacroActionRecordContract",
     "MacroExecutionReportContract",
     "MacroVerificationRecommendationContract",
+    "VisionCaptureBundleContract",
+    "VisionCaptureImageContract",
     "get_output_schema",
     "to_contract",
 ]

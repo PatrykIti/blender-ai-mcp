@@ -9,6 +9,7 @@ from .backends import (
     TransformersLocalVisionBackend,
     create_vision_backend,
 )
+from .capture import build_vision_request_from_capture_bundle
 from .config import (
     VisionBackendKind,
     VisionOpenAICompatibleConfig,
@@ -29,6 +30,7 @@ __all__ = [
     "VisionRequest",
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",
+    "build_vision_request_from_capture_bundle",
     "build_vision_runtime_config",
     "create_vision_backend",
 ]

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import base64
+import importlib
 import json
 import mimetypes
 import os
@@ -119,6 +120,7 @@ class TransformersLocalVisionBackend(VisionBackend):
             raise VisionBackendUnavailableError("transformers_local backend is not configured.")
         self._runtime_config = runtime_config
         self._local_config = runtime_config.transformers_local
+        self._runtime_modules: tuple[Any, Any] | None = None
 
     @property
     def backend_kind(self):
@@ -128,9 +130,25 @@ class TransformersLocalVisionBackend(VisionBackend):
     def model_name(self) -> str:
         return self._local_config.model_id or self._local_config.model_path or "unknown-local-model"
 
+    def _ensure_runtime_modules(self) -> tuple[Any, Any]:
+        if self._runtime_modules is not None:
+            return self._runtime_modules
+
+        try:
+            transformers = importlib.import_module("transformers")
+            torch = importlib.import_module("torch")
+        except ModuleNotFoundError as exc:
+            raise VisionBackendUnavailableError(
+                "transformers_local backend requires optional runtime dependencies: transformers and torch"
+            ) from exc
+
+        self._runtime_modules = (transformers, torch)
+        return self._runtime_modules
+
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
+        self._ensure_runtime_modules()
         raise VisionBackendUnavailableError(
-            "transformers_local vision backend wiring exists, but inference is not implemented yet."
+            "transformers_local backend resolved its optional runtime dependencies, but inference is not implemented yet."
         )
 
 

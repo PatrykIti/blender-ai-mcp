@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
+# SPDX-License-Identifier: BUSL-1.1
+
+"""Helpers for converting deterministic capture bundles into vision requests."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+from server.adapters.mcp.contracts.vision import (
+    VisionCaptureBundleContract,
+    VisionCaptureImageContract,
+)
+
+from .backend import VisionImageInput, VisionRequest
+
+
+def _capture_to_image_input(
+    capture: VisionCaptureImageContract,
+    *,
+    role: str,
+) -> VisionImageInput:
+    return VisionImageInput(
+        path=capture.image_path,
+        role=role,
+        label=capture.label,
+        media_type=capture.media_type,
+    )
+
+
+def build_vision_request_from_capture_bundle(
+    bundle: VisionCaptureBundleContract,
+    *,
+    goal: str,
+    reference_images: Sequence[VisionCaptureImageContract] = (),
+    prompt_hint: str | None = None,
+) -> VisionRequest:
+    """Build a normalized VisionRequest from a deterministic capture bundle."""
+
+    images = tuple(
+        [
+            *[_capture_to_image_input(capture, role="before") for capture in bundle.captures_before],
+            *[_capture_to_image_input(capture, role="after") for capture in bundle.captures_after],
+            *[_capture_to_image_input(capture, role="reference") for capture in reference_images],
+        ]
+    )
+    return VisionRequest(
+        goal=goal,
+        images=images,
+        target_object=bundle.target_object,
+        prompt_hint=prompt_hint,
+        truth_summary=bundle.truth_summary,
+        metadata={
+            "bundle_id": bundle.bundle_id,
+            "goal_id": bundle.goal_id,
+            "preset_names": list(bundle.preset_names),
+        },
+    )
