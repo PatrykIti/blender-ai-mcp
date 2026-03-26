@@ -88,6 +88,8 @@ Preliminary runtime status:
 - `mlx_local` has now passed a real smoke test on a small cached/downloaded
   model path (`mlx-community/Qwen3-VL-2B-Instruct-4bit`)
 - the backend can load the model and complete inference without crashing
+- local prompt + parse-repair helpers now let the backend turn fenced/echo-like
+  outputs into a bounded structured payload instead of failing immediately
 - output quality is still an open product problem: a successful smoke test does
   not yet mean the returned structured interpretation is useful enough
 

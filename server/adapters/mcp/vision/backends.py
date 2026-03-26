@@ -17,22 +17,8 @@ import httpx
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionRuntimeConfig
-
-_VISION_SYSTEM_PROMPT = """You are a bounded vision assistant for Blender modeling.
-
-You are not the truth source. Use images only to interpret visible change and
-compare against the goal/reference. Do not claim geometric correctness from
-images alone. Recommend deterministic follow-up checks when correctness matters.
-
-Return only one JSON object with keys:
-- goal_summary: string
-- reference_match_summary: string or null
-- visible_changes: string[]
-- likely_issues: [{category: string, summary: string, severity: "high"|"medium"|"low"}]
-- recommended_checks: [{tool_name: string, reason: string, priority: "high"|"normal"}]
-- confidence: number or null
-- captures_used: string[]
-"""
+from .parsing import parse_vision_output_text
+from .prompting import build_vision_payload_text, build_vision_system_prompt
 
 
 def _media_type_for(path: str, fallback: str) -> str:
@@ -44,16 +30,6 @@ def _image_to_data_url(path: str, media_type: str) -> str:
     raw = Path(path).read_bytes()
     encoded = base64.b64encode(raw).decode("ascii")
     return f"data:{media_type};base64,{encoded}"
-
-
-def _unwrap_json_text(text: str) -> str:
-    stripped = text.strip()
-    if stripped.startswith("```") and stripped.endswith("```"):
-        lines = stripped.splitlines()
-        if len(lines) >= 3:
-            return "\n".join(lines[1:-1]).strip()
-    return stripped
-
 
 def _extract_message_text(payload: dict[str, Any]) -> str:
     choices = payload.get("choices")
@@ -194,21 +170,16 @@ class TransformersLocalVisionBackend(VisionBackend):
 
     def _build_local_messages(self, request: VisionRequest) -> list[dict[str, Any]]:
         image_items = [{"type": "image", "path": image.path} for image in request.images]
-        prompt_payload = {
-            "goal": request.goal,
-            "target_object": request.target_object,
-            "prompt_hint": request.prompt_hint,
-            "truth_summary": request.truth_summary,
-            "metadata": request.metadata,
-            "images": [{"role": image.role, "label": image.label} for image in request.images],
-        }
         return [
-            {"role": "system", "content": [{"type": "text", "text": _VISION_SYSTEM_PROMPT}]},
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": build_vision_system_prompt(backend_kind=self.backend_kind)}],
+            },
             {
                 "role": "user",
                 "content": [
                     *image_items,
-                    {"type": "text", "text": json.dumps(prompt_payload, ensure_ascii=True, sort_keys=True, indent=2)},
+                    {"type": "text", "text": build_vision_payload_text(request)},
                 ],
             },
         ]
@@ -257,10 +228,10 @@ class TransformersLocalVisionBackend(VisionBackend):
             )
             if not output_text:
                 raise VisionBackendUnavailableError("Local vision runtime returned no decoded text.")
-            parsed_content = json.loads(_unwrap_json_text(str(output_text[0])))
+            parsed_content = parse_vision_output_text(str(output_text[0]), request)
         except VisionBackendUnavailableError:
             raise
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             raise VisionBackendUnavailableError("Local vision runtime did not return valid JSON content.") from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"Local vision inference failed: {exc}") from exc
@@ -328,15 +299,7 @@ class MLXLocalVisionBackend(VisionBackend):
         return mlx_vlm, prompt_utils, utils
 
     def _build_prompt_payload(self, request: VisionRequest) -> str:
-        payload = {
-            "goal": request.goal,
-            "target_object": request.target_object,
-            "prompt_hint": request.prompt_hint,
-            "truth_summary": request.truth_summary,
-            "metadata": request.metadata,
-            "images": [{"role": image.role, "label": image.label} for image in request.images],
-        }
-        return json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2)
+        return build_vision_payload_text(request)
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         mlx_vlm, prompt_utils, _utils = self._ensure_local_components()
@@ -376,10 +339,10 @@ class MLXLocalVisionBackend(VisionBackend):
             output_text = getattr(output, "text", output)
             if not output_text:
                 raise VisionBackendUnavailableError("MLX local vision runtime returned no output.")
-            parsed_content = json.loads(_unwrap_json_text(str(output_text)))
+            parsed_content = parse_vision_output_text(str(output_text), request)
         except VisionBackendUnavailableError:
             raise
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             raise VisionBackendUnavailableError("MLX local vision runtime did not return valid JSON content.") from exc
         except Exception as exc:
             raise VisionBackendUnavailableError(f"MLX local vision inference failed: {exc}") from exc
@@ -426,25 +389,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
-                "text": json.dumps(
-                    {
-                        "goal": request.goal,
-                        "target_object": request.target_object,
-                        "prompt_hint": request.prompt_hint,
-                        "truth_summary": request.truth_summary,
-                        "metadata": request.metadata,
-                        "images": [
-                            {
-                                "role": image.role,
-                                "label": image.label,
-                            }
-                            for image in request.images
-                        ],
-                    },
-                    ensure_ascii=True,
-                    sort_keys=True,
-                    indent=2,
-                ),
+                "text": build_vision_payload_text(request),
             }
         ]
 
@@ -465,7 +410,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             "max_tokens": self._runtime_config.max_tokens,
             "response_format": {"type": "json_object"},
             "messages": [
-                {"role": "system", "content": _VISION_SYSTEM_PROMPT},
+                {"role": "system", "content": build_vision_system_prompt(backend_kind=self.backend_kind)},
                 {"role": "user", "content": content},
             ],
         }
@@ -495,8 +440,8 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
         content = _extract_message_text(parsed_response)
         try:
-            parsed_content = json.loads(_unwrap_json_text(content))
-        except json.JSONDecodeError as exc:
+            parsed_content = parse_vision_output_text(content, request)
+        except (json.JSONDecodeError, ValueError) as exc:
             raise VisionBackendUnavailableError("Vision endpoint did not return valid JSON content.") from exc
 
         return _normalize_assist_payload(

@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` has also passed a first real smoke test on a small Apple-Silicon-friendly model path (`mlx-community/Qwen3-VL-2B-Instruct-4bit`), confirming that the local MLX runtime can load and run end-to-end, although output quality and stronger prompt/eval policy still need work.
+**Progress Update:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` has also passed a first real smoke test on a small Apple-Silicon-friendly model path (`mlx-community/Qwen3-VL-2B-Instruct-4bit`), the repo now has a backend-comparison harness script, and local prompt/parse-repair helpers can already turn fenced or input-echo-style outputs into a bounded structured payload. Output quality and stronger eval policy still need work.
 
 ---
 
