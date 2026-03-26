@@ -32,6 +32,7 @@ from .config import (
     VisionRuntimeConfig,
     VisionTransformersLocalConfig,
 )
+from .policy import choose_capture_preset_profile
 from .reporting import attach_vision_artifacts
 from .runtime import LazyVisionBackendResolver, build_vision_runtime_config
 
@@ -70,6 +71,7 @@ __all__ = [
     "DEFAULT_CAPTURE_PRESET_SPECS",
     "RICH_CAPTURE_PRESET_SPECS",
     "attach_vision_artifacts",
+    "choose_capture_preset_profile",
     "build_reference_capture_images",
     "build_capture_bundle",
     "capture_scene_state",

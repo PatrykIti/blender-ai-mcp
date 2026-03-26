@@ -106,7 +106,9 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
         )
 
     monkeypatch.setattr("server.adapters.mcp.vision.integration.run_vision_assist", _fake_run_vision_assist)
-    monkeypatch.setattr("server.adapters.mcp.vision.integration.get_vision_backend_resolver", lambda: MagicMock())
+    resolver = MagicMock()
+    resolver.runtime_config.max_images = 8
+    monkeypatch.setattr("server.adapters.mcp.vision.integration.get_vision_backend_resolver", lambda: resolver)
 
     result = asyncio.run(maybe_attach_macro_vision(_Ctx(), _report()))
 
@@ -118,3 +120,4 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
     assert "other_object_reference" not in (captured["request"].prompt_hint or "")
     assert captured["request"].images[-1].path == "/tmp/ref_stored.png"
     assert "reference_target_view[1]=target_focus" in (captured["request"].prompt_hint or "")
+    assert "capture_profile=compact" in (captured["request"].prompt_hint or "")

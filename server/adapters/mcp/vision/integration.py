@@ -17,6 +17,7 @@ from .capture import (
     build_vision_request_from_capture_bundle,
     select_reference_records_for_target,
 )
+from .policy import choose_capture_preset_profile
 from .runner import run_vision_assist
 
 
@@ -30,7 +31,12 @@ async def maybe_attach_macro_vision(
         return report
 
     session = await get_session_capability_state_async(ctx)
-    target_view = "target_focus" if "target_focus" in report.capture_bundle.preset_names else None
+    resolver = get_vision_backend_resolver()
+    capture_profile = choose_capture_preset_profile(
+        reference_image_count=len(session.reference_images or []),
+        max_images=resolver.runtime_config.max_images,
+    )
+    target_view = "target_focus" if capture_profile == "rich" else None
     selected_reference_records = select_reference_records_for_target(
         session.reference_images or [],
         target_object=report.capture_bundle.target_object,
@@ -50,6 +56,7 @@ async def maybe_attach_macro_vision(
             for index, record in enumerate(selected_reference_records, start=1)
             if record.target_view
         ],
+        f"capture_profile={capture_profile}",
     ]
     request = build_vision_request_from_capture_bundle(
         report.capture_bundle,
@@ -60,6 +67,6 @@ async def maybe_attach_macro_vision(
     outcome = await run_vision_assist(
         ctx,
         request=request,
-        resolver=get_vision_backend_resolver(),
+        resolver=resolver,
     )
     return report.model_copy(update={"vision_assistant": to_vision_assistant_contract(outcome)})

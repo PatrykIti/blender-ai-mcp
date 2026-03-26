@@ -52,6 +52,12 @@ Current image-budget assumption:
 - this leaves room for before/after capture sets plus a small number of
   goal-scoped reference images
 
+Current capture-profile policy:
+
+- default to `compact`
+- promote to `rich` only when the configured image budget is large enough to
+  hold the richer before/after bundle plus at least one reference image
+
 ## Local Runtime Setup
 
 The local `transformers_local` backend is intentionally optional.
