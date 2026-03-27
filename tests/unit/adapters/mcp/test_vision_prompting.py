@@ -30,6 +30,10 @@ def test_local_prompt_payload_is_more_compact_and_task_focused():
     assert "TASK:" in text
     assert "IMAGES:" in text
     assert "- before: before_1" in text
+    assert "OUTPUT_TEMPLATE:" in text
+    assert '"goal_summary"' in text
+    assert "If you can provide only one useful sentence, put it in goal_summary." in text
+    assert "Do not invent alternate top-level keys like comparison" in text
     assert "Do not repeat the input payload." in text
     assert '"goal"' not in text
 

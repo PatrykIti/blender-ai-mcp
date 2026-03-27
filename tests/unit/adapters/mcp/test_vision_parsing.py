@@ -58,3 +58,51 @@ def test_parse_vision_output_repairs_input_echo_payload():
     assert parsed["goal_summary"] == "Model echoed the request payload instead of producing visual analysis."
     assert parsed["confidence"] == 0.0
     assert parsed["likely_issues"][0]["category"] == "backend_output"
+
+
+def test_parse_vision_output_repairs_summary_alias_payload():
+    text = json.dumps(
+        {
+            "comparison": "The after image is closer to the rounded housing target and adds the central cutout.",
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["goal_summary"] == "The after image is closer to the rounded housing target and adds the central cutout."
+    assert parsed["visible_changes"] == []
+    assert parsed["captures_used"] == ["before_1"]
+
+
+def test_parse_vision_output_repairs_label_map_payload():
+    text = json.dumps(
+        {
+            "before": "before_1",
+            "after": "after_1",
+            "reference": "ref_1",
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["goal_summary"] == "Model returned capture labels instead of visual analysis."
+    assert parsed["confidence"] == 0.0
+    assert parsed["likely_issues"][0]["category"] == "backend_output"
+
+
+def test_parse_vision_output_coerces_alias_lists_and_strings():
+    text = json.dumps(
+        {
+            "summary": "Closer overall.",
+            "changes": ["Front is rounder."],
+            "issues": ["Top edge still looks flat."],
+            "checks": ["Run scene_measure_dimensions for the cutout width."],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["goal_summary"] == "Closer overall."
+    assert parsed["visible_changes"] == ["Front is rounder."]
+    assert parsed["likely_issues"][0]["summary"] == "Top edge still looks flat."
+    assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"

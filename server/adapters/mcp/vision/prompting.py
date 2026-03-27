@@ -20,6 +20,20 @@ _EXPECTED_KEYS = (
 )
 
 
+def _local_output_template(request: VisionRequest) -> str:
+    labels = [image.label or image.role for image in request.images]
+    template = {
+        "goal_summary": "One short sentence about whether the after images move toward the goal/reference.",
+        "reference_match_summary": None,
+        "visible_changes": [],
+        "likely_issues": [],
+        "recommended_checks": [],
+        "confidence": None,
+        "captures_used": labels,
+    }
+    return json.dumps(template, ensure_ascii=True, indent=2)
+
+
 def build_vision_system_prompt(*, backend_kind: str) -> str:
     """Return the bounded system prompt, tuned slightly by backend family."""
 
@@ -90,8 +104,12 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
         [
             "",
             "Return exactly one JSON object with the required keys only.",
+            "If you can provide only one useful sentence, put it in goal_summary.",
             "Do not repeat the input payload.",
+            "Do not invent alternate top-level keys like comparison, summary, analysis, before, after, or reference.",
             "If uncertain, keep fields conservative but present.",
+            "OUTPUT_TEMPLATE:",
+            _local_output_template(request),
         ]
     )
     return "\n".join(parts)

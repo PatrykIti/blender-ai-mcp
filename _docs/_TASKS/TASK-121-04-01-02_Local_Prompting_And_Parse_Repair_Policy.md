@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape, but semantic usefulness is still weak on the first small-model smoke path.
+**Progress Update:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape. The parser also repairs summary-alias outputs like `{"comparison": "..."}` and explicitly flags unsupported label-map outputs. Preliminary MLX smoke reruns now show usable structured output on both `Qwen3-VL-4B-Instruct-4bit` and `Qwen3-VL-2B-Instruct-4bit`, but the smaller model still looks more prone to overconfident/hallucinatory issue generation.
 
 ---
 
@@ -26,6 +26,8 @@ should be repaired or rejected.
   - fenced JSON
   - JSON embedded in prose
   - input-echo outputs that should be converted into a bounded warning payload
+  - summary-alias outputs that should be mapped into `goal_summary`
+  - unsupported JSON shapes that should be marked as backend-output drift
 - explicitly measure where parse-repair helps versus where it only masks weak
   model behavior
 

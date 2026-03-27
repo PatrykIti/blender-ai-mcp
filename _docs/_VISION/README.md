@@ -90,12 +90,40 @@ Preliminary runtime status:
 - the backend can load the model and complete inference without crashing
 - local prompt + parse-repair helpers now let the backend turn fenced/echo-like
   outputs into a bounded structured payload instead of failing immediately
+- the parser now also repairs common local-model drift shapes:
+  - single-summary outputs such as `{"comparison": "..."}`
+  - unsupported label-map outputs such as `{"before": "...", "after": "..."}`
 - output quality is still an open product problem: a successful smoke test does
-  not yet mean the returned structured interpretation is useful enough
-- current practical result on the small MLX smoke path:
-  - valid bounded output shape
-  - no crash
-  - but still weak semantic content (`goal_summary` empty, no useful issue/check suggestions)
+  not yet mean the returned structured interpretation is trustworthy enough
+- current practical result on the MLX smoke path after prompt/parse tightening:
+  - `Qwen3-VL-4B-Instruct-4bit` now returns a usable `goal_summary` on the
+    synthetic before/after/reference harness case and is now the more
+    reasonable candidate for real local trials on Apple Silicon
+  - `Qwen3-VL-2B-Instruct-4bit` can now return the full bounded shape on the
+    same case, which makes it useful for smoke/dev testing, but it also shows
+    a higher risk of overconfident issue/check generation that still needs
+    evaluation scoring before we trust it on real work
+  - current blocker is no longer "runtime crash" but "quality and trust"
+
+## What Improved
+
+Business-level summary of the recent quality gain:
+
+- we stopped letting local models "pass" with empty structured success when
+  they returned the wrong JSON shape
+- we started giving local models an explicit output template and told them
+  where to put the one useful sentence if they cannot fill everything
+- we now repair common local-model drift shapes such as:
+  - `{"comparison": "..."}`
+  - `{"summary": "..."}`
+  - `{"before": "...", "after": "...", "reference": "..."}`
+
+Practical impact:
+
+- `4B` no longer collapses into an empty success payload on the current smoke
+  harness case
+- `2B` is still weaker, but it now returns something that can be evaluated
+  instead of just being discarded as parser noise
 
 ## Boundary Rules
 

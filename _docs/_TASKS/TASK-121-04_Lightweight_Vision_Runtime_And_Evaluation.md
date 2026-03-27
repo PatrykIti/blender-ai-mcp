@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed a first real smoke test, and the next work is shifting from backend plumbing toward real backend comparison, debug harnessing, and stronger prompt/parse policy for local models.
+**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed real smoke reruns, and prompt/parse tightening materially improved local output quality. Current early verdict: `Qwen3-VL-2B-Instruct-4bit` is useful for smoke/dev probing, while `Qwen3-VL-4B-Instruct-4bit` is the better candidate for real local trials on Apple Silicon. The next work is shifting from backend plumbing toward repeatable backend comparison, scoring, and governance.
 
 ---
 

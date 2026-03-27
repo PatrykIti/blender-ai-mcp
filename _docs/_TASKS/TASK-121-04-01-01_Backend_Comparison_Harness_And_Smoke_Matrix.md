@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** `scripts/vision_harness.py` now exists and can run the same bundle/reference payload through at least `mlx_local` and other configured backends. The next step is to turn this from a raw debug utility into a repeatable smoke matrix with recorded backend/model outcomes.
+**Progress Update:** `scripts/vision_harness.py` now exists and can run the same bundle/reference payload through at least `mlx_local` and other configured backends. Preliminary MLX comparison now shows a meaningful split: `Qwen3-VL-2B-Instruct-4bit` is acceptable for smoke/dev probing, while `Qwen3-VL-4B-Instruct-4bit` is the more realistic candidate for real local trials. The next step is to turn this from a raw debug utility into a repeatable smoke matrix with recorded backend/model outcomes and scoring.
 
 ---
 
@@ -30,6 +30,7 @@ against the same bounded inputs.
   - model load success/failure
   - parse success/failure
   - raw output shape class (`json`, fenced json, prose, input echo)
+  - qualitative verdict (`smoke/dev only`, `real local trial candidate`, `reject`)
 
 ---
 
