@@ -138,10 +138,10 @@ class TestViewportControl(unittest.TestCase):
         # Verify:
         # 1. NO temp camera created
         bpy.ops.object.camera_add.assert_not_called()
-        # 2. Scene camera set to MyCamera (implicitly checked by lack of camera_add and logic flow)
-
-        # 3. Render called
-        bpy.ops.render.opengl.assert_called()
+        # 2. Explicit camera renders should not use the live user viewport OpenGL path
+        bpy.ops.render.opengl.assert_not_called()
+        # 3. Render should use the scene camera path instead
+        bpy.ops.render.render.assert_called_with(write_still=True)
 
 
 if __name__ == "__main__":

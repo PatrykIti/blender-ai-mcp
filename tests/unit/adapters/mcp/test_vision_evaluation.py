@@ -27,6 +27,14 @@ def test_load_golden_scenario_resolves_relative_bundle_and_reference_paths():
     assert resolved.references_path.name == "references.json"
 
 
+def test_load_golden_scenario_without_references_is_supported():
+    resolved = load_golden_scenario(_fixture("default_cube_to_picnic_table"))
+
+    assert resolved.scenario.scenario_id == "default_cube_to_picnic_table"
+    assert resolved.bundle_path.is_absolute()
+    assert resolved.references_path is None
+
+
 def test_evaluate_vision_result_scores_improvement_scenario():
     scenario = load_golden_scenario(_fixture("synthetic_round_cutout"))
     entry = {

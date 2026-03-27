@@ -186,6 +186,7 @@ Current repo-tracked first-pass scenarios:
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`
 - `tests/fixtures/vision_eval/synthetic_no_change/`
 - `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
+- `tests/fixtures/vision_eval/default_cube_to_picnic_table/`
 
 ## First Scored Baseline
 

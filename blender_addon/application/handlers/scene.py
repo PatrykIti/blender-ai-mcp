@@ -366,10 +366,11 @@ class SceneHandler:
 
             # 5. Handle Camera & Focus
             temp_camera_obj = None
+            use_explicit_scene_camera = bool(camera_name and camera_name != "USER_PERSPECTIVE")
 
             try:
                 # Case A: Specific existing camera
-                if camera_name and camera_name != "USER_PERSPECTIVE":
+                if use_explicit_scene_camera:
                     if camera_name in bpy.data.objects:
                         scene.camera = bpy.data.objects[camera_name]
                     else:
@@ -410,8 +411,10 @@ class SceneHandler:
                 render_success = False
 
                 # Strategy A: OpenGL Render (Fastest, requires Context)
-                # Only attempt if we found a valid 3D View context
-                if view_area and view_region:
+                # Only attempt if we found a valid 3D View context and we are rendering
+                # the live user perspective. Explicit camera renders should use the scene
+                # camera path below so the image matches the named camera transform.
+                if view_area and view_region and not use_explicit_scene_camera:
                     try:
                         with bpy.context.temp_override(area=view_area, region=view_region):
                             # write_still=True forces write to filepath

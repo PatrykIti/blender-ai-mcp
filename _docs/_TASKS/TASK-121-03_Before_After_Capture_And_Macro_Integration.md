@@ -31,6 +31,7 @@ macro/workflow reporting.
 |------|---------|
 | [TASK-121-03-01](./TASK-121-03-01_Capture_Bundle_Contract_And_Deterministic_Presets.md) | Define capture bundle shape and deterministic viewport presets for comparison |
 | [TASK-121-03-02](./TASK-121-03-02_Macro_Workflow_Vision_Integration_Path.md) | Attach before/after captures and vision results to macro/workflow reports |
+| [TASK-121-03-03](./TASK-121-03-03_Camera_Faithful_Viewport_Capture_Semantics.md) | Make camera-based viewport capture actually follow the named camera instead of the live user viewport |
 
 ---
 
