@@ -187,6 +187,9 @@ Current repo-tracked first-pass scenarios:
 - `tests/fixtures/vision_eval/synthetic_no_change/`
 - `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
 - `tests/fixtures/vision_eval/default_cube_to_picnic_table/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body/`
 
 ## First Scored Baseline
 
@@ -230,6 +233,27 @@ Current interpretation of that comparison:
 - the current scoring heuristic is improved for this scenario, but not fully
   generalized yet: `4B` now maps cleanly to `improved`, while `2B` still uses
   variant phrasing that the heuristic does not always classify correctly
+
+Current first-pass real viewport progression comparison on the squirrel scenarios:
+
+- `Qwen3-VL-4B-Instruct-4bit`
+  - scored `1.0` / `strong` on:
+    - `squirrel_head_to_face`
+    - `squirrel_face_to_body`
+    - `squirrel_head_to_body`
+  - produced concise, clean progression summaries with useful `visible_changes`
+- `Qwen3-VL-2B-Instruct-4bit`
+  - also scored `1.0` / `strong` on the same three squirrel scenarios after the
+    heuristic update
+  - still tends to add noisier `likely_issues` and `recommended_checks` than
+    `4B`, so the cleaner practical baseline remains `4B`
+
+Stability check:
+
+- rerunning `default_cube_to_picnic_table` after the progression-heuristic
+  update did not regress the earlier result
+  - `4B`: still `1.0`
+  - `2B`: still `0.875`
 
 Practical reading of that baseline:
 

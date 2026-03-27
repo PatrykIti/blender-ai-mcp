@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on both synthetic scenarios and one first real viewport smoke scenario (`default_cube_to_picnic_table`). Current recorded interpretation: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can look strong on narrow synthetic bundles, and both can correctly describe a large scene replacement smoke case. After the latest heuristic update, `4B` now scores a clean `1.0` on that real smoke case, while `2B` still lands lower because it is noisier and uses wording that does not always map cleanly through the direction heuristic. The next step is to record verdicts on harder scenarios, especially real macro bundles and mismatch cases.
+**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on both synthetic scenarios and several real viewport scenarios. `Qwen3-VL-4B-Instruct-4bit` now scores a clean `1.0` on the real cube-to-picnic-table smoke case and on the squirrel progression cases. `Qwen3-VL-2B-Instruct-4bit` also reaches `1.0` on the squirrel progression cases, but it remains noisier and still lands lower (`0.875`) on the cube-to-picnic-table smoke case because of weaker/noisier phrasing and extra issue/check output. Current governance interpretation remains the same: `4B` is the cleaner practical local baseline, while `2B` is viable for smoke/dev and some progression cases but still noisier.
 
 ---
 

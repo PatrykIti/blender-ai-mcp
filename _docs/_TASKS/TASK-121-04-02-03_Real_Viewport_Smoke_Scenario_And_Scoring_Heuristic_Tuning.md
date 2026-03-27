@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
 
-**Progress Update:** The repo now includes a first real viewport smoke scenario (`default_cube_to_picnic_table`) sourced from manual Blender captures. Both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` describe the large scene/object replacement correctly enough to score `strong`. The direction heuristic has now been tightened so the `4B` replacement wording maps cleanly to `improved` on this case. The remaining issue is that `2B` still tends to overproduce issues/checks on easy smoke scenarios and also uses variant wording that the heuristic does not yet always classify as `improved`.
+**Progress Update:** The repo now includes both a real viewport smoke scenario (`default_cube_to_picnic_table`) and a set of real viewport progression scenarios (`squirrel_head_to_face`, `squirrel_face_to_body`, `squirrel_head_to_body`) sourced from manual Blender captures. The direction heuristic is now strong enough that `Qwen3-VL-4B-Instruct-4bit` scores `1.0` across both the replacement smoke case and the progression cases. `Qwen3-VL-2B-Instruct-4bit` also reaches `1.0` on the squirrel progression cases, while remaining noisier in its extra issue/check output and still lower on the cube-to-picnic-table smoke case.
 
 ---
 

@@ -153,3 +153,50 @@ def test_evaluate_vision_result_classifies_real_viewport_replacement_as_improved
     summary = evaluate_vision_result(entry, scenario)
 
     assert summary.dimensions["direction_match"].passed is True
+
+
+def test_evaluate_vision_result_classifies_progressive_face_detailing_as_improved():
+    scenario = load_golden_scenario(_fixture("squirrel_head_to_face"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a detailed squirrel face with eyes, snout, and nose, while the before image only shows a blockout with ears.",
+            "reference_match_summary": None,
+            "visible_changes": [
+                "Eyes added to the face",
+                "Snout and nose details added",
+                "Face details refined from a simple head blockout",
+            ],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": ["context_wide_before", "context_wide_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True
+
+
+def test_evaluate_vision_result_classifies_progressive_body_addition_as_improved():
+    scenario = load_golden_scenario(_fixture("squirrel_face_to_body"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a complete squirrel model with a head and body, while the before image only shows the head with face details.",
+            "reference_match_summary": None,
+            "visible_changes": [
+                "A full squirrel body has been added below the head.",
+                "The head retains its face details including eyes, nose, and ears.",
+            ],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": ["context_wide_before", "context_wide_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True

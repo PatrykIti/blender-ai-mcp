@@ -37,6 +37,15 @@ _IMPROVEMENT_HINTS = (
     "replacing the default cube",
     "replacing the original cube",
     "replacing the cube",
+    "more detailed",
+    "detailed face",
+    "face details refined",
+    "full body has been added",
+    "body has been added",
+    "complete squirrel model",
+    "fully detailed",
+    "expanded into a full",
+    "expanded into a full squirrel",
 )
 _REGRESSION_HINTS = (
     "worse",
@@ -71,6 +80,40 @@ _TRUTH_CLAIM_HINTS = (
     "definitely correct",
     "confirmed correct",
     "precise dimensions",
+)
+
+_PROGRESSION_GAIN_HINTS = (
+    "added",
+    "detailed",
+    "refined",
+    "complete",
+    "fully detailed",
+    "expanded into",
+    "developed",
+    "full body",
+    "face details",
+)
+
+_PROGRESSION_SIMPLE_START_HINTS = (
+    "blockout",
+    "simple head",
+    "simple head blockout",
+    "head blockout",
+    "only shows a blockout",
+    "only shows the head",
+    "only shows a simple head",
+    "only shows a default cube",
+)
+
+_PROGRESSION_ADDED_PART_HINTS = (
+    "eyes",
+    "nose",
+    "snout",
+    "ears",
+    "body",
+    "torso",
+    "face",
+    "face details",
 )
 
 
@@ -179,6 +222,17 @@ def _classify_direction(text: str) -> DirectionExpectation | Literal["unknown"]:
         and any(hint in text for hint in ("default cube", "original cube", "simple cube", "cube"))
         and any(hint in text for hint in ("picnic table", "detailed", "more complex", "realistic object", "multiple components"))
         and regression_hits == 0
+    ):
+        return "improved"
+    if (
+        regression_hits == 0
+        and "after image" in text
+        and "before image" in text
+        and any(hint in text for hint in _PROGRESSION_GAIN_HINTS)
+        and (
+            any(hint in text for hint in _PROGRESSION_SIMPLE_START_HINTS)
+            or any(hint in text for hint in _PROGRESSION_ADDED_PART_HINTS)
+        )
     ):
         return "improved"
     if improvement_hits > regression_hits and improvement_hits > 0:

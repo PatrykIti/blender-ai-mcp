@@ -202,6 +202,9 @@ Repo-tracked synthetic vision evaluation scenarios now live under:
 - `tests/fixtures/vision_eval/synthetic_no_change/`
 - `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
 - `tests/fixtures/vision_eval/default_cube_to_picnic_table/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body/`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
