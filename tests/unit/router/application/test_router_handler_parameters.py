@@ -252,6 +252,30 @@ class TestSetGoalUnified:
         assert result["resolved"] == {}
         assert result["unresolved"] == []
 
+    def test_set_goal_treats_viewport_capture_request_as_utility_no_match(self, handler, mock_router):
+        """Utility/capture requests should not be routed into build workflows."""
+        mock_router._current_goal = "old modeling goal"
+        mock_router._pending_workflow = "picnic_table"
+
+        result = handler.set_goal("capture viewport screenshot save to file")
+
+        assert result["status"] == "no_match"
+        assert result["workflow"] is None
+        assert "utility/capture request" in result["message"]
+        assert "scene_get_viewport" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_scene_cleanup_request_as_utility_no_match(self, handler, mock_router):
+        """Scene prep/reset requests should not be routed as build goals."""
+        mock_router._pending_workflow = "picnic_table"
+
+        result = handler.set_goal("clean scene and reset for a fresh screenshot")
+
+        assert result["status"] == "no_match"
+        assert result["workflow"] is None
+        assert "scene_clean_scene" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
         """Test when workflow matches but has no parameters."""
         # Add workflow without parameters

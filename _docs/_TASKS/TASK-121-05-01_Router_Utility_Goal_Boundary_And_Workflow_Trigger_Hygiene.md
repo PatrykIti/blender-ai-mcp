@@ -1,8 +1,10 @@
 # TASK-121-05-01: Router Utility Goal Boundary and Workflow Trigger Hygiene
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** A first pass of this fix is implemented. `RouterToolHandler.set_goal(...)` now short-circuits obvious utility/capture requests into `status="no_match"` instead of letting them fall into unrelated build workflows, the workflow registry no longer uses raw substring matching for trigger keywords, and `screen_cutout_workflow` trigger keywords have been narrowed away from broad one-word hits such as `screen`/`display`. The remaining work is to decide whether utility-goal classification should stay in the handler only or also become a deeper router/ensemble concept.
 
 ---
 

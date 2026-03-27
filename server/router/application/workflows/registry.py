@@ -14,6 +14,7 @@ TASK-041-14: Added ProportionResolver integration
 
 import dataclasses
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
@@ -25,6 +26,18 @@ from server.router.domain.entities.tool_call import CorrectedToolCall
 from .base import BaseWorkflow, WorkflowDefinition, WorkflowStep
 
 logger = logging.getLogger(__name__)
+
+
+def _keyword_matches_text(keyword: str, text: str) -> bool:
+    """Match workflow trigger keywords on token/phrase boundaries, not raw substrings."""
+
+    normalized_keyword = keyword.strip().lower()
+    normalized_text = text.strip().lower()
+    if not normalized_keyword or not normalized_text:
+        return False
+
+    pattern = rf"(?<!\w){re.escape(normalized_keyword)}(?!\w)"
+    return re.search(pattern, normalized_text) is not None
 
 
 class WorkflowRegistry:
@@ -198,7 +211,7 @@ class WorkflowRegistry:
         # Check custom definitions
         for name, definition in self._custom_definitions.items():
             for keyword in definition.trigger_keywords:
-                if keyword.lower() in text_lower:
+                if _keyword_matches_text(keyword, text_lower):
                     return name
 
         return None

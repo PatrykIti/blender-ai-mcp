@@ -70,6 +70,11 @@ class TestWorkflowRegistry:
         name = registry.find_by_keywords("something completely different xyz123")
         assert name is None
 
+    def test_find_by_keywords_does_not_match_screen_cutout_from_screenshot_word(self, registry):
+        """Substring overlap like 'screen' in 'screenshot' must not trigger screen_cutout."""
+        name = registry.find_by_keywords("capture viewport screenshot save to file")
+        assert name is None
+
     def test_expand_workflow_nonexistent(self, registry):
         """Test expanding non-existent workflow returns empty list."""
         calls = registry.expand_workflow("nonexistent_workflow")

@@ -1,8 +1,10 @@
 # TASK-121-05: Guided Utility Capture Prep and Goal Boundary
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first router-side boundary fix is now in place: utility/capture goals such as viewport screenshot or scene cleanup requests are intercepted before workflow execution, broad substring-based workflow keyword matching has been tightened, and `screen_cutout_workflow` trigger keywords have been narrowed so `screen`-overlap prompts no longer route into that workflow by accident. The remaining gap is still the guided utility surface itself: `llm-guided` needs a bounded visibility/discovery path for scene prep and viewport capture.
 
 ---
 

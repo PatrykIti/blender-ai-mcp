@@ -8,6 +8,8 @@ TASK-046: Extended with semantic matching methods.
 TASK-055: Extended with parameter resolution methods.
 """
 
+import re
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from server.domain.tools.router import IRouterTool
@@ -33,6 +35,13 @@ class RouterToolHandler(IRouterTool):
         _enabled: Whether router is enabled in config.
     """
 
+    _UTILITY_GOAL_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\b(viewport|screenshot|screen ?shot|capture image|capture screenshot)\b", re.IGNORECASE),
+        re.compile(r"\b(save (to )?file|save image|export image)\b", re.IGNORECASE),
+        re.compile(r"\b(clean scene|clear scene|reset scene|new scene)\b", re.IGNORECASE),
+        re.compile(r"\b(zrzut ekranu|zrzut viewportu|screenshot viewportu|wyczy[sś]c scene|wyczy[sś]c scen[ęe])\b", re.IGNORECASE),
+    )
+
     def __init__(
         self,
         router=None,
@@ -57,6 +66,15 @@ class RouterToolHandler(IRouterTool):
         self._parameter_resolver = parameter_resolver
         self._workflow_loader = workflow_loader
         self._correction_policy_engine = correction_policy_engine or CorrectionPolicyEngine()
+
+    @classmethod
+    def _looks_like_utility_goal(cls, goal: str) -> bool:
+        """Return True when the request is a utility/capture intent, not a build goal."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._UTILITY_GOAL_PATTERNS)
 
     @staticmethod
     def _policy_context_dict(decision) -> dict[str, Any]:
@@ -183,6 +201,25 @@ class RouterToolHandler(IRouterTool):
                 "resolution_sources": {},
                 "phase_hint": derive_phase_hint_from_router_result({"status": "disabled"}),
                 "message": "Router not initialized.",
+            }
+
+        if self._looks_like_utility_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return {
+                "status": "no_match",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "no_match"}),
+                "message": (
+                    f"'{goal}' looks like a utility/capture request, not a build workflow goal. "
+                    "Use search_tools(...) and call_tool(...) for guided utility actions such as "
+                    "scene_get_viewport or scene_clean_scene."
+                ),
             }
 
         # Step 1: Match workflow

@@ -8,12 +8,15 @@ author: blender-ai-mcp
 version: "1.0.0"
 
 trigger_keywords:
-  - screen
-  - display
-  - cutout
-  - inset
-  - ekran
-  - wyswietlacz
+  - screen cutout
+  - display cutout
+  - screen recess
+  - display recess
+  - recessed screen
+  - recessed display
+  - screen inset
+  - ekran wpuszczony
+  - wnęka ekranu
 
 defaults:
   inset_thickness: 0.02
