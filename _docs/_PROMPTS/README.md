@@ -70,6 +70,15 @@ Interpretation:
 
 - normal production LLM usage should prefer the workflow-first path
 - manual/no-router mode is an explicit exception, not the default product model
+- practical `llm-guided` operating model:
+  - build/workflow goal:
+    `router_get_status(...)` -> `router_set_goal(...)` -> handle typed `needs_input` if present -> use visible build tools / macros
+  - utility/capture request:
+    do **not** force `router_set_goal(...)`; use the guided utility path instead
+  - vision-assisted build:
+    `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
+- if a tool is already directly visible on the current phase/surface, call it directly
+- only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
 - a typical guided macro flow is:
   `router_set_goal(...)` -> `browse_workflows(...)` / `search_tools(...)` -> `macro_finish_form` -> `inspect_scene(...)` + measure/assert verification
 - a typical guided utility capture flow is:
@@ -79,3 +88,21 @@ Interpretation:
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work
+
+## `llm-guided` Flow Summary
+
+Use this summary when you need the shortest mental model for the production
+guided surface:
+
+1. If the request is a real build/workflow goal, start from `router_set_goal(...)`.
+2. If the router returns `needs_input`, keep that clarification model-facing and
+   answer with a follow-up `router_set_goal(..., resolved_params={...})`.
+3. If the router returns `ready`, prefer:
+   - visible direct tools
+   - macro tools
+   - `search_tools(...)` / `call_tool(...)` only when discovery is needed
+4. If the request is utility/capture/scene-prep, skip `router_set_goal(...)`
+   and use the guided utility path directly.
+5. If vision should support the build, attach `reference_images(...)`, prefer
+   macro paths that emit `capture_bundle`, and treat inspection/measure/assert
+   as the truth layer after visual interpretation.

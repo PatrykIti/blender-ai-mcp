@@ -17,6 +17,15 @@ MODE: WORKFLOW-FIRST (ROUTER SUPERVISOR)
 - Exception: do not force `router_set_goal(...)` for utility/capture requests such as viewport screenshots,
   saving an image, or cleaning/resetting the scene.
 
+FLOW SUMMARY
+- Build/workflow request:
+  * router_get_status() -> router_set_goal(...) -> handle typed clarification if needed -> use visible build tools/macros
+- Utility/capture request:
+  * do not start workflow matching
+  * use the guided utility path directly
+- Vision-assisted build:
+  * router_set_goal(...) -> reference_images(...) -> macros/build tools -> inspect/measure/assert after visual interpretation
+
 WORKFLOW SELECTION (MANDATORY)
 1) Check Router status
    - router_get_status()
@@ -69,6 +78,11 @@ UTILITY / CAPTURE EXCEPTION
 
 RELIABILITY (STILL REQUIRED)
 - Treat visual interpretation as support, not truth.
+- If vision should support the task, prefer flows where:
+   * the goal is already active
+   * reference_images(...) are attached if available
+   * the build happens through macros or deterministic capture-aware steps
+   * inspection/measure/assert tools confirm correctness after the visual summary
 - Typical shaped-surface macro flow:
    * browse_workflows(action="search", search_query="<goal in user words>")
    * router_set_goal(goal="<goal in user words>")

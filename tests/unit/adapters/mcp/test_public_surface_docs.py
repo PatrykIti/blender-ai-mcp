@@ -111,6 +111,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "call it directly instead of routing through `search_tools(...)` / `call_tool(...)`" in prompt_readme
+    assert "practical `llm-guided` operating model" in prompt_readme
+    assert "vision-assisted build:" in prompt_readme
+    assert "## `llm-guided` Flow Summary" in prompt_readme
     assert "manual_tools_no_router" in prompt_readme
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
@@ -120,6 +123,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
     assert "workflow_catalog import" not in workflow_prompt
     assert "router_clear_goal()" not in workflow_prompt
+    assert "FLOW SUMMARY" in workflow_prompt
+    assert "Build/workflow request:" in workflow_prompt
+    assert "Vision-assisted build:" in workflow_prompt
     assert "UTILITY / CAPTURE EXCEPTION" in workflow_prompt
     assert "If a needed tool is already directly visible on the current surface/phase, call it directly." in workflow_prompt
     assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt

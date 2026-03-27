@@ -58,6 +58,9 @@ def test_build_server_builds_alternate_surface_profile():
     assert "background tasks" in guided.instructions
     assert "Use visible direct tools directly when they are already available" in guided.instructions
     assert "Use search_tools/call_tool only when you actually need discovery" in guided.instructions
+    assert "Build/workflow request: router_get_status -> router_set_goal" in guided.instructions
+    assert "Utility/capture request: skip router_set_goal" in guided.instructions
+    assert "For the full operating model, see the prompt docs" in guided.instructions
     assert "background tasks" in debug.instructions
     assert code_mode._bam_code_mode_enabled is True
     assert code_mode._bam_code_mode_benchmark_baselines == (
