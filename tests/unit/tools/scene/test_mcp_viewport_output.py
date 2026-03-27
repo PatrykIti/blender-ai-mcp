@@ -28,6 +28,39 @@ class TestMcpViewportOutputModes(unittest.TestCase):
         handler.get_viewport.assert_called_once()
 
     @patch("server.adapters.mcp.areas.scene.get_scene_handler")
+    def test_user_view_args_are_forwarded_to_handler(self, mock_get_scene_handler):
+        handler = MagicMock()
+        handler.get_viewport.return_value = "aGVsbG8="
+        mock_get_scene_handler.return_value = handler
+
+        asyncio.run(
+            SCENE_GET_VIEWPORT(
+                self.ctx,
+                camera_name="USER_PERSPECTIVE",
+                focus_target="Cube",
+                view_name="TOP",
+                orbit_horizontal=15.0,
+                orbit_vertical=-5.0,
+                zoom_factor=1.25,
+                persist_view=True,
+                output_mode="BASE64",
+            )
+        )
+
+        handler.get_viewport.assert_called_once_with(
+            1024,
+            768,
+            "SOLID",
+            "USER_PERSPECTIVE",
+            "Cube",
+            "TOP",
+            15.0,
+            -5.0,
+            1.25,
+            True,
+        )
+
+    @patch("server.adapters.mcp.areas.scene.get_scene_handler")
     def test_base64_mode_returns_raw_string(self, mock_get_scene_handler):
         handler = MagicMock()
         handler.get_viewport.return_value = "dGVzdF9iYXNlNjQ="

@@ -291,6 +291,11 @@ class SceneHandler:
         shading="SOLID",
         camera_name=None,
         focus_target=None,
+        view_name=None,
+        orbit_horizontal=0.0,
+        orbit_vertical=0.0,
+        zoom_factor=None,
+        persist_view=False,
         progress_callback: Callable[[float, float | None, str | None], None] | None = None,
         is_cancelled: Callable[[], bool] | None = None,
     ):
@@ -343,9 +348,14 @@ class SceneHandler:
             original_camera = scene.camera
             original_engine = scene.render.engine
             original_file_format = scene.render.image_settings.file_format
+            original_view_state = None
 
             if view_space:
                 original_shading_type = view_space.shading.type
+                try:
+                    original_view_state = self.get_view_state()
+                except Exception:
+                    original_view_state = None
 
             original_active = bpy.context.view_layer.objects.active
             original_selected = [obj for obj in bpy.context.view_layer.objects if obj.select_get()]
@@ -367,10 +377,21 @@ class SceneHandler:
             # 5. Handle Camera & Focus
             temp_camera_obj = None
             use_explicit_scene_camera = bool(camera_name and camera_name != "USER_PERSPECTIVE")
+            view_name_value = str(view_name).upper() if view_name is not None else None
+            zoom_value = float(zoom_factor) if zoom_factor is not None else None
+            orbit_h = float(orbit_horizontal or 0.0)
+            orbit_v = float(orbit_vertical or 0.0)
+            has_user_view_adjustment = bool(
+                view_name_value or orbit_h or orbit_v or zoom_value is not None
+            )
 
             try:
                 # Case A: Specific existing camera
                 if use_explicit_scene_camera:
+                    if has_user_view_adjustment:
+                        raise ValueError(
+                            "view_name/orbit/zoom options are only supported with USER_PERSPECTIVE captures."
+                        )
                     if camera_name in bpy.data.objects:
                         scene.camera = bpy.data.objects[camera_name]
                     else:
@@ -378,29 +399,51 @@ class SceneHandler:
 
                 # Case B: Dynamic View (User Perspective)
                 else:
+                    rv3d = view_space.region_3d if view_space else None
+                    if view_name_value:
+                        self.set_standard_view(view_name_value)
+
+                    if focus_target:
+                        self.camera_focus(focus_target, zoom_factor=zoom_value or 1.0)
+                    elif zoom_value is not None:
+                        if zoom_value <= 0:
+                            raise ValueError("zoom_factor must be > 0")
+                        if rv3d is not None:
+                            rv3d.view_distance = float(rv3d.view_distance) / zoom_value
+
+                    if orbit_h or orbit_v:
+                        self.camera_orbit(
+                            angle_horizontal=orbit_h,
+                            angle_vertical=orbit_v,
+                            target_object=focus_target,
+                        )
+
                     # Create temp camera
                     bpy.ops.object.camera_add()
                     temp_camera_obj = bpy.context.active_object
                     scene.camera = temp_camera_obj
 
-                    # Deselect all first
-                    bpy.ops.object.select_all(action="DESELECT")
-
-                    # Select target(s) for framing
-                    if focus_target:
-                        if focus_target in bpy.data.objects:
-                            target_obj = bpy.data.objects[focus_target]
-                            target_obj.select_set(True)
-                        else:
-                            bpy.ops.object.select_all(action="SELECT")
-                    else:
-                        # No target -> Select all visible objects
-                        bpy.ops.object.select_all(action="SELECT")
-
-                    # Frame the camera to selection
                     if view_area and view_region:
                         with bpy.context.temp_override(area=view_area, region=view_region):
-                            bpy.ops.view3d.camera_to_view_selected()
+                            if has_user_view_adjustment:
+                                bpy.ops.view3d.camera_to_view()
+                            else:
+                                # Deselect all first
+                                bpy.ops.object.select_all(action="DESELECT")
+
+                                # Select target(s) for framing
+                                if focus_target:
+                                    if focus_target in bpy.data.objects:
+                                        target_obj = bpy.data.objects[focus_target]
+                                        target_obj.select_set(True)
+                                    else:
+                                        bpy.ops.object.select_all(action="SELECT")
+                                else:
+                                    # No target -> Select all visible objects
+                                    bpy.ops.object.select_all(action="SELECT")
+
+                                # Frame the camera to selection
+                                bpy.ops.view3d.camera_to_view_selected()
                     else:
                         # Fallback positioning without 3D view context
                         temp_camera_obj.location = (10, -10, 10)
@@ -497,6 +540,12 @@ class SceneHandler:
 
                 if view_space:
                     view_space.shading.type = original_shading_type
+
+                if original_view_state and not use_explicit_scene_camera and not persist_view and has_user_view_adjustment:
+                    try:
+                        self.restore_view_state(original_view_state)
+                    except Exception:
+                        pass
 
                 # Restore selection
                 bpy.ops.object.select_all(action="DESELECT")

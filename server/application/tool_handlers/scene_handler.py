@@ -46,6 +46,11 @@ class SceneToolHandler(ISceneTool):
         shading: str = "SOLID",
         camera_name: Optional[str] = None,
         focus_target: Optional[str] = None,
+        view_name: Optional[str] = None,
+        orbit_horizontal: float = 0.0,
+        orbit_vertical: float = 0.0,
+        zoom_factor: Optional[float] = None,
+        persist_view: bool = False,
     ) -> str:
         # Note: Large base64 strings might be heavy.
         args = {
@@ -54,6 +59,11 @@ class SceneToolHandler(ISceneTool):
             "shading": shading,
             "camera_name": camera_name,
             "focus_target": focus_target,
+            "view_name": view_name,
+            "orbit_horizontal": orbit_horizontal,
+            "orbit_vertical": orbit_vertical,
+            "zoom_factor": zoom_factor,
+            "persist_view": persist_view,
         }
         return require_str_result(self.rpc.send_request("scene.get_viewport", args))
 

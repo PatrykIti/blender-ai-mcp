@@ -143,6 +143,77 @@ class TestViewportControl(unittest.TestCase):
         # 3. Render should use the scene camera path instead
         bpy.ops.render.render.assert_called_with(write_still=True)
 
+    @patch("os.path.getsize")
+    @patch("os.rmdir")
+    @patch("os.path.exists")
+    @patch("builtins.open", new_callable=mock_open, read_data=b"img_data")
+    @patch("tempfile.mkdtemp")
+    @patch("os.remove")
+    def test_user_view_adjustments_copy_view_to_temp_camera_and_restore(
+        self, mock_remove, mock_mkdtemp, mock_open, mock_exists, mock_rmdir, mock_getsize
+    ):
+        mock_mkdtemp.return_value = "/tmp/render_dir"
+        mock_exists.return_value = True
+        mock_getsize.return_value = 100
+
+        self.handler.set_standard_view = MagicMock(return_value="view ok")
+        self.handler.camera_focus = MagicMock(return_value="focus ok")
+        self.handler.camera_orbit = MagicMock(return_value="orbit ok")
+        self.handler.get_view_state = MagicMock(
+            return_value={
+                "available": True,
+                "view_location": [1.0, 2.0, 3.0],
+                "view_distance": 10.0,
+                "view_rotation": [1.0, 0.0, 0.0, 0.0],
+                "view_perspective": "PERSP",
+            }
+        )
+        self.handler.restore_view_state = MagicMock(return_value="restored")
+
+        self.handler.get_viewport(
+            width=640,
+            height=480,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+            focus_target="Cube",
+            view_name="TOP",
+            orbit_horizontal=25.0,
+            orbit_vertical=-10.0,
+            zoom_factor=1.5,
+            persist_view=False,
+        )
+
+        self.handler.set_standard_view.assert_called_once_with("TOP")
+        self.handler.camera_focus.assert_called_once_with("Cube", zoom_factor=1.5)
+        self.handler.camera_orbit.assert_called_once_with(
+            angle_horizontal=25.0,
+            angle_vertical=-10.0,
+            target_object="Cube",
+        )
+        bpy.ops.view3d.camera_to_view.assert_called_once()
+        bpy.ops.view3d.camera_to_view_selected.assert_not_called()
+        self.handler.restore_view_state.assert_called_once()
+
+    @patch("os.path.getsize")
+    @patch("os.rmdir")
+    @patch("os.path.exists")
+    @patch("builtins.open", new_callable=mock_open, read_data=b"img_data")
+    @patch("tempfile.mkdtemp")
+    @patch("os.remove")
+    def test_explicit_camera_rejects_user_view_adjustments(
+        self, mock_remove, mock_mkdtemp, mock_open, mock_exists, mock_rmdir, mock_getsize
+    ):
+        mock_mkdtemp.return_value = "/tmp/render_dir"
+        mock_exists.return_value = True
+        mock_getsize.return_value = 100
+        self.add_object("MyCamera")
+
+        with self.assertRaisesRegex(ValueError, "only supported with USER_PERSPECTIVE"):
+            self.handler.get_viewport(
+                camera_name="MyCamera",
+                view_name="TOP",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

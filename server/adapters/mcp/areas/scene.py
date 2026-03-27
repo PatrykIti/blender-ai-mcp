@@ -794,6 +794,11 @@ async def scene_get_viewport(
     shading: str = "SOLID",
     camera_name: str = None,
     focus_target: str = None,
+    view_name: str = None,
+    orbit_horizontal: float = 0.0,
+    orbit_vertical: float = 0.0,
+    zoom_factor: float = None,
+    persist_view: bool = False,
     output_mode: Literal["IMAGE", "BASE64", "FILE", "MARKDOWN"] = "IMAGE",
 ) -> Union[Image, str]:
     """Get a visual preview of the scene (OpenGL Viewport Render).
@@ -820,13 +825,30 @@ async def scene_get_viewport(
             camera.
         focus_target: Name of the object to focus on. Only works if camera_name is
             None/"USER_PERSPECTIVE".
+        view_name: Optional standard user-view preset ('FRONT', 'RIGHT', 'TOP') applied
+            before capture when using USER_PERSPECTIVE.
+        orbit_horizontal: Optional horizontal orbit in degrees applied to USER_PERSPECTIVE before capture.
+        orbit_vertical: Optional vertical orbit in degrees applied to USER_PERSPECTIVE before capture.
+        zoom_factor: Optional user-view zoom factor applied with focus_target or current USER_PERSPECTIVE view.
+        persist_view: If True, keeps the adjusted USER_PERSPECTIVE after capture. Defaults to False.
         output_mode: Output format selector: "IMAGE", "BASE64", "FILE", or "MARKDOWN".
     """
     if is_background_task_context(ctx):
 
         def _foreground_rpc() -> str:
             handler = get_scene_handler()
-            return handler.get_viewport(width, height, shading, camera_name, focus_target)
+            return handler.get_viewport(
+                width,
+                height,
+                shading,
+                camera_name,
+                focus_target,
+                view_name,
+                orbit_horizontal,
+                orbit_vertical,
+                zoom_factor,
+                persist_view,
+            )
 
         def _format_result(payload: Any) -> Union[Image, str]:
             if not isinstance(payload, str):
@@ -849,6 +871,11 @@ async def scene_get_viewport(
                 "shading": shading,
                 "camera_name": camera_name,
                 "focus_target": focus_target,
+                "view_name": view_name,
+                "orbit_horizontal": orbit_horizontal,
+                "orbit_vertical": orbit_vertical,
+                "zoom_factor": zoom_factor,
+                "persist_view": persist_view,
             },
             foreground_executor=_foreground_rpc,
             result_formatter=_format_result,
@@ -859,7 +886,18 @@ async def scene_get_viewport(
     def execute():
         handler = get_scene_handler()
         try:
-            b64_data = handler.get_viewport(width, height, shading, camera_name, focus_target)
+            b64_data = handler.get_viewport(
+                width,
+                height,
+                shading,
+                camera_name,
+                focus_target,
+                view_name,
+                orbit_horizontal,
+                orbit_vertical,
+                zoom_factor,
+                persist_view,
+            )
         except RuntimeError as e:
             return str(e)
         return _format_viewport_output(
@@ -878,6 +916,11 @@ async def scene_get_viewport(
             "shading": shading,
             "camera_name": camera_name,
             "focus_target": focus_target,
+            "view_name": view_name,
+            "orbit_horizontal": orbit_horizontal,
+            "orbit_vertical": orbit_vertical,
+            "zoom_factor": zoom_factor,
+            "persist_view": persist_view,
             "output_mode": output_mode,
         },
         direct_executor=execute,

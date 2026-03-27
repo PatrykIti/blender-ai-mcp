@@ -27,3 +27,36 @@ def test_scene_get_viewport_returns_decodable_base64(scene_handler):
         assert len(decoded) > 100
     except RuntimeError as e:
         pytest.skip(f"Blender not available: {e}")
+
+
+def test_scene_get_viewport_user_view_adjustment_restores_default_view(scene_handler):
+    """Adjusted USER_PERSPECTIVE capture should restore the prior user view by default."""
+
+    try:
+        first = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+        )
+        adjusted = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+            view_name="TOP",
+        )
+        third = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+        )
+
+        assert first
+        assert adjusted
+        assert third
+        assert adjusted != first
+        assert third == first
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")

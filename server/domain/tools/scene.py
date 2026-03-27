@@ -36,6 +36,11 @@ class ISceneTool(ABC):
         shading: str = "SOLID",
         camera_name: Optional[str] = None,
         focus_target: Optional[str] = None,
+        view_name: Optional[str] = None,
+        orbit_horizontal: float = 0.0,
+        orbit_vertical: float = 0.0,
+        zoom_factor: Optional[float] = None,
+        persist_view: bool = False,
     ) -> str:
         """Returns a base64 encoded image of the viewport."""
         pass
