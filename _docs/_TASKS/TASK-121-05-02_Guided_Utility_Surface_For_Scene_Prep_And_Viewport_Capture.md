@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** A first implementation of this leaf is now in place. `llm-guided` bootstrap/planning search can reach a minimal guided-safe utility set with `scene_get_viewport` and `scene_clean_scene`, while the default direct bootstrap surface still stays intentionally small. The remaining work is to decide whether the utility set should grow beyond these two actions and whether a dedicated bounded helper tool would be safer than continued direct exposure of the underlying primitives.
+**Progress Update:** A first implementation of this leaf is now in place. `llm-guided` bootstrap/planning search can reach a minimal guided-safe utility set with `scene_get_viewport` and `scene_clean_scene`, while the default direct bootstrap surface still stays intentionally small. First Blender-backed E2E coverage now exists for viewport capture and scene cleanup. The remaining work is to decide whether the utility set should grow beyond these two actions and whether a dedicated bounded helper tool would be safer than continued direct exposure of the underlying primitives.
 
 ---
 

@@ -111,11 +111,18 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "manual_tools_no_router" in prompt_readme
+    assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
+    assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
+    assert "do **not** force `router_set_goal(...)`" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
     assert "workflow_catalog import" not in workflow_prompt
     assert "router_clear_goal()" not in workflow_prompt
+    assert "UTILITY / CAPTURE EXCEPTION" in workflow_prompt
+    assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt
+    assert 'call_tool(name="scene_get_viewport", arguments={...})' in workflow_prompt
+    assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in workflow_prompt
     assert "macro_cutout_recess" in prompt_readme
     assert "macro_relative_layout" in prompt_readme
     assert "macro_finish_form" in prompt_readme

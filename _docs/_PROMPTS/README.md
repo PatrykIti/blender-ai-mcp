@@ -14,8 +14,12 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > The current guided entry surface is:
 > `router_set_goal`, `router_get_status`, `browse_workflows`, `reference_images`,
 > `search_tools`, `call_tool`, `list_prompts`, and `get_prompt`.
-> On production-oriented surfaces, start from `router_set_goal(...)` first and
-> treat the rest of the public surface in the context of that active goal.
+> On production-oriented surfaces, start from `router_set_goal(...)` first for
+> real build/workflow goals and treat the rest of the public surface in the
+> context of that active goal.
+> For utility/capture requests such as viewport screenshots or scene cleanup,
+> do **not** force `router_set_goal(...)`; use the guided utility path instead:
+> `search_tools(...)` -> `call_tool(name="scene_get_viewport"| "scene_clean_scene", ...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
 > images before asking the bounded vision layer to compare visible change.
 > Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
@@ -66,6 +70,10 @@ Interpretation:
 - manual/no-router mode is an explicit exception, not the default product model
 - a typical guided macro flow is:
   `router_set_goal(...)` -> `browse_workflows(...)` / `search_tools(...)` -> `macro_finish_form` -> `inspect_scene(...)` + measure/assert verification
+- a typical guided utility capture flow is:
+  `search_tools(query="viewport screenshot save file")` -> `call_tool(name="scene_get_viewport", arguments={...})`
+- a typical guided utility scene-prep flow is:
+  `search_tools(query="clean reset fresh scene")` -> `call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})`
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work

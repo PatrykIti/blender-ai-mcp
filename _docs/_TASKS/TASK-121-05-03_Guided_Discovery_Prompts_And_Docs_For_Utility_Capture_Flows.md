@@ -1,8 +1,10 @@
 # TASK-121-05-03: Guided Discovery, Prompts, and Docs for Utility Capture Flows
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
+
+**Progress Update:** Prompt and product docs now distinguish build/workflow goals from utility/capture requests. Guided instructions explicitly stop telling the model to force `router_set_goal(...)` for viewport screenshot and scene cleanup actions, and they point those requests toward the search-first utility path instead. Remaining work is mainly broader example coverage and any future prompt-tuning that follows from real guided usage.
 
 ---
 

@@ -202,6 +202,12 @@ Repo-tracked synthetic vision evaluation scenarios now live under:
 - `tests/fixtures/vision_eval/synthetic_no_change/`
 - `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
 
+First Blender-backed E2E coverage for the guided utility prep path now includes:
+
+- `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/router/test_utility_goal_boundary.py`
+
 ---
 
 ## E2E Test Runner Workflow
