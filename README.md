@@ -183,8 +183,9 @@ That is important for automation, auditing, and future macro/workflow compositio
 
 The guided surface supports missing-input handling as part of the product contract, not as an afterthought.
 
-- **Native elicitation** is used on async-capable guided clients when the system needs additional workflow parameters.
+- **Model-first clarification** is the default for `router_set_goal(...)` on `llm-guided`: missing workflow parameters return a typed `needs_input` payload to the outer model first.
 - **Typed fallback payloads** keep the same flow usable on tool-only or compatibility clients.
+- Human/native clarification is reserved for later/fallback policy rather than the default first step of workflow execution.
 - `router_set_goal(...)` can ask for constrained choices, booleans, enums, or workflow confirmation.
 - `partial answers` survive across follow-up turns.
 - `workflow_catalog` import conflicts reuse the same clarification model.

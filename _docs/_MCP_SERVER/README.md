@@ -323,7 +323,7 @@ Search-first default rollout remains a separate TASK-084 concern.
 
 Missing-input handling is now a first-class interaction layer:
 
-- `router_set_goal` uses native FastMCP elicitation on async-capable guided surfaces
+- `router_set_goal` now keeps normal workflow parameter clarification model-facing by default on `llm-guided`
 - non-elicitation / tool-only clients receive a typed `needs_input` fallback payload
 - fallback payloads carry stable `question_set_id`, field ids, and optional `request_id`
 - session state persists pending clarification identity, partial answers, and last elicitation action

@@ -1,13 +1,11 @@
-"""Tests for router-side native elicitation integration."""
+"""Tests for model-facing router clarification on llm-guided."""
 
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
 
-from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
 from server.adapters.mcp.areas import router as router_area
-from server.adapters.mcp.elicitation_contracts import build_elicitation_response_type
 from server.adapters.mcp.session_capabilities import get_session_capability_state
 
 
@@ -42,8 +40,8 @@ class FakeContext:
         return None
 
 
-def test_maybe_elicit_router_answers_accepts_and_extracts_answers(monkeypatch):
-    """llm-guided native elicitation should capture accepted answers."""
+def test_maybe_elicit_router_answers_returns_typed_clarification_without_human_prompt(monkeypatch):
+    """llm-guided should keep missing workflow params model-facing by default."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
@@ -52,38 +50,17 @@ def test_maybe_elicit_router_answers_accepts_and_extracts_answers(monkeypatch):
         "workflow": "chair_workflow",
         "unresolved": [{"param": "height", "type": "float", "description": "Overall height"}],
     }
-    response_type = build_elicitation_response_type(
-        router_area.build_clarification_plan("chair", "chair_workflow", initial["unresolved"])
-    )
-    ctx = FakeContext(response=AcceptedElicitation(data=response_type(height=1.25)))
+    ctx = FakeContext(response=object())
 
     result = __import__("asyncio").run(router_area._maybe_elicit_router_answers(ctx, "chair", initial))
 
-    assert result["elicitation_action"] == "accept"
-    assert result["elicitation_answers"] == {"height": 1.25}
     assert "clarification" in result
+    assert "elicitation_action" not in result
+    assert ctx.calls == []
 
 
-def test_maybe_elicit_router_answers_decline_keeps_fallback_payload(monkeypatch):
-    """Declined elicitation should preserve typed fallback clarification data."""
-
-    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
-
-    initial = {
-        "status": "needs_input",
-        "workflow": "chair_workflow",
-        "unresolved": [{"param": "leg_style", "type": "string", "description": "Leg style"}],
-    }
-    ctx = FakeContext(response=DeclinedElicitation())
-
-    result = __import__("asyncio").run(router_area._maybe_elicit_router_answers(ctx, "chair", initial))
-
-    assert result["elicitation_action"] == "decline"
-    assert "clarification" in result
-
-
-def test_maybe_elicit_router_answers_skips_native_elicitation_for_workflow_confirmation(monkeypatch):
-    """workflow_confirmation should stay model-facing instead of prompting the human directly."""
+def test_maybe_elicit_router_answers_keeps_workflow_confirmation_model_facing(monkeypatch):
+    """workflow_confirmation remains model-facing and should not prompt the human."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
@@ -100,17 +77,17 @@ def test_maybe_elicit_router_answers_skips_native_elicitation_for_workflow_confi
             }
         ],
     }
-    ctx = FakeContext(response=AcceptedElicitation(data=None))
+    ctx = FakeContext(response=object())
 
     result = __import__("asyncio").run(router_area._maybe_elicit_router_answers(ctx, "chair", initial))
 
-    assert result is initial
+    assert "clarification" in result
     assert ctx.calls == []
     assert "elicitation_action" not in result
 
 
-def test_router_set_goal_cancel_persists_pending_elicitation_state(monkeypatch):
-    """Cancelled elicitation should keep pending state for the next request."""
+def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
+    """llm-guided should persist pending clarification without human-first elicitation."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
 
@@ -130,15 +107,15 @@ def test_router_set_goal_cancel_persists_pending_elicitation_state(monkeypatch):
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
-    ctx = FakeContext(response=CancelledElicitation())
+    ctx = FakeContext(response=object())
     result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
 
     session = get_session_capability_state(ctx)
     assert result.status == "needs_input"
-    assert result.elicitation_action == "cancel"
+    assert result.elicitation_action is None
     assert session.pending_question_set_id is not None
     assert session.pending_workflow_name == "chair_workflow"
-    assert session.last_elicitation_action == "cancel"
+    assert session.last_elicitation_action is None
 
 
 def test_router_set_goal_merges_partial_answers_on_followup(monkeypatch):
@@ -175,7 +152,7 @@ def test_router_set_goal_merges_partial_answers_on_followup(monkeypatch):
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
-    ctx = FakeContext(response=DeclinedElicitation())
+    ctx = FakeContext(response=object())
     first = asyncio.run(router_area.router_set_goal(ctx, goal="chair", resolved_params={"width": 1.0}))
     second = asyncio.run(router_area.router_set_goal(ctx, goal="chair", resolved_params={"height": 2.0}))
 
@@ -185,8 +162,8 @@ def test_router_set_goal_merges_partial_answers_on_followup(monkeypatch):
     assert calls[1] == {"width": 1.0, "height": 2.0}
 
 
-def test_router_set_goal_reuses_question_set_id_after_cancel(monkeypatch):
-    """A cancelled clarification should reuse the same pending question-set id on retry."""
+def test_router_set_goal_reuses_question_set_id_after_model_facing_retry(monkeypatch):
+    """A repeated model-facing clarification should reuse the same pending question-set id."""
 
     monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "legacy-flat"})())
 
@@ -206,7 +183,7 @@ def test_router_set_goal_reuses_question_set_id_after_cancel(monkeypatch):
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
-    ctx = FakeContext(response=CancelledElicitation())
+    ctx = FakeContext(response=object())
     first = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
     second = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
 
@@ -244,7 +221,7 @@ def test_router_set_goal_accepts_explicit_workflow_confirmation(monkeypatch):
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
-    ctx = FakeContext(response=DeclinedElicitation())
+    ctx = FakeContext(response=object())
     result = asyncio.run(
         router_area.router_set_goal(
             ctx,
@@ -295,7 +272,7 @@ def test_router_set_goal_workflow_confirmation_stays_model_facing_on_llm_guided(
 
     monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
 
-    ctx = FakeContext(response=AcceptedElicitation(data=None))
+    ctx = FakeContext(response=object())
     result = asyncio.run(router_area.router_set_goal(ctx, goal="chair"))
 
     assert result.status == "needs_input"

@@ -24,6 +24,11 @@ GUIDED_UTILITY_TOOLS: tuple[str, ...] = (
     "scene_get_viewport",
 )
 
+GUIDED_DISCOVERY_TOOLS: tuple[str, ...] = (
+    "search_tools",
+    "call_tool",
+)
+
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_context",
     "check_scene",
@@ -217,6 +222,7 @@ def build_visibility_rules(
     rules: list[dict[str, Any]] = [
         {"enabled": False, "components": {"tool"}, "match_all": True},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_ENTRY_TOOLS)},
+        {"enabled": True, "components": {"tool"}, "names": set(GUIDED_DISCOVERY_TOOLS)},
         {
             "enabled": True,
             "components": {"tool"},

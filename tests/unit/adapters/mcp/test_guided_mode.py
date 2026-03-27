@@ -7,6 +7,7 @@ import asyncio
 from server.adapters.mcp.guided_mode import apply_session_visibility, build_visibility_diagnostics
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.transforms.visibility_policy import (
+    GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
 )
@@ -31,9 +32,9 @@ def test_guided_mode_bootstrap_visibility_is_tiny_and_entry_only():
 
     diagnostics = build_visibility_diagnostics("llm-guided", SessionPhase.BOOTSTRAP)
 
-    assert diagnostics.visible_capability_ids == ("reference", "router", "workflow_catalog")
+    assert diagnostics.visible_capability_ids == ("scene", "reference", "router", "workflow_catalog")
     assert diagnostics.visible_entry_capability_ids == ("reference", "router", "workflow_catalog")
-    assert "scene" in diagnostics.hidden_capability_ids
+    assert "scene" not in diagnostics.hidden_capability_ids
 
 
 def test_guided_mode_build_phase_exposes_build_capabilities_plus_entry_tools():
@@ -97,6 +98,10 @@ def test_apply_session_visibility_uses_native_fastmcp_session_api():
     assert ctx.calls[1][1]["match_all"] is True
     assert any(
         name == "enable_components" and call["names"] == set(GUIDED_ENTRY_TOOLS)
+        for name, call in ctx.calls[2:]
+    )
+    assert any(
+        name == "enable_components" and call["names"] == set(GUIDED_DISCOVERY_TOOLS)
         for name, call in ctx.calls[2:]
     )
     assert any(

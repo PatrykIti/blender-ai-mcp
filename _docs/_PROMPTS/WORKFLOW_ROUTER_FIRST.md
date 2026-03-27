@@ -48,14 +48,15 @@ UTILITY / CAPTURE EXCEPTION
 
 4) Handle Router response
    - If status == "needs_input":
-       * If your client shows structured elicitation UI, use it.
-       * Otherwise ask the user the missing questions using the typed clarification payload from Router.
+       * Treat the typed clarification payload as model-facing by default.
+       * Do not hand the question to the user first unless the user/business intent is genuinely missing.
        * Call router_set_goal(goal, resolved_params={...}) with the user answers.
        * Repeat until status == "ready".
    - If status == "ready":
        * Proceed with modeling. Prefer workflow/macro paths and only drop lower when necessary.
        * Do not treat the whole internal catalog as the default action space.
-       * For non-entry tools on `llm-guided`, use search_tools / call_tool on the shaped public surface instead of assuming broad direct visibility.
+       * If a needed tool is already directly visible on the current surface/phase, call it directly.
+       * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.

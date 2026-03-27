@@ -10,7 +10,7 @@ def test_readme_documents_structured_clarification_flow():
 
     for expected in (
         "Structured Clarification Flow",
-        "Native elicitation",
+        "Model-first clarification",
         "Typed fallback payloads",
         "partial answers",
         "workflow_catalog",
@@ -25,6 +25,7 @@ def test_mcp_docs_describe_native_and_fallback_elicitation_modes():
         "Structured Elicitation Baseline",
         "router_set_goal",
         "typed `needs_input` fallback payload",
+        "model-facing by default",
         "question_set_id",
         "workflow_catalog",
     ):
@@ -35,5 +36,5 @@ def test_prompt_docs_mention_structured_elicitation_behavior():
     prompt_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
     workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(encoding="utf-8")
 
-    assert "structured elicitation UI" in workflow_prompt
+    assert "typed clarification payload as model-facing by default" in workflow_prompt
     assert "typed `needs_input` fallback payload" in prompt_readme

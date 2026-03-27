@@ -16,7 +16,6 @@ TASK-055-FIX: Unified parameter resolution through single router_set_goal tool.
 from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
-from fastmcp.server.context import AcceptedElicitation, CancelledElicitation, DeclinedElicitation
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.router import (
@@ -25,9 +24,7 @@ from server.adapters.mcp.contracts.router import (
 )
 from server.adapters.mcp.elicitation_contracts import (
     build_clarification_plan,
-    build_elicitation_response_type,
     build_fallback_payload,
-    coerce_elicitation_answers,
 )
 from server.adapters.mcp.guided_mode import build_visibility_diagnostics
 from server.adapters.mcp.router_helper import get_router_status
@@ -197,15 +194,17 @@ async def _maybe_elicit_router_answers(
     goal: str,
     result: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Attempt native FastMCP elicitation for missing router parameters."""
+    """Build the typed clarification payload for missing router parameters.
+
+    On llm-guided, workflow clarification is model-facing by default.
+    Human/native elicitation is reserved for later/fallback policy, not the
+    first response path.
+    """
 
     if get_config().MCP_SURFACE_PROFILE != "llm-guided":
         return result
 
     if result.get("status") != "needs_input":
-        return result
-
-    if _contains_model_facing_workflow_confirmation(result):
         return result
 
     session = await get_session_capability_state_async(ctx)
@@ -239,24 +238,6 @@ async def _maybe_elicit_router_answers(
         question_set_id=session.pending_question_set_id,
     )
     result["clarification"] = fallback_payload.model_dump()
-
-    try:
-        response = await ctx.elicit(
-            message=f"Missing parameters for workflow '{plan.workflow_name}'",
-            response_type=cast(Any, build_elicitation_response_type(plan)),
-        )
-    except Exception:
-        result["elicitation_action"] = "unavailable"
-        return result
-
-    if isinstance(response, AcceptedElicitation):
-        result["elicitation_action"] = "accept"
-        result["elicitation_answers"] = coerce_elicitation_answers(response.data)
-    elif isinstance(response, DeclinedElicitation):
-        result["elicitation_action"] = "decline"
-    elif isinstance(response, CancelledElicitation):
-        result["elicitation_action"] = "cancel"
-
     return result
 
 

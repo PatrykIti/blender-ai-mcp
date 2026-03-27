@@ -20,11 +20,13 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > For utility/capture requests such as viewport screenshots or scene cleanup,
 > do **not** force `router_set_goal(...)`; use the guided utility path instead:
 > `search_tools(...)` -> `call_tool(name="scene_get_viewport"| "scene_clean_scene", ...)`.
+> When a needed tool is already directly visible on the current surface/phase,
+> call it directly instead of routing through `search_tools(...)` / `call_tool(...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
 > images before asking the bounded vision layer to compare visible change.
-> Use `search_tools` / `call_tool` to discover and invoke tools on the shaped
-> public surface, and use `manual_tools_no_router` when you explicitly want a
-> manual non-router operating mode.
+> Use `search_tools` / `call_tool` only when discovery is actually needed on the
+> shaped public surface, and use `manual_tools_no_router` when you explicitly
+> want a manual non-router operating mode.
 > Prefer workflow/macro tools over raw low-level atomics, and treat
 > before/after capture plus deterministic verification as the normal way to
 > judge whether a change is actually correct.

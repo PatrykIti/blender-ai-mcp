@@ -56,6 +56,8 @@ def test_build_server_builds_alternate_surface_profile():
     assert guided._bam_task_runtime_report.tasks_required is True
     assert guided._bam_task_runtime_report.supported is True
     assert "background tasks" in guided.instructions
+    assert "Use visible direct tools directly when they are already available" in guided.instructions
+    assert "Use search_tools/call_tool only when you actually need discovery" in guided.instructions
     assert "background tasks" in debug.instructions
     assert code_mode._bam_code_mode_enabled is True
     assert code_mode._bam_code_mode_benchmark_baselines == (
