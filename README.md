@@ -73,6 +73,15 @@ Current guided bootstrap surface:
 - `list_prompts`
 - `get_prompt`
 
+Current guided utility prep path:
+
+- bootstrap/planning search can now reach:
+  - `scene_get_viewport`
+  - `scene_clean_scene`
+- these utility actions stay bounded and do not reopen the full legacy surface
+- build goals should still start from `router_set_goal(...)`, but screenshot /
+  viewport / scene-reset requests should use the guided utility path instead
+
 Current public aliases on `llm-guided`:
 
 | Internal tool | `llm-guided` public name | Public arg changes |

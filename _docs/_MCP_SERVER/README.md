@@ -288,6 +288,16 @@ Search-first behavior now respects guided visibility:
 - hidden tools cannot be invoked through `call_tool`
 - direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
 
+Current guided utility prep path:
+
+- the direct bootstrap surface still stays at `8` visible tools
+- bootstrap/planning search can now surface a small guided-safe utility set:
+  - `scene_get_viewport`
+  - `scene_clean_scene`
+- this utility path is intended for screenshot/capture/scene-prep requests
+  and should be used instead of forcing those requests through
+  `router_set_goal(...)`
+
 Goal-scoped reference intake is now part of the guided entry layer:
 
 - `reference_images(action="attach", source_path=...)`
@@ -301,6 +311,7 @@ The `llm-guided` surface now has a first complete guided-mode visibility baselin
 
 - canonical coarse phases: `bootstrap`, `planning`, `build`, `inspect_validate`
 - guided entry surface at bootstrap/planning centered on `router_*` and `workflow_catalog`
+- guided utility prep path at bootstrap/planning for screenshot/capture/scene cleanup
 - deterministic phase/profile visibility rules owned by FastMCP platform code, not by router metadata
 - native FastMCP session visibility application via `enable_components`, `disable_components`, and `reset_visibility`
 - operator-facing visibility diagnostics exposed through `router_get_status()`

@@ -155,6 +155,24 @@ def test_bootstrap_search_does_not_leak_hidden_build_tools():
     assert all(tool["name"] != "scene_inspect" for tool in payload)
 
 
+def test_bootstrap_search_surfaces_guided_utility_tools():
+    """Bootstrap-phase discovery should surface the guided utility capture/prep path."""
+
+    server = build_server("llm-guided")
+
+    async def run():
+        viewport = await server.call_tool("search_tools", {"query": "capture viewport screenshot save file"})
+        cleanup = await server.call_tool("search_tools", {"query": "clean reset fresh scene"})
+        return _decode_tool_result(viewport), _decode_tool_result(cleanup)
+
+    viewport_payload, cleanup_payload = asyncio.run(run())
+    viewport_names = {tool["name"] for tool in viewport_payload}
+    cleanup_names = {tool["name"] for tool in cleanup_payload}
+
+    assert "scene_get_viewport" in viewport_names
+    assert "scene_clean_scene" in cleanup_names
+
+
 def test_build_phase_search_uses_public_alias_names_for_discovered_tools():
     """Build-phase discovery should expose public aliases on the shaped surface."""
 
@@ -298,6 +316,33 @@ def test_call_tool_proxy_matches_direct_public_alias_execution(monkeypatch):
     direct, discovered = asyncio.run(run())
 
     assert _decode_tool_result(direct) == _decode_tool_result(discovered)
+
+
+def test_call_tool_can_invoke_scene_clean_scene_during_bootstrap(monkeypatch):
+    """Visible guided utility tools should stay callable through call_tool during bootstrap."""
+
+    class Handler:
+        def clean_scene(self, keep_lights_and_cameras: bool):
+            assert keep_lights_and_cameras is True
+            return "Scene cleaned."
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.scene.get_scene_handler",
+        lambda: Handler(),
+    )
+
+    server = build_server("llm-guided")
+
+    async def run():
+        result = await server.call_tool(
+            "call_tool",
+            {"name": "scene_clean_scene", "arguments": {"keep_lights_and_cameras": True}},
+        )
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+
+    assert payload == "Scene cleaned."
 
 
 def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():

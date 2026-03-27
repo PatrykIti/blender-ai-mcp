@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first router-side boundary fix is now in place: utility/capture goals such as viewport screenshot or scene cleanup requests are intercepted before workflow execution, broad substring-based workflow keyword matching has been tightened, and `screen_cutout_workflow` trigger keywords have been narrowed so `screen`-overlap prompts no longer route into that workflow by accident. The remaining gap is still the guided utility surface itself: `llm-guided` needs a bounded visibility/discovery path for scene prep and viewport capture.
+**Progress Update:** The first router-side boundary fix is now in place: utility/capture goals such as viewport screenshot or scene cleanup requests are intercepted before workflow execution, broad substring-based workflow keyword matching has been tightened, and `screen_cutout_workflow` trigger keywords have been narrowed so `screen`-overlap prompts no longer route into that workflow by accident. A first guided utility surface is now also in place for bootstrap/planning: search-first discovery can reach `scene_get_viewport` and `scene_clean_scene` without reopening the legacy-flat catalog. The remaining gap is prompt/docs alignment and broader guided utility coverage.
 
 ---
 

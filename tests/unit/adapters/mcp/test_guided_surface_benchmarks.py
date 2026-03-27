@@ -84,16 +84,24 @@ def test_guided_surface_phase_baselines_stay_intentional():
     build_names, _ = _tool_names_and_payload_size(SessionPhase.BUILD)
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
-    assert len(bootstrap_names) == 4
+    assert len(bootstrap_names) == 6
     assert len(build_names) == 108
     assert len(inspect_names) == 38
 
-    assert bootstrap_names == {"browse_workflows", "reference_images", "router_get_status", "router_set_goal"}
+    assert bootstrap_names == {
+        "browse_workflows",
+        "reference_images",
+        "router_get_status",
+        "router_set_goal",
+        "scene_clean_scene",
+        "scene_get_viewport",
+    }
 
     assert "macro_relative_layout" in build_names
     assert "macro_finish_form" in build_names
     assert "macro_cutout_recess" in build_names
     assert "modeling_create_primitive" in build_names
+    assert "scene_clean_scene" not in build_names
     assert "modeling_add_modifier" not in build_names
     assert "modeling_apply_modifier" not in build_names
     assert "modeling_list_modifiers" not in build_names

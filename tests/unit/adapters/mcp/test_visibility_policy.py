@@ -14,6 +14,7 @@ from server.adapters.mcp.transforms.visibility_policy import (
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_UTILITY_TOOLS,
     build_visibility_rules,
 )
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
@@ -87,8 +88,9 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert bootstrap_rules[0]["enabled"] is False
     assert bootstrap_rules[0]["match_all"] is True
     assert bootstrap_rules[1]["names"] == set(GUIDED_ENTRY_TOOLS)
-    assert bootstrap_rules[2]["names"] == {"list_prompts", "get_prompt"}
-    assert bootstrap_rules[3]["components"] == {"prompt"}
+    assert bootstrap_rules[2]["names"] == set(GUIDED_UTILITY_TOOLS)
+    assert bootstrap_rules[3]["names"] == {"list_prompts", "get_prompt"}
+    assert bootstrap_rules[4]["components"] == {"prompt"}
     assert build_rules[-1]["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
     assert "macro_finish_form" in build_rules[-1]["names"]
     assert "modeling_add_modifier" not in build_rules[-1]["names"]
@@ -110,6 +112,6 @@ def test_llm_guided_surface_materializes_visibility_transforms():
     manual_transforms = materialize_transforms(get_surface_profile("legacy-manual"))
     legacy_transforms = materialize_transforms(get_surface_profile("legacy-flat"))
 
-    assert len(guided_transforms) == 7
+    assert len(guided_transforms) == 8
     assert len(manual_transforms) == 1
     assert len(legacy_transforms) == 1

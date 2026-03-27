@@ -19,6 +19,11 @@ GUIDED_ENTRY_TOOLS: tuple[str, ...] = (
     "reference_images",
 )
 
+GUIDED_UTILITY_TOOLS: tuple[str, ...] = (
+    "scene_clean_scene",
+    "scene_get_viewport",
+)
+
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_context",
     "check_scene",
@@ -212,6 +217,13 @@ def build_visibility_rules(
     rules: list[dict[str, Any]] = [
         {"enabled": False, "components": {"tool"}, "match_all": True},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_ENTRY_TOOLS)},
+        {
+            "enabled": True,
+            "components": {"tool"},
+            "names": set(GUIDED_UTILITY_TOOLS),
+        }
+        if resolved_phase in {SessionPhase.BOOTSTRAP, SessionPhase.PLANNING}
+        else None,
         {"enabled": True, "components": {"tool"}, "names": {"list_prompts", "get_prompt"}},
         {
             "enabled": True,
@@ -226,6 +238,7 @@ def build_visibility_rules(
             },
         },
     ]
+    rules = [rule for rule in rules if rule is not None]
 
     if resolved_phase == SessionPhase.BUILD:
         rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)})
