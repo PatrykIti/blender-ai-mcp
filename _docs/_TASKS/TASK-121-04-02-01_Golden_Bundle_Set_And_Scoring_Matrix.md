@@ -1,8 +1,10 @@
 # TASK-121-04-02-01: Golden Bundle Set and Scoring Matrix
 
 **Parent:** [TASK-121-04-02](./TASK-121-04-02_Evaluation_Harness_Goldens_And_Safety_Review.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** A first repo-tracked golden bundle set now exists under `tests/fixtures/vision_eval/`, together with scoring helpers that evaluate contract presence, direction/reference interpretation, capture usage, minimum completeness, and truth-claim safety. The current matrix is good enough for repeatable synthetic comparison; the next gap is expanding it to real macro capture bundles.
 
 ---
 

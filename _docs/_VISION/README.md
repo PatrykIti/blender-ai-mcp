@@ -167,13 +167,43 @@ The repo now includes a local comparison/debug script:
 ```bash
 poetry run python scripts/vision_harness.py \
   --backend mlx_local \
-  --goal "rounded housing" \
-  --bundle-json /path/to/bundle.json \
-  --references-json /path/to/references.json
+  --golden-json tests/fixtures/vision_eval/synthetic_round_cutout/golden.json \
+  --mlx-model mlx-community/Qwen3-VL-4B-Instruct-4bit
 ```
 
 The harness is intended for:
 
 - comparing `mlx_local`, `transformers_local`, and `openai_compatible_external`
 - checking normalized outputs on the same deterministic bundle
+- checking scored outputs on reusable repo-tracked golden scenarios
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
+
+Current repo-tracked first-pass scenarios:
+
+- `tests/fixtures/vision_eval/synthetic_round_cutout/`
+- `tests/fixtures/vision_eval/synthetic_no_change/`
+- `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
+
+## First Scored Baseline
+
+Current first-pass scored baseline on the synthetic repo scenarios:
+
+- `Qwen3-VL-4B-Instruct-4bit`
+  - scored `strong` on `synthetic_round_cutout`
+  - still weak on completeness there: it passed the direction/reference checks
+    but returned no `visible_changes`
+- `Qwen3-VL-2B-Instruct-4bit`
+  - scored `strong` on `synthetic_round_cutout`
+  - scored `strong` on `synthetic_no_change`
+  - still needs caution on harder scenarios because it tends to produce richer
+    issue/check output, which may be useful or may become overconfident on
+    noisier real viewport bundles
+
+Practical reading of that baseline:
+
+- first-pass synthetic scoring now works and is reusable
+- current score alone is not enough to promote a model
+- the next important differentiator is harder bundle coverage:
+  - real macro captures
+  - reference mismatch
+  - richer/noisier multi-view cases

@@ -190,11 +190,17 @@ poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/
 poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py tests/e2e/tools/macro/test_macro_finish_form.py tests/e2e/tools/macro/test_macro_relative_layout.py -q
 ```
 
-Primary local validation commands for TASK-121 vision runtime/capture scaffolding:
+Primary local validation commands for TASK-121 vision runtime/capture/evaluation scaffolding:
 
 ```bash
-poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_capture_bundle.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
+poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_capture_bundle.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
 ```
+
+Repo-tracked synthetic vision evaluation scenarios now live under:
+
+- `tests/fixtures/vision_eval/synthetic_round_cutout/`
+- `tests/fixtures/vision_eval/synthetic_no_change/`
+- `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
 
 ---
 

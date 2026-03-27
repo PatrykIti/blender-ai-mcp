@@ -34,6 +34,15 @@ from .config import (
     VisionRuntimeConfig,
     VisionTransformersLocalConfig,
 )
+from .evaluation import (
+    ResolvedVisionGoldenScenario,
+    VisionEvaluationDimension,
+    VisionEvaluationSummary,
+    VisionGoldenExpectations,
+    VisionGoldenScenario,
+    evaluate_vision_result,
+    load_golden_scenario,
+)
 from .policy import choose_capture_preset_profile, choose_reference_target_view, infer_capture_preset_profile
 from .reporting import attach_vision_artifacts
 from .runtime import LazyVisionBackendResolver, build_vision_runtime_config
@@ -63,7 +72,12 @@ __all__ = [
     "MLXLocalVisionBackend",
     "VisionMLXLocalConfig",
     "OpenAICompatibleVisionBackend",
+    "ResolvedVisionGoldenScenario",
     "TransformersLocalVisionBackend",
+    "VisionEvaluationDimension",
+    "VisionEvaluationSummary",
+    "VisionGoldenExpectations",
+    "VisionGoldenScenario",
     "VisionOpenAICompatibleConfig",
     "VisionRequest",
     "VisionRuntimeConfig",
@@ -87,6 +101,8 @@ __all__ = [
     "select_reference_records_for_target",
     "build_vision_runtime_config",
     "create_vision_backend",
+    "evaluate_vision_result",
+    "load_golden_scenario",
     "restore_scene_state",
     "run_vision_assist",
 ]

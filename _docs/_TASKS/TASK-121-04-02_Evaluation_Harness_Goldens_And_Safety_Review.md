@@ -1,8 +1,10 @@
 # TASK-121-04-02: Evaluation Harness, Goldens, and Safety Review
 
 **Parent:** [TASK-121-04](./TASK-121-04_Lightweight_Vision_Runtime_And_Evaluation.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The repo now has a first-pass evaluation harness path: `scripts/vision_harness.py` accepts repo-tracked `golden.json` scenarios, scores backend outputs against a reusable matrix, and synthetic golden scenarios exist for improvement, no-change, and reference-mismatch coverage. The next step is to push this beyond synthetic checks into real macro capture bundles and explicit governance verdicts.
 
 ---
 

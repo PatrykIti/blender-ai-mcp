@@ -1,8 +1,10 @@
 # TASK-121-04-02-02: Runtime Verdict and Governance Notes
 
 **Parent:** [TASK-121-04-02](./TASK-121-04-02_Evaluation_Harness_Goldens_And_Safety_Review.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on the synthetic golden scenarios. Current recorded interpretation: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can look strong on narrow synthetic bundles, so governance cannot rely on one synthetic score alone. The next step is to record verdicts on harder scenarios, especially real macro bundles and mismatch cases.
 
 ---
 

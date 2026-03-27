@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import json
 import os
 import sys
@@ -22,12 +23,15 @@ from server.adapters.mcp.contracts.vision import (
     VisionCaptureImageContract,
 )
 from server.adapters.mcp.vision import (
+    ResolvedVisionGoldenScenario,
     VisionImageInput,
     VisionRequest,
     build_reference_capture_images,
     build_vision_request_from_capture_bundle,
+    evaluate_vision_result,
     create_vision_backend,
     build_vision_runtime_config,
+    load_golden_scenario,
 )
 from server.infrastructure.config import Config
 
@@ -42,6 +46,36 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _resolve_local_path(base_dir: Path, value: str | None) -> str | None:
+    if value is None:
+        return None
+    path = Path(value)
+    if path.is_absolute():
+        return str(path)
+    return str((base_dir / path).resolve())
+
+
+def _resolve_bundle_paths(bundle_data: dict[str, Any], source_path: Path) -> dict[str, Any]:
+    resolved = copy.deepcopy(bundle_data)
+    base_dir = source_path.parent
+    for key in ("captures_before", "captures_after"):
+        for item in resolved.get(key, []):
+            if isinstance(item, dict):
+                item["image_path"] = _resolve_local_path(base_dir, item.get("image_path"))
+    return resolved
+
+
+def _resolve_reference_paths(references_data: dict[str, Any], source_path: Path) -> dict[str, Any]:
+    resolved = copy.deepcopy(references_data)
+    base_dir = source_path.parent
+    for item in resolved.get("references", []):
+        if not isinstance(item, dict):
+            continue
+        for key in ("original_path", "stored_path", "host_visible_path"):
+            item[key] = _resolve_local_path(base_dir, item.get(key))
+    return resolved
+
+
 def _capture_image(path: str, *, label: str, view_kind: str) -> VisionCaptureImageContract:
     media_type = "image/png" if path.lower().endswith(".png") else "image/jpeg"
     return VisionCaptureImageContract(
@@ -52,19 +86,76 @@ def _capture_image(path: str, *, label: str, view_kind: str) -> VisionCaptureIma
     )
 
 
-def _build_request_from_args(args: argparse.Namespace) -> VisionRequest:
-    if args.bundle_json:
-        bundle_data = _read_json(Path(args.bundle_json))
+def _resolve_golden(args: argparse.Namespace) -> ResolvedVisionGoldenScenario | None:
+    if not args.golden_json:
+        return None
+    return load_golden_scenario(args.golden_json)
+
+
+def _effective_goal(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str:
+    if args.goal:
+        return str(args.goal)
+    if golden is not None:
+        return golden.scenario.goal
+    raise ValueError("goal is required when no golden scenario is provided")
+
+
+def _effective_target_object(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+    if args.target_object is not None:
+        return args.target_object
+    if golden is not None:
+        return golden.scenario.target_object
+    return None
+
+
+def _effective_prompt_hint(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+    if args.prompt_hint is not None:
+        return args.prompt_hint
+    if golden is not None:
+        return golden.scenario.prompt_hint
+    return None
+
+
+def _effective_bundle_json(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+    if args.bundle_json is not None:
+        return args.bundle_json
+    if golden is not None:
+        return str(golden.bundle_path)
+    return None
+
+
+def _effective_references_json(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+    if args.references_json is not None:
+        return args.references_json
+    if golden is not None and golden.references_path is not None:
+        return str(golden.references_path)
+    return None
+
+
+def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None = None) -> VisionRequest:
+    goal = _effective_goal(args, golden)
+    target_object = _effective_target_object(args, golden)
+    prompt_hint = _effective_prompt_hint(args, golden)
+    bundle_json = _effective_bundle_json(args, golden)
+    references_json = _effective_references_json(args, golden)
+
+    if bundle_json:
+        bundle_path = Path(bundle_json)
+        bundle_data = _resolve_bundle_paths(_read_json(bundle_path), bundle_path)
         bundle = VisionCaptureBundleContract.model_validate(bundle_data)
         references = tuple(
             ReferenceImageRecordContract.model_validate(item)
-            for item in (_read_json(Path(args.references_json)).get("references", []) if args.references_json else [])
+            for item in (
+                _resolve_reference_paths(_read_json(Path(references_json)), Path(references_json)).get("references", [])
+                if references_json
+                else []
+            )
         )
         return build_vision_request_from_capture_bundle(
             bundle,
-            goal=args.goal,
+            goal=goal,
             reference_images=build_reference_capture_images(references),
-            prompt_hint=args.prompt_hint,
+            prompt_hint=prompt_hint,
         )
 
     before = [
@@ -98,10 +189,10 @@ def _build_request_from_args(args: argparse.Namespace) -> VisionRequest:
         ]
     )
     return VisionRequest(
-        goal=args.goal,
+        goal=goal,
         images=images,
-        target_object=args.target_object,
-        prompt_hint=args.prompt_hint,
+        target_object=target_object,
+        prompt_hint=prompt_hint,
         truth_summary=_read_json(Path(args.truth_json)) if args.truth_json else None,
         metadata={"source": "vision_harness"},
     )
@@ -149,41 +240,55 @@ def _backend_list(args: argparse.Namespace) -> list[str]:
     return [args.backend]
 
 
-async def _run_backend(args: argparse.Namespace, backend_name: str, request: VisionRequest) -> dict[str, Any]:
+async def _run_backend(
+    args: argparse.Namespace,
+    backend_name: str,
+    request: VisionRequest,
+    golden: ResolvedVisionGoldenScenario | None = None,
+) -> dict[str, Any]:
     runtime = build_vision_runtime_config(_config_for_backend(args, backend_name))
     backend = create_vision_backend(runtime)
     result = await backend.analyze(request)
-    return {
+    entry = {
         "backend": backend_name,
         "model_name": runtime.active_model_name,
         "status": "success",
         "result": result,
     }
+    if golden is not None:
+        entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
+    return entry
 
 
 async def _run(args: argparse.Namespace) -> list[dict[str, Any]]:
-    request = _build_request_from_args(args)
+    golden = _resolve_golden(args)
+    request = _build_request_from_args(args, golden=golden)
     results: list[dict[str, Any]] = []
     for backend_name in _backend_list(args):
         try:
-            results.append(await _run_backend(args, backend_name, request))
+            results.append(await _run_backend(args, backend_name, request, golden=golden))
         except Exception as exc:
-            results.append(
+            entry = (
                 {
                     "backend": backend_name,
+                    "model_name": None,
                     "status": "error",
                     "error": str(exc),
                 }
             )
+            if golden is not None:
+                entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
+            results.append(entry)
     return results
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", choices=["mlx_local", "transformers_local", "openai_compatible_external", "all"], default="all")
-    parser.add_argument("--goal", required=True)
+    parser.add_argument("--goal")
     parser.add_argument("--target-object")
     parser.add_argument("--prompt-hint")
+    parser.add_argument("--golden-json")
     parser.add_argument("--bundle-json")
     parser.add_argument("--references-json")
     parser.add_argument("--truth-json")
@@ -208,7 +313,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.bundle_json is None and not any([args.before, args.after, args.reference]):
+    if args.golden_json is None and args.goal is None:
+        parser.error("Provide --goal or --golden-json")
+
+    if args.golden_json is None and args.bundle_json is None and not any([args.before, args.after, args.reference]):
         parser.error("Provide --bundle-json or at least one of --before/--after/--reference")
 
     results = asyncio.run(_run(args))
