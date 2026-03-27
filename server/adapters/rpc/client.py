@@ -1,4 +1,5 @@
 import json
+import logging
 import socket
 import struct
 import time
@@ -6,6 +7,8 @@ from typing import Any, Dict, Optional
 
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.models.rpc import RpcRequest, RpcResponse
+
+logger = logging.getLogger(__name__)
 
 
 def send_msg(sock, msg):
@@ -60,7 +63,7 @@ class RpcClient(IRpcClient):
             self.socket = None
             return False
         except Exception as e:
-            print(f"Error connecting to Blender: {e}")
+            logger.warning("Error connecting to Blender RPC: %s", e)
             self.socket = None
             return False
 
@@ -117,7 +120,7 @@ class RpcClient(IRpcClient):
             return RpcResponse(**response_dict)
 
         except (socket.timeout, ConnectionResetError, BrokenPipeError) as e:
-            print(f"Connection lost: {e}")
+            logger.warning("Connection lost while talking to Blender RPC: %s", e)
             self.close()
             return RpcResponse(
                 request_id=request.request_id,

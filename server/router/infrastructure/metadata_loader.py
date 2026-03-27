@@ -6,10 +6,13 @@ Loads tool metadata from per-tool JSON files for router decision making.
 
 import hashlib
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -181,7 +184,7 @@ class MetadataLoader:
                     metadata[tool_metadata.tool_name] = tool_metadata
             except Exception as e:
                 # Log error but continue loading other files
-                print(f"Error loading {json_file}: {e}")
+                logger.warning("Error loading %s: %s", json_file, e)
 
         return metadata
 
