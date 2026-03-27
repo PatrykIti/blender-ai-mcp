@@ -74,11 +74,12 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
         list_page_size=50,
         tasks_enabled=True,
         instructions=(
-            "Guided MCP surface. Start from router_set_goal first; this is the required production session bootstrap. "
+            "Guided MCP surface. First classify the request type: build/workflow goal, utility/capture request, or guided manual build. "
             "Current entry tools are router_set_goal, router_get_status, browse_workflows, "
             "reference_images, search_tools, call_tool, list_prompts, and get_prompt. "
             "Build/workflow request: router_get_status -> router_set_goal -> handle typed clarification -> use visible build tools/macros. "
             "Utility/capture request: skip router_set_goal and use the guided utility path directly. "
+            "Guided manual build: if workflow matching is not useful, continue on the guided build surface without forcing workflow import or creation. "
             "Vision-assisted build: attach reference_images, prefer macro paths with capture_bundle/vision_assistant, then confirm with inspect/measure/assert tools. "
             "Prefer workflow/macro paths over raw low-level atomics. "
             "When a bounded intent matches, prefer macro_cutout_recess for recess/opening work, "
