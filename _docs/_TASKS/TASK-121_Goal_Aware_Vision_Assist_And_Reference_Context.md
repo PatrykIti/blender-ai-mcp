@@ -6,7 +6,7 @@
 **Dependencies:** TASK-113, TASK-120  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, deterministic capture-bundle input types plus runtime preset profiles, a first macro-path integration where macro reports can carry optional `capture_bundle` artifacts when vision is enabled, MCP macro adapters now have the request-bound attachment point for `vision_assistant`, `TASK-121-02` is done with goal-scoped reference images plus the public `reference_images` lifecycle surface, `TASK-121-03` is now in progress with reference-context-aware macro vision requests, and `TASK-121-04-01` is now in progress with real smoke-test validation of the `mlx_local` runtime path.
+**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, deterministic capture-bundle input types plus runtime preset profiles, a first macro-path integration where macro reports can carry optional `capture_bundle` artifacts when vision is enabled, MCP macro adapters now have the request-bound attachment point for `vision_assistant`, `TASK-121-02` is done with goal-scoped reference images plus the public `reference_images` lifecycle surface, `TASK-121-03` is now in progress with reference-context-aware macro vision requests, and `TASK-121-04` is now in progress with real smoke-test validation plus first scored goldens for the `mlx_local` runtime path. A newly identified gap is that `llm-guided` still handles utility capture/scene-prep requests badly, which blocks natural guided preparation of vision test inputs and needs its own follow-on fix track.
 
 ---
 
@@ -81,3 +81,4 @@ server dependency in the core MCP bootstrap path.
 | 2 | [TASK-121-02](./TASK-121-02_Goal_And_Reference_Context_Session_Model.md) | Add goal-scoped reference-image context and intake/lifecycle APIs |
 | 3 | [TASK-121-03](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md) | Add capture bundles and integrate vision assistance into macro/workflow paths |
 | 4 | [TASK-121-04](./TASK-121-04_Lightweight_Vision_Runtime_And_Evaluation.md) | Choose the lightweight runtime/model path and add evaluation/safety coverage |
+| 5 | [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md) | Fix `llm-guided` so utility capture/scene-prep flows work naturally and do not get misrouted into build workflows |
