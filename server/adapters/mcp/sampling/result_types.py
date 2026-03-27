@@ -102,7 +102,7 @@ class VisionInputSummaryContract(MCPContract):
 class VisionAssistContract(MCPContract):
     """Structured bounded vision result for macro/workflow reporting."""
 
-    backend_kind: Literal["transformers_local", "openai_compatible_external", "unknown"] = "unknown"
+    backend_kind: Literal["transformers_local", "mlx_local", "openai_compatible_external", "unknown"] = "unknown"
     model_name: str | None = None
     goal_summary: str
     reference_match_summary: str | None = None

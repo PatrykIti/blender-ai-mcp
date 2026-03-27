@@ -122,7 +122,7 @@ async def run_vision_assist(
 
     capability_source = cast(
         AssistantCapabilitySource,
-        "local_runtime" if backend.backend_kind == "transformers_local" else "external_runtime",
+        "local_runtime" if backend.backend_kind in {"transformers_local", "mlx_local"} else "external_runtime",
     )
 
     try:

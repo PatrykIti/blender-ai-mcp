@@ -166,6 +166,29 @@ def test_runner_returns_success_for_external_backend(monkeypatch):
     assert result.result.backend_kind == "openai_compatible_external"
 
 
+def test_runner_returns_success_for_mlx_local_backend(monkeypatch):
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_PROVIDER="mlx_local",
+            VISION_LOCAL_MODEL_ID=None,
+            VISION_MLX_MODEL_ID="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+        )
+    )
+    resolver = LazyVisionBackendResolver(runtime)
+    monkeypatch.setattr(
+        resolver,
+        "resolve_default",
+        lambda: _SuccessBackend("mlx_local", "mlx-community/Qwen3-VL-4B-Instruct-4bit"),
+    )
+
+    result = asyncio.run(run_vision_assist(_Ctx(), request=_request(), resolver=resolver))
+
+    assert result.status == "success"
+    assert result.capability_source == "local_runtime"
+    assert result.result is not None
+    assert result.result.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
+
+
 def test_runner_normalizes_backend_unavailable_errors(monkeypatch):
     runtime = build_vision_runtime_config(_config())
     resolver = LazyVisionBackendResolver(runtime)

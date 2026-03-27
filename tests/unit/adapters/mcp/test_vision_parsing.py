@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from server.adapters.mcp.vision.backend import VisionImageInput, VisionRequest
-from server.adapters.mcp.vision.parsing import parse_vision_output_text
+from server.adapters.mcp.vision.parsing import diagnose_vision_output_text, parse_vision_output_text
 
 
 def _request() -> VisionRequest:
@@ -106,3 +106,34 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
     assert parsed["visible_changes"] == ["Front is rounder."]
     assert parsed["likely_issues"][0]["summary"] == "Top edge still looks flat."
     assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"
+
+
+def test_diagnose_vision_output_classifies_fenced_contract_json():
+    text = """```json
+{"goal_summary":"ok","reference_match_summary":null,"visible_changes":[],"likely_issues":[],"recommended_checks":[],"confidence":0.2,"captures_used":["before_1"]}
+```"""
+
+    diagnostics = diagnose_vision_output_text(text)
+
+    assert diagnostics["container_shape"] == "fenced_json"
+    assert diagnostics["payload_shape"] == "contract"
+
+
+def test_diagnose_vision_output_classifies_summary_alias_json():
+    diagnostics = diagnose_vision_output_text('{"comparison":"Closer to the target."}')
+
+    assert diagnostics["container_shape"] == "json"
+    assert diagnostics["payload_shape"] == "summary_alias"
+
+
+def test_diagnose_vision_output_classifies_label_map_json():
+    diagnostics = diagnose_vision_output_text('{"before":"b","after":"a","reference":"r"}')
+
+    assert diagnostics["payload_shape"] == "label_map"
+
+
+def test_diagnose_vision_output_classifies_prose_without_json():
+    diagnostics = diagnose_vision_output_text("This is just prose with no JSON at all.")
+
+    assert diagnostics["container_shape"] == "prose"
+    assert diagnostics["payload_shape"] == "no_json"

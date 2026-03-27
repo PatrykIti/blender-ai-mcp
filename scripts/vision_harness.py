@@ -255,6 +255,9 @@ async def _run_backend(
         "status": "success",
         "result": result,
     }
+    diagnostics = getattr(backend, "last_output_diagnostics", None)
+    if diagnostics is not None:
+        entry["diagnostics"] = diagnostics
     if golden is not None:
         entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
     return entry

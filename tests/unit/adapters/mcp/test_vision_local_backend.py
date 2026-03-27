@@ -195,6 +195,8 @@ def test_local_backend_analyze_runs_generic_transformers_flow(monkeypatch, tmp_p
     assert result["input_summary"]["before_image_count"] == 1
     assert backend._processor is not None
     assert backend._processor.messages is not None
+    assert backend.last_output_diagnostics is not None
+    assert backend.last_output_diagnostics["payload_shape"] == "contract"
 
 
 def test_local_backend_rejects_invalid_json_output(monkeypatch, tmp_path):
@@ -338,6 +340,8 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
     assert result["backend_kind"] == "mlx_local"
     assert result["model_name"] == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result["goal_summary"] == "Closer to the goal."
+    assert backend.last_output_diagnostics is not None
+    assert backend.last_output_diagnostics["payload_shape"] == "contract"
 
 
 def test_mlx_local_backend_repairs_comparison_only_json(monkeypatch, tmp_path):

@@ -176,6 +176,9 @@ The harness is intended for:
 - comparing `mlx_local`, `transformers_local`, and `openai_compatible_external`
 - checking normalized outputs on the same deterministic bundle
 - checking scored outputs on reusable repo-tracked golden scenarios
+- recording raw-output diagnostics such as:
+  - `container_shape`: `json`, `fenced_json`, `embedded_json`, `prose`
+  - `payload_shape`: `contract`, `summary_alias`, `input_echo`, `label_map`, `unsupported_json`, `no_json`
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
 
 Current repo-tracked first-pass scenarios:

@@ -43,6 +43,16 @@ def extract_json_object_candidate(text: str) -> str | None:
     return text[start : end + 1]
 
 
+def _json_container_shape(text: str, parsed_from: str) -> str:
+    stripped = text.strip()
+    unwrapped = unwrap_json_text(text)
+    if stripped.startswith("```") and parsed_from == unwrapped:
+        return "fenced_json"
+    if parsed_from == stripped:
+        return "json"
+    return "embedded_json"
+
+
 def _looks_like_input_echo(parsed: dict[str, Any]) -> bool:
     return {"goal", "images", "metadata"} <= set(parsed.keys()) and "goal_summary" not in parsed
 
@@ -247,6 +257,52 @@ def _has_contract_signal(parsed: dict[str, Any]) -> bool:
     expected = set(expected_json_keys())
     aliases = set(_SUMMARY_ALIASES + _VISIBLE_CHANGES_ALIASES + _LIKELY_ISSUES_ALIASES + _RECOMMENDED_CHECKS_ALIASES)
     return bool(set(parsed.keys()) & (expected | aliases))
+
+
+def _payload_shape(parsed: dict[str, Any]) -> str:
+    if _looks_like_input_echo(parsed):
+        return "input_echo"
+    if _looks_like_label_map(parsed):
+        return "label_map"
+    if any(key in parsed for key in expected_json_keys()):
+        return "contract"
+    if any(key in parsed for key in _SUMMARY_ALIASES):
+        return "summary_alias"
+    if _has_contract_signal(parsed):
+        return "alias_contract"
+    return "unsupported_json"
+
+
+def diagnose_vision_output_text(text: str) -> dict[str, Any]:
+    """Classify one raw backend output before contract normalization."""
+
+    stripped = text.strip()
+    preview = stripped[:280]
+    candidates = [unwrap_json_text(text)]
+    extracted = extract_json_object_candidate(candidates[0])
+    if extracted and extracted not in candidates:
+        candidates.append(extracted)
+
+    for candidate in candidates:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            keys = sorted(str(key) for key in payload.keys())
+            return {
+                "container_shape": _json_container_shape(text, candidate),
+                "payload_shape": _payload_shape(payload),
+                "top_level_keys": keys,
+                "raw_preview": preview,
+            }
+
+    return {
+        "container_shape": "prose",
+        "payload_shape": "no_json",
+        "top_level_keys": [],
+        "raw_preview": preview,
+    }
 
 
 def parse_vision_output_text(text: str, request: VisionRequest) -> dict[str, Any]:

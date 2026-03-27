@@ -6,6 +6,16 @@
 
 **Progress Update:** `scripts/vision_harness.py` now exists and can run the same bundle/reference payload through at least `mlx_local` and other configured backends. It now also supports repo-tracked `golden.json` scenarios and emits scored evaluation summaries. Preliminary MLX comparison shows that both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can score well on the first synthetic scenarios, but harder scenario coverage is still needed before making a product-facing local-model verdict.
 
+The harness now also records raw-output diagnostics per backend run, so the
+team can distinguish:
+
+- valid contract JSON
+- fenced or embedded JSON
+- summary-alias drift such as `{"comparison": "..."}`
+- input echo
+- label-map drift
+- pure prose/no-JSON failures
+
 ---
 
 ## Objective

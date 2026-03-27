@@ -17,7 +17,7 @@ import httpx
 
 from .backend import VisionBackend, VisionBackendUnavailableError, VisionRequest
 from .config import VisionRuntimeConfig
-from .parsing import parse_vision_output_text
+from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
     build_local_vision_payload_text,
     build_vision_payload_text,
@@ -103,6 +103,7 @@ class TransformersLocalVisionBackend(VisionBackend):
         self._runtime_modules: tuple[Any, Any] | None = None
         self._processor: Any | None = None
         self._model: Any | None = None
+        self._last_output_diagnostics: dict[str, Any] | None = None
 
     @property
     def backend_kind(self):
@@ -111,6 +112,10 @@ class TransformersLocalVisionBackend(VisionBackend):
     @property
     def model_name(self) -> str:
         return self._local_config.model_id or self._local_config.model_path or "unknown-local-model"
+
+    @property
+    def last_output_diagnostics(self) -> dict[str, Any] | None:
+        return self._last_output_diagnostics
 
     def _ensure_runtime_modules(self) -> tuple[Any, Any]:
         if self._runtime_modules is not None:
@@ -232,7 +237,9 @@ class TransformersLocalVisionBackend(VisionBackend):
             )
             if not output_text:
                 raise VisionBackendUnavailableError("Local vision runtime returned no decoded text.")
-            parsed_content = parse_vision_output_text(str(output_text[0]), request)
+            raw_text = str(output_text[0])
+            self._last_output_diagnostics = diagnose_vision_output_text(raw_text)
+            parsed_content = parse_vision_output_text(raw_text, request)
         except VisionBackendUnavailableError:
             raise
         except (json.JSONDecodeError, ValueError) as exc:
@@ -260,6 +267,7 @@ class MLXLocalVisionBackend(VisionBackend):
         self._model: Any | None = None
         self._processor: Any | None = None
         self._model_config: Any | None = None
+        self._last_output_diagnostics: dict[str, Any] | None = None
 
     @property
     def backend_kind(self):
@@ -268,6 +276,10 @@ class MLXLocalVisionBackend(VisionBackend):
     @property
     def model_name(self) -> str:
         return self._mlx_config.model_id or self._mlx_config.model_path or "unknown-mlx-model"
+
+    @property
+    def last_output_diagnostics(self) -> dict[str, Any] | None:
+        return self._last_output_diagnostics
 
     def _resolve_model_source(self) -> str:
         return self._mlx_config.model_id or self._mlx_config.model_path or self.model_name
@@ -343,7 +355,9 @@ class MLXLocalVisionBackend(VisionBackend):
             output_text = getattr(output, "text", output)
             if not output_text:
                 raise VisionBackendUnavailableError("MLX local vision runtime returned no output.")
-            parsed_content = parse_vision_output_text(str(output_text), request)
+            raw_text = str(output_text)
+            self._last_output_diagnostics = diagnose_vision_output_text(raw_text)
+            parsed_content = parse_vision_output_text(raw_text, request)
         except VisionBackendUnavailableError:
             raise
         except (json.JSONDecodeError, ValueError) as exc:
@@ -367,6 +381,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             raise VisionBackendUnavailableError("openai_compatible_external backend is not configured.")
         self._runtime_config = runtime_config
         self._external_config = runtime_config.openai_compatible_external
+        self._last_output_diagnostics: dict[str, Any] | None = None
 
     @property
     def backend_kind(self):
@@ -375,6 +390,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
     @property
     def model_name(self) -> str:
         return self._external_config.model or "unknown-external-model"
+
+    @property
+    def last_output_diagnostics(self) -> dict[str, Any] | None:
+        return self._last_output_diagnostics
 
     def _endpoint_url(self) -> str:
         base_url = (self._external_config.base_url or "").rstrip("/")
@@ -444,6 +463,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
         content = _extract_message_text(parsed_response)
         try:
+            self._last_output_diagnostics = diagnose_vision_output_text(content)
             parsed_content = parse_vision_output_text(content, request)
         except (json.JSONDecodeError, ValueError) as exc:
             raise VisionBackendUnavailableError("Vision endpoint did not return valid JSON content.") from exc
