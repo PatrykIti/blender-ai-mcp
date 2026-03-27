@@ -203,6 +203,34 @@ Current first-pass scored baseline on the synthetic repo scenarios:
     issue/check output, which may be useful or may become overconfident on
     noisier real viewport bundles
 
+Current first-pass real viewport smoke comparison on `default_cube_to_picnic_table`:
+
+- `Qwen3-VL-4B-Instruct-4bit`
+  - scored `strong`
+  - produced a clean, concise summary that the default cube scene was replaced
+    by a detailed picnic table model
+  - produced useful `visible_changes`
+  - produced no extra issues/checks on this easy smoke scenario
+  - after the viewport-smoke heuristic update, this scenario now scores `1.0`
+    and the direction classifier maps the replacement wording to `improved`
+- `Qwen3-VL-2B-Instruct-4bit`
+  - also scored `strong`
+  - correctly recognized the large scene/object replacement
+  - but added noisier `likely_issues` and `recommended_checks` that do not add
+    much value on such an easy smoke case
+  - still scores lower (`0.875`) because its wording on this case does not
+    always hit the direction heuristic and it remains more prone to noisy
+    follow-up output
+
+Current interpretation of that comparison:
+
+- both models can handle a large before/after scene replacement smoke case
+- `4B` is the cleaner local baseline for real smoke usage
+- `2B` remains more prone to overproducing analysis on easy cases
+- the current scoring heuristic is improved for this scenario, but not fully
+  generalized yet: `4B` now maps cleanly to `improved`, while `2B` still uses
+  variant phrasing that the heuristic does not always classify correctly
+
 Practical reading of that baseline:
 
 - first-pass synthetic scoring now works and is reusable

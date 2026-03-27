@@ -131,3 +131,25 @@ def test_evaluate_vision_result_fails_error_entry():
 
     assert summary.verdict == "failed"
     assert summary.dimensions["status_success"].passed is False
+
+
+def test_evaluate_vision_result_classifies_real_viewport_replacement_as_improved():
+    scenario = load_golden_scenario(_fixture("default_cube_to_picnic_table"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a detailed picnic table model replacing the default cube, indicating a significant object replacement in the scene.",
+            "reference_match_summary": None,
+            "visible_changes": [
+                "A detailed picnic table model is now present in the scene, replacing the original cube."
+            ],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": ["context_wide_before", "context_wide_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True

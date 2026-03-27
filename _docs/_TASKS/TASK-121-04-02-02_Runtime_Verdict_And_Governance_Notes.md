@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on the synthetic golden scenarios. Current recorded interpretation: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can look strong on narrow synthetic bundles, so governance cannot rely on one synthetic score alone. The next step is to record verdicts on harder scenarios, especially real macro bundles and mismatch cases.
+**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on both synthetic scenarios and one first real viewport smoke scenario (`default_cube_to_picnic_table`). Current recorded interpretation: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can look strong on narrow synthetic bundles, and both can correctly describe a large scene replacement smoke case. After the latest heuristic update, `4B` now scores a clean `1.0` on that real smoke case, while `2B` still lands lower because it is noisier and uses wording that does not always map cleanly through the direction heuristic. The next step is to record verdicts on harder scenarios, especially real macro bundles and mismatch cases.
 
 ---
 

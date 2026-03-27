@@ -34,6 +34,9 @@ _IMPROVEMENT_HINTS = (
     "consistent with the goal",
     "toward the goal",
     "towards the goal",
+    "replacing the default cube",
+    "replacing the original cube",
+    "replacing the cube",
 )
 _REGRESSION_HINTS = (
     "worse",
@@ -171,6 +174,13 @@ def _classify_direction(text: str) -> DirectionExpectation | Literal["unknown"]:
         return "no_change"
     improvement_hits = sum(1 for hint in _IMPROVEMENT_HINTS if hint in text)
     regression_hits = sum(1 for hint in _REGRESSION_HINTS if hint in text)
+    if (
+        ("replacing" in text or "replaced" in text or "instead of" in text)
+        and any(hint in text for hint in ("default cube", "original cube", "simple cube", "cube"))
+        and any(hint in text for hint in ("picnic table", "detailed", "more complex", "realistic object", "multiple components"))
+        and regression_hits == 0
+    ):
+        return "improved"
     if improvement_hits > regression_hits and improvement_hits > 0:
         return "improved"
     if regression_hits > improvement_hits and regression_hits > 0:

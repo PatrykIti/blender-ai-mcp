@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has a first-pass evaluation harness path: `scripts/vision_harness.py` accepts repo-tracked `golden.json` scenarios, scores backend outputs against a reusable matrix, and synthetic golden scenarios exist for improvement, no-change, and reference-mismatch coverage. The next step is to push this beyond synthetic checks into real macro capture bundles and explicit governance verdicts.
+**Progress Update:** The repo now has a first-pass evaluation harness path: `scripts/vision_harness.py` accepts repo-tracked `golden.json` scenarios, scores backend outputs against a reusable matrix, and synthetic golden scenarios exist for improvement, no-change, and reference-mismatch coverage. A first real viewport smoke scenario is now also in the matrix (`default_cube_to_picnic_table`). The next step is to push this beyond simple scene-replacement smoke checks into real macro capture bundles and explicit governance verdicts.
 
 ---
 
