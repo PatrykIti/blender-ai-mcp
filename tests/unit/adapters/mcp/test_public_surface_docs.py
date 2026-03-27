@@ -123,10 +123,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
     assert "workflow_catalog import" not in workflow_prompt
     assert "router_clear_goal()" not in workflow_prompt
-    assert "FLOW SUMMARY" in workflow_prompt
-    assert "Build/workflow request:" in workflow_prompt
-    assert "Vision-assisted build:" in workflow_prompt
-    assert "UTILITY / CAPTURE EXCEPTION" in workflow_prompt
+    assert "REQUEST TRIAGE (FIRST STEP)" in workflow_prompt
+    assert "For A) build/workflow goal:" in workflow_prompt
+    assert "If vision should support the task" in workflow_prompt
+    assert "For B) utility/capture/scene-prep:" in workflow_prompt
     assert "If a needed tool is already directly visible on the current surface/phase, call it directly." in workflow_prompt
     assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in workflow_prompt

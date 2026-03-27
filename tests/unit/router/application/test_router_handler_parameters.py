@@ -251,6 +251,8 @@ class TestSetGoalUnified:
         assert result["workflow"] is None
         assert result["resolved"] == {}
         assert result["unresolved"] == []
+        assert result["phase_hint"] == "build"
+        assert "guided build surface" in result["message"]
 
     def test_set_goal_treats_viewport_capture_request_as_utility_no_match(self, handler, mock_router):
         """Utility/capture requests should not be routed into build workflows."""
@@ -263,6 +265,7 @@ class TestSetGoalUnified:
         assert result["workflow"] is None
         assert "utility/capture request" in result["message"]
         assert "scene_get_viewport" in result["message"]
+        assert result["phase_hint"] == "planning"
         assert mock_router.get_pending_workflow() is None
 
     def test_set_goal_treats_scene_cleanup_request_as_utility_no_match(self, handler, mock_router):
@@ -274,6 +277,22 @@ class TestSetGoalUnified:
         assert result["status"] == "no_match"
         assert result["workflow"] is None
         assert "scene_clean_scene" in result["message"]
+        assert result["phase_hint"] == "planning"
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_meta_capture_build_request_as_guided_manual_no_match(self, handler, mock_router):
+        """Progressive screenshot test goals should hand off into guided manual build instead of workflow routing."""
+
+        mock_router._pending_workflow = "feature_phone_workflow"
+
+        result = handler.set_goal(
+            "squirrel vision test - 3 progressive screenshots: head blockout, face features, full body - low poly squirrel with consistent camera"
+        )
+
+        assert result["status"] == "no_match"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "guided build surface" in result["message"]
         assert mock_router.get_pending_workflow() is None
 
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):

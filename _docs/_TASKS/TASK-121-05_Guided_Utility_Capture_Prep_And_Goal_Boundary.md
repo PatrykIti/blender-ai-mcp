@@ -78,6 +78,7 @@ It keeps the public surface curated and bounded.
 | [TASK-121-05-03](./TASK-121-05-03_Guided_Discovery_Prompts_And_Docs_For_Utility_Capture_Flows.md) | Align search, prompts, and docs so utility capture flows are discoverable and correctly framed |
 | [TASK-121-05-04](./TASK-121-05-04_Guided_Discovery_Tool_Persistence_Across_Session_Visibility.md) | Keep discovery tools (`search_tools` / `call_tool`) visible after guided session visibility updates |
 | [TASK-121-05-05](./TASK-121-05-05_Model_First_Router_Clarification_On_Guided_Surface.md) | Keep missing workflow parameters model-facing by default on `llm-guided`, with human elicitation only as a later fallback |
+| [TASK-121-05-06](./TASK-121-05-06_Guided_Manual_Build_Handoff_After_Weak_Or_Irrelevant_Workflow_Match.md) | Prevent weak/irrelevant workflow matches from blocking manual guided modeling and create an explicit handoff to the curated build surface |
 
 ---
 

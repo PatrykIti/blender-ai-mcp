@@ -21,7 +21,7 @@ from server.router.application.policy.correction_policy_engine import (
     CorrectionPolicyEngine,
     PolicyDecision,
 )
-from server.router.application.session_phase_hints import derive_phase_hint_from_router_result
+from server.router.application.session_phase_hints import BUILD_PHASE_HINT, PLANNING_PHASE_HINT, derive_phase_hint_from_router_result
 
 
 class RouterToolHandler(IRouterTool):
@@ -40,6 +40,11 @@ class RouterToolHandler(IRouterTool):
         re.compile(r"\b(save (to )?file|save image|export image)\b", re.IGNORECASE),
         re.compile(r"\b(clean scene|clear scene|reset scene|new scene)\b", re.IGNORECASE),
         re.compile(r"\b(zrzut ekranu|zrzut viewportu|screenshot viewportu|wyczy[sś]c scene|wyczy[sś]c scen[ęe])\b", re.IGNORECASE),
+    )
+    _META_CAPTURE_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\b(vision test|smoke test|test scenario|golden test)\b", re.IGNORECASE),
+        re.compile(r"\b(progressive screenshots?|before and after|before/after)\b", re.IGNORECASE),
+        re.compile(r"\b(consistent camera|same view|same framing|same camera)\b", re.IGNORECASE),
     )
 
     def __init__(
@@ -75,6 +80,32 @@ class RouterToolHandler(IRouterTool):
         if not normalized_goal:
             return False
         return any(pattern.search(normalized_goal) for pattern in cls._UTILITY_GOAL_PATTERNS)
+
+    @classmethod
+    def _looks_like_meta_capture_build_goal(cls, goal: str) -> bool:
+        """Return True when the goal is really a test/capture progression scenario, not a workflow target."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._META_CAPTURE_BUILD_PATTERNS)
+
+    @staticmethod
+    def _no_match_response(
+        *,
+        goal: str,
+        message: str,
+        phase_hint: str,
+    ) -> Dict[str, Any]:
+        return {
+            "status": "no_match",
+            "workflow": None,
+            "resolved": {},
+            "unresolved": [],
+            "resolution_sources": {},
+            "phase_hint": phase_hint,
+            "message": message,
+        }
 
     @staticmethod
     def _policy_context_dict(decision) -> dict[str, Any]:
@@ -208,19 +239,29 @@ class RouterToolHandler(IRouterTool):
                 router.clear_goal()
             except Exception:
                 pass
-            return {
-                "status": "no_match",
-                "workflow": None,
-                "resolved": {},
-                "unresolved": [],
-                "resolution_sources": {},
-                "phase_hint": derive_phase_hint_from_router_result({"status": "no_match"}),
-                "message": (
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=PLANNING_PHASE_HINT,
+                message=(
                     f"'{goal}' looks like a utility/capture request, not a build workflow goal. "
                     "Use search_tools(...) and call_tool(...) for guided utility actions such as "
                     "scene_get_viewport or scene_clean_scene."
                 ),
-            }
+            )
+
+        if self._looks_like_meta_capture_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                message=(
+                    f"'{goal}' looks like a guided manual-build / capture-test scenario rather than a reusable workflow goal. "
+                    "Continue on the guided build surface with visible build tools/macros and use utility capture tools separately."
+                ),
+            )
 
         # Step 1: Match workflow
         try:
@@ -242,15 +283,14 @@ class RouterToolHandler(IRouterTool):
             }
 
         if not matched_workflow:
-            return {
-                "status": "no_match",
-                "workflow": None,
-                "resolved": {},
-                "unresolved": [],
-                "resolution_sources": {},
-                "phase_hint": derive_phase_hint_from_router_result({"status": "no_match"}),
-                "message": f"No workflow matched for: '{goal}'. Router will use heuristics to assist.",
-            }
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                message=(
+                    f"No workflow matched for: '{goal}'. Continue on the guided build surface with visible build tools/macros "
+                    "instead of forcing workflow import or random tool guessing."
+                ),
+            )
 
         # Medium-confidence workflow matches should escalate to clarification instead
         # of silently reinterpreting intent.
