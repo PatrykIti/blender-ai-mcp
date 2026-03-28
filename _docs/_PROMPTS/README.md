@@ -105,6 +105,6 @@ guided surface:
    and use the guided utility path directly.
 5. If the router returns `no_match` with `continuation_mode="guided_manual_build"`,
    continue on the guided build surface instead of inventing or importing a workflow.
-5. If vision should support the build, attach `reference_images(...)`, prefer
+6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.

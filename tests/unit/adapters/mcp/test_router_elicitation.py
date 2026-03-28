@@ -279,3 +279,35 @@ def test_router_set_goal_workflow_confirmation_stays_model_facing_on_llm_guided(
     assert result.elicitation_action is None
     assert result.clarification is not None
     assert ctx.calls == []
+
+
+def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_to_build(monkeypatch):
+    """A guided-manual no_match handoff should update the session into build phase."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "phase_hint": "build",
+                "message": "Continue on the guided build surface.",
+            }
+
+        def clear_goal(self):
+            return "cleared"
+
+    monkeypatch.setattr(router_area, "get_router_handler", lambda: Handler())
+
+    ctx = FakeContext(response=object())
+    result = asyncio.run(router_area.router_set_goal(ctx, goal="low poly squirrel 3D model"))
+
+    session = get_session_capability_state(ctx)
+    assert result.status == "no_match"
+    assert result.continuation_mode == "guided_manual_build"
+    assert session.phase.value == "build"

@@ -117,6 +117,32 @@ def test_router_set_goal_returns_structured_contract(monkeypatch):
     assert result.status == "ready"
 
 
+def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypatch):
+    """router_set_goal should expose continuation_mode for guided manual handoff."""
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "no_match",
+                "continuation_mode": "guided_manual_build",
+                "workflow": None,
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "Continue on the guided build surface.",
+                "phase_hint": "build",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    callable_router_set_goal = getattr(router_set_goal, "fn", router_set_goal)
+    result = asyncio.run(callable_router_set_goal(DummyContext(), goal="low poly squirrel 3D model"))
+
+    assert isinstance(result, RouterGoalResponseContract)
+    assert result.status == "no_match"
+    assert result.continuation_mode == "guided_manual_build"
+
+
 def test_workflow_catalog_returns_structured_contract(monkeypatch):
     """workflow_catalog should return a typed contract instead of JSON text."""
 

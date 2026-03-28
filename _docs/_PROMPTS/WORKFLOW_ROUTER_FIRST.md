@@ -54,6 +54,8 @@ REQUEST TRIAGE (FIRST STEP)
 
 4) For C) guided manual build:
    - If workflow matching is not useful, continue on the guided build surface.
+   - If router_set_goal(...) returns `no_match` with `continuation_mode="guided_manual_build"`,
+     treat that as the intended handoff into this path, not as a failure.
    - Use directly visible tools first.
    - Use search_tools / call_tool only when discovery is actually needed.
 
