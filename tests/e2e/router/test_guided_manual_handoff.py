@@ -17,6 +17,7 @@ def test_router_set_goal_meta_capture_build_request_returns_guided_manual_no_mat
     )
 
     assert result["status"] == "no_match"
+    assert result["continuation_mode"] == "guided_manual_build"
     assert result["workflow"] is None
     assert result["phase_hint"] == "build"
     assert "guided build surface" in result["message"]

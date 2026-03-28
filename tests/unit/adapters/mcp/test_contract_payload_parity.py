@@ -61,6 +61,7 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
             RouterGoalResponseContract,
             {
                 "status": "ready",
+                "continuation_mode": "workflow",
                 "workflow": "chair_workflow",
                 "resolved": {"height": 1.0},
                 "unresolved": [],
@@ -69,8 +70,8 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
                 "phase_hint": "build",
                 "executed": 0,
             },
+            "continuation_mode",
             "workflow",
-            "chair_workflow",
         ),
         (
             RouterStatusContract,

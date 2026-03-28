@@ -46,6 +46,11 @@ class RouterToolHandler(IRouterTool):
         re.compile(r"\b(progressive screenshots?|before and after|before/after)\b", re.IGNORECASE),
         re.compile(r"\b(consistent camera|same view|same framing|same camera)\b", re.IGNORECASE),
     )
+    _GUIDED_MANUAL_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\blow poly\b.*\b(squirrel|rabbit|owl|fox|bird|animal|creature|character)\b", re.IGNORECASE),
+        re.compile(r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low poly|blockout|face|body|ears|snout)\b", re.IGNORECASE),
+        re.compile(r"\b(animal|creature|character)\b.*\b(low poly|blockout|head|face|body)\b", re.IGNORECASE),
+    )
 
     def __init__(
         self,
@@ -90,15 +95,26 @@ class RouterToolHandler(IRouterTool):
             return False
         return any(pattern.search(normalized_goal) for pattern in cls._META_CAPTURE_BUILD_PATTERNS)
 
+    @classmethod
+    def _looks_like_guided_manual_build_goal(cls, goal: str) -> bool:
+        """Return True when the goal should skip workflow routing and enter guided manual build."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._GUIDED_MANUAL_BUILD_PATTERNS)
+
     @staticmethod
     def _no_match_response(
         *,
         goal: str,
         message: str,
         phase_hint: str,
+        continuation_mode: str,
     ) -> Dict[str, Any]:
         return {
             "status": "no_match",
+            "continuation_mode": continuation_mode,
             "workflow": None,
             "resolved": {},
             "unresolved": [],
@@ -133,6 +149,7 @@ class RouterToolHandler(IRouterTool):
 
         return {
             "status": "needs_input",
+            "continuation_mode": "workflow",
             "workflow": matched_workflow,
             "resolved": {},
             "unresolved": [
@@ -242,6 +259,7 @@ class RouterToolHandler(IRouterTool):
             return self._no_match_response(
                 goal=goal,
                 phase_hint=PLANNING_PHASE_HINT,
+                continuation_mode="guided_utility",
                 message=(
                     f"'{goal}' looks like a utility/capture request, not a build workflow goal. "
                     "Use search_tools(...) and call_tool(...) for guided utility actions such as "
@@ -257,9 +275,25 @@ class RouterToolHandler(IRouterTool):
             return self._no_match_response(
                 goal=goal,
                 phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
                 message=(
                     f"'{goal}' looks like a guided manual-build / capture-test scenario rather than a reusable workflow goal. "
                     "Continue on the guided build surface with visible build tools/macros and use utility capture tools separately."
+                ),
+            )
+
+        if self._looks_like_guided_manual_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a guided manual-build modeling request rather than a reusable workflow goal. "
+                    "Continue on the guided build surface with visible build tools/macros instead of forcing workflow matching."
                 ),
             )
 
@@ -286,6 +320,7 @@ class RouterToolHandler(IRouterTool):
             return self._no_match_response(
                 goal=goal,
                 phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
                 message=(
                     f"No workflow matched for: '{goal}'. Continue on the guided build surface with visible build tools/macros "
                     "instead of forcing workflow import or random tool guessing."
@@ -361,6 +396,7 @@ class RouterToolHandler(IRouterTool):
             execution_results = router.execute_pending_workflow({})
             return {
                 "status": "ready",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": {},
                 "unresolved": [],
@@ -483,6 +519,7 @@ class RouterToolHandler(IRouterTool):
             if invalid_params:
                 return {
                     "status": "needs_input",
+                    "continuation_mode": "workflow",
                     "workflow": matched_workflow,
                     "resolved": {},
                     "unresolved": invalid_params,
@@ -494,6 +531,7 @@ class RouterToolHandler(IRouterTool):
             execution_results = router.execute_pending_workflow(merged_modifiers)
             return {
                 "status": "ready",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": merged_modifiers,
                 "unresolved": [],
@@ -545,6 +583,7 @@ class RouterToolHandler(IRouterTool):
 
             return {
                 "status": "needs_input",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": result.resolved,
                 "unresolved": unresolved_list,
@@ -562,6 +601,7 @@ class RouterToolHandler(IRouterTool):
 
         return {
             "status": "ready",
+            "continuation_mode": "workflow",
             "workflow": matched_workflow,
             "resolved": result.resolved,
             "unresolved": [],

@@ -81,7 +81,9 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
-       * Continue on the guided build surface if the task is still buildable without a workflow.
+       * If `continuation_mode == "guided_manual_build"`, continue on the guided build surface.
+       * Use directly visible build tools first.
+       * Use search_tools / call_tool only when discovery is actually needed.
        * Only consider workflow import/create when the user explicitly wants that.
    - If status == "error":
        * Stop and surface the error message (Router malfunction). Ask user to open a GitHub issue with logs/stack trace.

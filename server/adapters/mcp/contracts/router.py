@@ -37,6 +37,7 @@ class RouterGoalResponseContract(MCPContract):
     """Structured response contract for router_set_goal."""
 
     status: Literal["ready", "needs_input", "no_match", "disabled", "error"]
+    continuation_mode: Literal["workflow", "guided_manual_build", "guided_utility"] | None = None
     workflow: str | None = None
     resolved: dict[str, Any]
     unresolved: list[dict[str, Any]]
