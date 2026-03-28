@@ -22,7 +22,7 @@ Router is included with the MCP server. No additional installation needed.
 poetry install
 
 # Start MCP server
-poetry run python server/main.py
+poetry run python -m server.main
 ```
 
 ---

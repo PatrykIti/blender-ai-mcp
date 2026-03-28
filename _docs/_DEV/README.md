@@ -33,7 +33,7 @@ The `pre-commit` stage handles file hygiene, YAML/JSON/TOML checks, GitHub workf
 ## Run the MCP Server (local)
 
 ```bash
-poetry run python server/main.py
+poetry run python -m server.main
 ```
 
 Useful environment variables:
