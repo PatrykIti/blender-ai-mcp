@@ -9,9 +9,9 @@
 
 `blender-ai-mcp` lets Claude, ChatGPT, Codex, and other MCP clients control Blender through a stable tool API instead of ad-hoc Python generation. The result is a safer, smaller, and more reliable surface for real modeling work: goal-first routing, curated public tools, deterministic inspection, and verification that does not depend on guesswork.
 
-<video src="demo-mcp-server.mp4" controls="controls" style="max-width: 100%;">
-  <a href="demo-mcp-server.mp4">Watch demo video</a>
-</video>
+<a href="https://youtu.be/BaJj8gAtttw">
+  <img src="https://img.youtube.com/vi/BaJj8gAtttw/hqdefault.jpg" alt="Watch demo video on YouTube" style="max-width: 100%;">
+</a>
 
 ## Why This Exists
 
