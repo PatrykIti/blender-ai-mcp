@@ -111,7 +111,7 @@ Use these docs depending on what you need:
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
   - Surface profiles, guided aliases, versioned contracts, and runtime/platform guidance.
 - [Vision Layer Docs](./_docs/_VISION/README.md)
-  - Runtime/backends, capture bundles, reference images, and macro/workflow vision integration notes.
+  - Runtime/backends, capture bundles, reference images, macro/workflow vision integration notes, and repo-tracked real viewport eval bundles for both direct user-view and fixed camera-perspective captures.
 - [Available Tools Summary](./_docs/AVAILABLE_TOOLS_SUMMARY.md)
   - Full inventory and grouped/public tool overview.
 - [Tool Architecture Index](./_docs/TOOLS/README.md)

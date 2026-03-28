@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on both synthetic scenarios and several real viewport scenarios. `Qwen3-VL-4B-Instruct-4bit` now scores a clean `1.0` on the real cube-to-picnic-table smoke case and on the squirrel progression cases. `Qwen3-VL-2B-Instruct-4bit` also reaches `1.0` on the squirrel progression cases, but it remains noisier and still lands lower (`0.875`) on the cube-to-picnic-table smoke case because of weaker/noisier phrasing and extra issue/check output. Current governance interpretation remains the same: `4B` is the cleaner practical local baseline, while `2B` is viable for smoke/dev and some progression cases but still noisier.
+**Progress Update:** The repo now has an initial scored baseline for `mlx_local` on both synthetic scenarios and several real viewport scenarios. `Qwen3-VL-4B-Instruct-4bit` now scores a clean `1.0` on the real cube-to-picnic-table smoke case and on the original squirrel progression cases, and on the newly added top-view / fixed-camera variants it stays `strong` across all 6 scenarios while producing zero extra issues/checks. `Qwen3-VL-2B-Instruct-4bit` also stays `strong` on those same 6 new scenarios and currently hits `1.0` on all of them, but it remains materially noisier (`11` likely issues + `6` recommended checks across the set). Current governance interpretation remains the same: `4B` is the cleaner practical local baseline, while `2B` is viable for smoke/dev but still noisier and currently somewhat over-rewarded by the heuristic on two of the new variants.
 
 ---
 

@@ -212,6 +212,12 @@ Repo-tracked synthetic vision evaluation scenarios now live under:
 - `tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/`
 - `tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/`
 
+Opt-in real-model comparison coverage for the new view-family variants:
+
+- `tests/e2e/vision/test_real_view_variant_model_comparison.py`
+- requires `RUN_REAL_VISION_MODEL_COMPARISON=1`
+- currently intended for local/macOS Metal validation, not default CI
+
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`

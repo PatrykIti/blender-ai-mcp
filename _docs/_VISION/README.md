@@ -181,6 +181,12 @@ The harness is intended for:
   - `payload_shape`: `contract`, `summary_alias`, `input_echo`, `label_map`, `unsupported_json`, `no_json`
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
 
+Opt-in real-model comparison for the new view-family variants:
+
+```bash
+RUN_REAL_VISION_MODEL_COMPARISON=1 poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q -m slow
+```
+
 Current repo-tracked first-pass scenarios:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`
@@ -262,6 +268,27 @@ Additional repo-tracked real viewport variants now also exist for:
 Those variants mirror the same squirrel progression states so the harness can
 compare whether the current logic stays stable across view families instead of
 only one screenshot style.
+
+First real-model comparison on those new view-family variants:
+
+- `Qwen3-VL-2B-Instruct-4bit`
+  - stayed `strong` on all 6 new scenarios
+  - scored `1.0` on all 6
+  - remained noisier, producing a combined `11` `likely_issues` and `6`
+    `recommended_checks`
+- `Qwen3-VL-4B-Instruct-4bit`
+  - also stayed `strong` on all 6 new scenarios
+  - scored `1.0` on 4/6 and `0.875` on 2/6
+  - stayed materially cleaner, producing `0` `likely_issues` and `0`
+    `recommended_checks` across the same 6 scenarios
+
+Current interpretation of that comparison:
+
+- both models handle the new top-view and fixed-camera progression bundles
+- `4B` remains the cleaner practical local baseline
+- the current heuristic still over-rewards noisier `2B` phrasing on two cases,
+  so the next scoring pass should preserve the cleanliness advantage of `4B`
+  instead of treating extra issue/check output as neutral
 
 Stability check:
 

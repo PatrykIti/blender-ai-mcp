@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🟡 Medium
 
-**Progress Update:** The repo now includes both a real viewport smoke scenario (`default_cube_to_picnic_table`) and a set of real viewport progression scenarios (`squirrel_head_to_face`, `squirrel_face_to_body`, `squirrel_head_to_body`) sourced from manual Blender captures. The direction heuristic is now strong enough that `Qwen3-VL-4B-Instruct-4bit` scores `1.0` across both the replacement smoke case and the progression cases. `Qwen3-VL-2B-Instruct-4bit` also reaches `1.0` on the squirrel progression cases, while remaining noisier in its extra issue/check output and still lower on the cube-to-picnic-table smoke case.
+**Progress Update:** The repo now includes both a real viewport smoke scenario (`default_cube_to_picnic_table`) and a set of real viewport progression scenarios (`squirrel_head_to_face`, `squirrel_face_to_body`, `squirrel_head_to_body`) sourced from manual Blender captures, plus two additional real view families for the same squirrel progressions: direct top `USER_PERSPECTIVE` captures and fixed camera-perspective captures. On those 6 new variants, `Qwen3-VL-2B-Instruct-4bit` stays `strong` and currently scores `1.0` on all 6, while `Qwen3-VL-4B-Instruct-4bit` stays cleaner but currently lands at `0.875` on 2/6 because the heuristic does not always reward its shorter phrasing.
 
 ---
 
