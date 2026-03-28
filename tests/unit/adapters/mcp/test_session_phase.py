@@ -21,8 +21,8 @@ from server.adapters.mcp.session_phase import (
     coerce_session_phase,
 )
 from server.adapters.mcp.transforms.visibility_policy import (
-    GUIDED_DISCOVERY_TOOLS,
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
+    GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
 )
 
@@ -96,11 +96,58 @@ def test_update_session_from_router_goal_persists_goal_and_clarification_state()
     assert get_session_capability_state(ctx).policy_context is None
 
 
+def test_update_session_from_router_goal_persists_guided_handoff():
+    """Explicit guided handoff payloads should remain available in session diagnostics."""
+
+    ctx = FakeContext()
+
+    state = update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "no_match",
+            "continuation_mode": "guided_manual_build",
+            "phase_hint": "build",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["scene_create", "macro_finish_form"],
+                "supporting_tools": ["reference_images", "router_get_status"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided build surface.",
+            },
+        },
+    )
+
+    assert state.phase == SessionPhase.BUILD
+    assert state.guided_handoff is not None
+    assert state.guided_handoff["kind"] == "guided_manual_build"
+    assert get_session_capability_state(ctx).guided_handoff["target_phase"] == "build"
+
+
 def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
     """Clearing the current goal should reset goal-scoped state but keep the session usable."""
 
     ctx = FakeContext()
-    update_session_from_router_goal(ctx, "chair", {"status": "ready"})
+    update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "ready",
+            "guided_handoff": {
+                "kind": "guided_manual_build",
+                "target_phase": "build",
+                "surface_profile": "llm-guided",
+                "direct_tools": ["scene_create"],
+                "supporting_tools": ["router_get_status"],
+                "discovery_tools": ["search_tools", "call_tool"],
+                "workflow_import_recommended": False,
+                "message": "Continue on the guided build surface.",
+            },
+        },
+    )
 
     state = clear_session_goal_state(ctx)
 
@@ -108,6 +155,7 @@ def test_clear_session_goal_state_resets_goal_but_keeps_coarse_planning_phase():
     assert state.goal is None
     assert state.pending_clarification is None
     assert state.policy_context is None
+    assert state.guided_handoff is None
 
 
 def test_update_session_from_router_goal_persists_policy_context():

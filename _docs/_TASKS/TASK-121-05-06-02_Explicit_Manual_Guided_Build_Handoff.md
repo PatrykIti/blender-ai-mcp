@@ -1,10 +1,15 @@
 # TASK-121-05-06-02: Explicit Manual Guided Build Handoff
 
 **Parent:** [TASK-121-05-06](./TASK-121-05-06_Guided_Manual_Build_Handoff_After_Weak_Or_Irrelevant_Workflow_Match.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 ---
+
+**Completion Summary:** `router_set_goal()` now returns an explicit typed `guided_handoff`
+contract on guided manual-build continuation paths, the session persists that
+handoff for `router_get_status()`, and the payload names the intended phase plus
+the first-choice direct/discovery tools on `llm-guided`.
 
 ## Objective
 

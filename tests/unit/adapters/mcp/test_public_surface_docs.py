@@ -26,6 +26,8 @@ def test_readme_documents_llm_guided_public_aliases():
         "target_object",
         "config",
         "search_query",
+        "Guided Handoff Contract",
+        "guided_handoff",
     ):
         assert expected in text
 
@@ -43,6 +45,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "browse_workflows",
         "reference_images",
         "Vision Layer Docs",
+        "Guided Handoff Contract",
+        "guided_handoff",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -115,6 +119,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "vision-assisted build:" in prompt_readme
     assert "## `llm-guided` Flow Summary" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
+    assert "`guided_handoff`" in prompt_readme
+    assert "`guided_handoff.direct_tools`" in prompt_readme
     assert "manual_tools_no_router" in prompt_readme
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
@@ -129,6 +135,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "If vision should support the task" in workflow_prompt
     assert "For B) utility/capture/scene-prep:" in workflow_prompt
     assert '`continuation_mode == "guided_manual_build"`' in workflow_prompt
+    assert "`guided_handoff.direct_tools`" in workflow_prompt
+    assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "If a needed tool is already directly visible on the current surface/phase, call it directly." in workflow_prompt
     assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in workflow_prompt

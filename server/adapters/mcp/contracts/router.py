@@ -33,6 +33,19 @@ class RouterGoalErrorContract(MCPContract):
     stage: str | None = None
 
 
+class RouterGuidedHandoffContract(MCPContract):
+    """Explicit guided-surface continuation contract after router handoff states."""
+
+    kind: Literal["guided_manual_build", "guided_utility"]
+    target_phase: Literal["planning", "build", "inspect_validate"]
+    surface_profile: str
+    direct_tools: list[str]
+    supporting_tools: list[str]
+    discovery_tools: list[str]
+    workflow_import_recommended: bool
+    message: str
+
+
 class RouterGoalResponseContract(MCPContract):
     """Structured response contract for router_set_goal."""
 
@@ -50,6 +63,7 @@ class RouterGoalResponseContract(MCPContract):
     elicitation_action: Literal["accept", "decline", "cancel", "unavailable"] | None = None
     elicitation_answers: dict[str, Any] | None = None
     policy_context: RouterPolicyContextContract | None = None
+    guided_handoff: RouterGuidedHandoffContract | None = None
     repair_suggestion: RepairSuggestionAssistantContract | None = None
 
 
@@ -73,6 +87,7 @@ class RouterStatusContract(MCPContract):
     last_elicitation_action: str | None = None
     last_router_status: str | None = None
     policy_context: RouterPolicyContextContract | None = None
+    guided_handoff: RouterGuidedHandoffContract | None = None
     visibility_rules: list[dict[str, Any]] | None = None
     visible_capabilities: list[str] | None = None
     visible_entry_capabilities: list[str] | None = None

@@ -190,6 +190,15 @@ The guided surface supports missing-input handling as part of the product contra
 - `partial answers` survive across follow-up turns.
 - `workflow_catalog` import conflicts reuse the same clarification model.
 
+## Guided Handoff Contract
+
+The guided surface now treats workflow fallback as an explicit typed contract instead of a phase side effect hidden in prose.
+
+- `router_set_goal(...)` returns `guided_handoff` on bounded continuation paths such as `continuation_mode="guided_manual_build"` and `continuation_mode="guided_utility"`.
+- `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`.
+- `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
+- `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path.
+
 ## Server-Side Sampling Assistants Baseline
 
 The MCP server now has a bounded analytical assistant layer inside an active request.

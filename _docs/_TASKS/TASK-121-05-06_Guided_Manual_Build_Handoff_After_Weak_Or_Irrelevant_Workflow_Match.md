@@ -1,10 +1,15 @@
 # TASK-121-05-06: Guided Manual Build Handoff After Weak or Irrelevant Workflow Match
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first slice of this subtask is now in place. Obvious meta build/capture goals such as multi-stage vision-test prompts can now bypass irrelevant workflow routing and return `status="no_match"` with `phase_hint="build"`, so the guided session can continue on the curated build surface instead of getting trapped in the wrong workflow path. The remaining work is to make this handoff more explicit at the product/surface level and keep docs/prompts aligned.
+**Progress Update:** The guided manual-build fallback path is now explicit at the
+product surface. Obvious meta build/capture goals can bypass irrelevant workflow
+routing into `status="no_match"` with `continuation_mode="guided_manual_build"`,
+and `router_set_goal()` now adds a typed `guided_handoff` contract that names
+the target phase plus first-choice tools. Prompt/docs and regression coverage
+have been aligned around that behavior.
 
 ---
 

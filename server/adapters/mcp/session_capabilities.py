@@ -36,6 +36,7 @@ SESSION_LAST_ELICITATION_ACTION_KEY = "last_elicitation_action"
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
+SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,7 @@ class SessionCapabilityState:
     last_router_disposition: str | None = None
     last_router_error: str | None = None
     reference_images: list[dict[str, Any]] | None = None
+    guided_handoff: dict[str, Any] | None = None
 
 
 def infer_phase_from_router_status(
@@ -98,6 +100,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         last_router_disposition=get_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=get_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
+        guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
     )
 
 
@@ -120,6 +123,7 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         last_router_disposition=await get_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY),
         last_router_error=await get_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=await get_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY),
+        guided_handoff=await get_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY),
     )
 
 
@@ -141,6 +145,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
+    set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
 
 
 async def set_session_capability_state_async(ctx: Context, state: SessionCapabilityState) -> None:
@@ -161,6 +166,7 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, state.last_router_disposition)
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
+    await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
 
 
 def update_session_from_router_goal(
@@ -217,6 +223,7 @@ def update_session_from_router_goal(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=current.reference_images if same_goal else None,
+        guided_handoff=router_result.get("guided_handoff"),
     )
     set_session_capability_state(ctx, state)
     return state
@@ -276,6 +283,7 @@ async def update_session_from_router_goal_async(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=current.reference_images if same_goal else None,
+        guided_handoff=router_result.get("guided_handoff"),
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -306,6 +314,7 @@ def clear_session_goal_state(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=None,
+        guided_handoff=None,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -336,6 +345,7 @@ async def clear_session_goal_state_async(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=None,
+        guided_handoff=None,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -404,6 +414,7 @@ def replace_session_reference_images(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
+        guided_handoff=current.guided_handoff,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -432,6 +443,7 @@ async def replace_session_reference_images_async(
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
+        guided_handoff=current.guided_handoff,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -462,6 +474,7 @@ def record_router_execution_outcome(
         last_router_disposition=router_disposition,
         last_router_error=error,
         reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
     )
     set_session_capability_state(ctx, state)
     return state

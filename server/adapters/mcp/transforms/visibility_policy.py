@@ -9,7 +9,6 @@ from typing import Any
 
 from server.adapters.mcp.session_phase import SessionPhase, coerce_session_phase
 from server.adapters.mcp.settings import SurfaceProfileSettings
-from server.adapters.mcp.visibility.tags import phase_tag
 
 GUIDED_ENTRY_TOOLS: tuple[str, ...] = (
     "router_set_goal",
@@ -28,6 +27,27 @@ GUIDED_DISCOVERY_TOOLS: tuple[str, ...] = (
     "search_tools",
     "call_tool",
 )
+
+GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
+    "scene_create",
+    "check_scene",
+    "inspect_scene",
+    "macro_relative_layout",
+    "macro_cutout_recess",
+    "macro_finish_form",
+)
+
+GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
+    "reference_images",
+    "router_get_status",
+)
+
+GUIDED_UTILITY_HANDOFF_TOOLS: tuple[str, ...] = (
+    "scene_clean_scene",
+    "scene_get_viewport",
+)
+
+GUIDED_UTILITY_SUPPORTING_TOOLS: tuple[str, ...] = ("router_get_status",)
 
 GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_context",
@@ -178,6 +198,54 @@ GUIDED_INSPECT_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "collection_list_objects",
     "extraction_render_angles",
 )
+
+
+def build_guided_handoff_payload(
+    continuation_mode: str,
+    *,
+    surface_profile: SurfaceProfileSettings | str,
+    phase: SessionPhase | str,
+) -> dict[str, Any] | None:
+    """Build the explicit guided continuation contract for bounded no-match paths."""
+
+    resolved_surface = surface_profile.name if isinstance(surface_profile, SurfaceProfileSettings) else str(surface_profile)
+    resolved_phase = coerce_session_phase(phase)
+    if resolved_surface != "llm-guided":
+        return None
+
+    if continuation_mode == "guided_manual_build":
+        target_phase = resolved_phase if resolved_phase == SessionPhase.BUILD else SessionPhase.BUILD
+        return {
+            "kind": "guided_manual_build",
+            "target_phase": target_phase.value,
+            "surface_profile": resolved_surface,
+            "direct_tools": list(GUIDED_MANUAL_BUILD_HANDOFF_TOOLS),
+            "supporting_tools": list(GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS),
+            "discovery_tools": list(GUIDED_DISCOVERY_TOOLS),
+            "workflow_import_recommended": False,
+            "message": (
+                "Continue manual modeling on the guided build surface. "
+                "Use directly visible build tools/macros first, and only use discovery when needed."
+            ),
+        }
+
+    if continuation_mode == "guided_utility":
+        target_phase = resolved_phase if resolved_phase == SessionPhase.PLANNING else SessionPhase.PLANNING
+        return {
+            "kind": "guided_utility",
+            "target_phase": target_phase.value,
+            "surface_profile": resolved_surface,
+            "direct_tools": list(GUIDED_UTILITY_HANDOFF_TOOLS),
+            "supporting_tools": list(GUIDED_UTILITY_SUPPORTING_TOOLS),
+            "discovery_tools": list(GUIDED_DISCOVERY_TOOLS),
+            "workflow_import_recommended": False,
+            "message": (
+                "Continue on the guided utility path. "
+                "Use direct utility tools first, and only use discovery when needed."
+            ),
+        }
+
+    return None
 
 
 def build_visibility_rules(

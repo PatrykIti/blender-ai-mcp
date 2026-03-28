@@ -1,10 +1,14 @@
 # TASK-121-05-06-03: Prompts and Tests for Guided Manual No-Match Flow
 
 **Parent:** [TASK-121-05-06](./TASK-121-05-06_Guided_Manual_Build_Handoff_After_Weak_Or_Irrelevant_Workflow_Match.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
 ---
+
+**Completion Summary:** Prompt/docs now describe `guided_handoff` as the typed
+continuation contract for guided manual-build fallback, and regression tests
+cover contract delivery plus session/status persistence for that path.
 
 ## Objective
 

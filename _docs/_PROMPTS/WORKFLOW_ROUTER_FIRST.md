@@ -56,6 +56,8 @@ REQUEST TRIAGE (FIRST STEP)
    - If workflow matching is not useful, continue on the guided build surface.
    - If router_set_goal(...) returns `no_match` with `continuation_mode="guided_manual_build"`,
      treat that as the intended handoff into this path, not as a failure.
+   - If `guided_handoff` is present, use `guided_handoff.direct_tools` first.
+   - Treat `guided_handoff.discovery_tools` as fallback only, not the default first move.
    - Use directly visible tools first.
    - Use search_tools / call_tool only when discovery is actually needed.
 
@@ -84,6 +86,7 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.
    - If status == "no_match" or "disabled":
        * If `continuation_mode == "guided_manual_build"`, continue on the guided build surface.
+       * If `guided_handoff` is present, start from `guided_handoff.direct_tools` and respect `workflow_import_recommended=false`.
        * Use directly visible build tools first.
        * Use search_tools / call_tool only when discovery is actually needed.
        * Only consider workflow import/create when the user explicitly wants that.

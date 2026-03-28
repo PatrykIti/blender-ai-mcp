@@ -88,6 +88,7 @@ Interpretation:
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work
+- if `router_set_goal(...)` returns `guided_handoff`, treat it as the typed continuation contract for what to call next on the current guided surface
 
 ## `llm-guided` Flow Summary
 
@@ -105,6 +106,7 @@ guided surface:
    and use the guided utility path directly.
 5. If the router returns `no_match` with `continuation_mode="guided_manual_build"`,
    continue on the guided build surface instead of inventing or importing a workflow.
+   Use `guided_handoff.direct_tools` first and only fall back to `guided_handoff.discovery_tools` when direct tools are insufficient.
 6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.

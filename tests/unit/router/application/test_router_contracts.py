@@ -120,6 +120,11 @@ def test_router_set_goal_returns_structured_contract(monkeypatch):
 def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypatch):
     """router_set_goal should expose continuation_mode for guided manual handoff."""
 
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.router.get_config",
+        lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})(),
+    )
+
     class Handler:
         def set_goal(self, goal, resolved_params=None):
             return {
@@ -141,6 +146,10 @@ def test_router_set_goal_contract_accepts_guided_manual_build_no_match(monkeypat
     assert isinstance(result, RouterGoalResponseContract)
     assert result.status == "no_match"
     assert result.continuation_mode == "guided_manual_build"
+    assert result.guided_handoff is not None
+    assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.target_phase == "build"
+    assert result.guided_handoff.workflow_import_recommended is False
 
 
 def test_workflow_catalog_returns_structured_contract(monkeypatch):
@@ -205,6 +214,42 @@ def test_router_get_status_exposes_reference_image_diagnostics(monkeypatch):
     assert result.reference_image_count == 1
     assert result.reference_images is not None
     assert result.reference_images[0].reference_id == "ref_1"
+
+
+def test_router_get_status_exposes_guided_handoff_from_session(monkeypatch):
+    """router_get_status should surface the active guided handoff contract from session state."""
+
+    class Handler:
+        def set_goal(self, goal, resolved_params=None):
+            return {
+                "status": "ready",
+                "workflow": "chair_workflow",
+                "resolved": {},
+                "unresolved": [],
+                "resolution_sources": {},
+                "message": "ok",
+            }
+
+    monkeypatch.setattr("server.adapters.mcp.areas.router.get_router_handler", lambda: Handler())
+
+    ctx = DummyContext()
+    ctx.state["guided_handoff"] = {
+        "kind": "guided_manual_build",
+        "target_phase": "build",
+        "surface_profile": "llm-guided",
+        "direct_tools": ["scene_create", "macro_finish_form"],
+        "supporting_tools": ["reference_images", "router_get_status"],
+        "discovery_tools": ["search_tools", "call_tool"],
+        "workflow_import_recommended": False,
+        "message": "Continue on the guided build surface.",
+    }
+
+    result = asyncio.run(router_get_status(ctx))
+
+    assert isinstance(result, RouterStatusContract)
+    assert result.guided_handoff is not None
+    assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.direct_tools == ["scene_create", "macro_finish_form"]
 
 
 def test_workflow_catalog_get_accepts_steps_count_metadata(monkeypatch):

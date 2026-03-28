@@ -310,4 +310,12 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     session = get_session_capability_state(ctx)
     assert result.status == "no_match"
     assert result.continuation_mode == "guided_manual_build"
+    assert result.guided_handoff is not None
+    assert result.guided_handoff.kind == "guided_manual_build"
+    assert result.guided_handoff.target_phase == "build"
+    assert result.guided_handoff.workflow_import_recommended is False
+    assert "macro_finish_form" in result.guided_handoff.direct_tools
+    assert result.guided_handoff.discovery_tools == ["search_tools", "call_tool"]
     assert session.phase.value == "build"
+    assert session.guided_handoff is not None
+    assert session.guided_handoff["kind"] == "guided_manual_build"

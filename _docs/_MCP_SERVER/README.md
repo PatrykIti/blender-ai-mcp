@@ -365,6 +365,15 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 
 These tools return native structured payloads on contract-enabled paths and use the shared contract helpers/output-schema policy instead of prose-first JSON-string wrappers.
 
+## Guided Handoff Contract
+
+On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation metadata when workflow matching is not the intended next step.
+
+- `guided_handoff` is returned for bounded guided continuations such as `guided_manual_build` and `guided_utility`
+- it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
+- `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
+- `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
+
 ## Server-Side Sampling Assistants Baseline
 
 The MCP adapter layer now has a bounded sampling-assistant baseline for analytical/recovery helpers inside one active MCP request.
@@ -879,8 +888,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, and any unresolved inputs for follow-up calls. |
-| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, and router/component stats. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, and explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

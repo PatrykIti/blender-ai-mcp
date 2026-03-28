@@ -11,11 +11,16 @@ from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import materialize_transforms
 from server.adapters.mcp.transforms.visibility_policy import (
-    GUIDED_DISCOVERY_TOOLS,
     GUIDED_BUILD_ESCAPE_HATCH_TOOLS,
+    GUIDED_DISCOVERY_TOOLS,
     GUIDED_ENTRY_TOOLS,
     GUIDED_INSPECT_ESCAPE_HATCH_TOOLS,
+    GUIDED_MANUAL_BUILD_HANDOFF_TOOLS,
+    GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS,
+    GUIDED_UTILITY_HANDOFF_TOOLS,
+    GUIDED_UTILITY_SUPPORTING_TOOLS,
     GUIDED_UTILITY_TOOLS,
+    build_guided_handoff_payload,
     build_visibility_rules,
 )
 from server.adapters.mcp.visibility.tags import ENTRY_GUIDED, get_capability_tags, phase_tag
@@ -105,6 +110,35 @@ def test_visibility_rules_are_profile_and_phase_deterministic():
     assert code_mode_rules[0]["match_all"] is True
     assert "scene_snapshot_state" in code_mode_rules[1]["names"]
     assert "mesh_extrude_region" not in code_mode_rules[1]["names"]
+
+
+def test_guided_handoff_payloads_stay_explicit_and_bounded():
+    """Guided handoff payloads should expose explicit next tools without reopening workflow forcing."""
+
+    manual = build_guided_handoff_payload(
+        "guided_manual_build",
+        surface_profile="llm-guided",
+        phase=SessionPhase.BUILD,
+    )
+    utility = build_guided_handoff_payload(
+        "guided_utility",
+        surface_profile="llm-guided",
+        phase=SessionPhase.PLANNING,
+    )
+
+    assert manual is not None
+    assert manual["target_phase"] == "build"
+    assert manual["direct_tools"] == list(GUIDED_MANUAL_BUILD_HANDOFF_TOOLS)
+    assert manual["supporting_tools"] == list(GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS)
+    assert manual["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
+    assert manual["workflow_import_recommended"] is False
+
+    assert utility is not None
+    assert utility["target_phase"] == "planning"
+    assert utility["direct_tools"] == list(GUIDED_UTILITY_HANDOFF_TOOLS)
+    assert utility["supporting_tools"] == list(GUIDED_UTILITY_SUPPORTING_TOOLS)
+    assert utility["discovery_tools"] == list(GUIDED_DISCOVERY_TOOLS)
+    assert utility["workflow_import_recommended"] is False
 
 
 def test_llm_guided_surface_materializes_visibility_transforms():

@@ -38,6 +38,7 @@ from server.adapters.mcp.session_capabilities import (
     update_session_from_router_goal_async,
 )
 from server.adapters.mcp.tasks.job_registry import get_background_job_registry
+from server.adapters.mcp.transforms.visibility_policy import build_guided_handoff_payload
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.config import get_config
 from server.infrastructure.di import get_router_handler
@@ -189,6 +190,32 @@ def _contains_model_facing_workflow_confirmation(result: Dict[str, Any]) -> bool
     return False
 
 
+def _maybe_attach_guided_handoff(
+    payload: Dict[str, Any],
+    *,
+    surface_profile: str,
+) -> Dict[str, Any]:
+    """Attach the explicit guided continuation contract when the router requests one."""
+
+    continuation_mode = payload.get("continuation_mode")
+    if continuation_mode not in {"guided_manual_build", "guided_utility"}:
+        payload.pop("guided_handoff", None)
+        return payload
+
+    phase_hint = payload.get("phase_hint") or "planning"
+    guided_handoff = build_guided_handoff_payload(
+        str(continuation_mode),
+        surface_profile=surface_profile,
+        phase=str(phase_hint),
+    )
+    if guided_handoff is None:
+        payload.pop("guided_handoff", None)
+        return payload
+
+    payload["guided_handoff"] = guided_handoff
+    return payload
+
+
 async def _maybe_elicit_router_answers(
     ctx: Context,
     goal: str,
@@ -298,6 +325,7 @@ async def router_set_goal(
         -> {"status": "ready", ...}  # Learned from previous interaction
     """
     handler = get_router_handler()
+    surface_profile = get_config().MCP_SURFACE_PROFILE
     merged_resolved_params = await merge_resolved_params_with_session_answers_async(ctx, resolved_params)
     result = handler.set_goal(goal, merged_resolved_params)
 
@@ -329,12 +357,13 @@ async def router_set_goal(
                 question_set_id=session.pending_question_set_id,
             ).model_dump()
 
+    result = _maybe_attach_guided_handoff(result, surface_profile=surface_profile)
     state = await update_session_from_router_goal_async(
         ctx,
         goal,
         result,
         provided_answers=merged_resolved_params,
-        surface_profile=get_config().MCP_SURFACE_PROFILE,
+        surface_profile=surface_profile,
         contract_version=_get_runtime_contract_line(ctx),
     )
     await apply_visibility_for_session_state(ctx, state)
@@ -391,6 +420,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "last_router_disposition": session.last_router_disposition,
             "last_router_error": session.last_router_error,
             "policy_context": session.policy_context,
+            "guided_handoff": session.guided_handoff,
             "visibility_rules": [dict(rule) for rule in diagnostics.rules],
             "visible_capabilities": list(diagnostics.visible_capability_ids),
             "visible_entry_capabilities": list(diagnostics.visible_entry_capability_ids),

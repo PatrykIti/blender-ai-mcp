@@ -80,6 +80,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
             "Build/workflow request: router_get_status -> router_set_goal -> handle typed clarification -> use visible build tools/macros. "
             "Utility/capture request: skip router_set_goal and use the guided utility path directly. "
             "Guided manual build: if workflow matching is not useful, continue on the guided build surface without forcing workflow import or creation. "
+            "If router_set_goal returns guided_handoff, treat it as the typed continuation contract and start from guided_handoff.direct_tools. "
             "Vision-assisted build: attach reference_images, prefer macro paths with capture_bundle/vision_assistant, then confirm with inspect/measure/assert tools. "
             "Prefer workflow/macro paths over raw low-level atomics. "
             "When a bounded intent matches, prefer macro_cutout_recess for recess/opening work, "
