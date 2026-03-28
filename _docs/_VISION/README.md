@@ -190,6 +190,12 @@ Current repo-tracked first-pass scenarios:
 - `tests/fixtures/vision_eval/squirrel_head_to_face/`
 - `tests/fixtures/vision_eval/squirrel_face_to_body/`
 - `tests/fixtures/vision_eval/squirrel_head_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_user_top/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/`
 
 ## First Scored Baseline
 
@@ -247,6 +253,15 @@ Current first-pass real viewport progression comparison on the squirrel scenario
     heuristic update
   - still tends to add noisier `likely_issues` and `recommended_checks` than
     `4B`, so the cleaner practical baseline remains `4B`
+
+Additional repo-tracked real viewport variants now also exist for:
+
+- direct top-down `USER_PERSPECTIVE` captures
+- fixed named-camera perspective captures
+
+Those variants mirror the same squirrel progression states so the harness can
+compare whether the current logic stays stable across view families instead of
+only one screenshot style.
 
 Stability check:
 

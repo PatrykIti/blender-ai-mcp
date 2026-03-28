@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pytest
 from server.adapters.mcp.vision import evaluate_vision_result, load_golden_scenario
 
 
@@ -33,6 +35,30 @@ def test_load_golden_scenario_without_references_is_supported():
     assert resolved.scenario.scenario_id == "default_cube_to_picnic_table"
     assert resolved.bundle_path.is_absolute()
     assert resolved.references_path is None
+
+
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        "squirrel_head_to_face_user_top",
+        "squirrel_face_to_body_user_top",
+        "squirrel_head_to_body_user_top",
+        "squirrel_head_to_face_camera_perspective",
+        "squirrel_face_to_body_camera_perspective",
+        "squirrel_head_to_body_camera_perspective",
+    ],
+)
+def test_load_golden_scenario_supports_new_real_view_variants(fixture_name: str):
+    resolved = load_golden_scenario(_fixture(fixture_name))
+
+    assert resolved.scenario.scenario_id == fixture_name
+    assert resolved.bundle_path.is_absolute()
+    assert resolved.references_path is None
+
+    bundle = json.loads(resolved.bundle_path.read_text(encoding="utf-8"))
+    for item in [*bundle.get("captures_before", []), *bundle.get("captures_after", [])]:
+        image_path = resolved.bundle_path.parent / str(item["image_path"])
+        assert image_path.exists(), f"missing image fixture: {image_path}"
 
 
 def test_evaluate_vision_result_scores_improvement_scenario():
@@ -200,3 +226,83 @@ def test_evaluate_vision_result_classifies_progressive_body_addition_as_improved
     summary = evaluate_vision_result(entry, scenario)
 
     assert summary.dimensions["direction_match"].passed is True
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "goal_summary", "visible_changes"),
+    [
+        (
+            "squirrel_head_to_face_user_top",
+            "The after image shows a more detailed squirrel face with eyes, snout, and nose, while the before image only shows the head blockout with ears from a direct top user view.",
+            [
+                "Eyes are now visible in the head.",
+                "Snout and nose details have been added to the face.",
+            ],
+        ),
+        (
+            "squirrel_face_to_body_user_top",
+            "The after image shows a fuller squirrel model with body added, while the before image shows only the head with face details from a direct top user view.",
+            [
+                "A full body has been added below the head.",
+                "The head still retains eyes, nose, and ears.",
+            ],
+        ),
+        (
+            "squirrel_head_to_body_user_top",
+            "The after image shows a complete squirrel model with face details and body, while the before image only shows a simple head blockout from a direct top user view.",
+            [
+                "Face details are now present on the head.",
+                "A full body is now attached beneath the head.",
+            ],
+        ),
+        (
+            "squirrel_head_to_face_camera_perspective",
+            "The after image shows a more detailed squirrel face with eyes, snout, and nose, while the before image only shows the head blockout with ears from a fixed camera perspective.",
+            [
+                "Eyes are now visible in the face.",
+                "Snout and nose details have been added.",
+            ],
+        ),
+        (
+            "squirrel_face_to_body_camera_perspective",
+            "The after image shows a fuller squirrel model with body added, while the before image shows only the head with face details from a fixed camera perspective.",
+            [
+                "A full squirrel body has been added below the head.",
+                "The head keeps the visible face details.",
+            ],
+        ),
+        (
+            "squirrel_head_to_body_camera_perspective",
+            "The after image shows a complete squirrel model with face details and body, while the before image only shows a simple head blockout from a fixed camera perspective.",
+            [
+                "The face is now more detailed with eyes, snout, and nose.",
+                "A full body has been added to complete the squirrel.",
+            ],
+        ),
+    ],
+)
+def test_evaluate_vision_result_classifies_new_real_view_variants_as_improved(
+    fixture_name: str,
+    goal_summary: str,
+    visible_changes: list[str],
+):
+    scenario = load_golden_scenario(_fixture(fixture_name))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": goal_summary,
+            "reference_match_summary": None,
+            "visible_changes": visible_changes,
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": [
+                *scenario.scenario.expectations.expected_capture_labels,
+            ],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True
+    assert summary.dimensions["captures_used_match"].passed is True

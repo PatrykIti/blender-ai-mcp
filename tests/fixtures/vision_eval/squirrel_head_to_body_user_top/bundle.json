@@ -1,0 +1,29 @@
+{
+  "bundle_id": "squirrel_head_to_body_user_top_bundle",
+  "goal_id": "squirrel_head_to_body_user_top_goal",
+  "target_object": "Squirrel",
+  "preset_names": [
+    "user_top_view"
+  ],
+  "captures_before": [
+    {
+      "label": "user_top_before",
+      "image_path": "before.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "user_top_view"
+    }
+  ],
+  "captures_after": [
+    {
+      "label": "user_top_after",
+      "image_path": "after.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "user_top_view"
+    }
+  ],
+  "truth_summary": {
+    "note": "squirrel progression scenario from _TEST_3: head blockout to full body in direct top user view"
+  }
+}

@@ -205,6 +205,12 @@ Repo-tracked synthetic vision evaluation scenarios now live under:
 - `tests/fixtures/vision_eval/squirrel_head_to_face/`
 - `tests/fixtures/vision_eval/squirrel_face_to_body/`
 - `tests/fixtures/vision_eval/squirrel_head_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_user_top/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/`
 
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
