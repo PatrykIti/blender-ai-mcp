@@ -42,12 +42,14 @@ class TestHideObject:
         assert "hidden" in result.lower() or "Cube" in result
 
     def test_show_object_viewport(self):
-        """Test showing hidden object in viewport."""
+        """Showing an object should restore both viewport and render visibility."""
         self.cube.hide_viewport = True
+        self.cube.hide_render = True
 
         result = self.handler.hide_object("Cube", hide=False, hide_render=False)
 
         assert not self.cube.hide_viewport
+        assert not self.cube.hide_render
         assert "visible" in result.lower() or "Cube" in result
 
     def test_hide_object_render(self):
@@ -56,6 +58,16 @@ class TestHideObject:
 
         assert self.cube.hide_viewport
         assert self.cube.hide_render
+ 
+    def test_show_object_reports_render_visibility_restore(self):
+        """Show action should make the render-visibility side effect explicit."""
+
+        self.cube.hide_viewport = True
+        self.cube.hide_render = True
+
+        result = self.handler.hide_object("Cube", hide=False, hide_render=False)
+
+        assert "including render visibility" in result
 
     def test_hide_object_not_found(self):
         """Test hiding non-existent object raises error."""

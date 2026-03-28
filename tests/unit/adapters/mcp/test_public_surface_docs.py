@@ -47,6 +47,11 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
+        "scene_hide_object",
+        "scene_show_all_objects",
+        "scene_isolate_object",
+        "USER_PERSPECTIVE",
+        "named cameras follow render visibility",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -159,3 +164,5 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`scene_camera_focus(object_name=...)`" in manual_prompt
     assert "`scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`" in manual_prompt
     assert '`scene_get_viewport(shading=..., focus_target=..., output_mode="IMAGE")`' in manual_prompt
+    assert '`scene_get_viewport(camera_name="USER_PERSPECTIVE")` follows the live viewport; named cameras follow render visibility' in manual_prompt
+    assert "scene_show_all_objects(include_render=true)" in manual_prompt

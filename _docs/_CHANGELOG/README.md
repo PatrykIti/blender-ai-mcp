@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [159](./159-2026-03-28-viewport-capture-visibility-consistency.md) | 2026-03-28 | **Viewport capture visibility consistency** | - |
 | [158](./158-2026-03-24-first-measure-assert-tool-wave.md) | 2026-03-24 | **First measure/assert tool wave** | - |
 | [157](./157-2026-03-24-first-measure-assert-wave-planning.md) | 2026-03-24 | **First measure/assert wave planning** | - |
 | [156](./156-2026-03-24-public-surface-wording-alignment.md) | 2026-03-24 | **Public surface wording alignment** | - |

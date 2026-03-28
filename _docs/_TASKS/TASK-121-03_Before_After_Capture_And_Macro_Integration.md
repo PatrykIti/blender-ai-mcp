@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** Deterministic capture-bundle contracts and initial runtime presets now exist, macro reports can already carry `capture_bundle`, and MCP macro adapters now build bounded vision requests from before/after captures plus goal-scoped reference images when vision is enabled.
+**Progress Update:** Deterministic capture-bundle contracts and initial runtime presets now exist, macro reports can already carry `capture_bundle`, MCP macro adapters now build bounded vision requests from before/after captures plus goal-scoped reference images when vision is enabled, and the viewport-capture path now keeps `USER_PERSPECTIVE` plus named-camera visibility semantics aligned well enough for staged real-model screenshot flows.
 
 ---
 
@@ -33,6 +33,7 @@ macro/workflow reporting.
 | [TASK-121-03-02](./TASK-121-03-02_Macro_Workflow_Vision_Integration_Path.md) | Attach before/after captures and vision results to macro/workflow reports |
 | [TASK-121-03-03](./TASK-121-03-03_Camera_Faithful_Viewport_Capture_Semantics.md) | Make camera-based viewport capture actually follow the named camera instead of the live user viewport |
 | [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md) | Add bounded user-view manipulation options to viewport capture without blurring the line between capture and broad scene-control APIs |
+| [TASK-121-03-05](./TASK-121-03-05_Render_Visibility_Consistency_For_Viewport_Capture.md) | Align `USER_PERSPECTIVE`, named-camera capture, and scene visibility helpers so staged screenshots do not require render-visibility reset workarounds |
 
 ---
 

@@ -384,6 +384,8 @@ class SceneHandler:
             has_user_view_adjustment = bool(
                 view_name_value or orbit_h or orbit_v or zoom_value is not None
             )
+            user_view_state_mutated = False
+            user_view_available = bool(view_space and view_area and view_region)
 
             try:
                 # Case A: Specific existing camera
@@ -399,17 +401,26 @@ class SceneHandler:
 
                 # Case B: Dynamic View (User Perspective)
                 else:
+                    if not user_view_available:
+                        raise RuntimeError(
+                            "USER_PERSPECTIVE capture requires an active 3D viewport. "
+                            "Use an explicit camera_name for deterministic headless/background capture."
+                        )
+
                     rv3d = view_space.region_3d if view_space else None
                     if view_name_value:
                         self.set_standard_view(view_name_value)
+                        user_view_state_mutated = True
 
                     if focus_target:
                         self.camera_focus(focus_target, zoom_factor=zoom_value or 1.0)
+                        user_view_state_mutated = True
                     elif zoom_value is not None:
                         if zoom_value <= 0:
                             raise ValueError("zoom_factor must be > 0")
                         if rv3d is not None:
                             rv3d.view_distance = float(rv3d.view_distance) / zoom_value
+                            user_view_state_mutated = True
 
                     if orbit_h or orbit_v:
                         self.camera_orbit(
@@ -417,38 +428,7 @@ class SceneHandler:
                             angle_vertical=orbit_v,
                             target_object=focus_target,
                         )
-
-                    # Create temp camera
-                    bpy.ops.object.camera_add()
-                    temp_camera_obj = bpy.context.active_object
-                    scene.camera = temp_camera_obj
-
-                    if view_area and view_region:
-                        with bpy.context.temp_override(area=view_area, region=view_region):
-                            if has_user_view_adjustment:
-                                bpy.ops.view3d.camera_to_view()
-                            else:
-                                # Deselect all first
-                                bpy.ops.object.select_all(action="DESELECT")
-
-                                # Select target(s) for framing
-                                if focus_target:
-                                    if focus_target in bpy.data.objects:
-                                        target_obj = bpy.data.objects[focus_target]
-                                        target_obj.select_set(True)
-                                    else:
-                                        bpy.ops.object.select_all(action="SELECT")
-                                else:
-                                    # No target -> Select all visible objects
-                                    bpy.ops.object.select_all(action="SELECT")
-
-                                # Frame the camera to selection
-                                bpy.ops.view3d.camera_to_view_selected()
-                    else:
-                        # Fallback positioning without 3D view context
-                        temp_camera_obj.location = (10, -10, 10)
-                        # Approximate look at center
-                        temp_camera_obj.rotation_euler = (math.radians(60), 0, math.radians(45))
+                        user_view_state_mutated = True
 
                 # 6. Render Strategy
                 render_success = False
@@ -467,6 +447,17 @@ class SceneHandler:
                             render_success = True
                     except Exception as e:
                         print(f"[Viewport] OpenGL render failed: {e}")
+
+                # USER_PERSPECTIVE fallback path:
+                # if OpenGL is unavailable/failed, mirror the current live 3D view into a
+                # temporary camera so Workbench/Cycles still match what the user saw.
+                if not render_success and not use_explicit_scene_camera:
+                    bpy.ops.object.camera_add()
+                    temp_camera_obj = bpy.context.active_object
+                    scene.camera = temp_camera_obj
+
+                    with bpy.context.temp_override(area=view_area, region=view_region):
+                        bpy.ops.view3d.camera_to_view()
 
                 # Strategy B: Workbench Render (Software Rasterization, Headless Safe)
                 if not render_success:
@@ -541,7 +532,7 @@ class SceneHandler:
                 if view_space:
                     view_space.shading.type = original_shading_type
 
-                if original_view_state and not use_explicit_scene_camera and not persist_view and has_user_view_adjustment:
+                if original_view_state and not use_explicit_scene_camera and not persist_view and user_view_state_mutated:
                     try:
                         self.restore_view_state(original_view_state)
                     except Exception:
@@ -1299,28 +1290,41 @@ class SceneHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj.hide_viewport = hide
-        if hide_render:
-            obj.hide_render = hide
+        if hide:
+            if hide_render:
+                obj.hide_render = True
+        else:
+            obj.hide_render = False
 
         state = "hidden" if hide else "visible"
-        render_state = " (also in render)" if hide_render else ""
+        render_state = ""
+        if hide and hide_render:
+            render_state = " (also in render)"
+        elif not hide:
+            render_state = " (including render visibility)"
         return f"Object '{object_name}' is now {state}{render_state}"
 
     def show_all_objects(self, include_render=False):
         """Shows all hidden objects in the scene."""
-        count = 0
+        viewport_count = 0
+        render_count = 0
         for obj in bpy.data.objects:
             if obj.hide_viewport:
                 obj.hide_viewport = False
-                count += 1
+                viewport_count += 1
             if include_render and obj.hide_render:
                 obj.hide_render = False
+                render_count += 1
 
-        render_note = " (including render visibility)" if include_render else ""
-        return f"Made {count} objects visible{render_note}"
+        if include_render:
+            return (
+                f"Made {viewport_count} object(s) visible in viewport and restored "
+                f"render visibility for {render_count} object(s)"
+            )
+        return f"Made {viewport_count} object(s) visible"
 
     def isolate_object(self, object_names):
-        """Isolates object(s) by hiding all others."""
+        """Isolates object(s) by hiding all others in viewport and render."""
         # Validate all requested objects exist
         keep_visible = set(object_names)
         for name in keep_visible:
@@ -1333,11 +1337,13 @@ class SceneHandler:
                 if not obj.hide_viewport:
                     obj.hide_viewport = True
                     hidden_count += 1
+                obj.hide_render = True
             else:
                 # Ensure isolated objects are visible
                 obj.hide_viewport = False
+                obj.hide_render = False
 
-        return f"Isolated {len(keep_visible)} object(s), hid {hidden_count} others"
+        return f"Isolated {len(keep_visible)} object(s), hid {hidden_count} others in viewport and render"
 
     def camera_orbit(self, angle_horizontal=0.0, angle_vertical=0.0, target_object=None, target_point=None):
         """Orbits viewport camera around target."""

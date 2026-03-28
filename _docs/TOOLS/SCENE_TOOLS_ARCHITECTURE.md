@@ -92,6 +92,12 @@ Example:
 # 6. scene_get_viewport ✅ Done
 Gets a scene preview (viewport render) with selectable output mode.
 
+Semantics:
+- `camera_name="USER_PERSPECTIVE"` follows the live active 3D viewport
+- named-camera capture follows render visibility, not only viewport visibility
+- use `scene_isolate_object(...)` or `scene_hide_object(..., hide_render=True)`
+  when the isolated set must also apply to named-camera screenshots
+
 Args:
 - width: int
 - height: int

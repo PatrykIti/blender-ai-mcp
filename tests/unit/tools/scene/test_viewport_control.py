@@ -97,16 +97,16 @@ class TestViewportControl(unittest.TestCase):
             width=800, height=600, shading="WIREFRAME", camera_name="USER_PERSPECTIVE", focus_target="Cube"
         )
 
-        # 1. Verify Temp Camera Created
-        bpy.ops.object.camera_add.assert_called()
+        # 1. USER_PERSPECTIVE should prefer the live viewport OpenGL path without creating a temp camera.
+        bpy.ops.object.camera_add.assert_not_called()
 
         # 2. Verify Target Selected
         cube.select_set.assert_called_with(True)
 
-        # 3. Verify Camera Framed to Selection
-        # Should be called within temp_override
+        # 3. Verify OpenGL render used the active 3D view directly.
         bpy.context.temp_override.assert_any_call(area=self.mock_area, region=self.mock_region)
-        bpy.ops.view3d.camera_to_view_selected.assert_called()
+        bpy.ops.view3d.camera_to_view_selected.assert_not_called()
+        bpy.ops.view3d.camera_to_view.assert_not_called()
 
         # 4. Verify Render (OpenGL attempted first)
         bpy.ops.render.opengl.assert_called_with(write_still=True)
@@ -190,9 +190,36 @@ class TestViewportControl(unittest.TestCase):
             angle_vertical=-10.0,
             target_object="Cube",
         )
-        bpy.ops.view3d.camera_to_view.assert_called_once()
+        bpy.ops.object.camera_add.assert_not_called()
+        bpy.ops.view3d.camera_to_view.assert_not_called()
         bpy.ops.view3d.camera_to_view_selected.assert_not_called()
         self.handler.restore_view_state.assert_called_once()
+
+    @patch("os.path.getsize")
+    @patch("os.rmdir")
+    @patch("os.path.exists")
+    @patch("builtins.open", new_callable=mock_open, read_data=b"img_data")
+    @patch("tempfile.mkdtemp")
+    @patch("os.remove")
+    def test_user_perspective_fallback_copies_current_view_to_temp_camera(
+        self, mock_remove, mock_mkdtemp, mock_open, mock_exists, mock_rmdir, mock_getsize
+    ):
+        mock_mkdtemp.return_value = "/tmp/render_dir"
+        mock_exists.side_effect = [False, True, True]
+        mock_getsize.return_value = 100
+
+        self.handler.get_viewport(
+            width=640,
+            height=480,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+        )
+
+        bpy.ops.render.opengl.assert_called_with(write_still=True)
+        bpy.ops.object.camera_add.assert_called_once()
+        bpy.ops.view3d.camera_to_view.assert_called_once()
+        bpy.ops.view3d.camera_to_view_selected.assert_not_called()
+        bpy.ops.render.render.assert_called_with(write_still=True)
 
     @patch("os.path.getsize")
     @patch("os.rmdir")

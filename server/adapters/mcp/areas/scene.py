@@ -16,8 +16,8 @@ from server.adapters.mcp.contracts.scene import (
     SceneAssertSymmetryContract,
     SceneBoundingBoxContract,
     SceneConfigureResponseContract,
-    SceneCreateResponseContract,
     SceneContextResponseContract,
+    SceneCreateResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
     SceneInspectResponseContract,
@@ -43,9 +43,9 @@ from server.adapters.mcp.tasks.task_bridge import (
 )
 from server.adapters.mcp.utils import parse_coordinate
 from server.adapters.mcp.version_policy import get_versioned_tool_versions
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
 from server.adapters.mcp.vision.policy import choose_capture_preset_profile
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 from server.infrastructure.di import get_macro_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_viewport_output_paths
@@ -1425,7 +1425,8 @@ def scene_hide_object(ctx: Context, object_name: str, hide: bool = True, hide_re
     Args:
         object_name: Name of the object to hide/show
         hide: True to hide in viewport, False to show
-        hide_render: If True, also hide in renders
+        hide_render: If True while hiding, also hide in renders. Showing an object restores
+            render visibility as well.
 
     Returns:
         Success message with visibility state
@@ -1452,7 +1453,7 @@ def scene_show_all_objects(ctx: Context, include_render: bool = False) -> str:
     Workflow: AFTER → scene_hide_object | USE FOR → resetting visibility
 
     Args:
-        include_render: If True, also unhide in renders
+        include_render: If True, also restore render visibility for objects hidden from renders
 
     Returns:
         Count of objects made visible
@@ -1477,7 +1478,8 @@ def scene_isolate_object(ctx: Context, object_name: Union[str, List[str]]) -> st
     Workflow: USE FOR → focused inspection of specific component
 
     Args:
-        object_name: Name or list of names to keep visible (all others hidden)
+        object_name: Name or list of names to keep visible. Non-target objects are hidden
+            in both viewport and render so named-camera captures match the isolated set.
 
     Returns:
         Count of objects hidden

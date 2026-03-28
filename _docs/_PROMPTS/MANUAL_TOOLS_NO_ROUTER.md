@@ -68,7 +68,7 @@ RELIABILITY PROTOCOL (MANDATORY)
          - scene_isolate_object(object_name=...)
          - scene_get_viewport(shading="SOLID", focus_target=..., output_mode="IMAGE") OR extraction_render_angles(object_name=...)
          - If the top view reads as a square/box: rebuild/replace with a cylinder (6–12 sides depending on style/budget).
-         - scene_show_all_objects() after the check
+         - scene_show_all_objects(include_render=true) after the check if you also used named-camera capture
        * For ropes/wraps: run inspect_scene(action="topology", target_object=...) and fix if non-manifold edges appear unintentionally.
    - If you took a baseline snapshot: take a new snapshot and compare:
        * after = scene_snapshot_state(...)
@@ -85,6 +85,7 @@ RELIABILITY PROTOCOL (MANDATORY)
            - `scene_camera_focus(object_name=...)`
            - `scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`
            - `scene_get_viewport(shading=..., focus_target=..., output_mode="IMAGE")`
+           - `scene_get_viewport(camera_name="USER_PERSPECTIVE")` follows the live viewport; named cameras follow render visibility
        * scene_camera_focus(object_name=...)
        * scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=...)
        * scene_get_viewport(shading="SOLID" or "MATERIAL", focus_target=..., output_mode="IMAGE")
