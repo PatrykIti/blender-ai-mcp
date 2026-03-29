@@ -130,6 +130,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
     assert "do **not** force `router_set_goal(...)`" in prompt_readme
+    assert "`call_tool(...)` is not a bypass for hidden or phase-locked tools" in prompt_readme
+    assert "`Unknown tool`" in prompt_readme
+    assert "current phase/surface is wrong" in prompt_readme
+    assert "manual_tools_no_router` is a different operating mode" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
@@ -142,6 +146,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert '`continuation_mode == "guided_manual_build"`' in workflow_prompt
     assert "`guided_handoff.direct_tools`" in workflow_prompt
     assert "`workflow_import_recommended=false`" in workflow_prompt
+    assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
+    assert "If `call_tool(...)` reports `Unknown tool`, do not keep guessing names" in workflow_prompt
     assert "If a needed tool is already directly visible on the current surface/phase, call it directly." in workflow_prompt
     assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in workflow_prompt

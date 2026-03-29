@@ -60,6 +60,8 @@ REQUEST TRIAGE (FIRST STEP)
    - Treat `guided_handoff.discovery_tools` as fallback only, not the default first move.
    - Use directly visible tools first.
    - Use search_tools / call_tool only when discovery is actually needed.
+   - Do not guess hidden internal tool names and feed them into `call_tool(...)`.
+     `call_tool(...)` cannot bypass current surface/phase visibility.
 
 WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
 1) Optional: preview likely matches (if available in your client)
@@ -81,6 +83,7 @@ WORKFLOW MATCHING (ONLY WHEN REQUEST TYPE = BUILD/WORKFLOW)
        * Do not treat the whole internal catalog as the default action space.
        * If a needed tool is already directly visible on the current surface/phase, call it directly.
        * Use search_tools / call_tool only when you need discovery or need to reach a non-entry tool that is not already visible.
+       * If `call_tool(...)` reports `Unknown tool`, do not keep guessing names; re-check the current phase/surface and whether build tools have actually been unlocked.
        * If the task is a bounded recess/cutout/opening, prefer `macro_cutout_recess` over manually creating cutters, placing them, and chaining boolean cleanup.
        * If the task is bounded relative placement/alignment/contact-gap work, prefer `macro_relative_layout` over transform-by-transform placement.
        * If the task is a bounded finishing stack (rounded housing, panel finish, shell thicken, smooth subdivision), prefer `macro_finish_form` over manually rebuilding the modifier stack with `modeling_add_modifier(...)`.

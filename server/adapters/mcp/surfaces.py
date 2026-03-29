@@ -90,6 +90,7 @@ SURFACE_PROFILES: dict[str, SurfaceProfileSettings] = {
             "Other capability families can unlock progressively by session phase. "
             "Use visible direct tools directly when they are already available on the current shaped surface. "
             "Use search_tools/call_tool only when you actually need discovery or need to reach a non-entry tool that is not already visible. "
+            "call_tool is not a bypass for hidden or phase-locked tools, so guessing internal tool names on the wrong phase will still fail. "
             "For the full operating model, see the prompt docs and especially 'workflow_router_first'. "
             "If you want a manual non-router workflow, load the prompt 'manual_tools_no_router'. "
             "Verify meaningful changes with inspection and, when appropriate, before/after capture plus deterministic measure/assert tooling. "

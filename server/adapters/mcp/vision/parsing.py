@@ -16,6 +16,12 @@ _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
 _LIKELY_ISSUES_ALIASES = ("issues", "problems", "risks")
 _RECOMMENDED_CHECKS_ALIASES = ("checks", "follow_up_checks", "deterministic_checks", "recommended_tools")
 _LABEL_MAP_KEYS = {"before", "after", "reference"}
+_VISIBLE_CHANGE_GOAL_SUMMARY_HINTS = (
+    "the after image shows",
+    "the after images show",
+    "after image shows",
+    "after images show",
+)
 
 
 def _labels_for(request: VisionRequest) -> list[str]:
@@ -223,6 +229,10 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
     visible_changes = _coerce_string_list(parsed.get("visible_changes"))
     if not visible_changes:
         visible_changes = _coerce_string_list(_first_nonempty_value(parsed, _VISIBLE_CHANGES_ALIASES))
+    if not visible_changes and goal_summary:
+        goal_summary_lower = goal_summary.lower()
+        if any(hint in goal_summary_lower for hint in _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS):
+            visible_changes = [goal_summary]
 
     likely_issues = _coerce_issue_list(parsed.get("likely_issues"))
     if not likely_issues:

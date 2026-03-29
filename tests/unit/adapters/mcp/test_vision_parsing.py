@@ -74,6 +74,26 @@ def test_parse_vision_output_repairs_summary_alias_payload():
     assert parsed["captures_used"] == ["before_1"]
 
 
+def test_parse_vision_output_backfills_visible_changes_from_goal_summary_when_explicit():
+    text = json.dumps(
+        {
+            "goal_summary": "The after images show the Housing object with rounded edges and a softer front silhouette.",
+            "reference_match_summary": None,
+            "visible_changes": [],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "confidence": 0.6,
+            "captures_used": ["before_1"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["visible_changes"] == [
+        "The after images show the Housing object with rounded edges and a softer front silhouette."
+    ]
+
+
 def test_parse_vision_output_repairs_label_map_payload():
     text = json.dumps(
         {

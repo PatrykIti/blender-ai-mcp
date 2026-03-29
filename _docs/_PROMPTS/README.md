@@ -27,6 +27,11 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > Use `search_tools` / `call_tool` only when discovery is actually needed on the
 > shaped public surface, and use `manual_tools_no_router` when you explicitly
 > want a manual non-router operating mode.
+> `call_tool(...)` is not a bypass for hidden or phase-locked tools: if a tool
+> is not currently exposed/discoverable on the shaped surface, guessing its name
+> will still fail.
+> `manual_tools_no_router` is a different operating mode, not an escape hatch
+> for the active `llm-guided` shaped surface mid-session.
 > Prefer workflow/macro tools over raw low-level atomics, and treat
 > before/after capture plus deterministic verification as the normal way to
 > judge whether a change is actually correct.
@@ -75,10 +80,15 @@ Interpretation:
     `router_get_status(...)` -> `router_set_goal(...)` -> handle typed `needs_input` if present -> use visible build tools / macros
   - utility/capture request:
     do **not** force `router_set_goal(...)`; use the guided utility path instead
-  - vision-assisted build:
+- vision-assisted build:
     `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
+- `call_tool(...)` cannot summon hidden internal tools by guessed name; `Unknown tool`
+  on `llm-guided` usually means the current phase/surface is wrong
+- do not switch to `manual_tools_no_router` mentally while still using the
+  `llm-guided` shaped profile; if you need manual/no-router behavior, use the
+  matching manual profile/session intentionally
 - a typical guided macro flow is:
   `router_set_goal(...)` -> `browse_workflows(...)` / `search_tools(...)` -> `macro_finish_form` -> `inspect_scene(...)` + measure/assert verification
 - a typical guided utility capture flow is:

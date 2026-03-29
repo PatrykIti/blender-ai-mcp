@@ -56,6 +56,9 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
             + "\n"
             + "Do not explain the JSON. Do not echo the input payload. "
             + "Do not wrap the result in markdown unless unavoidable. "
+            + "If there is a visible before/after difference, visible_changes must contain 1-3 short concrete items. "
+            + "Leave visible_changes empty only when there is truly no visible change. "
+            + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
         )
     return shared
@@ -105,6 +108,8 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
             "",
             "Return exactly one JSON object with the required keys only.",
             "If you can provide only one useful sentence, put it in goal_summary.",
+            "If the after image(s) visibly changed, also populate visible_changes with 1-3 short concrete observations.",
+            "Leave likely_issues and recommended_checks empty unless you have a specific visual reason to add them.",
             "Do not repeat the input payload.",
             "Do not invent alternate top-level keys like comparison, summary, analysis, before, after, or reference.",
             "If uncertain, keep fields conservative but present.",
