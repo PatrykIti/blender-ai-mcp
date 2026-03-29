@@ -24,11 +24,15 @@ def test_vision_assistant_contract_wraps_structured_result():
         capability_source="local_runtime",
         result=VisionAssistContract(
             backend_kind="transformers_local",
+            backend_name="transformers_local",
             model_name="Qwen/Qwen3-VL-4B-Instruct",
             goal_summary="Closer to the rounded housing goal.",
             reference_match_summary="Front silhouette now better matches the reference.",
             visible_changes=["Front face edges appear softer."],
+            shape_mismatches=["Ears still look too thin."],
+            proportion_mismatches=["Head is still slightly too large relative to the body."],
             likely_issues=[],
+            next_corrections=["Thicken the ears slightly and reduce the head/body ratio."],
             recommended_checks=[],
             confidence=0.61,
             captures_used=["front_before", "front_after", "reference_main"],
@@ -41,4 +45,6 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.capability_source == "local_runtime"
     assert contract.result is not None
     assert contract.result.backend_kind == "transformers_local"
+    assert contract.result.backend_name == "transformers_local"
     assert contract.result.model_name == "Qwen/Qwen3-VL-4B-Instruct"
+    assert contract.result.shape_mismatches == ["Ears still look too thin."]

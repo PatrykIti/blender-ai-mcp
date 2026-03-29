@@ -18,6 +18,10 @@ The repo now has the first implementation scaffolding for the vision layer:
 - lazy, optional vision runtime config and backend resolution
 - local and external backend families
 - bounded `VisionAssistContract` / `VisionAssistantContract`
+- richer optional result semantics for later correction loops:
+  - `shape_mismatches`
+  - `proportion_mismatches`
+  - `next_corrections`
 - deterministic capture-bundle contracts and initial runtime presets:
   - default `compact` profile:
     - `context_wide`

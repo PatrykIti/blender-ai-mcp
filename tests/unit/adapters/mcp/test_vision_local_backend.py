@@ -6,7 +6,6 @@ import asyncio
 import importlib
 
 import pytest
-
 from server.adapters.mcp.vision import (
     MLXLocalVisionBackend,
     TransformersLocalVisionBackend,
@@ -301,7 +300,7 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
         @staticmethod
         def generate(model, processor, *args, **kwargs):
             return FakeGenerationResult(
-                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"likely_issues":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"shape_mismatches":[],"proportion_mismatches":[],"likely_issues":[],"next_corrections":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
             )
 
     class FakePromptUtils:
@@ -338,8 +337,10 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
     result = asyncio.run(backend.analyze(request))
 
     assert result["backend_kind"] == "mlx_local"
+    assert result["backend_name"] == "mlx_local"
     assert result["model_name"] == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result["goal_summary"] == "Closer to the goal."
+    assert result["shape_mismatches"] == []
     assert backend.last_output_diagnostics is not None
     assert backend.last_output_diagnostics["payload_shape"] == "contract"
 

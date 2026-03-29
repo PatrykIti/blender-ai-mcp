@@ -1,8 +1,13 @@
 # TASK-121-01: Vision Assistant Boundary and Delivery Contract
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The reusable result envelope from `TASK-121-01-01` is now
+in place, including richer optional fields for shape/proportion/correction
+semantics. The remaining work in this branch is the stricter policy/truth
+boundary in `TASK-121-01-02`.
 
 ---
 

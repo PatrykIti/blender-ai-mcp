@@ -13,7 +13,10 @@ _EXPECTED_KEYS = (
     "goal_summary",
     "reference_match_summary",
     "visible_changes",
+    "shape_mismatches",
+    "proportion_mismatches",
     "likely_issues",
+    "next_corrections",
     "recommended_checks",
     "confidence",
     "captures_used",
@@ -26,7 +29,10 @@ def _local_output_template(request: VisionRequest) -> str:
         "goal_summary": "One short sentence about whether the after images move toward the goal/reference.",
         "reference_match_summary": None,
         "visible_changes": [],
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
         "likely_issues": [],
+        "next_corrections": [],
         "recommended_checks": [],
         "confidence": None,
         "captures_used": labels,
@@ -45,7 +51,10 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
         "- goal_summary: string\n"
         "- reference_match_summary: string or null\n"
         "- visible_changes: string[]\n"
+        "- shape_mismatches: string[]\n"
+        "- proportion_mismatches: string[]\n"
         '- likely_issues: [{"category": string, "summary": string, "severity": "high"|"medium"|"low"}]\n'
+        "- next_corrections: string[]\n"
         '- recommended_checks: [{"tool_name": string, "reason": string, "priority": "high"|"normal"}]\n'
         "- confidence: number or null\n"
         "- captures_used: string[]\n"
@@ -59,6 +68,9 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
             + "If there is a visible before/after difference, visible_changes must contain 1-3 short concrete visual items. "
             + "Leave visible_changes empty only when there is truly no visible change. "
             + "Do not use visible_changes for unchanged facts from truth_summary such as same dimensions, same center, or same volume. "
+            + "Use shape_mismatches only for visible form/silhouette problems. "
+            + "Use proportion_mismatches only for visible size/ratio relationship problems. "
+            + "Use next_corrections for 1-3 bounded next-step corrections only when they are visually justified. "
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
             + "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
@@ -112,6 +124,9 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
             "If you can provide only one useful sentence, put it in goal_summary.",
             "If the after image(s) visibly changed, also populate visible_changes with 1-3 short concrete visual observations.",
             "Do not use visible_changes for unchanged truth_summary facts such as same dimensions, same center, or same volume.",
+            "Use shape_mismatches only for visible form/silhouette problems.",
+            "Use proportion_mismatches only for visible size/ratio problems.",
+            "Use next_corrections for 1-3 bounded next-step fixes only when they are visually justified.",
             "Leave likely_issues and recommended_checks empty unless you have a specific visual reason to add them.",
             "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks.",
             "Do not repeat the input payload.",

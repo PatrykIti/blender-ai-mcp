@@ -115,7 +115,10 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
         {
             "summary": "Closer overall.",
             "changes": ["Front is rounder."],
+            "shape_mismatches": ["Ears still look too thin."],
+            "proportion_mismatches": ["Head is still too large relative to body."],
             "issues": ["Top edge still looks flat."],
+            "next_corrections": ["Reduce the head slightly and thicken the ears."],
             "checks": ["Run scene_measure_dimensions for the cutout width."],
         }
     )
@@ -124,7 +127,10 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
 
     assert parsed["goal_summary"] == "Closer overall."
     assert parsed["visible_changes"] == ["Front is rounder."]
+    assert parsed["shape_mismatches"] == ["Ears still look too thin."]
+    assert parsed["proportion_mismatches"] == ["Head is still too large relative to body."]
     assert parsed["likely_issues"][0]["summary"] == "Top edge still looks flat."
+    assert parsed["next_corrections"] == ["Reduce the head slightly and thicken the ears."]
     assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"
 
 

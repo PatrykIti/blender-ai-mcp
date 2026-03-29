@@ -75,11 +75,15 @@ class _SuccessBackend(VisionBackend):
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         return {
             "backend_kind": self.backend_kind,
+            "backend_name": self.backend_kind,
             "model_name": self.model_name,
             "goal_summary": "Looks closer to the goal.",
             "reference_match_summary": None,
             "visible_changes": ["Front profile changed."],
+            "shape_mismatches": [],
+            "proportion_mismatches": [],
             "likely_issues": [],
+            "next_corrections": [],
             "recommended_checks": [],
             "confidence": 0.55,
             "captures_used": [image.label or image.role for image in request.images],
@@ -140,6 +144,7 @@ def test_runner_returns_success_for_local_backend(monkeypatch):
     assert result.capability_source == "local_runtime"
     assert result.result is not None
     assert result.result.backend_kind == "transformers_local"
+    assert result.result.backend_name == "transformers_local"
 
 
 def test_runner_returns_success_for_external_backend(monkeypatch):

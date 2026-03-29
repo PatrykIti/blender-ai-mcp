@@ -80,11 +80,15 @@ def _normalize_assist_payload(
 ) -> dict[str, Any]:
     return {
         "backend_kind": backend_kind,
+        "backend_name": backend_kind,
         "model_name": model_name,
         "goal_summary": str(parsed.get("goal_summary") or ""),
         "reference_match_summary": parsed.get("reference_match_summary"),
         "visible_changes": list(parsed.get("visible_changes") or []),
+        "shape_mismatches": list(parsed.get("shape_mismatches") or []),
+        "proportion_mismatches": list(parsed.get("proportion_mismatches") or []),
         "likely_issues": list(parsed.get("likely_issues") or []),
+        "next_corrections": list(parsed.get("next_corrections") or []),
         "recommended_checks": list(parsed.get("recommended_checks") or []),
         "confidence": parsed.get("confidence"),
         "captures_used": list(parsed.get("captures_used") or []),

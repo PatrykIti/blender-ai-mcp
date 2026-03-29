@@ -13,7 +13,10 @@ from .prompting import expected_json_keys
 
 _SUMMARY_ALIASES = ("comparison", "summary", "analysis", "description", "result")
 _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
+_SHAPE_MISMATCHES_ALIASES = ("shape_mismatches", "form_mismatches", "silhouette_mismatches")
+_PROPORTION_MISMATCHES_ALIASES = ("proportion_mismatches", "ratio_mismatches", "size_mismatches")
 _LIKELY_ISSUES_ALIASES = ("issues", "problems", "risks")
+_NEXT_CORRECTIONS_ALIASES = ("next_corrections", "suggested_corrections", "corrections")
 _RECOMMENDED_CHECKS_ALIASES = ("checks", "follow_up_checks", "deterministic_checks", "recommended_tools")
 _LABEL_MAP_KEYS = {"before", "after", "reference"}
 _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS = (
@@ -276,6 +279,12 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         if any(hint in goal_summary_lower for hint in _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS):
             visible_changes = [goal_summary]
     visible_changes = _dedupe_string_list(visible_changes)
+    shape_mismatches = _dedupe_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _SHAPE_MISMATCHES_ALIASES))
+    )
+    proportion_mismatches = _dedupe_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _PROPORTION_MISMATCHES_ALIASES))
+    )
 
     likely_issues = _coerce_issue_list(parsed.get("likely_issues"))
     if not likely_issues:
@@ -292,6 +301,9 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             if recommended_checks:
                 break
     recommended_checks = _dedupe_check_list(recommended_checks)
+    next_corrections = _dedupe_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _NEXT_CORRECTIONS_ALIASES))
+    )
 
     confidence = parsed.get("confidence")
     if not isinstance(confidence, (int, float)) and confidence is not None:
@@ -301,7 +313,10 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         "goal_summary": goal_summary,
         "reference_match_summary": reference_match_summary,
         "visible_changes": visible_changes,
+        "shape_mismatches": shape_mismatches,
+        "proportion_mismatches": proportion_mismatches,
         "likely_issues": likely_issues,
+        "next_corrections": next_corrections,
         "recommended_checks": recommended_checks,
         "confidence": confidence,
         "captures_used": list(parsed.get("captures_used") or labels),
@@ -310,7 +325,15 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
 
 def _has_contract_signal(parsed: dict[str, Any]) -> bool:
     expected = set(expected_json_keys())
-    aliases = set(_SUMMARY_ALIASES + _VISIBLE_CHANGES_ALIASES + _LIKELY_ISSUES_ALIASES + _RECOMMENDED_CHECKS_ALIASES)
+    aliases = set(
+        _SUMMARY_ALIASES
+        + _VISIBLE_CHANGES_ALIASES
+        + _SHAPE_MISMATCHES_ALIASES
+        + _PROPORTION_MISMATCHES_ALIASES
+        + _LIKELY_ISSUES_ALIASES
+        + _NEXT_CORRECTIONS_ALIASES
+        + _RECOMMENDED_CHECKS_ALIASES
+    )
     return bool(set(parsed.keys()) & (expected | aliases))
 
 

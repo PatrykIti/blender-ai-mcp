@@ -103,11 +103,15 @@ class VisionAssistContract(MCPContract):
     """Structured bounded vision result for macro/workflow reporting."""
 
     backend_kind: Literal["transformers_local", "mlx_local", "openai_compatible_external", "unknown"] = "unknown"
+    backend_name: str | None = None
     model_name: str | None = None
     goal_summary: str
     reference_match_summary: str | None = None
     visible_changes: list[str]
+    shape_mismatches: list[str] = []
+    proportion_mismatches: list[str] = []
     likely_issues: list[VisionIssueContract] = []
+    next_corrections: list[str] = []
     recommended_checks: list[VisionRecommendedCheckContract] = []
     confidence: float | None = None
     captures_used: list[str] = []

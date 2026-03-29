@@ -1,8 +1,16 @@
 # TASK-121-01-01: Vision Assistant Result Envelope and Status Model
 
 **Parent:** [TASK-121-01](./TASK-121-01_Vision_Assistant_Boundary_And_Delivery_Contract.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The bounded `vision_assistant` envelope now carries a
+reusable richer result model on top of the earlier base shape. In addition to
+`goal_summary`, `reference_match_summary`, `visible_changes`,
+`likely_issues`, and `recommended_checks`, the contract now exposes
+`backend_name`, `shape_mismatches`, `proportion_mismatches`, and
+`next_corrections` as optional machine-readable fields for later correction
+loops.
 
 ---
 
