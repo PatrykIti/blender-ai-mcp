@@ -123,6 +123,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "practical `llm-guided` operating model" in prompt_readme
     assert "vision-assisted build:" in prompt_readme
     assert "## `llm-guided` Flow Summary" in prompt_readme
+    assert "GUIDED_SESSION_START.md" in prompt_readme
+    assert "guided_session_start" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme
     assert "`guided_handoff.direct_tools`" in prompt_readme

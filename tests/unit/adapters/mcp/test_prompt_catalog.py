@@ -14,6 +14,7 @@ def test_prompt_catalog_exposes_curated_prompt_assets():
 
     assert names == {
         "getting_started",
+        "guided_session_start",
         "workflow_router_first",
         "manual_tools_no_router",
         "demo_low_poly_medieval_well",
@@ -35,5 +36,6 @@ def test_recommended_prompt_entries_change_by_profile_and_phase():
     }
 
     assert "workflow_router_first" in planning
+    assert "guided_session_start" in planning
     assert "manual_tools_no_router" not in planning
     assert "manual_tools_no_router" in inspect_validate

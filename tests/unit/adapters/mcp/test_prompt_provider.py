@@ -21,6 +21,7 @@ def test_prompt_provider_lists_curated_prompt_assets():
     names = asyncio.run(run())
 
     assert "getting_started" in names
+    assert "guided_session_start" in names
     assert "workflow_router_first" in names
     assert "recommended_prompts" in names
 
@@ -32,5 +33,6 @@ def test_recommended_prompts_renderer_reflects_phase_and_profile():
 
     assert isinstance(result, PromptResult)
     message = result.messages[0].content.text
+    assert "guided_session_start" in message
     assert "workflow_router_first" in message
     assert "llm-guided" in message

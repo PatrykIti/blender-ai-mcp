@@ -3,6 +3,10 @@
 Use this when you want the LLM to operate on the normal production-oriented
 guided surface.
 
+If the client tends to get lost between router flow, discovery, and hidden
+tools, prepend [`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md) before
+this prompt.
+
 ---
 
 ## ✅ Copy/paste template (System Prompt)

@@ -52,6 +52,17 @@ PROMPT_CATALOG: tuple[PromptCatalogEntry, ...] = (
         profile_tags=("profile:llm-guided",),
     ),
     PromptCatalogEntry(
+        name="guided_session_start",
+        title="Guided Session Start",
+        description="Short fail-safe starter prefix for llm-guided sessions that should avoid hidden-tool and wrong-phase drift.",
+        source_path=PROMPTS_DIR / "GUIDED_SESSION_START.md",
+        tags=("mode:guided-start", "audience:guided"),
+        operating_mode="guided-start",
+        audience="guided",
+        phase_tags=("phase:bootstrap", "phase:planning", "phase:build"),
+        profile_tags=("profile:llm-guided",),
+    ),
+    PromptCatalogEntry(
         name="manual_tools_no_router",
         title="Manual Tools No Router",
         description="Manual tool-calling guidance for clients or sessions that should avoid the router.",

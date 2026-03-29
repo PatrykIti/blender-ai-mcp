@@ -277,6 +277,7 @@ def build_visibility_rules(
                 "components": {"prompt"},
                 "names": {
                     "getting_started",
+                    "guided_session_start",
                     "workflow_router_first",
                     "manual_tools_no_router",
                     "recommended_prompts",
@@ -304,6 +305,7 @@ def build_visibility_rules(
             "components": {"prompt"},
             "names": {
                 "getting_started",
+                "guided_session_start",
                 "workflow_router_first",
                 "manual_tools_no_router",
                 "demo_low_poly_medieval_well",
