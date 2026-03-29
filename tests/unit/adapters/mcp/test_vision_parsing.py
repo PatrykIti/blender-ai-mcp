@@ -128,6 +128,32 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
     assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"
 
 
+def test_parse_vision_output_deduplicates_repeated_lists():
+    text = json.dumps(
+        {
+            "goal_summary": "The after image shows a rounder housing.",
+            "reference_match_summary": None,
+            "visible_changes": ["Front is rounder.", "Front is rounder."],
+            "likely_issues": [
+                {"category": "reported_issue", "summary": "Top edge still looks flat.", "severity": "medium"},
+                {"category": "reported_issue", "summary": "Top edge still looks flat.", "severity": "medium"},
+            ],
+            "recommended_checks": [
+                {"tool_name": "follow_up_check", "reason": "Run a viewport check.", "priority": "normal"},
+                {"tool_name": "follow_up_check", "reason": "Run a viewport check.", "priority": "normal"},
+            ],
+            "confidence": 0.4,
+            "captures_used": ["before_1"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["visible_changes"] == ["Front is rounder."]
+    assert len(parsed["likely_issues"]) == 1
+    assert len(parsed["recommended_checks"]) == 1
+
+
 def test_diagnose_vision_output_classifies_fenced_contract_json():
     text = """```json
 {"goal_summary":"ok","reference_match_summary":null,"visible_changes":[],"likely_issues":[],"recommended_checks":[],"confidence":0.2,"captures_used":["before_1"]}

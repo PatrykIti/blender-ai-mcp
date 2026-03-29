@@ -42,10 +42,13 @@ _IMPROVEMENT_HINTS = (
     "face details refined",
     "full body has been added",
     "body has been added",
+    "body added",
+    "fuller squirrel model",
     "complete squirrel model",
     "fully detailed",
     "expanded into a full",
     "expanded into a full squirrel",
+    "progressing from",
 )
 _REGRESSION_HINTS = (
     "worse",
@@ -129,6 +132,8 @@ class VisionGoldenExpectations(BaseModel):
     minimum_visible_changes: int = Field(default=0, ge=0)
     minimum_likely_issues: int = Field(default=0, ge=0)
     minimum_recommended_checks: int = Field(default=0, ge=0)
+    maximum_likely_issues: int | None = Field(default=None, ge=0)
+    maximum_recommended_checks: int | None = Field(default=None, ge=0)
     expected_issue_categories: list[str] = Field(default_factory=list)
     expected_tool_names: list[str] = Field(default_factory=list)
     should_avoid_truth_claims: bool = True
@@ -213,8 +218,7 @@ def _combined_text(result: dict[str, Any]) -> str:
 
 
 def _classify_direction(text: str) -> DirectionExpectation | Literal["unknown"]:
-    if any(hint in text for hint in _NO_CHANGE_HINTS):
-        return "no_change"
+    no_change_hits = sum(1 for hint in _NO_CHANGE_HINTS if hint in text)
     improvement_hits = sum(1 for hint in _IMPROVEMENT_HINTS if hint in text)
     regression_hits = sum(1 for hint in _REGRESSION_HINTS if hint in text)
     if (
@@ -235,10 +239,21 @@ def _classify_direction(text: str) -> DirectionExpectation | Literal["unknown"]:
         )
     ):
         return "improved"
+    if (
+        regression_hits == 0
+        and any(hint in text for hint in _PROGRESSION_GAIN_HINTS)
+        and (
+            any(hint in text for hint in _PROGRESSION_SIMPLE_START_HINTS)
+            or any(hint in text for hint in _PROGRESSION_ADDED_PART_HINTS)
+        )
+    ):
+        return "improved"
     if improvement_hits > regression_hits and improvement_hits > 0:
         return "improved"
     if regression_hits > improvement_hits and regression_hits > 0:
         return "regressed"
+    if no_change_hits > 0 and improvement_hits == 0 and regression_hits == 0:
+        return "no_change"
     return "unknown"
 
 
@@ -364,6 +379,18 @@ def evaluate_vision_result(
         issue_count >= expectations.minimum_likely_issues,
         f"found {issue_count}, required >= {expectations.minimum_likely_issues}",
     )
+    if expectations.maximum_likely_issues is None:
+        dimensions["likely_issues_budget"] = VisionEvaluationDimension(
+            score=0.0,
+            max_score=0.0,
+            passed=True,
+            detail="likely issue budget not scored for this scenario",
+        )
+    else:
+        dimensions["likely_issues_budget"] = _score_bool(
+            issue_count <= expectations.maximum_likely_issues,
+            f"found {issue_count}, required <= {expectations.maximum_likely_issues}",
+        )
 
     recommended_checks = result.get("recommended_checks") or []
     check_count = len(recommended_checks) if isinstance(recommended_checks, list) else 0
@@ -371,6 +398,18 @@ def evaluate_vision_result(
         check_count >= expectations.minimum_recommended_checks,
         f"found {check_count}, required >= {expectations.minimum_recommended_checks}",
     )
+    if expectations.maximum_recommended_checks is None:
+        dimensions["recommended_checks_budget"] = VisionEvaluationDimension(
+            score=0.0,
+            max_score=0.0,
+            passed=True,
+            detail="recommended check budget not scored for this scenario",
+        )
+    else:
+        dimensions["recommended_checks_budget"] = _score_bool(
+            check_count <= expectations.maximum_recommended_checks,
+            f"found {check_count}, required <= {expectations.maximum_recommended_checks}",
+        )
 
     issue_categories = [
         str(item.get("category"))

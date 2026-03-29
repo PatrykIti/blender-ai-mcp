@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [162](./162-2026-03-29-vision-local-output-and-scoring-tuning.md) | 2026-03-29 | **Vision local output and scoring tuning** | - |
 | [161](./161-2026-03-29-guided-goal-recovery-and-reference-semantics.md) | 2026-03-29 | **Guided goal recovery and reference semantics** | - |
 | [160](./160-2026-03-28-real-viewport-vision-view-variants.md) | 2026-03-28 | **Real viewport vision view variants** | - |
 | [159](./159-2026-03-28-viewport-capture-visibility-consistency.md) | 2026-03-28 | **Viewport capture visibility consistency** | - |

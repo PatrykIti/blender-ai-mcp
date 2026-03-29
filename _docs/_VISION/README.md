@@ -272,22 +272,24 @@ only one screenshot style.
 First real-model comparison on those new view-family variants:
 
 - `Qwen3-VL-2B-Instruct-4bit`
-  - stayed `strong` on all 6 new scenarios
-  - scored `1.0` on all 6
-  - remained noisier, producing a combined `11` `likely_issues` and `6`
+  - after the latest local prompt/parse cleanup, now stays `strong` on all 6
+    new scenarios with `1.0` on all 6
+  - current rerun on those 6 variants produced `0` `likely_issues` and `0`
     `recommended_checks`
 - `Qwen3-VL-4B-Instruct-4bit`
-  - also stayed `strong` on all 6 new scenarios
-  - scored `1.0` on 4/6 and `0.875` on 2/6
-  - stayed materially cleaner, producing `0` `likely_issues` and `0`
-    `recommended_checks` across the same 6 scenarios
+  - after the latest direction-heuristic update, now also stays `strong` on all
+    6 new scenarios with `1.0` on all 6
+  - current rerun on those 6 variants produced `0` `likely_issues` and `0`
+    `recommended_checks`
 
 Current interpretation of that comparison:
 
 - both models handle the new top-view and fixed-camera progression bundles
-- `4B` remains the cleaner practical local baseline
-- the current heuristic still over-rewards noisier `2B` phrasing on two cases,
-  so the next scoring pass should preserve the cleanliness advantage of `4B`
+- the earlier scoring asymmetry on 4B's shorter phrasing is now fixed on those
+  6 variants
+- `4B` remains the safer practical local baseline, but the new 2B rerun is now
+  materially cleaner than the earlier baseline and is more credible for
+  lightweight smoke/dev use on this scenario family
   instead of treating extra issue/check output as neutral
 
 Stability check:

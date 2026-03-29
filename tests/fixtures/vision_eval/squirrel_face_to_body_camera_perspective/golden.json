@@ -15,6 +15,8 @@
     "minimum_visible_changes": 1,
     "minimum_likely_issues": 0,
     "minimum_recommended_checks": 0,
+    "maximum_likely_issues": 0,
+    "maximum_recommended_checks": 0,
     "expected_issue_categories": [],
     "expected_tool_names": [],
     "should_avoid_truth_claims": true

@@ -1,10 +1,10 @@
 # TASK-121-04-01-02: Local Prompting and Parse-Repair Policy
 
 **Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape. The parser also repairs summary-alias outputs like `{"comparison": "..."}` and explicitly flags unsupported label-map outputs. Preliminary MLX smoke reruns now show usable structured output on both `Qwen3-VL-4B-Instruct-4bit` and `Qwen3-VL-2B-Instruct-4bit`, but the smaller model still looks more prone to overconfident/hallucinatory issue generation.
+**Progress Update:** Shared prompt/parsing helpers now exist and local backends use a shorter, more task-oriented payload. Fenced JSON and input-echo outputs can now be normalized into the bounded contract shape. The parser repairs summary-alias outputs like `{"comparison": "..."}`, explicitly flags unsupported label-map outputs, deduplicates repeated issue/check lists, and backfills `visible_changes` from explicit visual `goal_summary` phrasing when local models omit it. Prompt policy now also tells local models not to fill `visible_changes` with unchanged truth-summary facts or spam filler issue/check output. MLX reruns on the real squirrel view-family variants now show materially cleaner outputs from both `Qwen3-VL-4B-Instruct-4bit` and `Qwen3-VL-2B-Instruct-4bit`.
 
 ---
 

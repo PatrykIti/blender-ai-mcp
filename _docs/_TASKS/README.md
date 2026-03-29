@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0 tasks
 - **In Progress:** 1 tasks
-- **Done:** 176
+- **Done:** 178
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -58,6 +58,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
+| [TASK-121-04-01-02](./TASK-121-04-01-02_Local_Prompting_And_Parse_Repair_Policy.md) | **Local Prompting and Parse-Repair Policy** | 🔴 High | 2026-03-29 |
+| [TASK-121-04-02-03](./TASK-121-04-02-03_Real_Viewport_Smoke_Scenario_And_Scoring_Heuristic_Tuning.md) | **Real Viewport Smoke Scenario and Scoring Heuristic Tuning** | 🟡 Medium | 2026-03-29 |
 | [TASK-121-06](./TASK-121-06_Guided_Goal_Recovery_And_Reference_Semantics.md) | **Guided Goal Recovery and Reference Semantics** | 🔴 High | 2026-03-29 |
 | [TASK-121-03-05](./TASK-121-03-05_Render_Visibility_Consistency_For_Viewport_Capture.md) | **Render-Visibility Consistency for Viewport Capture** | 🟡 Medium | 2026-03-28 |
 | [TASK-115](./TASK-115_Public_Surface_Wording_Alignment.md) | **Public Surface Wording Alignment** | 🔴 High | 2026-03-24 |

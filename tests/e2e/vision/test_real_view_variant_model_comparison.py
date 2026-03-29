@@ -83,8 +83,8 @@ async def _run_model(model_name: str) -> list[dict[str, object]]:
     os.getenv("RUN_REAL_VISION_MODEL_COMPARISON") != "1",
     reason="set RUN_REAL_VISION_MODEL_COMPARISON=1 to run real MLX model comparison",
 )
-def test_real_view_variant_models_remain_strong_and_4b_is_cleaner():
-    """Both models should stay strong on the new variants, with 4B staying less noisy overall."""
+def test_real_view_variant_models_remain_strong_and_clean():
+    """Both local MLX baselines should stay strong and avoid noisy extra analysis on the new variants."""
 
     try:
         results_2b = asyncio.run(_run_model("mlx-community/Qwen3-VL-2B-Instruct-4bit"))
@@ -97,5 +97,9 @@ def test_real_view_variant_models_remain_strong_and_4b_is_cleaner():
 
     total_noise_2b = sum(int(row["noise_count"]) for row in results_2b)
     total_noise_4b = sum(int(row["noise_count"]) for row in results_4b)
+    total_score_2b = sum(float(row["normalized_score"] or 0.0) for row in results_2b)
+    total_score_4b = sum(float(row["normalized_score"] or 0.0) for row in results_4b)
 
-    assert total_noise_4b < total_noise_2b
+    assert total_noise_2b == 0
+    assert total_noise_4b == 0
+    assert total_score_4b >= total_score_2b

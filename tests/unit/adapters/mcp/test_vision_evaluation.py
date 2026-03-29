@@ -228,6 +228,79 @@ def test_evaluate_vision_result_classifies_progressive_body_addition_as_improved
     assert summary.dimensions["direction_match"].passed is True
 
 
+def test_evaluate_vision_result_penalizes_extra_issue_and_check_noise_when_budgeted():
+    scenario = load_golden_scenario(_fixture("default_cube_to_picnic_table"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a detailed picnic table model replacing the default cube.",
+            "reference_match_summary": None,
+            "visible_changes": ["A detailed picnic table model is now present in the scene."],
+            "likely_issues": [
+                {"category": "reported_issue", "summary": "The result may still need review.", "severity": "medium"}
+            ],
+            "recommended_checks": [
+                {"tool_name": "follow_up_check", "reason": "Confirm the object replacement.", "priority": "normal"}
+            ],
+            "captures_used": ["context_wide_before", "context_wide_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["likely_issues_budget"].passed is False
+    assert summary.dimensions["recommended_checks_budget"].passed is False
+    assert summary.normalized_score is not None
+    assert summary.normalized_score < 1.0
+
+
+def test_evaluate_vision_result_accepts_fuller_squirrel_progression_wording():
+    scenario = load_golden_scenario(_fixture("squirrel_head_to_body_user_top"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a fuller squirrel model with face details and body, progressing from a simple head blockout.",
+            "reference_match_summary": None,
+            "visible_changes": [
+                "Added facial details like eyes and nose",
+                "Included body elements with limbs and tail",
+            ],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": ["user_top_before", "user_top_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True
+
+
+def test_evaluate_vision_result_does_not_treat_retained_face_details_as_no_change():
+    scenario = load_golden_scenario(_fixture("squirrel_face_to_body_camera_perspective"))
+    entry = {
+        "backend": "mlx_local",
+        "status": "success",
+        "result": {
+            "goal_summary": "The after image shows a complete squirrel model with a body added to the previously detailed head, maintaining the same fixed camera perspective.",
+            "reference_match_summary": None,
+            "visible_changes": [
+                "A full body has been added beneath the head, featuring spherical limbs and a rounded torso.",
+                "The face details remain unchanged, confirming the progression is from head to full body.",
+            ],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "captures_used": ["camera_perspective_before", "camera_perspective_after"],
+        },
+    }
+
+    summary = evaluate_vision_result(entry, scenario)
+
+    assert summary.dimensions["direction_match"].passed is True
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "goal_summary", "visible_changes"),
     [

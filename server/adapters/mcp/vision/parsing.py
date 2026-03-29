@@ -142,6 +142,18 @@ def _coerce_string_list(value: Any) -> list[str]:
     return []
 
 
+def _dedupe_string_list(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for item in items:
+        key = item.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
 def _first_nonempty_value(parsed: dict[str, Any], keys: tuple[str, ...]) -> Any:
     for key in keys:
         value = parsed.get(key)
@@ -188,6 +200,21 @@ def _coerce_issue_list(value: Any) -> list[dict[str, Any]]:
     return issues
 
 
+def _dedupe_issue_list(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[str, str, str]] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in issues:
+        summary = str(item.get("summary") or "").strip()
+        category = str(item.get("category") or "reported_issue")
+        severity = str(item.get("severity") or "medium")
+        key = (category.lower(), summary.lower(), severity.lower())
+        if not summary or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
 def _coerce_check_list(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
@@ -222,6 +249,21 @@ def _coerce_check_list(value: Any) -> list[dict[str, Any]]:
     return checks
 
 
+def _dedupe_check_list(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[str, str, str]] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in checks:
+        reason = str(item.get("reason") or "").strip()
+        tool_name = str(item.get("tool_name") or "follow_up_check")
+        priority = str(item.get("priority") or "normal")
+        key = (tool_name.lower(), reason.lower(), priority.lower())
+        if not reason or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
 def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[str, Any]:
     labels = _labels_for(request)
     goal_summary = _first_string(parsed, ("goal_summary", *_SUMMARY_ALIASES)) or ""
@@ -233,6 +275,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         goal_summary_lower = goal_summary.lower()
         if any(hint in goal_summary_lower for hint in _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS):
             visible_changes = [goal_summary]
+    visible_changes = _dedupe_string_list(visible_changes)
 
     likely_issues = _coerce_issue_list(parsed.get("likely_issues"))
     if not likely_issues:
@@ -240,6 +283,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             likely_issues = _coerce_issue_list(parsed.get(alias))
             if likely_issues:
                 break
+    likely_issues = _dedupe_issue_list(likely_issues)
 
     recommended_checks = _coerce_check_list(parsed.get("recommended_checks"))
     if not recommended_checks:
@@ -247,6 +291,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             recommended_checks = _coerce_check_list(parsed.get(alias))
             if recommended_checks:
                 break
+    recommended_checks = _dedupe_check_list(recommended_checks)
 
     confidence = parsed.get("confidence")
     if not isinstance(confidence, (int, float)) and confidence is not None:
