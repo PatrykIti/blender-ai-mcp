@@ -8,8 +8,8 @@ from __future__ import annotations
 from fastmcp import Context
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
-from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
+from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.infrastructure.di import get_vision_backend_resolver
 
 from .capture import (
@@ -18,6 +18,7 @@ from .capture import (
     select_reference_records_for_target,
 )
 from .policy import choose_reference_target_view, infer_capture_preset_profile
+from .reporting import attach_vision_artifacts
 from .runner import run_vision_assist
 
 
@@ -44,6 +45,11 @@ async def maybe_attach_macro_vision(
     prompt_hint_parts = [
         f"target_object={report.capture_bundle.target_object}" if report.capture_bundle.target_object else None,
         *[
+            f"deterministic_check[{index}]={item.tool_name}"
+            for index, item in enumerate(report.verification_recommended or [], start=1)
+            if item.tool_name
+        ],
+        *[
             f"reference[{index}] label={capture.label}"
             for index, capture in enumerate(reference_images, start=1)
             if capture.label
@@ -66,4 +72,8 @@ async def maybe_attach_macro_vision(
         request=request,
         resolver=resolver,
     )
-    return report.model_copy(update={"vision_assistant": to_vision_assistant_contract(outcome)})
+    return attach_vision_artifacts(
+        report,
+        capture_bundle=report.capture_bundle,
+        vision_assistant=to_vision_assistant_contract(outcome),
+    )

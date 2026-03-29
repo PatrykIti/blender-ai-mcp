@@ -1,10 +1,10 @@
 # TASK-121-03-02: Macro/Workflow Vision Integration Path
 
 **Parent:** [TASK-121-03](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** Macro MCP adapters now have the first request-bound vision attachment path: when a macro report carries a capture bundle, the adapter builds a `VisionRequest`, includes goal-scoped reference images from session state, filters them toward the current target object before attaching them, and attaches the resulting `vision_assistant` envelope back onto the macro report.
+**Progress Update:** Macro MCP adapters now have the first request-bound vision attachment path: when a macro report carries a capture bundle, the adapter builds a `VisionRequest`, includes goal-scoped reference images from session state, filters them toward the current target object before attaching them, and attaches the resulting `vision_assistant` envelope back onto the macro report. The path now also passes the macro's existing deterministic verification tools into the vision prompt hint and folds vision-driven follow-up checks/mismatch signals back into `verification_recommended` plus `requires_followup`, so the report remains correction-oriented instead of ending at a detached summary blob.
 
 ---
 

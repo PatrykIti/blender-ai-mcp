@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [165](./165-2026-03-29-macro-vision-followup-integration.md) | 2026-03-29 | **Macro vision follow-up integration** | - |
 | [164](./164-2026-03-29-vision-boundary-policy-metadata.md) | 2026-03-29 | **Vision boundary policy metadata** | - |
 | [163](./163-2026-03-29-vision-assistant-envelope-extension.md) | 2026-03-29 | **Vision assistant envelope extension** | - |
 | [162](./162-2026-03-29-vision-local-output-and-scoring-tuning.md) | 2026-03-29 | **Vision local output and scoring tuning** | - |

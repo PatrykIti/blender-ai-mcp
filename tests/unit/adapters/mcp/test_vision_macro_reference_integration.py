@@ -24,6 +24,13 @@ def _report() -> MacroExecutionReportContract:
         macro_name="macro_finish_form",
         intent="apply rounded housing finish",
         actions_taken=[],
+        verification_recommended=[
+            {
+                "tool_name": "inspect_scene",
+                "reason": "Verify the modifier stack after applying the finishing preset.",
+                "priority": "normal",
+            }
+        ],
         capture_bundle=VisionCaptureBundleContract(
             bundle_id="bundle_1",
             target_object="Housing",
@@ -102,6 +109,13 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
                 model_name="gemma-3-27b-vision",
                 goal_summary="Closer to the goal.",
                 visible_changes=["Front silhouette changed."],
+                recommended_checks=[
+                    {
+                        "tool_name": "scene_measure_dimensions",
+                        "reason": "Confirm the outer dimensions after the finishing change.",
+                        "priority": "high",
+                    }
+                ],
             ),
         )
 
@@ -121,3 +135,6 @@ def test_maybe_attach_macro_vision_uses_goal_scoped_reference_images(monkeypatch
     assert captured["request"].images[-1].path == "/tmp/ref_stored.png"
     assert "reference_target_view[1]=target_focus" in (captured["request"].prompt_hint or "")
     assert "capture_profile=rich" in (captured["request"].prompt_hint or "")
+    assert "deterministic_check[1]=inspect_scene" in (captured["request"].prompt_hint or "")
+    assert result.verification_recommended is not None
+    assert any(item.tool_name == "scene_measure_dimensions" for item in result.verification_recommended)

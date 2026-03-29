@@ -54,6 +54,8 @@ def test_attach_vision_artifacts_enriches_macro_report():
                 model_name="gemma-3-27b-vision",
                 goal_summary="Closer to the reference silhouette.",
                 visible_changes=["Front profile is softer."],
+                shape_mismatches=["Front silhouette still looks too boxy."],
+                next_corrections=["Round the front silhouette more aggressively."],
             ),
         )
     )
@@ -69,3 +71,6 @@ def test_attach_vision_artifacts_enriches_macro_report():
     assert enriched.vision_assistant is not None
     assert enriched.vision_assistant.result is not None
     assert enriched.vision_assistant.result.backend_kind == "openai_compatible_external"
+    assert enriched.requires_followup is True
+    assert enriched.verification_recommended is not None
+    assert any(item.tool_name == "inspect_scene" for item in enriched.verification_recommended)

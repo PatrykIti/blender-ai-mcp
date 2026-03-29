@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 0 tasks
 - **In Progress:** 1 tasks
-- **Done:** 180
+- **Done:** 181
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -58,6 +58,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
+| [TASK-121-03-02](./TASK-121-03-02_Macro_Workflow_Vision_Integration_Path.md) | **Macro/Workflow Vision Integration Path** | 🔴 High | 2026-03-29 |
 | [TASK-121-01-02](./TASK-121-01-02_Vision_Policy_And_Truth_Boundary_Enforcement.md) | **Vision, Policy, and Truth Boundary Enforcement** | 🔴 High | 2026-03-29 |
 | [TASK-121-01-01](./TASK-121-01-01_Vision_Assistant_Result_Envelope_And_Status_Model.md) | **Vision Assistant Result Envelope and Status Model** | 🔴 High | 2026-03-29 |
 | [TASK-121-04-01-02](./TASK-121-04-01-02_Local_Prompting_And_Parse_Repair_Policy.md) | **Local Prompting and Parse-Repair Policy** | 🔴 High | 2026-03-29 |

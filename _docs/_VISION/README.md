@@ -43,6 +43,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - goal-scoped `reference_images` session surface
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
+- macro report integration now also folds bounded vision-driven follow-ups back
+  into `verification_recommended` when the vision result contains deterministic
+  check hints or clear mismatch/correction signals
 
 Current reference-selection behavior:
 

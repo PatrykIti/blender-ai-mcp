@@ -61,8 +61,6 @@ def test_macro_finish_form_mcp_can_attach_vision_assistant(monkeypatch):
                 "capture_bundle": _capture_bundle(),
             }
 
-    captured = {}
-
     monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_macro_handler", lambda: Handler())
     monkeypatch.setattr(
         "server.adapters.mcp.areas.modeling._resolve_macro_capture_profile",
