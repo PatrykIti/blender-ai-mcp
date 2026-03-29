@@ -37,6 +37,7 @@ SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
 SESSION_REFERENCE_IMAGES_KEY = "reference_images"
 SESSION_GUIDED_HANDOFF_KEY = "guided_handoff"
+SESSION_PENDING_REFERENCE_IMAGES_KEY = "pending_reference_images"
 
 
 @dataclass(frozen=True)
@@ -59,6 +60,7 @@ class SessionCapabilityState:
     last_router_error: str | None = None
     reference_images: list[dict[str, Any]] | None = None
     guided_handoff: dict[str, Any] | None = None
+    pending_reference_images: list[dict[str, Any]] | None = None
 
 
 def infer_phase_from_router_status(
@@ -101,6 +103,7 @@ def get_session_capability_state(ctx: Context) -> SessionCapabilityState:
         last_router_error=get_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=get_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=get_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY),
+        pending_reference_images=get_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
 
@@ -124,6 +127,7 @@ async def get_session_capability_state_async(ctx: Context) -> SessionCapabilityS
         last_router_error=await get_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY),
         reference_images=await get_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY),
         guided_handoff=await get_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY),
+        pending_reference_images=await get_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY),
     )
 
 
@@ -146,6 +150,7 @@ def set_session_capability_state(ctx: Context, state: SessionCapabilityState) ->
     set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     set_session_value(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     set_session_value(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
+    set_session_value(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
 
 
 async def set_session_capability_state_async(ctx: Context, state: SessionCapabilityState) -> None:
@@ -167,6 +172,25 @@ async def set_session_capability_state_async(ctx: Context, state: SessionCapabil
     await set_session_value_async(ctx, SESSION_LAST_ROUTER_ERROR_KEY, state.last_router_error)
     await set_session_value_async(ctx, SESSION_REFERENCE_IMAGES_KEY, state.reference_images)
     await set_session_value_async(ctx, SESSION_GUIDED_HANDOFF_KEY, state.guided_handoff)
+    await set_session_value_async(ctx, SESSION_PENDING_REFERENCE_IMAGES_KEY, state.pending_reference_images)
+
+
+def _adopt_pending_reference_images(
+    pending_reference_images: list[dict[str, Any]] | None,
+    *,
+    goal: str,
+) -> list[dict[str, Any]] | None:
+    """Retarget pending reference attachments onto the newly active goal."""
+
+    if not pending_reference_images:
+        return None
+
+    adopted: list[dict[str, Any]] = []
+    for item in pending_reference_images:
+        adopted_item = dict(item)
+        adopted_item["goal"] = goal
+        adopted.append(adopted_item)
+    return adopted or None
 
 
 def update_session_from_router_goal(
@@ -207,6 +231,11 @@ def update_session_from_router_goal(
         last_elicitation_action = None
         partial_answers = None
 
+    adopted_reference_images = current.reference_images if same_goal else _adopt_pending_reference_images(
+        current.pending_reference_images,
+        goal=goal,
+    )
+
     state = SessionCapabilityState(
         phase=phase,
         goal=goal,
@@ -222,8 +251,9 @@ def update_session_from_router_goal(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
-        reference_images=current.reference_images if same_goal else None,
+        reference_images=adopted_reference_images,
         guided_handoff=router_result.get("guided_handoff"),
+        pending_reference_images=current.pending_reference_images if same_goal else None,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -267,6 +297,11 @@ async def update_session_from_router_goal_async(
         last_elicitation_action = None
         partial_answers = None
 
+    adopted_reference_images = current.reference_images if same_goal else _adopt_pending_reference_images(
+        current.pending_reference_images,
+        goal=goal,
+    )
+
     state = SessionCapabilityState(
         phase=phase,
         goal=goal,
@@ -282,8 +317,9 @@ async def update_session_from_router_goal_async(
         last_elicitation_action=last_elicitation_action,
         last_router_disposition=current.last_router_disposition,
         last_router_error=current.last_router_error,
-        reference_images=current.reference_images if same_goal else None,
+        reference_images=adopted_reference_images,
         guided_handoff=router_result.get("guided_handoff"),
+        pending_reference_images=current.pending_reference_images if same_goal else None,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -315,6 +351,7 @@ def clear_session_goal_state(
         last_router_error=current.last_router_error,
         reference_images=None,
         guided_handoff=None,
+        pending_reference_images=None,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -346,6 +383,7 @@ async def clear_session_goal_state_async(
         last_router_error=current.last_router_error,
         reference_images=None,
         guided_handoff=None,
+        pending_reference_images=None,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -415,6 +453,7 @@ def replace_session_reference_images(
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
+        pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
     return state
@@ -444,6 +483,7 @@ async def replace_session_reference_images_async(
         last_router_error=current.last_router_error,
         reference_images=reference_images or None,
         guided_handoff=current.guided_handoff,
+        pending_reference_images=current.pending_reference_images,
     )
     await set_session_capability_state_async(ctx, state)
     return state
@@ -475,6 +515,67 @@ def record_router_execution_outcome(
         last_router_error=error,
         reference_images=current.reference_images,
         guided_handoff=current.guided_handoff,
+        pending_reference_images=current.pending_reference_images,
     )
     set_session_capability_state(ctx, state)
+    return state
+
+
+def replace_session_pending_reference_images(
+    ctx: Context,
+    pending_reference_images: list[dict[str, Any]] | None,
+) -> SessionCapabilityState:
+    """Replace the pending reference images kept before a goal is active."""
+
+    current = get_session_capability_state(ctx)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        pending_reference_images=pending_reference_images or None,
+    )
+    set_session_capability_state(ctx, state)
+    return state
+
+
+async def replace_session_pending_reference_images_async(
+    ctx: Context,
+    pending_reference_images: list[dict[str, Any]] | None,
+) -> SessionCapabilityState:
+    """Async variant of pending reference-image replacement."""
+
+    current = await get_session_capability_state_async(ctx)
+    state = SessionCapabilityState(
+        phase=current.phase,
+        goal=current.goal,
+        pending_clarification=current.pending_clarification,
+        last_router_status=current.last_router_status,
+        policy_context=current.policy_context,
+        surface_profile=current.surface_profile,
+        contract_version=current.contract_version,
+        pending_elicitation_id=current.pending_elicitation_id,
+        pending_workflow_name=current.pending_workflow_name,
+        partial_answers=current.partial_answers,
+        pending_question_set_id=current.pending_question_set_id,
+        last_elicitation_action=current.last_elicitation_action,
+        last_router_disposition=current.last_router_disposition,
+        last_router_error=current.last_router_error,
+        reference_images=current.reference_images,
+        guided_handoff=current.guided_handoff,
+        pending_reference_images=pending_reference_images or None,
+    )
+    await set_session_capability_state_async(ctx, state)
     return state

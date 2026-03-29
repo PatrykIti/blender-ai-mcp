@@ -23,16 +23,25 @@ class FakeContext:
         return None
 
 
-def test_reference_images_attach_requires_active_goal(tmp_path, monkeypatch):
+def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")
     monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
     monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
 
-    result = asyncio.run(reference_images(FakeContext(), action="attach", source_path=str(image)))
+    ctx = FakeContext()
+    result = asyncio.run(reference_images(ctx, action="attach", source_path=str(image), label="front_ref"))
 
-    assert result.error is not None
-    assert "router_set_goal" in result.error
+    assert result.error is None
+    assert result.goal is None
+    assert result.reference_count == 1
+    assert result.references[0].goal == "__pending_goal__"
+    assert "pending reference image" in (result.message or "")
+
+    state = update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    assert state.reference_images is not None
+    assert state.reference_images[0]["goal"] == "low poly squirrel"
+    assert state.pending_reference_images is None
 
 
 def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
@@ -75,4 +84,3 @@ def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
     assert attached_again.reference_count == 1
     cleared = asyncio.run(reference_images(ctx, action="clear"))
     assert cleared.reference_count == 0
-

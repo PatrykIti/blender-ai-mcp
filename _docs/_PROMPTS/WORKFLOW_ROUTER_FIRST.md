@@ -35,10 +35,11 @@ REQUEST TRIAGE (FIRST STEP)
    - Then:
      * router_set_goal(goal="<user prompt including modifiers>")
    - If status == "needs_input":
-     * Treat the typed clarification payload as model-facing by default.
-     * Do not hand the question to the user first unless the user/business intent is genuinely missing.
-     * Call router_set_goal(goal, resolved_params={...}) with the answers.
-     * Repeat until status == "ready".
+       * Treat the typed clarification payload as model-facing by default.
+       * Do not hand the question to the user first unless the user/business intent is genuinely missing.
+       * If the clarification is `workflow_confirmation` and the proposed workflow is clearly wrong, answer with `guided_manual_build` instead of improvising hidden-tool guesses.
+       * Call router_set_goal(goal, resolved_params={...}) with the answers.
+       * Repeat until status == "ready".
    - If status == "ready":
      * Proceed with visible build tools/macros.
      * Prefer macro/workflow paths when they are a good fit.
@@ -105,6 +106,7 @@ RELIABILITY (STILL REQUIRED)
 - If vision should support the task, prefer flows where:
    * the goal is already active
    * reference_images(...) are attached if available
+   * staged pending references may be attached before the goal exists and will be adopted by the next router_set_goal(...)
    * the build happens through macros or deterministic capture-aware steps
    * inspection/measure/assert tools confirm correctness after the visual summary
 - Typical shaped-surface macro flow:

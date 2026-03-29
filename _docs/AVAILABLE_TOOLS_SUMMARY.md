@@ -235,6 +235,7 @@ None.
 | `scene_camera_orbit` | `angle_horizontal`, `angle_vertical`, `target_object` (optional), `target_point` (optional) | Orbits the viewport around a target object or point. | ✅ Done |
 | `scene_camera_focus` | `object_name`, `zoom_factor` | Focuses the viewport on one object. Use `object_name`, not `target`, `target_object`, or `focus_target`. | ✅ Done |
 | `scene_get_viewport` | `width`, `height`, `shading`, `camera_name`, `focus_target`, `output_mode` | Returns a visual preview of the scene with selectable output mode (IMAGE/BASE64/FILE/MARKDOWN). `USER_PERSPECTIVE` follows the live 3D viewport; named-camera capture follows render visibility. | ✅ Done |
+| `reference_images` | `action`, `source_path`, `reference_id`, `label`, `notes`, `target_object`, `target_view` | Goal-scoped reference image lifecycle surface. `attach` can now also stage pending references before the goal exists; the next `router_set_goal(...)` adopts them automatically. | ✅ Done |
 | `scene_snapshot_state` | `include_mesh_stats`, `include_materials` | Captures a JSON snapshot of scene state with SHA256 hash. | ✅ Done |
 | `scene_compare_snapshot` | `baseline_snapshot`, `target_snapshot`, `ignore_minor_transforms` | Compares two snapshots and returns diff summary. | ✅ Done |
 | `scene_set_mode` | `mode` | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). | ✅ Done |

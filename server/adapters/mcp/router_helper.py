@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 SESSION_LAST_ROUTER_DISPOSITION_KEY = "last_router_disposition"
 SESSION_LAST_ROUTER_ERROR_KEY = "last_router_error"
+ROUTER_BYPASS_PREFIXES: tuple[str, ...] = ("scene_",)
 
 
 def _get_active_surface_profile() -> str:
@@ -49,6 +50,12 @@ def _should_fail_closed_on_router_error(surface_profile: str) -> bool:
     """Guided/product surfaces fail closed; explicit compatibility stays fail-open."""
 
     return surface_profile != "legacy-flat"
+
+
+def _should_bypass_router_for_tool(tool_name: str) -> bool:
+    """Return True when one public tool family should never be workflow-triggered."""
+
+    return any(tool_name.startswith(prefix) for prefix in ROUTER_BYPASS_PREFIXES)
 
 
 def _build_correction_audit_events(
@@ -254,6 +261,20 @@ def route_tool_call_report(
         report = MCPExecutionReport(
             context=context,
             router_enabled=False,
+            router_applied=False,
+            router_disposition="bypassed",
+            steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),
+            audit_ids=(),
+        )
+        _record_router_execution_report(report)
+        _log_audit_exposure(report)
+        return report
+
+    if _should_bypass_router_for_tool(tool_name):
+        result = direct_executor()
+        report = MCPExecutionReport(
+            context=context,
+            router_enabled=True,
             router_applied=False,
             router_disposition="bypassed",
             steps=(ExecutionStep(tool_name=tool_name, params=params, result=result),),

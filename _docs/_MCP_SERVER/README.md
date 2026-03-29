@@ -305,6 +305,10 @@ Goal-scoped reference intake is now part of the guided entry layer:
 - `reference_images(action="remove", reference_id=...)`
 - `reference_images(action="clear")`
 
+Reference intake can now also stage pending attachments before the active goal
+exists. In that case, the next `router_set_goal(...)` adopts those references
+onto the new goal automatically.
+
 ## Session-Adaptive Visibility Baseline
 
 The `llm-guided` surface now has a first complete guided-mode visibility baseline:
@@ -690,6 +694,13 @@ Example guided macro flow for finishing:
 If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
 If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
+
+Workflow clarification note:
+
+- if `router_set_goal(...)` returns a model-facing `workflow_confirmation`
+  clarification for a weak match, the model may now answer with
+  `guided_manual_build` to decline that workflow and continue on the guided
+  build surface instead
 
 ### Modeling Tools
 Geometry creation and editing.

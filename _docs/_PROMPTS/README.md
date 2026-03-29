@@ -24,6 +24,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > call it directly instead of routing through `search_tools(...)` / `call_tool(...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
 > images before asking the bounded vision layer to compare visible change.
+> If the goal is not active yet, `reference_images(action="attach", ...)` can
+> now stage pending references that will be adopted automatically by the next
+> `router_set_goal(...)`.
 > Use `search_tools` / `call_tool` only when discovery is actually needed on the
 > shaped public surface, and use `manual_tools_no_router` when you explicitly
 > want a manual non-router operating mode.
@@ -111,6 +114,9 @@ guided surface:
 1. If the request is a real build/workflow goal, start from `router_set_goal(...)`.
 2. If the router returns `needs_input`, keep that clarification model-facing and
    answer with a follow-up `router_set_goal(..., resolved_params={...})`.
+   If the suggested workflow is clearly wrong and the payload is asking for
+   `workflow_confirmation`, you may answer with `guided_manual_build` to decline
+   that workflow and continue manually on the guided build surface.
 3. If the router returns `ready`, prefer:
    - visible direct tools
    - macro tools

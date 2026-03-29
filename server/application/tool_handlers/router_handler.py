@@ -9,7 +9,6 @@ TASK-055: Extended with parameter resolution methods.
 """
 
 import re
-
 from typing import Any, Dict, List, Optional, Tuple
 
 from server.domain.tools.router import IRouterTool
@@ -21,7 +20,11 @@ from server.router.application.policy.correction_policy_engine import (
     CorrectionPolicyEngine,
     PolicyDecision,
 )
-from server.router.application.session_phase_hints import BUILD_PHASE_HINT, PLANNING_PHASE_HINT, derive_phase_hint_from_router_result
+from server.router.application.session_phase_hints import (
+    BUILD_PHASE_HINT,
+    PLANNING_PHASE_HINT,
+    derive_phase_hint_from_router_result,
+)
 
 
 class RouterToolHandler(IRouterTool):
@@ -47,9 +50,26 @@ class RouterToolHandler(IRouterTool):
         re.compile(r"\b(consistent camera|same view|same framing|same camera)\b", re.IGNORECASE),
     )
     _GUIDED_MANUAL_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
-        re.compile(r"\blow poly\b.*\b(squirrel|rabbit|owl|fox|bird|animal|creature|character)\b", re.IGNORECASE),
-        re.compile(r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low poly|blockout|face|body|ears|snout)\b", re.IGNORECASE),
-        re.compile(r"\b(animal|creature|character)\b.*\b(low poly|blockout|head|face|body)\b", re.IGNORECASE),
+        re.compile(r"\blow[- ]poly\b.*\b(squirrel|rabbit|owl|fox|bird|animal|creature|character)\b", re.IGNORECASE),
+        re.compile(r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low[- ]poly|blockout|face|body|ears|snout)\b", re.IGNORECASE),
+        re.compile(r"\b(animal|creature|character)\b.*\b(low[- ]poly|blockout|head|face|body)\b", re.IGNORECASE),
+    )
+    _REFERENCE_GUIDED_HINT_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\breference images?\b", re.IGNORECASE),
+        re.compile(r"\breference image\b", re.IGNORECASE),
+        re.compile(r"\bfront and side reference\b", re.IGNORECASE),
+        re.compile(r"\bfront and side reference images\b", re.IGNORECASE),
+        re.compile(r"\bfront/side reference\b", re.IGNORECASE),
+        re.compile(r"\bmatching .*reference", re.IGNORECASE),
+    )
+    _GUIDED_MANUAL_BUILD_DECLINE_VALUES: tuple[str, ...] = (
+        "guided_manual_build",
+        "__guided_manual_build__",
+        "manual_build",
+        "manual",
+        "decline",
+        "reject",
+        "none",
     )
 
     def __init__(
@@ -104,6 +124,16 @@ class RouterToolHandler(IRouterTool):
             return False
         return any(pattern.search(normalized_goal) for pattern in cls._GUIDED_MANUAL_BUILD_PATTERNS)
 
+    @classmethod
+    def _looks_like_reference_guided_manual_build_goal(cls, goal: str) -> bool:
+        """Return True when reference-guided organic/manual build should skip workflow routing."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        has_reference_guidance = any(pattern.search(normalized_goal) for pattern in cls._REFERENCE_GUIDED_HINT_PATTERNS)
+        return has_reference_guidance and cls._looks_like_guided_manual_build_goal(normalized_goal)
+
     @staticmethod
     def _no_match_response(
         *,
@@ -156,8 +186,8 @@ class RouterToolHandler(IRouterTool):
                 {
                     "param": "workflow_confirmation",
                     "type": "string",
-                    "description": "Confirm or refine the workflow choice before execution",
-                    "enum": [matched_workflow],
+                    "description": "Confirm the workflow choice or choose guided_manual_build to continue manually",
+                    "enum": [matched_workflow, "guided_manual_build"],
                     "default": matched_workflow,
                     "context": goal,
                     "semantic_hints": [],
@@ -169,9 +199,20 @@ class RouterToolHandler(IRouterTool):
             **({"policy_context": policy_context} if policy_context else {}),
             "message": (
                 f"Workflow '{matched_workflow}' is only a medium-confidence match. "
-                "Please confirm or refine the requested workflow before execution."
+                "Please confirm the workflow or switch to guided_manual_build before execution."
             ),
         }
+
+    @classmethod
+    def _is_guided_manual_build_rejection(cls, raw_confirmation: Any) -> bool:
+        """Return True when workflow confirmation explicitly declines into manual build."""
+
+        if raw_confirmation is None:
+            return False
+        confirmation = str(raw_confirmation).strip().lower()
+        if confirmation in cls._GUIDED_MANUAL_BUILD_DECLINE_VALUES:
+            return True
+        return "guided manual build" in confirmation or "manual build" in confirmation
 
     @staticmethod
     def _consume_workflow_confirmation(
@@ -192,6 +233,21 @@ class RouterToolHandler(IRouterTool):
 
         raw_confirmation = resolved_params.get("workflow_confirmation")
         confirmation = str(raw_confirmation).strip() if raw_confirmation is not None else ""
+
+        if RouterToolHandler._is_guided_manual_build_rejection(raw_confirmation):
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._no_match_response(
+                    goal=goal,
+                    phase_hint=BUILD_PHASE_HINT,
+                    continuation_mode="guided_manual_build",
+                    message=(
+                        f"Workflow '{matched_workflow}' was declined. "
+                        "Continue on the guided build surface with visible build tools/macros."
+                    ),
+                ),
+            )
 
         if confirmation != matched_workflow:
             return False, resolved_params, RouterToolHandler._workflow_confirmation_unresolved(
@@ -282,6 +338,21 @@ class RouterToolHandler(IRouterTool):
                 ),
             )
 
+        if self._looks_like_reference_guided_manual_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a reference-guided manual build request rather than a reusable workflow goal. "
+                    "Continue on the guided build surface, then attach/use reference_images(...) against that active manual build."
+                ),
+            )
+
         if self._looks_like_guided_manual_build_goal(goal):
             try:
                 router.clear_goal()
@@ -342,6 +413,11 @@ class RouterToolHandler(IRouterTool):
                 )
                 if not confirmation_accepted:
                     response = confirmation_response or {}
+                    if response.get("status") == "no_match":
+                        try:
+                            router.clear_goal()
+                        except Exception:
+                            pass
                     unresolved = response.get("unresolved") or []
                     if unresolved:
                         existing_error = unresolved[0].get("error")
@@ -373,6 +449,11 @@ class RouterToolHandler(IRouterTool):
                     )
                     if not confirmation_accepted:
                         response = confirmation_response or {}
+                        if response.get("status") == "no_match":
+                            try:
+                                router.clear_goal()
+                            except Exception:
+                                pass
                         unresolved = response.get("unresolved") or []
                         if unresolved:
                             existing_error = unresolved[0].get("error")

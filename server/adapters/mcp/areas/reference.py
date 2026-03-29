@@ -17,6 +17,7 @@ from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import ReferenceImagesResponseContract
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
+    replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
 )
 from server.adapters.mcp.visibility.tags import get_capability_tags
@@ -93,7 +94,9 @@ async def reference_images(
         return _as_response(action="list", goal=None, references=[], error="action must be attach, list, remove, or clear")
 
     session = await get_session_capability_state_async(ctx)
-    references = list(session.reference_images or [])
+    active_references = list(session.reference_images or [])
+    pending_references = list(session.pending_reference_images or [])
+    references = active_references if session.goal is not None else pending_references
 
     if normalized_action == "list":
         return _as_response(action="list", goal=session.goal, references=_sorted_references(references))
@@ -106,6 +109,11 @@ async def reference_images(
                     Path(stored_path).unlink(missing_ok=True)
                 except Exception:
                     pass
+        if session.goal is None:
+            await replace_session_pending_reference_images_async(ctx, [])
+            ctx_info(ctx, "[REFERENCE] Cleared pending reference images")
+            return _as_response(action="clear", goal=None, references=[], message="Cleared pending reference images.")
+
         await replace_session_reference_images_async(ctx, [])
         ctx_info(ctx, "[REFERENCE] Cleared session reference images")
         return _as_response(action="clear", goal=session.goal, references=[], message="Cleared session reference images.")
@@ -138,7 +146,10 @@ async def reference_images(
                 Path(stored_path).unlink(missing_ok=True)
             except Exception:
                 pass
-        await replace_session_reference_images_async(ctx, remaining)
+        if session.goal is None:
+            await replace_session_pending_reference_images_async(ctx, remaining)
+        else:
+            await replace_session_reference_images_async(ctx, remaining)
         ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
         return _as_response(
             action="remove",
@@ -146,14 +157,6 @@ async def reference_images(
             references=_sorted_references(remaining),
             removed_reference_id=reference_id,
             message=f"Removed reference image '{reference_id}'.",
-        )
-
-    if session.goal is None:
-        return _as_response(
-            action="attach",
-            goal=None,
-            references=_sorted_references(references),
-            error="Set an active goal with router_set_goal(...) before attaching reference images.",
         )
 
     if not source_path:
@@ -177,7 +180,7 @@ async def reference_images(
 
     reference = {
         "reference_id": f"ref_{uuid4().hex[:8]}",
-        "goal": session.goal,
+        "goal": session.goal or "__pending_goal__",
         "label": label,
         "notes": notes,
         "target_object": target_object,
@@ -190,6 +193,19 @@ async def reference_images(
         "added_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
     updated = [*references, reference]
+    if session.goal is None:
+        await replace_session_pending_reference_images_async(ctx, updated)
+        ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
+        return _as_response(
+            action="attach",
+            goal=None,
+            references=_sorted_references(updated),
+            message=(
+                f"Attached pending reference image '{reference['reference_id']}'. "
+                "It will be adopted automatically when the next active goal is set."
+            ),
+        )
+
     await replace_session_reference_images_async(ctx, updated)
     ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
     return _as_response(

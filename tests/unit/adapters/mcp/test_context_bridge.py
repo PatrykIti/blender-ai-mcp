@@ -109,3 +109,25 @@ def test_route_tool_call_report_returns_direct_execution_when_router_disabled(mo
     assert report.router_disposition == "bypassed"
     assert report.steps[0].tool_name == "scene_list_objects"
     assert report.to_legacy_text() == "['Cube']"
+
+
+def test_route_tool_call_report_bypasses_router_for_scene_utility_tools(monkeypatch):
+    """Scene utility/read-side tools should not trigger pending workflow execution."""
+
+    class FailingRouter:
+        def process_llm_tool_call(self, tool_name, params, prompt):
+            raise AssertionError("scene_* tools should bypass router processing")
+
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
+    monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: FailingRouter())
+
+    report = route_tool_call_report(
+        tool_name="scene_clean_scene",
+        params={"keep_lights_and_cameras": True},
+        direct_executor=lambda: "Scene cleaned",
+    )
+
+    assert report.router_enabled is True
+    assert report.router_applied is False
+    assert report.router_disposition == "bypassed"
+    assert report.steps[0].result == "Scene cleaned"

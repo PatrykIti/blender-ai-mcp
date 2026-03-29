@@ -313,6 +313,20 @@ class TestSetGoalUnified:
         assert "guided build surface" in result["message"]
         assert mock_router.get_pending_workflow() is None
 
+    def test_set_goal_treats_reference_guided_squirrel_as_guided_manual_build_no_match(self, handler, mock_router):
+        """Reference-guided low-poly squirrel requests should bypass irrelevant workflow matching."""
+
+        mock_router._pending_workflow = "simple_table_workflow"
+
+        result = handler.set_goal("create a low-poly squirrel matching front and side reference images")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "reference-guided manual build request" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
         """Test when workflow matches but has no parameters."""
         # Add workflow without parameters
@@ -638,6 +652,29 @@ class TestSetGoalUnified:
         assert result["workflow"] == "picnic_table"
         assert result["unresolved"] == []
 
+    def test_set_goal_medium_confidence_match_can_decline_into_guided_manual_build(
+        self, handler, mock_loader, mock_router
+    ):
+        """Workflow confirmation should support explicit decline into guided manual build."""
+
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "guided_manual_build"},
+        )
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert mock_router.get_pending_workflow() is None
+
     def test_set_goal_medium_confidence_match_rejects_invalid_workflow_confirmation(
         self, handler, mock_loader, mock_router
     ):
@@ -657,6 +694,7 @@ class TestSetGoalUnified:
         assert result["status"] == "needs_input"
         assert result["unresolved"][0]["param"] == "workflow_confirmation"
         assert "Invalid workflow confirmation" in result["unresolved"][0]["error"]
+        assert "guided_manual_build" in result["unresolved"][0]["enum"]
 
 
 class TestExtractContextForParam:
