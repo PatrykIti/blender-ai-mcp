@@ -22,6 +22,7 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `shape_mismatches`
   - `proportion_mismatches`
   - `next_corrections`
+- explicit boundary metadata in the result contract via `boundary_policy`
 - deterministic capture-bundle contracts and initial runtime presets:
   - default `compact` profile:
     - `context_wide`
@@ -134,6 +135,8 @@ Practical impact:
 The vision layer is not the truth source.
 
 - vision interprets visible change
+- the result contract now also carries `boundary_policy` so downstream clients
+  can see that `next_corrections` and confidence are non-authoritative hints
 - measure/assert tooling remains the correctness layer
 - router policy remains the policy layer
 - FastMCP platform controls discovery/visibility/public surface behavior

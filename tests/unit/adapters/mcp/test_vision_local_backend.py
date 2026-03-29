@@ -341,6 +341,7 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
     assert result["model_name"] == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result["goal_summary"] == "Closer to the goal."
     assert result["shape_mismatches"] == []
+    assert result["boundary_policy"]["not_truth_source"] is True
     assert backend.last_output_diagnostics is not None
     assert backend.last_output_diagnostics["payload_shape"] == "contract"
 

@@ -48,3 +48,5 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.result.backend_name == "transformers_local"
     assert contract.result.model_name == "Qwen/Qwen3-VL-4B-Instruct"
     assert contract.result.shape_mismatches == ["Ears still look too thin."]
+    assert contract.result.boundary_policy is not None
+    assert contract.result.boundary_policy.not_truth_source is True

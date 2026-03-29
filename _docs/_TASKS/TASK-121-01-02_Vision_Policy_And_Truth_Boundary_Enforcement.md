@@ -1,8 +1,14 @@
 # TASK-121-01-02: Vision, Policy, and Truth Boundary Enforcement
 
 **Parent:** [TASK-121-01](./TASK-121-01_Vision_Assistant_Boundary_And_Delivery_Contract.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The reusable `vision_assistant` envelope now carries an
+explicit `boundary_policy` contract that marks the vision layer as
+interpretation-only, non-truth, and non-policy. Local vision prompting now also
+repeats that `next_corrections` are suggestions rather than proof of safety or
+correctness.
 
 ---
 

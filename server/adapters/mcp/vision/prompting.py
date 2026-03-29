@@ -71,6 +71,7 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
             + "Use shape_mismatches only for visible form/silhouette problems. "
             + "Use proportion_mismatches only for visible size/ratio relationship problems. "
             + "Use next_corrections for 1-3 bounded next-step corrections only when they are visually justified. "
+            + "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness. "
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
             + "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
@@ -127,6 +128,7 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
             "Use shape_mismatches only for visible form/silhouette problems.",
             "Use proportion_mismatches only for visible size/ratio problems.",
             "Use next_corrections for 1-3 bounded next-step fixes only when they are visually justified.",
+            "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness.",
             "Leave likely_issues and recommended_checks empty unless you have a specific visual reason to add them.",
             "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks.",
             "Do not repeat the input payload.",

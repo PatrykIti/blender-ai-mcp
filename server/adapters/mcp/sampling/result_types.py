@@ -99,6 +99,17 @@ class VisionInputSummaryContract(MCPContract):
     target_object: str | None = None
 
 
+class VisionBoundaryPolicyContract(MCPContract):
+    """Explicit boundary contract for what the vision layer may and may not assert."""
+
+    interpretation_only: bool = True
+    not_truth_source: bool = True
+    not_policy_source: bool = True
+    requires_deterministic_checks_for_correctness: bool = True
+    requires_bundle_or_reference_context: bool = True
+    confidence_is_non_authoritative: bool = True
+
+
 class VisionAssistContract(MCPContract):
     """Structured bounded vision result for macro/workflow reporting."""
 
@@ -116,6 +127,7 @@ class VisionAssistContract(MCPContract):
     confidence: float | None = None
     captures_used: list[str] = []
     input_summary: VisionInputSummaryContract | None = None
+    boundary_policy: VisionBoundaryPolicyContract = VisionBoundaryPolicyContract()
     truth_source: Literal["vision_assist"] = "vision_assist"
 
 

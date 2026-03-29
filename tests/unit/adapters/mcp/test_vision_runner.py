@@ -87,6 +87,14 @@ class _SuccessBackend(VisionBackend):
             "recommended_checks": [],
             "confidence": 0.55,
             "captures_used": [image.label or image.role for image in request.images],
+            "boundary_policy": {
+                "interpretation_only": True,
+                "not_truth_source": True,
+                "not_policy_source": True,
+                "requires_deterministic_checks_for_correctness": True,
+                "requires_bundle_or_reference_context": True,
+                "confidence_is_non_authoritative": True,
+            },
         }
 
 
@@ -145,6 +153,8 @@ def test_runner_returns_success_for_local_backend(monkeypatch):
     assert result.result is not None
     assert result.result.backend_kind == "transformers_local"
     assert result.result.backend_name == "transformers_local"
+    assert result.result.boundary_policy is not None
+    assert result.result.boundary_policy.requires_deterministic_checks_for_correctness is True
 
 
 def test_runner_returns_success_for_external_backend(monkeypatch):

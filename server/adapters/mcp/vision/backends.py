@@ -93,6 +93,14 @@ def _normalize_assist_payload(
         "confidence": parsed.get("confidence"),
         "captures_used": list(parsed.get("captures_used") or []),
         "input_summary": _build_input_summary(request),
+        "boundary_policy": {
+            "interpretation_only": True,
+            "not_truth_source": True,
+            "not_policy_source": True,
+            "requires_deterministic_checks_for_correctness": True,
+            "requires_bundle_or_reference_context": True,
+            "confidence_is_non_authoritative": True,
+        },
     }
 
 
