@@ -149,6 +149,7 @@ EXPECTED_REFERENCE_TOOLS = {
     "reference_compare_checkpoint",
     "reference_compare_current_view",
     "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
 }
 
 ADDITIONAL_AREA_REGISTRARS = [

@@ -78,3 +78,26 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     vision_assistant: VisionAssistantContract | None = None
     message: str | None = None
     error: str | None = None
+
+
+class ReferenceIterateStageCheckpointResponseContract(MCPContract):
+    """Structured response for session-aware iterative stage checkpoint loops."""
+
+    action: Literal["iterate_stage_checkpoint"] = "iterate_stage_checkpoint"
+    goal: str | None = None
+    target_object: str
+    target_view: str | None = None
+    checkpoint_id: str
+    checkpoint_label: str | None = None
+    iteration_index: int = 1
+    loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = "continue_build"
+    continue_recommended: bool = True
+    prior_checkpoint_id: str | None = None
+    prior_correction_focus: list[str] = []
+    correction_focus: list[str] = []
+    repeated_correction_focus: list[str] = []
+    stagnation_count: int = 0
+    stop_reason: str | None = None
+    compare_result: ReferenceCompareStageCheckpointResponseContract
+    message: str | None = None
+    error: str | None = None

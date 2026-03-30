@@ -19,6 +19,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceImagesResponseContract,
+    ReferenceIterateStageCheckpointResponseContract,
 )
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
@@ -26,6 +27,7 @@ from server.adapters.mcp.session_capabilities import (
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
 )
+from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
     CapturePresetProfile,
@@ -45,8 +47,11 @@ REFERENCE_PUBLIC_TOOL_NAMES = (
     "reference_compare_checkpoint",
     "reference_compare_current_view",
     "reference_compare_stage_checkpoint",
+    "reference_iterate_stage_checkpoint",
 )
 _ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+_REFERENCE_CORRECTION_LOOP_STATE_KEY = "reference_correction_loop"
+_REFERENCE_CORRECTION_STAGNATION_THRESHOLD = 2
 
 
 def _register_existing_tool(target, tool_name: str):
@@ -163,6 +168,84 @@ def _stage_compare_response(
         message=message,
         error=error,
     )
+
+
+def _iterate_stage_response(
+    *,
+    goal: str | None,
+    target_object: str,
+    target_view: str | None,
+    checkpoint_id: str,
+    checkpoint_label: str | None,
+    iteration_index: int,
+    loop_disposition: str,
+    continue_recommended: bool,
+    prior_checkpoint_id: str | None,
+    prior_correction_focus: list[str],
+    correction_focus: list[str],
+    repeated_correction_focus: list[str],
+    stagnation_count: int,
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    stop_reason: str | None = None,
+    message: str | None = None,
+    error: str | None = None,
+) -> ReferenceIterateStageCheckpointResponseContract:
+    return ReferenceIterateStageCheckpointResponseContract(
+        action="iterate_stage_checkpoint",
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        checkpoint_id=checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        iteration_index=iteration_index,
+        loop_disposition=loop_disposition,
+        continue_recommended=continue_recommended,
+        prior_checkpoint_id=prior_checkpoint_id,
+        prior_correction_focus=prior_correction_focus,
+        correction_focus=correction_focus,
+        repeated_correction_focus=repeated_correction_focus,
+        stagnation_count=stagnation_count,
+        stop_reason=stop_reason,
+        compare_result=compare_result,
+        message=message,
+        error=error,
+    )
+
+
+def _normalized_focus_key(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    vision_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
+    if vision_result is None:
+        return []
+
+    ordered = list(vision_result.correction_focus or [])
+    if not ordered:
+        ordered.extend(vision_result.shape_mismatches or [])
+        ordered.extend(vision_result.proportion_mismatches or [])
+        ordered.extend(vision_result.next_corrections or [])
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in ordered:
+        normalized = _normalized_focus_key(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(item)
+    return deduped[:3]
+
+
+def _repeated_focus(current: list[str], prior: list[str]) -> list[str]:
+    prior_keys = {_normalized_focus_key(item) for item in prior if _normalized_focus_key(item)}
+    repeated: list[str] = []
+    for item in current:
+        normalized = _normalized_focus_key(item)
+        if normalized and normalized in prior_keys:
+            repeated.append(item)
+    return repeated
 
 
 async def _run_checkpoint_compare(
@@ -690,4 +773,114 @@ async def reference_compare_stage_checkpoint(
         preset_profile=preset_profile,
         goal_override=goal_override,
         prompt_hint=prompt_hint,
+    )
+
+
+async def reference_iterate_stage_checkpoint(
+    ctx: Context,
+    target_object: str,
+    checkpoint_label: str | None = None,
+    target_view: str | None = None,
+    goal_override: str | None = None,
+    prompt_hint: str | None = None,
+    preset_profile: CapturePresetProfile = "compact",
+) -> ReferenceIterateStageCheckpointResponseContract:
+    """Run one session-aware stage checkpoint iteration and return continuation guidance."""
+
+    compare_result = await reference_compare_stage_checkpoint(
+        ctx,
+        target_object=target_object,
+        checkpoint_label=checkpoint_label,
+        target_view=target_view,
+        goal_override=goal_override,
+        prompt_hint=prompt_hint,
+        preset_profile=preset_profile,
+    )
+    goal = compare_result.goal
+    correction_focus = _resolve_actionable_focus(compare_result)
+    continue_recommended = bool(correction_focus)
+    loop_disposition = "continue_build" if continue_recommended else "stop"
+    stop_reason = None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
+
+    if compare_result.error or goal is None:
+        return _iterate_stage_response(
+            goal=goal,
+            target_object=target_object,
+            target_view=target_view,
+            checkpoint_id=compare_result.checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            iteration_index=1,
+            loop_disposition="stop",
+            continue_recommended=False,
+            prior_checkpoint_id=None,
+            prior_correction_focus=[],
+            correction_focus=correction_focus,
+            repeated_correction_focus=[],
+            stagnation_count=0,
+            compare_result=compare_result,
+            stop_reason=compare_result.error or stop_reason,
+            message="Stage iteration did not complete successfully.",
+            error=compare_result.error,
+        )
+
+    prior_state = await get_session_value_async(ctx, _REFERENCE_CORRECTION_LOOP_STATE_KEY, None)
+    if not isinstance(prior_state, dict):
+        prior_state = None
+
+    same_loop = (
+        prior_state is not None
+        and prior_state.get("goal") == goal
+        and prior_state.get("target_object") == target_object
+    )
+    prior_checkpoint_id = str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
+    prior_correction_focus = list(prior_state.get("last_correction_focus") or []) if same_loop else []
+    iteration_index = int(prior_state.get("iteration_index") or 0) + 1 if same_loop else 1
+    repeated_correction_focus = _repeated_focus(correction_focus, prior_correction_focus)
+    prior_stagnation_count = int(prior_state.get("stagnation_count") or 0) if same_loop else 0
+    stagnation_count = prior_stagnation_count + 1 if repeated_correction_focus and correction_focus else 0
+
+    if continue_recommended and stagnation_count >= _REFERENCE_CORRECTION_STAGNATION_THRESHOLD:
+        loop_disposition = "inspect_validate"
+
+    await set_session_value_async(
+        ctx,
+        _REFERENCE_CORRECTION_LOOP_STATE_KEY,
+        {
+            "goal": goal,
+            "target_object": target_object,
+            "last_checkpoint_id": compare_result.checkpoint_id,
+            "last_checkpoint_label": checkpoint_label,
+            "last_correction_focus": correction_focus,
+            "iteration_index": iteration_index,
+            "stagnation_count": stagnation_count,
+        },
+    )
+
+    if loop_disposition == "inspect_validate":
+        message = (
+            "Repeated correction focus persists across stage iterations. "
+            "Prefer inspect/measure/assert confirmation before another free-form build step."
+        )
+    elif continue_recommended:
+        message = "Continue the guided build loop using correction_focus first."
+    else:
+        message = "No further correction loop action is recommended for this checkpoint."
+
+    return _iterate_stage_response(
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        checkpoint_id=compare_result.checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        iteration_index=iteration_index,
+        loop_disposition=loop_disposition,
+        continue_recommended=continue_recommended,
+        prior_checkpoint_id=prior_checkpoint_id,
+        prior_correction_focus=prior_correction_focus,
+        correction_focus=correction_focus,
+        repeated_correction_focus=repeated_correction_focus,
+        stagnation_count=stagnation_count,
+        compare_result=compare_result,
+        stop_reason=stop_reason,
+        message=message,
     )

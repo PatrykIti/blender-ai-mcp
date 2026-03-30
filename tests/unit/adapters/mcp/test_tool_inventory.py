@@ -24,6 +24,7 @@ def test_discovery_inventory_represents_each_public_tool_once():
     assert "reference_compare_checkpoint" in public_names
     assert "reference_compare_current_view" in public_names
     assert "reference_compare_stage_checkpoint" in public_names
+    assert "reference_iterate_stage_checkpoint" in public_names
 
 
 def test_discovery_inventory_tracks_aliases_and_pinned_defaults():

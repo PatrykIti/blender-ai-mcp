@@ -25,8 +25,9 @@ reference images and bounded vision feedback after each checkpoint.
    - body + tail
    - paws + final cleanup
 7. after each stage run:
-   - `reference_compare_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage>", preset_profile="compact")`
+   - `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage>", preset_profile="compact")`
 8. use the response in this order:
+   - `loop_disposition`
    - `correction_focus`
    - `shape_mismatches`
    - `proportion_mismatches`
@@ -48,7 +49,7 @@ Zasady:
 - `call_tool(...)` używaj tylko dla tooli bezpośrednio widocznych albo właśnie odkrytych przez `search_tools(...)`
 - keep parts as separate objects
 - skup się na low-poly shape match, nie na materiałach i futrze
-- po każdym etapie użyj `reference_compare_stage_checkpoint(...)`
+- po każdym etapie użyj `reference_iterate_stage_checkpoint(...)`
 
 Workflow:
 1. `router_get_status()`
@@ -63,15 +64,18 @@ Workflow:
    - etap 3: body + tail
    - etap 4: paws + final proportion cleanup
 7. po każdym etapie wywołaj:
-   `reference_compare_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage_name>", preset_profile="compact")`
+   `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage_name>", preset_profile="compact")`
 8. przy kolejnej iteracji priorytetyzuj:
+   - `loop_disposition`
    - `correction_focus`
    - potem `shape_mismatches`
    - potem `proportion_mismatches`
    - dopiero potem `next_corrections`
+9. jeśli `loop_disposition == "inspect_validate"`, zatrzymaj free-form modelowanie i przejdź do inspect/measure/assert zanim zrobisz kolejną dużą zmianę
 
 Na końcu każdego etapu zwróć tylko:
 - co zostało zrobione
+- `loop_disposition`
 - `correction_focus`
 - co nadal nie zgadza się z referencją
 - następny krok
@@ -84,3 +88,6 @@ Na końcu każdego etapu zwróć tylko:
   chcesz szerszego wielowidokowego porównania
 - `correction_focus` powinno być traktowane jako pierwsza lista do działania,
   bo jest już ograniczona i uporządkowana pod iteracyjne poprawki
+- `loop_disposition="inspect_validate"` oznacza, że system wykrywa powtarzający
+  się focus i lepiej przejść chwilowo do truth-layer verification niż dalej
+  zgadywać korekty

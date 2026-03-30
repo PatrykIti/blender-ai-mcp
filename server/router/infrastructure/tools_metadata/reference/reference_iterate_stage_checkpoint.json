@@ -1,0 +1,23 @@
+{
+  "tool_name": "reference_iterate_stage_checkpoint",
+  "category": "reference",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["reference", "iterate", "loop", "stage", "checkpoint", "continue", "stagnation", "vision"],
+  "sample_prompts": [
+    "run one iterative correction loop step for this squirrel stage",
+    "compare this stage to the references and tell me whether to continue building or validate",
+    "iterate the current stage checkpoint and remember the previous correction focus"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": true},
+    "checkpoint_label": {"type": "string", "default": null},
+    "target_view": {"type": "string", "default": null},
+    "goal_override": {"type": "string", "default": null},
+    "prompt_hint": {"type": "string", "default": null},
+    "preset_profile": {"type": "enum", "options": ["compact", "rich"], "default": "compact"}
+  },
+  "related_tools": ["reference_compare_stage_checkpoint", "reference_images", "router_get_status", "scene_get_viewport"],
+  "patterns": [],
+  "description": "Runs one session-aware stage checkpoint iteration: capture deterministic views, compare them against the active references, remember the prior correction focus, and return whether to continue building, inspect/validate, or stop."
+}
