@@ -36,10 +36,13 @@ class VisionOpenAICompatibleConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    provider_name: Literal["generic", "openrouter"] = "generic"
     base_url: str | None = None
     model: str | None = None
     api_key: str | None = None
     api_key_env: str | None = None
+    site_url: str | None = None
+    site_name: str | None = None
 
     @model_validator(mode="after")
     def validate_endpoint(self) -> "VisionOpenAICompatibleConfig":

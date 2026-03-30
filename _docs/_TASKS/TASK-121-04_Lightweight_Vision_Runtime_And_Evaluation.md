@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed real smoke reruns, prompt/parse tightening materially improved local output quality, and a first scored golden harness now exists in-repo. Current early verdict: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can score well on the first synthetic scenarios, but that baseline is still too narrow to settle the product choice. The next work is shifting from backend plumbing toward broader scenario coverage, stronger governance notes, and harder bundle scoring.
+**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed real smoke reruns, prompt/parse tightening materially improved local output quality, a first scored golden harness now exists in-repo, and OpenRouter now has a first-class configuration path on the external-provider side. Current early verdict: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can score well on the first synthetic scenarios, but that baseline is still too narrow to settle the product choice. The next work is shifting from backend plumbing toward broader scenario coverage, stronger governance notes, and harder bundle scoring.
 
 ---
 

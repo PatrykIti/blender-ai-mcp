@@ -421,6 +421,15 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             return os.getenv(self._external_config.api_key_env) or None
         return None
 
+    def _provider_headers(self) -> dict[str, str]:
+        headers: dict[str, str] = {}
+        if self._external_config.provider_name == "openrouter":
+            if self._external_config.site_url:
+                headers["HTTP-Referer"] = self._external_config.site_url
+            if self._external_config.site_name:
+                headers["X-Title"] = self._external_config.site_name
+        return headers
+
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
         content: list[dict[str, Any]] = [
             {
@@ -453,6 +462,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
     async def analyze(self, request: VisionRequest) -> dict[str, object]:
         headers = {"Content-Type": "application/json"}
+        headers.update(self._provider_headers())
         api_key = self._resolved_api_key()
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"

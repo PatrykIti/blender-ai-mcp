@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [173](./173-2026-03-30-openrouter-vision-provider-path.md) | 2026-03-30 | **OpenRouter vision provider path** | - |
 | [172](./172-2026-03-30-multi-object-reference-loop-scope.md) | 2026-03-30 | **Multi-object reference loop scope** | - |
 | [171](./171-2026-03-30-session-aware-reference-auto-loop.md) | 2026-03-30 | **Session-aware reference auto loop** | - |
 | [170](./170-2026-03-30-reference-guided-creature-eval-and-prompting.md) | 2026-03-30 | **Reference-guided creature eval and prompting** | - |

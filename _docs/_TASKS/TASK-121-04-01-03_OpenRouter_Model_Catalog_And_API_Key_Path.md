@@ -1,10 +1,10 @@
 # TASK-121-04-01-03: OpenRouter Model Catalog and API-Key Path
 
 **Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-Add first-class OpenRouter support for the vision module so users can provide
+Added first-class OpenRouter support for the vision module so users can provide
 an `openrouter.ai` API key, choose remote multimodal models there, and run them
 through the bounded vision contract without changing the MCP-facing surface.
 
@@ -42,8 +42,18 @@ with explicit config/docs for:
 - `tests/unit/adapters/mcp/`
 - `tests/e2e/vision/`
 
-## Acceptance Criteria
+## Delivered
 
-- a user can configure an OpenRouter API key and model id without code edits
-- the vision layer can call OpenRouter through the bounded external-runtime path
-- smoke tests/docs explain how to select and validate OpenRouter vision models
+- OpenRouter can now be selected through the existing
+  `openai_compatible_external` provider path
+- dedicated env/config aliases now exist for:
+  - model
+  - API key
+  - API key env var
+  - optional site URL / site name headers
+- OpenRouter defaults to `https://openrouter.ai/api/v1`
+- `scripts/vision_harness.py` now accepts OpenRouter-specific flags
+- unit coverage exists for:
+  - runtime config alias resolution
+  - provider-specific request headers
+  - harness config wiring

@@ -200,6 +200,37 @@ The harness is intended for:
   - `payload_shape`: `contract`, `summary_alias`, `input_echo`, `label_map`, `unsupported_json`, `no_json`
 - catching prompt/parse failures before they are hidden inside a larger MCP flow
 
+OpenRouter can now be used through the same `openai_compatible_external` path.
+
+Minimal setup:
+
+```bash
+export VISION_ENABLED=1
+export VISION_PROVIDER=openai_compatible_external
+export VISION_EXTERNAL_PROVIDER=openrouter
+export VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free"
+export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
+export OPENROUTER_API_KEY="<your-openrouter-key>"
+```
+
+Optional OpenRouter ranking headers:
+
+```bash
+export VISION_OPENROUTER_SITE_URL="https://example.com"
+export VISION_OPENROUTER_SITE_NAME="blender-ai-mcp-dev"
+```
+
+Harness example:
+
+```bash
+poetry run python scripts/vision_harness.py \
+  --backend openai_compatible_external \
+  --external-provider openrouter \
+  --openrouter-model "google/gemma-3-27b-it:free" \
+  --openrouter-api-key-env OPENROUTER_API_KEY \
+  --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json
+```
+
 Opt-in real-model comparison for the new view-family variants:
 
 ```bash

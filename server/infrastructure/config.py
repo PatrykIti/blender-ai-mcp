@@ -52,6 +52,28 @@ class Config(BaseSettings):
         default=None,
         description="Environment variable name containing the API key for external vision endpoint",
     )
+    VISION_EXTERNAL_PROVIDER: str = Field(
+        default="generic",
+        description="Named external vision provider profile: generic|openrouter",
+    )
+    VISION_OPENROUTER_BASE_URL: str | None = Field(
+        default=None,
+        description="Optional OpenRouter base URL override for vision; defaults to https://openrouter.ai/api/v1",
+    )
+    VISION_OPENROUTER_MODEL: str | None = Field(default=None, description="OpenRouter multimodal model id for vision")
+    VISION_OPENROUTER_API_KEY: str | None = Field(default=None, description="Inline OpenRouter API key for vision")
+    VISION_OPENROUTER_API_KEY_ENV: str | None = Field(
+        default=None,
+        description="Environment variable containing the OpenRouter API key for vision",
+    )
+    VISION_OPENROUTER_SITE_URL: str | None = Field(
+        default=None,
+        description="Optional HTTP-Referer / site URL sent to OpenRouter for ranking/analytics",
+    )
+    VISION_OPENROUTER_SITE_NAME: str | None = Field(
+        default=None,
+        description="Optional X-Title / site name sent to OpenRouter for ranking/analytics",
+    )
 
     @model_validator(mode="after")
     def validate_timeout_hierarchy(self):
@@ -69,6 +91,8 @@ class Config(BaseSettings):
 
         if self.VISION_PROVIDER not in {"transformers_local", "mlx_local", "openai_compatible_external"}:
             raise ValueError("VISION_PROVIDER must be one of: transformers_local, mlx_local, openai_compatible_external")
+        if self.VISION_EXTERNAL_PROVIDER not in {"generic", "openrouter"}:
+            raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter")
         return self
 
 
@@ -105,4 +129,11 @@ def get_config() -> Config:
         VISION_EXTERNAL_MODEL=os.getenv("VISION_EXTERNAL_MODEL") or None,
         VISION_EXTERNAL_API_KEY=os.getenv("VISION_EXTERNAL_API_KEY") or None,
         VISION_EXTERNAL_API_KEY_ENV=os.getenv("VISION_EXTERNAL_API_KEY_ENV") or None,
+        VISION_EXTERNAL_PROVIDER=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"),
+        VISION_OPENROUTER_BASE_URL=os.getenv("VISION_OPENROUTER_BASE_URL") or None,
+        VISION_OPENROUTER_MODEL=os.getenv("VISION_OPENROUTER_MODEL") or None,
+        VISION_OPENROUTER_API_KEY=os.getenv("VISION_OPENROUTER_API_KEY") or None,
+        VISION_OPENROUTER_API_KEY_ENV=os.getenv("VISION_OPENROUTER_API_KEY_ENV") or None,
+        VISION_OPENROUTER_SITE_URL=os.getenv("VISION_OPENROUTER_SITE_URL") or None,
+        VISION_OPENROUTER_SITE_NAME=os.getenv("VISION_OPENROUTER_SITE_NAME") or None,
     )

@@ -7,7 +7,6 @@ import json
 
 import httpx
 import pytest
-
 from server.adapters.mcp.vision import (
     OpenAICompatibleVisionBackend,
     VisionBackendUnavailableError,
@@ -48,6 +47,13 @@ def _config(**overrides) -> Config:
         "VISION_EXTERNAL_MODEL": "gemma-3-27b-vision",
         "VISION_EXTERNAL_API_KEY": None,
         "VISION_EXTERNAL_API_KEY_ENV": None,
+        "VISION_EXTERNAL_PROVIDER": "generic",
+        "VISION_OPENROUTER_BASE_URL": None,
+        "VISION_OPENROUTER_MODEL": None,
+        "VISION_OPENROUTER_API_KEY": None,
+        "VISION_OPENROUTER_API_KEY_ENV": None,
+        "VISION_OPENROUTER_SITE_URL": None,
+        "VISION_OPENROUTER_SITE_NAME": None,
     }
     payload.update(overrides)
     return Config(**payload)
@@ -169,6 +175,46 @@ def test_external_backend_uses_api_key_env_when_inline_key_missing(monkeypatch, 
     asyncio.run(backend.analyze(request))
 
     assert captured["headers"]["Authorization"] == "Bearer env-secret"
+
+
+def test_external_backend_supports_openrouter_headers_and_default_endpoint(monkeypatch, tmp_path):
+    image_path = tmp_path / "after.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="openrouter",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_EXTERNAL_API_KEY=None,
+            VISION_EXTERNAL_API_KEY_ENV=None,
+            VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+            VISION_OPENROUTER_API_KEY="openrouter-secret",
+            VISION_OPENROUTER_SITE_URL="https://example.com",
+            VISION_OPENROUTER_SITE_NAME="blender-ai-mcp-dev",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="after"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {"choices": [{"message": {"content": '{"goal_summary":"ok","visible_changes":[]}'}}]}
+            ),
+            captured=captured,
+        ),
+    )
+
+    asyncio.run(backend.analyze(request))
+
+    assert captured["url"] == "https://openrouter.ai/api/v1/chat/completions"
+    assert captured["headers"]["Authorization"] == "Bearer openrouter-secret"
+    assert captured["headers"]["HTTP-Referer"] == "https://example.com"
+    assert captured["headers"]["X-Title"] == "blender-ai-mcp-dev"
 
 
 def test_external_backend_rejects_invalid_json_content(monkeypatch, tmp_path):

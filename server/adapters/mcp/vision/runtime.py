@@ -23,6 +23,8 @@ from .config import (
     VisionTransformersLocalConfig,
 )
 
+_OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
     """Build typed vision runtime config from flat application settings."""
@@ -44,12 +46,21 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         )
 
     external_config = None
-    if config.VISION_EXTERNAL_BASE_URL or config.VISION_EXTERNAL_MODEL:
+    use_openrouter_profile = bool(config.VISION_OPENROUTER_MODEL) or config.VISION_EXTERNAL_PROVIDER == "openrouter"
+    if use_openrouter_profile or config.VISION_EXTERNAL_BASE_URL or config.VISION_EXTERNAL_MODEL:
+        external_base_url = (
+            config.VISION_OPENROUTER_BASE_URL or _OPENROUTER_DEFAULT_BASE_URL
+            if use_openrouter_profile
+            else config.VISION_EXTERNAL_BASE_URL
+        )
         external_config = VisionOpenAICompatibleConfig(
-            base_url=config.VISION_EXTERNAL_BASE_URL,
-            model=config.VISION_EXTERNAL_MODEL,
-            api_key=config.VISION_EXTERNAL_API_KEY,
-            api_key_env=config.VISION_EXTERNAL_API_KEY_ENV,
+            provider_name="openrouter" if use_openrouter_profile else "generic",
+            base_url=external_base_url,
+            model=config.VISION_OPENROUTER_MODEL or config.VISION_EXTERNAL_MODEL,
+            api_key=config.VISION_OPENROUTER_API_KEY or config.VISION_EXTERNAL_API_KEY,
+            api_key_env=config.VISION_OPENROUTER_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV,
+            site_url=config.VISION_OPENROUTER_SITE_URL,
+            site_name=config.VISION_OPENROUTER_SITE_NAME,
         )
 
     return VisionRuntimeConfig(

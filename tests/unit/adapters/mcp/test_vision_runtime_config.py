@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from server.adapters.mcp.vision import (
     LazyVisionBackendResolver,
     MLXLocalVisionBackend,
@@ -50,6 +49,13 @@ def _base_config(**overrides) -> Config:
         "VISION_EXTERNAL_MODEL": None,
         "VISION_EXTERNAL_API_KEY": None,
         "VISION_EXTERNAL_API_KEY_ENV": None,
+        "VISION_EXTERNAL_PROVIDER": "generic",
+        "VISION_OPENROUTER_BASE_URL": None,
+        "VISION_OPENROUTER_MODEL": None,
+        "VISION_OPENROUTER_API_KEY": None,
+        "VISION_OPENROUTER_API_KEY_ENV": None,
+        "VISION_OPENROUTER_SITE_URL": None,
+        "VISION_OPENROUTER_SITE_NAME": None,
     }
     data.update(overrides)
     return Config(**data)
@@ -91,6 +97,32 @@ def test_build_vision_runtime_config_supports_external_openai_compatible_backend
     assert runtime.openai_compatible_external.base_url == "http://localhost:8000/v1"
 
 
+def test_build_vision_runtime_config_supports_openrouter_aliases():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+        VISION_OPENROUTER_API_KEY_ENV="OPENROUTER_API_KEY",
+        VISION_OPENROUTER_SITE_URL="https://example.com",
+        VISION_OPENROUTER_SITE_NAME="blender-ai-mcp-dev",
+        VISION_EXTERNAL_BASE_URL=None,
+        VISION_EXTERNAL_MODEL=None,
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.enabled is True
+    assert runtime.provider == "openai_compatible_external"
+    assert runtime.active_model_name == "google/gemma-3-27b-it:free"
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "openrouter"
+    assert runtime.openai_compatible_external.base_url == "https://openrouter.ai/api/v1"
+    assert runtime.openai_compatible_external.api_key_env == "OPENROUTER_API_KEY"
+    assert runtime.openai_compatible_external.site_url == "https://example.com"
+    assert runtime.openai_compatible_external.site_name == "blender-ai-mcp-dev"
+
+
 def test_build_vision_runtime_config_supports_mlx_local_backend():
     config = _base_config(
         VISION_ENABLED=True,
@@ -124,6 +156,11 @@ def test_enabled_external_runtime_requires_endpoint_target():
 
     with pytest.raises(ValueError, match="requires openai_compatible_external config"):
         build_vision_runtime_config(config)
+
+
+def test_config_rejects_unknown_external_provider():
+    with pytest.raises(ValueError, match="VISION_EXTERNAL_PROVIDER must be one of"):
+        _base_config(VISION_EXTERNAL_PROVIDER="mystery")
 
 
 def test_enabled_mlx_runtime_requires_model_source():
