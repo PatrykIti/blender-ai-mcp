@@ -1,10 +1,17 @@
 # TASK-121-03-04: User-View Manipulation for Viewport Capture
 
 **Parent:** [TASK-121-03](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
 ---
+
+**Completion Summary:** `scene_get_viewport(...)` now supports a bounded
+user-view adjustment path on `USER_PERSPECTIVE` captures through
+`view_name`, `orbit_horizontal`, `orbit_vertical`, `zoom_factor`, and
+`persist_view`. Named-camera capture remains semantically separate, the live
+user-view path restores prior state by default, and both unit plus
+Blender-backed E2E coverage exist for the branch behavior.
 
 ## Objective
 
