@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 2 tasks
 - **In Progress:** 1 tasks
 - **Done:** 184
 - **Superseded:** 10
@@ -23,6 +23,8 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-121-04-01-03](./TASK-121-04-01-03_OpenRouter_Model_Catalog_And_API_Key_Path.md) | **OpenRouter Model Catalog and API-Key Path** | 🟡 Medium | Add first-class OpenRouter vision provider wiring so users can choose remote multimodal models through OpenRouter |
+| [TASK-121-04-01-04](./TASK-121-04-01-04_Google_AI_Studio_Gemini_Vision_Path.md) | **Google AI Studio Gemini Vision Path** | 🟡 Medium | Add Google AI Studio / Gemini vision provider wiring for bounded Gemini experiments and evals |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
