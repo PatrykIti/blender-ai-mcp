@@ -139,7 +139,7 @@ def _stage_compare_response(
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
-    target_object: str,
+    target_object: str | None,
     target_view: str | None,
     preset_profile: CapturePresetProfile,
     preset_names: list[str],
@@ -173,7 +173,7 @@ def _stage_compare_response(
 def _iterate_stage_response(
     *,
     goal: str | None,
-    target_object: str,
+    target_object: str | None,
     target_view: str | None,
     checkpoint_id: str,
     checkpoint_label: str | None,
@@ -368,7 +368,7 @@ async def _run_stage_checkpoint_compare(
     *,
     checkpoint_id: str,
     checkpoint_label: str | None,
-    target_object: str,
+    target_object: str | None,
     target_view: str | None,
     preset_profile: CapturePresetProfile,
     goal_override: str | None,
@@ -754,7 +754,7 @@ async def reference_compare_current_view(
 
 async def reference_compare_stage_checkpoint(
     ctx: Context,
-    target_object: str,
+    target_object: str | None = None,
     checkpoint_label: str | None = None,
     target_view: str | None = None,
     goal_override: str | None = None,
@@ -763,7 +763,8 @@ async def reference_compare_stage_checkpoint(
 ) -> ReferenceCompareStageCheckpointResponseContract:
     """Capture one deterministic stage view-set and compare it against attached references."""
 
-    checkpoint_id = f"stage_checkpoint_{target_object}_{uuid4().hex[:8]}"
+    checkpoint_target = target_object or "scene"
+    checkpoint_id = f"stage_checkpoint_{checkpoint_target}_{uuid4().hex[:8]}"
     return await _run_stage_checkpoint_compare(
         ctx,
         checkpoint_id=checkpoint_id,
@@ -778,7 +779,7 @@ async def reference_compare_stage_checkpoint(
 
 async def reference_iterate_stage_checkpoint(
     ctx: Context,
-    target_object: str,
+    target_object: str | None = None,
     checkpoint_label: str | None = None,
     target_view: str | None = None,
     goal_override: str | None = None,

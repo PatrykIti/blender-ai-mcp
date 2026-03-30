@@ -353,6 +353,80 @@ def test_reference_compare_stage_checkpoint_requires_goal_or_override():
     assert "router_set_goal" in result.error
 
 
+def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_object_is_omitted(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_side = tmp_path / "side.png"
+    image_front.write_bytes(b"front")
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_side), label="side_ref"))
+
+    captured = {}
+
+    class SceneHandler:
+        pass
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured["request"] = request
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The full squirrel scene is closer to the references.",
+                visible_changes=["The full silhouette is visible across the deterministic views."],
+                correction_focus=["Tail arc visibility"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            checkpoint_label="stage_full_scene",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.target_object is None
+    assert result.reference_count == 2
+    assert captured["request"].target_object is None
+
+
 def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_side = tmp_path / "side.png"

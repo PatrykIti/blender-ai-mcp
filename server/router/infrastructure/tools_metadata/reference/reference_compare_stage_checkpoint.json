@@ -10,7 +10,7 @@
     "run a staged checkpoint compare for this object and tell me the next corrections"
   ],
   "parameters": {
-    "target_object": {"type": "string", "required": true},
+    "target_object": {"type": "string", "default": null},
     "checkpoint_label": {"type": "string", "default": null},
     "target_view": {"type": "string", "default": null},
     "goal_override": {"type": "string", "default": null},
