@@ -41,6 +41,10 @@ The repo now has the first implementation scaffolding for the vision layer:
 - focus-oriented presets now isolate the target object when the scene helper
   can do so, then restore prior visibility after capture
 - goal-scoped `reference_images` session surface
+- bounded `reference_compare_checkpoint(...)` surface for comparing one current
+  stage/checkpoint image against the active goal plus attached references
+- bounded `reference_compare_current_view(...)` surface for capture-then-compare
+  on the current viewport/camera path during staged manual work
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

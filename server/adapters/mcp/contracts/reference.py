@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from server.adapters.mcp.sampling.result_types import VisionAssistantContract
+
 from .base import MCPContract
 
 
@@ -35,5 +37,22 @@ class ReferenceImagesResponseContract(MCPContract):
     reference_count: int = 0
     references: list[ReferenceImageRecordContract] = []
     removed_reference_id: str | None = None
+    message: str | None = None
+    error: str | None = None
+
+
+class ReferenceCompareCheckpointResponseContract(MCPContract):
+    """Structured response for bounded checkpoint-vs-reference comparison."""
+
+    action: Literal["compare_checkpoint", "compare_current_view"] = "compare_checkpoint"
+    goal: str | None = None
+    target_object: str | None = None
+    target_view: str | None = None
+    checkpoint_path: str
+    checkpoint_label: str | None = None
+    reference_count: int = 0
+    reference_ids: list[str] = []
+    reference_labels: list[str] = []
+    vision_assistant: VisionAssistantContract | None = None
     message: str | None = None
     error: str | None = None

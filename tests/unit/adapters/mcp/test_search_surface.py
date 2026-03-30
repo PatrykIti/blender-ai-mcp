@@ -261,6 +261,21 @@ def test_build_phase_search_prefers_macro_finish_tool_over_hidden_modifier_atomi
     assert "macro_finish_form" in names
     assert "modeling_add_modifier" not in names
     assert "modeling_apply_modifier" not in names
+
+
+def test_build_phase_search_can_discover_reference_compare_checkpoint():
+    """Build-phase discovery should surface the bounded checkpoint-vs-reference compare path."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "compare checkpoint against reference progress"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "reference_compare_checkpoint" in names
     assert "modeling_list_modifiers" not in names
 
 
@@ -365,7 +380,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 172
+    assert legacy_count == 174
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 
@@ -385,29 +400,28 @@ def test_call_tool_cannot_invoke_hidden_tool_during_bootstrap():
         asyncio.run(run())
 
 
-def test_guided_surface_fails_closed_for_direct_and_discovered_calls(monkeypatch):
-    """Guided surfaces should not silently bypass router failures during discovery-first rollout."""
+def test_guided_surface_fails_closed_for_non_bypassed_direct_and_discovered_calls(monkeypatch):
+    """Guided surfaces should still fail closed for normal build tools when router processing breaks."""
 
     class Handler:
-        def list_objects(self):
-            return ["Cube"]
+        def create_primitive(self, primitive_type, size=2.0, location=None, rotation=None, name=None):
+            return "Created"
 
     class FailingRouter:
         def process_llm_tool_call(self, tool_name, params, prompt=None):
             raise RuntimeError("router down")
 
-    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_scene_handler", lambda: Handler())
+    monkeypatch.setattr("server.adapters.mcp.areas.modeling.get_modeling_handler", lambda: Handler())
     monkeypatch.setattr("server.adapters.mcp.router_helper.get_router", lambda: FailingRouter())
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: True)
-    monkeypatch.setattr("server.adapters.mcp.areas.scene.ctx_info", lambda ctx, message: None)
 
     server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
-        direct = await server.call_tool("scene_list_objects", {})
+        direct = await server.call_tool("modeling_create_primitive", {"primitive_type": "CUBE"})
         discovered = await server.call_tool(
             "call_tool",
-            {"name": "scene_list_objects", "arguments": {}},
+            {"name": "modeling_create_primitive", "arguments": {"primitive_type": "CUBE"}},
         )
         return direct, discovered
 

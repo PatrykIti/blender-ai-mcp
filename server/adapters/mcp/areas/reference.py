@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import base64
 import mimetypes
 import shutil
 from datetime import UTC, datetime
@@ -14,16 +15,32 @@ from uuid import uuid4
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
-from server.adapters.mcp.contracts.reference import ReferenceImagesResponseContract
+from server.adapters.mcp.contracts.reference import (
+    ReferenceCompareCheckpointResponseContract,
+    ReferenceImagesResponseContract,
+)
+from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
 )
 from server.adapters.mcp.visibility.tags import get_capability_tags
-from server.infrastructure.tmp_paths import get_reference_image_storage_path
+from server.adapters.mcp.vision import (
+    VisionImageInput,
+    VisionRequest,
+    build_reference_capture_images,
+    run_vision_assist,
+    select_reference_records_for_target,
+)
+from server.infrastructure.di import get_scene_handler, get_vision_backend_resolver
+from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
-REFERENCE_PUBLIC_TOOL_NAMES = ("reference_images",)
+REFERENCE_PUBLIC_TOOL_NAMES = (
+    "reference_images",
+    "reference_compare_checkpoint",
+    "reference_compare_current_view",
+)
 _ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 
@@ -75,6 +92,151 @@ def _copy_reference_image(source_path: Path) -> tuple[str, str]:
     internal_path, host_visible_path = get_reference_image_storage_path(filename)
     shutil.copy2(source_path, internal_path)
     return str(internal_path), host_visible_path
+
+
+def _compare_response(
+    *,
+    action: str,
+    checkpoint_path: str,
+    checkpoint_label: str | None,
+    goal: str | None,
+    target_object: str | None,
+    target_view: str | None,
+    reference_ids: list[str],
+    reference_labels: list[str],
+    vision_assistant=None,
+    message: str | None = None,
+    error: str | None = None,
+) -> ReferenceCompareCheckpointResponseContract:
+    return ReferenceCompareCheckpointResponseContract(
+        action=action,
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        checkpoint_path=checkpoint_path,
+        checkpoint_label=checkpoint_label,
+        reference_count=len(reference_ids),
+        reference_ids=reference_ids,
+        reference_labels=reference_labels,
+        vision_assistant=vision_assistant,
+        message=message,
+        error=error,
+    )
+
+
+async def _run_checkpoint_compare(
+    ctx: Context,
+    *,
+    checkpoint: Path,
+    checkpoint_label: str | None,
+    target_object: str | None,
+    target_view: str | None,
+    goal_override: str | None,
+    prompt_hint: str | None,
+    response_action: str,
+) -> ReferenceCompareCheckpointResponseContract:
+    """Shared bounded checkpoint compare path."""
+
+    session = await get_session_capability_state_async(ctx)
+    goal = goal_override or session.goal
+    if not goal:
+        return _compare_response(
+            action=response_action,
+            checkpoint_path=str(checkpoint),
+            checkpoint_label=checkpoint_label,
+            goal=None,
+            target_object=target_object,
+            target_view=target_view,
+            reference_ids=[],
+            reference_labels=[],
+            error="Set an active goal with router_set_goal(...) before comparing a checkpoint, or pass goal_override.",
+        )
+
+    references = list(session.reference_images or [])
+    selected_reference_records = select_reference_records_for_target(
+        references,
+        target_object=target_object,
+        target_view=target_view,
+    )
+    if not selected_reference_records:
+        return _compare_response(
+            action=response_action,
+            checkpoint_path=str(checkpoint),
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=target_object,
+            target_view=target_view,
+            reference_ids=[],
+            reference_labels=[],
+            error="No matching reference images are attached for the requested target_object/target_view.",
+        )
+
+    reference_images = build_reference_capture_images(selected_reference_records)
+    vision_request = VisionRequest(
+        goal=goal,
+        images=(
+            VisionImageInput(
+                path=str(checkpoint),
+                role="after",
+                label=checkpoint_label or checkpoint.name,
+                media_type=mimetypes.guess_type(str(checkpoint))[0] or "image/png",
+            ),
+            *tuple(
+                VisionImageInput(
+                    path=item.image_path,
+                    role="reference",
+                    label=item.label,
+                    media_type=item.media_type,
+                )
+                for item in reference_images
+            ),
+        ),
+        target_object=target_object,
+        prompt_hint=" | ".join(
+            part
+            for part in (
+                prompt_hint,
+                "comparison_mode=checkpoint_vs_reference",
+                f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
+                f"target_view={target_view}" if target_view else None,
+                *[
+                    f"reference[{index}] label={record.label}"
+                    for index, record in enumerate(selected_reference_records, start=1)
+                    if record.label
+                ],
+            )
+            if part
+        )
+        or None,
+        metadata={
+            "source": response_action,
+            "checkpoint_path": str(checkpoint),
+            "reference_count": len(selected_reference_records),
+        },
+    )
+    outcome = await run_vision_assist(
+        ctx,
+        request=vision_request,
+        resolver=get_vision_backend_resolver(),
+    )
+    vision_assistant = to_vision_assistant_contract(outcome)
+    return _compare_response(
+        action=response_action,
+        checkpoint_path=str(checkpoint),
+        checkpoint_label=checkpoint_label,
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        reference_ids=[item.reference_id for item in selected_reference_records],
+        reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+        vision_assistant=vision_assistant,
+        message=(
+            f"Compared checkpoint '{checkpoint_label or checkpoint.name}' against {len(selected_reference_records)} reference image(s)."
+            if outcome.status == "success"
+            else "Checkpoint comparison executed but vision assistance did not complete successfully."
+        ),
+        error=vision_assistant.rejection_reason if vision_assistant.status != "success" else None,
+    )
 
 
 async def reference_images(
@@ -213,4 +375,122 @@ async def reference_images(
         goal=session.goal,
         references=_sorted_references(updated),
         message=f"Attached reference image '{reference['reference_id']}'.",
+    )
+
+
+async def reference_compare_checkpoint(
+    ctx: Context,
+    checkpoint_path: str,
+    checkpoint_label: str | None = None,
+    target_object: str | None = None,
+    target_view: str | None = None,
+    goal_override: str | None = None,
+    prompt_hint: str | None = None,
+) -> ReferenceCompareCheckpointResponseContract:
+    """Compare one current checkpoint image against the active goal and attached references."""
+
+    try:
+        checkpoint = _validate_local_reference_path(checkpoint_path)
+    except ValueError as exc:
+        return _compare_response(
+            action="compare_checkpoint",
+            checkpoint_path=checkpoint_path,
+            checkpoint_label=checkpoint_label,
+            goal=goal_override,
+            target_object=target_object,
+            target_view=target_view,
+            reference_ids=[],
+            reference_labels=[],
+            error=str(exc),
+        )
+
+    return await _run_checkpoint_compare(
+        ctx,
+        checkpoint=checkpoint,
+        checkpoint_label=checkpoint_label,
+        target_object=target_object,
+        target_view=target_view,
+        goal_override=goal_override,
+        prompt_hint=prompt_hint,
+        response_action="compare_checkpoint",
+    )
+
+
+async def reference_compare_current_view(
+    ctx: Context,
+    checkpoint_label: str | None = None,
+    target_object: str | None = None,
+    target_view: str | None = None,
+    goal_override: str | None = None,
+    prompt_hint: str | None = None,
+    width: int = 1280,
+    height: int = 960,
+    shading: str = "SOLID",
+    camera_name: str | None = None,
+    focus_target: str | None = None,
+    view_name: str | None = None,
+    orbit_horizontal: float = 0.0,
+    orbit_vertical: float = 0.0,
+    zoom_factor: float | None = None,
+    persist_view: bool = False,
+) -> ReferenceCompareCheckpointResponseContract:
+    """Capture one current viewport/camera checkpoint and compare it against attached references."""
+
+    try:
+        b64_data = get_scene_handler().get_viewport(
+            width=width,
+            height=height,
+            shading=shading,
+            camera_name=camera_name,
+            focus_target=focus_target,
+            view_name=view_name,
+            orbit_horizontal=orbit_horizontal,
+            orbit_vertical=orbit_vertical,
+            zoom_factor=zoom_factor,
+            persist_view=persist_view,
+        )
+    except RuntimeError as exc:
+        return _compare_response(
+            action="compare_current_view",
+            checkpoint_path="",
+            checkpoint_label=checkpoint_label,
+            goal=goal_override,
+            target_object=target_object,
+            target_view=target_view,
+            reference_ids=[],
+            reference_labels=[],
+            error=str(exc),
+        )
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"checkpoint_compare_{timestamp}.jpg"
+    latest_name = "checkpoint_compare_latest.jpg"
+    internal_file, internal_latest, _external_file, _external_latest = get_viewport_output_paths(
+        filename,
+        latest_name=latest_name,
+    )
+    image_bytes = base64.b64decode(b64_data)
+    internal_file.write_bytes(image_bytes)
+    internal_latest.write_bytes(image_bytes)
+
+    return await _run_checkpoint_compare(
+        ctx,
+        checkpoint=internal_file,
+        checkpoint_label=checkpoint_label,
+        target_object=target_object or focus_target,
+        target_view=target_view,
+        goal_override=goal_override,
+        prompt_hint=" | ".join(
+            part
+            for part in (
+                prompt_hint,
+                "comparison_mode=current_view_checkpoint",
+                f"camera_name={camera_name}" if camera_name else None,
+                f"view_name={view_name}" if view_name else None,
+                f"shading={shading}",
+            )
+            if part
+        )
+        or None,
+        response_action="compare_current_view",
     )

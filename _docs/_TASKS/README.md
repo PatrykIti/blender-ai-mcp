@@ -3,8 +3,8 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks
-- **In Progress:** 1 tasks
+- **To Do:** 0 tasks
+- **In Progress:** 2 tasks
 - **Done:** 182
 - **Superseded:** 10
 
@@ -48,6 +48,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Runtime scaffolding is in place for pluggable local/external vision backends plus deterministic capture-bundle inputs; next step is scene/macro integration |
+| [TASK-121-07](./TASK-121-07_Vision_Guided_Iterative_Correction_Loop.md) | **Vision-Guided Iterative Correction Loop** | 🔴 High | First checkpoint-vs-reference comparison surface exists; next step is staged manual checkpoint capture and richer correction-loop semantics |
 
 ---
 

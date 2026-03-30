@@ -1,8 +1,16 @@
 # TASK-121-07: Vision-Guided Iterative Correction Loop
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first bounded checkpoint comparison surface now exists:
+`reference_compare_checkpoint(...)` compares an existing checkpoint image
+against the active goal plus attached references, and
+`reference_compare_current_view(...)` adds a practical capture-then-compare path
+for staged manual work. The remaining work is the fuller manual-stage capture
+flow, richer correction semantics tuned for creature/reference work, and real
+iterative eval/prompting on top of that surface.
 
 ---
 

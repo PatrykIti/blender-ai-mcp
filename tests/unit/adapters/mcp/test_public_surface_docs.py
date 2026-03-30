@@ -44,6 +44,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "configure_scene",
         "browse_workflows",
         "reference_images",
+        "reference_compare_checkpoint",
+        "reference_compare_current_view",
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
@@ -117,6 +119,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "configure_scene" in prompt_readme
     assert "browse_workflows" in prompt_readme
     assert "reference_images" in prompt_readme
+    assert "reference_compare_checkpoint" in prompt_readme
+    assert "reference_compare_current_view" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "call it directly instead of routing through `search_tools(...)` / `call_tool(...)`" in prompt_readme
