@@ -204,6 +204,15 @@ Opt-in real-model comparison for the new view-family variants:
 RUN_REAL_VISION_MODEL_COMPARISON=1 poetry run pytest tests/e2e/vision/test_real_view_variant_model_comparison.py -q -m slow
 ```
 
+Opt-in real reference-guided creature comparison:
+
+```bash
+RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1 \
+VISION_REFERENCE_FRONT_PATH=/abs/path/squirrel-front.png \
+VISION_REFERENCE_SIDE_PATH=/abs/path/squirrel-side.png \
+poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q -m slow
+```
+
 Current repo-tracked first-pass scenarios:
 
 - `tests/fixtures/vision_eval/synthetic_round_cutout/`

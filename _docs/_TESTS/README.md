@@ -218,6 +218,16 @@ Opt-in real-model comparison coverage for the new view-family variants:
 - requires `RUN_REAL_VISION_MODEL_COMPARISON=1`
 - currently intended for local/macOS Metal validation, not default CI
 
+Opt-in real reference-guided creature comparison coverage:
+
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- requires:
+  - `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1`
+  - `VISION_REFERENCE_FRONT_PATH`
+  - `VISION_REFERENCE_SIDE_PATH`
+- uses repo-tracked squirrel checkpoint images plus local front/side reference
+  images to validate correction-oriented output on a real creature flow
+
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`

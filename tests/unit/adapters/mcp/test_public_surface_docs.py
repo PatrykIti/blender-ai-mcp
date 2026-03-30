@@ -130,6 +130,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "vision-assisted build:" in prompt_readme
     assert "## `llm-guided` Flow Summary" in prompt_readme
     assert "GUIDED_SESSION_START.md" in prompt_readme
+    assert "REFERENCE_GUIDED_CREATURE_BUILD.md" in prompt_readme
     assert "guided_session_start" in prompt_readme
     assert '`continuation_mode="guided_manual_build"`' in prompt_readme
     assert "`guided_handoff`" in prompt_readme
@@ -142,6 +143,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`Unknown tool`" in prompt_readme
     assert "current phase/surface is wrong" in prompt_readme
     assert "manual_tools_no_router` is a different operating mode" in prompt_readme
+    assert "correction_focus" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt

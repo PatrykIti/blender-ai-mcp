@@ -72,6 +72,7 @@ Model a smartphone with separate parts: body, screen, camera bump, 3 lenses, pow
 - **Manual tool-calling (no Router / no workflows)** → [`MANUAL_TOOLS_NO_ROUTER.md`](./MANUAL_TOOLS_NO_ROUTER.md)
 - **Short fail-safe starter for `llm-guided`** → [`GUIDED_SESSION_START.md`](./GUIDED_SESSION_START.md)
 - **Workflow-first (Router Supervisor)** → [`WORKFLOW_ROUTER_FIRST.md`](./WORKFLOW_ROUTER_FIRST.md)
+- **Reference-guided creature build** → [`REFERENCE_GUIDED_CREATURE_BUILD.md`](./REFERENCE_GUIDED_CREATURE_BUILD.md)
 - **Demo task: low-poly medieval well** → [`DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md`](./DEMO_TASK_LOW_POLY_MEDIEVAL_WELL.md)
 - **Demo task: generic modeling template** → [`DEMO_TASK_GENERIC_MODELING.md`](./DEMO_TASK_GENERIC_MODELING.md)
 
@@ -90,6 +91,7 @@ Interpretation:
     `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, or `reference_compare_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
+    prioritize `correction_focus` first when it is present
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
 - `call_tool(...)` cannot summon hidden internal tools by guessed name; `Unknown tool`

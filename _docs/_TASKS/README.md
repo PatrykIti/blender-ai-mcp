@@ -48,7 +48,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md) | **Goal-Aware Vision Assist and Reference Context** | 🔴 High | Runtime scaffolding is in place for pluggable local/external vision backends plus deterministic capture-bundle inputs; next step is scene/macro integration |
-| [TASK-121-07](./TASK-121-07_Vision_Guided_Iterative_Correction_Loop.md) | **Vision-Guided Iterative Correction Loop** | 🔴 High | Checkpoint, current-view, and deterministic stage-checkpoint compare surfaces exist; correction-focused output semantics are in place; next step is real creature evals/prompting |
 
 ---
 
@@ -60,9 +59,11 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
+| [TASK-121-07](./TASK-121-07_Vision_Guided_Iterative_Correction_Loop.md) | **Vision-Guided Iterative Correction Loop** | 🔴 High | 2026-03-30 |
 | [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md) | **User-View Manipulation for Viewport Capture** | 🟡 Medium | 2026-03-30 |
 | [TASK-121-07-02](./TASK-121-07-02_Manual_Stage_Checkpoint_Capture_Path.md) | **Manual Stage Checkpoint Capture Path** | 🟡 Medium | 2026-03-30 |
 | [TASK-121-07-03](./TASK-121-07-03_Reference_Guided_Correction_Output_Model.md) | **Reference-Guided Correction Output Model** | 🔴 High | 2026-03-30 |
+| [TASK-121-07-04](./TASK-121-07-04_Real_Reference_Driven_Creature_Eval_And_Prompting.md) | **Real Reference-Driven Creature Eval and Prompting** | 🟡 Medium | 2026-03-30 |
 | [TASK-121-03-02](./TASK-121-03-02_Macro_Workflow_Vision_Integration_Path.md) | **Macro/Workflow Vision Integration Path** | 🔴 High | 2026-03-29 |
 | [TASK-121-01-02](./TASK-121-01-02_Vision_Policy_And_Truth_Boundary_Enforcement.md) | **Vision, Policy, and Truth Boundary Enforcement** | 🔴 High | 2026-03-29 |
 | [TASK-121-01-01](./TASK-121-01-01_Vision_Assistant_Result_Envelope_And_Status_Model.md) | **Vision Assistant Result Envelope and Status Model** | 🔴 High | 2026-03-29 |

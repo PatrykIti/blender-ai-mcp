@@ -1,7 +1,7 @@
 # TASK-121-07: Vision-Guided Iterative Correction Loop
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
 **Progress Update:** The first bounded checkpoint comparison surfaces now exist:
@@ -13,8 +13,9 @@ capture-then-compare path for staged manual work, and
 stage checkpoint path using the shared `compact` / `rich` preset system. The
 checkpoint result now also exposes a tighter correction-oriented output shape
 via `correction_focus`, plus more bounded mismatch/correction semantics for
-reference-guided compare modes. The remaining work is real iterative eval and
-prompting on top of that capture surface.
+reference-guided compare modes. Real squirrel/reference eval coverage and
+prompt guidance are now in repo as the first practical reference-driven
+creature package.
 
 ---
 
