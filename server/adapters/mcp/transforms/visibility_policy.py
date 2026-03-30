@@ -41,6 +41,7 @@ GUIDED_MANUAL_BUILD_SUPPORTING_TOOLS: tuple[str, ...] = (
     "reference_images",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
     "router_get_status",
 )
 
@@ -89,6 +90,7 @@ GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_assert_proportion",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
     "macro_relative_layout",
     "macro_cutout_recess",
     "macro_finish_form",
@@ -195,6 +197,7 @@ GUIDED_INSPECT_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "scene_assert_proportion",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
     "mesh_inspect",
     "material_list",
     "material_list_by_object",

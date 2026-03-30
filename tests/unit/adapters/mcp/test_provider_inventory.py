@@ -144,7 +144,12 @@ EXPECTED_ROUTER_TOOLS = {
 }
 
 EXPECTED_WORKFLOW_TOOLS = {"workflow_catalog"}
-EXPECTED_REFERENCE_TOOLS = {"reference_images", "reference_compare_checkpoint", "reference_compare_current_view"}
+EXPECTED_REFERENCE_TOOLS = {
+    "reference_images",
+    "reference_compare_checkpoint",
+    "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
+}
 
 ADDITIONAL_AREA_REGISTRARS = [
     ("reference", register_reference_tools, set(REFERENCE_PUBLIC_TOOL_NAMES)),

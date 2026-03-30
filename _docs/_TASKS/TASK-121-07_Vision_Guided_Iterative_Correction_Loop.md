@@ -4,13 +4,15 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first bounded checkpoint comparison surface now exists:
+**Progress Update:** The first bounded checkpoint comparison surfaces now exist:
 `reference_compare_checkpoint(...)` compares an existing checkpoint image
-against the active goal plus attached references, and
-`reference_compare_current_view(...)` adds a practical capture-then-compare path
-for staged manual work. The remaining work is the fuller manual-stage capture
-flow, richer correction semantics tuned for creature/reference work, and real
-iterative eval/prompting on top of that surface.
+against the active goal plus attached references,
+`reference_compare_current_view(...)` adds a practical single-view
+capture-then-compare path for staged manual work, and
+`reference_compare_stage_checkpoint(...)` now adds a deterministic multi-view
+stage checkpoint path using the shared `compact` / `rich` preset system. The
+remaining work is richer correction semantics tuned for creature/reference
+work, and real iterative eval/prompting on top of that capture surface.
 
 ---
 

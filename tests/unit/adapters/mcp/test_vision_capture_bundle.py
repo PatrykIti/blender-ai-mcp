@@ -9,6 +9,7 @@ from server.adapters.mcp.contracts import (
 from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
 from server.adapters.mcp.vision import (
     build_vision_request_from_capture_bundle,
+    build_vision_request_from_stage_captures,
     select_reference_records_for_target,
 )
 
@@ -56,6 +57,43 @@ def test_capture_bundle_can_be_converted_into_vision_request():
     assert request.metadata["bundle_id"] == "bundle_1"
     assert request.metadata["preset_names"] == ["front", "iso_focus"]
     assert request.truth_summary == {"dimensions": [0.2, 0.1, 0.05]}
+
+
+def test_stage_captures_can_be_converted_into_vision_request():
+    captures = [
+        VisionCaptureImageContract(
+            label="target_front_after",
+            image_path="/tmp/front_after.png",
+            preset_name="target_front",
+            view_kind="focus",
+        ),
+        VisionCaptureImageContract(
+            label="target_side_after",
+            image_path="/tmp/side_after.png",
+            preset_name="target_side",
+            view_kind="focus",
+        ),
+    ]
+    reference = VisionCaptureImageContract(
+        label="reference_side",
+        image_path="/tmp/reference_side.png",
+        view_kind="reference",
+    )
+
+    request = build_vision_request_from_stage_captures(
+        captures,
+        goal="Move this squirrel stage closer to the front and side references.",
+        target_object="Squirrel",
+        reference_images=[reference],
+        prompt_hint="Focus on silhouette and tail arc.",
+        metadata={"checkpoint_id": "stage_3", "preset_profile": "compact"},
+    )
+
+    assert request.goal == "Move this squirrel stage closer to the front and side references."
+    assert request.target_object == "Squirrel"
+    assert [image.role for image in request.images] == ["after", "after", "reference"]
+    assert request.metadata["checkpoint_id"] == "stage_3"
+    assert request.metadata["preset_profile"] == "compact"
 
 
 def test_select_reference_records_prefers_object_specific_matches():

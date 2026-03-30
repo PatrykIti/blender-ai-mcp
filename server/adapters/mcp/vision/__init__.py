@@ -13,6 +13,7 @@ from .backends import (
 from .capture import (
     build_reference_capture_images,
     build_vision_request_from_capture_bundle,
+    build_vision_request_from_stage_captures,
     select_reference_records_for_target,
 )
 from .capture_runtime import (
@@ -20,6 +21,7 @@ from .capture_runtime import (
     COMPACT_CAPTURE_PRESET_SPECS,
     DEFAULT_CAPTURE_PRESET_SPECS,
     RICH_CAPTURE_PRESET_SPECS,
+    CapturePresetProfile,
     CapturePresetSpec,
     build_capture_bundle,
     capture_scene_state,
@@ -83,6 +85,7 @@ __all__ = [
     "VisionRuntimeConfig",
     "VisionTransformersLocalConfig",
     "VISION_ASSIST_POLICY",
+    "CapturePresetProfile",
     "CapturePresetSpec",
     "CAPTURE_PRESET_PROFILES",
     "COMPACT_CAPTURE_PRESET_SPECS",
@@ -97,6 +100,7 @@ __all__ = [
     "capture_stage_images",
     "resolve_capture_preset_specs",
     "build_vision_request_from_capture_bundle",
+    "build_vision_request_from_stage_captures",
     "infer_capture_preset_profile",
     "select_reference_records_for_target",
     "build_vision_runtime_config",

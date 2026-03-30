@@ -45,6 +45,8 @@ The repo now has the first implementation scaffolding for the vision layer:
   stage/checkpoint image against the active goal plus attached references
 - bounded `reference_compare_current_view(...)` surface for capture-then-compare
   on the current viewport/camera path during staged manual work
+- bounded `reference_compare_stage_checkpoint(...)` surface for deterministic
+  multi-view stage capture + compare during staged manual/reference-guided work
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

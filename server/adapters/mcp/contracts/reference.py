@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
 from .base import MCPContract
@@ -50,6 +51,27 @@ class ReferenceCompareCheckpointResponseContract(MCPContract):
     target_view: str | None = None
     checkpoint_path: str
     checkpoint_label: str | None = None
+    reference_count: int = 0
+    reference_ids: list[str] = []
+    reference_labels: list[str] = []
+    vision_assistant: VisionAssistantContract | None = None
+    message: str | None = None
+    error: str | None = None
+
+
+class ReferenceCompareStageCheckpointResponseContract(MCPContract):
+    """Structured response for deterministic stage checkpoint capture + compare."""
+
+    action: Literal["compare_stage_checkpoint"] = "compare_stage_checkpoint"
+    goal: str | None = None
+    target_object: str
+    target_view: str | None = None
+    checkpoint_id: str
+    checkpoint_label: str | None = None
+    preset_profile: Literal["compact", "rich"] = "compact"
+    preset_names: list[str] = []
+    capture_count: int = 0
+    captures: list[VisionCaptureImageContract] = []
     reference_count: int = 0
     reference_ids: list[str] = []
     reference_labels: list[str] = []

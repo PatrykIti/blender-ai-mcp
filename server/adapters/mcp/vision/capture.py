@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
 # SPDX-License-Identifier: BUSL-1.1
 
-"""Helpers for converting deterministic capture bundles into vision requests."""
+"""Helpers for converting deterministic capture artifacts into vision requests."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
 from server.adapters.mcp.contracts.vision import (
@@ -56,6 +57,34 @@ def build_vision_request_from_capture_bundle(
             "goal_id": bundle.goal_id,
             "preset_names": list(bundle.preset_names),
         },
+    )
+
+
+def build_vision_request_from_stage_captures(
+    captures: Sequence[VisionCaptureImageContract],
+    *,
+    goal: str,
+    target_object: str | None = None,
+    reference_images: Sequence[VisionCaptureImageContract] = (),
+    prompt_hint: str | None = None,
+    truth_summary: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> VisionRequest:
+    """Build a normalized VisionRequest from one stage checkpoint capture set."""
+
+    images = tuple(
+        [
+            *[_capture_to_image_input(capture, role="after") for capture in captures],
+            *[_capture_to_image_input(capture, role="reference") for capture in reference_images],
+        ]
+    )
+    return VisionRequest(
+        goal=goal,
+        images=images,
+        target_object=target_object,
+        prompt_hint=prompt_hint,
+        truth_summary=truth_summary,
+        metadata=metadata or {},
     )
 
 

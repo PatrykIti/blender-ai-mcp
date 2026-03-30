@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [168](./168-2026-03-30-reference-stage-checkpoint-compare.md) | 2026-03-30 | **Reference stage checkpoint compare** | - |
 | [167](./167-2026-03-30-reference-checkpoint-compare-surface.md) | 2026-03-30 | **Reference checkpoint compare surface** | - |
 | [166](./166-2026-03-30-user-view-viewport-capture-controls.md) | 2026-03-30 | **User-view viewport capture controls** | - |
 | [165](./165-2026-03-29-macro-vision-followup-integration.md) | 2026-03-29 | **Macro vision follow-up integration** | - |

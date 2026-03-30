@@ -8,8 +8,10 @@ from dataclasses import dataclass, field
 from server.adapters.mcp.areas.reference import (
     reference_compare_checkpoint,
     reference_compare_current_view,
+    reference_compare_stage_checkpoint,
     reference_images,
 )
+from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
     AssistantRunResult,
@@ -229,3 +231,121 @@ def test_reference_compare_current_view_captures_then_compares(tmp_path, monkeyp
     assert result.checkpoint_path.endswith(".jpg")
     assert [image.role for image in captured["request"].images] == ["after", "reference"]
     assert "comparison_mode=current_view_checkpoint" in (captured["request"].prompt_hint or "")
+
+
+def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_side = tmp_path / "side.png"
+    image_front.write_bytes(b"front")
+    image_side.write_bytes(b"side")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_front),
+            label="front_ref",
+            target_object="Squirrel",
+            target_view="front",
+        )
+    )
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image_side),
+            label="side_ref",
+            target_object="Squirrel",
+            target_view="side",
+        )
+    )
+
+    class SceneHandler:
+        pass
+
+    captured = {}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured["request"] = request
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Stage checkpoint is moving closer to the squirrel references.",
+                visible_changes=["The tail arc is more readable from side and front views."],
+                shape_mismatches=["Head silhouette is still too spherical."],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+            VisionCaptureImageContract(
+                label="target_front_after",
+                image_path=str(tmp_path / "front.jpg"),
+                host_visible_path=str(tmp_path / "front.jpg"),
+                preset_name="target_front",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+            VisionCaptureImageContract(
+                label="target_side_after",
+                image_path=str(tmp_path / "side.jpg"),
+                host_visible_path=str(tmp_path / "side.jpg"),
+                preset_name="target_side",
+                media_type="image/jpeg",
+                view_kind="focus",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_3",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.reference_count == 2
+    assert result.capture_count == 3
+    assert result.preset_profile == "compact"
+    assert result.preset_names == ["context_wide", "target_front", "target_side"]
+    assert result.vision_assistant is not None
+    assert [image.role for image in captured["request"].images] == [
+        "after",
+        "after",
+        "after",
+        "reference",
+        "reference",
+    ]
+    assert "comparison_mode=stage_checkpoint_vs_reference" in (captured["request"].prompt_hint or "")
+
+
+def test_reference_compare_stage_checkpoint_requires_goal_or_override():
+    result = asyncio.run(reference_compare_stage_checkpoint(FakeContext(), target_object="Squirrel"))
+
+    assert result.error is not None
+    assert "router_set_goal" in result.error

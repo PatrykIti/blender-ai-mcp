@@ -279,6 +279,22 @@ def test_build_phase_search_can_discover_reference_compare_checkpoint():
     assert "modeling_list_modifiers" not in names
 
 
+def test_build_phase_search_can_discover_reference_compare_stage_checkpoint():
+    """Build-phase discovery should surface the deterministic stage checkpoint compare path."""
+
+    server = _build_phase_search_server(SessionPhase.BUILD)
+
+    async def run():
+        result = await server.call_tool("search_tools", {"query": "compare current stage progress against reference set"})
+        return _decode_tool_result(result)
+
+    payload = asyncio.run(run())
+    names = {tool["name"] for tool in payload}
+
+    assert "reference_compare_stage_checkpoint" in names
+    assert "modeling_list_modifiers" not in names
+
+
 @pytest.mark.parametrize(
     ("query", "expected_tool"),
     [
@@ -380,7 +396,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 174
+    assert legacy_count == 175
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 

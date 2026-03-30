@@ -61,6 +61,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_relative_layout` for align/place/contact-gap part layout
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
+- `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 
 Current guided bootstrap surface:
 

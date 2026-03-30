@@ -46,6 +46,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "reference_images",
         "reference_compare_checkpoint",
         "reference_compare_current_view",
+        "reference_compare_stage_checkpoint",
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
@@ -121,6 +122,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "reference_images" in prompt_readme
     assert "reference_compare_checkpoint" in prompt_readme
     assert "reference_compare_current_view" in prompt_readme
+    assert "reference_compare_stage_checkpoint" in prompt_readme
     assert "search_tools" in prompt_readme
     assert "call_tool" in prompt_readme
     assert "call it directly instead of routing through `search_tools(...)` / `call_tool(...)`" in prompt_readme

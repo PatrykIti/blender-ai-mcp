@@ -17,6 +17,7 @@ from fastmcp import Context
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareCheckpointResponseContract,
+    ReferenceCompareStageCheckpointResponseContract,
     ReferenceImagesResponseContract,
 )
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
@@ -27,9 +28,12 @@ from server.adapters.mcp.session_capabilities import (
 )
 from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision import (
+    CapturePresetProfile,
     VisionImageInput,
     VisionRequest,
     build_reference_capture_images,
+    build_vision_request_from_stage_captures,
+    capture_stage_images,
     run_vision_assist,
     select_reference_records_for_target,
 )
@@ -40,6 +44,7 @@ REFERENCE_PUBLIC_TOOL_NAMES = (
     "reference_images",
     "reference_compare_checkpoint",
     "reference_compare_current_view",
+    "reference_compare_stage_checkpoint",
 )
 _ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
@@ -115,6 +120,42 @@ def _compare_response(
         target_view=target_view,
         checkpoint_path=checkpoint_path,
         checkpoint_label=checkpoint_label,
+        reference_count=len(reference_ids),
+        reference_ids=reference_ids,
+        reference_labels=reference_labels,
+        vision_assistant=vision_assistant,
+        message=message,
+        error=error,
+    )
+
+
+def _stage_compare_response(
+    *,
+    checkpoint_id: str,
+    checkpoint_label: str | None,
+    goal: str | None,
+    target_object: str,
+    target_view: str | None,
+    preset_profile: CapturePresetProfile,
+    preset_names: list[str],
+    captures: list | tuple = (),
+    reference_ids: list[str],
+    reference_labels: list[str],
+    vision_assistant=None,
+    message: str | None = None,
+    error: str | None = None,
+) -> ReferenceCompareStageCheckpointResponseContract:
+    return ReferenceCompareStageCheckpointResponseContract(
+        action="compare_stage_checkpoint",
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        checkpoint_id=checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        preset_profile=preset_profile,
+        preset_names=preset_names,
+        capture_count=len(captures),
+        captures=list(captures),
         reference_count=len(reference_ids),
         reference_ids=reference_ids,
         reference_labels=reference_labels,
@@ -234,6 +275,138 @@ async def _run_checkpoint_compare(
             f"Compared checkpoint '{checkpoint_label or checkpoint.name}' against {len(selected_reference_records)} reference image(s)."
             if outcome.status == "success"
             else "Checkpoint comparison executed but vision assistance did not complete successfully."
+        ),
+        error=vision_assistant.rejection_reason if vision_assistant.status != "success" else None,
+    )
+
+
+async def _run_stage_checkpoint_compare(
+    ctx: Context,
+    *,
+    checkpoint_id: str,
+    checkpoint_label: str | None,
+    target_object: str,
+    target_view: str | None,
+    preset_profile: CapturePresetProfile,
+    goal_override: str | None,
+    prompt_hint: str | None,
+) -> ReferenceCompareStageCheckpointResponseContract:
+    """Capture one deterministic stage view-set, then compare it against references."""
+
+    session = await get_session_capability_state_async(ctx)
+    goal = goal_override or session.goal
+    if not goal:
+        return _stage_compare_response(
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=None,
+            target_object=target_object,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[],
+            reference_labels=[],
+            error="Set an active goal with router_set_goal(...) before comparing a stage checkpoint, or pass goal_override.",
+        )
+
+    references = list(session.reference_images or [])
+    selected_reference_records = select_reference_records_for_target(
+        references,
+        target_object=target_object,
+        target_view=target_view,
+    )
+    if not selected_reference_records:
+        return _stage_compare_response(
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=target_object,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[],
+            reference_labels=[],
+            error="No matching reference images are attached for the requested target_object/target_view.",
+        )
+
+    try:
+        captures = capture_stage_images(
+            get_scene_handler(),
+            bundle_id=checkpoint_id,
+            stage="after",
+            target_object=target_object,
+            preset_profile=preset_profile,
+        )
+    except RuntimeError as exc:
+        return _stage_compare_response(
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=target_object,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[item.reference_id for item in selected_reference_records],
+            reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+            error=str(exc),
+        )
+
+    reference_images = build_reference_capture_images(selected_reference_records)
+    vision_request = build_vision_request_from_stage_captures(
+        captures,
+        goal=goal,
+        target_object=target_object,
+        reference_images=reference_images,
+        prompt_hint=" | ".join(
+            part
+            for part in (
+                prompt_hint,
+                "comparison_mode=stage_checkpoint_vs_reference",
+                f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
+                f"preset_profile={preset_profile}",
+                f"target_view={target_view}" if target_view else None,
+                *[
+                    f"capture[{index}] label={capture.label}"
+                    for index, capture in enumerate(captures, start=1)
+                ],
+                *[
+                    f"reference[{index}] label={record.label}"
+                    for index, record in enumerate(selected_reference_records, start=1)
+                    if record.label
+                ],
+            )
+            if part
+        )
+        or None,
+        metadata={
+            "source": "compare_stage_checkpoint",
+            "checkpoint_id": checkpoint_id,
+            "preset_profile": preset_profile,
+            "capture_count": len(captures),
+        },
+    )
+    outcome = await run_vision_assist(
+        ctx,
+        request=vision_request,
+        resolver=get_vision_backend_resolver(),
+    )
+    vision_assistant = to_vision_assistant_contract(outcome)
+    return _stage_compare_response(
+        checkpoint_id=checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        goal=goal,
+        target_object=target_object,
+        target_view=target_view,
+        preset_profile=preset_profile,
+        preset_names=[capture.preset_name or capture.label for capture in captures],
+        captures=captures,
+        reference_ids=[item.reference_id for item in selected_reference_records],
+        reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+        vision_assistant=vision_assistant,
+        message=(
+            f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
+            if outcome.status == "success"
+            else "Stage checkpoint capture executed but vision assistance did not complete successfully."
         ),
         error=vision_assistant.rejection_reason if vision_assistant.status != "success" else None,
     )
@@ -493,4 +666,28 @@ async def reference_compare_current_view(
         )
         or None,
         response_action="compare_current_view",
+    )
+
+
+async def reference_compare_stage_checkpoint(
+    ctx: Context,
+    target_object: str,
+    checkpoint_label: str | None = None,
+    target_view: str | None = None,
+    goal_override: str | None = None,
+    prompt_hint: str | None = None,
+    preset_profile: CapturePresetProfile = "compact",
+) -> ReferenceCompareStageCheckpointResponseContract:
+    """Capture one deterministic stage view-set and compare it against attached references."""
+
+    checkpoint_id = f"stage_checkpoint_{target_object}_{uuid4().hex[:8]}"
+    return await _run_stage_checkpoint_compare(
+        ctx,
+        checkpoint_id=checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        target_object=target_object,
+        target_view=target_view,
+        preset_profile=preset_profile,
+        goal_override=goal_override,
+        prompt_hint=prompt_hint,
     )
