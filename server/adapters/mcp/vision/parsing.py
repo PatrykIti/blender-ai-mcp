@@ -15,6 +15,7 @@ _SUMMARY_ALIASES = ("comparison", "summary", "analysis", "description", "result"
 _VISIBLE_CHANGES_ALIASES = ("changes", "visible_differences", "differences")
 _SHAPE_MISMATCHES_ALIASES = ("shape_mismatches", "form_mismatches", "silhouette_mismatches")
 _PROPORTION_MISMATCHES_ALIASES = ("proportion_mismatches", "ratio_mismatches", "size_mismatches")
+_CORRECTION_FOCUS_ALIASES = ("correction_focus", "priority_mismatches", "priority_fixes", "focus_areas")
 _LIKELY_ISSUES_ALIASES = ("issues", "problems", "risks")
 _NEXT_CORRECTIONS_ALIASES = ("next_corrections", "suggested_corrections", "corrections")
 _RECOMMENDED_CHECKS_ALIASES = ("checks", "follow_up_checks", "deterministic_checks", "recommended_tools")
@@ -24,6 +25,19 @@ _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS = (
     "the after images show",
     "after image shows",
     "after images show",
+)
+_REFERENCE_GUIDED_CHECKPOINT_HINTS = (
+    "comparison_mode=checkpoint_vs_reference",
+    "comparison_mode=current_view_checkpoint",
+    "comparison_mode=stage_checkpoint_vs_reference",
+)
+_UNHELPFUL_CORRECTION_SNIPPETS = (
+    "same dimensions",
+    "same center",
+    "same volume",
+    "center unchanged",
+    "volume unchanged",
+    "bounding box unchanged",
 )
 
 
@@ -77,6 +91,9 @@ def _repair_echo_payload(parsed: dict[str, Any], request: VisionRequest) -> dict
         "goal_summary": "Model echoed the request payload instead of producing visual analysis.",
         "reference_match_summary": None,
         "visible_changes": [],
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
+        "correction_focus": [],
         "likely_issues": [
             {
                 "category": "backend_output",
@@ -84,6 +101,7 @@ def _repair_echo_payload(parsed: dict[str, Any], request: VisionRequest) -> dict
                 "severity": "medium",
             }
         ],
+        "next_corrections": [],
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
@@ -96,6 +114,9 @@ def _repair_label_map_payload(parsed: dict[str, Any], request: VisionRequest) ->
         "goal_summary": "Model returned capture labels instead of visual analysis.",
         "reference_match_summary": None,
         "visible_changes": [],
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
+        "correction_focus": [],
         "likely_issues": [
             {
                 "category": "backend_output",
@@ -103,6 +124,7 @@ def _repair_label_map_payload(parsed: dict[str, Any], request: VisionRequest) ->
                 "severity": "medium",
             }
         ],
+        "next_corrections": [],
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
@@ -116,6 +138,9 @@ def _repair_unrecognized_payload(parsed: dict[str, Any], request: VisionRequest)
         "goal_summary": "Model returned JSON, but not in the required vision-assist contract shape.",
         "reference_match_summary": None,
         "visible_changes": [],
+        "shape_mismatches": [],
+        "proportion_mismatches": [],
+        "correction_focus": [],
         "likely_issues": [
             {
                 "category": "backend_output",
@@ -123,6 +148,7 @@ def _repair_unrecognized_payload(parsed: dict[str, Any], request: VisionRequest)
                 "severity": "medium",
             }
         ],
+        "next_corrections": [],
         "recommended_checks": [],
         "confidence": 0.0,
         "captures_used": labels,
@@ -157,6 +183,23 @@ def _dedupe_string_list(items: list[str]) -> list[str]:
     return deduped
 
 
+def _prune_unhelpful_correction_items(items: list[str]) -> list[str]:
+    pruned: list[str] = []
+    for item in items:
+        normalized = item.strip().lower()
+        if any(snippet in normalized for snippet in _UNHELPFUL_CORRECTION_SNIPPETS):
+            continue
+        pruned.append(item)
+    return pruned
+
+
+def _bounded_string_list(items: list[str], *, max_items: int = 3, prune_unhelpful: bool = False) -> list[str]:
+    deduped = _dedupe_string_list(items)
+    if prune_unhelpful:
+        deduped = _prune_unhelpful_correction_items(deduped)
+    return deduped[:max_items]
+
+
 def _first_nonempty_value(parsed: dict[str, Any], keys: tuple[str, ...]) -> Any:
     for key in keys:
         value = parsed.get(key)
@@ -168,6 +211,12 @@ def _first_nonempty_value(parsed: dict[str, Any], keys: tuple[str, ...]) -> Any:
             continue
         return value
     return None
+
+
+def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
+    prompt_hint = (request.prompt_hint or "").lower()
+    has_reference = any(image.role == "reference" for image in request.images)
+    return has_reference and any(hint in prompt_hint for hint in _REFERENCE_GUIDED_CHECKPOINT_HINTS)
 
 
 def _coerce_issue_list(value: Any) -> list[dict[str, Any]]:
@@ -278,12 +327,18 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         goal_summary_lower = goal_summary.lower()
         if any(hint in goal_summary_lower for hint in _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS):
             visible_changes = [goal_summary]
-    visible_changes = _dedupe_string_list(visible_changes)
-    shape_mismatches = _dedupe_string_list(
-        _coerce_string_list(_first_nonempty_value(parsed, _SHAPE_MISMATCHES_ALIASES))
+    visible_changes = _bounded_string_list(visible_changes)
+    shape_mismatches = _bounded_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _SHAPE_MISMATCHES_ALIASES)),
+        prune_unhelpful=True,
     )
-    proportion_mismatches = _dedupe_string_list(
-        _coerce_string_list(_first_nonempty_value(parsed, _PROPORTION_MISMATCHES_ALIASES))
+    proportion_mismatches = _bounded_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _PROPORTION_MISMATCHES_ALIASES)),
+        prune_unhelpful=True,
+    )
+    correction_focus = _bounded_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _CORRECTION_FOCUS_ALIASES)),
+        prune_unhelpful=True,
     )
 
     likely_issues = _coerce_issue_list(parsed.get("likely_issues"))
@@ -301,9 +356,15 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
             if recommended_checks:
                 break
     recommended_checks = _dedupe_check_list(recommended_checks)
-    next_corrections = _dedupe_string_list(
-        _coerce_string_list(_first_nonempty_value(parsed, _NEXT_CORRECTIONS_ALIASES))
+    next_corrections = _bounded_string_list(
+        _coerce_string_list(_first_nonempty_value(parsed, _NEXT_CORRECTIONS_ALIASES)),
+        prune_unhelpful=True,
     )
+    if not correction_focus and _is_reference_guided_checkpoint(request):
+        correction_focus = _bounded_string_list(
+            [*shape_mismatches, *proportion_mismatches, *next_corrections],
+            prune_unhelpful=True,
+        )
 
     confidence = parsed.get("confidence")
     if not isinstance(confidence, (int, float)) and confidence is not None:
@@ -315,6 +376,7 @@ def _normalize_payload(parsed: dict[str, Any], request: VisionRequest) -> dict[s
         "visible_changes": visible_changes,
         "shape_mismatches": shape_mismatches,
         "proportion_mismatches": proportion_mismatches,
+        "correction_focus": correction_focus,
         "likely_issues": likely_issues,
         "next_corrections": next_corrections,
         "recommended_checks": recommended_checks,
@@ -330,6 +392,7 @@ def _has_contract_signal(parsed: dict[str, Any]) -> bool:
         + _VISIBLE_CHANGES_ALIASES
         + _SHAPE_MISMATCHES_ALIASES
         + _PROPORTION_MISMATCHES_ALIASES
+        + _CORRECTION_FOCUS_ALIASES
         + _LIKELY_ISSUES_ALIASES
         + _NEXT_CORRECTIONS_ALIASES
         + _RECOMMENDED_CHECKS_ALIASES

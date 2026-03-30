@@ -87,6 +87,7 @@ def _normalize_assist_payload(
         "visible_changes": list(parsed.get("visible_changes") or []),
         "shape_mismatches": list(parsed.get("shape_mismatches") or []),
         "proportion_mismatches": list(parsed.get("proportion_mismatches") or []),
+        "correction_focus": list(parsed.get("correction_focus") or []),
         "likely_issues": list(parsed.get("likely_issues") or []),
         "next_corrections": list(parsed.get("next_corrections") or []),
         "recommended_checks": list(parsed.get("recommended_checks") or []),

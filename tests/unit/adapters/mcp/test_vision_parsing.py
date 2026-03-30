@@ -71,6 +71,7 @@ def test_parse_vision_output_repairs_summary_alias_payload():
 
     assert parsed["goal_summary"] == "The after image is closer to the rounded housing target and adds the central cutout."
     assert parsed["visible_changes"] == []
+    assert parsed["correction_focus"] == []
     assert parsed["captures_used"] == ["before_1"]
 
 
@@ -117,6 +118,7 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
             "changes": ["Front is rounder."],
             "shape_mismatches": ["Ears still look too thin."],
             "proportion_mismatches": ["Head is still too large relative to body."],
+            "correction_focus": ["Head/body ratio first."],
             "issues": ["Top edge still looks flat."],
             "next_corrections": ["Reduce the head slightly and thicken the ears."],
             "checks": ["Run scene_measure_dimensions for the cutout width."],
@@ -129,6 +131,7 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
     assert parsed["visible_changes"] == ["Front is rounder."]
     assert parsed["shape_mismatches"] == ["Ears still look too thin."]
     assert parsed["proportion_mismatches"] == ["Head is still too large relative to body."]
+    assert parsed["correction_focus"] == ["Head/body ratio first."]
     assert parsed["likely_issues"][0]["summary"] == "Top edge still looks flat."
     assert parsed["next_corrections"] == ["Reduce the head slightly and thicken the ears."]
     assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"
@@ -158,6 +161,40 @@ def test_parse_vision_output_deduplicates_repeated_lists():
     assert parsed["visible_changes"] == ["Front is rounder."]
     assert len(parsed["likely_issues"]) == 1
     assert len(parsed["recommended_checks"]) == 1
+
+
+def test_parse_vision_output_backfills_correction_focus_for_reference_guided_checkpoint():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+    text = json.dumps(
+        {
+            "goal_summary": "Closer overall to the squirrel reference.",
+            "reference_match_summary": "The front silhouette is closer but still too spherical.",
+            "visible_changes": ["The tail arc is more visible from the front."],
+            "shape_mismatches": ["Head silhouette is still too spherical."],
+            "proportion_mismatches": ["Tail still reads too small relative to the body."],
+            "next_corrections": ["Flatten the head silhouette slightly and enlarge the tail arc."],
+            "likely_issues": [],
+            "recommended_checks": [],
+            "confidence": 0.6,
+            "captures_used": ["target_front_after", "ref_front"],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, request)
+
+    assert parsed["correction_focus"] == [
+        "Head silhouette is still too spherical.",
+        "Tail still reads too small relative to the body.",
+        "Flatten the head silhouette slightly and enlarge the tail arc.",
+    ]
 
 
 def test_diagnose_vision_output_classifies_fenced_contract_json():

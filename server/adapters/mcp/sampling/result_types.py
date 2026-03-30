@@ -121,6 +121,7 @@ class VisionAssistContract(MCPContract):
     visible_changes: list[str]
     shape_mismatches: list[str] = []
     proportion_mismatches: list[str] = []
+    correction_focus: list[str] = []
     likely_issues: list[VisionIssueContract] = []
     next_corrections: list[str] = []
     recommended_checks: list[VisionRecommendedCheckContract] = []

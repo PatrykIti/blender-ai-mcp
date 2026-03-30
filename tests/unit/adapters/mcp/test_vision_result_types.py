@@ -31,6 +31,7 @@ def test_vision_assistant_contract_wraps_structured_result():
             visible_changes=["Front face edges appear softer."],
             shape_mismatches=["Ears still look too thin."],
             proportion_mismatches=["Head is still slightly too large relative to the body."],
+            correction_focus=["Head/body ratio", "Ear thickness"],
             likely_issues=[],
             next_corrections=["Thicken the ears slightly and reduce the head/body ratio."],
             recommended_checks=[],
@@ -48,5 +49,6 @@ def test_vision_assistant_contract_wraps_structured_result():
     assert contract.result.backend_name == "transformers_local"
     assert contract.result.model_name == "Qwen/Qwen3-VL-4B-Instruct"
     assert contract.result.shape_mismatches == ["Ears still look too thin."]
+    assert contract.result.correction_focus == ["Head/body ratio", "Ear thickness"]
     assert contract.result.boundary_policy is not None
     assert contract.result.boundary_policy.not_truth_source is True

@@ -21,6 +21,7 @@ The repo now has the first implementation scaffolding for the vision layer:
 - richer optional result semantics for later correction loops:
   - `shape_mismatches`
   - `proportion_mismatches`
+  - `correction_focus`
   - `next_corrections`
 - explicit boundary metadata in the result contract via `boundary_policy`
 - deterministic capture-bundle contracts and initial runtime presets:

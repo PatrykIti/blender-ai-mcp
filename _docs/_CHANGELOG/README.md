@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [169](./169-2026-03-30-reference-guided-correction-focus.md) | 2026-03-30 | **Reference-guided correction focus** | - |
 | [168](./168-2026-03-30-reference-stage-checkpoint-compare.md) | 2026-03-30 | **Reference stage checkpoint compare** | - |
 | [167](./167-2026-03-30-reference-checkpoint-compare-surface.md) | 2026-03-30 | **Reference checkpoint compare surface** | - |
 | [166](./166-2026-03-30-user-view-viewport-capture-controls.md) | 2026-03-30 | **User-view viewport capture controls** | - |

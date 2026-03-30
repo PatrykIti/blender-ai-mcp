@@ -15,12 +15,25 @@ _EXPECTED_KEYS = (
     "visible_changes",
     "shape_mismatches",
     "proportion_mismatches",
+    "correction_focus",
     "likely_issues",
     "next_corrections",
     "recommended_checks",
     "confidence",
     "captures_used",
 )
+
+_REFERENCE_GUIDED_CHECKPOINT_MODES = (
+    "comparison_mode=checkpoint_vs_reference",
+    "comparison_mode=current_view_checkpoint",
+    "comparison_mode=stage_checkpoint_vs_reference",
+)
+
+
+def _is_reference_guided_checkpoint(request: VisionRequest) -> bool:
+    prompt_hint = (request.prompt_hint or "").lower()
+    has_reference = any(image.role == "reference" for image in request.images)
+    return has_reference and any(mode in prompt_hint for mode in _REFERENCE_GUIDED_CHECKPOINT_MODES)
 
 
 def _local_output_template(request: VisionRequest) -> str:
@@ -31,6 +44,7 @@ def _local_output_template(request: VisionRequest) -> str:
         "visible_changes": [],
         "shape_mismatches": [],
         "proportion_mismatches": [],
+        "correction_focus": [],
         "likely_issues": [],
         "next_corrections": [],
         "recommended_checks": [],
@@ -53,6 +67,7 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
         "- visible_changes: string[]\n"
         "- shape_mismatches: string[]\n"
         "- proportion_mismatches: string[]\n"
+        "- correction_focus: string[]\n"
         '- likely_issues: [{"category": string, "summary": string, "severity": "high"|"medium"|"low"}]\n'
         "- next_corrections: string[]\n"
         '- recommended_checks: [{"tool_name": string, "reason": string, "priority": "high"|"normal"}]\n'
@@ -70,6 +85,7 @@ def build_vision_system_prompt(*, backend_kind: str) -> str:
             + "Do not use visible_changes for unchanged facts from truth_summary such as same dimensions, same center, or same volume. "
             + "Use shape_mismatches only for visible form/silhouette problems. "
             + "Use proportion_mismatches only for visible size/ratio relationship problems. "
+            + "Use correction_focus for the 1-3 highest-priority mismatch targets to fix next. "
             + "Use next_corrections for 1-3 bounded next-step corrections only when they are visually justified. "
             + "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness. "
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
@@ -118,6 +134,7 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
     ]
     if truth_lines:
         parts.extend(["TRUTH_SUMMARY:", *truth_lines])
+    reference_guided_checkpoint = _is_reference_guided_checkpoint(request)
     parts.extend(
         [
             "",
@@ -127,6 +144,7 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
             "Do not use visible_changes for unchanged truth_summary facts such as same dimensions, same center, or same volume.",
             "Use shape_mismatches only for visible form/silhouette problems.",
             "Use proportion_mismatches only for visible size/ratio problems.",
+            "Use correction_focus for the 1-3 highest-priority mismatch targets to fix next.",
             "Use next_corrections for 1-3 bounded next-step fixes only when they are visually justified.",
             "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness.",
             "Leave likely_issues and recommended_checks empty unless you have a specific visual reason to add them.",
@@ -138,6 +156,16 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
             _local_output_template(request),
         ]
     )
+    if reference_guided_checkpoint:
+        parts.extend(
+            [
+                "Because this is a reference-guided checkpoint comparison:",
+                "- populate reference_match_summary if the references meaningfully inform the comparison",
+                "- prefer concrete silhouette/proportion mismatches over generic praise",
+                "- correction_focus should rank the most important fixes first",
+                "- next_corrections should stay tightly aligned with the mismatches you listed",
+            ]
+        )
     return "\n".join(parts)
 
 

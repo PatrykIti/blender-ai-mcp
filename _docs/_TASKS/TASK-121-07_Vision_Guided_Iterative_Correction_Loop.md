@@ -11,8 +11,10 @@ against the active goal plus attached references,
 capture-then-compare path for staged manual work, and
 `reference_compare_stage_checkpoint(...)` now adds a deterministic multi-view
 stage checkpoint path using the shared `compact` / `rich` preset system. The
-remaining work is richer correction semantics tuned for creature/reference
-work, and real iterative eval/prompting on top of that capture surface.
+checkpoint result now also exposes a tighter correction-oriented output shape
+via `correction_focus`, plus more bounded mismatch/correction semantics for
+reference-guided compare modes. The remaining work is real iterative eval and
+prompting on top of that capture surface.
 
 ---
 

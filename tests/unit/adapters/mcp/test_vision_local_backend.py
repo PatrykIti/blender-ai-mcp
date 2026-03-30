@@ -300,7 +300,7 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
         @staticmethod
         def generate(model, processor, *args, **kwargs):
             return FakeGenerationResult(
-                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"shape_mismatches":[],"proportion_mismatches":[],"likely_issues":[],"next_corrections":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
+                '{"goal_summary":"Closer to the goal.","reference_match_summary":null,"visible_changes":["Front changed."],"shape_mismatches":[],"proportion_mismatches":[],"correction_focus":["front silhouette"],"likely_issues":[],"next_corrections":[],"recommended_checks":[],"confidence":0.5,"captures_used":["before_1"]}'
             )
 
     class FakePromptUtils:
@@ -341,6 +341,7 @@ def test_mlx_local_backend_runs_generic_mlx_vlm_flow(monkeypatch, tmp_path):
     assert result["model_name"] == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
     assert result["goal_summary"] == "Closer to the goal."
     assert result["shape_mismatches"] == []
+    assert result["correction_focus"] == ["front silhouette"]
     assert result["boundary_policy"]["not_truth_source"] is True
     assert backend.last_output_diagnostics is not None
     assert backend.last_output_diagnostics["payload_shape"] == "contract"
