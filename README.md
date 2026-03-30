@@ -112,6 +112,8 @@ Use these docs depending on what you need:
   - Canonical policy for `atomic / macro / workflow`, hidden atomic tools, goal-first usage, and vision/assert boundaries.
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
   - Surface profiles, guided aliases, versioned contracts, and runtime/platform guidance.
+- [MCP Client Config Examples](./_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+  - Ready-to-paste local MCP client config examples for guided/manual surfaces plus MLX, OpenRouter, and Gemini vision variants.
 - [Vision Layer Docs](./_docs/_VISION/README.md)
   - Runtime/backends, capture bundles, reference images, macro/workflow vision integration notes, and repo-tracked real viewport eval bundles for both direct user-view and fixed camera-perspective captures.
 - [Available Tools Summary](./_docs/AVAILABLE_TOOLS_SUMMARY.md)
@@ -314,7 +316,10 @@ Network notes:
 - **macOS / Windows:** use `host.docker.internal`
 - **Linux:** prefer `--network host` with `BLENDER_RPC_HOST=127.0.0.1`
 
-For broader profile/config examples, use [MCP Server Docs](./_docs/_MCP_SERVER/README.md).
+For broader profile/config examples, use:
+
+- [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
+- [MCP Client Config Examples](./_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
 
 ## Testing
 

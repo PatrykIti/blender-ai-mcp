@@ -41,6 +41,10 @@ Useful environment variables:
 - `ROUTER_ENABLED=true`
 - `BLENDER_RPC_HOST=host.docker.internal` (when running the server in Docker on macOS/Windows)
 
+For ready-to-paste local client/MCP profile examples, use:
+
+- [_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+
 ## Build Blender Addon ZIP
 
 ```bash
