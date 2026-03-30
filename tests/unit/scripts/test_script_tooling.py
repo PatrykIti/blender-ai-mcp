@@ -376,3 +376,30 @@ def test_vision_harness_can_build_openrouter_backend_config():
     assert config.VISION_OPENROUTER_API_KEY_ENV == "OPENROUTER_API_KEY"
     assert config.VISION_OPENROUTER_SITE_URL == "https://example.com"
     assert config.VISION_OPENROUTER_SITE_NAME == "blender-ai-mcp-dev"
+
+
+def test_vision_harness_can_build_gemini_backend_config():
+    module = _load_script("vision_harness")
+
+    args = module.build_parser().parse_args(
+        [
+            "--backend",
+            "openai_compatible_external",
+            "--goal",
+            "rounded housing",
+            "--before",
+            "/tmp/before.png",
+            "--external-provider",
+            "google_ai_studio",
+            "--gemini-model",
+            "gemini-2.5-flash",
+            "--gemini-api-key-env",
+            "GEMINI_API_KEY",
+        ]
+    )
+
+    config = module._config_for_backend(args, "openai_compatible_external")
+
+    assert config.VISION_EXTERNAL_PROVIDER == "google_ai_studio"
+    assert config.VISION_GEMINI_MODEL == "gemini-2.5-flash"
+    assert config.VISION_GEMINI_API_KEY_ENV == "GEMINI_API_KEY"

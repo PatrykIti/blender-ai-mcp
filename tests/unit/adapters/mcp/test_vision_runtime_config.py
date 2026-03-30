@@ -56,6 +56,10 @@ def _base_config(**overrides) -> Config:
         "VISION_OPENROUTER_API_KEY_ENV": None,
         "VISION_OPENROUTER_SITE_URL": None,
         "VISION_OPENROUTER_SITE_NAME": None,
+        "VISION_GEMINI_BASE_URL": None,
+        "VISION_GEMINI_MODEL": None,
+        "VISION_GEMINI_API_KEY": None,
+        "VISION_GEMINI_API_KEY_ENV": None,
     }
     data.update(overrides)
     return Config(**data)
@@ -121,6 +125,28 @@ def test_build_vision_runtime_config_supports_openrouter_aliases():
     assert runtime.openai_compatible_external.api_key_env == "OPENROUTER_API_KEY"
     assert runtime.openai_compatible_external.site_url == "https://example.com"
     assert runtime.openai_compatible_external.site_name == "blender-ai-mcp-dev"
+
+
+def test_build_vision_runtime_config_supports_google_ai_studio_aliases():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="google_ai_studio",
+        VISION_GEMINI_MODEL="gemini-2.5-flash",
+        VISION_GEMINI_API_KEY_ENV="GEMINI_API_KEY",
+        VISION_EXTERNAL_BASE_URL=None,
+        VISION_EXTERNAL_MODEL=None,
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.enabled is True
+    assert runtime.provider == "openai_compatible_external"
+    assert runtime.active_model_name == "gemini-2.5-flash"
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
+    assert runtime.openai_compatible_external.base_url == "https://generativelanguage.googleapis.com/v1beta"
+    assert runtime.openai_compatible_external.api_key_env == "GEMINI_API_KEY"
 
 
 def test_build_vision_runtime_config_supports_mlx_local_backend():

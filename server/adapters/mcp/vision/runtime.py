@@ -24,6 +24,7 @@ from .config import (
 )
 
 _OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+_GOOGLE_AI_STUDIO_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 
 def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
@@ -47,20 +48,43 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
 
     external_config = None
     use_openrouter_profile = bool(config.VISION_OPENROUTER_MODEL) or config.VISION_EXTERNAL_PROVIDER == "openrouter"
-    if use_openrouter_profile or config.VISION_EXTERNAL_BASE_URL or config.VISION_EXTERNAL_MODEL:
-        external_base_url = (
-            config.VISION_OPENROUTER_BASE_URL or _OPENROUTER_DEFAULT_BASE_URL
-            if use_openrouter_profile
-            else config.VISION_EXTERNAL_BASE_URL
-        )
+    use_google_ai_studio_profile = (
+        bool(config.VISION_GEMINI_MODEL) or config.VISION_EXTERNAL_PROVIDER == "google_ai_studio"
+    )
+    if use_openrouter_profile or use_google_ai_studio_profile or config.VISION_EXTERNAL_BASE_URL or config.VISION_EXTERNAL_MODEL:
+        if use_openrouter_profile:
+            external_provider_name = "openrouter"
+            external_base_url = config.VISION_OPENROUTER_BASE_URL or _OPENROUTER_DEFAULT_BASE_URL
+            external_model = config.VISION_OPENROUTER_MODEL or config.VISION_EXTERNAL_MODEL
+            external_api_key = config.VISION_OPENROUTER_API_KEY or config.VISION_EXTERNAL_API_KEY
+            external_api_key_env = config.VISION_OPENROUTER_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV
+            site_url = config.VISION_OPENROUTER_SITE_URL
+            site_name = config.VISION_OPENROUTER_SITE_NAME
+        elif use_google_ai_studio_profile:
+            external_provider_name = "google_ai_studio"
+            external_base_url = config.VISION_GEMINI_BASE_URL or _GOOGLE_AI_STUDIO_DEFAULT_BASE_URL
+            external_model = config.VISION_GEMINI_MODEL or config.VISION_EXTERNAL_MODEL
+            external_api_key = config.VISION_GEMINI_API_KEY or config.VISION_EXTERNAL_API_KEY
+            external_api_key_env = config.VISION_GEMINI_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV or "GEMINI_API_KEY"
+            site_url = None
+            site_name = None
+        else:
+            external_provider_name = "generic"
+            external_base_url = config.VISION_EXTERNAL_BASE_URL
+            external_model = config.VISION_EXTERNAL_MODEL
+            external_api_key = config.VISION_EXTERNAL_API_KEY
+            external_api_key_env = config.VISION_EXTERNAL_API_KEY_ENV
+            site_url = None
+            site_name = None
+
         external_config = VisionOpenAICompatibleConfig(
-            provider_name="openrouter" if use_openrouter_profile else "generic",
+            provider_name=external_provider_name,
             base_url=external_base_url,
-            model=config.VISION_OPENROUTER_MODEL or config.VISION_EXTERNAL_MODEL,
-            api_key=config.VISION_OPENROUTER_API_KEY or config.VISION_EXTERNAL_API_KEY,
-            api_key_env=config.VISION_OPENROUTER_API_KEY_ENV or config.VISION_EXTERNAL_API_KEY_ENV,
-            site_url=config.VISION_OPENROUTER_SITE_URL,
-            site_name=config.VISION_OPENROUTER_SITE_NAME,
+            model=external_model,
+            api_key=external_api_key,
+            api_key_env=external_api_key_env,
+            site_url=site_url,
+            site_name=site_name,
         )
 
     return VisionRuntimeConfig(

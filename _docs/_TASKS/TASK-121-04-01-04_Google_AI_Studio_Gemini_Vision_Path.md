@@ -1,10 +1,10 @@
 # TASK-121-04-01-04: Google AI Studio Gemini Vision Path
 
 **Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-Add a supported Google AI Studio / Gemini path for the vision module so users
+Added a supported Google AI Studio / Gemini path for the vision module so users
 can plug in an API key, select Gemini multimodal models, and compare their
 bounded vision quality/cost profile against the local and other external paths.
 
@@ -40,10 +40,20 @@ with explicit setup/docs for:
 - `tests/unit/adapters/mcp/`
 - `tests/e2e/vision/`
 
-## Acceptance Criteria
+## Delivered
 
-- a user can configure a Google AI Studio API key and Gemini model id without
-  code edits
-- the vision layer can run Gemini through the bounded external-runtime path
-- the repo has smoke/eval guidance for comparing Gemini against current vision
-  baselines
+- dedicated Gemini env/config aliases now exist for:
+  - model
+  - API key / API key env var
+  - optional base URL override
+- Google AI Studio now runs through the bounded external-runtime path using
+  provider-specific:
+  - endpoint construction
+  - payload shape
+  - response parsing
+  - API key header handling
+- `scripts/vision_harness.py` now supports Gemini-oriented flags
+- unit coverage exists for:
+  - runtime config alias resolution
+  - provider-specific request/response handling
+  - harness config wiring

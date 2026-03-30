@@ -3,9 +3,9 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 1 tasks
+- **To Do:** 0 tasks
 - **In Progress:** 1 tasks
-- **Done:** 185
+- **Done:** 186
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -23,7 +23,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-121-04-01-04](./TASK-121-04-01-04_Google_AI_Studio_Gemini_Vision_Path.md) | **Google AI Studio Gemini Vision Path** | 🟡 Medium | Add Google AI Studio / Gemini vision provider wiring for bounded Gemini experiments and evals |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -59,6 +58,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
 | [TASK-117](./TASK-117_Truth_Layer_Assertion_Wave.md) | **Truth Layer Assertion Wave** | 🔴 High | 2026-03-25 |
 | [TASK-121-04-01-03](./TASK-121-04-01-03_OpenRouter_Model_Catalog_And_API_Key_Path.md) | **OpenRouter Model Catalog and API-Key Path** | 🟡 Medium | 2026-03-30 |
+| [TASK-121-04-01-04](./TASK-121-04-01-04_Google_AI_Studio_Gemini_Vision_Path.md) | **Google AI Studio Gemini Vision Path** | 🟡 Medium | 2026-03-30 |
 | [TASK-121-08](./TASK-121-08_Session_Aware_Reference_Correction_Auto_Loop.md) | **Session-Aware Reference Correction Auto Loop** | 🔴 High | 2026-03-30 |
 | [TASK-121-07](./TASK-121-07_Vision_Guided_Iterative_Correction_Loop.md) | **Vision-Guided Iterative Correction Loop** | 🔴 High | 2026-03-30 |
 | [TASK-121-03-04](./TASK-121-03-04_User_View_Manipulation_For_Viewport_Capture.md) | **User-View Manipulation for Viewport Capture** | 🟡 Medium | 2026-03-30 |

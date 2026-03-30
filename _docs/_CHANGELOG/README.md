@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [174](./174-2026-03-30-google-ai-studio-gemini-vision-path.md) | 2026-03-30 | **Google AI Studio Gemini vision path** | - |
 | [173](./173-2026-03-30-openrouter-vision-provider-path.md) | 2026-03-30 | **OpenRouter vision provider path** | - |
 | [172](./172-2026-03-30-multi-object-reference-loop-scope.md) | 2026-03-30 | **Multi-object reference loop scope** | - |
 | [171](./171-2026-03-30-session-aware-reference-auto-loop.md) | 2026-03-30 | **Session-aware reference auto loop** | - |

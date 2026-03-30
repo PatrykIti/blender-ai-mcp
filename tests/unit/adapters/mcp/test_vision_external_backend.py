@@ -54,6 +54,10 @@ def _config(**overrides) -> Config:
         "VISION_OPENROUTER_API_KEY_ENV": None,
         "VISION_OPENROUTER_SITE_URL": None,
         "VISION_OPENROUTER_SITE_NAME": None,
+        "VISION_GEMINI_BASE_URL": None,
+        "VISION_GEMINI_MODEL": None,
+        "VISION_GEMINI_API_KEY": None,
+        "VISION_GEMINI_API_KEY_ENV": None,
     }
     payload.update(overrides)
     return Config(**payload)
@@ -215,6 +219,55 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert captured["headers"]["Authorization"] == "Bearer openrouter-secret"
     assert captured["headers"]["HTTP-Referer"] == "https://example.com"
     assert captured["headers"]["X-Title"] == "blender-ai-mcp-dev"
+
+
+def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch, tmp_path):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(
+        _config(
+            VISION_EXTERNAL_PROVIDER="google_ai_studio",
+            VISION_EXTERNAL_BASE_URL=None,
+            VISION_EXTERNAL_MODEL=None,
+            VISION_GEMINI_MODEL="gemini-2.5-flash",
+            VISION_GEMINI_API_KEY="gemini-secret",
+        )
+    )
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="reference"),))
+
+    captured: dict = {}
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse(
+                {
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [
+                                    {
+                                        "text": '{"goal_summary":"ok","visible_changes":[],"shape_mismatches":[],"proportion_mismatches":[],"correction_focus":[],"likely_issues":[],"next_corrections":[],"recommended_checks":[]}'
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ),
+            captured=captured,
+        ),
+    )
+
+    result = asyncio.run(backend.analyze(request))
+
+    assert result["backend_kind"] == "openai_compatible_external"
+    assert captured["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    assert captured["headers"]["x-goog-api-key"] == "gemini-secret"
+    assert captured["json"]["generationConfig"]["responseMimeType"] == "application/json"
+    assert "contents" in captured["json"]
 
 
 def test_external_backend_rejects_invalid_json_content(monkeypatch, tmp_path):

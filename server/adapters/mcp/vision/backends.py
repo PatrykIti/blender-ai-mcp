@@ -59,6 +59,30 @@ def _extract_message_text(payload: dict[str, Any]) -> str:
     raise VisionBackendUnavailableError("Vision endpoint returned an unsupported message content shape.")
 
 
+def _extract_gemini_text(payload: dict[str, Any]) -> str:
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise VisionBackendUnavailableError("Gemini endpoint returned no candidates.")
+
+    content = candidates[0].get("content")
+    if not isinstance(content, dict):
+        raise VisionBackendUnavailableError("Gemini endpoint returned no content payload.")
+
+    parts = content.get("parts")
+    if not isinstance(parts, list) or not parts:
+        raise VisionBackendUnavailableError("Gemini endpoint returned no content parts.")
+
+    chunks: list[str] = []
+    for item in parts:
+        if isinstance(item, dict):
+            text = item.get("text")
+            if isinstance(text, str):
+                chunks.append(text)
+    if chunks:
+        return "".join(chunks)
+    raise VisionBackendUnavailableError("Gemini endpoint returned no text parts.")
+
+
 def _build_input_summary(request: VisionRequest) -> dict[str, Any]:
     before = sum(1 for image in request.images if image.role == "before")
     after = sum(1 for image in request.images if image.role == "after")
@@ -410,6 +434,11 @@ class OpenAICompatibleVisionBackend(VisionBackend):
 
     def _endpoint_url(self) -> str:
         base_url = (self._external_config.base_url or "").rstrip("/")
+        if self._external_config.provider_name == "google_ai_studio":
+            model_name = self.model_name
+            if model_name.startswith("models/"):
+                return f"{base_url}/{model_name}:generateContent"
+            return f"{base_url}/models/{model_name}:generateContent"
         if base_url.endswith("/chat/completions"):
             return base_url
         return f"{base_url}/chat/completions"
@@ -419,6 +448,8 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             return self._external_config.api_key
         if self._external_config.api_key_env:
             return os.getenv(self._external_config.api_key_env) or None
+        if self._external_config.provider_name == "google_ai_studio":
+            return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or None
         return None
 
     def _provider_headers(self) -> dict[str, str]:
@@ -431,6 +462,36 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         return headers
 
     def _build_request_payload(self, request: VisionRequest) -> dict[str, Any]:
+        if self._external_config.provider_name == "google_ai_studio":
+            parts: list[dict[str, Any]] = [{"text": build_vision_payload_text(request)}]
+            for image in request.images:
+                media_type = _media_type_for(image.path, image.media_type)
+                encoded = base64.b64encode(Path(image.path).read_bytes()).decode("ascii")
+                parts.append(
+                    {
+                        "inline_data": {
+                            "mime_type": media_type,
+                            "data": encoded,
+                        }
+                    }
+                )
+
+            return {
+                "systemInstruction": {
+                    "parts": [
+                        {
+                            "text": build_vision_system_prompt(backend_kind=self.backend_kind),
+                        }
+                    ]
+                },
+                "contents": [{"parts": parts}],
+                "generationConfig": {
+                    "temperature": 0.0,
+                    "maxOutputTokens": self._runtime_config.max_tokens,
+                    "responseMimeType": "application/json",
+                },
+            }
+
         content: list[dict[str, Any]] = [
             {
                 "type": "text",
@@ -464,7 +525,9 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         headers = {"Content-Type": "application/json"}
         headers.update(self._provider_headers())
         api_key = self._resolved_api_key()
-        if api_key:
+        if api_key and self._external_config.provider_name == "google_ai_studio":
+            headers["x-goog-api-key"] = api_key
+        elif api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
         timeout = httpx.Timeout(self._runtime_config.timeout_seconds)
@@ -484,7 +547,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
         except Exception as exc:  # pragma: no cover - defensive normalization
             raise VisionBackendUnavailableError(f"Vision endpoint execution failed: {exc}") from exc
 
-        content = _extract_message_text(parsed_response)
+        if self._external_config.provider_name == "google_ai_studio":
+            content = _extract_gemini_text(parsed_response)
+        else:
+            content = _extract_message_text(parsed_response)
         try:
             self._last_output_diagnostics = diagnose_vision_output_text(content)
             parsed_content = parse_vision_output_text(content, request)

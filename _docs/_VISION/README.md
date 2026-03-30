@@ -231,6 +231,31 @@ poetry run python scripts/vision_harness.py \
   --golden-json tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/golden.json
 ```
 
+Google AI Studio / Gemini can now also be used through the same
+`openai_compatible_external` path.
+
+Minimal setup:
+
+```bash
+export VISION_ENABLED=1
+export VISION_PROVIDER=openai_compatible_external
+export VISION_EXTERNAL_PROVIDER=google_ai_studio
+export VISION_GEMINI_MODEL="gemini-2.5-flash"
+export VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY
+export GEMINI_API_KEY="<your-google-ai-studio-key>"
+```
+
+Harness example:
+
+```bash
+poetry run python scripts/vision_harness.py \
+  --backend openai_compatible_external \
+  --external-provider google_ai_studio \
+  --gemini-model "gemini-2.5-flash" \
+  --gemini-api-key-env GEMINI_API_KEY \
+  --golden-json tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/golden.json
+```
+
 Opt-in real-model comparison for the new view-family variants:
 
 ```bash

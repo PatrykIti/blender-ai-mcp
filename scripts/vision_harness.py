@@ -238,6 +238,10 @@ def _config_for_backend(args: argparse.Namespace, backend: str) -> Config:
         "VISION_OPENROUTER_API_KEY_ENV": args.openrouter_api_key_env if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_SITE_URL": args.openrouter_site_url if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_SITE_NAME": args.openrouter_site_name if backend == "openai_compatible_external" else None,
+        "VISION_GEMINI_BASE_URL": args.gemini_base_url if backend == "openai_compatible_external" else None,
+        "VISION_GEMINI_MODEL": args.gemini_model if backend == "openai_compatible_external" else None,
+        "VISION_GEMINI_API_KEY": args.gemini_api_key if backend == "openai_compatible_external" else None,
+        "VISION_GEMINI_API_KEY_ENV": args.gemini_api_key_env if backend == "openai_compatible_external" else None,
     }
     return Config(**payload)
 
@@ -315,13 +319,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--external-model", default=os.getenv("VISION_EXTERNAL_MODEL"))
     parser.add_argument("--external-api-key", default=os.getenv("VISION_EXTERNAL_API_KEY"))
     parser.add_argument("--external-api-key-env", default=os.getenv("VISION_EXTERNAL_API_KEY_ENV"))
-    parser.add_argument("--external-provider", choices=["generic", "openrouter"], default=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"))
+    parser.add_argument(
+        "--external-provider",
+        choices=["generic", "openrouter", "google_ai_studio"],
+        default=os.getenv("VISION_EXTERNAL_PROVIDER", "generic"),
+    )
     parser.add_argument("--openrouter-base-url", default=os.getenv("VISION_OPENROUTER_BASE_URL"))
     parser.add_argument("--openrouter-model", default=os.getenv("VISION_OPENROUTER_MODEL"))
     parser.add_argument("--openrouter-api-key", default=os.getenv("VISION_OPENROUTER_API_KEY"))
     parser.add_argument("--openrouter-api-key-env", default=os.getenv("VISION_OPENROUTER_API_KEY_ENV"))
     parser.add_argument("--openrouter-site-url", default=os.getenv("VISION_OPENROUTER_SITE_URL"))
     parser.add_argument("--openrouter-site-name", default=os.getenv("VISION_OPENROUTER_SITE_NAME"))
+    parser.add_argument("--gemini-base-url", default=os.getenv("VISION_GEMINI_BASE_URL"))
+    parser.add_argument("--gemini-model", default=os.getenv("VISION_GEMINI_MODEL"))
+    parser.add_argument("--gemini-api-key", default=os.getenv("VISION_GEMINI_API_KEY"))
+    parser.add_argument("--gemini-api-key-env", default=os.getenv("VISION_GEMINI_API_KEY_ENV"))
     parser.add_argument("--local-device", default=os.getenv("VISION_LOCAL_DEVICE", "cpu"))
     parser.add_argument("--local-dtype", default=os.getenv("VISION_LOCAL_DTYPE", "auto"))
     return parser
