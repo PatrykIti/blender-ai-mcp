@@ -62,7 +62,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
-- `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus and can escalate into inspect/validate when the same correction repeats
+- `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 
 Current guided bootstrap surface:
 

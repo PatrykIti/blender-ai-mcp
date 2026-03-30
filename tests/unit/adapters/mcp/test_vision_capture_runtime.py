@@ -161,6 +161,29 @@ def test_capture_stage_images_can_use_rich_profile(tmp_path, monkeypatch):
     assert len(handler.orbit_calls) == 2
 
 
+def test_capture_stage_images_can_isolate_multiple_objects_without_single_focus(tmp_path, monkeypatch):
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    handler = _Handler()
+    captures = capture_stage_images(
+        handler,
+        bundle_id="bundle_multi",
+        stage="after",
+        target_objects=["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        preset_profile="compact",
+    )
+
+    assert len(captures) == 4
+    assert handler.isolate_calls == [
+        ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+        ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"],
+    ]
+    assert handler.focus_calls == []
+    assert handler.calls[1]["focus_target"] is None
+
+
 def test_build_capture_bundle_collects_preset_names(tmp_path, monkeypatch):
     monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
     monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))

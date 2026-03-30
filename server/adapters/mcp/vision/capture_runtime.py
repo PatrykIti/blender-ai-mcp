@@ -188,6 +188,7 @@ def capture_stage_images(
     bundle_id: str,
     stage: CaptureStage,
     target_object: str | None = None,
+    target_objects: list[str] | tuple[str, ...] | None = None,
     preset_specs: tuple[CapturePresetSpec, ...] | None = None,
     preset_profile: CapturePresetProfile = "compact",
 ) -> list[VisionCaptureImageContract]:
@@ -197,13 +198,15 @@ def capture_stage_images(
     original_state = capture_scene_state(scene_handler)
     captures: list[VisionCaptureImageContract] = []
     try:
+        normalized_target_objects = [name for name in list(target_objects or []) if str(name).strip()]
+        isolate_names = normalized_target_objects or ([target_object] if target_object else [])
         for preset in resolved_preset_specs:
             focus_target = target_object if preset.focus_target else None
             if preset is not resolved_preset_specs[0]:
                 restore_scene_state(scene_handler, original_state)
-            if focus_target and preset.isolate_target and hasattr(scene_handler, "isolate_object"):
+            if isolate_names and preset.isolate_target and hasattr(scene_handler, "isolate_object"):
                 try:
-                    scene_handler.isolate_object([focus_target])
+                    scene_handler.isolate_object(isolate_names)
                 except Exception:
                     pass
             if preset.standard_view and hasattr(scene_handler, "set_standard_view"):

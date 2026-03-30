@@ -21,6 +21,11 @@ Delivered:
     - `stop`
   - escalates to `inspect_validate` when the same correction focus repeats
     across multiple stage iterations
+  - can now target:
+    - one object
+    - many objects via `target_objects=[...]`
+    - a whole collection via `collection_name=...`
+    - or the full assembled silhouette by omitting target scope
 
 Why this matters:
 

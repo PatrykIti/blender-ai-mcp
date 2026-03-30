@@ -11,6 +11,8 @@
   ],
   "parameters": {
     "target_object": {"type": "string", "default": null},
+    "target_objects": {"type": "array", "default": null},
+    "collection_name": {"type": "string", "default": null},
     "checkpoint_label": {"type": "string", "default": null},
     "target_view": {"type": "string", "default": null},
     "goal_override": {"type": "string", "default": null},

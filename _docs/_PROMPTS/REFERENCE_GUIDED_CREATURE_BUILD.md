@@ -50,6 +50,11 @@ Zasady:
 - keep parts as separate objects
 - skup się na low-poly shape match, nie na materiałach i futrze
 - po każdym etapie użyj `reference_iterate_stage_checkpoint(...)`
+- dla etapów z jedną główną bryłą możesz używać `target_object=...`
+- dla złożonej pełnej sylwetki użyj:
+  - `target_objects=[...]`
+  - albo `collection_name="Squirrel"`
+  - albo nic, jeśli chcesz compare całej złożonej sceny/sylwetki
 
 Workflow:
 1. `router_get_status()`
@@ -91,3 +96,5 @@ Na końcu każdego etapu zwróć tylko:
 - `loop_disposition="inspect_validate"` oznacza, że system wykrywa powtarzający
   się focus i lepiej przejść chwilowo do truth-layer verification niż dalej
   zgadywać korekty
+- dla pełnej wieloczęściowej wiewiórki nie zawężaj finalnych iteracji do samego
+  `Squirrel_Body`, bo loop oceni wtedy tylko korpus

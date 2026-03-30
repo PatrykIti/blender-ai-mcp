@@ -39,7 +39,7 @@ from server.adapters.mcp.vision import (
     run_vision_assist,
     select_reference_records_for_target,
 )
-from server.infrastructure.di import get_scene_handler, get_vision_backend_resolver
+from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
 REFERENCE_PUBLIC_TOOL_NAMES = (
@@ -140,6 +140,8 @@ def _stage_compare_response(
     checkpoint_label: str | None,
     goal: str | None,
     target_object: str | None,
+    target_objects: list[str],
+    collection_name: str | None,
     target_view: str | None,
     preset_profile: CapturePresetProfile,
     preset_names: list[str],
@@ -154,6 +156,8 @@ def _stage_compare_response(
         action="compare_stage_checkpoint",
         goal=goal,
         target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -174,6 +178,8 @@ def _iterate_stage_response(
     *,
     goal: str | None,
     target_object: str | None,
+    target_objects: list[str],
+    collection_name: str | None,
     target_view: str | None,
     checkpoint_id: str,
     checkpoint_label: str | None,
@@ -194,6 +200,8 @@ def _iterate_stage_response(
         action="iterate_stage_checkpoint",
         goal=goal,
         target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -236,6 +244,46 @@ def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointRes
         seen.add(normalized)
         deduped.append(item)
     return deduped[:3]
+
+
+def _dedupe_names(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in values:
+        normalized = item.strip()
+        key = normalized.lower()
+        if not normalized or key in seen:
+            continue
+        seen.add(key)
+        result.append(normalized)
+    return result
+
+
+def _resolve_capture_scope(
+    *,
+    target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
+) -> tuple[str | None, list[str], str | None]:
+    resolved_target_objects = _dedupe_names(list(target_objects or []))
+    if target_object:
+        resolved_target_objects = _dedupe_names([target_object, *resolved_target_objects])
+
+    if collection_name:
+        collection_payload = get_collection_handler().list_objects(
+            collection_name=collection_name,
+            recursive=True,
+            include_hidden=False,
+        )
+        collection_objects = [
+            str(item.get("name")).strip()
+            for item in collection_payload.get("objects", [])
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
+        resolved_target_objects = _dedupe_names([*resolved_target_objects, *collection_objects])
+
+    normalized_primary = target_object if target_object else (resolved_target_objects[0] if len(resolved_target_objects) == 1 else None)
+    return normalized_primary, resolved_target_objects, collection_name
 
 
 def _repeated_focus(current: list[str], prior: list[str]) -> list[str]:
@@ -369,6 +417,8 @@ async def _run_stage_checkpoint_compare(
     checkpoint_id: str,
     checkpoint_label: str | None,
     target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
     target_view: str | None,
     preset_profile: CapturePresetProfile,
     goal_override: str | None,
@@ -384,6 +434,8 @@ async def _run_stage_checkpoint_compare(
             checkpoint_label=checkpoint_label,
             goal=None,
             target_object=target_object,
+            target_objects=list(target_objects or []),
+            collection_name=collection_name,
             target_view=target_view,
             preset_profile=preset_profile,
             preset_names=[],
@@ -392,10 +444,32 @@ async def _run_stage_checkpoint_compare(
             error="Set an active goal with router_set_goal(...) before comparing a stage checkpoint, or pass goal_override.",
         )
 
+    try:
+        resolved_target_object, resolved_target_objects, resolved_collection_name = _resolve_capture_scope(
+            target_object=target_object,
+            target_objects=target_objects,
+            collection_name=collection_name,
+        )
+    except RuntimeError as exc:
+        return _stage_compare_response(
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            goal=goal,
+            target_object=target_object,
+            target_objects=list(target_objects or []),
+            collection_name=collection_name,
+            target_view=target_view,
+            preset_profile=preset_profile,
+            preset_names=[],
+            reference_ids=[],
+            reference_labels=[],
+            error=str(exc),
+        )
+
     references = list(session.reference_images or [])
     selected_reference_records = select_reference_records_for_target(
         references,
-        target_object=target_object,
+        target_object=resolved_target_object,
         target_view=target_view,
     )
     if not selected_reference_records:
@@ -403,7 +477,9 @@ async def _run_stage_checkpoint_compare(
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
-            target_object=target_object,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
             target_view=target_view,
             preset_profile=preset_profile,
             preset_names=[],
@@ -417,7 +493,8 @@ async def _run_stage_checkpoint_compare(
             get_scene_handler(),
             bundle_id=checkpoint_id,
             stage="after",
-            target_object=target_object,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
             preset_profile=preset_profile,
         )
     except RuntimeError as exc:
@@ -425,7 +502,9 @@ async def _run_stage_checkpoint_compare(
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
-            target_object=target_object,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
             target_view=target_view,
             preset_profile=preset_profile,
             preset_names=[],
@@ -438,7 +517,7 @@ async def _run_stage_checkpoint_compare(
     vision_request = build_vision_request_from_stage_captures(
         captures,
         goal=goal,
-        target_object=target_object,
+        target_object=resolved_target_object,
         reference_images=reference_images,
         prompt_hint=" | ".join(
             part
@@ -447,6 +526,8 @@ async def _run_stage_checkpoint_compare(
                 "comparison_mode=stage_checkpoint_vs_reference",
                 f"checkpoint_label={checkpoint_label}" if checkpoint_label else None,
                 f"preset_profile={preset_profile}",
+                f"collection_name={resolved_collection_name}" if resolved_collection_name else None,
+                f"target_objects={','.join(resolved_target_objects)}" if resolved_target_objects else None,
                 f"target_view={target_view}" if target_view else None,
                 *[
                     f"capture[{index}] label={capture.label}"
@@ -466,6 +547,8 @@ async def _run_stage_checkpoint_compare(
             "checkpoint_id": checkpoint_id,
             "preset_profile": preset_profile,
             "capture_count": len(captures),
+            "collection_name": resolved_collection_name,
+            "target_objects": list(resolved_target_objects),
         },
     )
     outcome = await run_vision_assist(
@@ -478,7 +561,9 @@ async def _run_stage_checkpoint_compare(
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
-        target_object=target_object,
+        target_object=resolved_target_object,
+        target_objects=resolved_target_objects,
+        collection_name=resolved_collection_name,
         target_view=target_view,
         preset_profile=preset_profile,
         preset_names=[capture.preset_name or capture.label for capture in captures],
@@ -755,6 +840,8 @@ async def reference_compare_current_view(
 async def reference_compare_stage_checkpoint(
     ctx: Context,
     target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
     checkpoint_label: str | None = None,
     target_view: str | None = None,
     goal_override: str | None = None,
@@ -763,13 +850,15 @@ async def reference_compare_stage_checkpoint(
 ) -> ReferenceCompareStageCheckpointResponseContract:
     """Capture one deterministic stage view-set and compare it against attached references."""
 
-    checkpoint_target = target_object or "scene"
+    checkpoint_target = collection_name or target_object or "scene"
     checkpoint_id = f"stage_checkpoint_{checkpoint_target}_{uuid4().hex[:8]}"
     return await _run_stage_checkpoint_compare(
         ctx,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
         target_view=target_view,
         preset_profile=preset_profile,
         goal_override=goal_override,
@@ -780,6 +869,8 @@ async def reference_compare_stage_checkpoint(
 async def reference_iterate_stage_checkpoint(
     ctx: Context,
     target_object: str | None = None,
+    target_objects: list[str] | None = None,
+    collection_name: str | None = None,
     checkpoint_label: str | None = None,
     target_view: str | None = None,
     goal_override: str | None = None,
@@ -791,6 +882,8 @@ async def reference_iterate_stage_checkpoint(
     compare_result = await reference_compare_stage_checkpoint(
         ctx,
         target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
         checkpoint_label=checkpoint_label,
         target_view=target_view,
         goal_override=goal_override,
@@ -807,6 +900,8 @@ async def reference_iterate_stage_checkpoint(
         return _iterate_stage_response(
             goal=goal,
             target_object=target_object,
+            target_objects=list(target_objects or []),
+            collection_name=collection_name,
             target_view=target_view,
             checkpoint_id=compare_result.checkpoint_id,
             checkpoint_label=checkpoint_label,
@@ -832,6 +927,8 @@ async def reference_iterate_stage_checkpoint(
         prior_state is not None
         and prior_state.get("goal") == goal
         and prior_state.get("target_object") == target_object
+        and list(prior_state.get("target_objects") or []) == list(compare_result.target_objects or [])
+        and prior_state.get("collection_name") == collection_name
     )
     prior_checkpoint_id = str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
     prior_correction_focus = list(prior_state.get("last_correction_focus") or []) if same_loop else []
@@ -849,6 +946,8 @@ async def reference_iterate_stage_checkpoint(
         {
             "goal": goal,
             "target_object": target_object,
+            "target_objects": list(compare_result.target_objects or []),
+            "collection_name": collection_name,
             "last_checkpoint_id": compare_result.checkpoint_id,
             "last_checkpoint_label": checkpoint_label,
             "last_correction_focus": correction_focus,
@@ -870,6 +969,8 @@ async def reference_iterate_stage_checkpoint(
     return _iterate_stage_response(
         goal=goal,
         target_object=target_object,
+        target_objects=list(compare_result.target_objects or []),
+        collection_name=collection_name,
         target_view=target_view,
         checkpoint_id=compare_result.checkpoint_id,
         checkpoint_label=checkpoint_label,

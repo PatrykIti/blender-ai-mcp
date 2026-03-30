@@ -65,6 +65,8 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     action: Literal["compare_stage_checkpoint"] = "compare_stage_checkpoint"
     goal: str | None = None
     target_object: str | None = None
+    target_objects: list[str] = []
+    collection_name: str | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -86,6 +88,8 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     action: Literal["iterate_stage_checkpoint"] = "iterate_stage_checkpoint"
     goal: str | None = None
     target_object: str | None = None
+    target_objects: list[str] = []
+    collection_name: str | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
