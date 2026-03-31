@@ -28,4 +28,4 @@ def test_transform_pipeline_materializes_only_active_transforms():
 
     transforms = materialize_transforms(get_surface_profile("llm-guided"))
 
-    assert len(transforms) == 7
+    assert len(transforms) == 9

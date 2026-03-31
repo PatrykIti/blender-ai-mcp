@@ -7,9 +7,7 @@ import json
 
 from fastmcp import FastMCP
 from fastmcp.server.transforms.visibility import create_visibility_transforms
-
-from server.adapters.mcp.factory import build_server
-from server.adapters.mcp.factory import build_surface_providers
+from server.adapters.mcp.factory import build_server, build_surface_providers
 from server.adapters.mcp.session_phase import SessionPhase
 from server.adapters.mcp.surfaces import get_surface_profile
 from server.adapters.mcp.transforms import build_surface_transform_pipeline
@@ -85,8 +83,8 @@ def test_guided_surface_phase_baselines_stay_intentional():
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
     assert len(bootstrap_names) == 6
-    assert len(build_names) == 108
-    assert len(inspect_names) == 38
+    assert len(build_names) == 112
+    assert len(inspect_names) == 42
 
     assert bootstrap_names == {
         "browse_workflows",
