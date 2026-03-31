@@ -43,6 +43,7 @@ The business idea formalized in `TASK-113` is simple:
 - **Workflow tools** are bounded multi-step process tools with explicit reporting, not open-ended "do anything" endpoints.
 - **Goal-first orchestration** keeps sessions anchored to an active intent instead of making the model rediscover context on every turn.
 - **Vision assists interpretation**, while deterministic measurement and assertions provide the final truth layer.
+- **Pluggable vision runtimes** now cover local MLX plus external OpenRouter and Google AI Studio / Gemini provider paths behind the same bounded contract.
 
 This is what turns the project from "Blender tools exposed over MCP" into a usable AI control product for modeling pipelines.
 
