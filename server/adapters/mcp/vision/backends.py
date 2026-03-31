@@ -21,6 +21,7 @@ from .parsing import diagnose_vision_output_text, parse_vision_output_text
 from .prompting import (
     build_local_vision_payload_text,
     build_vision_payload_text,
+    build_vision_response_json_schema,
     build_vision_system_prompt,
 )
 
@@ -127,6 +128,22 @@ def _normalize_assist_payload(
             "confidence_is_non_authoritative": True,
         },
     }
+
+
+def _diagnostics_suffix(diagnostics: dict[str, Any] | None) -> str:
+    if not diagnostics:
+        return ""
+    container_shape = diagnostics.get("container_shape")
+    payload_shape = diagnostics.get("payload_shape")
+    preview = str(diagnostics.get("raw_preview") or "").strip().replace("\n", " ")
+    preview = preview[:160]
+    parts = [
+        f"container_shape={container_shape}" if container_shape else None,
+        f"payload_shape={payload_shape}" if payload_shape else None,
+        f"preview={preview}" if preview else None,
+    ]
+    suffix = ", ".join(part for part in parts if part)
+    return f" ({suffix})" if suffix else ""
 
 
 class TransformersLocalVisionBackend(VisionBackend):
@@ -489,6 +506,7 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                     "temperature": 0.0,
                     "maxOutputTokens": self._runtime_config.max_tokens,
                     "responseMimeType": "application/json",
+                    "responseJsonSchema": build_vision_response_json_schema(),
                 },
             }
 
@@ -510,11 +528,24 @@ class OpenAICompatibleVisionBackend(VisionBackend):
                 }
             )
 
+        response_format: dict[str, Any]
+        if self._external_config.provider_name == "openrouter":
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "vision_assist",
+                    "strict": True,
+                    "schema": build_vision_response_json_schema(),
+                },
+            }
+        else:
+            response_format = {"type": "json_object"}
+
         return {
             "model": self.model_name,
             "temperature": 0.0,
             "max_tokens": self._runtime_config.max_tokens,
-            "response_format": {"type": "json_object"},
+            "response_format": response_format,
             "messages": [
                 {"role": "system", "content": build_vision_system_prompt(backend_kind=self.backend_kind)},
                 {"role": "user", "content": content},
@@ -555,7 +586,10 @@ class OpenAICompatibleVisionBackend(VisionBackend):
             self._last_output_diagnostics = diagnose_vision_output_text(content)
             parsed_content = parse_vision_output_text(content, request)
         except (json.JSONDecodeError, ValueError) as exc:
-            raise VisionBackendUnavailableError("Vision endpoint did not return valid JSON content.") from exc
+            raise VisionBackendUnavailableError(
+                "Vision endpoint did not return valid JSON content."
+                f"{_diagnostics_suffix(self._last_output_diagnostics)}"
+            ) from exc
 
         return _normalize_assist_payload(
             backend_kind=self.backend_kind,

@@ -220,6 +220,9 @@ def test_external_backend_supports_openrouter_headers_and_default_endpoint(monke
     assert captured["headers"]["Authorization"] == "Bearer openrouter-secret"
     assert captured["headers"]["HTTP-Referer"] == "https://example.com"
     assert captured["headers"]["X-Title"] == "blender-ai-mcp-dev"
+    assert captured["json"]["response_format"]["type"] == "json_schema"
+    assert captured["json"]["response_format"]["json_schema"]["name"] == "vision_assist"
+    assert captured["json"]["response_format"]["json_schema"]["strict"] is True
 
 
 def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch, tmp_path):
@@ -268,7 +271,29 @@ def test_external_backend_supports_google_ai_studio_generate_content(monkeypatch
     assert captured["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     assert captured["headers"]["x-goog-api-key"] == "gemini-secret"
     assert captured["json"]["generationConfig"]["responseMimeType"] == "application/json"
+    assert "responseJsonSchema" in captured["json"]["generationConfig"]
     assert "contents" in captured["json"]
+
+
+def test_external_backend_invalid_json_error_includes_diagnostics(monkeypatch, tmp_path):
+    image_path = tmp_path / "reference.png"
+    image_path.write_bytes(b"fake-png")
+
+    runtime = build_vision_runtime_config(_config())
+    backend = OpenAICompatibleVisionBackend(runtime)
+    request = VisionRequest(goal="goal", images=(VisionImageInput(path=str(image_path), role="reference"),))
+
+    monkeypatch.setattr(
+        httpx,
+        "AsyncClient",
+        lambda timeout=None: _FakeAsyncClient(
+            response=_FakeResponse({"choices": [{"message": {"content": "not-json"}}]}),
+            captured={},
+        ),
+    )
+
+    with pytest.raises(VisionBackendUnavailableError, match="container_shape=prose"):
+        asyncio.run(backend.analyze(request))
 
 
 def test_external_backend_rejects_invalid_json_content(monkeypatch, tmp_path):

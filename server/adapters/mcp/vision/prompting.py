@@ -173,3 +173,50 @@ def expected_json_keys() -> tuple[str, ...]:
     """Expose the canonical required JSON keys for tests and parse repair."""
 
     return _EXPECTED_KEYS
+
+
+def build_vision_response_json_schema() -> dict[str, object]:
+    """Return a provider-agnostic JSON Schema for bounded vision responses."""
+
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "goal_summary": {"type": "string"},
+            "reference_match_summary": {"type": ["string", "null"]},
+            "visible_changes": {"type": "array", "items": {"type": "string"}},
+            "shape_mismatches": {"type": "array", "items": {"type": "string"}},
+            "proportion_mismatches": {"type": "array", "items": {"type": "string"}},
+            "correction_focus": {"type": "array", "items": {"type": "string"}},
+            "likely_issues": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "category": {"type": "string"},
+                        "summary": {"type": "string"},
+                        "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+                    },
+                    "required": ["category", "summary"],
+                },
+            },
+            "next_corrections": {"type": "array", "items": {"type": "string"}},
+            "recommended_checks": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "tool_name": {"type": "string"},
+                        "reason": {"type": "string"},
+                        "priority": {"type": "string", "enum": ["high", "normal"]},
+                    },
+                    "required": ["tool_name", "reason"],
+                },
+            },
+            "confidence": {"type": ["number", "null"]},
+            "captures_used": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["goal_summary", "visible_changes", "captures_used"],
+    }
