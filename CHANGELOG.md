@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Chores
+
+- Relicense the repository to Apache License 2.0 and align current repo docs,
+  NOTICE, and SPDX headers with the new license
+
 ### Testing
 
 - Expand regression coverage for MCP contracts, MCP area main paths, server-side RPC result alignment, and FastMCP surface runtime behavior

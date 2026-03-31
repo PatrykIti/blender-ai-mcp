@@ -11,7 +11,7 @@ Thank you for your interest in contributing! We are building a professional, rob
 
 ## 📜 License (Important)
 
-This repository is licensed under the **Business Source License 1.1 (BUSL-1.1)** (see `LICENSE.md`).
+This repository is licensed under the **Apache License 2.0** (see `LICENSE.md`).
 By submitting a contribution (code, docs, workflows, etc.), you agree that your contribution will be licensed under the same terms.
 
 ## 🏗️ Architecture Compliance (Mandatory)

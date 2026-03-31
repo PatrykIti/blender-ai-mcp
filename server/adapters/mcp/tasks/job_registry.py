@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
 
 """Registry for MCP task bookkeeping and addon job identity mapping."""
 

@@ -1,6 +1,6 @@
 # blender-ai-mcp
 
-[![License: BUSL-1.1](https://img.shields.io/badge/License-BUSL--1.1-lightgrey.svg)](./LICENSE.md)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE.md)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
@@ -393,48 +393,9 @@ Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a PR. The repo enforces
 
 ## License
 
-This project is licensed under the **Business Source License 1.1 (BUSL 1.1)**.
+This project is licensed under the **Apache License 2.0**.
 
-This means the repository is **source-available, not Open Source** in the OSI
-sense. The full legal terms are in [LICENSE.md](./LICENSE.md). The summary
-below is informational only; if there is any conflict, `LICENSE.md` controls.
+See:
 
-Allowed without a separate commercial license:
-
-- non-production use such as evaluation, development, testing, and research
-- internal organizational use, including production use, as long as you are not
-  offering the Licensed Work itself to third parties on a hosted or embedded
-  basis as a competing product
-- internal use to create outputs for clients, such as assets, renders, or
-  reports, without giving clients access to the Licensed Work itself
-
-Commercial license required:
-
-- offering this repository, or its functionality, to third parties on a
-  hosted basis in order to operate a competing offering
-- embedding or bundling this repository into a product that is offered to third
-  parties in order to operate a competing offering
-
-Practical examples:
-
-- `Hosted` means a third party can use your deployed MCP/API surface over the
-  network without obtaining their own copy of this repository
-- `Embedded` means your product includes this repository's source or binaries,
-  or depends on them being installed/accessed/downloaded for the product to
-  operate
-- if you use the repo internally inside your studio/company to produce Blender
-  deliverables for clients, that is described in [LICENSE.md](./LICENSE.md) as
-  not being a competing offering
-
-Change License:
-
-- the current `LICENSE.md` names **Apache License 2.0** as the Change License;
-  see [LICENSE-APACHE-2.0.txt](./LICENSE-APACHE-2.0.txt)
-- the current Change Date in `LICENSE.md` is **2029-12-01**
-- under BUSL 1.1, the Change License also takes effect on the fourth
-  anniversary of the first public distribution of a specific version, whichever
-  comes first
-
-If you need rights beyond the Additional Use Grant, including operating a
-competing hosted or embedded offering, use the contact in
-[LICENSE.md](./LICENSE.md).
+- [LICENSE.md](./LICENSE.md)
+- [NOTICE](./NOTICE)

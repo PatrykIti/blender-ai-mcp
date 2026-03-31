@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
 
 """Helpers for converting deterministic capture artifacts into vision requests."""
 

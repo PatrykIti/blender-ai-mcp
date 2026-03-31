@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [175](./175-2026-03-31-relicense-to-apache-2.0.md) | 2026-03-31 | **Relicense to Apache 2.0** | - |
 | [174](./174-2026-03-30-google-ai-studio-gemini-vision-path.md) | 2026-03-30 | **Google AI Studio Gemini vision path** | - |
 | [173](./173-2026-03-30-openrouter-vision-provider-path.md) | 2026-03-30 | **OpenRouter vision provider path** | - |
 | [172](./172-2026-03-30-multi-object-reference-loop-scope.md) | 2026-03-30 | **Multi-object reference loop scope** | - |

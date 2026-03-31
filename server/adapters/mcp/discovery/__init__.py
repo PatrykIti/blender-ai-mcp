@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
 
 """Discovery inventory and search helpers for TASK-084."""
 
