@@ -11,12 +11,14 @@ core MCP server bootstrap path.
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Literal, cast
 
 from server.infrastructure.config import Config
 
 from .backend import VisionBackend, VisionBackendUnavailableError
 from .backends import create_vision_backend
 from .config import (
+    VisionBackendKind,
     VisionMLXLocalConfig,
     VisionOpenAICompatibleConfig,
     VisionRuntimeConfig,
@@ -52,6 +54,14 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         bool(config.VISION_GEMINI_MODEL) or config.VISION_EXTERNAL_PROVIDER == "google_ai_studio"
     )
     if use_openrouter_profile or use_google_ai_studio_profile or config.VISION_EXTERNAL_BASE_URL or config.VISION_EXTERNAL_MODEL:
+        external_provider_name: Literal["generic", "openrouter", "google_ai_studio"]
+        external_base_url: str | None
+        external_model: str | None
+        external_api_key: str | None
+        external_api_key_env: str | None
+        site_url: str | None
+        site_name: str | None
+
         if use_openrouter_profile:
             external_provider_name = "openrouter"
             external_base_url = config.VISION_OPENROUTER_BASE_URL or _OPENROUTER_DEFAULT_BASE_URL
@@ -89,7 +99,7 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
 
     return VisionRuntimeConfig(
         enabled=config.VISION_ENABLED,
-        provider=config.VISION_PROVIDER,
+        provider=cast(VisionBackendKind, config.VISION_PROVIDER),
         allow_on_guided=config.VISION_ALLOW_ON_GUIDED,
         max_images=config.VISION_MAX_IMAGES,
         max_tokens=config.VISION_MAX_TOKENS,

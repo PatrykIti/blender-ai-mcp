@@ -10,6 +10,7 @@ import mimetypes
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 from uuid import uuid4
 
 from fastmcp import Context
@@ -18,6 +19,7 @@ from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
+    ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
 )
@@ -70,7 +72,7 @@ def _sorted_references(references: list[dict]) -> list[dict]:
 
 def _as_response(
     *,
-    action: str,
+    action: Literal["attach", "list", "remove", "clear"],
     goal: str | None,
     references: list[dict],
     removed_reference_id: str | None = None,
@@ -81,7 +83,7 @@ def _as_response(
         action=action,
         goal=goal,
         reference_count=len(references),
-        references=references,
+        references=[ReferenceImageRecordContract.model_validate(item) for item in references],
         removed_reference_id=removed_reference_id,
         message=message,
         error=error,
@@ -106,7 +108,7 @@ def _copy_reference_image(source_path: Path) -> tuple[str, str]:
 
 def _compare_response(
     *,
-    action: str,
+    action: Literal["compare_checkpoint", "compare_current_view"],
     checkpoint_path: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -184,7 +186,7 @@ def _iterate_stage_response(
     checkpoint_id: str,
     checkpoint_label: str | None,
     iteration_index: int,
-    loop_disposition: str,
+    loop_disposition: Literal["continue_build", "inspect_validate", "stop"],
     continue_recommended: bool,
     prior_checkpoint_id: str | None,
     prior_correction_focus: list[str],
@@ -305,7 +307,7 @@ async def _run_checkpoint_compare(
     target_view: str | None,
     goal_override: str | None,
     prompt_hint: str | None,
-    response_action: str,
+    response_action: Literal["compare_checkpoint", "compare_current_view"],
 ) -> ReferenceCompareCheckpointResponseContract:
     """Shared bounded checkpoint compare path."""
 
@@ -893,7 +895,9 @@ async def reference_iterate_stage_checkpoint(
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
     continue_recommended = bool(correction_focus)
-    loop_disposition = "continue_build" if continue_recommended else "stop"
+    loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
+        "continue_build" if continue_recommended else "stop"
+    )
     stop_reason = None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
 
     if compare_result.error or goal is None:

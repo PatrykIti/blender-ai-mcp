@@ -141,7 +141,7 @@ class SculptHandler:
         length = self._vector_length(vector)
         if length == 0:
             return (0.0, 0.0, 0.0)
-        return tuple(component / length for component in vector)
+        return self._coerce_xyz([component / length for component in vector])
 
     def _strongest_region_source(
         self,
@@ -165,13 +165,13 @@ class SculptHandler:
             mirrored_center[axis_index] *= -1.0
 
             mirror_weight = self._falloff_weight(
-                self._distance(vertex_co, tuple(mirrored_center)),
+                self._distance(vertex_co, self._coerce_xyz(mirrored_center)),
                 radius,
                 falloff,
             )
             if mirror_weight > best_weight:
                 best_weight = mirror_weight
-                best_center = tuple(mirrored_center)
+                best_center = self._coerce_xyz(mirrored_center)
                 mirrored = True
 
         return best_weight, best_center, mirrored
@@ -181,7 +181,7 @@ class SculptHandler:
         """Build one-hop adjacency map from mesh edges."""
 
         vertices = list(getattr(obj.data, "vertices", []))
-        adjacency = {index: set() for index in range(len(vertices))}
+        adjacency: dict[int, set[int]] = {index: set() for index in range(len(vertices))}
 
         for edge in getattr(obj.data, "edges", []):
             vert_indices = getattr(edge, "vertices", None)
@@ -364,14 +364,14 @@ class SculptHandler:
                     axis_index = self._mirror_axis_index(symmetry_axis)
                     mirrored_delta = list(delta_local)
                     mirrored_delta[axis_index] *= -1.0
-                    chosen_delta = tuple(mirrored_delta)
+                    chosen_delta = self._coerce_xyz(mirrored_delta)
 
                 weight = base_weight * clamped_strength
 
                 if weight <= 0:
                     continue
 
-                new_co = tuple(vertex_co[i] + chosen_delta[i] * weight for i in range(3))
+                new_co = self._coerce_xyz([vertex_co[i] + chosen_delta[i] * weight for i in range(3)])
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1
                 max_weight = max(max_weight, weight)
@@ -445,12 +445,15 @@ class SculptHandler:
                     neighbors = adjacency.get(index, set())
                     if not neighbors:
                         continue
-                    neighbor_average = tuple(
-                        sum(snapshot[neighbor][axis] for neighbor in neighbors) / len(neighbors) for axis in range(3)
+                    neighbor_average = self._coerce_xyz(
+                        [sum(snapshot[neighbor][axis] for neighbor in neighbors) / len(neighbors) for axis in range(3)]
                     )
                     current = snapshot[index]
-                    next_positions[index] = tuple(
-                        current[axis] + (neighbor_average[axis] - current[axis]) * weight for axis in range(3)
+                    next_positions[index] = self._coerce_xyz(
+                        [
+                            current[axis] + (neighbor_average[axis] - current[axis]) * weight
+                            for axis in range(3)
+                        ]
                     )
 
                 for index, new_co in next_positions.items():
@@ -515,9 +518,11 @@ class SculptHandler:
                 if normal_source is not None:
                     direction = self._normalize_vector(self._coerce_xyz(normal_source))
                 else:
-                    direction = self._normalize_vector(tuple(vertex_co[axis] - chosen_center[axis] for axis in range(3)))
+                    direction = self._normalize_vector(
+                        self._coerce_xyz([vertex_co[axis] - chosen_center[axis] for axis in range(3)])
+                    )
 
-                new_co = tuple(vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3))
+                new_co = self._coerce_xyz([vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)])
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1
 
@@ -575,8 +580,10 @@ class SculptHandler:
                 if base_weight <= 0:
                     continue
 
-                direction = self._normalize_vector(tuple(chosen_center[axis] - vertex_co[axis] for axis in range(3)))
-                new_co = tuple(vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3))
+                direction = self._normalize_vector(
+                    self._coerce_xyz([chosen_center[axis] - vertex_co[axis] for axis in range(3)])
+                )
+                new_co = self._coerce_xyz([vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)])
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1
 
@@ -638,19 +645,23 @@ class SculptHandler:
 
                 normal_source = getattr(vertex, "normal", None)
                 if normal_source is not None:
-                    inward_normal = tuple(
-                        -component for component in self._normalize_vector(self._coerce_xyz(normal_source))
+                    inward_normal = self._coerce_xyz(
+                        [-component for component in self._normalize_vector(self._coerce_xyz(normal_source))]
                     )
                 else:
                     inward_normal = self._normalize_vector(
-                        tuple(chosen_center[axis] - vertex_co[axis] for axis in range(3))
+                        self._coerce_xyz([chosen_center[axis] - vertex_co[axis] for axis in range(3)])
                     )
 
-                to_center = self._normalize_vector(tuple(chosen_center[axis] - vertex_co[axis] for axis in range(3)))
-                new_co = tuple(
-                    vertex_co[axis]
-                    + (inward_normal[axis] * depth + to_center[axis] * depth * clamped_pinch) * base_weight
-                    for axis in range(3)
+                to_center = self._normalize_vector(
+                    self._coerce_xyz([chosen_center[axis] - vertex_co[axis] for axis in range(3)])
+                )
+                new_co = self._coerce_xyz(
+                    [
+                        vertex_co[axis]
+                        + (inward_normal[axis] * depth + to_center[axis] * depth * clamped_pinch) * base_weight
+                        for axis in range(3)
+                    ]
                 )
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1

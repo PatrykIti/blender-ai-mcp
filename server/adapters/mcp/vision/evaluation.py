@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -300,7 +300,7 @@ def evaluate_vision_result(
     """Score one harness result entry against a reusable golden scenario."""
 
     resolved = scenario if isinstance(scenario, ResolvedVisionGoldenScenario) else None
-    scenario_model = resolved.scenario if resolved is not None else scenario
+    scenario_model = resolved.scenario if resolved is not None else cast(VisionGoldenScenario, scenario)
     expectations = scenario_model.expectations
 
     status = str(entry.get("status") or "error")

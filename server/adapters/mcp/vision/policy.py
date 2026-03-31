@@ -17,7 +17,6 @@ def choose_capture_preset_profile(
 ) -> CapturePresetProfile:
     """Choose the deterministic capture profile for one bounded vision request."""
 
-    compact_bundle_images = 4 * 2
     rich_bundle_images = 8 * 2
     required_reference_budget = max(1, reference_image_count)
 

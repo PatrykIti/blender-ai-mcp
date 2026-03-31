@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock
 
-from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
+from server.adapters.mcp.contracts.macro import MacroExecutionReportContract, MacroVerificationRecommendationContract
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
@@ -25,11 +25,11 @@ def _report() -> MacroExecutionReportContract:
         intent="apply rounded housing finish",
         actions_taken=[],
         verification_recommended=[
-            {
-                "tool_name": "inspect_scene",
-                "reason": "Verify the modifier stack after applying the finishing preset.",
-                "priority": "normal",
-            }
+            MacroVerificationRecommendationContract(
+                tool_name="inspect_scene",
+                reason="Verify the modifier stack after applying the finishing preset.",
+                priority="normal",
+            )
         ],
         capture_bundle=VisionCaptureBundleContract(
             bundle_id="bundle_1",

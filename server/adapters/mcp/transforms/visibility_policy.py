@@ -226,7 +226,7 @@ def build_guided_handoff_payload(
         return None
 
     if continuation_mode == "guided_manual_build":
-        target_phase = resolved_phase if resolved_phase == SessionPhase.BUILD else SessionPhase.BUILD
+        target_phase: SessionPhase = resolved_phase if resolved_phase == SessionPhase.BUILD else SessionPhase.BUILD
         return {
             "kind": "guided_manual_build",
             "target_phase": target_phase.value,
@@ -242,10 +242,12 @@ def build_guided_handoff_payload(
         }
 
     if continuation_mode == "guided_utility":
-        target_phase = resolved_phase if resolved_phase == SessionPhase.PLANNING else SessionPhase.PLANNING
+        utility_target_phase: SessionPhase = (
+            resolved_phase if resolved_phase == SessionPhase.PLANNING else SessionPhase.PLANNING
+        )
         return {
             "kind": "guided_utility",
-            "target_phase": target_phase.value,
+            "target_phase": utility_target_phase.value,
             "surface_profile": resolved_surface,
             "direct_tools": list(GUIDED_UTILITY_HANDOFF_TOOLS),
             "supporting_tools": list(GUIDED_UTILITY_SUPPORTING_TOOLS),
@@ -304,29 +306,33 @@ def build_visibility_rules(
         {"enabled": False, "components": {"tool"}, "match_all": True},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_ENTRY_TOOLS)},
         {"enabled": True, "components": {"tool"}, "names": set(GUIDED_DISCOVERY_TOOLS)},
-        {
-            "enabled": True,
-            "components": {"tool"},
-            "names": set(GUIDED_UTILITY_TOOLS),
-        }
-        if resolved_phase in {SessionPhase.BOOTSTRAP, SessionPhase.PLANNING}
-        else None,
-        {"enabled": True, "components": {"tool"}, "names": {"list_prompts", "get_prompt"}},
-        {
-            "enabled": True,
-            "components": {"prompt"},
-            "names": {
-                "getting_started",
-                "guided_session_start",
-                "workflow_router_first",
-                "manual_tools_no_router",
-                "demo_low_poly_medieval_well",
-                "demo_generic_modeling",
-                "recommended_prompts",
-            },
-        },
     ]
-    rules = [rule for rule in rules if rule is not None]
+    if resolved_phase in {SessionPhase.BOOTSTRAP, SessionPhase.PLANNING}:
+        rules.append(
+            {
+                "enabled": True,
+                "components": {"tool"},
+                "names": set(GUIDED_UTILITY_TOOLS),
+            }
+        )
+    rules.extend(
+        [
+            {"enabled": True, "components": {"tool"}, "names": {"list_prompts", "get_prompt"}},
+            {
+                "enabled": True,
+                "components": {"prompt"},
+                "names": {
+                    "getting_started",
+                    "guided_session_start",
+                    "workflow_router_first",
+                    "manual_tools_no_router",
+                    "demo_low_poly_medieval_well",
+                    "demo_generic_modeling",
+                    "recommended_prompts",
+                },
+            },
+        ]
+    )
 
     if resolved_phase == SessionPhase.BUILD:
         rules.append({"enabled": True, "components": {"tool"}, "names": set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)})

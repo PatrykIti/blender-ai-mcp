@@ -1204,21 +1204,29 @@ def scene_create(
                 return SceneCreateResponseContract(action="light", error=str(e))
         if action == "camera":
             try:
-                parsed_location = parse_coordinate(location)
-                parsed_rotation = parse_coordinate(rotation)
-                if parsed_location is None or parsed_rotation is None:
+                parsed_camera_location = parse_coordinate(location) or None
+                parsed_camera_rotation = parse_coordinate(rotation) or None
+                if parsed_camera_location is None or parsed_camera_rotation is None:
                     return SceneCreateResponseContract(
                         action="camera",
                         error="Invalid location or rotation coordinate payload.",
                     )
-                created_name = _scene_create_camera(ctx, parsed_location, parsed_rotation, lens, clip_start, clip_end, name)
+                created_name = _scene_create_camera(
+                    ctx,
+                    parsed_camera_location,
+                    parsed_camera_rotation,
+                    lens,
+                    clip_start,
+                    clip_end,
+                    name,
+                )
                 return SceneCreateResponseContract(
                     action="camera",
                     payload={
                         "object_name": created_name,
                         "object_type": "CAMERA",
-                        "location": parsed_location,
-                        "rotation": parsed_rotation,
+                        "location": parsed_camera_location,
+                        "rotation": parsed_camera_rotation,
                         "lens": lens,
                         "clip_start": clip_start,
                         "clip_end": clip_end,

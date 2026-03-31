@@ -14,13 +14,13 @@ from server.adapters.mcp.contracts.vision import (
     VisionCaptureImageContract,
 )
 
-from .backend import VisionImageInput, VisionRequest
+from .backend import VisionImageInput, VisionImageRole, VisionRequest
 
 
 def _capture_to_image_input(
     capture: VisionCaptureImageContract,
     *,
-    role: str,
+    role: VisionImageRole,
 ) -> VisionImageInput:
     return VisionImageInput(
         path=capture.image_path,

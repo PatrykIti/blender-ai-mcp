@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
 import httpx
 import pytest
@@ -18,7 +19,7 @@ from server.infrastructure.config import Config
 
 
 def _config(**overrides) -> Config:
-    payload = {
+    payload: dict[str, Any] = {
         "BLENDER_RPC_HOST": "127.0.0.1",
         "BLENDER_RPC_PORT": 8765,
         "ROUTER_ENABLED": True,

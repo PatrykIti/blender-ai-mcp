@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import Any, Dict, List, Optional, cast
 from uuid import uuid4
-from typing import Any, Dict, List, Optional
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
-from server.adapters.mcp.vision.capture_runtime import build_capture_bundle, capture_stage_images
+from server.adapters.mcp.vision.capture_runtime import (
+    CapturePresetProfile,
+    CaptureStage,
+    build_capture_bundle,
+    capture_stage_images,
+)
 from server.adapters.mcp.vision.reporting import attach_vision_artifacts
 from server.domain.tools.macro import IMacroTool
 from server.domain.tools.modeling import IModelingTool
@@ -488,7 +493,7 @@ class MacroToolHandler(IMacroTool):
 
         if resolved["bevel_width"] is not None:
             bevel_width_value = float(resolved["bevel_width"])
-            bevel_segments_value = int(resolved["bevel_segments"])
+            bevel_segments_value = cast(int, resolved["bevel_segments"])
             before_names = self._modifier_names(target_object)
             self._modeling.add_modifier(
                 target_object,
@@ -666,9 +671,9 @@ class MacroToolHandler(IMacroTool):
             captures = capture_stage_images(
                 self._scene,
                 bundle_id=bundle_id,
-                stage=stage,
+                stage=cast(CaptureStage, stage),
                 target_object=target_object,
-                preset_profile=(capture_profile or "compact"),
+                preset_profile=cast(CapturePresetProfile, capture_profile or "compact"),
             )
         except Exception:
             return None

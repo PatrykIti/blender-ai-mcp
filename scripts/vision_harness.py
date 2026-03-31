@@ -12,7 +12,7 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -77,7 +77,12 @@ def _resolve_reference_paths(references_data: dict[str, Any], source_path: Path)
     return resolved
 
 
-def _capture_image(path: str, *, label: str, view_kind: str) -> VisionCaptureImageContract:
+def _capture_image(
+    path: str,
+    *,
+    label: str,
+    view_kind: Literal["wide", "focus", "overlay", "reference"],
+) -> VisionCaptureImageContract:
     media_type = "image/png" if path.lower().endswith(".png") else "image/jpeg"
     return VisionCaptureImageContract(
         label=label,
@@ -87,13 +92,13 @@ def _capture_image(path: str, *, label: str, view_kind: str) -> VisionCaptureIma
     )
 
 
-def _resolve_golden(args: argparse.Namespace) -> ResolvedVisionGoldenScenario | None:
+def _resolve_golden(args: Any) -> ResolvedVisionGoldenScenario | None:
     if not args.golden_json:
         return None
     return load_golden_scenario(args.golden_json)
 
 
-def _effective_goal(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str:
+def _effective_goal(args: Any, golden: ResolvedVisionGoldenScenario | None) -> str:
     if args.goal:
         return str(args.goal)
     if golden is not None:
@@ -101,7 +106,7 @@ def _effective_goal(args: argparse.Namespace, golden: ResolvedVisionGoldenScenar
     raise ValueError("goal is required when no golden scenario is provided")
 
 
-def _effective_target_object(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+def _effective_target_object(args: Any, golden: ResolvedVisionGoldenScenario | None) -> str | None:
     if args.target_object is not None:
         return args.target_object
     if golden is not None:
@@ -109,7 +114,7 @@ def _effective_target_object(args: argparse.Namespace, golden: ResolvedVisionGol
     return None
 
 
-def _effective_prompt_hint(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+def _effective_prompt_hint(args: Any, golden: ResolvedVisionGoldenScenario | None) -> str | None:
     if args.prompt_hint is not None:
         return args.prompt_hint
     if golden is not None:
@@ -117,7 +122,7 @@ def _effective_prompt_hint(args: argparse.Namespace, golden: ResolvedVisionGolde
     return None
 
 
-def _effective_bundle_json(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+def _effective_bundle_json(args: Any, golden: ResolvedVisionGoldenScenario | None) -> str | None:
     if args.bundle_json is not None:
         return args.bundle_json
     if golden is not None:
@@ -125,7 +130,7 @@ def _effective_bundle_json(args: argparse.Namespace, golden: ResolvedVisionGolde
     return None
 
 
-def _effective_references_json(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None) -> str | None:
+def _effective_references_json(args: Any, golden: ResolvedVisionGoldenScenario | None) -> str | None:
     if args.references_json is not None:
         return args.references_json
     if golden is not None and golden.references_path is not None:
@@ -133,7 +138,7 @@ def _effective_references_json(args: argparse.Namespace, golden: ResolvedVisionG
     return None
 
 
-def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGoldenScenario | None = None) -> VisionRequest:
+def _build_request_from_args(args: Any, golden: ResolvedVisionGoldenScenario | None = None) -> VisionRequest:
     goal = _effective_goal(args, golden)
     target_object = _effective_target_object(args, golden)
     prompt_hint = _effective_prompt_hint(args, golden)
@@ -144,7 +149,7 @@ def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGol
         bundle_path = Path(bundle_json)
         bundle_data = _resolve_bundle_paths(_read_json(bundle_path), bundle_path)
         bundle = VisionCaptureBundleContract.model_validate(bundle_data)
-        references = tuple(
+        reference_records = tuple(
             ReferenceImageRecordContract.model_validate(item)
             for item in (
                 _resolve_reference_paths(_read_json(Path(references_json)), Path(references_json)).get("references", [])
@@ -155,7 +160,7 @@ def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGol
         return build_vision_request_from_capture_bundle(
             bundle,
             goal=goal,
-            reference_images=build_reference_capture_images(references),
+            reference_images=build_reference_capture_images(reference_records),
             prompt_hint=prompt_hint,
         )
 
@@ -167,7 +172,7 @@ def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGol
         _capture_image(path, label=f"after_{index}", view_kind="wide")
         for index, path in enumerate(args.after or [], start=1)
     ]
-    references = [
+    reference_images = [
         VisionImageInput(
             path=path,
             role="reference",
@@ -186,7 +191,7 @@ def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGol
                 VisionImageInput(path=item.image_path, role="after", label=item.label, media_type=item.media_type)
                 for item in after
             ],
-            *references,
+            *reference_images,
         ]
     )
     return VisionRequest(
@@ -199,8 +204,8 @@ def _build_request_from_args(args: argparse.Namespace, golden: ResolvedVisionGol
     )
 
 
-def _config_for_backend(args: argparse.Namespace, backend: str) -> Config:
-    payload = {
+def _config_for_backend(args: Any, backend: str) -> Config:
+    payload: dict[str, Any] = {
         "BLENDER_RPC_HOST": "127.0.0.1",
         "BLENDER_RPC_PORT": 8765,
         "ROUTER_ENABLED": True,
@@ -246,14 +251,14 @@ def _config_for_backend(args: argparse.Namespace, backend: str) -> Config:
     return Config(**payload)
 
 
-def _backend_list(args: argparse.Namespace) -> list[str]:
+def _backend_list(args: Any) -> list[str]:
     if args.backend == "all":
         return ["mlx_local", "transformers_local", "openai_compatible_external"]
     return [args.backend]
 
 
 async def _run_backend(
-    args: argparse.Namespace,
+    args: Any,
     backend_name: str,
     request: VisionRequest,
     golden: ResolvedVisionGoldenScenario | None = None,
@@ -275,7 +280,7 @@ async def _run_backend(
     return entry
 
 
-async def _run(args: argparse.Namespace) -> list[dict[str, Any]]:
+async def _run(args: Any) -> list[dict[str, Any]]:
     golden = _resolve_golden(args)
     request = _build_request_from_args(args, golden=golden)
     results: list[dict[str, Any]] = []
@@ -283,14 +288,12 @@ async def _run(args: argparse.Namespace) -> list[dict[str, Any]]:
         try:
             results.append(await _run_backend(args, backend_name, request, golden=golden))
         except Exception as exc:
-            entry = (
-                {
-                    "backend": backend_name,
-                    "model_name": None,
-                    "status": "error",
-                    "error": str(exc),
-                }
-            )
+            entry: dict[str, Any] = {
+                "backend": backend_name,
+                "model_name": None,
+                "status": "error",
+                "error": str(exc),
+            }
             if golden is not None:
                 entry["evaluation"] = evaluate_vision_result(entry, golden).model_dump(mode="json")
             results.append(entry)

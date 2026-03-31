@@ -107,7 +107,9 @@ class VisionRuntimeConfig(BaseModel):
         return self
 
     @property
-    def active_backend_config(self) -> VisionTransformersLocalConfig | VisionOpenAICompatibleConfig | None:
+    def active_backend_config(
+        self,
+    ) -> VisionTransformersLocalConfig | VisionMLXLocalConfig | VisionOpenAICompatibleConfig | None:
         """Return the config block for the selected backend."""
 
         if self.provider == "transformers_local":

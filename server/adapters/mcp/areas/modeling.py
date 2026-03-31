@@ -6,9 +6,9 @@ from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
 from server.adapters.mcp.router_helper import route_tool_call
 from server.adapters.mcp.session_capabilities import get_session_capability_state_async
 from server.adapters.mcp.utils import parse_coordinate, parse_dict
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.adapters.mcp.vision.integration import maybe_attach_macro_vision
 from server.adapters.mcp.vision.policy import choose_capture_preset_profile
-from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_macro_handler, get_modeling_handler, get_vision_backend_resolver
 
 MODELING_PUBLIC_TOOL_NAMES = (
