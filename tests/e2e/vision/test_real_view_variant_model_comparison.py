@@ -1,21 +1,13 @@
-"""Opt-in real-model comparison for the new real viewport view variants."""
+"""Real-model comparison for the new real viewport view variants."""
 
 from __future__ import annotations
 
-import asyncio
-import os
+import json
+import subprocess
+import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-from server.adapters.mcp.vision import (
-    build_vision_runtime_config,
-    create_vision_backend,
-    evaluate_vision_result,
-    load_golden_scenario,
-)
-
-from scripts import vision_harness as harness
 
 SCENARIOS = (
     "tests/fixtures/vision_eval/squirrel_head_to_face_user_top/golden.json",
@@ -26,70 +18,62 @@ SCENARIOS = (
     "tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/golden.json",
 )
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
-async def _run_model(model_name: str) -> list[dict[str, object]]:
-    args = SimpleNamespace(
-        max_images=8,
-        max_tokens=600,
-        timeout_seconds=120.0,
-        transformers_model="Qwen/Qwen2.5-VL-3B-Instruct",
-        local_device="mps",
-        local_dtype="float16",
-        mlx_model=model_name,
-        external_base_url=None,
-        external_model=None,
-        external_api_key=None,
-        external_api_key_env=None,
-        goal=None,
-        target_object=None,
-        prompt_hint=None,
-        bundle_json=None,
-        references_json=None,
-        before=None,
-        after=None,
-        reference=None,
-        truth_json=None,
-    )
-    runtime = build_vision_runtime_config(harness._config_for_backend(args, "mlx_local"))
-    backend = create_vision_backend(runtime)
+
+def _run_model(model_name: str) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for scenario_path in SCENARIOS:
-        golden = load_golden_scenario(Path(scenario_path))
-        request = harness._build_request_from_args(args, golden)
-        result = await backend.analyze(request)
-        summary = evaluate_vision_result(
-            {
-                "backend": "mlx_local",
-                "model_name": runtime.active_model_name,
-                "status": "success",
-                "result": result,
-            },
-            golden,
+        cmd = [
+            sys.executable,
+            "scripts/vision_harness.py",
+            "--backend",
+            "mlx_local",
+            "--golden-json",
+            scenario_path,
+            "--mlx-model",
+            model_name,
+            "--max-images",
+            "8",
+            "--max-tokens",
+            "600",
+            "--timeout-seconds",
+            "120",
+        ]
+        completed = subprocess.run(
+            cmd,
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
         )
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "vision_harness failed")
+        payload = json.loads(completed.stdout)
+        if not isinstance(payload, list) or not payload:
+            raise RuntimeError("vision_harness returned empty payload")
+        entry = payload[0]
+        evaluation = entry.get("evaluation") or {}
+        result = entry.get("result") or {}
         rows.append(
             {
-                "scenario_id": golden.scenario.scenario_id,
-                "verdict": summary.verdict,
-                "normalized_score": summary.normalized_score,
-                "noise_count": len(result.get("likely_issues") or [])
-                + len(result.get("recommended_checks") or []),
+                "scenario_id": str((evaluation.get("scenario_id") or "")),
+                "verdict": str(evaluation.get("verdict") or ""),
+                "normalized_score": float(evaluation.get("normalized_score") or 0.0),
+                "noise_count": len(result.get("likely_issues") or []) + len(result.get("recommended_checks") or []),
             }
         )
     return rows
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(
-    os.getenv("RUN_REAL_VISION_MODEL_COMPARISON") != "1",
-    reason="set RUN_REAL_VISION_MODEL_COMPARISON=1 to run real MLX model comparison",
-)
 def test_real_view_variant_models_remain_strong_and_clean():
     """Both local MLX baselines should stay strong and avoid noisy extra analysis on the new variants."""
 
     try:
-        results_2b = asyncio.run(_run_model("mlx-community/Qwen3-VL-2B-Instruct-4bit"))
-        results_4b = asyncio.run(_run_model("mlx-community/Qwen3-VL-4B-Instruct-4bit"))
-    except Exception as exc:  # pragma: no cover - opt-in runtime guard
+        results_2b = _run_model("mlx-community/Qwen3-VL-2B-Instruct-4bit")
+        results_4b = _run_model("mlx-community/Qwen3-VL-4B-Instruct-4bit")
+    except Exception as exc:  # pragma: no cover - runtime guard
         pytest.skip(f"real MLX comparison unavailable in this environment: {exc}")
 
     assert all(str(row["verdict"]) == "strong" for row in results_2b)

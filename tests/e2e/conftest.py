@@ -66,5 +66,8 @@ def pytest_collection_modifyitems(config, items):
     if not is_rpc_available():
         skip_marker = pytest.mark.skip(reason="Blender RPC server not available. Start Blender with addon enabled.")
         for item in items:
-            if "/e2e/" in str(item.fspath):
+            path = str(item.fspath)
+            if "/e2e/vision/" in path:
+                continue
+            if "/e2e/" in path:
                 item.add_marker(skip_marker)
