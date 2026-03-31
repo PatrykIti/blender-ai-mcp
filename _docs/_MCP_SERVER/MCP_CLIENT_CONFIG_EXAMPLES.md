@@ -15,6 +15,10 @@ Practical notes:
 - adapt absolute paths to your machine
 - these examples assume the project venv exists at `.venv/`
 - prefer `python -m server.main` rather than `python server/main.py`
+- docker examples below assume:
+  - `ghcr.io/patrykiti/blender-ai-mcp:latest`
+- for Docker on macOS / Windows, use `BLENDER_RPC_HOST=host.docker.internal`
+- for Docker on Linux, prefer host networking or adapt the RPC host explicitly
 
 ## Base Local Guided Profile
 
@@ -131,6 +135,103 @@ Uses the same external-runtime path with the Gemini provider profile:
 }
 ```
 
+## Docker Guided Profile
+
+Smallest practical docker-backed guided profile:
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp-guided-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "/tmp:/tmp",
+        "-e", "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+        "-e", "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+        "-e", "ROUTER_ENABLED=true",
+        "-e", "MCP_SURFACE_PROFILE=llm-guided",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "-e", "PYTHONUNBUFFERED=1",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+## Docker Guided + OpenRouter Vision
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp-guided-openrouter-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "/tmp:/tmp",
+        "-e", "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+        "-e", "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+        "-e", "ROUTER_ENABLED=true",
+        "-e", "MCP_SURFACE_PROFILE=llm-guided",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "-e", "VISION_ENABLED=true",
+        "-e", "VISION_PROVIDER=openai_compatible_external",
+        "-e", "VISION_EXTERNAL_PROVIDER=openrouter",
+        "-e", "VISION_OPENROUTER_MODEL=google/gemma-3-27b-it:free",
+        "-e", "VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY",
+        "-e", "OPENROUTER_API_KEY=<YOUR_OPENROUTER_KEY>",
+        "-e", "VISION_OPENROUTER_SITE_URL=https://example.com",
+        "-e", "VISION_OPENROUTER_SITE_NAME=blender-ai-mcp-dev",
+        "-e", "VISION_MAX_IMAGES=8",
+        "-e", "VISION_MAX_TOKENS=600",
+        "-e", "VISION_TIMEOUT_SECONDS=120",
+        "-e", "PYTHONUNBUFFERED=1",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+## Docker Guided + Google AI Studio / Gemini Vision
+
+```json
+{
+  "mcpServers": {
+    "blender-ai-mcp-guided-gemini-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v", "/tmp:/tmp",
+        "-e", "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
+        "-e", "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
+        "-e", "ROUTER_ENABLED=true",
+        "-e", "MCP_SURFACE_PROFILE=llm-guided",
+        "-e", "BLENDER_RPC_HOST=host.docker.internal",
+        "-e", "VISION_ENABLED=true",
+        "-e", "VISION_PROVIDER=openai_compatible_external",
+        "-e", "VISION_EXTERNAL_PROVIDER=google_ai_studio",
+        "-e", "VISION_GEMINI_MODEL=gemini-2.5-flash",
+        "-e", "VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY",
+        "-e", "GEMINI_API_KEY=<YOUR_GEMINI_KEY>",
+        "-e", "VISION_MAX_IMAGES=8",
+        "-e", "VISION_MAX_TOKENS=600",
+        "-e", "VISION_TIMEOUT_SECONDS=120",
+        "-e", "PYTHONUNBUFFERED=1",
+        "ghcr.io/patrykiti/blender-ai-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
 ## Legacy Manual Surface
 
 Use this only when you intentionally want the broader non-goal-first manual
@@ -183,5 +284,7 @@ Compatibility-oriented broad surface:
 - OpenRouter and Gemini both ride on the same bounded
   `openai_compatible_external` path; the difference is the provider profile and
   provider-specific env vars
+- the same env model works for both local venv launch and Docker launch; only
+  `command` / `args` differ
 - for local image/file outputs, keep `/tmp` host-visible if your client expects
   file paths that can be opened outside the container/runtime
