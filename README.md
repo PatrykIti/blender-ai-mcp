@@ -4,6 +4,8 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/PatrykIti/blender-ai-mcp/pkgs/container/blender-ai-mcp)
 [![CI Status](https://github.com/PatrykIti/blender-ai-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/PatrykIti/blender-ai-mcp/actions)
+[![GitHub Stars](https://img.shields.io/github/stars/PatrykIti/blender-ai-mcp?style=social)](https://github.com/PatrykIti/blender-ai-mcp/stargazers)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/PatrykIti?style=social)](https://github.com/sponsors/PatrykIti)
 
 **A production-shaped MCP server for Blender.**
 
