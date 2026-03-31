@@ -116,8 +116,19 @@ def test_multi_object_isolation_workflow(scene_handler):
         # Step 1: List objects
         objects = scene_handler.list_objects()
 
+        created_names: list[str] = []
         if len(objects) < 3:
-            pytest.skip("Need at least 3 objects for multi-isolation workflow")
+            # Deterministically seed the scene with enough lightweight objects for the workflow.
+            for index in range(3 - len(objects)):
+                seed_name = f"IsolationProbe_{index + 1}"
+                scene_handler.create_empty(
+                    type="PLAIN_AXES",
+                    size=0.25,
+                    location=[float(index), 0.0, 0.0],
+                    name=seed_name,
+                )
+                created_names.append(seed_name)
+            objects = scene_handler.list_objects()
 
         # Get mesh objects only
         mesh_objects = [obj for obj in objects if obj.get("type") == "MESH"]
@@ -142,6 +153,12 @@ def test_multi_object_isolation_workflow(scene_handler):
         # Step 4: Restore
         result = scene_handler.show_all_objects()
         print("✓ Step 4: Restored visibility")
+
+        for name in created_names:
+            try:
+                scene_handler.delete_object(name)
+            except RuntimeError:
+                pass
 
         print("\n✅ Multi-object isolation workflow completed successfully!")
 
