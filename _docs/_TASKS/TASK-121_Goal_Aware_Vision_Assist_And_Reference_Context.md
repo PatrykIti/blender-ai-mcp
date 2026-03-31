@@ -4,9 +4,9 @@
 **Category:** Vision Assist / Goal Context  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-113, TASK-120  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The repo now has the first runtime/capture scaffolding for this wave: a pluggable local/external vision backend model, lazy runtime resolution that keeps heavyweight VLM loading out of MCP bootstrap, shared vision result contracts, deterministic capture-bundle input types plus runtime preset profiles, a first macro-path integration where macro reports can carry optional `capture_bundle` artifacts when vision is enabled, MCP macro adapters now have the request-bound attachment point for `vision_assistant`, `TASK-121-02` is done with goal-scoped reference images plus the public `reference_images` lifecycle surface, `TASK-121-03` is now in progress with reference-context-aware macro vision requests, `TASK-121-04` is now in progress with real smoke-test validation plus first scored goldens for the `mlx_local` runtime path, OpenRouter now has a first-class external-provider configuration path, Google AI Studio / Gemini now also has a first-class provider-specific path, `TASK-121-05` hardened guided utility/manual-build handoffs, `TASK-121-06` fixes the remaining guided-session recovery semantics around reference-first attach, bad workflow rejection, and utility-tool workflow bypass, `TASK-121-07` is now done with bounded checkpoint-vs-reference compare surfaces, deterministic stage checkpoint capture, correction-focused output semantics, and prompt/eval guidance for reference-driven creature work, and `TASK-121-08` adds the first session-aware auto-loop controller on top of that surface via `reference_iterate_stage_checkpoint(...)`.
+**Completion Summary:** The repo now has the first complete goal-aware vision/reference wave: pluggable local and external runtimes, deterministic capture bundles, goal-scoped reference images, macro-attached vision reports, bounded checkpoint/reference compare tools, staged correction semantics, session-aware auto-loop behavior, and first-class OpenRouter and Google AI Studio / Gemini provider paths. `TASK-121` is now functionally complete as an umbrella; future model-quality or provider work can continue as new follow-on tasks instead of leaving this original wave open.
 
 ---
 
