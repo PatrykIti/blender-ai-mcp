@@ -2,26 +2,6 @@
 
 <!-- version list -->
 
-## Unreleased
-
-### Bug Fixes
-
-- Fix explicit external vision-provider startup resolution so OpenRouter and
-  Google AI Studio / Gemini can reuse generic fallback model/auth env while
-  still respecting selected-provider precedence
-
-- Keep timed-out server-local background tasks terminal so late progress
-  callbacks cannot flip diagnostics back to `running`
-
-### Chores
-
-- Relicense the repository to Apache License 2.0 and align current repo docs,
-  NOTICE, and SPDX headers with the new license
-
-### Testing
-
-- Expand regression coverage for MCP contracts, MCP area main paths, server-side RPC result alignment, and FastMCP surface runtime behavior
-
 ## v2.2.0 (2026-03-20)
 
 ### Features
