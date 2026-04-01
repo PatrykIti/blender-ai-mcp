@@ -14,7 +14,10 @@ from typing import Any, Callable, TypeVar
 
 from fastmcp import Context
 
-from server.adapters.mcp.tasks.job_registry import get_background_job_registry
+from server.adapters.mcp.tasks.job_registry import (
+    get_background_job_registry,
+    is_terminal_background_job_status,
+)
 from server.adapters.mcp.tasks.result_store import get_background_result_store
 from server.adapters.mcp.timeout_policy import MCPTimeoutPolicy, build_timeout_policy
 from server.infrastructure.config import get_config
@@ -75,6 +78,10 @@ async def _report_background_progress(
     """Update internal registry state and best-effort MCP progress notifications."""
 
     registry = get_background_job_registry()
+    existing = registry.get(task_id)
+    if existing is not None and is_terminal_background_job_status(existing.status):
+        if status != existing.status:
+            return
     registry.update_progress(
         task_id,
         current=current,
@@ -279,18 +286,23 @@ async def run_local_background_operation(
     cancellation_flag = Event()
 
     def progress_callback(current: float, total: float | None = None, message: str | None = None) -> None:
-        future = asyncio.run_coroutine_threadsafe(
-            _report_background_progress(
-                ctx,
-                task_id=task_id,
-                tool_name=tool_name,
-                current=current,
-                total=total,
-                message=message,
-                status="running",
-            ),
-            loop,
-        )
+        if cancellation_flag.is_set() or registry.is_terminal(task_id):
+            return
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                _report_background_progress(
+                    ctx,
+                    task_id=task_id,
+                    tool_name=tool_name,
+                    current=current,
+                    total=total,
+                    message=message,
+                    status="running",
+                ),
+                loop,
+            )
+        except RuntimeError:
+            return
         try:
             future.result(timeout=1.0)
         except FuturesTimeoutError:

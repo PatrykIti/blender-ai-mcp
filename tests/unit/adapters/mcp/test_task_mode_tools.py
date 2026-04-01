@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from threading import Event
+from typing import cast
 
 import pytest
+from fastmcp import Context
 from server.adapters.mcp.areas.extraction import extraction_render_angles
 from server.adapters.mcp.areas.scene import scene_get_viewport
 from server.adapters.mcp.areas.system import export_obj, import_glb, import_image_as_plane
@@ -17,6 +20,7 @@ from server.adapters.mcp.tasks.result_store import (
     get_background_result_store,
     reset_background_result_store_for_tests,
 )
+from server.adapters.mcp.tasks.task_bridge import run_local_background_operation
 from server.adapters.mcp.timeout_policy import build_timeout_policy
 from server.domain.models.rpc import RpcResponse
 
@@ -236,6 +240,54 @@ def test_workflow_catalog_import_finalize_times_out_in_local_background_bridge(m
     registry_record = get_background_job_registry().get("task-workflow-timeout")
     assert registry_record is not None
     assert registry_record.status == "failed"
+
+
+def test_run_local_background_operation_ignores_late_progress_after_timeout(monkeypatch):
+    """Late local progress callbacks must not resurrect a timed-out task."""
+
+    late_progress_seen = Event()
+
+    def background_executor(progress_callback, is_cancelled):
+        import time
+
+        time.sleep(0.05)
+        progress_callback(1, 2, "Late progress")
+        late_progress_seen.set()
+        return {"status": "imported", "workflow_name": "chair", "message": "ok"}
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.tasks.task_bridge._get_timeout_policy",
+        lambda ctx: build_timeout_policy(
+            tool_timeout_seconds=30.0,
+            task_timeout_seconds=0.01,
+            rpc_timeout_seconds=30.0,
+            addon_execution_timeout_seconds=30.0,
+        ),
+    )
+
+    async def _scenario() -> BackgroundContext:
+        ctx = BackgroundContext("task-local-late-progress")
+        with pytest.raises(RuntimeError, match="exceeded MCP_TASK_TIMEOUT_SECONDS"):
+            await run_local_background_operation(
+                cast(Context, ctx),
+                tool_name="workflow_catalog.import_finalize",
+                foreground_executor=lambda: {"status": "imported"},
+                background_executor=background_executor,
+                result_formatter=lambda result: result,
+                start_message="Starting workflow import finalization",
+                completion_message="Workflow import finalization completed",
+            )
+        await asyncio.to_thread(late_progress_seen.wait, 0.5)
+        return ctx
+
+    ctx = asyncio.run(_scenario())
+
+    assert late_progress_seen.is_set()
+    registry_record = get_background_job_registry().get("task-local-late-progress")
+    assert registry_record is not None
+    assert registry_record.status == "failed"
+    assert registry_record.progress.message == "Starting workflow import finalization"
+    assert all(message != "Late progress" for _, _, message in ctx.progress_events)
 
 
 def test_workflow_catalog_import_finalize_marks_failed_on_local_execution_error(monkeypatch):

@@ -1,5 +1,6 @@
 """Tests for MCP background job bookkeeping primitives."""
 
+import pytest
 from server.adapters.mcp.tasks.job_registry import (
     get_background_job_registry,
     reset_background_job_registry_for_tests,
@@ -40,6 +41,48 @@ def test_background_job_registry_tracks_identity_progress_and_completion():
     stored_again = store.get("task-result:task-1")
     assert stored_again is not None
     assert stored_again.payload == {"ok": True}
+
+
+@pytest.mark.parametrize("terminal_status", ["failed", "cancelled", "completed"])
+def test_background_job_registry_keeps_terminal_states_monotonic_against_running_progress(
+    terminal_status: str,
+):
+    """Late running progress must not overwrite a terminal task state."""
+
+    registry = get_background_job_registry()
+    registry.register(task_id="task-1", tool_name="scene_get_viewport", backend_kind="addon_job")
+
+    if terminal_status == "failed":
+        registry.mark_failed("task-1", "timeout")
+    elif terminal_status == "cancelled":
+        registry.mark_cancelled("task-1", error="cancelled by user")
+    else:
+        registry.mark_completed("task-1", result_ref="task-result:task-1")
+
+    registry.update_progress("task-1", current=2, total=3, message="late progress", status="running")
+
+    record = registry.get("task-1")
+    assert record is not None
+    assert record.status == terminal_status
+    assert record.progress.current == 0
+    assert record.progress.message is None
+
+
+def test_background_job_registry_allows_same_terminal_status_progress_refresh():
+    """Terminal completion reports may still refresh the final progress snapshot."""
+
+    registry = get_background_job_registry()
+    registry.register(task_id="task-1", tool_name="scene_get_viewport", backend_kind="addon_job")
+    registry.mark_completed("task-1", result_ref="task-result:task-1")
+
+    registry.update_progress("task-1", current=1, total=1, message="Completed", status="completed")
+
+    record = registry.get("task-1")
+    assert record is not None
+    assert record.status == "completed"
+    assert record.progress.current == 1
+    assert record.progress.total == 1
+    assert record.progress.message == "Completed"
 
 
 def test_task_runtime_report_matches_current_supported_pair():

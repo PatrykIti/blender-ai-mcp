@@ -15,6 +15,13 @@ from server.adapters.mcp.tasks.progress import (
 )
 
 BackgroundJobStatus = str
+TERMINAL_BACKGROUND_JOB_STATUSES = frozenset({"completed", "failed", "cancelled"})
+
+
+def is_terminal_background_job_status(status: BackgroundJobStatus) -> bool:
+    """Return True when the given task status is terminal."""
+
+    return status in TERMINAL_BACKGROUND_JOB_STATUSES
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,7 @@ class BackgroundJobRegistry:
             task_id,
             backend_job_id=backend_job_id,
             status="running",
+            block_on_terminal_transition=True,
         )
 
     def update_progress(
@@ -95,7 +103,11 @@ class BackgroundJobRegistry:
         }
         if status is not None:
             updates["status"] = status
-        return self._update(task_id, **updates)
+        return self._update(
+            task_id,
+            block_on_terminal_transition=True,
+            **updates,
+        )
 
     def mark_completed(self, task_id: str, *, result_ref: str | None = None) -> BackgroundJobRecord | None:
         """Mark a task as completed and optionally attach a stable result reference."""
@@ -133,6 +145,13 @@ class BackgroundJobRegistry:
         with self._lock:
             return self._jobs.get(task_id)
 
+    def is_terminal(self, task_id: str) -> bool:
+        """Return True when the current stored state for a task is terminal."""
+
+        with self._lock:
+            current = self._jobs.get(task_id)
+            return current is not None and is_terminal_background_job_status(current.status)
+
     def list(self) -> tuple[BackgroundJobRecord, ...]:
         """Return all tracked jobs in insertion order."""
 
@@ -145,11 +164,22 @@ class BackgroundJobRegistry:
         with self._lock:
             self._jobs.clear()
 
-    def _update(self, task_id: str, **changes) -> BackgroundJobRecord | None:
+    def _update(
+        self,
+        task_id: str,
+        *,
+        block_on_terminal_transition: bool = False,
+        **changes,
+    ) -> BackgroundJobRecord | None:
         with self._lock:
             current = self._jobs.get(task_id)
             if current is None:
                 return None
+
+            if block_on_terminal_transition and is_terminal_background_job_status(current.status):
+                next_status = changes.get("status")
+                if next_status != current.status:
+                    return current
 
             updated = BackgroundJobRecord(
                 task_id=current.task_id,

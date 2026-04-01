@@ -230,6 +230,13 @@ export VISION_OPENROUTER_API_KEY_ENV=OPENROUTER_API_KEY
 export OPENROUTER_API_KEY="<your-openrouter-key>"
 ```
 
+Config precedence note:
+
+- if `VISION_EXTERNAL_PROVIDER=openrouter`, the runtime uses the OpenRouter
+  provider profile and default base URL
+- model/auth values resolve from `VISION_OPENROUTER_*` first and then fall back
+  to generic `VISION_EXTERNAL_*`
+
 Optional OpenRouter ranking headers:
 
 ```bash
@@ -261,6 +268,13 @@ export VISION_GEMINI_MODEL="gemini-2.5-flash"
 export VISION_GEMINI_API_KEY_ENV=GEMINI_API_KEY
 export GEMINI_API_KEY="<your-google-ai-studio-key>"
 ```
+
+Config precedence note:
+
+- if `VISION_EXTERNAL_PROVIDER=google_ai_studio`, the runtime uses the Google
+  AI Studio provider profile and default base URL
+- model/auth values resolve from `VISION_GEMINI_*` first and then fall back to
+  generic `VISION_EXTERNAL_*`
 
 Harness example:
 

@@ -5,7 +5,7 @@ Task board for the project. Update statuses in markdown files.
 ## 📊 Statistics
 - **To Do:** 2 tasks
 - **In Progress:** 0 tasks
-- **Done:** 187
+- **Done:** 188
 - **Superseded:** 10
 
 ## 🧭 Terminology Guardrails
@@ -54,6 +54,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-123](./TASK-123_Runtime_Reliability_Fixes_For_Vision_Provider_Startup_And_Task_Terminality.md) | **Runtime Reliability Fixes for Vision Provider Startup and Task Terminality** | 🔴 High | 2026-04-01 |
 | [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | 2026-03-26 |
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |
 | [TASK-118](./TASK-118_Scene_Render_World_And_Configuration_Wave.md) | **Scene Render, World, and Configuration Wave** | 🟡 Medium | 2026-03-25 |
@@ -538,3 +539,10 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | `TASK-122-01` | [overview](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md), [assembled target scope and part group contract](./TASK-122-01-01_Assembled_Target_Scope_And_Part_Group_Contract.md), [contact/gap/alignment/overlap correction bundle](./TASK-122-01-02_Contact_Gap_Alignment_And_Overlap_Correction_Bundle.md), [truth follow-up delivery and loop handoff](./TASK-122-01-03_Truth_Followup_Delivery_And_Loop_Handoff.md) | Correction-oriented truth bundles for assembled multi-part models |
 | `TASK-122-02` | [overview](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md), [`macro_attach_part_to_surface`](./TASK-122-02-01_macro_attach_part_to_surface.md), [`macro_align_part_with_contact`](./TASK-122-02-02_macro_align_part_with_contact.md), [`macro_place_symmetry_pair`](./TASK-122-02-03_macro_place_symmetry_pair.md), [`macro_adjust_head_body_proportion`](./TASK-122-02-04_macro_adjust_head_body_proportion.md), [`macro_adjust_tail_arc`](./TASK-122-02-05_macro_adjust_tail_arc.md), [`macro_pose_simple_limbs`](./TASK-122-02-06_macro_pose_simple_limbs.md), [`macro_cleanup_part_intersections`](./TASK-122-02-07_macro_cleanup_part_intersections.md) | The next bounded macro wave for assembled-creature correction |
 | `TASK-122-03` | [overview](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md), [correction candidate contract and priority model](./TASK-122-03-01_Correction_Candidate_Contract_And_Priority_Model.md), [`reference_iterate_stage_checkpoint` truth bundle integration](./TASK-122-03-02_Reference_Iterate_Stage_Checkpoint_Truth_Bundle_Integration.md), [loop disposition from vision and truth signal](./TASK-122-03-03_Loop_Disposition_From_Vision_And_Truth_Signal.md), [real assembled creature eval and prompting](./TASK-122-03-04_Real_Assembled_Creature_Eval_And_Prompting.md) | Hybrid loop that merges visual mismatch, geometric truth, and bounded correction actions |
+
+### TASK-123 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-123-01` | [overview](./TASK-123-01_Explicit_External_Vision_Provider_Fallback_And_Precedence.md) | Explicit selected-provider startup gating plus generic fallback precedence for OpenRouter and Google AI Studio / Gemini |
+| `TASK-123-02` | [overview](./TASK-123-02_Local_Background_Task_Terminality_After_Timeout.md) | Monotonic terminal state for server-local background tasks after timeout and late progress |
