@@ -833,7 +833,7 @@ async def reference_compare_current_view(
         )
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"checkpoint_compare_{timestamp}.jpg"
+    filename = f"checkpoint_compare_{timestamp}_{uuid4().hex[:8]}.jpg"
     latest_name = "checkpoint_compare_latest.jpg"
     internal_file, internal_latest, _external_file, _external_latest = get_viewport_output_paths(
         filename,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from server.adapters.mcp.areas.reference import (
     reference_compare_checkpoint,
@@ -233,6 +234,72 @@ def test_reference_compare_current_view_captures_then_compares(tmp_path, monkeyp
     assert result.checkpoint_path.endswith(".jpg")
     assert [image.role for image in captured["request"].images] == ["after", "reference"]
     assert "comparison_mode=current_view_checkpoint" in (captured["request"].prompt_hint or "")
+
+
+def test_reference_compare_current_view_uses_unique_checkpoint_filename(tmp_path, monkeypatch):
+    image = tmp_path / "ref.png"
+    image.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(
+        reference_images(
+            ctx,
+            action="attach",
+            source_path=str(image),
+            label="side_ref",
+            target_object="Squirrel",
+            target_view="side",
+        )
+    )
+
+    class SceneHandler:
+        def get_viewport(self, **kwargs):
+            return "ZmFrZQ=="  # base64("fake")
+
+    class FixedUuid:
+        hex = "deadbeefcafebabe"
+
+    class FixedDatetime:
+        @staticmethod
+        def now():
+            return datetime(2026, 4, 1, 12, 34, 56)
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Current side checkpoint is closer to the squirrel reference.",
+                visible_changes=["Tail arc is now more visible."],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.uuid4", lambda: FixedUuid())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.datetime", FixedDatetime)
+
+    result = asyncio.run(
+        reference_compare_current_view(
+            ctx,
+            checkpoint_label="stage_3_side",
+            target_object="Squirrel",
+            target_view="side",
+        )
+    )
+
+    assert result.error is None
+    assert result.checkpoint_path.endswith("checkpoint_compare_20260401_123456_deadbeef.jpg")
+    assert result.checkpoint_path != ""
 
 
 def test_reference_compare_current_view_requires_goal_before_capture(monkeypatch):
