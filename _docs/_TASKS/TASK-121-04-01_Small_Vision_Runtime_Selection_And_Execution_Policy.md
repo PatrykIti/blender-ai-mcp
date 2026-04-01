@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Completion Summary:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` passed real smoke tests on an Apple-Silicon-friendly model path, the repo has a backend-comparison harness script, and local prompt/parse-repair helpers can turn fenced or input-echo-style outputs into a bounded structured payload. The main runtime-selection and execution-policy wave is complete; the remaining provider-specific Gemini hardening is tracked separately in [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md).
+**Completion Summary:** The repo now has all three runtime families wired behind the same bounded contract path: `transformers_local`, `mlx_local`, and `openai_compatible_external`. `mlx_local` passed real smoke tests on an Apple-Silicon-friendly model path, the repo has a backend-comparison harness script, and local prompt/parse-repair helpers can turn fenced or input-echo-style outputs into a bounded structured payload. The main runtime-selection and execution-policy wave is complete, and the former provider-specific Gemini follow-on [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) is now complete as well.
 
 ---
 

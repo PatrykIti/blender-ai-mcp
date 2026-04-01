@@ -24,6 +24,15 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
 )
+from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
+    SceneAssertionPayloadContract,
+    SceneCorrectionTruthBundleContract,
+    SceneCorrectionTruthPairContract,
+    SceneCorrectionTruthSummaryContract,
+    SceneTruthFollowupContract,
+    SceneTruthFollowupItemContract,
+)
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     get_session_capability_state_async,
@@ -160,15 +169,25 @@ def _stage_compare_response(
     reference_ids: list[str],
     reference_labels: list[str],
     vision_assistant=None,
+    truth_bundle: SceneCorrectionTruthBundleContract | None = None,
+    truth_followup: SceneTruthFollowupContract | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
+    assembled_target_scope = _assembled_target_scope(
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+    )
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
+        assembled_target_scope=assembled_target_scope,
+        truth_bundle=truth_bundle,
+        truth_followup=truth_followup,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -213,6 +232,9 @@ def _iterate_stage_response(
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
+        assembled_target_scope=compare_result.assembled_target_scope,
+        truth_bundle=compare_result.truth_bundle,
+        truth_followup=compare_result.truth_followup,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -297,6 +319,204 @@ def _resolve_capture_scope(
         target_object if target_object else (resolved_target_objects[0] if len(resolved_target_objects) == 1 else None)
     )
     return normalized_primary, resolved_target_objects, collection_name
+
+
+def _assembled_target_scope(
+    *,
+    target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
+) -> SceneAssembledTargetScopeContract:
+    normalized_primary, resolved_target_objects, normalized_collection = _resolve_capture_scope(
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+    )
+
+    if normalized_collection:
+        scope_kind = "collection"
+    elif len(resolved_target_objects) > 1:
+        scope_kind = "object_set"
+    elif normalized_primary:
+        scope_kind = "single_object"
+    else:
+        scope_kind = "scene"
+
+    return SceneAssembledTargetScopeContract(
+        scope_kind=scope_kind,
+        primary_target=normalized_primary or (resolved_target_objects[0] if resolved_target_objects else None),
+        object_names=resolved_target_objects,
+        object_count=len(resolved_target_objects),
+        collection_name=normalized_collection,
+        part_groups=[],
+    )
+
+
+def _truth_bundle_pairs(scope: SceneAssembledTargetScopeContract) -> tuple[str, list[tuple[str, str]]]:
+    object_names = list(scope.object_names or [])
+    if len(object_names) < 2 or scope.primary_target is None:
+        return "none", []
+
+    anchor = scope.primary_target
+    pairs = [(anchor, name) for name in object_names if name != anchor]
+    return ("primary_to_others", pairs) if pairs else ("none", [])
+
+
+def _build_correction_truth_bundle(
+    scene_handler,
+    scope: SceneAssembledTargetScopeContract,
+) -> SceneCorrectionTruthBundleContract:
+    pairing_strategy, pairs = _truth_bundle_pairs(scope)
+    checks: list[SceneCorrectionTruthPairContract] = []
+    contact_failures = 0
+    overlap_pairs = 0
+    separated_pairs = 0
+    misaligned_pairs = 0
+
+    for from_object, to_object in pairs:
+        error: str | None = None
+        gap = None
+        alignment = None
+        overlap = None
+        contact_assertion = None
+        try:
+            gap = scene_handler.measure_gap(from_object, to_object)
+            alignment = scene_handler.measure_alignment(from_object, to_object, ["X", "Y", "Z"], "CENTER")
+            overlap = scene_handler.measure_overlap(from_object, to_object)
+            contact_assertion = SceneAssertionPayloadContract.model_validate(
+                scene_handler.assert_contact(from_object, to_object)
+            )
+        except RuntimeError as exc:
+            error = str(exc)
+
+        if gap is not None and str(gap.get("relation") or "").lower() == "separated":
+            separated_pairs += 1
+        if overlap is not None and bool(overlap.get("overlaps")):
+            overlap_pairs += 1
+        if alignment is not None and not bool(alignment.get("is_aligned")):
+            misaligned_pairs += 1
+        if contact_assertion is not None and not contact_assertion.passed:
+            contact_failures += 1
+
+        checks.append(
+            SceneCorrectionTruthPairContract(
+                from_object=from_object,
+                to_object=to_object,
+                gap=gap,
+                alignment=alignment,
+                overlap=overlap,
+                contact_assertion=contact_assertion,
+                error=error,
+            )
+        )
+
+    return SceneCorrectionTruthBundleContract(
+        scope=scope,
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy=pairing_strategy,
+            pair_count=len(pairs),
+            evaluated_pairs=sum(1 for item in checks if item.error is None),
+            contact_failures=contact_failures,
+            overlap_pairs=overlap_pairs,
+            separated_pairs=separated_pairs,
+            misaligned_pairs=misaligned_pairs,
+        ),
+        checks=checks,
+    )
+
+
+def _pair_label(from_object: str, to_object: str) -> str:
+    return f"{from_object} -> {to_object}"
+
+
+def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTruthFollowupContract:
+    if bundle.summary.pair_count == 0:
+        return SceneTruthFollowupContract(
+            scope=bundle.scope,
+            continue_recommended=False,
+            message="No pairwise truth checks are available for this assembled target scope yet.",
+            focus_pairs=[],
+            items=[],
+        )
+
+    items: list[SceneTruthFollowupItemContract] = []
+    focus_pairs: list[str] = []
+    seen_pairs: set[str] = set()
+
+    for check in bundle.checks:
+        pair_label = _pair_label(check.from_object, check.to_object)
+        if check.error:
+            items.append(
+                SceneTruthFollowupItemContract(
+                    kind="measurement_error",
+                    summary=f"Truth checks failed for {pair_label}: {check.error}",
+                    priority="high",
+                    from_object=check.from_object,
+                    to_object=check.to_object,
+                )
+            )
+        else:
+            if check.contact_assertion is not None and not check.contact_assertion.passed:
+                items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="contact_failure",
+                        summary=f"{pair_label} failed the contact assertion.",
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_assert_contact",
+                    )
+                )
+            if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated":
+                items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="gap",
+                        summary=f"{pair_label} still has measurable separation.",
+                        priority="normal",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_measure_gap",
+                    )
+                )
+            if check.overlap is not None and bool(check.overlap.get("overlaps")):
+                items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="overlap",
+                        summary=f"{pair_label} still overlaps.",
+                        priority="high",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_measure_overlap",
+                    )
+                )
+            if check.alignment is not None and not bool(check.alignment.get("is_aligned")):
+                items.append(
+                    SceneTruthFollowupItemContract(
+                        kind="alignment",
+                        summary=f"{pair_label} is still misaligned.",
+                        priority="normal",
+                        from_object=check.from_object,
+                        to_object=check.to_object,
+                        tool_name="scene_measure_alignment",
+                    )
+                )
+
+        if any(item.from_object == check.from_object and item.to_object == check.to_object for item in items):
+            if pair_label not in seen_pairs:
+                seen_pairs.add(pair_label)
+                focus_pairs.append(pair_label)
+
+    return SceneTruthFollowupContract(
+        scope=bundle.scope,
+        continue_recommended=bool(items),
+        message=(
+            f"Truth follow-up identified {len(items)} actionable finding(s) across {len(focus_pairs)} pair(s)."
+            if items
+            else "Truth follow-up found no actionable pairwise issues for the current assembled target scope."
+        ),
+        focus_pairs=focus_pairs,
+        items=items,
+    )
 
 
 def _repeated_focus(current: list[str], prior: list[str]) -> list[str]:
@@ -478,6 +698,11 @@ async def _run_stage_checkpoint_compare(
             reference_labels=[],
             error=str(exc),
         )
+    assembled_target_scope = _assembled_target_scope(
+        target_object=resolved_target_object,
+        target_objects=resolved_target_objects,
+        collection_name=resolved_collection_name,
+    )
 
     references = list(session.reference_images or [])
     selected_reference_records = select_reference_records_for_target(
@@ -526,12 +751,16 @@ async def _run_stage_checkpoint_compare(
             error=str(exc),
         )
 
+    scene_handler = get_scene_handler()
+    truth_bundle = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
+    truth_followup = _build_truth_followup(truth_bundle)
     reference_images = build_reference_capture_images(selected_reference_records)
     vision_request = build_vision_request_from_stage_captures(
         captures,
         goal=goal,
         target_object=resolved_target_object,
         reference_images=reference_images,
+        truth_summary=truth_bundle.model_dump(mode="json"),
         prompt_hint=" | ".join(
             part
             for part in (
@@ -559,6 +788,7 @@ async def _run_stage_checkpoint_compare(
             "capture_count": len(captures),
             "collection_name": resolved_collection_name,
             "target_objects": list(resolved_target_objects),
+            "assembled_target_scope": assembled_target_scope.model_dump(mode="json"),
         },
     )
     outcome = await run_vision_assist(
@@ -581,6 +811,8 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         vision_assistant=vision_assistant,
+        truth_bundle=truth_bundle,
+        truth_followup=truth_followup,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"

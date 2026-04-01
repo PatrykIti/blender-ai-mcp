@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Completion Summary:** The runtime layer now has all three backend families wired behind the same bounded contract path, prompt/parse tightening materially improved local output quality, a scored golden harness exists in-repo, OpenRouter and Google AI Studio / Gemini both have first-class provider paths, and the runtime/evaluation wave is closed as complete. Provider-specific Gemini structured-output hardening remains tracked separately as the explicit follow-on [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md).
+**Completion Summary:** The runtime layer now has all three backend families wired behind the same bounded contract path, prompt/parse tightening materially improved local output quality, a scored golden harness exists in-repo, OpenRouter and Google AI Studio / Gemini both have first-class provider paths, and the runtime/evaluation wave is complete. The former Gemini follow-on [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) is now also complete, so the staged compare path no longer depends on the older generic external contract.
 
 ---
 

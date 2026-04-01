@@ -348,7 +348,24 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
     )
 
     class SceneHandler:
-        pass
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {"from_object": from_object, "to_object": to_object, "is_aligned": True, "axes": axes or ["X", "Y", "Z"]}
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
 
     class CollectionHandler:
         def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
@@ -422,6 +439,15 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
     assert result.preset_profile == "compact"
     assert result.preset_names == ["context_wide", "target_front", "target_side"]
     assert result.vision_assistant is not None
+    assert result.assembled_target_scope is not None
+    assert result.assembled_target_scope.scope_kind == "single_object"
+    assert result.assembled_target_scope.primary_target == "Squirrel"
+    assert result.assembled_target_scope.object_names == ["Squirrel"]
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.summary.pairing_strategy == "none"
+    assert result.truth_followup is not None
+    assert result.truth_followup.continue_recommended is False
+    assert captured["request"].truth_summary["scope"]["scope_kind"] == "single_object"
     assert [image.role for image in captured["request"].images] == [
         "after",
         "after",
@@ -455,7 +481,17 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
     captured = {}
 
     class SceneHandler:
-        pass
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            raise AssertionError("measure_gap should not be called for scene-wide scope")
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            raise AssertionError("measure_alignment should not be called for scene-wide scope")
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            raise AssertionError("measure_overlap should not be called for scene-wide scope")
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+            raise AssertionError("assert_contact should not be called for scene-wide scope")
 
     class CollectionHandler:
         def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
@@ -515,6 +551,13 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
     assert result.error is None
     assert result.target_object is None
     assert result.reference_count == 2
+    assert result.assembled_target_scope is not None
+    assert result.assembled_target_scope.scope_kind == "scene"
+    assert result.assembled_target_scope.object_names == []
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.summary.pairing_strategy == "none"
+    assert result.truth_followup is not None
+    assert result.truth_followup.continue_recommended is False
     assert captured["request"].target_object is None
 
 
@@ -545,7 +588,24 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
             }
 
     class SceneHandler:
-        pass
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "separated", "gap": 0.05}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {"from_object": from_object, "to_object": to_object, "is_aligned": False, "axes": axes or ["X", "Y", "Z"]}
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": False,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.05, "relation": "separated"},
+            }
 
     async def _fake_run_vision_assist(ctx, *, request, resolver):
         captured["request"] = request
@@ -595,7 +655,111 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.error is None
     assert result.collection_name == "Squirrel"
     assert result.target_objects == ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"]
+    assert result.assembled_target_scope is not None
+    assert result.assembled_target_scope.scope_kind == "collection"
+    assert result.assembled_target_scope.collection_name == "Squirrel"
+    assert result.assembled_target_scope.object_count == 3
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.summary.pairing_strategy == "primary_to_others"
+    assert result.truth_bundle.summary.pair_count == 2
+    assert result.truth_followup is not None
+    assert result.truth_followup.continue_recommended is True
+    assert result.truth_followup.focus_pairs == [
+        "Squirrel_Head -> Squirrel_Body",
+        "Squirrel_Head -> Squirrel_Tail",
+    ]
+    assert captured["request"].truth_summary["summary"]["pair_count"] == 2
     assert captured["request"].metadata["collection_name"] == "Squirrel"
+
+
+def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            return {"objects": []}
+
+    class SceneHandler:
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            return {"from_object": from_object, "to_object": to_object, "is_aligned": True, "axes": axes or ["X", "Y", "Z"]}
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
+
+        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": True,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0, "relation": "contact"},
+            }
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="ok",
+                visible_changes=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_objects=["Squirrel_Head", "Squirrel_Tail"],
+            checkpoint_label="stage_object_set",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert result.target_object is None
+    assert result.target_objects == ["Squirrel_Head", "Squirrel_Tail"]
+    assert result.assembled_target_scope is not None
+    assert result.assembled_target_scope.scope_kind == "object_set"
+    assert result.assembled_target_scope.object_names == ["Squirrel_Head", "Squirrel_Tail"]
+    assert result.assembled_target_scope.object_count == 2
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.summary.pairing_strategy == "primary_to_others"
+    assert result.truth_bundle.summary.pair_count == 1
+    assert result.truth_followup is not None
+    assert result.truth_followup.continue_recommended is False
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):

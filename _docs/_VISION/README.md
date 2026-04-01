@@ -50,6 +50,10 @@ The repo now has the first implementation scaffolding for the vision layer:
   multi-view stage capture + compare during staged manual/reference-guided work
 - bounded `reference_iterate_stage_checkpoint(...)` surface for session-aware
   staged correction loops with repeated-focus detection and continuation hints
+- stage compare/iterate responses now also carry:
+  - `assembled_target_scope` for explicit assembled-model targeting semantics
+  - `truth_bundle` for correction-oriented contact/gap/alignment/overlap findings
+  - `truth_followup` for loop-ready truth handoff items and focus pairs
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back
@@ -131,13 +135,13 @@ Current practical provider/model notes on this branch:
 | `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
 | `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
 | `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
-| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Experimental | Simple macro smoke can succeed, but staged iterative compare flows still drift or return malformed JSON under the current generic external contract. Follow-up task: [TASK-121-04-01-05](../_TASKS/TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md). |
+| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Supported for staged compare | Gemini now uses a provider-specific narrow compare contract for `reference_compare_*` and `reference_iterate_stage_checkpoint(...)` flows, plus provider-specific parse repair for near-JSON / truncated compare responses. |
 
 Interpretation:
 
 - `mlx_local` remains the safest current default for local reference-driven work
 - OpenRouter is worth keeping enabled; `x-ai/grok-4.20-multi-agent` is the current strongest external branch candidate for iterative compare loops
-- Gemini transport/provider wiring is in place, but the iterative compare contract/prompt still needs provider-specific tightening before it should be treated as stable
+- Gemini transport/provider wiring is in place and the staged compare path now runs on a provider-specific narrow contract instead of the older generic external contract
 
 ## What Improved
 

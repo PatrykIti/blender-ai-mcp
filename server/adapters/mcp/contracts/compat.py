@@ -18,6 +18,7 @@ CONTRACT_ENABLED_TOOLS = {
     "macro_cutout_recess",
     "macro_finish_form",
     "macro_relative_layout",
+    "macro_attach_part_to_surface",
     "mesh_select",
     "mesh_select_targeted",
     "mesh_inspect",

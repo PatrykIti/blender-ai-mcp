@@ -33,6 +33,7 @@ GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
     "check_scene",
     "inspect_scene",
     "macro_relative_layout",
+    "macro_attach_part_to_surface",
     "macro_cutout_recess",
     "macro_finish_form",
 )
@@ -94,6 +95,7 @@ GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "reference_compare_stage_checkpoint",
     "reference_iterate_stage_checkpoint",
     "macro_relative_layout",
+    "macro_attach_part_to_surface",
     "macro_cutout_recess",
     "macro_finish_form",
     "modeling_create_primitive",

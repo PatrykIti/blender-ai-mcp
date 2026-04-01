@@ -64,6 +64,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_compare_snapshot",
     "scene_create",
     "macro_relative_layout",
+    "macro_attach_part_to_surface",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -229,6 +230,102 @@ async def macro_relative_layout(
         status="failed",
         macro_name="macro_relative_layout",
         intent=f"layout '{moving_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_attach_part_to_surface(
+    ctx: Context,
+    part_object: str,
+    surface_object: str,
+    surface_axis: Literal["X", "Y", "Z"],
+    surface_side: Literal["positive", "negative"] = "positive",
+    align_mode: Literal["center", "min", "max"] = "center",
+    gap: float = 0.0,
+    offset: Union[str, List[float], None] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for seating one part onto another object's surface/body.
+
+    Use this when the intent is "attach this part onto that surface" rather than
+    manually composing a more generic relative layout call. The first slice keeps
+    the attachment bounded:
+
+    - one required surface axis (`X`, `Y`, `Z`)
+    - one required surface side (`positive`, `negative`)
+    - one shared tangential alignment mode for the two remaining axes
+    - optional non-negative contact gap
+    - optional world offset after seating
+
+    Args:
+        part_object: Existing object that will be seated onto the target surface/body.
+        surface_object: Existing object that stays fixed and provides the target surface.
+        surface_axis: Axis normal of the target surface (`X`, `Y`, `Z`).
+        surface_side: Which side of the target surface bbox to attach against.
+        align_mode: Alignment rule applied to the two axes tangent to the surface.
+        gap: Optional non-negative spacing along the surface normal.
+        offset: Optional world-axis offset `[x, y, z]` applied after seating.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().attach_part_to_surface(
+                part_object=part_object,
+                surface_object=surface_object,
+                surface_axis=surface_axis,
+                surface_side=surface_side,
+                align_mode=align_mode,
+                gap=gap,
+                offset=parsed_offset,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_attach_part_to_surface",
+                intent=f"attach '{part_object}' to '{surface_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_attach_part_to_surface",
+        params={
+            "part_object": part_object,
+            "surface_object": surface_object,
+            "surface_axis": surface_axis,
+            "surface_side": surface_side,
+            "align_mode": align_mode,
+            "gap": gap,
+            "offset": offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status == "failed" else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") == "failed" or result.get("error"):
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_attach_part_to_surface",
+                intent=f"attach '{part_object}' to '{surface_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status == "failed" else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_attach_part_to_surface",
+        intent=f"attach '{part_object}' to '{surface_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),

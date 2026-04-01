@@ -280,7 +280,85 @@ class MacroToolHandler(IMacroTool):
 
         if resolved_contact_axis is None and all(mode == "none" for mode in modes.values()):
             raise ValueError("macro_relative_layout needs at least one alignment mode or contact_axis")
-        bundle_id = self._make_capture_bundle_id("macro_relative_layout", moving_object)
+        intent_parts = [f"x={modes['X']}", f"y={modes['Y']}", f"z={modes['Z']}"]
+        if resolved_contact_axis is not None:
+            intent_parts.append(f"contact {resolved_contact_side} on {resolved_contact_axis}")
+            intent_parts.append(f"gap={gap_value:g}")
+        return self._execute_relative_layout_macro(
+            macro_name="macro_relative_layout",
+            moving_object=moving_object,
+            reference_object=reference_object,
+            modes=modes,
+            resolved_contact_axis=resolved_contact_axis,
+            resolved_contact_side=resolved_contact_side,
+            gap_value=gap_value,
+            offset_vector=offset_vector,
+            capture_profile=capture_profile,
+            intent=f"Layout '{moving_object}' relative to '{reference_object}' ({', '.join(intent_parts)})",
+            placement_action="apply_relative_layout",
+            placement_summary=f"Moved '{moving_object}' relative to '{reference_object}'",
+        )
+
+    def attach_part_to_surface(
+        self,
+        part_object: str,
+        surface_object: str,
+        surface_axis: str,
+        surface_side: str = "positive",
+        align_mode: str = "center",
+        gap: float = 0.0,
+        offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if part_object == surface_object:
+            raise ValueError("part_object and surface_object must be different")
+
+        resolved_surface_axis = self._normalize_contact_axis(surface_axis)
+        resolved_surface_side = self._normalize_contact_side(surface_side)
+        resolved_align_mode = self._normalize_layout_mode(align_mode, field_name="align_mode")
+        gap_value = self._require_non_negative(gap, "gap")
+        offset_vector = self._normalize_offset(offset)
+
+        modes = {
+            axis_name: ("none" if axis_name == resolved_surface_axis else resolved_align_mode)
+            for axis_name in self._AXIS_INDEX
+        }
+        tangential_axes = [axis_name for axis_name in self._AXIS_INDEX if axis_name != resolved_surface_axis]
+        return self._execute_relative_layout_macro(
+            macro_name="macro_attach_part_to_surface",
+            moving_object=part_object,
+            reference_object=surface_object,
+            modes=modes,
+            resolved_contact_axis=resolved_surface_axis,
+            resolved_contact_side=resolved_surface_side,
+            gap_value=gap_value,
+            offset_vector=offset_vector,
+            capture_profile=capture_profile,
+            intent=(
+                f"Attach '{part_object}' to the {resolved_surface_side} {resolved_surface_axis} surface of "
+                f"'{surface_object}' with {resolved_align_mode} tangential alignment on {', '.join(tangential_axes)}"
+            ),
+            placement_action="attach_part_to_surface",
+            placement_summary=f"Seated '{part_object}' onto '{surface_object}'",
+        )
+
+    def _execute_relative_layout_macro(
+        self,
+        *,
+        macro_name: str,
+        moving_object: str,
+        reference_object: str,
+        modes: dict[str, str],
+        resolved_contact_axis: Optional[str],
+        resolved_contact_side: str,
+        gap_value: float,
+        offset_vector: list[float],
+        capture_profile: Optional[str],
+        intent: str,
+        placement_action: str,
+        placement_summary: str,
+    ) -> Dict[str, Any]:
+        bundle_id = self._make_capture_bundle_id(macro_name, moving_object)
         captures_before = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="before",
@@ -352,9 +430,9 @@ class MacroToolHandler(IMacroTool):
         actions_taken.append(
             {
                 "status": "applied",
-                "action": "apply_relative_layout",
+                "action": placement_action,
                 "tool_name": "modeling_transform_object",
-                "summary": f"Moved '{moving_object}' relative to '{reference_object}'",
+                "summary": placement_summary,
                 "details": {
                     "target_location": target_location,
                     "translation_delta": translation_delta,
@@ -433,15 +511,10 @@ class MacroToolHandler(IMacroTool):
             }
         )
 
-        intent_parts = [f"x={modes['X']}", f"y={modes['Y']}", f"z={modes['Z']}"]
-        if resolved_contact_axis is not None:
-            intent_parts.append(f"contact {resolved_contact_side} on {resolved_contact_axis}")
-            intent_parts.append(f"gap={gap_value:g}")
-
         report = {
             "status": "success",
-            "macro_name": "macro_relative_layout",
-            "intent": f"Layout '{moving_object}' relative to '{reference_object}' ({', '.join(intent_parts)})",
+            "macro_name": macro_name,
+            "intent": intent,
             "actions_taken": actions_taken,
             "objects_created": None,
             "objects_modified": [moving_object],

@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks
-- **In Progress:** 0 tasks
-- **Done:** 188
+- **To Do:** 0 tasks
+- **In Progress:** 1 task
+- **Done:** 189
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -37,8 +37,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | Add a Gemini-specific structured-output contract/prompting path for iterative compare flows, where the current generic external contract is still unstable |
-| [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md) | **Hybrid Vision, Truth, and Correction Macro Wave** | 🔴 High | Add the next reliability wave for assembled models: truth bundles, correction macros, and a hybrid vision+truth correction loop |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -61,6 +59,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md) | **Hybrid Vision, Truth, and Correction Macro Wave** | 🔴 High | First assembled-target scope leaf is complete; truth-bundle, macro, and hybrid-loop work continues from that contract baseline |
 
 ---
 
@@ -68,6 +67,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | 2026-04-01 |
 | [TASK-123](./TASK-123_Runtime_Reliability_Fixes_For_Vision_Provider_Startup_And_Task_Terminality.md) | **Runtime Reliability Fixes for Vision Provider Startup and Task Terminality** | 🔴 High | 2026-04-01 |
 | [TASK-120](./TASK-120_Macro_Tool_Layer_And_Guided_Surface_Collapse.md) | **Macro Tool Layer and Guided Surface Collapse** | 🔴 High | 2026-03-26 |
 | [TASK-119](./TASK-119_Existing_Public_Surface_Hardening_After_TASK-113.md) | **Existing Public Surface Hardening After TASK-113** | 🔴 High | 2026-03-25 |

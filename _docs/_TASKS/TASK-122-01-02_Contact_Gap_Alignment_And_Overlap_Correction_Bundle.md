@@ -1,8 +1,10 @@
 # TASK-122-01-02: Contact, Gap, Alignment, and Overlap Correction Bundle
 
 **Parent:** [TASK-122-01](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added a correction-oriented `truth_bundle` for stage compare and iterate flows. The bundle now groups contact, gap, alignment, and overlap findings per assembled-target pair, summarizes pairing strategy and failure counts, and is passed both in the reference response contract and into the vision request as deterministic truth context.
 
 ## Objective
 
@@ -43,4 +45,4 @@ Build one correction-ready truth bundle that combines contact, gap, alignment, a
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the work starts or closes
+- this leaf is closed; the parent task summary and `_docs/_TASKS/README.md` now reflect that `TASK-122` work is actively in progress

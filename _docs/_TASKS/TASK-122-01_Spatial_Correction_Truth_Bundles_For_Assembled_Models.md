@@ -1,8 +1,10 @@
 # TASK-122-01: Spatial Correction Truth Bundles For Assembled Models
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The truth-bundle subtree is now complete. Stage compare and iterate responses expose a stable `assembled_target_scope` envelope, a correction-oriented `truth_bundle` carrying contact/gap/alignment/overlap findings, and a loop-ready `truth_followup` payload that later hybrid-loop work can consume directly.
 
 ## Objective
 

@@ -6,6 +6,11 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [185](./185-2026-04-01-macro-attach-part-to-surface.md) | 2026-04-01 | **Macro attach part to surface** | - |
+| [184](./184-2026-04-01-truth-followup-loop-handoff.md) | 2026-04-01 | **Truth follow-up loop handoff** | - |
+| [183](./183-2026-04-01-correction-truth-bundle-baseline.md) | 2026-04-01 | **Correction truth bundle baseline** | - |
+| [182](./182-2026-04-01-assembled-target-scope-contract.md) | 2026-04-01 | **Assembled target scope contract** | - |
+| [181](./181-2026-04-01-gemini-compare-contract-hardening.md) | 2026-04-01 | **Gemini compare contract hardening** | - |
 | [180](./180-2026-04-01-task-governance-and-board-normalization.md) | 2026-04-01 | **Task governance and board normalization** | - |
 | [179](./179-2026-04-01-rpc-poll-budget-and-disabled-vision-conflict-guard.md) | 2026-04-01 | **RPC poll budget and disabled vision conflict guard** | - |
 | [177](./177-2026-04-01-external-provider-precedence-loop-scope-and-task-timeout.md) | 2026-04-01 | **External provider precedence, loop scope, and task timeout** | - |

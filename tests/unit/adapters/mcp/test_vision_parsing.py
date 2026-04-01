@@ -228,3 +228,59 @@ def test_diagnose_vision_output_classifies_prose_without_json():
 
     assert diagnostics["container_shape"] == "prose"
     assert diagnostics["payload_shape"] == "no_json"
+
+
+def test_parse_gemini_compare_output_accepts_narrow_contract_and_backfills_defaults():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+    text = json.dumps(
+        {
+            "goal_summary": "Closer overall to the squirrel reference.",
+            "reference_match_summary": "Head shape is closer but still too round.",
+            "shape_mismatches": ["Head silhouette is still too spherical."],
+            "proportion_mismatches": ["Tail still reads too small relative to the body."],
+            "correction_focus": ["Head silhouette", "Tail size"],
+            "next_corrections": ["Flatten the head silhouette slightly and enlarge the tail arc."],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, request, provider_name="google_ai_studio")
+
+    assert parsed["goal_summary"] == "Closer overall to the squirrel reference."
+    assert parsed["visible_changes"] == []
+    assert parsed["likely_issues"] == []
+    assert parsed["recommended_checks"] == []
+    assert parsed["captures_used"] == ["target_front_after", "ref_front"]
+
+
+def test_parse_gemini_compare_output_repairs_truncated_json():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+    text = (
+        '{"goal_summary":"Closer overall.","reference_match_summary":"Head is closer.",'
+        '"shape_mismatches":["Head silhouette is still too spherical."],'
+        '"proportion_mismatches":["Tail still reads too small relative to the body."],'
+        '"correction_focus":["Head silhouette"],'
+        '"next_corrections":["Flatten the head silhouette slightly"]'
+    )
+
+    parsed = parse_vision_output_text(text, request, provider_name="google_ai_studio")
+    diagnostics = diagnose_vision_output_text(text, request=request, provider_name="google_ai_studio")
+
+    assert parsed["goal_summary"] == "Closer overall."
+    assert parsed["next_corrections"] == ["Flatten the head silhouette slightly"]
+    assert diagnostics["payload_shape"] == "contract"

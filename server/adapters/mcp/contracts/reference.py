@@ -7,6 +7,11 @@ from __future__ import annotations
 
 from typing import Literal
 
+from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
+    SceneCorrectionTruthBundleContract,
+    SceneTruthFollowupContract,
+)
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
 
@@ -67,6 +72,9 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
+    assembled_target_scope: SceneAssembledTargetScopeContract | None = None
+    truth_bundle: SceneCorrectionTruthBundleContract | None = None
+    truth_followup: SceneTruthFollowupContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -90,6 +98,9 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
+    assembled_target_scope: SceneAssembledTargetScopeContract | None = None
+    truth_bundle: SceneCorrectionTruthBundleContract | None = None
+    truth_followup: SceneTruthFollowupContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None

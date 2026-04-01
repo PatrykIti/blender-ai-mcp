@@ -133,6 +133,67 @@ class SceneMeasureOverlapContract(MCPContract):
     error: str | None = None
 
 
+class ScenePartGroupContract(MCPContract):
+    group_name: str
+    group_kind: Literal["explicit_objects", "named_group", "collection", "role"] = "explicit_objects"
+    object_names: list[str] = []
+    collection_name: str | None = None
+    role: str | None = None
+
+
+class SceneAssembledTargetScopeContract(MCPContract):
+    scope_kind: Literal["single_object", "object_set", "collection", "part_groups", "scene"] = "scene"
+    primary_target: str | None = None
+    object_names: list[str] = []
+    object_count: int = 0
+    collection_name: str | None = None
+    part_groups: list[ScenePartGroupContract] = []
+
+
+class SceneCorrectionTruthPairContract(MCPContract):
+    from_object: str
+    to_object: str
+    gap: dict[str, Any] | None = None
+    alignment: dict[str, Any] | None = None
+    overlap: dict[str, Any] | None = None
+    contact_assertion: SceneAssertionPayloadContract | None = None
+    error: str | None = None
+
+
+class SceneCorrectionTruthSummaryContract(MCPContract):
+    pairing_strategy: Literal["none", "primary_to_others"] = "none"
+    pair_count: int = 0
+    evaluated_pairs: int = 0
+    contact_failures: int = 0
+    overlap_pairs: int = 0
+    separated_pairs: int = 0
+    misaligned_pairs: int = 0
+
+
+class SceneCorrectionTruthBundleContract(MCPContract):
+    scope: SceneAssembledTargetScopeContract
+    summary: SceneCorrectionTruthSummaryContract
+    checks: list[SceneCorrectionTruthPairContract] = []
+    error: str | None = None
+
+
+class SceneTruthFollowupItemContract(MCPContract):
+    kind: Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+    summary: str
+    priority: Literal["high", "normal"] = "normal"
+    from_object: str | None = None
+    to_object: str | None = None
+    tool_name: str | None = None
+
+
+class SceneTruthFollowupContract(MCPContract):
+    scope: SceneAssembledTargetScopeContract
+    continue_recommended: bool = False
+    message: str
+    focus_pairs: list[str] = []
+    items: list[SceneTruthFollowupItemContract] = []
+
+
 class SceneAssertionPayloadContract(MCPContract):
     assertion: str
     passed: bool

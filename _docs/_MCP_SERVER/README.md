@@ -17,7 +17,7 @@ Documentation for the MCP Server (Client Side).
   - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
 - **[Vision Layer Docs](../_VISION/README.md)**
   - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
-  - Includes a provider/model notes table covering the current MLX, OpenRouter, and Gemini status.
+  - Includes a provider/model notes table covering the current MLX, OpenRouter, and Gemini status, including the provider-specific Gemini compare contract path.
 - **[MCP Client Config Examples](./MCP_CLIENT_CONFIG_EXAMPLES.md)**
   - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini.
 - **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
@@ -356,6 +356,7 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 
 - `macro_cutout_recess`
 - `macro_finish_form`
+- `macro_attach_part_to_surface`
 - `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
@@ -636,6 +637,7 @@ Managing objects at the scene level.
 | `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
 | `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. |
 | `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. |
+Stage compare/iterate responses now also expose `assembled_target_scope`, `truth_bundle`, and `truth_followup`, so assembled-model correction flows can consume a structured target scope, correction-oriented truth findings, and loop-ready follow-up items instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields.
 | `scene_camera_orbit` | `angle_horizontal` (float), `angle_vertical` (float), `target_object` (str, optional), `target_point` ([x,y,z], optional) | Orbits the viewport around a target object or point. |
 | `scene_camera_focus` | `object_name` (str), `zoom_factor` (float) | Focuses the viewport on one object. Use `object_name` here, not `target`, `target_object`, or `focus_target`. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `USER_PERSPECTIVE` follows the live active 3D viewport; named cameras follow render visibility. `view_name`/`orbit_*`/`zoom_factor`/`persist_view` apply only to bounded `USER_PERSPECTIVE` capture adjustments. `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
@@ -703,6 +705,7 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 |-----------|-----------|-------------|
 | `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
 | `macro_finish_form` | `target_object` (str), `preset` (str), `bevel_width` (float), `bevel_segments` (int), `subsurf_levels` (int), `thickness` (float), `solidify_offset` (float) | Applies one bounded finishing stack to an object using a preset such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` instead of hand-building the modifier chain. |
+| `macro_attach_part_to_surface` | `part_object` (str), `surface_object` (str), `surface_axis` (`X`/`Y`/`Z`), `surface_side` (`positive`/`negative`), `align_mode` (`center`/`min`/`max`), `gap` (float), `offset` ([x,y,z]) | Seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. |
 | `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
 
 Example guided macro flow for finishing:
@@ -717,6 +720,7 @@ Example guided macro flow for finishing:
    - `call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})`
 
 If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
+If the task is specifically "seat/attach this part onto that surface/body", prefer `macro_attach_part_to_surface` over the more general `macro_relative_layout`.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
 If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
 

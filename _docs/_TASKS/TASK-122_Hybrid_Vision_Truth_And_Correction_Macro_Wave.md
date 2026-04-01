@@ -4,7 +4,9 @@
 **Category:** Product Reliability / Assembled-Model Correction  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Update:** The `TASK-122-01` truth-contract subtree is now complete: stage compare and iterate responses expose a structured `assembled_target_scope` envelope that distinguishes single-object, explicit object-set, collection-backed, and full-scene targeting, plus a correction-oriented `truth_bundle` and loop-ready `truth_followup` handoff. The umbrella remains in progress while the macro and hybrid-loop subtrees build on that baseline.
 
 ## Objective
 

@@ -1,8 +1,10 @@
 # TASK-122-02: Creature Correction Macro Tool Wave
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first macro leaf is now complete. `macro_attach_part_to_surface` is available as a bounded surface-attachment macro built on the existing relative-layout/contact verification stack, and the remaining creature-correction macro leaves stay open under this in-progress wave.
 
 ## Objective
 

@@ -1,8 +1,10 @@
 # TASK-122-02-01: `macro_attach_part_to_surface`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added `macro_attach_part_to_surface` as a bounded surface-attachment macro on the scene MCP surface. The first slice reuses the deterministic bbox/contact logic from the relative-layout stack, but narrows the UX to one explicit surface axis, one side, one shared tangential alignment mode, optional gap, and one deterministic transform with contact-oriented verification hints.
 
 ## Objective
 
@@ -46,4 +48,4 @@ Add a bounded macro for seating one part onto another object's surface/body with
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the macro moves from planning to implementation to closure
+- this leaf is closed; the parent macro wave is now in progress and the board-level `TASK-122` umbrella remains in progress

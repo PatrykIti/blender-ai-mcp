@@ -4,8 +4,16 @@
 **Board Tracking:** Standalone provider-hardening carveout kept open after the
 parent closed. `_docs/_TASKS/README.md` tracks it as its own open item while
 the older numbering is preserved for continuity.  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Google AI Studio / Gemini now uses a provider-specific
+narrow compare contract for reference-guided checkpoint and staged iterative
+compare flows. The backend now emits a narrower Gemini-specific JSON schema and
+prompt path for those flows, parsing accepts the narrow compare contract and
+repairs near-JSON / truncated compare responses, and downstream normalization
+still returns the canonical bounded payload used by the rest of the vision
+stack.
 
 Google AI Studio / Gemini now has a working provider path for bounded vision,
 but the current generic external contract is still too heavy for reliable
@@ -93,10 +101,9 @@ Likely omit from the Gemini compare-specific path:
 
 ## Status / Board Update
 
-- keep this leaf `⏳ To Do` until the Gemini-specific contract, prompting path,
-  docs, and tests are complete
-- when it closes, update this file, the closed parent follow-on note, and
-  `_docs/_TASKS/README.md`
+- this leaf is closed; keep the historical follow-on note for lineage only
+- the closed parent follow-on note and `_docs/_TASKS/README.md` now point to
+  the completed state
 
 ## Acceptance Criteria
 

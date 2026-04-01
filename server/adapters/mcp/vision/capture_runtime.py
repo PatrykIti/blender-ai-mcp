@@ -9,6 +9,7 @@ import base64
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from server.adapters.mcp.contracts.scene import SceneAssembledTargetScopeContract
 from server.adapters.mcp.contracts.vision import (
     VisionCaptureBundleContract,
     VisionCaptureImageContract,
@@ -325,6 +326,7 @@ def build_capture_bundle(
     captures_before: list[VisionCaptureImageContract],
     captures_after: list[VisionCaptureImageContract],
     goal_id: str | None = None,
+    assembled_target_scope: SceneAssembledTargetScopeContract | None = None,
     truth_summary: dict | None = None,
 ) -> VisionCaptureBundleContract:
     """Build one deterministic before/after capture bundle contract."""
@@ -336,6 +338,7 @@ def build_capture_bundle(
         bundle_id=bundle_id,
         goal_id=goal_id,
         target_object=target_object,
+        assembled_target_scope=assembled_target_scope,
         preset_names=preset_names,
         captures_before=captures_before,
         captures_after=captures_after,

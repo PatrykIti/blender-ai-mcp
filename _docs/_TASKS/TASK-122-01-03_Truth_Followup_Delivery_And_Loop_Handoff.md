@@ -1,8 +1,10 @@
 # TASK-122-01-03: Truth Follow-Up Delivery and Loop Handoff
 
 **Parent:** [TASK-122-01](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added a loop-ready `truth_followup` payload on top of the new `truth_bundle`. Stage compare and iterate responses now expose focus pairs, actionable truth findings, and recommended deterministic re-check tools so later loop logic can consume a structured handoff instead of raw measure/assert payloads.
 
 ## Objective
 
@@ -43,4 +45,4 @@ Expose truth-bundle findings as loop-ready follow-up payloads instead of isolate
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the work starts or closes
+- this leaf is closed; the parent truth-bundle task is now complete and the `TASK-122` umbrella remains in progress for the remaining macro and hybrid-loop work

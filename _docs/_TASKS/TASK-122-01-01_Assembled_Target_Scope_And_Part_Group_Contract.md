@@ -1,8 +1,10 @@
 # TASK-122-01-01: Assembled Target Scope and Part Group Contract
 
 **Parent:** [TASK-122-01](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Added a canonical `assembled_target_scope` contract for stage compare and iterate flows. The contract now distinguishes `single_object`, `object_set`, `collection`, and `scene` targeting, and the current response envelopes carry that structured scope instead of leaving downstream consumers to infer meaning only from loose `target_object`, `target_objects`, and `collection_name` fields.
 
 ## Objective
 
@@ -43,4 +45,36 @@ Define one stable contract for assembled correction targets, including single pa
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the work starts or closes
+- this leaf is closed; the parent task and `_docs/_TASKS/README.md` now reflect that `TASK-122` work has started
+*** Add File: _docs/_CHANGELOG/182-2026-04-01-assembled-target-scope-contract.md
+# 182. Assembled target scope contract
+
+Date: 2026-04-01
+
+## Summary
+
+Started the `TASK-122` reliability wave by adding a canonical assembled-target
+scope contract for stage compare and iterate flows.
+
+## What Changed
+
+- added a structured `assembled_target_scope` contract for assembled-model
+  targeting
+- wired that scope into `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` responses
+- classified current targeting modes into:
+  - `single_object`
+  - `object_set`
+  - `collection`
+  - `scene`
+- added unit coverage for:
+  - the new scene contract types
+  - stage compare response scope classification
+  - capture-bundle compatibility defaults
+
+## Why
+
+The upcoming `TASK-122` truth-bundle and hybrid-loop work needs one stable
+scope envelope for assembled targets. Without it, downstream consumers still
+have to infer semantics ad hoc from `target_object`, `target_objects`, and
+`collection_name`.

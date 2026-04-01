@@ -6,6 +6,7 @@ from server.adapters.mcp.vision.backend import VisionImageInput, VisionRequest
 from server.adapters.mcp.vision.prompting import (
     build_local_vision_payload_text,
     build_vision_payload_text,
+    build_vision_response_json_schema,
     build_vision_system_prompt,
 )
 
@@ -84,3 +85,37 @@ def test_local_prompt_adds_reference_guided_checkpoint_guidance_when_requested()
 
     assert "Because this is a reference-guided checkpoint comparison:" in local_prompt
     assert "correction_focus should rank the most important fixes first" in local_prompt
+
+
+def test_google_ai_studio_compare_prompt_uses_narrow_contract():
+    request = VisionRequest(
+        goal="low poly squirrel",
+        target_object="Squirrel",
+        images=(
+            VisionImageInput(path="/tmp/front.png", role="after", label="target_front_after"),
+            VisionImageInput(path="/tmp/ref_front.png", role="reference", label="ref_front"),
+        ),
+        prompt_hint="comparison_mode=stage_checkpoint_vs_reference",
+    )
+
+    system_prompt = build_vision_system_prompt(
+        backend_kind="openai_compatible_external",
+        provider_name="google_ai_studio",
+        request=request,
+    )
+    payload_text = build_vision_payload_text(request, provider_name="google_ai_studio")
+    schema = build_vision_response_json_schema(provider_name="google_ai_studio", request=request)
+
+    assert "Return exactly one JSON object with only these keys:" in system_prompt
+    assert "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_prompt
+    assert '"visible_changes"' not in payload_text
+    assert '"shape_mismatches"' in payload_text
+    assert '"next_corrections"' in payload_text
+    assert set(schema["properties"]) == {
+        "goal_summary",
+        "reference_match_summary",
+        "shape_mismatches",
+        "proportion_mismatches",
+        "correction_focus",
+        "next_corrections",
+    }

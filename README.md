@@ -62,6 +62,7 @@ When a bounded modeling intent matches, the default public working layer should 
 
 - `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts
 - `macro_relative_layout` for align/place/contact-gap part layout
+- `macro_attach_part_to_surface` for seating one part onto another object's surface/body
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
@@ -143,7 +144,7 @@ Current short version:
 
 - **Local default:** `mlx_local` with a Qwen VL 4B-class model path; current repo-validated baseline is `mlx-community/Qwen3-VL-4B-Instruct-4bit`
 - **External iterative compare candidate:** OpenRouter with `x-ai/grok-4.20-multi-agent`
-- **External experimental path:** Google AI Studio / Gemini currently needs a provider-specific structured-output contract for harder staged compare flows
+- **External Gemini compare path:** Google AI Studio / Gemini now uses a provider-specific narrow compare contract for staged iterative/reference-guided flows
 
 Detailed per-provider table:
 
@@ -174,6 +175,7 @@ Current structured-contract baseline includes:
 
 - `macro_cutout_recess`
 - `macro_finish_form`
+- `macro_attach_part_to_surface`
 - `macro_relative_layout`
 - `scene_create`
 - `scene_configure`

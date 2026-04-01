@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from .base import MCPContract
+from .scene import SceneAssembledTargetScopeContract
 
 
 class VisionCaptureImageContract(MCPContract):
@@ -27,6 +28,7 @@ class VisionCaptureBundleContract(MCPContract):
     bundle_id: str
     goal_id: str | None = None
     target_object: str | None = None
+    assembled_target_scope: SceneAssembledTargetScopeContract | None = None
     preset_names: list[str]
     captures_before: list[VisionCaptureImageContract]
     captures_after: list[VisionCaptureImageContract]
