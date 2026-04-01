@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import mimetypes
+import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -104,6 +105,14 @@ def _copy_reference_image(source_path: Path) -> tuple[str, str]:
     internal_path, host_visible_path = get_reference_image_storage_path(filename)
     shutil.copy2(source_path, internal_path)
     return str(internal_path), host_visible_path
+
+
+def _safe_checkpoint_token(value: str | None) -> str:
+    """Return a filesystem-safe token for checkpoint/bundle ids."""
+
+    raw = str(value or "scene").strip()
+    normalized = re.sub(r"[^A-Za-z0-9._-]+", "_", raw).strip("._-")
+    return normalized or "scene"
 
 
 def _compare_response(
@@ -782,6 +791,21 @@ async def reference_compare_current_view(
 ) -> ReferenceCompareCheckpointResponseContract:
     """Capture one current viewport/camera checkpoint and compare it against attached references."""
 
+    session = await get_session_capability_state_async(ctx)
+    effective_goal = goal_override or session.goal
+    if not effective_goal:
+        return _compare_response(
+            action="compare_current_view",
+            checkpoint_path="",
+            checkpoint_label=checkpoint_label,
+            goal=None,
+            target_object=target_object,
+            target_view=target_view,
+            reference_ids=[],
+            reference_labels=[],
+            error="Set an active goal with router_set_goal(...) before comparing the current view, or pass goal_override.",
+        )
+
     try:
         b64_data = get_scene_handler().get_viewport(
             width=width,
@@ -855,7 +879,7 @@ async def reference_compare_stage_checkpoint(
 ) -> ReferenceCompareStageCheckpointResponseContract:
     """Capture one deterministic stage view-set and compare it against attached references."""
 
-    checkpoint_target = collection_name or target_object or "scene"
+    checkpoint_target = _safe_checkpoint_token(collection_name or target_object or "scene")
     checkpoint_id = f"stage_checkpoint_{checkpoint_target}_{uuid4().hex[:8]}"
     return await _run_stage_checkpoint_compare(
         ctx,

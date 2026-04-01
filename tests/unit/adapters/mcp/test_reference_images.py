@@ -235,6 +235,20 @@ def test_reference_compare_current_view_captures_then_compares(tmp_path, monkeyp
     assert "comparison_mode=current_view_checkpoint" in (captured["request"].prompt_hint or "")
 
 
+def test_reference_compare_current_view_requires_goal_before_capture(monkeypatch):
+    class SceneHandler:
+        def get_viewport(self, **kwargs):
+            raise AssertionError("get_viewport should not be called without an active goal")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+
+    result = asyncio.run(reference_compare_current_view(FakeContext(), checkpoint_label="no_goal"))
+
+    assert result.error is not None
+    assert "router_set_goal" in result.error
+    assert result.checkpoint_path == ""
+
+
 def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_side = tmp_path / "side.png"
@@ -269,6 +283,10 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
     class SceneHandler:
         pass
 
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            return {"objects": []}
+
     captured = {}
 
     async def _fake_run_vision_assist(ctx, *, request, resolver):
@@ -289,6 +307,7 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
         )
 
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
     monkeypatch.setattr(
@@ -371,6 +390,10 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
     class SceneHandler:
         pass
 
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            return {"objects": []}
+
     async def _fake_run_vision_assist(ctx, *, request, resolver):
         captured["request"] = request
         return AssistantRunResult(
@@ -389,6 +412,7 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
         )
 
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
     monkeypatch.setattr(
@@ -475,6 +499,7 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
 
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
     monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
     monkeypatch.setattr(
@@ -504,6 +529,71 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     assert result.collection_name == "Squirrel"
     assert result.target_objects == ["Squirrel_Head", "Squirrel_Body", "Squirrel_Tail"]
     assert captured["request"].metadata["collection_name"] == "Squirrel"
+
+
+def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        pass
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            return {"objects": []}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="ok",
+                visible_changes=[],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_vision_backend_resolver", lambda: object())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel/Head",
+            checkpoint_label="unsafe_target",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.error is None
+    assert "/" not in result.checkpoint_id
+    assert "\\" not in result.checkpoint_id
+    assert "Squirrel_Head" in result.checkpoint_id
 
 
 def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(tmp_path, monkeypatch):
