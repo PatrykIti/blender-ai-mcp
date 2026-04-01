@@ -120,7 +120,24 @@ Preliminary runtime status:
     same case, which makes it useful for smoke/dev testing, but it also shows
     a higher risk of overconfident issue/check generation that still needs
     evaluation scoring before we trust it on real work
-  - current blocker is no longer "runtime crash" but "quality and trust"
+- current blocker is no longer "runtime crash" but "quality and trust"
+
+## Provider Notes
+
+Current practical provider/model notes on this branch:
+
+| Provider Path | Model / Family | Current Status | Notes |
+|---|---|---|---|
+| `mlx_local` | `mlx-community/Qwen3-VL-4B-Instruct-4bit` | Recommended local baseline | Current repo-validated local baseline for bounded vision work. Strong on the real viewport squirrel scenarios and usable for staged reference-guided correction loops. |
+| `openai_compatible_external` via OpenRouter | `x-ai/grok-4.20-multi-agent` | Strong external candidate for iterative compare | Live branch validation shows this model returns full structured output on `reference_iterate_stage_checkpoint(...)` and produces actionable `correction_focus` / mismatch guidance. |
+| `openai_compatible_external` via OpenRouter | `qwen/qwen3-vl-32b-instruct` | Weak on current smoke usage | Provider path works, but this model performed poorly on the simple `macro_finish_form` smoke and is not a recommended default from current branch evidence. |
+| `openai_compatible_external` via Google AI Studio / Gemini | `gemini-3-flash-preview` | Experimental | Simple macro smoke can succeed, but staged iterative compare flows still drift or return malformed JSON under the current generic external contract. Follow-up task: [TASK-121-04-01-05](../_TASKS/TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md). |
+
+Interpretation:
+
+- `mlx_local` remains the safest current default for local reference-driven work
+- OpenRouter is worth keeping enabled; `x-ai/grok-4.20-multi-agent` is the current strongest external branch candidate for iterative compare loops
+- Gemini transport/provider wiring is in place, but the iterative compare contract/prompt still needs provider-specific tightening before it should be treated as stable
 
 ## What Improved
 

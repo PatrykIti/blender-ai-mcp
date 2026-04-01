@@ -3,7 +3,7 @@
 Task board for the project. Update statuses in markdown files.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 1 tasks
 - **In Progress:** 0 tasks
 - **Done:** 187
 - **Superseded:** 10
@@ -23,6 +23,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | Add a Gemini-specific structured-output contract/prompting path for iterative compare flows, where the current generic external contract is still unstable |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|

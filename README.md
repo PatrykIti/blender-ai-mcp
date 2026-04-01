@@ -137,6 +137,18 @@ Recommended interpretation:
 - keep `README.md` product-facing and compact
 - keep `/_docs/AVAILABLE_TOOLS_SUMMARY.md` as the runtime inventory
 
+## Provider Notes
+
+Current short version:
+
+- **Local default:** `mlx_local` with a Qwen VL 4B-class model path; current repo-validated baseline is `mlx-community/Qwen3-VL-4B-Instruct-4bit`
+- **External iterative compare candidate:** OpenRouter with `x-ai/grok-4.20-multi-agent`
+- **External experimental path:** Google AI Studio / Gemini currently needs a provider-specific structured-output contract for harder staged compare flows
+
+Detailed per-provider table:
+
+- [Vision Layer Docs -> Provider Notes](./_docs/_VISION/README.md#provider-notes)
+
 ## Architecture
 
 The system is split on purpose:
