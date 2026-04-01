@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [177](./177-2026-04-01-external-provider-precedence-loop-scope-and-task-timeout.md) | 2026-04-01 | **External provider precedence, loop scope, and task timeout** | - |
 | [176](./176-2026-04-01-provider-notes-and-gemini-contract-task.md) | 2026-04-01 | **Provider notes and Gemini contract follow-up** | - |
 | [175](./175-2026-03-31-relicense-to-apache-2.0.md) | 2026-03-31 | **Relicense to Apache 2.0** | - |
 | [174](./174-2026-03-30-google-ai-studio-gemini-vision-path.md) | 2026-03-30 | **Google AI Studio Gemini vision path** | - |

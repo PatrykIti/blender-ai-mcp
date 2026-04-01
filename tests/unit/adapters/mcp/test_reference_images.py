@@ -768,3 +768,87 @@ def test_reference_iterate_stage_checkpoint_escalates_after_repeated_focus(monke
     assert second.loop_disposition == "continue_build"
     assert third.loop_disposition == "inspect_validate"
     assert third.stagnation_count >= 2
+
+
+def test_reference_iterate_stage_checkpoint_does_not_reuse_state_across_target_view_or_profile(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly squirrel",
+            "target_object": "Squirrel",
+            "target_view": "front",
+            "checkpoint_id": "checkpoint_front",
+            "checkpoint_label": "stage_front",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "vision_assistant": {
+                "status": "success",
+                "assistant_name": "vision_assist",
+                "message": "ok",
+                "budget": {"max_input_chars": 1000, "max_messages": 1, "max_tokens": 100, "tool_budget": 0},
+                "capability_source": "local_runtime",
+                "result": {
+                    "backend_kind": "mlx_local",
+                    "goal_summary": "Still off from the squirrel reference.",
+                    "visible_changes": ["The head is visible."],
+                    "shape_mismatches": ["Head silhouette is still too spherical."],
+                    "proportion_mismatches": [],
+                    "correction_focus": ["Head silhouette"],
+                    "next_corrections": ["Flatten the head silhouette slightly."],
+                    "likely_issues": [],
+                    "recommended_checks": [],
+                    "captures_used": ["target_front_after"],
+                },
+            },
+        }
+    )
+    compare_side = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            **compare.model_dump(mode="json"),
+            "checkpoint_id": "checkpoint_side",
+            "checkpoint_label": "stage_side",
+            "target_view": "side",
+        }
+    )
+
+    compares = [compare, compare_side]
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compares.pop(0)
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    first = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_front",
+            target_view="front",
+            preset_profile="compact",
+        )
+    )
+    second = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="Squirrel",
+            checkpoint_label="stage_side",
+            target_view="side",
+            preset_profile="compact",
+        )
+    )
+
+    assert first.iteration_index == 1
+    assert second.iteration_index == 1
+    assert second.prior_correction_focus == []
+    assert second.repeated_correction_focus == []

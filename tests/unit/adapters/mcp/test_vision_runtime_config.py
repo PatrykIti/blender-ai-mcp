@@ -151,6 +151,35 @@ def test_build_vision_runtime_config_supports_google_ai_studio_aliases():
     assert runtime.openai_compatible_external.api_key_env == "GEMINI_API_KEY"
 
 
+def test_explicit_google_provider_wins_even_if_openrouter_model_env_is_present():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="google_ai_studio",
+        VISION_GEMINI_MODEL="gemini-2.5-flash",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.openai_compatible_external is not None
+    assert runtime.openai_compatible_external.provider_name == "google_ai_studio"
+    assert runtime.active_model_name == "gemini-2.5-flash"
+
+
+def test_generic_external_provider_rejects_conflicting_openrouter_and_gemini_models():
+    config = _base_config(
+        VISION_ENABLED=True,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="generic",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+        VISION_GEMINI_MODEL="gemini-2.5-flash",
+    )
+
+    with pytest.raises(ValueError, match="both set while VISION_EXTERNAL_PROVIDER=generic"):
+        build_vision_runtime_config(config)
+
+
 def test_build_vision_runtime_config_supports_mlx_local_backend():
     config = _base_config(
         VISION_ENABLED=True,

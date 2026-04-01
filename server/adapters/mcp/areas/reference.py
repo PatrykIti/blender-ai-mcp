@@ -962,6 +962,8 @@ async def reference_iterate_stage_checkpoint(
         and prior_state.get("target_object") == target_object
         and list(prior_state.get("target_objects") or []) == list(compare_result.target_objects or [])
         and prior_state.get("collection_name") == collection_name
+        and prior_state.get("target_view") == target_view
+        and prior_state.get("preset_profile") == preset_profile
     )
     prior_checkpoint_id = (
         str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
@@ -983,6 +985,8 @@ async def reference_iterate_stage_checkpoint(
             "target_object": target_object,
             "target_objects": list(compare_result.target_objects or []),
             "collection_name": collection_name,
+            "target_view": target_view,
+            "preset_profile": preset_profile,
             "last_checkpoint_id": compare_result.checkpoint_id,
             "last_checkpoint_label": checkpoint_label,
             "last_correction_focus": correction_focus,

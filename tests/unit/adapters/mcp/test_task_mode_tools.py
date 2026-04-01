@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
 from server.adapters.mcp.areas.extraction import extraction_render_angles
 from server.adapters.mcp.areas.scene import scene_get_viewport
 from server.adapters.mcp.areas.system import export_obj, import_glb, import_image_as_plane
@@ -16,6 +17,7 @@ from server.adapters.mcp.tasks.result_store import (
     get_background_result_store,
     reset_background_result_store_for_tests,
 )
+from server.adapters.mcp.timeout_policy import build_timeout_policy
 from server.domain.models.rpc import RpcResponse
 
 
@@ -383,3 +385,59 @@ def test_import_image_as_plane_background_path_uses_system_bridge(monkeypatch):
     assert registry_record is not None
     assert registry_record.backend_job_id == "job-image"
     assert registry_record.status == "completed"
+
+
+def test_scene_get_viewport_background_path_times_out_during_polling(monkeypatch):
+    """Background polling should respect MCP_TASK_TIMEOUT_SECONDS, not loop forever."""
+
+    class FakeRpcClient:
+        def __init__(self) -> None:
+            self.cancelled: list[str] = []
+
+        def launch_background_job(self, cmd, args, *, timeout_seconds=None):
+            return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-timeout"})
+
+        def get_background_job_status(self, job_id):
+            return RpcResponse(
+                request_id="req-2",
+                status="ok",
+                result={
+                    "job_id": job_id,
+                    "status": "running",
+                    "progress_current": 0,
+                    "progress_total": 1,
+                    "status_message": "Still running",
+                },
+            )
+
+        def collect_background_job_result(self, job_id):
+            raise AssertionError("collect should not be called on timeout")
+
+        def cancel_background_job(self, job_id):
+            self.cancelled.append(job_id)
+            return RpcResponse(request_id="req-3", status="ok", result={"job_id": job_id})
+
+    fake_rpc = FakeRpcClient()
+    monotonic_values = iter([0.0, 0.1, 0.3])
+
+    monkeypatch.setattr("server.adapters.mcp.tasks.task_bridge.get_rpc_client", lambda: fake_rpc)
+    monkeypatch.setattr(
+        "server.adapters.mcp.tasks.task_bridge._get_timeout_policy",
+        lambda ctx: build_timeout_policy(
+            tool_timeout_seconds=30.0,
+            task_timeout_seconds=0.2,
+            rpc_timeout_seconds=30.0,
+            addon_execution_timeout_seconds=30.0,
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.tasks.task_bridge._monotonic_now", lambda: next(monotonic_values))
+
+    ctx = BackgroundContext("task-timeout")
+
+    with pytest.raises(RuntimeError, match="exceeded MCP_TASK_TIMEOUT_SECONDS"):
+        asyncio.run(scene_get_viewport(ctx, output_mode="BASE64"))
+
+    registry_record = get_background_job_registry().get("task-timeout")
+    assert registry_record is not None
+    assert registry_record.status == "failed"
+    assert fake_rpc.cancelled == ["job-timeout"]

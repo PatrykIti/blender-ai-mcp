@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from threading import Event
 from typing import Any, Callable, TypeVar
@@ -22,6 +23,12 @@ from server.infrastructure.di import get_rpc_client
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+
+def _monotonic_now() -> float:
+    """Wrapper around monotonic time to keep timeout tests local to this module."""
+
+    return time.monotonic()
 
 
 def _get_timeout_policy(ctx: Context) -> MCPTimeoutPolicy:
@@ -135,9 +142,26 @@ async def run_rpc_background_job(
         raise RuntimeError(error)
 
     registry.bind_backend_job(task_id, addon_job_id)
+    poll_deadline = _monotonic_now() + float(policy.task_timeout_seconds)
 
     try:
         while True:
+            if _monotonic_now() >= poll_deadline:
+                error = (
+                    f"Background job {addon_job_id} for {tool_name} exceeded MCP_TASK_TIMEOUT_SECONDS="
+                    f"{policy.task_timeout_seconds}"
+                )
+                try:
+                    cancel_response = await asyncio.to_thread(
+                        rpc_client.cancel_background_job,
+                        addon_job_id,
+                    )
+                    cancel_error = cancel_response.error if cancel_response.status == "error" else None
+                except Exception:
+                    cancel_error = None
+                registry.mark_failed(task_id, cancel_error or error)
+                raise RuntimeError(cancel_error or error)
+
             poll_response = await asyncio.to_thread(rpc_client.get_background_job_status, addon_job_id)
             if poll_response.status == "error":
                 error = poll_response.error or f"Polling failed for background job {addon_job_id}"
