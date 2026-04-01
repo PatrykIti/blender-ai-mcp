@@ -12,7 +12,7 @@ TASK-046-3
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Tuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from server.router.application.classifier.workflow_intent_classifier import (
     WorkflowIntentClassifier,
@@ -23,6 +23,18 @@ if TYPE_CHECKING:
     from server.router.application.workflows.registry import WorkflowRegistry
 
 logger = logging.getLogger(__name__)
+
+SEMANTIC_WORKFLOW_SCOPE = "workflow_retrieval_only"
+
+
+def _semantic_boundary_metadata() -> Dict[str, Any]:
+    """Return stable metadata describing the allowed semantic scope."""
+
+    return {
+        "semantic_scope": SEMANTIC_WORKFLOW_SCOPE,
+        "policy_approval_delegated": False,
+        "truth_source_required": "inspection_contracts",
+    }
 
 
 @dataclass
@@ -139,7 +151,7 @@ class SemanticWorkflowMatcher:
         self._registry = registry
 
         # Build workflow dict for classifier
-        workflows = {}
+        workflows: Dict[str, Any] = {}
         for name in registry.get_all_workflows():
             workflow = registry.get_workflow(name)
             if workflow:
@@ -153,9 +165,7 @@ class SemanticWorkflowMatcher:
         self._classifier.load_workflow_embeddings(workflows)
         self._is_initialized = True
 
-        logger.info(
-            f"SemanticWorkflowMatcher initialized with {len(workflows)} workflows"
-        )
+        logger.info(f"SemanticWorkflowMatcher initialized with {len(workflows)} workflows")
 
     def is_initialized(self) -> bool:
         """Check if matcher is initialized."""
@@ -229,6 +239,7 @@ class SemanticWorkflowMatcher:
                     "source_type": confidence_result.get("source_type"),
                     "matched_text": confidence_result.get("matched_text"),
                     "language_detected": confidence_result.get("language_detected"),
+                    **_semantic_boundary_metadata(),
                 },
             )
 
@@ -330,6 +341,7 @@ class SemanticWorkflowMatcher:
                 "base_workflow": base_workflow,
                 "generalized_from": [w for w, _ in similar_workflows],
                 "original_prompt": prompt,
+                **_semantic_boundary_metadata(),
             },
         )
 
@@ -366,15 +378,10 @@ class SemanticWorkflowMatcher:
             return f"Exact match: '{result.workflow_name}' (keyword match)"
 
         elif result.match_type == "semantic":
-            return (
-                f"Semantic match: '{result.workflow_name}' "
-                f"(similarity: {result.confidence:.1%})"
-            )
+            return f"Semantic match: '{result.workflow_name}' (similarity: {result.confidence:.1%})"
 
         elif result.match_type == "generalized":
-            sources = ", ".join(
-                f"{w}({s:.0%})" for w, s in result.similar_workflows[:3]
-            )
+            sources = ", ".join(f"{w}({s:.0%})" for w, s in result.similar_workflows[:3])
             return (
                 f"Generalized match: '{result.workflow_name}' "
                 f"(confidence: {result.confidence:.1%}, based on: {sources})"

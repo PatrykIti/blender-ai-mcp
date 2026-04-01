@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from server.application.tool_handlers._rpc_utils import require_dict_result, require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.sculpt import ISculptTool
 
@@ -28,10 +29,148 @@ class SculptToolHandler(ISculptTool):
             "use_symmetry": use_symmetry,
             "symmetry_axis": symmetry_axis,
         }
-        response = self.rpc.send_request("sculpt.auto", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.auto", args))
+
+    def deform_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        delta: Optional[List[float]] = None,
+        strength: float = 1.0,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically deforms a local region of mesh vertices."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "delta": delta,
+            "strength": strength,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.deform_region", args))
+        return (
+            f"Deformed region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, radius={result['radius']}, "
+            f"falloff={result['falloff']}, strength={result['strength']})"
+        )
+
+    def crease_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        depth: float = 0.1,
+        pinch: float = 0.5,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically create a local crease/groove region."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "depth": depth,
+            "pinch": pinch,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.crease_region", args))
+        return (
+            f"Creased region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, depth={result['depth']}, "
+            f"pinch={result['pinch']}, radius={result['radius']}, falloff={result['falloff']})"
+        )
+
+    def smooth_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        strength: float = 0.5,
+        iterations: int = 1,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically smooth a local region of mesh vertices."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "strength": strength,
+            "iterations": iterations,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.smooth_region", args))
+        return (
+            f"Smoothed region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, iterations={result['iterations']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
+
+    def inflate_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        amount: float = 0.2,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically inflate or deflate a local region."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.inflate_region", args))
+        return (
+            f"Inflated region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, amount={result['amount']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
+
+    def pinch_region(
+        self,
+        object_name: Optional[str] = None,
+        center: Optional[List[float]] = None,
+        radius: float = 0.5,
+        amount: float = 0.2,
+        falloff: str = "SMOOTH",
+        use_symmetry: bool = False,
+        symmetry_axis: str = "X",
+    ) -> str:
+        """Deterministically pinch a local region toward the influence center."""
+        args = {
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        }
+        result = require_dict_result(self.rpc.send_request("sculpt.pinch_region", args))
+        return (
+            f"Pinched region on '{result['object_name']}' "
+            f"(affected_vertices={result['affected_vertices']}, amount={result['amount']}, "
+            f"radius={result['radius']}, falloff={result['falloff']})"
+        )
 
     def brush_smooth(
         self,
@@ -47,10 +186,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_smooth", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_smooth", args))
 
     def brush_grab(
         self,
@@ -68,10 +204,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_grab", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_grab", args))
 
     def brush_crease(
         self,
@@ -89,10 +222,7 @@ class SculptToolHandler(ISculptTool):
             "strength": strength,
             "pinch": pinch,
         }
-        response = self.rpc.send_request("sculpt.brush_crease", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_crease", args))
 
     # ==========================================================================
     # TASK-038-2: Core Sculpt Brushes
@@ -110,10 +240,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_clay", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_clay", args))
 
     def brush_inflate(
         self,
@@ -127,10 +254,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_inflate", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_inflate", args))
 
     def brush_blob(
         self,
@@ -144,10 +268,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_blob", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_blob", args))
 
     # ==========================================================================
     # TASK-038-3: Detail Sculpt Brushes
@@ -165,10 +286,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_snake_hook", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_snake_hook", args))
 
     def brush_draw(
         self,
@@ -182,10 +300,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_draw", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_draw", args))
 
     def brush_pinch(
         self,
@@ -199,10 +314,7 @@ class SculptToolHandler(ISculptTool):
             "radius": radius,
             "strength": strength,
         }
-        response = self.rpc.send_request("sculpt.brush_pinch", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.brush_pinch", args))
 
     # ==========================================================================
     # TASK-038-4: Dynamic Topology (Dyntopo)
@@ -222,10 +334,7 @@ class SculptToolHandler(ISculptTool):
             "detail_size": detail_size,
             "use_smooth_shading": use_smooth_shading,
         }
-        response = self.rpc.send_request("sculpt.enable_dyntopo", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.enable_dyntopo", args))
 
     def disable_dyntopo(
         self,
@@ -235,10 +344,7 @@ class SculptToolHandler(ISculptTool):
         args = {
             "object_name": object_name,
         }
-        response = self.rpc.send_request("sculpt.disable_dyntopo", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.disable_dyntopo", args))
 
     def dyntopo_flood_fill(
         self,
@@ -248,7 +354,4 @@ class SculptToolHandler(ISculptTool):
         args = {
             "object_name": object_name,
         }
-        response = self.rpc.send_request("sculpt.dyntopo_flood_fill", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("sculpt.dyntopo_flood_fill", args))

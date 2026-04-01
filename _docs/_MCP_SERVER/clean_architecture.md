@@ -35,8 +35,10 @@ The MCP server project is organized according to Clean Architecture principles t
 
 - **RPC (`rpc/`)**: Socket client implementation (`RpcClient`) that satisfies `IRpcClient` interface.
 - **MCP (`mcp/`)**: Input Layer (Driver Adapter).
-  - `instance.py`: Initializes the shared `FastMCP` application instance.
-  - `areas/`: Modular definitions of tools. Each file imports `mcp` from `instance.py` and defines `@mcp.tool` functions that delegate to Application Handlers:
+  - `factory.py`: Builds the composed FastMCP server for a selected surface profile.
+  - `surfaces.py`: Defines surface profiles such as `legacy-flat`, `llm-guided`, `internal-debug`, and `code-mode-pilot`.
+  - `providers/`: Reusable provider groups used by the factory composition root.
+  - `areas/`: Modular tool definitions. Each area exposes plain tool callables plus `register_*_tools(...)` seams that can mount on a `FastMCP` server or a `LocalProvider`:
     - `scene.py` - Scene tools (list, delete, inspect, context, create, viewport)
     - `modeling.py` - Modeling tools (primitives, transforms, modifiers)
     - `mesh.py` - Mesh Edit Mode tools (extrude, bevel, select, bridge, spin, etc.)
@@ -44,7 +46,24 @@ The MCP server project is organized according to Clean Architecture principles t
     - `collection.py` - Collection tools (list, list_objects)
     - `material.py` - Material tools (list, list_by_object)
     - `uv.py` - UV tools (list_maps)
-  - `server.py`: Entry point that imports areas (triggering registration) and exposes the `run()` function.
+  - `server.py`: Thin startup wrapper delegating to `build_server(...)`.
+
+Important platform note:
+- the old shared `instance.py` decorator shim is no longer part of runtime composition
+- runtime assembly is factory/provider/transform based, not import-side-effect based
+
+Important runtime note:
+- The MCP adapter layer is the place where FastMCP presents the public client surface.
+- Semantic understanding is handled elsewhere.
+- Scene truth is handled elsewhere.
+
+In other words:
+- FastMCP is the platform/presentation layer.
+- LaBSE is the semantic layer.
+- Router is the policy/safety layer.
+- Inspection tools are the truth layer.
+
+See `../_ROUTER/RESPONSIBILITY_BOUNDARIES.md`.
 
 ### 4. Infrastructure (`server/infrastructure`)
 **Technical details and configuration.**
@@ -65,13 +84,20 @@ The MCP server project is organized according to Clean Architecture principles t
 Example: Calling `scene_list_objects` tool
 
 1. `main.py` -> calls `adapters.mcp.server.run()`.
-2. `adapters.mcp.areas.scene` (Tool Function) -> calls `infrastructure.di.get_scene_handler()`.
-3. `infrastructure.di` -> creates (or returns cached) `RpcClient` and injects it into `SceneToolHandler`.
-4. `adapters.mcp.areas.scene` -> calls `SceneToolHandler.list_objects()`.
-5. `SceneToolHandler` -> calls `IRpcClient.send_request("list_objects", ...)`.
-6. `RpcClient` -> sends JSON via socket to Blender Addon.
-7. Blender Addon -> processes request, returns JSON response.
-8. `RpcClient` -> receives response, returns to handler.
-9. `SceneToolHandler` -> formats result string for AI model.
+2. `adapters.mcp.server` -> builds the selected surface through `build_server(surface_profile=...)`.
+3. The factory composes provider groups and transforms into one FastMCP runtime.
+4. `adapters.mcp.areas.scene` (tool function) -> calls `infrastructure.di.get_scene_handler()`.
+5. `infrastructure.di` -> creates (or returns cached) `RpcClient` and injects it into `SceneToolHandler`.
+6. `SceneToolHandler` -> calls `IRpcClient.send_request("list_objects", ...)`.
+7. `RpcClient` -> sends JSON via socket to Blender Addon.
+8. Blender Addon -> processes request, returns JSON response.
+9. `RpcClient` -> receives response, returns to handler.
+10. The MCP adapter returns structured content or compatibility text, depending on the active surface/contract path.
 
 This flow is identical for all tool areas (mesh, curve, modeling, etc.) - only the handler and RPC command names differ.
+
+Current state:
+- The repo now runs on an explicit FastMCP 3.x composition model with provider groups, surface profiles, and deterministic transforms.
+
+Strategic direction:
+- Further platform work extends the composed surface rather than reintroducing a global singleton or import-side-effect registration.

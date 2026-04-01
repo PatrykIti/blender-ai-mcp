@@ -4,7 +4,9 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The first stable `llm-guided` public line is implemented and documented, including manifest-owned public contracts, transform-based aliases and hidden-argument rules, dispatcher/router compatibility, prompt/docs coverage, and parity with the now-enabled discovery/versioning path.
 
 ---
 
@@ -59,6 +61,29 @@ The goal is not to change what the server can do, but to change how clearly the 
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This task should rely on built-in FastMCP public-surface shaping:
+
+- `ToolTransform`
+- `ArgTransform`
+- profile-specific renderers and visibility
+
+Do not fork business logic or duplicate router execution paths to create LLM-friendly naming.
+
+This task establishes the first stable baseline public `llm-guided` contract line.
+That line is:
+
+- the public surface that TASK-084 discovery infrastructure should index
+- the baseline public surface that TASK-091 later versions for coexistence and rollback
+
+Do not wait for TASK-091 to create this baseline.
+Versioning layers on after the baseline public line is clear enough to compare safely.
+
+---
+
 ## FastMCP Features To Use
 
 - **Tool Transformation** — **FastMCP 3.0.0**
@@ -104,3 +129,26 @@ Tool transformation is one of the cleanest ways to improve that without destabil
 - Different clients can receive different API shapes without forking the business layer.
 - The server becomes easier to productize for Blender creation workflows.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define a platform-owned public naming and argument convention.
+2. Apply aliasing and hidden-argument rules on the public surface only.
+3. Simplify the LLM-guided surface while keeping expert and internal variants richer.
+4. Prove dispatcher and router internals still operate on canonical internal names.
+5. Add examples and QA cases focused on how LLMs choose and fill tools.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-086-01](./TASK-086-01_Public_Surface_Manifest_and_Naming_Conventions.md) | Define the public surface manifest and naming rules |
+| 2 | [TASK-086-02](./TASK-086-02_Transform_Based_Tool_and_Parameter_Aliasing.md) | Apply tool and parameter aliasing through transforms |
+| 3 | [TASK-086-03](./TASK-086-03_LLM_First_Surface_Simplification_and_Hidden_Args.md) | Hide backend-only arguments and simplify the LLM-facing surface |
+| 4 | [TASK-086-04](./TASK-086-04_Compatibility_Adapters_and_Dispatcher_Alignment.md) | Keep aliases compatible with router and dispatcher internals |
+| 5 | [TASK-086-05](./TASK-086-05_Surface_QA_Examples_and_Documentation.md) | Add surface QA, examples, and documentation |

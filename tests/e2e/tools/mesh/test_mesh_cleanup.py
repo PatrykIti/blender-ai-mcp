@@ -10,6 +10,7 @@ Tested tools:
 - mesh_normals_make_consistent
 - mesh_decimate
 """
+
 import pytest
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -38,6 +39,7 @@ def scene_handler(rpc_client):
 # Setup Helpers
 # ==============================================================================
 
+
 def create_test_cube(modeling_handler, scene_handler, name="E2E_CleanupCube"):
     """Creates a test cube for cleanup operations."""
     try:
@@ -47,12 +49,7 @@ def create_test_cube(modeling_handler, scene_handler, name="E2E_CleanupCube"):
         pass  # Object didn't exist
 
     # Create cube
-    result = modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
     return name
 
 
@@ -65,12 +62,7 @@ def create_test_triangulated_mesh(modeling_handler, scene_handler, mesh_handler,
         pass  # Object didn't exist
 
     # Create UV sphere (produces quads/tris)
-    modeling_handler.create_primitive(
-        primitive_type="SPHERE",
-        radius=1.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="SPHERE", radius=1.0, location=[0, 0, 0], name=name)
 
     # Set active and triangulate to ensure we have triangles
     scene_handler.set_active_object(name)
@@ -97,6 +89,7 @@ def enter_edit_mode_and_select_all(scene_handler, mesh_handler, object_name):
 # ==============================================================================
 # TASK-030-1: mesh_dissolve Tests
 # ==============================================================================
+
 
 def test_dissolve_limited_default(mesh_handler, modeling_handler, scene_handler):
     """Test limited dissolve with default parameters."""
@@ -162,7 +155,7 @@ def test_dissolve_verts(mesh_handler, modeling_handler, scene_handler):
 
         # Deselect all, then select center vertices
         mesh_handler.select_all(deselect=True)
-        mesh_handler.select_by_location(axis='Z', min_coord=-0.5, max_coord=0.5, mode='VERT')
+        mesh_handler.select_by_location(axis="Z", min_coord=-0.5, max_coord=0.5, mode="VERT")
 
         # Test dissolve verts
         result = mesh_handler.dissolve(dissolve_type="verts")
@@ -208,6 +201,7 @@ def test_dissolve_invalid_type_raises(mesh_handler, modeling_handler, scene_hand
 # ==============================================================================
 # TASK-030-2: mesh_tris_to_quads Tests
 # ==============================================================================
+
 
 def test_tris_to_quads_default(mesh_handler, modeling_handler, scene_handler):
     """Test tris to quads conversion with default thresholds."""
@@ -283,6 +277,7 @@ def test_tris_to_quads_already_quads(mesh_handler, modeling_handler, scene_handl
 # TASK-030-3: mesh_normals_make_consistent Tests
 # ==============================================================================
 
+
 def test_normals_make_consistent_outward(mesh_handler, modeling_handler, scene_handler):
     """Test normals make consistent outward (default)."""
     try:
@@ -356,6 +351,7 @@ def test_normals_on_complex_mesh(mesh_handler, modeling_handler, scene_handler):
 # TASK-030-4: mesh_decimate Tests
 # ==============================================================================
 
+
 def test_decimate_default(mesh_handler, modeling_handler, scene_handler):
     """Test decimate with default ratio (50%)."""
     try:
@@ -410,7 +406,7 @@ def test_decimate_with_symmetry(mesh_handler, modeling_handler, scene_handler):
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test
-        result = mesh_handler.decimate(ratio=0.5, use_symmetry=True, symmetry_axis='X')
+        result = mesh_handler.decimate(ratio=0.5, use_symmetry=True, symmetry_axis="X")
 
         # Verify
         assert "x symmetry" in result.lower()
@@ -433,7 +429,7 @@ def test_decimate_invalid_axis_raises(mesh_handler, modeling_handler, scene_hand
         enter_edit_mode_and_select_all(scene_handler, mesh_handler, obj_name)
 
         # Test - should raise error
-        mesh_handler.decimate(use_symmetry=True, symmetry_axis='W')
+        mesh_handler.decimate(use_symmetry=True, symmetry_axis="W")
         assert False, "Expected error for invalid axis"
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -453,6 +449,7 @@ def test_decimate_invalid_axis_raises(mesh_handler, modeling_handler, scene_hand
 # ==============================================================================
 # Integration Workflow Tests
 # ==============================================================================
+
 
 def test_workflow_cleanup_imported_mesh(mesh_handler, modeling_handler, scene_handler):
     """

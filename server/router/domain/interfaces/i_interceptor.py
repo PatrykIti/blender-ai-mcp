@@ -5,7 +5,7 @@ Abstract interface for capturing LLM tool calls.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.entities.tool_call import InterceptedToolCall
 

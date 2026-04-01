@@ -1,10 +1,30 @@
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastmcp import Context
 
-from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.utils import parse_coordinate
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_sculpt_handler
+
+SCULPT_PUBLIC_TOOL_NAMES = (
+    "sculpt_auto",
+    "sculpt_deform_region",
+    "sculpt_crease_region",
+    "sculpt_smooth_region",
+    "sculpt_inflate_region",
+    "sculpt_pinch_region",
+    "sculpt_enable_dyntopo",
+    "sculpt_disable_dyntopo",
+    "sculpt_dyntopo_flood_fill",
+)
+
+
+def register_sculpt_tools(target: Any) -> Dict[str, Any]:
+    """Register public sculpt tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, SCULPT_PUBLIC_TOOL_NAMES, tags=get_capability_tags("sculpt"))
 
 
 # ==============================================================================
@@ -12,7 +32,6 @@ from server.infrastructure.di import get_sculpt_handler
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_auto(
     ctx: Context,
     operation: Literal["smooth", "inflate", "flatten", "sharpen"] = "smooth",
@@ -53,12 +72,94 @@ def sculpt_auto(
     """
     return route_tool_call(
         tool_name="sculpt_auto",
-        params={"operation": operation, "object_name": object_name, "strength": strength, "iterations": iterations, "use_symmetry": use_symmetry, "symmetry_axis": symmetry_axis},
-        direct_executor=lambda: get_sculpt_handler().auto_sculpt(object_name=object_name, operation=operation, strength=strength, iterations=iterations, use_symmetry=use_symmetry, symmetry_axis=symmetry_axis)
+        params={
+            "operation": operation,
+            "object_name": object_name,
+            "strength": strength,
+            "iterations": iterations,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=lambda: get_sculpt_handler().auto_sculpt(
+            object_name=object_name,
+            operation=operation,
+            strength=strength,
+            iterations=iterations,
+            use_symmetry=use_symmetry,
+            symmetry_axis=symmetry_axis,
+        ),
     )
 
 
-@mcp.tool()
+def sculpt_deform_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    delta: List[float] | str | None = None,
+    strength: float = 1.0,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Deforms a local mesh region by a weighted delta vector.
+
+    This is the programmatic replacement for brush-style grab deformation.
+    It operates directly on mesh data, not on viewport-driven brush strokes,
+    so it is stable and suitable for LLM automation.
+
+    Workflow: BEFORE -> inspect_scene / mesh_inspect | AFTER -> scene_snapshot_state / scene_compare_snapshot
+
+    Args:
+        object_name: Target object (default: active object)
+        center: World-space center of influence [x, y, z]
+        radius: Radius of influence in Blender units
+        delta: World-space displacement vector [x, y, z]
+        strength: Blend factor 0-1 applied to the weighted deformation
+        falloff: Weight curve inside the radius (`SMOOTH`, `LINEAR`, `SHARP`, `CONSTANT`)
+        use_symmetry: If True, mirrors the deformation across the chosen axis
+        symmetry_axis: Symmetry axis (`X`, `Y`, `Z`)
+
+    Examples:
+        sculpt_deform_region(object_name="Head", center=[0,0,1], radius=0.35, delta=[0,0,0.2])
+        sculpt_deform_region(object_name="Arm", center=[0.5,0,0], radius=0.2, delta=[0.1,0,0], use_symmetry=True, symmetry_axis="X")
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            parsed_delta = parse_coordinate(delta)
+            return handler.deform_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                delta=parsed_delta,
+                strength=strength,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_deform_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "delta": delta,
+            "strength": strength,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
 def sculpt_brush_smooth(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -87,11 +188,63 @@ def sculpt_brush_smooth(
     return route_tool_call(
         tool_name="sculpt_brush_smooth",
         params={"object_name": object_name, "location": location, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_smooth(object_name=object_name, location=location, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_smooth(
+            object_name=object_name, location=location, radius=radius, strength=strength
+        ),
     )
 
 
-@mcp.tool()
+def sculpt_smooth_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    strength: float = 0.5,
+    iterations: int = 1,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Smooths a local mesh region using edge-adjacency averaging.
+
+    This is the programmatic replacement for brush-style smooth setup. It operates
+    directly on mesh data and is suitable for repeatable LLM-driven workflows.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.smooth_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                strength=strength,
+                iterations=iterations,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_smooth_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "strength": strength,
+            "iterations": iterations,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
 def sculpt_brush_grab(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -101,31 +254,94 @@ def sculpt_brush_grab(
     strength: float = 0.5,
 ) -> str:
     """
-    [SCULPT MODE][DESTRUCTIVE] Grabs and moves geometry from one location to another.
+    [SCULPT MODE][SETUP-ONLY][NON-DESTRUCTIVE] Configures the Grab brush for manual interaction.
 
-    Note: Programmatic brush strokes are complex. For reliable results, consider using
-    mesh tools like mesh_transform_selected with careful vertex selection.
+    This tool does not execute a sculpt stroke. It only switches to the Grab brush,
+    applies radius/strength settings, and records the intended from/to locations in
+    the returned message for operator context.
+
+    For reliable programmatic geometry changes, prefer mesh tools like
+    mesh_transform_selected with careful vertex selection.
 
     Workflow: BEFORE -> scene_set_mode(mode='SCULPT')
 
     Args:
         object_name: Target object (default: active object)
-        from_location: Start position [x, y, z] for grab
-        to_location: End position [x, y, z] where to move
+        from_location: Intended start position [x, y, z] for a manual grab stroke
+        to_location: Intended end position [x, y, z] for a manual grab stroke
         radius: Brush radius (default 0.1)
         strength: Brush strength 0-1 (default 0.5)
 
     Examples:
         sculpt_brush_grab(from_location=[0,0,0], to_location=[0,0,0.5], radius=0.2)
+        -> configures the brush only; does not move geometry by itself
     """
     return route_tool_call(
         tool_name="sculpt_brush_grab",
-        params={"object_name": object_name, "from_location": from_location, "to_location": to_location, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_grab(object_name=object_name, from_location=from_location, to_location=to_location, radius=radius, strength=strength)
+        params={
+            "object_name": object_name,
+            "from_location": from_location,
+            "to_location": to_location,
+            "radius": radius,
+            "strength": strength,
+        },
+        direct_executor=lambda: get_sculpt_handler().brush_grab(
+            object_name=object_name,
+            from_location=from_location,
+            to_location=to_location,
+            radius=radius,
+            strength=strength,
+        ),
     )
 
 
-@mcp.tool()
+def sculpt_inflate_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    amount: float = 0.2,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Inflates or deflates a local mesh region.
+
+    This is the programmatic replacement for brush-style local inflate behavior.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.inflate_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                amount=amount,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_inflate_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
 def sculpt_brush_crease(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -157,8 +373,113 @@ def sculpt_brush_crease(
     """
     return route_tool_call(
         tool_name="sculpt_brush_crease",
-        params={"object_name": object_name, "location": location, "radius": radius, "strength": strength, "pinch": pinch},
-        direct_executor=lambda: get_sculpt_handler().brush_crease(object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch)
+        params={
+            "object_name": object_name,
+            "location": location,
+            "radius": radius,
+            "strength": strength,
+            "pinch": pinch,
+        },
+        direct_executor=lambda: get_sculpt_handler().brush_crease(
+            object_name=object_name, location=location, radius=radius, strength=strength, pinch=pinch
+        ),
+    )
+
+
+def sculpt_pinch_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    amount: float = 0.2,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Pinches a local mesh region toward the influence center.
+
+    This is the programmatic replacement for brush-style pinch setup.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.pinch_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                amount=amount,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_pinch_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "amount": amount,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
+    )
+
+
+def sculpt_crease_region(
+    ctx: Context,
+    object_name: Optional[str] = None,
+    center: List[float] | str | None = None,
+    radius: float = 0.5,
+    depth: float = 0.1,
+    pinch: float = 0.5,
+    falloff: Literal["SMOOTH", "LINEAR", "SHARP", "CONSTANT"] = "SMOOTH",
+    use_symmetry: bool = False,
+    symmetry_axis: Literal["X", "Y", "Z"] = "X",
+) -> str:
+    """
+    [OBJECT/SCULPT MODE][DETERMINISTIC][DESTRUCTIVE] Creates a local crease/groove region.
+
+    This is the programmatic replacement for brush-style crease behavior.
+    """
+
+    def execute():
+        handler = get_sculpt_handler()
+        try:
+            parsed_center = parse_coordinate(center)
+            return handler.crease_region(
+                object_name=object_name,
+                center=parsed_center,
+                radius=radius,
+                depth=depth,
+                pinch=pinch,
+                falloff=falloff,
+                use_symmetry=use_symmetry,
+                symmetry_axis=symmetry_axis,
+            )
+        except (RuntimeError, ValueError) as e:
+            return str(e)
+
+    return route_tool_call(
+        tool_name="sculpt_crease_region",
+        params={
+            "object_name": object_name,
+            "center": center,
+            "radius": radius,
+            "depth": depth,
+            "pinch": pinch,
+            "falloff": falloff,
+            "use_symmetry": use_symmetry,
+            "symmetry_axis": symmetry_axis,
+        },
+        direct_executor=execute,
     )
 
 
@@ -167,7 +488,6 @@ def sculpt_brush_crease(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_brush_clay(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -193,11 +513,12 @@ def sculpt_brush_clay(
     return route_tool_call(
         tool_name="sculpt_brush_clay",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_clay(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_clay(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
-@mcp.tool()
 def sculpt_brush_inflate(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -223,11 +544,12 @@ def sculpt_brush_inflate(
     return route_tool_call(
         tool_name="sculpt_brush_inflate",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_inflate(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_inflate(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
-@mcp.tool()
 def sculpt_brush_blob(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -253,7 +575,9 @@ def sculpt_brush_blob(
     return route_tool_call(
         tool_name="sculpt_brush_blob",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_blob(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_blob(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -262,7 +586,6 @@ def sculpt_brush_blob(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_brush_snake_hook(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -288,11 +611,12 @@ def sculpt_brush_snake_hook(
     return route_tool_call(
         tool_name="sculpt_brush_snake_hook",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_snake_hook(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_snake_hook(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
-@mcp.tool()
 def sculpt_brush_draw(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -318,11 +642,12 @@ def sculpt_brush_draw(
     return route_tool_call(
         tool_name="sculpt_brush_draw",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_draw(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_draw(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
-@mcp.tool()
 def sculpt_brush_pinch(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -348,7 +673,9 @@ def sculpt_brush_pinch(
     return route_tool_call(
         tool_name="sculpt_brush_pinch",
         params={"object_name": object_name, "radius": radius, "strength": strength},
-        direct_executor=lambda: get_sculpt_handler().brush_pinch(object_name=object_name, radius=radius, strength=strength)
+        direct_executor=lambda: get_sculpt_handler().brush_pinch(
+            object_name=object_name, radius=radius, strength=strength
+        ),
     )
 
 
@@ -357,7 +684,6 @@ def sculpt_brush_pinch(
 # ==============================================================================
 
 
-@mcp.tool()
 def sculpt_enable_dyntopo(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -395,12 +721,21 @@ def sculpt_enable_dyntopo(
     """
     return route_tool_call(
         tool_name="sculpt_enable_dyntopo",
-        params={"object_name": object_name, "detail_mode": detail_mode, "detail_size": detail_size, "use_smooth_shading": use_smooth_shading},
-        direct_executor=lambda: get_sculpt_handler().enable_dyntopo(object_name=object_name, detail_mode=detail_mode, detail_size=detail_size, use_smooth_shading=use_smooth_shading)
+        params={
+            "object_name": object_name,
+            "detail_mode": detail_mode,
+            "detail_size": detail_size,
+            "use_smooth_shading": use_smooth_shading,
+        },
+        direct_executor=lambda: get_sculpt_handler().enable_dyntopo(
+            object_name=object_name,
+            detail_mode=detail_mode,
+            detail_size=detail_size,
+            use_smooth_shading=use_smooth_shading,
+        ),
     )
 
 
-@mcp.tool()
 def sculpt_disable_dyntopo(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -421,11 +756,10 @@ def sculpt_disable_dyntopo(
     return route_tool_call(
         tool_name="sculpt_disable_dyntopo",
         params={"object_name": object_name},
-        direct_executor=lambda: get_sculpt_handler().disable_dyntopo(object_name=object_name)
+        direct_executor=lambda: get_sculpt_handler().disable_dyntopo(object_name=object_name),
     )
 
 
-@mcp.tool()
 def sculpt_dyntopo_flood_fill(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -446,5 +780,5 @@ def sculpt_dyntopo_flood_fill(
     return route_tool_call(
         tool_name="sculpt_dyntopo_flood_fill",
         params={"object_name": object_name},
-        direct_executor=lambda: get_sculpt_handler().dyntopo_flood_fill(object_name=object_name)
+        direct_executor=lambda: get_sculpt_handler().dyntopo_flood_fill(object_name=object_name),
     )

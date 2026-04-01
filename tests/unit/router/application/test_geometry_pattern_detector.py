@@ -4,12 +4,10 @@ Unit tests for Geometry Pattern Detector.
 Tests for GeometryPatternDetector implementation.
 """
 
-import pytest
-
 from server.router.application.analyzers.geometry_pattern_detector import GeometryPatternDetector
 from server.router.application.analyzers.proportion_calculator import calculate_proportions
-from server.router.domain.entities.scene_context import SceneContext, ObjectInfo, ProportionInfo
-from server.router.domain.entities.pattern import PatternType, DetectedPattern, PatternMatchResult
+from server.router.domain.entities.pattern import PatternMatchResult, PatternType
+from server.router.domain.entities.scene_context import ObjectInfo, SceneContext
 
 
 class TestGeometryPatternDetectorBasic:

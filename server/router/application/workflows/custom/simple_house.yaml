@@ -1,0 +1,193 @@
+name: simple_house_workflow
+description: Creates a simple house with rectangular walls and a triangular prism roof
+category: architecture
+author: blender-ai-mcp
+version: "1.0.0"
+
+trigger_keywords:
+  - simple house
+  - basic house
+  - house with roof
+  - small house
+  - house building
+  - domek
+  - prosty domek
+  - dom z dachem
+  - budynek
+  - simple building
+
+sample_prompts:
+  - "create a simple house"
+  - "build a basic house with triangular roof"
+  - "make a house"
+  - "zrób prosty domek"
+  - "stwórz dom z dachem"
+
+defaults:
+  house_width: 4.0
+  house_depth: 2.0
+  wall_height: 2.0
+  roof_height: 2.0
+
+parameters:
+  house_width:
+    type: float
+    range: [2.0, 10.0]
+    default: 4.0
+    description: Width of the house (X axis)
+    semantic_hints: [width, wide, house, size]
+    group: house_dimensions
+
+  house_depth:
+    type: float
+    range: [2.0, 8.0]
+    default: 2.0
+    description: Depth of the house (Y axis)
+    semantic_hints: [depth, deep, house, size]
+    group: house_dimensions
+
+  wall_height:
+    type: float
+    range: [1.5, 5.0]
+    default: 2.0
+    description: Height of the walls
+    semantic_hints: [height, tall, walls]
+    group: house_dimensions
+
+  roof_height:
+    type: float
+    range: [0.5, 4.0]
+    default: 2.0
+    description: Height of the roof peak above walls
+    semantic_hints: [roof, height, peak, ridge]
+    group: house_dimensions
+
+steps:
+  # ============================================================
+  # SECTION 1: CLEAN SCENE
+  # ============================================================
+
+  - tool: scene_clean_scene
+    params:
+      keep_lights_and_cameras: true
+    description: Clean scene, keep lights and cameras
+
+  # ============================================================
+  # SECTION 2: HOUSE WALLS
+  # Cube scaled to house dimensions, bottom at Z=0
+  # ============================================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "HouseWalls"
+    description: Create house walls base cube
+
+  - tool: modeling_transform_object
+    params:
+      name: "HouseWalls"
+      scale:
+        - "$CALCULATE(house_width / 2)"
+        - "$CALCULATE(house_depth / 2)"
+        - "$CALCULATE(wall_height / 2)"
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(wall_height / 2)"
+    description: Scale house walls and raise bottom to Z=0
+
+  # ============================================================
+  # SECTION 3: ROOF BASE
+  # Cube placed on top of walls, same footprint
+  # ============================================================
+
+  - tool: modeling_create_primitive
+    params:
+      primitive_type: CUBE
+      name: "HouseRoof"
+    description: Create roof base cube
+
+  - tool: modeling_transform_object
+    params:
+      name: "HouseRoof"
+      scale:
+        - "$CALCULATE(house_width / 2)"
+        - "$CALCULATE(house_depth / 2)"
+        - "$CALCULATE(roof_height / 2)"
+      location:
+        - 0
+        - 0
+        - "$CALCULATE(wall_height + roof_height / 2)"
+    description: Scale and position roof cube on top of walls
+
+  # ============================================================
+  # SECTION 4: SHAPE ROOF INTO TRIANGULAR PRISM
+  # Select top vertices (local Z=+1) and collapse X to form ridge
+  # ============================================================
+
+  - tool: scene_set_active_object
+    params:
+      name: "HouseRoof"
+    description: Set HouseRoof as active object
+
+  - tool: scene_set_mode
+    params:
+      mode: EDIT
+    description: Enter edit mode for roof shaping
+
+  - tool: mesh_select
+    params:
+      action: none
+    description: Deselect all vertices
+
+  - tool: mesh_select_targeted
+    params:
+      action: by_location
+      axis: Z
+      min_coord: 0.99
+      max_coord: 1.01
+      element_type: VERT
+    description: Select top 4 vertices of roof (local Z=+1)
+
+  - tool: mesh_transform_selected
+    params:
+      scale: [0, 1, 1]
+    description: Collapse top vertices on X=0 to form triangular ridge
+
+  - tool: scene_set_mode
+    params:
+      mode: OBJECT
+    description: Return to object mode
+
+  # ============================================================
+  # SECTION 5: MATERIALS
+  # Beige walls + red roof tiles
+  # ============================================================
+
+  - tool: material_create
+    params:
+      name: "WallMaterial"
+      base_color: [0.9, 0.85, 0.7, 1.0]
+      roughness: 0.8
+      metallic: 0.0
+    description: Create beige wall material
+
+  - tool: material_assign
+    params:
+      material_name: "WallMaterial"
+      object_name: "HouseWalls"
+    description: Assign wall material to HouseWalls
+
+  - tool: material_create
+    params:
+      name: "RoofMaterial"
+      base_color: [0.55, 0.18, 0.08, 1.0]
+      roughness: 0.9
+      metallic: 0.0
+    description: Create red roof tile material
+
+  - tool: material_assign
+    params:
+      material_name: "RoofMaterial"
+      object_name: "HouseRoof"
+    description: Assign roof material to HouseRoof

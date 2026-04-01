@@ -3,7 +3,12 @@
   "category": "modeling",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["metaball", "element", "add", "blob"],
+  "keywords": [
+    "metaball",
+    "element",
+    "add",
+    "blob"
+  ],
   "sample_prompts": [
     "add metaball element",
     "add another blob",
@@ -18,12 +23,18 @@
     },
     "element_type": {
       "type": "enum",
-      "options": ["BALL", "CAPSULE", "PLANE", "ELLIPSOID", "CUBE"],
+      "options": [
+        "BALL",
+        "CAPSULE",
+        "PLANE",
+        "ELLIPSOID",
+        "CUBE"
+      ],
       "default": "BALL",
       "description": "Type of element"
     },
     "location": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Position relative to metaball origin"
     },
@@ -38,7 +49,10 @@
       "description": "How strongly it merges with other elements"
     }
   },
-  "related_tools": ["metaball_create", "metaball_to_mesh"],
+  "related_tools": [
+    "metaball_create",
+    "metaball_to_mesh"
+  ],
   "patterns": [],
   "description": "Adds an element to an existing metaball object."
 }

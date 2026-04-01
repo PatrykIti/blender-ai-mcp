@@ -4,11 +4,11 @@ Tests for EnsembleAggregator.
 TASK-053-7: Tests for weighted consensus aggregation.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
-from server.router.domain.entities.ensemble import MatcherResult, EnsembleResult, ModifierResult
+from server.router.domain.entities.ensemble import EnsembleResult, MatcherResult, ModifierResult
 
 
 class TestEnsembleAggregator:
@@ -19,11 +19,7 @@ class TestEnsembleAggregator:
         """Create mock modifier extractor."""
         extractor = MagicMock()
         # Default: return empty modifiers
-        extractor.extract.return_value = ModifierResult(
-            modifiers={},
-            matched_keywords=[],
-            confidence_map={}
-        )
+        extractor.extract.return_value = ModifierResult(modifiers={}, matched_keywords=[], confidence_map={})
         return extractor
 
     @pytest.fixture
@@ -36,7 +32,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", None, 0.0, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "random text")
@@ -53,15 +49,13 @@ class TestEnsembleAggregator:
         """Test aggregate when only one matcher returns a match."""
         # Setup modifier extractor
         mock_modifier_extractor.extract.return_value = ModifierResult(
-            modifiers={"leg_style": "straight"},
-            matched_keywords=["proste nogi"],
-            confidence_map={"proste nogi": 1.0}
+            modifiers={"leg_style": "straight"}, matched_keywords=["proste nogi"], confidence_map={"proste nogi": 1.0}
         )
 
         results = [
             MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.84, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "proste nogi")
@@ -81,7 +75,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "phone_workflow", 1.0, 0.40),
             MatcherResult("semantic", "phone_workflow", 0.85, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "create phone")
@@ -92,7 +86,7 @@ class TestEnsembleAggregator:
         assert ensemble.confidence_level == "HIGH"  # 0.74 >= 0.7
         assert ensemble.matcher_contributions == {
             "keyword": pytest.approx(0.40, rel=1e-3),
-            "semantic": pytest.approx(0.34, rel=1e-3)
+            "semantic": pytest.approx(0.34, rel=1e-3),
         }
         assert ensemble.requires_adaptation is False  # HIGH confidence
 
@@ -101,7 +95,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "phone_workflow", 0.85, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "create something")
@@ -117,7 +111,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", "phone_workflow", 0.50, 0.40),
-            MatcherResult("pattern", "phone_workflow", 0.95, 0.15)
+            MatcherResult("pattern", "phone_workflow", 0.95, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "create phone-like object")
@@ -134,7 +128,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "phone_workflow", 0.70, 0.40),
-            MatcherResult("pattern", "phone_workflow", 0.95, 0.15)
+            MatcherResult("pattern", "phone_workflow", 0.95, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "create phone")
@@ -150,7 +144,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.85, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         # Score is 0.74 (HIGH), but "simple" keyword should force LOW
@@ -166,7 +160,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.85, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "prosty stół")
@@ -178,7 +172,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "chair_workflow", 0.95, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "furniture")
@@ -195,7 +189,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "chair_workflow", 0.50, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "furniture")
@@ -211,15 +205,13 @@ class TestEnsembleAggregator:
         """Test that modifiers are ALWAYS extracted (bug fix verification)."""
         # Setup modifier extractor
         mock_modifier_extractor.extract.return_value = ModifierResult(
-            modifiers={"leg_style": "straight"},
-            matched_keywords=["proste nogi"],
-            confidence_map={"proste nogi": 1.0}
+            modifiers={"leg_style": "straight"}, matched_keywords=["proste nogi"], confidence_map={"proste nogi": 1.0}
         )
 
         results = [
             MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.84, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "proste nogi")
@@ -234,15 +226,13 @@ class TestEnsembleAggregator:
         """Test modifiers extracted when semantic matcher wins (THE BUG FIX)."""
         # Setup modifier extractor
         mock_modifier_extractor.extract.return_value = ModifierResult(
-            modifiers={"leg_style": "straight"},
-            matched_keywords=["proste nogi"],
-            confidence_map={"proste nogi": 1.0}
+            modifiers={"leg_style": "straight"}, matched_keywords=["proste nogi"], confidence_map={"proste nogi": 1.0}
         )
 
         results = [
             MatcherResult("keyword", None, 0.0, 0.40),  # Keyword didn't match
             MatcherResult("semantic", "table_workflow", 0.84, 0.40),  # Semantic wins
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "prosty stół z prostymi nogami")
@@ -277,7 +267,7 @@ class TestEnsembleAggregator:
         results = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.60, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
 
         ensemble = aggregator.aggregate(results, "table")
@@ -286,7 +276,7 @@ class TestEnsembleAggregator:
         assert ensemble.final_score == pytest.approx(0.64, rel=1e-3)
         assert ensemble.matcher_contributions == {
             "keyword": pytest.approx(0.40, rel=1e-3),
-            "semantic": pytest.approx(0.24, rel=1e-3)
+            "semantic": pytest.approx(0.24, rel=1e-3),
         }
 
     def test_aggregate_requires_adaptation_flag(self, aggregator):
@@ -295,7 +285,7 @@ class TestEnsembleAggregator:
         results_high = [
             MatcherResult("keyword", "table_workflow", 1.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.85, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
         ensemble_high = aggregator.aggregate(results_high, "create")
         assert ensemble_high.confidence_level == "HIGH"
@@ -306,7 +296,7 @@ class TestEnsembleAggregator:
         results_medium = [
             MatcherResult("keyword", None, 0.0, 0.40),
             MatcherResult("semantic", "table_workflow", 0.50, 0.40),
-            MatcherResult("pattern", None, 0.0, 0.15)
+            MatcherResult("pattern", None, 0.0, 0.15),
         ]
         ensemble_medium = aggregator.aggregate(results_medium, "create")
         # Score: 0.50 × 0.40 = 0.20; max=0.40 → 0.20/0.40 = 50% → MEDIUM

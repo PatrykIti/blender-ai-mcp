@@ -4,21 +4,117 @@ Workflow Catalog MCP Tools.
 Utilities for exploring and importing YAML/JSON workflows without executing them.
 """
 
-import json
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, cast
 
 from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
-from server.adapters.mcp.instance import mcp
+from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogResponseContract
+from server.adapters.mcp.elicitation_contracts import build_fallback_payload
+from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_assistant
+from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
+from server.adapters.mcp.tasks.candidacy import get_tool_task_config
+from server.adapters.mcp.tasks.task_bridge import (
+    is_background_task_context,
+    run_local_background_operation,
+)
+from server.adapters.mcp.version_policy import get_versioned_tool_versions
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_workflow_catalog_handler
+from server.router.domain.entities.elicitation import ClarificationPlan, ClarificationRequirement
 
 logger = logging.getLogger(__name__)
 
+WORKFLOW_PUBLIC_TOOL_NAMES = ("workflow_catalog",)
 
-@mcp.tool()
-def workflow_catalog(
+
+def _register_existing_tool(target: Any, tool_name: str) -> Any:
+    """Register an existing workflow catalog tool on a FastMCP-compatible target."""
+
+    tool = globals()[tool_name]
+    fn = getattr(tool, "fn", tool)
+    task_config = get_tool_task_config(tool_name)
+    versions = get_versioned_tool_versions(tool_name)
+    if versions:
+        registered = None
+        for version in versions:
+            version_kwargs: Dict[str, Any] = {
+                "name": tool_name,
+                "version": version,
+                "tags": set(get_capability_tags("workflow_catalog")),
+            }
+            if task_config is not None:
+                version_kwargs["task"] = task_config
+            registered = target.tool(fn, **version_kwargs)
+        return registered
+    base_kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(get_capability_tags("workflow_catalog"))}
+    if task_config is not None:
+        base_kwargs["task"] = task_config
+    return target.tool(fn, **base_kwargs)
+
+
+def register_workflow_tools(target: Any) -> Dict[str, Any]:
+    """Register public workflow tools on a FastMCP server or LocalProvider."""
+
+    return {tool_name: _register_existing_tool(target, tool_name) for tool_name in WORKFLOW_PUBLIC_TOOL_NAMES}
+
+
+def _should_attach_workflow_repair_suggestion(
+    action: str,
+    contract: WorkflowCatalogResponseContract,
+) -> bool:
+    """Return True when workflow-catalog import flows need bounded repair guidance."""
+
+    if action not in {"import", "import_finalize", "import_append", "import_init", "import_abort"}:
+        return False
+    if contract.error:
+        return True
+    return contract.status in {"needs_input", "skipped"}
+
+
+def _build_workflow_repair_diagnostics(
+    action: str,
+    contract: WorkflowCatalogResponseContract,
+) -> Dict[str, Any]:
+    """Build a bounded diagnostic payload for workflow-catalog recovery guidance."""
+
+    diagnostics = {
+        "source": "workflow_catalog",
+        "action": action,
+        "status": contract.status,
+        "workflow_name": contract.workflow_name,
+        "message": contract.message,
+        "error": contract.error,
+        "content_type": contract.content_type,
+        "filepath": contract.filepath,
+        "session_id": contract.session_id,
+        "available": contract.available,
+        "suggestions": contract.suggestions,
+        "clarification": contract.clarification.model_dump() if contract.clarification else None,
+    }
+    return {key: value for key, value in diagnostics.items() if value is not None}
+
+
+async def _maybe_attach_workflow_repair_suggestion(
+    ctx: Context,
+    *,
+    action: str,
+    contract: WorkflowCatalogResponseContract,
+) -> WorkflowCatalogResponseContract:
+    """Attach bounded recovery guidance for workflow-catalog import flows."""
+
+    if not _should_attach_workflow_repair_suggestion(action, contract):
+        return contract
+
+    outcome = await run_repair_suggestion_assistant(
+        ctx,
+        diagnostics=_build_workflow_repair_diagnostics(action, contract),
+    )
+    return contract.model_copy(update={"repair_suggestion": to_repair_assistant_contract(outcome)})
+
+
+async def workflow_catalog(
     ctx: Context,
     action: Literal[
         "list",
@@ -34,6 +130,8 @@ def workflow_catalog(
     query: Optional[str] = None,
     top_k: int = 5,
     threshold: float = 0.0,
+    offset: int = 0,
+    limit: Optional[int] = None,
     filepath: Optional[str] = None,
     overwrite: Optional[bool] = None,
     content: Optional[str] = None,
@@ -43,7 +141,7 @@ def workflow_catalog(
     chunk_data: Optional[str] = None,
     chunk_index: Optional[int] = None,
     total_chunks: Optional[int] = None,
-) -> str:
+) -> WorkflowCatalogResponseContract:
     """
     [SYSTEM][SAFE] Browse, search, and import workflow definitions (no execution).
 
@@ -63,6 +161,8 @@ def workflow_catalog(
       query: Search query for search action
       top_k: Number of results for search (default 5)
       threshold: Minimum similarity score (0.0 disables filtering)
+      offset: Optional pagination offset for list/search responses
+      limit: Optional pagination limit for list/search responses
       filepath: Workflow file path for import action
       overwrite: Overwrite existing workflow if name conflicts (import only)
       content: Inline YAML/JSON workflow definition
@@ -86,35 +186,133 @@ def workflow_catalog(
     handler = get_workflow_catalog_handler()
 
     try:
+
+        def _with_import_clarification(result: Dict[str, Any]) -> Dict[str, Any]:
+            if result.get("status") != "needs_input" or result.get("clarification") is not None:
+                return result
+
+            workflow_name_for_prompt = result.get("workflow_name") or source_name or filepath or "workflow_import"
+            try:
+                request_id = getattr(ctx, "request_id", None)
+            except Exception:
+                request_id = None
+
+            plan = ClarificationPlan(
+                goal="workflow_import",
+                workflow_name=str(workflow_name_for_prompt),
+                requirements=(
+                    ClarificationRequirement(
+                        field_name="overwrite",
+                        prompt="Overwrite the existing workflow import target?",
+                        value_type="bool",
+                        required=True,
+                        default=False,
+                        context=str(workflow_name_for_prompt),
+                        description=result.get("message") or "Choose whether to overwrite the existing workflow.",
+                    ),
+                ),
+            )
+            result["clarification"] = build_fallback_payload(
+                plan,
+                request_id=request_id if isinstance(request_id, str) else None,
+            ).model_dump()
+            return result
+
+        def _finalize_import_foreground() -> WorkflowCatalogResponseContract:
+            if not session_id:
+                return WorkflowCatalogResponseContract(
+                    action="import_finalize",
+                    error="session_id required for import_finalize",
+                )
+            result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
+            result = _with_import_clarification(result)
+            status = result.get("status", "unknown")
+            if status == "imported":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
+            elif status == "needs_input":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import needs input: {result.get('workflow_name')}")
+            elif status == "skipped":
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
+            else:
+                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
+            return WorkflowCatalogResponseContract(action="import_finalize", **result)
+
+        if action == "import_finalize" and is_background_task_context(ctx):
+            if not session_id:
+                return await _maybe_attach_workflow_repair_suggestion(
+                    ctx,
+                    action=action,
+                    contract=WorkflowCatalogResponseContract(
+                        action="import_finalize",
+                        error="session_id required for import_finalize",
+                    ),
+                )
+
+            def _background_finalize(
+                progress_callback,
+                is_cancelled,
+            ) -> Dict[str, Any]:
+                return handler.finalize_import_session(
+                    session_id=session_id,
+                    overwrite=overwrite,
+                    progress_callback=progress_callback,
+                    is_cancelled=is_cancelled,
+                )
+
+            def _format_background_finalize(result: Any) -> WorkflowCatalogResponseContract:
+                if not isinstance(result, dict):
+                    raise RuntimeError("workflow_catalog import_finalize returned an invalid background payload")
+                enriched = _with_import_clarification(result)
+                return WorkflowCatalogResponseContract(action="import_finalize", **enriched)
+
+            contract = await run_local_background_operation(
+                ctx,
+                tool_name="workflow_catalog.import_finalize",
+                foreground_executor=_finalize_import_foreground,
+                background_executor=_background_finalize,
+                result_formatter=_format_background_finalize,
+                start_message="Starting workflow import finalization",
+                completion_message="Workflow import finalization completed",
+            )
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=cast(WorkflowCatalogResponseContract, contract),
+            )
+
         if action == "list":
-            result: Dict[str, Any] = handler.list_workflows()
+            result: Dict[str, Any] = handler.list_workflows(offset=offset, limit=limit)
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Listed {result.get('count', 0)} workflows")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="list", **result)
 
         if action == "get":
             if not workflow_name:
-                return json.dumps(
-                    {"error": "workflow_name required for get action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="get",
+                    error="workflow_name required for get action",
                 )
             result = handler.get_workflow(workflow_name)
             if "error" in result:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Get failed: {workflow_name}")
             else:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Fetched: {workflow_name}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="get", **result)
 
         if action == "search":
             if not query:
-                return json.dumps(
-                    {"error": "query required for search action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="search",
+                    error="query required for search action",
                 )
-            result = handler.search_workflows(query=query, top_k=top_k, threshold=threshold)
+            result = handler.search_workflows(
+                query=query,
+                top_k=top_k,
+                threshold=threshold,
+                offset=offset,
+                limit=limit,
+            )
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Search '{query[:40]}...' -> {result.get('count', 0)} results")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return WorkflowCatalogResponseContract(action="search", **result)
 
         if action == "import":
             if filepath:
@@ -127,11 +325,11 @@ def workflow_catalog(
                     source_name=source_name,
                 )
             else:
-                return json.dumps(
-                    {"error": "filepath or content required for import action"},
-                    indent=2,
-                    ensure_ascii=False,
+                return WorkflowCatalogResponseContract(
+                    action="import",
+                    error="filepath or content required for import action",
                 )
+            result = _with_import_clarification(result)
             status = result.get("status", "unknown")
             if status == "imported":
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
@@ -141,7 +339,11 @@ def workflow_catalog(
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
             else:
                 ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=WorkflowCatalogResponseContract(action="import", **result),
+            )
 
         if action == "import_init":
             result = handler.begin_import_session(
@@ -150,20 +352,30 @@ def workflow_catalog(
                 total_chunks=total_chunks,
             )
             ctx_info(ctx, f"[WORKFLOW_CATALOG] Import session: {result.get('session_id')}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=WorkflowCatalogResponseContract(action="import_init", **result),
+            )
 
         if action == "import_append":
             if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_append"},
-                    indent=2,
-                    ensure_ascii=False,
+                return await _maybe_attach_workflow_repair_suggestion(
+                    ctx,
+                    action=action,
+                    contract=WorkflowCatalogResponseContract(
+                        action="import_append",
+                        error="session_id required for import_append",
+                    ),
                 )
             if chunk_data is None:
-                return json.dumps(
-                    {"error": "chunk_data required for import_append"},
-                    indent=2,
-                    ensure_ascii=False,
+                return await _maybe_attach_workflow_repair_suggestion(
+                    ctx,
+                    action=action,
+                    contract=WorkflowCatalogResponseContract(
+                        action="import_append",
+                        error="chunk_data required for import_append",
+                    ),
                 )
             result = handler.append_import_chunk(
                 session_id=session_id,
@@ -171,39 +383,42 @@ def workflow_catalog(
                 chunk_index=chunk_index,
                 total_chunks=total_chunks,
             )
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=WorkflowCatalogResponseContract(action="import_append", **result),
+            )
 
         if action == "import_finalize":
-            if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_finalize"},
-                    indent=2,
-                    ensure_ascii=False,
-                )
-            result = handler.finalize_import_session(session_id=session_id, overwrite=overwrite)
-            status = result.get("status", "unknown")
-            if status == "imported":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Imported: {result.get('workflow_name')}")
-            elif status == "needs_input":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import needs input: {result.get('workflow_name')}")
-            elif status == "skipped":
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import skipped: {result.get('workflow_name')}")
-            else:
-                ctx_info(ctx, f"[WORKFLOW_CATALOG] Import status: {status}")
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=_finalize_import_foreground(),
+            )
 
         if action == "import_abort":
             if not session_id:
-                return json.dumps(
-                    {"error": "session_id required for import_abort"},
-                    indent=2,
-                    ensure_ascii=False,
+                return await _maybe_attach_workflow_repair_suggestion(
+                    ctx,
+                    action=action,
+                    contract=WorkflowCatalogResponseContract(
+                        action="import_abort",
+                        error="session_id required for import_abort",
+                    ),
                 )
             result = handler.abort_import_session(session_id=session_id)
-            return json.dumps(result, indent=2, ensure_ascii=False)
+            return await _maybe_attach_workflow_repair_suggestion(
+                ctx,
+                action=action,
+                contract=WorkflowCatalogResponseContract(action="import_abort", **result),
+            )
 
-        return json.dumps({"error": f"Unknown action: {action}"}, indent=2, ensure_ascii=False)
+        return WorkflowCatalogResponseContract(action=action, error=f"Unknown action: {action}")
 
     except Exception as e:
         logger.error(f"workflow_catalog error: {e}")
-        return json.dumps({"error": str(e)}, indent=2, ensure_ascii=False)
+        return await _maybe_attach_workflow_repair_suggestion(
+            ctx,
+            action=action,
+            contract=WorkflowCatalogResponseContract(action=action, error=str(e)),
+        )

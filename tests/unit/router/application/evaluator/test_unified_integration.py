@@ -6,11 +6,8 @@ correctly delegate to UnifiedEvaluator while maintaining their specific behavior
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
-
-from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
-from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
+from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 
 
 class TestExpressionEvaluatorDelegation:
@@ -57,9 +54,7 @@ class TestExpressionEvaluatorDelegation:
     def test_calculate_combined_ternary_and_logic(self, evaluator):
         """Verify complex expression with ternary and logic."""
         evaluator.set_context({"x": 7.0, "y": 3.0})
-        result = evaluator.resolve_param_value(
-            "$CALCULATE(100 if x > 5 and y < 5 else 0)"
-        )
+        result = evaluator.resolve_param_value("$CALCULATE(100 if x > 5 and y < 5 else 0)")
         assert result == 100.0
 
     def test_variable_reference_still_works(self, evaluator):
@@ -204,10 +199,7 @@ class TestNewCapabilitiesIntegration:
     def test_floor_ceiling_in_workflow_condition(self):
         """Test floor/ceiling in realistic workflow condition."""
         evaluator = ConditionEvaluator()
-        evaluator.set_context({
-            "table_width": 1.5,
-            "plank_width": 0.2
-        })
+        evaluator.set_context({"table_width": 1.5, "plank_width": 0.2})
 
         # This condition was NOT possible before TASK-060
         # floor(1.5 / 0.2) = floor(7.5) = 7
@@ -216,39 +208,21 @@ class TestNewCapabilitiesIntegration:
     def test_ternary_in_workflow_expression(self):
         """Test ternary expression in realistic workflow calculation."""
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({
-            "i": 3,
-            "plank_full_count": 5,
-            "full_width": 0.2,
-            "remainder_width": 0.15
-        })
+        evaluator.set_context({"i": 3, "plank_full_count": 5, "full_width": 0.2, "remainder_width": 0.15})
 
         # This expression was NOT possible before TASK-060
-        result = evaluator.resolve_param_value(
-            "$CALCULATE(full_width if i <= plank_full_count else remainder_width)"
-        )
+        result = evaluator.resolve_param_value("$CALCULATE(full_width if i <= plank_full_count else remainder_width)")
         assert result == 0.2
 
         # Now test with i > plank_full_count
-        evaluator.set_context({
-            "i": 6,
-            "plank_full_count": 5,
-            "full_width": 0.2,
-            "remainder_width": 0.15
-        })
-        result = evaluator.resolve_param_value(
-            "$CALCULATE(full_width if i <= plank_full_count else remainder_width)"
-        )
+        evaluator.set_context({"i": 6, "plank_full_count": 5, "full_width": 0.2, "remainder_width": 0.15})
+        result = evaluator.resolve_param_value("$CALCULATE(full_width if i <= plank_full_count else remainder_width)")
         assert result == 0.15
 
     def test_complex_workflow_calculation(self):
         """Test complex calculation combining math functions and logic."""
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({
-            "length": 1.5,
-            "width": 0.8,
-            "min_diagonal": 1.0
-        })
+        evaluator.set_context({"length": 1.5, "width": 0.8, "min_diagonal": 1.0})
 
         # Calculate diagonal and compare
         # sqrt(1.5^2 + 0.8^2) = sqrt(2.25 + 0.64) = sqrt(2.89) ≈ 1.7
@@ -260,11 +234,7 @@ class TestNewCapabilitiesIntegration:
     def test_conditional_count_calculation(self):
         """Test calculation with floor and conditional logic."""
         evaluator = ExpressionEvaluator()
-        evaluator.set_context({
-            "total_width": 2.0,
-            "item_width": 0.3,
-            "max_items": 10
-        })
+        evaluator.set_context({"total_width": 2.0, "item_width": 0.3, "max_items": 10})
 
         # Calculate how many items fit, but cap at max_items
         # floor(2.0 / 0.3) = floor(6.67) = 6

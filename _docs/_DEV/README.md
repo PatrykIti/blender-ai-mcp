@@ -2,6 +2,13 @@
 
 This folder contains developer-facing docs for working on the MCP server + Blender addon.
 
+Before adding or reshaping public tools/surfaces, read:
+
+- [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md)
+
+That file is the canonical policy source for layered tools, hidden atomic tools,
+goal-first behavior, and vision/assert boundaries.
+
 ## Local Setup
 
 ```bash
@@ -9,16 +16,34 @@ This folder contains developer-facing docs for working on the MCP server + Blend
 poetry install --no-interaction
 ```
 
+## Git Hooks
+
+```bash
+poetry run pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+Run the hook sets manually:
+```bash
+poetry run pre-commit run --all-files
+poetry run pre-commit run --hook-stage pre-push --all-files
+```
+
+The `pre-commit` stage handles file hygiene, YAML/JSON/TOML checks, GitHub workflow validation, router metadata schema validation, and `ruff` lint/format. The `pre-push` stage additionally runs `poetry check --strict --lock`, unit tests, and the addon build.
+
 ## Run the MCP Server (local)
 
 ```bash
-poetry run python server/main.py
+poetry run python -m server.main
 ```
 
 Useful environment variables:
 - `LOG_LEVEL=DEBUG`
 - `ROUTER_ENABLED=true`
 - `BLENDER_RPC_HOST=host.docker.internal` (when running the server in Docker on macOS/Windows)
+
+For ready-to-paste local client/MCP profile examples, use:
+
+- [_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md](/Users/pciechanski/Documents/_moje_projekty/blender-ai-mcp/_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
 
 ## Build Blender Addon ZIP
 
@@ -44,4 +69,3 @@ python3 scripts/run_e2e_tests.py
 ## Releasing
 
 See `./RELEASING.md`.
-

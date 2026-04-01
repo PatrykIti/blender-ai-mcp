@@ -2,6 +2,9 @@
 
 Export tools enable AI to save 3D content to various file formats for use in game engines, web applications, and other 3D software.
 
+This is an interchange/runtime family.
+Export tools may be available on task-capable or broader surfaces, but they are not part of the default guided bootstrap entry layer.
+
 ---
 
 ## 1. export_glb ✅ Done

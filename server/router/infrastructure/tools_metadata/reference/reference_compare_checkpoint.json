@@ -1,0 +1,23 @@
+{
+  "tool_name": "reference_compare_checkpoint",
+  "category": "reference",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["reference", "checkpoint", "compare", "vision", "stage", "progress", "mismatch"],
+  "sample_prompts": [
+    "compare this checkpoint to the attached references",
+    "analyze the current stage against the front and side reference",
+    "check the current checkpoint against the active reference images"
+  ],
+  "parameters": {
+    "checkpoint_path": {"type": "string", "required": true},
+    "checkpoint_label": {"type": "string", "default": null},
+    "target_object": {"type": "string", "default": null},
+    "target_view": {"type": "string", "default": null},
+    "goal_override": {"type": "string", "default": null},
+    "prompt_hint": {"type": "string", "default": null}
+  },
+  "related_tools": ["reference_images", "scene_get_viewport", "router_get_status"],
+  "patterns": [],
+  "description": "Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step."
+}

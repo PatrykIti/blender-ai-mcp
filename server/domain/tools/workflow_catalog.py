@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 class IWorkflowCatalogTool(ABC):
@@ -13,7 +13,11 @@ class IWorkflowCatalogTool(ABC):
     """
 
     @abstractmethod
-    def list_workflows(self) -> Dict[str, Any]:
+    def list_workflows(
+        self,
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> Dict[str, Any]:
         """List all available workflows with summary metadata."""
         raise NotImplementedError
 
@@ -28,6 +32,8 @@ class IWorkflowCatalogTool(ABC):
         query: str,
         top_k: int = 5,
         threshold: float = 0.0,
+        offset: int = 0,
+        limit: int | None = None,
     ) -> Dict[str, Any]:
         """Search for workflows similar to a query (no execution)."""
         raise NotImplementedError
@@ -78,6 +84,9 @@ class IWorkflowCatalogTool(ABC):
         self,
         session_id: str,
         overwrite: Optional[bool] = None,
+        *,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> Dict[str, Any]:
         """Finalize a chunked workflow import session."""
         raise NotImplementedError

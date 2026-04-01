@@ -10,6 +10,7 @@ To run:
 
 The tests will skip automatically if RPC connection fails.
 """
+
 import pytest
 from server.adapters.rpc.client import RpcClient
 from server.infrastructure.config import get_config
@@ -63,9 +64,10 @@ def rpc_client():
 def pytest_collection_modifyitems(config, items):
     """Mark E2E tests to skip if RPC is not available."""
     if not is_rpc_available():
-        skip_marker = pytest.mark.skip(
-            reason="Blender RPC server not available. Start Blender with addon enabled."
-        )
+        skip_marker = pytest.mark.skip(reason="Blender RPC server not available. Start Blender with addon enabled.")
         for item in items:
-            if "/e2e/" in str(item.fspath):
+            path = str(item.fspath)
+            if "/e2e/vision/" in path:
+                continue
+            if "/e2e/" in path:
                 item.add_marker(skip_marker)

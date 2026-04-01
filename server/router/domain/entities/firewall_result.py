@@ -5,8 +5,8 @@ Data class for firewall validation results.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class FirewallAction(Enum):

@@ -5,8 +5,8 @@ TASK-041-14
 """
 
 import pytest
-from server.router.application.workflows.registry import WorkflowRegistry
 from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+from server.router.application.workflows.registry import WorkflowRegistry
 
 
 class TestRegistryProportionResolver:
@@ -189,9 +189,9 @@ class TestAutoScaleParams:
         scale = calls[0].params["scale"]
         assert isinstance(scale, list)
         assert len(scale) == 3
-        assert scale[0] == pytest.approx(1.6)   # 80% of 2.0
-        assert scale[1] == pytest.approx(3.2)   # 80% of 4.0
-        assert scale[2] == pytest.approx(0.4)   # 80% of 0.5
+        assert scale[0] == pytest.approx(1.6)  # 80% of 2.0
+        assert scale[1] == pytest.approx(3.2)  # 80% of 4.0
+        assert scale[2] == pytest.approx(0.4)  # 80% of 0.5
 
 
 class TestRealWorldWorkflows:

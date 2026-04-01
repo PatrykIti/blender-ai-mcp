@@ -1,0 +1,17 @@
+{
+  "references": [
+    {
+      "reference_id": "ref_round_cutout_1",
+      "goal": "rounded housing with central cutout",
+      "label": "target_reference",
+      "target_object": "Housing",
+      "target_view": "context_wide",
+      "media_type": "image/png",
+      "source_kind": "local_path",
+      "original_path": "reference.png",
+      "stored_path": "reference.png",
+      "host_visible_path": "reference.png",
+      "added_at": "2026-03-27T00:00:00Z"
+    }
+  ]
+}

@@ -8,19 +8,17 @@ Tests:
 - mesh_decimate
 """
 
-import unittest
-from unittest.mock import MagicMock, patch
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
 import bpy
-import bmesh
-
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -32,8 +30,8 @@ class TestMeshDissolve(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
 
         # Setup dissolve operation mocks
@@ -97,19 +95,13 @@ class TestMeshDissolve(unittest.TestCase):
         """Test dissolve verts with face_split option"""
         self.handler.dissolve(dissolve_type="verts", use_face_split=True)
 
-        bpy.ops.mesh.dissolve_verts.assert_called_once_with(
-            use_face_split=True,
-            use_boundary_tear=False
-        )
+        bpy.ops.mesh.dissolve_verts.assert_called_once_with(use_face_split=True, use_boundary_tear=False)
 
     def test_dissolve_with_boundary_tear(self):
         """Test dissolve verts with boundary_tear option"""
         self.handler.dissolve(dissolve_type="verts", use_boundary_tear=True)
 
-        bpy.ops.mesh.dissolve_verts.assert_called_once_with(
-            use_face_split=False,
-            use_boundary_tear=True
-        )
+        bpy.ops.mesh.dissolve_verts.assert_called_once_with(use_face_split=False, use_boundary_tear=True)
 
 
 class TestMeshTrisToQuads(unittest.TestCase):
@@ -120,8 +112,8 @@ class TestMeshTrisToQuads(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.tris_convert_to_quads = MagicMock()
 
@@ -170,8 +162,8 @@ class TestMeshNormalsMakeConsistent(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.normals_make_consistent = MagicMock()
 
@@ -207,8 +199,8 @@ class TestMeshDecimate(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.decimate = MagicMock()
 
@@ -216,11 +208,7 @@ class TestMeshDecimate(unittest.TestCase):
         """Test decimate with default ratio"""
         result = self.handler.decimate()
 
-        bpy.ops.mesh.decimate.assert_called_once_with(
-            ratio=0.5,
-            use_symmetry=False,
-            symmetry_axis='X'
-        )
+        bpy.ops.mesh.decimate.assert_called_once_with(ratio=0.5, use_symmetry=False, symmetry_axis="X")
         self.assertIn("50.0%", result)
 
     def test_decimate_custom_ratio(self):
@@ -231,13 +219,9 @@ class TestMeshDecimate(unittest.TestCase):
 
     def test_decimate_with_symmetry(self):
         """Test decimate with symmetry enabled"""
-        result = self.handler.decimate(ratio=0.5, use_symmetry=True, symmetry_axis='Y')
+        result = self.handler.decimate(ratio=0.5, use_symmetry=True, symmetry_axis="Y")
 
-        bpy.ops.mesh.decimate.assert_called_once_with(
-            ratio=0.5,
-            use_symmetry=True,
-            symmetry_axis='Y'
-        )
+        bpy.ops.mesh.decimate.assert_called_once_with(ratio=0.5, use_symmetry=True, symmetry_axis="Y")
         self.assertIn("with Y symmetry", result)
 
     def test_decimate_clamps_ratio(self):
@@ -252,16 +236,16 @@ class TestMeshDecimate(unittest.TestCase):
 
     def test_decimate_symmetry_axis_case_insensitive(self):
         """Test that symmetry_axis is case-insensitive"""
-        result = self.handler.decimate(use_symmetry=True, symmetry_axis='x')
+        result = self.handler.decimate(use_symmetry=True, symmetry_axis="x")
         self.assertIn("X symmetry", result)
 
-        result = self.handler.decimate(use_symmetry=True, symmetry_axis='z')
+        result = self.handler.decimate(use_symmetry=True, symmetry_axis="z")
         self.assertIn("Z symmetry", result)
 
     def test_decimate_invalid_axis_raises(self):
         """Test that invalid symmetry axis raises error"""
         with self.assertRaises(ValueError) as context:
-            self.handler.decimate(use_symmetry=True, symmetry_axis='W')
+            self.handler.decimate(use_symmetry=True, symmetry_axis="W")
 
         self.assertIn("Invalid symmetry_axis", str(context.exception))
 
@@ -275,5 +259,5 @@ class TestMeshDecimate(unittest.TestCase):
         self.assertIn("Decimate failed", str(context.exception))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,8 +1,7 @@
 blender-ai-mcp
-Copyright (c) 2024–2025 Patryk Ciechański
+Copyright (c) 2024-2026 Patryk Ciechanski
 
-This project is licensed under the Business Source License 1.1 (BSL 1.1).
-See LICENSE.md.
+Licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at:
 
-On the Change Date, the license changes to Apache License, Version 2.0.
-See LICENSE-APACHE-2.0.txt.
+    http://www.apache.org/licenses/LICENSE-2.0

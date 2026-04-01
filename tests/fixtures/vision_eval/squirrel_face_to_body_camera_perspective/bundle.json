@@ -1,0 +1,29 @@
+{
+  "bundle_id": "squirrel_face_to_body_camera_perspective_bundle",
+  "goal_id": "squirrel_face_to_body_camera_perspective_goal",
+  "target_object": "Squirrel",
+  "preset_names": [
+    "camera_perspective"
+  ],
+  "captures_before": [
+    {
+      "label": "camera_perspective_before",
+      "image_path": "before.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "camera_perspective"
+    }
+  ],
+  "captures_after": [
+    {
+      "label": "camera_perspective_after",
+      "image_path": "after.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "camera_perspective"
+    }
+  ],
+  "truth_summary": {
+    "note": "squirrel progression scenario from _TEST_4: face details to full body in fixed camera perspective"
+  }
+}

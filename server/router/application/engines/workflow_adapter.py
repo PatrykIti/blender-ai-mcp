@@ -15,11 +15,10 @@ Adaptation Strategy:
 import dataclasses
 import logging
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-from server.router.application.workflows.base import WorkflowStep, WorkflowDefinition
+from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
 from server.router.infrastructure.config import RouterConfig
-from server.router.domain.entities.ensemble import EnsembleResult
 
 if TYPE_CHECKING:
     from server.router.application.classifier.workflow_intent_classifier import (
@@ -95,9 +94,7 @@ class WorkflowAdapter:
         """
         self._config = config or RouterConfig()
         self._classifier = classifier
-        self._semantic_threshold = getattr(
-            self._config, "adaptation_semantic_threshold", 0.6
-        )
+        self._semantic_threshold = getattr(self._config, "adaptation_semantic_threshold", 0.6)
 
     def adapt(
         self,
@@ -130,10 +127,7 @@ class WorkflowAdapter:
         if confidence_level == "HIGH":
             result.adapted_step_count = len(all_steps)
             result.adaptation_strategy = "FULL"
-            logger.debug(
-                f"HIGH confidence - returning all {len(all_steps)} steps "
-                f"for workflow '{definition.name}'"
-            )
+            logger.debug(f"HIGH confidence - returning all {len(all_steps)} steps for workflow '{definition.name}'")
             return all_steps, result
 
         # Separate core and optional steps
@@ -145,9 +139,7 @@ class WorkflowAdapter:
         if confidence_level in ("LOW", "NONE"):
             result.adapted_step_count = len(core_steps)
             result.adaptation_strategy = "CORE_ONLY"
-            result.skipped_steps = [
-                s.description or s.tool for s in optional_steps
-            ]
+            result.skipped_steps = [s.description or s.tool for s in optional_steps]
             logger.info(
                 f"{confidence_level} confidence - returning {len(core_steps)} core steps, "
                 f"skipping {len(optional_steps)} optional steps "
@@ -161,14 +153,8 @@ class WorkflowAdapter:
 
         result.adapted_step_count = len(adapted_steps)
         result.adaptation_strategy = "FILTERED"
-        result.included_optional = [
-            s.description or s.tool for s in relevant_optional
-        ]
-        result.skipped_steps = [
-            s.description or s.tool
-            for s in optional_steps
-            if s not in relevant_optional
-        ]
+        result.included_optional = [s.description or s.tool for s in relevant_optional]
+        result.skipped_steps = [s.description or s.tool for s in optional_steps if s not in relevant_optional]
 
         logger.info(
             f"MEDIUM confidence - returning {len(core_steps)} core + "
@@ -196,34 +182,38 @@ class WorkflowAdapter:
             Step with `add_bench: true` in YAML returns {"add_bench": True}
         """
         EXPLICIT_PARAMS = {
-            "tool", "params", "description", "condition",
-            "optional", "disable_adaptation", "tags", "_known_fields"
+            "tool",
+            "params",
+            "description",
+            "condition",
+            "optional",
+            "disable_adaptation",
+            "tags",
+            "_known_fields",
         }
 
         semantic = {}
-        for field in dataclasses.fields(step):
-            if field.name not in EXPLICIT_PARAMS:
-                value = getattr(step, field.name, None)
+        for dataclass_field in dataclasses.fields(step):
+            if dataclass_field.name not in EXPLICIT_PARAMS:
+                value = getattr(step, dataclass_field.name, None)
                 if isinstance(value, bool):
-                    semantic[field.name] = value
+                    semantic[dataclass_field.name] = value
 
         # Also check dynamic attributes (set via setattr, not in dataclass fields)
         for attr_name in dir(step):
-            if (not attr_name.startswith("_") and
-                attr_name not in EXPLICIT_PARAMS and
-                not callable(getattr(step, attr_name)) and
-                attr_name not in {f.name for f in dataclasses.fields(step)}):
+            if (
+                not attr_name.startswith("_")
+                and attr_name not in EXPLICIT_PARAMS
+                and not callable(getattr(step, attr_name))
+                and attr_name not in {f.name for f in dataclasses.fields(step)}
+            ):
                 value = getattr(step, attr_name)
                 if isinstance(value, bool):
                     semantic[attr_name] = value
 
         return semantic
 
-    def _matches_semantic_params(
-        self,
-        semantic_params: Dict[str, bool],
-        user_prompt: str
-    ) -> bool:
+    def _matches_semantic_params(self, semantic_params: Dict[str, bool], user_prompt: str) -> bool:
         """Check if user prompt matches semantic filter conditions.
 
         TASK-055-FIX-6 Phase 2: Converts parameter names to keywords and checks
@@ -254,16 +244,14 @@ class WorkflowAdapter:
                 # Step requires this feature - check if user mentions it
                 if keyword.lower() in prompt_lower:
                     logger.debug(
-                        f"Semantic param match: '{param_name}={param_value}' "
-                        f"matches keyword '{keyword}' in prompt"
+                        f"Semantic param match: '{param_name}={param_value}' matches keyword '{keyword}' in prompt"
                     )
                     return True
             else:
                 # Step excludes this feature - check if user doesn't mention it
                 if keyword.lower() not in prompt_lower:
                     logger.debug(
-                        f"Semantic param match: '{param_name}={param_value}' "
-                        f"(keyword '{keyword}' not in prompt)"
+                        f"Semantic param match: '{param_name}={param_value}' (keyword '{keyword}' not in prompt)"
                     )
                     return True
 
@@ -296,9 +284,7 @@ class WorkflowAdapter:
             if step.tags:
                 if any(tag.lower() in prompt_lower for tag in step.tags):
                     relevant.append(step)
-                    logger.debug(
-                        f"Step '{step.tool}' included by tag match: {step.tags}"
-                    )
+                    logger.debug(f"Step '{step.tool}' included by tag match: {step.tags}")
                     continue
 
             # 2. Semantic filter parameters (TASK-055-FIX-6 Phase 2)
@@ -306,17 +292,13 @@ class WorkflowAdapter:
             if semantic_params:
                 if self._matches_semantic_params(semantic_params, user_prompt):
                     relevant.append(step)
-                    logger.debug(
-                        f"Step '{step.tool}' included by semantic param match: {semantic_params}"
-                    )
+                    logger.debug(f"Step '{step.tool}' included by semantic param match: {semantic_params}")
                     continue
 
             # 3. Semantic similarity (fallback for steps without tags or no tag match)
             if step.description and self._classifier:
                 try:
-                    similarity = self._classifier.similarity(
-                        user_prompt, step.description
-                    )
+                    similarity = self._classifier.similarity(user_prompt, step.description)
                     if similarity >= self._semantic_threshold:
                         relevant.append(step)
                         logger.debug(
@@ -360,9 +342,7 @@ class WorkflowAdapter:
             "semantic_threshold": self._semantic_threshold,
             "has_classifier": self._classifier is not None,
             "config": {
-                "enable_workflow_adaptation": getattr(
-                    self._config, "enable_workflow_adaptation", True
-                ),
+                "enable_workflow_adaptation": getattr(self._config, "enable_workflow_adaptation", True),
                 "adaptation_semantic_threshold": self._semantic_threshold,
             },
         }

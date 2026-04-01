@@ -4,15 +4,14 @@ Tests for MetadataLoader.
 Task: TASK-039-4
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
 
+import pytest
 from server.router.infrastructure.metadata_loader import (
     MetadataLoader,
     ToolMetadata,
-    ValidationError,
 )
 
 
@@ -34,9 +33,7 @@ def temp_metadata_dir():
             "selection_required": True,
             "keywords": ["extrude", "pull"],
             "sample_prompts": ["extrude the face"],
-            "parameters": {
-                "value": {"type": "float", "default": 0.0}
-            },
+            "parameters": {"value": {"type": "float", "default": 0.0}},
             "related_tools": ["mesh_bevel"],
             "patterns": ["phone_like"],
             "description": "Extrudes geometry",
@@ -204,6 +201,25 @@ class TestMetadataLoader:
 
         # Should return same cached data
         assert metadata1 is metadata2
+
+    def test_load_by_area_logs_errors_instead_of_printing(self, temp_metadata_dir, monkeypatch, caplog):
+        """Metadata loading errors should be logged, not printed to stdout."""
+
+        broken_dir = temp_metadata_dir / "scene"
+        broken_dir.mkdir(exist_ok=True)
+        (broken_dir / "broken.json").write_text("{ not-json }", encoding="utf-8")
+
+        loader = MetadataLoader(metadata_dir=temp_metadata_dir)
+
+        monkeypatch.setattr(
+            "builtins.print",
+            lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("print called")),
+        )
+
+        result = loader.load_by_area("scene")
+
+        assert result == {}
+        assert "Error loading" in caplog.text
 
 
 class TestMetadataValidation:

@@ -4,18 +4,17 @@ Error Firewall Implementation.
 Validates and blocks/fixes invalid operations before execution.
 """
 
-from typing import Dict, Any, List, Optional
 import re
+from typing import Any, Dict, List, Optional
 
-from server.router.domain.interfaces.i_firewall import IFirewall
-from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.firewall_result import (
     FirewallResult,
-    FirewallAction,
-    FirewallViolation,
     FirewallRuleType,
+    FirewallViolation,
 )
+from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.entities.tool_call import CorrectedToolCall
+from server.router.domain.interfaces.i_firewall import IFirewall
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -227,10 +226,7 @@ class ErrorFirewall(IFirewall):
         Returns:
             List of firewall rule definitions.
         """
-        return [
-            {**rule, "enabled": rule["rule_name"] not in self._disabled_rules}
-            for rule in self._rules.values()
-        ]
+        return [{**rule, "enabled": rule["rule_name"] not in self._disabled_rules} for rule in self._rules.values()]
 
     def register_rule(
         self,
@@ -458,17 +454,21 @@ class ErrorFirewall(IFirewall):
         if "mode ==" in condition or "mode !=" in condition:
             target_mode = self._get_required_mode_for_tool(tool_call.tool_name)
             if target_mode and target_mode != context.mode:
-                result["pre_steps"].append({
-                    "tool": "system_set_mode",
-                    "params": {"mode": target_mode},
-                })
+                result["pre_steps"].append(
+                    {
+                        "tool": "system_set_mode",
+                        "params": {"mode": target_mode},
+                    }
+                )
 
         # Selection fixes
         if condition == "no_selection":
-            result["pre_steps"].append({
-                "tool": "mesh_select",
-                "params": {"action": "all"},
-            })
+            result["pre_steps"].append(
+                {
+                    "tool": "mesh_select",
+                    "params": {"action": "all"},
+                }
+            )
 
         return result if result["pre_steps"] else None
 

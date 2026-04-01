@@ -1,7 +1,8 @@
 # Demo Task Prompt: Low‑Poly Medieval Well
 
 Use this as the **user request** (`TASK:`) together with the system prompt from:
-- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md` (recommended)
+- `_docs/_PROMPTS/MANUAL_TOOLS_NO_ROUTER.md` (manual exception)
 
 ---
 
@@ -91,7 +92,7 @@ OUTPUT / REPORT
 - Before the final report, do quick QA on critical shapes:
   * scene_isolate_object(object_name="Well_Roller") and verify in top/iso view that it is round (not boxy).
   * scene_isolate_object(object_name="Well_Bucket") and verify it is round AND visibly hollow/open.
-  * For all rope parts: scene_inspect(action="topology", detailed=True, object_name=...) and fix degenerate/flat objects (Dimensions axis == 0.0) and unintended non-manifold edges.
+  * For all rope parts: inspect_scene(action="topology", target_object=...) and fix degenerate/flat objects (Dimensions axis == 0.0) and unintended non-manifold edges.
   * scene_show_all_objects() after checks.
 - At the end, provide a short YES/NO checklist for the “CRITICAL” section.
 - List all objects and approximate tri count per object and total (target 1000–1500).

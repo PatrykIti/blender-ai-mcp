@@ -352,8 +352,8 @@ sculpt_auto
 # DOCSTRING STANDARDS & SEMANTIC TAGGING
 
 ## 🎯 Purpose
-LLMs rely heavily on docstrings to understand tool capabilities, safety, and usage context. 
-To minimize token cost while maximizing semantic clarity, we use **concise semantic tags** 
+LLMs rely heavily on docstrings to understand tool capabilities, safety, and usage context.
+To minimize token cost while maximizing semantic clarity, we use **concise semantic tags**
 as the first line of every tool docstring.
 
 ## 📝 Tag Vocabulary
@@ -404,7 +404,7 @@ def scene_delete_object(object_name: str) -> str:
     """
     [SCENE][DESTRUCTIVE] Permanently removes object from scene.
     Cannot be undone via this API.
-    
+
     Args:
         object_name: Name of the object to delete
     """
@@ -419,7 +419,7 @@ def modeling_add_modifier(object_name: str, modifier_type: str) -> str:
     """
     [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Adds modifier to object stack.
     Modifier can be removed or adjusted before applying.
-    
+
     Args:
         object_name: Target mesh object
         modifier_type: ARRAY, MIRROR, BOOLEAN, etc.
@@ -433,7 +433,7 @@ def modeling_apply_modifier(object_name: str, modifier_name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Bakes modifier into mesh geometry.
     Irreversibly alters topology. Cannot be undone.
-    
+
     Args:
         object_name: Target mesh object
         modifier_name: Name of modifier to apply
@@ -449,7 +449,7 @@ def mesh_smooth(object_name: str, iterations: int = 1, factor: float = 0.5) -> s
     """
     [EDIT MODE][SELECTION-BASED][NON-DESTRUCTIVE] Smooths selected vertices.
     Uses Laplacian smoothing to refine organic shapes and remove hard edges.
-    
+
     Args:
         object_name: Name of the mesh object to smooth
         iterations: Number of smoothing passes (1-100). More = smoother
@@ -464,7 +464,7 @@ def mesh_flatten(object_name: str, axis: Literal["X", "Y", "Z"]) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Flattens selected vertices to plane.
     Aligns vertices perpendicular to chosen axis (X: YZ plane, Y: XZ plane, Z: XY plane).
-    
+
     Args:
         object_name: Name of the mesh object
         axis: Axis to flatten along ("X", "Y", or "Z")

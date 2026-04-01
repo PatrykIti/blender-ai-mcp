@@ -3,8 +3,10 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Dependencies:** TASK-083 (mandatory platform baseline). Integration / rollout gates: TASK-085 (session-visibility parity on adaptive surfaces), TASK-086 (public surface baseline), TASK-091 (default public rollout / coexistence gate)
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has a canonical discovery inventory, enriched search documents, built-in BM25 discovery, search-first default rollout on `llm-guided`, guided visibility parity for discovery, direct-vs-discovered call parity, and measured before/after payload benchmarks documented for `legacy-flat` versus `llm-guided`.
 
 ---
 
@@ -57,6 +59,52 @@ Core tools such as router entry, status, prompt access, and essential help can r
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo, the preferred default is:
+
+- built-in `BM25SearchTransform` for `llm-guided` discovery
+- a very small pinned visible set
+- native synthetic `search_tools` and `call_tool`
+
+Discovery rollout for this repo must happen in two phases:
+
+- **Infrastructure phase:** inventory, search document building, and call-path validation may proceed once the platform composition and transform baseline exists
+- **Default public rollout phase:** search-first becomes the default `llm-guided` experience only after the public LLM-facing naming/argument surface from TASK-086 is stable enough to index intentionally and compare safely against legacy behavior
+
+Visibility ownership rule:
+
+- TASK-084 owns discovery inventory, search transforms, and call-path parity
+- TASK-085 owns session state, visibility policy, and phase-driven enable/disable behavior
+- TASK-084 must consume the visibility state defined by TASK-085 where adaptive visibility is active, but it must not define a second visibility model
+
+Hard gate:
+
+- TASK-084 implementation is blocked until TASK-083 Gate 0 is green (3.0+ baseline) and the runtime for this surface is moved to a FastMCP 3.1+ feature line (`>=3.1,<4.0` unless explicitly revised).
+- default rollout on the public `llm-guided` surface is additionally blocked until:
+  - the shaped public surface from TASK-086 exists and is stable enough to index intentionally
+  - TASK-091 defines the coexistence/rollback path for comparing discovery-first behavior against legacy behavior
+
+### Critical Path Rule
+
+This task has two different dependency moments and they must stay explicit:
+
+- **Discovery infrastructure work** may begin once the TASK-083 composition / transform baseline exists and the shared public manifest is available for the capabilities being indexed
+- **Public search indexing and naming validation** must target the baseline public surface established by TASK-086, not the raw internal registration names
+- **Adaptive visibility parity** is integrated after TASK-085 visibility controls exist; it is not a prerequisite for the earlier inventory / search-plumbing work
+- **Default public rollout** of search-first `llm-guided` behavior is gated by TASK-091 so coexistence and rollback against legacy behavior are defined up front
+
+Do not introduce a custom search proxy unless the built-in call path proves insufficient.
+
+Discovery must preserve auth/visibility parity:
+
+- `search_tools` results and `call_tool` execution must respect the same authorization and visibility pipeline as direct tool listing/calls
+- session-level visibility changes defined by TASK-085 (`ctx.enable_components()` / `ctx.disable_components()`) must be reflected in discovery results wherever adaptive visibility is enabled
+
+---
+
 ## FastMCP Features To Use
 
 - **Tool Search** — **FastMCP 3.1.0**
@@ -73,6 +121,7 @@ This task covers:
 - deciding which tools stay always visible
 - designing a small public “entry layer” for the server
 - improving LLM tool selection quality at catalog scale
+- moving discovery onto the shaped public surface rather than indexing raw internal adapter names as the long-term default
 
 This task does not cover:
 
@@ -103,3 +152,37 @@ It is one of the most important FastMCP 3.1 features for this project.
 - Tool selection quality improves for complex Blender tasks.
 - The project can keep growing its tool catalog without linearly increasing model confusion.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original product objective stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define one platform-owned discovery manifest and taxonomy.
+2. Build BM25 search infrastructure and pinned entry tooling against the canonical platform manifest.
+3. Enrich search text from docstrings, schemas, aliases, and capability metadata.
+4. Prove discovered-tool execution stays on the same router and dispatcher path.
+5. Prove auth parity for `search_tools` / `call_tool` vs direct paths, and prove visibility parity once TASK-085 adaptive visibility controls exist.
+6. Roll discovery-first out as the default only on the stabilized public surface, then measure payload reduction and search quality against legacy behavior.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-084-01](./TASK-084-01_Tool_Inventory_Normalization_and_Discovery_Taxonomy.md) | Build one canonical discovery inventory and taxonomy |
+| 2 | [TASK-084-02](./TASK-084-02_Search_Transform_and_Pinned_Entry_Surface.md) | Introduce search-first discovery with pinned entry tools |
+| 3 | [TASK-084-03](./TASK-084-03_Search_Document_Enrichment_from_Metadata_and_Docstrings.md) | Enrich search documents from metadata, docstrings, and schemas |
+| 4 | [TASK-084-04](./TASK-084-04_Search_Execution_and_Router_Aware_Call_Path.md) | Keep search execution aligned with router and dispatcher behavior |
+| 5 | [TASK-084-05](./TASK-084-05_Discovery_Tests_Benchmarks_and_Docs.md) | Add discovery regression tests, benchmarks, and docs |
+
+### Repo-Specific Focus
+
+- future `server/adapters/mcp/platform/**`
+- future `server/adapters/mcp/discovery/**`
+- `server/router/infrastructure/tools_metadata/**`
+- `server/router/infrastructure/metadata_loader.py`
+- `server/adapters/mcp/areas/*.py`
+- `server/adapters/mcp/dispatcher.py`
+- `server/adapters/mcp/areas/workflow_catalog.py`

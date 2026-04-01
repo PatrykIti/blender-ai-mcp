@@ -1,4 +1,6 @@
 from typing import List, Optional, Union
+
+from server.application.tool_handlers._rpc_utils import require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.lattice import ILatticeTool
 
@@ -29,10 +31,7 @@ class LatticeToolHandler(ILatticeTool):
             "points_w": points_w,
             "interpolation": interpolation,
         }
-        response = self.rpc.send_request("lattice.create", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("lattice.create", args))
 
     def lattice_bind(
         self,
@@ -46,10 +45,7 @@ class LatticeToolHandler(ILatticeTool):
             "lattice_name": lattice_name,
             "vertex_group": vertex_group,
         }
-        response = self.rpc.send_request("lattice.bind", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("lattice.bind", args))
 
     def lattice_edit_point(
         self,
@@ -65,15 +61,9 @@ class LatticeToolHandler(ILatticeTool):
             "offset": offset,
             "relative": relative,
         }
-        response = self.rpc.send_request("lattice.edit_point", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("lattice.edit_point", args))
 
     def get_points(self, object_name: str) -> str:
         """Returns lattice point positions and resolution."""
         args = {"object_name": object_name}
-        response = self.rpc.send_request("lattice.get_points", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("lattice.get_points", args))

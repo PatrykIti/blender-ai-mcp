@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Literal
+from typing import List, Optional
 
 
 class ITextTool(ABC):

@@ -5,8 +5,9 @@ Implements texture baking operations using Cycles renderer.
 """
 
 try:
-    import bpy
     import os
+
+    import bpy
 except ImportError:
     bpy = None
 
@@ -17,20 +18,20 @@ class BakingHandler:
     def _ensure_object_mode(self):
         """Ensures we are in OBJECT mode. Returns previous mode."""
         current_mode = bpy.context.mode
-        if current_mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if current_mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
         return current_mode
 
     def _ensure_cycles(self):
         """Ensures Cycles renderer is active. Returns previous engine."""
         previous_engine = bpy.context.scene.render.engine
-        if previous_engine != 'CYCLES':
-            bpy.context.scene.render.engine = 'CYCLES'
+        if previous_engine != "CYCLES":
+            bpy.context.scene.render.engine = "CYCLES"
         return previous_engine
 
     def _restore_engine(self, previous_engine):
         """Restores the previous render engine."""
-        if previous_engine != 'CYCLES':
+        if previous_engine != "CYCLES":
             bpy.context.scene.render.engine = previous_engine
 
     def _get_object(self, object_name):
@@ -42,7 +43,7 @@ class BakingHandler:
 
     def _ensure_uv_map(self, obj):
         """Ensures object has UV map. Raises error if missing."""
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{obj.name}' is not a mesh")
         if not obj.data.uv_layers:
             raise ValueError(f"Object '{obj.name}' has no UV map. Use uv_unwrap first.")
@@ -54,14 +55,8 @@ class BakingHandler:
         if name in bpy.data.images:
             bpy.data.images.remove(bpy.data.images[name])
 
-        image = bpy.data.images.new(
-            name=name,
-            width=resolution,
-            height=resolution,
-            alpha=True,
-            float_buffer=False
-        )
-        image.colorspace_settings.name = 'sRGB'
+        image = bpy.data.images.new(name=name, width=resolution, height=resolution, alpha=True, float_buffer=False)
+        image.colorspace_settings.name = "sRGB"
         return image
 
     def _setup_bake_material(self, obj, image):
@@ -90,14 +85,14 @@ class BakingHandler:
         # Create or get image texture node for baking
         bake_node = None
         for node in nodes:
-            if node.type == 'TEX_IMAGE' and node.name == 'BakeTarget':
+            if node.type == "TEX_IMAGE" and node.name == "BakeTarget":
                 bake_node = node
                 break
 
         if bake_node is None:
-            bake_node = nodes.new(type='ShaderNodeTexImage')
-            bake_node.name = 'BakeTarget'
-            bake_node.label = 'Bake Target'
+            bake_node = nodes.new(type="ShaderNodeTexImage")
+            bake_node.name = "BakeTarget"
+            bake_node.label = "Bake Target"
             bake_node.location = (-300, 300)
 
         # Set the image
@@ -117,12 +112,12 @@ class BakingHandler:
 
         # Determine format from extension
         ext = os.path.splitext(output_path)[1].lower()
-        if ext == '.exr':
-            image.file_format = 'OPEN_EXR'
-        elif ext in ['.jpg', '.jpeg']:
-            image.file_format = 'JPEG'
+        if ext == ".exr":
+            image.file_format = "OPEN_EXR"
+        elif ext in [".jpg", ".jpeg"]:
+            image.file_format = "JPEG"
         else:
-            image.file_format = 'PNG'
+            image.file_format = "PNG"
 
         image.filepath_raw = output_path
         image.save()
@@ -135,7 +130,7 @@ class BakingHandler:
         high_poly_source=None,
         cage_extrusion=0.1,
         margin=16,
-        normal_space="TANGENT"
+        normal_space="TANGENT",
     ):
         """
         Bakes normal map from high-poly to low-poly or from geometry.
@@ -153,7 +148,7 @@ class BakingHandler:
             image = self._create_bake_image(image_name, resolution)
 
             # For normal maps, use non-color data
-            image.colorspace_settings.name = 'Non-Color'
+            image.colorspace_settings.name = "Non-Color"
 
             # Setup material with image texture
             self._setup_bake_material(target_obj, image)
@@ -164,7 +159,7 @@ class BakingHandler:
 
             # Validate normal space
             normal_space = normal_space.upper()
-            if normal_space not in ['TANGENT', 'OBJECT']:
+            if normal_space not in ["TANGENT", "OBJECT"]:
                 raise ValueError(f"Invalid normal_space '{normal_space}'. Must be 'TANGENT' or 'OBJECT'.")
             bake_settings.normal_space = normal_space
 
@@ -176,7 +171,7 @@ class BakingHandler:
                 bake_settings.cage_extrusion = cage_extrusion
 
                 # Deselect all, select source, then target (active)
-                bpy.ops.object.select_all(action='DESELECT')
+                bpy.ops.object.select_all(action="DESELECT")
                 source_obj.select_set(True)
                 target_obj.select_set(True)
                 bpy.context.view_layer.objects.active = target_obj
@@ -186,32 +181,26 @@ class BakingHandler:
                 bake_settings.use_selected_to_active = False
 
                 # Select only target
-                bpy.ops.object.select_all(action='DESELECT')
+                bpy.ops.object.select_all(action="DESELECT")
                 target_obj.select_set(True)
                 bpy.context.view_layer.objects.active = target_obj
 
                 bake_mode = "self-bake"
 
             # Perform bake
-            bpy.ops.object.bake(type='NORMAL')
+            bpy.ops.object.bake(type="NORMAL")
 
             # Save image
             self._save_image(image, output_path)
 
-            return f"Baked normal map ({bake_mode}) to '{output_path}' [{resolution}x{resolution}, {normal_space} space]"
+            return (
+                f"Baked normal map ({bake_mode}) to '{output_path}' [{resolution}x{resolution}, {normal_space} space]"
+            )
 
         finally:
             self._restore_engine(previous_engine)
 
-    def bake_ao(
-        self,
-        object_name,
-        output_path,
-        resolution=1024,
-        samples=128,
-        distance=1.0,
-        margin=16
-    ):
+    def bake_ao(self, object_name, output_path, resolution=1024, samples=128, distance=1.0, margin=16):
         """
         Bakes ambient occlusion map.
         """
@@ -243,12 +232,12 @@ class BakingHandler:
                 bpy.context.scene.world.light_settings.distance = distance
 
             # Select target
-            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action="DESELECT")
             target_obj.select_set(True)
             bpy.context.view_layer.objects.active = target_obj
 
             # Perform bake
-            bpy.ops.object.bake(type='AO')
+            bpy.ops.object.bake(type="AO")
 
             # Save image
             self._save_image(image, output_path)
@@ -267,7 +256,7 @@ class BakingHandler:
         margin=16,
         use_pass_direct=True,
         use_pass_indirect=True,
-        use_pass_color=True
+        use_pass_color=True,
     ):
         """
         Bakes combined render (full material + lighting) to texture.
@@ -299,12 +288,12 @@ class BakingHandler:
             bake_settings.use_pass_color = use_pass_color
 
             # Select target
-            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action="DESELECT")
             target_obj.select_set(True)
             bpy.context.view_layer.objects.active = target_obj
 
             # Perform bake
-            bpy.ops.object.bake(type='COMBINED')
+            bpy.ops.object.bake(type="COMBINED")
 
             # Save image
             self._save_image(image, output_path)
@@ -323,13 +312,7 @@ class BakingHandler:
         finally:
             self._restore_engine(previous_engine)
 
-    def bake_diffuse(
-        self,
-        object_name,
-        output_path,
-        resolution=1024,
-        margin=16
-    ):
+    def bake_diffuse(self, object_name, output_path, resolution=1024, margin=16):
         """
         Bakes diffuse/albedo color only.
         """
@@ -359,12 +342,12 @@ class BakingHandler:
             bake_settings.use_pass_color = True
 
             # Select target
-            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action="DESELECT")
             target_obj.select_set(True)
             bpy.context.view_layer.objects.active = target_obj
 
             # Perform bake
-            bpy.ops.object.bake(type='DIFFUSE')
+            bpy.ops.object.bake(type="DIFFUSE")
 
             # Save image
             self._save_image(image, output_path)

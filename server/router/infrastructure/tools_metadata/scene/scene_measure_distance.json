@@ -1,0 +1,16 @@
+{
+  "tool_name": "scene_measure_distance",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["distance", "apart", "spacing", "offset", "clearance", "measure"],
+  "sample_prompts": ["measure distance between two objects", "how far apart are these parts", "check spacing"],
+  "parameters": {
+    "from_object": {"type": "string", "required": true},
+    "to_object": {"type": "string", "required": true},
+    "reference": {"type": "enum", "default": "ORIGIN", "options": ["ORIGIN", "BBOX_CENTER"]}
+  },
+  "related_tools": ["scene_measure_gap", "scene_measure_alignment", "scene_measure_dimensions"],
+  "patterns": [],
+  "description": "Measures distance between two objects using origin or bounding-box-center references."
+}

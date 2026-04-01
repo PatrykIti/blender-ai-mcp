@@ -5,18 +5,16 @@ TASK-055-2
 TASK-055-FIX: Removed tests for deleted methods (list_mappings, delete_mapping, get_stats).
 """
 
-import pytest
-from datetime import datetime
 from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
 
+import pytest
 from server.router.application.resolver.parameter_store import ParameterStore
 from server.router.domain.entities.parameter import StoredMapping
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
 )
 from server.router.domain.interfaces.i_workflow_intent_classifier import (
     IWorkflowIntentClassifier,
@@ -154,9 +152,7 @@ class MockVectorStore(IVectorStore):
         """Count records in namespace."""
         if namespace is None:
             return len(self._records)
-        return sum(
-            1 for r in self._records.values() if r.namespace == namespace
-        )
+        return sum(1 for r in self._records.values() if r.namespace == namespace)
 
     def get_stats(self) -> Dict[str, Any]:
         """Get storage statistics."""
@@ -173,18 +169,14 @@ class MockVectorStore(IVectorStore):
             self._records.clear()
             return count
 
-        to_delete = [
-            key for key, r in self._records.items() if r.namespace == namespace
-        ]
+        to_delete = [key for key, r in self._records.items() if r.namespace == namespace]
         for key in to_delete:
             del self._records[key]
         return len(to_delete)
 
     def get_all_ids(self, namespace: VectorNamespace) -> List[str]:
         """Get all IDs in namespace."""
-        return [
-            r.id for r in self._records.values() if r.namespace == namespace
-        ]
+        return [r.id for r in self._records.values() if r.namespace == namespace]
 
     def search_workflows_weighted(
         self,
@@ -316,7 +308,7 @@ class TestParameterStoreFindMapping:
         )
 
         # Search for different parameter - should not find
-        result = parameter_store.find_mapping(
+        parameter_store.find_mapping(
             prompt="straight legs",
             parameter_name="top_width",  # Different parameter
             workflow_name="table",
@@ -336,7 +328,7 @@ class TestParameterStoreFindMapping:
         )
 
         # With high threshold
-        result_high = parameter_store.find_mapping(
+        parameter_store.find_mapping(
             prompt="straight legs",
             parameter_name="angle",
             workflow_name="table",
@@ -344,7 +336,7 @@ class TestParameterStoreFindMapping:
         )
 
         # With low threshold
-        result_low = parameter_store.find_mapping(
+        parameter_store.find_mapping(
             prompt="straight legs",
             parameter_name="angle",
             workflow_name="table",

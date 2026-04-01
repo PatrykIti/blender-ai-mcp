@@ -8,6 +8,7 @@ This file configures pytest to properly discover and run tests from both:
 The bpy/bmesh mocks are handled in tests/unit/conftest.py and only apply
 to unit tests.
 """
+
 import pytest
 
 

@@ -41,12 +41,60 @@ The system allows AI to create:
                 Domain | Application | Adapters | Infra
 ```
 
+### Runtime Responsibility Split
+
+Beyond the Clean Architecture layers, the runtime product is divided into four responsibility layers:
+
+- **FastMCP platform layer**: public MCP surface, discovery, visibility, prompts, elicitation, background-task UX, and future 3.x client-surface shaping.
+- **Semantic layer (LaBSE / vector retrieval)**: workflow matching, multilingual generalization, learned parameter reuse.
+- **Router policy layer**: deterministic correction, guardrails, adaptation, override policy, and execution safety.
+- **Inspection / assertion layer**: the source of truth for current Blender state and future correctness checks.
+
+This split is intentional:
+
+- FastMCP should not be the semantic engine.
+- LaBSE should not be the truth engine.
+- Router should not be the primary discovery/catalog-shaping engine.
+- Inspection must remain the final authority on actual Blender state.
+
+See [_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md](_docs/_ROUTER/RESPONSIBILITY_BOUNDARIES.md).
+See [_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md](_docs/_MCP_SERVER/TOOL_LAYERING_POLICY.md) for the canonical product policy on layered tools, small public surfaces, hidden atomic tools, and `set_goal`-first orchestration.
+
 ### 1. MCP Server (Client Side)
 A Python application that exposes tools to the AI model and acts as a client for the Blender Addon.
 - **Domain**: Defines interfaces (`IModelingTool`) and models (`RpcRequest`).
 - **Application**: Implements tool logic (`ModelingToolHandler`) using dependency injection.
 - **Adapters**: Implements `RpcClient` (sockets) and `FastMCP` endpoints.
 - **Infrastructure**: DI Container and Configuration.
+
+Current state:
+- The runtime now boots through an explicit FastMCP 3.x factory path with reusable provider groups and a deterministic transform pipeline scaffold.
+
+Strategic direction:
+- Move toward FastMCP 3.x platform capabilities for discovery, visibility, versioned surfaces, prompts, and richer client interaction patterns.
+
+### FastMCP 3.x Composition Model
+
+The MCP platform layer now has four explicit composition seams:
+
+- **Provider groups**: reusable `core_tools`, `router_tools`, `workflow_tools`, and `internal_tools` provider builders
+- **Surface profiles**: `legacy-flat`, `llm-guided`, `internal-debug`, `code-mode-pilot`
+- **Platform manifest**: one minimal capability manifest outside router metadata
+- **Transform pipeline**: one ordered scaffold for versioning, naming, prompt bridging, visibility, and discovery
+
+This is important because the repo is no longer just “one FastMCP singleton + decorators”.
+It is now moving toward:
+
+- one composition root
+- multiple public surfaces
+- future version coexistence
+- future search- and visibility-driven shaping
+
+Area modules now expose plain tool callables plus explicit `register_*_tools(...)`
+seams. Runtime composition happens through provider builders, not through
+module-import side effects.
+
+See [_docs/_MCP_SERVER/fastmcp_3x_composition.md](_docs/_MCP_SERVER/fastmcp_3x_composition.md).
 
 ### 2. Blender Addon (Server Side)
 A plugin running inside Blender's Python environment (`bpy`).
@@ -128,6 +176,8 @@ We group operations into high-level, robust tools.
 - **Dependency Injection**: All dependencies are injected via providers (`di.py`).
 - **Thread Safety**: The Addon uses `bpy.app.timers` to ensure thread safety when handling RPC requests.
 - **No "Raw Code"**: The AI calls tools, it never executes arbitrary Python scripts.
+- **Semantic vs Truth Separation**: Semantic retrieval helps decide likely intent; inspection tools determine actual scene truth.
+- **Deterministic Safety First**: Router corrections should prefer deterministic fixes and explicit policy over speculative behavior.
 
 ---
 

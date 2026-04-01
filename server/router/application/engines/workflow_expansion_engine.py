@@ -6,20 +6,17 @@ Supports parametric variable substitution (TASK-052).
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional
 
-from server.router.domain.interfaces.i_expansion_engine import IExpansionEngine
-from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.domain.entities.scene_context import SceneContext
 from server.router.domain.entities.pattern import DetectedPattern
+from server.router.domain.entities.tool_call import CorrectedToolCall
+from server.router.domain.interfaces.i_expansion_engine import IExpansionEngine
 from server.router.infrastructure.config import RouterConfig
 
 logger = logging.getLogger(__name__)
 
 
-def extract_modifiers(
-    prompt: str, workflow_modifiers: Dict[str, Dict[str, Any]]
-) -> Dict[str, Any]:
+def extract_modifiers(prompt: str, workflow_modifiers: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     """Extract variable overrides from user prompt based on workflow modifiers.
 
     Scans the user prompt for keywords defined in workflow modifiers and
@@ -50,9 +47,7 @@ def extract_modifiers(
     return overrides
 
 
-def substitute_variables(
-    params: Dict[str, Any], variables: Dict[str, Any]
-) -> Dict[str, Any]:
+def substitute_variables(params: Dict[str, Any], variables: Dict[str, Any]) -> Dict[str, Any]:
     """Replace $variable placeholders with actual values.
 
     Handles both top-level string values and values within lists.
@@ -146,6 +141,7 @@ class WorkflowExpansionEngine(IExpansionEngine):
         """
         if self._registry is None:
             from server.router.application.workflows.registry import get_workflow_registry
+
             self._registry = get_workflow_registry()
         return self._registry
 
@@ -181,10 +177,7 @@ class WorkflowExpansionEngine(IExpansionEngine):
         """
         from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
 
-        workflow_steps = [
-            WorkflowStep(tool=s["tool"], params=s.get("params", {}))
-            for s in steps
-        ]
+        workflow_steps = [WorkflowStep(tool=s["tool"], params=s.get("params", {})) for s in steps]
 
         definition = WorkflowDefinition(
             name=name,

@@ -6,9 +6,9 @@ TASK-046-4
 """
 
 from server.router.application.inheritance.proportion_inheritance import (
+    InheritedProportions,
     ProportionInheritance,
     ProportionRule,
-    InheritedProportions,
 )
 
 __all__ = [

@@ -4,43 +4,43 @@ Supervisor Router.
 Main orchestrator that processes LLM tool calls through the router pipeline.
 """
 
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from server.router.infrastructure.config import RouterConfig
-from server.router.infrastructure.logger import RouterLogger
-from server.router.domain.entities.tool_call import (
-    InterceptedToolCall,
-    CorrectedToolCall,
-    ToolCallSequence,
-)
-from server.router.domain.entities.scene_context import SceneContext
-from server.router.domain.entities.pattern import DetectedPattern
-from server.router.domain.entities.firewall_result import FirewallAction
-from server.router.application.interceptor.tool_interceptor import ToolInterceptor
-from server.router.application.analyzers.scene_context_analyzer import SceneContextAnalyzer
 from server.router.application.analyzers.geometry_pattern_detector import GeometryPatternDetector
-from server.router.application.engines.tool_correction_engine import ToolCorrectionEngine
-from server.router.application.engines.tool_override_engine import ToolOverrideEngine
-from server.router.application.engines.workflow_expansion_engine import WorkflowExpansionEngine
-from server.router.application.engines.workflow_adapter import WorkflowAdapter, AdaptationResult
-from server.router.application.engines.error_firewall import ErrorFirewall
+from server.router.application.analyzers.scene_context_analyzer import SceneContextAnalyzer
 from server.router.application.classifier.intent_classifier import IntentClassifier
 from server.router.application.classifier.workflow_intent_classifier import (
     WorkflowIntentClassifier,
 )
-from server.router.application.triggerer.workflow_triggerer import WorkflowTriggerer
-from server.router.application.matcher.semantic_workflow_matcher import (
-    SemanticWorkflowMatcher,
-    MatchResult,
-)
-from server.router.domain.entities.ensemble import EnsembleResult
+from server.router.application.engines.error_firewall import ErrorFirewall
+from server.router.application.engines.tool_correction_engine import ToolCorrectionEngine
+from server.router.application.engines.tool_override_engine import ToolOverrideEngine
+from server.router.application.engines.workflow_adapter import AdaptationResult, WorkflowAdapter
+from server.router.application.engines.workflow_expansion_engine import WorkflowExpansionEngine
 from server.router.application.inheritance.proportion_inheritance import (
     ProportionInheritance,
 )
+from server.router.application.interceptor.tool_interceptor import ToolInterceptor
 from server.router.application.learning.feedback_collector import (
     FeedbackCollector,
 )
+from server.router.application.matcher.semantic_workflow_matcher import (
+    MatchResult,
+    SemanticWorkflowMatcher,
+)
+from server.router.application.triggerer.workflow_triggerer import WorkflowTriggerer
+from server.router.domain.entities.ensemble import EnsembleResult
+from server.router.domain.entities.firewall_result import FirewallAction
+from server.router.domain.entities.pattern import DetectedPattern
+from server.router.domain.entities.scene_context import SceneContext
+from server.router.domain.entities.tool_call import (
+    CorrectedToolCall,
+)
+from server.router.infrastructure.config import RouterConfig
+from server.router.infrastructure.logger import RouterLogger
+
+if TYPE_CHECKING:
+    from server.router.application.workflows.base import WorkflowDefinition
 
 
 class SupervisorRouter:
@@ -189,7 +189,7 @@ class SupervisorRouter:
         self._processing_stats["total_calls"] += 1
 
         # Step 1: Intercept - capture the tool call
-        intercepted = self.interceptor.intercept(tool_name, params, prompt)
+        self.interceptor.intercept(tool_name, params, prompt)
         self.logger.log_intercept(tool_name, params, prompt)
 
         # Step 2: Analyze - read scene context
@@ -202,9 +202,7 @@ class SupervisorRouter:
         corrected, pre_steps = self._correct_tool_call(tool_name, params, context)
 
         # Step 5: Check workflow trigger (from goal or heuristics)
-        triggered_workflow = self._check_workflow_trigger(
-            tool_name, params, context, pattern
-        )
+        triggered_workflow = self._check_workflow_trigger(tool_name, params, context, pattern)
 
         # Step 6: Override - check for better alternatives (skip if workflow triggered)
         override_result = None
@@ -314,9 +312,7 @@ class SupervisorRouter:
         Returns:
             Tuple of (corrected_call, pre_steps).
         """
-        corrected, pre_steps = self.correction_engine.correct(
-            tool_name, params, context
-        )
+        corrected, pre_steps = self.correction_engine.correct(tool_name, params, context)
 
         if corrected.corrections_applied:
             self._processing_stats["corrections_applied"] += 1
@@ -349,9 +345,7 @@ class SupervisorRouter:
         if not self.config.enable_overrides:
             return None
 
-        decision = self.override_engine.check_override(
-            tool_name, params, context, pattern
-        )
+        decision = self.override_engine.check_override(tool_name, params, context, pattern)
 
         if decision.should_override:
             self._processing_stats["overrides_triggered"] += 1
@@ -410,20 +404,14 @@ class SupervisorRouter:
 
         # Priority 1: Use pending workflow from goal
         if self._pending_workflow:
-            self.logger.log_info(
-                f"Using pending workflow from goal: {self._pending_workflow}"
-            )
+            self.logger.log_info(f"Using pending workflow from goal: {self._pending_workflow}")
             return self._pending_workflow
 
         # Priority 2: Check triggerer heuristics
-        workflow_name = self.triggerer.determine_workflow(
-            tool_name, params, context, pattern
-        )
+        workflow_name = self.triggerer.determine_workflow(tool_name, params, context, pattern)
 
         if workflow_name:
-            self.logger.log_info(
-                f"Workflow triggered by heuristics: {workflow_name}"
-            )
+            self.logger.log_info(f"Workflow triggered by heuristics: {workflow_name}")
 
         return workflow_name
 
@@ -463,13 +451,17 @@ class SupervisorRouter:
         )
 
         if should_adapt:
+            match_result = self._last_match_result
+            if match_result is None:
+                return []
+
             # Get workflow definition for adaptation
             definition = registry.get_definition(workflow_name)
             if definition:
                 # Adapt workflow based on confidence level
                 adapted_steps, adaptation_result = self._workflow_adapter.adapt(
                     definition=definition,
-                    confidence_level=self._last_match_result.confidence_level,
+                    confidence_level=match_result.confidence_level,
                     user_prompt=self._current_goal or "",
                 )
                 self._last_adaptation_result = adaptation_result
@@ -500,7 +492,7 @@ class SupervisorRouter:
                     self.logger.log_info(
                         f"Adapted workflow '{workflow_name}': "
                         f"{adaptation_result.original_step_count} -> {adaptation_result.adapted_step_count} steps "
-                        f"(confidence: {self._last_match_result.confidence_level}, "
+                        f"(confidence: {match_result.confidence_level}, "
                         f"strategy: {adaptation_result.adaptation_strategy})"
                     )
                     # Clear pending workflow and modifiers after expansion
@@ -514,9 +506,7 @@ class SupervisorRouter:
         if self._pending_modifiers:
             # Merge original params with pending modifiers (modifiers override)
             merged_params = {**(params or {}), **self._pending_modifiers}
-            self.logger.log_info(
-                f"Using modifiers from ensemble result: {list(self._pending_modifiers.keys())}"
-            )
+            self.logger.log_info(f"Using modifiers from ensemble result: {list(self._pending_modifiers.keys())}")
         else:
             # Use original params (legacy path will extract modifiers from prompt)
             merged_params = params
@@ -527,9 +517,7 @@ class SupervisorRouter:
 
         if calls:
             self._processing_stats["workflows_expanded"] += 1
-            self.logger.log_info(
-                f"Expanded workflow '{workflow_name}' to {len(calls)} steps"
-            )
+            self.logger.log_info(f"Expanded workflow '{workflow_name}' to {len(calls)} steps")
             # Clear pending workflow and modifiers after expansion
             self._pending_workflow = None
             self._pending_modifiers = {}
@@ -633,13 +621,13 @@ class SupervisorRouter:
             return True
 
         try:
-            from server.router.application.workflows.registry import get_workflow_registry
-            from server.router.application.matcher.keyword_matcher import KeywordMatcher
-            from server.router.application.matcher.semantic_matcher import SemanticMatcher
-            from server.router.application.matcher.pattern_matcher import PatternMatcher
-            from server.router.application.matcher.modifier_extractor import ModifierExtractor
             from server.router.application.matcher.ensemble_aggregator import EnsembleAggregator
             from server.router.application.matcher.ensemble_matcher import EnsembleMatcher
+            from server.router.application.matcher.keyword_matcher import KeywordMatcher
+            from server.router.application.matcher.modifier_extractor import ModifierExtractor
+            from server.router.application.matcher.pattern_matcher import PatternMatcher
+            from server.router.application.matcher.semantic_matcher import SemanticMatcher
+            from server.router.application.workflows.registry import get_workflow_registry
 
             registry = get_workflow_registry()
             registry.ensure_custom_loaded()
@@ -648,6 +636,7 @@ class SupervisorRouter:
             if self._workflow_classifier is None:
                 # Use shared LaBSE model from DI (singleton)
                 from server.infrastructure.di import get_labse_model
+
                 self._workflow_classifier = WorkflowIntentClassifier(
                     config=self.config,
                     model=get_labse_model(),
@@ -861,9 +850,7 @@ class SupervisorRouter:
 
             # Update simulated context for next iteration
             # (mode switches affect subsequent validations)
-            current_context = self._simulate_context_change(
-                current_context, tool
-            )
+            current_context = self._simulate_context_change(current_context, tool)
 
         return validated
 
@@ -903,6 +890,7 @@ class SupervisorRouter:
                 # Simulate having selection
                 if context.topology:
                     from server.router.domain.entities.scene_context import TopologyInfo
+
                     new_topo = TopologyInfo(
                         vertices=context.topology.vertices,
                         edges=context.topology.edges,
@@ -927,6 +915,7 @@ class SupervisorRouter:
                 # Simulate no selection
                 if context.topology:
                     from server.router.domain.entities.scene_context import TopologyInfo
+
                     new_topo = TopologyInfo(
                         vertices=context.topology.vertices,
                         edges=context.topology.edges,
@@ -962,10 +951,7 @@ class SupervisorRouter:
         Returns:
             List of dicts with 'tool' and 'params' keys.
         """
-        return [
-            {"tool": t.tool_name, "params": t.params}
-            for t in tools
-        ]
+        return [{"tool": t.tool_name, "params": t.params} for t in tools]
 
     def get_stats(self) -> Dict[str, Any]:
         """Get processing statistics.
@@ -1042,6 +1028,35 @@ class SupervisorRouter:
             "semantic_matcher": self._semantic_initialized,
             "proportion_inheritance": True,
         }
+
+    def get_assistant_diagnostics(self) -> Dict[str, Any]:
+        """Return bounded diagnostics suitable for sampling assistants."""
+
+        diagnostics: Dict[str, Any] = {
+            "current_goal": self._current_goal,
+            "pending_workflow": self._pending_workflow,
+            "stats": self.get_stats(),
+        }
+
+        if self._last_pattern is not None:
+            diagnostics["last_pattern"] = self._last_pattern.to_dict()
+
+        if self._last_match_result is not None:
+            diagnostics["last_match"] = self._last_match_result.to_dict()
+
+        if self._last_ensemble_result is not None:
+            diagnostics["last_ensemble"] = {
+                "workflow_name": self._last_ensemble_result.workflow_name,
+                "final_score": self._last_ensemble_result.final_score,
+                "confidence_level": self._last_ensemble_result.confidence_level,
+                "requires_adaptation": self._last_ensemble_result.requires_adaptation,
+                "matcher_contributions": self._last_ensemble_result.matcher_contributions,
+            }
+
+        if self._last_adaptation_result is not None:
+            diagnostics["last_adaptation"] = self._last_adaptation_result.to_dict()
+
+        return diagnostics
 
     def get_last_adaptation_result(self) -> Optional[AdaptationResult]:
         """Get last workflow adaptation result.
@@ -1138,7 +1153,11 @@ class SupervisorRouter:
                 pass  # Context already has pattern via _detect_pattern
 
         # Run ensemble matching
-        result = self._ensemble_matcher.match(goal, context)
+        ensemble_matcher = self._ensemble_matcher
+        if ensemble_matcher is None:
+            return None
+
+        result = ensemble_matcher.match(goal, context)
 
         if result.workflow_name:
             self._pending_workflow = result.workflow_name
@@ -1152,7 +1171,7 @@ class SupervisorRouter:
                 match_type="ensemble",
                 confidence_level=result.confidence_level,
                 requires_adaptation=result.requires_adaptation,
-                metadata={"matcher_contributions": result.matcher_contributions}
+                metadata={"matcher_contributions": result.matcher_contributions},
             )
 
             self.logger.log_info(
@@ -1238,12 +1257,11 @@ class SupervisorRouter:
         if variables:
             final_variables.update(variables)
 
-        self.logger.log_info(
-            f"Executing workflow '{workflow_name}' with variables: {list(final_variables.keys())}"
-        )
+        self.logger.log_info(f"Executing workflow '{workflow_name}' with variables: {list(final_variables.keys())}")
 
         # Get workflow definition
         from server.router.application.workflows.registry import get_workflow_registry
+
         registry = get_workflow_registry()
         registry.ensure_custom_loaded()
 
@@ -1266,14 +1284,18 @@ class SupervisorRouter:
         )
 
         if should_adapt:
-            # Adapt workflow based on confidence level
-            adapted_steps, adaptation_result = self._workflow_adapter.adapt(
-                definition=definition,
-                confidence_level=self._last_match_result.confidence_level,
-                user_prompt=self._current_goal or "",
-            )
-            self._last_adaptation_result = adaptation_result
-            steps_to_execute = adapted_steps
+            match_result = self._last_match_result
+            if match_result is None:
+                steps_to_execute = definition.steps
+            else:
+                # Adapt workflow based on confidence level
+                adapted_steps, adaptation_result = self._workflow_adapter.adapt(
+                    definition=definition,
+                    confidence_level=match_result.confidence_level,
+                    user_prompt=self._current_goal or "",
+                )
+                self._last_adaptation_result = adaptation_result
+                steps_to_execute = adapted_steps
         else:
             steps_to_execute = definition.steps
 
@@ -1310,36 +1332,40 @@ class SupervisorRouter:
             if self._rpc_client:
                 try:
                     result = self._rpc_client.send_request(rpc_command, params)
-                    results.append({
-                        "tool": tool_name,
-                        "params": params,
-                        "result": result,
-                        "success": True,
-                    })
+                    results.append(
+                        {
+                            "tool": tool_name,
+                            "params": params,
+                            "result": result,
+                            "success": True,
+                        }
+                    )
                 except Exception as e:
                     self.logger.log_info(f"Tool '{tool_name}' failed: {e}")
-                    results.append({
-                        "tool": tool_name,
-                        "params": params,
-                        "error": str(e),
-                        "success": False,
-                    })
+                    results.append(
+                        {
+                            "tool": tool_name,
+                            "params": params,
+                            "error": str(e),
+                            "success": False,
+                        }
+                    )
             else:
                 # No RPC client - just return the calls without execution
-                results.append({
-                    "tool": tool_name,
-                    "params": params,
-                    "success": True,
-                })
+                results.append(
+                    {
+                        "tool": tool_name,
+                        "params": params,
+                        "success": True,
+                    }
+                )
 
         self._processing_stats["workflows_expanded"] += 1
 
         # Clear goal after successful execution
         self.clear_goal()
 
-        self.logger.log_info(
-            f"Workflow '{workflow_name}' executed: {len(results)} tool calls"
-        )
+        self.logger.log_info(f"Workflow '{workflow_name}' executed: {len(results)} tool calls")
 
         return results
 
@@ -1366,9 +1392,7 @@ class SupervisorRouter:
             self._semantic_matcher.initialize(registry)
             self._semantic_initialized = True
 
-            self.logger.log_info(
-                f"Semantic matcher initialized with {len(registry.get_all_workflows())} workflows"
-            )
+            self.logger.log_info(f"Semantic matcher initialized with {len(registry.get_all_workflows())} workflows")
             return True
         except Exception as e:
             self.logger.log_info(f"Semantic matcher initialization failed: {e}")
@@ -1440,9 +1464,7 @@ class SupervisorRouter:
         Returns:
             Dictionary with inherited proportion data.
         """
-        inherited = self._proportion_inheritance.inherit_proportions(
-            similar_workflows
-        )
+        inherited = self._proportion_inheritance.inherit_proportions(similar_workflows)
 
         result = {
             "proportions": inherited.to_dict(),
@@ -1451,13 +1473,9 @@ class SupervisorRouter:
         }
 
         if dimensions and len(dimensions) >= 3:
-            applied = self._proportion_inheritance.apply_to_dimensions(
-                inherited, dimensions
-            )
+            applied = self._proportion_inheritance.apply_to_dimensions(inherited, dimensions)
             result["applied_values"] = applied
-            result["dimension_context"] = self._proportion_inheritance.get_dimension_context(
-                dimensions
-            )
+            result["dimension_context"] = self._proportion_inheritance.get_dimension_context(dimensions)
 
         return result
 
@@ -1507,9 +1525,7 @@ class SupervisorRouter:
         """
         return {
             "initialized": self._semantic_initialized,
-            "matcher_info": self._semantic_matcher.get_info()
-            if self._semantic_initialized
-            else {},
+            "matcher_info": self._semantic_matcher.get_info() if self._semantic_initialized else {},
             "proportion_info": self._proportion_inheritance.get_info(),
         }
 
@@ -1539,9 +1555,7 @@ class SupervisorRouter:
             correct_workflow=correct_workflow,
         )
 
-        self.logger.log_info(
-            f"Recorded feedback correction: '{prompt[:30]}...' -> {correct_workflow}"
-        )
+        self.logger.log_info(f"Recorded feedback correction: '{prompt[:30]}...' -> {correct_workflow}")
 
     def record_feedback_helpful(
         self,
@@ -1587,9 +1601,7 @@ class SupervisorRouter:
         Returns:
             List of suggested prompts.
         """
-        return self._feedback_collector.get_new_sample_prompts(
-            workflow_name, min_corrections
-        )
+        return self._feedback_collector.get_new_sample_prompts(workflow_name, min_corrections)
 
     def get_feedback_collector(self) -> FeedbackCollector:
         """Get the feedback collector instance.

@@ -7,15 +7,14 @@ TASK-050: Updated for YAML-based workflows (no more Python builtin workflows).
 """
 
 import pytest
-
-from server.router.application.workflows.registry import (
-    WorkflowRegistry,
-    get_workflow_registry,
-)
 from server.router.application.workflows.base import (
     BaseWorkflow,
     WorkflowDefinition,
     WorkflowStep,
+)
+from server.router.application.workflows.registry import (
+    WorkflowRegistry,
+    get_workflow_registry,
 )
 from server.router.domain.entities.tool_call import CorrectedToolCall
 
@@ -71,6 +70,11 @@ class TestWorkflowRegistry:
         name = registry.find_by_keywords("something completely different xyz123")
         assert name is None
 
+    def test_find_by_keywords_does_not_match_screen_cutout_from_screenshot_word(self, registry):
+        """Substring overlap like 'screen' in 'screenshot' must not trigger screen_cutout."""
+        name = registry.find_by_keywords("capture viewport screenshot save to file")
+        assert name is None
+
     def test_expand_workflow_nonexistent(self, registry):
         """Test expanding non-existent workflow returns empty list."""
         calls = registry.expand_workflow("nonexistent_workflow")
@@ -78,6 +82,7 @@ class TestWorkflowRegistry:
 
     def test_register_custom_workflow(self, registry):
         """Test registering a custom workflow class."""
+
         class CustomWorkflow(BaseWorkflow):
             @property
             def name(self):

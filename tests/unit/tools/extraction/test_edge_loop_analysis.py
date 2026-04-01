@@ -4,10 +4,11 @@ Unit tests for extraction_edge_loop_analysis (TASK-044-4)
 Tests the ExtractionHandler.edge_loop_analysis method which
 analyzes edge loops for feature detection.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 

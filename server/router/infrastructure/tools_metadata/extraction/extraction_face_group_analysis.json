@@ -3,7 +3,14 @@
   "category": "extraction",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["face groups", "inset", "extrude", "coplanar", "normal groups", "extraction"],
+  "keywords": [
+    "face groups",
+    "inset",
+    "extrude",
+    "coplanar",
+    "normal groups",
+    "extraction"
+  ],
   "sample_prompts": [
     "analyze face groups",
     "detect insets",
@@ -11,10 +18,24 @@
     "check face normals"
   ],
   "parameters": {
-    "object_name": {"type": "string", "required": true, "description": "Object to analyze"},
-    "angle_threshold": {"type": "number", "required": false, "default": 5.0, "description": "Max angle for coplanar grouping (degrees)"}
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Object to analyze"
+    },
+    "angle_threshold": {
+      "type": "float",
+      "required": false,
+      "default": 5.0,
+      "description": "Max angle for coplanar grouping (degrees)"
+    }
   },
-  "related_tools": ["extraction_deep_topology", "extraction_edge_loop_analysis", "mesh_inset", "mesh_extrude_region"],
+  "related_tools": [
+    "extraction_deep_topology",
+    "extraction_edge_loop_analysis",
+    "mesh_inset",
+    "mesh_extrude_region"
+  ],
   "patterns": [],
   "description": "Analyzes face groups to detect insets, extrusions, and planar regions."
 }

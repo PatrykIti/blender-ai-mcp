@@ -4,14 +4,14 @@ Unit tests for Parameter Resolution Domain Entities.
 TASK-055-1
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
 from server.router.domain.entities.parameter import (
+    ParameterResolutionResult,
     ParameterSchema,
     StoredMapping,
     UnresolvedParameter,
-    ParameterResolutionResult,
 )
 
 

@@ -5,16 +5,16 @@ TASK-055-5, TASK-055-6
 TASK-055-FIX: Updated for unified set_goal interface.
 """
 
-import pytest
 from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from server.application.tool_handlers.router_handler import RouterToolHandler
 from server.router.domain.entities.parameter import (
-    ParameterSchema,
     ParameterResolutionResult,
-    UnresolvedParameter,
+    ParameterSchema,
     StoredMapping,
+    UnresolvedParameter,
 )
 
 
@@ -93,12 +93,14 @@ class MockParameterResolver:
                     f"range={schema.range})"
                 )
 
-        self.stored_values.append({
-            "context": context,
-            "parameter_name": parameter_name,
-            "value": value,
-            "workflow_name": workflow_name,
-        })
+        self.stored_values.append(
+            {
+                "context": context,
+                "parameter_name": parameter_name,
+                "value": value,
+                "workflow_name": workflow_name,
+            }
+        )
         return f"Stored: '{context}' → {parameter_name}={value} (workflow: {workflow_name})"
 
     def resolve(
@@ -123,12 +125,14 @@ class MockParameterResolver:
                 resolved[name] = schema.default
                 sources[name] = "default"
             else:
-                unresolved.append(UnresolvedParameter(
-                    name=name,
-                    schema=schema,
-                    context=prompt,
-                    relevance=0.8,
-                ))
+                unresolved.append(
+                    UnresolvedParameter(
+                        name=name,
+                        schema=schema,
+                        context=prompt,
+                        relevance=0.8,
+                    )
+                )
         return ParameterResolutionResult(
             resolved=resolved,
             unresolved=unresolved,
@@ -161,6 +165,8 @@ class MockRouter:
         self._pending_workflow = None
         self._pending_modifiers = {}
         self._pending_variables = {}
+        self._last_match_result = None
+        self._last_ensemble_result = None
 
     def set_current_goal(self, goal: str) -> Optional[str]:
         """Set goal and return matched workflow."""
@@ -242,9 +248,84 @@ class TestSetGoalUnified:
         result = handler.set_goal("random unmatched goal")
 
         assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
         assert result["workflow"] is None
         assert result["resolved"] == {}
         assert result["unresolved"] == []
+        assert result["phase_hint"] == "build"
+        assert "guided build surface" in result["message"]
+
+    def test_set_goal_treats_viewport_capture_request_as_utility_no_match(self, handler, mock_router):
+        """Utility/capture requests should not be routed into build workflows."""
+        mock_router._current_goal = "old modeling goal"
+        mock_router._pending_workflow = "picnic_table"
+
+        result = handler.set_goal("capture viewport screenshot save to file")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_utility"
+        assert result["workflow"] is None
+        assert "utility/capture request" in result["message"]
+        assert "scene_get_viewport" in result["message"]
+        assert result["phase_hint"] == "planning"
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_scene_cleanup_request_as_utility_no_match(self, handler, mock_router):
+        """Scene prep/reset requests should not be routed as build goals."""
+        mock_router._pending_workflow = "picnic_table"
+
+        result = handler.set_goal("clean scene and reset for a fresh screenshot")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_utility"
+        assert result["workflow"] is None
+        assert "scene_clean_scene" in result["message"]
+        assert result["phase_hint"] == "planning"
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_meta_capture_build_request_as_guided_manual_no_match(self, handler, mock_router):
+        """Progressive screenshot test goals should hand off into guided manual build instead of workflow routing."""
+
+        mock_router._pending_workflow = "feature_phone_workflow"
+
+        result = handler.set_goal(
+            "squirrel vision test - 3 progressive screenshots: head blockout, face features, full body - low poly squirrel with consistent camera"
+        )
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "guided build surface" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_low_poly_squirrel_as_guided_manual_build_no_match(self, handler, mock_router):
+        """Low-poly animal build requests should not drift into irrelevant workflow families."""
+
+        mock_router._pending_workflow = "simple_house_workflow"
+
+        result = handler.set_goal("low poly squirrel 3D model")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "guided build surface" in result["message"]
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_treats_reference_guided_squirrel_as_guided_manual_build_no_match(self, handler, mock_router):
+        """Reference-guided low-poly squirrel requests should bypass irrelevant workflow matching."""
+
+        mock_router._pending_workflow = "simple_table_workflow"
+
+        result = handler.set_goal("create a low-poly squirrel matching front and side reference images")
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert "reference-guided manual build request" in result["message"]
+        assert mock_router.get_pending_workflow() is None
 
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
         """Test when workflow matches but has no parameters."""
@@ -254,6 +335,7 @@ class TestSetGoalUnified:
         result = handler.set_goal("picnic table")
 
         assert result["status"] == "ready"
+        assert result["continuation_mode"] == "workflow"
         assert result["workflow"] == "picnic_table"
         assert result["resolved"] == {}
 
@@ -297,22 +379,25 @@ class TestSetGoalUnified:
                     default=0.3,
                     description="Right leg angle",
                 ),
-            }
+            },
         )
 
         # Configure resolver to return everything as resolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.0, "leg_angle_right": 0.0},
-            unresolved=[],
-            resolution_sources={
-                "leg_angle_left": "yaml_modifier",
-                "leg_angle_right": "yaml_modifier",
-            },
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.0, "leg_angle_right": 0.0},
+                unresolved=[],
+                resolution_sources={
+                    "leg_angle_left": "yaml_modifier",
+                    "leg_angle_right": "yaml_modifier",
+                },
+            )
+        )
 
         result = handler.set_goal("picnic table with straight legs")
 
         assert result["status"] == "ready"
+        assert result["continuation_mode"] == "workflow"
         assert result["workflow"] == "picnic_table"
         assert result["resolved"]["leg_angle_left"] == 0.0
         assert result["resolved"]["leg_angle_right"] == 0.0
@@ -331,22 +416,25 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
 
         # Configure resolver to return unresolved parameter
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="leg_angle_left",
-                    schema=leg_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="leg_angle_left",
+                        schema=leg_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result = handler.set_goal("table")
 
         assert result["status"] == "needs_input"
+        assert result["continuation_mode"] == "workflow"
         assert result["workflow"] == "picnic_table"
         assert len(result["unresolved"]) == 1
         assert result["unresolved"][0]["param"] == "leg_angle_left"
@@ -365,18 +453,20 @@ class TestSetGoalUnified:
         )
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="bench_layout",
-                    schema=layout_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="bench_layout",
+                        schema=layout_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result = handler.set_goal("table")
 
@@ -384,9 +474,7 @@ class TestSetGoalUnified:
         assert result["unresolved"][0]["param"] == "bench_layout"
         assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
 
-    def test_set_goal_invalid_enum_value_returns_needs_input(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_invalid_enum_value_returns_needs_input(self, handler, mock_loader, mock_resolver):
         """Invalid enum values should be reported instead of silently ignored."""
         layout_schema = ParameterSchema(
             name="bench_layout",
@@ -398,11 +486,13 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
         # Resolver would otherwise consider everything resolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"bench_layout": "all"},
-            unresolved=[],
-            resolution_sources={"bench_layout": "default"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"bench_layout": "all"},
+                unresolved=[],
+                resolution_sources={"bench_layout": "default"},
+            )
+        )
 
         result = handler.set_goal("table", resolved_params={"bench_layout": "side-only"})
 
@@ -411,9 +501,7 @@ class TestSetGoalUnified:
         assert result["unresolved"][0]["enum"] == ["all", "sides", "none"]
         assert "Invalid value" in result["unresolved"][0]["error"]
 
-    def test_set_goal_enum_value_is_case_insensitive(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_enum_value_is_case_insensitive(self, handler, mock_loader, mock_resolver):
         """String enum inputs should accept case-insensitive user values."""
         layout_schema = ParameterSchema(
             name="bench_layout",
@@ -424,20 +512,20 @@ class TestSetGoalUnified:
         )
         mock_loader.add_test_workflow("picnic_table", {"bench_layout": layout_schema})
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"bench_layout": "sides"},
-            unresolved=[],
-            resolution_sources={"bench_layout": "user"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"bench_layout": "sides"},
+                unresolved=[],
+                resolution_sources={"bench_layout": "user"},
+            )
+        )
 
         result = handler.set_goal("table", resolved_params={"bench_layout": "Sides"})
 
         assert result["status"] == "ready"
         assert result["resolved"]["bench_layout"] == "sides"
 
-    def test_set_goal_with_resolved_params_second_call(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_with_resolved_params_second_call(self, handler, mock_loader, mock_resolver):
         """Test providing resolved_params on second call."""
         leg_schema = ParameterSchema(
             name="leg_angle_left",
@@ -449,32 +537,38 @@ class TestSetGoalUnified:
         mock_loader.add_test_workflow("picnic_table", {"leg_angle_left": leg_schema})
 
         # First call returns unresolved
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={},
-            unresolved=[
-                UnresolvedParameter(
-                    name="leg_angle_left",
-                    schema=leg_schema,
-                    context="table",
-                    relevance=0.8,
-                )
-            ],
-            resolution_sources={},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={},
+                unresolved=[
+                    UnresolvedParameter(
+                        name="leg_angle_left",
+                        schema=leg_schema,
+                        context="table",
+                        relevance=0.8,
+                    )
+                ],
+                resolution_sources={},
+            )
+        )
 
         result1 = handler.set_goal("table")
         assert result1["status"] == "needs_input"
+        assert result1["continuation_mode"] == "workflow"
 
         # Second call with resolved_params
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.5},
-            unresolved=[],
-            resolution_sources={"leg_angle_left": "learned_mapping"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.5},
+                unresolved=[],
+                resolution_sources={"leg_angle_left": "learned_mapping"},
+            )
+        )
 
         result2 = handler.set_goal("table", resolved_params={"leg_angle_left": 0.5})
 
         assert result2["status"] == "ready"
+        assert result2["continuation_mode"] == "workflow"
         assert result2["resolved"]["leg_angle_left"] == 0.5
 
     def test_set_goal_disabled(self):
@@ -495,9 +589,7 @@ class TestSetGoalUnified:
         assert result["status"] == "disabled"
         assert "not initialized" in result["message"]
 
-    def test_set_goal_resolution_sources_included(
-        self, handler, mock_loader, mock_resolver
-    ):
+    def test_set_goal_resolution_sources_included(self, handler, mock_loader, mock_resolver):
         """Test that resolution sources are included in response."""
         mock_loader.add_test_workflow(
             "picnic_table",
@@ -507,18 +599,100 @@ class TestSetGoalUnified:
                     type="float",
                     default=0.3,
                 ),
-            }
+            },
         )
 
-        mock_resolver.set_resolve_result(ParameterResolutionResult(
-            resolved={"leg_angle_left": 0.0},
-            unresolved=[],
-            resolution_sources={"leg_angle_left": "yaml_modifier"},
-        ))
+        mock_resolver.set_resolve_result(
+            ParameterResolutionResult(
+                resolved={"leg_angle_left": 0.0},
+                unresolved=[],
+                resolution_sources={"leg_angle_left": "yaml_modifier"},
+            )
+        )
 
         result = handler.set_goal("picnic table with straight legs")
 
         assert result["resolution_sources"]["leg_angle_left"] == "yaml_modifier"
+
+    def test_set_goal_medium_confidence_match_escalates_to_needs_input(
+        self, handler, mock_loader, mock_resolver, mock_router
+    ):
+        """Medium-confidence workflow matches should request confirmation instead of auto-running."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal("picnic table")
+
+        assert result["status"] == "needs_input"
+        assert result["continuation_mode"] == "workflow"
+        assert result["workflow"] == "picnic_table"
+        assert result["unresolved"][0]["param"] == "workflow_confirmation"
+
+    def test_set_goal_medium_confidence_match_accepts_workflow_confirmation(self, handler, mock_loader, mock_router):
+        """A confirmed medium-confidence workflow should proceed instead of looping."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "picnic_table"},
+        )
+
+        assert result["status"] == "ready"
+        assert result["workflow"] == "picnic_table"
+        assert result["unresolved"] == []
+
+    def test_set_goal_medium_confidence_match_can_decline_into_guided_manual_build(
+        self, handler, mock_loader, mock_router
+    ):
+        """Workflow confirmation should support explicit decline into guided manual build."""
+
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "guided_manual_build"},
+        )
+
+        assert result["status"] == "no_match"
+        assert result["continuation_mode"] == "guided_manual_build"
+        assert result["workflow"] is None
+        assert result["phase_hint"] == "build"
+        assert mock_router.get_pending_workflow() is None
+
+    def test_set_goal_medium_confidence_match_rejects_invalid_workflow_confirmation(
+        self, handler, mock_loader, mock_router
+    ):
+        """Invalid workflow confirmations should stay in clarification instead of auto-running."""
+        mock_loader.add_test_workflow("picnic_table", {})
+
+        mock_router._last_match_result = MagicMock(
+            confidence_level="MEDIUM",
+            requires_adaptation=True,
+        )
+
+        result = handler.set_goal(
+            "picnic table",
+            resolved_params={"workflow_confirmation": "other_workflow"},
+        )
+
+        assert result["status"] == "needs_input"
+        assert result["unresolved"][0]["param"] == "workflow_confirmation"
+        assert "Invalid workflow confirmation" in result["unresolved"][0]["error"]
+        assert "guided_manual_build" in result["unresolved"][0]["enum"]
 
 
 class TestExtractContextForParam:

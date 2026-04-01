@@ -47,4 +47,3 @@ This reduces friction for LLM/tooling clients that sometimes serialize arrays as
 ```bash
 poetry run pytest -q tests/unit/tools/mesh/test_mesh_transform_selected_mcp_parsing.py tests/unit/tools/material/test_material_create_mcp_parsing.py
 ```
-

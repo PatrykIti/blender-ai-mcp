@@ -15,8 +15,9 @@ class TestMeshTransformSelectedMcpParsing:
         handler = MagicMock()
         handler.transform_selected.return_value = "OK"
         mock_get_mesh_handler.return_value = handler
+        callable_mesh_transform_selected = getattr(mesh_transform_selected, "fn", mesh_transform_selected)
 
-        result = mesh_transform_selected.fn(self.mock_ctx, scale="[1, 1, 0.5]")
+        result = callable_mesh_transform_selected(self.mock_ctx, scale="[1, 1, 0.5]")
 
         handler.transform_selected.assert_called_once_with(None, None, [1.0, 1.0, 0.5], "MEDIAN_POINT")
         assert result == "OK"
@@ -29,9 +30,9 @@ class TestMeshTransformSelectedMcpParsing:
         handler = MagicMock()
         handler.transform_selected.return_value = "OK"
         mock_get_mesh_handler.return_value = handler
+        callable_mesh_transform_selected = getattr(mesh_transform_selected, "fn", mesh_transform_selected)
 
-        result = mesh_transform_selected.fn(self.mock_ctx, scale="invalid")
+        result = callable_mesh_transform_selected(self.mock_ctx, scale="invalid")
 
         handler.transform_selected.assert_not_called()
         assert "Invalid coordinate format" in result
-

@@ -1,5 +1,6 @@
-import bpy
 import os
+
+import bpy
 
 
 class TextHandler:
@@ -31,8 +32,8 @@ class TextHandler:
             location = tuple(location)
 
         # Ensure we're in object mode
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Create text object
         bpy.ops.object.text_add(location=location)
@@ -100,14 +101,14 @@ class TextHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'FONT':
+        if obj.type != "FONT":
             raise ValueError(f"Object '{object_name}' is not a text object (type: {obj.type})")
 
         modified = []
 
         if text is not None:
             obj.data.body = text
-            modified.append(f"text=\"{text}\"")
+            modified.append(f'text="{text}"')
 
         if size is not None:
             obj.data.size = size
@@ -155,20 +156,19 @@ class TextHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'FONT':
+        if obj.type != "FONT":
             raise ValueError(f"Object '{object_name}' is not a text object (type: {obj.type})")
 
         # Ensure we're in object mode
-        if bpy.context.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Select the object and make it active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
         original_name = obj.name
-        text_content = obj.data.body
 
         if keep_original:
             # Duplicate before converting
@@ -177,7 +177,7 @@ class TextHandler:
             duplicated_obj.name = f"{original_name}_mesh"
             # Now convert the duplicate
             try:
-                bpy.ops.object.convert(target='MESH')
+                bpy.ops.object.convert(target="MESH")
             except RuntimeError as e:
                 raise ValueError(f"Failed to convert text to mesh: {str(e)}")
             converted_obj = bpy.context.active_object
@@ -185,7 +185,7 @@ class TextHandler:
         else:
             # Convert directly
             try:
-                bpy.ops.object.convert(target='MESH')
+                bpy.ops.object.convert(target="MESH")
             except RuntimeError as e:
                 raise ValueError(f"Failed to convert text to mesh: {str(e)}")
             converted_obj = bpy.context.active_object

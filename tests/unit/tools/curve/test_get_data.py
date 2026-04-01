@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import bpy
-
 from blender_addon.application.handlers.curve import CurveHandler
 
 

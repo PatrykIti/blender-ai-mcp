@@ -1,17 +1,17 @@
 """Tests for mesh vertex group weights introspection."""
+
+import sys
 import unittest
 from unittest.mock import MagicMock
-import sys
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -27,8 +27,8 @@ class TestMeshGetVertexGroupWeights(unittest.TestCase):
 
     def _setup_object(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
 
         vg_spine = MagicMock()
         vg_spine.name = "Spine"
@@ -97,5 +97,5 @@ class TestMeshGetVertexGroupWeights(unittest.TestCase):
         assert result["groups"][1]["weight_count"] == 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -3,8 +3,9 @@ Unit tests for Snapshot Diff Service (TASK-014-5)
 
 These tests verify the local snapshot comparison logic without requiring Blender.
 """
-import pytest
+
 import json
+
 from server.application.services.snapshot_diff import get_snapshot_diff_service
 
 
@@ -18,26 +19,18 @@ def test_compare_snapshot_identical():
             "timestamp": "2025-01-01T00:00:00Z",
             "object_count": 1,
             "objects": [
-                {
-                    "name": "Cube",
-                    "type": "MESH",
-                    "location": [0, 0, 0],
-                    "rotation": [0, 0, 0],
-                    "scale": [1, 1, 1]
-                }
-            ]
-        }
+                {"name": "Cube", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
+            ],
+        },
     }
 
     snapshot_str = json.dumps(snapshot_data)
 
     result = diff_service.compare_snapshots(
-        baseline_snapshot=snapshot_str,
-        target_snapshot=snapshot_str,
-        ignore_minor_transforms=0.0
+        baseline_snapshot=snapshot_str, target_snapshot=snapshot_str, ignore_minor_transforms=0.0
     )
 
-    assert result["has_changes"] == False
+    assert not result["has_changes"]
     assert len(result["objects_added"]) == 0
     assert len(result["objects_removed"]) == 0
     assert len(result["objects_modified"]) == 0
@@ -52,7 +45,7 @@ def test_compare_snapshot_with_changes():
             "timestamp": "2025-01-01T00:00:00Z",
             "objects": [
                 {"name": "Cube", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
-            ]
+            ],
         }
     }
 
@@ -61,18 +54,16 @@ def test_compare_snapshot_with_changes():
             "timestamp": "2025-01-01T00:01:00Z",
             "objects": [
                 {"name": "Cube", "type": "MESH", "location": [1, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
-                {"name": "Sphere", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
-            ]
+                {"name": "Sphere", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
+            ],
         }
     }
 
     result = diff_service.compare_snapshots(
-        baseline_snapshot=json.dumps(baseline),
-        target_snapshot=json.dumps(target),
-        ignore_minor_transforms=0.0
+        baseline_snapshot=json.dumps(baseline), target_snapshot=json.dumps(target), ignore_minor_transforms=0.0
     )
 
-    assert result["has_changes"] == True
+    assert result["has_changes"]
     assert "Sphere" in result["objects_added"]
     assert len(result["objects_modified"]) == 1
     assert result["objects_modified"][0]["object_name"] == "Cube"
@@ -86,7 +77,7 @@ def test_compare_snapshot_object_removed():
         "snapshot": {
             "objects": [
                 {"name": "Cube", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
-                {"name": "Sphere", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
+                {"name": "Sphere", "type": "MESH", "location": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]},
             ]
         }
     }
@@ -100,12 +91,10 @@ def test_compare_snapshot_object_removed():
     }
 
     result = diff_service.compare_snapshots(
-        baseline_snapshot=json.dumps(baseline),
-        target_snapshot=json.dumps(target),
-        ignore_minor_transforms=0.0
+        baseline_snapshot=json.dumps(baseline), target_snapshot=json.dumps(target), ignore_minor_transforms=0.0
     )
 
-    assert result["has_changes"] == True
+    assert result["has_changes"]
     assert "Sphere" in result["objects_removed"]
 
 
@@ -131,9 +120,7 @@ def test_compare_snapshot_ignore_minor_transforms():
 
     # With threshold of 0.01, small change should be ignored
     result = diff_service.compare_snapshots(
-        baseline_snapshot=json.dumps(baseline),
-        target_snapshot=json.dumps(target),
-        ignore_minor_transforms=0.01
+        baseline_snapshot=json.dumps(baseline), target_snapshot=json.dumps(target), ignore_minor_transforms=0.01
     )
 
-    assert result["has_changes"] == False
+    assert not result["has_changes"]

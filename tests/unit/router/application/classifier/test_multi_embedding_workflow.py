@@ -10,20 +10,17 @@ Tests the complete multi-embedding workflow including:
 TASK-050: Multi-Embedding Workflow System
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
+import pytest
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
+    SearchResult,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
     WeightedSearchResult,
     WorkflowEmbeddingRecord,
 )
-from server.router.infrastructure.config import RouterConfig
 
 
 class MockVectorStoreForMultiEmbedding(IVectorStore):
@@ -116,10 +113,7 @@ class MockVectorStoreForMultiEmbedding(IVectorStore):
             # Calculate final score
             final_score = raw_score * source_weight * language_boost
 
-            if (
-                workflow_id not in workflow_matches
-                or final_score > workflow_matches[workflow_id].final_score
-            ):
+            if workflow_id not in workflow_matches or final_score > workflow_matches[workflow_id].final_score:
                 workflow_matches[workflow_id] = WeightedSearchResult(
                     workflow_id=workflow_id,
                     raw_score=raw_score,

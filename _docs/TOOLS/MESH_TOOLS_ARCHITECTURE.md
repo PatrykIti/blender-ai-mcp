@@ -1,6 +1,12 @@
 # Mesh Tools Architecture (Edit Mode)
 
 Mesh tools operate on the geometry (vertices, edges, faces) of the active mesh object.
+
+In the post-`TASK-113` model, this file mostly describes the **edit-mode atomic substrate** plus the grouped mesh entry tools built above it.
+
+- grouped public entry tools: `mesh_select`, `mesh_select_targeted`, `mesh_inspect`
+- direct destructive `mesh_*` operations: build-layer atomics and explicit escape hatches
+
 **Context:** These tools automatically switch Blender to **Edit Mode** if necessary.
 
 ---

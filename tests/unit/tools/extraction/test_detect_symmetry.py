@@ -4,10 +4,11 @@ Unit tests for extraction_detect_symmetry (TASK-044-3)
 Tests the ExtractionHandler.detect_symmetry method which
 detects symmetry planes in mesh geometry.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 

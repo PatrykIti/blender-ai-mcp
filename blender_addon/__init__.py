@@ -1,5 +1,8 @@
 # SPDX-FileCopyrightText: 2024-2026 Patryk Ciechański
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
+# ruff: noqa: E402
+
+from typing import Any
 
 bl_info = {
     "name": "Blender AI MCP",
@@ -19,37 +22,40 @@ except ImportError:
     bpy = None
 
 from .infrastructure.rpc_server import rpc_server
+
+SceneHandler: Any = None
+ModelingHandler: Any = None
+MeshHandler: Any = None
+CollectionHandler: Any = None
+MaterialHandler: Any = None
+UVHandler: Any = None
+CurveHandler: Any = None
+SystemHandler: Any = None
+SculptHandler: Any = None
+BakingHandler: Any = None
+LatticeHandler: Any = None
+ExtractionHandler: Any = None
+TextHandler: Any = None
+ArmatureHandler: Any = None
+
 # Import Application Handlers
 try:
-    from .application.handlers.scene import SceneHandler
-    from .application.handlers.modeling import ModelingHandler
-    from .application.handlers.mesh import MeshHandler
-    from .application.handlers.collection import CollectionHandler
-    from .application.handlers.material import MaterialHandler
-    from .application.handlers.uv import UVHandler
-    from .application.handlers.curve import CurveHandler
-    from .application.handlers.system import SystemHandler
-    from .application.handlers.sculpt import SculptHandler
-    from .application.handlers.baking import BakingHandler
-    from .application.handlers.lattice import LatticeHandler
-    from .application.handlers.extraction import ExtractionHandler
-    from .application.handlers.text import TextHandler
     from .application.handlers.armature import ArmatureHandler
+    from .application.handlers.baking import BakingHandler
+    from .application.handlers.collection import CollectionHandler
+    from .application.handlers.curve import CurveHandler
+    from .application.handlers.extraction import ExtractionHandler
+    from .application.handlers.lattice import LatticeHandler
+    from .application.handlers.material import MaterialHandler
+    from .application.handlers.mesh import MeshHandler
+    from .application.handlers.modeling import ModelingHandler
+    from .application.handlers.scene import SceneHandler
+    from .application.handlers.sculpt import SculptHandler
+    from .application.handlers.system import SystemHandler
+    from .application.handlers.text import TextHandler
+    from .application.handlers.uv import UVHandler
 except ImportError:
-    SceneHandler = None
-    ModelingHandler = None
-    MeshHandler = None
-    CollectionHandler = None
-    MaterialHandler = None
-    UVHandler = None
-    CurveHandler = None
-    SystemHandler = None
-    SculptHandler = None
-    BakingHandler = None
-    LatticeHandler = None
-    ExtractionHandler = None
-    TextHandler = None
-    ArmatureHandler = None
+    pass
 
 
 def register():
@@ -86,8 +92,15 @@ def register():
         rpc_server.register_handler("scene.inspect_material_slots", scene_handler.inspect_material_slots)
         rpc_server.register_handler("scene.inspect_mesh_topology", scene_handler.inspect_mesh_topology)
         rpc_server.register_handler("scene.inspect_modifiers", scene_handler.inspect_modifiers)
+        rpc_server.register_handler("scene.inspect_render_settings", scene_handler.inspect_render_settings)
+        rpc_server.register_handler("scene.inspect_color_management", scene_handler.inspect_color_management)
+        rpc_server.register_handler("scene.inspect_world", scene_handler.inspect_world)
+        rpc_server.register_handler("scene.configure_render_settings", scene_handler.configure_render_settings)
+        rpc_server.register_handler("scene.configure_color_management", scene_handler.configure_color_management)
+        rpc_server.register_handler("scene.configure_world", scene_handler.configure_world)
         rpc_server.register_handler("scene.get_constraints", scene_handler.get_constraints)
         rpc_server.register_handler("scene.get_viewport", scene_handler.get_viewport)
+        rpc_server.register_background_handler("scene.get_viewport", scene_handler.get_viewport)
         rpc_server.register_handler("scene.create_light", scene_handler.create_light)
         rpc_server.register_handler("scene.create_camera", scene_handler.create_camera)
         rpc_server.register_handler("scene.create_empty", scene_handler.create_empty)
@@ -99,12 +112,25 @@ def register():
         rpc_server.register_handler("scene.isolate_object", scene_handler.isolate_object)
         rpc_server.register_handler("scene.camera_orbit", scene_handler.camera_orbit)
         rpc_server.register_handler("scene.camera_focus", scene_handler.camera_focus)
+        rpc_server.register_handler("scene.get_view_state", scene_handler.get_view_state)
+        rpc_server.register_handler("scene.restore_view_state", scene_handler.restore_view_state)
+        rpc_server.register_handler("scene.set_standard_view", scene_handler.set_standard_view)
         # TASK-045: Object Inspection Tools
         rpc_server.register_handler("scene.get_custom_properties", scene_handler.get_custom_properties)
         rpc_server.register_handler("scene.set_custom_property", scene_handler.set_custom_property)
         rpc_server.register_handler("scene.get_hierarchy", scene_handler.get_hierarchy)
         rpc_server.register_handler("scene.get_bounding_box", scene_handler.get_bounding_box)
         rpc_server.register_handler("scene.get_origin_info", scene_handler.get_origin_info)
+        rpc_server.register_handler("scene.measure_distance", scene_handler.measure_distance)
+        rpc_server.register_handler("scene.measure_dimensions", scene_handler.measure_dimensions)
+        rpc_server.register_handler("scene.measure_gap", scene_handler.measure_gap)
+        rpc_server.register_handler("scene.measure_alignment", scene_handler.measure_alignment)
+        rpc_server.register_handler("scene.measure_overlap", scene_handler.measure_overlap)
+        rpc_server.register_handler("scene.assert_contact", scene_handler.assert_contact)
+        rpc_server.register_handler("scene.assert_dimensions", scene_handler.assert_dimensions)
+        rpc_server.register_handler("scene.assert_containment", scene_handler.assert_containment)
+        rpc_server.register_handler("scene.assert_symmetry", scene_handler.assert_symmetry)
+        rpc_server.register_handler("scene.assert_proportion", scene_handler.assert_proportion)
 
         # Modeling
         rpc_server.register_handler("modeling.create_primitive", modeling_handler.create_primitive)
@@ -204,6 +230,9 @@ def register():
         rpc_server.register_handler("export.glb", system_handler.export_glb)
         rpc_server.register_handler("export.fbx", system_handler.export_fbx)
         rpc_server.register_handler("export.obj", system_handler.export_obj)
+        rpc_server.register_background_handler("export.glb", system_handler.export_glb)
+        rpc_server.register_background_handler("export.fbx", system_handler.export_fbx)
+        rpc_server.register_background_handler("export.obj", system_handler.export_obj)
 
         # TASK-025: System Tools
         rpc_server.register_handler("system.set_mode", system_handler.set_mode)
@@ -216,6 +245,11 @@ def register():
 
         # TASK-027: Sculpting Tools
         rpc_server.register_handler("sculpt.auto", sculpt_handler.auto_sculpt)
+        rpc_server.register_handler("sculpt.deform_region", sculpt_handler.deform_region)
+        rpc_server.register_handler("sculpt.crease_region", sculpt_handler.crease_region)
+        rpc_server.register_handler("sculpt.smooth_region", sculpt_handler.smooth_region)
+        rpc_server.register_handler("sculpt.inflate_region", sculpt_handler.inflate_region)
+        rpc_server.register_handler("sculpt.pinch_region", sculpt_handler.pinch_region)
         rpc_server.register_handler("sculpt.brush_smooth", sculpt_handler.brush_smooth)
         rpc_server.register_handler("sculpt.brush_grab", sculpt_handler.brush_grab)
         rpc_server.register_handler("sculpt.brush_crease", sculpt_handler.brush_crease)
@@ -277,6 +311,10 @@ def register():
         rpc_server.register_handler("import.fbx", system_handler.import_fbx)
         rpc_server.register_handler("import.glb", system_handler.import_glb)
         rpc_server.register_handler("import.image_as_plane", system_handler.import_image_as_plane)
+        rpc_server.register_background_handler("import.obj", system_handler.import_obj)
+        rpc_server.register_background_handler("import.fbx", system_handler.import_fbx)
+        rpc_server.register_background_handler("import.glb", system_handler.import_glb)
+        rpc_server.register_background_handler("import.image_as_plane", system_handler.import_image_as_plane)
 
         # TASK-033: Lattice Deformation Tools
         rpc_server.register_handler("lattice.create", lattice_handler.lattice_create)
@@ -291,6 +329,7 @@ def register():
         rpc_server.register_handler("extraction.edge_loop_analysis", extraction_handler.edge_loop_analysis)
         rpc_server.register_handler("extraction.face_group_analysis", extraction_handler.face_group_analysis)
         rpc_server.register_handler("extraction.render_angles", extraction_handler.render_angles)
+        rpc_server.register_background_handler("extraction.render_angles", extraction_handler.render_angles)
 
         # TASK-034: Text & Annotations
         rpc_server.register_handler("text.create", text_handler.create)
@@ -309,10 +348,12 @@ def register():
     else:
         print("[Blender AI MCP] Mock registration (bpy not found)")
 
+
 def unregister():
     if bpy:
         print("[Blender AI MCP] Unregistering addon...")
         rpc_server.stop()
+
 
 if __name__ == "__main__":
     register()

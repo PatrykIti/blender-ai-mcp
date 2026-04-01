@@ -1,0 +1,25 @@
+{
+  "tool_name": "sculpt_crease_region",
+  "category": "sculpt",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["sculpt", "crease", "groove", "wrinkle", "fold", "region"],
+  "sample_prompts": [
+    "create a crease region",
+    "cut a wrinkle into the mesh",
+    "make a local groove"
+  ],
+  "parameters": {
+    "object_name": {"type": "string", "default": null},
+    "center": {"type": "array"},
+    "radius": {"type": "float", "default": 0.5},
+    "depth": {"type": "float", "default": 0.1},
+    "pinch": {"type": "float", "default": 0.5, "range": [0.0, 1.0]},
+    "falloff": {"type": "enum", "options": ["SMOOTH", "LINEAR", "SHARP", "CONSTANT"], "default": "SMOOTH"},
+    "use_symmetry": {"type": "bool", "default": false},
+    "symmetry_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"}
+  },
+  "related_tools": ["sculpt_pinch_region", "sculpt_deform_region", "mesh_inspect"],
+  "patterns": [],
+  "description": "Deterministically creates a local crease or groove region by combining inward normal displacement with center-directed pinch."
+}

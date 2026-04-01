@@ -5,7 +5,6 @@ TASK-058: Loop System & String Interpolation for Workflows.
 """
 
 import pytest
-
 from server.router.application.evaluator.loop_expander import LoopExpander
 from server.router.application.workflows.base import WorkflowStep
 
@@ -129,4 +128,3 @@ class TestLoopExpanderLoops:
 
         with pytest.raises(ValueError, match="limit=3"):
             expander.expand([step], {})
-

@@ -7,10 +7,10 @@ into standalone matcher implementing IMatcher interface.
 Uses WorkflowRegistry.find_by_keywords() for exact keyword matching.
 """
 
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from server.router.domain.interfaces.matcher import IMatcher
 from server.router.domain.entities.ensemble import MatcherResult
+from server.router.domain.interfaces.matcher import IMatcher
 
 if TYPE_CHECKING:
     from server.router.application.workflows.registry import WorkflowRegistry
@@ -92,13 +92,8 @@ class KeywordMatcher(IMatcher):
                 workflow_name=workflow_name,
                 confidence=1.0,  # Exact keyword match = full confidence
                 weight=self.weight,
-                metadata={"matched_by": "keyword"}
+                metadata={"matched_by": "keyword"},
             )
 
         # No keyword match found
-        return MatcherResult(
-            matcher_name=self.name,
-            workflow_name=None,
-            confidence=0.0,
-            weight=self.weight
-        )
+        return MatcherResult(matcher_name=self.name, workflow_name=None, confidence=0.0, weight=self.weight)

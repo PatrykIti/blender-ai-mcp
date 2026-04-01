@@ -5,15 +5,14 @@ Tests tool replacement logic and override rules.
 """
 
 import pytest
-
 from server.router.application.engines.tool_override_engine import ToolOverrideEngine
+from server.router.domain.entities.override_decision import OverrideDecision
+from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
-from server.router.domain.entities.pattern import DetectedPattern, PatternType
-from server.router.domain.entities.override_decision import OverrideDecision
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -47,8 +46,12 @@ def base_context():
             )
         ],
         topology=TopologyInfo(
-            vertices=8, edges=12, faces=6,
-            selected_verts=8, selected_edges=12, selected_faces=6,
+            vertices=8,
+            edges=12,
+            faces=6,
+            selected_verts=8,
+            selected_edges=12,
+            selected_faces=6,
         ),
         materials=[],
     )

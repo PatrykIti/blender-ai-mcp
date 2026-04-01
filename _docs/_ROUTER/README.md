@@ -8,8 +8,16 @@
 
 | Document | Description |
 |----------|-------------|
+| [QUICK_START.md](./QUICK_START.md) | Fast setup path, prerequisites, and first Router usage example |
 | [ROUTER_HIGH_LEVEL_OVERVIEW.md](./ROUTER_HIGH_LEVEL_OVERVIEW.md) | Concept and architecture |
 | [ROUTER_ARCHITECTURE.md](./ROUTER_ARCHITECTURE.md) | Code templates and structure |
+| [API.md](./API.md) | SupervisorRouter API reference and component method surface |
+| [CONFIGURATION.md](./CONFIGURATION.md) | Full `RouterConfig` option reference and examples |
+| [PATTERNS.md](./PATTERNS.md) | Geometry pattern detection rules, supported patterns, and scoring |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common Router failures, diagnostics, and recovery steps |
+| [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) | Role split between FastMCP platform, LaBSE semantics, router safety, and inspection/assertion truth |
+| [semantic-boundary-audit.md](./semantic-boundary-audit.md) | Code-backed audit of semantic responsibilities against the boundary policy |
+| [correction-risk-matrix.md](./correction-risk-matrix.md) | Code-backed matrix for correction classes, blast radius, and auto-safe policy |
 | [IMPLEMENTATION/](./IMPLEMENTATION/) | Step-by-step implementation docs |
 | [WORKFLOWS/](./WORKFLOWS/) | Predefined workflow definitions |
 | [TOOLS/](./TOOLS/) | **Guide for adding new tools to Router** |
@@ -36,6 +44,31 @@ User → LLM → tool_call → ROUTER → corrected_tools → Blender
                   [Workflow Expansion Engine]
                   [Error Firewall]
 ```
+
+---
+
+## Responsibility Boundaries
+
+The router sits inside a larger stack and should not absorb every responsibility.
+
+- **FastMCP platform layer** owns discovery, visibility, prompts, elicitation, background tasks, and client-facing surface design.
+- **LaBSE semantic layer** owns multilingual semantic matching, workflow retrieval, and learned semantic parameter reuse.
+- **Router policy layer** owns deterministic safety, correction, guardrails, and confidence-based execution decisions.
+- **Inspection/assertion layer** owns scene truth and result verification.
+
+Read [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md) before changing FastMCP integration, LaBSE usage, router correction policy, or state-validation behavior.
+
+---
+
+## Correction Transparency Baseline
+
+The current router safety baseline separates decision policy, audit trail, and verification outcome.
+
+- corrected executions emit structured audit events with separate intent, execution, and verification fields
+- router-aware MCP reports expose `router_disposition`, `audit_ids`, and `verification_status`
+- high-risk fixes for `mode`, `selection`, and `active_object` are verified against inspection truth before success is trusted
+- inconclusive verification is surfaced explicitly and must not be treated as silent success
+- router telemetry/logs carry the same `audit_ids` so operator traces can be correlated with MCP responses
 
 ---
 

@@ -9,10 +9,11 @@ Tests the CollectionHandler.manage_collection method with all actions:
 - link_object: Link object to collection (additive)
 - unlink_object: Unlink object from collection
 """
-import sys
-import pytest
-from unittest.mock import MagicMock, PropertyMock
 
+import sys
+from unittest.mock import MagicMock
+
+import pytest
 from blender_addon.application.handlers.collection import CollectionHandler
 
 
@@ -38,10 +39,7 @@ class TestCollectionManageCreate:
         new_col.name = "NewCollection"
         self.mock_collections.new.return_value = new_col
 
-        result = self.handler.manage_collection(
-            action="create",
-            collection_name="NewCollection"
-        )
+        result = self.handler.manage_collection(action="create", collection_name="NewCollection")
 
         self.mock_collections.new.assert_called_with("NewCollection")
         self.mock_scene_collection.children.link.assert_called_with(new_col)
@@ -66,9 +64,7 @@ class TestCollectionManageCreate:
         self.mock_collections.new.return_value = new_col
 
         result = self.handler.manage_collection(
-            action="create",
-            collection_name="ChildCollection",
-            parent_name="ParentCollection"
+            action="create", collection_name="ChildCollection", parent_name="ParentCollection"
         )
 
         self.mock_collections.new.assert_called_with("ChildCollection")
@@ -83,10 +79,7 @@ class TestCollectionManageCreate:
         self.mock_collections.get.return_value = existing_col
 
         with pytest.raises(ValueError, match="already exists"):
-            self.handler.manage_collection(
-                action="create",
-                collection_name="ExistingCollection"
-            )
+            self.handler.manage_collection(action="create", collection_name="ExistingCollection")
 
     def test_create_collection_parent_not_found(self):
         """Test error when parent collection doesn't exist."""
@@ -94,9 +87,7 @@ class TestCollectionManageCreate:
 
         with pytest.raises(ValueError, match="Parent collection .* not found"):
             self.handler.manage_collection(
-                action="create",
-                collection_name="NewCollection",
-                parent_name="NonExistentParent"
+                action="create", collection_name="NewCollection", parent_name="NonExistentParent"
             )
 
 
@@ -126,10 +117,7 @@ class TestCollectionManageDelete:
         col.objects = mock_objects
         self.mock_collections.get.return_value = col
 
-        result = self.handler.manage_collection(
-            action="delete",
-            collection_name="EmptyCollection"
-        )
+        result = self.handler.manage_collection(action="delete", collection_name="EmptyCollection")
 
         self.mock_collections.remove.assert_called_with(col)
         assert "Deleted collection 'EmptyCollection'" in result
@@ -153,10 +141,7 @@ class TestCollectionManageDelete:
         col.objects = mock_objects
         self.mock_collections.get.return_value = col
 
-        result = self.handler.manage_collection(
-            action="delete",
-            collection_name="CollectionWithObjects"
-        )
+        result = self.handler.manage_collection(action="delete", collection_name="CollectionWithObjects")
 
         # Objects should be linked to scene collection
         assert self.mock_scene_collection.objects.link.call_count == 2
@@ -170,10 +155,7 @@ class TestCollectionManageDelete:
         self.mock_collections.get.return_value = None
 
         with pytest.raises(ValueError, match="not found"):
-            self.handler.manage_collection(
-                action="delete",
-                collection_name="NonExistent"
-            )
+            self.handler.manage_collection(action="delete", collection_name="NonExistent")
 
 
 class TestCollectionManageRename:
@@ -198,11 +180,7 @@ class TestCollectionManageRename:
 
         self.mock_collections.get = get_collection
 
-        result = self.handler.manage_collection(
-            action="rename",
-            collection_name="OldName",
-            new_name="NewName"
-        )
+        result = self.handler.manage_collection(action="rename", collection_name="OldName", new_name="NewName")
 
         assert col.name == "NewName"
         assert "Renamed" in result
@@ -212,11 +190,7 @@ class TestCollectionManageRename:
         self.mock_collections.get.return_value = None
 
         with pytest.raises(ValueError, match="not found"):
-            self.handler.manage_collection(
-                action="rename",
-                collection_name="NonExistent",
-                new_name="NewName"
-            )
+            self.handler.manage_collection(action="rename", collection_name="NonExistent", new_name="NewName")
 
     def test_rename_collection_new_name_exists(self):
         """Test error when new name already exists."""
@@ -235,11 +209,7 @@ class TestCollectionManageRename:
         self.mock_collections.get = get_collection
 
         with pytest.raises(ValueError, match="already exists"):
-            self.handler.manage_collection(
-                action="rename",
-                collection_name="OldName",
-                new_name="ExistingName"
-            )
+            self.handler.manage_collection(action="rename", collection_name="OldName", new_name="ExistingName")
 
     def test_rename_collection_missing_new_name(self):
         """Test error when new_name is not provided."""
@@ -248,10 +218,7 @@ class TestCollectionManageRename:
         self.mock_collections.get.return_value = col
 
         with pytest.raises(ValueError, match="new_name is required"):
-            self.handler.manage_collection(
-                action="rename",
-                collection_name="OldName"
-            )
+            self.handler.manage_collection(action="rename", collection_name="OldName")
 
 
 class TestCollectionManageMoveObject:
@@ -283,9 +250,7 @@ class TestCollectionManageMoveObject:
         self.mock_collections.get.return_value = new_col
 
         result = self.handler.manage_collection(
-            action="move_object",
-            collection_name="NewCollection",
-            object_name="TestObject"
+            action="move_object", collection_name="NewCollection", object_name="TestObject"
         )
 
         old_col.objects.unlink.assert_called_with(obj)
@@ -299,9 +264,7 @@ class TestCollectionManageMoveObject:
 
         with pytest.raises(ValueError, match="Object .* not found"):
             self.handler.manage_collection(
-                action="move_object",
-                collection_name="SomeCollection",
-                object_name="NonExistent"
+                action="move_object", collection_name="SomeCollection", object_name="NonExistent"
             )
 
     def test_move_object_collection_not_found(self):
@@ -313,18 +276,13 @@ class TestCollectionManageMoveObject:
 
         with pytest.raises(ValueError, match="Collection .* not found"):
             self.handler.manage_collection(
-                action="move_object",
-                collection_name="NonExistent",
-                object_name="TestObject"
+                action="move_object", collection_name="NonExistent", object_name="TestObject"
             )
 
     def test_move_object_missing_object_name(self):
         """Test error when object_name is not provided."""
         with pytest.raises(ValueError, match="object_name is required"):
-            self.handler.manage_collection(
-                action="move_object",
-                collection_name="SomeCollection"
-            )
+            self.handler.manage_collection(action="move_object", collection_name="SomeCollection")
 
 
 class TestCollectionManageLinkObject:
@@ -357,9 +315,7 @@ class TestCollectionManageLinkObject:
         self.mock_collections.get.return_value = col
 
         result = self.handler.manage_collection(
-            action="link_object",
-            collection_name="TargetCollection",
-            object_name="TestObject"
+            action="link_object", collection_name="TargetCollection", object_name="TestObject"
         )
 
         col.objects.link.assert_called_with(obj)
@@ -382,9 +338,7 @@ class TestCollectionManageLinkObject:
         self.mock_collections.get.return_value = col
 
         result = self.handler.manage_collection(
-            action="link_object",
-            collection_name="TargetCollection",
-            object_name="TestObject"
+            action="link_object", collection_name="TargetCollection", object_name="TestObject"
         )
 
         col.objects.link.assert_not_called()
@@ -425,9 +379,7 @@ class TestCollectionManageUnlinkObject:
         self.mock_collections.get.return_value = col1
 
         result = self.handler.manage_collection(
-            action="unlink_object",
-            collection_name="Collection1",
-            object_name="TestObject"
+            action="unlink_object", collection_name="Collection1", object_name="TestObject"
         )
 
         col1.objects.unlink.assert_called_with(obj)
@@ -452,9 +404,7 @@ class TestCollectionManageUnlinkObject:
 
         with pytest.raises(ValueError, match="only collection"):
             self.handler.manage_collection(
-                action="unlink_object",
-                collection_name="OnlyCollection",
-                object_name="TestObject"
+                action="unlink_object", collection_name="OnlyCollection", object_name="TestObject"
             )
 
     def test_unlink_object_not_in_collection(self):
@@ -474,9 +424,7 @@ class TestCollectionManageUnlinkObject:
         self.mock_collections.get.return_value = col
 
         result = self.handler.manage_collection(
-            action="unlink_object",
-            collection_name="Collection1",
-            object_name="TestObject"
+            action="unlink_object", collection_name="Collection1", object_name="TestObject"
         )
 
         col.objects.unlink.assert_not_called()
@@ -493,7 +441,4 @@ class TestCollectionManageInvalidAction:
     def test_invalid_action(self):
         """Test error for invalid action."""
         with pytest.raises(ValueError, match="Unknown action"):
-            self.handler.manage_collection(
-                action="invalid_action",
-                collection_name="SomeCollection"
-            )
+            self.handler.manage_collection(action="invalid_action", collection_name="SomeCollection")

@@ -5,8 +5,8 @@ TASK-041-11, TASK-041-12
 """
 
 import pytest
-from server.router.application.workflows.registry import WorkflowRegistry
 from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+from server.router.application.workflows.registry import WorkflowRegistry
 
 
 class TestRegistryConditionEvaluation:
@@ -182,9 +182,7 @@ class TestContextSimulation:
             trigger_keywords=["test"],
         )
 
-    def test_context_simulation_prevents_redundant_steps(
-        self, registry, simulation_workflow
-    ):
+    def test_context_simulation_prevents_redundant_steps(self, registry, simulation_workflow):
         """Test that context simulation prevents redundant conditional steps."""
         registry.register_definition(simulation_workflow)
 

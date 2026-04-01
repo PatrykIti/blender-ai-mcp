@@ -3,14 +3,18 @@
 Provides deep topology analysis, component detection, symmetry detection,
 and multi-angle rendering for the Automatic Workflow Extraction System.
 """
+
 import math
 import os
 from collections import defaultdict
+from typing import Any, Callable, Dict, cast
 
-import bpy
 import bmesh
-from mathutils import Vector, Euler
+import bpy
+from mathutils import Euler, Vector
 from mathutils.kdtree import KDTree
+
+from .job_utils import raise_if_cancelled
 
 
 class ExtractionHandler:
@@ -43,7 +47,7 @@ class ExtractionHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         # Create bmesh for analysis
@@ -78,9 +82,7 @@ class ExtractionHandler:
         non_manifold_edges = sum(1 for e in bm.edges if not e.is_manifold)
 
         # Estimate base primitive
-        base_primitive, primitive_confidence = self._detect_base_primitive(
-            bm, vert_count, edge_count, face_count, obj
-        )
+        base_primitive, primitive_confidence = self._detect_base_primitive(bm, vert_count, edge_count, face_count, obj)
 
         # Detect features
         has_beveled_edges = self._detect_beveled_edges(bm)
@@ -89,22 +91,17 @@ class ExtractionHandler:
 
         # Edge loop estimate (simplified: count edges with exactly 4 connected faces)
         edge_loop_candidates = sum(
-            1 for e in bm.edges
-            if len(e.link_faces) == 2 and all(len(f.verts) == 4 for f in e.link_faces)
+            1 for e in bm.edges if len(e.link_faces) == 2 and all(len(f.verts) == 4 for f in e.link_faces)
         )
 
         # Bounding box
         bbox_corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
-        min_corner = Vector((
-            min(c.x for c in bbox_corners),
-            min(c.y for c in bbox_corners),
-            min(c.z for c in bbox_corners)
-        ))
-        max_corner = Vector((
-            max(c.x for c in bbox_corners),
-            max(c.y for c in bbox_corners),
-            max(c.z for c in bbox_corners)
-        ))
+        min_corner = Vector(
+            (min(c.x for c in bbox_corners), min(c.y for c in bbox_corners), min(c.z for c in bbox_corners))
+        )
+        max_corner = Vector(
+            (max(c.x for c in bbox_corners), max(c.y for c in bbox_corners), max(c.z for c in bbox_corners))
+        )
         dimensions = max_corner - min_corner
 
         bm.free()
@@ -128,8 +125,8 @@ class ExtractionHandler:
             "bounding_box": {
                 "min": [round(v, 4) for v in min_corner],
                 "max": [round(v, 4) for v in max_corner],
-                "dimensions": [round(v, 4) for v in dimensions]
-            }
+                "dimensions": [round(v, 4) for v in dimensions],
+            },
         }
 
     def _detect_base_primitive(self, bm, vert_count, edge_count, face_count, obj) -> tuple:
@@ -149,7 +146,7 @@ class ExtractionHandler:
         # Safe division with fallback for zero dimensions
         aspect_xy = dims.x / dims.y if dims.y > 0 else 1.0
         aspect_xz = dims.x / dims.z if dims.z > 0 else 1.0
-        aspect_yz = dims.y / dims.z if dims.z > 0 else 1.0
+        dims.y / dims.z if dims.z > 0 else 1.0
 
         # Cube detection: 8 verts, 6 faces, roughly cubic proportions
         if vert_count == 8 and face_count == 6:
@@ -254,26 +251,26 @@ class ExtractionHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         # Store original object count
-        original_count = len(bpy.data.objects)
+        len(bpy.data.objects)
 
         # Ensure object mode
-        if bpy.context.active_object and bpy.context.active_object.mode != 'OBJECT':
-            bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.active_object and bpy.context.active_object.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
 
         # Deselect all, select target
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
         # Enter edit mode, select all, separate by loose parts
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.separate(type='LOOSE')
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.separate(type="LOOSE")
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         # Find all components (objects with similar names)
         components = []
@@ -281,14 +278,12 @@ class ExtractionHandler:
 
         for o in bpy.data.objects:
             if o.name == object_name or o.name.startswith(object_name + "."):
-                if o.type == 'MESH':
+                if o.type == "MESH":
                     vert_count = len(o.data.vertices)
                     if vert_count >= min_vertex_count:
-                        components.append({
-                            "name": o.name,
-                            "vertex_count": vert_count,
-                            "face_count": len(o.data.polygons)
-                        })
+                        components.append(
+                            {"name": o.name, "vertex_count": vert_count, "face_count": len(o.data.polygons)}
+                        )
                     else:
                         objects_to_delete.append(o)
 
@@ -300,7 +295,7 @@ class ExtractionHandler:
             "original_object": object_name,
             "component_count": len(components),
             "components": components,
-            "deleted_small_components": len(objects_to_delete)
+            "deleted_small_components": len(objects_to_delete),
         }
 
     def detect_symmetry(self, object_name: str, tolerance: float = 0.001) -> dict:
@@ -317,7 +312,7 @@ class ExtractionHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         bm = bmesh.new()
@@ -329,10 +324,13 @@ class ExtractionHandler:
             bm.free()
             return {
                 "object_name": object_name,
-                "x_symmetric": False, "x_confidence": 0.0,
-                "y_symmetric": False, "y_confidence": 0.0,
-                "z_symmetric": False, "z_confidence": 0.0,
-                "total_vertices": 0
+                "x_symmetric": False,
+                "x_confidence": 0.0,
+                "y_symmetric": False,
+                "y_confidence": 0.0,
+                "z_symmetric": False,
+                "z_confidence": 0.0,
+                "total_vertices": 0,
             }
 
         # Build KD-tree for efficient spatial lookup
@@ -372,7 +370,7 @@ class ExtractionHandler:
             "z_symmetric": z_confidence >= threshold,
             "z_confidence": round(z_confidence, 3),
             "total_vertices": vert_count,
-            "tolerance": tolerance
+            "tolerance": tolerance,
         }
 
     def edge_loop_analysis(self, object_name: str) -> dict:
@@ -388,7 +386,7 @@ class ExtractionHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         bm = bmesh.new()
@@ -414,21 +412,14 @@ class ExtractionHandler:
             if len(edge.verts) == 2:
                 direction = (edge.verts[1].co - edge.verts[0].co).normalized()
                 # Quantize direction to detect parallel groups
-                key = (
-                    round(abs(direction.x), 1),
-                    round(abs(direction.y), 1),
-                    round(abs(direction.z), 1)
-                )
+                key = (round(abs(direction.x), 1), round(abs(direction.y), 1), round(abs(direction.z), 1))
                 edge_directions[key].append(edge)
 
         # Find groups of parallel edges (potential edge loops)
         parallel_groups = []
         for key, edges in edge_directions.items():
             if len(edges) >= 4:  # Minimum for a loop
-                parallel_groups.append({
-                    "direction": list(key),
-                    "edge_count": len(edges)
-                })
+                parallel_groups.append({"direction": list(key), "edge_count": len(edges)})
 
         # Estimate support loops (edges near corners with many connected faces)
         support_loop_candidates = 0
@@ -466,7 +457,7 @@ class ExtractionHandler:
             "support_loop_candidates": support_loop_candidates,
             "chamfer_edges": chamfer_edges,
             "has_chamfer": chamfer_edges > 0,
-            "estimated_bevel_segments": min(3, chamfer_edges // 4) if chamfer_edges > 0 else 0
+            "estimated_bevel_segments": min(3, chamfer_edges // 4) if chamfer_edges > 0 else 0,
         }
 
     def face_group_analysis(self, object_name: str, angle_threshold: float = 5.0) -> dict:
@@ -483,25 +474,21 @@ class ExtractionHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh (type: {obj.type})")
 
         bm = bmesh.new()
         bm.from_mesh(obj.data)
         bm.faces.ensure_lookup_table()
 
-        angle_rad = math.radians(angle_threshold)
+        math.radians(angle_threshold)
 
         # Group faces by normal direction
         normal_groups = defaultdict(list)
         for face in bm.faces:
             # Quantize normal for grouping
             n = face.normal
-            key = (
-                round(n.x, 1),
-                round(n.y, 1),
-                round(n.z, 1)
-            )
+            key = (round(n.x, 1), round(n.y, 1), round(n.z, 1))
             normal_groups[key].append(face)
 
         # Group faces by Z height
@@ -516,13 +503,15 @@ class ExtractionHandler:
             avg_height = sum(f.calc_center_median().z for f in faces) / len(faces)
             total_area = sum(f.calc_area() for f in faces)
 
-            face_groups.append({
-                "id": i,
-                "normal": list(key),
-                "face_count": len(faces),
-                "avg_height": round(avg_height, 3),
-                "total_area": round(total_area, 4)
-            })
+            face_groups.append(
+                {
+                    "id": i,
+                    "normal": list(key),
+                    "face_count": len(faces),
+                    "avg_height": round(avg_height, 3),
+                    "total_area": round(total_area, 4),
+                }
+            )
 
         # Detect inset faces
         detected_insets = 0
@@ -565,7 +554,7 @@ class ExtractionHandler:
             "detected_insets": detected_insets,
             "detected_extrusions": detected_extrusions,
             "has_insets": detected_insets > 0,
-            "has_extrusions": detected_extrusions > 0
+            "has_extrusions": detected_extrusions > 0,
         }
 
     def render_angles(
@@ -573,7 +562,9 @@ class ExtractionHandler:
         object_name: str,
         angles: list = None,
         resolution: int = 512,
-        output_dir: str = "/tmp/extraction_renders"
+        output_dir: str = "/tmp/extraction_renders",
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> dict:
         """Renders object from multiple angles for LLM Vision analysis.
 
@@ -593,6 +584,9 @@ class ExtractionHandler:
 
         if angles is None:
             angles = ["front", "back", "left", "right", "top", "iso"]
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, len(angles), "Preparing multi-angle render job")
 
         # Validate angles
         valid_angles = set(self.ANGLE_PRESETS.keys())
@@ -618,7 +612,7 @@ class ExtractionHandler:
         # Store original visibility
         original_visibility = {}
         for o in bpy.data.objects:
-            if o.type == 'MESH' and o != obj:
+            if o.type == "MESH" and o != obj:
                 original_visibility[o.name] = o.hide_render
                 o.hide_render = True
 
@@ -627,13 +621,15 @@ class ExtractionHandler:
         scene.camera = cam_obj
         scene.render.resolution_x = resolution
         scene.render.resolution_y = resolution
-        scene.render.image_settings.file_format = 'PNG'
+        scene.render.image_settings.file_format = "PNG"
 
         renders = []
 
         try:
-            for angle_name in angles:
-                preset = self.ANGLE_PRESETS[angle_name]
+            total_angles = len(angles)
+            for index, angle_name in enumerate(angles, 1):
+                raise_if_cancelled(is_cancelled)
+                preset = cast(Dict[str, Any], self.ANGLE_PRESETS[angle_name])
 
                 # Position camera
                 rotation = Euler(preset["rotation"])
@@ -658,17 +654,16 @@ class ExtractionHandler:
 
                 # Point camera at object center
                 direction = center - cam_pos
-                cam_obj.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
+                cam_obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
 
                 # Render
                 filepath = os.path.join(output_dir, f"{object_name}_{angle_name}.png")
                 scene.render.filepath = filepath
                 bpy.ops.render.render(write_still=True)
 
-                renders.append({
-                    "angle": angle_name,
-                    "path": filepath
-                })
+                renders.append({"angle": angle_name, "path": filepath})
+                if progress_callback is not None:
+                    progress_callback(index, total_angles, f"Rendered {angle_name} view")
 
         finally:
             # Restore visibility
@@ -680,9 +675,4 @@ class ExtractionHandler:
             bpy.data.objects.remove(cam_obj, do_unlink=True)
             bpy.data.cameras.remove(cam_data)
 
-        return {
-            "object_name": object_name,
-            "resolution": resolution,
-            "output_dir": output_dir,
-            "renders": renders
-        }
+        return {"object_name": object_name, "resolution": resolution, "output_dir": output_dir, "renders": renders}

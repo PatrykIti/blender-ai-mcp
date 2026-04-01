@@ -1,17 +1,17 @@
 """Tests for mesh topology introspection tools (edges, faces, UVs)."""
+
+import sys
 import unittest
 from unittest.mock import MagicMock
-import sys
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -29,8 +29,8 @@ class MeshHandlerTestBase(unittest.TestCase):
 class TestMeshGetEdgeData(MeshHandlerTestBase):
     def test_get_edge_data_selected_only(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
@@ -81,14 +81,14 @@ class TestMeshGetEdgeData(MeshHandlerTestBase):
         assert result["selected_count"] == 1
         assert result["returned_count"] == 1
         assert result["edges"][0]["index"] == 0
-        assert result["edges"][0]["is_sharp"] == False
+        assert not result["edges"][0]["is_sharp"]
 
 
 class TestMeshGetFaceData(MeshHandlerTestBase):
     def test_get_face_data_all_faces(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
@@ -141,8 +141,8 @@ class TestMeshGetFaceData(MeshHandlerTestBase):
 class TestMeshGetUVData(MeshHandlerTestBase):
     def test_get_uv_data_active_layer(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
         obj.data = MagicMock()
         bpy.data.objects = {"Cube": obj}
 
@@ -200,5 +200,5 @@ class TestMeshGetUVData(MeshHandlerTestBase):
         assert result["faces"][0]["uvs"] == [[0.0, 0.1], [0.5, 0.1], [0.5, 0.6]]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

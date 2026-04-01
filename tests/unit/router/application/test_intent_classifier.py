@@ -7,19 +7,14 @@ TASK-047: Updated for LanceDB integration
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
-from pathlib import Path
-import tempfile
-
 from server.router.application.classifier.intent_classifier import (
-    IntentClassifier,
     EMBEDDINGS_AVAILABLE,
+    IntentClassifier,
 )
 from server.router.domain.interfaces.i_vector_store import (
     IVectorStore,
     VectorNamespace,
     VectorRecord,
-    SearchResult,
 )
 from server.router.infrastructure.config import RouterConfig
 
@@ -156,6 +151,32 @@ def sample_metadata():
     }
 
 
+@pytest.fixture
+def macro_bias_metadata():
+    """Create metadata that exercises macro-first enrichment paths."""
+
+    return {
+        "macro_relative_layout": {
+            "sample_prompts": [
+                "align the panel to the housing and leave a small gap",
+                "wyrównaj panel do obudowy i zostaw małą szczelinę",
+            ],
+            "keywords": ["align", "gap", "wyrównaj", "szczelina"],
+            "description": "Prefer this macro over manual transform chaining for bounded relative placement.",
+            "related_tools": ["scene_measure_gap", "scene_assert_contact"],
+        },
+        "macro_finish_form": {
+            "sample_prompts": [
+                "give this housing a rounded finish without hand-building the modifier stack",
+                "zaokrąglij obudowę i dodaj lekki bevel oraz subdivision",
+            ],
+            "keywords": ["finish", "rounded", "zaokrąglij", "wygładź"],
+            "description": "Prefer this macro over manual bevel-plus-subdivision chains.",
+            "related_tools": ["inspect_scene", "scene_assert_dimensions"],
+        },
+    }
+
+
 class TestIntentClassifierInit:
     """Tests for IntentClassifier initialization."""
 
@@ -200,6 +221,19 @@ class TestIntentClassifierLoadEmbeddings:
         # Check tool texts were extracted
         assert len(classifier._tool_texts) == 3
         assert "mesh_extrude_region" in classifier._tool_texts
+
+    def test_tool_texts_include_description_and_related_tool_hints(self, classifier, macro_bias_metadata):
+        """Router classifier should consume richer metadata fields used for macro-first biasing."""
+
+        classifier.load_tool_embeddings(macro_bias_metadata)
+
+        layout_texts = classifier._tool_texts["macro_relative_layout"]
+        finish_texts = classifier._tool_texts["macro_finish_form"]
+
+        assert any("manual transform chaining" in text for text in layout_texts)
+        assert any("scene_measure_gap scene_assert_contact" == text for text in layout_texts)
+        assert any("manual bevel-plus-subdivision chains" in text for text in finish_texts)
+        assert any("inspect_scene scene_assert_dimensions" == text for text in finish_texts)
 
 
 class TestIntentClassifierPredict:
@@ -314,15 +348,17 @@ class TestIntentClassifierClearCache:
     def test_clear_cache(self, classifier, mock_store, sample_metadata):
         """Test clearing the cache."""
         # Add some records first
-        mock_store.upsert([
-            VectorRecord(
-                id="test_tool",
-                namespace=VectorNamespace.TOOLS,
-                vector=[0.0] * 768,
-                text="test",
-                metadata={},
-            )
-        ])
+        mock_store.upsert(
+            [
+                VectorRecord(
+                    id="test_tool",
+                    namespace=VectorNamespace.TOOLS,
+                    vector=[0.0] * 768,
+                    text="test",
+                    metadata={},
+                )
+            ]
+        )
 
         result = classifier.clear_cache()
 
@@ -338,7 +374,7 @@ class TestTfidfFallback:
         # This will use TF-IDF if sentence-transformers not installed
         classifier.load_tool_embeddings(sample_metadata)
 
-        info = classifier.get_model_info()
+        classifier.get_model_info()
         # Either embeddings or TF-IDF should be working
         assert classifier.is_loaded()
 
@@ -393,11 +429,11 @@ class TestIntentClassifierInterface:
         classifier = IntentClassifier(vector_store=mock_store)
 
         # Check all required methods exist
-        assert hasattr(classifier, 'predict')
-        assert hasattr(classifier, 'predict_top_k')
-        assert hasattr(classifier, 'load_tool_embeddings')
-        assert hasattr(classifier, 'is_loaded')
-        assert hasattr(classifier, 'get_embedding')
-        assert hasattr(classifier, 'similarity')
-        assert hasattr(classifier, 'get_model_info')
-        assert hasattr(classifier, 'clear_cache')
+        assert hasattr(classifier, "predict")
+        assert hasattr(classifier, "predict_top_k")
+        assert hasattr(classifier, "load_tool_embeddings")
+        assert hasattr(classifier, "is_loaded")
+        assert hasattr(classifier, "get_embedding")
+        assert hasattr(classifier, "similarity")
+        assert hasattr(classifier, "get_model_info")
+        assert hasattr(classifier, "clear_cache")

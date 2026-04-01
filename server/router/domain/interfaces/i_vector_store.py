@@ -10,7 +10,7 @@ TASK-047-1
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class VectorNamespace(Enum):

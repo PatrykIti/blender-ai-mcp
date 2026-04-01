@@ -9,9 +9,6 @@ TASK-039-23
 
 import pytest
 
-from server.router.application.router import SupervisorRouter
-from server.router.infrastructure.config import RouterConfig
-
 
 class TestModeCorrection:
     """Tests for automatic mode correction."""
@@ -52,8 +49,7 @@ class TestModeCorrection:
 
         # LLM tries to add modifier while in EDIT mode
         tools = router.process_llm_tool_call(
-            "modeling_add_modifier",
-            {"modifier_type": "SUBSURF", "name": "Subdivision"}
+            "modeling_add_modifier", {"modifier_type": "SUBSURF", "name": "Subdivision"}
         )
 
         # Router should add mode switch to OBJECT

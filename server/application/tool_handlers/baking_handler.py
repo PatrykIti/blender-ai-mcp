@@ -5,8 +5,10 @@ Implements IBakingTool interface using RPC calls to Blender addon.
 """
 
 from typing import Optional
-from server.domain.tools.baking import IBakingTool
+
+from server.application.tool_handlers._rpc_utils import require_str_result
 from server.domain.interfaces.rpc import IRpcClient
+from server.domain.tools.baking import IBakingTool
 
 
 class BakingToolHandler(IBakingTool):
@@ -23,21 +25,23 @@ class BakingToolHandler(IBakingTool):
         high_poly_source: Optional[str] = None,
         cage_extrusion: float = 0.1,
         margin: int = 16,
-        normal_space: str = "TANGENT"
+        normal_space: str = "TANGENT",
     ) -> str:
         """Bakes normal map from high-poly to low-poly or from geometry."""
-        response = self.rpc.send_request("baking.normal_map", {
-            "object_name": object_name,
-            "output_path": output_path,
-            "resolution": resolution,
-            "high_poly_source": high_poly_source,
-            "cage_extrusion": cage_extrusion,
-            "margin": margin,
-            "normal_space": normal_space
-        })
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request(
+                "baking.normal_map",
+                {
+                    "object_name": object_name,
+                    "output_path": output_path,
+                    "resolution": resolution,
+                    "high_poly_source": high_poly_source,
+                    "cage_extrusion": cage_extrusion,
+                    "margin": margin,
+                    "normal_space": normal_space,
+                },
+            )
+        )
 
     def bake_ao(
         self,
@@ -46,20 +50,22 @@ class BakingToolHandler(IBakingTool):
         resolution: int = 1024,
         samples: int = 128,
         distance: float = 1.0,
-        margin: int = 16
+        margin: int = 16,
     ) -> str:
         """Bakes ambient occlusion map."""
-        response = self.rpc.send_request("baking.ao", {
-            "object_name": object_name,
-            "output_path": output_path,
-            "resolution": resolution,
-            "samples": samples,
-            "distance": distance,
-            "margin": margin
-        })
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request(
+                "baking.ao",
+                {
+                    "object_name": object_name,
+                    "output_path": output_path,
+                    "resolution": resolution,
+                    "samples": samples,
+                    "distance": distance,
+                    "margin": margin,
+                },
+            )
+        )
 
     def bake_combined(
         self,
@@ -70,37 +76,30 @@ class BakingToolHandler(IBakingTool):
         margin: int = 16,
         use_pass_direct: bool = True,
         use_pass_indirect: bool = True,
-        use_pass_color: bool = True
+        use_pass_color: bool = True,
     ) -> str:
         """Bakes combined render (full material + lighting) to texture."""
-        response = self.rpc.send_request("baking.combined", {
-            "object_name": object_name,
-            "output_path": output_path,
-            "resolution": resolution,
-            "samples": samples,
-            "margin": margin,
-            "use_pass_direct": use_pass_direct,
-            "use_pass_indirect": use_pass_indirect,
-            "use_pass_color": use_pass_color
-        })
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request(
+                "baking.combined",
+                {
+                    "object_name": object_name,
+                    "output_path": output_path,
+                    "resolution": resolution,
+                    "samples": samples,
+                    "margin": margin,
+                    "use_pass_direct": use_pass_direct,
+                    "use_pass_indirect": use_pass_indirect,
+                    "use_pass_color": use_pass_color,
+                },
+            )
+        )
 
-    def bake_diffuse(
-        self,
-        object_name: str,
-        output_path: str,
-        resolution: int = 1024,
-        margin: int = 16
-    ) -> str:
+    def bake_diffuse(self, object_name: str, output_path: str, resolution: int = 1024, margin: int = 16) -> str:
         """Bakes diffuse/albedo color only."""
-        response = self.rpc.send_request("baking.diffuse", {
-            "object_name": object_name,
-            "output_path": output_path,
-            "resolution": resolution,
-            "margin": margin
-        })
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(
+            self.rpc.send_request(
+                "baking.diffuse",
+                {"object_name": object_name, "output_path": output_path, "resolution": resolution, "margin": margin},
+            )
+        )

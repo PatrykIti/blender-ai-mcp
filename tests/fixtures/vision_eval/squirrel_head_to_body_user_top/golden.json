@@ -1,0 +1,24 @@
+{
+  "scenario_id": "squirrel_head_to_body_user_top",
+  "description": "Low-poly squirrel progression from simple head blockout to head plus full body, captured from direct USER_PERSPECTIVE top view.",
+  "goal": "Describe the visible progression from a simple squirrel head blockout to a fuller squirrel model with face details and body in a top-down direct user-view capture.",
+  "target_object": "Squirrel",
+  "bundle_path": "bundle.json",
+  "expectations": {
+    "require_goal_summary": true,
+    "expected_direction": "improved",
+    "reference_relation": "unspecified",
+    "expected_capture_labels": [
+      "user_top_before",
+      "user_top_after"
+    ],
+    "minimum_visible_changes": 1,
+    "minimum_likely_issues": 0,
+    "minimum_recommended_checks": 0,
+    "maximum_likely_issues": 0,
+    "maximum_recommended_checks": 0,
+    "expected_issue_categories": [],
+    "expected_tool_names": [],
+    "should_avoid_truth_claims": true
+  }
+}

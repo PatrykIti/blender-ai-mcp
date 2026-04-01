@@ -4,9 +4,9 @@ Tests for KeywordMatcher.
 TASK-053-3: Tests for keyword matching extracted from SemanticWorkflowMatcher.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.keyword_matcher import KeywordMatcher
 from server.router.domain.entities.ensemble import MatcherResult
 

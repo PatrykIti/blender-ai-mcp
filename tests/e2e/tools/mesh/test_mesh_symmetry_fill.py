@@ -11,6 +11,7 @@ Tested tools:
 - mesh_beautify_fill
 - mesh_mirror
 """
+
 import pytest
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -39,6 +40,7 @@ def scene_handler(rpc_client):
 # Setup Helpers
 # ==============================================================================
 
+
 def create_test_cube(modeling_handler, scene_handler, name="E2E_SymmetryFillCube"):
     """Creates a test cube for symmetry/fill operations."""
     try:
@@ -48,12 +50,7 @@ def create_test_cube(modeling_handler, scene_handler, name="E2E_SymmetryFillCube
         pass  # Object didn't exist
 
     # Create cube
-    modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
     return name
 
 
@@ -65,12 +62,7 @@ def create_asymmetric_mesh(modeling_handler, scene_handler, mesh_handler, name="
         pass
 
     # Create cube and make it asymmetric
-    modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
 
     # Enter edit mode and modify one side
     scene_handler.set_active_object(name)
@@ -78,7 +70,7 @@ def create_asymmetric_mesh(modeling_handler, scene_handler, mesh_handler, name="
     mesh_handler.select_all(deselect=True)
 
     # Select vertices on positive X side only
-    mesh_handler.select_by_location(axis='X', min_coord=0.5, max_coord=2.0, mode='VERT')
+    mesh_handler.select_by_location(axis="X", min_coord=0.5, max_coord=2.0, mode="VERT")
 
     # Move them to make it asymmetric
     mesh_handler.transform_selected(translate=[0.5, 0, 0])
@@ -95,12 +87,7 @@ def create_mesh_with_hole(modeling_handler, scene_handler, mesh_handler, name="E
         pass
 
     # Create plane
-    modeling_handler.create_primitive(
-        primitive_type="PLANE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="PLANE", size=2.0, location=[0, 0, 0], name=name)
 
     # Subdivide to get more geometry
     scene_handler.set_active_object(name)
@@ -110,11 +97,11 @@ def create_mesh_with_hole(modeling_handler, scene_handler, mesh_handler, name="E
 
     # Delete center face to create hole
     mesh_handler.select_all(deselect=True)
-    mesh_handler.select_by_location(axis='X', min_coord=-0.3, max_coord=0.3, mode='FACE')
-    mesh_handler.select_by_location(axis='Y', min_coord=-0.3, max_coord=0.3, mode='FACE')
+    mesh_handler.select_by_location(axis="X", min_coord=-0.3, max_coord=0.3, mode="FACE")
+    mesh_handler.select_by_location(axis="Y", min_coord=-0.3, max_coord=0.3, mode="FACE")
 
     # Delete the selected face
-    mesh_handler.delete_selected(type='FACE')
+    mesh_handler.delete_selected(type="FACE")
 
     scene_handler.set_mode("OBJECT")
     return name
@@ -128,12 +115,7 @@ def create_triangulated_mesh(modeling_handler, scene_handler, mesh_handler, name
         pass
 
     # Create sphere (has triangles)
-    modeling_handler.create_primitive(
-        primitive_type="SPHERE",
-        radius=1.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="SPHERE", radius=1.0, location=[0, 0, 0], name=name)
 
     # Triangulate to ensure we have triangles
     scene_handler.set_active_object(name)
@@ -155,6 +137,7 @@ def enter_edit_mode_and_select_all(scene_handler, mesh_handler, object_name):
 # ==============================================================================
 # TASK-036-1: mesh_symmetrize Tests
 # ==============================================================================
+
 
 def test_symmetrize_default(mesh_handler, modeling_handler, scene_handler):
     """Test symmetrize with default parameters (NEGATIVE_X)."""
@@ -281,6 +264,7 @@ def test_symmetrize_invalid_direction_raises(mesh_handler, modeling_handler, sce
 # TASK-036-2: mesh_grid_fill Tests
 # ==============================================================================
 
+
 def test_grid_fill_default(mesh_handler, modeling_handler, scene_handler):
     """Test grid fill with default parameters."""
     try:
@@ -369,6 +353,7 @@ def test_grid_fill_simple_interpolation(mesh_handler, modeling_handler, scene_ha
 # ==============================================================================
 # TASK-036-3: mesh_poke_faces Tests
 # ==============================================================================
+
 
 def test_poke_faces_default(mesh_handler, modeling_handler, scene_handler):
     """Test poke faces with default parameters."""
@@ -494,6 +479,7 @@ def test_poke_faces_invalid_center_mode_raises(mesh_handler, modeling_handler, s
 # TASK-036-4: mesh_beautify_fill Tests
 # ==============================================================================
 
+
 def test_beautify_fill_default(mesh_handler, modeling_handler, scene_handler):
     """Test beautify fill with default angle limit."""
     try:
@@ -570,6 +556,7 @@ def test_beautify_fill_small_angle(mesh_handler, modeling_handler, scene_handler
 # TASK-036-5: mesh_mirror Tests
 # ==============================================================================
 
+
 def test_mirror_default(mesh_handler, modeling_handler, scene_handler):
     """Test mirror with default parameters (X axis)."""
     try:
@@ -580,7 +567,7 @@ def test_mirror_default(mesh_handler, modeling_handler, scene_handler):
 
         # Select half of the mesh
         mesh_handler.select_all(deselect=True)
-        mesh_handler.select_by_location(axis='X', min_coord=0, max_coord=2, mode='FACE')
+        mesh_handler.select_by_location(axis="X", min_coord=0, max_coord=2, mode="FACE")
 
         # Test mirror
         result = mesh_handler.mirror()
@@ -746,6 +733,7 @@ def test_mirror_invalid_axis_raises(mesh_handler, modeling_handler, scene_handle
 # ==============================================================================
 # Integration Workflow Tests
 # ==============================================================================
+
 
 def test_workflow_character_symmetry(mesh_handler, modeling_handler, scene_handler):
     """

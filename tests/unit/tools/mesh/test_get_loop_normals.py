@@ -1,18 +1,18 @@
 """Tests for mesh loop normals introspection."""
+
+import sys
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock
-import sys
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -29,8 +29,8 @@ class TestMeshGetLoopNormals(unittest.TestCase):
 
     def test_get_loop_normals_selected_only(self):
         obj = MagicMock()
-        obj.type = 'MESH'
-        obj.mode = 'OBJECT'
+        obj.type = "MESH"
+        obj.mode = "OBJECT"
 
         mesh = MagicMock()
         mesh.has_custom_normals = True
@@ -85,5 +85,5 @@ class TestMeshGetLoopNormals(unittest.TestCase):
         assert result["custom_normals"] is True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -49,4 +49,3 @@ Addon packaging is handled by:
 
 It produces:
 - `outputs/blender_ai_mcp.zip`
-

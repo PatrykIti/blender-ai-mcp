@@ -4,27 +4,19 @@ Unit tests for SupervisorRouter.
 Tests the main router orchestrator and its pipeline.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 
+import pytest
 from server.router.application.router import SupervisorRouter
-from server.router.infrastructure.config import RouterConfig
+from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
-    TopologyInfo,
     ProportionInfo,
+    SceneContext,
+    TopologyInfo,
 )
-from server.router.domain.entities.pattern import PatternType, DetectedPattern
 from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.domain.entities.firewall_result import FirewallResult, FirewallAction
-from server.router.domain.entities.override_decision import (
-    OverrideDecision,
-    OverrideReason,
-    ReplacementTool,
-)
-
+from server.router.infrastructure.config import RouterConfig
 
 # ============================================================================
 # Fixtures
@@ -216,7 +208,7 @@ class TestBasicPipeline:
 
     def test_passthrough_no_correction_needed(self, router, edit_mode_context):
         """Test passthrough when no corrections needed."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
                 {"move": [0.0, 0.0, 0.5]},
@@ -228,7 +220,7 @@ class TestBasicPipeline:
 
     def test_mode_switch_correction(self, router, object_mode_context):
         """Test mode switch is added when needed."""
-        with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
                 {"move": [0.0, 0.0, 0.5]},
@@ -264,7 +256,7 @@ class TestBasicPipeline:
             ),
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=no_selection_context):
+        with patch.object(router.analyzer, "analyze", return_value=no_selection_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
                 {"move": [0.0, 0.0, 0.5]},
@@ -275,7 +267,7 @@ class TestBasicPipeline:
 
     def test_stats_increment(self, router, object_mode_context):
         """Test stats are incremented on processing."""
-        with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=object_mode_context):
             router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         stats = router.get_stats()
@@ -299,8 +291,8 @@ class TestOverrides:
             confidence=0.9,
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
-            with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
+        with patch.object(router.analyzer, "analyze", return_value=phone_like_context):
+            with patch.object(router.detector, "get_best_match", return_value=phone_pattern):
                 result = router.process_llm_tool_call(
                     "mesh_extrude_region",
                     {"move": [0.0, 0.0, -0.02]},
@@ -319,8 +311,8 @@ class TestOverrides:
             confidence=0.9,
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
-            with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
+        with patch.object(router.analyzer, "analyze", return_value=phone_like_context):
+            with patch.object(router.detector, "get_best_match", return_value=phone_pattern):
                 result = router.process_llm_tool_call(
                     "mesh_extrude_region",
                     {"move": [0.0, 0.0, -0.02]},
@@ -346,10 +338,10 @@ class TestWorkflowExpansion:
             suggested_workflow="phone_workflow",
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
-            with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
+        with patch.object(router.analyzer, "analyze", return_value=phone_like_context):
+            with patch.object(router.detector, "get_best_match", return_value=phone_pattern):
                 # Override won't match because trigger tool is different
-                result = router.process_llm_tool_call(
+                router.process_llm_tool_call(
                     "some_other_tool",
                     {},
                 )
@@ -369,9 +361,9 @@ class TestWorkflowExpansion:
             suggested_workflow="phone_workflow",
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
-            with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
-                result = router.process_llm_tool_call(
+        with patch.object(router.analyzer, "analyze", return_value=phone_like_context):
+            with patch.object(router.detector, "get_best_match", return_value=phone_pattern):
+                router.process_llm_tool_call(
                     "modeling_create_primitive",
                     {"type": "CUBE"},
                 )
@@ -396,19 +388,19 @@ class TestFirewall:
             objects=[],
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=empty_context):
-            result = router.process_llm_tool_call(
+        with patch.object(router.analyzer, "analyze", return_value=empty_context):
+            router.process_llm_tool_call(
                 "scene_delete_object",
                 {"name": "NonExistent"},
             )
 
         # Should be blocked or have no valid operations
-        stats = router.get_stats()
+        router.get_stats()
         # May be blocked by firewall
 
     def test_firewall_auto_fix(self, router, object_mode_context):
         """Test firewall auto-fixes when possible."""
-        with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_bevel",
                 {"offset": 0.1, "segments": 2},
@@ -422,7 +414,7 @@ class TestFirewall:
         config = RouterConfig(block_invalid_operations=False)
         router = SupervisorRouter(config=config)
 
-        with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_bevel",
                 {"offset": 0.1, "segments": 2},
@@ -442,11 +434,13 @@ class TestBatchProcessing:
 
     def test_process_batch(self, router, edit_mode_context):
         """Test processing batch of tool calls."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
-            result = router.process_batch([
-                {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}},
-                {"tool": "mesh_bevel", "params": {"offset": 0.1}},
-            ])
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
+            result = router.process_batch(
+                [
+                    {"tool": "mesh_extrude_region", "params": {"move": [0.0, 0.0, 0.5]}},
+                    {"tool": "mesh_bevel", "params": {"offset": 0.1}},
+                ]
+            )
 
         assert len(result) >= 2
         stats = router.get_stats()
@@ -476,10 +470,10 @@ class TestRouteMethod:
         router.classifier._is_loaded = True
         with patch.object(
             router.classifier,
-            'predict_top_k',
+            "predict_top_k",
             return_value=[("mesh_extrude_region", 0.85), ("mesh_inset", 0.7)],
         ):
-            with patch.object(router.classifier, 'is_loaded', return_value=True):
+            with patch.object(router.classifier, "is_loaded", return_value=True):
                 result = router.route("extrude the top face")
 
         assert "mesh_extrude_region" in result
@@ -553,7 +547,7 @@ class TestStateManagement:
 
     def test_get_last_context(self, router, edit_mode_context):
         """Test getting last analyzed context."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         last_context = router.get_last_context()
@@ -567,8 +561,8 @@ class TestStateManagement:
             confidence=0.9,
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=phone_like_context):
-            with patch.object(router.detector, 'get_best_match', return_value=phone_pattern):
+        with patch.object(router.analyzer, "analyze", return_value=phone_like_context):
+            with patch.object(router.detector, "get_best_match", return_value=phone_pattern):
                 router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         last_pattern = router.get_last_pattern()
@@ -577,7 +571,7 @@ class TestStateManagement:
 
     def test_invalidate_cache(self, router, edit_mode_context):
         """Test cache invalidation."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         router.invalidate_cache()
@@ -586,7 +580,7 @@ class TestStateManagement:
 
     def test_reset_stats(self, router, edit_mode_context):
         """Test stats reset."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             router.process_llm_tool_call("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
 
         router.reset_stats()
@@ -649,7 +643,7 @@ class TestIntegration:
 
     def test_full_pipeline_mesh_in_object_mode(self, router, object_mode_context):
         """Test full pipeline for mesh tool in object mode."""
-        with patch.object(router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=object_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
                 {"move": [0.0, 0.0, 0.5]},
@@ -666,7 +660,7 @@ class TestIntegration:
 
     def test_full_pipeline_modeling_in_edit_mode(self, router, edit_mode_context):
         """Test full pipeline for modeling tool in edit mode."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             result = router.process_llm_tool_call(
                 "modeling_add_modifier",
                 {"type": "BEVEL"},
@@ -678,7 +672,7 @@ class TestIntegration:
 
     def test_parameter_clamping(self, router, edit_mode_context):
         """Test parameter clamping in pipeline."""
-        with patch.object(router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(router.analyzer, "analyze", return_value=edit_mode_context):
             result = router.process_llm_tool_call(
                 "mesh_subdivide",
                 {"number_cuts": 100},  # Way over limit
@@ -713,7 +707,7 @@ class TestIntegration:
             ),
         )
 
-        with patch.object(router.analyzer, 'analyze', return_value=no_selection_object):
+        with patch.object(router.analyzer, "analyze", return_value=no_selection_object):
             result = router.process_llm_tool_call(
                 "mesh_extrude_region",
                 {"move": [0.0, 0.0, 0.5]},
@@ -738,10 +732,10 @@ class TestEnsembleMatcherInitialization:
         router = SupervisorRouter(config=RouterConfig())
 
         # TASK-053-9: New ensemble matching fields
-        assert hasattr(router, '_ensemble_matcher')
-        assert hasattr(router, '_last_ensemble_result')
-        assert hasattr(router, '_pending_modifiers')
-        assert hasattr(router, '_last_ensemble_init_error')
+        assert hasattr(router, "_ensemble_matcher")
+        assert hasattr(router, "_last_ensemble_result")
+        assert hasattr(router, "_pending_modifiers")
+        assert hasattr(router, "_last_ensemble_init_error")
 
         # Initial values
         assert router._ensemble_matcher is None  # Lazy init
@@ -803,7 +797,7 @@ class TestSetCurrentGoalEnsemble:
             confidence_level="HIGH",
             modifiers={"leg_style": "straight"},
             matcher_contributions={"semantic": 0.336, "keyword": 0.40},
-            requires_adaptation=False
+            requires_adaptation=False,
         )
         router._ensemble_matcher = mock_ensemble
         router._ensemble_matcher.is_initialized.return_value = True
@@ -830,7 +824,7 @@ class TestSetCurrentGoalEnsemble:
             confidence_level="HIGH",
             modifiers={},
             matcher_contributions={"keyword": 0.40, "semantic": 0.34},
-            requires_adaptation=False
+            requires_adaptation=False,
         )
         mock_ensemble = MagicMock()
         mock_ensemble.match.return_value = ensemble_result
@@ -856,7 +850,7 @@ class TestSetCurrentGoalEnsemble:
             confidence_level="MEDIUM",
             modifiers={},
             matcher_contributions={"semantic": 0.22, "keyword": 0.40},
-            requires_adaptation=True
+            requires_adaptation=True,
         )
         router._ensemble_matcher = mock_ensemble
         router._ensemble_matcher.is_initialized.return_value = True
@@ -886,36 +880,35 @@ class TestSetCurrentGoalEnsemble:
 class TestExpandTriggeredWorkflowWithModifiers:
     """Tests for TASK-053-11: _expand_triggered_workflow uses _pending_modifiers."""
 
-    @patch('server.router.application.workflows.registry.get_workflow_registry')
+    @patch("server.router.application.workflows.registry.get_workflow_registry")
     def test_expand_uses_pending_modifiers_in_adaptation_path(self, mock_get_registry):
         """Test _expand_triggered_workflow uses _pending_modifiers in adaptation path."""
-        router = SupervisorRouter(config=RouterConfig(
-            use_ensemble_matching=True,
-            enable_workflow_adaptation=True
-        ))
+        router = SupervisorRouter(config=RouterConfig(use_ensemble_matching=True, enable_workflow_adaptation=True))
 
         # Set up pending modifiers (from ensemble result)
         router._pending_modifiers = {"leg_style": "straight", "surface": "smooth"}
 
         # Set up last match result (triggers adaptation)
         from server.router.application.matcher.semantic_workflow_matcher import MatchResult
+
         router._last_match_result = MatchResult(
             workflow_name="table_workflow",
             confidence=0.35,
             match_type="ensemble",
             confidence_level="LOW",
-            requires_adaptation=True
+            requires_adaptation=True,
         )
 
         # Mock workflow definition
         from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+
         definition = WorkflowDefinition(
             name="table_workflow",
             description="Table",
             steps=[
                 WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False),
             ],
-            defaults={"leg_style": "curved"}  # Will be overridden by pending_modifiers
+            defaults={"leg_style": "curved"},  # Will be overridden by pending_modifiers
         )
 
         # Mock registry
@@ -934,6 +927,7 @@ class TestExpandTriggeredWorkflowWithModifiers:
 
         # Mock workflow adapter
         from server.router.application.engines.workflow_adapter import AdaptationResult
+
         router._workflow_adapter = MagicMock()
         adapted_steps = [
             WorkflowStep(tool="modeling_create_primitive", params={"primitive_type": "CUBE"}, optional=False)
@@ -941,17 +935,14 @@ class TestExpandTriggeredWorkflowWithModifiers:
         router._workflow_adapter.adapt.return_value = (
             adapted_steps,
             AdaptationResult(
-                original_step_count=1,
-                adapted_step_count=1,
-                confidence_level="LOW",
-                adaptation_strategy="CORE_ONLY"
-            )
+                original_step_count=1, adapted_step_count=1, confidence_level="LOW", adaptation_strategy="CORE_ONLY"
+            ),
         )
 
         # Call _expand_triggered_workflow
         context = SceneContext(mode="OBJECT", objects=[])
         expected_params = {"leg_style": "straight", "surface": "smooth"}
-        calls = router._expand_triggered_workflow("table_workflow", {}, context)
+        router._expand_triggered_workflow("table_workflow", {}, context)
 
         mock_registry.expand_workflow.assert_called_once()
         args, kwargs = mock_registry.expand_workflow.call_args
@@ -964,7 +955,7 @@ class TestExpandTriggeredWorkflowWithModifiers:
         # Verify pending_modifiers were cleared after expansion
         assert router._pending_modifiers == {}
 
-    @patch('server.router.application.workflows.registry.get_workflow_registry')
+    @patch("server.router.application.workflows.registry.get_workflow_registry")
     def test_expand_clears_pending_modifiers_after_expansion(self, mock_get_registry):
         """Test _expand_triggered_workflow clears _pending_modifiers after use."""
         router = SupervisorRouter(config=RouterConfig())
@@ -977,13 +968,15 @@ class TestExpandTriggeredWorkflowWithModifiers:
         mock_registry = MagicMock()
         mock_get_registry.return_value = mock_registry
         mock_registry.expand_workflow.return_value = [
-            CorrectedToolCall(tool_name="modeling_create_primitive", params={}, corrections_applied=[], is_injected=True)
+            CorrectedToolCall(
+                tool_name="modeling_create_primitive", params={}, corrections_applied=[], is_injected=True
+            )
         ]
         mock_registry.ensure_custom_loaded.return_value = None
 
         # Call standard expansion path
         context = SceneContext(mode="OBJECT", objects=[])
-        calls = router._expand_triggered_workflow("table_workflow", {}, context)
+        router._expand_triggered_workflow("table_workflow", {}, context)
 
         # Verify pending_modifiers were cleared
         assert router._pending_modifiers == {}
@@ -998,15 +991,15 @@ class TestRouterConfigEnsembleFields:
         config = RouterConfig()
 
         # TASK-053-12: Ensemble matching fields
-        assert hasattr(config, 'use_ensemble_matching')
-        assert hasattr(config, 'keyword_weight')
-        assert hasattr(config, 'semantic_weight')
-        assert hasattr(config, 'pattern_weight')
-        assert hasattr(config, 'pattern_boost_factor')
-        assert hasattr(config, 'composition_threshold')
-        assert hasattr(config, 'enable_composition_mode')
-        assert hasattr(config, 'ensemble_high_threshold')
-        assert hasattr(config, 'ensemble_medium_threshold')
+        assert hasattr(config, "use_ensemble_matching")
+        assert hasattr(config, "keyword_weight")
+        assert hasattr(config, "semantic_weight")
+        assert hasattr(config, "pattern_weight")
+        assert hasattr(config, "pattern_boost_factor")
+        assert hasattr(config, "composition_threshold")
+        assert hasattr(config, "enable_composition_mode")
+        assert hasattr(config, "ensemble_high_threshold")
+        assert hasattr(config, "ensemble_medium_threshold")
 
     def test_config_ensemble_defaults(self):
         """Test RouterConfig ensemble field defaults match spec."""
@@ -1027,23 +1020,20 @@ class TestRouterConfigEnsembleFields:
         config = RouterConfig()
         config_dict = config.to_dict()
 
-        assert 'use_ensemble_matching' in config_dict
-        assert 'keyword_weight' in config_dict
-        assert 'semantic_weight' in config_dict
-        assert 'pattern_weight' in config_dict
-        assert 'pattern_boost_factor' in config_dict
-        assert 'composition_threshold' in config_dict
-        assert 'enable_composition_mode' in config_dict
-        assert 'ensemble_high_threshold' in config_dict
-        assert 'ensemble_medium_threshold' in config_dict
+        assert "use_ensemble_matching" in config_dict
+        assert "keyword_weight" in config_dict
+        assert "semantic_weight" in config_dict
+        assert "pattern_weight" in config_dict
+        assert "pattern_boost_factor" in config_dict
+        assert "composition_threshold" in config_dict
+        assert "enable_composition_mode" in config_dict
+        assert "ensemble_high_threshold" in config_dict
+        assert "ensemble_medium_threshold" in config_dict
 
     def test_config_ensemble_fields_from_dict(self):
         """Test RouterConfig.from_dict() restores ensemble fields."""
         original = RouterConfig(
-            use_ensemble_matching=False,
-            keyword_weight=0.50,
-            semantic_weight=0.30,
-            pattern_weight=0.20
+            use_ensemble_matching=False, keyword_weight=0.50, semantic_weight=0.30, pattern_weight=0.20
         )
 
         config_dict = original.to_dict()

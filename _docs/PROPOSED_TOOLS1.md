@@ -16,10 +16,10 @@ def mesh_transform_selected(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Transforms selected vertices/edges/faces.
-    
-    The most essential missing tool. Enables shaping geometry by moving, scaling, 
+
+    The most essential missing tool. Enables shaping geometry by moving, scaling,
     and rotating selected elements. Without this, complex modeling is impossible.
-    
+
     Args:
         translate: [x, y, z] translation offset in local coordinates
         scale: [x, y, z] scale factors (1.0 = no change)
@@ -30,16 +30,16 @@ def mesh_transform_selected(
             - 'INDIVIDUAL_ORIGINS': Each element's own origin
             - 'ACTIVE_ELEMENT': Active vertex/edge/face
             - 'BOUNDING_BOX_CENTER': Selection bounding box center
-    
+
     Returns:
         Success message with transform details.
-    
+
     Use cases:
         - Taper legs of a tower (scale top vertices toward center)
         - Position vertices precisely
         - Create curved profiles by progressive transforms
         - Rotate faces for angled cuts
-    
+
     Example workflow (tapering):
         1. mesh_select_by_location(axis='Z', min_coord=0.8, max_coord=1.0)
         2. mesh_transform_selected(scale=[0.3, 0.3, 1.0], pivot='MEDIAN_POINT')
@@ -61,23 +61,23 @@ def mesh_bridge_edge_loops(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates faces between two edge loops.
-    
-    Connects two separate edge loops with a bridge of faces. Essential for 
+
+    Connects two separate edge loops with a bridge of faces. Essential for
     joining geometry sections, creating tubes, and connecting platforms to legs.
-    
+
     Args:
         segments: Number of subdivisions in the bridge (1 = direct connection)
         smoothness: Interpolation smoothness (0.0 = linear, 1.0 = smooth)
         profile_factor: Shape of bridge profile (-1.0 to 1.0)
         twist_offset: Rotation offset between loops (in edge steps)
-    
+
     Returns:
         Success message with face count created.
-    
+
     Prerequisites:
         - Exactly 2 edge loops must be selected
         - Loops should have same vertex count for best results
-    
+
     Use cases:
         - Connect tower legs to observation platforms
         - Create tubes from two circular edge loops
@@ -99,26 +99,26 @@ def mesh_bisect(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Cuts mesh geometry with infinite plane.
-    
-    Bisects selected geometry along a defined plane. Can optionally delete 
+
+    Bisects selected geometry along a defined plane. Can optionally delete
     geometry on either side and fill the cut with a face.
-    
+
     Args:
         plane_co: [x, y, z] any point that lies on the cutting plane
         plane_no: [x, y, z] normal vector defining plane orientation
         clear_inner: If True, deletes geometry on negative normal side
         clear_outer: If True, deletes geometry on positive normal side
         fill: If True, creates a face to cap the cut
-    
+
     Returns:
         Success message with operation details.
-    
+
     Use cases:
         - Cut torus in half to create arches
         - Slice objects at precise angles
         - Create cross-sections
         - Remove parts of geometry cleanly
-    
+
     Example (cut torus in half on Z axis):
         mesh_bisect(
             plane_co=[0, 0, 0],
@@ -139,17 +139,17 @@ def mesh_duplicate_selected(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Duplicates selected geometry in-place.
-    
+
     Creates a copy of selected vertices/edges/faces within the same mesh object.
     The duplicate remains selected after operation.
-    
+
     Args:
-        translate: Optional [x, y, z] offset to move duplicate. 
+        translate: Optional [x, y, z] offset to move duplicate.
                    If None, duplicate is created at same position.
-    
+
     Returns:
         Success message with duplicated element count.
-    
+
     Use cases:
         - Create repeated structural elements (lattice, truss)
         - Duplicate and transform for patterns
@@ -165,13 +165,13 @@ def mesh_duplicate_selected(
 def mesh_separate_selected() -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Separates selected geometry into new object.
-    
-    Extracts currently selected geometry from the mesh and creates a new 
+
+    Extracts currently selected geometry from the mesh and creates a new
     independent object. Original mesh loses the selected geometry.
-    
+
     Returns:
         Name of the newly created object.
-    
+
     Use cases:
         - Extract part of model for independent manipulation
         - Split joined objects back into components
@@ -195,10 +195,10 @@ def curve_create(
 ) -> str:
     """
     [OBJECT MODE][SAFE] Creates curve object from control points.
-    
-    Essential for creating smooth arches, rails, paths, and organic shapes 
+
+    Essential for creating smooth arches, rails, paths, and organic shapes
     that can later be converted to mesh or used with modifiers.
-    
+
     Args:
         curve_type: Type of curve interpolation:
             - 'BEZIER': Smooth curves with handle control
@@ -208,16 +208,16 @@ def curve_create(
         name: Optional name for the curve object
         cyclic: If True, connects last point to first (closed loop)
         resolution: Curve smoothness (segments between control points)
-    
+
     Returns:
         Name of created curve object.
-    
+
     Use cases:
         - Create arches between tower legs
         - Define paths for array modifier
         - Organic decorative elements
         - Rails for geometry extrusion
-    
+
     Example (simple arch):
         curve_create(
             curve_type='BEZIER',
@@ -239,10 +239,10 @@ def curve_to_mesh(
 ) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Converts curve to mesh geometry.
-    
-    Transforms curve object into editable mesh. Optionally extrudes a 
+
+    Transforms curve object into editable mesh. Optionally extrudes a
     profile shape along the curve path.
-    
+
     Args:
         curve_name: Name of the curve object to convert
         profile: Optional name of another curve to use as cross-section profile
@@ -250,10 +250,10 @@ def curve_to_mesh(
             - 'NONE': Open curve (no fill)
             - 'HALF': Fill one side
             - 'FULL': Fill both sides (solid)
-    
+
     Returns:
         Name of the resulting mesh object.
-    
+
     Use cases:
         - Convert decorative arches to mesh
         - Create tubes/pipes from curve paths
@@ -275,27 +275,27 @@ def mesh_spin(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Spins/revolves geometry around axis.
-    
+
     Creates rotational copies of selected geometry around specified axis.
     Can create connected geometry (lathe) or separate copies (radial array).
-    
+
     Args:
         steps: Number of segments/copies to create
         angle: Total angle to cover in radians (2*pi = 360°)
         axis: Rotation axis ('X', 'Y', or 'Z')
         center: [x, y, z] center of rotation. If None, uses 3D cursor
-        dupli: If True, creates disconnected copies. If False, creates 
+        dupli: If True, creates disconnected copies. If False, creates
                connected faces (like lathe operation)
-    
+
     Returns:
         Success message with created geometry info.
-    
+
     Use cases:
         - Create radial tower structure elements
         - Lathe profiles (vases, columns)
         - Radial patterns (wheel spokes, gears)
         - Rotational symmetry elements
-    
+
     Example (8-segment full rotation):
         mesh_spin(steps=8, angle=6.28318, axis='Z')
     """
@@ -315,20 +315,20 @@ def mesh_screw(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Creates helical/spiral geometry.
-    
-    Extrudes selected geometry in a spiral pattern. Combines rotation 
+
+    Extrudes selected geometry in a spiral pattern. Combines rotation
     with translation for helical structures.
-    
+
     Args:
         steps: Segments per revolution
         screw_offset: Vertical distance per full revolution
         angle: Rotation per step in radians
         axis: Helix axis ('X', 'Y', or 'Z')
         iterations: Number of complete turns
-    
+
     Returns:
         Success message with geometry info.
-    
+
     Use cases:
         - Spiral staircases
         - Springs and coils
@@ -348,17 +348,17 @@ def mesh_knife_project(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][DESTRUCTIVE] Projects object outline as cut.
-    
-    Uses the silhouette of another object (from current view) to cut 
+
+    Uses the silhouette of another object (from current view) to cut
     into the selected mesh geometry.
-    
+
     Args:
         cutter_object: Name of object whose outline will be projected
         cut_through: If True, cuts through entire mesh depth
-    
+
     Returns:
         Success message with cut details.
-    
+
     Use cases:
         - Cut decorative patterns into surfaces
         - Create complex cutouts
@@ -378,16 +378,16 @@ def mesh_add_vertex(
 ) -> str:
     """
     [EDIT MODE][DESTRUCTIVE] Adds single vertex at specified position.
-    
-    Foundation for fully procedural geometry construction. Creates isolated 
+
+    Foundation for fully procedural geometry construction. Creates isolated
     vertex that can be connected to others via edges and faces.
-    
+
     Args:
         position: [x, y, z] coordinates in object's local space
-    
+
     Returns:
         Index of the created vertex.
-    
+
     Use cases:
         - Build geometry from scratch vertex by vertex
         - Add control points for manual edge creation
@@ -405,15 +405,15 @@ def mesh_add_edge(
 ) -> str:
     """
     [EDIT MODE][DESTRUCTIVE] Creates edge between two existing vertices.
-    
+
     Connects two vertices with an edge. Vertices must already exist in mesh.
-    
+
     Args:
         vertex_indices: List of exactly 2 vertex indices to connect
-    
+
     Returns:
         Index of the created edge.
-    
+
     Use cases:
         - Manual wireframe construction
         - Connect procedurally placed vertices
@@ -431,16 +431,16 @@ def mesh_add_face(
 ) -> str:
     """
     [EDIT MODE][DESTRUCTIVE] Creates face from existing vertices.
-    
-    Constructs a polygon face from 3 or more vertices. Vertices must be 
+
+    Constructs a polygon face from 3 or more vertices. Vertices must be
     specified in correct winding order for proper normal direction.
-    
+
     Args:
         vertex_indices: List of vertex indices (minimum 3) in order
-    
+
     Returns:
         Index of the created face.
-    
+
     Use cases:
         - Complete procedural geometry construction
         - Fill custom shapes
@@ -460,18 +460,18 @@ def mesh_select_random(
 ) -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Randomly selects geometry elements.
-    
-    Selects elements with specified probability. Useful for adding 
+
+    Selects elements with specified probability. Useful for adding
     variation and randomized details to models.
-    
+
     Args:
         probability: Chance of selecting each element (0.0-1.0)
         seed: Random seed for reproducible selections
         mode: Element type to select ('VERT', 'EDGE', 'FACE')
-    
+
     Returns:
         Count of selected elements.
-    
+
     Use cases:
         - Add random details to lattice structures
         - Create variation in repeated elements
@@ -487,13 +487,13 @@ def mesh_select_random(
 def mesh_set_cursor_to_selected() -> str:
     """
     [EDIT MODE][SELECTION-BASED][SAFE] Moves 3D cursor to selection center.
-    
+
     Positions the 3D cursor at the median point of current selection.
     Critical for setting custom pivot points for transforms.
-    
+
     Returns:
         New cursor position [x, y, z].
-    
+
     Use cases:
         - Set pivot for rotation/scaling
         - Mark position for later operations
@@ -511,16 +511,16 @@ def mesh_cursor_set_position(
 ) -> str:
     """
     [SCENE][SAFE] Sets 3D cursor to specified world position.
-    
-    Moves the 3D cursor to exact coordinates. Essential for precise 
+
+    Moves the 3D cursor to exact coordinates. Essential for precise
     pivot point control in transforms and spin operations.
-    
+
     Args:
         position: [x, y, z] world coordinates for cursor
-    
+
     Returns:
         Confirmation of new cursor position.
-    
+
     Use cases:
         - Set precise pivot point
         - Define center for radial operations
@@ -557,7 +557,7 @@ def mesh_cursor_set_position(
 
 1. **Phase 1 (Core Transform)**
    - `mesh_transform_selected` ← START HERE
-   
+
 2. **Phase 2 (Geometry Connections)**
    - `mesh_bridge_edge_loops`
    - `mesh_bisect`

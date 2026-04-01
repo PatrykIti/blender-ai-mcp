@@ -1,22 +1,17 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+from server.application.tool_handlers._rpc_utils import require_dict_result, require_str_result
 from server.domain.interfaces.rpc import IRpcClient
 from server.domain.tools.uv import IUVTool
+
 
 class UVToolHandler(IUVTool):
     def __init__(self, rpc_client: IRpcClient):
         self.rpc = rpc_client
 
     def list_maps(self, object_name: str, include_island_counts: bool = False) -> Dict[str, Any]:
-        args = {
-            "object_name": object_name,
-            "include_island_counts": include_island_counts
-        }
-        response = self.rpc.send_request("uv.list_maps", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        if not isinstance(response.result, dict):
-            raise RuntimeError("Blender Error: Invalid payload for uv_list_maps")
-        return response.result
+        args = {"object_name": object_name, "include_island_counts": include_island_counts}
+        return require_dict_result(self.rpc.send_request("uv.list_maps", args))
 
     def unwrap(
         self,
@@ -34,10 +29,7 @@ class UVToolHandler(IUVTool):
             "island_margin": island_margin,
             "scale_to_bounds": scale_to_bounds,
         }
-        response = self.rpc.send_request("uv.unwrap", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("uv.unwrap", args))
 
     def pack_islands(
         self,
@@ -53,10 +45,7 @@ class UVToolHandler(IUVTool):
             "rotate": rotate,
             "scale": scale,
         }
-        response = self.rpc.send_request("uv.pack_islands", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("uv.pack_islands", args))
 
     def create_seam(
         self,
@@ -68,7 +57,4 @@ class UVToolHandler(IUVTool):
             "object_name": object_name,
             "action": action,
         }
-        response = self.rpc.send_request("uv.create_seam", args)
-        if response.status == "error":
-            raise RuntimeError(f"Blender Error: {response.error}")
-        return response.result
+        return require_str_result(self.rpc.send_request("uv.create_seam", args))

@@ -1,9 +1,11 @@
 """Unit tests for System handler (blender_addon)."""
+
 import os
 import sys
 import tempfile
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 # conftest.py handles bpy mocking
 from blender_addon.application.handlers.system import SystemHandler
@@ -60,7 +62,7 @@ class TestSystemSetMode:
 
     def test_set_mode_with_object_name(self):
         """Test mode switch with specific object name."""
-        result = self.handler.set_mode("EDIT", object_name="Cube")
+        self.handler.set_mode("EDIT", object_name="Cube")
 
         # Should set the object as active first
         self.mock_bpy.ops.object.select_all.assert_called()
@@ -210,7 +212,7 @@ class TestSystemSaveFile:
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join(tmpdir, "test")
 
-            result = self.handler.save_file(filepath=filepath)
+            self.handler.save_file(filepath=filepath)
 
             call_args = self.mock_bpy.ops.wm.save_as_mainfile.call_args
             assert call_args[1]["filepath"].endswith(".blend")
@@ -252,7 +254,7 @@ class TestSystemNewFile:
 
     def test_new_file_with_ui(self):
         """Test creating new file loading UI."""
-        result = self.handler.new_file(load_ui=True)
+        self.handler.new_file(load_ui=True)
 
         self.mock_bpy.ops.wm.read_homefile.assert_called_once_with(load_ui=True)
 
@@ -274,6 +276,7 @@ class TestSystemSnapshot:
     def teardown_method(self):
         """Cleanup temp directory after each test."""
         import shutil
+
         if os.path.exists(self.test_snapshot_dir):
             shutil.rmtree(self.test_snapshot_dir)
 
@@ -368,7 +371,7 @@ class TestSystemSnapshot:
 
     def test_snapshot_name_sanitization(self):
         """Test that snapshot names are sanitized."""
-        result = self.handler.snapshot("save", name="my/../dangerous/../../name")
+        self.handler.snapshot("save", name="my/../dangerous/../../name")
 
         # Name should be sanitized to safe characters only
         call_args = self.mock_bpy.ops.wm.save_as_mainfile.call_args

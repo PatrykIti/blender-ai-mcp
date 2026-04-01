@@ -1,10 +1,17 @@
 # Scene Tools Architecture
 
-Scene tools are used for managing objects, their selection, and preview.
-According to the adopted convention (just like in Modeling Tools), **each operation is a separate tool**.
+Scene tools cover scene-state queries, helper-object creation, viewport capture, scene maintenance, and scene-level truth/inspection operations.
 
-> **Note:** Some scene tools have been consolidated into **mega tools** for LLM context optimization.
-> See `MEGA_TOOLS_ARCHITECTURE.md` for details on `scene_context` and `scene_create`.
+This file is a family/internals reference.
+It includes both:
+
+- direct scene atomics
+- grouped scene tools such as `scene_context`, `scene_create`, and `scene_inspect`
+
+Inventory existence here does **not** imply public-default exposure on production-oriented MCP surfaces.
+For normal guided usage, prefer goal-first entry through `router_set_goal(...)` and grouped scene surfaces where available.
+
+For grouped scene tools, see `MEGA_TOOLS_ARCHITECTURE.md`.
 
 ---
 
@@ -84,6 +91,12 @@ Example:
 
 # 6. scene_get_viewport ✅ Done
 Gets a scene preview (viewport render) with selectable output mode.
+
+Semantics:
+- `camera_name="USER_PERSPECTIVE"` follows the live active 3D viewport
+- named-camera capture follows render visibility, not only viewport visibility
+- use `scene_isolate_object(...)` or `scene_hide_object(..., hide_render=True)`
+  when the isolated set must also apply to named-camera screenshots
 
 Args:
 - width: int

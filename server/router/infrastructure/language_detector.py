@@ -10,7 +10,6 @@ TASK-050-2
 import re
 from typing import Dict, Set
 
-
 # Language-specific character patterns (diacritics, special chars)
 LANGUAGE_PATTERNS: Dict[str, str] = {
     "pl": r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]",  # Polish diacritics

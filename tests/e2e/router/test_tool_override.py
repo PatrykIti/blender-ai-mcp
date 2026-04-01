@@ -7,8 +7,6 @@ Requires running Blender instance.
 TASK-040
 """
 
-import pytest
-
 from server.router.application.router import SupervisorRouter
 from server.router.infrastructure.config import RouterConfig
 
@@ -20,9 +18,12 @@ class TestPatternBasedOverride:
         """Test: Extrude on phone-like object may trigger override."""
         # Create phone-like object (flat rectangle)
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]  # Phone proportions
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.4, 0.8, 0.05]  # Phone proportions
+            },
+        )
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 
@@ -31,9 +32,7 @@ class TestPatternBasedOverride:
 
         # Try extrude with screen-related prompt
         tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": -0.02},
-            prompt="create screen cutout on phone"
+            "mesh_extrude_region", {"depth": -0.02}, prompt="create screen cutout on phone"
         )
 
         tool_names = [t["tool"] for t in tools]
@@ -45,7 +44,6 @@ class TestPatternBasedOverride:
         # This is optional behavior depending on pattern detection
         if len(tools) > 2:
             # If override triggered, should have inset
-            has_inset = "mesh_inset" in tool_names
             # Pattern-based override is optional, so we just verify structure
             assert isinstance(tools, list)
 
@@ -53,9 +51,12 @@ class TestPatternBasedOverride:
         """Test: Subdivide on tower-like object may trigger override."""
         # Create tower-like object (tall thin)
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.3, 0.3, 2.0]  # Tower proportions
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.3, 0.3, 2.0]  # Tower proportions
+            },
+        )
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 
@@ -63,9 +64,7 @@ class TestPatternBasedOverride:
 
         # Try subdivide with tower-related prompt
         tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 3},
-            prompt="add segments to tower for tapering"
+            "mesh_subdivide", {"number_cuts": 3}, prompt="add segments to tower for tapering"
         )
 
         tool_names = [t["tool"] for t in tools]
@@ -91,10 +90,7 @@ class TestOverrideWithoutPattern:
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.5}
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -108,18 +104,18 @@ class TestOverrideWithoutPattern:
         """Test: Subdivide on flat object doesn't trigger tower override."""
         # Create flat object (not tower-like)
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [2.0, 2.0, 0.1]  # Flat, not tower
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [2.0, 2.0, 0.1]  # Flat, not tower
+            },
+        )
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 2})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -143,17 +139,11 @@ class TestOverrideConfiguration:
 
         # Create phone-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
         rpc_client.send_request("mesh.select", {"action": "all"})
 
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": -0.02},
-            prompt="create screen"
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": -0.02}, prompt="create screen")
 
         tool_names = [t["tool"] for t in tools]
 
@@ -175,10 +165,7 @@ class TestOverrideExecution:
         router.invalidate_cache()
 
         # Get tools (may or may not be overridden)
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.1, "segments": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1, "segments": 2})
 
         # Execute all tools
         errors = []

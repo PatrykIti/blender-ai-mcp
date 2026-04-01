@@ -1,0 +1,60 @@
+# TASK-085-04: Client Profiles and Guided Mode Presets
+
+**Parent:** [TASK-085](./TASK-085_Session_Adaptive_Tool_Visibility.md)  
+**Status:** ✅ Done  
+**Priority:** 🟡 Medium  
+**Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)
+
+---
+
+## Objective
+
+Introduce visibility presets for different clients and a guided-mode surface that reduces active action space without removing deeper capabilities from the repo.
+
+## Completion Summary
+
+This slice is now closed.
+
+- explicit client profile presets exist for `legacy-flat`, `llm-guided`, `internal-debug`, and `code-mode-pilot`
+- guided-mode diagnostics are computed from the canonical manifest + phase policy rather than ad hoc lists
+- tests cover profile alignment and guided defaults
+
+---
+
+## Planned Work
+
+- create:
+  - `server/adapters/mcp/client_profiles.py`
+  - `server/adapters/mcp/guided_mode.py`
+  - `tests/unit/adapters/mcp/test_client_profiles.py`
+- support profiles such as:
+  - `legacy-flat`
+  - `llm-guided`
+  - `internal-debug`
+  - `code-mode-pilot`
+
+---
+
+## Layered Subtasks
+
+| ID | Title | Focus |
+|----|-------|-------|
+| [TASK-085-04-01](./TASK-085-04-01_Core_Profiles_Guided_Presets.md) | Core Client Profiles and Guided Mode Presets | Core implementation layer |
+| [TASK-085-04-02](./TASK-085-04-02_Tests_Profiles_Guided_Presets.md) | Tests and Docs Client Profiles and Guided Mode Presets | Tests, docs, and QA |
+
+---
+
+## Acceptance Criteria
+
+- surface profiles can be selected without forking tool handler logic
+- guided mode starts from a small entry surface, not by phase-filtering the entire catalog at once
+- deeper capabilities remain available through search or alternate profiles
+
+---
+
+## Atomic Work Items
+
+1. Align profile names with the server factory and versioning matrix.
+2. Define exactly which providers and transforms each profile uses.
+3. Keep `llm-guided` initial visibility intentionally tiny and centered on entry tools.
+4. Add one golden test per profile for visible entry tools.

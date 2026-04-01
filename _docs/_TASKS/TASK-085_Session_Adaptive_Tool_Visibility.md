@@ -4,7 +4,9 @@
 **Category:** FastMCP Tool UX  
 **Estimated Effort:** Medium  
 **Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has a canonical coarse phase model, deterministic visibility rules, session-scoped visibility application through native FastMCP APIs, router-driven phase hints, explicit client profile presets, guided-mode diagnostics, and tests/docs covering the current guided visibility baseline. Search-first rollout remains a separate TASK-084 concern rather than unfinished visibility work.
 
 ---
 
@@ -55,6 +57,35 @@ This should work as a dynamic product behavior, not as a static documentation re
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+Visibility work in this task must preserve the distinction between:
+
+- surface profile selected at bootstrap
+- session phase selected at runtime
+- contract version selected through version filters
+
+The router may emit hints, but FastMCP remains the owner of what is visible.
+
+Initial rollout rule:
+
+- start with a very small async-capable entry surface (`router_*`, `workflow_catalog`, prompt/help/status entrypoints where applicable)
+- start with coarse phases only
+- do not attempt whole-catalog phase orchestration in the first pass
+
+Phase taxonomy rule:
+
+- canonical phase vocabulary for this task family is: `bootstrap`, `planning`, `workflow_resolution`, `build`, `inspect_validate`, `repair`, `export_handoff`
+- the first rollout uses only: `bootstrap`, `planning`, `build`, `inspect_validate`
+- `workflow_resolution` is folded into `planning` until finer-grained phase handling proves useful
+- `repair` is folded into `inspect_validate` for the first pass
+- `export_handoff` remains reserved for later rollout and diagnostics
+- do not introduce alternate labels such as plain `inspect` as a parallel phase name
+
+---
+
 ## FastMCP Features To Use
 
 - **Session-Scoped State** — **FastMCP 3.0.0**
@@ -101,3 +132,37 @@ Those are different tasks and should not all compete equally in one flat visible
 - The model receives less irrelevant tool noise.
 - The project gains a practical mechanism for “guided mode” without removing deeper capabilities.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original business goal stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define explicit session state keys and the minimal coarse phase model.
+2. Bind visibility rules to platform tags and profile defaults instead of ad hoc wrapper logic.
+3. Feed router-generated phase hints into session state without moving ownership into the router.
+4. Apply adaptive visibility first to the small guided entry surface, not to the whole catalog.
+5. Add guided presets for `llm-guided` work while preserving deeper access through search or debug surfaces.
+6. Add observability so maintainers can see which profile and phase shaped the active surface.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-085-01](./TASK-085-01_Session_State_Model_and_Capability_Phases.md) | Define session state and capability phases |
+| 2 | [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md) | Build visibility filtering around phase/profile tags |
+| 3 | [TASK-085-03](./TASK-085-03_Router_Driven_Phase_Transitions.md) | Feed router phase hints into session state without mixing responsibilities |
+| 4 | [TASK-085-04](./TASK-085-04_Client_Profiles_and_Guided_Mode_Presets.md) | Add guided mode and client profile presets |
+| 5 | [TASK-085-05](./TASK-085-05_Visibility_Observability_Tests_and_Docs.md) | Add visibility diagnostics, tests, and docs |
+
+### Repo-Specific Focus
+
+- future `server/adapters/mcp/platform/**`
+- future `server/adapters/mcp/transforms/**`
+- future `server/adapters/mcp/factory.py`
+- future `server/adapters/mcp/session_*.py`
+- `server/adapters/mcp/context_utils.py`
+- `server/router/application/router.py`
+- `server/application/tool_handlers/router_handler.py`

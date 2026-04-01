@@ -1,0 +1,24 @@
+{
+  "scenario_id": "default_cube_to_picnic_table",
+  "description": "Real viewport smoke scenario comparing Blender default cube view against a scene after picnic table workflow execution.",
+  "goal": "Describe the visible difference between the default cube scene and the picnic table workflow result.",
+  "prompt_hint": "This is a smoke comparison of a large scene/object change, not a precision-fit judgement.",
+  "bundle_path": "bundle.json",
+  "expectations": {
+    "require_goal_summary": true,
+    "expected_direction": "improved",
+    "reference_relation": "unspecified",
+    "expected_capture_labels": [
+      "context_wide_before",
+      "context_wide_after"
+    ],
+    "minimum_visible_changes": 1,
+    "minimum_likely_issues": 0,
+    "minimum_recommended_checks": 0,
+    "maximum_likely_issues": 0,
+    "maximum_recommended_checks": 0,
+    "expected_issue_categories": [],
+    "expected_tool_names": [],
+    "should_avoid_truth_claims": true
+  }
+}

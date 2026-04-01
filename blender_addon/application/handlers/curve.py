@@ -26,7 +26,7 @@ class CurveHandler:
     # TASK-021: Phase 2.6 - Curves & Procedural
     # ==========================================================================
 
-    def create_curve(self, curve_type='BEZIER', location=None):
+    def create_curve(self, curve_type="BEZIER", location=None):
         """
         [OBJECT MODE][SAFE] Creates a curve primitive.
         Uses bpy.ops.curve.primitive_* operators.
@@ -39,13 +39,13 @@ class CurveHandler:
         curve_type_upper = curve_type.upper()
 
         # Map curve types to operators
-        if curve_type_upper == 'BEZIER':
+        if curve_type_upper == "BEZIER":
             bpy.ops.curve.primitive_bezier_curve_add(location=location)
-        elif curve_type_upper == 'NURBS':
+        elif curve_type_upper == "NURBS":
             bpy.ops.curve.primitive_nurbs_curve_add(location=location)
-        elif curve_type_upper == 'PATH':
+        elif curve_type_upper == "PATH":
             bpy.ops.curve.primitive_nurbs_path_add(location=location)
-        elif curve_type_upper == 'CIRCLE':
+        elif curve_type_upper == "CIRCLE":
             bpy.ops.curve.primitive_bezier_circle_add(location=location)
         else:
             raise ValueError(f"Invalid curve_type '{curve_type}'. Must be BEZIER, NURBS, PATH, or CIRCLE")
@@ -63,11 +63,11 @@ class CurveHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type not in ('CURVE', 'SURFACE', 'FONT'):
+        if obj.type not in ("CURVE", "SURFACE", "FONT"):
             raise ValueError(f"Object '{object_name}' is not a CURVE/SURFACE/FONT (type: {obj.type})")
 
         # Select the object and make it active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
@@ -75,7 +75,7 @@ class CurveHandler:
 
         # Convert to mesh
         try:
-            bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.convert(target="MESH")
         except RuntimeError as e:
             raise ValueError(f"Failed to convert '{object_name}' to mesh: {str(e)}")
 
@@ -92,7 +92,7 @@ class CurveHandler:
             raise ValueError(f"Object '{object_name}' not found")
 
         obj = bpy.data.objects[object_name]
-        if obj.type != 'CURVE':
+        if obj.type != "CURVE":
             raise ValueError(f"Object '{object_name}' is not a CURVE (type: {obj.type})")
 
         curve_data = obj.data
@@ -111,7 +111,7 @@ class CurveHandler:
             "use_fill_caps": curve_data.use_fill_caps,
             "bevel_object": curve_data.bevel_object.name if curve_data.bevel_object else None,
             "taper_object": curve_data.taper_object.name if curve_data.taper_object else None,
-            "splines": []
+            "splines": [],
         }
 
         for spline in curve_data.splines:
@@ -124,36 +124,40 @@ class CurveHandler:
                 "resolution_u": spline.resolution_u,
                 "resolution_v": getattr(spline, "resolution_v", None),
                 "tilt_interpolation": getattr(spline, "tilt_interpolation", None),
-                "radius_interpolation": getattr(spline, "radius_interpolation", None)
+                "radius_interpolation": getattr(spline, "radius_interpolation", None),
             }
 
-            if spline.type == 'BEZIER':
+            if spline.type == "BEZIER":
                 bezier_points = []
                 for point in spline.bezier_points:
                     handle_type = point.handle_left_type
                     if point.handle_left_type != point.handle_right_type:
                         handle_type = "MIXED"
-                    bezier_points.append({
-                        "co": _vector_to_list(point.co),
-                        "handle_left": _vector_to_list(point.handle_left),
-                        "handle_right": _vector_to_list(point.handle_right),
-                        "handle_left_type": point.handle_left_type,
-                        "handle_right_type": point.handle_right_type,
-                        "handle_type": handle_type,
-                        "radius": point.radius,
-                        "tilt": point.tilt,
-                        "weight": getattr(point, "weight_softbody", None)
-                    })
+                    bezier_points.append(
+                        {
+                            "co": _vector_to_list(point.co),
+                            "handle_left": _vector_to_list(point.handle_left),
+                            "handle_right": _vector_to_list(point.handle_right),
+                            "handle_left_type": point.handle_left_type,
+                            "handle_right_type": point.handle_right_type,
+                            "handle_type": handle_type,
+                            "radius": point.radius,
+                            "tilt": point.tilt,
+                            "weight": getattr(point, "weight_softbody", None),
+                        }
+                    )
                 spline_entry["bezier_points"] = bezier_points
             else:
                 points = []
                 for point in spline.points:
-                    points.append({
-                        "co": _vector_to_list(point.co),
-                        "radius": point.radius,
-                        "tilt": point.tilt,
-                        "weight": getattr(point, "weight_softbody", None)
-                    })
+                    points.append(
+                        {
+                            "co": _vector_to_list(point.co),
+                            "radius": point.radius,
+                            "tilt": point.tilt,
+                            "weight": getattr(point, "weight_softbody", None),
+                        }
+                    )
                 spline_entry["points"] = points
 
             result["splines"].append(spline_entry)

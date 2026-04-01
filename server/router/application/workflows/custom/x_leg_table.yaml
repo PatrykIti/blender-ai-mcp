@@ -387,4 +387,3 @@ steps:
       material_name: "XLegTable_Wood"
       object_name: "TablePlank_1"
     description: Apply wood material (assigned to first plank as reference)
-

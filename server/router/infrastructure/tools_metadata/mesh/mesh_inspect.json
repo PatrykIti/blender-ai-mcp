@@ -13,10 +13,13 @@
     "normal",
     "attributes",
     "shape keys",
-    "weights"
+    "weights",
+    "audit",
+    "reconstruction"
   ],
   "sample_prompts": [
     "get a mesh summary",
+    "inspect this mesh before rebuilding it",
     "inspect mesh vertices",
     "show edge connectivity",
     "get face data",
@@ -91,5 +94,5 @@
     "scene_inspect"
   ],
   "patterns": [],
-  "description": "Mega tool for mesh introspection (summary, topology payloads, UVs, normals, attributes, shape keys, and weights)."
+  "description": "Grouped mesh introspection for summary, topology payloads, UVs, normals, attributes, shape keys, and weights. Use it as the main read-side mesh audit/reconstruction surface."
 }

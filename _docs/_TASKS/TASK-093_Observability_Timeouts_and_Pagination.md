@@ -3,8 +3,10 @@
 **Priority:** 🟡 Medium  
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Dependencies:** TASK-083 (platform baseline). Task-mode-specific timeout / diagnostics rollout depends on TASK-088-02.
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The repo has OTEL bootstrap, explicit timeout taxonomy, operational diagnostics through `router_get_status()`, task-runtime pair reporting, background-job summaries, surface/component pagination policy, and payload pagination for workflow-heavy responses. Tests and docs now cover telemetry, timeout policy, diagnostics surface, and pagination expectations.
 
 ---
 
@@ -48,6 +50,24 @@ Adopt FastMCP operational features that improve:
 - server diagnostics
 
 This task should be treated as product infrastructure, not just developer convenience.
+
+---
+
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+This umbrella must treat these as separate concerns:
+
+- built-in FastMCP OpenTelemetry spans vs repo-specific router/job attributes
+- MCP component pagination vs domain payload pagination
+- foreground tool timeouts vs background-task execution timeouts vs RPC timeouts
+
+### Ownership Rule
+
+- TASK-093 owns the shared timeout taxonomy, observability model, diagnostics payloads, and pagination policy
+- TASK-088 owns the task bridge, RPC/job execution architecture, and concrete heavy-operation adoption
+- when TASK-088 runtime code needs timeout behavior, it must consume the contracts defined here rather than creating a parallel policy layer
 
 ---
 
@@ -96,3 +116,26 @@ Observability and operational guardrails make those distinctions clearer and sho
 - Large component listings stop being an operational liability.
 - The project gains better visibility into real-world LLM usage patterns.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Bootstrap OpenTelemetry on top of FastMCP’s native spans.
+2. Define explicit timeout contracts per runtime boundary and feed them into TASK-088 runtime adaptation.
+3. Enable pagination for large MCP component lists.
+4. Standardize payload pagination for large structured tool outputs.
+5. Expose operational diagnostics so maintainers can see active profile, phase, jobs, and timeout state.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-093-01](./TASK-093-01_Telemetry_Model_and_OpenTelemetry_Bootstrap.md) | Add telemetry foundations and OpenTelemetry bootstrap |
+| 2 | [TASK-093-02](./TASK-093-02_Tool_and_Task_Timeout_Policy.md) | Define timeouts for tools, tasks, and RPC boundaries |
+| 3 | [TASK-093-03](./TASK-093-03_Pagination_Rollout_for_Component_and_Data_Listings.md) | Add pagination to large listings and payloads |
+| 4 | [TASK-093-04](./TASK-093-04_Operational_Status_and_Diagnostics_Surface.md) | Expose operational diagnostics and runtime status |
+| 5 | [TASK-093-05](./TASK-093-05_Operations_Tests_and_Documentation.md) | Add operations-focused tests and documentation |

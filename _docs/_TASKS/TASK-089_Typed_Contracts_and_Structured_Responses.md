@@ -4,7 +4,9 @@
 **Category:** FastMCP LLM Reliability  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** This task is now closed. The structured-contract layer now covers the high-value scene, mesh, router, workflow, and execution-report surfaces; adapter return policy is centralized; contract-enabled tools use native structured delivery with compatibility strategy where needed; and tests/docs cover schemas, delivery behavior, and the current contract-enabled public surfaces.
 
 ---
 
@@ -52,16 +54,46 @@ The desired behavior is:
 
 - important inspection tools return structured, stable payloads
 - the LLM no longer depends on brittle text parsing for key state
-- internal server-side reasoning helpers can also use validated structured output when sampling is involved
+- internal sampling-assisted reasoning helpers can also use validated structured output when client-mediated sampling is involved
 
 This should begin with high-value context and inspection surfaces and then expand outward.
+
+---
+
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo:
+
+- domain and application handlers may keep returning dict/list state
+- adapter-side contracts should define public shape
+- structured payloads are the default for state-heavy tools
+- stop serializing structured payloads to JSON text in MCP adapters as the first migration move
+- do not introduce a custom renderer subsystem before native FastMCP structured delivery is used correctly
+
+For router clarification flows:
+
+- TASK-087 defines clarification semantics and the typed `needs_input` content model
+- TASK-089 defines adapter-facing structured delivery, `structuredContent`, `outputSchema`, and execution-report envelopes that reference or embed those clarification models
+
+Do not create a second clarification-question schema in this task family.
+
+### MCP Contract Delivery DoD
+
+For contract-enabled tools in this task scope:
+
+- return machine-readable payloads through MCP `structuredContent`
+- declare and maintain tool `outputSchema` aligned with the structured payload shape
+- rely on FastMCP's native compatibility delivery where object-like returns already produce structured output plus traditional content
+- add explicit text-only compatibility behavior only where a real client need remains after native delivery is used correctly
 
 ---
 
 ## FastMCP Features To Use
 
 - **Tool output schemas / structured content support in the current FastMCP server tools surface** — **3.x baseline**
-- **Structured output via `result_type` for server-side sampling** — **FastMCP 2.14.1**
+- **Structured output via `result_type` for client-mediated sampling flows** — **FastMCP 2.14.1**
 
 ---
 
@@ -105,4 +137,30 @@ Structured response contracts reduce that gap.
 - Inspection and validation flows rely less on natural-language parsing.
 - The project gains a cleaner foundation for spatial assertions and automated QA.
 - The model’s follow-up decisions improve because the state contract is clearer.
+- Structured contract surfaces consistently expose `structuredContent` + `outputSchema`, with explicit text fallback behavior for compatibility surfaces.
 
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Define one shared contract catalog and adapter return policy.
+2. Remove unconditional `json.dumps(...)` / prose-only return paths from contract-enabled adapters.
+3. Convert scene context and scene inspection surfaces to stable structured payloads.
+4. Standardize mesh introspection envelopes and paging fields.
+5. Add structured router, workflow, and base execution-report contracts that later audit/postcondition work can extend.
+6. Add schema tests and public docs for the new contract set.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-089-01](./TASK-089-01_Contract_Catalog_and_Response_Guidelines.md) | Define the contract catalog and response design rules |
+| 2 | [TASK-089-02](./TASK-089-02_Structured_Scene_Context_and_Inspection_Contracts.md) | Add structured contracts for scene context and inspection |
+| 3 | [TASK-089-03](./TASK-089-03_Structured_Mesh_Introspection_Contracts.md) | Standardize mesh introspection contracts and paging |
+| 4 | [TASK-089-04](./TASK-089-04_Router_Workflow_and_Execution_Report_Contracts.md) | Add typed contracts for router and execution reporting |
+| 5 | [TASK-089-05](./TASK-089-05_Adapter_Dual_Format_Delivery_Strategy.md) | Define a dual-format transition strategy for clients |
+| 6 | [TASK-089-06](./TASK-089-06_Contract_Tests_Schemas_and_Documentation.md) | Add schema tests and contract documentation |

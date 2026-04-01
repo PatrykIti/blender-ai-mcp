@@ -1,0 +1,61 @@
+"""
+E2E tests for scene_get_viewport in real Blender.
+"""
+
+from __future__ import annotations
+
+import base64
+
+import pytest
+from server.application.tool_handlers.scene_handler import SceneToolHandler
+
+
+@pytest.fixture
+def scene_handler(rpc_client):
+    return SceneToolHandler(rpc_client)
+
+
+def test_scene_get_viewport_returns_decodable_base64(scene_handler):
+    """Viewport capture should produce real image bytes in Blender-backed execution."""
+
+    try:
+        payload = scene_handler.get_viewport(width=320, height=240, shading="SOLID")
+        decoded = base64.b64decode(payload, validate=True)
+
+        assert decoded
+        assert len(decoded) > 100
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")
+
+
+def test_scene_get_viewport_user_view_adjustment_restores_default_view(scene_handler):
+    """Adjusted USER_PERSPECTIVE capture should restore the prior user view by default."""
+
+    try:
+        first = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+        )
+        adjusted = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+            view_name="TOP",
+        )
+        third = scene_handler.get_viewport(
+            width=320,
+            height=240,
+            shading="SOLID",
+            camera_name="USER_PERSPECTIVE",
+        )
+
+        assert first
+        assert adjusted
+        assert third
+        assert adjusted != first
+        assert third == first
+    except RuntimeError as e:
+        pytest.skip(f"Blender not available: {e}")

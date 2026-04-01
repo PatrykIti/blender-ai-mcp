@@ -7,11 +7,7 @@ class ICurveTool(ABC):
 
     # TASK-021-1: Curve Create Tool
     @abstractmethod
-    def create_curve(
-        self,
-        curve_type: str = 'BEZIER',
-        location: Optional[List[float]] = None
-    ) -> str:
+    def create_curve(self, curve_type: str = "BEZIER", location: Optional[List[float]] = None) -> str:
         """Creates a curve primitive (BEZIER, NURBS, PATH, CIRCLE)."""
         pass
 

@@ -6,6 +6,59 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [179](./179-2026-04-01-rpc-poll-budget-and-disabled-vision-conflict-guard.md) | 2026-04-01 | **RPC poll budget and disabled vision conflict guard** | - |
+| [177](./177-2026-04-01-external-provider-precedence-loop-scope-and-task-timeout.md) | 2026-04-01 | **External provider precedence, loop scope, and task timeout** | - |
+| [176](./176-2026-04-01-provider-notes-and-gemini-contract-task.md) | 2026-04-01 | **Provider notes and Gemini contract follow-up** | - |
+| [175](./175-2026-03-31-relicense-to-apache-2.0.md) | 2026-03-31 | **Relicense to Apache 2.0** | - |
+| [174](./174-2026-03-30-google-ai-studio-gemini-vision-path.md) | 2026-03-30 | **Google AI Studio Gemini vision path** | - |
+| [173](./173-2026-03-30-openrouter-vision-provider-path.md) | 2026-03-30 | **OpenRouter vision provider path** | - |
+| [172](./172-2026-03-30-multi-object-reference-loop-scope.md) | 2026-03-30 | **Multi-object reference loop scope** | - |
+| [171](./171-2026-03-30-session-aware-reference-auto-loop.md) | 2026-03-30 | **Session-aware reference auto loop** | - |
+| [170](./170-2026-03-30-reference-guided-creature-eval-and-prompting.md) | 2026-03-30 | **Reference-guided creature eval and prompting** | - |
+| [169](./169-2026-03-30-reference-guided-correction-focus.md) | 2026-03-30 | **Reference-guided correction focus** | - |
+| [168](./168-2026-03-30-reference-stage-checkpoint-compare.md) | 2026-03-30 | **Reference stage checkpoint compare** | - |
+| [167](./167-2026-03-30-reference-checkpoint-compare-surface.md) | 2026-03-30 | **Reference checkpoint compare surface** | - |
+| [166](./166-2026-03-30-user-view-viewport-capture-controls.md) | 2026-03-30 | **User-view viewport capture controls** | - |
+| [165](./165-2026-03-29-macro-vision-followup-integration.md) | 2026-03-29 | **Macro vision follow-up integration** | - |
+| [164](./164-2026-03-29-vision-boundary-policy-metadata.md) | 2026-03-29 | **Vision boundary policy metadata** | - |
+| [163](./163-2026-03-29-vision-assistant-envelope-extension.md) | 2026-03-29 | **Vision assistant envelope extension** | - |
+| [162](./162-2026-03-29-vision-local-output-and-scoring-tuning.md) | 2026-03-29 | **Vision local output and scoring tuning** | - |
+| [161](./161-2026-03-29-guided-goal-recovery-and-reference-semantics.md) | 2026-03-29 | **Guided goal recovery and reference semantics** | - |
+| [160](./160-2026-03-28-real-viewport-vision-view-variants.md) | 2026-03-28 | **Real viewport vision view variants** | - |
+| [159](./159-2026-03-28-viewport-capture-visibility-consistency.md) | 2026-03-28 | **Viewport capture visibility consistency** | - |
+| [158](./158-2026-03-24-first-measure-assert-tool-wave.md) | 2026-03-24 | **First measure/assert tool wave** | - |
+| [157](./157-2026-03-24-first-measure-assert-wave-planning.md) | 2026-03-24 | **First measure/assert wave planning** | - |
+| [156](./156-2026-03-24-public-surface-wording-alignment.md) | 2026-03-24 | **Public surface wording alignment** | - |
+| [155](./155-2026-03-24-existing-tool-audit-backlog-and-measure-plan.md) | 2026-03-24 | **Existing-tool audit backlog and measure/assert plan** | - |
+| [154](./154-2026-03-24-metadata-and-truth-audit-findings.md) | 2026-03-24 | **Metadata and truth-model audit findings** | - |
+| [153](./153-2026-03-24-initial-existing-tool-audit-findings.md) | 2026-03-24 | **Initial existing-tool audit findings** | - |
+| [152](./152-2026-03-24-existing-tool-audit-planning.md) | 2026-03-24 | **Existing tool audit planning** | - |
+| [151](./151-2026-03-24-instructions-prompts-and-doc-migration-map.md) | 2026-03-24 | **Instructions, prompts, and documentation migration map** | - |
+| [150](./150-2026-03-24-macro-workflow-and-vision-assert-docs.md) | 2026-03-24 | **Macro/workflow and vision/assert docs** | - |
+| [149](./149-2026-03-24-hidden-atomic-and-goal-first-docs.md) | 2026-03-24 | **Hidden atomic layer and goal-first docs** | - |
+| [148](./148-2026-03-24-tool-layering-policy-foundation.md) | 2026-03-24 | **Tool layering policy foundation** | - |
+| [147](./147-2026-03-24-supersede-reconstruction-legacy-task-forms.md) | 2026-03-24 | **Supersede legacy reconstruction task forms** | - |
+| [146](./146-2026-03-24-supersede-router-workflow-legacy-tasks.md) | 2026-03-24 | **Supersede legacy router/workflow planning tasks** | - |
+| [145](./145-2026-03-24-router-workflow-task-triage.md) | 2026-03-24 | **Router/workflow task triage against new tool strategy** | - |
+| [144](./144-2026-03-24-tool-layering-goal-first-strategy-planning.md) | 2026-03-24 | **Tool layering and goal-first strategy planning** | - |
+| [143](./143-2026-03-24-final-public-sculpt-surface-replacement.md) | 2026-03-24 | **Final public sculpt surface replacement** | - |
+| [142](./142-2026-03-23-programmatic-sculpt-region-wave.md) | 2026-03-23 | **Programmatic sculpt region wave** | - |
+| [141](./141-2026-03-23-programmatic-sculpt-deform-region-foundation.md) | 2026-03-23 | **Programmatic sculpt deform-region foundation** | - |
+| [140](./140-2026-03-23-programmatic-sculpt-replacement-policy.md) | 2026-03-23 | **Programmatic sculpt replacement policy** | - |
+| [139](./139-2026-03-23-modeling-modifier-rpc-and-sculpt-grab-boundary.md) | 2026-03-23 | **Modeling modifier RPC alignment and sculpt grab boundary** | - |
+| [138](./138-2026-03-23-coverage-expansion-contracts-mcp-areas-rpc-surface-runtime.md) | 2026-03-23 | **Coverage expansion for contracts, MCP areas, RPC alignment, and surface runtime** | - |
+| [137](./137-2026-03-23-legacy-manual-surface-boundary.md) | 2026-03-23 | **Legacy manual surface boundary** | - |
+| [136](./136-2026-03-23-scene-camera-parameter-ux-clarification.md) | 2026-03-23 | **Scene camera parameter UX clarification** | - |
+| [135](./135-2026-03-23-workflow-catalog-get-contract-alignment.md) | 2026-03-23 | **Workflow catalog get contract alignment** | - |
+| [134](./134-2026-03-23-modeling-transform-rpc-result-alignment.md) | 2026-03-23 | **Modeling transform RPC result alignment** | - |
+| [133](./133-2026-03-23-legacy-flat-single-page-tool-catalog.md) | 2026-03-23 | **Legacy-flat single-page tool catalog** | - |
+| [132](./132-2026-03-23-coverage-expansion-scene-workflow-catalog-vector-store-rpc.md) | 2026-03-23 | **Coverage expansion for scene MCP area, workflow catalog, vector store, and RPC server** | - |
+| [131](./131-2026-03-23-coverage-expansion-extraction-system-and-scripts.md) | 2026-03-23 | **Coverage expansion for extraction handler, system MCP area, and tooling scripts** | - |
+| [130](./130-2026-03-23-coverage-expansion-tooling-and-mcp-areas.md) | 2026-03-23 | **Coverage expansion for tooling scripts, addon bootstrap, and MCP areas** | - |
+| [129](./129-2026-03-22-router-metadata-schema-alignment.md) | 2026-03-22 | **Router metadata schema alignment for full pre-commit validation** | - |
+| [128](./128-2026-03-22-mypy-baseline-and-precommit-typing.md) | 2026-03-22 | **Full-repo mypy baseline and pre-commit typing hook** | - |
+| [127](./127-2026-03-22-fastmcp-3x-test-alignment.md) | 2026-03-22 | **FastMCP 3.x test alignment after MCP server migration** | - |
+| [126](./126-2026-03-20-runtime-boundaries-fastmcp-3x-strategy.md) | 2026-03-20 | **Runtime boundaries + FastMCP 3.x strategy docs** | - |
 | [125](./125-2025-12-21-workflow-catalog-inline-chunked-import.md) | 2025-12-21 | **Workflow catalog inline + chunked import** | - |
 | [124](./124-2025-12-21-mesh-inspect-paging.md) | 2025-12-21 | **Mesh inspect paging** | - |
 | [123](./123-2025-12-21-introspection-api-fixes.md) | 2025-12-21 | **Introspection API fixes (Blender 5.0+)** | - |
@@ -31,6 +84,7 @@ Project Change Log.
 | [103](./103-2025-12-09-router-semantic-matching-fix.md) | 2025-12-09 | **Router Semantic Matching Improvements (TASK-055-FIX-2)** | - |
 | [102](./102-2025-12-08-ensemble-modifier-fixes.md) | 2025-12-08 | **Ensemble Matching & Modifier Extraction Fixes** | - |
 | [101](./101-2025-12-08-unified-parameter-resolution.md) | 2025-12-08 | **Unified Parameter Resolution Interface (TASK-055-FIX)** | - |
+| [100](./100-2025-12-09-parameter-context-extraction.md) | 2025-12-09 | **Hybrid Context Extraction for ParameterStore (TASK-055-FIX-3)** | - |
 | [100](./100-2025-12-08-interactive-parameter-resolution.md) | 2025-12-08 | **Interactive Parameter Resolution (TASK-055)** *(superseded by 101)* | - |
 | [99](./99-2025-12-07-router-matching-fixes.md) | 2025-12-07 | **Router Matching & Parametric Variables Fixes** | - |
 | [98](./98-2025-12-07-parametric-variables.md) | 2025-12-07 | **Parametric Workflow Variables (TASK-052)** | - |
@@ -39,7 +93,9 @@ Project Change Log.
 | [95](./95-2025-12-07-fix-dispatcher-mappings.md) | 2025-12-07 | **Fix ToolDispatcher Mappings (TASK-049)** | - |
 | [94](./94-2025-12-07-proper-di-shared-labse.md) | 2025-12-07 | **Proper DI for Classifiers + Shared LaBSE Model (TASK-048)** | - |
 | [93](./93-2025-12-06-lancedb-migration.md) | 2025-12-06 | **LanceDB Vector Store Migration (TASK-047)** | - |
+| [92](./92-2025-12-05-symmetry-fill-tools.md) | 2025-12-05 | **Symmetry & Advanced Fill Tools (TASK-036)** | - |
 | [91](./91-2025-12-05-armature-rigging-tools.md) | 2025-12-05 | **Armature & Rigging Tools (TASK-037)** | 1.31.0 |
+| [91](./91-2025-12-04-object-inspection-tools.md) | 2025-12-04 | **Object Inspection Tools (TASK-045)** | - |
 | [90](./90-2025-12-04-text-tools.md) | 2025-12-04 | **Text & Annotations Tools (TASK-034)** | 1.30.0 |
 | [89](./89-2025-12-04-task-044-extraction-analysis-tools.md) | 2025-12-04 | **Extraction Analysis Tools (TASK-044)** | 1.29.0 |
 | [88](./88-2025-12-03-task-041-p5-testing-documentation.md) | 2025-12-03 | **Testing & Documentation (TASK-041 P5 Complete)** | - |
@@ -95,6 +151,7 @@ Project Change Log.
 | [38](./38-2025-11-29-mega-tools-implementation.md) | 2025-11-29 | **Mega Tools Implementation (TASK-020)** | 1.11.0 |
 | [37](./37-2025-11-28-phase-2-1-advanced-selection.md) | 2025-11-28 | **Phase 2.1: Advanced Selection Tools (TASK-015)** | - |
 | [36](./36-2025-11-28-mcp-parameter-validation-fixes.md) | 2025-11-28 | **MCP Parameter Validation Fixes (PR #14)** | - |
+| [35](./35-2025-11-27-fix-blender-tool-bugs.md) | 2025-11-27 | **Fix Blender Tool Bugs (Mode Validation, Boolean Solver, Edit Mode Context)** | - |
 | [34](./34-2025-11-27-scene-inspect-modifiers.md) | 2025-11-27 | **Scene Inspect Modifiers (TASK-014-14)** | 1.9.13 |
 | [33](./33-2025-11-27-scene-inspect-mesh-topology.md) | 2025-11-27 | **Scene Inspect Mesh Topology (TASK-014-13)** | 1.9.12 |
 | [32](./32-2025-11-27-mesh-list-groups.md) | 2025-11-27 | **Mesh List Groups (TASK-014-12)** | 1.9.11 |
@@ -108,6 +165,7 @@ Project Change Log.
 | [24](./24-2025-11-27-scene-inspect-object.md) | 2025-11-27 | **Scene Inspect Object Tool (TASK-014-3)** | 1.9.3 |
 | [23](./23-2025-11-27-scene-list-selection.md) | 2025-11-27 | **Scene List Selection Tool (TASK-014-2)** | 1.9.2 |
 | [22](./22-2025-11-27-scene-get-mode.md) | 2025-11-27 | **Scene Get Mode Tool (TASK-014-1)** | 1.9.1 |
+| [22](./22-2025-11-25-mesh-smooth-flatten.md) | 2025-11-25 | **Mesh Smooth & Flatten Tools (TASK-012)** | - |
 | [21](./21-2025-11-25-tool-docstring-standardization.md) | 2025-11-25 | **Tool Docstring Standardization (Scene, Modeling, Mesh)** | 0.2.4 |
 | [20](./20-2025-11-25-advanced-mesh-ops.md) | 2025-11-25 | **Advanced Mesh Operations (Boolean, Merge, Subdivide)** | 0.2.3 |
 | [19](./19-2025-11-24-mesh-edges.md) | 2025-11-24 | **Edge Operations (Bevel, Loop Cut, Inset)** | 0.2.2 |

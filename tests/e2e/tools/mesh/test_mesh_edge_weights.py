@@ -9,6 +9,7 @@ Tested tools:
 - mesh_bevel_weight
 - mesh_mark_sharp
 """
+
 import pytest
 from server.application.tool_handlers.mesh_handler import MeshToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -37,6 +38,7 @@ def scene_handler(rpc_client):
 # Setup Helpers
 # ==============================================================================
 
+
 def create_test_cube(modeling_handler, scene_handler, name="E2E_EdgeWeightsCube"):
     """Creates a test cube for edge weight operations."""
     try:
@@ -46,12 +48,7 @@ def create_test_cube(modeling_handler, scene_handler, name="E2E_EdgeWeightsCube"
         pass  # Object didn't exist
 
     # Create cube
-    result = modeling_handler.create_primitive(
-        primitive_type="CUBE",
-        size=2.0,
-        location=[0, 0, 0],
-        name=name
-    )
+    modeling_handler.create_primitive(primitive_type="CUBE", size=2.0, location=[0, 0, 0], name=name)
     return name
 
 
@@ -70,6 +67,7 @@ def enter_edit_mode_and_select_edges(scene_handler, mesh_handler, object_name):
 # ==============================================================================
 # TASK-029-1: mesh_edge_crease Tests
 # ==============================================================================
+
 
 def test_edge_crease_full_sharp(mesh_handler, modeling_handler, scene_handler):
     """Test setting full crease (1.0) on selected edges."""
@@ -177,6 +175,7 @@ def test_edge_crease_no_selection_raises(mesh_handler, modeling_handler, scene_h
 # TASK-029-2: mesh_bevel_weight Tests
 # ==============================================================================
 
+
 def test_bevel_weight_full(mesh_handler, modeling_handler, scene_handler):
     """Test setting full bevel weight (1.0) on selected edges."""
     try:
@@ -282,6 +281,7 @@ def test_bevel_weight_no_selection_raises(mesh_handler, modeling_handler, scene_
 # ==============================================================================
 # TASK-029-3: mesh_mark_sharp Tests
 # ==============================================================================
+
 
 def test_mark_sharp(mesh_handler, modeling_handler, scene_handler):
     """Test marking edges as sharp."""
@@ -391,6 +391,7 @@ def test_mark_sharp_invalid_action_raises(mesh_handler, modeling_handler, scene_
 # Integration Workflow Tests
 # ==============================================================================
 
+
 def test_workflow_crease_with_subsurf(mesh_handler, modeling_handler, scene_handler):
     """
     Integration test: Create cube → set crease → add Subsurf → verify sharp corners.
@@ -412,9 +413,7 @@ def test_workflow_crease_with_subsurf(mesh_handler, modeling_handler, scene_hand
 
         # Add Subdivision Surface modifier
         modifier_result = modeling_handler.add_modifier(
-            name=obj_name,
-            modifier_type="SUBSURF",
-            properties={"levels": 2, "render_levels": 2}
+            name=obj_name, modifier_type="SUBSURF", properties={"levels": 2, "render_levels": 2}
         )
         assert "SUBSURF" in modifier_result or "Subsurf" in modifier_result or "added" in modifier_result.lower()
 
@@ -447,9 +446,7 @@ def test_workflow_bevel_weight_with_bevel_modifier(mesh_handler, modeling_handle
 
         # Add Bevel modifier with Weight limit method
         modifier_result = modeling_handler.add_modifier(
-            name=obj_name,
-            modifier_type="BEVEL",
-            properties={"width": 0.1, "segments": 2, "limit_method": "WEIGHT"}
+            name=obj_name, modifier_type="BEVEL", properties={"width": 0.1, "segments": 2, "limit_method": "WEIGHT"}
         )
         assert "BEVEL" in modifier_result or "Bevel" in modifier_result or "added" in modifier_result.lower()
 

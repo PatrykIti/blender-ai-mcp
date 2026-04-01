@@ -5,9 +5,8 @@ TASK-060: Tests for AST-based unified evaluator.
 """
 
 import math
-import pytest
-from typing import Any
 
+import pytest
 from server.router.application.evaluator.unified_evaluator import UnifiedEvaluator
 from server.router.domain.entities.parameter import ParameterSchema
 
@@ -23,16 +22,11 @@ class TestUnifiedEvaluatorInit:
     def test_set_context(self):
         """Test setting context with various types."""
         evaluator = UnifiedEvaluator()
-        evaluator.set_context({
-            "width": 2.0,
-            "height": 4,
-            "has_selection": True,
-            "mode": "EDIT"
-        })
+        evaluator.set_context({"width": 2.0, "height": 4, "has_selection": True, "mode": "EDIT"})
         ctx = evaluator.get_context()
         assert ctx["width"] == 2.0
         assert ctx["height"] == 4.0  # int converted to float
-        assert ctx["has_selection"] == True  # Original type preserved
+        assert ctx["has_selection"]  # Original type preserved
         assert ctx["mode"] == "EDIT"
 
     def test_set_context_bool_handling(self):
@@ -393,12 +387,7 @@ class TestComputedParameters:
         """Test simple computed parameter."""
         schemas = {
             "width": ParameterSchema(name="width", type="float"),
-            "half_width": ParameterSchema(
-                name="half_width",
-                type="float",
-                computed="width / 2",
-                depends_on=["width"]
-            )
+            "half_width": ParameterSchema(name="half_width", type="float", computed="width / 2", depends_on=["width"]),
         }
         context = {"width": 10.0}
         result = evaluator.resolve_computed_parameters(schemas, context)
@@ -409,18 +398,8 @@ class TestComputedParameters:
         """Test computed parameters with dependencies."""
         schemas = {
             "x": ParameterSchema(name="x", type="float"),
-            "y": ParameterSchema(
-                name="y",
-                type="float",
-                computed="x * 2",
-                depends_on=["x"]
-            ),
-            "z": ParameterSchema(
-                name="z",
-                type="float",
-                computed="y + 1",
-                depends_on=["y"]
-            )
+            "y": ParameterSchema(name="y", type="float", computed="x * 2", depends_on=["x"]),
+            "z": ParameterSchema(name="z", type="float", computed="y + 1", depends_on=["y"]),
         }
         context = {"x": 5.0}
         result = evaluator.resolve_computed_parameters(schemas, context)
@@ -432,12 +411,7 @@ class TestComputedParameters:
         """Test computed parameters with math functions."""
         schemas = {
             "value": ParameterSchema(name="value", type="float"),
-            "rounded": ParameterSchema(
-                name="rounded",
-                type="float",
-                computed="floor(value)",
-                depends_on=["value"]
-            )
+            "rounded": ParameterSchema(name="rounded", type="float", computed="floor(value)", depends_on=["value"]),
         }
         context = {"value": 3.7}
         result = evaluator.resolve_computed_parameters(schemas, context)
@@ -446,28 +420,15 @@ class TestComputedParameters:
     def test_circular_dependency(self, evaluator):
         """Test circular dependency detection."""
         schemas = {
-            "a": ParameterSchema(
-                name="a",
-                type="float",
-                computed="b + 1",
-                depends_on=["b"]
-            ),
-            "b": ParameterSchema(
-                name="b",
-                type="float",
-                computed="a + 1",
-                depends_on=["a"]
-            )
+            "a": ParameterSchema(name="a", type="float", computed="b + 1", depends_on=["b"]),
+            "b": ParameterSchema(name="b", type="float", computed="a + 1", depends_on=["a"]),
         }
         with pytest.raises(ValueError, match="[Cc]ircular"):
             evaluator.resolve_computed_parameters(schemas, {})
 
     def test_no_computed(self, evaluator):
         """Test with no computed parameters."""
-        schemas = {
-            "x": ParameterSchema(name="x", type="float"),
-            "y": ParameterSchema(name="y", type="float")
-        }
+        schemas = {"x": ParameterSchema(name="x", type="float"), "y": ParameterSchema(name="y", type="float")}
         context = {"x": 1.0, "y": 2.0}
         result = evaluator.resolve_computed_parameters(schemas, context)
         assert result == {"x": 1.0, "y": 2.0}

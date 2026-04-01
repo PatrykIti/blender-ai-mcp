@@ -3,7 +3,14 @@
   "category": "mesh",
   "mode_required": "EDIT",
   "selection_required": true,
-  "keywords": ["extrude", "pull", "extend", "push", "outward", "geometry"],
+  "keywords": [
+    "extrude",
+    "pull",
+    "extend",
+    "push",
+    "outward",
+    "geometry"
+  ],
   "sample_prompts": [
     "extrude the selected faces",
     "pull out the top face",
@@ -13,12 +20,19 @@
   ],
   "parameters": {
     "move": {
-      "type": "list[float]",
+      "type": "vector3",
       "default": null,
       "description": "Translation vector [x, y, z] for extruded geometry"
     }
   },
-  "related_tools": ["mesh_inset", "mesh_bevel", "mesh_select"],
-  "patterns": ["phone_like:screen_cutout", "tower_like:height_extension"],
+  "related_tools": [
+    "mesh_inset",
+    "mesh_bevel",
+    "mesh_select"
+  ],
+  "patterns": [
+    "phone_like:screen_cutout",
+    "tower_like:height_extension"
+  ],
   "description": "Extrudes selected geometry with optional movement vector."
 }

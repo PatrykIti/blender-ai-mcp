@@ -1,0 +1,21 @@
+{
+  "tool_name": "scene_assert_proportion",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["assert", "proportion", "ratio", "relative size", "verify"],
+  "sample_prompts": ["assert object proportion", "verify width to height ratio", "check relative thickness"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "axis_a": {"type": "enum", "required": true, "options": ["X", "Y", "Z"]},
+    "expected_ratio": {"type": "float", "required": true},
+    "axis_b": {"type": "enum", "default": null, "options": ["X", "Y", "Z"]},
+    "reference_object": {"type": "string", "default": null},
+    "reference_axis": {"type": "enum", "default": null, "options": ["X", "Y", "Z"]},
+    "tolerance": {"type": "float", "default": 0.01, "range": [0.0, 1.0]},
+    "world_space": {"type": "bool", "default": true}
+  },
+  "related_tools": ["scene_measure_dimensions", "scene_assert_dimensions", "scene_assert_symmetry"],
+  "patterns": [],
+  "description": "Asserts that one object proportion or ratio matches the expected value."
+}

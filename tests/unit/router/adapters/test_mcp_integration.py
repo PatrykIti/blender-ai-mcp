@@ -4,26 +4,30 @@ Unit tests for MCP Integration Adapter.
 Tests the router integration with MCP server tool execution.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 import asyncio
+from unittest.mock import MagicMock, patch
 
+import pytest
 from server.router.adapters.mcp_integration import (
     MCPRouterIntegration,
     RouterMiddleware,
     create_router_integration,
 )
-from server.router.infrastructure.config import RouterConfig
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
+from server.router.infrastructure.config import RouterConfig
 
 
 def run_async(coro):
     """Helper to run async coroutines in sync tests."""
-    return asyncio.new_event_loop().run_until_complete(coro)
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
 
 
 # ============================================================================
@@ -46,16 +50,20 @@ def disabled_integration():
 @pytest.fixture
 def mock_executor():
     """Create mock async executor."""
+
     async def executor(tool_name: str, params: dict) -> str:
         return f"Executed {tool_name}"
+
     return executor
 
 
 @pytest.fixture
 def mock_sync_executor():
     """Create mock sync executor."""
+
     def executor(tool_name: str, params: dict) -> str:
         return f"Executed {tool_name}"
+
     return executor
 
 
@@ -181,7 +189,7 @@ class TestAsyncExecutorWrapping:
 
     def test_wrap_executor_routes_through_router(self, integration, mock_executor, edit_mode_context):
         """Test that executor routes through router."""
-        with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(integration.router.analyzer, "analyze", return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
             result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             # Should execute at least the original tool
@@ -189,7 +197,7 @@ class TestAsyncExecutorWrapping:
 
     def test_wrap_executor_increments_count(self, integration, mock_executor, edit_mode_context):
         """Test execution count increments."""
-        with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(integration.router.analyzer, "analyze", return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
             run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             assert integration._execution_count == 1
@@ -202,7 +210,7 @@ class TestAsyncExecutorWrapping:
             calls.append(tool_name)
             return f"Executed {tool_name}"
 
-        with patch.object(integration.router, 'process_llm_tool_call', side_effect=Exception("Router error")):
+        with patch.object(integration.router, "process_llm_tool_call", side_effect=Exception("Router error")):
             wrapped = integration.wrap_tool_executor(executor)
             result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
             assert "[ROUTER ERROR]" in result
@@ -234,7 +242,7 @@ class TestSyncExecutorWrapping:
 
     def test_wrap_sync_routes_through_router(self, integration, mock_sync_executor, edit_mode_context):
         """Test that sync executor routes through router."""
-        with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(integration.router.analyzer, "analyze", return_value=edit_mode_context):
             wrapped = integration.wrap_sync_executor(mock_sync_executor)
             result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
             assert "mesh_extrude_region" in result
@@ -247,7 +255,7 @@ class TestSyncExecutorWrapping:
             calls.append(tool_name)
             return f"Executed {tool_name}"
 
-        with patch.object(integration.router, 'process_llm_tool_call', side_effect=Exception("Router error")):
+        with patch.object(integration.router, "process_llm_tool_call", side_effect=Exception("Router error")):
             wrapped = integration.wrap_sync_executor(executor)
             result = wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]})
             assert "[ROUTER ERROR]" in result
@@ -439,9 +447,9 @@ class TestIntegration:
             executed_tools.append(tool_name)
             return f"OK: {tool_name}"
 
-        with patch.object(integration.router.analyzer, 'analyze', return_value=object_mode_context):
+        with patch.object(integration.router.analyzer, "analyze", return_value=object_mode_context):
             wrapped = integration.wrap_tool_executor(mock_executor)
-            result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
+            run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
 
         # Should have executed mode switch and selection
         assert "system_set_mode" in executed_tools
@@ -449,10 +457,11 @@ class TestIntegration:
 
     def test_tool_execution_error_handling(self, integration, edit_mode_context):
         """Test error handling during tool execution."""
+
         async def failing_executor(tool_name: str, params: dict) -> str:
             raise Exception("Tool failed")
 
-        with patch.object(integration.router.analyzer, 'analyze', return_value=edit_mode_context):
+        with patch.object(integration.router.analyzer, "analyze", return_value=edit_mode_context):
             wrapped = integration.wrap_tool_executor(failing_executor)
             result = run_async(wrapped("mesh_extrude_region", {"move": [0.0, 0.0, 0.5]}))
 

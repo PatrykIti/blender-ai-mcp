@@ -1,10 +1,16 @@
 # TASK-058: Loop System & String Interpolation for Workflows
 
+**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
+**Superseded On:** 2026-03-24  
+**Reason:** This task was planned under the older architecture assumptions. It will be rewritten later under the new tool-layering and goal-first strategy instead of being advanced in its current form.
+
 ## Overview
 
 Extension of the workflow system with **loops** and **string interpolation** so that even complex workflows (furniture/devices/models) can be described briefly and parametrically (e.g. `simple_table.yaml` without 15 manually duplicated planks).
 
 Key assumption: **nothing can "bypass the pipeline"** (especially the adaptation from TASK-051). Loops/interpolation must work identically in the standard and adaptive paths.
+
+> **Historical note:** Keep this file only as historical context until the workflow-DSL track is rewritten under `TASK-113`.
 
 ---
 

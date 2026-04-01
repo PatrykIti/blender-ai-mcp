@@ -12,7 +12,7 @@ TASK-046-4
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -255,16 +255,11 @@ class ProportionInheritance:
                     name=rule_name,
                     value=weighted_value,
                     source_workflow=main_source,
-                    weight=total_weight / result.total_weight
-                    if result.total_weight > 0
-                    else 0,
+                    weight=total_weight / result.total_weight if result.total_weight > 0 else 0,
                     description=f"Inherited from {main_source} (weighted avg)",
                 )
 
-        logger.debug(
-            f"Inherited {len(result.rules)} proportion rules from "
-            f"{len(result.sources)} workflows"
-        )
+        logger.debug(f"Inherited {len(result.rules)} proportion rules from {len(result.sources)} workflows")
 
         return result
 
@@ -291,7 +286,7 @@ class ProportionInheritance:
         x, y, z = dimensions[:3]
         min_dim = min(x, y, z)
         min_xy = min(x, y)
-        max_dim = max(x, y, z)
+        max(x, y, z)
 
         result = {}
 
@@ -404,7 +399,7 @@ class ProportionInheritance:
         Returns:
             List of rule names across all workflows.
         """
-        rules = set()
+        rules: set[str] = set()
         for proportions in self.WORKFLOW_PROPORTIONS.values():
             rules.update(proportions.keys())
         for proportions in self._custom_proportions.values():
@@ -421,6 +416,5 @@ class ProportionInheritance:
             "builtin_workflows": list(self.WORKFLOW_PROPORTIONS.keys()),
             "custom_workflows": list(self._custom_proportions.keys()),
             "available_rules": self.get_available_rules(),
-            "total_workflows": len(self.WORKFLOW_PROPORTIONS)
-            + len(self._custom_proportions),
+            "total_workflows": len(self.WORKFLOW_PROPORTIONS) + len(self._custom_proportions),
         }

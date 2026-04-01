@@ -8,8 +8,7 @@ TASK-047-4: Integrated with LanceVectorStore
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from server.router.domain.interfaces.i_intent_classifier import IIntentClassifier
 from server.router.domain.interfaces.i_vector_store import (
@@ -23,17 +22,14 @@ logger = logging.getLogger(__name__)
 
 # Try to import sentence-transformers
 try:
-    from sentence_transformers import SentenceTransformer
     import numpy as np
+    from sentence_transformers import SentenceTransformer
 
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
     np = None  # type: ignore
-    logger.warning(
-        "sentence-transformers not installed. "
-        "Intent classification will use fallback TF-IDF matching."
-    )
+    logger.warning("sentence-transformers not installed. Intent classification will use fallback TF-IDF matching.")
 
 
 # LaBSE model for multilingual embeddings
@@ -224,6 +220,9 @@ class IntentClassifier(IIntentClassifier):
         try:
             from sklearn.metrics.pairwise import cosine_similarity
 
+            if self._tfidf_vectorizer is None or self._tfidf_matrix is None:
+                return []
+
             # Transform prompt
             prompt_vec = self._tfidf_vectorizer.transform([prompt])
 
@@ -236,9 +235,7 @@ class IntentClassifier(IIntentClassifier):
             results = []
             for idx in top_indices:
                 if similarities[idx] > 0:
-                    results.append(
-                        (self._tfidf_tool_names[idx], float(similarities[idx]))
-                    )
+                    results.append((self._tfidf_tool_names[idx], float(similarities[idx])))
 
             return results
 
@@ -272,6 +269,15 @@ class IntentClassifier(IIntentClassifier):
             if keywords:
                 texts.append(" ".join(keywords))
 
+            # Add descriptive text and adjacent-tool hints from router metadata.
+            description = tool_meta.get("description")
+            if description:
+                texts.append(str(description))
+
+            related_tools = tool_meta.get("related_tools", [])
+            if related_tools:
+                texts.append(" ".join(str(tool) for tool in related_tools))
+
             # Add tool name (replace underscores with spaces)
             texts.append(tool_name.replace("_", " "))
 
@@ -283,9 +289,7 @@ class IntentClassifier(IIntentClassifier):
         existing_count = store.count(VectorNamespace.TOOLS)
 
         if existing_count >= len(self._tool_texts):
-            logger.info(
-                f"Vector store already has {existing_count} tool embeddings"
-            )
+            logger.info(f"Vector store already has {existing_count} tool embeddings")
             self._is_loaded = True
             return
 
@@ -454,10 +458,7 @@ class IntentClassifier(IIntentClassifier):
             "model_loaded": self._model is not None,
             "num_tools": stats.get("tools_count", 0),
             "is_loaded": self._is_loaded,
-            "using_fallback": (
-                self._is_loaded
-                and self._tfidf_vectorizer is not None
-            ),
+            "using_fallback": (self._is_loaded and self._tfidf_vectorizer is not None),
             "vector_store": {
                 "type": "LanceDB",
                 "using_fallback": stats.get("using_fallback", False),

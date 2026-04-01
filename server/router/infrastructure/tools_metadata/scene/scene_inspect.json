@@ -3,10 +3,17 @@
   "category": "scene",
   "mode_required": "ANY",
   "selection_required": false,
-  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object", "constraints"],
-  "sample_prompts": ["inspect the cube", "analyze mesh topology", "show modifiers on object", "inspect constraints on rig"],
+  "keywords": ["inspect", "analyze", "topology", "modifiers", "materials", "object", "constraints", "render", "world", "color management", "verify", "preflight"],
+  "sample_prompts": [
+    "inspect the current part before modifying it",
+    "analyze mesh topology on this object",
+    "show modifiers on object",
+    "inspect constraints on rig",
+    "inspect render settings",
+    "inspect world background state"
+  ],
   "parameters": {
-    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials", "constraints", "modifier_data"], "required": true},
+    "action": {"type": "enum", "options": ["object", "topology", "modifiers", "materials", "constraints", "modifier_data", "render", "color_management", "world"], "required": true},
     "object_name": {"type": "string", "default": null},
     "detailed": {"type": "bool", "default": false},
     "include_disabled": {"type": "bool", "default": true},
@@ -16,7 +23,7 @@
     "modifier_name": {"type": "string", "default": null},
     "include_node_tree": {"type": "bool", "default": false}
   },
-  "related_tools": ["scene_list_objects", "scene_context", "scene_get_constraints", "modeling_get_modifier_data"],
+  "related_tools": ["scene_list_objects", "scene_context", "scene_get_constraints", "modeling_get_modifier_data", "scene_configure"],
   "patterns": [],
-  "description": "Detailed inspection of objects, topology, modifiers, materials, constraints, and modifier data."
+  "description": "Detailed grouped inspection of objects, topology, modifiers, materials, constraints, modifier data, render settings, color management, and world state. Use it as the main read-side verification surface, including node-graph handoff fields for node-based worlds."
 }

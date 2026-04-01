@@ -1,11 +1,12 @@
+from typing import Any, Dict, List
+
 import bpy
-import math
-from typing import List, Optional
+
 
 class ModelingHandler:
     """Application service for modeling operations."""
 
-    def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=(0,0,0), rotation=(0,0,0), name=None):
+    def create_primitive(self, primitive_type, radius=1.0, size=2.0, location=(0, 0, 0), rotation=(0, 0, 0), name=None):
         """
         [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Creates a 3D primitive object.
         """
@@ -27,12 +28,14 @@ class ModelingHandler:
         elif ptype == "monkey":
             bpy.ops.mesh.primitive_monkey_add(size=size, location=location, rotation=rotation)
         else:
-            raise ValueError(f"Unknown primitive type: {primitive_type}. Valid types: cube, sphere, cylinder, plane, cone, torus, monkey")
-        
+            raise ValueError(
+                f"Unknown primitive type: {primitive_type}. Valid types: cube, sphere, cylinder, plane, cone, torus, monkey"
+            )
+
         obj = bpy.context.active_object
         if name:
             obj.name = name
-            
+
         return {"name": obj.name, "type": "MESH"}
 
     def transform_object(self, name, location=None, rotation=None, scale=None):
@@ -41,21 +44,21 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
+
         if location:
             obj.location = location
         if rotation:
-            # Convert degrees to radians if needed, but usually API expects radians. 
-            # Let's assume input is in radians or handle it. 
-            # Standard bpy uses Euler (radians). 
-            # If we want to be user friendly for LLM, maybe accept degrees? 
+            # Convert degrees to radians if needed, but usually API expects radians.
+            # Let's assume input is in radians or handle it.
+            # Standard bpy uses Euler (radians).
+            # If we want to be user friendly for LLM, maybe accept degrees?
             # For now, let's stick to standard vector inputs.
             obj.rotation_euler = rotation
         if scale:
             obj.scale = scale
-            
+
         return {"name": name, "location": list(obj.location)}
 
     def add_modifier(self, name, modifier_type, properties=None):
@@ -65,20 +68,20 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
+
         # Normalize modifier type to uppercase (Blender convention: SUBSURF, BEVEL, etc.)
         modifier_type_upper = modifier_type.upper()
-        
+
         try:
             mod = obj.modifiers.new(name=modifier_type, type=modifier_type_upper)
         except TypeError:
-             # Fallback if exact type name provided was correct but not upper (rare) or invalid
-             raise ValueError(f"Invalid modifier type: '{modifier_type}'")
+            # Fallback if exact type name provided was correct but not upper (rare) or invalid
+            raise ValueError(f"Invalid modifier type: '{modifier_type}'")
         except Exception as e:
-             raise ValueError(f"Could not create modifier '{modifier_type}': {str(e)}")
-        
+            raise ValueError(f"Could not create modifier '{modifier_type}': {str(e)}")
+
         if properties:
             # Special-case pointer properties that commonly arrive as names (strings)
             # from the MCP server.
@@ -96,9 +99,7 @@ class ModelingHandler:
                     if isinstance(value, str):
                         target_obj = bpy.data.objects.get(value)
                         if target_obj is None:
-                            raise ValueError(
-                                f"Boolean modifier target object '{value}' not found"
-                            )
+                            raise ValueError(f"Boolean modifier target object '{value}' not found")
                         mod.object = target_obj
                     else:
                         # Allow callers to pass an actual object reference.
@@ -113,7 +114,7 @@ class ModelingHandler:
                         setattr(mod, prop, value)
                     except Exception as e:
                         print(f"Warning: Could not set property {prop}: {e}")
-        
+
         return {"modifier": mod.name}
 
     def apply_modifier(self, name, modifier_name):
@@ -122,11 +123,11 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
+
         target_modifier_name = modifier_name
-        
+
         if modifier_name not in obj.modifiers:
             # Case-insensitive fallback lookup
             # e.g. AI asks for "bevel", but modifier is named "Bevel" or "BEVEL"
@@ -135,20 +136,20 @@ class ModelingHandler:
                 if m.name.upper() == modifier_name.upper():
                     found = m.name
                     break
-            
+
             if found:
                 target_modifier_name = found
             else:
                 raise ValueError(f"Modifier '{modifier_name}' not found on object '{name}'")
-            
+
         # Select the object and make it active for the operator to work
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
         # Ensure we're in Object Mode (modifier_apply is an Object Mode operator).
         try:
-            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode="OBJECT")
         except Exception:
             pass
 
@@ -160,12 +161,12 @@ class ModelingHandler:
                 mod.show_viewport = True
             if hasattr(mod, "show_render") and not mod.show_render:
                 mod.show_render = True
-        
+
         try:
             bpy.ops.object.modifier_apply(modifier=target_modifier_name)
         except RuntimeError as e:
             raise ValueError(str(e))
-        
+
         return {"applied_modifier": target_modifier_name, "object": name}
 
     def convert_to_mesh(self, name):
@@ -174,23 +175,23 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
-        if obj.type == 'MESH':
+
+        if obj.type == "MESH":
             return {"name": name, "type": "MESH", "status": "already_mesh"}
 
         # Select the object and make it active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        
+
         # Convert to mesh
         try:
-            bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.convert(target="MESH")
         except RuntimeError as e:
             raise ValueError(f"Failed to convert object '{name}' to mesh: {str(e)}")
-            
+
         return {"name": obj.name, "type": "MESH", "status": "converted"}
 
     def join_objects(self, object_names):
@@ -200,74 +201,74 @@ class ModelingHandler:
         """
         if not object_names:
             raise ValueError("No objects provided for joining.")
-            
+
         # Validate all objects exist
         objects_to_join = []
         for name in object_names:
             if name not in bpy.data.objects:
                 raise ValueError(f"Object '{name}' not found")
             objects_to_join.append(bpy.data.objects[name])
-            
+
         # Deselect all first
-        bpy.ops.object.select_all(action='DESELECT')
-        
+        bpy.ops.object.select_all(action="DESELECT")
+
         # Select all objects to be joined
         for obj in objects_to_join:
             obj.select_set(True)
-            
+
         # The last selected object becomes the active one for joining
         bpy.context.view_layer.objects.active = objects_to_join[-1]
-        
+
         try:
             bpy.ops.object.join()
         except RuntimeError as e:
             raise ValueError(f"Failed to join objects: {str(e)}")
-            
+
         # The active object after join is the new combined object
         joined_obj = bpy.context.active_object
         return {"name": joined_obj.name, "joined_count": len(object_names)}
 
-    def separate_object(self, name, type="LOOSE") -> List[str]:
+    def separate_object(self, name, type="LOOSE") -> Dict[str, Any]:
         """
         [OBJECT MODE][DESTRUCTIVE] Separates a mesh into new objects (LOOSE, SELECTED, MATERIAL).
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
-        valid_types = ['LOOSE', 'SELECTED', 'MATERIAL']
+
+        valid_types = ["LOOSE", "SELECTED", "MATERIAL"]
         separate_type = type.upper()
         if separate_type not in valid_types:
             raise ValueError(f"Invalid separation type: '{type}'. Must be one of {valid_types}")
-            
-        if obj.type != 'MESH':
+
+        if obj.type != "MESH":
             raise ValueError(f"Object '{name}' is not a mesh. Can only separate mesh objects.")
 
         # Get current objects in scene to identify new ones later
         initial_objects = set(bpy.context.scene.objects)
 
         # Select the object and make it active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        
+
         # Enter Edit Mode
-        bpy.ops.object.mode_set(mode='EDIT')
-        
+        bpy.ops.object.mode_set(mode="EDIT")
+
         try:
             bpy.ops.mesh.separate(type=separate_type)
         except RuntimeError as e:
-            bpy.ops.object.mode_set(mode='OBJECT') # Ensure we exit edit mode on error
+            bpy.ops.object.mode_set(mode="OBJECT")  # Ensure we exit edit mode on error
             raise ValueError(f"Failed to separate object '{name}' by type '{type}': {str(e)}")
-            
+
         # Exit Edit Mode
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         # Identify newly created objects
         current_objects = set(bpy.context.scene.objects)
         new_objects = current_objects - initial_objects
-        
+
         new_object_names = [o.name for o in new_objects]
         return {"separated_objects": new_object_names, "original_object": name}
 
@@ -277,32 +278,32 @@ class ModelingHandler:
         """
         if name not in bpy.data.objects:
             raise ValueError(f"Object '{name}' not found")
-        
+
         obj = bpy.data.objects[name]
-        
+
         valid_types = [
-            'GEOMETRY_ORIGIN',        # Geometry to Origin
-            'ORIGIN_GEOMETRY',        # Origin to Geometry
-            'ORIGIN_CURSOR',          # Origin to 3D Cursor
-            'ORIGIN_CENTER_OF_MASS',  # Origin to Center of Mass (Surface)
-            'ORIGIN_CENTER_OF_VOLUME' # Origin to Center of Mass (Volume)
+            "GEOMETRY_ORIGIN",  # Geometry to Origin
+            "ORIGIN_GEOMETRY",  # Origin to Geometry
+            "ORIGIN_CURSOR",  # Origin to 3D Cursor
+            "ORIGIN_CENTER_OF_MASS",  # Origin to Center of Mass (Surface)
+            "ORIGIN_CENTER_OF_VOLUME",  # Origin to Center of Mass (Volume)
         ]
-        
+
         origin_type_upper = type.upper()
         if origin_type_upper not in valid_types:
             # Provide a helpful error message with valid options
             raise ValueError(f"Invalid origin type: '{type}'. Must be one of {valid_types}")
 
         # Select the object and make it active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        
+
         try:
             bpy.ops.object.origin_set(type=origin_type_upper)
         except RuntimeError as e:
             raise ValueError(f"Failed to set origin for object '{name}' with type '{type}': {str(e)}")
-            
+
         return {"object": name, "origin_type": origin_type_upper, "status": "success"}
 
     def get_modifiers(self, name):
@@ -316,12 +317,9 @@ class ModelingHandler:
         modifiers_list = []
 
         for mod in obj.modifiers:
-            modifiers_list.append({
-                "name": mod.name,
-                "type": mod.type,
-                "show_viewport": mod.show_viewport,
-                "show_render": mod.show_render
-            })
+            modifiers_list.append(
+                {"name": mod.name, "type": mod.type, "show_viewport": mod.show_viewport, "show_render": mod.show_render}
+            )
 
         return modifiers_list
 
@@ -382,7 +380,7 @@ class ModelingHandler:
         return modifier_data
 
     def _serialize_modifier_value(self, value, prop, object_refs, seen_refs):
-        if prop.type == 'POINTER':
+        if prop.type == "POINTER":
             if value is None:
                 return None
             if hasattr(value, "name"):
@@ -393,7 +391,7 @@ class ModelingHandler:
                 return value.name
             return str(value)
 
-        if prop.type == 'COLLECTION':
+        if prop.type == "COLLECTION":
             items = []
             try:
                 for item in value:
@@ -466,10 +464,7 @@ class ModelingHandler:
         elif hasattr(node_group, "interface"):
             items = getattr(node_group.interface, "items_tree", None) or getattr(node_group.interface, "items", None)
             if items:
-                sockets = [
-                    item for item in items
-                    if getattr(item, "in_out", None) == direction
-                ]
+                sockets = [item for item in items if getattr(item, "in_out", None) == direction]
 
         return [self._serialize_node_socket(socket) for socket in sockets]
 
@@ -517,7 +512,7 @@ class ModelingHandler:
         location = location or [0, 0, 0]
 
         # Valid metaball element types
-        valid_types = ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+        valid_types = ["BALL", "CAPSULE", "PLANE", "ELLIPSOID", "CUBE"]
         element_type = element_type.upper()
         if element_type not in valid_types:
             raise ValueError(f"Invalid element type: {element_type}. Valid: {valid_types}")
@@ -541,7 +536,7 @@ class ModelingHandler:
         bpy.context.collection.objects.link(obj)
 
         # Select and make active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
@@ -570,11 +565,11 @@ class ModelingHandler:
 
         obj = bpy.data.objects[metaball_name]
 
-        if obj.type != 'META':
+        if obj.type != "META":
             raise ValueError(f"Object '{metaball_name}' is not a metaball (type: {obj.type})")
 
         # Valid metaball element types
-        valid_types = ['BALL', 'CAPSULE', 'PLANE', 'ELLIPSOID', 'CUBE']
+        valid_types = ["BALL", "CAPSULE", "PLANE", "ELLIPSOID", "CUBE"]
         element_type = element_type.upper()
         if element_type not in valid_types:
             raise ValueError(f"Invalid element type: {element_type}. Valid: {valid_types}")
@@ -610,16 +605,16 @@ class ModelingHandler:
 
         obj = bpy.data.objects[metaball_name]
 
-        if obj.type != 'META':
+        if obj.type != "META":
             raise ValueError(f"Object '{metaball_name}' is not a metaball (type: {obj.type})")
 
         # Select and make active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
         # Convert to mesh
-        bpy.ops.object.convert(target='MESH')
+        bpy.ops.object.convert(target="MESH")
 
         # Get the new mesh object
         new_obj = bpy.context.active_object
@@ -668,22 +663,19 @@ class ModelingHandler:
         bpy.context.collection.objects.link(obj)
 
         # Select and make active
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
         # Add Skin modifier
-        mod = obj.modifiers.new(name="Skin", type='SKIN')
+        obj.modifiers.new(name="Skin", type="SKIN")
 
         # Add Subdivision modifier for smooth result
-        subsurf = obj.modifiers.new(name="Subdivision", type='SUBSURF')
+        subsurf = obj.modifiers.new(name="Subdivision", type="SUBSURF")
         subsurf.levels = 2
         subsurf.render_levels = 2
 
-        return (
-            f"Created skeleton '{obj.name}' with {len(vertices)} vertices, "
-            f"{len(edges)} edges. Skin modifier added."
-        )
+        return f"Created skeleton '{obj.name}' with {len(vertices)} vertices, {len(edges)} edges. Skin modifier added."
 
     def skin_set_radius(
         self,
@@ -702,13 +694,13 @@ class ModelingHandler:
 
         obj = bpy.data.objects[object_name]
 
-        if obj.type != 'MESH':
+        if obj.type != "MESH":
             raise ValueError(f"Object '{object_name}' is not a mesh")
 
         # Check for skin modifier
         skin_mod = None
         for mod in obj.modifiers:
-            if mod.type == 'SKIN':
+            if mod.type == "SKIN":
                 skin_mod = mod
                 break
 
@@ -725,15 +717,9 @@ class ModelingHandler:
         if vertex_index is not None:
             # Set specific vertex
             if vertex_index < 0 or vertex_index >= len(skin_layer.data):
-                raise ValueError(
-                    f"Vertex index {vertex_index} out of range "
-                    f"(0 to {len(skin_layer.data) - 1})"
-                )
+                raise ValueError(f"Vertex index {vertex_index} out of range (0 to {len(skin_layer.data) - 1})")
             skin_layer.data[vertex_index].radius = (radius_x, radius_y)
-            return (
-                f"Set skin radius at vertex {vertex_index} to "
-                f"({radius_x}, {radius_y}) on '{object_name}'"
-            )
+            return f"Set skin radius at vertex {vertex_index} to ({radius_x}, {radius_y}) on '{object_name}'"
         else:
             # Set all vertices
             for sv in skin_layer.data:

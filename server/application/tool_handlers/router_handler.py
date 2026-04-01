@@ -8,10 +8,23 @@ TASK-046: Extended with semantic matching methods.
 TASK-055: Extended with parameter resolution methods.
 """
 
-import json
-from typing import Dict, Any, List, Optional, Tuple, Union
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
 from server.domain.tools.router import IRouterTool
+from server.router.application.confidence_normalization import (
+    normalize_ensemble_result,
+    normalize_workflow_match_confidence,
+)
+from server.router.application.policy.correction_policy_engine import (
+    CorrectionPolicyEngine,
+    PolicyDecision,
+)
+from server.router.application.session_phase_hints import (
+    BUILD_PHASE_HINT,
+    PLANNING_PHASE_HINT,
+    derive_phase_hint_from_router_result,
+)
 
 
 class RouterToolHandler(IRouterTool):
@@ -25,12 +38,52 @@ class RouterToolHandler(IRouterTool):
         _enabled: Whether router is enabled in config.
     """
 
+    _UTILITY_GOAL_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\b(viewport|screenshot|screen ?shot|capture image|capture screenshot)\b", re.IGNORECASE),
+        re.compile(r"\b(save (to )?file|save image|export image)\b", re.IGNORECASE),
+        re.compile(r"\b(clean scene|clear scene|reset scene|new scene)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(zrzut ekranu|zrzut viewportu|screenshot viewportu|wyczy[sś]c scene|wyczy[sś]c scen[ęe])\b",
+            re.IGNORECASE,
+        ),
+    )
+    _META_CAPTURE_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\b(vision test|smoke test|test scenario|golden test)\b", re.IGNORECASE),
+        re.compile(r"\b(progressive screenshots?|before and after|before/after)\b", re.IGNORECASE),
+        re.compile(r"\b(consistent camera|same view|same framing|same camera)\b", re.IGNORECASE),
+    )
+    _GUIDED_MANUAL_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\blow[- ]poly\b.*\b(squirrel|rabbit|owl|fox|bird|animal|creature|character)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low[- ]poly|blockout|face|body|ears|snout)\b", re.IGNORECASE
+        ),
+        re.compile(r"\b(animal|creature|character)\b.*\b(low[- ]poly|blockout|head|face|body)\b", re.IGNORECASE),
+    )
+    _REFERENCE_GUIDED_HINT_PATTERNS: tuple[re.Pattern[str], ...] = (
+        re.compile(r"\breference images?\b", re.IGNORECASE),
+        re.compile(r"\breference image\b", re.IGNORECASE),
+        re.compile(r"\bfront and side reference\b", re.IGNORECASE),
+        re.compile(r"\bfront and side reference images\b", re.IGNORECASE),
+        re.compile(r"\bfront/side reference\b", re.IGNORECASE),
+        re.compile(r"\bmatching .*reference", re.IGNORECASE),
+    )
+    _GUIDED_MANUAL_BUILD_DECLINE_VALUES: tuple[str, ...] = (
+        "guided_manual_build",
+        "__guided_manual_build__",
+        "manual_build",
+        "manual",
+        "decline",
+        "reject",
+        "none",
+    )
+
     def __init__(
         self,
         router=None,
         enabled: bool = True,
         parameter_resolver=None,
         workflow_loader=None,
+        correction_policy_engine: Optional[CorrectionPolicyEngine] = None,
     ):
         """Initialize router handler.
 
@@ -47,6 +100,178 @@ class RouterToolHandler(IRouterTool):
         self._enabled = enabled
         self._parameter_resolver = parameter_resolver
         self._workflow_loader = workflow_loader
+        self._correction_policy_engine = correction_policy_engine or CorrectionPolicyEngine()
+
+    @classmethod
+    def _looks_like_utility_goal(cls, goal: str) -> bool:
+        """Return True when the request is a utility/capture intent, not a build goal."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._UTILITY_GOAL_PATTERNS)
+
+    @classmethod
+    def _looks_like_meta_capture_build_goal(cls, goal: str) -> bool:
+        """Return True when the goal is really a test/capture progression scenario, not a workflow target."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._META_CAPTURE_BUILD_PATTERNS)
+
+    @classmethod
+    def _looks_like_guided_manual_build_goal(cls, goal: str) -> bool:
+        """Return True when the goal should skip workflow routing and enter guided manual build."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        return any(pattern.search(normalized_goal) for pattern in cls._GUIDED_MANUAL_BUILD_PATTERNS)
+
+    @classmethod
+    def _looks_like_reference_guided_manual_build_goal(cls, goal: str) -> bool:
+        """Return True when reference-guided organic/manual build should skip workflow routing."""
+
+        normalized_goal = goal.strip()
+        if not normalized_goal:
+            return False
+        has_reference_guidance = any(pattern.search(normalized_goal) for pattern in cls._REFERENCE_GUIDED_HINT_PATTERNS)
+        return has_reference_guidance and cls._looks_like_guided_manual_build_goal(normalized_goal)
+
+    @staticmethod
+    def _no_match_response(
+        *,
+        goal: str,
+        message: str,
+        phase_hint: str,
+        continuation_mode: str,
+    ) -> Dict[str, Any]:
+        return {
+            "status": "no_match",
+            "continuation_mode": continuation_mode,
+            "workflow": None,
+            "resolved": {},
+            "unresolved": [],
+            "resolution_sources": {},
+            "phase_hint": phase_hint,
+            "message": message,
+        }
+
+    @staticmethod
+    def _policy_context_dict(decision) -> dict[str, Any]:
+        """Convert policy decisions into a serializable transparency payload."""
+
+        return {
+            "decision": decision.decision.value,
+            "reason": decision.reason,
+            "source": decision.confidence.source,
+            "score": decision.confidence.score,
+            "band": decision.confidence.band.value,
+            "risk": decision.confidence.risk.value,
+            "metadata": decision.confidence.metadata,
+        }
+
+    @staticmethod
+    def _workflow_confirmation_unresolved(
+        *,
+        matched_workflow: str,
+        goal: str,
+        error: str | None = None,
+        policy_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Build the explicit workflow-confirmation clarification payload."""
+
+        return {
+            "status": "needs_input",
+            "continuation_mode": "workflow",
+            "workflow": matched_workflow,
+            "resolved": {},
+            "unresolved": [
+                {
+                    "param": "workflow_confirmation",
+                    "type": "string",
+                    "description": "Confirm the workflow choice or choose guided_manual_build to continue manually",
+                    "enum": [matched_workflow, "guided_manual_build"],
+                    "default": matched_workflow,
+                    "context": goal,
+                    "semantic_hints": [],
+                    **({"error": error} if error else {}),
+                }
+            ],
+            "resolution_sources": {},
+            "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
+            **({"policy_context": policy_context} if policy_context else {}),
+            "message": (
+                f"Workflow '{matched_workflow}' is only a medium-confidence match. "
+                "Please confirm the workflow or switch to guided_manual_build before execution."
+            ),
+        }
+
+    @classmethod
+    def _is_guided_manual_build_rejection(cls, raw_confirmation: Any) -> bool:
+        """Return True when workflow confirmation explicitly declines into manual build."""
+
+        if raw_confirmation is None:
+            return False
+        confirmation = str(raw_confirmation).strip().lower()
+        if confirmation in cls._GUIDED_MANUAL_BUILD_DECLINE_VALUES:
+            return True
+        return "guided manual build" in confirmation or "manual build" in confirmation
+
+    @staticmethod
+    def _consume_workflow_confirmation(
+        *,
+        matched_workflow: str,
+        goal: str,
+        resolved_params: Optional[Dict[str, Any]],
+        policy_context: dict[str, Any] | None = None,
+    ) -> tuple[bool, dict[str, Any] | None, dict[str, Any] | None]:
+        """Validate and strip workflow_confirmation before normal parameter handling."""
+
+        if not resolved_params or "workflow_confirmation" not in resolved_params:
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._workflow_confirmation_unresolved(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    policy_context=policy_context,
+                ),
+            )
+
+        raw_confirmation = resolved_params.get("workflow_confirmation")
+        confirmation = str(raw_confirmation).strip() if raw_confirmation is not None else ""
+
+        if RouterToolHandler._is_guided_manual_build_rejection(raw_confirmation):
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._no_match_response(
+                    goal=goal,
+                    phase_hint=BUILD_PHASE_HINT,
+                    continuation_mode="guided_manual_build",
+                    message=(
+                        f"Workflow '{matched_workflow}' was declined. "
+                        "Continue on the guided build surface with visible build tools/macros."
+                    ),
+                ),
+            )
+
+        if confirmation != matched_workflow:
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._workflow_confirmation_unresolved(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    error=f"Invalid workflow confirmation: {raw_confirmation!r}",
+                    policy_context=policy_context,
+                ),
+            )
+
+        remaining = {key: value for key, value in resolved_params.items() if key != "workflow_confirmation"}
+        return True, remaining or None, None
 
     def set_goal(
         self,
@@ -79,6 +304,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "disabled"}),
                 "message": "Router is disabled. Goal noted but no workflow optimization available.",
             }
 
@@ -90,8 +316,70 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "disabled"}),
                 "message": "Router not initialized.",
             }
+
+        if self._looks_like_utility_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=PLANNING_PHASE_HINT,
+                continuation_mode="guided_utility",
+                message=(
+                    f"'{goal}' looks like a utility/capture request, not a build workflow goal. "
+                    "Use search_tools(...) and call_tool(...) for guided utility actions such as "
+                    "scene_get_viewport or scene_clean_scene."
+                ),
+            )
+
+        if self._looks_like_meta_capture_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a guided manual-build / capture-test scenario rather than a reusable workflow goal. "
+                    "Continue on the guided build surface with visible build tools/macros and use utility capture tools separately."
+                ),
+            )
+
+        if self._looks_like_reference_guided_manual_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a reference-guided manual build request rather than a reusable workflow goal. "
+                    "Continue on the guided build surface, then attach/use reference_images(...) against that active manual build."
+                ),
+            )
+
+        if self._looks_like_guided_manual_build_goal(goal):
+            try:
+                router.clear_goal()
+            except Exception:
+                pass
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"'{goal}' looks like a guided manual-build modeling request rather than a reusable workflow goal. "
+                    "Continue on the guided build surface with visible build tools/macros instead of forcing workflow matching."
+                ),
+            )
 
         # Step 1: Match workflow
         try:
@@ -103,6 +391,7 @@ class RouterToolHandler(IRouterTool):
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "error"}),
                 "error": {
                     "type": type(e).__name__,
                     "details": str(e),
@@ -112,14 +401,85 @@ class RouterToolHandler(IRouterTool):
             }
 
         if not matched_workflow:
-            return {
-                "status": "no_match",
-                "workflow": None,
-                "resolved": {},
-                "unresolved": [],
-                "resolution_sources": {},
-                "message": f"No workflow matched for: '{goal}'. Router will use heuristics to assist.",
-            }
+            return self._no_match_response(
+                goal=goal,
+                phase_hint=BUILD_PHASE_HINT,
+                continuation_mode="guided_manual_build",
+                message=(
+                    f"No workflow matched for: '{goal}'. Continue on the guided build surface with visible build tools/macros "
+                    "instead of forcing workflow import or random tool guessing."
+                ),
+            )
+
+        # Medium-confidence workflow matches should escalate to clarification instead
+        # of silently reinterpreting intent.
+        ensemble_result = getattr(router, "_last_ensemble_result", None)
+        if ensemble_result is not None:
+            normalized_confidence = normalize_ensemble_result(ensemble_result)
+            policy_decision = self._correction_policy_engine.decide(normalized_confidence)
+            if policy_decision.decision == PolicyDecision.ASK:
+                confirmation_accepted, resolved_params, confirmation_response = self._consume_workflow_confirmation(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    resolved_params=resolved_params,
+                    policy_context=self._policy_context_dict(policy_decision),
+                )
+                if not confirmation_accepted:
+                    response = confirmation_response or {}
+                    if response.get("status") == "no_match":
+                        try:
+                            router.clear_goal()
+                        except Exception:
+                            pass
+                    unresolved = response.get("unresolved") or []
+                    if unresolved:
+                        existing_error = unresolved[0].get("error")
+                        medium_confidence_error = (
+                            f"Medium-confidence workflow match ({normalized_confidence.score:.3f}, "
+                            f"band={normalized_confidence.band}) requires confirmation."
+                        )
+                        unresolved[0]["error"] = (
+                            f"{existing_error} {medium_confidence_error}".strip()
+                            if existing_error
+                            else medium_confidence_error
+                        )
+                    return response
+        else:
+            last_match = getattr(router, "_last_match_result", None)
+            if last_match is not None:
+                normalized_confidence = normalize_workflow_match_confidence(
+                    workflow_name=matched_workflow,
+                    confidence_level=getattr(last_match, "confidence_level", None),
+                    requires_adaptation=bool(getattr(last_match, "requires_adaptation", False)),
+                )
+                policy_decision = self._correction_policy_engine.decide(normalized_confidence)
+                if policy_decision.decision == PolicyDecision.ASK:
+                    confirmation_accepted, resolved_params, confirmation_response = self._consume_workflow_confirmation(
+                        matched_workflow=matched_workflow,
+                        goal=goal,
+                        resolved_params=resolved_params,
+                        policy_context=self._policy_context_dict(policy_decision),
+                    )
+                    if not confirmation_accepted:
+                        response = confirmation_response or {}
+                        if response.get("status") == "no_match":
+                            try:
+                                router.clear_goal()
+                            except Exception:
+                                pass
+                        unresolved = response.get("unresolved") or []
+                        if unresolved:
+                            existing_error = unresolved[0].get("error")
+                            medium_confidence_error = (
+                                f"Medium-confidence workflow match "
+                                f"(band={normalized_confidence.band}) requires confirmation."
+                            )
+                            unresolved[0]["error"] = (
+                                f"{existing_error} {medium_confidence_error}".strip()
+                                if existing_error
+                                else medium_confidence_error
+                            )
+                        return response
 
         # Step 2: Get workflow definition and parameters
         loader = self._workflow_loader
@@ -130,10 +490,12 @@ class RouterToolHandler(IRouterTool):
             execution_results = router.execute_pending_workflow({})
             return {
                 "status": "ready",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": {},
                 "unresolved": [],
                 "resolution_sources": {},
+                "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed ({len(execution_results)} tool calls).",
             }
@@ -158,10 +520,7 @@ class RouterToolHandler(IRouterTool):
                 if not isinstance(raw, str):
                     return raw
                 value = raw.strip()
-                if (
-                    (value.startswith('"') and value.endswith('"'))
-                    or (value.startswith("'") and value.endswith("'"))
-                ):
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                     value = value[1:-1].strip()
                 if schema.enum and all(isinstance(v, str) for v in schema.enum):
                     enum_map = {v.strip().lower(): v for v in schema.enum}
@@ -244,7 +603,7 @@ class RouterToolHandler(IRouterTool):
                     )
 
         # Step 4: Get existing modifiers from ensemble matching
-        existing_modifiers = getattr(router, '_pending_modifiers', {}) or {}
+        existing_modifiers = getattr(router, "_pending_modifiers", {}) or {}
         merged_modifiers = {**explicit_params, **existing_modifiers} if explicit_params else existing_modifiers
 
         # Step 5: Resolve parameters using three-tier system
@@ -254,16 +613,19 @@ class RouterToolHandler(IRouterTool):
             if invalid_params:
                 return {
                     "status": "needs_input",
+                    "continuation_mode": "workflow",
                     "workflow": matched_workflow,
                     "resolved": {},
                     "unresolved": invalid_params,
                     "resolution_sources": {},
+                    "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
                     "message": "Some provided parameter values are invalid. Please correct them and try again.",
                 }
 
             execution_results = router.execute_pending_workflow(merged_modifiers)
             return {
                 "status": "ready",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": merged_modifiers,
                 "unresolved": [],
@@ -271,6 +633,7 @@ class RouterToolHandler(IRouterTool):
                     **{k: "yaml_modifier" for k in existing_modifiers},
                     **{k: "user" for k in (explicit_params or {}) if k not in existing_modifiers},
                 },
+                "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
                 "executed": len(execution_results),
                 "message": f"Workflow '{matched_workflow}' executed with modifiers ({len(execution_results)} tool calls).",
             }
@@ -293,16 +656,18 @@ class RouterToolHandler(IRouterTool):
         if result.needs_llm_input or invalid_params:
             unresolved_list = []
             for unresolved in result.unresolved:
-                unresolved_list.append({
-                    "param": unresolved.name,
-                    "type": unresolved.schema.type,
-                    "description": unresolved.schema.description,
-                    "range": list(unresolved.schema.range) if unresolved.schema.range else None,
-                    "enum": unresolved.schema.enum,
-                    "default": unresolved.schema.default,
-                    "context": unresolved.context,
-                    "semantic_hints": unresolved.schema.semantic_hints,
-                })
+                unresolved_list.append(
+                    {
+                        "param": unresolved.name,
+                        "type": unresolved.schema.type,
+                        "description": unresolved.schema.description,
+                        "range": list(unresolved.schema.range) if unresolved.schema.range else None,
+                        "enum": unresolved.schema.enum,
+                        "default": unresolved.schema.default,
+                        "context": unresolved.context,
+                        "semantic_hints": unresolved.schema.semantic_hints,
+                    }
+                )
 
             if invalid_params:
                 # Put invalid inputs at the front, avoid duplicates
@@ -312,10 +677,12 @@ class RouterToolHandler(IRouterTool):
 
             return {
                 "status": "needs_input",
+                "continuation_mode": "workflow",
                 "workflow": matched_workflow,
                 "resolved": result.resolved,
                 "unresolved": unresolved_list,
                 "resolution_sources": resolution_sources,
+                "phase_hint": derive_phase_hint_from_router_result({"status": "needs_input"}),
                 "message": (
                     "Some provided parameter values are invalid. Please correct them and try again."
                     if invalid_params
@@ -328,10 +695,12 @@ class RouterToolHandler(IRouterTool):
 
         return {
             "status": "ready",
+            "continuation_mode": "workflow",
             "workflow": matched_workflow,
             "resolved": result.resolved,
             "unresolved": [],
             "resolution_sources": resolution_sources,
+            "phase_hint": derive_phase_hint_from_router_result({"status": "ready"}),
             "executed": len(execution_results),
             "message": f"Workflow '{matched_workflow}' executed with {len(result.resolved)} parameters ({len(execution_results)} tool calls).",
         }
@@ -358,10 +727,10 @@ class RouterToolHandler(IRouterTool):
 
         # Get semantic hints
         hints = []
-        if hasattr(schema, 'semantic_hints'):
+        if hasattr(schema, "semantic_hints"):
             hints = schema.semantic_hints
         elif isinstance(schema, dict):
-            hints = schema.get('semantic_hints', [])
+            hints = schema.get("semantic_hints", [])
 
         # Try to find matching hint in goal
         goal_lower = goal.lower()

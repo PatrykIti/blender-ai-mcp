@@ -7,15 +7,8 @@ Requires running Blender instance.
 TASK-039-23
 """
 
-import pytest
-
-from server.router.application.router import SupervisorRouter
 from server.router.application.analyzers.geometry_pattern_detector import GeometryPatternDetector
 from server.router.application.analyzers.scene_context_analyzer import SceneContextAnalyzer
-from server.router.application.analyzers.proportion_calculator import (
-    calculate_proportions,
-    get_proportion_summary,
-)
 
 
 class TestPatternDetectionOnRealGeometry:
@@ -25,9 +18,12 @@ class TestPatternDetectionOnRealGeometry:
         """Test: Flat, rectangular object is detected as phone_like."""
         # Create phone-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]  # Phone proportions
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.4, 0.8, 0.05]  # Phone proportions
+            },
+        )
 
         # Analyze scene
         analyzer = SceneContextAnalyzer(rpc_client=rpc_client)
@@ -48,15 +44,20 @@ class TestPatternDetectionOnRealGeometry:
         flat_patterns = {"phone_like", "table_like", "wheel_like"}
         has_flat_pattern = any(name in flat_patterns for name in pattern_names)
 
-        assert has_flat_pattern, f"Should detect flat pattern (phone_like, table_like, or wheel_like), got: {pattern_names}"
+        assert has_flat_pattern, (
+            f"Should detect flat pattern (phone_like, table_like, or wheel_like), got: {pattern_names}"
+        )
 
     def test_detect_tower_like_pattern(self, rpc_client, clean_scene):
         """Test: Tall, thin object is detected as tower_like."""
         # Create tower-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.3, 0.3, 2.0]  # Tower proportions
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.3, 0.3, 2.0]  # Tower proportions
+            },
+        )
 
         analyzer = SceneContextAnalyzer(rpc_client=rpc_client)
         context = analyzer.analyze()
@@ -113,9 +114,12 @@ class TestProportionCalculation:
     def test_flat_object_proportions(self, rpc_client, clean_scene):
         """Test: Flat object has correct proportions calculated."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [1.0, 1.0, 0.1]  # Flat
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [1.0, 1.0, 0.1]  # Flat
+            },
+        )
 
         analyzer = SceneContextAnalyzer(rpc_client=rpc_client)
         context = analyzer.analyze()
@@ -126,17 +130,20 @@ class TestProportionCalculation:
             # If dimensions were retrieved correctly, check proportions
             dims = context.get_active_dimensions()
             if dims and dims != [1.0, 1.0, 1.0]:
-                assert context.proportions.is_flat or \
-                       context.proportions.aspect_xz > 5, \
-                       "Flat object should have flat proportions"
+                assert context.proportions.is_flat or context.proportions.aspect_xz > 5, (
+                    "Flat object should have flat proportions"
+                )
             # Otherwise, test passes - dimension retrieval is a separate concern
 
     def test_tall_object_proportions(self, rpc_client, clean_scene):
         """Test: Tall object has correct proportions calculated."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.5, 0.5, 3.0]  # Tall
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.5, 0.5, 3.0]  # Tall
+            },
+        )
 
         analyzer = SceneContextAnalyzer(rpc_client=rpc_client)
         context = analyzer.analyze()
@@ -147,9 +154,9 @@ class TestProportionCalculation:
             # If dimensions were retrieved correctly, check proportions
             dims = context.get_active_dimensions()
             if dims and dims != [1.0, 1.0, 1.0]:
-                assert context.proportions.is_tall or \
-                       context.proportions.dominant_axis == "z", \
-                       "Tall object should have tall proportions"
+                assert context.proportions.is_tall or context.proportions.dominant_axis == "z", (
+                    "Tall object should have tall proportions"
+                )
             # Otherwise, test passes - dimension retrieval is a separate concern
 
 
@@ -196,9 +203,7 @@ class TestSceneContextAnalysis:
     def test_analyze_dimensions(self, rpc_client, clean_scene):
         """Test: Scene analysis includes object dimensions."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [2.0, 3.0, 4.0]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [2.0, 3.0, 4.0]})
 
         analyzer = SceneContextAnalyzer(rpc_client=rpc_client)
         context = analyzer.analyze()
@@ -216,15 +221,11 @@ class TestPatternToWorkflowMapping:
         """Test: Phone-like pattern suggests phone workflow."""
         # Create phone-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]})
 
         # Process a tool call that might trigger workflow
         tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": -0.02},
-            prompt="create screen cutout on phone"
+            "mesh_extrude_region", {"depth": -0.02}, prompt="create screen cutout on phone"
         )
 
         # Should have detected pattern and potentially suggested workflow
@@ -234,14 +235,8 @@ class TestPatternToWorkflowMapping:
     def test_tower_pattern_triggers_tower_workflow(self, router, rpc_client, clean_scene):
         """Test: Tower-like pattern suggests tower workflow."""
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.3, 0.3, 2.0]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [0.3, 0.3, 2.0]})
 
-        tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 3},
-            prompt="add segments to tower"
-        )
+        tools = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 3}, prompt="add segments to tower")
 
         assert len(tools) > 0

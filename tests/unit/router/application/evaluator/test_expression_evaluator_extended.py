@@ -5,8 +5,9 @@ Tests TASK-056-1: 13 new math functions
 Tests TASK-056-5: Computed parameters system
 """
 
-import pytest
 import math
+
+import pytest
 from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
 from server.router.domain.entities.parameter import ParameterSchema
 
@@ -18,11 +19,13 @@ class TestExtendedMathFunctions:
     def evaluator(self):
         """Create evaluator with test context."""
         ev = ExpressionEvaluator()
-        ev.set_context({
-            "x": 2.0,
-            "y": 3.0,
-            "angle": 0.5,  # radians
-        })
+        ev.set_context(
+            {
+                "x": 2.0,
+                "y": 3.0,
+                "angle": 0.5,  # radians
+            }
+        )
         return ev
 
     def test_trunc(self, evaluator):
@@ -123,11 +126,8 @@ class TestComputedParameters:
             "width": ParameterSchema(name="width", type="float"),
             "height": ParameterSchema(name="height", type="float"),
             "aspect_ratio": ParameterSchema(
-                name="aspect_ratio",
-                type="float",
-                computed="width / height",
-                depends_on=["width", "height"]
-            )
+                name="aspect_ratio", type="float", computed="width / height", depends_on=["width", "height"]
+            ),
         }
 
         context = {"width": 2.0, "height": 1.0}
@@ -141,18 +141,8 @@ class TestComputedParameters:
         """Test chain of dependent computed parameters."""
         schemas = {
             "base": ParameterSchema(name="base", type="float"),
-            "double": ParameterSchema(
-                name="double",
-                type="float",
-                computed="base * 2",
-                depends_on=["base"]
-            ),
-            "quadruple": ParameterSchema(
-                name="quadruple",
-                type="float",
-                computed="double * 2",
-                depends_on=["double"]
-            )
+            "double": ParameterSchema(name="double", type="float", computed="base * 2", depends_on=["base"]),
+            "quadruple": ParameterSchema(name="quadruple", type="float", computed="double * 2", depends_on=["double"]),
         }
 
         context = {"base": 5.0}
@@ -168,11 +158,8 @@ class TestComputedParameters:
             "width": ParameterSchema(name="width", type="float"),
             "height": ParameterSchema(name="height", type="float"),
             "diagonal": ParameterSchema(
-                name="diagonal",
-                type="float",
-                computed="hypot(width, height)",
-                depends_on=["width", "height"]
-            )
+                name="diagonal", type="float", computed="hypot(width, height)", depends_on=["width", "height"]
+            ),
         }
 
         context = {"width": 3.0, "height": 4.0}
@@ -183,18 +170,8 @@ class TestComputedParameters:
     def test_circular_dependency_detection(self, evaluator):
         """Test that circular dependencies are detected."""
         schemas = {
-            "a": ParameterSchema(
-                name="a",
-                type="float",
-                computed="b * 2",
-                depends_on=["b"]
-            ),
-            "b": ParameterSchema(
-                name="b",
-                type="float",
-                computed="a * 2",
-                depends_on=["a"]
-            )
+            "a": ParameterSchema(name="a", type="float", computed="b * 2", depends_on=["b"]),
+            "b": ParameterSchema(name="b", type="float", computed="a * 2", depends_on=["a"]),
         }
 
         with pytest.raises(ValueError, match="Circular dependency"):
@@ -218,24 +195,13 @@ class TestComputedParameters:
             "width": ParameterSchema(name="width", type="float"),
             "height": ParameterSchema(name="height", type="float"),
             "depth": ParameterSchema(name="depth", type="float"),
-            "area": ParameterSchema(
-                name="area",
-                type="float",
-                computed="width * depth",
-                depends_on=["width", "depth"]
-            ),
+            "area": ParameterSchema(name="area", type="float", computed="width * depth", depends_on=["width", "depth"]),
             "volume": ParameterSchema(
-                name="volume",
-                type="float",
-                computed="area * height",
-                depends_on=["area", "height"]
+                name="volume", type="float", computed="area * height", depends_on=["area", "height"]
             ),
             "diagonal": ParameterSchema(
-                name="diagonal",
-                type="float",
-                computed="hypot(width, depth)",
-                depends_on=["width", "depth"]
-            )
+                name="diagonal", type="float", computed="hypot(width, depth)", depends_on=["width", "depth"]
+            ),
         }
 
         context = {"width": 2.0, "height": 3.0, "depth": 4.0}
@@ -256,11 +222,7 @@ class TestTopologicalSort:
 
     def test_simple_linear_graph(self, evaluator):
         """Test sorting of simple linear dependency graph."""
-        graph = {
-            "a": [],
-            "b": ["a"],
-            "c": ["b"]
-        }
+        graph = {"a": [], "b": ["a"], "c": ["b"]}
 
         result = evaluator._topological_sort(graph)
 
@@ -270,12 +232,7 @@ class TestTopologicalSort:
 
     def test_parallel_branches(self, evaluator):
         """Test sorting with parallel independent branches."""
-        graph = {
-            "a": [],
-            "b": ["a"],
-            "c": ["a"],
-            "d": ["b", "c"]
-        }
+        graph = {"a": [], "b": ["a"], "c": ["a"], "d": ["b", "c"]}
 
         result = evaluator._topological_sort(graph)
 
@@ -289,11 +246,7 @@ class TestTopologicalSort:
 
     def test_circular_dependency(self, evaluator):
         """Test circular dependency detection."""
-        graph = {
-            "a": ["b"],
-            "b": ["c"],
-            "c": ["a"]
-        }
+        graph = {"a": ["b"], "b": ["c"], "c": ["a"]}
 
         with pytest.raises(ValueError, match="Circular dependency"):
             evaluator._topological_sort(graph)

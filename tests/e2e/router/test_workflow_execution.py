@@ -8,8 +8,6 @@ TASK-039-23
 """
 
 import pytest
-
-from server.router.application.router import SupervisorRouter
 from server.router.application.workflows import get_workflow_registry
 
 
@@ -59,20 +57,20 @@ class TestPhoneWorkflowExecution:
         registry = get_workflow_registry()
 
         # Custom phone dimensions
-        calls = registry.expand_workflow("feature_phone_workflow", {
-            "width": 0.07,
-            "height": 0.15,
-            "depth": 0.008,
-        })
+        calls = registry.expand_workflow(
+            "feature_phone_workflow",
+            {
+                "width": 0.07,
+                "height": 0.15,
+                "depth": 0.008,
+            },
+        )
 
         # Execute up to the first body shell transform to exercise scaling
         steps_to_run = []
         for call in calls:
             steps_to_run.append(call)
-            if (
-                call.tool_name == "modeling_transform_object"
-                and call.params.get("name") == "body_shell"
-            ):
+            if call.tool_name == "modeling_transform_object" and call.params.get("name") == "body_shell":
                 break
 
         for call in steps_to_run:
@@ -153,9 +151,7 @@ class TestScreenCutoutWorkflowExecution:
 
         # First create a phone-like object
         rpc_client.send_request("modeling.create_primitive", {"primitive_type": "CUBE"})
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.4, 0.8, 0.05]
-        })
+        rpc_client.send_request("modeling.transform_object", {"scale": [0.4, 0.8, 0.05]})
         rpc_client.send_request("system.set_mode", {"mode": "EDIT"})
 
         # Get screen cutout workflow
@@ -171,7 +167,7 @@ class TestScreenCutoutWorkflowExecution:
 
             try:
                 rpc_client.send_request(f"{area}.{method}", params)
-            except Exception as e:
+            except Exception:
                 # Some steps may fail if geometry doesn't match
                 # (e.g., select by location might not find exact face)
                 pass
@@ -199,19 +195,17 @@ class TestCustomWorkflowExecution:
         registry = get_workflow_registry()
 
         # Phone workflow with custom bevel
-        calls = registry.expand_workflow("feature_phone_workflow", {
-            "body_bevel_width": 0.005,
-            "body_bevel_segments": 5,
-        })
+        calls = registry.expand_workflow(
+            "feature_phone_workflow",
+            {
+                "body_bevel_width": 0.005,
+                "body_bevel_segments": 5,
+            },
+        )
 
         # Find bevel step
         bevel_call = next(
-            (
-                c
-                for c in calls
-                if c.tool_name == "modeling_add_modifier"
-                and c.params.get("modifier_type") == "BEVEL"
-            ),
+            (c for c in calls if c.tool_name == "modeling_add_modifier" and c.params.get("modifier_type") == "BEVEL"),
             None,
         )
 
@@ -242,14 +236,13 @@ class TestWorkflowErrorHandling:
             method = "_".join(tool_name.split("_")[1:])
 
             try:
-                result = rpc_client.send_request(f"{area}.{method}", params)
+                rpc_client.send_request(f"{area}.{method}", params)
                 successes.append(tool_name)
             except Exception as e:
                 errors.append({"tool": tool_name, "error": str(e)})
 
         # Should have more successes than failures
-        assert len(successes) >= len(errors), \
-            f"Too many errors: {len(errors)} errors vs {len(successes)} successes"
+        assert len(successes) >= len(errors), f"Too many errors: {len(errors)} errors vs {len(successes)} successes"
 
     def test_nonexistent_workflow_returns_empty(self, router, rpc_client):
         """Test: Non-existent workflow returns empty list."""

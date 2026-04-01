@@ -5,10 +5,11 @@ NOTE: Complex viewport manipulation with mathutils.Vector is difficult to mock.
 Full functionality is tested in E2E tests with real Blender.
 Unit tests focus on error handling and basic flow.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.scene import SceneHandler
 
 
@@ -49,11 +50,11 @@ class TestCameraFocus:
         self.rv3d.view_location = MagicMock()
 
         self.space = MagicMock()
-        self.space.type = 'VIEW_3D'
+        self.space.type = "VIEW_3D"
         self.space.region_3d = self.rv3d
 
         self.area = MagicMock()
-        self.area.type = 'VIEW_3D'
+        self.area.type = "VIEW_3D"
         self.area.spaces = [self.space]
 
         self.mock_bpy.context.screen.areas = [self.area]

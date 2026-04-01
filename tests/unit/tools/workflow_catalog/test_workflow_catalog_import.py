@@ -2,12 +2,11 @@ import json
 from pathlib import Path
 
 import pytest
-
 from server.application.tool_handlers.workflow_catalog_handler import (
     WorkflowCatalogToolHandler,
 )
-from server.router.infrastructure.workflow_loader import WorkflowLoader
 from server.router.domain.interfaces.i_vector_store import VectorNamespace
+from server.router.infrastructure.workflow_loader import WorkflowLoader
 
 
 class DummyWorkflowClassifier:
@@ -57,13 +56,7 @@ def _write_workflow_json(path: Path, name: str) -> None:
 
 
 def _write_workflow_yaml(path: Path, name: str) -> None:
-    content = (
-        f"name: {name}\n"
-        "steps:\n"
-        "  - tool: modeling_create_primitive\n"
-        "    params:\n"
-        "      primitive_type: Cube\n"
-    )
+    content = f"name: {name}\nsteps:\n  - tool: modeling_create_primitive\n    params:\n      primitive_type: Cube\n"
     path.write_text(content, encoding="utf-8")
 
 
@@ -131,6 +124,7 @@ def test_import_workflow_conflict_needs_input(workflow_setup):
     assert result["conflicts"]["definition_loaded"] is True
     assert result["conflicts"]["files"]
     assert result["conflicts"]["vector_store_records"] == 1
+    assert "clarification" not in result
     assert registry.reload_calls == 0
 
 
@@ -165,9 +159,7 @@ def test_import_workflow_overwrite_removes_files_and_embeddings(workflow_setup):
     incoming_file = incoming_dir / "chair.json"
     _write_workflow_json(incoming_file, "chair_workflow")
 
-    vector_store = DummyVectorStore(
-        ids=["chair_workflow", "chair_workflow__sample_prompt__0"]
-    )
+    vector_store = DummyVectorStore(ids=["chair_workflow", "chair_workflow__sample_prompt__0"])
     handler = WorkflowCatalogToolHandler(
         workflow_loader=loader,
         workflow_classifier=DummyWorkflowClassifier(),
@@ -216,6 +208,53 @@ def test_import_workflow_content_json(workflow_setup):
     assert Path(result["saved_path"]).exists()
     assert Path(result["saved_path"]).parent == workflows_dir
     assert registry.reload_calls == 1
+
+
+def test_list_workflows_supports_pagination(workflow_setup):
+    workflows_dir, _incoming_dir, loader, _registry = workflow_setup
+    _write_workflow_json(workflows_dir / "chair.json", "chair")
+    _write_workflow_json(workflows_dir / "table.json", "table")
+    _write_workflow_json(workflows_dir / "lamp.json", "lamp")
+
+    handler = WorkflowCatalogToolHandler(
+        workflow_loader=loader,
+        workflow_classifier=DummyWorkflowClassifier(),
+        vector_store=DummyVectorStore(),
+    )
+
+    result = handler.list_workflows(offset=1, limit=1)
+
+    assert result["total"] == 3
+    assert result["returned"] == 1
+    assert result["count"] == 1
+    assert result["offset"] == 1
+    assert result["limit"] == 1
+    assert result["has_more"] is True
+    assert len(result["workflows"]) == 1
+
+
+def test_search_workflows_supports_pagination(workflow_setup):
+    workflows_dir, _incoming_dir, loader, _registry = workflow_setup
+    _write_workflow_json(workflows_dir / "chair.json", "chair")
+    _write_workflow_json(workflows_dir / "chair_stool.json", "chair_stool")
+    _write_workflow_json(workflows_dir / "chair_lounge.json", "chair_lounge")
+    _write_workflow_json(workflows_dir / "table.json", "table")
+
+    handler = WorkflowCatalogToolHandler(
+        workflow_loader=loader,
+        workflow_classifier=None,
+        vector_store=DummyVectorStore(),
+    )
+
+    result = handler.search_workflows(query="chair", top_k=10, threshold=0.0, offset=1, limit=1)
+
+    assert result["total"] >= 2
+    assert result["returned"] == 1
+    assert result["count"] == 1
+    assert result["offset"] == 1
+    assert result["limit"] == 1
+    assert result["has_more"] is True
+    assert len(result["results"]) == 1
 
 
 def test_import_workflow_chunked_json(workflow_setup):

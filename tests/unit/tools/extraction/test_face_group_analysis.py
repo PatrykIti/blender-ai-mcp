@@ -4,10 +4,11 @@ Unit tests for extraction_face_group_analysis (TASK-044-5)
 Tests the ExtractionHandler.face_group_analysis method which
 analyzes face groups for feature detection.
 """
+
 import sys
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 

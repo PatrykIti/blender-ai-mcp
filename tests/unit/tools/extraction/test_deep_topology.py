@@ -4,10 +4,11 @@ Unit tests for extraction_deep_topology (TASK-044-1)
 Tests the ExtractionHandler.deep_topology method which performs
 extended topology analysis on mesh objects.
 """
-import sys
-import pytest
-from unittest.mock import MagicMock, patch
 
+import sys
+from unittest.mock import MagicMock
+
+import pytest
 from blender_addon.application.handlers.extraction import ExtractionHandler
 
 
@@ -27,8 +28,14 @@ class TestDeepTopology:
         self.cube.data = MagicMock()
         self.cube.matrix_world = MagicMock()
         self.cube.bound_box = [
-            (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
-            (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)
+            (-1, -1, -1),
+            (1, -1, -1),
+            (1, 1, -1),
+            (-1, 1, -1),
+            (-1, -1, 1),
+            (1, -1, 1),
+            (1, 1, 1),
+            (-1, 1, 1),
         ]
 
         def get_object(name):

@@ -1,5 +1,6 @@
-import bpy
 from typing import Optional
+
+import bpy
 
 
 class CollectionHandler:
@@ -83,7 +84,7 @@ class CollectionHandler:
                     "visible_viewport": not obj.hide_viewport,
                     "visible_render": not obj.hide_render,
                     "selected": obj.select_get(),
-                    "location": [round(c, 3) for c in obj.location]
+                    "location": [round(c, 3) for c in obj.location],
                 }
 
                 objects_data.append(obj_data)
@@ -96,7 +97,7 @@ class CollectionHandler:
             "object_count": len(objects_data),
             "recursive": recursive,
             "include_hidden": include_hidden,
-            "objects": objects_data
+            "objects": objects_data,
         }
 
     def manage_collection(
@@ -133,7 +134,9 @@ class CollectionHandler:
         elif action == "unlink_object":
             return self._unlink_object(object_name, collection_name)
         else:
-            raise ValueError(f"Unknown action: '{action}'. Valid actions: create, delete, rename, move_object, link_object, unlink_object")
+            raise ValueError(
+                f"Unknown action: '{action}'. Valid actions: create, delete, rename, move_object, link_object, unlink_object"
+            )
 
     def _create_collection(self, collection_name: str, parent_name: Optional[str] = None) -> str:
         """Creates a new collection, optionally under a parent collection."""
@@ -255,7 +258,9 @@ class CollectionHandler:
 
         # Check if this is the only collection
         if len(obj.users_collection) == 1:
-            raise ValueError(f"Cannot unlink '{object_name}' from '{collection_name}': it's the only collection. Use 'move_object' instead.")
+            raise ValueError(
+                f"Cannot unlink '{object_name}' from '{collection_name}': it's the only collection. Use 'move_object' instead."
+            )
 
         col.objects.unlink(obj)
         return f"Unlinked '{object_name}' from '{collection_name}'"

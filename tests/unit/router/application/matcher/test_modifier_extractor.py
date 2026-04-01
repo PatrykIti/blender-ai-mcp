@@ -5,9 +5,9 @@ TASK-053-6: Tests for modifier extraction implementing IModifierExtractor interf
 TASK-053-FIX: Added tests for LaBSE semantic matching.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.modifier_extractor import ModifierExtractor
 from server.router.domain.entities.ensemble import ModifierResult
 
@@ -57,10 +57,7 @@ class TestModifierExtractorSubstring:
         # Setup definition with modifiers
         definition = MagicMock()
         definition.defaults = {"leg_style": "default"}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"},
-            "zakrzywione nogi": {"leg_style": "curved"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}, "zakrzywione nogi": {"leg_style": "curved"}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("random text", "table_workflow")
@@ -75,10 +72,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {"leg_style": "default", "height": 0.8}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"},
-            "zakrzywione nogi": {"leg_style": "curved"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}, "zakrzywione nogi": {"leg_style": "curved"}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("proste nogi", "table_workflow")
@@ -96,7 +90,7 @@ class TestModifierExtractorSubstring:
         definition.modifiers = {
             "proste nogi": {"leg_style": "straight"},
             "wysoki": {"height": 1.0},
-            "metalowy": {"surface": "metal"}
+            "metalowy": {"surface": "metal"},
         }
         mock_registry.get_definition.return_value = definition
 
@@ -112,9 +106,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}}
         mock_registry.get_definition.return_value = definition
 
         # Test uppercase prompt
@@ -128,9 +120,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {"leg_style": "default"}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("", "table_workflow")
@@ -145,9 +135,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = None
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("proste nogi", "table_workflow")
@@ -161,9 +149,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {"leg_style": "default", "height": 0.8}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight", "height": 0.9}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight", "height": 0.9}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("proste nogi", "table_workflow")
@@ -177,9 +163,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {}
-        definition.modifiers = {
-            "proste": {"leg_style": "straight"}
-        }
+        definition.modifiers = {"proste": {"leg_style": "straight"}}
         mock_registry.get_definition.return_value = definition
 
         # "proste" is substring of "proste nogi"
@@ -194,9 +178,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {"leg_style": "default", "height": 0.8, "width": 1.0, "depth": 0.6}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("proste nogi", "table_workflow")
@@ -224,10 +206,7 @@ class TestModifierExtractorSubstring:
         # Setup definition
         definition = MagicMock()
         definition.defaults = {}
-        definition.modifiers = {
-            "proste nogi": {"leg_style": "straight"},
-            "wysoki": {"height": 1.0}
-        }
+        definition.modifiers = {"proste nogi": {"leg_style": "straight"}, "wysoki": {"height": 1.0}}
         mock_registry.get_definition.return_value = definition
 
         result = extractor.extract("proste nogi wysoki", "table_workflow")
@@ -283,9 +262,7 @@ class TestModifierExtractorSemantic:
             similarity_threshold=0.70,
         )
 
-    def test_semantic_match_polish_to_english(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_match_polish_to_english(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test that Polish 'prostymi nogami' matches English 'straight legs'."""
         # Setup definition with ONLY English keys (no Polish variants)
         definition = MagicMock()
@@ -308,18 +285,14 @@ class TestModifierExtractorSemantic:
 
         mock_classifier.similarity.side_effect = similarity_side_effect
 
-        result = extractor_with_classifier.extract(
-            "prosty stół z prostymi nogami", "table_workflow"
-        )
+        result = extractor_with_classifier.extract("prosty stół z prostymi nogami", "table_workflow")
 
         # Should match "straight legs" via semantic similarity
         assert result.modifiers == {"leg_angle": 0}
         assert result.matched_keywords == ["straight legs"]
         assert result.confidence_map["straight legs"] == pytest.approx(0.79, rel=1e-3)
 
-    def test_semantic_match_german_to_english(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_match_german_to_english(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test that German 'gerade Beine' matches English 'straight legs'."""
         definition = MagicMock()
         definition.defaults = {"leg_angle": 0.32}
@@ -331,16 +304,12 @@ class TestModifierExtractorSemantic:
         # Mock LaBSE similarity for German
         mock_classifier.similarity.return_value = 0.75  # Above threshold
 
-        result = extractor_with_classifier.extract(
-            "Tisch mit geraden Beinen", "table_workflow"
-        )
+        result = extractor_with_classifier.extract("Tisch mit geraden Beinen", "table_workflow")
 
         assert result.modifiers == {"leg_angle": 0}
         assert "straight legs" in result.matched_keywords
 
-    def test_semantic_no_match_below_threshold(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_no_match_below_threshold(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test that low similarity doesn't trigger match."""
         definition = MagicMock()
         definition.defaults = {"leg_angle": 0.32}
@@ -358,9 +327,7 @@ class TestModifierExtractorSemantic:
         assert result.modifiers == {}
         assert result.matched_keywords == []
 
-    def test_semantic_match_multiple_modifiers(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_match_multiple_modifiers(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test that best semantic match wins (single modifier applied)."""
         definition = MagicMock()
         definition.defaults = {"leg_angle": 0.32, "height": 0.8}
@@ -384,16 +351,12 @@ class TestModifierExtractorSemantic:
 
         mock_classifier.similarity.side_effect = similarity_side_effect
 
-        result = extractor_with_classifier.extract(
-            "wysoki stół z prostymi nogami", "table_workflow"
-        )
+        result = extractor_with_classifier.extract("wysoki stół z prostymi nogami", "table_workflow")
 
         assert result.modifiers == {"height": 1.2}
         assert result.matched_keywords == ["tall table"]
 
-    def test_semantic_confidence_reflects_similarity(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_confidence_reflects_similarity(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test that confidence_map contains actual similarity scores."""
         definition = MagicMock()
         definition.defaults = {}
@@ -448,9 +411,7 @@ class TestModifierExtractorSemantic:
         assert result.matched_keywords == ["proste nogi"]
         assert result.confidence_map["proste nogi"] == 1.0  # Exact match = 1.0
 
-    def test_semantic_with_empty_prompt(
-        self, extractor_with_classifier, mock_registry, mock_classifier
-    ):
+    def test_semantic_with_empty_prompt(self, extractor_with_classifier, mock_registry, mock_classifier):
         """Test semantic matching with empty prompt."""
         definition = MagicMock()
         definition.defaults = {"leg_angle": 0.32}

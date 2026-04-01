@@ -15,8 +15,9 @@ class TestMaterialCreateMcpParsing:
         handler = MagicMock()
         handler.create_material.return_value = "Created"
         mock_get_material_handler.return_value = handler
+        callable_material_create = getattr(material_create, "fn", material_create)
 
-        result = material_create.fn(
+        result = callable_material_create(
             self.mock_ctx,
             name="Mat",
             base_color="[0.1, 0.2, 0.3, 1]",
@@ -44,9 +45,9 @@ class TestMaterialCreateMcpParsing:
         handler = MagicMock()
         handler.create_material.return_value = "Created"
         mock_get_material_handler.return_value = handler
+        callable_material_create = getattr(material_create, "fn", material_create)
 
-        result = material_create.fn(self.mock_ctx, name="Mat", base_color="invalid")
+        result = callable_material_create(self.mock_ctx, name="Mat", base_color="invalid")
 
         handler.create_material.assert_not_called()
         assert "Invalid coordinate format" in result
-

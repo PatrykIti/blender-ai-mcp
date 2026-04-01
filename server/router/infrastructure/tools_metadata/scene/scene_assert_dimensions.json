@@ -1,0 +1,17 @@
+{
+  "tool_name": "scene_assert_dimensions",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["assert", "dimensions", "size", "width", "height", "depth", "verify"],
+  "sample_prompts": ["assert object dimensions", "verify this object has the right size", "check expected width and height"],
+  "parameters": {
+    "object_name": {"type": "string", "required": true},
+    "expected_dimensions": {"type": "array", "required": true},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]},
+    "world_space": {"type": "bool", "default": true}
+  },
+  "related_tools": ["scene_measure_dimensions", "scene_assert_contact", "scene_measure_distance"],
+  "patterns": [],
+  "description": "Asserts that an object's dimensions match the expected vector within tolerance."
+}

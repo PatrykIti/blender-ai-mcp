@@ -7,17 +7,17 @@ into standalone component implementing IModifierExtractor interface.
 Extracts parametric modifiers from user prompts based on workflow definitions.
 """
 
-from typing import Dict, Any, List, Optional, TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING, List, Optional
 
-from server.router.domain.interfaces.matcher import IModifierExtractor
 from server.router.domain.entities.ensemble import ModifierResult
+from server.router.domain.interfaces.matcher import IModifierExtractor
 
 if TYPE_CHECKING:
-    from server.router.application.workflows.registry import WorkflowRegistry
     from server.router.application.classifier.workflow_intent_classifier import (
         WorkflowIntentClassifier,
     )
+    from server.router.application.workflows.registry import WorkflowRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class ModifierExtractor(IModifierExtractor):
         ngrams = []
         for n in range(min_n, min(max_n + 1, len(words) + 1)):
             for i in range(len(words) - n + 1):
-                ngrams.append(" ".join(words[i:i + n]))
+                ngrams.append(" ".join(words[i : i + n]))
         return ngrams
 
     def _has_negative_signals(self, prompt: str, negative_signals: list) -> bool:
@@ -146,11 +146,7 @@ class ModifierExtractor(IModifierExtractor):
         definition = self._registry.get_definition(workflow_name)
         if not definition:
             logger.warning(f"No definition found for workflow: {workflow_name}")
-            return ModifierResult(
-                modifiers={},
-                matched_keywords=[],
-                confidence_map={}
-            )
+            return ModifierResult(modifiers={}, matched_keywords=[], confidence_map={})
 
         # TASK-055-FIX: Start with empty dict - defaults should be handled by ParameterResolver TIER 3
         # Only include ACTUAL matched modifiers from YAML, not defaults
@@ -191,9 +187,7 @@ class ModifierExtractor(IModifierExtractor):
 
                         if best_sim >= per_word_threshold:
                             matched_words.append((kw_word, best_ngram, best_sim))
-                            logger.debug(
-                                f"Word match: '{kw_word}' ↔ '{best_ngram}' (sim={best_sim:.3f})"
-                            )
+                            logger.debug(f"Word match: '{kw_word}' ↔ '{best_ngram}' (sim={best_sim:.3f})")
 
                     # Require min(N, 2) words to match
                     required_matches = min(len(keyword_words), 2)
@@ -212,9 +206,7 @@ class ModifierExtractor(IModifierExtractor):
                         # Check negative signals from YAML
                         negative_signals = values.get("negative_signals", [])
                         if self._has_negative_signals(prompt, negative_signals):
-                            logger.debug(
-                                f"Rejected '{keyword}': negative signals detected in prompt"
-                            )
+                            logger.debug(f"Rejected '{keyword}': negative signals detected in prompt")
                             continue  # Skip this match
 
                         # Extract actual parameter values (filter out negative_signals key)
@@ -253,8 +245,4 @@ class ModifierExtractor(IModifierExtractor):
                         confidence_map[keyword] = 1.0  # Exact match = full confidence
                         break  # Only apply first substring match
 
-        return ModifierResult(
-            modifiers=modifiers,
-            matched_keywords=matched_keywords,
-            confidence_map=confidence_map
-        )
+        return ModifierResult(modifiers=modifiers, matched_keywords=matched_keywords, confidence_map=confidence_map)

@@ -9,9 +9,6 @@ TASK-040
 
 import pytest
 
-from server.router.application.router import SupervisorRouter
-from server.router.infrastructure.config import RouterConfig
-
 
 class TestNoActiveObject:
     """Tests for operations without active object."""
@@ -21,10 +18,7 @@ class TestNoActiveObject:
         # Scene is empty after clean_scene, no active object
 
         # Try mesh operation - should handle gracefully
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.5}
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 0.5})
 
         # Should return list (possibly empty or with error info)
         assert isinstance(tools, list)
@@ -33,10 +27,7 @@ class TestNoActiveObject:
         """Test: Modeling operation without active object."""
         # Scene is empty
 
-        tools = router.process_llm_tool_call(
-            "modeling_transform_object",
-            {"location": [1, 0, 0]}
-        )
+        tools = router.process_llm_tool_call("modeling_transform_object", {"location": [1, 0, 0]})
 
         assert isinstance(tools, list)
 
@@ -55,10 +46,7 @@ class TestMultipleSelectedObjects:
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "modeling_transform_object",
-            {"scale": [2.0, 2.0, 2.0]}
-        )
+        tools = router.process_llm_tool_call("modeling_transform_object", {"scale": [2.0, 2.0, 2.0]})
 
         assert isinstance(tools, list)
         assert len(tools) > 0
@@ -71,10 +59,7 @@ class TestMultipleSelectedObjects:
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "modeling_add_modifier",
-            {"modifier_type": "BEVEL", "width": 0.1}
-        )
+        tools = router.process_llm_tool_call("modeling_add_modifier", {"modifier_type": "BEVEL", "width": 0.1})
 
         assert isinstance(tools, list)
 
@@ -96,10 +81,7 @@ class TestModeTransitions:
         router.invalidate_cache()
 
         # Try edit mode tool
-        tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 2})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -116,10 +98,7 @@ class TestModeTransitions:
         router.invalidate_cache()
 
         # Try object mode tool
-        tools = router.process_llm_tool_call(
-            "modeling_add_modifier",
-            {"modifier_type": "SUBSURF", "levels": 2}
-        )
+        tools = router.process_llm_tool_call("modeling_add_modifier", {"modifier_type": "SUBSURF", "levels": 2})
 
         tool_names = [t["tool"] for t in tools]
 
@@ -139,10 +118,7 @@ class TestInvalidParameters:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Negative value
-        tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": -5}
-        )
+        tools = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": -5})
 
         assert isinstance(tools, list)
 
@@ -158,10 +134,7 @@ class TestInvalidParameters:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Zero width
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.0}
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.0})
 
         assert isinstance(tools, list)
 
@@ -172,10 +145,7 @@ class TestInvalidParameters:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Extreme depth
-        tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 10000.0}
-        )
+        tools = router.process_llm_tool_call("mesh_extrude_region", {"depth": 10000.0})
 
         assert isinstance(tools, list)
 
@@ -192,18 +162,12 @@ class TestNonMeshObjects:
     def test_mesh_tool_on_camera(self, router, rpc_client, clean_scene):
         """Test: Mesh tool called with camera as active object."""
         # Create camera
-        rpc_client.send_request("scene.create_light_or_camera", {
-            "object_type": "CAMERA",
-            "location": [0, 0, 5]
-        })
+        rpc_client.send_request("scene.create_light_or_camera", {"object_type": "CAMERA", "location": [0, 0, 5]})
 
         router.invalidate_cache()
 
         # Try mesh tool on camera
-        tools = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 2})
 
         # Should handle gracefully - may return empty or error
         assert isinstance(tools, list)
@@ -211,17 +175,11 @@ class TestNonMeshObjects:
     def test_mesh_tool_on_light(self, router, rpc_client, clean_scene):
         """Test: Mesh tool called with light as active object."""
         # Create light
-        rpc_client.send_request("scene.create_light_or_camera", {
-            "object_type": "LIGHT",
-            "location": [0, 0, 3]
-        })
+        rpc_client.send_request("scene.create_light_or_camera", {"object_type": "LIGHT", "location": [0, 0, 3]})
 
         router.invalidate_cache()
 
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.1}
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1})
 
         assert isinstance(tools, list)
 
@@ -238,10 +196,7 @@ class TestWorkflowResilience:
         router.invalidate_cache()
 
         # Get a tool sequence
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.1, "segments": 2}
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1, "segments": 2})
 
         # Execute and track results
         executed = 0
@@ -272,22 +227,19 @@ class TestWorkflowResilience:
         router.invalidate_cache()
 
         # Get tools for current state
-        tools1 = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 2}
-        )
+        tools1 = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 2})
 
         # Change scene significantly
-        rpc_client.send_request("modeling.transform_object", {
-            "scale": [0.1, 0.1, 5.0]  # Tower-like
-        })
+        rpc_client.send_request(
+            "modeling.transform_object",
+            {
+                "scale": [0.1, 0.1, 5.0]  # Tower-like
+            },
+        )
         router.invalidate_cache()
 
         # Get tools again - may be different due to pattern detection
-        tools2 = router.process_llm_tool_call(
-            "mesh_subdivide",
-            {"number_cuts": 2}
-        )
+        tools2 = router.process_llm_tool_call("mesh_subdivide", {"number_cuts": 2})
 
         # Both should be valid lists
         assert isinstance(tools1, list)
@@ -306,11 +258,7 @@ class TestSpecialCharactersInPrompt:
         rpc_client.send_request("mesh.select", {"action": "all"})
 
         # Prompt with unicode (emoji, accented chars)
-        tools = router.process_llm_tool_call(
-            "mesh_bevel",
-            {"width": 0.1},
-            prompt="créer un biseau ✨ с фаской"
-        )
+        tools = router.process_llm_tool_call("mesh_bevel", {"width": 0.1}, prompt="créer un biseau ✨ с фаской")
 
         assert isinstance(tools, list)
         assert len(tools) > 0
@@ -323,9 +271,7 @@ class TestSpecialCharactersInPrompt:
 
         # Prompt with quotes and special chars
         tools = router.process_llm_tool_call(
-            "mesh_extrude_region",
-            {"depth": 0.5},
-            prompt='extrude "upward" by 50% & scale'
+            "mesh_extrude_region", {"depth": 0.5}, prompt='extrude "upward" by 50% & scale'
         )
 
         assert isinstance(tools, list)

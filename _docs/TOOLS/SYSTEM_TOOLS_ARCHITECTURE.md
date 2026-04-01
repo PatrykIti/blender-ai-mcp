@@ -8,6 +8,12 @@
 
 System Tools provide low-level operations for mode switching, undo/redo, file management, and checkpoint management. These tools are essential for AI-driven workflows that need to manage Blender's state reliably.
 
+They should be understood as an operational/support family:
+
+- useful for broad/manual and maintainer-oriented surfaces
+- selectively exposed on guided flows when the product surface explicitly allows them
+- not a replacement for goal-first routing, grouped public tools, or the truth/verification layer
+
 ---
 
 ## Tool Summary

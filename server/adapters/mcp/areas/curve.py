@@ -1,19 +1,34 @@
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
+
 from fastmcp import Context
-from server.adapters.mcp.instance import mcp
+
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_curve_handler
+
+CURVE_PUBLIC_TOOL_NAMES = (
+    "curve_create",
+    "curve_to_mesh",
+    "curve_get_data",
+)
+
+
+def register_curve_tools(target: Any) -> Dict[str, Any]:
+    """Register public curve tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, CURVE_PUBLIC_TOOL_NAMES, tags=get_capability_tags("curve"))
 
 
 # ==============================================================================
 # TASK-021: Phase 2.6 - Curves & Procedural
 # ==============================================================================
 
-@mcp.tool()
+
 def curve_create(
     ctx: Context,
     curve_type: Literal["BEZIER", "NURBS", "PATH", "CIRCLE"] = "BEZIER",
-    location: Optional[List[float]] = None
+    location: Optional[List[float]] = None,
 ) -> str:
     """
     [OBJECT MODE][SAFE] Creates a curve primitive object.
@@ -34,6 +49,7 @@ def curve_create(
         curve_create(curve_type="CIRCLE", location=[0, 0, 1]) -> Circle at Z=1
         curve_create(curve_type="PATH") -> Creates animation path
     """
+
     def execute():
         handler = get_curve_handler()
         try:
@@ -42,17 +58,11 @@ def curve_create(
             return str(e)
 
     return route_tool_call(
-        tool_name="curve_create",
-        params={"curve_type": curve_type, "location": location},
-        direct_executor=execute
+        tool_name="curve_create", params={"curve_type": curve_type, "location": location}, direct_executor=execute
     )
 
 
-@mcp.tool()
-def curve_to_mesh(
-    ctx: Context,
-    object_name: str
-) -> str:
+def curve_to_mesh(ctx: Context, object_name: str) -> str:
     """
     [OBJECT MODE][DESTRUCTIVE] Converts a curve object to mesh geometry.
     The curve is permanently converted - use modeling_add_modifier for non-destructive workflow.
@@ -65,6 +75,7 @@ def curve_to_mesh(
     Examples:
         curve_to_mesh(object_name="BezierCurve") -> Converts curve to mesh
     """
+
     def execute():
         handler = get_curve_handler()
         try:
@@ -72,18 +83,10 @@ def curve_to_mesh(
         except RuntimeError as e:
             return str(e)
 
-    return route_tool_call(
-        tool_name="curve_to_mesh",
-        params={"object_name": object_name},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="curve_to_mesh", params={"object_name": object_name}, direct_executor=execute)
 
 
-@mcp.tool()
-def curve_get_data(
-    ctx: Context,
-    object_name: str
-) -> str:
+def curve_get_data(ctx: Context, object_name: str) -> str:
     """
     [OBJECT MODE][READ-ONLY][SAFE] Returns curve splines, points, and settings.
 
@@ -95,17 +98,15 @@ def curve_get_data(
     Returns:
         JSON string with curve data including splines and point handles.
     """
+
     def execute():
         handler = get_curve_handler()
         try:
             import json
+
             data = handler.get_data(object_name)
             return json.dumps(data, indent=2)
         except RuntimeError as e:
             return str(e)
 
-    return route_tool_call(
-        tool_name="curve_get_data",
-        params={"object_name": object_name},
-        direct_executor=execute
-    )
+    return route_tool_call(tool_name="curve_get_data", params={"object_name": object_name}, direct_executor=execute)

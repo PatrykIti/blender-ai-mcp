@@ -1,0 +1,32 @@
+{
+  "tool_name": "reference_compare_current_view",
+  "category": "reference",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["reference", "current view", "checkpoint", "compare", "vision", "stage", "progress"],
+  "sample_prompts": [
+    "compare the current view against the attached references",
+    "capture the current stage and compare it to the front and side reference",
+    "analyze this current viewport checkpoint against the active references"
+  ],
+  "parameters": {
+    "checkpoint_label": {"type": "string", "default": null},
+    "target_object": {"type": "string", "default": null},
+    "target_view": {"type": "string", "default": null},
+    "goal_override": {"type": "string", "default": null},
+    "prompt_hint": {"type": "string", "default": null},
+    "width": {"type": "int", "default": 1280},
+    "height": {"type": "int", "default": 960},
+    "shading": {"type": "string", "default": "SOLID"},
+    "camera_name": {"type": "string", "default": null},
+    "focus_target": {"type": "string", "default": null},
+    "view_name": {"type": "string", "default": null},
+    "orbit_horizontal": {"type": "float", "default": 0.0},
+    "orbit_vertical": {"type": "float", "default": 0.0},
+    "zoom_factor": {"type": "float", "default": null},
+    "persist_view": {"type": "bool", "default": false}
+  },
+  "related_tools": ["reference_images", "scene_get_viewport", "router_get_status"],
+  "patterns": [],
+  "description": "Captures one current viewport/camera checkpoint and compares it against the active goal plus attached reference images, returning bounded vision interpretation for the next correction step."
+}

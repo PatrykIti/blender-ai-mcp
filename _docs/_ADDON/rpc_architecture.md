@@ -29,7 +29,7 @@ Communication occurs via **TCP Sockets** using JSON.
 ```json
 {
     "request_id": "uuid",
-    "status": "ok", 
+    "status": "ok",
     "result": { ... }
 }
 ```
@@ -37,7 +37,7 @@ or
 ```json
 {
     "request_id": "uuid",
-    "status": "error", 
+    "status": "error",
     "error": "Message string"
 }
 ```

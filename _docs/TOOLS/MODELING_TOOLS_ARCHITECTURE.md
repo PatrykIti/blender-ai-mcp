@@ -1,7 +1,11 @@
 # Modeling Tools Architecture
 
 Modeling tools manage geometry creation, modification, and object-level manipulation.
-**Each operation is a separate tool** to ensure clarity and avoid context mixing (except for strictly parametric operations like adding modifiers).
+
+This file primarily documents the object-level modeling family as an implementation/build layer.
+Most entries here are atomic or narrowly scoped object tools that can be used directly on broad/manual surfaces and internally beneath grouped, macro, and workflow layers.
+
+Inventory existence here does **not** mean every tool belongs on the default guided public surface.
 
 ---
 

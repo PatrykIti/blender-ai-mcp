@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
+      - name: Run Pre-commit Checks
+        run: poetry run pre-commit run --all-files --show-diff-on-failure
+
       - name: Run Unit Tests
         run: poetry run pytest tests/unit/ -v
 

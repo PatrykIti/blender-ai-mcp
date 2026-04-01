@@ -41,6 +41,15 @@
 - Analyzes scene state before execution
 - Detects geometric patterns and applies rules
 
+Important:
+- ~~Router is the source of truth for everything.~~
+- Router is the **policy and safety layer**.
+- The source of truth for actual Blender state should be inspection tools and addon-returned state.
+- FastMCP should own discovery/visibility concerns.
+- LaBSE should own semantic retrieval concerns.
+
+See [RESPONSIBILITY_BOUNDARIES.md](./RESPONSIBILITY_BOUNDARIES.md).
+
 ------------------------------------------------------------
 
 ## System Structure / Components
@@ -202,6 +211,17 @@ Why LaBSE:
 - Single model for all languages - no translation step needed
 - Handles slang, abbreviations, non-standard phrases
 - "pull the wall" ≈ "extrude the face" ≈ "extrude face"
+
+Use LaBSE here for:
+- semantic workflow matching
+- semantic modifier matching
+- multilingual prompt generalization
+
+Do not use LaBSE here as the authority for:
+- scene truth
+- geometry correctness
+- safe execution policy
+- final validation
 
 Usage:
 ```python

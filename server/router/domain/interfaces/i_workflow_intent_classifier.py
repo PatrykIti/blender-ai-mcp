@@ -8,7 +8,7 @@ TASK-047-1
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class IWorkflowIntentClassifier(ABC):

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 
 class ICollectionTool(ABC):
     @abstractmethod
@@ -8,7 +9,9 @@ class ICollectionTool(ABC):
         pass
 
     @abstractmethod
-    def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False) -> Dict[str, Any]:
+    def list_objects(
+        self, collection_name: str, recursive: bool = True, include_hidden: bool = False
+    ) -> Dict[str, Any]:
         """Lists all objects within a specified collection."""
         pass
 

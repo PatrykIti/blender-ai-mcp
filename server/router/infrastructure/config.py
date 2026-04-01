@@ -4,8 +4,8 @@ Router Configuration.
 Configuration dataclass for router behavior settings.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Any
+from dataclasses import dataclass
+from typing import Any, Dict
 
 
 @dataclass

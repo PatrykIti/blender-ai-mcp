@@ -5,19 +5,17 @@ Tests validation, blocking, and auto-fix functionality.
 """
 
 import pytest
-
 from server.router.application.engines.error_firewall import ErrorFirewall
-from server.router.domain.entities.tool_call import CorrectedToolCall
+from server.router.domain.entities.firewall_result import (
+    FirewallAction,
+    FirewallResult,
+)
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
-from server.router.domain.entities.firewall_result import (
-    FirewallResult,
-    FirewallAction,
-    FirewallRuleType,
-)
+from server.router.domain.entities.tool_call import CorrectedToolCall
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -72,8 +70,12 @@ def edit_mode_context():
             )
         ],
         topology=TopologyInfo(
-            vertices=8, edges=12, faces=6,
-            selected_verts=8, selected_edges=12, selected_faces=6,
+            vertices=8,
+            edges=12,
+            faces=6,
+            selected_verts=8,
+            selected_edges=12,
+            selected_faces=6,
         ),
         materials=[],
     )
@@ -96,8 +98,12 @@ def edit_mode_no_selection():
             )
         ],
         topology=TopologyInfo(
-            vertices=8, edges=12, faces=6,
-            selected_verts=0, selected_edges=0, selected_faces=0,
+            vertices=8,
+            edges=12,
+            faces=6,
+            selected_verts=0,
+            selected_edges=0,
+            selected_faces=0,
         ),
         materials=[],
     )
@@ -390,10 +396,7 @@ class TestEnableDisableRule:
         result = firewall.validate(call, object_mode_context)
 
         # Should not have mode violation since rule is disabled
-        mode_violations = [
-            v for v in result.violations
-            if "mesh_in_object_mode" in v.message
-        ]
+        mode_violations = [v for v in result.violations if "mesh_in_object_mode" in v.message]
         assert len(mode_violations) == 0
 
     def test_get_rules_shows_enabled_status(self, firewall):

@@ -1,16 +1,28 @@
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
+
 from fastmcp import Context
-from server.adapters.mcp.instance import mcp
+
+from server.adapters.mcp.areas._registration import register_existing_tools
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_uv_handler
 
-@mcp.tool()
-def uv_list_maps(
-    ctx: Context,
-    object_name: str,
-    include_island_counts: bool = False
-) -> str:
+UV_PUBLIC_TOOL_NAMES = (
+    "uv_list_maps",
+    "uv_unwrap",
+    "uv_pack_islands",
+    "uv_create_seam",
+)
+
+
+def register_uv_tools(target: Any) -> Dict[str, Any]:
+    """Register public UV tools on a FastMCP server or LocalProvider."""
+
+    return register_existing_tools(globals(), target, UV_PUBLIC_TOOL_NAMES, tags=get_capability_tags("uv"))
+
+
+def uv_list_maps(ctx: Context, object_name: str, include_island_counts: bool = False) -> str:
     """
     [UV][SAFE][READ-ONLY] Lists UV maps on a mesh object.
 
@@ -23,13 +35,11 @@ def uv_list_maps(
         object_name: Name of the mesh object to query
         include_island_counts: If True, includes UV loop counts (island counts not yet implemented)
     """
+
     def execute():
         handler = get_uv_handler()
         try:
-            result = handler.list_maps(
-                object_name=object_name,
-                include_island_counts=include_island_counts
-            )
+            result = handler.list_maps(object_name=object_name, include_island_counts=include_island_counts)
 
             obj_name = result.get("object_name")
             uv_map_count = result.get("uv_map_count", 0)
@@ -38,10 +48,7 @@ def uv_list_maps(
             if uv_map_count == 0:
                 return f"Object '{obj_name}' has no UV maps."
 
-            lines = [
-                f"Object: {obj_name}",
-                f"UV Maps ({uv_map_count}):"
-            ]
+            lines = [f"Object: {obj_name}", f"UV Maps ({uv_map_count}):"]
 
             for uv_map in uv_maps:
                 name = uv_map.get("name")
@@ -65,7 +72,7 @@ def uv_list_maps(
                     if island_count is not None:
                         lines.append(f"      Islands: {island_count}")
                     else:
-                        lines.append(f"      Islands: (not implemented)")
+                        lines.append("      Islands: (not implemented)")
 
             ctx_info(ctx, f"Listed {uv_map_count} UV maps for '{obj_name}'")
             return "\n".join(lines)
@@ -78,11 +85,10 @@ def uv_list_maps(
     return route_tool_call(
         tool_name="uv_list_maps",
         params={"object_name": object_name, "include_island_counts": include_island_counts},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
 def uv_unwrap(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -110,6 +116,7 @@ def uv_unwrap(
         island_margin: Space between UV islands (0.0-1.0)
         scale_to_bounds: Scale UVs to fill 0-1 space
     """
+
     def execute():
         handler = get_uv_handler()
         try:
@@ -132,12 +139,17 @@ def uv_unwrap(
 
     return route_tool_call(
         tool_name="uv_unwrap",
-        params={"object_name": object_name, "method": method, "angle_limit": angle_limit, "island_margin": island_margin, "scale_to_bounds": scale_to_bounds},
-        direct_executor=execute
+        params={
+            "object_name": object_name,
+            "method": method,
+            "angle_limit": angle_limit,
+            "island_margin": island_margin,
+            "scale_to_bounds": scale_to_bounds,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
 def uv_pack_islands(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -159,6 +171,7 @@ def uv_pack_islands(
         rotate: Allow rotation for better packing
         scale: Allow scaling islands to fill space
     """
+
     def execute():
         handler = get_uv_handler()
         try:
@@ -181,11 +194,10 @@ def uv_pack_islands(
     return route_tool_call(
         tool_name="uv_pack_islands",
         params={"object_name": object_name, "margin": margin, "rotate": rotate, "scale": scale},
-        direct_executor=execute
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
 def uv_create_seam(
     ctx: Context,
     object_name: Optional[str] = None,
@@ -203,6 +215,7 @@ def uv_create_seam(
         object_name: Target object (default: active object)
         action: 'mark' to add seams, 'clear' to remove seams from selected edges
     """
+
     def execute():
         handler = get_uv_handler()
         try:
@@ -221,7 +234,5 @@ def uv_create_seam(
             return msg
 
     return route_tool_call(
-        tool_name="uv_create_seam",
-        params={"object_name": object_name, "action": action},
-        direct_executor=execute
+        tool_name="uv_create_seam", params={"object_name": object_name, "action": action}, direct_executor=execute
     )

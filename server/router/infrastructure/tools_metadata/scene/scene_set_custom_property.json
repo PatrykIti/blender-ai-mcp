@@ -3,15 +3,43 @@
   "category": "scene",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["custom", "property", "set", "add", "tag", "annotate", "metadata", "delete"],
-  "sample_prompts": ["set property on object", "add tag to cube", "delete custom property"],
+  "keywords": [
+    "custom",
+    "property",
+    "set",
+    "add",
+    "tag",
+    "annotate",
+    "metadata",
+    "delete"
+  ],
+  "sample_prompts": [
+    "set property on object",
+    "add tag to cube",
+    "delete custom property"
+  ],
   "parameters": {
-    "object_name": {"type": "string", "required": true},
-    "property_name": {"type": "string", "required": true},
-    "property_value": {"type": "any", "required": true},
-    "delete": {"type": "bool", "default": false}
+    "object_name": {
+      "type": "string",
+      "required": true
+    },
+    "property_name": {
+      "type": "string",
+      "required": true
+    },
+    "property_value": {
+      "type": "scalar",
+      "required": true
+    },
+    "delete": {
+      "type": "bool",
+      "default": false
+    }
   },
-  "related_tools": ["scene_get_custom_properties", "scene_inspect"],
+  "related_tools": [
+    "scene_get_custom_properties",
+    "scene_inspect"
+  ],
   "patterns": [],
   "description": "Sets or deletes a custom property on an object."
 }

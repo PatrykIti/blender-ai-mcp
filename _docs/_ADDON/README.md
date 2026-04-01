@@ -9,6 +9,24 @@ Documentation for the Blender Addon (Server Side).
   - `bpy.app.timers` mechanism.
   - JSON Protocol.
 
+## Responsibility Boundary
+
+The addon is the Blender execution and state layer.
+
+It should be treated as the authority for:
+
+- actual `bpy` execution
+- object/mesh/material/world state
+- data returned by inspection tools
+
+It is not the place for:
+
+- MCP discovery logic
+- semantic workflow matching
+- LLM-facing correction policy
+
+Those belong to the FastMCP platform layer and router stack on the server side.
+
 ## 🛠 Structure (Clean Architecture)
 
 The Addon is layered to separate Blender logic from networking mechanisms.
@@ -25,6 +43,9 @@ Business Logic ("How to do it in Blender").
 - `scene.py`: `SceneHandler` (List objects, delete).
 - `modeling.py`: `ModelingHandler` (Create primitives, transforms, modifiers).
 - Direct usage of `bpy`.
+
+Practical rule:
+- If a question is “what is actually true in Blender right now?”, the addon-side state and inspection handlers should be the source of truth.
 
 ### 3. Infrastructure (`infrastructure/`)
 Technical details.
@@ -57,6 +78,12 @@ Technical details.
 | `inspect_material_slots` | `inspect_material_slots` | Audits material slot assignments across scene. |
 | `inspect_mesh_topology` | `inspect_mesh_topology` | Reports detailed topology stats (counts, N-gons, non-manifold). |
 | `inspect_modifiers` | `inspect_modifiers` | Audits modifier stacks and properties. |
+| `scene.inspect_render_settings` | `inspect_render_settings` | Returns grouped render-engine, resolution, output, and sample settings. |
+| `scene.inspect_color_management` | `inspect_color_management` | Returns grouped display/view/sequencer color-management settings. |
+| `scene.inspect_world` | `inspect_world` | Returns world assignment, simple color state, background-node summary, and explicit node-graph handoff/reference fields when nodes are in use. |
+| `scene.configure_render_settings` | `configure_render_settings` | Applies grouped render settings and returns the resulting render snapshot. |
+| `scene.configure_color_management` | `configure_color_management` | Applies grouped color-management settings and returns the resulting snapshot. |
+| `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
 | `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
@@ -64,6 +91,16 @@ Technical details.
 | `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
 | `scene.get_bounding_box` | `get_bounding_box` | Gets bounding box corners in world/local space. |
 | `scene.get_origin_info` | `get_origin_info` | Gets origin (pivot point) information for an object. |
+| `scene.measure_distance` | `measure_distance` | Measures origin/bbox-center distance between two objects. |
+| `scene.measure_dimensions` | `measure_dimensions` | Measures object dimensions and volume from its bounding box. |
+| `scene.measure_gap` | `measure_gap` | Measures nearest bbox gap/contact state between two objects. |
+| `scene.measure_alignment` | `measure_alignment` | Measures bbox alignment across chosen axes. |
+| `scene.measure_overlap` | `measure_overlap` | Measures bbox overlap/touching state and intersection volume. |
+| `scene.assert_contact` | `assert_contact` | Asserts pass/fail contact relation between two objects. |
+| `scene.assert_dimensions` | `assert_dimensions` | Asserts pass/fail dimensions against an expected vector. |
+| `scene.assert_containment` | `assert_containment` | Asserts pass/fail containment plus measured clearance/protrusion details. |
+| `scene.assert_symmetry` | `assert_symmetry` | Asserts mirrored symmetry between two objects across a chosen axis. |
+| `scene.assert_proportion` | `assert_proportion` | Asserts pass/fail ratio/proportion against the expected value. |
 
 ### Collection (`application/handlers/collection.py`)
 

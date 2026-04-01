@@ -5,9 +5,9 @@ TASK-053-4: Tests for semantic matching implementing IMatcher interface.
 Note: This is separate from test_semantic_workflow_matcher.py (legacy).
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from server.router.application.matcher.semantic_matcher import SemanticMatcher
 from server.router.domain.entities.ensemble import MatcherResult
 from server.router.infrastructure.config import RouterConfig

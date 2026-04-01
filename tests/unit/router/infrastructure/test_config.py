@@ -4,7 +4,6 @@ Unit tests for Router Configuration.
 Tests for RouterConfig dataclass.
 """
 
-import pytest
 from server.router.infrastructure.config import RouterConfig
 
 

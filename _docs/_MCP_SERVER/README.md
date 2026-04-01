@@ -7,6 +7,571 @@ Documentation for the MCP Server (Client Side).
 - **[Clean Architecture](./clean_architecture.md)**
   - Detailed description of layers and control flow (DI).
   - Dependency separation principles implemented in version 0.1.5.
+- **[FastMCP 3.x Migration Matrix](./fastmcp_3x_migration_matrix.md)**
+  - Maps the current flat/runtime-coupled MCP server to the target provider/factory/transform model for TASK-083 through TASK-097.
+- **[Runtime Baseline Matrix](./runtime_baseline_matrix.md)**
+  - Defines the supported Python and FastMCP baseline for the migration series, including 3.1+ feature gates.
+- **[FastMCP 3.x Composition Model](./fastmcp_3x_composition.md)**
+  - Documents provider groups, surface profiles, transform ordering, and the platform regression harness added during TASK-083.
+- **[Tool Layering Policy](./TOOL_LAYERING_POLICY.md)**
+  - Canonical policy for layered tools, small public surfaces, hidden atomic tools, `set_goal`-first orchestration, and vision/assert boundaries.
+- **[Vision Layer Docs](../_VISION/README.md)**
+  - Working notes for vision runtime choices, capture bundles, reference context, and macro/workflow integration.
+  - Includes a provider/model notes table covering the current MLX, OpenRouter, and Gemini status.
+- **[MCP Client Config Examples](./MCP_CLIENT_CONFIG_EXAMPLES.md)**
+  - Ready-to-paste local MCP client config examples for `llm-guided`, legacy surfaces, MLX vision, OpenRouter, and Gemini.
+- **[Router / Runtime Responsibility Boundaries](../_ROUTER/RESPONSIBILITY_BOUNDARIES.md)**
+  - Defines the role split between FastMCP platform features, LaBSE semantics, router safety policy, and inspection/assertion truth.
+  - Use this before changing discovery, semantic matching, correction logic, or structured validation behavior.
+
+## Canonical Tool Policy
+
+The canonical policy for:
+
+- layered tools (`atomic` / `macro` / `workflow`)
+- small public LLM-facing catalogs
+- hidden atomic tools
+- `router_set_goal(...)` as the default production entrypoint
+- vision vs measure/assert boundaries
+
+lives here:
+
+- [Tool Layering Policy](./TOOL_LAYERING_POLICY.md)
+
+This README is a surface/runtime reference doc. If it conflicts with the policy
+doc above, the policy doc wins.
+
+## FastMCP 3.x Migration Baseline
+
+The MCP server is in the middle of a platform migration tracked by `TASK-083` through `TASK-097`.
+
+For this task series:
+
+- the task-capable runtime baseline is **FastMCP 3.1.1 + pydocket 0.18.2**
+- the supported server baseline is **Python 3.11+**
+- **FastMCP 3.1+** remains the line required for built-in Tool Search / BM25, Code Mode work, and the current task-capable surfaces
+- the current runtime inventory lives in `server/adapters/mcp/platform/runtime_inventory.py`
+
+The migration matrix and runtime matrix linked above are the canonical audit docs for Gate 0.
+The composition document linked above is the canonical reference for the current factory/provider/transform baseline.
+
+## LLM-Guided Public Surface Baseline
+
+The first `llm-guided` public contract line is now available on top of the canonical internal tool surface.
+
+Current public tool aliases:
+
+| Internal tool | `llm-guided` public name |
+|---|---|
+| `scene_context` | `check_scene` |
+| `scene_inspect` | `inspect_scene` |
+| `scene_configure` | `configure_scene` |
+| `workflow_catalog` | `browse_workflows` |
+
+Current public argument aliases:
+
+| Tool | Internal arg | `llm-guided` public arg |
+|---|---|---|
+| `check_scene` | `action` | `query` |
+| `inspect_scene` | `object_name` | `target_object` |
+| `configure_scene` | `settings` | `config` |
+| `browse_workflows` | `workflow_name` | `name` |
+| `browse_workflows` | `query` | `search_query` |
+
+Current hidden/expert-only arguments on `llm-guided` include:
+
+- `inspect_scene`: `detailed`, `include_disabled`, `modifier_name`, `assistant_summary`, and other backend-only inspection flags
+- `mesh_inspect`: `selected_only`, `uv_layer`, `include_deltas`, `assistant_summary`
+- `scene_snapshot_state`, `scene_compare_snapshot`, `scene_get_hierarchy`, `scene_get_bounding_box`, and `scene_get_origin_info`: `assistant_summary`
+- `browse_workflows`: `top_k`, `threshold`, chunk/session import internals, and related expert-only knobs
+
+Router and dispatcher internals still operate on canonical internal names.
+The public alias layer is a transform concern, not a second business-logic path.
+
+## Surface Exposure Matrix
+
+High-level intended posture:
+
+| Surface | Public Layer | Goal-First | Use |
+|---|---|---|---|
+| `legacy-manual` | broad manual/control | no | maintainer/manual direct usage |
+| `legacy-flat` | compatibility/control | optional | compatibility and broad control |
+| `llm-guided` | small curated public catalog | yes | normal production LLM usage |
+| `internal-debug` | debug/maintainer | optional | maintainer/debug |
+| `code-mode-pilot` | experimental read-only analytical surface | no | analytical experiments |
+
+For the governing rules behind this matrix, use the canonical policy doc above.
+
+## Hidden Atomic Layer And Escape Hatches
+
+Production-oriented public surfaces should not behave as though every internal
+tool is a normal public discovery candidate.
+
+Current governing rules:
+
+- atomic tools are primarily the implementation substrate
+- macro/workflow tools should dominate the public LLM-facing action space
+- discovery should not leak hidden atomic tools into normal bootstrap usage
+- any public single-purpose atomic tools should be explicit escape hatches, not
+  the default surface model
+
+Typical public escape hatches that remain acceptable:
+
+- `router_set_goal`
+- `router_get_status`
+- truth/inspection essentials
+- explicit measure/assert tools as they are introduced
+
+On `llm-guided`, the phased escape-hatch layer is intentionally narrower than
+the full runtime inventory. Specialist families such as armature, sculpt, text,
+baking, and similar maintainer-oriented areas stay off the normal guided
+surface until a stronger macro layer exists.
+
+The canonical policy file above governs this rule set.
+
+## Goal-First Requirement
+
+For normal production-oriented LLM surfaces, the expected interaction model is:
+
+1. `router_set_goal(...)`
+2. use the shaped public surface in the context of that goal
+3. perform verification and before/after analysis against the active goal
+
+Current exception surfaces:
+
+- `legacy-manual`
+- `internal-debug`
+- `code-mode-pilot`
+
+These may intentionally skip strict goal-first usage, but they are not the
+default product path for normal LLM operation.
+
+## Session Context Contract
+
+Once a goal is set, downstream layers should be able to rely on:
+
+- active goal / user intent
+- current modeling phase
+- current target object/component when known
+- expected verification criteria
+- the frame of reference for before/after visual interpretation
+
+This context model is part of the current architecture direction and should be
+preserved as later tool and vision waves are added.
+
+## Macro vs Workflow Tool Rules
+
+Current product direction:
+
+- **macro tools** are the preferred default LLM-facing layer
+- **workflow tools** are bounded process tools, not catch-all “do anything” tools
+
+Macro tools should:
+
+- represent one meaningful task responsibility
+- orchestrate atomic tools internally when needed
+- return task-relevant structured outputs
+
+Workflow tools should:
+
+- remain bounded
+- orchestrate macro tools, atomic tools, rule checks, and verification
+- return structured reports that answer:
+  - what changed
+  - what passed
+  - what failed
+  - what to do next if verification failed
+
+Current contract direction for macro/workflow reports:
+
+- macro report contracts are now being prepared to carry optional
+  `capture_bundle` and `vision_assistant` artifacts
+- this keeps visual interpretation attached to bounded reports instead of
+  exposing vision first as a detached free-floating tool
+- current runtime scaffolding can already attach deterministic `capture_bundle`
+  artifacts to macro reports when vision is enabled, even before full model
+  inference is wired into those paths
+- MCP macro adapters now have the request-bound attachment point for
+  `vision_assistant` once a macro report already carries a capture bundle
+
+## Vision, Measurement, and Assertion
+
+The intended verification model is:
+
+- vision = interpretation support
+- measurement/assertion = truth layer
+
+Preferred before/after analysis contract:
+
+1. before capture
+2. action/change
+3. after capture
+4. structured compare/summary
+
+Current scaffold direction:
+
+- the default deterministic `compact` capture profile uses a small preset mix the runtime can already produce reliably:
+  - `context_wide`
+  - `target_front`
+  - `target_side`
+  - `target_top`
+- a richer `rich` preset profile is also scaffolded for deeper comparison bundles:
+  - `context_wide`
+  - `target_focus`
+  - `target_oblique_left`
+  - `target_oblique_right`
+  - `target_front`
+  - `target_side`
+  - `target_top`
+  - `target_detail`
+- broader canonical view sets such as front/side/top/iso remain the target direction as the scene capture path grows
+- capture bundles should carry truth summaries alongside images before the vision layer interprets them
+
+Expected standard view set when visual comparison matters:
+
+- front
+- side
+- top
+- iso
+- focus-target view when needed
+
+The first implemented deterministic verification slice now includes:
+
+- `scene_measure_dimensions`
+- `scene_measure_distance`
+- `scene_measure_gap`
+- `scene_measure_overlap`
+- `scene_measure_alignment`
+
+The broader truth layer should continue to expand with:
+
+- proportion
+- symmetry
+- containment
+
+Lightweight vision models are acceptable for:
+
+- summarizing visual change
+- localizing likely issues
+- comparing before/after imagery
+
+Current runtime direction for the vision layer:
+
+- treat vision as an optional adopted capability, not a mandatory bootstrap dependency
+- keep local/external backend choice pluggable
+- prefer deterministic capture bundles plus truth summaries over one ad hoc viewport image
+- keep heavyweight local VLM loading lazy/on-demand instead of tying MCP server startup to it
+
+They should not override deterministic measure/assert results.
+
+## Search-First Discovery Rollout
+
+The default `llm-guided` surface now runs search-first discovery by default.
+
+Current visible entry set on `llm-guided`:
+
+- `router_set_goal`
+- `router_get_status`
+- `browse_workflows`
+- `reference_images`
+- `list_prompts`
+- `get_prompt`
+- `search_tools`
+- `call_tool`
+
+Measured baseline from the current unit suite:
+
+- `legacy-manual`: `163` visible tools, router/workflow capabilities omitted from the namespace
+- `legacy-flat`: `170` visible tools, now fitting in one `tools/list` page by default for compatibility clients
+- `llm-guided`: `8` visible tools
+
+Search-first behavior now respects guided visibility:
+
+- hidden tools do not appear in bootstrap-phase search results
+- hidden tools cannot be invoked through `call_tool`
+- direct public calls and discovered `call_tool` calls share the same guided-surface router failure behavior
+
+Current guided utility prep path:
+
+- the direct bootstrap surface still stays at `8` visible tools
+- bootstrap/planning search can now surface a small guided-safe utility set:
+  - `scene_get_viewport`
+  - `scene_clean_scene`
+- this utility path is intended for screenshot/capture/scene-prep requests
+  and should be used instead of forcing those requests through
+  `router_set_goal(...)`
+
+Goal-scoped reference intake is now part of the guided entry layer:
+
+- `reference_images(action="attach", source_path=...)`
+- `reference_images(action="list")`
+- `reference_images(action="remove", reference_id=...)`
+- `reference_images(action="clear")`
+
+For staged/manual reference-guided work, the guided build/inspect surface now
+also exposes a bounded checkpoint comparison tool:
+
+- `reference_compare_checkpoint(checkpoint_path=..., target_object=..., target_view=...)`
+- `reference_compare_current_view(target_object=..., target_view=..., camera_name=... or USER_PERSPECTIVE)`
+- `reference_compare_stage_checkpoint(target_object=..., preset_profile="compact" or "rich")`
+- `reference_iterate_stage_checkpoint(target_object=..., checkpoint_label=...)`
+
+For assembled multi-part targets, the stage/iterate surfaces can now also use:
+
+- `target_objects=[...]`
+- `collection_name="..."`
+- or no target scope at all for a full-scene/full-silhouette compare
+
+Reference intake can now also stage pending attachments before the active goal
+exists. In that case, the next `router_set_goal(...)` adopts those references
+onto the new goal automatically.
+
+## Session-Adaptive Visibility Baseline
+
+The `llm-guided` surface now has a first complete guided-mode visibility baseline:
+
+- canonical coarse phases: `bootstrap`, `planning`, `build`, `inspect_validate`
+- guided entry surface at bootstrap/planning centered on `router_*` and `workflow_catalog`
+- guided utility prep path at bootstrap/planning for screenshot/capture/scene cleanup
+- deterministic phase/profile visibility rules owned by FastMCP platform code, not by router metadata
+- native FastMCP session visibility application via `enable_components`, `disable_components`, and `reset_visibility`
+- operator-facing visibility diagnostics exposed through `router_get_status()`
+
+This visibility baseline is complete for guided-mode surface shaping.
+Search-first default rollout remains a separate TASK-084 concern.
+
+## Structured Elicitation Baseline
+
+Missing-input handling is now a first-class interaction layer:
+
+- `router_set_goal` now keeps normal workflow parameter clarification model-facing by default on `llm-guided`
+- non-elicitation / tool-only clients receive a typed `needs_input` fallback payload
+- fallback payloads carry stable `question_set_id`, field ids, and optional `request_id`
+- session state persists pending clarification identity, partial answers, and last elicitation action
+- `workflow_catalog` import conflicts reuse the same typed clarification payload shape for compatibility mode
+
+## Structured Contract Baseline
+
+The structured-contract layer now covers the high-value state-heavy MCP surfaces:
+
+- `macro_cutout_recess`
+- `macro_finish_form`
+- `macro_relative_layout`
+- `scene_context`
+- `scene_inspect`
+- `scene_create`
+- `scene_configure`
+- `mesh_select`
+- `mesh_select_targeted`
+- `scene_snapshot_state`
+- `scene_compare_snapshot`
+- `scene_get_custom_properties`
+- `scene_get_hierarchy`
+- `scene_get_bounding_box`
+- `scene_get_origin_info`
+- `scene_measure_distance`
+- `scene_measure_dimensions`
+- `scene_measure_gap`
+- `scene_measure_alignment`
+- `scene_measure_overlap`
+- `scene_assert_contact`
+- `scene_assert_dimensions`
+- `scene_assert_containment`
+- `scene_assert_symmetry`
+- `scene_assert_proportion`
+- `mesh_inspect`
+- `router_set_goal`
+- `router_get_status`
+- `workflow_catalog`
+
+These tools return native structured payloads on contract-enabled paths and use the shared contract helpers/output-schema policy instead of prose-first JSON-string wrappers.
+
+## Guided Handoff Contract
+
+On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation metadata when workflow matching is not the intended next step.
+
+- `guided_handoff` is returned for bounded guided continuations such as `guided_manual_build` and `guided_utility`
+- it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
+- `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
+- `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
+
+## Server-Side Sampling Assistants Baseline
+
+The MCP adapter layer now has a bounded sampling-assistant baseline for analytical/recovery helpers inside one active MCP request.
+
+Current assistant-enabled paths:
+
+- `scene_inspect(..., assistant_summary=True)` on internal/expert paths
+- `mesh_inspect(..., assistant_summary=True)` on internal/expert paths
+- `scene_snapshot_state(..., assistant_summary=True)` on internal/expert paths
+- `scene_compare_snapshot(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_hierarchy(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_bounding_box(..., assistant_summary=True)` on internal/expert paths
+- `scene_get_origin_info(..., assistant_summary=True)` on internal/expert paths
+- `router_set_goal()` when the goal flow ends in `no_match` or `error`
+- `router_get_status()` when the latest router/session diagnostics indicate a recovery path
+- `workflow_catalog()` when import-oriented flows enter `needs_input`, `skipped`, or explicit error states
+
+Current typed assistant statuses:
+
+- `success`
+- `unavailable`
+- `masked_error`
+- `rejected_by_policy`
+
+Governance notes:
+
+- assistants are request-bound and reject background-task execution
+- assistants are adapter-scoped helpers, not a fifth truth/policy authority
+- assistants may summarize inspection contracts or draft repair guidance from diagnostics
+- assistants must not replace router safety policy or inspection truth
+
+## Versioned Client Surface Baseline
+
+The repo now has an explicit contract-line matrix on top of the existing surface profiles:
+
+| Surface Profile | Default Contract Line |
+|---|---|
+| `legacy-manual` | `legacy-v1` |
+| `legacy-flat` | `legacy-v1` |
+| `llm-guided` | `llm-guided-v2` |
+| `internal-debug` | `llm-guided-v2` |
+| `code-mode-pilot` | `llm-guided-v2` |
+
+Current guided-surface rollback/coexistence path:
+
+- `llm-guided-v1` = earlier guided public line
+- `llm-guided-v2` = current guided public line
+
+Bootstrap/config can override the default contract line through `MCP_DEFAULT_CONTRACT_LINE`.
+Version filtering is applied in the transform pipeline; profile selection and contract-line selection remain separate axes.
+
+## Telemetry And Timeout Foundations
+
+The platform now has the first operations baseline for telemetry and timeout policy:
+
+- optional OTEL bootstrap through `OTEL_ENABLED`, `OTEL_EXPORTER`, and `OTEL_SERVICE_NAME`
+- repo-specific router spans emitted on top of the current MCP runtime
+- explicit timeout policy object attached at factory bootstrap
+- canonical timeout boundary names:
+  - `mcp_tool`
+  - `mcp_task`
+  - `rpc_client`
+  - `addon_execution`
+- `router_get_status()` now exposes:
+  - active surface/profile
+  - active contract line
+  - timeout policy snapshot
+  - task runtime pair
+  - telemetry bootstrap state
+  - background job counts and job summaries
+
+## Pagination Baseline
+
+Pagination is now split explicitly between:
+
+- component pagination via surface `list_page_size`
+- payload pagination via structured contract fields such as `offset`, `limit`, `returned`, `total`, and `has_more`
+
+Current payload-pagination coverage includes:
+
+- `mesh_inspect`
+- `workflow_catalog(action="list")`
+- `workflow_catalog(action="search")`
+
+## Prompt Layer Baseline
+
+The prompt layer is now part of the MCP product surface:
+
+- native prompt components expose curated prompt assets from `_docs/_PROMPTS`
+- tool-only clients can use:
+  - `list_prompts`
+  - `get_prompt`
+- `recommended_prompts` provides phase/profile-aware recommendations
+
+## Code Mode Pilot Baseline
+
+The repo now has a first experimental `code-mode-pilot` surface.
+
+Current guardrails:
+
+- the pilot is explicit, opt-in, and profile-scoped
+- the pilot uses FastMCP `CodeMode` on top of the existing composed MCP surface
+- the pilot keeps a read-only allowlist by visibility policy before Code Mode collapses the catalog
+- the sandbox dependency fails fast if `pydantic-monty` is unavailable
+- prompt bridge tools remain available (`list_prompts`, `get_prompt`) alongside Code Mode meta-tools
+
+Current pilot meta-tool surface:
+
+- `search`
+- `get_schema`
+- `tags`
+- `execute`
+- `list_prompts`
+- `get_prompt`
+
+Current benchmark baselines for the experiment:
+
+- `legacy-flat`
+- `llm-guided`
+- `code-mode-pilot`
+
+Current recommendation:
+
+- keep `legacy-manual` as the direct manual surface with no router/workflow exposure
+- keep `code-mode-pilot` as an experimental read-only surface
+- keep `llm-guided` as the primary production baseline
+- do not promote Code Mode to the default execution path for write/destructive Blender work
+
+## Background Task Mode Baseline
+
+The current task-mode rollout now covers the initial heavy-operation slice plus the system import/export family on task-capable surfaces.
+
+Adopted endpoints:
+
+- `scene_get_viewport`
+- `extraction_render_angles`
+- `workflow_catalog(action="import_finalize")`
+- `export_glb`
+- `export_fbx`
+- `export_obj`
+- `import_obj`
+- `import_fbx`
+- `import_glb`
+- `import_image_as_plane`
+
+Current product semantics:
+
+- adopted tools register explicit `TaskConfig(mode="optional")`
+- task-capable surfaces can submit them as background work without changing canonical tool names
+- legacy/foreground clients keep a synchronous fallback path
+- Blender-backed task mode now uses explicit RPC verbs for launch, poll, cancel, and collect
+- workflow import finalization uses the same MCP-side task bookkeeping without requiring addon RPC
+
+Task-capable profile guidance is now included directly in the surface instructions for:
+
+- `llm-guided`
+- `internal-debug`
+- `code-mode-pilot`
+
+## Correction Audit Exposure Baseline
+
+Router-aware MCP execution now exposes a correction-transparency baseline on top of the FastMCP 3.x platform work:
+
+- structured execution reports carry `router_disposition`, `audit_events`, `audit_ids`, and `verification_status`
+- corrected execution paths expose correlatable audit ids both in MCP-facing response contracts and in router telemetry/logging
+- high-risk precondition fixes use inspection-based verification for `mode`, `selection`, and `active_object`
+- legacy string rendering remains available for compatibility, but audit/report fields are the canonical machine-readable record
+
+## Runtime Baseline
+
+The current support policy for the migration track is:
+
+- **Supported task-capable pair**: Python `3.11+` with `fastmcp 3.1.1` and `pydocket 0.18.2`
+- **Required line for current platform work**: FastMCP `3.1.x`
+- **Not supported for TASK-083+ migration work**: Python `3.10`
+
+This keeps the runtime policy aligned with the repo's practical dependency set (`sentence-transformers`, `lancedb`, `pyarrow`) and with the now-shipped task-mode surfaces.
 
 ## 🚀 Running (Docker)
 
@@ -34,26 +599,31 @@ docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
 
 ## 🛠 Available Tools
 
-### 🧠 Mega Tools (LLM Context Optimization)
+### 🧠 Grouped Public Tools
 
-Unified tools that consolidate multiple related operations to reduce LLM context usage.
+These grouped tools are part of the current public working layer.
+They should now be understood through the layered policy in
+`TOOL_LAYERING_POLICY.md`: grouped public tools above a hidden/internal atomic
+layer.
 
-| Mega Tool | Actions | Description |
+| Grouped Tool | Actions | Description |
 |-----------|---------|-------------|
 | `scene_context` | `mode`, `selection` | Quick context queries (mode, selection state). |
 | `scene_create` | `light`, `camera`, `empty` | Creates scene helper objects. |
-| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data` | Detailed inspection queries for objects. |
+| `scene_inspect` | `object`, `topology`, `modifiers`, `materials`, `constraints`, `modifier_data`, `render`, `color_management`, `world` | Detailed inspection queries for objects plus scene-level render/color/world state, including node-graph handoff fields for node-based worlds. |
+| `scene_configure` | `render`, `color_management`, `world` | Applies grouped render, color-management, and bounded world/background settings from structured input. Full node-graph rebuild stays outside this tool. |
 | `mesh_select` | `all`, `none`, `linked`, `more`, `less`, `boundary` | Simple selection operations. |
 | `mesh_select_targeted` | `by_index`, `loop`, `ring`, `by_location` | Targeted selection with parameters. |
 | `mesh_inspect` | `summary`, `vertices`, `edges`, `faces`, `uvs`, `normals`, `attributes`, `shape_keys`, `group_weights` | Mesh introspection with summary and raw data. |
 
-**Total:** 28 tools → 6 mega tools (**-22 definitions** for LLM context)
+**Current grouped public set:** 7 high-frequency grouped tools.
 
 ### Scene Tools
 Managing objects at the scene level.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
+| `scene_configure` | `action` (`render`/`color_management`/`world`), `settings` (object) | Applies grouped scene appearance settings. `world` is intentionally bounded, surfaces explicit node-graph handoff fields, and does not author arbitrary world node graphs. |
 | `scene_list_objects` | *none* | Returns a list of all objects in the scene with their type and position. |
 | `scene_delete_object` | `name` (str) | Deletes the specified object. Returns error if object does not exist. |
 | `scene_clean_scene` | `keep_lights_and_cameras` (bool, default True) | Deletes objects from scene. If `True`, preserves cameras and lights. If `False`, cleans the project completely ("hard reset"). |
@@ -62,13 +632,36 @@ Managing objects at the scene level.
 | `scene_set_mode` | `mode` (str) | Sets interaction mode (OBJECT, EDIT, SCULPT, etc.). |
 | `scene_snapshot_state` | `include_mesh_stats` (bool), `include_materials` (bool) | Captures a structured JSON snapshot of scene state with SHA256 hash for change detection. |
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
-| `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
+| `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
+| `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. |
+| `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. |
+| `scene_camera_orbit` | `angle_horizontal` (float), `angle_vertical` (float), `target_object` (str, optional), `target_point` ([x,y,z], optional) | Orbits the viewport around a target object or point. |
+| `scene_camera_focus` | `object_name` (str), `zoom_factor` (float) | Focuses the viewport on one object. Use `object_name` here, not `target`, `target_object`, or `focus_target`. |
+| `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `USER_PERSPECTIVE` follows the live active 3D viewport; named cameras follow render visibility. `view_name`/`orbit_*`/`zoom_factor`/`persist_view` apply only to bounded `USER_PERSPECTIVE` capture adjustments. `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
+| `scene_hide_object` | `object_name` (str), `hide` (bool), `hide_render` (bool) | Hides an object in the viewport. If hiding with `hide_render=True`, it is also hidden from named-camera/render capture. Showing the object restores render visibility as well. |
+| `scene_show_all_objects` | `include_render` (bool) | Restores viewport visibility for all objects. If `include_render=True`, also restores render visibility for objects hidden from named-camera/render capture. |
+| `scene_isolate_object` | `object_name` (str or array) | Keeps only the named object(s) visible and hides all others in both viewport and render, so named-camera capture matches the isolated set. |
 | `scene_get_custom_properties` | `object_name` (str) | Gets custom properties (metadata) from an object. Returns object_name, property_count, and properties dict. |
 | `scene_set_custom_property` | `object_name` (str), `property_name` (str), `property_value` (str/int/float/bool), `delete` (bool) | Sets or deletes a custom property on an object. |
 | `scene_get_hierarchy` | `object_name` (str, optional), `include_transforms` (bool) | Gets parent-child hierarchy for specific object or full scene tree. |
 | `scene_get_bounding_box` | `object_name` (str), `world_space` (bool) | Gets bounding box corners, min/max, center, dimensions, and volume. |
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
-> **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into mega tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
+| `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
+| `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
+| `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest world-space bbox gap/contact state between two objects. |
+| `scene_measure_alignment` | `from_object` (str), `to_object` (str), `axes` (array), `reference` (str), `tolerance` (float) | Measures bbox alignment deltas on chosen axes using CENTER/MIN/MAX references. |
+| `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures bbox overlap/touching state plus intersection dimensions and volume. |
+| `scene_assert_contact` | `from_object` (str), `to_object` (str), `max_gap` (float), `allow_overlap` (bool) | Asserts pass/fail contact relation from measured gap and overlap state. |
+| `scene_assert_dimensions` | `object_name` (str), `expected_dimensions` (array), `tolerance` (float), `world_space` (bool) | Asserts pass/fail dimensions against an expected vector within tolerance. |
+| `scene_assert_containment` | `inner_object` (str), `outer_object` (str), `min_clearance` (float), `tolerance` (float) | Asserts pass/fail containment plus measured clearance/protrusion details. |
+| `scene_assert_symmetry` | `left_object` (str), `right_object` (str), `axis` (str), `mirror_coordinate` (float), `tolerance` (float) | Asserts mirrored symmetry between two objects across a chosen axis. |
+| `scene_assert_proportion` | `object_name` (str), `axis_a` (str), `expected_ratio` (float), `axis_b` (str), `reference_object` (str), `reference_axis` (str), `tolerance` (float), `world_space` (bool) | Asserts pass/fail ratio/proportion against the expected value. |
+| `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
+| `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. |
+| `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. |
+> **Note:** Tools like `scene_get_mode`, `scene_list_selection`, `scene_inspect_*`, and `scene_create_*` have been consolidated into grouped public tools. Use `scene_context`, `scene_inspect`, and `scene_create` instead.
 > `scene_get_constraints` is now internal to `scene_inspect(action="constraints")` for MCP clients.
 
 ### Collection Tools
@@ -103,6 +696,37 @@ Texture coordinate mapping operations.
 | `uv_pack_islands` | `object_name` (str), `margin` (float), `rotate` (bool), `scale` (bool) | Packs UV islands for optimal texture space usage. |
 | `uv_create_seam` | `object_name` (str), `action` (str) | Marks or clears UV seams on selected edges ('mark' or 'clear'). |
 
+### Macro Tools
+Bounded multi-step tools above the atomic layer and below full workflows.
+
+| Tool Name | Arguments | Description |
+|-----------|-----------|-------------|
+| `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
+| `macro_finish_form` | `target_object` (str), `preset` (str), `bevel_width` (float), `bevel_segments` (int), `subsurf_levels` (int), `thickness` (float), `solidify_offset` (float) | Applies one bounded finishing stack to an object using a preset such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` instead of hand-building the modifier chain. |
+| `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
+
+Example guided macro flow for finishing:
+
+1. `browse_workflows(action="search", search_query="rounded housing finish")`
+2. `router_set_goal(goal="give the housing a rounded finish while keeping the overall size close to the current blockout")`
+3. `search_tools(query="finish housing bevel subdivision shell")`
+4. `call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})`
+5. verify with `inspect_scene(action="object", target_object="Housing")`
+6. then discover and call the right truth-layer check, for example:
+   - `search_tools(query="measure dimensions assert dimensions viewport")`
+   - `call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})`
+
+If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
+If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
+If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
+
+Workflow clarification note:
+
+- if `router_set_goal(...)` returns a model-facing `workflow_confirmation`
+  clarification for a weak match, the model may now answer with
+  `guided_manual_build` to decline that workflow and continue on the guided
+  build surface instead
+
 ### Modeling Tools
 Geometry creation and editing.
 
@@ -110,7 +734,7 @@ Geometry creation and editing.
 |-----------|-----------|-------------|
 | `modeling_create_primitive` | `primitive_type` (str), `size` (float), `location` ([x,y,z]), `rotation` ([x,y,z]) | Creates a simple 3D object (Cube, Sphere, Cylinder, Plane, Cone, Torus, Monkey). |
 | `modeling_transform_object` | `name` (str), `location` (opt), `rotation` (opt), `scale` (opt) | Changes position, rotation, or scale of an existing object. |
-| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a modifier to an object (e.g., `SUBSURF`, `BEVEL`). |
+| `modeling_add_modifier` | `name` (str), `modifier_type` (str), `properties` (dict) | Adds a non-destructive object modifier (e.g., `SUBSURF`, `BEVEL`). Successful addon responses use structured modifier metadata under the hood. |
 | `modeling_apply_modifier` | `name` (str), `modifier_name` (str) | Applies a modifier, permanently changing the mesh geometry. |
 | `modeling_convert_to_mesh` | `name` (str) | Converts a non-mesh object (e.g., Curve, Text, Surface) to a mesh. |
 | `modeling_join_objects` | `object_names` (list[str]) | Joins multiple mesh objects into a single one. |
@@ -179,7 +803,7 @@ Low-level geometry manipulation.
 
 > **Note:** Mesh introspection tools (`mesh_get_*`) are consolidated into `mesh_inspect` for MCP clients. Router can still call internal actions via handler metadata.
 
-> **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into mega tools. Use `mesh_select` and `mesh_select_targeted` instead.
+> **Note:** Selection tools (`mesh_select_all`, `mesh_select_by_index`, `mesh_select_loop`, etc.) have been consolidated into grouped public tools. Use `mesh_select` and `mesh_select_targeted` instead.
 
 ### Curve Tools
 Curve creation and conversion.
@@ -205,20 +829,16 @@ Sculpt Mode operations for organic shape manipulation.
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
 | `sculpt_auto` | `operation` (smooth/inflate/flatten/sharpen), `strength`, `iterations`, `use_symmetry`, `symmetry_axis` | High-level sculpt operation using mesh filters. Applies to entire mesh. Recommended for AI workflows. |
-| `sculpt_brush_smooth` | `location`, `radius`, `strength` | Sets up smooth brush at specified location. |
-| `sculpt_brush_grab` | `from_location`, `to_location`, `radius`, `strength` | Sets up grab brush for moving geometry. |
-| `sculpt_brush_crease` | `location`, `radius`, `strength`, `pinch` | Sets up crease brush for creating sharp lines. |
-| `sculpt_brush_clay` | `radius`, `strength` | Sets up clay brush for adding material (muscle mass, fat deposits). |
-| `sculpt_brush_inflate` | `radius`, `strength` | Sets up inflate brush for pushing geometry outward (tumors, swelling). |
-| `sculpt_brush_blob` | `radius`, `strength` | Sets up blob brush for creating rounded organic bulges. |
-| `sculpt_brush_snake_hook` | `radius`, `strength` | Sets up snake hook brush for pulling tendrils (blood vessels, nerves). |
-| `sculpt_brush_draw` | `radius`, `strength` | Sets up draw brush for basic sculpting. |
-| `sculpt_brush_pinch` | `radius`, `strength` | Sets up pinch brush for creating sharp creases (wrinkles, folds). |
+| `sculpt_deform_region` | `center`, `radius`, `delta`, `strength`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically deforms a local mesh region. Programmatic replacement for brush-style grab behavior. |
+| `sculpt_crease_region` | `center`, `radius`, `depth`, `pinch`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically creates a local crease/groove region. Programmatic replacement for brush-style crease behavior. |
+| `sculpt_smooth_region` | `center`, `radius`, `strength`, `iterations`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically smooths a local mesh region using edge-adjacency averaging. |
+| `sculpt_inflate_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically inflates or deflates a local mesh region. |
+| `sculpt_pinch_region` | `center`, `radius`, `amount`, `falloff`, `use_symmetry`, `symmetry_axis` | Deterministically pinches a local mesh region toward the influence center. |
 | `sculpt_enable_dyntopo` | `detail_mode`, `detail_size`, `use_smooth_shading` | Enables Dynamic Topology for automatic geometry addition. |
 | `sculpt_disable_dyntopo` | *none* | Disables Dynamic Topology. |
 | `sculpt_dyntopo_flood_fill` | *none* | Applies current detail level to entire mesh. |
 
-> **Note:** For reliable AI workflows, use `sculpt_auto` with mesh filters. Brush tools set up the brush but don't execute strokes programmatically.
+> **Note:** For reliable AI workflows, use `sculpt_auto`, `sculpt_deform_region`, `sculpt_crease_region`, `sculpt_smooth_region`, `sculpt_inflate_region`, and `sculpt_pinch_region`.
 
 ### Export Tools
 File export operations.
@@ -307,8 +927,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets modeling goal with automatic parameter resolution. Returns JSON with status (ready/needs_input/no_match/disabled/error), resolved params with sources, and unresolved params. Call again with resolved_params to provide answers. Mappings stored automatically for future semantic reuse. |
-| `router_get_status` | *none* | Gets current Router Supervisor status (goal, pending workflow, stats). |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, and explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

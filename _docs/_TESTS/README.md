@@ -38,8 +38,12 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 
 | Type | Count | Execution Time |
 |------|-------|----------------|
-| Unit Tests | 905+ | ~5-6 seconds |
+| Unit Tests | 2436 | ~27-28 seconds |
 | E2E Tests | 142 | ~12 seconds |
+
+Current repo-wide unit coverage (`server + blender_addon + scripts`):
+
+- `76%`
 
 ## Test Coverage by Area
 
@@ -72,6 +76,167 @@ PYTHONPATH=. poetry run pytest tests/e2e/ -v
 | **Step Dependencies** | ✅ | 📋 Planned | **TASK-056-4**: Topological sort, timeout, retry ✅ DONE |
 | **Computed Parameters** | ✅ | 📋 Planned | **TASK-056-5**: Dependency graph, expression eval ✅ DONE |
 | **Dynamic Workflow Steps** | 📋 Planned | 📋 Planned | **TASK-055-FIX-7**: Conditional planks, adaptive count |
+
+---
+
+## TASK-088 Background Task Coverage
+
+Background task mode now has focused unit coverage for:
+
+- candidacy inventory and adopted endpoint classification
+- task/runtime compatibility shims for the current FastMCP+Docket baseline
+- background job registry and result store bookkeeping
+- task-mode registration semantics:
+  - `forbidden`
+  - `optional`
+  - `required`
+- addon-side RPC lifecycle:
+  - launch
+  - poll
+  - cancel
+  - collect
+- adopted tool paths for:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+  - `export_glb`
+  - `export_fbx`
+  - `export_obj`
+  - `import_obj`
+  - `import_fbx`
+  - `import_glb`
+  - `import_image_as_plane`
+
+Primary local validation commands for TASK-088:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_candidacy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/adapters/rpc/test_background_job_lifecycle.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/scene/test_mcp_viewport_output.py -q
+
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_versioned_surface.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/rpc/test_timeout_coordination.py tests/unit/tools/extraction/test_render_angles.py -q
+```
+
+Task-mode regression is intentionally unit/integration focused for now.
+No Blender-backed E2E suite has been added yet for background task submission itself.
+
+Primary local validation commands for TASK-098 extension work:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_candidacy.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py tests/unit/tools/export/test_export_tools.py tests/unit/tools/import_tool/test_import_handler.py -q
+
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_provider_versions.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_versioned_surface.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/rpc/test_background_job_lifecycle.py tests/unit/adapters/rpc/test_timeout_coordination.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
+```
+
+Primary local validation commands for TASK-099 runtime alignment:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_task_mode_registration.py tests/unit/adapters/mcp/test_task_mode_tools.py -q
+```
+
+Primary local validation commands for TASK-093 diagnostics/pagination:
+
+```bash
+poetry run pytest tests/unit/router/application/test_router_contracts.py tests/unit/adapters/mcp/test_session_phase.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_task_runtime_policy.py tests/unit/adapters/mcp/test_background_job_registry.py tests/unit/adapters/mcp/test_timeout_policy.py tests/unit/tools/workflow_catalog/test_workflow_catalog_import.py tests/unit/adapters/mcp/test_pagination_policy.py -q
+```
+
+Primary local validation commands for TASK-095 semantic boundary hardening:
+
+```bash
+poetry run pytest tests/unit/router/infrastructure/test_semantic_boundary_audit.py tests/unit/router/infrastructure/test_semantic_boundary_telemetry.py tests/unit/router/application/test_correction_audit.py tests/unit/router/application/resolver/test_parameter_resolver.py tests/unit/router/application/matcher/test_semantic_workflow_matcher.py tests/unit/router/application/matcher/test_ensemble_aggregator.py -q
+```
+
+Primary local validation commands for TASK-083 platform closure:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_context_bridge.py tests/unit/adapters/mcp/test_platform_migration_docs.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_runtime_inventory.py tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_surface_bootstrap.py tests/unit/adapters/mcp/test_surface_inventory.py tests/unit/adapters/mcp/test_surface_compatibility.py tests/unit/adapters/mcp/test_transform_pipeline.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/adapters/test_mcp_integration.py -q
+```
+
+Primary local validation commands for TASK-092 sampling assistants:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_aliasing_transform.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py tests/unit/router/application/test_router_contracts.py tests/unit/tools/scene/test_scene_inspect_mega.py tests/unit/tools/scene/test_scene_state_assistants.py tests/unit/tools/mesh/test_mesh_inspect_mega.py tests/unit/tools/mesh/test_mesh_contracts.py tests/unit/tools/workflow_catalog/test_workflow_catalog_assistants.py -q
+```
+
+Primary local validation commands for TASK-094 guardrails and read-only pilot:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py -q
+```
+
+Primary local validation commands for TASK-094 benchmark and decision memo:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_server_factory.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_code_mode_pilot.py tests/unit/adapters/mcp/test_code_mode_benchmarks.py tests/unit/adapters/mcp/test_code_mode_pilot_docs.py tests/unit/adapters/mcp/test_code_mode_decision_docs.py -q
+```
+
+Primary local validation commands for TASK-118 scene render/world/configuration wave:
+
+```bash
+poetry run pytest tests/unit/tools/scene/test_scene_configure_mega.py tests/unit/tools/scene/test_scene_configure_handler.py tests/unit/tools/scene/test_scene_mcp_tools_batch.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/test_handler_rpc_alignment.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_runtime_inventory.py tests/unit/adapters/mcp/test_contract_docs.py -q
+
+poetry run pytest tests/e2e/tools/scene/test_scene_configure_roundtrip.py -q
+```
+
+Primary local validation commands for TASK-119 public-surface hardening:
+
+```bash
+poetry run pytest tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/adapters/mcp/test_visibility_policy.py tests/unit/adapters/mcp/test_guided_mode.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_name_resolution.py tests/unit/adapters/mcp/test_surface_manifest.py tests/unit/adapters/mcp/test_aliasing_transform.py tests/unit/adapters/mcp/test_tool_inventory.py tests/unit/adapters/mcp/test_public_surface_docs.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/tools/scene/test_scene_create_mega.py tests/unit/tools/scene/test_scene_contracts.py tests/unit/tools/mesh/test_mesh_select_mega.py tests/unit/tools/mesh/test_mesh_select_targeted_mega.py tests/unit/tools/mesh/test_mesh_contracts.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py -q
+```
+
+Primary local validation commands for TASK-120 macro regression/benchmark pack:
+
+```bash
+poetry run pytest tests/unit/tools/macro/test_macro_cutout_recess.py tests/unit/tools/macro/test_macro_finish_form.py tests/unit/tools/macro/test_macro_relative_layout.py tests/unit/tools/modeling/test_macro_cutout_recess_mcp.py tests/unit/tools/modeling/test_macro_finish_form_mcp.py tests/unit/tools/scene/test_macro_relative_layout_mcp.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_provider_inventory.py tests/unit/adapters/mcp/test_delivery_strategy.py tests/unit/adapters/mcp/test_structured_contract_delivery.py tests/unit/adapters/mcp/test_contract_docs.py tests/unit/adapters/mcp/test_search_surface.py tests/unit/adapters/mcp/test_legacy_flat_pagination_compat.py tests/unit/adapters/mcp/test_guided_surface_benchmarks.py tests/unit/router/infrastructure/test_mcp_tools_metadata_alignment.py tests/unit/router/infrastructure/test_metadata_loader.py tests/unit/router/application/test_intent_classifier.py -q
+
+poetry run pytest tests/e2e/tools/macro/test_macro_cutout_recess.py tests/e2e/tools/macro/test_macro_finish_form.py tests/e2e/tools/macro/test_macro_relative_layout.py -q
+```
+
+Primary local validation commands for TASK-121 vision runtime/capture/evaluation scaffolding:
+
+```bash
+poetry run pytest tests/unit/adapters/mcp/test_reference_images.py tests/unit/tools/macro/test_macro_capture_bundle.py tests/unit/adapters/mcp/test_macro_contracts.py tests/unit/adapters/mcp/test_vision_runtime_config.py tests/unit/adapters/mcp/test_vision_result_types.py tests/unit/adapters/mcp/test_vision_external_backend.py tests/unit/adapters/mcp/test_vision_local_backend.py tests/unit/adapters/mcp/test_vision_capture_bundle.py tests/unit/adapters/mcp/test_vision_capture_runtime.py tests/unit/adapters/mcp/test_vision_runner.py tests/unit/adapters/mcp/test_vision_macro_reporting.py tests/unit/adapters/mcp/test_vision_macro_mcp_integration.py tests/unit/adapters/mcp/test_vision_macro_reference_integration.py tests/unit/adapters/mcp/test_vision_evaluation.py tests/unit/infrastructure/test_vision_di.py tests/unit/adapters/mcp/test_assistant_runner.py tests/unit/adapters/mcp/test_sampling_assistant_docs.py -q
+```
+
+Repo-tracked synthetic vision evaluation scenarios now live under:
+
+- `tests/fixtures/vision_eval/synthetic_round_cutout/`
+- `tests/fixtures/vision_eval/synthetic_no_change/`
+- `tests/fixtures/vision_eval/synthetic_reference_mismatch/`
+- `tests/fixtures/vision_eval/default_cube_to_picnic_table/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_user_top/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_user_top/`
+- `tests/fixtures/vision_eval/squirrel_head_to_face_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_face_to_body_camera_perspective/`
+- `tests/fixtures/vision_eval/squirrel_head_to_body_camera_perspective/`
+
+Opt-in real-model comparison coverage for the new view-family variants:
+
+- `tests/e2e/vision/test_real_view_variant_model_comparison.py`
+- requires `RUN_REAL_VISION_MODEL_COMPARISON=1`
+- currently intended for local/macOS Metal validation, not default CI
+
+Opt-in real reference-guided creature comparison coverage:
+
+- `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- requires:
+  - `RUN_REAL_REFERENCE_GUIDED_CREATURE_EVAL=1`
+  - `VISION_REFERENCE_FRONT_PATH`
+  - `VISION_REFERENCE_SIDE_PATH`
+- uses repo-tracked squirrel checkpoint images plus local front/side reference
+  images to validate correction-oriented output on a real creature flow
+
+First Blender-backed E2E coverage for the guided utility prep path now includes:
+
+- `tests/e2e/tools/scene/test_scene_clean_scene.py`
+- `tests/e2e/tools/scene/test_scene_get_viewport.py`
+- `tests/e2e/router/test_utility_goal_boundary.py`
+
+Camera-faithful viewport capture regression coverage now also includes:
+
+- `tests/e2e/tools/scene/test_scene_get_viewport_camera.py`
 
 ---
 

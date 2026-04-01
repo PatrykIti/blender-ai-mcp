@@ -1,0 +1,53 @@
+{
+  "tool_name": "macro_finish_form",
+  "category": "modeling",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "finish",
+    "bevel",
+    "subsurf",
+    "subdivision",
+    "solidify",
+    "shell",
+    "smooth",
+    "rounded",
+    "panel",
+    "housing",
+    "thicken",
+    "wykończenie",
+    "zaokrąglij",
+    "sfazuj",
+    "wygładź",
+    "pogrub",
+    "skorupa",
+    "obudowa"
+  ],
+  "sample_prompts": [
+    "give this housing a rounded finish without hand-building the modifier stack",
+    "apply a light panel finish preset to this part",
+    "thicken this shell with one finishing macro",
+    "zaokrąglij obudowę i dodaj lekki bevel oraz subdivision",
+    "pogrub tę skorupę jednym makrem wykończenia",
+    "wygładź i sfazuj ten obiekt jednym presetem"
+  ],
+  "parameters": {
+    "target_object": {"type": "string", "required": true},
+    "preset": {"type": "enum", "options": ["rounded_housing", "panel_finish", "shell_thicken", "smooth_subdivision"], "default": "rounded_housing"},
+    "bevel_width": {"type": "float", "default": null},
+    "bevel_segments": {"type": "int", "default": null},
+    "subsurf_levels": {"type": "int", "default": null},
+    "thickness": {"type": "float", "default": null},
+    "solidify_offset": {"type": "float", "default": 0.0}
+  },
+  "related_tools": [
+    "scene_inspect",
+    "scene_measure_dimensions",
+    "scene_assert_dimensions",
+    "scene_get_viewport",
+    "macro_relative_layout",
+    "macro_cutout_recess"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that applies one finishing preset stack to an object using controlled bevel, subdivision, or solidify combinations. Prefer this macro over manual modifier-by-modifier or bevel-plus-subdivision chaining when one preset matches the intent."
+}

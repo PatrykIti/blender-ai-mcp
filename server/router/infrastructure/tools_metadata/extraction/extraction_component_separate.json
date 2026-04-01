@@ -3,7 +3,14 @@
   "category": "extraction",
   "mode_required": "OBJECT",
   "selection_required": false,
-  "keywords": ["separate", "components", "loose parts", "split", "islands", "extraction"],
+  "keywords": [
+    "separate",
+    "components",
+    "loose parts",
+    "split",
+    "islands",
+    "extraction"
+  ],
   "sample_prompts": [
     "separate the mesh into parts",
     "split by loose parts",
@@ -11,10 +18,22 @@
     "break apart the model"
   ],
   "parameters": {
-    "object_name": {"type": "string", "required": true, "description": "Object to separate"},
-    "min_vertex_count": {"type": "integer", "required": false, "default": 4, "description": "Minimum vertices to keep component"}
+    "object_name": {
+      "type": "string",
+      "required": true,
+      "description": "Object to separate"
+    },
+    "min_vertex_count": {
+      "type": "int",
+      "required": false,
+      "default": 4,
+      "description": "Minimum vertices to keep component"
+    }
   },
-  "related_tools": ["modeling_separate_object", "extraction_deep_topology"],
+  "related_tools": [
+    "modeling_separate_object",
+    "extraction_deep_topology"
+  ],
   "patterns": [],
   "description": "Separates mesh into loose parts (components) for individual analysis."
 }

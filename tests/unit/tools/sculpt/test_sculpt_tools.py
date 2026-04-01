@@ -2,17 +2,17 @@
 Tests for TASK-027 (Sculpting Tools).
 Pure pytest style - uses conftest.py fixtures.
 """
-import pytest
-from unittest.mock import MagicMock, patch
+
+from unittest.mock import MagicMock
 
 import bpy
-
+import pytest
 from blender_addon.application.handlers.sculpt import SculptHandler
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sculpt_handler():
@@ -47,11 +47,11 @@ def mock_sculpt_tool_settings():
 def mock_mesh_object(mock_sculpt_tool_settings):
     """Sets up mock mesh object in object mode."""
     mock_obj = MagicMock()
-    mock_obj.name = 'Cube'
-    mock_obj.type = 'MESH'
-    mock_obj.mode = 'OBJECT'
+    mock_obj.name = "Cube"
+    mock_obj.type = "MESH"
+    mock_obj.mode = "OBJECT"
     bpy.context.active_object = mock_obj
-    bpy.data.objects = {'Cube': mock_obj}
+    bpy.data.objects = {"Cube": mock_obj}
     return mock_obj
 
 
@@ -59,11 +59,49 @@ def mock_mesh_object(mock_sculpt_tool_settings):
 def mock_mesh_object_sculpt_mode(mock_sculpt_tool_settings):
     """Sets up mock mesh object already in sculpt mode."""
     mock_obj = MagicMock()
-    mock_obj.name = 'Sphere'
-    mock_obj.type = 'MESH'
-    mock_obj.mode = 'SCULPT'
+    mock_obj.name = "Sphere"
+    mock_obj.type = "MESH"
+    mock_obj.mode = "SCULPT"
     bpy.context.active_object = mock_obj
-    bpy.data.objects = {'Sphere': mock_obj}
+    bpy.data.objects = {"Sphere": mock_obj}
+    return mock_obj
+
+
+class MockVertex:
+    """Simple vertex container with mutable Vector-like coordinates."""
+
+    def __init__(self, coords, normal=(0.0, 0.0, 1.0)):
+        from mathutils import Vector
+
+        self.co = Vector(coords)
+        self.normal = Vector(normal)
+
+
+class MockEdge:
+    """Simple edge container exposing vertex indices."""
+
+    def __init__(self, left: int, right: int):
+        self.vertices = (left, right)
+
+
+@pytest.fixture
+def mock_mesh_object_with_vertices(mock_sculpt_tool_settings):
+    """Mesh object fixture with editable vertex coordinates for deform tests."""
+
+    mock_obj = MagicMock()
+    mock_obj.name = "Head"
+    mock_obj.type = "MESH"
+    mock_obj.mode = "OBJECT"
+    mock_obj.matrix_world = None
+    mock_obj.data = MagicMock()
+    mock_obj.data.vertices = [
+        MockVertex((0.0, 0.0, 1.0)),
+        MockVertex((0.1, 0.0, 1.0)),
+        MockVertex((0.8, 0.0, 1.0)),
+    ]
+    mock_obj.data.edges = [MockEdge(0, 1), MockEdge(1, 2)]
+    bpy.context.active_object = mock_obj
+    bpy.data.objects = {"Head": mock_obj}
     return mock_obj
 
 
@@ -77,6 +115,7 @@ def mock_sculpt_context(mock_sculpt_tool_settings):
 # TASK-027-1: sculpt_auto tests
 # =============================================================================
 
+
 class TestSculptAuto:
     """Tests for sculpt_auto tool (mesh filters)."""
 
@@ -87,8 +126,8 @@ class TestSculptAuto:
 
         result = sculpt_handler.auto_sculpt()
 
-        bpy.ops.object.mode_set.assert_called_with(mode='SCULPT')
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SMOOTH', strength=0.5)
+        bpy.ops.object.mode_set.assert_called_with(mode="SCULPT")
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="SMOOTH", strength=0.5)
         assert "smooth" in result.lower()
         assert "Cube" in result
 
@@ -99,7 +138,7 @@ class TestSculptAuto:
 
         result = sculpt_handler.auto_sculpt(operation="inflate", strength=0.3)
 
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='INFLATE', strength=0.3)
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="INFLATE", strength=0.3)
         assert "inflate" in result.lower()
 
     def test_auto_sculpt_flatten(self, sculpt_handler, mock_mesh_object_sculpt_mode):
@@ -110,7 +149,7 @@ class TestSculptAuto:
         result = sculpt_handler.auto_sculpt(operation="flatten")
 
         # FLATTEN was removed in Blender 5.0, mapped to SURFACE_SMOOTH
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SURFACE_SMOOTH', strength=0.5)
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="SURFACE_SMOOTH", strength=0.5)
         assert "flatten" in result.lower()
 
     def test_auto_sculpt_sharpen(self, sculpt_handler, mock_mesh_object_sculpt_mode):
@@ -120,7 +159,7 @@ class TestSculptAuto:
 
         result = sculpt_handler.auto_sculpt(operation="sharpen")
 
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SHARPEN', strength=0.5)
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="SHARPEN", strength=0.5)
         assert "sharpen" in result.lower()
 
     def test_auto_sculpt_multiple_iterations(self, sculpt_handler, mock_mesh_object_sculpt_mode):
@@ -168,11 +207,11 @@ class TestSculptAuto:
 
         # Test value > 1
         sculpt_handler.auto_sculpt(strength=2.0)
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SMOOTH', strength=1.0)
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="SMOOTH", strength=1.0)
 
         # Test value < 0
         sculpt_handler.auto_sculpt(strength=-0.5)
-        bpy.ops.sculpt.mesh_filter.assert_called_with(type='SMOOTH', strength=0.0)
+        bpy.ops.sculpt.mesh_filter.assert_called_with(type="SMOOTH", strength=0.0)
 
     def test_auto_sculpt_invalid_operation_raises(self, sculpt_handler, mock_mesh_object_sculpt_mode):
         """Should raise ValueError for invalid operation."""
@@ -191,9 +230,9 @@ class TestSculptAuto:
     def test_auto_sculpt_non_mesh_raises(self, sculpt_handler):
         """Should raise ValueError for non-mesh objects."""
         mock_camera = MagicMock()
-        mock_camera.name = 'Camera'
-        mock_camera.type = 'CAMERA'
-        bpy.data.objects = {'Camera': mock_camera}
+        mock_camera.name = "Camera"
+        mock_camera.type = "CAMERA"
+        bpy.data.objects = {"Camera": mock_camera}
         bpy.context.view_layer = MagicMock()
         bpy.context.active_object = mock_camera
 
@@ -204,6 +243,7 @@ class TestSculptAuto:
 # =============================================================================
 # TASK-027-2: sculpt_brush_smooth tests
 # =============================================================================
+
 
 class TestSculptBrushSmooth:
     """Tests for sculpt_brush_smooth tool."""
@@ -243,8 +283,165 @@ class TestSculptBrushSmooth:
 
 
 # =============================================================================
+# TASK-112-01/02: sculpt_deform_region tests
+# =============================================================================
+
+
+class TestSculptDeformRegion:
+    """Tests for deterministic sculpt region deformation."""
+
+    def test_falloff_weight_variants(self, sculpt_handler):
+        """Shared falloff engine should produce deterministic weight curves."""
+
+        assert sculpt_handler._falloff_weight(0.0, 1.0, "CONSTANT") == 1.0
+        assert sculpt_handler._falloff_weight(0.5, 1.0, "LINEAR") == pytest.approx(0.5)
+        assert sculpt_handler._falloff_weight(0.5, 1.0, "SHARP") == pytest.approx(0.25)
+        assert sculpt_handler._falloff_weight(1.0, 1.0, "SMOOTH") == 0.0
+
+    def test_deform_region_moves_vertices_inside_radius(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Vertices inside the region should move along the weighted delta."""
+
+        bpy.ops.object.mode_set = MagicMock()
+
+        result = sculpt_handler.deform_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.25,
+            delta=[0.0, 0.0, 0.2],
+            strength=1.0,
+            falloff="LINEAR",
+        )
+
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        assert result["affected_vertices"] == 2
+        assert vertices[0].co[2] == pytest.approx(1.2)
+        assert vertices[1].co[2] > 1.0
+        assert vertices[2].co[2] == pytest.approx(1.0)
+
+    def test_deform_region_supports_symmetry(self, sculpt_handler, mock_sculpt_tool_settings):
+        """Symmetry should mirror center and delta on the chosen axis."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        mock_obj = MagicMock()
+        mock_obj.name = "Head"
+        mock_obj.type = "MESH"
+        mock_obj.mode = "OBJECT"
+        mock_obj.matrix_world = None
+        mock_obj.data = MagicMock()
+        mock_obj.data.vertices = [
+            MockVertex((0.25, 0.0, 0.0)),
+            MockVertex((-0.25, 0.0, 0.0)),
+        ]
+        bpy.context.active_object = mock_obj
+        bpy.data.objects = {"Head": mock_obj}
+
+        result = sculpt_handler.deform_region(
+            object_name="Head",
+            center=[0.25, 0.0, 0.0],
+            radius=0.2,
+            delta=[0.1, 0.0, 0.0],
+            strength=1.0,
+            falloff="CONSTANT",
+            use_symmetry=True,
+            symmetry_axis="X",
+        )
+
+        assert result["affected_vertices"] == 2
+        assert mock_obj.data.vertices[0].co[0] > 0.25
+        assert mock_obj.data.vertices[1].co[0] < -0.25
+
+    def test_deform_region_rejects_missing_center_or_delta(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Core region tool should fail loudly on missing geometry parameters."""
+
+        with pytest.raises(ValueError, match="center is required"):
+            sculpt_handler.deform_region(object_name="Head", delta=[0.0, 0.0, 0.1])
+
+        with pytest.raises(ValueError, match="delta is required"):
+            sculpt_handler.deform_region(object_name="Head", center=[0.0, 0.0, 1.0])
+
+
+class TestSculptRegionTools:
+    """Tests for programmatic smooth/inflate/pinch region tools."""
+
+    def test_smooth_region_relaxes_vertices_toward_neighbors(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Local smoothing should move the middle vertex toward the neighbor average."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        vertices[1].co[2] = 2.0
+
+        result = sculpt_handler.smooth_region(
+            object_name="Head",
+            center=[0.1, 0.0, 2.0],
+            radius=0.3,
+            strength=1.0,
+            iterations=1,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[1].co[2] < 2.0
+
+    def test_inflate_region_uses_vertex_normals(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Inflate should move vertices along normals within the selected region."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[0].co[2]
+
+        result = sculpt_handler.inflate_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.2,
+            amount=0.25,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[0].co[2] > before
+
+    def test_pinch_region_moves_vertices_toward_center(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Pinch should contract vertices toward the chosen center."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[2].co[0]
+
+        result = sculpt_handler.pinch_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=1.0,
+            amount=0.2,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[2].co[0] < before
+
+    def test_crease_region_moves_vertices_inward(self, sculpt_handler, mock_mesh_object_with_vertices):
+        """Crease should indent vertices inward and toward the center."""
+
+        bpy.ops.object.mode_set = MagicMock()
+        vertices = mock_mesh_object_with_vertices.data.vertices
+        before = vertices[0].co[2]
+
+        result = sculpt_handler.crease_region(
+            object_name="Head",
+            center=[0.0, 0.0, 1.0],
+            radius=0.2,
+            depth=0.15,
+            pinch=0.5,
+            falloff="CONSTANT",
+        )
+
+        assert result["affected_vertices"] >= 1
+        assert vertices[0].co[2] < before
+
+
+# =============================================================================
 # TASK-027-3: sculpt_brush_grab tests
 # =============================================================================
+
 
 class TestSculptBrushGrab:
     """Tests for sculpt_brush_grab tool."""
@@ -258,25 +455,25 @@ class TestSculptBrushGrab:
 
         bpy.ops.wm.tool_set_by_id.assert_called_with(name="builtin_brush.Grab")
         assert mock_sculpt_context.brush.strength == 0.7
-        assert "Grab brush ready" in result
+        assert "Grab brush configured" in result
+        assert "No geometry was modified" in result
 
     def test_brush_grab_with_locations(self, sculpt_handler, mock_mesh_object, mock_sculpt_context):
         """Should include from/to locations in result message."""
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.wm.tool_set_by_id = MagicMock()
 
-        result = sculpt_handler.brush_grab(
-            from_location=[0, 0, 0],
-            to_location=[0, 0, 1]
-        )
+        result = sculpt_handler.brush_grab(from_location=[0, 0, 0], to_location=[0, 0, 1])
 
         assert "[0, 0, 0]" in result
         assert "[0, 0, 1]" in result
+        assert "Manual interaction is required" in result
 
 
 # =============================================================================
 # TASK-027-4: sculpt_brush_crease tests
 # =============================================================================
+
 
 class TestSculptBrushCrease:
     """Tests for sculpt_brush_crease tool."""
@@ -320,6 +517,7 @@ class TestSculptBrushCrease:
 # Helper function tests
 # =============================================================================
 
+
 class TestSculptHelpers:
     """Tests for helper methods."""
 
@@ -329,8 +527,8 @@ class TestSculptHelpers:
 
         obj, prev_mode = sculpt_handler._ensure_sculpt_mode()
 
-        bpy.ops.object.mode_set.assert_called_with(mode='SCULPT')
-        assert prev_mode == 'OBJECT'
+        bpy.ops.object.mode_set.assert_called_with(mode="SCULPT")
+        assert prev_mode == "OBJECT"
 
     def test_ensure_sculpt_mode_stays_in_sculpt(self, sculpt_handler, mock_mesh_object_sculpt_mode):
         """Should not switch mode if already in sculpt mode."""
@@ -340,11 +538,11 @@ class TestSculptHelpers:
 
         # Should not be called since already in SCULPT mode
         bpy.ops.object.mode_set.assert_not_called()
-        assert prev_mode == 'SCULPT'
+        assert prev_mode == "SCULPT"
 
     def test_set_symmetry_x(self, sculpt_handler, mock_mesh_object):
         """Should set X symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
-        sculpt_handler._set_symmetry(mock_mesh_object, True, 'X')
+        sculpt_handler._set_symmetry(mock_mesh_object, True, "X")
 
         # Blender 5.0+: symmetry is on sculpt tool settings, not on object
         sculpt_settings = bpy.context.scene.tool_settings.sculpt
@@ -354,7 +552,7 @@ class TestSculptHelpers:
 
     def test_set_symmetry_y(self, sculpt_handler, mock_mesh_object):
         """Should set Y symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
-        sculpt_handler._set_symmetry(mock_mesh_object, True, 'Y')
+        sculpt_handler._set_symmetry(mock_mesh_object, True, "Y")
 
         sculpt_settings = bpy.context.scene.tool_settings.sculpt
         assert sculpt_settings.use_symmetry_x is False
@@ -363,7 +561,7 @@ class TestSculptHelpers:
 
     def test_set_symmetry_z(self, sculpt_handler, mock_mesh_object):
         """Should set Z symmetry correctly (Blender 5.0+ uses sculpt tool settings)."""
-        sculpt_handler._set_symmetry(mock_mesh_object, True, 'Z')
+        sculpt_handler._set_symmetry(mock_mesh_object, True, "Z")
 
         sculpt_settings = bpy.context.scene.tool_settings.sculpt
         assert sculpt_settings.use_symmetry_x is False
@@ -376,7 +574,7 @@ class TestSculptHelpers:
         sculpt_settings = bpy.context.scene.tool_settings.sculpt
         sculpt_settings.use_symmetry_x = True
 
-        sculpt_handler._set_symmetry(mock_mesh_object, False, 'X')
+        sculpt_handler._set_symmetry(mock_mesh_object, False, "X")
 
         assert sculpt_settings.use_symmetry_x is False
         assert sculpt_settings.use_symmetry_y is False
@@ -386,6 +584,7 @@ class TestSculptHelpers:
 # =============================================================================
 # TASK-038-2: Core Sculpt Brushes
 # =============================================================================
+
 
 class TestSculptBrushClay:
     """Tests for sculpt_brush_clay tool."""
@@ -445,6 +644,7 @@ class TestSculptBrushBlob:
 # TASK-038-3: Detail Sculpt Brushes
 # =============================================================================
 
+
 class TestSculptBrushSnakeHook:
     """Tests for sculpt_brush_snake_hook tool."""
 
@@ -493,6 +693,7 @@ class TestSculptBrushPinch:
 # =============================================================================
 # TASK-038-4: Dynamic Topology (Dyntopo)
 # =============================================================================
+
 
 class TestSculptEnableDyntopo:
     """Tests for sculpt_enable_dyntopo tool."""

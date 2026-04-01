@@ -14,16 +14,30 @@ TASK-041-14: Added ProportionResolver integration
 
 import dataclasses
 import logging
-from typing import Dict, Any, Optional, List
+import re
+from typing import Any, Dict, List, Optional
+
+from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
+from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
+from server.router.application.evaluator.loop_expander import LoopExpander
+from server.router.application.evaluator.proportion_resolver import ProportionResolver
+from server.router.domain.entities.tool_call import CorrectedToolCall
 
 from .base import BaseWorkflow, WorkflowDefinition, WorkflowStep
-from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.application.evaluator.expression_evaluator import ExpressionEvaluator
-from server.router.application.evaluator.condition_evaluator import ConditionEvaluator
-from server.router.application.evaluator.proportion_resolver import ProportionResolver
-from server.router.application.evaluator.loop_expander import LoopExpander
 
 logger = logging.getLogger(__name__)
+
+
+def _keyword_matches_text(keyword: str, text: str) -> bool:
+    """Match workflow trigger keywords on token/phrase boundaries, not raw substrings."""
+
+    normalized_keyword = keyword.strip().lower()
+    normalized_text = text.strip().lower()
+    if not normalized_keyword or not normalized_text:
+        return False
+
+    pattern = rf"(?<!\w){re.escape(normalized_keyword)}(?!\w)"
+    return re.search(pattern, normalized_text) is not None
 
 
 class WorkflowRegistry:
@@ -197,7 +211,7 @@ class WorkflowRegistry:
         # Check custom definitions
         for name, definition in self._custom_definitions.items():
             for keyword in definition.trigger_keywords:
-                if keyword.lower() in text_lower:
+                if _keyword_matches_text(keyword, text_lower):
                     return name
 
         return None
@@ -228,9 +242,7 @@ class WorkflowRegistry:
         # Treat explicit `None` values as "not provided" to avoid accidentally
         # overriding defaults/computed params (e.g. computed params often have
         # schema.default=None and should be computed, not passed through).
-        sanitized_params: Dict[str, Any] = {
-            k: v for k, v in (params or {}).items() if v is not None
-        }
+        sanitized_params: Dict[str, Any] = {k: v for k, v in (params or {}).items() if v is not None}
 
         # Ensure custom workflows are loaded
         self.ensure_custom_loaded()
@@ -265,7 +277,6 @@ class WorkflowRegistry:
             # Merge with params (params override variables)
             all_params = {**variables, **sanitized_params}
 
-
             # TASK-055-FIX-7 Phase 0: Resolve computed parameters
             if definition.parameters:
                 try:
@@ -277,9 +288,7 @@ class WorkflowRegistry:
                     base_params = {k: v for k, v in all_params.items() if k not in explicit_params}
 
                     # Resolve computed parameters using all available params
-                    computed_values = self._evaluator.resolve_computed_parameters(
-                        schemas, all_params
-                    )
+                    computed_values = self._evaluator.resolve_computed_parameters(schemas, all_params)
 
                     # Merge: base_params < computed_values < explicit_params
                     # Computed params override defaults but NOT explicit params
@@ -291,15 +300,11 @@ class WorkflowRegistry:
                     )
                 except ValueError as e:
                     # Circular dependency or missing required variable
-                    logger.error(
-                        f"Computed parameter dependency error in '{workflow_name}': {e}"
-                    )
+                    logger.error(f"Computed parameter dependency error in '{workflow_name}': {e}")
                     # Continue without computed params - workflow may fail later with clearer error
                 except Exception as e:
                     # Syntax error, unexpected exception
-                    logger.error(
-                        f"Unexpected error resolving computed parameters in '{workflow_name}': {e}"
-                    )
+                    logger.error(f"Unexpected error resolving computed parameters in '{workflow_name}': {e}")
                     # Continue without computed params
 
             # Set evaluator context with all resolved parameters (including computed)
@@ -344,9 +349,7 @@ class WorkflowRegistry:
 
         try:
             # Resolve computed parameters using provided params
-            computed_values = self._evaluator.resolve_computed_parameters(
-                definition.parameters, sanitized_params
-            )
+            computed_values = self._evaluator.resolve_computed_parameters(definition.parameters, sanitized_params)
 
             # Merge computed values into params (computed override defaults)
             result = {**sanitized_params, **computed_values}
@@ -359,14 +362,10 @@ class WorkflowRegistry:
             return result
 
         except ValueError as e:
-            logger.error(
-                f"Computed parameter dependency error in '{workflow_name}': {e}"
-            )
+            logger.error(f"Computed parameter dependency error in '{workflow_name}': {e}")
             return sanitized_params  # Return sanitized params on error
         except Exception as e:
-            logger.error(
-                f"Unexpected error resolving computed parameters in '{workflow_name}': {e}"
-            )
+            logger.error(f"Unexpected error resolving computed parameters in '{workflow_name}': {e}")
             return sanitized_params  # Return sanitized params on error
 
     def _build_variables(
@@ -451,8 +450,7 @@ class WorkflowRegistry:
             condition_context["has_selection"] = context["selected_verts"] > 0
 
         # Topology info
-        for key in ["selected_verts", "selected_edges", "selected_faces",
-                    "total_verts", "total_edges", "total_faces"]:
+        for key in ["selected_verts", "selected_edges", "selected_faces", "total_verts", "total_edges", "total_faces"]:
             if key in context:
                 condition_context[key] = context[key]
 
@@ -512,25 +510,20 @@ class WorkflowRegistry:
         if workflow_params:
             extended_context = {**original_context, **workflow_params}
             self._condition_evaluator.set_context(extended_context)
-            logger.debug(
-                f"Extended condition context with workflow params: {list(workflow_params.keys())}"
-            )
+            logger.debug(f"Extended condition context with workflow params: {list(workflow_params.keys())}")
 
         try:
             for i, step in enumerate(steps):
                 # DEBUG: Log step condition status
-                condition_display = f'"{step.condition}"' if step.condition else 'None'
-                logger.debug(
-                    f"Step {i+1} ({step.tool}): condition={condition_display}"
-                )
+                condition_display = f'"{step.condition}"' if step.condition else "None"
+                logger.debug(f"Step {i + 1} ({step.tool}): condition={condition_display}")
 
                 # Check condition if present (TASK-041-11)
                 if step.condition:
                     should_execute = self._condition_evaluator.evaluate(step.condition)
                     if not should_execute:
                         logger.debug(
-                            f"Skipping workflow step {i+1} ({step.tool}): "
-                            f"condition '{step.condition}' not met"
+                            f"Skipping workflow step {i + 1} ({step.tool}): condition '{step.condition}' not met"
                         )
                         skipped_count += 1
                         continue
@@ -539,7 +532,7 @@ class WorkflowRegistry:
                 call = CorrectedToolCall(
                     tool_name=step.tool,
                     params=dict(step.params),
-                    corrections_applied=[f"workflow:{workflow_name}:step_{i+1}"],
+                    corrections_applied=[f"workflow:{workflow_name}:step_{i + 1}"],
                     is_injected=True,
                 )
                 calls.append(call)

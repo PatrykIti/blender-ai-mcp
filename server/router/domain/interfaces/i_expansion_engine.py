@@ -5,11 +5,9 @@ Abstract interface for expanding tool calls into workflows.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from server.router.domain.entities.tool_call import CorrectedToolCall
-from server.router.domain.entities.scene_context import SceneContext
-from server.router.domain.entities.pattern import DetectedPattern
 
 
 class IExpansionEngine(ABC):

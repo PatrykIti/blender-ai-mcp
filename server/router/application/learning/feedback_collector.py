@@ -12,10 +12,10 @@ TASK-046-6
 
 import json
 import logging
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -101,9 +101,7 @@ class FeedbackCollector:
             max_entries: Maximum entries to keep in memory and storage.
             auto_save: Whether to auto-save after each entry.
         """
-        self._storage_path = storage_path or (
-            Path.home() / ".blender-mcp" / "feedback.jsonl"
-        )
+        self._storage_path = storage_path or (Path.home() / ".blender-mcp" / "feedback.jsonl")
         self._max_entries = max_entries
         self._auto_save = auto_save
         self._entries: List[FeedbackEntry] = []
@@ -196,10 +194,7 @@ class FeedbackCollector:
         if self._auto_save:
             self._save()
 
-        logger.debug(
-            f"Recorded match: {prompt[:30]}... -> {matched_workflow} "
-            f"({match_type}, {confidence:.1%})"
-        )
+        logger.debug(f"Recorded match: {prompt[:30]}... -> {matched_workflow} ({match_type}, {confidence:.1%})")
 
         return entry
 
@@ -234,10 +229,7 @@ class FeedbackCollector:
                 if self._auto_save:
                     self._save()
 
-                logger.info(
-                    f"Recorded correction: {prompt[:30]}... "
-                    f"{original_match} -> {correct_workflow}"
-                )
+                logger.info(f"Recorded correction: {prompt[:30]}... {original_match} -> {correct_workflow}")
                 return entry
 
         # Create new correction entry if not found
@@ -258,9 +250,7 @@ class FeedbackCollector:
         if self._auto_save:
             self._save()
 
-        logger.info(
-            f"Recorded new correction: {prompt[:30]}... -> {correct_workflow}"
-        )
+        logger.info(f"Recorded new correction: {prompt[:30]}... -> {correct_workflow}")
 
         return entry
 
@@ -291,10 +281,7 @@ class FeedbackCollector:
                 if self._auto_save:
                     self._save()
 
-                logger.debug(
-                    f"Recorded helpful={was_helpful}: {prompt[:30]}... "
-                    f"-> {matched_workflow}"
-                )
+                logger.debug(f"Recorded helpful={was_helpful}: {prompt[:30]}... -> {matched_workflow}")
                 return True
 
         return False
@@ -323,11 +310,7 @@ class FeedbackCollector:
             if entry.user_correction == workflow_name:
                 prompt_counts[entry.prompt] = prompt_counts.get(entry.prompt, 0) + 1
 
-        return [
-            prompt
-            for prompt, count in prompt_counts.items()
-            if count >= min_corrections
-        ]
+        return [prompt for prompt, count in prompt_counts.items() if count >= min_corrections]
 
     def get_failed_matches(
         self,
@@ -344,9 +327,7 @@ class FeedbackCollector:
             List of entries with no match.
         """
         failed = [
-            entry
-            for entry in reversed(self._entries)
-            if entry.match_type == "none" or entry.matched_workflow is None
+            entry for entry in reversed(self._entries) if entry.match_type == "none" or entry.matched_workflow is None
         ]
         return failed[:limit]
 
@@ -369,8 +350,7 @@ class FeedbackCollector:
         low_conf = [
             entry
             for entry in reversed(self._entries)
-            if entry.match_confidence <= max_confidence
-            and entry.matched_workflow is not None
+            if entry.match_confidence <= max_confidence and entry.matched_workflow is not None
         ]
         return low_conf[:limit]
 
@@ -386,11 +366,7 @@ class FeedbackCollector:
         Returns:
             List of correction entries.
         """
-        return [
-            entry
-            for entry in self._entries
-            if entry.user_correction == workflow_name
-        ]
+        return [entry for entry in self._entries if entry.user_correction == workflow_name]
 
     def get_corrections_from_workflow(
         self,
@@ -448,9 +424,7 @@ class FeedbackCollector:
             "corrections": corrections,
             "correction_rate": corrections / total if total > 0 else 0.0,
             "helpful_entries": len(helpful_entries),
-            "helpful_rate": helpful_true / len(helpful_entries)
-            if helpful_entries
-            else 0.0,
+            "helpful_rate": helpful_true / len(helpful_entries) if helpful_entries else 0.0,
             "by_match_type": by_type,
             "avg_confidence": avg_confidence,
         }
@@ -467,9 +441,7 @@ class FeedbackCollector:
         Returns:
             Dictionary with workflow-specific statistics.
         """
-        matches = [
-            e for e in self._entries if e.matched_workflow == workflow_name
-        ]
+        matches = [e for e in self._entries if e.matched_workflow == workflow_name]
         corrections_to = self.get_corrections_for_workflow(workflow_name)
         corrections_from = self.get_corrections_from_workflow(workflow_name)
 

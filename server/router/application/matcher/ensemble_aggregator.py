@@ -7,12 +7,13 @@ Combines MatcherResult from all matchers and produces a single EnsembleResult.
 ALWAYS runs ModifierExtractor to ensure modifiers are applied (bug fix).
 """
 
+import logging
 from collections import defaultdict
 from typing import Dict, List, Optional
-import logging
 
-from server.router.domain.entities.ensemble import MatcherResult, EnsembleResult
+from server.infrastructure.telemetry import emit_router_event_span
 from server.router.application.matcher.modifier_extractor import ModifierExtractor
+from server.router.domain.entities.ensemble import EnsembleResult, MatcherResult
 from server.router.infrastructure.config import RouterConfig
 
 logger = logging.getLogger(__name__)
@@ -40,9 +41,19 @@ class EnsembleAggregator:
 
     # Keywords that force LOW confidence (simple workflow)
     SIMPLE_KEYWORDS = [
-        "simple", "basic", "minimal", "just", "only", "plain",
-        "prosty", "podstawowy", "tylko", "zwykły",  # Polish
-        "einfach", "nur", "schlicht",  # German
+        "simple",
+        "basic",
+        "minimal",
+        "just",
+        "only",
+        "plain",
+        "prosty",
+        "podstawowy",
+        "tylko",
+        "zwykły",  # Polish
+        "einfach",
+        "nur",
+        "schlicht",  # German
     ]
 
     def __init__(
@@ -103,7 +114,7 @@ class EnsembleAggregator:
                 confidence_level="NONE",
                 modifiers={},
                 matcher_contributions={},
-                requires_adaptation=False
+                requires_adaptation=False,
             )
 
         # Calculate final scores for each workflow
@@ -119,11 +130,7 @@ class EnsembleAggregator:
             final_scores[workflow] = score
 
         # Sort workflows by score (descending)
-        sorted_workflows = sorted(
-            final_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_workflows = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
 
         best_workflow, best_score = sorted_workflows[0]
         best_contributions = workflow_scores[best_workflow]
@@ -149,15 +156,27 @@ class EnsembleAggregator:
         max_possible_score = self._calculate_max_possible_score(best_contributions)
 
         # Determine confidence level (normalized)
-        confidence_level = self._determine_confidence_level(
-            best_score, prompt, max_possible_score
-        )
+        confidence_level = self._determine_confidence_level(best_score, prompt, max_possible_score)
 
         logger.info(
             f"Ensemble aggregation: {best_workflow} "
             f"(score: {best_score:.3f}, level: {confidence_level}, "
             f"modifiers: {list(modifier_result.modifiers.keys())})"
         )
+
+        if "semantic" in best_contributions:
+            emit_router_event_span(
+                event_type="semantic_workflow_match",
+                tool_name=best_workflow,
+                session_id=None,
+                data={
+                    "confidence_level": confidence_level,
+                    "final_score": best_score,
+                    "semantic_scope": "workflow_retrieval_only",
+                    "policy_approval_delegated": False,
+                    "truth_source_required": "inspection_contracts",
+                },
+            )
 
         return EnsembleResult(
             workflow_name=best_workflow,
@@ -167,7 +186,7 @@ class EnsembleAggregator:
             matcher_contributions=best_contributions,
             requires_adaptation=confidence_level != "HIGH",
             composition_mode=composition_mode,
-            extra_workflows=extra_workflows
+            extra_workflows=extra_workflows,
         )
 
     def _calculate_max_possible_score(self, contributions: Dict[str, float]) -> float:
@@ -204,9 +223,7 @@ class EnsembleAggregator:
 
         return max_score if max_score > 0 else 0.95  # Fallback to full possible
 
-    def _determine_confidence_level(
-        self, score: float, prompt: str, max_possible_score: float = 0.95
-    ) -> str:
+    def _determine_confidence_level(self, score: float, prompt: str, max_possible_score: float = 0.95) -> str:
         """Determine confidence level from score and prompt analysis.
 
         TASK-055-FIX: Now normalizes score relative to max_possible_score.
@@ -246,8 +263,7 @@ class EnsembleAggregator:
         normalized_score = score / max_possible_score if max_possible_score > 0 else 0.0
 
         logger.debug(
-            f"Confidence calculation: raw={score:.3f}, max={max_possible_score:.3f}, "
-            f"normalized={normalized_score:.3f}"
+            f"Confidence calculation: raw={score:.3f}, max={max_possible_score:.3f}, normalized={normalized_score:.3f}"
         )
 
         # Use NORMALIZED thresholds

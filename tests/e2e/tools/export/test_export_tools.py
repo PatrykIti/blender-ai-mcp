@@ -4,8 +4,10 @@ E2E tests for Export Tools (TASK-026).
 Tests the export functionality with a running Blender instance.
 These tests require Blender with the addon enabled.
 """
+
 import os
 import tempfile
+
 import pytest
 from server.application.tool_handlers.system_handler import SystemToolHandler
 
@@ -175,7 +177,7 @@ class TestExportObj:
     def test_export_obj_with_materials(self, system_handler, temp_dir):
         """Test OBJ export with materials (creates .mtl file)."""
         filepath = os.path.join(temp_dir, "test_materials.obj")
-        mtl_filepath = os.path.join(temp_dir, "test_materials.mtl")
+        os.path.join(temp_dir, "test_materials.mtl")
 
         try:
             result = system_handler.export_obj(

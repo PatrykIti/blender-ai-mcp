@@ -1,6 +1,7 @@
 import sys
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # conftest.py handles bpy mocking
 from blender_addon.application.handlers.lattice import LatticeHandler
@@ -92,8 +93,14 @@ class TestLatticeCreate:
 
         # Setup bound_box (8 corners of a cube centered at origin, size 2x2x6)
         mock_target.bound_box = [
-            (-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0),  # Bottom
-            (-1, -1, 6), (1, -1, 6), (1, 1, 6), (-1, 1, 6),  # Top
+            (-1, -1, 0),
+            (1, -1, 0),
+            (1, 1, 0),
+            (-1, 1, 0),  # Bottom
+            (-1, -1, 6),
+            (1, -1, 6),
+            (1, 1, 6),
+            (-1, 1, 6),  # Top
         ]
 
         # Mock matrix_world to return identity (no transformation)
@@ -178,9 +185,7 @@ class TestLatticeBind:
         )
 
         # Then
-        mock_mesh.modifiers.new.assert_called_once_with(
-            name="Lattice_TowerLattice", type='LATTICE'
-        )
+        mock_mesh.modifiers.new.assert_called_once_with(name="Lattice_TowerLattice", type="LATTICE")
         assert mock_modifier.object == mock_lattice
         assert "Bound 'Tower' to lattice 'TowerLattice'" in result
 

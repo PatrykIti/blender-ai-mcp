@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 
 class IMeshTool(ABC):
     @abstractmethod
@@ -8,12 +9,12 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def delete_selected(self, type: str = 'VERT') -> str:
+    def delete_selected(self, type: str = "VERT") -> str:
         """Deletes selected geometry elements (VERT, EDGE, FACE)."""
         pass
 
     @abstractmethod
-    def select_by_index(self, indices: List[int], type: str = 'VERT', selection_mode: str = 'SET') -> str:
+    def select_by_index(self, indices: List[int], type: str = "VERT", selection_mode: str = "SET") -> str:
         """
         Selects specific geometry elements by their index.
         selection_mode: 'SET' (replace), 'ADD' (extend), 'SUBTRACT' (deselect).
@@ -31,7 +32,7 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = 'EDGES') -> str:
+    def bevel(self, offset: float, segments: int = 1, profile: float = 0.5, affect: str = "EDGES") -> str:
         """Bevels selected edges or vertices."""
         pass
 
@@ -46,7 +47,7 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def boolean(self, operation: str, solver: str = 'FAST') -> str:
+    def boolean(self, operation: str, solver: str = "FAST") -> str:
         """Performs a boolean operation on selected geometry (Edit Mode)."""
         pass
 
@@ -71,7 +72,7 @@ class IMeshTool(ABC):
         pass
 
     @abstractmethod
-    def list_groups(self, object_name: str, group_type: str = 'VERTEX') -> Dict[str, Any]:
+    def list_groups(self, object_name: str, group_type: str = "VERTEX") -> Dict[str, Any]:
         """Lists vertex/face groups defined on a mesh object."""
         pass
 
@@ -102,33 +103,21 @@ class IMeshTool(ABC):
 
     @abstractmethod
     def get_vertex_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """Returns vertex positions and selection states for programmatic analysis."""
         pass
 
     @abstractmethod
     def get_edge_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """Returns edge connectivity and attributes."""
         pass
 
     @abstractmethod
     def get_face_data(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """Returns face connectivity and attributes."""
         pass
@@ -140,18 +129,14 @@ class IMeshTool(ABC):
         uv_layer: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Returns UV data per face loop."""
         pass
 
     @abstractmethod
     def get_loop_normals(
-        self,
-        object_name: str,
-        selected_only: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, selected_only: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """Returns per-loop normals (split/custom)."""
         pass
@@ -163,7 +148,7 @@ class IMeshTool(ABC):
         group_name: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Returns vertex group weights."""
         pass
@@ -175,29 +160,25 @@ class IMeshTool(ABC):
         attribute_name: Optional[str] = None,
         selected_only: bool = False,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Returns mesh attribute data."""
         pass
 
     @abstractmethod
     def get_shape_keys(
-        self,
-        object_name: str,
-        include_deltas: bool = False,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+        self, object_name: str, include_deltas: bool = False, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """Returns shape key data (optionally with deltas)."""
         pass
 
     @abstractmethod
-    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = 'VERT') -> str:
+    def select_by_location(self, axis: str, min_coord: float, max_coord: float, mode: str = "VERT") -> str:
         """Selects geometry within coordinate range on specified axis."""
         pass
 
     @abstractmethod
-    def select_boundary(self, mode: str = 'EDGE') -> str:
+    def select_boundary(self, mode: str = "EDGE") -> str:
         """Selects boundary edges (1 adjacent face) or boundary vertices."""
         pass
 
@@ -232,7 +213,14 @@ class IMeshTool(ABC):
 
     # TASK-018-1: Mesh Bisect Tool
     @abstractmethod
-    def bisect(self, plane_co: List[float], plane_no: List[float], clear_inner: bool = False, clear_outer: bool = False, fill: bool = False) -> str:
+    def bisect(
+        self,
+        plane_co: List[float],
+        plane_no: List[float],
+        clear_inner: bool = False,
+        clear_outer: bool = False,
+        fill: bool = False,
+    ) -> str:
         """Cuts mesh along a plane defined by point and normal."""
         pass
 
@@ -266,7 +254,7 @@ class IMeshTool(ABC):
         translate: Optional[List[float]] = None,
         rotate: Optional[List[float]] = None,
         scale: Optional[List[float]] = None,
-        pivot: str = 'MEDIAN_POINT'
+        pivot: str = "MEDIAN_POINT",
     ) -> str:
         """Transforms selected geometry (move/rotate/scale) in Edit Mode."""
         pass
@@ -274,11 +262,7 @@ class IMeshTool(ABC):
     # TASK-019-2: Mesh Bridge Edge Loops Tool
     @abstractmethod
     def bridge_edge_loops(
-        self,
-        number_cuts: int = 0,
-        interpolation: str = 'LINEAR',
-        smoothness: float = 0.0,
-        twist: int = 0
+        self, number_cuts: int = 0, interpolation: str = "LINEAR", smoothness: float = 0.0, twist: int = 0
     ) -> str:
         """Bridges two edge loops with faces."""
         pass
@@ -295,9 +279,9 @@ class IMeshTool(ABC):
         self,
         steps: int = 12,
         angle: float = 6.283185,
-        axis: str = 'Z',
+        axis: str = "Z",
         center: Optional[List[float]] = None,
-        dupli: bool = False
+        dupli: bool = False,
     ) -> str:
         """Spins/lathes selected geometry around an axis."""
         pass
@@ -308,9 +292,9 @@ class IMeshTool(ABC):
         self,
         steps: int = 12,
         turns: int = 1,
-        axis: str = 'Z',
+        axis: str = "Z",
         center: Optional[List[float]] = None,
-        offset: float = 0.0
+        offset: float = 0.0,
     ) -> str:
         """Creates spiral/screw geometry from selected profile."""
         pass
@@ -351,18 +335,14 @@ class IMeshTool(ABC):
         dissolve_type: str = "limited",
         angle_limit: float = 5.0,
         use_face_split: bool = False,
-        use_boundary_tear: bool = False
+        use_boundary_tear: bool = False,
     ) -> str:
         """Dissolves selected geometry while preserving shape."""
         pass
 
     # TASK-030-2: Mesh Tris To Quads Tool
     @abstractmethod
-    def tris_to_quads(
-        self,
-        face_threshold: float = 40.0,
-        shape_threshold: float = 40.0
-    ) -> str:
+    def tris_to_quads(self, face_threshold: float = 40.0, shape_threshold: float = 40.0) -> str:
         """Converts triangles to quads where possible."""
         pass
 
@@ -374,12 +354,7 @@ class IMeshTool(ABC):
 
     # TASK-030-4: Mesh Decimate Tool
     @abstractmethod
-    def decimate(
-        self,
-        ratio: float = 0.5,
-        use_symmetry: bool = False,
-        symmetry_axis: str = "X"
-    ) -> str:
+    def decimate(self, ratio: float = 0.5, use_symmetry: bool = False, symmetry_axis: str = "X") -> str:
         """Reduces polycount while preserving shape."""
         pass
 
@@ -432,32 +407,20 @@ class IMeshTool(ABC):
 
     # TASK-036-1: Mesh Symmetrize Tool
     @abstractmethod
-    def symmetrize(
-        self,
-        direction: str = "NEGATIVE_X",
-        threshold: float = 0.0001
-    ) -> str:
+    def symmetrize(self, direction: str = "NEGATIVE_X", threshold: float = 0.0001) -> str:
         """Makes mesh symmetric by mirroring one side to the other."""
         pass
 
     # TASK-036-2: Mesh Grid Fill Tool
     @abstractmethod
-    def grid_fill(
-        self,
-        span: int = 1,
-        offset: int = 0,
-        use_interp_simple: bool = False
-    ) -> str:
+    def grid_fill(self, span: int = 1, offset: int = 0, use_interp_simple: bool = False) -> str:
         """Fills boundary with a grid of quads."""
         pass
 
     # TASK-036-3: Mesh Poke Faces Tool
     @abstractmethod
     def poke_faces(
-        self,
-        offset: float = 0.0,
-        use_relative_offset: bool = False,
-        center_mode: str = "MEDIAN_WEIGHTED"
+        self, offset: float = 0.0, use_relative_offset: bool = False, center_mode: str = "MEDIAN_WEIGHTED"
     ) -> str:
         """Pokes selected faces (adds vertex at center, creating triangles)."""
         pass
@@ -470,11 +433,6 @@ class IMeshTool(ABC):
 
     # TASK-036-5: Mesh Mirror Tool
     @abstractmethod
-    def mirror(
-        self,
-        axis: str = "X",
-        use_mirror_merge: bool = True,
-        merge_threshold: float = 0.001
-    ) -> str:
+    def mirror(self, axis: str = "X", use_mirror_merge: bool = True, merge_threshold: float = 0.001) -> str:
         """Mirrors selected geometry within the same object."""
         pass

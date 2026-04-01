@@ -1,7 +1,9 @@
 # Material Tools Architecture
 
 Material tools manage Blender materials and their assignments.
-**Each operation is a separate tool** to ensure clarity.
+
+This document records the material family as a technical/runtime reference.
+These are mostly focused atomic tools; actual public exposure depends on the MCP surface/profile and should be checked against the canonical tool-layering policy.
 
 ---
 

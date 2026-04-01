@@ -33,7 +33,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-
 POLISH_CHARS_RE = re.compile(r"[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]")
 POLISH_WORD_RE = re.compile(
     r"\b("
@@ -376,7 +375,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     translate_files = [p for p in all_files if needs_translation[p]]
     if args.max_files and len(translate_files) > args.max_files:
         # Limit translation requests; still mirror/copy the rest when using --output-root.
-        limited_set = set(translate_files[: args.max_files])
+        set(translate_files[: args.max_files])
         for p in translate_files[args.max_files :]:
             needs_translation[p] = False
         translate_files = [p for p in all_files if needs_translation[p]]
@@ -399,8 +398,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         or default_endpoint(api)
     )
     model = os.environ.get("OPENAI_MODEL", "").strip() or env_fallback.get("OPENAI_MODEL", "").strip() or "gpt-4.1-mini"
-    max_output_tokens = int(os.environ.get("OPENAI_MAX_TOKENS", "").strip() or env_fallback.get("OPENAI_MAX_TOKENS", "").strip() or "16384")
-    timeout_s = float(os.environ.get("OPENAI_TIMEOUT_S", "").strip() or env_fallback.get("OPENAI_TIMEOUT_S", "").strip() or "120")
+    max_output_tokens = int(
+        os.environ.get("OPENAI_MAX_TOKENS", "").strip() or env_fallback.get("OPENAI_MAX_TOKENS", "").strip() or "16384"
+    )
+    timeout_s = float(
+        os.environ.get("OPENAI_TIMEOUT_S", "").strip() or env_fallback.get("OPENAI_TIMEOUT_S", "").strip() or "120"
+    )
 
     # CLI overrides (highest priority)
     if args.api:

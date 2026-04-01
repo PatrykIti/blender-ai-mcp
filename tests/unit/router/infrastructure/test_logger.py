@@ -4,20 +4,18 @@ Unit tests for Router Logger.
 Tests logging and telemetry functionality.
 """
 
-import pytest
-import tempfile
 import json
-from datetime import datetime
+import tempfile
 from pathlib import Path
 
+import pytest
 from server.router.infrastructure.logger import (
-    RouterLogger,
-    RouterEvent,
     EventType,
-    get_router_logger,
+    RouterEvent,
+    RouterLogger,
     configure_router_logging,
+    get_router_logger,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -278,6 +276,21 @@ class TestLogWorkflowAndExecution:
         assert event.event_type == EventType.EXECUTION_COMPLETE
         assert event.data["duration_ms"] == 45.5
         assert event.data["success"] is True
+
+    def test_log_execution_audit(self, logger):
+        """Test audit exposure logging."""
+        logger.log_execution_audit(
+            tool_name="mesh_extrude_region",
+            disposition="corrected",
+            verification_status="passed",
+            audit_ids=["audit_1", "audit_2"],
+        )
+
+        event = logger._events[0]
+        assert event.event_type == EventType.EXECUTION_COMPLETE
+        assert event.data["disposition"] == "corrected"
+        assert event.data["verification_status"] == "passed"
+        assert event.data["audit_ids"] == ["audit_1", "audit_2"]
 
 
 # ============================================================================

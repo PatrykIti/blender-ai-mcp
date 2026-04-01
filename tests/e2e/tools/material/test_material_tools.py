@@ -1,6 +1,7 @@
 """
 Tests for Material Tools (TASK-014-8, 014-9, TASK-023)
 """
+
 import pytest
 from server.application.tool_handlers.material_handler import MaterialToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
@@ -69,17 +70,10 @@ def test_material_list_by_object(material_handler, modeling_handler, scene_handl
             pass
 
         # Create test object
-        modeling_handler.create_primitive(
-            primitive_type="CUBE",
-            name=obj_name,
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="CUBE", name=obj_name, location=[0, 0, 0])
 
         # List material slots
-        result = material_handler.list_by_object(
-            object_name=obj_name,
-            include_indices=False
-        )
+        result = material_handler.list_by_object(object_name=obj_name, include_indices=False)
 
         assert isinstance(result, dict)
         assert "object_name" in result
@@ -105,10 +99,7 @@ def test_material_list_by_object(material_handler, modeling_handler, scene_handl
 def test_material_list_by_object_invalid(material_handler):
     """Test listing material slots with invalid object name."""
     try:
-        material_handler.list_by_object(
-            object_name="NonExistentObject12345",
-            include_indices=False
-        )
+        material_handler.list_by_object(object_name="NonExistentObject12345", include_indices=False)
         # If we get here without exception, test should fail
         assert False, "Expected RuntimeError for invalid object name"
     except RuntimeError as e:
@@ -199,20 +190,13 @@ def test_material_assign_to_object(material_handler, modeling_handler, scene_han
             pass
 
         # Create test object
-        modeling_handler.create_primitive(
-            primitive_type="CUBE",
-            name=obj_name,
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="CUBE", name=obj_name, location=[0, 0, 0])
 
         # Create a test material
         material_handler.create_material(name=mat_name)
 
         # Assign material to object
-        result = material_handler.assign_material(
-            material_name=mat_name,
-            object_name=obj_name
-        )
+        result = material_handler.assign_material(material_name=mat_name, object_name=obj_name)
 
         assert "Assigned" in result
         print(f"✓ material_assign: {result}")
@@ -233,10 +217,7 @@ def test_material_assign_to_object(material_handler, modeling_handler, scene_han
 def test_material_assign_invalid_material(material_handler):
     """Test assigning non-existent material."""
     try:
-        material_handler.assign_material(
-            material_name="NonExistentMaterial12345",
-            object_name="Cube"
-        )
+        material_handler.assign_material(material_name="NonExistentMaterial12345", object_name="Cube")
         assert False, "Expected RuntimeError for invalid material"
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -275,10 +256,7 @@ def test_material_set_params(material_handler):
 def test_material_set_params_invalid_material(material_handler):
     """Test modifying non-existent material."""
     try:
-        material_handler.set_material_params(
-            material_name="NonExistentMaterial12345",
-            roughness=0.5
-        )
+        material_handler.set_material_params(material_name="NonExistentMaterial12345", roughness=0.5)
         assert False, "Expected RuntimeError for invalid material"
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -294,10 +272,7 @@ def test_material_set_params_invalid_material(material_handler):
 def test_material_set_texture_invalid_material(material_handler):
     """Test setting texture on non-existent material."""
     try:
-        material_handler.set_material_texture(
-            material_name="NonExistentMaterial12345",
-            texture_path="/tmp/test.png"
-        )
+        material_handler.set_material_texture(material_name="NonExistentMaterial12345", texture_path="/tmp/test.png")
         assert False, "Expected RuntimeError for invalid material"
     except RuntimeError as e:
         error_msg = str(e).lower()
@@ -317,8 +292,7 @@ def test_material_set_texture_invalid_path(material_handler):
 
         # Try to set texture with non-existent file
         material_handler.set_material_texture(
-            material_name="E2E_TextureMaterial",
-            texture_path="/nonexistent/path/to/texture.png"
+            material_name="E2E_TextureMaterial", texture_path="/nonexistent/path/to/texture.png"
         )
         assert False, "Expected RuntimeError for invalid texture path"
     except RuntimeError as e:

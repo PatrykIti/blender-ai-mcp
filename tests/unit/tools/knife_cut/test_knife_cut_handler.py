@@ -8,19 +8,18 @@ Tests:
 - mesh_edge_split
 """
 
-import unittest
-from unittest.mock import MagicMock, patch
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
 
 
@@ -39,8 +38,8 @@ class TestMeshKnifeProject(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.mesh.knife_project = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
 
@@ -74,17 +73,17 @@ class TestMeshRip(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.mesh.rip_move = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
 
         # Mock screen areas for temp_override context
         mock_region = MagicMock()
-        mock_region.type = 'WINDOW'
+        mock_region.type = "WINDOW"
 
         mock_area = MagicMock()
-        mock_area.type = 'VIEW_3D'
+        mock_area.type = "VIEW_3D"
         mock_area.regions = [mock_region]
 
         bpy.context.screen = MagicMock()
@@ -137,8 +136,8 @@ class TestMeshSplit(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.mesh.split = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
 
@@ -183,8 +182,8 @@ class TestMeshEdgeSplit(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'EDIT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "EDIT"
         bpy.ops.mesh.edge_split = MagicMock()
         bpy.ops.object.mode_set = MagicMock()
 
@@ -216,5 +215,5 @@ class TestMeshEdgeSplit(unittest.TestCase):
         self.assertIn("No edges selected", str(context.exception))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,25 @@
+{
+  "tool_name": "reference_images",
+  "category": "reference",
+  "mode_required": "ANY",
+  "selection_required": false,
+  "keywords": ["reference", "image", "attach", "remove", "list", "clear", "inspiration", "moodboard"],
+  "sample_prompts": [
+    "attach this reference image to the current goal",
+    "list the active reference images",
+    "remove one reference image from the session",
+    "clear all reference images for this goal"
+  ],
+  "parameters": {
+    "action": {"type": "enum", "options": ["attach", "list", "remove", "clear"], "required": true},
+    "source_path": {"type": "string", "default": null},
+    "reference_id": {"type": "string", "default": null},
+    "label": {"type": "string", "default": null},
+    "notes": {"type": "string", "default": null},
+    "target_object": {"type": "string", "default": null},
+    "target_view": {"type": "string", "default": null}
+  },
+  "related_tools": ["router_set_goal", "router_get_status", "scene_get_viewport"],
+  "patterns": [],
+  "description": "Goal-scoped reference image intake and lifecycle surface for attach/list/remove/clear operations before bounded vision or capture comparison."
+}

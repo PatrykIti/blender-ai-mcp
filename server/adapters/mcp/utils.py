@@ -1,4 +1,5 @@
 """Shared utility functions for MCP adapter layer."""
+
 import json
 from typing import Any, Dict, List, Optional, Union
 
@@ -36,10 +37,7 @@ def parse_coordinate(value: Union[str, List[float], None]) -> Optional[List[floa
                 raise ValueError(f"Expected a list, got {type(parsed).__name__}")
             return [float(x) for x in parsed]
         except (json.JSONDecodeError, ValueError) as e:
-            raise ValueError(
-                f"Invalid coordinate format: {value}. "
-                f"Expected a list like [0.0, 0.0, 0.0]. Error: {e}"
-            )
+            raise ValueError(f"Invalid coordinate format: {value}. Expected a list like [0.0, 0.0, 0.0]. Error: {e}")
 
     # Already a list, ensure all elements are floats
     return [float(x) for x in value]
@@ -79,8 +77,7 @@ def parse_dict(value: Union[str, Dict[str, Any], None]) -> Optional[Dict[str, An
             return parsed
         except (json.JSONDecodeError, ValueError) as e:
             raise ValueError(
-                f"Invalid dictionary format: {value}. "
-                f"Expected a dictionary like {{'key': 'value'}}. Error: {e}"
+                f"Invalid dictionary format: {value}. Expected a dictionary like {{'key': 'value'}}. Error: {e}"
             )
 
     # Already a dict, return as is

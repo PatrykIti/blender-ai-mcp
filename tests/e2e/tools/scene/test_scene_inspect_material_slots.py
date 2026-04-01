@@ -1,10 +1,11 @@
 """
 Tests for Scene Inspect Material Slots (TASK-014-10)
 """
+
 import pytest
-from server.application.tool_handlers.scene_handler import SceneToolHandler
-from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.material_handler import MaterialToolHandler
+from server.application.tool_handlers.modeling_handler import ModelingToolHandler
+from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 
 @pytest.fixture
@@ -28,10 +29,7 @@ def material_handler(rpc_client):
 def test_inspect_material_slots_basic(scene_handler):
     """Test basic material slot inspection."""
     try:
-        result = scene_handler.inspect_material_slots(
-            material_filter=None,
-            include_empty_slots=True
-        )
+        result = scene_handler.inspect_material_slots(material_filter=None, include_empty_slots=True)
 
         assert isinstance(result, dict)
         assert "total_slots" in result
@@ -40,7 +38,9 @@ def test_inspect_material_slots_basic(scene_handler):
         assert "warnings" in result
         assert "slots" in result
 
-        print(f"✓ inspect_material_slots: {result['total_slots']} total slots ({result['assigned_slots']} assigned, {result['empty_slots']} empty)")
+        print(
+            f"✓ inspect_material_slots: {result['total_slots']} total slots ({result['assigned_slots']} assigned, {result['empty_slots']} empty)"
+        )
     except RuntimeError as e:
         pytest.skip(f"Blender not available: {e}")
 
@@ -48,10 +48,7 @@ def test_inspect_material_slots_basic(scene_handler):
 def test_inspect_material_slots_exclude_empty(scene_handler):
     """Test excluding empty slots."""
     try:
-        result = scene_handler.inspect_material_slots(
-            material_filter=None,
-            include_empty_slots=False
-        )
+        result = scene_handler.inspect_material_slots(material_filter=None, include_empty_slots=False)
 
         assert isinstance(result, dict)
         assert "slots" in result
@@ -78,21 +75,14 @@ def test_inspect_material_slots_with_filter(scene_handler, modeling_handler, mat
             pass
 
         # Create test object
-        modeling_handler.create_primitive(
-            primitive_type="CUBE",
-            name=obj_name,
-            location=[0, 0, 0]
-        )
+        modeling_handler.create_primitive(primitive_type="CUBE", name=obj_name, location=[0, 0, 0])
 
         # Create and assign material
         material_handler.create_material(name=mat_name)
         material_handler.assign_material(material_name=mat_name, object_name=obj_name)
 
         # Now filter by that material
-        filtered_result = scene_handler.inspect_material_slots(
-            material_filter=mat_name,
-            include_empty_slots=True
-        )
+        filtered_result = scene_handler.inspect_material_slots(material_filter=mat_name, include_empty_slots=True)
 
         assert isinstance(filtered_result, dict)
         assert len(filtered_result["slots"]) > 0, "Expected at least one slot with test material"
@@ -119,10 +109,7 @@ def test_inspect_material_slots_with_filter(scene_handler, modeling_handler, mat
 def test_inspect_material_slots_warnings(scene_handler):
     """Test warning detection for empty slots."""
     try:
-        result = scene_handler.inspect_material_slots(
-            material_filter=None,
-            include_empty_slots=True
-        )
+        result = scene_handler.inspect_material_slots(material_filter=None, include_empty_slots=True)
 
         assert isinstance(result, dict)
         assert "warnings" in result

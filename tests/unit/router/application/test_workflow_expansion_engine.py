@@ -7,17 +7,16 @@ TASK-050: Updated to not depend on specific builtin workflows (YAML-based now).
 """
 
 import pytest
-
 from server.router.application.engines.workflow_expansion_engine import (
     WorkflowExpansionEngine,
 )
 from server.router.application.workflows.registry import get_workflow_registry
+from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.domain.entities.scene_context import (
-    SceneContext,
     ObjectInfo,
+    SceneContext,
     TopologyInfo,
 )
-from server.router.domain.entities.pattern import DetectedPattern, PatternType
 from server.router.infrastructure.config import RouterConfig
 
 
@@ -262,6 +261,34 @@ class TestParameterInheritance:
 
         assert create_call is not None
         assert create_call.params.get("type") == "CUBE"
+
+    def test_custom_feature_phone_workflow_respects_body_bevel_overrides(self):
+        """Custom workflow defaults should be overridable through explicit params."""
+        registry = get_workflow_registry()
+
+        result = registry.expand_workflow(
+            "feature_phone_workflow",
+            {
+                "body_bevel_width": 0.005,
+                "body_bevel_segments": 5,
+            },
+        )
+
+        bevel_call = next(
+            (
+                c
+                for c in result
+                if c.tool_name == "modeling_add_modifier"
+                and c.params.get("name") == "screen_recess_cutter"
+                and c.params.get("modifier_type") == "BEVEL"
+            ),
+            None,
+        )
+
+        assert bevel_call is not None
+        props = bevel_call.params.get("properties") or {}
+        assert props.get("width") == 0.005
+        assert props.get("segments") == 5
 
 
 class TestGetAvailableWorkflows:

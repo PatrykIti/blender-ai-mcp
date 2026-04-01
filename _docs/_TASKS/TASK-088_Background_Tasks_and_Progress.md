@@ -3,8 +3,8 @@
 **Priority:** 🔴 High  
 **Category:** FastMCP Operations  
 **Estimated Effort:** Medium  
-**Dependencies:** TASK-083  
-**Status:** ⬜ To Do
+**Dependencies:** TASK-083 (platform baseline). Cross-task integration gate: TASK-093-02 (shared timeout policy consumed by RPC/job adaptation).
+**Status:** ✅ Done
 
 ---
 
@@ -55,6 +55,41 @@ This gives the product room to grow into more ambitious workflows without making
 
 ---
 
+## Implementation Constraints
+
+Follow [FASTMCP_3X_IMPLEMENTATION_MODEL.md](./FASTMCP_3X_IMPLEMENTATION_MODEL.md).
+
+For this repo, background execution is a two-layer problem:
+
+- FastMCP task UX at the MCP boundary
+- addon/server-side Blender job execution beyond the current blocking RPC timeout model
+
+This task is not complete if only the MCP layer becomes task-aware while the addon still blocks on a single `result_queue.get(timeout=30.0)` path.
+
+Implementation should stay split across four seams:
+
+- server task bridge
+- server RPC verbs and protocol changes
+- addon job lifecycle and main-thread coordination
+- incremental adoption by selected heavy tools
+- async task-capable adapter entrypoints (`async def` + `task=True`) for selected heavy operations
+
+### Timeout Ownership Rule
+
+- TASK-088 owns job architecture, task bridge adoption, RPC verbs, addon job lifecycle, and concrete endpoint rollout
+- TASK-093-02 owns the shared timeout contract across foreground tools, background tasks, RPC calls, and Blender-side execution
+- TASK-088 runtime adaptation must consume that shared timeout policy instead of defining a second timeout taxonomy inside RPC/job code
+
+### Runtime Requirement (Hard Gate)
+
+- FastMCP runtime must include task support (`fastmcp[tasks]` or equivalent dependency set enabled in this repo baseline).
+- MCP entrypoints marked with `task=True` must be `async def` and verified in tests.
+- Task-capable surfaces must keep an explicit compatibility fallback for non-task/sync clients when required.
+- Task-enabled entrypoints must use explicit `TaskConfig` execution semantics (`mode="optional" | "required" | "forbidden"`) rather than implicit behavior.
+- Registration-guard tests must prove that `task=True` on a sync function fails at registration time.
+
+---
+
 ## FastMCP Features To Use
 
 - **Background Tasks** — **FastMCP 2.14.0**
@@ -98,4 +133,47 @@ Without background tasks, those features become harder to ship cleanly.
 - Clients can observe progress and retrieve results later.
 - The platform becomes ready for larger-scale Blender workflows.
 - Long operations feel like a supported product pattern rather than an operational edge case.
+- Task-mode entrypoints are explicitly async and validated against a runtime with task support enabled.
+- Task execution mode behavior (`optional`/`required`/`forbidden`) is explicitly defined, tested, and documented per adopted endpoint.
 
+## Completion Summary
+
+- added an explicit task candidacy matrix in platform code for the initial heavy-operation set plus deferred import/export classifications
+- implemented one shared MCP task bridge, in-memory job registry, and result store keyed by FastMCP task identity
+- added explicit addon/server RPC verbs for `launch`, `poll`, `cancel`, and `collect`
+- added addon-side job lifecycle primitives for `scene.get_viewport` and `extraction.render_angles`, including cooperative progress/cancel hooks
+- adopted task mode on selected async MCP entrypoints:
+  - `scene_get_viewport`
+  - `extraction_render_angles`
+  - `workflow_catalog(import_finalize)`
+- kept synchronous fallback behavior for foreground/legacy surfaces
+- added task-mode registration tests, runtime compatibility coverage, job lifecycle tests, and adopted-tool regression coverage
+
+Import/export paths were intentionally left at the classification stage in this task.
+That is consistent with the original acceptance criteria, which required the first render, extraction, and workflow-import slices to be adopted before optional import/export extensions.
+
+---
+
+## Umbrella Execution Notes
+
+This remains the umbrella task. The original scope stays unchanged.
+
+### Atomic Delivery Waves
+
+1. Classify which operations truly need task mode instead of synchronous execution.
+2. Build the FastMCP task bridge and explicit job identity mapping.
+3. Define progress, cancellation, and result retrieval contracts.
+4. Adapt RPC and addon runtime to launch, poll, and cancel Blender jobs safely while consuming the shared timeout policy from TASK-093-02.
+5. Convert selected heavy entrypoints to async task-capable adapters and roll task mode into the highest-value tools first.
+6. Add operations-focused tests and docs for task behavior.
+
+Implementation is decomposed into:
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-088-01](./TASK-088-01_Heavy_Operation_Inventory_and_Task_Candidacy.md) | Classify which operations should support task execution |
+| 2 | [TASK-088-02](./TASK-088-02_Async_Task_Bridge_and_Job_Registry.md) | Build the background-task bridge and job registry |
+| 3 | [TASK-088-03](./TASK-088-03_Progress_Cancellation_and_Result_Retrieval.md) | Define progress, cancellation, and result retrieval contracts |
+| 4 | [TASK-088-04](./TASK-088-04_RPC_and_Blender_Main_Thread_Adaptation.md) | Adapt RPC and Blender runtime for longer-running jobs |
+| 5 | [TASK-088-05](./TASK-088-05_Background_Adoption_for_Imports_Renders_Extraction_and_Workflow_Import.md) | Roll task mode into concrete heavy tools |
+| 6 | [TASK-088-06](./TASK-088-06_Task_Mode_Tests_Operations_and_Docs.md) | Add operations docs and regression coverage |

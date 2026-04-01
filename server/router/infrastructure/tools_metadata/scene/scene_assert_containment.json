@@ -1,0 +1,17 @@
+{
+  "tool_name": "scene_assert_containment",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["assert", "containment", "inside", "enclosed", "clearance", "fit", "verify"],
+  "sample_prompts": ["assert this object is inside another", "verify containment with clearance", "check inset fit"],
+  "parameters": {
+    "inner_object": {"type": "string", "required": true},
+    "outer_object": {"type": "string", "required": true},
+    "min_clearance": {"type": "float", "default": 0.0, "range": [0.0, 1.0]},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["scene_measure_gap", "scene_assert_contact", "scene_assert_dimensions"],
+  "patterns": [],
+  "description": "Asserts that one object is contained within another with optional minimum clearance."
+}

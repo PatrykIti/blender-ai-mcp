@@ -1,0 +1,18 @@
+{
+  "tool_name": "scene_assert_symmetry",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["assert", "symmetry", "mirrored", "mirror", "left right", "verify"],
+  "sample_prompts": ["assert these parts are symmetric", "verify mirrored objects", "check bilateral symmetry"],
+  "parameters": {
+    "left_object": {"type": "string", "required": true},
+    "right_object": {"type": "string", "required": true},
+    "axis": {"type": "enum", "default": "X", "options": ["X", "Y", "Z"]},
+    "mirror_coordinate": {"type": "float", "default": 0.0},
+    "tolerance": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]}
+  },
+  "related_tools": ["scene_measure_alignment", "scene_assert_dimensions", "scene_assert_proportion"],
+  "patterns": [],
+  "description": "Asserts symmetry between two objects across a mirror plane on one axis."
+}

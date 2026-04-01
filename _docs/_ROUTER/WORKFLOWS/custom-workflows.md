@@ -46,4 +46,3 @@ Full explanation: [workflow-execution-pipeline.md](./workflow-execution-pipeline
 - Use `loop:` + `{var}` to avoid copy/paste for repeated elements.
 - If a step must be controlled only by `condition` (not semantic filtering), add `disable_adaptation: true`.
 - Prefer small, composable workflows over huge monoliths; use tags/optional steps for “nice-to-have” features.
-

@@ -1,0 +1,17 @@
+{
+  "tool_name": "scene_assert_contact",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": ["assert", "contact", "touching", "fit", "clearance", "gap", "verify"],
+  "sample_prompts": ["assert these parts touch", "verify contact between objects", "check fit with no visible gap"],
+  "parameters": {
+    "from_object": {"type": "string", "required": true},
+    "to_object": {"type": "string", "required": true},
+    "max_gap": {"type": "float", "default": 0.0001, "range": [0.0, 1.0]},
+    "allow_overlap": {"type": "bool", "default": false}
+  },
+  "related_tools": ["scene_measure_gap", "scene_measure_overlap", "scene_assert_dimensions"],
+  "patterns": [],
+  "description": "Asserts that two objects satisfy the expected contact relation within a maximum gap."
+}

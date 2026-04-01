@@ -1,0 +1,24 @@
+{
+  "scenario_id": "squirrel_head_to_face_camera_perspective",
+  "description": "Low-poly squirrel progression from main head blockout with ears to head plus face details, captured from a fixed named camera perspective.",
+  "goal": "Describe the visible progression from a squirrel head blockout with ears to a more detailed face with eyes, snout, and nose in a fixed camera-perspective capture.",
+  "target_object": "Squirrel",
+  "bundle_path": "bundle.json",
+  "expectations": {
+    "require_goal_summary": true,
+    "expected_direction": "improved",
+    "reference_relation": "unspecified",
+    "expected_capture_labels": [
+      "camera_perspective_before",
+      "camera_perspective_after"
+    ],
+    "minimum_visible_changes": 1,
+    "minimum_likely_issues": 0,
+    "minimum_recommended_checks": 0,
+    "maximum_likely_issues": 0,
+    "maximum_recommended_checks": 0,
+    "expected_issue_categories": [],
+    "expected_tool_names": [],
+    "should_avoid_truth_claims": true
+  }
+}

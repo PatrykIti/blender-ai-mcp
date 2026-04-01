@@ -8,7 +8,7 @@ TASK-041-13
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Union, Callable
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -142,66 +142,73 @@ class ProportionResolver:
             },
         }
 
+    def _require_dimensions(self) -> List[float]:
+        if self._dimensions is None or len(self._dimensions) < 3:
+            raise ValueError("Object dimensions must be set before resolving proportion macros")
+        return self._dimensions
+
     # Calculation methods
     def _calc_bevel(self) -> float:
         """Calculate standard bevel width (5% of min dim)."""
-        return min(self._dimensions) * 0.05
+        return min(self._require_dimensions()) * 0.05
 
     def _calc_bevel_small(self) -> float:
         """Calculate small bevel width (2% of min dim)."""
-        return min(self._dimensions) * 0.02
+        return min(self._require_dimensions()) * 0.02
 
     def _calc_bevel_large(self) -> float:
         """Calculate large bevel width (10% of min dim)."""
-        return min(self._dimensions) * 0.10
+        return min(self._require_dimensions()) * 0.10
 
     def _calc_inset(self) -> float:
         """Calculate inset thickness (3% of XY min)."""
-        return min(self._dimensions[0], self._dimensions[1]) * 0.03
+        dims = self._require_dimensions()
+        return min(dims[0], dims[1]) * 0.03
 
     def _calc_inset_thick(self) -> float:
         """Calculate thick inset (5% of XY min)."""
-        return min(self._dimensions[0], self._dimensions[1]) * 0.05
+        dims = self._require_dimensions()
+        return min(dims[0], dims[1]) * 0.05
 
     def _calc_extrude(self) -> float:
         """Calculate extrude distance (10% of Z)."""
-        return self._dimensions[2] * 0.10
+        return self._require_dimensions()[2] * 0.10
 
     def _calc_extrude_small(self) -> float:
         """Calculate small extrude distance (5% of Z)."""
-        return self._dimensions[2] * 0.05
+        return self._require_dimensions()[2] * 0.05
 
     def _calc_extrude_deep(self) -> float:
         """Calculate deep extrude distance (20% of Z)."""
-        return self._dimensions[2] * 0.20
+        return self._require_dimensions()[2] * 0.20
 
     def _calc_extrude_neg(self) -> float:
         """Calculate negative extrude (inward, -10% of Z)."""
-        return -self._dimensions[2] * 0.10
+        return -self._require_dimensions()[2] * 0.10
 
     def _calc_scale_small(self) -> List[float]:
         """Calculate small scale (80% of each dimension)."""
-        return [d * 0.8 for d in self._dimensions[:3]]
+        return [d * 0.8 for d in self._require_dimensions()[:3]]
 
     def _calc_scale_tiny(self) -> List[float]:
         """Calculate tiny scale (50% of each dimension)."""
-        return [d * 0.5 for d in self._dimensions[:3]]
+        return [d * 0.5 for d in self._require_dimensions()[:3]]
 
     def _calc_offset(self) -> float:
         """Calculate offset (2% of min dim)."""
-        return min(self._dimensions) * 0.02
+        return min(self._require_dimensions()) * 0.02
 
     def _calc_thickness(self) -> float:
         """Calculate thickness (5% of Z)."""
-        return self._dimensions[2] * 0.05
+        return self._require_dimensions()[2] * 0.05
 
     def _calc_screen_depth(self) -> float:
         """Calculate screen depth for phone (50% of Z)."""
-        return self._dimensions[2] * 0.50
+        return self._require_dimensions()[2] * 0.50
 
     def _calc_screen_depth_neg(self) -> float:
         """Calculate negative screen depth (-50% of Z)."""
-        return -self._dimensions[2] * 0.50
+        return -self._require_dimensions()[2] * 0.50
 
     def _calc_loop_pos(self) -> float:
         """Calculate loop cut position factor."""
@@ -292,10 +299,7 @@ class ProportionResolver:
         Returns:
             List of dicts with 'name' and 'description'.
         """
-        return [
-            {"name": name, "description": info["description"]}
-            for name, info in self._auto_params.items()
-        ]
+        return [{"name": name, "description": info["description"]} for name, info in self._auto_params.items()]
 
     def is_auto_param(self, value: Any) -> bool:
         """Check if a value is an $AUTO_* parameter.

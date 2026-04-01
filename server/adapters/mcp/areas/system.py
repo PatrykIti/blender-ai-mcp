@@ -1,16 +1,64 @@
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
+
 from fastmcp import Context
-from server.adapters.mcp.instance import mcp
+
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.router_helper import route_tool_call
+from server.adapters.mcp.tasks.candidacy import get_tool_task_config
+from server.adapters.mcp.tasks.task_bridge import (
+    is_background_task_context,
+    run_rpc_background_job,
+)
+from server.adapters.mcp.visibility.tags import get_capability_tags
 from server.infrastructure.di import get_system_handler
+
+SYSTEM_PUBLIC_TOOL_NAMES = (
+    "export_glb",
+    "export_fbx",
+    "export_obj",
+    "import_obj",
+    "import_fbx",
+    "import_glb",
+    "import_image_as_plane",
+    "system_set_mode",
+    "system_undo",
+    "system_redo",
+    "system_save_file",
+    "system_new_file",
+    "system_snapshot",
+)
+
+
+def register_system_tools(target: Any) -> Dict[str, Any]:
+    """Register public system tools on a FastMCP server or LocalProvider."""
+
+    registered: Dict[str, Any] = {}
+    tag_set = set(get_capability_tags("system"))
+
+    for tool_name in SYSTEM_PUBLIC_TOOL_NAMES:
+        tool = globals()[tool_name]
+        fn = getattr(tool, "fn", tool)
+        kwargs: Dict[str, Any] = {"name": tool_name, "tags": set(tag_set)}
+        task_config = get_tool_task_config(tool_name)
+        if task_config is not None:
+            kwargs["task"] = task_config
+        registered[tool_name] = target.tool(fn, **kwargs)
+
+    return registered
+
+
+def _format_background_string_payload(payload: Any) -> str:
+    """Validate the background payload shape for system file operations."""
+
+    if not isinstance(payload, str):
+        raise RuntimeError("Background system task returned an invalid payload")
+    return payload
 
 
 # === Export Tools ===
 
 
-@mcp.tool()
-def export_glb(
+async def export_glb(
     ctx: Context,
     filepath: str,
     export_selected: bool = False,
@@ -33,6 +81,36 @@ def export_glb(
         export_materials: Include materials and textures
         apply_modifiers: Apply modifiers before export
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().export_glb(
+                filepath=filepath,
+                export_selected=export_selected,
+                export_animations=export_animations,
+                export_materials=export_materials,
+                apply_modifiers=apply_modifiers,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="export_glb",
+            rpc_cmd="export.glb",
+            rpc_args={
+                "filepath": filepath,
+                "export_selected": export_selected,
+                "export_animations": export_animations,
+                "export_materials": export_materials,
+                "apply_modifiers": apply_modifiers,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching GLB export to '{filepath}'",
+            completion_message=f"Completed GLB export to '{filepath}'",
+        )
+        ctx_info(ctx, f"Exported GLB to: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -50,13 +128,18 @@ def export_glb(
 
     return route_tool_call(
         tool_name="export_glb",
-        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "export_materials": export_materials, "apply_modifiers": apply_modifiers},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "export_animations": export_animations,
+            "export_materials": export_materials,
+            "apply_modifiers": apply_modifiers,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
-def export_fbx(
+async def export_fbx(
     ctx: Context,
     filepath: str,
     export_selected: bool = False,
@@ -79,6 +162,36 @@ def export_fbx(
         apply_modifiers: Apply modifiers before export
         mesh_smooth_type: Smoothing export method (OFF, FACE, EDGE)
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().export_fbx(
+                filepath=filepath,
+                export_selected=export_selected,
+                export_animations=export_animations,
+                apply_modifiers=apply_modifiers,
+                mesh_smooth_type=mesh_smooth_type,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="export_fbx",
+            rpc_cmd="export.fbx",
+            rpc_args={
+                "filepath": filepath,
+                "export_selected": export_selected,
+                "export_animations": export_animations,
+                "apply_modifiers": apply_modifiers,
+                "mesh_smooth_type": mesh_smooth_type,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching FBX export to '{filepath}'",
+            completion_message=f"Completed FBX export to '{filepath}'",
+        )
+        ctx_info(ctx, f"Exported FBX to: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -96,13 +209,18 @@ def export_fbx(
 
     return route_tool_call(
         tool_name="export_fbx",
-        params={"filepath": filepath, "export_selected": export_selected, "export_animations": export_animations, "apply_modifiers": apply_modifiers, "mesh_smooth_type": mesh_smooth_type},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "export_animations": export_animations,
+            "apply_modifiers": apply_modifiers,
+            "mesh_smooth_type": mesh_smooth_type,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
-def export_obj(
+async def export_obj(
     ctx: Context,
     filepath: str,
     export_selected: bool = False,
@@ -129,6 +247,40 @@ def export_obj(
         export_normals: Include vertex normals
         triangulate: Convert quads/ngons to triangles
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().export_obj(
+                filepath=filepath,
+                export_selected=export_selected,
+                apply_modifiers=apply_modifiers,
+                export_materials=export_materials,
+                export_uvs=export_uvs,
+                export_normals=export_normals,
+                triangulate=triangulate,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="export_obj",
+            rpc_cmd="export.obj",
+            rpc_args={
+                "filepath": filepath,
+                "export_selected": export_selected,
+                "apply_modifiers": apply_modifiers,
+                "export_materials": export_materials,
+                "export_uvs": export_uvs,
+                "export_normals": export_normals,
+                "triangulate": triangulate,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching OBJ export to '{filepath}'",
+            completion_message=f"Completed OBJ export to '{filepath}'",
+        )
+        ctx_info(ctx, f"Exported OBJ to: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -148,16 +300,23 @@ def export_obj(
 
     return route_tool_call(
         tool_name="export_obj",
-        params={"filepath": filepath, "export_selected": export_selected, "apply_modifiers": apply_modifiers, "export_materials": export_materials, "export_uvs": export_uvs, "export_normals": export_normals, "triangulate": triangulate},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "export_selected": export_selected,
+            "apply_modifiers": apply_modifiers,
+            "export_materials": export_materials,
+            "export_uvs": export_uvs,
+            "export_normals": export_normals,
+            "triangulate": triangulate,
+        },
+        direct_executor=execute,
     )
 
 
 # === Import Tools ===
 
 
-@mcp.tool()
-def import_obj(
+async def import_obj(
     ctx: Context,
     filepath: str,
     use_split_objects: bool = True,
@@ -182,6 +341,38 @@ def import_obj(
         forward_axis: Forward axis in Blender (NEGATIVE_Z = -Z forward, standard for most apps)
         up_axis: Up axis in Blender (Y = Y-up standard)
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().import_obj(
+                filepath=filepath,
+                use_split_objects=use_split_objects,
+                use_split_groups=use_split_groups,
+                global_scale=global_scale,
+                forward_axis=forward_axis,
+                up_axis=up_axis,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="import_obj",
+            rpc_cmd="import.obj",
+            rpc_args={
+                "filepath": filepath,
+                "use_split_objects": use_split_objects,
+                "use_split_groups": use_split_groups,
+                "global_scale": global_scale,
+                "forward_axis": forward_axis,
+                "up_axis": up_axis,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching OBJ import from '{filepath}'",
+            completion_message=f"Completed OBJ import from '{filepath}'",
+        )
+        ctx_info(ctx, f"Imported OBJ from: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -200,13 +391,19 @@ def import_obj(
 
     return route_tool_call(
         tool_name="import_obj",
-        params={"filepath": filepath, "use_split_objects": use_split_objects, "use_split_groups": use_split_groups, "global_scale": global_scale, "forward_axis": forward_axis, "up_axis": up_axis},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "use_split_objects": use_split_objects,
+            "use_split_groups": use_split_groups,
+            "global_scale": global_scale,
+            "forward_axis": forward_axis,
+            "up_axis": up_axis,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
-def import_fbx(
+async def import_fbx(
     ctx: Context,
     filepath: str,
     use_custom_normals: bool = True,
@@ -231,6 +428,38 @@ def import_fbx(
         automatic_bone_orientation: Auto-orient bones to Blender conventions
         global_scale: Scale factor for imported geometry (1.0 = original size)
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().import_fbx(
+                filepath=filepath,
+                use_custom_normals=use_custom_normals,
+                use_image_search=use_image_search,
+                ignore_leaf_bones=ignore_leaf_bones,
+                automatic_bone_orientation=automatic_bone_orientation,
+                global_scale=global_scale,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="import_fbx",
+            rpc_cmd="import.fbx",
+            rpc_args={
+                "filepath": filepath,
+                "use_custom_normals": use_custom_normals,
+                "use_image_search": use_image_search,
+                "ignore_leaf_bones": ignore_leaf_bones,
+                "automatic_bone_orientation": automatic_bone_orientation,
+                "global_scale": global_scale,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching FBX import from '{filepath}'",
+            completion_message=f"Completed FBX import from '{filepath}'",
+        )
+        ctx_info(ctx, f"Imported FBX from: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -249,13 +478,19 @@ def import_fbx(
 
     return route_tool_call(
         tool_name="import_fbx",
-        params={"filepath": filepath, "use_custom_normals": use_custom_normals, "use_image_search": use_image_search, "ignore_leaf_bones": ignore_leaf_bones, "automatic_bone_orientation": automatic_bone_orientation, "global_scale": global_scale},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "use_custom_normals": use_custom_normals,
+            "use_image_search": use_image_search,
+            "ignore_leaf_bones": ignore_leaf_bones,
+            "automatic_bone_orientation": automatic_bone_orientation,
+            "global_scale": global_scale,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
-def import_glb(
+async def import_glb(
     ctx: Context,
     filepath: str,
     import_pack_images: bool = True,
@@ -276,6 +511,34 @@ def import_glb(
         merge_vertices: Merge duplicate vertices (may break UV seams)
         import_shading: How to handle shading (NORMALS = use file normals, FLAT, SMOOTH)
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().import_glb(
+                filepath=filepath,
+                import_pack_images=import_pack_images,
+                merge_vertices=merge_vertices,
+                import_shading=import_shading,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="import_glb",
+            rpc_cmd="import.glb",
+            rpc_args={
+                "filepath": filepath,
+                "import_pack_images": import_pack_images,
+                "merge_vertices": merge_vertices,
+                "import_shading": import_shading,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching GLB/GLTF import from '{filepath}'",
+            completion_message=f"Completed GLB/GLTF import from '{filepath}'",
+        )
+        ctx_info(ctx, f"Imported GLB/GLTF from: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -292,13 +555,17 @@ def import_glb(
 
     return route_tool_call(
         tool_name="import_glb",
-        params={"filepath": filepath, "import_pack_images": import_pack_images, "merge_vertices": merge_vertices, "import_shading": import_shading},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "import_pack_images": import_pack_images,
+            "merge_vertices": merge_vertices,
+            "import_shading": import_shading,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
-def import_image_as_plane(
+async def import_image_as_plane(
     ctx: Context,
     filepath: str,
     name: Optional[str] = None,
@@ -328,6 +595,40 @@ def import_image_as_plane(
         shader: Material shader type (PRINCIPLED = PBR, SHADELESS = unlit, EMISSION = glowing)
         use_transparency: Use alpha channel for transparency (PNG with alpha)
     """
+    if is_background_task_context(ctx):
+
+        def _foreground_rpc() -> str:
+            return get_system_handler().import_image_as_plane(
+                filepath=filepath,
+                name=name,
+                location=location,
+                size=size,
+                align_axis=align_axis,
+                shader=shader,
+                use_transparency=use_transparency,
+            )
+
+        result = await run_rpc_background_job(
+            ctx,
+            tool_name="import_image_as_plane",
+            rpc_cmd="import.image_as_plane",
+            rpc_args={
+                "filepath": filepath,
+                "name": name,
+                "location": location,
+                "size": size,
+                "align_axis": align_axis,
+                "shader": shader,
+                "use_transparency": use_transparency,
+            },
+            foreground_executor=_foreground_rpc,
+            result_formatter=_format_background_string_payload,
+            start_message=f"Launching image-as-plane import from '{filepath}'",
+            completion_message=f"Completed image-as-plane import from '{filepath}'",
+        )
+        ctx_info(ctx, f"Imported image as plane from: {filepath}")
+        return result
+
     def execute():
         handler = get_system_handler()
         try:
@@ -347,12 +648,19 @@ def import_image_as_plane(
 
     return route_tool_call(
         tool_name="import_image_as_plane",
-        params={"filepath": filepath, "name": name, "location": location, "size": size, "align_axis": align_axis, "shader": shader, "use_transparency": use_transparency},
-        direct_executor=execute
+        params={
+            "filepath": filepath,
+            "name": name,
+            "location": location,
+            "size": size,
+            "align_axis": align_axis,
+            "shader": shader,
+            "use_transparency": use_transparency,
+        },
+        direct_executor=execute,
     )
 
 
-@mcp.tool()
 def system_set_mode(
     ctx: Context,
     mode: Literal["OBJECT", "EDIT", "SCULPT", "VERTEX_PAINT", "WEIGHT_PAINT", "TEXTURE_PAINT", "POSE"],
@@ -380,11 +688,10 @@ def system_set_mode(
     return route_tool_call(
         tool_name="system_set_mode",
         params={"mode": mode, "object_name": object_name},
-        direct_executor=lambda: get_system_handler().set_mode(mode, object_name)
+        direct_executor=lambda: get_system_handler().set_mode(mode, object_name),
     )
 
 
-@mcp.tool()
 def system_undo(ctx: Context, steps: int = 1) -> str:
     """
     [SCENE][NON-DESTRUCTIVE] Undoes the last operation(s).
@@ -398,13 +705,10 @@ def system_undo(ctx: Context, steps: int = 1) -> str:
         steps: Number of steps to undo (default: 1, max: 10)
     """
     return route_tool_call(
-        tool_name="system_undo",
-        params={"steps": steps},
-        direct_executor=lambda: get_system_handler().undo(steps)
+        tool_name="system_undo", params={"steps": steps}, direct_executor=lambda: get_system_handler().undo(steps)
     )
 
 
-@mcp.tool()
 def system_redo(ctx: Context, steps: int = 1) -> str:
     """
     [SCENE][NON-DESTRUCTIVE] Redoes previously undone operation(s).
@@ -418,13 +722,10 @@ def system_redo(ctx: Context, steps: int = 1) -> str:
         steps: Number of steps to redo (default: 1, max: 10)
     """
     return route_tool_call(
-        tool_name="system_redo",
-        params={"steps": steps},
-        direct_executor=lambda: get_system_handler().redo(steps)
+        tool_name="system_redo", params={"steps": steps}, direct_executor=lambda: get_system_handler().redo(steps)
     )
 
 
-@mcp.tool()
 def system_save_file(
     ctx: Context,
     filepath: Optional[str] = None,
@@ -448,11 +749,10 @@ def system_save_file(
     return route_tool_call(
         tool_name="system_save_file",
         params={"filepath": filepath, "compress": compress},
-        direct_executor=lambda: get_system_handler().save_file(filepath, compress)
+        direct_executor=lambda: get_system_handler().save_file(filepath, compress),
     )
 
 
-@mcp.tool()
 def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     """
     [SCENE][DESTRUCTIVE] Creates a new Blender file (clears current scene).
@@ -467,11 +767,10 @@ def system_new_file(ctx: Context, load_ui: bool = False) -> str:
     return route_tool_call(
         tool_name="system_new_file",
         params={"load_ui": load_ui},
-        direct_executor=lambda: get_system_handler().new_file(load_ui)
+        direct_executor=lambda: get_system_handler().new_file(load_ui),
     )
 
 
-@mcp.tool()
 def system_snapshot(
     ctx: Context,
     action: Literal["save", "restore", "list", "delete"],
@@ -503,5 +802,5 @@ def system_snapshot(
     return route_tool_call(
         tool_name="system_snapshot",
         params={"action": action, "name": name},
-        direct_executor=lambda: get_system_handler().snapshot(action, name)
+        direct_executor=lambda: get_system_handler().snapshot(action, name),
     )

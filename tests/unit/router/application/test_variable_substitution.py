@@ -6,14 +6,13 @@ for workflow parametric adaptation.
 """
 
 import pytest
-
 from server.router.application.engines.workflow_expansion_engine import (
+    _substitute_list,
     extract_modifiers,
     substitute_variables,
-    _substitute_list,
 )
-from server.router.application.workflows.registry import get_workflow_registry
 from server.router.application.workflows.base import WorkflowDefinition, WorkflowStep
+from server.router.application.workflows.registry import get_workflow_registry
 
 
 class TestExtractModifiers:
@@ -450,7 +449,8 @@ class TestPicnicTableWorkflow:
 
         # Find leg transformation steps
         leg_steps = [
-            s for s in definition.steps
+            s
+            for s in definition.steps
             if s.tool == "modeling_transform_object" and "Leg_" in str(s.params.get("name", ""))
         ]
 
@@ -460,8 +460,5 @@ class TestPicnicTableWorkflow:
         for step in leg_steps:
             rotation = step.params.get("rotation", [])
             # At least one element should be a $variable
-            has_variable = any(
-                isinstance(v, str) and v.startswith("$")
-                for v in rotation
-            )
+            has_variable = any(isinstance(v, str) and v.startswith("$") for v in rotation)
             assert has_variable, f"Step for {step.params.get('name')} should use $variable in rotation"

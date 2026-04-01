@@ -1,18 +1,19 @@
 """Tests for advanced mesh selection tools (Phase 2.1)."""
-import unittest
-from unittest.mock import MagicMock, patch
+
 import sys
+import unittest
+from unittest.mock import MagicMock
 
 # Mock blender modules
-if 'bpy' not in sys.modules:
-    sys.modules['bpy'] = MagicMock()
-if 'bmesh' not in sys.modules:
-    sys.modules['bmesh'] = MagicMock()
+if "bpy" not in sys.modules:
+    sys.modules["bpy"] = MagicMock()
+if "bmesh" not in sys.modules:
+    sys.modules["bmesh"] = MagicMock()
 
-import bpy
 import bmesh
-
+import bpy
 from blender_addon.application.handlers.mesh import MeshHandler
+
 
 class TestMeshSelectLoop(unittest.TestCase):
     def setUp(self):
@@ -20,9 +21,9 @@ class TestMeshSelectLoop(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.loop_multi_select = MagicMock()
         bmesh.from_edit_mesh = MagicMock()
@@ -59,8 +60,8 @@ class TestMeshSelectLoop(unittest.TestCase):
         result = self.handler.select_loop(edge_index=5)
 
         # Verify
-        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
-        assert edges[5].select == True, "Target edge should be selected"
+        bpy.ops.object.mode_set.assert_any_call(mode="EDIT")
+        assert edges[5].select, "Target edge should be selected"
         bpy.ops.mesh.loop_multi_select.assert_called_once_with(ring=False)
         assert "Selected edge loop from edge 5" in result
 
@@ -91,7 +92,7 @@ class TestMeshSelectLoop(unittest.TestCase):
     def test_select_loop_restores_mode(self):
         """Should restore previous mode after selection."""
         # Setup: Start in OBJECT mode
-        bpy.context.active_object.mode = 'OBJECT'
+        bpy.context.active_object.mode = "OBJECT"
         bpy.context.object = bpy.context.active_object
 
         # Setup BMesh mock
@@ -114,9 +115,9 @@ class TestMeshSelectLoop(unittest.TestCase):
         self.handler.select_loop(edge_index=2)
 
         # Verify mode restoration
-        mode_set_calls = [call[1]['mode'] for call in bpy.ops.object.mode_set.call_args_list]
-        assert 'EDIT' in mode_set_calls, "Should switch to EDIT mode"
-        assert 'OBJECT' in mode_set_calls, "Should restore OBJECT mode"
+        mode_set_calls = [call[1]["mode"] for call in bpy.ops.object.mode_set.call_args_list]
+        assert "EDIT" in mode_set_calls, "Should switch to EDIT mode"
+        assert "OBJECT" in mode_set_calls, "Should restore OBJECT mode"
 
 
 class TestMeshSelectRing(unittest.TestCase):
@@ -125,9 +126,9 @@ class TestMeshSelectRing(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.loop_multi_select = MagicMock()
         bmesh.from_edit_mesh = MagicMock()
@@ -162,8 +163,8 @@ class TestMeshSelectRing(unittest.TestCase):
         result = self.handler.select_ring(edge_index=3)
 
         # Verify
-        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
-        assert edges[3].select == True, "Target edge should be selected"
+        bpy.ops.object.mode_set.assert_any_call(mode="EDIT")
+        assert edges[3].select, "Target edge should be selected"
         bpy.ops.mesh.loop_multi_select.assert_called_once_with(ring=True)
         assert "Selected edge ring from edge 3" in result
 
@@ -194,9 +195,9 @@ class TestMeshSelectLinked(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.select_linked = MagicMock()
         bmesh.from_edit_mesh = MagicMock()
@@ -212,7 +213,7 @@ class TestMeshSelectLinked(unittest.TestCase):
         verts = []
         for i in range(8):
             vert = MagicMock()
-            vert.select = (i < 3)  # First 3 selected initially
+            vert.select = i < 3  # First 3 selected initially
             verts.append(vert)
 
         # Mock the selection behavior: after select_linked is called, all become selected
@@ -231,7 +232,7 @@ class TestMeshSelectLinked(unittest.TestCase):
         result = self.handler.select_linked()
 
         # Verify
-        bpy.ops.object.mode_set.assert_any_call(mode='EDIT')
+        bpy.ops.object.mode_set.assert_any_call(mode="EDIT")
         assert "Selected linked geometry" in result
         assert "8 vertices total" in result
 
@@ -257,7 +258,7 @@ class TestMeshSelectLinked(unittest.TestCase):
         bpy.ops.mesh.select_linked.assert_not_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 
@@ -267,9 +268,9 @@ class TestMeshSelectMoreLess(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bpy.ops.mesh.select_more = MagicMock()
         bpy.ops.mesh.select_less = MagicMock()
@@ -285,7 +286,7 @@ class TestMeshSelectMoreLess(unittest.TestCase):
         verts = []
         for i in range(10):
             vert = MagicMock()
-            vert.select = (i < 3)
+            vert.select = i < 3
             verts.append(vert)
 
         # Mock grow behavior: 3 -> 6 verts selected
@@ -315,7 +316,7 @@ class TestMeshSelectMoreLess(unittest.TestCase):
         verts = []
         for i in range(10):
             vert = MagicMock()
-            vert.select = (i < 6)
+            vert.select = i < 6
             verts.append(vert)
 
         # Mock shrink behavior: 6 -> 3 verts selected
@@ -361,9 +362,9 @@ class TestMeshSelectByLocation(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bmesh.from_edit_mesh = MagicMock()
         bmesh.update_edit_mesh = MagicMock()
@@ -392,7 +393,7 @@ class TestMeshSelectByLocation(unittest.TestCase):
         bm.faces.__iter__.return_value = iter([])
 
         # Execute: select vertices with Z between 3 and 6
-        result = self.handler.select_by_location(axis='Z', min_coord=3.0, max_coord=6.0, mode='VERT')
+        result = self.handler.select_by_location(axis="Z", min_coord=3.0, max_coord=6.0, mode="VERT")
 
         # Verify
         assert "Selected 4 vert(s)" in result  # Verts 3, 4, 5, 6
@@ -402,13 +403,13 @@ class TestMeshSelectByLocation(unittest.TestCase):
         """Should raise ValueError for invalid axis."""
         bm = MagicMock()
         bmesh.from_edit_mesh.return_value = bm
-        
+
         bm.verts = []
         bm.edges = []
         bm.faces = []
 
         with self.assertRaises(ValueError) as context:
-            self.handler.select_by_location(axis='W', min_coord=0, max_coord=1)
+            self.handler.select_by_location(axis="W", min_coord=0, max_coord=1)
 
         assert "Invalid axis 'W'" in str(context.exception)
 
@@ -416,13 +417,13 @@ class TestMeshSelectByLocation(unittest.TestCase):
         """Should raise ValueError for invalid mode."""
         bm = MagicMock()
         bmesh.from_edit_mesh.return_value = bm
-        
+
         bm.verts = []
         bm.edges = []
         bm.faces = []
 
         with self.assertRaises(ValueError) as context:
-            self.handler.select_by_location(axis='X', min_coord=0, max_coord=1, mode='INVALID')
+            self.handler.select_by_location(axis="X", min_coord=0, max_coord=1, mode="INVALID")
 
         assert "Invalid mode 'INVALID'" in str(context.exception)
 
@@ -433,9 +434,9 @@ class TestMeshSelectBoundary(unittest.TestCase):
 
         # Reset mocks
         bpy.context.active_object = MagicMock()
-        bpy.context.active_object.type = 'MESH'
-        bpy.context.active_object.mode = 'OBJECT'
-        bpy.context.mode = 'OBJECT'
+        bpy.context.active_object.type = "MESH"
+        bpy.context.active_object.mode = "OBJECT"
+        bpy.context.mode = "OBJECT"
         bpy.ops.object.mode_set = MagicMock()
         bmesh.from_edit_mesh = MagicMock()
         bmesh.update_edit_mesh = MagicMock()
@@ -449,7 +450,7 @@ class TestMeshSelectBoundary(unittest.TestCase):
         edges = []
         for i in range(6):
             e = MagicMock()
-            e.is_boundary = (i < 2)  # First 2 are boundary
+            e.is_boundary = i < 2  # First 2 are boundary
             e.select = False
             v1 = MagicMock()
             v1.select = False
@@ -469,12 +470,12 @@ class TestMeshSelectBoundary(unittest.TestCase):
         bm.faces.__iter__.return_value = iter([])
 
         # Execute
-        result = self.handler.select_boundary(mode='EDGE')
+        result = self.handler.select_boundary(mode="EDGE")
 
         # Verify
-        assert edges[0].select == True, "First boundary edge should be selected"
-        assert edges[1].select == True, "Second boundary edge should be selected"
-        assert edges[2].select == False, "Internal edge should not be selected"
+        assert edges[0].select, "First boundary edge should be selected"
+        assert edges[1].select, "Second boundary edge should be selected"
+        assert not edges[2].select, "Internal edge should not be selected"
         assert "Selected 2 boundary edge(s)" in result
 
     def test_select_boundary_vertices(self):
@@ -486,7 +487,7 @@ class TestMeshSelectBoundary(unittest.TestCase):
         verts = []
         for i in range(8):
             v = MagicMock()
-            v.is_boundary = (i < 3)  # First 3 are boundary
+            v.is_boundary = i < 3  # First 3 are boundary
             v.select = False
             verts.append(v)
 
@@ -500,13 +501,13 @@ class TestMeshSelectBoundary(unittest.TestCase):
         bm.faces.__iter__.return_value = iter([])
 
         # Execute
-        result = self.handler.select_boundary(mode='VERT')
+        result = self.handler.select_boundary(mode="VERT")
 
         # Verify
-        assert verts[0].select == True, "First boundary vert should be selected"
-        assert verts[1].select == True, "Second boundary vert should be selected"
-        assert verts[2].select == True, "Third boundary vert should be selected"
-        assert verts[3].select == False, "Internal vert should not be selected"
+        assert verts[0].select, "First boundary vert should be selected"
+        assert verts[1].select, "Second boundary vert should be selected"
+        assert verts[2].select, "Third boundary vert should be selected"
+        assert not verts[3].select, "Internal vert should not be selected"
         assert "Selected 3 boundary vert(s)" in result
 
     def test_select_boundary_invalid_mode(self):
@@ -522,7 +523,7 @@ class TestMeshSelectBoundary(unittest.TestCase):
         bm.faces.__iter__.return_value = iter([])
 
         with self.assertRaises(ValueError) as context:
-            self.handler.select_boundary(mode='INVALID')
+            self.handler.select_boundary(mode="INVALID")
 
         assert "Invalid mode 'INVALID'" in str(context.exception)
         assert "Must be EDGE or VERT" in str(context.exception)

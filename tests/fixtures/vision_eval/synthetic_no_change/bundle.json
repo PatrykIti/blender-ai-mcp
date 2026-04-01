@@ -1,0 +1,29 @@
+{
+  "bundle_id": "synthetic_no_change_bundle",
+  "goal_id": "synthetic_no_change_goal",
+  "target_object": "Housing",
+  "preset_names": [
+    "context_wide"
+  ],
+  "captures_before": [
+    {
+      "label": "context_wide_before",
+      "image_path": "before_context.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "context_wide"
+    }
+  ],
+  "captures_after": [
+    {
+      "label": "context_wide_after",
+      "image_path": "before_context.png",
+      "media_type": "image/png",
+      "view_kind": "wide",
+      "preset_name": "context_wide"
+    }
+  ],
+  "truth_summary": {
+    "note": "synthetic no-change smoke scenario"
+  }
+}

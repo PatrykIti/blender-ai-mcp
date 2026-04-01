@@ -3,11 +3,15 @@
 Provides low-level control over Blender state: mode switching,
 undo/redo, file operations, and snapshot checkpoints.
 """
+
 import os
 import tempfile
 from datetime import datetime
+from typing import Callable
 
 import bpy
+
+from .job_utils import raise_if_cancelled
 
 
 class SystemHandler:
@@ -59,9 +63,7 @@ class SystemHandler:
 
         # Check if already in target mode
         if current_mode == mode or current_mode.startswith(mode):
-            active_name = (
-                bpy.context.active_object.name if bpy.context.active_object else "None"
-            )
+            active_name = bpy.context.active_object.name if bpy.context.active_object else "None"
             return f"Already in {mode} mode (active: {active_name})"
 
         active_obj = bpy.context.active_object
@@ -194,9 +196,7 @@ class SystemHandler:
             else:
                 # Generate temp path for unsaved file
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filepath = os.path.join(
-                    tempfile.gettempdir(), f"blender_ai_autosave_{timestamp}.blend"
-                )
+                filepath = os.path.join(tempfile.gettempdir(), f"blender_ai_autosave_{timestamp}.blend")
                 bpy.ops.wm.save_as_mainfile(filepath=filepath, compress=compress)
                 return f"Saved unsaved file to '{filepath}'"
 
@@ -273,9 +273,7 @@ class SystemHandler:
                 name = datetime.now().strftime("%Y%m%d_%H%M%S")
 
             # Sanitize name (remove dangerous characters)
-            safe_name = "".join(
-                c for c in name if c.isalnum() or c in ("_", "-")
-            ).rstrip()
+            safe_name = "".join(c for c in name if c.isalnum() or c in ("_", "-")).rstrip()
             if not safe_name:
                 safe_name = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -311,9 +309,7 @@ class SystemHandler:
                 filepath = os.path.join(self.SNAPSHOT_DIR, f"{snap_name}.blend")
                 try:
                     mtime = os.path.getmtime(filepath)
-                    mtime_str = datetime.fromtimestamp(mtime).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
+                    mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                     size_mb = os.path.getsize(filepath) / (1024 * 1024)
                     snapshot_info.append(f"  - {snap_name} ({mtime_str}, {size_mb:.1f}MB)")
                 except OSError:
@@ -360,8 +356,13 @@ class SystemHandler:
         export_animations: bool = True,
         export_materials: bool = True,
         apply_modifiers: bool = True,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Exports scene or selected objects to GLB/GLTF format."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 3, "Validating GLB export path")
         # Ensure correct extension
         if not filepath.lower().endswith((".glb", ".gltf")):
             filepath += ".glb"
@@ -370,6 +371,9 @@ class SystemHandler:
         dir_path = os.path.dirname(filepath)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(1, 3, "Running GLB exporter")
 
         # Determine export format
         export_format = "GLB" if filepath.lower().endswith(".glb") else "GLTF_SEPARATE"
@@ -383,6 +387,9 @@ class SystemHandler:
             export_materials="EXPORT" if export_materials else "NONE",
             export_apply=apply_modifiers,
         )
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(3, 3, "GLB export complete")
 
         return f"Successfully exported to '{filepath}'"
 
@@ -393,8 +400,13 @@ class SystemHandler:
         export_animations: bool = True,
         apply_modifiers: bool = True,
         mesh_smooth_type: str = "FACE",
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Exports scene or selected objects to FBX format."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 3, "Validating FBX export path")
         # Ensure correct extension
         if not filepath.lower().endswith(".fbx"):
             filepath += ".fbx"
@@ -408,6 +420,9 @@ class SystemHandler:
         valid_smooth_types = {"OFF", "FACE", "EDGE"}
         if mesh_smooth_type not in valid_smooth_types:
             mesh_smooth_type = "FACE"
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(1, 3, "Running FBX exporter")
 
         # Export with FBX exporter
         bpy.ops.export_scene.fbx(
@@ -420,6 +435,9 @@ class SystemHandler:
             primary_bone_axis="Y",
             secondary_bone_axis="X",
         )
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(3, 3, "FBX export complete")
 
         return f"Successfully exported to '{filepath}'"
 
@@ -432,8 +450,13 @@ class SystemHandler:
         export_uvs: bool = True,
         export_normals: bool = True,
         triangulate: bool = False,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Exports scene or selected objects to OBJ format."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 4, "Validating OBJ export path")
         # Ensure correct extension
         if not filepath.lower().endswith(".obj"):
             filepath += ".obj"
@@ -448,9 +471,12 @@ class SystemHandler:
             raise RuntimeError(f"Directory not writable: {dir_path}")
 
         # Check objects in scene
-        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == 'MESH']
+        mesh_objects = [obj.name for obj in bpy.data.objects if obj.type == "MESH"]
         if not mesh_objects:
             raise RuntimeError("No mesh objects in scene to export")
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(1, 4, "Running OBJ exporter")
 
         # Export with OBJ exporter (Blender 4.0+ uses wm.obj_export)
         # Blender 5.0 requires check_existing=False for non-interactive export
@@ -466,8 +492,11 @@ class SystemHandler:
         )
 
         # Verify export succeeded
-        if result != {'FINISHED'}:
+        if result != {"FINISHED"}:
             raise RuntimeError(f"OBJ export failed with result: {result}")
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 4, "Verifying OBJ export output")
 
         # List files in directory for debugging
         if dir_path:
@@ -477,9 +506,10 @@ class SystemHandler:
 
         if not os.path.exists(filepath):
             raise RuntimeError(
-                f"OBJ export reported success but file was not created: {filepath}. "
-                f"Files in dir: {files_in_dir}"
+                f"OBJ export reported success but file was not created: {filepath}. Files in dir: {files_in_dir}"
             )
+        if progress_callback is not None:
+            progress_callback(4, 4, "OBJ export complete")
 
         return f"Successfully exported to '{filepath}'"
 
@@ -493,14 +523,21 @@ class SystemHandler:
         global_scale: float = 1.0,
         forward_axis: str = "NEGATIVE_Z",
         up_axis: str = "Y",
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Imports OBJ file."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 3, "Validating OBJ import file")
         # Validate file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"OBJ file not found: {filepath}")
 
         # Track objects before import
         objects_before = set(bpy.data.objects.keys())
+        if progress_callback is not None:
+            progress_callback(1, 3, "Running OBJ importer")
 
         # Import OBJ (Blender 3.3+ uses wm.obj_import)
         bpy.ops.wm.obj_import(
@@ -511,10 +548,15 @@ class SystemHandler:
             forward_axis=forward_axis,
             up_axis=up_axis,
         )
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 3, "Collecting imported OBJ objects")
 
         # Find newly imported objects
         objects_after = set(bpy.data.objects.keys())
         new_objects = objects_after - objects_before
+        if progress_callback is not None:
+            progress_callback(3, 3, "OBJ import complete")
 
         if new_objects:
             return f"Successfully imported OBJ from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
@@ -528,14 +570,21 @@ class SystemHandler:
         ignore_leaf_bones: bool = False,
         automatic_bone_orientation: bool = False,
         global_scale: float = 1.0,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Imports FBX file."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 3, "Validating FBX import file")
         # Validate file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"FBX file not found: {filepath}")
 
         # Track objects before import
         objects_before = set(bpy.data.objects.keys())
+        if progress_callback is not None:
+            progress_callback(1, 3, "Running FBX importer")
 
         # Import FBX
         bpy.ops.import_scene.fbx(
@@ -546,10 +595,15 @@ class SystemHandler:
             automatic_bone_orientation=automatic_bone_orientation,
             global_scale=global_scale,
         )
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 3, "Collecting imported FBX objects")
 
         # Find newly imported objects
         objects_after = set(bpy.data.objects.keys())
         new_objects = objects_after - objects_before
+        if progress_callback is not None:
+            progress_callback(3, 3, "FBX import complete")
 
         if new_objects:
             return f"Successfully imported FBX from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
@@ -561,14 +615,21 @@ class SystemHandler:
         import_pack_images: bool = True,
         merge_vertices: bool = False,
         import_shading: str = "NORMALS",
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Imports GLB/GLTF file."""
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 3, "Validating GLB/GLTF import file")
         # Validate file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"GLB/GLTF file not found: {filepath}")
 
         # Track objects before import
         objects_before = set(bpy.data.objects.keys())
+        if progress_callback is not None:
+            progress_callback(1, 3, "Running GLB/GLTF importer")
 
         # Import GLTF
         bpy.ops.import_scene.gltf(
@@ -577,10 +638,15 @@ class SystemHandler:
             merge_vertices=merge_vertices,
             import_shading=import_shading,
         )
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 3, "Collecting imported GLB/GLTF objects")
 
         # Find newly imported objects
         objects_after = set(bpy.data.objects.keys())
         new_objects = objects_after - objects_before
+        if progress_callback is not None:
+            progress_callback(3, 3, "GLB/GLTF import complete")
 
         if new_objects:
             return f"Successfully imported GLB/GLTF from '{filepath}'. Objects: {', '.join(sorted(new_objects))}"
@@ -595,6 +661,8 @@ class SystemHandler:
         align_axis: str = "Z+",
         shader: str = "PRINCIPLED",
         use_transparency: bool = True,
+        progress_callback: Callable[[float, float | None, str | None], None] | None = None,
+        is_cancelled: Callable[[], bool] | None = None,
     ) -> str:
         """Imports image as a textured plane.
 
@@ -603,6 +671,10 @@ class SystemHandler:
         """
         import math
 
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(0, 4, "Validating image file")
+
         # Validate file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Image file not found: {filepath}")
@@ -610,6 +682,9 @@ class SystemHandler:
         # Load the image
         img = bpy.data.images.load(filepath)
         img_width, img_height = img.size
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(1, 4, "Creating plane geometry")
 
         # Calculate aspect ratio for plane dimensions
         aspect = img_width / img_height if img_height > 0 else 1.0
@@ -646,6 +721,9 @@ class SystemHandler:
         }
         rotation = rotation_map.get(align_axis, (0, 0, 0))
         plane.rotation_euler = rotation
+        raise_if_cancelled(is_cancelled)
+        if progress_callback is not None:
+            progress_callback(2, 4, "Building image material")
 
         # Create material
         mat_name = f"{base_name}_Material"
@@ -659,41 +737,41 @@ class SystemHandler:
 
         # Create nodes based on shader type
         # Output node
-        output_node = nodes.new('ShaderNodeOutputMaterial')
+        output_node = nodes.new("ShaderNodeOutputMaterial")
         output_node.location = (400, 0)
 
         # Image texture node
-        tex_node = nodes.new('ShaderNodeTexImage')
+        tex_node = nodes.new("ShaderNodeTexImage")
         tex_node.image = img
         tex_node.location = (-300, 0)
 
         if shader == "EMISSION":
             # Emission shader
-            emission_node = nodes.new('ShaderNodeEmission')
+            emission_node = nodes.new("ShaderNodeEmission")
             emission_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
-            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], emission_node.inputs["Color"])
+            links.new(emission_node.outputs["Emission"], output_node.inputs["Surface"])
 
         elif shader == "SHADELESS":
             # Shadeless (Background shader in Cycles, or just emission)
             # Use emission with strength 1 for shadeless look
-            emission_node = nodes.new('ShaderNodeEmission')
-            emission_node.inputs['Strength'].default_value = 1.0
+            emission_node = nodes.new("ShaderNodeEmission")
+            emission_node.inputs["Strength"].default_value = 1.0
             emission_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], emission_node.inputs['Color'])
-            links.new(emission_node.outputs['Emission'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], emission_node.inputs["Color"])
+            links.new(emission_node.outputs["Emission"], output_node.inputs["Surface"])
 
         else:  # PRINCIPLED (default)
             # Principled BSDF
-            bsdf_node = nodes.new('ShaderNodeBsdfPrincipled')
+            bsdf_node = nodes.new("ShaderNodeBsdfPrincipled")
             bsdf_node.location = (100, 0)
-            links.new(tex_node.outputs['Color'], bsdf_node.inputs['Base Color'])
-            links.new(bsdf_node.outputs['BSDF'], output_node.inputs['Surface'])
+            links.new(tex_node.outputs["Color"], bsdf_node.inputs["Base Color"])
+            links.new(bsdf_node.outputs["BSDF"], output_node.inputs["Surface"])
 
             # Handle transparency
             if use_transparency:
-                mat.blend_method = 'BLEND'
-                links.new(tex_node.outputs['Alpha'], bsdf_node.inputs['Alpha'])
+                mat.blend_method = "BLEND"
+                links.new(tex_node.outputs["Alpha"], bsdf_node.inputs["Alpha"])
 
         # Assign material to plane
         if plane.data.materials:
@@ -702,5 +780,7 @@ class SystemHandler:
             plane.data.materials.append(mat)
 
         # Ensure proper UV mapping (plane already has UVs from primitive)
+        if progress_callback is not None:
+            progress_callback(4, 4, "Image-as-plane import complete")
 
         return f"Successfully imported image as plane '{plane.name}' from '{filepath}'"
