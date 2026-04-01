@@ -167,6 +167,22 @@ def test_explicit_google_provider_wins_even_if_openrouter_model_env_is_present()
     assert runtime.active_model_name == "gemini-2.5-flash"
 
 
+def test_disabled_runtime_does_not_build_external_profile_from_provider_name_alone():
+    config = _base_config(
+        VISION_ENABLED=False,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="openrouter",
+        VISION_OPENROUTER_MODEL=None,
+        VISION_EXTERNAL_BASE_URL=None,
+        VISION_EXTERNAL_MODEL=None,
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.enabled is False
+    assert runtime.openai_compatible_external is None
+
+
 def test_generic_external_provider_rejects_conflicting_openrouter_and_gemini_models():
     config = _base_config(
         VISION_ENABLED=True,

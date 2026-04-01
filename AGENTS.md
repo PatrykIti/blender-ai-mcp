@@ -131,6 +131,8 @@ Use `_docs/_ROUTER/TOOLS/README.md` as the checklist for router-facing tools.
 ## Testing Expectations
 
 - Before considering work done, run the relevant `pre-commit` hooks or the full `pre-commit run --all-files` when the change is broad.
+- For meaningful repo-wide or cross-cutting changes, prefer the full command below so failures show the exact diff/context:
+  - `poetry run pre-commit run --all-files --show-diff-on-failure`
 - For server-side logic, default to unit tests first.
 - For Blender behavior, add or update E2E coverage if the change affects real geometry, mode handling, selection handling, viewport output, router correction, or workflow execution.
 - Router tests should avoid repeated heavy model initialization. Follow the shared/session-scoped patterns already used in tests.

@@ -197,12 +197,17 @@ async def run_rpc_background_job(
 
                 collect_result = collect_response.result if isinstance(collect_response.result, dict) else {}
                 payload = collect_result.get("result", collect_result)
-                formatted_result = result_formatter(payload)
-                result_record = result_store.put(
-                    task_id=task_id,
-                    tool_name=tool_name,
-                    payload=formatted_result,
-                )
+                try:
+                    formatted_result = result_formatter(payload)
+                    result_record = result_store.put(
+                        task_id=task_id,
+                        tool_name=tool_name,
+                        payload=formatted_result,
+                    )
+                except Exception as exc:
+                    error = str(exc) or f"Result formatting failed for background job {addon_job_id}"
+                    registry.mark_failed(task_id, error)
+                    raise
                 registry.mark_completed(task_id, result_ref=result_record.result_ref)
                 await _report_background_progress(
                     ctx,

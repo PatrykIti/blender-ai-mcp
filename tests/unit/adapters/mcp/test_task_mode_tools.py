@@ -508,3 +508,49 @@ def test_scene_get_viewport_background_path_times_out_during_polling(monkeypatch
     assert registry_record is not None
     assert registry_record.status == "failed"
     assert fake_rpc.cancelled == ["job-timeout"]
+
+
+def test_scene_get_viewport_background_path_marks_failed_on_result_formatter_error(monkeypatch):
+    """Formatter failures after completed addon jobs should mark the task as failed."""
+
+    class FakeRpcClient:
+        def __init__(self) -> None:
+            self.poll_count = 0
+
+        def launch_background_job(self, cmd, args, *, timeout_seconds=None):
+            return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-format"})
+
+        def get_background_job_status(self, job_id):
+            self.poll_count += 1
+            return RpcResponse(
+                request_id="req-2",
+                status="ok",
+                result={
+                    "job_id": job_id,
+                    "status": "completed",
+                    "progress_current": 1,
+                    "progress_total": 1,
+                    "status_message": "Completed",
+                },
+            )
+
+        def collect_background_job_result(self, job_id):
+            return RpcResponse(
+                request_id="req-3",
+                status="ok",
+                result={"job_id": job_id, "result": {"not": "a base64 string"}},
+            )
+
+        def cancel_background_job(self, job_id):
+            return RpcResponse(request_id="req-4", status="ok", result={"job_id": job_id})
+
+    monkeypatch.setattr("server.adapters.mcp.tasks.task_bridge.get_rpc_client", lambda: FakeRpcClient())
+
+    ctx = BackgroundContext("task-format-error")
+
+    with pytest.raises(RuntimeError, match="invalid payload"):
+        asyncio.run(scene_get_viewport(ctx, output_mode="BASE64"))
+
+    registry_record = get_background_job_registry().get("task-format-error")
+    assert registry_record is not None
+    assert registry_record.status == "failed"

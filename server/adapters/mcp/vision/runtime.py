@@ -49,6 +49,11 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         )
 
     external_config = None
+    explicit_complete_external_settings_present = bool(
+        (config.VISION_EXTERNAL_BASE_URL and config.VISION_EXTERNAL_MODEL)
+        or config.VISION_OPENROUTER_MODEL
+        or config.VISION_GEMINI_MODEL
+    )
     explicit_external_provider = config.VISION_EXTERNAL_PROVIDER
     if explicit_external_provider == "openrouter":
         use_openrouter_profile = True
@@ -64,12 +69,8 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
             )
         use_openrouter_profile = bool(config.VISION_OPENROUTER_MODEL)
         use_google_ai_studio_profile = bool(config.VISION_GEMINI_MODEL)
-    if (
-        use_openrouter_profile
-        or use_google_ai_studio_profile
-        or config.VISION_EXTERNAL_BASE_URL
-        or config.VISION_EXTERNAL_MODEL
-    ):
+    should_build_external_config = explicit_complete_external_settings_present
+    if should_build_external_config:
         external_provider_name: Literal["generic", "openrouter", "google_ai_studio"]
         external_base_url: str | None
         external_model: str | None
