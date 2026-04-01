@@ -1,6 +1,7 @@
 # TASK-080: Image Asset Tools (List, Load, Export, Pack)
 
-**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
+**Status:** ⏭️ Superseded
+**Superseded By:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
 **Superseded On:** 2026-03-24  
 **Reason:** The business intent remains valid, but this task will be rewritten under the new layered tool strategy instead of continuing in its current form.
 

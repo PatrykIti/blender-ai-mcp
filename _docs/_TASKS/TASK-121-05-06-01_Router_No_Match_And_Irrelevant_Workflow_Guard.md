@@ -1,10 +1,10 @@
 # TASK-121-05-06-01: Router No-Match and Irrelevant Workflow Guard
 
 **Parent:** [TASK-121-05-06](./TASK-121-05-06_Guided_Manual_Build_Handoff_After_Weak_Or_Irrelevant_Workflow_Match.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The router/handler layer now short-circuits obvious meta capture-build goals away from irrelevant workflow matches and into `no_match` + `build` handoff semantics. Unit and E2E-style regression coverage now exist for the squirrel progressive-screenshot case. The next gap is to generalize this beyond the first explicit meta-test pattern set without reintroducing weak workflow matches.
+**Completion Summary:** The router/handler layer now short-circuits obvious meta capture-build goals away from irrelevant workflow matches and into `no_match` + `build` handoff semantics. Unit and E2E-style regression coverage now exist for the squirrel progressive-screenshot case, and this leaf is closed with the first generalized guided-manual handoff guard in place.
 
 ---
 

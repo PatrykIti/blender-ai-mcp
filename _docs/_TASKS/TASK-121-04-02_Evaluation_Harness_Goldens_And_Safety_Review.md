@@ -1,10 +1,10 @@
 # TASK-121-04-02: Evaluation Harness, Goldens, and Safety Review
 
 **Parent:** [TASK-121-04](./TASK-121-04_Lightweight_Vision_Runtime_And_Evaluation.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The repo now has a first-pass evaluation harness path: `scripts/vision_harness.py` accepts repo-tracked `golden.json` scenarios, scores backend outputs against a reusable matrix, and synthetic golden scenarios exist for improvement, no-change, and reference-mismatch coverage. A first real viewport smoke scenario is now also in the matrix (`default_cube_to_picnic_table`). The next step is to push this beyond simple scene-replacement smoke checks into real macro capture bundles and explicit governance verdicts.
+**Completion Summary:** The repo now has an evaluation harness path: `scripts/vision_harness.py` accepts repo-tracked `golden.json` scenarios, scores backend outputs against a reusable matrix, synthetic golden scenarios exist for improvement, no-change, and reference-mismatch coverage, and real viewport smoke/progression scenarios are part of the matrix. Governance notes for the current runtime paths are now recorded as part of this completed evaluation wave.
 
 ---
 

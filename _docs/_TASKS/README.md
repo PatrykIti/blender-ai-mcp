@@ -1,12 +1,26 @@
 # Kanban Tasks - Blender AI MCP
 
-Task board for the project. Update statuses in markdown files.
+Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
 - **To Do:** 2 tasks
 - **In Progress:** 0 tasks
 - **Done:** 188
 - **Superseded:** 10
+
+## 📐 Board Scope
+
+- The counts above refer to the rows tracked on this board, not every nested task file under `_docs/_TASKS/`.
+- Use the board for currently promoted work and promoted follow-ons.
+- Keep nested task files in sync with the board when their promoted state changes.
+
+## 🧱 Hierarchy Rules
+
+- Preferred planning flow: umbrella -> subtask -> deeper technical subtask when needed -> leaf/micro-task.
+- Open direct children must not remain under a closed parent.
+- If follow-on work remains after a parent is closed, keep the historical lineage in the task ID if useful, but track it as a board-level follow-on task instead of an open child.
+- Use the canonical task status vocabulary from `AGENTS.md`.
+- Close historical planning slices administratively once the parent wave is complete.
 
 ## 🧭 Terminology Guardrails
 

@@ -1,10 +1,10 @@
 # TASK-121-03: Before/After Capture and Macro Integration
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** Deterministic capture-bundle contracts and initial runtime presets now exist, macro reports can already carry `capture_bundle`, MCP macro adapters now build bounded vision requests from before/after captures plus goal-scoped reference images when vision is enabled, and the viewport-capture path now keeps `USER_PERSPECTIVE` plus named-camera visibility semantics aligned well enough for staged real-model screenshot flows.
+**Completion Summary:** Deterministic capture-bundle contracts and initial runtime presets are now in place, macro reports can carry `capture_bundle`, MCP macro adapters build bounded vision requests from before/after captures plus goal-scoped reference images when vision is enabled, and the viewport-capture path keeps `USER_PERSPECTIVE` plus named-camera visibility semantics aligned for staged real-model screenshot flows.
 
 ---
 

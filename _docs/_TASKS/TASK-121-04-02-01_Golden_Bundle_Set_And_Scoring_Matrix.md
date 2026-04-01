@@ -1,10 +1,10 @@
 # TASK-121-04-02-01: Golden Bundle Set and Scoring Matrix
 
 **Parent:** [TASK-121-04-02](./TASK-121-04-02_Evaluation_Harness_Goldens_And_Safety_Review.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** A first repo-tracked golden bundle set now exists under `tests/fixtures/vision_eval/`, together with scoring helpers that evaluate contract presence, direction/reference interpretation, capture usage, minimum completeness, and truth-claim safety. The matrix now also includes a real viewport smoke scenario (`default_cube_to_picnic_table`) sourced from manual Blender captures. The next gap is expanding beyond this first real smoke case into real macro bundles and tightening the scoring heuristics for large scene/object replacement language.
+**Completion Summary:** A repo-tracked golden bundle set now exists under `tests/fixtures/vision_eval/`, together with scoring helpers that evaluate contract presence, direction/reference interpretation, capture usage, minimum completeness, and truth-claim safety. The matrix includes real viewport smoke/progression scenarios sourced from manual Blender captures and provides the reusable baseline for ongoing runtime comparison.
 
 ---
 

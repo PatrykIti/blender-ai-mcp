@@ -1,6 +1,6 @@
 # TASK-014-2: Scene List Selection Tool
 
-**Status:** ✅ Complete  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium  
 **Phase:** Phase 7 - Introspection & Listing APIs  
 **Completion Date:** 2025-11-27

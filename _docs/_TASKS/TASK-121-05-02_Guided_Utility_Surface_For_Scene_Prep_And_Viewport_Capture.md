@@ -1,10 +1,10 @@
 # TASK-121-05-02: Guided Utility Surface for Scene Prep and Viewport Capture
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** A first implementation of this leaf is now in place. `llm-guided` bootstrap/planning search can reach a minimal guided-safe utility set with `scene_get_viewport` and `scene_clean_scene`, while the default direct bootstrap surface still stays intentionally small. First Blender-backed E2E coverage now exists for viewport capture and scene cleanup. The remaining work is to decide whether the utility set should grow beyond these two actions and whether a dedicated bounded helper tool would be safer than continued direct exposure of the underlying primitives.
+**Completion Summary:** `llm-guided` bootstrap/planning search can now reach a minimal guided-safe utility set with `scene_get_viewport` and `scene_clean_scene`, while the default direct bootstrap surface stays intentionally small. Blender-backed E2E coverage exists for viewport capture and scene cleanup, closing this bounded utility-surface leaf.
 
 ---
 

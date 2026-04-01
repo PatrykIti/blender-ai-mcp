@@ -4,8 +4,8 @@
 **Category:** Router Supervisor Enhancement
 **Estimated Effort:** Medium
 **Dependencies:** TASK-053 (Ensemble Matcher System)
-**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
-
+**Status:** ⏭️ Superseded
+**Superseded By:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
 ---
 
 ## Overview

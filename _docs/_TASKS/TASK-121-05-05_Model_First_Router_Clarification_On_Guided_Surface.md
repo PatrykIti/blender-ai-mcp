@@ -1,10 +1,10 @@
 # TASK-121-05-05: Model-First Router Clarification on Guided Surface
 
 **Parent:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** `router_set_goal(...)` on `llm-guided` now keeps ordinary missing workflow parameters model-facing by default: the server builds a typed clarification payload and returns `needs_input` to the outer model without triggering native human elicitation first. The remaining work is mainly broader real-world validation and any later policy distinction for true user/business-input gaps.
+**Completion Summary:** `router_set_goal(...)` on `llm-guided` now keeps ordinary missing workflow parameters model-facing by default: the server builds a typed clarification payload and returns `needs_input` to the outer model without triggering native human elicitation first.
 
 ---
 

@@ -1,6 +1,6 @@
 # TASK-014-1: Scene Get Mode Tool
 
-**Status:** ✅ Complete  
+**Status:** ✅ Done  
 **Priority:** 🟢 Low  
 **Phase:** Phase 7 - Introspection & Listing APIs  
 **Completion Date:** 2025-11-27

@@ -1,6 +1,6 @@
 # TASK-014-15: Fix Blender Tool Bugs (Mode Validation, Boolean Solver, Edit Mode Context)
 
-**Status:** ✅ Completed
+**Status:** ✅ Done
 **Priority:** 🔴 Critical
 **Phase:** Phase 7 - Bug Fixes & Quality Improvements
 **Created:** 2025-11-27
@@ -239,7 +239,7 @@ def test_smooth_vertices_restores_mode(self):
 ### Task 5: Update Documentation
 
 **5.1 Update CHANGELOG**
-File: `_docs/_CHANGELOG/CHANGELOG.md`
+File: `_docs/_CHANGELOG/README.md`
 
 Add bug fix entries:
 ```markdown
@@ -309,7 +309,7 @@ Expected results:
 3. `blender_addon/application/handlers/scene.py` (Tasks 2, 3)
 4. `tests/test_modeling_tools.py` (Task 4)
 5. `tests/test_scene_mode.py` (Task 4)
-6. `_docs/_CHANGELOG/CHANGELOG.md` (Task 5)
+6. `_docs/_CHANGELOG/README.md` (Task 5)
 7. `_docs/_MCP_SERVER/README.md` (Task 5)
 
 ## 📚 Risk Assessment

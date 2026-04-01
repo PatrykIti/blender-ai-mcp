@@ -22,11 +22,31 @@ creature/reference correction still lacks direct tools for:
 - posing simple limbs
 - cleaning up part intersections
 
-## Success Criteria
+## Acceptance Criteria
 
 - the correction loop has a usable bounded macro layer for assembled creatures
 - repeated fixes do not require ad hoc atomics every time
 - the macros are narrow and composable, not free-form mega tools
+
+## Repository Touchpoints
+
+- `server/domain/tools/`
+- `server/application/tool_handlers/`
+- `server/adapters/mcp/areas/`
+- `server/adapters/mcp/dispatcher.py`
+- `server/infrastructure/di.py`
+- `blender_addon/application/handlers/`
+- `blender_addon/__init__.py`
+- `tests/unit/`
+- `tests/e2e/`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_ADDON/README.md`
+
+## Completion Update Requirements
+
+- every shipped macro leaf must update all required tool layers, docs, and tests for that macro
+- add unit coverage for bounded macro contract/parameter behavior and E2E coverage when geometry or placement behavior changes
+- add the historical `_docs/_CHANGELOG/*` entry and sync `_docs/_TASKS/README.md` when promoted board state changes
 
 ## Execution Structure
 

@@ -1,10 +1,10 @@
 # TASK-121-03-03: Camera-Faithful Viewport Capture Semantics
 
 **Parent:** [TASK-121-03](./TASK-121-03_Before_After_Capture_And_Macro_Integration.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The addon now routes `scene_get_viewport(camera_name=...)` away from the live-user OpenGL viewport path and through a scene-camera render path instead. Unit coverage is in place for the branch split, and the Blender-backed E2E camera-vs-user-perspective regression test passes locally against a live Blender session.
+**Completion Summary:** The addon now routes `scene_get_viewport(camera_name=...)` away from the live-user OpenGL viewport path and through a scene-camera render path instead. Unit coverage is in place for the branch split, and the Blender-backed E2E camera-vs-user-perspective regression test passes locally against a live Blender session.
 
 ---
 

@@ -1,6 +1,6 @@
 # TASK-012: Mesh Smooth & Flatten Tools
 
-**Status:** ✅ Complete  
+**Status:** ✅ Done  
 **Priority:** Medium  
 **Phase:** Phase 2 - Mesh Editing  
 **Dependencies:** TASK-011-1 (Edit Mode Foundation)  

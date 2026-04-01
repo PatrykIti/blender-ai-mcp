@@ -1,6 +1,6 @@
 # TASK-013: Viewport Output Modes & Docker Temp Mapping
 
-**Status:** ✅ Complete  
+**Status:** ✅ Done  
 **Priority:** Medium  
 **Phase:** Phase 2 - Scene Tools  
 **Dependencies:** TASK-009 (Extend Viewport Control), TASK-005 (Dockerize Server)  

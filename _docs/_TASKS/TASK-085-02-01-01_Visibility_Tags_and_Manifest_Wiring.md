@@ -1,8 +1,11 @@
 # TASK-085-02-01-01: Visibility Tags and Manifest Wiring
 
 **Parent:** [TASK-085-02-01](./TASK-085-02-01_Core_Visibility_Engine_Tagged_Providers.md)  
-**Status:** ⬜ Planned  
+**Status:** ✅ Done  
 **Priority:** 🔴 High  
+
+**Administrative Note:** Closed with the completed parent implementation wave. The planning sections below are retained as historical slice notes.
+
 **Depends On:** [TASK-085-02](./TASK-085-02_Visibility_Policy_Engine_and_Tagged_Providers.md)  
 
 ---

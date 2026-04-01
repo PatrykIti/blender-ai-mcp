@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [180](./180-2026-04-01-task-governance-and-board-normalization.md) | 2026-04-01 | **Task governance and board normalization** | - |
 | [179](./179-2026-04-01-rpc-poll-budget-and-disabled-vision-conflict-guard.md) | 2026-04-01 | **RPC poll budget and disabled vision conflict guard** | - |
 | [177](./177-2026-04-01-external-provider-precedence-loop-scope-and-task-timeout.md) | 2026-04-01 | **External provider precedence, loop scope, and task timeout** | - |
 | [176](./176-2026-04-01-provider-notes-and-gemini-contract-task.md) | 2026-04-01 | **Provider notes and Gemini contract follow-up** | - |

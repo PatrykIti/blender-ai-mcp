@@ -1,6 +1,7 @@
 # TASK-058: Loop System & String Interpolation for Workflows
 
-**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
+**Status:** ⏭️ Superseded
+**Superseded By:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
 **Superseded On:** 2026-03-24  
 **Reason:** This task was planned under the older architecture assumptions. It will be rewritten later under the new tool-layering and goal-first strategy instead of being advanced in its current form.
 

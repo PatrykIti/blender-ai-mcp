@@ -1,6 +1,9 @@
 # TASK-121-04-01-05: Google AI Studio Gemini Structured Output Contract and Prompting
 
-**Parent:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
+**Follow-on After:** [TASK-121-04-01](./TASK-121-04-01_Small_Vision_Runtime_Selection_And_Execution_Policy.md)  
+**Board Tracking:** Standalone provider-hardening carveout kept open after the
+parent closed. `_docs/_TASKS/README.md` tracks it as its own open item while
+the older numbering is preserved for continuity.  
 **Status:** ⏳ To Do  
 **Priority:** 🔴 High
 
@@ -69,6 +72,31 @@ Likely omit from the Gemini compare-specific path:
 - `tests/unit/adapters/mcp/test_vision_external_backend.py`
 - `tests/e2e/vision/`
 - `_docs/_VISION/README.md`
+
+## Docs To Update
+
+- `_docs/_VISION/README.md`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_TASKS/README.md` if the board state changes
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_vision_external_backend.py`
+- `tests/unit/adapters/mcp/test_vision_prompting.py`
+- `tests/unit/adapters/mcp/test_vision_parsing.py`
+- `tests/e2e/vision/` for staged compare flows when provider behavior changes
+
+## Changelog Impact
+
+- add a `_docs/_CHANGELOG/*.md` entry if this task changes provider behavior,
+  prompt/parse guarantees, or provider-facing documentation
+
+## Status / Board Update
+
+- keep this leaf `⏳ To Do` until the Gemini-specific contract, prompting path,
+  docs, and tests are complete
+- when it closes, update this file, the closed parent follow-on note, and
+  `_docs/_TASKS/README.md`
 
 ## Acceptance Criteria
 

@@ -62,12 +62,33 @@ This umbrella covers:
 This umbrella does **not** make vision the truth source.
 It also does **not** introduce free-form unconstrained "fix everything" mega tools.
 
-## Success Criteria
+## Acceptance Criteria
 
 - the repo can detect both visible mismatch and actual spatial failure
 - the loop can recommend or apply bounded corrective actions for assembled parts
 - multi-part creature-style models are materially easier to correct than with vision-only guidance
 - the resulting system remains bounded, deterministic where possible, and consistent with the existing truth-layer boundary
+
+## Repository Touchpoints
+
+- `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/contracts/`
+- `server/adapters/mcp/vision/`
+- `server/application/tool_handlers/`
+- `server/domain/tools/`
+- `blender_addon/application/handlers/`
+- `tests/unit/`
+- `tests/e2e/`
+- `_docs/_MCP_SERVER/README.md`
+- `_docs/_VISION/README.md`
+- `_docs/_ADDON/README.md`
+
+## Completion Update Requirements
+
+- every completed descendant under `TASK-122` must add a new `_docs/_CHANGELOG/*` entry and update `_docs/_CHANGELOG/README.md`
+- update the relevant `_docs/` area docs for the touched truth, macro, or loop behavior
+- add or update focused unit coverage, and add/update E2E coverage when Blender/runtime behavior changes
+- keep `_docs/_TASKS/README.md` and the relevant task statuses aligned when promoted board state changes
 
 ## Execution Structure
 

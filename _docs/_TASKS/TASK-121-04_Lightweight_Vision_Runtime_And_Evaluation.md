@@ -1,10 +1,10 @@
 # TASK-121-04: Lightweight Vision Runtime and Evaluation
 
 **Parent:** [TASK-121](./TASK-121_Goal_Aware_Vision_Assist_And_Reference_Context.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The runtime layer is now materially underway: `transformers_local`, `mlx_local`, and `openai_compatible_external` all exist behind the same bounded contract path, `mlx_local` has passed real smoke reruns, prompt/parse tightening materially improved local output quality, a first scored golden harness now exists in-repo, OpenRouter now has a first-class configuration path on the external-provider side, and Google AI Studio / Gemini now also has a first-class provider-specific external path. Current early verdict: both `Qwen3-VL-2B-Instruct-4bit` and `Qwen3-VL-4B-Instruct-4bit` can score well on the first synthetic scenarios, but that baseline is still too narrow to settle the product choice. The next work is shifting from backend plumbing toward broader scenario coverage, stronger governance notes, and harder bundle scoring.
+**Completion Summary:** The runtime layer now has all three backend families wired behind the same bounded contract path, prompt/parse tightening materially improved local output quality, a scored golden harness exists in-repo, OpenRouter and Google AI Studio / Gemini both have first-class provider paths, and the runtime/evaluation wave is closed as complete. Provider-specific Gemini structured-output hardening remains tracked separately as the explicit follow-on [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md).
 
 ---
 
@@ -45,7 +45,7 @@ layer.
 | [TASK-121-04-01-02](./TASK-121-04-01-02_Local_Prompting_And_Parse_Repair_Policy.md) | Harden local prompt design and parse-repair rules |
 | [TASK-121-04-01-03](./TASK-121-04-01-03_OpenRouter_Model_Catalog_And_API_Key_Path.md) | Add first-class OpenRouter API-key/model-selection support for remote vision |
 | [TASK-121-04-01-04](./TASK-121-04-01-04_Google_AI_Studio_Gemini_Vision_Path.md) | Add Google AI Studio/Gemini API-key/model-selection support for remote vision |
-| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | Add a Gemini-specific structured-output contract/prompting path for iterative compare flows |
+| [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | Explicit provider-hardening follow-on kept open after the main runtime wave closed |
 | [TASK-121-04-02-01](./TASK-121-04-02-01_Golden_Bundle_Set_And_Scoring_Matrix.md) | Create first reusable goldens and scoring dimensions |
 | [TASK-121-04-02-02](./TASK-121-04-02-02_Runtime_Verdict_And_Governance_Notes.md) | Record verdicts/governance for current backend/model paths |
 

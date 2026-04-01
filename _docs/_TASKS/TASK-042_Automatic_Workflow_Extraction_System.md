@@ -1,6 +1,7 @@
 # Plan: Automatic Workflow Extraction System
 
-**Status:** ⛔ Superseded by [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)  
+**Status:** ⏭️ Superseded
+**Superseded By:** [TASK-113](./TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md)
 **Superseded On:** 2026-03-24  
 **Reason:** This task was planned under older assumptions about workflow extraction, LLM vision, and public tool usage. It will be rewritten later under the new tool-layering, goal-first, and measure/assert architecture.
 

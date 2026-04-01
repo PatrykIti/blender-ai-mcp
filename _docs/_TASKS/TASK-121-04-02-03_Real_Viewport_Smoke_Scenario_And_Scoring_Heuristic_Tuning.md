@@ -4,7 +4,7 @@
 **Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-**Progress Update:** The repo now includes both a real viewport smoke scenario (`default_cube_to_picnic_table`) and a set of real viewport progression scenarios (`squirrel_head_to_face`, `squirrel_face_to_body`, `squirrel_head_to_body`) sourced from manual Blender captures, plus two additional real view families for the same squirrel progressions: direct top `USER_PERSPECTIVE` captures and fixed camera-perspective captures. Scoring now has optional noise budgets for easy smoke/progression scenarios, so noisy issue/check output is no longer neutral. The direction heuristic has also been widened enough that the previously under-scored concise `Qwen3-VL-4B-Instruct-4bit` outputs on `squirrel_head_to_body_user_top` and `squirrel_face_to_body_camera_perspective` now classify cleanly as `improved` and score `1.0`.
+**Completion Summary:** The repo now includes both a real viewport smoke scenario (`default_cube_to_picnic_table`) and a set of real viewport progression scenarios (`squirrel_head_to_face`, `squirrel_face_to_body`, `squirrel_head_to_body`) sourced from manual Blender captures, plus two additional real view families for the same squirrel progressions: direct top `USER_PERSPECTIVE` captures and fixed camera-perspective captures. Scoring now has optional noise budgets for easy smoke/progression scenarios, so noisy issue/check output is no longer neutral. The direction heuristic has also been widened enough that the previously under-scored concise `Qwen3-VL-4B-Instruct-4bit` outputs on `squirrel_head_to_body_user_top` and `squirrel_face_to_body_camera_perspective` now classify cleanly as `improved` and score `1.0`.
 
 ---
 
