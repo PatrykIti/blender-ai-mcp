@@ -392,6 +392,12 @@ Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a PR. The repo enforces
 
 ## Community And Support
 
+If `blender-ai-mcp` is useful in your workflow, consider sponsoring its long-term development.
+
+Sponsorship helps fund maintenance, docs, testing, and the higher-level reliability work that makes this repo different from raw Blender code generation: goal-first routing, curated tools, deterministic verification, and production-shaped workflow support.
+
+[Become a sponsor](https://github.com/sponsors/PatrykIti)
+
 - [SUPPORT.md](./SUPPORT.md)
 - [SECURITY.md](./SECURITY.md)
 - [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
