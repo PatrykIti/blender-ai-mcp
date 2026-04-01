@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.3.0 (2026-04-01)
+
+### Features
+
+- Complete guided FastMCP platform and vision/reference workflows
+  ([#31](https://github.com/PatrykIti/blender-ai-mcp/pull/31),
+  [`96a55dd`](https://github.com/PatrykIti/blender-ai-mcp/commit/96a55ddf41c150f0a335f8f787ec49e689e07e89))
+
+
 ## v2.2.0 (2026-03-20)
 
 ### Features
