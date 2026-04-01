@@ -80,11 +80,14 @@ class RpcClient(IRpcClient):
         cmd: str,
         args: Dict[str, Any] = None,
         timeout_seconds: Optional[float] = None,
+        *,
+        rpc_timeout_seconds: Optional[float] = None,
     ) -> RpcResponse:
         if args is None:
             args = {}
 
         addon_timeout = timeout_seconds or self.addon_execution_timeout_seconds
+        client_timeout = self.timeout if rpc_timeout_seconds is None else min(self.timeout, rpc_timeout_seconds)
         request = RpcRequest(
             cmd=cmd,
             args=args,
@@ -105,7 +108,7 @@ class RpcClient(IRpcClient):
             # Keep the socket boundary explicit per request.
             if self.socket is None:
                 raise ConnectionResetError("RPC socket is not connected")
-            self.socket.settimeout(self.timeout)
+            self.socket.settimeout(client_timeout)
 
             # Send
             data = request.model_dump_json().encode("utf-8")
@@ -156,17 +159,27 @@ class RpcClient(IRpcClient):
             timeout_seconds=timeout_seconds,
         )
 
-    def get_background_job_status(self, job_id: str) -> RpcResponse:
+    def get_background_job_status(self, job_id: str, *, timeout_seconds: Optional[float] = None) -> RpcResponse:
         """Poll background job status without collecting the final result payload."""
 
-        return self.send_request("rpc.get_job", {"job_id": job_id})
+        return self.send_request(
+            "rpc.get_job",
+            {"job_id": job_id},
+            timeout_seconds=timeout_seconds,
+            rpc_timeout_seconds=timeout_seconds,
+        )
 
     def cancel_background_job(self, job_id: str) -> RpcResponse:
         """Request cancellation for an existing background addon job."""
 
         return self.send_request("rpc.cancel_job", {"job_id": job_id})
 
-    def collect_background_job_result(self, job_id: str) -> RpcResponse:
+    def collect_background_job_result(self, job_id: str, *, timeout_seconds: Optional[float] = None) -> RpcResponse:
         """Collect the final result payload for a completed background addon job."""
 
-        return self.send_request("rpc.collect_job", {"job_id": job_id})
+        return self.send_request(
+            "rpc.collect_job",
+            {"job_id": job_id},
+            timeout_seconds=timeout_seconds,
+            rpc_timeout_seconds=timeout_seconds,
+        )

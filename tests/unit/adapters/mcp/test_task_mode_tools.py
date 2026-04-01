@@ -55,7 +55,7 @@ def test_scene_get_viewport_background_path_tracks_registry_and_returns_formatte
             assert cmd == "scene.get_viewport"
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-1"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             if self.poll_count == 1:
                 return RpcResponse(
@@ -81,7 +81,7 @@ def test_scene_get_viewport_background_path_tracks_registry_and_returns_formatte
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
@@ -116,7 +116,7 @@ def test_extraction_render_angles_background_path_formats_json_result(monkeypatc
             assert cmd == "extraction.render_angles"
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-2"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             if self.poll_count == 1:
                 return RpcResponse(
@@ -142,7 +142,7 @@ def test_extraction_render_angles_background_path_formats_json_result(monkeypatc
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
@@ -329,7 +329,7 @@ def test_export_obj_background_path_uses_system_bridge(monkeypatch):
             assert args["filepath"] == "/tmp/test.obj"
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-export"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             if self.poll_count == 1:
                 return RpcResponse(
@@ -355,7 +355,7 @@ def test_export_obj_background_path_uses_system_bridge(monkeypatch):
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
@@ -390,7 +390,7 @@ def test_import_glb_background_path_uses_system_bridge(monkeypatch):
             assert args["filepath"] == "/tmp/model.glb"
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-import"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             if self.poll_count == 1:
                 return RpcResponse(
@@ -416,7 +416,7 @@ def test_import_glb_background_path_uses_system_bridge(monkeypatch):
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
@@ -454,7 +454,7 @@ def test_import_image_as_plane_background_path_uses_system_bridge(monkeypatch):
             assert args["filepath"] == "/tmp/image.png"
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-image"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             if self.poll_count == 1:
                 return RpcResponse(
@@ -480,7 +480,7 @@ def test_import_image_as_plane_background_path_uses_system_bridge(monkeypatch):
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-4",
                 status="ok",
@@ -516,7 +516,7 @@ def test_scene_get_viewport_background_path_times_out_during_polling(monkeypatch
         def launch_background_job(self, cmd, args, *, timeout_seconds=None):
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-timeout"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-2",
                 status="ok",
@@ -529,7 +529,7 @@ def test_scene_get_viewport_background_path_times_out_during_polling(monkeypatch
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             raise AssertionError("collect should not be called on timeout")
 
         def cancel_background_job(self, job_id):
@@ -562,6 +562,69 @@ def test_scene_get_viewport_background_path_times_out_during_polling(monkeypatch
     assert fake_rpc.cancelled == ["job-timeout"]
 
 
+def test_scene_get_viewport_background_path_binds_poll_and_collect_to_remaining_task_budget(monkeypatch):
+    """Polling and result collection should not outlive the remaining task deadline."""
+
+    class FakeRpcClient:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, float | None, float | None]] = []
+
+        def launch_background_job(self, cmd, args, *, timeout_seconds=None):
+            return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-budget"})
+
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
+            self.calls.append(("rpc.get_job", timeout_seconds, timeout_seconds))
+            return RpcResponse(
+                request_id="req-2",
+                status="ok",
+                result={
+                    "job_id": "job-budget",
+                    "status": "completed",
+                    "progress_current": 1,
+                    "progress_total": 1,
+                    "status_message": "Completed",
+                },
+            )
+
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
+            self.calls.append(("rpc.collect_job", timeout_seconds, timeout_seconds))
+            return RpcResponse(
+                request_id="req-3",
+                status="ok",
+                result={"job_id": "job-budget", "result": "aGVsbG8="},
+            )
+
+        def cancel_background_job(self, job_id):
+            return RpcResponse(request_id="req-4", status="ok", result={"job_id": job_id})
+
+    fake_rpc = FakeRpcClient()
+    monotonic_values = iter([100.0, 100.05, 100.15])
+
+    monkeypatch.setattr("server.adapters.mcp.tasks.task_bridge.get_rpc_client", lambda: fake_rpc)
+    monkeypatch.setattr(
+        "server.adapters.mcp.tasks.task_bridge._get_timeout_policy",
+        lambda ctx: build_timeout_policy(
+            tool_timeout_seconds=30.0,
+            task_timeout_seconds=0.2,
+            rpc_timeout_seconds=30.0,
+            addon_execution_timeout_seconds=30.0,
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.tasks.task_bridge._monotonic_now", lambda: next(monotonic_values))
+
+    ctx = BackgroundContext("task-budgeted-poll")
+    result = asyncio.run(scene_get_viewport(ctx, output_mode="BASE64"))
+
+    assert result == "aGVsbG8="
+    assert len(fake_rpc.calls) == 2
+    assert fake_rpc.calls[0][0] == "rpc.get_job"
+    assert fake_rpc.calls[0][1] == pytest.approx(0.15)
+    assert fake_rpc.calls[0][2] == pytest.approx(0.15)
+    assert fake_rpc.calls[1][0] == "rpc.collect_job"
+    assert fake_rpc.calls[1][1] == pytest.approx(0.05)
+    assert fake_rpc.calls[1][2] == pytest.approx(0.05)
+
+
 def test_scene_get_viewport_background_path_marks_failed_on_result_formatter_error(monkeypatch):
     """Formatter failures after completed addon jobs should mark the task as failed."""
 
@@ -572,7 +635,7 @@ def test_scene_get_viewport_background_path_marks_failed_on_result_formatter_err
         def launch_background_job(self, cmd, args, *, timeout_seconds=None):
             return RpcResponse(request_id="req-1", status="ok", result={"job_id": "job-format"})
 
-        def get_background_job_status(self, job_id):
+        def get_background_job_status(self, job_id, *, timeout_seconds=None):
             self.poll_count += 1
             return RpcResponse(
                 request_id="req-2",
@@ -586,7 +649,7 @@ def test_scene_get_viewport_background_path_marks_failed_on_result_formatter_err
                 },
             )
 
-        def collect_background_job_result(self, job_id):
+        def collect_background_job_result(self, job_id, *, timeout_seconds=None):
             return RpcResponse(
                 request_id="req-3",
                 status="ok",

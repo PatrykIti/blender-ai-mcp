@@ -15,6 +15,8 @@ class DummyRpc(IRpcClient):
         cmd: str,
         args: Dict[str, Any] | None = None,
         timeout_seconds: float | None = None,
+        *,
+        rpc_timeout_seconds: float | None = None,
     ) -> RpcResponse:
         return self._responses[cmd]
 

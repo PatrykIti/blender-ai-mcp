@@ -58,12 +58,16 @@ def build_vision_runtime_config(config: Config) -> VisionRuntimeConfig:
         use_google_ai_studio_profile = True
     else:
         if config.VISION_OPENROUTER_MODEL and config.VISION_GEMINI_MODEL:
-            raise ValueError(
-                "VISION_OPENROUTER_MODEL and VISION_GEMINI_MODEL are both set while VISION_EXTERNAL_PROVIDER=generic. "
-                "Choose one provider explicitly."
-            )
-        use_openrouter_profile = bool(config.VISION_OPENROUTER_MODEL)
-        use_google_ai_studio_profile = bool(config.VISION_GEMINI_MODEL)
+            if config.VISION_ENABLED:
+                raise ValueError(
+                    "VISION_OPENROUTER_MODEL and VISION_GEMINI_MODEL are both set while VISION_EXTERNAL_PROVIDER=generic. "
+                    "Choose one provider explicitly."
+                )
+            use_openrouter_profile = False
+            use_google_ai_studio_profile = False
+        else:
+            use_openrouter_profile = bool(config.VISION_OPENROUTER_MODEL)
+            use_google_ai_studio_profile = bool(config.VISION_GEMINI_MODEL)
 
     if use_openrouter_profile:
         should_build_external_config = bool(config.VISION_OPENROUTER_MODEL or config.VISION_EXTERNAL_MODEL)

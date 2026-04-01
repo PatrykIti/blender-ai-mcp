@@ -13,22 +13,22 @@ def test_rpc_client_background_job_methods_use_explicit_control_plane(monkeypatc
     calls = []
     client = RpcClient(host="127.0.0.1", port=8765)
 
-    def fake_send_request(cmd, args=None, timeout_seconds=None):
-        calls.append((cmd, args, timeout_seconds))
+    def fake_send_request(cmd, args=None, timeout_seconds=None, *, rpc_timeout_seconds=None):
+        calls.append((cmd, args, timeout_seconds, rpc_timeout_seconds))
         return RpcResponse(request_id="req", status="ok", result={"ok": True})
 
     monkeypatch.setattr(client, "send_request", fake_send_request)
 
     client.launch_background_job("scene.get_viewport", {"width": 1}, timeout_seconds=12.0)
-    client.get_background_job_status("job-1")
+    client.get_background_job_status("job-1", timeout_seconds=5.0)
     client.cancel_background_job("job-1")
-    client.collect_background_job_result("job-1")
+    client.collect_background_job_result("job-1", timeout_seconds=4.0)
 
     assert calls == [
-        ("rpc.launch_job", {"cmd": "scene.get_viewport", "args": {"width": 1}}, 12.0),
-        ("rpc.get_job", {"job_id": "job-1"}, None),
-        ("rpc.cancel_job", {"job_id": "job-1"}, None),
-        ("rpc.collect_job", {"job_id": "job-1"}, None),
+        ("rpc.launch_job", {"cmd": "scene.get_viewport", "args": {"width": 1}}, 12.0, None),
+        ("rpc.get_job", {"job_id": "job-1"}, 5.0, 5.0),
+        ("rpc.cancel_job", {"job_id": "job-1"}, None, None),
+        ("rpc.collect_job", {"job_id": "job-1"}, 4.0, 4.0),
     ]
 
 

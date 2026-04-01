@@ -21,6 +21,8 @@ class DummyRpc(IRpcClient):
         cmd: str,
         args: dict[str, Any] | None = None,
         timeout_seconds: float | None = None,
+        *,
+        rpc_timeout_seconds: float | None = None,
     ) -> RpcResponse:
         self.calls.append((cmd, args))
         return self._responses[cmd]

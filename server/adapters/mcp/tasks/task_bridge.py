@@ -9,6 +9,7 @@ import asyncio
 import logging
 import time
 from concurrent.futures import TimeoutError as FuturesTimeoutError
+from functools import partial
 from threading import Event
 from typing import Any, Callable, TypeVar
 
@@ -32,6 +33,12 @@ def _monotonic_now() -> float:
     """Wrapper around monotonic time to keep timeout tests local to this module."""
 
     return time.monotonic()
+
+
+def _remaining_task_budget_seconds(deadline: float) -> float:
+    """Return the remaining task budget in seconds, clamped at zero."""
+
+    return max(deadline - _monotonic_now(), 0.0)
 
 
 def _get_timeout_policy(ctx: Context) -> MCPTimeoutPolicy:
@@ -153,7 +160,8 @@ async def run_rpc_background_job(
 
     try:
         while True:
-            if _monotonic_now() >= poll_deadline:
+            remaining_budget = _remaining_task_budget_seconds(poll_deadline)
+            if remaining_budget <= 0:
                 error = (
                     f"Background job {addon_job_id} for {tool_name} exceeded MCP_TASK_TIMEOUT_SECONDS="
                     f"{policy.task_timeout_seconds}"
@@ -169,7 +177,13 @@ async def run_rpc_background_job(
                 registry.mark_failed(task_id, cancel_error or error)
                 raise RuntimeError(cancel_error or error)
 
-            poll_response = await asyncio.to_thread(rpc_client.get_background_job_status, addon_job_id)
+            poll_response = await asyncio.to_thread(
+                partial(
+                    rpc_client.get_background_job_status,
+                    addon_job_id,
+                    timeout_seconds=remaining_budget,
+                )
+            )
             if poll_response.status == "error":
                 error = poll_response.error or f"Polling failed for background job {addon_job_id}"
                 registry.mark_failed(task_id, error)
@@ -193,9 +207,20 @@ async def run_rpc_background_job(
             )
 
             if status == "completed":
+                remaining_budget = _remaining_task_budget_seconds(poll_deadline)
+                if remaining_budget <= 0:
+                    error = (
+                        f"Background job {addon_job_id} for {tool_name} exceeded MCP_TASK_TIMEOUT_SECONDS="
+                        f"{policy.task_timeout_seconds}"
+                    )
+                    registry.mark_failed(task_id, error)
+                    raise RuntimeError(error)
                 collect_response = await asyncio.to_thread(
-                    rpc_client.collect_background_job_result,
-                    addon_job_id,
+                    partial(
+                        rpc_client.collect_background_job_result,
+                        addon_job_id,
+                        timeout_seconds=remaining_budget,
+                    )
                 )
                 if collect_response.status == "error":
                     error = collect_response.error or f"Result collection failed for background job {addon_job_id}"

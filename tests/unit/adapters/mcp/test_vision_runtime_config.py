@@ -238,6 +238,21 @@ def test_disabled_runtime_does_not_build_external_profile_from_provider_name_alo
     assert runtime.openai_compatible_external is None
 
 
+def test_disabled_runtime_does_not_raise_on_conflicting_generic_provider_models():
+    config = _base_config(
+        VISION_ENABLED=False,
+        VISION_PROVIDER="openai_compatible_external",
+        VISION_EXTERNAL_PROVIDER="generic",
+        VISION_OPENROUTER_MODEL="google/gemma-3-27b-it:free",
+        VISION_GEMINI_MODEL="gemini-2.5-flash",
+    )
+
+    runtime = build_vision_runtime_config(config)
+
+    assert runtime.enabled is False
+    assert runtime.openai_compatible_external is None
+
+
 def test_generic_external_provider_rejects_conflicting_openrouter_and_gemini_models():
     config = _base_config(
         VISION_ENABLED=True,
