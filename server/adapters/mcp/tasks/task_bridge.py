@@ -255,6 +255,7 @@ async def run_local_background_operation(
         return foreground_executor()
 
     task_id = str(ctx.task_id)
+    policy = _get_timeout_policy(ctx)
     registry = get_background_job_registry()
     result_store = get_background_result_store()
     registry.register(task_id=task_id, tool_name=tool_name, backend_kind="server_local")
@@ -293,21 +294,42 @@ async def run_local_background_operation(
             return
 
     try:
-        result = await asyncio.to_thread(
-            background_executor,
-            progress_callback,
-            cancellation_flag.is_set,
+        result = await asyncio.wait_for(
+            asyncio.to_thread(
+                background_executor,
+                progress_callback,
+                cancellation_flag.is_set,
+            ),
+            timeout=policy.task_timeout_seconds,
         )
+    except asyncio.TimeoutError as exc:
+        cancellation_flag.set()
+        error = (
+            f"Local background operation for {tool_name} exceeded MCP_TASK_TIMEOUT_SECONDS="
+            f"{policy.task_timeout_seconds}"
+        )
+        registry.mark_failed(task_id, error)
+        raise RuntimeError(error) from exc
     except asyncio.CancelledError:
         cancellation_flag.set()
         registry.mark_cancelled(task_id, error=f"Task {task_id} cancelled during local background execution")
+        raise
+    except Exception as exc:
+        cancellation_flag.set()
+        error = str(exc) or f"Local background execution failed for {tool_name}"
+        registry.mark_failed(task_id, error)
         raise
 
     if isinstance(result, dict) and result.get("status") == "cancelled":
         registry.mark_cancelled(task_id, error=str(result.get("message") or "Background operation cancelled"))
         raise asyncio.CancelledError(str(result.get("message") or "Background operation cancelled"))
 
-    formatted_result = result_formatter(result)
+    try:
+        formatted_result = result_formatter(result)
+    except Exception as exc:
+        error = str(exc) or f"Local background result formatting failed for {tool_name}"
+        registry.mark_failed(task_id, error)
+        raise
     result_record = result_store.put(
         task_id=task_id,
         tool_name=tool_name,

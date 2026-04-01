@@ -18,6 +18,10 @@ reference correction-loop state scoping, and background task timeout handling.
   - `preset_profile`
 - background task RPC polling now respects `MCP_TASK_TIMEOUT_SECONDS` end-to-end
   instead of looping forever if Blender never leaves `running`
+- local server-side background operations now also respect
+  `MCP_TASK_TIMEOUT_SECONDS`
+- local background execution and formatting errors now mark the registry entry as
+  `failed` instead of leaving task state in a non-terminal limbo
 
 ## Why
 

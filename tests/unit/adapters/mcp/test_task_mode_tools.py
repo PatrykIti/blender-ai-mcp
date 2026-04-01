@@ -198,6 +198,73 @@ def test_workflow_catalog_import_finalize_uses_local_background_bridge(monkeypat
     assert ctx.progress_events[-1] == (1, 1, "Workflow import finalization completed")
 
 
+def test_workflow_catalog_import_finalize_times_out_in_local_background_bridge(monkeypatch):
+    """Local background bridge should enforce MCP_TASK_TIMEOUT_SECONDS."""
+
+    class Handler:
+        def finalize_import_session(
+            self,
+            session_id,
+            overwrite=None,
+            *,
+            progress_callback=None,
+            is_cancelled=None,
+        ):
+            import time
+
+            time.sleep(0.2)
+            return {"status": "imported", "workflow_name": "chair", "message": "ok"}
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.tasks.task_bridge._get_timeout_policy",
+        lambda ctx: build_timeout_policy(
+            tool_timeout_seconds=30.0,
+            task_timeout_seconds=0.01,
+            rpc_timeout_seconds=30.0,
+            addon_execution_timeout_seconds=30.0,
+        ),
+    )
+
+    ctx = BackgroundContext("task-workflow-timeout")
+
+    result = asyncio.run(workflow_catalog(ctx, action="import_finalize", session_id="sess-1"))
+
+    assert result.error is not None
+    assert "exceeded MCP_TASK_TIMEOUT_SECONDS" in result.error
+
+    registry_record = get_background_job_registry().get("task-workflow-timeout")
+    assert registry_record is not None
+    assert registry_record.status == "failed"
+
+
+def test_workflow_catalog_import_finalize_marks_failed_on_local_execution_error(monkeypatch):
+    """Unhandled local background errors should mark the task as failed."""
+
+    class Handler:
+        def finalize_import_session(
+            self,
+            session_id,
+            overwrite=None,
+            *,
+            progress_callback=None,
+            is_cancelled=None,
+        ):
+            raise RuntimeError("finalize boom")
+
+    monkeypatch.setattr("server.adapters.mcp.areas.workflow_catalog.get_workflow_catalog_handler", lambda: Handler())
+
+    ctx = BackgroundContext("task-workflow-error")
+
+    result = asyncio.run(workflow_catalog(ctx, action="import_finalize", session_id="sess-1"))
+
+    assert result.error == "finalize boom"
+
+    registry_record = get_background_job_registry().get("task-workflow-error")
+    assert registry_record is not None
+    assert registry_record.status == "failed"
+
+
 def test_export_obj_background_path_uses_system_bridge(monkeypatch):
     """export_obj should use the addon job bridge when running in task mode."""
 
