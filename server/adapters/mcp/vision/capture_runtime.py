@@ -330,11 +330,7 @@ def build_capture_bundle(
     """Build one deterministic before/after capture bundle contract."""
 
     preset_names = sorted(
-        {
-            capture.preset_name
-            for capture in [*captures_before, *captures_after]
-            if capture.preset_name is not None
-        }
+        {capture.preset_name for capture in [*captures_before, *captures_after] if capture.preset_name is not None}
     )
     return VisionCaptureBundleContract(
         bundle_id=bundle_id,

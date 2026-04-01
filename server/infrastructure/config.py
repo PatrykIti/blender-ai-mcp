@@ -45,8 +45,12 @@ class Config(BaseSettings):
     VISION_LOCAL_DTYPE: str = Field(default="auto", description="Dtype for local vision backend")
     VISION_MLX_MODEL_ID: str | None = Field(default=None, description="Local MLX vision model id")
     VISION_MLX_MODEL_PATH: str | None = Field(default=None, description="Local MLX vision model path")
-    VISION_EXTERNAL_BASE_URL: str | None = Field(default=None, description="Base URL for external OpenAI-compatible vision")
-    VISION_EXTERNAL_MODEL: str | None = Field(default=None, description="Model name for external OpenAI-compatible vision")
+    VISION_EXTERNAL_BASE_URL: str | None = Field(
+        default=None, description="Base URL for external OpenAI-compatible vision"
+    )
+    VISION_EXTERNAL_MODEL: str | None = Field(
+        default=None, description="Model name for external OpenAI-compatible vision"
+    )
     VISION_EXTERNAL_API_KEY: str | None = Field(default=None, description="Inline API key for external vision endpoint")
     VISION_EXTERNAL_API_KEY_ENV: str | None = Field(
         default=None,
@@ -100,7 +104,9 @@ class Config(BaseSettings):
         """Keep the vision provider vocabulary explicit."""
 
         if self.VISION_PROVIDER not in {"transformers_local", "mlx_local", "openai_compatible_external"}:
-            raise ValueError("VISION_PROVIDER must be one of: transformers_local, mlx_local, openai_compatible_external")
+            raise ValueError(
+                "VISION_PROVIDER must be one of: transformers_local, mlx_local, openai_compatible_external"
+            )
         if self.VISION_EXTERNAL_PROVIDER not in {"generic", "openrouter", "google_ai_studio"}:
             raise ValueError("VISION_EXTERNAL_PROVIDER must be one of: generic, openrouter, google_ai_studio")
         return self

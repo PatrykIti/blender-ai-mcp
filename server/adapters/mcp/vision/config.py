@@ -95,7 +95,9 @@ class VisionRuntimeConfig(BaseModel):
             return self
 
         if self.provider == "transformers_local" and self.transformers_local is None:
-            raise ValueError("enabled vision runtime with provider=transformers_local requires transformers_local config")
+            raise ValueError(
+                "enabled vision runtime with provider=transformers_local requires transformers_local config"
+            )
 
         if self.provider == "mlx_local" and self.mlx_local is None:
             raise ValueError("enabled vision runtime with provider=mlx_local requires mlx_local config")

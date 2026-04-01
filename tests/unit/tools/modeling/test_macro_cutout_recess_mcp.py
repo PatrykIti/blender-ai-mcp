@@ -20,7 +20,10 @@ def test_macro_cutout_recess_mcp_tool_returns_structured_contract(monkeypatch):
                 ],
                 "objects_modified": ["BodyShell"],
                 "verification_recommended": [
-                    {"tool_name": "inspect_scene", "reason": "Verify the target object after the boolean cutout operation."}
+                    {
+                        "tool_name": "inspect_scene",
+                        "reason": "Verify the target object after the boolean cutout operation.",
+                    }
                 ],
                 "requires_followup": True,
             }

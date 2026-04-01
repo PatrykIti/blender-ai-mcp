@@ -23,7 +23,9 @@ def _capture_bundle() -> dict:
         target_object="Housing",
         preset_names=["context_wide", "target_focus"],
         captures_before=[
-            VisionCaptureImageContract(label="context_wide_before", image_path="/tmp/before.jpg", media_type="image/jpeg")
+            VisionCaptureImageContract(
+                label="context_wide_before", image_path="/tmp/before.jpg", media_type="image/jpeg"
+            )
         ],
         captures_after=[
             VisionCaptureImageContract(label="context_wide_after", image_path="/tmp/after.jpg", media_type="image/jpeg")

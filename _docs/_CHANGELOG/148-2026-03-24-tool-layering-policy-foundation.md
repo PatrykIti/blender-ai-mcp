@@ -43,4 +43,3 @@ The repo now has:
 - `ARCHITECTURE.md`
 - `_docs/_TASKS/TASK-113*`
 - `_docs/_CHANGELOG/README.md`
-

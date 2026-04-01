@@ -29,4 +29,3 @@ It records the first concrete findings and turns them into a prioritized backlog
 - `_docs/_TASKS/TASK-114-01*`
 - `_docs/_TASKS/TASK-114-02*`
 - `_docs/_CHANGELOG/README.md`
-

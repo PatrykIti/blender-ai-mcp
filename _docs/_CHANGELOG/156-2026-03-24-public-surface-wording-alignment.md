@@ -17,4 +17,3 @@ This wave updates:
 - router MCP tool wording
 
 so the public surface matches the new layered architecture more closely.
-

@@ -7,8 +7,6 @@ focus on goal routing behavior rather than Blender geometry changes.
 
 from __future__ import annotations
 
-import pytest
-
 from server.application.tool_handlers.router_handler import RouterToolHandler
 
 

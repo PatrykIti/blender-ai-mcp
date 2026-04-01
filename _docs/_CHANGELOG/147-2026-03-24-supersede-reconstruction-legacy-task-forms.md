@@ -36,4 +36,3 @@ layered tool strategy.
 - `_docs/_TASKS/TASK-080_Image_Asset_Tools.md`
 - `_docs/_TASKS/TASK-081_Scene_Render_World_Settings.md`
 - `_docs/_TASKS/TASK-082_Animation_and_Drivers_Tools.md`
-

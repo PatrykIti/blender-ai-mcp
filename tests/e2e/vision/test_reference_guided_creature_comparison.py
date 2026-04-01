@@ -142,6 +142,4 @@ def test_real_reference_guided_creature_comparison_returns_correction_guidance()
         else:
             assert _has_reference_summary_signal(row["reference_match_summary"])
 
-    assert saw_actionable_guidance or all(
-        _has_reference_summary_signal(row["reference_match_summary"]) for row in rows
-    )
+    assert saw_actionable_guidance or all(_has_reference_summary_signal(row["reference_match_summary"]) for row in rows)

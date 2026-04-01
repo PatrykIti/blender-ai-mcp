@@ -381,9 +381,7 @@ class SceneHandler:
             zoom_value = float(zoom_factor) if zoom_factor is not None else None
             orbit_h = float(orbit_horizontal or 0.0)
             orbit_v = float(orbit_vertical or 0.0)
-            has_user_view_adjustment = bool(
-                view_name_value or orbit_h or orbit_v or zoom_value is not None
-            )
+            has_user_view_adjustment = bool(view_name_value or orbit_h or orbit_v or zoom_value is not None)
             user_view_state_mutated = False
             user_view_available = bool(view_space and view_area and view_region)
 
@@ -532,7 +530,12 @@ class SceneHandler:
                 if view_space:
                     view_space.shading.type = original_shading_type
 
-                if original_view_state and not use_explicit_scene_camera and not persist_view and user_view_state_mutated:
+                if (
+                    original_view_state
+                    and not use_explicit_scene_camera
+                    and not persist_view
+                    and user_view_state_mutated
+                ):
                     try:
                         self.restore_view_state(original_view_state)
                     except Exception:
@@ -2090,9 +2093,11 @@ class SceneHandler:
         """Returns raw bounding-box data for an object."""
         from mathutils import Vector
 
-        corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box] if world_space else [
-            Vector(corner) for corner in obj.bound_box
-        ]
+        corners = (
+            [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+            if world_space
+            else [Vector(corner) for corner in obj.bound_box]
+        )
         min_corner = [float(min(corner[index] for corner in corners)) for index in range(3)]
         max_corner = [float(max(corner[index] for corner in corners)) for index in range(3)]
         center = [(min_corner[index] + max_corner[index]) / 2.0 for index in range(3)]
@@ -2328,7 +2333,9 @@ class SceneHandler:
             return {
                 "node_name": getattr(node, "name", None),
                 "color": self._vec_to_list(color_input) if color_input is not None else None,
-                "strength": round(float(strength_input), 6) if isinstance(strength_input, (int, float)) else strength_input,
+                "strength": round(float(strength_input), 6)
+                if isinstance(strength_input, (int, float))
+                else strength_input,
             }
         return None
 

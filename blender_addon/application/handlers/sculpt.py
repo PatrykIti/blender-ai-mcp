@@ -450,10 +450,7 @@ class SculptHandler:
                     )
                     current = snapshot[index]
                     next_positions[index] = self._coerce_xyz(
-                        [
-                            current[axis] + (neighbor_average[axis] - current[axis]) * weight
-                            for axis in range(3)
-                        ]
+                        [current[axis] + (neighbor_average[axis] - current[axis]) * weight for axis in range(3)]
                     )
 
                 for index, new_co in next_positions.items():
@@ -522,7 +519,9 @@ class SculptHandler:
                         self._coerce_xyz([vertex_co[axis] - chosen_center[axis] for axis in range(3)])
                     )
 
-                new_co = self._coerce_xyz([vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)])
+                new_co = self._coerce_xyz(
+                    [vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)]
+                )
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1
 
@@ -583,7 +582,9 @@ class SculptHandler:
                 direction = self._normalize_vector(
                     self._coerce_xyz([chosen_center[axis] - vertex_co[axis] for axis in range(3)])
                 )
-                new_co = self._coerce_xyz([vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)])
+                new_co = self._coerce_xyz(
+                    [vertex_co[axis] + direction[axis] * amount * base_weight for axis in range(3)]
+                )
                 self._set_xyz(vertex.co, new_co)
                 affected_vertices += 1
 

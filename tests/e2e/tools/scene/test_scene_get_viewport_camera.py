@@ -5,7 +5,6 @@ E2E tests for camera-faithful scene_get_viewport behavior.
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 

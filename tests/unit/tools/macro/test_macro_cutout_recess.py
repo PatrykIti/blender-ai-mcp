@@ -51,14 +51,18 @@ class FakeModelingTool:
         return f"Created {primitive_type} named '{name}'"
 
     def transform_object(self, name, location=None, rotation=None, scale=None):
-        self.calls.append(("transform_object", {"name": name, "location": location, "rotation": rotation, "scale": scale}))
+        self.calls.append(
+            ("transform_object", {"name": name, "location": location, "rotation": rotation, "scale": scale})
+        )
         return f"Transformed object '{name}'"
 
     def add_modifier(self, name, modifier_type, properties=None):
         current = self._modifiers.setdefault(name, [])
         modifier_name = modifier_type if not current else f"{modifier_type}.{len(current):03d}"
         current.append({"name": modifier_name, "type": modifier_type})
-        self.calls.append(("add_modifier", {"name": name, "modifier_type": modifier_type, "properties": properties or {}}))
+        self.calls.append(
+            ("add_modifier", {"name": name, "modifier_type": modifier_type, "properties": properties or {}})
+        )
         return f"Added modifier '{modifier_type}' to '{name}'"
 
     def apply_modifier(self, name, modifier_name):

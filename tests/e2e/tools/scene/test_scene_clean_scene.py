@@ -5,7 +5,6 @@ E2E tests for scene_clean_scene in real Blender.
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 

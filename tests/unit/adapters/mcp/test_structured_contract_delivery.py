@@ -470,7 +470,9 @@ def test_scene_configure_delivers_structured_content(monkeypatch):
     server = build_server("legacy-flat")
 
     async def run():
-        render = await server.call_tool("scene_configure", {"action": "render", "settings": {"render_engine": "CYCLES"}})
+        render = await server.call_tool(
+            "scene_configure", {"action": "render", "settings": {"render_engine": "CYCLES"}}
+        )
         color = await server.call_tool(
             "scene_configure",
             {"action": "color_management", "settings": {"view_transform": "AgX"}},

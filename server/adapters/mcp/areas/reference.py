@@ -284,7 +284,9 @@ def _resolve_capture_scope(
         ]
         resolved_target_objects = _dedupe_names([*resolved_target_objects, *collection_objects])
 
-    normalized_primary = target_object if target_object else (resolved_target_objects[0] if len(resolved_target_objects) == 1 else None)
+    normalized_primary = (
+        target_object if target_object else (resolved_target_objects[0] if len(resolved_target_objects) == 1 else None)
+    )
     return normalized_primary, resolved_target_objects, collection_name
 
 
@@ -531,10 +533,7 @@ async def _run_stage_checkpoint_compare(
                 f"collection_name={resolved_collection_name}" if resolved_collection_name else None,
                 f"target_objects={','.join(resolved_target_objects)}" if resolved_target_objects else None,
                 f"target_view={target_view}" if target_view else None,
-                *[
-                    f"capture[{index}] label={capture.label}"
-                    for index, capture in enumerate(captures, start=1)
-                ],
+                *[f"capture[{index}] label={capture.label}" for index, capture in enumerate(captures, start=1)],
                 *[
                     f"reference[{index}] label={record.label}"
                     for index, record in enumerate(selected_reference_records, start=1)
@@ -596,7 +595,9 @@ async def reference_images(
 
     normalized_action = str(action).lower()
     if normalized_action not in {"attach", "list", "remove", "clear"}:
-        return _as_response(action="list", goal=None, references=[], error="action must be attach, list, remove, or clear")
+        return _as_response(
+            action="list", goal=None, references=[], error="action must be attach, list, remove, or clear"
+        )
 
     session = await get_session_capability_state_async(ctx)
     active_references = list(session.reference_images or [])
@@ -621,7 +622,9 @@ async def reference_images(
 
         await replace_session_reference_images_async(ctx, [])
         ctx_info(ctx, "[REFERENCE] Cleared session reference images")
-        return _as_response(action="clear", goal=session.goal, references=[], message="Cleared session reference images.")
+        return _as_response(
+            action="clear", goal=session.goal, references=[], message="Cleared session reference images."
+        )
 
     if normalized_action == "remove":
         if not reference_id:
@@ -898,7 +901,9 @@ async def reference_iterate_stage_checkpoint(
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
         "continue_build" if continue_recommended else "stop"
     )
-    stop_reason = None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
+    stop_reason = (
+        None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
+    )
 
     if compare_result.error or goal is None:
         return _iterate_stage_response(
@@ -934,7 +939,9 @@ async def reference_iterate_stage_checkpoint(
         and list(prior_state.get("target_objects") or []) == list(compare_result.target_objects or [])
         and prior_state.get("collection_name") == collection_name
     )
-    prior_checkpoint_id = str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
+    prior_checkpoint_id = (
+        str(prior_state.get("last_checkpoint_id")) if same_loop and prior_state.get("last_checkpoint_id") else None
+    )
     prior_correction_focus = list(prior_state.get("last_correction_focus") or []) if same_loop else []
     iteration_index = int(prior_state.get("iteration_index") or 0) + 1 if same_loop else 1
     repeated_correction_focus = _repeated_focus(correction_focus, prior_correction_focus)

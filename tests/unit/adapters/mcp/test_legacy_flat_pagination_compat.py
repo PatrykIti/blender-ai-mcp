@@ -13,9 +13,7 @@ def test_legacy_flat_first_page_contains_full_catalog_without_next_cursor():
 
     async def run():
         server = build_server("legacy-flat")
-        result = await server._list_tools_mcp(
-            ListToolsRequest(method="tools/list", params=PaginatedRequestParams())
-        )
+        result = await server._list_tools_mcp(ListToolsRequest(method="tools/list", params=PaginatedRequestParams()))
         return len(result.tools), result.nextCursor
 
     tool_count, next_cursor = asyncio.run(run())
@@ -29,9 +27,7 @@ def test_legacy_flat_camera_focus_description_clarifies_parameter_name():
 
     async def run():
         server = build_server("legacy-flat")
-        result = await server._list_tools_mcp(
-            ListToolsRequest(method="tools/list", params=PaginatedRequestParams())
-        )
+        result = await server._list_tools_mcp(ListToolsRequest(method="tools/list", params=PaginatedRequestParams()))
         tool = next(tool for tool in result.tools if tool.name == "scene_camera_focus")
         return tool.description
 
@@ -47,9 +43,7 @@ def test_legacy_manual_first_page_omits_router_and_workflow_tools():
 
     async def run():
         server = build_server("legacy-manual")
-        result = await server._list_tools_mcp(
-            ListToolsRequest(method="tools/list", params=PaginatedRequestParams())
-        )
+        result = await server._list_tools_mcp(ListToolsRequest(method="tools/list", params=PaginatedRequestParams()))
         return {tool.name for tool in result.tools}, len(result.tools), result.nextCursor
 
     names, tool_count, next_cursor = asyncio.run(run())
@@ -68,9 +62,7 @@ def test_internal_debug_first_page_keeps_platform_pagination_active():
 
     async def run():
         server = build_server("internal-debug")
-        result = await server._list_tools_mcp(
-            ListToolsRequest(method="tools/list", params=PaginatedRequestParams())
-        )
+        result = await server._list_tools_mcp(ListToolsRequest(method="tools/list", params=PaginatedRequestParams()))
         return len(result.tools), result.nextCursor
 
     tool_count, next_cursor = asyncio.run(run())

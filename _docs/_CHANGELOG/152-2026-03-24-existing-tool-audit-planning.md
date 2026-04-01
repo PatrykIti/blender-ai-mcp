@@ -19,4 +19,3 @@ before adding the next tool families.
 - `_docs/_TASKS/README.md`
 - `_docs/_TASKS/TASK-114*`
 - `_docs/_CHANGELOG/README.md`
-

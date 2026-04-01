@@ -31,4 +31,3 @@ The docs now explicitly define:
 - `_docs/_TASKS/TASK-113-05*`
 - `_docs/_TASKS/TASK-113_Tool_Layering_Goal_First_And_Vision_Assertion_Strategy.md`
 - `_docs/_CHANGELOG/README.md`
-

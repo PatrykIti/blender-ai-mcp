@@ -5,7 +5,6 @@ Blender-backed read/apply/read regression coverage for scene_configure (TASK-118
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 

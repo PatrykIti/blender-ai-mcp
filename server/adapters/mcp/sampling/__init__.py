@@ -41,6 +41,7 @@ def __getattr__(name: str):
 
     return getattr(assistant_runner, name)
 
+
 __all__ = [
     "AssistantBudgetContract",
     "AssistantPolicy",

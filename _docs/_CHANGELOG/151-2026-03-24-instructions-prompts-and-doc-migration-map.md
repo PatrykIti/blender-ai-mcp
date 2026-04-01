@@ -30,4 +30,3 @@ The repo now has:
 - `_docs/_TASKS/TASK-113-06*`
 - `_docs/_TASKS/TASK-113-07*`
 - `_docs/_CHANGELOG/README.md`
-

@@ -190,7 +190,9 @@ class ResolvedVisionGoldenScenario(BaseModel):
 
 
 def _score_bool(passed: bool, detail: str, *, max_score: float = 1.0) -> VisionEvaluationDimension:
-    return VisionEvaluationDimension(score=max_score if passed else 0.0, max_score=max_score, passed=passed, detail=detail)
+    return VisionEvaluationDimension(
+        score=max_score if passed else 0.0, max_score=max_score, passed=passed, detail=detail
+    )
 
 
 def _score_ratio(matched: int, total: int, detail: str) -> VisionEvaluationDimension:
@@ -224,7 +226,10 @@ def _classify_direction(text: str) -> DirectionExpectation | Literal["unknown"]:
     if (
         ("replacing" in text or "replaced" in text or "instead of" in text)
         and any(hint in text for hint in ("default cube", "original cube", "simple cube", "cube"))
-        and any(hint in text for hint in ("picnic table", "detailed", "more complex", "realistic object", "multiple components"))
+        and any(
+            hint in text
+            for hint in ("picnic table", "detailed", "more complex", "realistic object", "multiple components")
+        )
         and regression_hits == 0
     ):
         return "improved"
@@ -261,7 +266,11 @@ def _classify_reference_relation(text: str) -> ReferenceRelationExpectation | Li
     if "reference" in text:
         if any(hint in text for hint in _REFERENCE_MISMATCH_HINTS):
             return "mismatch"
-        if any(hint in text for hint in _REFERENCE_MATCH_HINTS) or " matches " in f" {text} " or " consistent " in f" {text} ":
+        if (
+            any(hint in text for hint in _REFERENCE_MATCH_HINTS)
+            or " matches " in f" {text} "
+            or " consistent " in f" {text} "
+        ):
             return "match"
     mismatch_hits = sum(1 for hint in _REFERENCE_MISMATCH_HINTS if hint in text)
     match_hits = sum(1 for hint in _REFERENCE_MATCH_HINTS if hint in text)
@@ -319,7 +328,9 @@ def evaluate_vision_result(
     goal_summary = result.get("goal_summary")
     goal_present = isinstance(goal_summary, str) and bool(goal_summary.strip())
     if expectations.require_goal_summary:
-        dimensions["goal_summary_present"] = _score_bool(goal_present, "goal_summary is present" if goal_present else "goal_summary missing")
+        dimensions["goal_summary_present"] = _score_bool(
+            goal_present, "goal_summary is present" if goal_present else "goal_summary missing"
+        )
     else:
         dimensions["goal_summary_present"] = VisionEvaluationDimension(
             score=0.0,
@@ -438,7 +449,9 @@ def evaluate_vision_result(
     if expectations.should_avoid_truth_claims:
         dimensions["truth_claim_safety"] = _score_bool(
             not _has_truth_claim_risk(combined),
-            "no risky truth-claim language detected" if not _has_truth_claim_risk(combined) else "truth-claim language detected",
+            "no risky truth-claim language detected"
+            if not _has_truth_claim_risk(combined)
+            else "truth-claim language detected",
         )
     else:
         dimensions["truth_claim_safety"] = VisionEvaluationDimension(

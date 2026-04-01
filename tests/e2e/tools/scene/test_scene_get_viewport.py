@@ -7,7 +7,6 @@ from __future__ import annotations
 import base64
 
 import pytest
-
 from server.application.tool_handlers.scene_handler import SceneToolHandler
 
 

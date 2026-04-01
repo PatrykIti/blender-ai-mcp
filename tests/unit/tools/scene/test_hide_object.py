@@ -58,7 +58,7 @@ class TestHideObject:
 
         assert self.cube.hide_viewport
         assert self.cube.hide_render
- 
+
     def test_show_object_reports_render_visibility_restore(self):
         """Show action should make the render-visibility side effect explicit."""
 

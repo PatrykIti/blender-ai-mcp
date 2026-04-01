@@ -7,7 +7,6 @@ from dataclasses import replace
 
 import pytest
 from fastmcp.server.providers import LocalProvider
-
 from server.adapters.mcp.factory import build_server
 from server.adapters.mcp.settings import SurfaceProfileSettings
 from server.adapters.mcp.surfaces import SURFACE_PROFILES, get_surface_profile

@@ -240,7 +240,9 @@ def _config_for_backend(args: Any, backend: str) -> Config:
         "VISION_OPENROUTER_BASE_URL": args.openrouter_base_url if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_MODEL": args.openrouter_model if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_API_KEY": args.openrouter_api_key if backend == "openai_compatible_external" else None,
-        "VISION_OPENROUTER_API_KEY_ENV": args.openrouter_api_key_env if backend == "openai_compatible_external" else None,
+        "VISION_OPENROUTER_API_KEY_ENV": args.openrouter_api_key_env
+        if backend == "openai_compatible_external"
+        else None,
         "VISION_OPENROUTER_SITE_URL": args.openrouter_site_url if backend == "openai_compatible_external" else None,
         "VISION_OPENROUTER_SITE_NAME": args.openrouter_site_name if backend == "openai_compatible_external" else None,
         "VISION_GEMINI_BASE_URL": args.gemini_base_url if backend == "openai_compatible_external" else None,
@@ -302,7 +304,9 @@ async def _run(args: Any) -> list[dict[str, Any]]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--backend", choices=["mlx_local", "transformers_local", "openai_compatible_external", "all"], default="all")
+    parser.add_argument(
+        "--backend", choices=["mlx_local", "transformers_local", "openai_compatible_external", "all"], default="all"
+    )
     parser.add_argument("--goal")
     parser.add_argument("--target-object")
     parser.add_argument("--prompt-hint")
@@ -317,7 +321,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-tokens", type=int, default=400)
     parser.add_argument("--timeout-seconds", type=float, default=60.0)
     parser.add_argument("--transformers-model", default=os.getenv("VISION_LOCAL_MODEL_ID"))
-    parser.add_argument("--mlx-model", default=os.getenv("VISION_MLX_MODEL_ID") or "mlx-community/Qwen3-VL-2B-Instruct-4bit")
+    parser.add_argument(
+        "--mlx-model", default=os.getenv("VISION_MLX_MODEL_ID") or "mlx-community/Qwen3-VL-2B-Instruct-4bit"
+    )
     parser.add_argument("--external-base-url", default=os.getenv("VISION_EXTERNAL_BASE_URL"))
     parser.add_argument("--external-model", default=os.getenv("VISION_EXTERNAL_MODEL"))
     parser.add_argument("--external-api-key", default=os.getenv("VISION_EXTERNAL_API_KEY"))

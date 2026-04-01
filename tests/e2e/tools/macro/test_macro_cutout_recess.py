@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.macro_handler import MacroToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
@@ -81,7 +80,9 @@ def test_macro_cutout_recess_delete_cleanup_roundtrip(clean_scene, scene_handler
         _skip_if_blender_unavailable(e)
 
 
-def test_macro_cutout_recess_hide_cleanup_keeps_hidden_helper(clean_scene, scene_handler, modeling_handler, macro_handler):
+def test_macro_cutout_recess_hide_cleanup_keeps_hidden_helper(
+    clean_scene, scene_handler, modeling_handler, macro_handler
+):
     target_name = "MacroBody"
     cutter_name = "MacroCutHidden"
 

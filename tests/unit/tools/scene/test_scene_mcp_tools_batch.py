@@ -212,12 +212,16 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
         0,
         0,
     ]
-    assert scene_area.scene_measure_distance(MagicMock(), from_object="Cube", to_object="Sphere").payload["distance"] == 2.0
+    assert (
+        scene_area.scene_measure_distance(MagicMock(), from_object="Cube", to_object="Sphere").payload["distance"]
+        == 2.0
+    )
     assert scene_area.scene_measure_dimensions(MagicMock(), object_name="Cube").payload["volume"] == 6.0
     assert scene_area.scene_measure_gap(MagicMock(), from_object="Cube", to_object="Sphere").payload["gap"] == 0.5
     assert (
-        scene_area.scene_measure_alignment(MagicMock(), from_object="Cube", to_object="Sphere", axes=["Y", "Z"])
-        .payload["is_aligned"]
+        scene_area.scene_measure_alignment(
+            MagicMock(), from_object="Cube", to_object="Sphere", axes=["Y", "Z"]
+        ).payload["is_aligned"]
         is True
     )
     assert (
@@ -226,13 +230,15 @@ def test_scene_state_and_utility_wrappers(monkeypatch):
     )
     assert scene_area.scene_assert_contact(MagicMock(), from_object="Cube", to_object="Sphere").payload.passed is True
     assert (
-        scene_area.scene_assert_dimensions(MagicMock(), object_name="Cube", expected_dimensions="[1, 2, 3]")
-        .payload.delta["x"]
+        scene_area.scene_assert_dimensions(
+            MagicMock(), object_name="Cube", expected_dimensions="[1, 2, 3]"
+        ).payload.delta["x"]
         == 0.2
     )
     assert (
-        scene_area.scene_assert_containment(MagicMock(), inner_object="Cube", outer_object="Shell")
-        .payload.actual["min_clearance"]
+        scene_area.scene_assert_containment(MagicMock(), inner_object="Cube", outer_object="Shell").payload.actual[
+            "min_clearance"
+        ]
         == 0.1
     )
     assert (

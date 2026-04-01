@@ -285,7 +285,9 @@ def test_build_phase_search_can_discover_reference_compare_stage_checkpoint():
     server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
-        result = await server.call_tool("search_tools", {"query": "compare current stage progress against reference set"})
+        result = await server.call_tool(
+            "search_tools", {"query": "compare current stage progress against reference set"}
+        )
         return _decode_tool_result(result)
 
     payload = asyncio.run(run())
@@ -301,7 +303,9 @@ def test_build_phase_search_can_discover_reference_iterate_stage_checkpoint():
     server = _build_phase_search_server(SessionPhase.BUILD)
 
     async def run():
-        result = await server.call_tool("search_tools", {"query": "iterate stage checkpoint continue building or validate"})
+        result = await server.call_tool(
+            "search_tools", {"query": "iterate stage checkpoint continue building or validate"}
+        )
         return _decode_tool_result(result)
 
     payload = asyncio.run(run())

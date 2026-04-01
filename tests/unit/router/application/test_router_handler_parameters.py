@@ -632,9 +632,7 @@ class TestSetGoalUnified:
         assert result["workflow"] == "picnic_table"
         assert result["unresolved"][0]["param"] == "workflow_confirmation"
 
-    def test_set_goal_medium_confidence_match_accepts_workflow_confirmation(
-        self, handler, mock_loader, mock_router
-    ):
+    def test_set_goal_medium_confidence_match_accepts_workflow_confirmation(self, handler, mock_loader, mock_router):
         """A confirmed medium-confidence workflow should proceed instead of looping."""
         mock_loader.add_test_workflow("picnic_table", {})
 

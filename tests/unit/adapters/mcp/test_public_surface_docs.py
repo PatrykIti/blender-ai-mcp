@@ -160,7 +160,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`workflow_import_recommended=false`" in workflow_prompt
     assert "Do not guess hidden internal tool names and feed them into `call_tool(...)`." in workflow_prompt
     assert "If `call_tool(...)` reports `Unknown tool`, do not keep guessing names" in workflow_prompt
-    assert "If a needed tool is already directly visible on the current surface/phase, call it directly." in workflow_prompt
+    assert (
+        "If a needed tool is already directly visible on the current surface/phase, call it directly."
+        in workflow_prompt
+    )
     assert 'search_tools(query="viewport screenshot save file")' in workflow_prompt
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in workflow_prompt
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in workflow_prompt
@@ -168,19 +171,37 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "macro_relative_layout" in prompt_readme
     assert "macro_finish_form" in prompt_readme
     assert 'search_tools(query="align panel housing gap contact placement")' in workflow_prompt
-    assert 'call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})' in workflow_prompt
+    assert (
+        'call_tool(name="macro_relative_layout", arguments={"moving_object":"Panel","reference_object":"Housing","x_mode":"center","y_mode":"center","contact_axis":"Z","contact_side":"positive","gap":0.002})'
+        in workflow_prompt
+    )
     assert 'search_tools(query="cutout recess opening boolean front face")' in workflow_prompt
-    assert 'call_tool(name="macro_cutout_recess", arguments={"target_object":"Housing","width":0.12,"height":0.06,"depth":0.01,"face":"front","mode":"recess"})' in workflow_prompt
+    assert (
+        'call_tool(name="macro_cutout_recess", arguments={"target_object":"Housing","width":0.12,"height":0.06,"depth":0.01,"face":"front","mode":"recess"})'
+        in workflow_prompt
+    )
     assert 'search_tools(query="finish housing bevel subdivision shell")' in workflow_prompt
-    assert 'call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})' in workflow_prompt
-    assert 'call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})' in workflow_prompt
+    assert (
+        'call_tool(name="macro_finish_form", arguments={"target_object":"Housing","preset":"rounded_housing"})'
+        in workflow_prompt
+    )
+    assert (
+        'call_tool(name="scene_measure_dimensions", arguments={"object_name":"Housing","world_space":true})'
+        in workflow_prompt
+    )
     assert 'inspect_scene(action="object", target_object=...)' in workflow_prompt
 
     assert 'check_scene(query="mode")' in manual_prompt
     assert 'check_scene(query="selection")' in manual_prompt
     assert 'inspect_scene(action="object", target_object=...)' in manual_prompt
     assert "`scene_camera_focus(object_name=...)`" in manual_prompt
-    assert "`scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`" in manual_prompt
+    assert (
+        "`scene_camera_orbit(angle_horizontal=..., angle_vertical=..., target_object=... or target_point=...)`"
+        in manual_prompt
+    )
     assert '`scene_get_viewport(shading=..., focus_target=..., output_mode="IMAGE")`' in manual_prompt
-    assert '`scene_get_viewport(camera_name="USER_PERSPECTIVE")` follows the live viewport; named cameras follow render visibility' in manual_prompt
+    assert (
+        '`scene_get_viewport(camera_name="USER_PERSPECTIVE")` follows the live viewport; named cameras follow render visibility'
+        in manual_prompt
+    )
     assert "scene_show_all_objects(include_render=true)" in manual_prompt

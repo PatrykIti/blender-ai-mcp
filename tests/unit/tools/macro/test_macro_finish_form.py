@@ -16,7 +16,9 @@ class FakeModelingTool:
         current = self._modifiers.setdefault(name, [])
         modifier_name = modifier_type if not current else f"{modifier_type}.{len(current):03d}"
         current.append({"name": modifier_name, "type": modifier_type})
-        self.calls.append(("add_modifier", {"name": name, "modifier_type": modifier_type, "properties": properties or {}}))
+        self.calls.append(
+            ("add_modifier", {"name": name, "modifier_type": modifier_type, "properties": properties or {}})
+        )
         return f"Added modifier '{modifier_type}' to '{name}'"
 
     def get_modifiers(self, name):

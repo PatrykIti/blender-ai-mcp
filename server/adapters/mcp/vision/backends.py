@@ -36,6 +36,7 @@ def _image_to_data_url(path: str, media_type: str) -> str:
     encoded = base64.b64encode(raw).decode("ascii")
     return f"data:{media_type};base64,{encoded}"
 
+
 def _extract_message_text(payload: dict[str, Any]) -> str:
     choices = payload.get("choices")
     if not isinstance(choices, list) or not choices:
@@ -263,7 +264,9 @@ class TransformersLocalVisionBackend(VisionBackend):
         if model is None:
             raise VisionBackendUnavailableError("Local vision model failed to initialize.")
         if not hasattr(processor, "apply_chat_template") or not hasattr(processor, "batch_decode"):
-            raise VisionBackendUnavailableError("Local vision processor does not expose the required chat/decode methods.")
+            raise VisionBackendUnavailableError(
+                "Local vision processor does not expose the required chat/decode methods."
+            )
 
         messages = self._build_local_messages(request)
 

@@ -129,7 +129,9 @@ def select_reference_records_for_target(
     """
 
     resolved = tuple(
-        record if isinstance(record, ReferenceImageRecordContract) else ReferenceImageRecordContract.model_validate(record)
+        record
+        if isinstance(record, ReferenceImageRecordContract)
+        else ReferenceImageRecordContract.model_validate(record)
         for record in reference_records
     )
     if target_object is None and target_view is None:
@@ -137,9 +139,7 @@ def select_reference_records_for_target(
 
     if target_object is not None and target_view is not None:
         targeted_view = tuple(
-            record
-            for record in resolved
-            if record.target_object == target_object and record.target_view == target_view
+            record for record in resolved if record.target_object == target_object and record.target_view == target_view
         )
         if targeted_view:
             return targeted_view
@@ -151,9 +151,7 @@ def select_reference_records_for_target(
 
     if target_view is not None:
         generic_view = tuple(
-            record
-            for record in resolved
-            if record.target_object is None and record.target_view == target_view
+            record for record in resolved if record.target_object is None and record.target_view == target_view
         )
         if generic_view:
             return generic_view

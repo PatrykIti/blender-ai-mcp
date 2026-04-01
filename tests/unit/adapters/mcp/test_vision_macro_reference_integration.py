@@ -82,7 +82,7 @@ class _Ctx:
                     "original_path": "/tmp/ref_other.png",
                     "stored_path": "/tmp/ref_other_stored.png",
                     "added_at": "2026-03-26T00:00:01Z",
-                }
+                },
             ],
         }
 

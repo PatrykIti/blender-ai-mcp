@@ -42,7 +42,10 @@ class RouterToolHandler(IRouterTool):
         re.compile(r"\b(viewport|screenshot|screen ?shot|capture image|capture screenshot)\b", re.IGNORECASE),
         re.compile(r"\b(save (to )?file|save image|export image)\b", re.IGNORECASE),
         re.compile(r"\b(clean scene|clear scene|reset scene|new scene)\b", re.IGNORECASE),
-        re.compile(r"\b(zrzut ekranu|zrzut viewportu|screenshot viewportu|wyczy[sś]c scene|wyczy[sś]c scen[ęe])\b", re.IGNORECASE),
+        re.compile(
+            r"\b(zrzut ekranu|zrzut viewportu|screenshot viewportu|wyczy[sś]c scene|wyczy[sś]c scen[ęe])\b",
+            re.IGNORECASE,
+        ),
     )
     _META_CAPTURE_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"\b(vision test|smoke test|test scenario|golden test)\b", re.IGNORECASE),
@@ -51,7 +54,9 @@ class RouterToolHandler(IRouterTool):
     )
     _GUIDED_MANUAL_BUILD_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.compile(r"\blow[- ]poly\b.*\b(squirrel|rabbit|owl|fox|bird|animal|creature|character)\b", re.IGNORECASE),
-        re.compile(r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low[- ]poly|blockout|face|body|ears|snout)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(squirrel|rabbit|owl|fox|bird)\b.*\b(low[- ]poly|blockout|face|body|ears|snout)\b", re.IGNORECASE
+        ),
         re.compile(r"\b(animal|creature|character)\b.*\b(low[- ]poly|blockout|head|face|body)\b", re.IGNORECASE),
     )
     _REFERENCE_GUIDED_HINT_PATTERNS: tuple[re.Pattern[str], ...] = (
@@ -225,10 +230,14 @@ class RouterToolHandler(IRouterTool):
         """Validate and strip workflow_confirmation before normal parameter handling."""
 
         if not resolved_params or "workflow_confirmation" not in resolved_params:
-            return False, resolved_params, RouterToolHandler._workflow_confirmation_unresolved(
-                matched_workflow=matched_workflow,
-                goal=goal,
-                policy_context=policy_context,
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._workflow_confirmation_unresolved(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    policy_context=policy_context,
+                ),
             )
 
         raw_confirmation = resolved_params.get("workflow_confirmation")
@@ -250,11 +259,15 @@ class RouterToolHandler(IRouterTool):
             )
 
         if confirmation != matched_workflow:
-            return False, resolved_params, RouterToolHandler._workflow_confirmation_unresolved(
-                matched_workflow=matched_workflow,
-                goal=goal,
-                error=f"Invalid workflow confirmation: {raw_confirmation!r}",
-                policy_context=policy_context,
+            return (
+                False,
+                resolved_params,
+                RouterToolHandler._workflow_confirmation_unresolved(
+                    matched_workflow=matched_workflow,
+                    goal=goal,
+                    error=f"Invalid workflow confirmation: {raw_confirmation!r}",
+                    policy_context=policy_context,
+                ),
             )
 
         remaining = {key: value for key, value in resolved_params.items() if key != "workflow_confirmation"}

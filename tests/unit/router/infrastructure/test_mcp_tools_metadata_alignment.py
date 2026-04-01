@@ -210,9 +210,7 @@ def test_tools_metadata_related_tools_exist_in_current_runtime():
                     f"- {tool_name} ({json_file.relative_to(repo_root)}): unknown related tool '{related_tool}'"
                 )
 
-    assert not invalid_related, (
-        "Tools metadata references unknown related_tools values:\n" + "\n".join(invalid_related)
-    )
+    assert not invalid_related, "Tools metadata references unknown related_tools values:\n" + "\n".join(invalid_related)
 
 
 def test_router_emitted_tool_names_exist_in_mcp():

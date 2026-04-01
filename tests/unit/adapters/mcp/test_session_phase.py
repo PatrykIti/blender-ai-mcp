@@ -195,14 +195,8 @@ def test_apply_visibility_for_session_state_uses_stored_surface_profile():
 
     calls = ctx.state["_visibility_calls"]
     assert calls[0] == ("reset_visibility", {})
-    assert any(
-        name == "enable_components" and call["names"] == set(GUIDED_ENTRY_TOOLS)
-        for name, call in calls[1:]
-    )
-    assert any(
-        name == "enable_components" and call["names"] == set(GUIDED_DISCOVERY_TOOLS)
-        for name, call in calls[1:]
-    )
+    assert any(name == "enable_components" and call["names"] == set(GUIDED_ENTRY_TOOLS) for name, call in calls[1:])
+    assert any(name == "enable_components" and call["names"] == set(GUIDED_DISCOVERY_TOOLS) for name, call in calls[1:])
     assert any(
         name == "enable_components" and call["names"] == set(GUIDED_BUILD_ESCAPE_HATCH_TOOLS)
         for name, call in calls[1:]

@@ -100,7 +100,12 @@ def test_capture_stage_images_builds_wide_and_focus_variants(tmp_path, monkeypat
         target_object="Housing",
     )
 
-    assert [capture.preset_name for capture in captures] == ["context_wide", "target_front", "target_side", "target_top"]
+    assert [capture.preset_name for capture in captures] == [
+        "context_wide",
+        "target_front",
+        "target_side",
+        "target_top",
+    ]
     assert captures[0].view_kind == "wide"
     assert captures[1].view_kind == "focus"
     assert captures[2].view_kind == "focus"

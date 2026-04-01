@@ -312,9 +312,13 @@ class MacroToolHandler(IMacroTool):
         if resolved_contact_axis is not None:
             axis_index = self._AXIS_INDEX[resolved_contact_axis]
             if resolved_contact_side == "positive":
-                target_location[axis_index] = float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+                target_location[axis_index] = (
+                    float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+                )
             else:
-                target_location[axis_index] = float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+                target_location[axis_index] = (
+                    float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+                )
 
         target_location = [target + delta for target, delta in zip(target_location, offset_vector)]
         translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
@@ -723,9 +727,7 @@ class MacroToolHandler(IMacroTool):
     def _normalize_finish_preset(self, preset: str) -> str:
         normalized = str(preset).lower()
         if normalized not in self._FINISH_PRESETS:
-            raise ValueError(
-                "preset must be one of rounded_housing, panel_finish, shell_thicken, smooth_subdivision"
-            )
+            raise ValueError("preset must be one of rounded_housing, panel_finish, shell_thicken, smooth_subdivision")
         return normalized
 
     def _normalize_layout_mode(self, value: str, field_name: str) -> str:

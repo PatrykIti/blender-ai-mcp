@@ -231,9 +231,13 @@ def update_session_from_router_goal(
         last_elicitation_action = None
         partial_answers = None
 
-    adopted_reference_images = current.reference_images if same_goal else _adopt_pending_reference_images(
-        current.pending_reference_images,
-        goal=goal,
+    adopted_reference_images = (
+        current.reference_images
+        if same_goal
+        else _adopt_pending_reference_images(
+            current.pending_reference_images,
+            goal=goal,
+        )
     )
 
     state = SessionCapabilityState(
@@ -297,9 +301,13 @@ async def update_session_from_router_goal_async(
         last_elicitation_action = None
         partial_answers = None
 
-    adopted_reference_images = current.reference_images if same_goal else _adopt_pending_reference_images(
-        current.pending_reference_images,
-        goal=goal,
+    adopted_reference_images = (
+        current.reference_images
+        if same_goal
+        else _adopt_pending_reference_images(
+            current.pending_reference_images,
+            goal=goal,
+        )
     )
 
     state = SessionCapabilityState(

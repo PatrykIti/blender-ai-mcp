@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.macro_handler import MacroToolHandler
 
 
@@ -29,7 +28,9 @@ class FakeModelingTool:
         self.calls: list[tuple[str, dict]] = []
 
     def transform_object(self, name, location=None, rotation=None, scale=None):
-        self.calls.append(("transform_object", {"name": name, "location": location, "rotation": rotation, "scale": scale}))
+        self.calls.append(
+            ("transform_object", {"name": name, "location": location, "rotation": rotation, "scale": scale})
+        )
         return f"Transformed object '{name}'"
 
 
@@ -78,7 +79,9 @@ def test_macro_relative_layout_recommends_alignment_check_for_centered_axes():
 
     assert result["status"] == "success"
     assert modeling.calls[0][1]["location"] == [0.0, 0.0, 0.5]
-    alignment_checks = [item for item in result["verification_recommended"] if item["tool_name"] == "scene_measure_alignment"]
+    alignment_checks = [
+        item for item in result["verification_recommended"] if item["tool_name"] == "scene_measure_alignment"
+    ]
     assert alignment_checks
     assert alignment_checks[0]["arguments_hint"]["axes"] == ["X", "Y"]
 

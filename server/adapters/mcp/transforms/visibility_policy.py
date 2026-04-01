@@ -220,7 +220,9 @@ def build_guided_handoff_payload(
 ) -> dict[str, Any] | None:
     """Build the explicit guided continuation contract for bounded no-match paths."""
 
-    resolved_surface = surface_profile.name if isinstance(surface_profile, SurfaceProfileSettings) else str(surface_profile)
+    resolved_surface = (
+        surface_profile.name if isinstance(surface_profile, SurfaceProfileSettings) else str(surface_profile)
+    )
     resolved_phase = coerce_session_phase(phase)
     if resolved_surface != "llm-guided":
         return None

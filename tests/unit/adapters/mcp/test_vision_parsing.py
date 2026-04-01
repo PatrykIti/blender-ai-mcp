@@ -69,7 +69,9 @@ def test_parse_vision_output_repairs_summary_alias_payload():
 
     parsed = parse_vision_output_text(text, _request())
 
-    assert parsed["goal_summary"] == "The after image is closer to the rounded housing target and adds the central cutout."
+    assert (
+        parsed["goal_summary"] == "The after image is closer to the rounded housing target and adds the central cutout."
+    )
     assert parsed["visible_changes"] == []
     assert parsed["correction_focus"] == []
     assert parsed["captures_used"] == ["before_1"]

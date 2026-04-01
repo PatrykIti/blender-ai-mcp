@@ -122,7 +122,9 @@ def test_external_backend_analyze_returns_structured_payload(monkeypatch, tmp_pa
                             "goal_summary": "Closer to the intended rounded housing shape.",
                             "reference_match_summary": "Front silhouette is somewhat closer to reference.",
                             "visible_changes": ["The visible front edges appear softer."],
-                            "likely_issues": [{"category": "front_profile", "summary": "Top edge still looks too flat."}],
+                            "likely_issues": [
+                                {"category": "front_profile", "summary": "Top edge still looks too flat."}
+                            ],
                             "recommended_checks": [
                                 {"tool_name": "scene_measure_dimensions", "reason": "Check overall size drift"}
                             ],

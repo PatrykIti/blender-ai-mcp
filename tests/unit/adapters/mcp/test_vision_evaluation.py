@@ -10,13 +10,7 @@ from server.adapters.mcp.vision import evaluate_vision_result, load_golden_scena
 
 
 def _fixture(name: str) -> Path:
-    return (
-        Path(__file__).resolve().parents[3]
-        / "fixtures"
-        / "vision_eval"
-        / name
-        / "golden.json"
-    )
+    return Path(__file__).resolve().parents[3] / "fixtures" / "vision_eval" / name / "golden.json"
 
 
 def test_load_golden_scenario_resolves_relative_bundle_and_reference_paths():

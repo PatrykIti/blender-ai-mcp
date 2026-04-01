@@ -19,4 +19,3 @@ layer:
 
 This is the first code wave after the `TASK-113` strategy rollout and the
 `TASK-114` audit.
-

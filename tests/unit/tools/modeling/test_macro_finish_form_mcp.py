@@ -19,9 +19,7 @@ def test_macro_finish_form_mcp_tool_returns_structured_contract(monkeypatch):
                     {"status": "applied", "action": "add_bevel_finish", "tool_name": "modeling_add_modifier"}
                 ],
                 "objects_modified": [kwargs.get("target_object", "BodyShell")],
-                "verification_recommended": [
-                    {"tool_name": "inspect_scene", "reason": "Verify the finishing stack."}
-                ],
+                "verification_recommended": [{"tool_name": "inspect_scene", "reason": "Verify the finishing stack."}],
                 "requires_followup": True,
             }
 

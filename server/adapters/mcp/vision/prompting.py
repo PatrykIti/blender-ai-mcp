@@ -112,10 +112,7 @@ def build_vision_payload_text(request: VisionRequest) -> str:
 def build_local_vision_payload_text(request: VisionRequest) -> str:
     """Return a shorter local-model-oriented payload to reduce echoing."""
 
-    image_lines = [
-        f"- {image.role}: {image.label or image.role}"
-        for image in request.images
-    ]
+    image_lines = [f"- {image.role}: {image.label or image.role}" for image in request.images]
     truth_summary = request.truth_summary or {}
     truth_lines = []
     if isinstance(truth_summary, dict):

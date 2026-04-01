@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from server.application.tool_handlers.macro_handler import MacroToolHandler
 from server.application.tool_handlers.modeling_handler import ModelingToolHandler
 from server.application.tool_handlers.scene_handler import SceneToolHandler
