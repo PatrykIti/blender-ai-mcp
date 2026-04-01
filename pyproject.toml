@@ -1,7 +1,7 @@
 [project]
 name = "blender-ai-mcp"
 version = "2.2.0"
-description = "Modular MCP Server + Blender Addon for AI-Driven 3D Modeling"
+description = "Production-shaped MCP server for Blender with goal-first routing, curated tools, deterministic verification, and vision-assisted 3D modeling workflows."
 authors = [
     {name = "Patryk Ciechański",email = "patryk.ciechanski@patrykiti.pl"}
 ]
