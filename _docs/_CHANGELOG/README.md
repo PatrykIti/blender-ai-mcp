@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [192](./192-2026-04-02-correction-candidate-contract-and-priority-model.md) | 2026-04-02 | **Correction candidate contract and priority model** | - |
 | [191](./191-2026-04-02-macro-cleanup-part-intersections.md) | 2026-04-02 | **Macro cleanup part intersections** | - |
 | [190](./190-2026-04-02-macro-place-supported-pair.md) | 2026-04-02 | **Macro place supported pair** | - |
 | [189](./189-2026-04-02-macro-adjust-segment-chain-arc.md) | 2026-04-02 | **Macro adjust segment chain arc** | - |

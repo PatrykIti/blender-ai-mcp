@@ -20,6 +20,9 @@ from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import (
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
+    ReferenceCorrectionCandidateContract,
+    ReferenceCorrectionTruthEvidenceContract,
+    ReferenceCorrectionVisionEvidenceContract,
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
@@ -172,6 +175,7 @@ def _stage_compare_response(
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
+    correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -189,6 +193,7 @@ def _stage_compare_response(
         assembled_target_scope=assembled_target_scope,
         truth_bundle=truth_bundle,
         truth_followup=truth_followup,
+        correction_candidates=list(correction_candidates or []),
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -223,6 +228,7 @@ def _iterate_stage_response(
     repeated_correction_focus: list[str],
     stagnation_count: int,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
+    correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -236,6 +242,7 @@ def _iterate_stage_response(
         assembled_target_scope=compare_result.assembled_target_scope,
         truth_bundle=compare_result.truth_bundle,
         truth_followup=compare_result.truth_followup,
+        correction_candidates=list(correction_candidates or compare_result.correction_candidates or []),
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -278,6 +285,147 @@ def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointRes
         seen.add(normalized)
         deduped.append(item)
     return deduped[:3]
+
+
+def _candidate_matches_pair_label(focus_item: str, pair_label: str) -> bool:
+    normalized_focus = _normalized_focus_key(focus_item)
+    normalized_pair = _normalized_focus_key(pair_label)
+    if not normalized_focus or not normalized_pair:
+        return False
+    if normalized_pair in normalized_focus:
+        return True
+    from_object, to_object = pair_label.split(" -> ", 1)
+    return (
+        _normalized_focus_key(from_object) in normalized_focus and _normalized_focus_key(to_object) in normalized_focus
+    )
+
+
+def _macro_candidate_matches_pair(
+    candidate: SceneRepairMacroCandidateContract,
+    *,
+    from_object: str,
+    to_object: str,
+) -> bool:
+    arguments = candidate.arguments_hint or {}
+    candidate_from = arguments.get("part_object") or arguments.get("left_object") or arguments.get("primary_object")
+    candidate_to = arguments.get("reference_object") or arguments.get("right_object") or arguments.get("support_object")
+    return candidate_from == from_object and candidate_to == to_object
+
+
+def _build_vision_candidate_evidence(
+    *,
+    vision_result,
+    focus_items: list[str],
+) -> ReferenceCorrectionVisionEvidenceContract | None:
+    if vision_result is None or not focus_items:
+        return None
+    return ReferenceCorrectionVisionEvidenceContract(
+        correction_focus=focus_items,
+        shape_mismatches=list(vision_result.shape_mismatches or []),
+        proportion_mismatches=list(vision_result.proportion_mismatches or []),
+        next_corrections=list(vision_result.next_corrections or []),
+    )
+
+
+def _build_correction_candidates(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> list[ReferenceCorrectionCandidateContract]:
+    truth_followup = compare_result.truth_followup
+    vision_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
+    correction_focus = _resolve_actionable_focus(compare_result)
+    candidates: list[ReferenceCorrectionCandidateContract] = []
+    used_focus_items: set[str] = set()
+    rank = 1
+    focus_pairs = list(truth_followup.focus_pairs or []) if truth_followup is not None else []
+
+    truth_items_by_pair: dict[str, list[SceneTruthFollowupItemContract]] = {}
+    for item in list(truth_followup.items or []) if truth_followup is not None else []:
+        if item.from_object is None or item.to_object is None:
+            continue
+        pair_label = _pair_label(item.from_object, item.to_object)
+        truth_items_by_pair.setdefault(pair_label, []).append(item)
+
+    truth_macros_by_pair: dict[str, list[SceneRepairMacroCandidateContract]] = {}
+    for macro_candidate in list(truth_followup.macro_candidates or []) if truth_followup is not None else []:
+        for pair_label in focus_pairs:
+            from_object, to_object = pair_label.split(" -> ", 1)
+            if _macro_candidate_matches_pair(macro_candidate, from_object=from_object, to_object=to_object):
+                truth_macros_by_pair.setdefault(pair_label, []).append(macro_candidate)
+
+    for pair_label in focus_pairs:
+        pair_items = truth_items_by_pair.get(pair_label, [])
+        pair_macros = truth_macros_by_pair.get(pair_label, [])
+        matched_focus = [item for item in correction_focus if _candidate_matches_pair_label(item, pair_label)]
+        used_focus_items.update(_normalized_focus_key(item) for item in matched_focus)
+        item_priorities = {item.priority for item in pair_items}
+        macro_priorities = {item.priority for item in pair_macros}
+        priority: Literal["high", "normal"] = (
+            "high" if "high" in item_priorities or "high" in macro_priorities else "normal"
+        )
+        signals: list[Literal["vision", "truth", "macro"]] = ["truth"]
+        if pair_macros:
+            signals.append("macro")
+        if matched_focus:
+            signals.append("vision")
+        summary = (
+            pair_items[0].summary
+            if pair_items
+            else (matched_focus[0] if matched_focus else f"Review pair {pair_label}")
+        )
+        from_object, to_object = pair_label.split(" -> ", 1)
+        candidates.append(
+            ReferenceCorrectionCandidateContract(
+                candidate_id=f"pair:{_normalized_focus_key(pair_label).replace(' ', '_')}",
+                summary=summary,
+                priority_rank=rank,
+                priority=priority,
+                candidate_kind="hybrid" if matched_focus else "truth_only",
+                target_object=compare_result.target_object,
+                target_objects=[from_object, to_object],
+                focus_pairs=[pair_label],
+                source_signals=signals,
+                vision_evidence=_build_vision_candidate_evidence(
+                    vision_result=vision_result,
+                    focus_items=matched_focus,
+                ),
+                truth_evidence=ReferenceCorrectionTruthEvidenceContract(
+                    focus_pairs=[pair_label],
+                    item_kinds=[item.kind for item in pair_items],
+                    items=pair_items,
+                    macro_candidates=pair_macros,
+                ),
+            )
+        )
+        rank += 1
+
+    for focus_item in correction_focus:
+        normalized_focus = _normalized_focus_key(focus_item)
+        if not normalized_focus or normalized_focus in used_focus_items:
+            continue
+        target_objects = list(compare_result.target_objects or [])
+        if compare_result.target_object and compare_result.target_object not in target_objects:
+            target_objects = [compare_result.target_object, *target_objects]
+        candidates.append(
+            ReferenceCorrectionCandidateContract(
+                candidate_id=f"vision:{normalized_focus.replace(' ', '_')}",
+                summary=focus_item,
+                priority_rank=rank,
+                priority="normal",
+                candidate_kind="vision_only",
+                target_object=compare_result.target_object,
+                target_objects=target_objects,
+                focus_pairs=[],
+                source_signals=["vision"],
+                vision_evidence=_build_vision_candidate_evidence(
+                    vision_result=vision_result,
+                    focus_items=[focus_item],
+                ),
+                truth_evidence=None,
+            )
+        )
+        rank += 1
+
+    return candidates
 
 
 def _dedupe_names(values: list[str]) -> list[str]:
@@ -848,6 +996,29 @@ async def _run_stage_checkpoint_compare(
         resolver=get_vision_backend_resolver(),
     )
     vision_assistant = to_vision_assistant_contract(outcome)
+    correction_candidates = _build_correction_candidates(
+        ReferenceCompareStageCheckpointResponseContract(
+            action="compare_stage_checkpoint",
+            goal=goal,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
+            assembled_target_scope=assembled_target_scope,
+            truth_bundle=truth_bundle,
+            truth_followup=truth_followup,
+            target_view=target_view,
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            preset_profile=preset_profile,
+            preset_names=[capture.preset_name or capture.label for capture in captures],
+            capture_count=len(captures),
+            captures=list(captures),
+            reference_count=len(selected_reference_records),
+            reference_ids=[item.reference_id for item in selected_reference_records],
+            reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+            vision_assistant=vision_assistant,
+        )
+    )
     return _stage_compare_response(
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -864,6 +1035,7 @@ async def _run_stage_checkpoint_compare(
         vision_assistant=vision_assistant,
         truth_bundle=truth_bundle,
         truth_followup=truth_followup,
+        correction_candidates=correction_candidates,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -1230,6 +1402,7 @@ async def reference_iterate_stage_checkpoint(
             repeated_correction_focus=[],
             stagnation_count=0,
             compare_result=compare_result,
+            correction_candidates=compare_result.correction_candidates,
             stop_reason=compare_result.error or stop_reason,
             message="Stage iteration did not complete successfully.",
             error=compare_result.error,
@@ -1305,6 +1478,7 @@ async def reference_iterate_stage_checkpoint(
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
         compare_result=compare_result,
+        correction_candidates=compare_result.correction_candidates,
         stop_reason=stop_reason,
         message=message,
     )

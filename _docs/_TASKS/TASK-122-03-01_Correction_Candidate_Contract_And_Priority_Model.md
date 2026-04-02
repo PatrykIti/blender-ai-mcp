@@ -1,8 +1,10 @@
 # TASK-122-03-01: Correction Candidate Contract and Priority Model
 
 **Parent:** [TASK-122-03](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added a merged `correction_candidates` contract for stage compare / iterate responses. The first MVP preserves source boundaries by nesting vision evidence, truth evidence, and bounded macro options inside one explicitly ranked candidate list. Truth-driven pair issues can now become `truth_only` or `hybrid` candidates, while unmatched vision focus items remain `vision_only` candidates instead of being flattened into ad hoc prose order.
 
 ## Objective
 
@@ -47,4 +49,4 @@ Define one merged contract that can carry vision mismatch signals, truth/spatial
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the hybrid-loop work advances or closes
+- this leaf is closed; the hybrid-loop parent remains in progress for truth integration, disposition policy, and eval work

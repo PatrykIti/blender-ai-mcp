@@ -1,8 +1,10 @@
 # TASK-122-03: Hybrid Vision + Truth Correction Loop
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first hybrid-loop leaf is now complete. Stage compare / iterate responses expose a ranked `correction_candidates` list that preserves source boundaries between vision evidence, truth evidence, and bounded macro options. The subtree remains open while truth integration, loop-disposition policy, and real eval work land on top of that contract.
 
 ## Objective
 

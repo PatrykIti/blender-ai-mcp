@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from server.adapters.mcp.areas.reference import (
+    _build_correction_candidates,
     _build_truth_followup,
     reference_compare_checkpoint,
     reference_compare_current_view,
@@ -84,6 +85,91 @@ def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
     assert followup.continue_recommended is True
     assert followup.macro_candidates
     assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
+
+
+def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focus():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_merge",
+            "checkpoint_label": "stage_merge",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 1,
+            "reference_ids": ["ref_1"],
+            "reference_labels": ["front_ref"],
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "TruthHead",
+                    "object_names": ["TruthHead", "TruthBody"],
+                    "object_count": 2,
+                },
+                "continue_recommended": True,
+                "message": "truth",
+                "focus_pairs": ["TruthHead -> TruthBody"],
+                "items": [
+                    {
+                        "kind": "contact_failure",
+                        "summary": "TruthHead -> TruthBody failed the contact assertion.",
+                        "priority": "high",
+                        "from_object": "TruthHead",
+                        "to_object": "TruthBody",
+                        "tool_name": "scene_assert_contact",
+                    }
+                ],
+                "macro_candidates": [
+                    {
+                        "macro_name": "macro_align_part_with_contact",
+                        "reason": "Repair the pair with a bounded nudge.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "part_object": "TruthHead",
+                            "reference_object": "TruthBody",
+                        },
+                    }
+                ],
+            },
+            "vision_assistant": {
+                "status": "success",
+                "assistant_name": "vision_assist",
+                "message": "ok",
+                "budget": {"max_input_chars": 1000, "max_messages": 1, "max_tokens": 100, "tool_budget": 0},
+                "capability_source": "local_runtime",
+                "result": {
+                    "backend_kind": "mlx_local",
+                    "goal_summary": "The pair still needs correction.",
+                    "visible_changes": ["The body is visible."],
+                    "shape_mismatches": ["TruthHead -> TruthBody contact is still wrong."],
+                    "proportion_mismatches": [],
+                    "correction_focus": ["TruthHead -> TruthBody contact", "Head silhouette"],
+                    "next_corrections": ["Repair contact first."],
+                    "likely_issues": [],
+                    "recommended_checks": [],
+                    "captures_used": ["target_front_after"],
+                },
+            },
+        }
+    )
+
+    candidates = _build_correction_candidates(compare)
+
+    assert [candidate.priority_rank for candidate in candidates] == [1, 2]
+    assert candidates[0].candidate_kind == "hybrid"
+    assert candidates[0].priority == "high"
+    assert candidates[0].focus_pairs == ["TruthHead -> TruthBody"]
+    assert candidates[0].source_signals == ["truth", "macro", "vision"]
+    assert candidates[0].truth_evidence is not None
+    assert candidates[0].truth_evidence.macro_candidates[0].macro_name == "macro_align_part_with_contact"
+    assert candidates[0].vision_evidence is not None
+    assert candidates[0].vision_evidence.correction_focus == ["TruthHead -> TruthBody contact"]
+    assert candidates[1].candidate_kind == "vision_only"
+    assert candidates[1].summary == "Head silhouette"
 
 
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):
@@ -735,6 +821,10 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
     ]
     assert result.truth_followup.macro_candidates
     assert result.truth_followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
+    assert result.correction_candidates
+    assert result.correction_candidates[0].priority_rank == 1
+    assert result.correction_candidates[0].candidate_kind == "truth_only"
+    assert result.correction_candidates[0].truth_evidence is not None
     assert captured["request"].truth_summary["summary"]["pair_count"] == 2
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 
@@ -834,6 +924,7 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     assert result.truth_bundle.summary.pair_count == 1
     assert result.truth_followup is not None
     assert result.truth_followup.continue_recommended is False
+    assert result.correction_candidates == []
 
 
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
@@ -947,6 +1038,25 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
             "reference_count": 2,
             "reference_ids": ["ref_1", "ref_2"],
             "reference_labels": ["front_ref", "side_ref"],
+            "correction_candidates": [
+                {
+                    "candidate_id": "vision:head_silhouette",
+                    "summary": "Head silhouette",
+                    "priority_rank": 1,
+                    "priority": "normal",
+                    "candidate_kind": "vision_only",
+                    "target_object": "Squirrel",
+                    "target_objects": ["Squirrel"],
+                    "focus_pairs": [],
+                    "source_signals": ["vision"],
+                    "vision_evidence": {
+                        "correction_focus": ["Head silhouette"],
+                        "shape_mismatches": ["Head silhouette is still too spherical."],
+                        "proportion_mismatches": [],
+                        "next_corrections": ["Flatten the head silhouette slightly."],
+                    },
+                }
+            ],
             "vision_assistant": {
                 "status": "success",
                 "assistant_name": "vision_assist",
@@ -1010,6 +1120,8 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
     assert first.iteration_index == 1
     assert first.loop_disposition == "continue_build"
     assert first.prior_correction_focus == []
+    assert first.correction_candidates
+    assert first.correction_candidates[0].summary == "Head silhouette"
     assert second.iteration_index == 2
     assert second.prior_checkpoint_id == "checkpoint_1"
     assert second.prior_correction_focus == ["Head silhouette"]

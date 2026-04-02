@@ -138,5 +138,8 @@ def test_reference_compare_stage_checkpoint_exposes_truth_bundle_and_followup(
         assert result.truth_followup.focus_pairs == [f"{head_name} -> {body_name}"]
         assert any(item.tool_name == "scene_assert_contact" for item in result.truth_followup.items)
         assert any(item.tool_name == "scene_measure_gap" for item in result.truth_followup.items)
+        assert result.correction_candidates
+        assert result.correction_candidates[0].focus_pairs == [f"{head_name} -> {body_name}"]
+        assert "truth" in result.correction_candidates[0].source_signals
     except RuntimeError as e:
         _skip_if_blender_unavailable(e)

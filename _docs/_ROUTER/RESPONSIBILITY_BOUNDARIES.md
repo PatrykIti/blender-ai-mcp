@@ -218,6 +218,16 @@ The intended system contract is:
 - **Router** decides what is safe and how execution should be corrected.
 - **Inspection / Assertion** decides what is true and whether the result is acceptable.
 
+For hybrid correction-loop payloads such as ranked `correction_candidates`,
+preserve those boundaries inside the contract itself:
+
+- vision evidence may justify *what looks wrong*
+- truth evidence may justify *what is spatially wrong*
+- macro candidates may justify *what bounded repair is available*
+
+Do not collapse those sources into one fuzzy score that hides provenance.
+Ranking is allowed; source erasure is not.
+
 For correction policy specifically:
 
 - normalized confidence and explicit risk classes should feed one router policy decision

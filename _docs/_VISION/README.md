@@ -54,6 +54,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `assembled_target_scope` for explicit assembled-model targeting semantics
   - `truth_bundle` for correction-oriented contact/gap/alignment/overlap findings
   - `truth_followup` for loop-ready truth handoff items and focus pairs
+  - `correction_candidates` for one ranked merged candidate list that preserves
+    vision evidence, truth evidence, and bounded macro options without
+    collapsing their source boundaries
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

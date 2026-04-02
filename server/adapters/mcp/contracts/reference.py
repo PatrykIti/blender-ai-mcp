@@ -10,7 +10,9 @@ from typing import Literal
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
     SceneCorrectionTruthBundleContract,
+    SceneRepairMacroCandidateContract,
     SceneTruthFollowupContract,
+    SceneTruthFollowupItemContract,
 )
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import VisionAssistantContract
@@ -64,6 +66,42 @@ class ReferenceCompareCheckpointResponseContract(MCPContract):
     error: str | None = None
 
 
+class ReferenceCorrectionVisionEvidenceContract(MCPContract):
+    """Vision-side evidence attached to one merged correction candidate."""
+
+    correction_focus: list[str] = []
+    shape_mismatches: list[str] = []
+    proportion_mismatches: list[str] = []
+    next_corrections: list[str] = []
+
+
+class ReferenceCorrectionTruthEvidenceContract(MCPContract):
+    """Truth-side evidence attached to one merged correction candidate."""
+
+    focus_pairs: list[str] = []
+    item_kinds: list[
+        Literal["contact_failure", "gap", "overlap", "alignment", "measurement_error", "insufficient_scope"]
+    ] = []
+    items: list[SceneTruthFollowupItemContract] = []
+    macro_candidates: list[SceneRepairMacroCandidateContract] = []
+
+
+class ReferenceCorrectionCandidateContract(MCPContract):
+    """One ranked correction candidate combining vision, truth, and macro evidence."""
+
+    candidate_id: str
+    summary: str
+    priority_rank: int
+    priority: Literal["high", "normal"] = "normal"
+    candidate_kind: Literal["vision_only", "truth_only", "hybrid"] = "vision_only"
+    target_object: str | None = None
+    target_objects: list[str] = []
+    focus_pairs: list[str] = []
+    source_signals: list[Literal["vision", "truth", "macro"]] = []
+    vision_evidence: ReferenceCorrectionVisionEvidenceContract | None = None
+    truth_evidence: ReferenceCorrectionTruthEvidenceContract | None = None
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -75,6 +113,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     assembled_target_scope: SceneAssembledTargetScopeContract | None = None
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
+    correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -101,6 +140,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     assembled_target_scope: SceneAssembledTargetScopeContract | None = None
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
+    correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
