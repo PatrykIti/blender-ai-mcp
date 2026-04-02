@@ -40,6 +40,38 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
+    def attach_part_to_surface(
+        self,
+        part_object: str,
+        surface_object: str,
+        surface_axis: str,
+        surface_side: str = "positive",
+        align_mode: str = "center",
+        gap: float = 0.0,
+        offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Seat one part onto another object's surface/body with bounded contact placement."""
+        pass
+
+    @abstractmethod
+    def align_part_with_contact(
+        self,
+        part_object: str,
+        reference_object: str,
+        target_relation: str = "contact",
+        gap: float = 0.0,
+        align_mode: str = "none",
+        normal_axis: Optional[str] = None,
+        preserve_side: bool = True,
+        max_nudge: float = 0.5,
+        offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Repair one already-related pair with a bounded contact/gap-aware nudge."""
+        pass
+
+    @abstractmethod
     def finish_form(
         self,
         target_object: str,

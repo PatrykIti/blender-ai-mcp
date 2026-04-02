@@ -1,8 +1,10 @@
 # TASK-122-02-02-01-02: Minimal Nudge and Before/After Truth Summary
 
 **Parent:** [TASK-122-02-02-01](./TASK-122-02-02-01_Repair_Macro_Contract_Inference_And_Candidate_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The repair macro now computes one bounded minimal nudge instead of a fresh re-placement. It returns before/after pair truth snapshots in the action log, blocks moves that exceed `max_nudge`, and keeps deterministic verification hints attached to the report.
 
 ## Objective
 
@@ -38,4 +40,4 @@ summary instead of only a transform report.
 
 ## Status / Board Update
 
-- update this leaf and its parent when the bounded repair behavior is implemented
+- this leaf is closed

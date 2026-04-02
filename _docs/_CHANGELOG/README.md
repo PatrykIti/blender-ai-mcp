@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [186](./186-2026-04-02-macro-align-part-with-contact.md) | 2026-04-02 | **Macro align part with contact** | - |
 | [185](./185-2026-04-01-macro-attach-part-to-surface.md) | 2026-04-01 | **Macro attach part to surface** | - |
 | [184](./184-2026-04-01-truth-followup-loop-handoff.md) | 2026-04-01 | **Truth follow-up loop handoff** | - |
 | [183](./183-2026-04-01-correction-truth-bundle-baseline.md) | 2026-04-01 | **Correction truth bundle baseline** | - |

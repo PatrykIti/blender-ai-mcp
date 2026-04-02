@@ -63,6 +63,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_cutout_recess` for recesses, openings, and cutter-driven cutouts
 - `macro_relative_layout` for align/place/contact-gap part layout
 - `macro_attach_part_to_surface` for seating one part onto another object's surface/body
+- `macro_align_part_with_contact` for minimal repair nudges on pairs that almost fit
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
@@ -176,6 +177,7 @@ Current structured-contract baseline includes:
 - `macro_cutout_recess`
 - `macro_finish_form`
 - `macro_attach_part_to_surface`
+- `macro_align_part_with_contact`
 - `macro_relative_layout`
 - `scene_create`
 - `scene_configure`

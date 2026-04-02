@@ -19,6 +19,7 @@ CONTRACT_ENABLED_TOOLS = {
     "macro_finish_form",
     "macro_relative_layout",
     "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
     "mesh_select",
     "mesh_select_targeted",
     "mesh_inspect",

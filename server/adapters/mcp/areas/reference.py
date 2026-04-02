@@ -26,6 +26,7 @@ from server.adapters.mcp.contracts.reference import (
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
+    SceneRepairMacroCandidateContract,
     SceneAssertionPayloadContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
@@ -437,11 +438,14 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             message="No pairwise truth checks are available for this assembled target scope yet.",
             focus_pairs=[],
             items=[],
+            macro_candidates=[],
         )
 
     items: list[SceneTruthFollowupItemContract] = []
+    macro_candidates: list[SceneRepairMacroCandidateContract] = []
     focus_pairs: list[str] = []
     seen_pairs: set[str] = set()
+    pair_issue_kinds: dict[str, set[str]] = {}
 
     for check in bundle.checks:
         pair_label = _pair_label(check.from_object, check.to_object)
@@ -505,17 +509,47 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
             if pair_label not in seen_pairs:
                 seen_pairs.add(pair_label)
                 focus_pairs.append(pair_label)
+            pair_issue_kinds[pair_label] = {
+                item.kind
+                for item in items
+                if item.from_object == check.from_object and item.to_object == check.to_object
+            }
+
+    for pair_label in focus_pairs:
+        issue_kinds = pair_issue_kinds.get(pair_label, set())
+        if not issue_kinds:
+            continue
+        if "overlap" in issue_kinds or "measurement_error" in issue_kinds:
+            continue
+        if not issue_kinds.intersection({"contact_failure", "gap", "alignment"}):
+            continue
+        from_object, to_object = pair_label.split(" -> ", 1)
+        macro_candidates.append(
+            SceneRepairMacroCandidateContract(
+                macro_name="macro_align_part_with_contact",
+                reason="Use a bounded repair nudge to restore contact/alignment without re-placing the pair from scratch.",
+                priority="high" if "contact_failure" in issue_kinds else "normal",
+                arguments_hint={
+                    "part_object": from_object,
+                    "reference_object": to_object,
+                    "target_relation": "contact",
+                    "align_mode": "none",
+                    "preserve_side": True,
+                },
+            )
+        )
 
     return SceneTruthFollowupContract(
         scope=bundle.scope,
         continue_recommended=bool(items),
         message=(
-            f"Truth follow-up identified {len(items)} actionable finding(s) across {len(focus_pairs)} pair(s)."
+            f"Truth follow-up identified {len(items)} actionable finding(s), plus {len(macro_candidates)} repair macro candidate(s), across {len(focus_pairs)} pair(s)."
             if items
             else "Truth follow-up found no actionable pairwise issues for the current assembled target scope."
         ),
         focus_pairs=focus_pairs,
         items=items,
+        macro_candidates=macro_candidates,
     )
 
 

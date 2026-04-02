@@ -14,6 +14,7 @@ from server.adapters.mcp.contracts.scene import (
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneRepairMacroCandidateContract,
     SceneCreateResponseContract,
     SceneCustomPropertiesContract,
     SceneHierarchyContract,
@@ -202,11 +203,20 @@ def test_scene_truth_followup_contract_carries_loop_ready_items():
                 tool_name="scene_measure_gap",
             )
         ],
+        macro_candidates=[
+            SceneRepairMacroCandidateContract(
+                macro_name="macro_align_part_with_contact",
+                reason="Repair the pair with a bounded nudge.",
+                priority="high",
+                arguments_hint={"part_object": "Squirrel_Head", "reference_object": "Squirrel_Tail"},
+            )
+        ],
     )
 
     assert followup.continue_recommended is True
     assert followup.focus_pairs == ["Squirrel_Head -> Squirrel_Tail"]
     assert followup.items[0].tool_name == "scene_measure_gap"
+    assert followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
 
 
 def test_scene_create_contract_carries_structured_payload_or_error():

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Optional, cast
 from uuid import uuid4
 
@@ -342,6 +343,172 @@ class MacroToolHandler(IMacroTool):
             placement_summary=f"Seated '{part_object}' onto '{surface_object}'",
         )
 
+    def align_part_with_contact(
+        self,
+        part_object: str,
+        reference_object: str,
+        target_relation: str = "contact",
+        gap: float = 0.0,
+        align_mode: str = "none",
+        normal_axis: Optional[str] = None,
+        preserve_side: bool = True,
+        max_nudge: float = 0.5,
+        offset: Optional[List[float]] = None,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if part_object == reference_object:
+            raise ValueError("part_object and reference_object must be different")
+
+        relation_name = self._normalize_target_relation(target_relation)
+        gap_value = self._require_non_negative(gap, "gap")
+        if relation_name == "contact" and gap_value != 0.0:
+            raise ValueError("gap must be 0 when target_relation='contact'")
+        align_mode_name = self._normalize_layout_mode(align_mode, field_name="align_mode")
+        offset_vector = self._normalize_offset(offset)
+        max_nudge_value = self._require_positive(max_nudge, "max_nudge")
+
+        reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
+        moving_bbox = self._scene.get_bounding_box(part_object, world_space=True)
+        before_truth = self._pair_truth_summary(part_object, reference_object)
+
+        resolved_normal_axis = self._normalize_contact_axis(normal_axis) if normal_axis is not None else None
+        if resolved_normal_axis is None:
+            resolved_normal_axis = self._infer_repair_axis(
+                moving_bbox=moving_bbox,
+                reference_bbox=reference_bbox,
+                truth_summary=before_truth,
+                gap_value=gap_value,
+            )
+        if resolved_normal_axis is None:
+            return self._blocked_repair_report(
+                macro_name="macro_align_part_with_contact",
+                intent=f"Repair '{part_object}' relative to '{reference_object}'",
+                message="Could not infer a stable repair axis from the current pair state.",
+                before_truth=before_truth,
+            )
+
+        resolved_side = self._infer_side_from_centers(moving_bbox, reference_bbox, resolved_normal_axis)
+        if resolved_side is None:
+            if preserve_side:
+                return self._blocked_repair_report(
+                    macro_name="macro_align_part_with_contact",
+                    intent=f"Repair '{part_object}' relative to '{reference_object}'",
+                    message="Could not infer the current side to preserve; pass normal_axis only after the pair has a clear side relation.",
+                    before_truth=before_truth,
+                )
+            resolved_side = self._choose_min_nudge_side(
+                moving_bbox=moving_bbox,
+                reference_bbox=reference_bbox,
+                axis_name=resolved_normal_axis,
+                gap_value=gap_value,
+            )
+
+        modes = {
+            axis_name: ("none" if axis_name == resolved_normal_axis else align_mode_name)
+            for axis_name in self._AXIS_INDEX
+        }
+        target_location, moving_center, _reference_center, _moving_half, _center_axes = self._compute_target_location(
+            moving_bbox=moving_bbox,
+            reference_bbox=reference_bbox,
+            modes=modes,
+            resolved_contact_axis=resolved_normal_axis,
+            resolved_contact_side=resolved_side,
+            gap_value=gap_value,
+            offset_vector=offset_vector,
+        )
+        translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
+        nudge_distance = round(math.sqrt(sum((target - current) ** 2 for target, current in zip(target_location, moving_center))), 6)
+
+        if nudge_distance > max_nudge_value:
+            return self._blocked_repair_report(
+                macro_name="macro_align_part_with_contact",
+                intent=f"Repair '{part_object}' relative to '{reference_object}'",
+                message=(
+                    f"Required repair nudge {nudge_distance:g} exceeds max_nudge {max_nudge_value:g}; "
+                    "use a broader placement macro or raise the bound explicitly."
+                ),
+                before_truth=before_truth,
+                repair_plan={
+                    "target_relation": relation_name,
+                    "normal_axis": resolved_normal_axis,
+                    "preserved_side": resolved_side,
+                    "align_mode": align_mode_name,
+                    "translation_delta": translation_delta,
+                    "nudge_distance": nudge_distance,
+                    "max_nudge": max_nudge_value,
+                },
+            )
+
+        base_report = self._execute_relative_layout_macro(
+            macro_name="macro_align_part_with_contact",
+            moving_object=part_object,
+            reference_object=reference_object,
+            modes=modes,
+            resolved_contact_axis=resolved_normal_axis,
+            resolved_contact_side=resolved_side,
+            gap_value=gap_value,
+            offset_vector=offset_vector,
+            capture_profile=capture_profile,
+            intent=(
+                f"Repair '{part_object}' against '{reference_object}' toward {relation_name} "
+                f"using inferred {resolved_side} {resolved_normal_axis} side"
+            ),
+            placement_action="align_part_with_contact",
+            placement_summary=f"Nudged '{part_object}' toward a bounded {relation_name} repair against '{reference_object}'",
+        )
+        after_truth = self._pair_truth_summary(part_object, reference_object)
+        actions_taken = list(base_report.get("actions_taken") or [])
+        actions_taken.insert(
+            0,
+            {
+                "status": "applied",
+                "action": "inspect_pair_truth_before",
+                "tool_name": "scene_measure_gap",
+                "summary": f"Read pair truth before repairing '{part_object}' relative to '{reference_object}'",
+                "details": before_truth,
+            },
+        )
+        actions_taken.insert(
+            1,
+            {
+                "status": "applied",
+                "action": "infer_repair_plan",
+                "tool_name": None,
+                "summary": "Inferred bounded repair direction from the current pair state",
+                "details": {
+                    "target_relation": relation_name,
+                    "normal_axis": resolved_normal_axis,
+                    "preserved_side": resolved_side,
+                    "align_mode": align_mode_name,
+                    "translation_delta": translation_delta,
+                    "nudge_distance": nudge_distance,
+                    "max_nudge": max_nudge_value,
+                    "preserve_side": preserve_side,
+                },
+            },
+        )
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_pair_truth_after",
+                "tool_name": "scene_measure_gap",
+                "summary": f"Read pair truth after repairing '{part_object}' relative to '{reference_object}'",
+                "details": after_truth,
+            }
+        )
+        verification_recommended = list(base_report.get("verification_recommended") or [])
+        verification_recommended.append(
+            {
+                "tool_name": "scene_measure_overlap",
+                "reason": "Confirm that the bounded repair did not introduce a new overlap issue.",
+                "priority": "normal",
+                "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+            }
+        )
+        base_report["actions_taken"] = actions_taken
+        base_report["verification_recommended"] = verification_recommended
+        return base_report
+
     def _execute_relative_layout_macro(
         self,
         *,
@@ -368,37 +535,15 @@ class MacroToolHandler(IMacroTool):
 
         reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
         moving_bbox = self._scene.get_bounding_box(moving_object, world_space=True)
-        moving_center = [float(value) for value in moving_bbox["center"]]
-        reference_center = [float(value) for value in reference_bbox["center"]]
-        moving_half = [float(value) / 2.0 for value in moving_bbox["dimensions"]]
-
-        target_location = list(moving_center)
-        center_axes: list[str] = []
-
-        for axis_name, mode in modes.items():
-            if mode == "none":
-                continue
-            axis_index = self._AXIS_INDEX[axis_name]
-            if mode == "center":
-                target_location[axis_index] = reference_center[axis_index]
-                center_axes.append(axis_name)
-            elif mode == "min":
-                target_location[axis_index] = float(reference_bbox["min"][axis_index]) + moving_half[axis_index]
-            else:
-                target_location[axis_index] = float(reference_bbox["max"][axis_index]) - moving_half[axis_index]
-
-        if resolved_contact_axis is not None:
-            axis_index = self._AXIS_INDEX[resolved_contact_axis]
-            if resolved_contact_side == "positive":
-                target_location[axis_index] = (
-                    float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
-                )
-            else:
-                target_location[axis_index] = (
-                    float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
-                )
-
-        target_location = [target + delta for target, delta in zip(target_location, offset_vector)]
+        target_location, moving_center, reference_center, _moving_half, center_axes = self._compute_target_location(
+            moving_bbox=moving_bbox,
+            reference_bbox=reference_bbox,
+            modes=modes,
+            resolved_contact_axis=resolved_contact_axis,
+            resolved_contact_side=resolved_contact_side,
+            gap_value=gap_value,
+            offset_vector=offset_vector,
+        )
         translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
 
         actions_taken: list[Dict[str, Any]] = [
@@ -534,6 +679,46 @@ class MacroToolHandler(IMacroTool):
             captures_before=captures_before,
             captures_after=captures_after,
         )
+
+    def _compute_target_location(
+        self,
+        *,
+        moving_bbox: Dict[str, Any],
+        reference_bbox: Dict[str, Any],
+        modes: dict[str, str],
+        resolved_contact_axis: Optional[str],
+        resolved_contact_side: str,
+        gap_value: float,
+        offset_vector: list[float],
+    ) -> tuple[list[float], list[float], list[float], list[float], list[str]]:
+        moving_center = [float(value) for value in moving_bbox["center"]]
+        reference_center = [float(value) for value in reference_bbox["center"]]
+        moving_half = [float(value) / 2.0 for value in moving_bbox["dimensions"]]
+
+        target_location = list(moving_center)
+        center_axes: list[str] = []
+
+        for axis_name, mode in modes.items():
+            if mode == "none":
+                continue
+            axis_index = self._AXIS_INDEX[axis_name]
+            if mode == "center":
+                target_location[axis_index] = reference_center[axis_index]
+                center_axes.append(axis_name)
+            elif mode == "min":
+                target_location[axis_index] = float(reference_bbox["min"][axis_index]) + moving_half[axis_index]
+            else:
+                target_location[axis_index] = float(reference_bbox["max"][axis_index]) - moving_half[axis_index]
+
+        if resolved_contact_axis is not None:
+            axis_index = self._AXIS_INDEX[resolved_contact_axis]
+            if resolved_contact_side == "positive":
+                target_location[axis_index] = float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+            else:
+                target_location[axis_index] = float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+
+        target_location = [target + delta for target, delta in zip(target_location, offset_vector)]
+        return target_location, moving_center, reference_center, moving_half, center_axes
 
     def finish_form(
         self,
@@ -822,6 +1007,140 @@ class MacroToolHandler(IMacroTool):
         if normalized not in {"positive", "negative"}:
             raise ValueError("contact_side must be one of positive or negative")
         return normalized
+
+    def _normalize_target_relation(self, relation: str) -> str:
+        normalized = str(relation).lower()
+        if normalized not in {"contact", "gap"}:
+            raise ValueError("target_relation must be one of contact or gap")
+        return normalized
+
+    def _pair_truth_summary(self, part_object: str, reference_object: str) -> Dict[str, Any]:
+        return {
+            "gap": self._scene.measure_gap(part_object, reference_object),
+            "alignment": self._scene.measure_alignment(part_object, reference_object, ["X", "Y", "Z"], "CENTER"),
+            "overlap": self._scene.measure_overlap(part_object, reference_object),
+            "contact_assertion": self._scene.assert_contact(part_object, reference_object, max_gap=0.001, allow_overlap=False),
+        }
+
+    def _infer_side_from_centers(
+        self,
+        moving_bbox: Dict[str, Any],
+        reference_bbox: Dict[str, Any],
+        axis_name: str,
+        *,
+        epsilon: float = 1e-6,
+    ) -> Optional[str]:
+        axis_index = self._AXIS_INDEX[axis_name]
+        moving_center = float(moving_bbox["center"][axis_index])
+        reference_center = float(reference_bbox["center"][axis_index])
+        delta = moving_center - reference_center
+        if delta > epsilon:
+            return "positive"
+        if delta < -epsilon:
+            return "negative"
+        return None
+
+    def _choose_min_nudge_side(
+        self,
+        *,
+        moving_bbox: Dict[str, Any],
+        reference_bbox: Dict[str, Any],
+        axis_name: str,
+        gap_value: float,
+    ) -> str:
+        axis_index = self._AXIS_INDEX[axis_name]
+        moving_center = float(moving_bbox["center"][axis_index])
+        moving_half = float(moving_bbox["dimensions"][axis_index]) / 2.0
+        positive_target = float(reference_bbox["max"][axis_index]) + gap_value + moving_half
+        negative_target = float(reference_bbox["min"][axis_index]) - gap_value - moving_half
+        return "positive" if abs(positive_target - moving_center) <= abs(negative_target - moving_center) else "negative"
+
+    def _infer_repair_axis(
+        self,
+        *,
+        moving_bbox: Dict[str, Any],
+        reference_bbox: Dict[str, Any],
+        truth_summary: Dict[str, Any],
+        gap_value: float,
+    ) -> Optional[str]:
+        gap_payload = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
+        axis_gap = gap_payload.get("axis_gap") if isinstance(gap_payload, dict) else None
+        if isinstance(axis_gap, dict):
+            ordered = sorted(
+                (
+                    (axis_name, abs(float(axis_gap.get(axis_name.lower()) or 0.0)))
+                    for axis_name in self._AXIS_INDEX
+                ),
+                key=lambda item: item[1],
+                reverse=True,
+            )
+            if ordered and ordered[0][1] > 1e-6:
+                return ordered[0][0]
+
+        best_axis: Optional[str] = None
+        best_delta: float | None = None
+        for axis_name, axis_index in self._AXIS_INDEX.items():
+            inferred_side = self._infer_side_from_centers(moving_bbox, reference_bbox, axis_name)
+            if inferred_side is None:
+                continue
+            moving_center = float(moving_bbox["center"][axis_index])
+            moving_half = float(moving_bbox["dimensions"][axis_index]) / 2.0
+            if inferred_side == "positive":
+                target = float(reference_bbox["max"][axis_index]) + gap_value + moving_half
+            else:
+                target = float(reference_bbox["min"][axis_index]) - gap_value - moving_half
+            delta = abs(target - moving_center)
+            if best_delta is None or delta < best_delta:
+                best_axis = axis_name
+                best_delta = delta
+        return best_axis
+
+    def _blocked_repair_report(
+        self,
+        *,
+        macro_name: str,
+        intent: str,
+        message: str,
+        before_truth: Dict[str, Any],
+        repair_plan: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_pair_truth_before",
+                "tool_name": "scene_measure_gap",
+                "summary": "Read pair truth before bounded repair planning",
+                "details": before_truth,
+            }
+        ]
+        if repair_plan is not None:
+            actions_taken.append(
+                {
+                    "status": "skipped",
+                    "action": "repair_plan_blocked",
+                    "tool_name": None,
+                    "summary": message,
+                    "details": repair_plan,
+                }
+            )
+        return {
+            "status": "blocked",
+            "macro_name": macro_name,
+            "intent": intent,
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": None,
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_measure_gap",
+                    "reason": "Re-check the pair state before attempting a broader placement or a larger repair bound.",
+                    "priority": "high",
+                    "arguments_hint": None,
+                }
+            ],
+            "requires_followup": True,
+            "error": message,
+        }
 
     def _resolve_finish_preset_parameters(
         self,

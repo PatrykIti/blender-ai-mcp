@@ -668,6 +668,8 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
         "Squirrel_Head -> Squirrel_Body",
         "Squirrel_Head -> Squirrel_Tail",
     ]
+    assert result.truth_followup.macro_candidates
+    assert result.truth_followup.macro_candidates[0].macro_name == "macro_align_part_with_contact"
     assert captured["request"].truth_summary["summary"]["pair_count"] == 2
     assert captured["request"].metadata["collection_name"] == "Squirrel"
 

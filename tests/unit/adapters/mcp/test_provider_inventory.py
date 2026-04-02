@@ -59,6 +59,7 @@ EXPECTED_SCENE_TOOLS = {
     "scene_create",
     "macro_relative_layout",
     "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",

@@ -1,8 +1,10 @@
 # TASK-122-02-02-01-03: Truth-Followup Candidate Exposure Without Auto-Apply
 
 **Parent:** [TASK-122-02-02-01](./TASK-122-02-02-01_Repair_Macro_Contract_Inference_And_Candidate_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** `truth_followup` now exposes `macro_candidates`, and clear gap/contact/alignment pairs can recommend `macro_align_part_with_contact` as a bounded repair option. The loop still does not auto-apply the macro by default.
 
 ## Objective
 
@@ -36,4 +38,4 @@ truth-followup / loop guidance without turning on automatic execution.
 
 ## Status / Board Update
 
-- update this leaf and its parent when candidate exposure is implemented
+- this leaf is closed

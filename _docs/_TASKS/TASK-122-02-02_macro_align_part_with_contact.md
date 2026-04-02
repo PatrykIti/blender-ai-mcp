@@ -1,8 +1,10 @@
 # TASK-122-02-02: `macro_align_part_with_contact`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added `macro_align_part_with_contact` as a bounded repair macro for already-related pairs. The first MVP reads pair truth through `gap` / `alignment` / `overlap` / `assert_contact`, infers a repair axis when possible, preserves the current side by default, enforces `max_nudge`, and surfaces the macro as a recommended candidate from `truth_followup` without auto-applying it in the loop.
 
 ## Objective
 
@@ -108,7 +110,7 @@ This task should **not** become:
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the macro moves from planning to implementation to closure
+- this leaf is closed; the parent macro wave remains in progress for the remaining creature-correction macros
 
 ## Execution Structure
 

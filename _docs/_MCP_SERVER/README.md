@@ -357,6 +357,7 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `macro_cutout_recess`
 - `macro_finish_form`
 - `macro_attach_part_to_surface`
+- `macro_align_part_with_contact`
 - `macro_relative_layout`
 - `scene_context`
 - `scene_inspect`
@@ -706,6 +707,7 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 | `macro_cutout_recess` | `target_object` (str), `width` (float), `height` (float), `depth` (float), `face` (str), `offset` ([x,y,z]), `mode` (str), `bevel_width` (float), `bevel_segments` (int), `cleanup` (str), `cutter_name` (str) | Creates one bounded recess/cutout by orchestrating cutter creation, placement, optional bevel, boolean application, and helper cleanup on a target object. |
 | `macro_finish_form` | `target_object` (str), `preset` (str), `bevel_width` (float), `bevel_segments` (int), `subsurf_levels` (int), `thickness` (float), `solidify_offset` (float) | Applies one bounded finishing stack to an object using a preset such as `rounded_housing`, `panel_finish`, `shell_thicken`, or `smooth_subdivision` instead of hand-building the modifier chain. |
 | `macro_attach_part_to_surface` | `part_object` (str), `surface_object` (str), `surface_axis` (`X`/`Y`/`Z`), `surface_side` (`positive`/`negative`), `align_mode` (`center`/`min`/`max`), `gap` (float), `offset` ([x,y,z]) | Seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. |
+| `macro_align_part_with_contact` | `part_object` (str), `reference_object` (str), `target_relation` (`contact`/`gap`), `gap` (float), `align_mode` (`none`/`center`/`min`/`max`), `normal_axis` (`X`/`Y`/`Z`, optional), `preserve_side` (bool), `max_nudge` (float), `offset` ([x,y,z]) | Repairs an already-related pair with a bounded minimal nudge. It reads the current truth state, infers a repair axis/side when possible, preserves the current side by default, and refuses broader moves once the required nudge exceeds `max_nudge`. |
 | `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
 
 Example guided macro flow for finishing:
@@ -721,6 +723,7 @@ Example guided macro flow for finishing:
 
 If `macro_finish_form` matches the user's intent, prefer it over manually chaining `modeling_add_modifier(...)` calls.
 If the task is specifically "seat/attach this part onto that surface/body", prefer `macro_attach_part_to_surface` over the more general `macro_relative_layout`.
+If the pair is already almost correct and only needs a small repair nudge, prefer `macro_align_part_with_contact` over a full re-placement macro.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.
 If the task is a bounded recess/opening, prefer `macro_cutout_recess` over hand-building the cutter/boolean sequence.
 

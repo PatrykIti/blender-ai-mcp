@@ -186,12 +186,20 @@ class SceneTruthFollowupItemContract(MCPContract):
     tool_name: str | None = None
 
 
+class SceneRepairMacroCandidateContract(MCPContract):
+    macro_name: str
+    reason: str
+    priority: Literal["high", "normal"] = "normal"
+    arguments_hint: dict[str, Any] | None = None
+
+
 class SceneTruthFollowupContract(MCPContract):
     scope: SceneAssembledTargetScopeContract
     continue_recommended: bool = False
     message: str
     focus_pairs: list[str] = []
     items: list[SceneTruthFollowupItemContract] = []
+    macro_candidates: list[SceneRepairMacroCandidateContract] = []
 
 
 class SceneAssertionPayloadContract(MCPContract):

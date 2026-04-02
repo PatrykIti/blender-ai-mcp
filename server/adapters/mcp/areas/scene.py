@@ -65,6 +65,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_create",
     "macro_relative_layout",
     "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -326,6 +327,111 @@ async def macro_attach_part_to_surface(
         status="failed",
         macro_name="macro_attach_part_to_surface",
         intent=f"attach '{part_object}' to '{surface_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_align_part_with_contact(
+    ctx: Context,
+    part_object: str,
+    reference_object: str,
+    target_relation: Literal["contact", "gap"] = "contact",
+    gap: float = 0.0,
+    align_mode: Literal["none", "center", "min", "max"] = "none",
+    normal_axis: Literal["X", "Y", "Z"] | None = None,
+    preserve_side: bool = True,
+    max_nudge: float = 0.5,
+    offset: Union[str, List[float], None] = None,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded repair macro for an already-related part pair.
+
+    Use this when a part is already roughly attached, but truth tools still show
+    a small gap, contact failure, or tangential drift that should be corrected
+    with a minimal nudge instead of a fresh placement.
+
+    Current first slice:
+    - one part/reference pair only
+    - truth-driven repair planning using gap/alignment/overlap/contact checks
+    - inferred normal axis when possible
+    - preserve current side by default when that side is clear
+    - bounded `max_nudge` safety gate to avoid turning repair into re-placement
+
+    Args:
+        part_object: Existing object to repair.
+        reference_object: Existing object that defines the desired relation.
+        target_relation: Desired repaired relation: `contact` or explicit `gap`.
+        gap: Target non-negative gap when `target_relation="gap"`. Must stay `0` for `contact`.
+        align_mode: Optional tangential alignment rule for the two non-normal axes.
+        normal_axis: Optional explicit normal axis. If omitted, the macro infers one when possible.
+        preserve_side: If True, preserve the current side relation when it is clear.
+        max_nudge: Maximum allowed total movement for the bounded repair.
+        offset: Optional world-axis offset `[x, y, z]` applied after the repair target is computed.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            parsed_offset = parse_coordinate(offset) or [0.0, 0.0, 0.0]
+            payload = get_macro_handler().align_part_with_contact(
+                part_object=part_object,
+                reference_object=reference_object,
+                target_relation=target_relation,
+                gap=gap,
+                align_mode=align_mode,
+                normal_axis=normal_axis,
+                preserve_side=preserve_side,
+                max_nudge=max_nudge,
+                offset=parsed_offset,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_align_part_with_contact",
+                intent=f"repair '{part_object}' relative to '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_align_part_with_contact",
+        params={
+            "part_object": part_object,
+            "reference_object": reference_object,
+            "target_relation": target_relation,
+            "gap": gap,
+            "align_mode": align_mode,
+            "normal_axis": normal_axis,
+            "preserve_side": preserve_side,
+            "max_nudge": max_nudge,
+            "offset": offset,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=str(result.get("status") or "failed"),
+                macro_name="macro_align_part_with_contact",
+                intent=f"repair '{part_object}' relative to '{reference_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_align_part_with_contact",
+        intent=f"repair '{part_object}' relative to '{reference_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),

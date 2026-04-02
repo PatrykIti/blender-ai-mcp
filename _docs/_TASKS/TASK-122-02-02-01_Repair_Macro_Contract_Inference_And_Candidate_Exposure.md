@@ -1,8 +1,10 @@
 # TASK-122-02-02-01: Repair Macro Contract, Inference, and Candidate Exposure
 
 **Parent:** [TASK-122-02-02](./TASK-122-02-02_macro_align_part_with_contact.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The MVP contract, inference path, and candidate exposure for `macro_align_part_with_contact` are now in place. The repair macro has a distinct pair-repair input model, bounded nudge behavior, and candidate exposure from `truth_followup` without any auto-apply path.
 
 ## Objective
 
@@ -61,7 +63,7 @@ The MVP should:
 
 ## Status / Board Update
 
-- update this subtask, its leaves, and the parent task when the MVP moves from planning to implementation to closure
+- this subtask is closed; its leaves now describe the completed MVP slices
 
 ## Leaf Breakdown
 

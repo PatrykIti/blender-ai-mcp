@@ -1,8 +1,10 @@
 # TASK-122-02-02-01-01: Truth-Driven Pair Input and Side Preservation
 
 **Parent:** [TASK-122-02-02-01](./TASK-122-02-02-01_Repair_Macro_Contract_Inference_And_Candidate_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The repair macro input model now distinguishes repair from fresh placement. `macro_align_part_with_contact` accepts pair-oriented repair inputs, optional `normal_axis`, `preserve_side`, and a bounded `max_nudge`, and preserves the current side by default when that side is clear.
 
 ## Objective
 
@@ -35,4 +37,4 @@ side preservation explicit by default.
 
 ## Status / Board Update
 
-- update this leaf and its parent when the input model is implemented
+- this leaf is closed

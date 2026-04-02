@@ -163,6 +163,7 @@ class ToolDispatcher:
                 "macro_finish_form": "finish_form",
                 "macro_relative_layout": "relative_layout",
                 "macro_attach_part_to_surface": "attach_part_to_surface",
+                "macro_align_part_with_contact": "align_part_with_contact",
             },
         )
 
