@@ -6,7 +6,7 @@
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The `TASK-122-01` truth-contract subtree is now complete: stage compare and iterate responses expose a structured `assembled_target_scope` envelope that distinguishes single-object, explicit object-set, collection-backed, and full-scene targeting, plus a correction-oriented `truth_bundle` and loop-ready `truth_followup` handoff. The umbrella remains in progress while the macro and hybrid-loop subtrees build on that baseline.
+**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete. Stage compare and iterate responses expose structured assembled-target truth handoff, and the bounded macro layer now covers seating, contact repair, mirrored placement, mirrored support placement, overlap cleanup, proportion repair, and ordered segment-chain arc adjustment. The umbrella remains in progress while the hybrid-loop subtree (`TASK-122-03`) merges those pieces into one practical correction loop.
 
 ## Objective
 
@@ -57,7 +57,7 @@ If this wave is done correctly, the repo gains:
 This umbrella covers:
 
 - truth/spatial correction bundles for assembled parts
-- macro tools for attachment, contact, symmetry pairing, proportion, tail/limb posing, and intersection cleanup
+- macro tools for attachment, contact repair, symmetry pairing, supported-pair placement, proportion repair, ordered segment-chain shaping, and intersection cleanup
 - a hybrid loop contract that merges vision and truth signals
 - real assembled-creature evaluation and prompting guidance
 

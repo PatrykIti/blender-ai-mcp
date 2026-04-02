@@ -521,11 +521,26 @@ def _build_truth_followup(bundle: SceneCorrectionTruthBundleContract) -> SceneTr
         issue_kinds = pair_issue_kinds.get(pair_label, set())
         if not issue_kinds:
             continue
-        if "overlap" in issue_kinds or "measurement_error" in issue_kinds:
+        if "measurement_error" in issue_kinds:
+            continue
+        from_object, to_object = pair_label.split(" -> ", 1)
+        if "overlap" in issue_kinds:
+            macro_candidates.append(
+                SceneRepairMacroCandidateContract(
+                    macro_name="macro_cleanup_part_intersections",
+                    reason="Use a bounded cleanup push to separate the overlapping pair without broad manual re-placement.",
+                    priority="high",
+                    arguments_hint={
+                        "part_object": from_object,
+                        "reference_object": to_object,
+                        "gap": 0.0,
+                        "preserve_side": True,
+                    },
+                )
+            )
             continue
         if not issue_kinds.intersection({"contact_failure", "gap", "alignment"}):
             continue
-        from_object, to_object = pair_label.split(" -> ", 1)
         macro_candidates.append(
             SceneRepairMacroCandidateContract(
                 macro_name="macro_align_part_with_contact",

@@ -1,0 +1,42 @@
+{
+  "tool_name": "macro_cleanup_part_intersections",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "cleanup intersection",
+    "separate overlap",
+    "fix clipping",
+    "resolve collision",
+    "push out overlap",
+    "napraw przeciecie",
+    "usun nakladanie",
+    "rozdziel obiekty",
+    "kolizja czesci",
+    "przenikanie"
+  ],
+  "sample_prompts": [
+    "separate this horn from the head so it stops clipping through",
+    "clean up the overlap between these two parts with a small bounded push",
+    "rozdziel te dwa elementy bo teraz sie przenikaja",
+    "usun przeciecie tej czesci z korpusem bez przebudowy calego ukladu"
+  ],
+  "parameters": {
+    "part_object": {"type": "string", "required": true},
+    "reference_object": {"type": "string", "required": true},
+    "gap": {"type": "float", "default": 0.0},
+    "normal_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": null},
+    "preserve_side": {"type": "bool", "default": true},
+    "max_push": {"type": "float", "default": 0.5}
+  },
+  "related_tools": [
+    "macro_align_part_with_contact",
+    "macro_attach_part_to_surface",
+    "macro_relative_layout",
+    "scene_measure_overlap",
+    "scene_measure_gap",
+    "scene_assert_contact"
+  ],
+  "patterns": [],
+  "description": "Bounded cleanup macro that separates one overlapping pair by inferring a stable cleanup axis/side when possible and applying one limited push toward contact or a small gap. Prefer this over ad hoc manual transforms when the problem is obvious pairwise intersection rather than broader reconstruction."
+}

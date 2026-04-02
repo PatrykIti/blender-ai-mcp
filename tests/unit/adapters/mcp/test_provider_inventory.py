@@ -62,6 +62,7 @@ EXPECTED_SCENE_TOOLS = {
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_place_supported_pair",
+    "macro_cleanup_part_intersections",
     "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
     "scene_set_mode",

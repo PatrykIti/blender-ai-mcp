@@ -1023,6 +1023,326 @@ class MacroToolHandler(IMacroTool):
             captures_after=captures_after,
         )
 
+    def cleanup_part_intersections(
+        self,
+        part_object: str,
+        reference_object: str,
+        gap: float = 0.0,
+        normal_axis: Optional[str] = None,
+        preserve_side: bool = True,
+        max_push: float = 0.5,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if part_object == reference_object:
+            raise ValueError("part_object and reference_object must be different")
+
+        gap_value = self._require_non_negative(gap, "gap")
+        max_push_value = self._require_positive(max_push, "max_push")
+        reference_bbox = self._scene.get_bounding_box(reference_object, world_space=True)
+        moving_bbox = self._scene.get_bounding_box(part_object, world_space=True)
+        before_truth = self._pair_truth_summary(part_object, reference_object)
+        before_overlap = before_truth.get("overlap") if isinstance(before_truth, dict) else None
+        before_gap = before_truth.get("gap") if isinstance(before_truth, dict) else None
+        overlap_relation = str((before_overlap or {}).get("relation") or "").lower()
+
+        if overlap_relation != "overlap" or not bool((before_overlap or {}).get("overlaps")):
+            noop_report = {
+                "status": "success",
+                "macro_name": "macro_cleanup_part_intersections",
+                "intent": f"Clean intersection between '{part_object}' and '{reference_object}'",
+                "actions_taken": [
+                    {
+                        "status": "applied",
+                        "action": "inspect_overlap_before",
+                        "tool_name": "scene_measure_overlap",
+                        "summary": "Current pair is already non-overlapping; no bounded cleanup push was needed.",
+                        "details": {
+                            "overlap": before_overlap,
+                            "gap": before_gap,
+                        },
+                    }
+                ],
+                "objects_created": None,
+                "objects_modified": None,
+                "verification_recommended": [
+                    {
+                        "tool_name": "scene_measure_overlap",
+                        "reason": "Reconfirm overlap state if later edits reintroduce intersection risk.",
+                        "priority": "normal",
+                        "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                    }
+                ],
+                "requires_followup": False,
+            }
+            return noop_report
+
+        axis_candidates = (
+            [self._normalize_contact_axis(normal_axis)]
+            if normal_axis is not None
+            else self._ordered_overlap_axes(before_overlap)
+        )
+        resolved_normal_axis = next(
+            (
+                axis_name
+                for axis_name in axis_candidates
+                if axis_name is not None
+                and (
+                    not preserve_side
+                    or self._infer_side_from_centers(moving_bbox, reference_bbox, axis_name) is not None
+                )
+            ),
+            None,
+        )
+        if resolved_normal_axis is None and axis_candidates:
+            resolved_normal_axis = axis_candidates[0]
+        if resolved_normal_axis is None:
+            return {
+                "status": "blocked",
+                "macro_name": "macro_cleanup_part_intersections",
+                "intent": f"Clean intersection between '{part_object}' and '{reference_object}'",
+                "actions_taken": [
+                    {
+                        "status": "applied",
+                        "action": "inspect_overlap_before",
+                        "tool_name": "scene_measure_overlap",
+                        "summary": "Read overlap truth before bounded cleanup planning.",
+                        "details": before_truth,
+                    }
+                ],
+                "objects_created": None,
+                "objects_modified": None,
+                "verification_recommended": [
+                    {
+                        "tool_name": "scene_measure_overlap",
+                        "reason": "Re-check the overlap state before attempting a broader cleanup step.",
+                        "priority": "high",
+                        "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                    }
+                ],
+                "requires_followup": True,
+                "error": "Could not infer a stable cleanup axis from the current overlap state.",
+            }
+
+        resolved_side = self._infer_side_from_centers(moving_bbox, reference_bbox, resolved_normal_axis)
+        if resolved_side is None:
+            if preserve_side:
+                return {
+                    "status": "blocked",
+                    "macro_name": "macro_cleanup_part_intersections",
+                    "intent": f"Clean intersection between '{part_object}' and '{reference_object}'",
+                    "actions_taken": [
+                        {
+                            "status": "applied",
+                            "action": "inspect_overlap_before",
+                            "tool_name": "scene_measure_overlap",
+                            "summary": "Read overlap truth before bounded cleanup planning.",
+                            "details": before_truth,
+                        }
+                    ],
+                    "objects_created": None,
+                    "objects_modified": None,
+                    "verification_recommended": [
+                        {
+                            "tool_name": "scene_measure_overlap",
+                            "reason": "Re-check the overlap state before attempting a broader cleanup step.",
+                            "priority": "high",
+                            "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                        }
+                    ],
+                    "requires_followup": True,
+                    "error": (
+                        "Could not infer the current side to preserve for overlap cleanup; "
+                        "pass normal_axis only after the pair has a clear side relation or disable preserve_side."
+                    ),
+                }
+            resolved_side = self._choose_min_nudge_side(
+                moving_bbox=moving_bbox,
+                reference_bbox=reference_bbox,
+                axis_name=resolved_normal_axis,
+                gap_value=gap_value,
+            )
+
+        target_location, moving_center, _reference_center, _moving_half, _center_axes = self._compute_target_location(
+            moving_bbox=moving_bbox,
+            reference_bbox=reference_bbox,
+            modes={axis_name: "none" for axis_name in self._AXIS_INDEX},
+            resolved_contact_axis=resolved_normal_axis,
+            resolved_contact_side=resolved_side,
+            gap_value=gap_value,
+            offset_vector=[0.0, 0.0, 0.0],
+        )
+        translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
+        push_distance = round(
+            math.sqrt(sum((target - current) ** 2 for target, current in zip(target_location, moving_center))),
+            6,
+        )
+
+        if push_distance > max_push_value:
+            return {
+                "status": "blocked",
+                "macro_name": "macro_cleanup_part_intersections",
+                "intent": f"Clean intersection between '{part_object}' and '{reference_object}'",
+                "actions_taken": [
+                    {
+                        "status": "applied",
+                        "action": "inspect_overlap_before",
+                        "tool_name": "scene_measure_overlap",
+                        "summary": "Read overlap truth before bounded cleanup planning.",
+                        "details": before_truth,
+                    },
+                    {
+                        "status": "skipped",
+                        "action": "cleanup_plan_blocked",
+                        "tool_name": None,
+                        "summary": (
+                            f"Required cleanup push {push_distance:g} exceeds max_push {max_push_value:g}; "
+                            "use a broader rebuild step or raise the bound explicitly."
+                        ),
+                        "details": {
+                            "normal_axis": resolved_normal_axis,
+                            "preserved_side": resolved_side,
+                            "translation_delta": translation_delta,
+                            "push_distance": push_distance,
+                            "max_push": max_push_value,
+                            "gap": gap_value,
+                        },
+                    },
+                ],
+                "objects_created": None,
+                "objects_modified": None,
+                "verification_recommended": [
+                    {
+                        "tool_name": "scene_measure_overlap",
+                        "reason": "Re-check the overlap state before attempting a broader cleanup step.",
+                        "priority": "high",
+                        "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                    }
+                ],
+                "requires_followup": True,
+                "error": (
+                    f"Required cleanup push {push_distance:g} exceeds max_push {max_push_value:g}; "
+                    "use a broader rebuild step or raise the bound explicitly."
+                ),
+            }
+
+        bundle_id = self._make_capture_bundle_id("macro_cleanup_part_intersections", part_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=part_object,
+            capture_profile=capture_profile,
+        )
+
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_overlap_before",
+                "tool_name": "scene_measure_overlap",
+                "summary": f"Read overlap truth for '{part_object}' relative to '{reference_object}' before cleanup.",
+                "details": before_truth,
+            },
+            {
+                "status": "applied",
+                "action": "plan_intersection_cleanup",
+                "tool_name": None,
+                "summary": "Planned a bounded push to clear the current overlap.",
+                "details": {
+                    "normal_axis": resolved_normal_axis,
+                    "preserved_side": resolved_side,
+                    "translation_delta": translation_delta,
+                    "push_distance": push_distance,
+                    "max_push": max_push_value,
+                    "gap": gap_value,
+                    "preserve_side": preserve_side,
+                },
+            },
+        ]
+
+        self._modeling.transform_object(name=part_object, location=target_location)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "cleanup_part_intersections",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Moved '{part_object}' to clear the overlap against '{reference_object}'",
+                "details": {
+                    "target_location": target_location,
+                    "translation_delta": translation_delta,
+                    "normal_axis": resolved_normal_axis,
+                    "preserved_side": resolved_side,
+                    "gap": gap_value,
+                },
+            }
+        )
+
+        after_truth = self._pair_truth_summary(part_object, reference_object)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_overlap_after",
+                "tool_name": "scene_measure_overlap",
+                "summary": f"Read overlap truth for '{part_object}' relative to '{reference_object}' after cleanup.",
+                "details": after_truth,
+            }
+        )
+
+        cleanup_report: Dict[str, Any] = {
+            "status": "success",
+            "macro_name": "macro_cleanup_part_intersections",
+            "intent": f"Clean intersection between '{part_object}' and '{reference_object}'",
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": [part_object],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_measure_overlap",
+                    "reason": "Confirm the overlap volume is gone after the bounded cleanup push.",
+                    "priority": "high",
+                    "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                },
+                (
+                    {
+                        "tool_name": "scene_assert_contact",
+                        "reason": "Confirm the pair now resolves to contact without overlap.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "from_object": part_object,
+                            "to_object": reference_object,
+                            "max_gap": 0.001,
+                            "allow_overlap": False,
+                        },
+                    }
+                    if gap_value == 0.0
+                    else {
+                        "tool_name": "scene_measure_gap",
+                        "reason": "Confirm the requested post-cleanup clearance after the bounded push.",
+                        "priority": "high",
+                        "arguments_hint": {"from_object": part_object, "to_object": reference_object},
+                    }
+                ),
+                {
+                    "tool_name": "scene_get_viewport",
+                    "reason": "Do a quick visual check of the cleaned pair before continuing the build.",
+                    "priority": "normal",
+                    "arguments_hint": {"focus_target": part_object, "shading": "SOLID"},
+                },
+            ],
+            "requires_followup": True,
+        }
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=part_object,
+            capture_profile=capture_profile,
+        )
+        return self._finalize_report(
+            cleanup_report,
+            bundle_id=bundle_id,
+            target_object=part_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
     def adjust_relative_proportion(
         self,
         primary_object: str,
@@ -2059,6 +2379,21 @@ class MacroToolHandler(IMacroTool):
             offset_vector=[0.0, 0.0, 0.0],
         )
         return float(target_location[self._AXIS_INDEX[axis_name]])
+
+    def _ordered_overlap_axes(self, overlap_summary: Dict[str, Any] | None) -> list[AxisName]:
+        overlap_dimensions = overlap_summary.get("overlap_dimensions") if isinstance(overlap_summary, dict) else None
+        if not isinstance(overlap_dimensions, list) or len(overlap_dimensions) != 3:
+            return []
+
+        ordered = sorted(
+            (
+                (cast(AxisName, axis_name), abs(float(overlap_dimensions[axis_index] or 0.0)))
+                for axis_name, axis_index in self._AXIS_INDEX.items()
+                if abs(float(overlap_dimensions[axis_index] or 0.0)) > 1e-6
+            ),
+            key=lambda item: item[1],
+        )
+        return [axis_name for axis_name, _ in ordered]
 
     def _choose_min_nudge_side(
         self,

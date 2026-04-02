@@ -1,10 +1,10 @@
 # TASK-122-02: Creature Correction Macro Tool Wave
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first six macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, `macro_place_supported_pair` now handles mirrored pair placement against a shared support surface, `macro_adjust_relative_proportion` handles bounded cross-object ratio repair, and `macro_adjust_segment_chain_arc` handles bounded arc adjustment for ordered segment chains. The remaining creature-correction macro leaves stay open under this in-progress wave.
+**Completion Summary:** The full creature-correction macro subtree is now complete. The bounded macro layer covers initial seating, pair repair nudges, mirrored pair placement, mirrored pair support placement, overlap cleanup, cross-object proportion repair, and ordered segment-chain arc adjustment. `truth_followup` now has candidate exposure for both bounded contact repair and bounded overlap cleanup, so the later hybrid-loop subtree can consume a materially richer correction layer.
 
 ## Objective
 

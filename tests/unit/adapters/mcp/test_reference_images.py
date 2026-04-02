@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from server.adapters.mcp.areas.reference import (
+    _build_truth_followup,
     reference_compare_checkpoint,
     reference_compare_current_view,
     reference_compare_stage_checkpoint,
@@ -14,6 +15,13 @@ from server.adapters.mcp.areas.reference import (
     reference_iterate_stage_checkpoint,
 )
 from server.adapters.mcp.contracts.reference import ReferenceCompareStageCheckpointResponseContract
+from server.adapters.mcp.contracts.scene import (
+    SceneAssembledTargetScopeContract,
+    SceneAssertionPayloadContract,
+    SceneCorrectionTruthBundleContract,
+    SceneCorrectionTruthPairContract,
+    SceneCorrectionTruthSummaryContract,
+)
 from server.adapters.mcp.contracts.vision import VisionCaptureImageContract
 from server.adapters.mcp.sampling.result_types import (
     AssistantBudgetContract,
@@ -35,6 +43,47 @@ class FakeContext:
 
     def info(self, message, logger_name=None, extra=None):
         return None
+
+
+def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
+    bundle = SceneCorrectionTruthBundleContract(
+        scope=SceneAssembledTargetScopeContract(
+            scope_kind="object_set",
+            primary_target="Horn",
+            object_names=["Horn", "Head"],
+            object_count=2,
+        ),
+        summary=SceneCorrectionTruthSummaryContract(
+            pairing_strategy="primary_to_others",
+            pair_count=1,
+            evaluated_pairs=1,
+            contact_failures=1,
+            overlap_pairs=1,
+        ),
+        checks=[
+            SceneCorrectionTruthPairContract(
+                from_object="Horn",
+                to_object="Head",
+                gap={"relation": "overlapping", "gap": 0.0},
+                alignment={"is_aligned": True, "axes": ["X", "Y", "Z"]},
+                overlap={"overlaps": True, "relation": "overlap", "overlap_dimensions": [0.2, 0.3, 0.4]},
+                contact_assertion=SceneAssertionPayloadContract(
+                    assertion="scene_assert_contact",
+                    passed=False,
+                    subject="Horn",
+                    target="Head",
+                    expected={"max_gap": 0.0001, "allow_overlap": False},
+                    actual={"gap": 0.0, "relation": "overlapping"},
+                ),
+            )
+        ],
+    )
+
+    followup = _build_truth_followup(bundle)
+
+    assert followup.continue_recommended is True
+    assert followup.macro_candidates
+    assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
 
 
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):

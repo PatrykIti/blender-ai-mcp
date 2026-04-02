@@ -402,6 +402,25 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def cleanup_part_intersections(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_cleanup_part_intersections",
+            "intent": "clean Horn / Head overlap",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "cleanup_part_intersections",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": [kwargs.get("part_object", "Horn")],
+            "verification_recommended": [
+                {"tool_name": "scene_measure_overlap", "reason": "Confirm overlap is gone", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
     def adjust_relative_proportion(self, **kwargs):
         return {
             "status": "success",
@@ -466,6 +485,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_align_part_with_contact"],
             by_name["macro_place_symmetry_pair"],
             by_name["macro_place_supported_pair"],
+            by_name["macro_cleanup_part_intersections"],
             by_name["macro_adjust_relative_proportion"],
             by_name["macro_adjust_segment_chain_arc"],
             by_name["scene_context"],
@@ -485,6 +505,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         repair_macro_tool,
         symmetry_macro_tool,
         supported_pair_macro_tool,
+        cleanup_macro_tool,
         proportion_macro_tool,
         tail_arc_macro_tool,
         scene_context_tool,
@@ -503,6 +524,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     assert repair_macro_tool.output_schema is not None
     assert symmetry_macro_tool.output_schema is not None
     assert supported_pair_macro_tool.output_schema is not None
+    assert cleanup_macro_tool.output_schema is not None
     assert proportion_macro_tool.output_schema is not None
     assert tail_arc_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
@@ -824,6 +846,31 @@ def test_macro_place_supported_pair_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_place_supported_pair"
     assert payload["actions_taken"][0]["action"] == "place_supported_pair_anchor"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_cleanup_part_intersections_delivers_structured_content(monkeypatch):
+    """Intersection-cleanup macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_cleanup_part_intersections",
+            {
+                "part_object": "Horn",
+                "reference_object": "Head",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_cleanup_part_intersections"
+    assert payload["actions_taken"][0]["action"] == "cleanup_part_intersections"
     assert payload["requires_followup"] is True
 
 

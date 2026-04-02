@@ -104,6 +104,20 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
+    def cleanup_part_intersections(
+        self,
+        part_object: str,
+        reference_object: str,
+        gap: float = 0.0,
+        normal_axis: Optional[str] = None,
+        preserve_side: bool = True,
+        max_push: float = 0.5,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Separate one overlapping pair with a bounded push toward contact or a small gap."""
+        pass
+
+    @abstractmethod
     def adjust_relative_proportion(
         self,
         primary_object: str,

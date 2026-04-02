@@ -68,6 +68,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_place_supported_pair",
+    "macro_cleanup_part_intersections",
     "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
     "scene_set_mode",
@@ -622,6 +623,83 @@ async def macro_place_supported_pair(
         status="failed",
         macro_name="macro_place_supported_pair",
         intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_cleanup_part_intersections(
+    ctx: Context,
+    part_object: str,
+    reference_object: str,
+    gap: float = 0.0,
+    normal_axis: Literal["X", "Y", "Z"] | None = None,
+    preserve_side: bool = True,
+    max_push: float = 0.5,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for resolving one obvious overlap between two existing objects.
+
+    Use this when one part is visibly intersecting another and the intended fix
+    is a bounded push out to contact or a small gap, not an unconstrained
+    rebuild or physics/collision solve.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().cleanup_part_intersections(
+                part_object=part_object,
+                reference_object=reference_object,
+                gap=gap,
+                normal_axis=normal_axis,
+                preserve_side=preserve_side,
+                max_push=max_push,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_cleanup_part_intersections",
+                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_cleanup_part_intersections",
+        params={
+            "part_object": part_object,
+            "reference_object": reference_object,
+            "gap": gap,
+            "normal_axis": normal_axis,
+            "preserve_side": preserve_side,
+            "max_push": max_push,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_cleanup_part_intersections",
+                intent=f"clean intersection between '{part_object}' and '{reference_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_cleanup_part_intersections",
+        intent=f"clean intersection between '{part_object}' and '{reference_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),
