@@ -55,7 +55,7 @@ creature/reference correction still lacks direct tools for:
 | Order | Leaf | Purpose |
 |------|------|---------|
 | 1 | [TASK-122-02-01](./TASK-122-02-01_macro_attach_part_to_surface.md) | Attach or seat a part onto another object’s surface/body |
-| 2 | [TASK-122-02-02](./TASK-122-02-02_macro_align_part_with_contact.md) | Align one part and enforce practical contact/gap constraints |
+| 2 | [TASK-122-02-02](./TASK-122-02-02_macro_align_part_with_contact.md) | Repair an already-related part pair with a bounded contact-aware nudge instead of re-placing it from scratch |
 | 3 | [TASK-122-02-03](./TASK-122-02-03_macro_place_symmetry_pair.md) | Place or correct mirrored part pairs such as ears/eyes/limbs |
 | 4 | [TASK-122-02-04](./TASK-122-02-04_macro_adjust_head_body_proportion.md) | Correct large body-part ratio issues such as head/body scale |
 | 5 | [TASK-122-02-05](./TASK-122-02-05_macro_adjust_tail_arc.md) | Correct segmented tail shape/arc/placement |
