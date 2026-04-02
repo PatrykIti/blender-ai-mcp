@@ -266,6 +266,19 @@ def _normalized_focus_key(value: str) -> str:
 
 
 def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
+    candidate_summaries = list(compare_result.correction_candidates or [])
+    if candidate_summaries:
+        deduped_candidates: list[str] = []
+        seen_candidates: set[str] = set()
+        for candidate in candidate_summaries:
+            normalized = _normalized_focus_key(candidate.summary)
+            if not normalized or normalized in seen_candidates:
+                continue
+            seen_candidates.add(normalized)
+            deduped_candidates.append(candidate.summary)
+        if deduped_candidates:
+            return deduped_candidates[:3]
+
     vision_result = compare_result.vision_assistant.result if compare_result.vision_assistant else None
     if vision_result is None:
         return []

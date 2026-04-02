@@ -1,8 +1,10 @@
 # TASK-122-03-02: Reference Iterate Stage Checkpoint Truth Bundle Integration
 
 **Parent:** [TASK-122-03](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `reference_iterate_stage_checkpoint(...)` now consumes truth-integrated ranked `correction_candidates` instead of relying only on raw vision output for its loop-facing `correction_focus`. The staged correction loop can therefore surface deterministic truth-only findings and hybrid truth+vision findings through the same bounded focus channel while preserving the richer source payloads on the response contract.
 
 ## Objective
 
@@ -47,4 +49,4 @@ Feed truth bundles into `reference_iterate_stage_checkpoint(...)` so the staged 
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the hybrid-loop work advances or closes
+- this leaf is closed; the hybrid-loop parent remains in progress for disposition policy and real eval work

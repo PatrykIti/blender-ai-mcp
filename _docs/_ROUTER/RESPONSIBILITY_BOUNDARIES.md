@@ -228,6 +228,11 @@ preserve those boundaries inside the contract itself:
 Do not collapse those sources into one fuzzy score that hides provenance.
 Ranking is allowed; source erasure is not.
 
+When loop-facing summaries such as `correction_focus` are derived from those
+ranked candidates, preserve the ranked order but keep the richer source payload
+available alongside the summary list. The summary is for loop ergonomics; the
+candidate payload remains the authoritative provenance record.
+
 For correction policy specifically:
 
 - normalized confidence and explicit risk classes should feed one router policy decision

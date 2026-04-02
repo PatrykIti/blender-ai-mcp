@@ -6,7 +6,7 @@
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete, and the first hybrid-loop leaf (`TASK-122-03-01`) is also done. Stage compare and iterate responses now expose structured assembled-target truth handoff plus ranked `correction_candidates`, while the bounded macro layer covers seating, contact repair, mirrored placement, mirrored support placement, overlap cleanup, proportion repair, and ordered segment-chain arc adjustment. The umbrella remains in progress while the remaining hybrid-loop leaves wire that contract into loop execution policy and eval.
+**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete, and the first two hybrid-loop leaves (`TASK-122-03-01` and `TASK-122-03-02`) are also done. Stage compare and iterate responses now expose structured assembled-target truth handoff plus ranked `correction_candidates`, and the iterate loop now derives its loop-facing `correction_focus` from those ranked candidates when available. The umbrella remains in progress while the remaining hybrid-loop leaves wire that integration into final disposition policy and eval.
 
 ## Objective
 

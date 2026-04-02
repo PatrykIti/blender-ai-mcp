@@ -57,6 +57,10 @@ The repo now has the first implementation scaffolding for the vision layer:
   - `correction_candidates` for one ranked merged candidate list that preserves
     vision evidence, truth evidence, and bounded macro options without
     collapsing their source boundaries
+- `reference_iterate_stage_checkpoint(...)` now derives its loop-facing
+  `correction_focus` from ranked `correction_candidates` when they are present,
+  so deterministic truth-only findings can still reach the staged correction
+  loop even before the later disposition-policy leaf changes
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

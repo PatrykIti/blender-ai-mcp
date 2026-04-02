@@ -1187,6 +1187,121 @@ def test_reference_iterate_stage_checkpoint_escalates_after_repeated_focus(monke
     assert third.stagnation_count >= 2
 
 
+def test_reference_iterate_stage_checkpoint_uses_truth_integrated_candidates_for_focus(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_truth_only",
+            "checkpoint_label": "stage_truth_only",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "object_set",
+                    "primary_target": "TruthHead",
+                    "object_names": ["TruthHead", "TruthBody"],
+                    "object_count": 2,
+                },
+                "continue_recommended": True,
+                "message": "truth",
+                "focus_pairs": ["TruthHead -> TruthBody"],
+                "items": [
+                    {
+                        "kind": "gap",
+                        "summary": "TruthHead -> TruthBody still has measurable separation.",
+                        "priority": "normal",
+                        "from_object": "TruthHead",
+                        "to_object": "TruthBody",
+                        "tool_name": "scene_measure_gap",
+                    }
+                ],
+                "macro_candidates": [
+                    {
+                        "macro_name": "macro_align_part_with_contact",
+                        "reason": "Repair the pair with a bounded nudge.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "part_object": "TruthHead",
+                            "reference_object": "TruthBody",
+                        },
+                    }
+                ],
+            },
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:truthhead_truthbody",
+                    "summary": "TruthHead -> TruthBody still has measurable separation.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "TruthHead",
+                    "target_objects": ["TruthHead", "TruthBody"],
+                    "focus_pairs": ["TruthHead -> TruthBody"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["TruthHead -> TruthBody"],
+                        "item_kinds": ["gap"],
+                        "items": [
+                            {
+                                "kind": "gap",
+                                "summary": "TruthHead -> TruthBody still has measurable separation.",
+                                "priority": "normal",
+                                "from_object": "TruthHead",
+                                "to_object": "TruthBody",
+                                "tool_name": "scene_measure_gap",
+                            }
+                        ],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Repair the pair with a bounded nudge.",
+                                "priority": "high",
+                                "arguments_hint": {
+                                    "part_object": "TruthHead",
+                                    "reference_object": "TruthBody",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="TruthHead",
+            target_objects=["TruthBody"],
+            checkpoint_label="stage_truth_only",
+        )
+    )
+
+    assert result.correction_focus == ["TruthHead -> TruthBody still has measurable separation."]
+    assert result.loop_disposition == "continue_build"
+    assert result.correction_candidates
+    assert result.correction_candidates[0].candidate_kind == "truth_only"
+
+
 def test_reference_iterate_stage_checkpoint_does_not_reuse_state_across_target_view_or_profile(monkeypatch):
     ctx = FakeContext()
     update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
