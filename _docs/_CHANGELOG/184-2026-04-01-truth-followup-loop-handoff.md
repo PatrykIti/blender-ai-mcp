@@ -16,6 +16,9 @@ payload on top of the assembled-target scope and correction truth bundle work.
   - focus pairs
   - recommended deterministic re-check tools
   - a simple continue/no-continue signal for later loop logic
+- added Blender-backed E2E coverage for the public stage-compare flow so
+  `truth_bundle` / `truth_followup` are exercised with real scene geometry and
+  stubbed vision output
 - completed the `TASK-122-01` truth-bundle branch as a reusable baseline for
   the later hybrid correction loop work
 

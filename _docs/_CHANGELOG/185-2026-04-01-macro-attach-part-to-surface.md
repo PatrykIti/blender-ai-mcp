@@ -15,11 +15,12 @@ stack.
   placement logic instead of introducing a new addon/RPC geometry path
 - exposed structured delivery, provider inventory, compatibility policy, and
   guided build-surface visibility for the new macro
-- added unit coverage for:
+- added coverage for:
   - macro handler behavior
   - MCP wrapper behavior
   - structured delivery
   - provider inventory / guided surface visibility
+  - Blender-backed E2E surface seating / contact verification
 
 ## Why
 
