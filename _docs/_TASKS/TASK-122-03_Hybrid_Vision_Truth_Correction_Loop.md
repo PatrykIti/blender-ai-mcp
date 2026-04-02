@@ -1,10 +1,10 @@
 # TASK-122-03: Hybrid Vision + Truth Correction Loop
 
 **Parent:** [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md)  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first three hybrid-loop leaves are now complete. Stage compare / iterate responses expose a ranked `correction_candidates` list that preserves source boundaries between vision evidence, truth evidence, and bounded macro options, `reference_iterate_stage_checkpoint(...)` derives loop-facing `correction_focus` from those ranked candidates when available, and `loop_disposition` now also responds to high-priority deterministic truth evidence. The subtree remains open only for real assembled-creature eval and prompting validation.
+**Completion Summary:** The hybrid-loop subtree is now complete. Stage compare / iterate responses expose ranked `correction_candidates`, the iterate loop derives loop-facing `correction_focus` from those ranked candidates when available, `loop_disposition` responds to both actionable focus and high-priority deterministic truth evidence, and the real assembled-creature regression pack plus prompt guidance are now explicit enough for repeatable validation.
 
 ## Objective
 

@@ -1,8 +1,10 @@
 # TASK-122-03-04: Real Assembled Creature Eval and Prompting
 
 **Parent:** [TASK-122-03](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Formalized the current hybrid-loop regression pack for real assembled-creature work and updated prompt guidance to consume the new loop outputs in the correct order. The repo now has explicit regression-pack docs plus a separate operator/test prompt document outside `_docs/_PROMPTS/`, so the fuller manual-eval prompt can evolve without affecting the MCP-served prompt catalog.
 
 ## Objective
 
@@ -47,4 +49,4 @@ Validate the hybrid correction loop on real assembled-creature scenarios, prompt
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the hybrid-loop work advances or closes
+- this leaf is closed; the hybrid-loop subtree and the parent `TASK-122` umbrella are now complete

@@ -244,6 +244,19 @@ Opt-in real reference-guided creature comparison coverage:
 - uses repo-tracked squirrel checkpoint images plus local front/side reference
   images to validate correction-oriented output on a real creature flow
 
+Hybrid-loop assembled-creature regression pack:
+
+- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
+- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- combines:
+  - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
+  - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
+- review staged hybrid-loop output in this order:
+  - `loop_disposition`
+  - `correction_candidates`
+  - `truth_followup`
+  - `correction_focus`
+
 First Blender-backed E2E coverage for the guided utility prep path now includes:
 
 - `tests/e2e/tools/scene/test_scene_clean_scene.py`

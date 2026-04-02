@@ -74,6 +74,39 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "goal-scoped reference image context",
         "request-bound attachment of `vision_assistant`",
         "Multi-View Capture Plan",
+        "HYBRID_LOOP_REAL_CREATURE_EVAL.md",
+        "`correction_candidates`",
+    ):
+        assert expected in text
+
+
+def test_hybrid_loop_eval_pack_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "HYBRID_LOOP_REAL_CREATURE_EVAL.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Hybrid Loop Real Creature Eval",
+        "tests/e2e/vision/test_reference_stage_truth_handoff.py",
+        "tests/e2e/vision/test_reference_guided_creature_comparison.py",
+        "`loop_disposition`",
+        "`correction_candidates`",
+        "`truth_followup`",
+        "`correction_focus`",
+    ):
+        assert expected in text
+
+
+def test_reference_guided_creature_test_prompt_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Reference-Guided Creature Test Prompt",
+        "outside `_docs/_PROMPTS/`",
+        "blender-ai-mcp-guided-docker-openrouter",
+        "`reference_iterate_stage_checkpoint(...)`",
+        "`scene_get_viewport(...)`",
+        "`correction_candidates`",
+        "`truth_followup`",
+        "`USER_PERSPECTIVE`",
     ):
         assert expected in text
 
@@ -115,6 +148,9 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     prompt_readme = (REPO_ROOT / "_docs" / "_PROMPTS" / "README.md").read_text(encoding="utf-8")
     workflow_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "WORKFLOW_ROUTER_FIRST.md").read_text(encoding="utf-8")
     manual_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "MANUAL_TOOLS_NO_ROUTER.md").read_text(encoding="utf-8")
+    creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
 
     assert "check_scene" in prompt_readme
     assert "inspect_scene" in prompt_readme
@@ -146,6 +182,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "current phase/surface is wrong" in prompt_readme
     assert "manual_tools_no_router` is a different operating mode" in prompt_readme
     assert "correction_focus" in prompt_readme
+    assert "correction_candidates" in prompt_readme
+    assert "truth_followup" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt
@@ -205,3 +243,10 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
         in manual_prompt
     )
     assert "scene_show_all_objects(include_render=true)" in manual_prompt
+
+    assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
+    assert "`loop_disposition`" in creature_prompt
+    assert "`correction_candidates`" in creature_prompt
+    assert "`truth_followup`" in creature_prompt
+    assert "`truth_followup.focus_pairs`" in creature_prompt
+    assert "`truth_followup.macro_candidates`" in creature_prompt

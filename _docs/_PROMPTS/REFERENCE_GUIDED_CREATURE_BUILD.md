@@ -28,6 +28,8 @@ reference images and bounded vision feedback after each checkpoint.
    - `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage>", preset_profile="compact")`
 8. use the response in this order:
    - `loop_disposition`
+   - `correction_candidates`
+   - `truth_followup`
    - `correction_focus`
    - `shape_mismatches`
    - `proportion_mismatches`
@@ -72,6 +74,9 @@ Workflow:
    `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage_name>", preset_profile="compact")`
 8. przy kolejnej iteracji priorytetyzuj:
    - `loop_disposition`
+   - `correction_candidates`
+   - `truth_followup.focus_pairs`
+   - `truth_followup.macro_candidates`
    - `correction_focus`
    - potem `shape_mismatches`
    - potem `proportion_mismatches`
@@ -92,9 +97,17 @@ Na końcu każdego etapu zwróć tylko:
 - `rich` profile ma sens dopiero, gdy jeden etap jest już dość stabilny i
   chcesz szerszego wielowidokowego porównania
 - `correction_focus` powinno być traktowane jako pierwsza lista do działania,
-  bo jest już ograniczona i uporządkowana pod iteracyjne poprawki
+  ale dopiero po sprawdzeniu, czy `correction_candidates` lub
+  `truth_followup` nie niosą mocniejszego truth-driven sygnału
 - `loop_disposition="inspect_validate"` oznacza, że system wykrywa powtarzający
-  się focus i lepiej przejść chwilowo do truth-layer verification niż dalej
-  zgadywać korekty
+  się focus albo high-priority truth signal i lepiej przejść chwilowo do
+  truth-layer verification niż dalej zgadywać korekty
+- `correction_candidates` to główny ranked handoff dla hybrydowej pętli:
+  - `vision_only` oznacza problem widoczny głównie po stronie vision
+  - `truth_only` oznacza problem deterministycznie potwierdzony przez truth
+  - `hybrid` oznacza zbieżny sygnał vision + truth
+- `truth_followup.focus_pairs` i `truth_followup.macro_candidates` są nadal
+  źródłem szczegółów, gdy trzeba rozumieć który pair i który bounded macro
+  powinien być następnym ruchem
 - dla pełnej wieloczęściowej wiewiórki nie zawężaj finalnych iteracji do samego
   `Squirrel_Body`, bo loop oceni wtedy tylko korpus

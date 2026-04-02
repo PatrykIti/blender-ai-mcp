@@ -4,9 +4,9 @@
 **Category:** Product Reliability / Assembled-Model Correction  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
-**Status:** 🚧 In Progress
+**Status:** ✅ Done
 
-**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete, and the first three hybrid-loop leaves (`TASK-122-03-01` through `TASK-122-03-03`) are also done. Stage compare and iterate responses now expose structured assembled-target truth handoff plus ranked `correction_candidates`, the iterate loop derives its loop-facing `correction_focus` from those ranked candidates when available, and `loop_disposition` now responds to both actionable focus and high-priority deterministic truth evidence. The umbrella remains in progress only for the real eval/prompting leaf.
+**Completion Summary:** The full `TASK-122` wave is now complete. The repo exposes assembled-target truth bundles, a full bounded creature-correction macro layer, ranked correction candidates for the hybrid loop, truth-integrated iterate focus, truth-aware loop disposition, and an explicit real assembled-creature regression pack plus prompt guidance for validating the end-to-end flow.
 
 ## Objective
 

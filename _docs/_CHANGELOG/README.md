@@ -6,6 +6,8 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [196](./196-2026-04-02-reference-guided-creature-test-prompt-doc.md) | 2026-04-02 | **Reference-guided creature test prompt doc** | - |
+| [195](./195-2026-04-02-real-assembled-creature-eval-and-prompting.md) | 2026-04-02 | **Real assembled creature eval and prompting** | - |
 | [194](./194-2026-04-02-loop-disposition-from-vision-and-truth-signal.md) | 2026-04-02 | **Loop disposition from vision and truth signal** | - |
 | [193](./193-2026-04-02-iterate-stage-truth-bundle-integration.md) | 2026-04-02 | **Iterate stage truth bundle integration** | - |
 | [192](./192-2026-04-02-correction-candidate-contract-and-priority-model.md) | 2026-04-02 | **Correction candidate contract and priority model** | - |

@@ -10,6 +10,7 @@ This folder is the canonical place to describe:
 - goal-scoped reference image context
 - macro/workflow integration of `capture_bundle` and `vision_assistant`
 - evaluation constraints and model-comparison notes
+- real hybrid-loop creature regression guidance
 
 ## Current State
 
@@ -315,6 +316,16 @@ VISION_REFERENCE_FRONT_PATH=/abs/path/squirrel-front.png \
 VISION_REFERENCE_SIDE_PATH=/abs/path/squirrel-side.png \
 poetry run pytest tests/e2e/vision/test_reference_guided_creature_comparison.py -q -m slow
 ```
+
+Hybrid-loop regression guidance:
+
+- `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
+- `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- use it to review the current staged creature loop in this order:
+  - `loop_disposition`
+  - `correction_candidates`
+  - `truth_followup`
+  - `correction_focus`
 
 Current repo-tracked first-pass scenarios:
 
