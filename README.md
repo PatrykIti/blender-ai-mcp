@@ -65,7 +65,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_attach_part_to_surface` for seating one part onto another object's surface/body
 - `macro_align_part_with_contact` for minimal repair nudges on pairs that almost fit
 - `macro_place_symmetry_pair` for mirrored pair placement/correction around an explicit mirror plane
-- `macro_adjust_head_body_proportion` for bounded ratio repair on assembled creature parts
+- `macro_adjust_relative_proportion` for bounded ratio repair between related objects
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work

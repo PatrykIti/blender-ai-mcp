@@ -669,60 +669,60 @@ class MacroToolHandler(IMacroTool):
             captures_after=captures_after,
         )
 
-    def adjust_head_body_proportion(
+    def adjust_relative_proportion(
         self,
-        head_object: str,
-        body_object: str,
+        primary_object: str,
+        reference_object: str,
         expected_ratio: float,
-        head_axis: str = "X",
-        body_axis: str = "X",
-        scale_target: str = "head",
+        primary_axis: str = "X",
+        reference_axis: str = "X",
+        scale_target: str = "primary",
         tolerance: float = 0.01,
         uniform_scale: bool = True,
         max_scale_delta: float = 0.5,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
-        if head_object == body_object:
-            raise ValueError("head_object and body_object must be different")
+        if primary_object == reference_object:
+            raise ValueError("primary_object and reference_object must be different")
 
         expected_ratio_value = self._require_positive(expected_ratio, "expected_ratio")
-        head_axis_name = self._normalize_contact_axis(head_axis)
-        body_axis_name = self._normalize_contact_axis(body_axis)
+        primary_axis_name = self._normalize_contact_axis(primary_axis)
+        reference_axis_name = self._normalize_contact_axis(reference_axis)
         scale_target_name = self._normalize_scale_target(scale_target)
         tolerance_value = self._require_non_negative(tolerance, "tolerance")
         max_scale_delta_value = self._require_positive(max_scale_delta, "max_scale_delta")
-        bundle_id = self._make_capture_bundle_id("macro_adjust_head_body_proportion", head_object)
+        bundle_id = self._make_capture_bundle_id("macro_adjust_relative_proportion", primary_object)
         captures_before = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="before",
-            target_object=head_object,
+            target_object=primary_object,
             capture_profile=capture_profile,
         )
 
         before_proportion = self._scene.assert_proportion(
-            head_object,
-            axis_a=head_axis_name,
+            primary_object,
+            axis_a=primary_axis_name,
             expected_ratio=expected_ratio_value,
-            reference_object=body_object,
-            reference_axis=body_axis_name,
+            reference_object=reference_object,
+            reference_axis=reference_axis_name,
             tolerance=tolerance_value,
             world_space=True,
         )
         current_ratio = float(before_proportion["actual"]["ratio"])
         if current_ratio <= 0.0:
             return self._blocked_repair_report(
-                macro_name="macro_adjust_head_body_proportion",
-                intent=f"Repair head/body proportion for '{head_object}' relative to '{body_object}'",
-                message="Current head/body ratio is zero or invalid; cannot compute a bounded scale repair.",
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"Repair relative proportion for '{primary_object}' relative to '{reference_object}'",
+                message="Current cross-object ratio is zero or invalid; cannot compute a bounded scale repair.",
                 before_truth={"proportion": before_proportion},
             )
 
         if abs(current_ratio - expected_ratio_value) <= tolerance_value:
             report = {
                 "status": "success",
-                "macro_name": "macro_adjust_head_body_proportion",
+                "macro_name": "macro_adjust_relative_proportion",
                 "intent": (
-                    f"Repair head/body proportion for '{head_object}' relative to '{body_object}' "
+                    f"Repair relative proportion for '{primary_object}' relative to '{reference_object}' "
                     f"toward ratio {expected_ratio_value:g}"
                 ),
                 "actions_taken": [
@@ -739,14 +739,14 @@ class MacroToolHandler(IMacroTool):
                 "verification_recommended": [
                     {
                         "tool_name": "scene_assert_proportion",
-                        "reason": "Reconfirm the ratio if later edits change the head/body relationship.",
+                        "reason": "Reconfirm the ratio if later edits change the relationship.",
                         "priority": "normal",
                         "arguments_hint": {
-                            "object_name": head_object,
-                            "axis_a": head_axis_name,
+                            "object_name": primary_object,
+                            "axis_a": primary_axis_name,
                             "expected_ratio": expected_ratio_value,
-                            "reference_object": body_object,
-                            "reference_axis": body_axis_name,
+                            "reference_object": reference_object,
+                            "reference_axis": reference_axis_name,
                             "tolerance": tolerance_value,
                             "world_space": True,
                         },
@@ -756,17 +756,17 @@ class MacroToolHandler(IMacroTool):
             }
             return report
 
-        current_scale = self._object_scale(scale_target_name == "head" and head_object or body_object)
+        current_scale = self._object_scale(primary_object if scale_target_name == "primary" else reference_object)
         scale_factor = (
             expected_ratio_value / current_ratio
-            if scale_target_name == "head"
+            if scale_target_name == "primary"
             else current_ratio / expected_ratio_value
         )
         scale_delta = abs(scale_factor - 1.0)
         if scale_delta > max_scale_delta_value:
             return self._blocked_repair_report(
-                macro_name="macro_adjust_head_body_proportion",
-                intent=f"Repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"Repair relative proportion for '{primary_object}' relative to '{reference_object}'",
                 message=(
                     f"Required scale delta {scale_delta:g} exceeds max_scale_delta {max_scale_delta_value:g}; "
                     "choose a broader rebuild step or raise the bound explicitly."
@@ -781,32 +781,32 @@ class MacroToolHandler(IMacroTool):
                 },
             )
 
-        scale_object = head_object if scale_target_name == "head" else body_object
+        scale_object = primary_object if scale_target_name == "primary" else reference_object
         new_scale = (
             [round(component * scale_factor, 6) for component in current_scale]
             if uniform_scale
             else self._scaled_axis_only(
                 current_scale=current_scale,
-                axis_name=head_axis_name if scale_target_name == "head" else body_axis_name,
+                axis_name=primary_axis_name if scale_target_name == "primary" else reference_axis_name,
                 scale_factor=scale_factor,
             )
         )
         self._modeling.transform_object(name=scale_object, scale=new_scale)
         after_proportion = self._scene.assert_proportion(
-            head_object,
-            axis_a=head_axis_name,
+            primary_object,
+            axis_a=primary_axis_name,
             expected_ratio=expected_ratio_value,
-            reference_object=body_object,
-            reference_axis=body_axis_name,
+            reference_object=reference_object,
+            reference_axis=reference_axis_name,
             tolerance=tolerance_value,
             world_space=True,
         )
 
         report = {
             "status": "success",
-            "macro_name": "macro_adjust_head_body_proportion",
+            "macro_name": "macro_adjust_relative_proportion",
             "intent": (
-                f"Repair head/body proportion for '{head_object}' relative to '{body_object}' "
+                f"Repair relative proportion for '{primary_object}' relative to '{reference_object}' "
                 f"toward ratio {expected_ratio_value:g}"
             ),
             "actions_taken": [
@@ -814,14 +814,14 @@ class MacroToolHandler(IMacroTool):
                     "status": "applied",
                     "action": "inspect_proportion_before",
                     "tool_name": "scene_assert_proportion",
-                    "summary": "Read the current head/body ratio before the scale repair.",
+                    "summary": "Read the current ratio before the scale repair.",
                     "details": before_proportion,
                 },
                 {
                     "status": "applied",
-                    "action": "adjust_head_body_proportion",
+                    "action": "adjust_relative_proportion",
                     "tool_name": "modeling_transform_object",
-                    "summary": f"Scaled '{scale_object}' to repair the head/body ratio.",
+                    "summary": f"Scaled '{scale_object}' to repair the target cross-object ratio.",
                     "details": {
                         "scale_target": scale_target_name,
                         "current_ratio": current_ratio,
@@ -835,7 +835,7 @@ class MacroToolHandler(IMacroTool):
                     "status": "applied",
                     "action": "inspect_proportion_after",
                     "tool_name": "scene_assert_proportion",
-                    "summary": "Read the head/body ratio after the scale repair.",
+                    "summary": "Read the ratio after the scale repair.",
                     "details": after_proportion,
                 },
             ],
@@ -844,14 +844,14 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": [
                 {
                     "tool_name": "scene_assert_proportion",
-                    "reason": "Confirm the repaired head/body ratio against the requested target.",
+                    "reason": "Confirm the repaired relative ratio against the requested target.",
                     "priority": "high",
                     "arguments_hint": {
-                        "object_name": head_object,
-                        "axis_a": head_axis_name,
+                        "object_name": primary_object,
+                        "axis_a": primary_axis_name,
                         "expected_ratio": expected_ratio_value,
-                        "reference_object": body_object,
-                        "reference_axis": body_axis_name,
+                        "reference_object": reference_object,
+                        "reference_axis": reference_axis_name,
                         "tolerance": tolerance_value,
                         "world_space": True,
                     },
@@ -864,9 +864,9 @@ class MacroToolHandler(IMacroTool):
                 },
                 {
                     "tool_name": "scene_get_viewport",
-                    "reason": "Do a quick visual check of the repaired head/body proportion before continuing the build.",
+                    "reason": "Do a quick visual check of the repaired relative proportion before continuing the build.",
                     "priority": "normal",
-                    "arguments_hint": {"focus_target": head_object, "shading": "SOLID"},
+                    "arguments_hint": {"focus_target": primary_object, "shading": "SOLID"},
                 },
             ],
             "requires_followup": True,
@@ -874,13 +874,13 @@ class MacroToolHandler(IMacroTool):
         captures_after = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="after",
-            target_object=head_object,
+            target_object=primary_object,
             capture_profile=capture_profile,
         )
         return self._finalize_report(
             report,
             bundle_id=bundle_id,
-            target_object=head_object,
+            target_object=primary_object,
             captures_before=captures_before,
             captures_after=captures_after,
         )
@@ -1398,8 +1398,8 @@ class MacroToolHandler(IMacroTool):
 
     def _normalize_scale_target(self, scale_target: str) -> str:
         normalized = str(scale_target).lower()
-        if normalized not in {"head", "body"}:
-            raise ValueError("scale_target must be one of head or body")
+        if normalized not in {"primary", "reference"}:
+            raise ValueError("scale_target must be one of primary or reference")
         return normalized
 
     def _pair_truth_summary(self, part_object: str, reference_object: str) -> Dict[str, Any]:

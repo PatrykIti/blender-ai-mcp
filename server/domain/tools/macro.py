@@ -86,20 +86,20 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
-    def adjust_head_body_proportion(
+    def adjust_relative_proportion(
         self,
-        head_object: str,
-        body_object: str,
+        primary_object: str,
+        reference_object: str,
         expected_ratio: float,
-        head_axis: str = "X",
-        body_axis: str = "X",
-        scale_target: str = "head",
+        primary_axis: str = "X",
+        reference_axis: str = "X",
+        scale_target: str = "primary",
         tolerance: float = 0.01,
         uniform_scale: bool = True,
         max_scale_delta: float = 0.5,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Repair head/body proportion with a bounded scale adjustment."""
+        """Repair one cross-object proportion/ratio with a bounded scale adjustment."""
         pass
 
     @abstractmethod

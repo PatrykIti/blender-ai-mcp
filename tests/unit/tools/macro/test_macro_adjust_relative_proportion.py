@@ -62,37 +62,37 @@ class FakeModelingTool:
         return f"Transformed object '{name}'"
 
 
-def test_macro_adjust_head_body_proportion_scales_head_toward_target_ratio():
+def test_macro_adjust_relative_proportion_scales_primary_toward_target_ratio():
     scene = FakeSceneTool()
     modeling = FakeModelingTool()
     handler = MacroToolHandler(scene, modeling)
 
-    result = handler.adjust_head_body_proportion(
-        head_object="Head",
-        body_object="Body",
+    result = handler.adjust_relative_proportion(
+        primary_object="Head",
+        reference_object="Body",
         expected_ratio=0.4,
-        head_axis="X",
-        body_axis="X",
-        scale_target="head",
+        primary_axis="X",
+        reference_axis="X",
+        scale_target="primary",
         max_scale_delta=0.5,
     )
 
     assert result["status"] == "success"
-    assert result["macro_name"] == "macro_adjust_head_body_proportion"
+    assert result["macro_name"] == "macro_adjust_relative_proportion"
     assert modeling.calls[0][1]["name"] == "Head"
     assert modeling.calls[0][1]["scale"] == pytest.approx([0.666667, 0.666667, 0.666667], abs=1e-6)
-    assert result["actions_taken"][1]["action"] == "adjust_head_body_proportion"
+    assert result["actions_taken"][1]["action"] == "adjust_relative_proportion"
     assert result["actions_taken"][-1]["details"]["passed"] is True
 
 
-def test_macro_adjust_head_body_proportion_blocks_when_scale_delta_is_too_large():
+def test_macro_adjust_relative_proportion_blocks_when_scale_delta_is_too_large():
     scene = FakeSceneTool()
     modeling = FakeModelingTool()
     handler = MacroToolHandler(scene, modeling)
 
-    result = handler.adjust_head_body_proportion(
-        head_object="Head",
-        body_object="Body",
+    result = handler.adjust_relative_proportion(
+        primary_object="Head",
+        reference_object="Body",
         expected_ratio=0.2,
         max_scale_delta=0.1,
     )

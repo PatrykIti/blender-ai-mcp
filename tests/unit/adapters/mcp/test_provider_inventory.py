@@ -61,7 +61,7 @@ EXPECTED_SCENE_TOOLS = {
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
-    "macro_adjust_head_body_proportion",
+    "macro_adjust_relative_proportion",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",

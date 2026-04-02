@@ -6,7 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
-| [188](./188-2026-04-02-macro-adjust-head-body-proportion.md) | 2026-04-02 | **Macro adjust head body proportion** | - |
+| [188](./188-2026-04-02-macro-adjust-relative-proportion.md) | 2026-04-02 | **Macro adjust relative proportion** | - |
 | [187](./187-2026-04-02-macro-place-symmetry-pair.md) | 2026-04-02 | **Macro place symmetry pair** | - |
 | [186](./186-2026-04-02-macro-align-part-with-contact.md) | 2026-04-02 | **Macro align part with contact** | - |
 | [185](./185-2026-04-01-macro-attach-part-to-surface.md) | 2026-04-01 | **Macro attach part to surface** | - |

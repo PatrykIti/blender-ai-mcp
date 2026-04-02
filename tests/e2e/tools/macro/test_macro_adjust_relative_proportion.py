@@ -1,4 +1,4 @@
-"""Blender-backed E2E tests for macro_adjust_head_body_proportion."""
+"""Blender-backed E2E tests for macro_adjust_relative_proportion."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def clean_scene(scene_handler):
     scene_handler.clean_scene(keep_lights_and_cameras=False)
 
 
-def test_macro_adjust_head_body_proportion_repairs_ratio_by_scaling_head(
+def test_macro_adjust_relative_proportion_repairs_ratio_by_scaling_primary(
     clean_scene,
     scene_handler,
     modeling_handler,
@@ -52,18 +52,18 @@ def test_macro_adjust_head_body_proportion_repairs_ratio_by_scaling_head(
         modeling_handler.create_primitive(primitive_type="CUBE", name=head_name, size=1.0, location=[0, 0, 0])
         modeling_handler.create_primitive(primitive_type="CUBE", name=body_name, size=2.0, location=[0, 0, -1.5])
 
-        result = macro_handler.adjust_head_body_proportion(
-            head_object=head_name,
-            body_object=body_name,
+        result = macro_handler.adjust_relative_proportion(
+            primary_object=head_name,
+            reference_object=body_name,
             expected_ratio=0.4,
-            head_axis="X",
-            body_axis="X",
-            scale_target="head",
+            primary_axis="X",
+            reference_axis="X",
+            scale_target="primary",
             max_scale_delta=0.5,
         )
 
         assert result["status"] == "success"
-        assert result["macro_name"] == "macro_adjust_head_body_proportion"
+        assert result["macro_name"] == "macro_adjust_relative_proportion"
         assert head_name in result["objects_modified"]
         assert result["requires_followup"] is True
 
@@ -83,7 +83,7 @@ def test_macro_adjust_head_body_proportion_repairs_ratio_by_scaling_head(
         _skip_if_blender_unavailable(e)
 
 
-def test_macro_adjust_head_body_proportion_blocks_when_scale_delta_too_large(
+def test_macro_adjust_relative_proportion_blocks_when_scale_delta_too_large(
     clean_scene,
     scene_handler,
     modeling_handler,
@@ -98,11 +98,11 @@ def test_macro_adjust_head_body_proportion_blocks_when_scale_delta_too_large(
 
         before = scene_handler.inspect_object(head_name)
 
-        result = macro_handler.adjust_head_body_proportion(
-            head_object=head_name,
-            body_object=body_name,
+        result = macro_handler.adjust_relative_proportion(
+            primary_object=head_name,
+            reference_object=body_name,
             expected_ratio=0.2,
-            scale_target="head",
+            scale_target="primary",
             max_scale_delta=0.1,
         )
 

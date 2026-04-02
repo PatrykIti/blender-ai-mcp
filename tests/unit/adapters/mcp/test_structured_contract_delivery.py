@@ -384,19 +384,19 @@ class MacroHandler:
             "requires_followup": True,
         }
 
-    def adjust_head_body_proportion(self, **kwargs):
+    def adjust_relative_proportion(self, **kwargs):
         return {
             "status": "success",
-            "macro_name": "macro_adjust_head_body_proportion",
+            "macro_name": "macro_adjust_relative_proportion",
             "intent": "repair Head / Body proportion",
             "actions_taken": [
                 {
                     "status": "applied",
-                    "action": "adjust_head_body_proportion",
+                    "action": "adjust_relative_proportion",
                     "tool_name": "modeling_transform_object",
                 }
             ],
-            "objects_modified": [kwargs.get("head_object", "Head")],
+            "objects_modified": [kwargs.get("primary_object", "Head")],
             "verification_recommended": [
                 {"tool_name": "scene_assert_proportion", "reason": "Confirm repaired ratio", "priority": "high"}
             ],
@@ -428,7 +428,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_attach_part_to_surface"],
             by_name["macro_align_part_with_contact"],
             by_name["macro_place_symmetry_pair"],
-            by_name["macro_adjust_head_body_proportion"],
+            by_name["macro_adjust_relative_proportion"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -758,7 +758,7 @@ def test_macro_place_symmetry_pair_delivers_structured_content(monkeypatch):
     assert payload["requires_followup"] is True
 
 
-def test_macro_adjust_head_body_proportion_delivers_structured_content(monkeypatch):
+def test_macro_adjust_relative_proportion_delivers_structured_content(monkeypatch):
     """Proportion-repair macro should expose machine-readable reports on the MCP surface."""
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
@@ -768,10 +768,10 @@ def test_macro_adjust_head_body_proportion_delivers_structured_content(monkeypat
 
     async def run():
         return await server.call_tool(
-            "macro_adjust_head_body_proportion",
+            "macro_adjust_relative_proportion",
             {
-                "head_object": "Head",
-                "body_object": "Body",
+                "primary_object": "Head",
+                "reference_object": "Body",
                 "expected_ratio": 0.4,
             },
         )
@@ -779,8 +779,8 @@ def test_macro_adjust_head_body_proportion_delivers_structured_content(monkeypat
     result = asyncio.run(run())
 
     payload = _unwrap_structured(result)
-    assert payload["macro_name"] == "macro_adjust_head_body_proportion"
-    assert payload["actions_taken"][0]["action"] == "adjust_head_body_proportion"
+    assert payload["macro_name"] == "macro_adjust_relative_proportion"
+    assert payload["actions_taken"][0]["action"] == "adjust_relative_proportion"
     assert payload["requires_followup"] is True
 
 

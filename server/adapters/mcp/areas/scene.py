@@ -67,7 +67,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
-    "macro_adjust_head_body_proportion",
+    "macro_adjust_relative_proportion",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -524,22 +524,22 @@ async def macro_place_symmetry_pair(
     )
 
 
-async def macro_adjust_head_body_proportion(
+async def macro_adjust_relative_proportion(
     ctx: Context,
-    head_object: str,
-    body_object: str,
+    primary_object: str,
+    reference_object: str,
     expected_ratio: float,
-    head_axis: Literal["X", "Y", "Z"] = "X",
-    body_axis: Literal["X", "Y", "Z"] = "X",
-    scale_target: Literal["head", "body"] = "head",
+    primary_axis: Literal["X", "Y", "Z"] = "X",
+    reference_axis: Literal["X", "Y", "Z"] = "X",
+    scale_target: Literal["primary", "reference"] = "primary",
     tolerance: float = 0.01,
     uniform_scale: bool = True,
     max_scale_delta: float = 0.5,
 ) -> MacroExecutionReportContract:
     """
-    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for repairing head/body proportion drift.
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for repairing relative proportion drift between two objects.
 
-    Use this when the current head/body ratio is visibly off but the pair is
+    Use this when the current cross-object ratio is visibly off but the pair is
     already otherwise useful enough that a bounded scale repair is safer than a
     rebuild or open-ended sculpt pass.
     """
@@ -548,12 +548,12 @@ async def macro_adjust_head_body_proportion(
 
     def execute() -> MacroExecutionReportContract:
         try:
-            payload = get_macro_handler().adjust_head_body_proportion(
-                head_object=head_object,
-                body_object=body_object,
+            payload = get_macro_handler().adjust_relative_proportion(
+                primary_object=primary_object,
+                reference_object=reference_object,
                 expected_ratio=expected_ratio,
-                head_axis=head_axis,
-                body_axis=body_axis,
+                primary_axis=primary_axis,
+                reference_axis=reference_axis,
                 scale_target=scale_target,
                 tolerance=tolerance,
                 uniform_scale=uniform_scale,
@@ -564,21 +564,21 @@ async def macro_adjust_head_body_proportion(
         except (RuntimeError, ValueError) as e:
             return MacroExecutionReportContract(
                 status="failed",
-                macro_name="macro_adjust_head_body_proportion",
-                intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
                 actions_taken=[],
                 requires_followup=False,
                 error=str(e),
             )
 
     result = route_tool_call(
-        tool_name="macro_adjust_head_body_proportion",
+        tool_name="macro_adjust_relative_proportion",
         params={
-            "head_object": head_object,
-            "body_object": body_object,
+            "primary_object": primary_object,
+            "reference_object": reference_object,
             "expected_ratio": expected_ratio,
-            "head_axis": head_axis,
-            "body_axis": body_axis,
+            "primary_axis": primary_axis,
+            "reference_axis": reference_axis,
             "scale_target": scale_target,
             "tolerance": tolerance,
             "uniform_scale": uniform_scale,
@@ -592,8 +592,8 @@ async def macro_adjust_head_body_proportion(
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
                 status=str(result.get("status") or "failed"),
-                macro_name="macro_adjust_head_body_proportion",
-                intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                macro_name="macro_adjust_relative_proportion",
+                intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
                 actions_taken=list(result.get("actions_taken") or []),
                 requires_followup=bool(result.get("requires_followup")),
                 error=str(result.get("error") or result),
@@ -602,8 +602,8 @@ async def macro_adjust_head_body_proportion(
         return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
     return MacroExecutionReportContract(
         status="failed",
-        macro_name="macro_adjust_head_body_proportion",
-        intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
+        macro_name="macro_adjust_relative_proportion",
+        intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),
