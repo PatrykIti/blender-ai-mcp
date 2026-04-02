@@ -1,8 +1,10 @@
 # TASK-122-02-03: `macro_place_symmetry_pair`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added `macro_place_symmetry_pair` as a bounded pair-level symmetry macro. The first MVP preserves one anchor object (`left`, `right`, or `auto`), mirrors the follower object's center across an explicit mirror plane, and verifies the result with `scene_assert_symmetry` instead of relying on ad hoc mirrored transforms.
 
 ## Objective
 
@@ -46,4 +48,4 @@ Add a bounded macro for placing or correcting mirrored part pairs such as ears, 
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the macro moves from planning to implementation to closure
+- this leaf is closed; the parent macro wave remains in progress for the remaining creature-correction macros

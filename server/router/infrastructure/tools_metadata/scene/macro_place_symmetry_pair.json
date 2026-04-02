@@ -1,0 +1,42 @@
+{
+  "tool_name": "macro_place_symmetry_pair",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "symmetry pair",
+    "mirror pair",
+    "mirrored pair",
+    "left right pair",
+    "ears",
+    "eyes",
+    "symetryczna para",
+    "lustrzana para",
+    "usz y",
+    "oczy",
+    "odbicie"
+  ],
+  "sample_prompts": [
+    "mirror this ear pair across X=0",
+    "place these eyes as a symmetric pair around the center plane",
+    "ustaw te uszy jako lustrzaną parę względem osi X",
+    "wyrównaj tę parę oczu symetrycznie względem środka"
+  ],
+  "parameters": {
+    "left_object": {"type": "string", "required": true},
+    "right_object": {"type": "string", "required": true},
+    "axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"},
+    "mirror_coordinate": {"type": "float", "default": 0.0},
+    "anchor_object": {"type": "enum", "options": ["auto", "left", "right"], "default": "auto"},
+    "tolerance": {"type": "float", "default": 0.0001}
+  },
+  "related_tools": [
+    "scene_assert_symmetry",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "macro_relative_layout",
+    "scene_get_bounding_box"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that places or corrects one mirrored pair around an explicit mirror plane by preserving one anchor object and mirroring the other object's position. Prefer this tool over ad hoc manual mirroring when the task is pair symmetry rather than generic layout."
+}

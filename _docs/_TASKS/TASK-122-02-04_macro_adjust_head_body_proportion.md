@@ -1,8 +1,10 @@
 # TASK-122-02-04: `macro_adjust_head_body_proportion`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added `macro_adjust_head_body_proportion` as a bounded proportion-repair macro. The first MVP reads the current cross-object ratio through `scene_assert_proportion`, scales one explicit target (`head` or `body`) within `max_scale_delta`, and re-checks the result instead of relying on ad hoc scale guessing or open-ended sculpting.
 
 ## Objective
 
@@ -46,4 +48,4 @@ Add a bounded macro for correcting large head/body proportion drift on assembled
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the macro moves from planning to implementation to closure
+- this leaf is closed; the parent macro wave remains in progress for the remaining creature-correction macros

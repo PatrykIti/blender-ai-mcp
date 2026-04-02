@@ -1,0 +1,42 @@
+{
+  "tool_name": "macro_adjust_head_body_proportion",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "head body ratio",
+    "proportion repair",
+    "head too big",
+    "head too small",
+    "body proportion",
+    "napraw proporcje",
+    "głowa za duża",
+    "głowa za mała",
+    "proporcje ciała"
+  ],
+  "sample_prompts": [
+    "make the head a bit smaller relative to the body without rebuilding the model",
+    "repair the head/body proportion drift with a bounded scale change",
+    "napraw proporcje głowy do ciała bez przebudowy modelu",
+    "zmniejsz trochę głowę względem korpusu"
+  ],
+  "parameters": {
+    "head_object": {"type": "string", "required": true},
+    "body_object": {"type": "string", "required": true},
+    "expected_ratio": {"type": "float", "required": true},
+    "head_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"},
+    "body_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"},
+    "scale_target": {"type": "enum", "options": ["head", "body"], "default": "head"},
+    "tolerance": {"type": "float", "default": 0.01},
+    "uniform_scale": {"type": "bool", "default": true},
+    "max_scale_delta": {"type": "float", "default": 0.5}
+  },
+  "related_tools": [
+    "scene_measure_dimensions",
+    "scene_assert_proportion",
+    "macro_align_part_with_contact",
+    "scene_get_viewport"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that repairs head/body proportion drift with an explicit target ratio and a bounded scale adjustment. It verifies the current ratio, scales one target object within a max delta, and re-checks the result with scene_assert_proportion."
+}

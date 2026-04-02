@@ -66,6 +66,8 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_relative_layout",
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
+    "macro_place_symmetry_pair",
+    "macro_adjust_head_body_proportion",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -432,6 +434,176 @@ async def macro_align_part_with_contact(
         status="failed",
         macro_name="macro_align_part_with_contact",
         intent=f"repair '{part_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_place_symmetry_pair(
+    ctx: Context,
+    left_object: str,
+    right_object: str,
+    axis: Literal["X", "Y", "Z"] = "X",
+    mirror_coordinate: float = 0.0,
+    anchor_object: Literal["auto", "left", "right"] = "auto",
+    tolerance: float = 0.0001,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for placing or correcting one mirrored pair.
+
+    Use this when two existing parts should form a mirrored pair around one
+    explicit mirror plane. The first slice:
+
+    - works on one existing pair only
+    - chooses an anchor (`left`, `right`, or `auto`)
+    - mirrors the follower object's center across `axis + mirror_coordinate`
+    - verifies the result with `scene_assert_symmetry`
+
+    It does not yet try to solve contact-to-body placement or dimension
+    rescaling; those remain separate concerns from this pair-symmetry tool.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().place_symmetry_pair(
+                left_object=left_object,
+                right_object=right_object,
+                axis=axis,
+                mirror_coordinate=mirror_coordinate,
+                anchor_object=anchor_object,
+                tolerance=tolerance,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_place_symmetry_pair",
+                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_place_symmetry_pair",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "anchor_object": anchor_object,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=str(result.get("status") or "failed"),
+                macro_name="macro_place_symmetry_pair",
+                intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_place_symmetry_pair",
+        intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_adjust_head_body_proportion(
+    ctx: Context,
+    head_object: str,
+    body_object: str,
+    expected_ratio: float,
+    head_axis: Literal["X", "Y", "Z"] = "X",
+    body_axis: Literal["X", "Y", "Z"] = "X",
+    scale_target: Literal["head", "body"] = "head",
+    tolerance: float = 0.01,
+    uniform_scale: bool = True,
+    max_scale_delta: float = 0.5,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for repairing head/body proportion drift.
+
+    Use this when the current head/body ratio is visibly off but the pair is
+    already otherwise useful enough that a bounded scale repair is safer than a
+    rebuild or open-ended sculpt pass.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().adjust_head_body_proportion(
+                head_object=head_object,
+                body_object=body_object,
+                expected_ratio=expected_ratio,
+                head_axis=head_axis,
+                body_axis=body_axis,
+                scale_target=scale_target,
+                tolerance=tolerance,
+                uniform_scale=uniform_scale,
+                max_scale_delta=max_scale_delta,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_adjust_head_body_proportion",
+                intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_adjust_head_body_proportion",
+        params={
+            "head_object": head_object,
+            "body_object": body_object,
+            "expected_ratio": expected_ratio,
+            "head_axis": head_axis,
+            "body_axis": body_axis,
+            "scale_target": scale_target,
+            "tolerance": tolerance,
+            "uniform_scale": uniform_scale,
+            "max_scale_delta": max_scale_delta,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=str(result.get("status") or "failed"),
+                macro_name="macro_adjust_head_body_proportion",
+                intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_adjust_head_body_proportion",
+        intent=f"repair head/body proportion for '{head_object}' relative to '{body_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),

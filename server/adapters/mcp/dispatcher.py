@@ -164,6 +164,8 @@ class ToolDispatcher:
                 "macro_relative_layout": "relative_layout",
                 "macro_attach_part_to_surface": "attach_part_to_surface",
                 "macro_align_part_with_contact": "align_part_with_contact",
+                "macro_place_symmetry_pair": "place_symmetry_pair",
+                "macro_adjust_head_body_proportion": "adjust_head_body_proportion",
             },
         )
 

@@ -72,6 +72,37 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
+    def place_symmetry_pair(
+        self,
+        left_object: str,
+        right_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        anchor_object: str = "auto",
+        tolerance: float = 0.0001,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Place or correct one mirrored pair around a bounded mirror plane."""
+        pass
+
+    @abstractmethod
+    def adjust_head_body_proportion(
+        self,
+        head_object: str,
+        body_object: str,
+        expected_ratio: float,
+        head_axis: str = "X",
+        body_axis: str = "X",
+        scale_target: str = "head",
+        tolerance: float = 0.01,
+        uniform_scale: bool = True,
+        max_scale_delta: float = 0.5,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Repair head/body proportion with a bounded scale adjustment."""
+        pass
+
+    @abstractmethod
     def finish_form(
         self,
         target_object: str,

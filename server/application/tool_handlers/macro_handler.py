@@ -509,6 +509,382 @@ class MacroToolHandler(IMacroTool):
         base_report["verification_recommended"] = verification_recommended
         return base_report
 
+    def place_symmetry_pair(
+        self,
+        left_object: str,
+        right_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        anchor_object: str = "auto",
+        tolerance: float = 0.0001,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if left_object == right_object:
+            raise ValueError("left_object and right_object must be different")
+
+        axis_name = self._normalize_contact_axis(axis)
+        anchor_mode = self._normalize_symmetry_anchor(anchor_object)
+        tolerance_value = self._require_non_negative(tolerance, "tolerance")
+        bundle_id = self._make_capture_bundle_id("macro_place_symmetry_pair", left_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=left_object,
+            capture_profile=capture_profile,
+        )
+
+        left_bbox = self._scene.get_bounding_box(left_object, world_space=True)
+        right_bbox = self._scene.get_bounding_box(right_object, world_space=True)
+        before_symmetry = self._scene.assert_symmetry(
+            left_object,
+            right_object,
+            axis=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance_value,
+        )
+
+        anchor_name, follower_name, anchor_bbox = self._resolve_symmetry_anchor(
+            left_object=left_object,
+            right_object=right_object,
+            left_bbox=left_bbox,
+            right_bbox=right_bbox,
+            axis_name=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            anchor_mode=anchor_mode,
+        )
+        follower_bbox = right_bbox if follower_name == right_object else left_bbox
+        target_center = self._mirrored_center(
+            anchor_center=[float(value) for value in anchor_bbox["center"]],
+            axis_name=axis_name,
+            mirror_coordinate=float(mirror_coordinate),
+        )
+        current_center = [float(value) for value in follower_bbox["center"]]
+        translation_delta = [round(target - current, 6) for target, current in zip(target_center, current_center)]
+
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_symmetry_before",
+                "tool_name": "scene_assert_symmetry",
+                "summary": f"Read symmetry state for '{left_object}' and '{right_object}' before placement repair",
+                "details": before_symmetry,
+            },
+            {
+                "status": "applied",
+                "action": "select_symmetry_anchor",
+                "tool_name": None,
+                "summary": f"Using '{anchor_name}' as the symmetry anchor",
+                "details": {
+                    "anchor_mode": anchor_mode,
+                    "anchor_object": anchor_name,
+                    "follower_object": follower_name,
+                    "axis": axis_name,
+                    "mirror_coordinate": float(mirror_coordinate),
+                },
+            },
+        ]
+
+        self._modeling.transform_object(name=follower_name, location=target_center)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "place_symmetry_pair",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Moved '{follower_name}' to the mirrored position of '{anchor_name}'",
+                "details": {
+                    "axis": axis_name,
+                    "mirror_coordinate": float(mirror_coordinate),
+                    "target_center": target_center,
+                    "translation_delta": translation_delta,
+                },
+            }
+        )
+
+        after_symmetry = self._scene.assert_symmetry(
+            left_object,
+            right_object,
+            axis=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance_value,
+        )
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_symmetry_after",
+                "tool_name": "scene_assert_symmetry",
+                "summary": f"Read symmetry state for '{left_object}' and '{right_object}' after placement repair",
+                "details": after_symmetry,
+            }
+        )
+
+        report = {
+            "status": "success",
+            "macro_name": "macro_place_symmetry_pair",
+            "intent": (
+                f"Place/correct mirrored pair '{left_object}' and '{right_object}' across "
+                f"{axis_name}={float(mirror_coordinate):g} using '{anchor_name}' as anchor"
+            ),
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": [follower_name],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_assert_symmetry",
+                    "reason": "Confirm the pair is mirrored around the requested axis and mirror coordinate.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "left_object": left_object,
+                        "right_object": right_object,
+                        "axis": axis_name,
+                        "mirror_coordinate": float(mirror_coordinate),
+                        "tolerance": tolerance_value,
+                    },
+                },
+                {
+                    "tool_name": "inspect_scene",
+                    "reason": "Verify the mirrored pair visually after the bounded symmetry placement.",
+                    "priority": "normal",
+                    "arguments_hint": {"action": "object", "target_object": follower_name},
+                },
+                {
+                    "tool_name": "scene_get_viewport",
+                    "reason": "Do a quick visual check of the mirrored pair before continuing the build.",
+                    "priority": "normal",
+                    "arguments_hint": {"focus_target": follower_name, "shading": "SOLID"},
+                },
+            ],
+            "requires_followup": True,
+        }
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=follower_name,
+            capture_profile=capture_profile,
+        )
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=follower_name,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
+    def adjust_head_body_proportion(
+        self,
+        head_object: str,
+        body_object: str,
+        expected_ratio: float,
+        head_axis: str = "X",
+        body_axis: str = "X",
+        scale_target: str = "head",
+        tolerance: float = 0.01,
+        uniform_scale: bool = True,
+        max_scale_delta: float = 0.5,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if head_object == body_object:
+            raise ValueError("head_object and body_object must be different")
+
+        expected_ratio_value = self._require_positive(expected_ratio, "expected_ratio")
+        head_axis_name = self._normalize_contact_axis(head_axis)
+        body_axis_name = self._normalize_contact_axis(body_axis)
+        scale_target_name = self._normalize_scale_target(scale_target)
+        tolerance_value = self._require_non_negative(tolerance, "tolerance")
+        max_scale_delta_value = self._require_positive(max_scale_delta, "max_scale_delta")
+        bundle_id = self._make_capture_bundle_id("macro_adjust_head_body_proportion", head_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=head_object,
+            capture_profile=capture_profile,
+        )
+
+        before_proportion = self._scene.assert_proportion(
+            head_object,
+            axis_a=head_axis_name,
+            expected_ratio=expected_ratio_value,
+            reference_object=body_object,
+            reference_axis=body_axis_name,
+            tolerance=tolerance_value,
+            world_space=True,
+        )
+        current_ratio = float(before_proportion["actual"]["ratio"])
+        if current_ratio <= 0.0:
+            return self._blocked_repair_report(
+                macro_name="macro_adjust_head_body_proportion",
+                intent=f"Repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                message="Current head/body ratio is zero or invalid; cannot compute a bounded scale repair.",
+                before_truth={"proportion": before_proportion},
+            )
+
+        if abs(current_ratio - expected_ratio_value) <= tolerance_value:
+            report = {
+                "status": "success",
+                "macro_name": "macro_adjust_head_body_proportion",
+                "intent": (
+                    f"Repair head/body proportion for '{head_object}' relative to '{body_object}' "
+                    f"toward ratio {expected_ratio_value:g}"
+                ),
+                "actions_taken": [
+                    {
+                        "status": "applied",
+                        "action": "inspect_proportion_before",
+                        "tool_name": "scene_assert_proportion",
+                        "summary": "Current proportion is already within tolerance; no scale repair was needed.",
+                        "details": before_proportion,
+                    }
+                ],
+                "objects_created": None,
+                "objects_modified": None,
+                "verification_recommended": [
+                    {
+                        "tool_name": "scene_assert_proportion",
+                        "reason": "Reconfirm the ratio if later edits change the head/body relationship.",
+                        "priority": "normal",
+                        "arguments_hint": {
+                            "object_name": head_object,
+                            "axis_a": head_axis_name,
+                            "expected_ratio": expected_ratio_value,
+                            "reference_object": body_object,
+                            "reference_axis": body_axis_name,
+                            "tolerance": tolerance_value,
+                            "world_space": True,
+                        },
+                    }
+                ],
+                "requires_followup": False,
+            }
+            return report
+
+        current_scale = self._object_scale(scale_target_name == "head" and head_object or body_object)
+        scale_factor = (
+            expected_ratio_value / current_ratio
+            if scale_target_name == "head"
+            else current_ratio / expected_ratio_value
+        )
+        scale_delta = abs(scale_factor - 1.0)
+        if scale_delta > max_scale_delta_value:
+            return self._blocked_repair_report(
+                macro_name="macro_adjust_head_body_proportion",
+                intent=f"Repair head/body proportion for '{head_object}' relative to '{body_object}'",
+                message=(
+                    f"Required scale delta {scale_delta:g} exceeds max_scale_delta {max_scale_delta_value:g}; "
+                    "choose a broader rebuild step or raise the bound explicitly."
+                ),
+                before_truth={"proportion": before_proportion},
+                repair_plan={
+                    "scale_target": scale_target_name,
+                    "current_ratio": current_ratio,
+                    "expected_ratio": expected_ratio_value,
+                    "scale_factor": scale_factor,
+                    "max_scale_delta": max_scale_delta_value,
+                },
+            )
+
+        scale_object = head_object if scale_target_name == "head" else body_object
+        new_scale = (
+            [round(component * scale_factor, 6) for component in current_scale]
+            if uniform_scale
+            else self._scaled_axis_only(
+                current_scale=current_scale,
+                axis_name=head_axis_name if scale_target_name == "head" else body_axis_name,
+                scale_factor=scale_factor,
+            )
+        )
+        self._modeling.transform_object(name=scale_object, scale=new_scale)
+        after_proportion = self._scene.assert_proportion(
+            head_object,
+            axis_a=head_axis_name,
+            expected_ratio=expected_ratio_value,
+            reference_object=body_object,
+            reference_axis=body_axis_name,
+            tolerance=tolerance_value,
+            world_space=True,
+        )
+
+        report = {
+            "status": "success",
+            "macro_name": "macro_adjust_head_body_proportion",
+            "intent": (
+                f"Repair head/body proportion for '{head_object}' relative to '{body_object}' "
+                f"toward ratio {expected_ratio_value:g}"
+            ),
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "inspect_proportion_before",
+                    "tool_name": "scene_assert_proportion",
+                    "summary": "Read the current head/body ratio before the scale repair.",
+                    "details": before_proportion,
+                },
+                {
+                    "status": "applied",
+                    "action": "adjust_head_body_proportion",
+                    "tool_name": "modeling_transform_object",
+                    "summary": f"Scaled '{scale_object}' to repair the head/body ratio.",
+                    "details": {
+                        "scale_target": scale_target_name,
+                        "current_ratio": current_ratio,
+                        "expected_ratio": expected_ratio_value,
+                        "scale_factor": round(scale_factor, 6),
+                        "uniform_scale": uniform_scale,
+                        "new_scale": new_scale,
+                    },
+                },
+                {
+                    "status": "applied",
+                    "action": "inspect_proportion_after",
+                    "tool_name": "scene_assert_proportion",
+                    "summary": "Read the head/body ratio after the scale repair.",
+                    "details": after_proportion,
+                },
+            ],
+            "objects_created": None,
+            "objects_modified": [scale_object],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_assert_proportion",
+                    "reason": "Confirm the repaired head/body ratio against the requested target.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "object_name": head_object,
+                        "axis_a": head_axis_name,
+                        "expected_ratio": expected_ratio_value,
+                        "reference_object": body_object,
+                        "reference_axis": body_axis_name,
+                        "tolerance": tolerance_value,
+                        "world_space": True,
+                    },
+                },
+                {
+                    "tool_name": "scene_measure_dimensions",
+                    "reason": "Inspect the updated object dimensions after the bounded scale repair.",
+                    "priority": "normal",
+                    "arguments_hint": {"object_name": scale_object, "world_space": True},
+                },
+                {
+                    "tool_name": "scene_get_viewport",
+                    "reason": "Do a quick visual check of the repaired head/body proportion before continuing the build.",
+                    "priority": "normal",
+                    "arguments_hint": {"focus_target": head_object, "shading": "SOLID"},
+                },
+            ],
+            "requires_followup": True,
+        }
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=head_object,
+            capture_profile=capture_profile,
+        )
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=head_object,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
     def _execute_relative_layout_macro(
         self,
         *,
@@ -1014,6 +1390,18 @@ class MacroToolHandler(IMacroTool):
             raise ValueError("target_relation must be one of contact or gap")
         return normalized
 
+    def _normalize_symmetry_anchor(self, anchor_object: str) -> str:
+        normalized = str(anchor_object).lower()
+        if normalized not in {"auto", "left", "right"}:
+            raise ValueError("anchor_object must be one of auto, left, or right")
+        return normalized
+
+    def _normalize_scale_target(self, scale_target: str) -> str:
+        normalized = str(scale_target).lower()
+        if normalized not in {"head", "body"}:
+            raise ValueError("scale_target must be one of head or body")
+        return normalized
+
     def _pair_truth_summary(self, part_object: str, reference_object: str) -> Dict[str, Any]:
         return {
             "gap": self._scene.measure_gap(part_object, reference_object),
@@ -1039,6 +1427,41 @@ class MacroToolHandler(IMacroTool):
         if delta < -epsilon:
             return "negative"
         return None
+
+    def _resolve_symmetry_anchor(
+        self,
+        *,
+        left_object: str,
+        right_object: str,
+        left_bbox: Dict[str, Any],
+        right_bbox: Dict[str, Any],
+        axis_name: str,
+        mirror_coordinate: float,
+        anchor_mode: str,
+    ) -> tuple[str, str, Dict[str, Any]]:
+        if anchor_mode == "left":
+            return left_object, right_object, left_bbox
+        if anchor_mode == "right":
+            return right_object, left_object, right_bbox
+
+        axis_index = self._AXIS_INDEX[axis_name]
+        left_delta = abs(float(left_bbox["center"][axis_index]) - mirror_coordinate)
+        right_delta = abs(float(right_bbox["center"][axis_index]) - mirror_coordinate)
+        if left_delta >= right_delta:
+            return left_object, right_object, left_bbox
+        return right_object, left_object, right_bbox
+
+    def _mirrored_center(
+        self,
+        *,
+        anchor_center: list[float],
+        axis_name: str,
+        mirror_coordinate: float,
+    ) -> list[float]:
+        mirrored = list(anchor_center)
+        axis_index = self._AXIS_INDEX[axis_name]
+        mirrored[axis_index] = round((2.0 * mirror_coordinate) - anchor_center[axis_index], 6)
+        return mirrored
 
     def _choose_min_nudge_side(
         self,
@@ -1141,6 +1564,24 @@ class MacroToolHandler(IMacroTool):
             "requires_followup": True,
             "error": message,
         }
+
+    def _object_scale(self, object_name: str) -> list[float]:
+        object_snapshot = self._scene.inspect_object(object_name)
+        scale = list(object_snapshot.get("scale") or [1.0, 1.0, 1.0])
+        if len(scale) != 3:
+            raise ValueError(f"Object '{object_name}' did not return a valid scale vector")
+        return [float(value) for value in scale]
+
+    def _scaled_axis_only(
+        self,
+        *,
+        current_scale: list[float],
+        axis_name: str,
+        scale_factor: float,
+    ) -> list[float]:
+        updated = list(current_scale)
+        updated[self._AXIS_INDEX[axis_name]] = round(updated[self._AXIS_INDEX[axis_name]] * scale_factor, 6)
+        return [round(value, 6) for value in updated]
 
     def _resolve_finish_preset_parameters(
         self,

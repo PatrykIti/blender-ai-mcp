@@ -365,6 +365,44 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def place_symmetry_pair(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_place_symmetry_pair",
+            "intent": "mirror Ear_L / Ear_R",
+            "actions_taken": [
+                {"status": "applied", "action": "place_symmetry_pair", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [kwargs.get("right_object", "Ear_R")],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_assert_symmetry",
+                    "reason": "Confirm mirrored placement after the move",
+                    "priority": "high",
+                }
+            ],
+            "requires_followup": True,
+        }
+
+    def adjust_head_body_proportion(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_adjust_head_body_proportion",
+            "intent": "repair Head / Body proportion",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "adjust_head_body_proportion",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": [kwargs.get("head_object", "Head")],
+            "verification_recommended": [
+                {"tool_name": "scene_assert_proportion", "reason": "Confirm repaired ratio", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
 
 def _unwrap_structured(result):
     structured = getattr(result, "structured_content", None)
@@ -389,6 +427,8 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_relative_layout"],
             by_name["macro_attach_part_to_surface"],
             by_name["macro_align_part_with_contact"],
+            by_name["macro_place_symmetry_pair"],
+            by_name["macro_adjust_head_body_proportion"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -404,6 +444,8 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         layout_macro_tool,
         attach_macro_tool,
         repair_macro_tool,
+        symmetry_macro_tool,
+        proportion_macro_tool,
         scene_context_tool,
         scene_create_tool,
         scene_configure_tool,
@@ -418,6 +460,8 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     assert layout_macro_tool.output_schema is not None
     assert attach_macro_tool.output_schema is not None
     assert repair_macro_tool.output_schema is not None
+    assert symmetry_macro_tool.output_schema is not None
+    assert proportion_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
@@ -686,6 +730,57 @@ def test_macro_align_part_with_contact_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_align_part_with_contact"
     assert payload["actions_taken"][0]["action"] == "align_part_with_contact"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_place_symmetry_pair_delivers_structured_content(monkeypatch):
+    """Symmetry-pair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_place_symmetry_pair",
+            {
+                "left_object": "Ear_L",
+                "right_object": "Ear_R",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_place_symmetry_pair"
+    assert payload["actions_taken"][0]["action"] == "place_symmetry_pair"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_adjust_head_body_proportion_delivers_structured_content(monkeypatch):
+    """Proportion-repair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_adjust_head_body_proportion",
+            {
+                "head_object": "Head",
+                "body_object": "Body",
+                "expected_ratio": 0.4,
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_adjust_head_body_proportion"
+    assert payload["actions_taken"][0]["action"] == "adjust_head_body_proportion"
     assert payload["requires_followup"] is True
 
 

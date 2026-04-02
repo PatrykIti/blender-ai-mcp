@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first two macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, and `macro_align_part_with_contact` now covers bounded minimal-nudge repair for pairs that already almost fit. The remaining creature-correction macro leaves stay open under this in-progress wave.
+**Progress Update:** The first four macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, and `macro_adjust_head_body_proportion` now handles bounded head/body ratio repair. The remaining creature-correction macro leaves stay open under this in-progress wave.
 
 ## Objective
 

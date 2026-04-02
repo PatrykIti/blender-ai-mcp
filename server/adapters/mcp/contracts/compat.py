@@ -20,6 +20,8 @@ CONTRACT_ENABLED_TOOLS = {
     "macro_relative_layout",
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
+    "macro_place_symmetry_pair",
+    "macro_adjust_head_body_proportion",
     "mesh_select",
     "mesh_select_targeted",
     "mesh_inspect",
