@@ -6,6 +6,12 @@
 
 **Completion Summary:** The hybrid-loop subtree is now complete. Stage compare / iterate responses expose ranked `correction_candidates`, the iterate loop derives loop-facing `correction_focus` from those ranked candidates when available, `loop_disposition` responds to both actionable focus and high-priority deterministic truth evidence, and the real assembled-creature regression pack plus prompt guidance are now explicit enough for repeatable validation.
 
+**Follow-on Notes:**
+- [TASK-122-03-05](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md)
+  for pairing-anchor selection and canonical tool-id output
+- [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md)
+  for model-aware budget/scope control and graceful payload trimming
+
 ## Objective
 
 Merge:
