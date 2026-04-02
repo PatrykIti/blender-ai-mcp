@@ -1,8 +1,10 @@
 # TASK-122-03-03: Loop Disposition From Vision and Truth Signal
 
 **Parent:** [TASK-122-03](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `reference_iterate_stage_checkpoint(...)` now computes `loop_disposition` from both actionable focus and deterministic truth evidence. The first bounded rule keeps the existing actionability + repeated-focus path, but additionally escalates to `inspect_validate` when the highest-priority ranked correction candidates contain high-priority truth evidence such as `contact_failure`, `overlap`, or `measurement_error`.
 
 ## Objective
 
@@ -47,4 +49,4 @@ Recompute `loop_disposition` from both visual and geometric evidence instead of 
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the hybrid-loop work advances or closes
+- this leaf is closed; the hybrid-loop parent remains in progress for real eval and prompting work

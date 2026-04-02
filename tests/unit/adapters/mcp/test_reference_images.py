@@ -1302,6 +1302,88 @@ def test_reference_iterate_stage_checkpoint_uses_truth_integrated_candidates_for
     assert result.correction_candidates[0].candidate_kind == "truth_only"
 
 
+def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_priority(monkeypatch):
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly creature", {"status": "no_match"})
+
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "low poly creature",
+            "target_object": "TruthHead",
+            "target_objects": ["TruthHead", "TruthBody"],
+            "checkpoint_id": "checkpoint_truth_inspect",
+            "checkpoint_label": "stage_truth_inspect",
+            "preset_profile": "compact",
+            "preset_names": ["context_wide"],
+            "capture_count": 1,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:truthhead_truthbody",
+                    "summary": "TruthHead -> TruthBody failed the contact assertion.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_object": "TruthHead",
+                    "target_objects": ["TruthHead", "TruthBody"],
+                    "focus_pairs": ["TruthHead -> TruthBody"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["TruthHead -> TruthBody"],
+                        "item_kinds": ["contact_failure"],
+                        "items": [
+                            {
+                                "kind": "contact_failure",
+                                "summary": "TruthHead -> TruthBody failed the contact assertion.",
+                                "priority": "high",
+                                "from_object": "TruthHead",
+                                "to_object": "TruthBody",
+                                "tool_name": "scene_assert_contact",
+                            }
+                        ],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Repair the pair with a bounded nudge.",
+                                "priority": "high",
+                                "arguments_hint": {
+                                    "part_object": "TruthHead",
+                                    "reference_object": "TruthBody",
+                                },
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    async def _fake_reference_compare_stage_checkpoint(*args, **kwargs):
+        return compare
+
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.reference_compare_stage_checkpoint",
+        _fake_reference_compare_stage_checkpoint,
+    )
+
+    result = asyncio.run(
+        reference_iterate_stage_checkpoint(
+            ctx,
+            target_object="TruthHead",
+            target_objects=["TruthBody"],
+            checkpoint_label="stage_truth_inspect",
+        )
+    )
+
+    assert result.loop_disposition == "inspect_validate"
+    assert result.correction_focus == ["TruthHead -> TruthBody failed the contact assertion."]
+    assert "Deterministic truth findings remain high-priority" in (result.message or "")
+
+
 def test_reference_iterate_stage_checkpoint_does_not_reuse_state_across_target_view_or_profile(monkeypatch):
     ctx = FakeContext()
     update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})

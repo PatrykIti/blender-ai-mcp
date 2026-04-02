@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [194](./194-2026-04-02-loop-disposition-from-vision-and-truth-signal.md) | 2026-04-02 | **Loop disposition from vision and truth signal** | - |
 | [193](./193-2026-04-02-iterate-stage-truth-bundle-integration.md) | 2026-04-02 | **Iterate stage truth bundle integration** | - |
 | [192](./192-2026-04-02-correction-candidate-contract-and-priority-model.md) | 2026-04-02 | **Correction candidate contract and priority model** | - |
 | [191](./191-2026-04-02-macro-cleanup-part-intersections.md) | 2026-04-02 | **Macro cleanup part intersections** | - |

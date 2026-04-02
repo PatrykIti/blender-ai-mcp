@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first two hybrid-loop leaves are now complete. Stage compare / iterate responses expose a ranked `correction_candidates` list that preserves source boundaries between vision evidence, truth evidence, and bounded macro options, and `reference_iterate_stage_checkpoint(...)` now derives loop-facing `correction_focus` from those ranked candidates when available. The subtree remains open while disposition policy and real eval work land on top of that integration.
+**Progress Update:** The first three hybrid-loop leaves are now complete. Stage compare / iterate responses expose a ranked `correction_candidates` list that preserves source boundaries between vision evidence, truth evidence, and bounded macro options, `reference_iterate_stage_checkpoint(...)` derives loop-facing `correction_focus` from those ranked candidates when available, and `loop_disposition` now also responds to high-priority deterministic truth evidence. The subtree remains open only for real assembled-creature eval and prompting validation.
 
 ## Objective
 

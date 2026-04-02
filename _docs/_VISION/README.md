@@ -61,6 +61,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   `correction_focus` from ranked `correction_candidates` when they are present,
   so deterministic truth-only findings can still reach the staged correction
   loop even before the later disposition-policy leaf changes
+- `reference_iterate_stage_checkpoint(...)` now also lets high-priority
+  deterministic truth findings move `loop_disposition` to
+  `inspect_validate`, instead of waiting only for repeated vision focus
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

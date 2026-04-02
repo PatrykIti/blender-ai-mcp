@@ -6,7 +6,7 @@
 **Dependencies:** TASK-117, TASK-120, TASK-121, TASK-121-08  
 **Status:** 🚧 In Progress
 
-**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete, and the first two hybrid-loop leaves (`TASK-122-03-01` and `TASK-122-03-02`) are also done. Stage compare and iterate responses now expose structured assembled-target truth handoff plus ranked `correction_candidates`, and the iterate loop now derives its loop-facing `correction_focus` from those ranked candidates when available. The umbrella remains in progress while the remaining hybrid-loop leaves wire that integration into final disposition policy and eval.
+**Progress Update:** The truth-contract subtree (`TASK-122-01`) and the creature-correction macro subtree (`TASK-122-02`) are now complete, and the first three hybrid-loop leaves (`TASK-122-03-01` through `TASK-122-03-03`) are also done. Stage compare and iterate responses now expose structured assembled-target truth handoff plus ranked `correction_candidates`, the iterate loop derives its loop-facing `correction_focus` from those ranked candidates when available, and `loop_disposition` now responds to both actionable focus and high-priority deterministic truth evidence. The umbrella remains in progress only for the real eval/prompting leaf.
 
 ## Objective
 

@@ -233,6 +233,11 @@ ranked candidates, preserve the ranked order but keep the richer source payload
 available alongside the summary list. The summary is for loop ergonomics; the
 candidate payload remains the authoritative provenance record.
 
+When `loop_disposition` is influenced by deterministic truth signals, prefer
+explicit bounded rules such as high-priority contact/overlap/assertion failure
+over fuzzy confidence blending. Truth-driven escalation is allowed; source
+blurring is not.
+
 For correction policy specifically:
 
 - normalized confidence and explicit risk classes should feed one router policy decision

@@ -300,6 +300,23 @@ def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointRes
     return deduped[:3]
 
 
+def _should_inspect_from_truth_signal(
+    correction_candidates: list[ReferenceCorrectionCandidateContract],
+) -> bool:
+    if not correction_candidates:
+        return False
+
+    for candidate in correction_candidates:
+        if candidate.priority != "high":
+            continue
+        truth_evidence = candidate.truth_evidence
+        if truth_evidence is None:
+            continue
+        if any(kind in {"contact_failure", "overlap", "measurement_error"} for kind in truth_evidence.item_kinds):
+            return True
+    return False
+
+
 def _candidate_matches_pair_label(focus_item: str, pair_label: str) -> bool:
     normalized_focus = _normalized_focus_key(focus_item)
     normalized_pair = _normalized_focus_key(pair_label)
@@ -1390,8 +1407,9 @@ async def reference_iterate_stage_checkpoint(
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
     continue_recommended = bool(correction_focus)
+    inspect_from_truth_signal = _should_inspect_from_truth_signal(compare_result.correction_candidates)
     loop_disposition: Literal["continue_build", "inspect_validate", "stop"] = (
-        "continue_build" if continue_recommended else "stop"
+        "inspect_validate" if inspect_from_truth_signal else ("continue_build" if continue_recommended else "stop")
     )
     stop_reason = (
         None if continue_recommended else "No actionable correction guidance was returned for this checkpoint."
@@ -1465,10 +1483,16 @@ async def reference_iterate_stage_checkpoint(
     )
 
     if loop_disposition == "inspect_validate":
-        message = (
-            "Repeated correction focus persists across stage iterations. "
-            "Prefer inspect/measure/assert confirmation before another free-form build step."
-        )
+        if inspect_from_truth_signal:
+            message = (
+                "Deterministic truth findings remain high-priority. "
+                "Prefer inspect/measure/assert confirmation before another free-form build step."
+            )
+        else:
+            message = (
+                "Repeated correction focus persists across stage iterations. "
+                "Prefer inspect/measure/assert confirmation before another free-form build step."
+            )
     elif continue_recommended:
         message = "Continue the guided build loop using correction_focus first."
     else:
