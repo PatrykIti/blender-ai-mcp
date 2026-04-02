@@ -1,8 +1,10 @@
 # TASK-122-02-05: `macro_adjust_tail_arc`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Added `macro_adjust_tail_arc` as a bounded chain macro for segmented tails. The first MVP takes an ordered list of existing tail segment objects, keeps the first segment anchored, and places the remaining segments along a planar arc with deterministic spacing and optional progressive rotation around one explicit rotation axis.
 
 ## Objective
 
@@ -46,4 +48,4 @@ Add a bounded macro for correcting segmented tail shape, arc, and placement with
 
 ## Status / Board Update
 
-- update this leaf, its parent task, and `_docs/_TASKS/README.md` when the macro moves from planning to implementation to closure
+- this leaf is closed; the parent macro wave remains in progress for the remaining creature-correction macros

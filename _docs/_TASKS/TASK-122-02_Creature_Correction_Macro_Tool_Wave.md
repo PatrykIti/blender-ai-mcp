@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first four macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, and `macro_adjust_relative_proportion` now handles bounded cross-object ratio repair. The remaining creature-correction macro leaves stay open under this in-progress wave.
+**Progress Update:** The first five macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, `macro_adjust_relative_proportion` handles bounded cross-object ratio repair, and `macro_adjust_tail_arc` now handles bounded arc adjustment for ordered tail segment chains. The remaining creature-correction macro leaves stay open under this in-progress wave.
 
 ## Objective
 

@@ -403,6 +403,25 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def adjust_tail_arc(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_adjust_tail_arc",
+            "intent": "adjust Tail_01/Tail_02/Tail_03 arc",
+            "actions_taken": [
+                {
+                    "status": "applied",
+                    "action": "adjust_tail_arc",
+                    "tool_name": "modeling_transform_object",
+                }
+            ],
+            "objects_modified": list(kwargs.get("segment_objects", [])[1:]),
+            "verification_recommended": [
+                {"tool_name": "inspect_scene", "reason": "Verify updated tail arc", "priority": "normal"}
+            ],
+            "requires_followup": True,
+        }
+
 
 def _unwrap_structured(result):
     structured = getattr(result, "structured_content", None)
@@ -429,6 +448,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_align_part_with_contact"],
             by_name["macro_place_symmetry_pair"],
             by_name["macro_adjust_relative_proportion"],
+            by_name["macro_adjust_tail_arc"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -446,6 +466,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         repair_macro_tool,
         symmetry_macro_tool,
         proportion_macro_tool,
+        tail_arc_macro_tool,
         scene_context_tool,
         scene_create_tool,
         scene_configure_tool,
@@ -462,6 +483,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     assert repair_macro_tool.output_schema is not None
     assert symmetry_macro_tool.output_schema is not None
     assert proportion_macro_tool.output_schema is not None
+    assert tail_arc_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
     assert scene_create_tool.output_schema is not None
     assert scene_configure_tool.output_schema is not None
@@ -781,6 +803,30 @@ def test_macro_adjust_relative_proportion_delivers_structured_content(monkeypatc
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_adjust_relative_proportion"
     assert payload["actions_taken"][0]["action"] == "adjust_relative_proportion"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_adjust_tail_arc_delivers_structured_content(monkeypatch):
+    """Tail-arc macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_adjust_tail_arc",
+            {
+                "segment_objects": ["Tail_01", "Tail_02", "Tail_03"],
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_adjust_tail_arc"
+    assert payload["actions_taken"][0]["action"] == "adjust_tail_arc"
     assert payload["requires_followup"] is True
 
 

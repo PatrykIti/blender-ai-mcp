@@ -66,6 +66,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_align_part_with_contact` for minimal repair nudges on pairs that almost fit
 - `macro_place_symmetry_pair` for mirrored pair placement/correction around an explicit mirror plane
 - `macro_adjust_relative_proportion` for bounded ratio repair between related objects
+- `macro_adjust_tail_arc` for bounded arc adjustment on segmented tail chains
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work

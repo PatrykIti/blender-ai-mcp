@@ -103,6 +103,20 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
+    def adjust_tail_arc(
+        self,
+        segment_objects: List[str],
+        rotation_axis: str = "Y",
+        total_angle: float = 30.0,
+        direction: str = "positive",
+        segment_spacing: Optional[float] = None,
+        apply_rotation: bool = True,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Adjust one segmented tail chain into a bounded planar arc."""
+        pass
+
+    @abstractmethod
     def finish_form(
         self,
         target_object: str,

@@ -885,6 +885,152 @@ class MacroToolHandler(IMacroTool):
             captures_after=captures_after,
         )
 
+    def adjust_tail_arc(
+        self,
+        segment_objects: List[str],
+        rotation_axis: str = "Y",
+        total_angle: float = 30.0,
+        direction: str = "positive",
+        segment_spacing: Optional[float] = None,
+        apply_rotation: bool = True,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        normalized_segments = [str(name).strip() for name in segment_objects if str(name).strip()]
+        if len(normalized_segments) < 2:
+            raise ValueError("segment_objects must contain at least 2 object names")
+
+        rotation_axis_name = self._normalize_contact_axis(rotation_axis)
+        direction_name = self._normalize_contact_side(direction)
+        total_angle_value = self._require_non_negative(total_angle, "total_angle")
+        spacing_override = (
+            None if segment_spacing is None else self._require_non_negative(segment_spacing, "segment_spacing")
+        )
+        bundle_id = self._make_capture_bundle_id("macro_adjust_tail_arc", normalized_segments[0])
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=normalized_segments[0],
+            capture_profile=capture_profile,
+        )
+
+        bbox_map = {name: self._scene.get_bounding_box(name, world_space=True) for name in normalized_segments}
+        inspect_map = {name: self._scene.inspect_object(name) for name in normalized_segments}
+        centers = {name: [float(value) for value in bbox_map[name]["center"]] for name in normalized_segments}
+        rotations = {name: [float(value) for value in inspect_map[name].get("rotation") or [0.0, 0.0, 0.0]] for name in normalized_segments}
+        base_name = normalized_segments[0]
+        base_center = centers[base_name]
+        direction_vector = self._initial_arc_direction(
+            start_center=base_center,
+            next_center=centers[normalized_segments[1]],
+            rotation_axis=rotation_axis_name,
+        )
+        spacing_values = self._tail_spacing_values(
+            segment_names=normalized_segments,
+            centers=centers,
+            fallback_spacing=spacing_override,
+        )
+
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_tail_chain",
+                "tool_name": "scene_get_bounding_box",
+                "summary": f"Read the current tail chain state for {len(normalized_segments)} segment(s)",
+                "details": {
+                    "segment_objects": normalized_segments,
+                    "rotation_axis": rotation_axis_name,
+                    "direction": direction_name,
+                    "total_angle": total_angle_value,
+                    "segment_spacing": spacing_values,
+                },
+            }
+        ]
+
+        previous_center = list(base_center)
+        total_angle_radians = math.radians(total_angle_value)
+        sign = 1.0 if direction_name == "positive" else -1.0
+        modified_objects: list[str] = []
+        angle_steps: list[Dict[str, Any]] = []
+
+        for index, object_name in enumerate(normalized_segments[1:], start=1):
+            spacing = spacing_values[index - 1]
+            cumulative_angle = sign * total_angle_radians * (index / (len(normalized_segments) - 1))
+            rotated_direction = self._rotate_vector_about_axis(
+                direction_vector,
+                rotation_axis=rotation_axis_name,
+                angle_radians=cumulative_angle,
+            )
+            target_center = [round(previous_center[idx] + rotated_direction[idx] * spacing, 6) for idx in range(3)]
+            updated_rotation = None
+            if apply_rotation:
+                updated_rotation = list(rotations[object_name])
+                updated_rotation[self._AXIS_INDEX[rotation_axis_name]] = round(
+                    updated_rotation[self._AXIS_INDEX[rotation_axis_name]] + cumulative_angle,
+                    6,
+                )
+
+            self._modeling.transform_object(name=object_name, location=target_center, rotation=updated_rotation)
+            modified_objects.append(object_name)
+            angle_steps.append(
+                {
+                    "object_name": object_name,
+                    "cumulative_angle_degrees": round(math.degrees(cumulative_angle), 6),
+                    "target_center": target_center,
+                    "rotation_applied": updated_rotation,
+                }
+            )
+            previous_center = target_center
+
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "adjust_tail_arc",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Repositioned {len(modified_objects)} tail segment(s) along a bounded planar arc",
+                "details": {"steps": angle_steps},
+            }
+        )
+
+        report = {
+            "status": "success",
+            "macro_name": "macro_adjust_tail_arc",
+            "intent": (
+                f"Adjust tail arc for {len(normalized_segments)} segment(s) around {rotation_axis_name} "
+                f"with total_angle={total_angle_value:g} and direction={direction_name}"
+            ),
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": modified_objects,
+            "verification_recommended": [
+                {
+                    "tool_name": "inspect_scene",
+                    "reason": "Verify the updated tail chain object states after the bounded arc adjustment.",
+                    "priority": "normal",
+                    "arguments_hint": {"action": "object", "target_object": normalized_segments[-1]},
+                },
+                {
+                    "tool_name": "scene_get_viewport",
+                    "reason": "Do a quick visual check of the adjusted tail arc before continuing the build.",
+                    "priority": "normal",
+                    "arguments_hint": {"focus_target": normalized_segments[-1], "shading": "SOLID"},
+                },
+            ],
+            "requires_followup": True,
+        }
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=normalized_segments[-1],
+            capture_profile=capture_profile,
+        )
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=normalized_segments[-1],
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
     def _execute_relative_layout_macro(
         self,
         *,
@@ -1395,6 +1541,62 @@ class MacroToolHandler(IMacroTool):
         if normalized not in {"auto", "left", "right"}:
             raise ValueError("anchor_object must be one of auto, left, or right")
         return normalized
+
+    def _initial_arc_direction(
+        self,
+        *,
+        start_center: list[float],
+        next_center: list[float],
+        rotation_axis: str,
+    ) -> list[float]:
+        vector = [next_center[idx] - start_center[idx] for idx in range(3)]
+        axis_index = self._AXIS_INDEX[rotation_axis]
+        vector[axis_index] = 0.0
+        length = math.sqrt(sum(component * component for component in vector))
+        if length <= 1e-9:
+            defaults = {
+                "X": [0.0, 1.0, 0.0],
+                "Y": [1.0, 0.0, 0.0],
+                "Z": [1.0, 0.0, 0.0],
+            }
+            return defaults[rotation_axis]
+        return [component / length for component in vector]
+
+    def _tail_spacing_values(
+        self,
+        *,
+        segment_names: list[str],
+        centers: dict[str, list[float]],
+        fallback_spacing: float | None,
+    ) -> list[float]:
+        if fallback_spacing is not None:
+            return [fallback_spacing for _ in segment_names[1:]]
+
+        values: list[float] = []
+        for current_name, next_name in zip(segment_names, segment_names[1:]):
+            current_center = centers[current_name]
+            next_center = centers[next_name]
+            distance = math.sqrt(
+                sum((next_center[idx] - current_center[idx]) ** 2 for idx in range(3))
+            )
+            values.append(round(distance, 6))
+        return values
+
+    def _rotate_vector_about_axis(
+        self,
+        vector: list[float],
+        *,
+        rotation_axis: str,
+        angle_radians: float,
+    ) -> list[float]:
+        x, y, z = vector
+        cosine = math.cos(angle_radians)
+        sine = math.sin(angle_radians)
+        if rotation_axis == "X":
+            return [x, y * cosine - z * sine, y * sine + z * cosine]
+        if rotation_axis == "Y":
+            return [x * cosine + z * sine, y, -x * sine + z * cosine]
+        return [x * cosine - y * sine, x * sine + y * cosine, z]
 
     def _normalize_scale_target(self, scale_target: str) -> str:
         normalized = str(scale_target).lower()

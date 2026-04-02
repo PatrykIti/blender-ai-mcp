@@ -68,6 +68,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_adjust_relative_proportion",
+    "macro_adjust_tail_arc",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -604,6 +605,83 @@ async def macro_adjust_relative_proportion(
         status="failed",
         macro_name="macro_adjust_relative_proportion",
         intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_adjust_tail_arc(
+    ctx: Context,
+    segment_objects: List[str],
+    rotation_axis: Literal["X", "Y", "Z"] = "Y",
+    total_angle: float = 30.0,
+    direction: Literal["positive", "negative"] = "positive",
+    segment_spacing: float | None = None,
+    apply_rotation: bool = True,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for adjusting a segmented tail arc.
+
+    Use this when a tail is represented by an ordered chain of existing segment
+    objects and needs a cleaner planar arc without resorting to free-form tool
+    chaining or rigging.
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().adjust_tail_arc(
+                segment_objects=segment_objects,
+                rotation_axis=rotation_axis,
+                total_angle=total_angle,
+                direction=direction,
+                segment_spacing=segment_spacing,
+                apply_rotation=apply_rotation,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_adjust_tail_arc",
+                intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_adjust_tail_arc",
+        params={
+            "segment_objects": segment_objects,
+            "rotation_axis": rotation_axis,
+            "total_angle": total_angle,
+            "direction": direction,
+            "segment_spacing": segment_spacing,
+            "apply_rotation": apply_rotation,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=str(result.get("status") or "failed"),
+                macro_name="macro_adjust_tail_arc",
+                intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_adjust_tail_arc",
+        intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
         actions_taken=[],
         requires_followup=False,
         error=str(result),
