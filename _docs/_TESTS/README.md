@@ -12,6 +12,19 @@ PYTHONPATH=. poetry run pytest tests/unit/ -v
 PYTHONPATH=. poetry run pytest tests/unit/tools/mesh/ -v
 ```
 
+Important:
+
+- do **not** mix `tests/unit` and `tests/e2e` in one `pytest` invocation
+- unit tests install global `bpy` / `bmesh` / `mathutils` mocks from
+  [tests/unit/conftest.py](../../tests/unit/conftest.py)
+- E2E tests expect real Blender RPC and should run in a separate process
+
+Recommended split runner:
+
+```bash
+./scripts/run_unit_then_e2e.sh
+```
+
 ### E2E Tests (Requires Blender)
 
 **Automated (Recommended):**
@@ -30,6 +43,9 @@ python3 scripts/run_e2e_tests.py --quiet           # Don't stream output to cons
 # 1. Start Blender with addon enabled
 # 2. Run E2E tests
 PYTHONPATH=. poetry run pytest tests/e2e/ -v
+
+# Or run unit and E2E in two separate pytest processes
+./scripts/run_unit_then_e2e.sh
 ```
 
 ---
