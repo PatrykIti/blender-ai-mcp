@@ -403,21 +403,21 @@ class MacroHandler:
             "requires_followup": True,
         }
 
-    def adjust_tail_arc(self, **kwargs):
+    def adjust_segment_chain_arc(self, **kwargs):
         return {
             "status": "success",
-            "macro_name": "macro_adjust_tail_arc",
-            "intent": "adjust Tail_01/Tail_02/Tail_03 arc",
+            "macro_name": "macro_adjust_segment_chain_arc",
+            "intent": "adjust Tail_01/Tail_02/Tail_03 chain arc",
             "actions_taken": [
                 {
                     "status": "applied",
-                    "action": "adjust_tail_arc",
+                    "action": "adjust_segment_chain_arc",
                     "tool_name": "modeling_transform_object",
                 }
             ],
             "objects_modified": list(kwargs.get("segment_objects", [])[1:]),
             "verification_recommended": [
-                {"tool_name": "inspect_scene", "reason": "Verify updated tail arc", "priority": "normal"}
+                {"tool_name": "inspect_scene", "reason": "Verify updated chain arc", "priority": "normal"}
             ],
             "requires_followup": True,
         }
@@ -448,7 +448,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_align_part_with_contact"],
             by_name["macro_place_symmetry_pair"],
             by_name["macro_adjust_relative_proportion"],
-            by_name["macro_adjust_tail_arc"],
+            by_name["macro_adjust_segment_chain_arc"],
             by_name["scene_context"],
             by_name["scene_create"],
             by_name["scene_configure"],
@@ -806,8 +806,8 @@ def test_macro_adjust_relative_proportion_delivers_structured_content(monkeypatc
     assert payload["requires_followup"] is True
 
 
-def test_macro_adjust_tail_arc_delivers_structured_content(monkeypatch):
-    """Tail-arc macro should expose machine-readable reports on the MCP surface."""
+def test_macro_adjust_segment_chain_arc_delivers_structured_content(monkeypatch):
+    """Segment-chain arc macro should expose machine-readable reports on the MCP surface."""
 
     monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
     monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
@@ -816,7 +816,7 @@ def test_macro_adjust_tail_arc_delivers_structured_content(monkeypatch):
 
     async def run():
         return await server.call_tool(
-            "macro_adjust_tail_arc",
+            "macro_adjust_segment_chain_arc",
             {
                 "segment_objects": ["Tail_01", "Tail_02", "Tail_03"],
             },
@@ -825,8 +825,8 @@ def test_macro_adjust_tail_arc_delivers_structured_content(monkeypatch):
     result = asyncio.run(run())
 
     payload = _unwrap_structured(result)
-    assert payload["macro_name"] == "macro_adjust_tail_arc"
-    assert payload["actions_taken"][0]["action"] == "adjust_tail_arc"
+    assert payload["macro_name"] == "macro_adjust_segment_chain_arc"
+    assert payload["actions_taken"][0]["action"] == "adjust_segment_chain_arc"
     assert payload["requires_followup"] is True
 
 

@@ -100,7 +100,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "macro_align_part_with_contact" in build_names
     assert "macro_place_symmetry_pair" in build_names
     assert "macro_adjust_relative_proportion" in build_names
-    assert "macro_adjust_tail_arc" in build_names
+    assert "macro_adjust_segment_chain_arc" in build_names
     assert "macro_finish_form" in build_names
     assert "macro_cutout_recess" in build_names
     assert "modeling_create_primitive" in build_names
@@ -118,7 +118,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "macro_align_part_with_contact" not in inspect_names
     assert "macro_place_symmetry_pair" not in inspect_names
     assert "macro_adjust_relative_proportion" not in inspect_names
-    assert "macro_adjust_tail_arc" not in inspect_names
+    assert "macro_adjust_segment_chain_arc" not in inspect_names
     assert "macro_finish_form" not in inspect_names
     assert "modeling_create_primitive" not in inspect_names
     assert "router_clear_goal" not in inspect_names

@@ -4,7 +4,7 @@
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first five macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, `macro_adjust_relative_proportion` handles bounded cross-object ratio repair, and `macro_adjust_tail_arc` now handles bounded arc adjustment for ordered tail segment chains. The remaining creature-correction macro leaves stay open under this in-progress wave.
+**Progress Update:** The first five macro leaves are now complete. `macro_attach_part_to_surface` covers initial seating, `macro_align_part_with_contact` covers bounded minimal-nudge repair, `macro_place_symmetry_pair` handles mirrored pair placement/correction, `macro_adjust_relative_proportion` handles bounded cross-object ratio repair, and `macro_adjust_segment_chain_arc` now handles bounded arc adjustment for ordered segment chains. The remaining creature-correction macro leaves stay open under this in-progress wave.
 
 ## Objective
 
@@ -58,6 +58,6 @@ creature/reference correction still lacks direct tools for:
 | 2 | [TASK-122-02-02](./TASK-122-02-02_macro_align_part_with_contact.md) | Repair an already-related part pair with a bounded contact-aware nudge instead of re-placing it from scratch |
 | 3 | [TASK-122-02-03](./TASK-122-02-03_macro_place_symmetry_pair.md) | Place or correct mirrored part pairs such as ears/eyes/limbs |
 | 4 | [TASK-122-02-04](./TASK-122-02-04_macro_adjust_relative_proportion.md) | Correct large cross-object ratio issues through bounded proportion repair |
-| 5 | [TASK-122-02-05](./TASK-122-02-05_macro_adjust_tail_arc.md) | Correct segmented tail shape/arc/placement |
+| 5 | [TASK-122-02-05](./TASK-122-02-05_macro_adjust_segment_chain_arc.md) | Correct ordered segment-chain arc/placement through bounded chain adjustment |
 | 6 | [TASK-122-02-06](./TASK-122-02-06_macro_pose_simple_limbs.md) | Correct simple limb/foot placement and grounded posing |
 | 7 | [TASK-122-02-07](./TASK-122-02-07_macro_cleanup_part_intersections.md) | Resolve or reduce obvious part intersections in a bounded way |

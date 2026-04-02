@@ -1,5 +1,5 @@
 {
-  "tool_name": "macro_adjust_tail_arc",
+  "tool_name": "macro_adjust_segment_chain_arc",
   "category": "scene",
   "mode_required": "OBJECT",
   "selection_required": false,

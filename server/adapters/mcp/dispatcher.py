@@ -166,7 +166,7 @@ class ToolDispatcher:
                 "macro_align_part_with_contact": "align_part_with_contact",
                 "macro_place_symmetry_pair": "place_symmetry_pair",
                 "macro_adjust_relative_proportion": "adjust_relative_proportion",
-                "macro_adjust_tail_arc": "adjust_tail_arc",
+                "macro_adjust_segment_chain_arc": "adjust_segment_chain_arc",
             },
         )
 

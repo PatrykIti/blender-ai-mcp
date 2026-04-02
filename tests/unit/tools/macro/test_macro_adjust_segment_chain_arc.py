@@ -55,12 +55,12 @@ class FakeModelingTool:
         return f"Transformed object '{name}'"
 
 
-def test_macro_adjust_tail_arc_places_tail_segments_along_arc():
+def test_macro_adjust_segment_chain_arc_places_segments_along_arc():
     scene = FakeSceneTool()
     modeling = FakeModelingTool()
     handler = MacroToolHandler(scene, modeling)
 
-    result = handler.adjust_tail_arc(
+    result = handler.adjust_segment_chain_arc(
         segment_objects=["Tail_01", "Tail_02", "Tail_03"],
         rotation_axis="Y",
         total_angle=60.0,
@@ -69,7 +69,7 @@ def test_macro_adjust_tail_arc_places_tail_segments_along_arc():
     )
 
     assert result["status"] == "success"
-    assert result["macro_name"] == "macro_adjust_tail_arc"
+    assert result["macro_name"] == "macro_adjust_segment_chain_arc"
     assert result["objects_modified"] == ["Tail_02", "Tail_03"]
     assert len(modeling.calls) == 2
     assert modeling.calls[0][1]["location"] == pytest.approx([0.866025, 0.0, -0.5], abs=1e-5)
@@ -78,10 +78,10 @@ def test_macro_adjust_tail_arc_places_tail_segments_along_arc():
     assert modeling.calls[1][1]["rotation"][1] == pytest.approx(1.047198, abs=1e-6)
 
 
-def test_macro_adjust_tail_arc_requires_two_segments():
+def test_macro_adjust_segment_chain_arc_requires_two_segments():
     scene = FakeSceneTool()
     modeling = FakeModelingTool()
     handler = MacroToolHandler(scene, modeling)
 
     with pytest.raises(ValueError, match="segment_objects must contain at least 2 object names"):
-        handler.adjust_tail_arc(segment_objects=["Tail_01"])
+        handler.adjust_segment_chain_arc(segment_objects=["Tail_01"])

@@ -103,7 +103,7 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
-    def adjust_tail_arc(
+    def adjust_segment_chain_arc(
         self,
         segment_objects: List[str],
         rotation_axis: str = "Y",

@@ -68,7 +68,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_adjust_relative_proportion",
-    "macro_adjust_tail_arc",
+    "macro_adjust_segment_chain_arc",
     "scene_set_mode",
     "scene_rename_object",
     "scene_hide_object",
@@ -611,7 +611,7 @@ async def macro_adjust_relative_proportion(
     )
 
 
-async def macro_adjust_tail_arc(
+async def macro_adjust_segment_chain_arc(
     ctx: Context,
     segment_objects: List[str],
     rotation_axis: Literal["X", "Y", "Z"] = "Y",
@@ -632,7 +632,7 @@ async def macro_adjust_tail_arc(
 
     def execute() -> MacroExecutionReportContract:
         try:
-            payload = get_macro_handler().adjust_tail_arc(
+            payload = get_macro_handler().adjust_segment_chain_arc(
                 segment_objects=segment_objects,
                 rotation_axis=rotation_axis,
                 total_angle=total_angle,
@@ -645,7 +645,7 @@ async def macro_adjust_tail_arc(
         except (RuntimeError, ValueError) as e:
             return MacroExecutionReportContract(
                 status="failed",
-                macro_name="macro_adjust_tail_arc",
+                macro_name="macro_adjust_segment_chain_arc",
                 intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
                 actions_taken=[],
                 requires_followup=False,
@@ -653,7 +653,7 @@ async def macro_adjust_tail_arc(
             )
 
     result = route_tool_call(
-        tool_name="macro_adjust_tail_arc",
+        tool_name="macro_adjust_segment_chain_arc",
         params={
             "segment_objects": segment_objects,
             "rotation_axis": rotation_axis,
@@ -670,7 +670,7 @@ async def macro_adjust_tail_arc(
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
                 status=str(result.get("status") or "failed"),
-                macro_name="macro_adjust_tail_arc",
+                macro_name="macro_adjust_segment_chain_arc",
                 intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
                 actions_taken=list(result.get("actions_taken") or []),
                 requires_followup=bool(result.get("requires_followup")),
@@ -680,7 +680,7 @@ async def macro_adjust_tail_arc(
         return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
     return MacroExecutionReportContract(
         status="failed",
-        macro_name="macro_adjust_tail_arc",
+        macro_name="macro_adjust_segment_chain_arc",
         intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
         actions_taken=[],
         requires_followup=False,

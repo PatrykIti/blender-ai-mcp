@@ -1,4 +1,4 @@
-"""Blender-backed E2E tests for macro_adjust_tail_arc."""
+"""Blender-backed E2E tests for macro_adjust_segment_chain_arc."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def clean_scene(scene_handler):
     scene_handler.clean_scene(keep_lights_and_cameras=False)
 
 
-def test_macro_adjust_tail_arc_repositions_tail_chain_along_arc(
+def test_macro_adjust_segment_chain_arc_repositions_chain_along_arc(
     clean_scene,
     scene_handler,
     modeling_handler,
@@ -51,7 +51,7 @@ def test_macro_adjust_tail_arc_repositions_tail_chain_along_arc(
         for index, name in enumerate(names):
             modeling_handler.create_primitive(primitive_type="CUBE", name=name, size=0.4, location=[float(index), 0.0, 0.0])
 
-        result = macro_handler.adjust_tail_arc(
+        result = macro_handler.adjust_segment_chain_arc(
             segment_objects=names,
             rotation_axis="Y",
             total_angle=60.0,
@@ -60,7 +60,7 @@ def test_macro_adjust_tail_arc_repositions_tail_chain_along_arc(
         )
 
         assert result["status"] == "success"
-        assert result["macro_name"] == "macro_adjust_tail_arc"
+        assert result["macro_name"] == "macro_adjust_segment_chain_arc"
         assert result["objects_modified"] == names[1:]
         assert result["requires_followup"] is True
 

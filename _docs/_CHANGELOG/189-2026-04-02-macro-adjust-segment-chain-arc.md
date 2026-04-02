@@ -1,16 +1,16 @@
-# 189. Macro adjust tail arc
+# 189. Macro adjust segment chain arc
 
 Date: 2026-04-02
 
 ## Summary
 
 Completed the fifth creature-correction macro leaf by adding
-`macro_adjust_tail_arc` as a bounded chain-arc adjustment tool for segmented
-tail objects.
+`macro_adjust_segment_chain_arc` as a bounded chain-arc adjustment tool for
+ordered segment chains.
 
 ## What Changed
 
-- added `macro_adjust_tail_arc` to the scene MCP surface
+- added `macro_adjust_segment_chain_arc` to the scene MCP surface
 - implemented it as a bounded macro that:
   - takes an ordered chain of existing segment objects
   - keeps the first segment anchored
@@ -23,9 +23,9 @@ tail objects.
   - MCP wrapper behavior
   - structured delivery
   - provider inventory / guided surface visibility
-  - Blender-backed E2E tail-chain arc adjustment
+  - Blender-backed E2E chain-arc adjustment
 
 ## Why
 
-The macro wave needed one bounded way to reshape segmented tails without
+The macro wave needed one bounded way to reshape ordered segment chains without
 dropping into free-form manual transform chains, rigging, or curve deformation.

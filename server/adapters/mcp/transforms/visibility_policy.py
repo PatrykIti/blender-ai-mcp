@@ -37,7 +37,7 @@ GUIDED_MANUAL_BUILD_HANDOFF_TOOLS: tuple[str, ...] = (
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_adjust_relative_proportion",
-    "macro_adjust_tail_arc",
+    "macro_adjust_segment_chain_arc",
     "macro_cutout_recess",
     "macro_finish_form",
 )
@@ -103,7 +103,7 @@ GUIDED_BUILD_ESCAPE_HATCH_TOOLS: tuple[str, ...] = (
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
     "macro_adjust_relative_proportion",
-    "macro_adjust_tail_arc",
+    "macro_adjust_segment_chain_arc",
     "macro_cutout_recess",
     "macro_finish_form",
     "modeling_create_primitive",

@@ -1,14 +1,14 @@
-# TASK-122-02-05: `macro_adjust_tail_arc`
+# TASK-122-02-05: `macro_adjust_segment_chain_arc`
 
 **Parent:** [TASK-122-02](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md)  
 **Status:** ✅ Done  
 **Priority:** 🟡 Medium
 
-**Completion Summary:** Added `macro_adjust_tail_arc` as a bounded chain macro for segmented tails. The first MVP takes an ordered list of existing tail segment objects, keeps the first segment anchored, and places the remaining segments along a planar arc with deterministic spacing and optional progressive rotation around one explicit rotation axis.
+**Completion Summary:** Added `macro_adjust_segment_chain_arc` as a bounded chain macro for ordered segment chains. The first MVP takes an ordered list of existing segment objects, keeps the first segment anchored, and places the remaining segments along a planar arc with deterministic spacing and optional progressive rotation around one explicit rotation axis. The public naming was generalized immediately so the tool can be reused for non-tail chains without another rename pass.
 
 ## Objective
 
-Add a bounded macro for correcting segmented tail shape, arc, and placement without resorting to free-form tool chaining.
+Add a bounded macro for correcting ordered segment-chain arc/placement without resorting to free-form tool chaining.
 
 ## Repository Touchpoints
 
@@ -27,8 +27,8 @@ Add a bounded macro for correcting segmented tail shape, arc, and placement with
 
 ## Acceptance Criteria
 
-- the macro can adjust tail arc/placement through bounded parameters that stay compatible with assembled-model correction loops
-- the macro report records what tail-shape correction was applied and which truth checks should validate the result
+- the macro can adjust chain arc/placement through bounded parameters that stay compatible with assembled-model correction loops
+- the macro report records what chain-shape correction was applied and which truth checks should validate the result
 
 ## Docs To Update
 
@@ -49,3 +49,9 @@ Add a bounded macro for correcting segmented tail shape, arc, and placement with
 ## Status / Board Update
 
 - this leaf is closed; the parent macro wave remains in progress for the remaining creature-correction macros
+
+## Execution Structure
+
+| Order | Subtask | Purpose |
+|------|---------|---------|
+| 1 | [TASK-122-02-05-01](./TASK-122-02-05-01_Public_Naming_Generalization_For_Chain_Arc_Adjustment.md) | Generalize the public naming so the chain-arc macro is not tail-specific |

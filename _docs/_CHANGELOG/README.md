@@ -6,7 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
-| [189](./189-2026-04-02-macro-adjust-tail-arc.md) | 2026-04-02 | **Macro adjust tail arc** | - |
+| [189](./189-2026-04-02-macro-adjust-segment-chain-arc.md) | 2026-04-02 | **Macro adjust segment chain arc** | - |
 | [188](./188-2026-04-02-macro-adjust-relative-proportion.md) | 2026-04-02 | **Macro adjust relative proportion** | - |
 | [187](./187-2026-04-02-macro-place-symmetry-pair.md) | 2026-04-02 | **Macro place symmetry pair** | - |
 | [186](./186-2026-04-02-macro-align-part-with-contact.md) | 2026-04-02 | **Macro align part with contact** | - |

@@ -31,7 +31,7 @@ def test_contract_enabled_tools_default_to_structured_first_delivery():
     assert "macro_align_part_with_contact" in CONTRACT_ENABLED_TOOLS
     assert "macro_place_symmetry_pair" in CONTRACT_ENABLED_TOOLS
     assert "macro_adjust_relative_proportion" in CONTRACT_ENABLED_TOOLS
-    assert "macro_adjust_tail_arc" in CONTRACT_ENABLED_TOOLS
+    assert "macro_adjust_segment_chain_arc" in CONTRACT_ENABLED_TOOLS
     assert "scene_create" in CONTRACT_ENABLED_TOOLS
     assert "scene_configure" in CONTRACT_ENABLED_TOOLS
     assert "mesh_select" in CONTRACT_ENABLED_TOOLS
@@ -44,7 +44,7 @@ def test_contract_enabled_tools_default_to_structured_first_delivery():
     assert should_prefer_native_structured_delivery("llm-guided", "macro_align_part_with_contact") is True
     assert should_prefer_native_structured_delivery("llm-guided", "macro_place_symmetry_pair") is True
     assert should_prefer_native_structured_delivery("llm-guided", "macro_adjust_relative_proportion") is True
-    assert should_prefer_native_structured_delivery("llm-guided", "macro_adjust_tail_arc") is True
+    assert should_prefer_native_structured_delivery("llm-guided", "macro_adjust_segment_chain_arc") is True
     assert should_prefer_native_structured_delivery("llm-guided", "scene_create") is True
     assert should_prefer_native_structured_delivery("llm-guided", "scene_configure") is True
     assert should_prefer_native_structured_delivery("llm-guided", "mesh_select") is True

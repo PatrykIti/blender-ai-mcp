@@ -885,7 +885,7 @@ class MacroToolHandler(IMacroTool):
             captures_after=captures_after,
         )
 
-    def adjust_tail_arc(
+    def adjust_segment_chain_arc(
         self,
         segment_objects: List[str],
         rotation_axis: str = "Y",
@@ -905,7 +905,7 @@ class MacroToolHandler(IMacroTool):
         spacing_override = (
             None if segment_spacing is None else self._require_non_negative(segment_spacing, "segment_spacing")
         )
-        bundle_id = self._make_capture_bundle_id("macro_adjust_tail_arc", normalized_segments[0])
+        bundle_id = self._make_capture_bundle_id("macro_adjust_segment_chain_arc", normalized_segments[0])
         captures_before = self._maybe_capture_stage(
             bundle_id=bundle_id,
             stage="before",
@@ -984,7 +984,7 @@ class MacroToolHandler(IMacroTool):
         actions_taken.append(
             {
                 "status": "applied",
-                "action": "adjust_tail_arc",
+                "action": "adjust_segment_chain_arc",
                 "tool_name": "modeling_transform_object",
                 "summary": f"Repositioned {len(modified_objects)} tail segment(s) along a bounded planar arc",
                 "details": {"steps": angle_steps},
@@ -993,7 +993,7 @@ class MacroToolHandler(IMacroTool):
 
         report = {
             "status": "success",
-            "macro_name": "macro_adjust_tail_arc",
+            "macro_name": "macro_adjust_segment_chain_arc",
             "intent": (
                 f"Adjust tail arc for {len(normalized_segments)} segment(s) around {rotation_axis_name} "
                 f"with total_angle={total_angle_value:g} and direction={direction_name}"
