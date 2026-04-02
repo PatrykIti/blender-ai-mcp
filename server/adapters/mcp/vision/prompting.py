@@ -50,7 +50,7 @@ def _uses_gemini_compare_contract(*, provider_name: str | None, request: VisionR
 
 def _local_output_template(request: VisionRequest) -> str:
     labels = [image.label or image.role for image in request.images]
-    template = {
+    template: dict[str, object] = {
         "goal_summary": "One short sentence about whether the after images move toward the goal/reference.",
         "reference_match_summary": None,
         "visible_changes": [],
@@ -67,7 +67,7 @@ def _local_output_template(request: VisionRequest) -> str:
 
 
 def _gemini_compare_output_template() -> str:
-    template = {
+    template: dict[str, object] = {
         "goal_summary": "One short sentence about whether the current checkpoint moves toward the goal/reference.",
         "reference_match_summary": None,
         "shape_mismatches": [],
@@ -142,7 +142,7 @@ def build_vision_system_prompt(
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
             + "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
-    )
+        )
     return shared
 
 

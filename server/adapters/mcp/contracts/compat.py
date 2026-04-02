@@ -21,6 +21,7 @@ CONTRACT_ENABLED_TOOLS = {
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
+    "macro_place_supported_pair",
     "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
     "mesh_select",

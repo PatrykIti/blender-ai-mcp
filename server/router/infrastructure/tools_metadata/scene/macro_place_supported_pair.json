@@ -1,0 +1,48 @@
+{
+  "tool_name": "macro_place_supported_pair",
+  "category": "scene",
+  "mode_required": "OBJECT",
+  "selection_required": false,
+  "keywords": [
+    "supported pair",
+    "grounded pair",
+    "pair on floor",
+    "mirrored support",
+    "feet on ground",
+    "chair legs",
+    "landing skids",
+    "para na podparciu",
+    "para na podłodze",
+    "uziemiona para",
+    "stopy na ziemi",
+    "lustro i podparcie"
+  ],
+  "sample_prompts": [
+    "place these feet as a mirrored grounded pair on the floor",
+    "seat this chair-leg pair onto the ground and keep it symmetric",
+    "ustaw tę parę stóp symetrycznie na podłodze",
+    "osadź tę parę nóg na powierzchni i zachowaj lustrzaną parę"
+  ],
+  "parameters": {
+    "left_object": {"type": "string", "required": true},
+    "right_object": {"type": "string", "required": true},
+    "support_object": {"type": "string", "required": true},
+    "axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "X"},
+    "mirror_coordinate": {"type": "float", "default": 0.0},
+    "support_axis": {"type": "enum", "options": ["X", "Y", "Z"], "default": "Z"},
+    "support_side": {"type": "enum", "options": ["positive", "negative"], "default": "positive"},
+    "anchor_object": {"type": "enum", "options": ["auto", "left", "right"], "default": "auto"},
+    "gap": {"type": "float", "default": 0.0},
+    "tolerance": {"type": "float", "default": 0.0001}
+  },
+  "related_tools": [
+    "macro_place_symmetry_pair",
+    "macro_attach_part_to_surface",
+    "macro_align_part_with_contact",
+    "scene_assert_symmetry",
+    "scene_assert_contact",
+    "scene_get_bounding_box"
+  ],
+  "patterns": [],
+  "description": "Bounded macro that places or corrects one mirrored pair against a shared support surface by combining explicit mirror placement with explicit support contact. Prefer this over ad hoc pair-by-pair transforms when the intent is shared support plus symmetry, not full rigging or free-form posing."
+}

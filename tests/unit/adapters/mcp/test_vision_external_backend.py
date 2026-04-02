@@ -347,7 +347,9 @@ def test_google_ai_studio_compare_flow_uses_narrow_schema_and_prompt(monkeypatch
         "correction_focus",
         "next_corrections",
     }
-    assert "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text
+    assert (
+        "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_text
+    )
     assert "OUTPUT_TEMPLATE:" in payload_text
     assert '"shape_mismatches"' in payload_text
 

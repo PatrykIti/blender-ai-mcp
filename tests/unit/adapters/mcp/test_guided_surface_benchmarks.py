@@ -83,7 +83,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     inspect_names, _ = _tool_names_and_payload_size(SessionPhase.INSPECT_VALIDATE)
 
     assert len(bootstrap_names) == 6
-    assert len(build_names) == 117
+    assert len(build_names) == 118
     assert len(inspect_names) == 42
 
     assert bootstrap_names == {
@@ -99,6 +99,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "macro_attach_part_to_surface" in build_names
     assert "macro_align_part_with_contact" in build_names
     assert "macro_place_symmetry_pair" in build_names
+    assert "macro_place_supported_pair" in build_names
     assert "macro_adjust_relative_proportion" in build_names
     assert "macro_adjust_segment_chain_arc" in build_names
     assert "macro_finish_form" in build_names
@@ -117,6 +118,7 @@ def test_guided_surface_phase_baselines_stay_intentional():
     assert "macro_attach_part_to_surface" not in inspect_names
     assert "macro_align_part_with_contact" not in inspect_names
     assert "macro_place_symmetry_pair" not in inspect_names
+    assert "macro_place_supported_pair" not in inspect_names
     assert "macro_adjust_relative_proportion" not in inspect_names
     assert "macro_adjust_segment_chain_arc" not in inspect_names
     assert "macro_finish_form" not in inspect_names

@@ -477,11 +477,11 @@ def _repair_gemini_compare_json_candidate(text: str) -> str | None:
     candidate = candidate[start:]
     candidate = re.sub(r",(\s*[}\]])", r"\1", candidate)
     candidate = re.sub(r",\s*$", "", candidate)
-    candidate = _balance_json_delimiters(candidate)
-    if candidate is None:
+    balanced_candidate = _balance_json_delimiters(candidate)
+    if balanced_candidate is None:
         return None
-    json.loads(candidate)
-    return candidate
+    json.loads(balanced_candidate)
+    return balanced_candidate
 
 
 def _payload_shape(parsed: dict[str, Any]) -> str:

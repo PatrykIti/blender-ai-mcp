@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [190](./190-2026-04-02-macro-place-supported-pair.md) | 2026-04-02 | **Macro place supported pair** | - |
 | [189](./189-2026-04-02-macro-adjust-segment-chain-arc.md) | 2026-04-02 | **Macro adjust segment chain arc** | - |
 | [188](./188-2026-04-02-macro-adjust-relative-proportion.md) | 2026-04-02 | **Macro adjust relative proportion** | - |
 | [187](./187-2026-04-02-macro-place-symmetry-pair.md) | 2026-04-02 | **Macro place symmetry pair** | - |

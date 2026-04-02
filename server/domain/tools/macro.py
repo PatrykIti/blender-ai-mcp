@@ -86,6 +86,24 @@ class IMacroTool(ABC):
         pass
 
     @abstractmethod
+    def place_supported_pair(
+        self,
+        left_object: str,
+        right_object: str,
+        support_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        support_axis: str = "Z",
+        support_side: str = "positive",
+        anchor_object: str = "auto",
+        gap: float = 0.0,
+        tolerance: float = 0.0001,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Place or correct one mirrored pair against a shared support surface."""
+        pass
+
+    @abstractmethod
     def adjust_relative_proportion(
         self,
         primary_object: str,
@@ -113,7 +131,7 @@ class IMacroTool(ABC):
         apply_rotation: bool = True,
         capture_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Adjust one segmented tail chain into a bounded planar arc."""
+        """Adjust one ordered segment chain into a bounded planar arc."""
         pass
 
     @abstractmethod

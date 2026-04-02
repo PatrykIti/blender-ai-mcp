@@ -107,7 +107,10 @@ def test_google_ai_studio_compare_prompt_uses_narrow_contract():
     schema = build_vision_response_json_schema(provider_name="google_ai_studio", request=request)
 
     assert "Return exactly one JSON object with only these keys:" in system_prompt
-    assert "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used." in system_prompt
+    assert (
+        "Do not return visible_changes, likely_issues, recommended_checks, confidence, or captures_used."
+        in system_prompt
+    )
     assert '"visible_changes"' not in payload_text
     assert '"shape_mismatches"' in payload_text
     assert '"next_corrections"' in payload_text

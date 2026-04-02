@@ -65,6 +65,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_attach_part_to_surface` for seating one part onto another object's surface/body
 - `macro_align_part_with_contact` for minimal repair nudges on pairs that almost fit
 - `macro_place_symmetry_pair` for mirrored pair placement/correction around an explicit mirror plane
+- `macro_place_supported_pair` for mirrored pair placement/correction against one shared support surface
 - `macro_adjust_relative_proportion` for bounded ratio repair between related objects
 - `macro_adjust_segment_chain_arc` for bounded arc adjustment on ordered segment chains
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
@@ -181,6 +182,7 @@ Current structured-contract baseline includes:
 - `macro_finish_form`
 - `macro_attach_part_to_surface`
 - `macro_align_part_with_contact`
+- `macro_place_supported_pair`
 - `macro_relative_layout`
 - `scene_create`
 - `scene_configure`

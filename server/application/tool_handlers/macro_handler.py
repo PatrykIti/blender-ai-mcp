@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Literal, Optional, cast, overload
 from uuid import uuid4
 
 from server.adapters.mcp.contracts.macro import MacroExecutionReportContract
@@ -16,6 +16,11 @@ from server.domain.tools.macro import IMacroTool
 from server.domain.tools.modeling import IModelingTool
 from server.domain.tools.scene import ISceneTool
 from server.infrastructure.config import get_config
+
+AxisName = Literal["X", "Y", "Z"]
+ContactSideName = Literal["positive", "negative"]
+SymmetryAnchorName = Literal["auto", "left", "right"]
+ScaleTargetName = Literal["primary", "reference"]
 
 
 class MacroToolHandler(IMacroTool):
@@ -417,7 +422,9 @@ class MacroToolHandler(IMacroTool):
             offset_vector=offset_vector,
         )
         translation_delta = [round(target - current, 6) for target, current in zip(target_location, moving_center)]
-        nudge_distance = round(math.sqrt(sum((target - current) ** 2 for target, current in zip(target_location, moving_center))), 6)
+        nudge_distance = round(
+            math.sqrt(sum((target - current) ** 2 for target, current in zip(target_location, moving_center))), 6
+        )
 
         if nudge_distance > max_nudge_value:
             return self._blocked_repair_report(
@@ -669,6 +676,353 @@ class MacroToolHandler(IMacroTool):
             captures_after=captures_after,
         )
 
+    def place_supported_pair(
+        self,
+        left_object: str,
+        right_object: str,
+        support_object: str,
+        axis: str = "X",
+        mirror_coordinate: float = 0.0,
+        support_axis: str = "Z",
+        support_side: str = "positive",
+        anchor_object: str = "auto",
+        gap: float = 0.0,
+        tolerance: float = 0.0001,
+        capture_profile: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        if left_object == right_object:
+            raise ValueError("left_object and right_object must be different")
+        if support_object in {left_object, right_object}:
+            raise ValueError("support_object must be different from left_object and right_object")
+
+        axis_name = self._normalize_contact_axis(axis)
+        support_axis_name = self._normalize_contact_axis(support_axis)
+        if axis_name == support_axis_name:
+            raise ValueError("axis and support_axis must be different for a supported pair")
+
+        support_side_name = self._normalize_contact_side(support_side)
+        anchor_mode = self._normalize_symmetry_anchor(anchor_object)
+        gap_value = self._require_non_negative(gap, "gap")
+        tolerance_value = self._require_non_negative(tolerance, "tolerance")
+        bundle_id = self._make_capture_bundle_id("macro_place_supported_pair", left_object)
+        captures_before = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="before",
+            target_object=left_object,
+            capture_profile=capture_profile,
+        )
+
+        left_bbox = self._scene.get_bounding_box(left_object, world_space=True)
+        right_bbox = self._scene.get_bounding_box(right_object, world_space=True)
+        support_bbox = self._scene.get_bounding_box(support_object, world_space=True)
+        before_symmetry = self._scene.assert_symmetry(
+            left_object,
+            right_object,
+            axis=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance_value,
+        )
+        before_support = {
+            left_object: self._support_truth_summary(left_object, support_object),
+            right_object: self._support_truth_summary(right_object, support_object),
+        }
+
+        anchor_name, follower_name, anchor_bbox = self._resolve_symmetry_anchor(
+            left_object=left_object,
+            right_object=right_object,
+            left_bbox=left_bbox,
+            right_bbox=right_bbox,
+            axis_name=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            anchor_mode=anchor_mode,
+        )
+        follower_bbox = right_bbox if follower_name == right_object else left_bbox
+        anchor_support_coordinate = self._support_target_coordinate(
+            moving_bbox=anchor_bbox,
+            reference_bbox=support_bbox,
+            axis_name=support_axis_name,
+            side_name=support_side_name,
+            gap_value=gap_value,
+        )
+        follower_support_coordinate = self._support_target_coordinate(
+            moving_bbox=follower_bbox,
+            reference_bbox=support_bbox,
+            axis_name=support_axis_name,
+            side_name=support_side_name,
+            gap_value=gap_value,
+        )
+        support_coordinate_delta = round(abs(anchor_support_coordinate - follower_support_coordinate), 6)
+
+        intent = (
+            f"Place/correct supported pair '{left_object}' and '{right_object}' on '{support_object}' "
+            f"around {axis_name}={float(mirror_coordinate):g}"
+        )
+
+        if support_coordinate_delta > tolerance_value:
+            return {
+                "status": "blocked",
+                "macro_name": "macro_place_supported_pair",
+                "intent": intent,
+                "actions_taken": [
+                    {
+                        "status": "applied",
+                        "action": "inspect_symmetry_before",
+                        "tool_name": "scene_assert_symmetry",
+                        "summary": f"Read symmetry state for '{left_object}' and '{right_object}' before support placement",
+                        "details": before_symmetry,
+                    },
+                    {
+                        "status": "applied",
+                        "action": "inspect_support_contacts_before",
+                        "tool_name": "scene_assert_contact",
+                        "summary": f"Read support contact state for '{left_object}' and '{right_object}' against '{support_object}'",
+                        "details": {
+                            "support_object": support_object,
+                            "support_axis": support_axis_name,
+                            "support_side": support_side_name,
+                            "support_checks": before_support,
+                        },
+                    },
+                    {
+                        "status": "skipped",
+                        "action": "plan_supported_pair_blocked",
+                        "tool_name": None,
+                        "summary": "Mirror placement and support contact would require materially different support coordinates.",
+                        "details": {
+                            "anchor_object": anchor_name,
+                            "follower_object": follower_name,
+                            "support_axis": support_axis_name,
+                            "anchor_support_coordinate": anchor_support_coordinate,
+                            "follower_support_coordinate": follower_support_coordinate,
+                            "support_coordinate_delta": support_coordinate_delta,
+                            "tolerance": tolerance_value,
+                        },
+                    },
+                ],
+                "objects_created": None,
+                "objects_modified": None,
+                "verification_recommended": [
+                    {
+                        "tool_name": "scene_assert_symmetry",
+                        "reason": "Re-check the pair symmetry before trying a broader rebuild step.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "left_object": left_object,
+                            "right_object": right_object,
+                            "axis": axis_name,
+                            "mirror_coordinate": float(mirror_coordinate),
+                            "tolerance": tolerance_value,
+                        },
+                    },
+                    {
+                        "tool_name": "scene_assert_contact",
+                        "reason": "Verify one object's current support contact before relaxing the bound.",
+                        "priority": "high",
+                        "arguments_hint": {
+                            "from_object": anchor_name,
+                            "to_object": support_object,
+                            "max_gap": 0.001,
+                            "allow_overlap": False,
+                        },
+                    },
+                ],
+                "requires_followup": True,
+                "error": (
+                    f"Support placement would require different {support_axis_name} coordinates "
+                    f"({anchor_support_coordinate:g} vs {follower_support_coordinate:g}), which exceeds tolerance "
+                    f"{tolerance_value:g} and would break the bounded mirrored pair."
+                ),
+            }
+
+        anchor_target_center = [float(value) for value in anchor_bbox["center"]]
+        anchor_target_center[self._AXIS_INDEX[support_axis_name]] = anchor_support_coordinate
+        follower_target_center = self._mirrored_center(
+            anchor_center=anchor_target_center,
+            axis_name=axis_name,
+            mirror_coordinate=float(mirror_coordinate),
+        )
+        follower_target_center[self._AXIS_INDEX[support_axis_name]] = follower_support_coordinate
+
+        anchor_translation_delta = [
+            round(target - current, 6)
+            for target, current in zip(anchor_target_center, [float(value) for value in anchor_bbox["center"]])
+        ]
+        follower_translation_delta = [
+            round(target - current, 6)
+            for target, current in zip(follower_target_center, [float(value) for value in follower_bbox["center"]])
+        ]
+
+        actions_taken: list[Dict[str, Any]] = [
+            {
+                "status": "applied",
+                "action": "inspect_symmetry_before",
+                "tool_name": "scene_assert_symmetry",
+                "summary": f"Read symmetry state for '{left_object}' and '{right_object}' before support placement",
+                "details": before_symmetry,
+            },
+            {
+                "status": "applied",
+                "action": "inspect_support_contacts_before",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Read support contact state for '{left_object}' and '{right_object}' against '{support_object}'",
+                "details": {
+                    "support_object": support_object,
+                    "support_axis": support_axis_name,
+                    "support_side": support_side_name,
+                    "support_checks": before_support,
+                },
+            },
+            {
+                "status": "applied",
+                "action": "plan_supported_pair",
+                "tool_name": None,
+                "summary": f"Planned a bounded mirrored pair placement against '{support_object}'",
+                "details": {
+                    "axis": axis_name,
+                    "mirror_coordinate": float(mirror_coordinate),
+                    "support_axis": support_axis_name,
+                    "support_side": support_side_name,
+                    "anchor_object": anchor_name,
+                    "follower_object": follower_name,
+                    "gap": gap_value,
+                    "anchor_target_center": anchor_target_center,
+                    "follower_target_center": follower_target_center,
+                    "support_coordinate_delta": support_coordinate_delta,
+                },
+            },
+        ]
+
+        self._modeling.transform_object(name=anchor_name, location=anchor_target_center)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "place_supported_pair_anchor",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Moved '{anchor_name}' onto the requested support surface",
+                "details": {
+                    "support_object": support_object,
+                    "support_axis": support_axis_name,
+                    "support_side": support_side_name,
+                    "target_center": anchor_target_center,
+                    "translation_delta": anchor_translation_delta,
+                },
+            }
+        )
+
+        self._modeling.transform_object(name=follower_name, location=follower_target_center)
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "place_supported_pair_follower",
+                "tool_name": "modeling_transform_object",
+                "summary": f"Moved '{follower_name}' into mirrored support placement relative to '{anchor_name}'",
+                "details": {
+                    "axis": axis_name,
+                    "mirror_coordinate": float(mirror_coordinate),
+                    "support_object": support_object,
+                    "support_axis": support_axis_name,
+                    "support_side": support_side_name,
+                    "target_center": follower_target_center,
+                    "translation_delta": follower_translation_delta,
+                },
+            }
+        )
+
+        after_symmetry = self._scene.assert_symmetry(
+            left_object,
+            right_object,
+            axis=axis_name,
+            mirror_coordinate=mirror_coordinate,
+            tolerance=tolerance_value,
+        )
+        after_support = {
+            left_object: self._support_truth_summary(left_object, support_object),
+            right_object: self._support_truth_summary(right_object, support_object),
+        }
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_symmetry_after",
+                "tool_name": "scene_assert_symmetry",
+                "summary": f"Read symmetry state for '{left_object}' and '{right_object}' after support placement",
+                "details": after_symmetry,
+            }
+        )
+        actions_taken.append(
+            {
+                "status": "applied",
+                "action": "inspect_support_contacts_after",
+                "tool_name": "scene_assert_contact",
+                "summary": f"Read support contact state for '{left_object}' and '{right_object}' against '{support_object}' after placement",
+                "details": {"support_object": support_object, "support_checks": after_support},
+            }
+        )
+
+        report = {
+            "status": "success",
+            "macro_name": "macro_place_supported_pair",
+            "intent": intent,
+            "actions_taken": actions_taken,
+            "objects_created": None,
+            "objects_modified": [anchor_name, follower_name],
+            "verification_recommended": [
+                {
+                    "tool_name": "scene_assert_symmetry",
+                    "reason": "Confirm the pair still satisfies the requested mirrored placement after support alignment.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "left_object": left_object,
+                        "right_object": right_object,
+                        "axis": axis_name,
+                        "mirror_coordinate": float(mirror_coordinate),
+                        "tolerance": tolerance_value,
+                    },
+                },
+                {
+                    "tool_name": "scene_assert_contact",
+                    "reason": "Confirm the left object is actually supported instead of visually floating.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "from_object": left_object,
+                        "to_object": support_object,
+                        "max_gap": 0.001,
+                        "allow_overlap": False,
+                    },
+                },
+                {
+                    "tool_name": "scene_assert_contact",
+                    "reason": "Confirm the right object is actually supported instead of visually floating.",
+                    "priority": "high",
+                    "arguments_hint": {
+                        "from_object": right_object,
+                        "to_object": support_object,
+                        "max_gap": 0.001,
+                        "allow_overlap": False,
+                    },
+                },
+                {
+                    "tool_name": "scene_get_viewport",
+                    "reason": "Do a quick visual check of the supported pair before continuing the build.",
+                    "priority": "normal",
+                    "arguments_hint": {"focus_target": follower_name, "shading": "SOLID"},
+                },
+            ],
+            "requires_followup": True,
+        }
+        captures_after = self._maybe_capture_stage(
+            bundle_id=bundle_id,
+            stage="after",
+            target_object=follower_name,
+            capture_profile=capture_profile,
+        )
+        return self._finalize_report(
+            report,
+            bundle_id=bundle_id,
+            target_object=follower_name,
+            captures_before=captures_before,
+            captures_after=captures_after,
+        )
+
     def adjust_relative_proportion(
         self,
         primary_object: str,
@@ -718,7 +1072,7 @@ class MacroToolHandler(IMacroTool):
             )
 
         if abs(current_ratio - expected_ratio_value) <= tolerance_value:
-            report = {
+            noop_report = {
                 "status": "success",
                 "macro_name": "macro_adjust_relative_proportion",
                 "intent": (
@@ -754,7 +1108,7 @@ class MacroToolHandler(IMacroTool):
                 ],
                 "requires_followup": False,
             }
-            return report
+            return noop_report
 
         current_scale = self._object_scale(primary_object if scale_target_name == "primary" else reference_object)
         scale_factor = (
@@ -802,7 +1156,7 @@ class MacroToolHandler(IMacroTool):
             world_space=True,
         )
 
-        report = {
+        repair_report: Dict[str, Any] = {
             "status": "success",
             "macro_name": "macro_adjust_relative_proportion",
             "intent": (
@@ -878,7 +1232,7 @@ class MacroToolHandler(IMacroTool):
             capture_profile=capture_profile,
         )
         return self._finalize_report(
-            report,
+            repair_report,
             bundle_id=bundle_id,
             target_object=primary_object,
             captures_before=captures_before,
@@ -916,7 +1270,10 @@ class MacroToolHandler(IMacroTool):
         bbox_map = {name: self._scene.get_bounding_box(name, world_space=True) for name in normalized_segments}
         inspect_map = {name: self._scene.inspect_object(name) for name in normalized_segments}
         centers = {name: [float(value) for value in bbox_map[name]["center"]] for name in normalized_segments}
-        rotations = {name: [float(value) for value in inspect_map[name].get("rotation") or [0.0, 0.0, 0.0]] for name in normalized_segments}
+        rotations = {
+            name: [float(value) for value in inspect_map[name].get("rotation") or [0.0, 0.0, 0.0]]
+            for name in normalized_segments
+        }
         base_name = normalized_segments[0]
         base_center = centers[base_name]
         direction_vector = self._initial_arc_direction(
@@ -933,9 +1290,9 @@ class MacroToolHandler(IMacroTool):
         actions_taken: list[Dict[str, Any]] = [
             {
                 "status": "applied",
-                "action": "inspect_tail_chain",
+                "action": "inspect_segment_chain",
                 "tool_name": "scene_get_bounding_box",
-                "summary": f"Read the current tail chain state for {len(normalized_segments)} segment(s)",
+                "summary": f"Read the current segment-chain state for {len(normalized_segments)} segment(s)",
                 "details": {
                     "segment_objects": normalized_segments,
                     "rotation_axis": rotation_axis_name,
@@ -986,7 +1343,7 @@ class MacroToolHandler(IMacroTool):
                 "status": "applied",
                 "action": "adjust_segment_chain_arc",
                 "tool_name": "modeling_transform_object",
-                "summary": f"Repositioned {len(modified_objects)} tail segment(s) along a bounded planar arc",
+                "summary": f"Repositioned {len(modified_objects)} segment(s) along a bounded planar arc",
                 "details": {"steps": angle_steps},
             }
         )
@@ -995,7 +1352,7 @@ class MacroToolHandler(IMacroTool):
             "status": "success",
             "macro_name": "macro_adjust_segment_chain_arc",
             "intent": (
-                f"Adjust tail arc for {len(normalized_segments)} segment(s) around {rotation_axis_name} "
+                f"Adjust segment chain arc for {len(normalized_segments)} segment(s) around {rotation_axis_name} "
                 f"with total_angle={total_angle_value:g} and direction={direction_name}"
             ),
             "actions_taken": actions_taken,
@@ -1004,13 +1361,13 @@ class MacroToolHandler(IMacroTool):
             "verification_recommended": [
                 {
                     "tool_name": "inspect_scene",
-                    "reason": "Verify the updated tail chain object states after the bounded arc adjustment.",
+                    "reason": "Verify the updated segment-chain object states after the bounded arc adjustment.",
                     "priority": "normal",
                     "arguments_hint": {"action": "object", "target_object": normalized_segments[-1]},
                 },
                 {
                     "tool_name": "scene_get_viewport",
-                    "reason": "Do a quick visual check of the adjusted tail arc before continuing the build.",
+                    "reason": "Do a quick visual check of the adjusted segment chain before continuing the build.",
                     "priority": "normal",
                     "arguments_hint": {"focus_target": normalized_segments[-1], "shading": "SOLID"},
                 },
@@ -1235,9 +1592,13 @@ class MacroToolHandler(IMacroTool):
         if resolved_contact_axis is not None:
             axis_index = self._AXIS_INDEX[resolved_contact_axis]
             if resolved_contact_side == "positive":
-                target_location[axis_index] = float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+                target_location[axis_index] = (
+                    float(reference_bbox["max"][axis_index]) + gap_value + moving_half[axis_index]
+                )
             else:
-                target_location[axis_index] = float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+                target_location[axis_index] = (
+                    float(reference_bbox["min"][axis_index]) - gap_value - moving_half[axis_index]
+                )
 
         target_location = [target + delta for target, delta in zip(target_location, offset_vector)]
         return target_location, moving_center, reference_center, moving_half, center_axes
@@ -1516,19 +1877,25 @@ class MacroToolHandler(IMacroTool):
             raise ValueError(f"{field_name} must be one of none, center, min, max")
         return normalized
 
-    def _normalize_contact_axis(self, axis: Optional[str]) -> Optional[str]:
+    @overload
+    def _normalize_contact_axis(self, axis: None) -> None: ...
+
+    @overload
+    def _normalize_contact_axis(self, axis: str) -> AxisName: ...
+
+    def _normalize_contact_axis(self, axis: Optional[str]) -> Optional[AxisName]:
         if axis is None:
             return None
         normalized = str(axis).upper()
         if normalized not in self._AXIS_INDEX:
             raise ValueError("contact_axis must be one of X, Y, Z")
-        return normalized
+        return cast(AxisName, normalized)
 
-    def _normalize_contact_side(self, side: str) -> str:
+    def _normalize_contact_side(self, side: str) -> ContactSideName:
         normalized = str(side).lower()
         if normalized not in {"positive", "negative"}:
             raise ValueError("contact_side must be one of positive or negative")
-        return normalized
+        return cast(ContactSideName, normalized)
 
     def _normalize_target_relation(self, relation: str) -> str:
         normalized = str(relation).lower()
@@ -1536,11 +1903,11 @@ class MacroToolHandler(IMacroTool):
             raise ValueError("target_relation must be one of contact or gap")
         return normalized
 
-    def _normalize_symmetry_anchor(self, anchor_object: str) -> str:
+    def _normalize_symmetry_anchor(self, anchor_object: str) -> SymmetryAnchorName:
         normalized = str(anchor_object).lower()
         if normalized not in {"auto", "left", "right"}:
             raise ValueError("anchor_object must be one of auto, left, or right")
-        return normalized
+        return cast(SymmetryAnchorName, normalized)
 
     def _initial_arc_direction(
         self,
@@ -1576,9 +1943,7 @@ class MacroToolHandler(IMacroTool):
         for current_name, next_name in zip(segment_names, segment_names[1:]):
             current_center = centers[current_name]
             next_center = centers[next_name]
-            distance = math.sqrt(
-                sum((next_center[idx] - current_center[idx]) ** 2 for idx in range(3))
-            )
+            distance = math.sqrt(sum((next_center[idx] - current_center[idx]) ** 2 for idx in range(3)))
             values.append(round(distance, 6))
         return values
 
@@ -1598,18 +1963,28 @@ class MacroToolHandler(IMacroTool):
             return [x * cosine + z * sine, y, -x * sine + z * cosine]
         return [x * cosine - y * sine, x * sine + y * cosine, z]
 
-    def _normalize_scale_target(self, scale_target: str) -> str:
+    def _normalize_scale_target(self, scale_target: str) -> ScaleTargetName:
         normalized = str(scale_target).lower()
         if normalized not in {"primary", "reference"}:
             raise ValueError("scale_target must be one of primary or reference")
-        return normalized
+        return cast(ScaleTargetName, normalized)
 
     def _pair_truth_summary(self, part_object: str, reference_object: str) -> Dict[str, Any]:
         return {
             "gap": self._scene.measure_gap(part_object, reference_object),
             "alignment": self._scene.measure_alignment(part_object, reference_object, ["X", "Y", "Z"], "CENTER"),
             "overlap": self._scene.measure_overlap(part_object, reference_object),
-            "contact_assertion": self._scene.assert_contact(part_object, reference_object, max_gap=0.001, allow_overlap=False),
+            "contact_assertion": self._scene.assert_contact(
+                part_object, reference_object, max_gap=0.001, allow_overlap=False
+            ),
+        }
+
+    def _support_truth_summary(self, part_object: str, support_object: str) -> Dict[str, Any]:
+        return {
+            "gap": self._scene.measure_gap(part_object, support_object),
+            "contact_assertion": self._scene.assert_contact(
+                part_object, support_object, max_gap=0.001, allow_overlap=False
+            ),
         }
 
     def _infer_side_from_centers(
@@ -1619,7 +1994,7 @@ class MacroToolHandler(IMacroTool):
         axis_name: str,
         *,
         epsilon: float = 1e-6,
-    ) -> Optional[str]:
+    ) -> Optional[ContactSideName]:
         axis_index = self._AXIS_INDEX[axis_name]
         moving_center = float(moving_bbox["center"][axis_index])
         reference_center = float(reference_bbox["center"][axis_index])
@@ -1665,6 +2040,26 @@ class MacroToolHandler(IMacroTool):
         mirrored[axis_index] = round((2.0 * mirror_coordinate) - anchor_center[axis_index], 6)
         return mirrored
 
+    def _support_target_coordinate(
+        self,
+        *,
+        moving_bbox: Dict[str, Any],
+        reference_bbox: Dict[str, Any],
+        axis_name: str,
+        side_name: str,
+        gap_value: float,
+    ) -> float:
+        target_location, *_ = self._compute_target_location(
+            moving_bbox=moving_bbox,
+            reference_bbox=reference_bbox,
+            modes={axis: "none" for axis in self._AXIS_INDEX},
+            resolved_contact_axis=axis_name,
+            resolved_contact_side=side_name,
+            gap_value=gap_value,
+            offset_vector=[0.0, 0.0, 0.0],
+        )
+        return float(target_location[self._AXIS_INDEX[axis_name]])
+
     def _choose_min_nudge_side(
         self,
         *,
@@ -1672,13 +2067,15 @@ class MacroToolHandler(IMacroTool):
         reference_bbox: Dict[str, Any],
         axis_name: str,
         gap_value: float,
-    ) -> str:
+    ) -> ContactSideName:
         axis_index = self._AXIS_INDEX[axis_name]
         moving_center = float(moving_bbox["center"][axis_index])
         moving_half = float(moving_bbox["dimensions"][axis_index]) / 2.0
         positive_target = float(reference_bbox["max"][axis_index]) + gap_value + moving_half
         negative_target = float(reference_bbox["min"][axis_index]) - gap_value - moving_half
-        return "positive" if abs(positive_target - moving_center) <= abs(negative_target - moving_center) else "negative"
+        return (
+            "positive" if abs(positive_target - moving_center) <= abs(negative_target - moving_center) else "negative"
+        )
 
     def _infer_repair_axis(
         self,
@@ -1687,22 +2084,19 @@ class MacroToolHandler(IMacroTool):
         reference_bbox: Dict[str, Any],
         truth_summary: Dict[str, Any],
         gap_value: float,
-    ) -> Optional[str]:
+    ) -> Optional[AxisName]:
         gap_payload = truth_summary.get("gap") if isinstance(truth_summary, dict) else None
         axis_gap = gap_payload.get("axis_gap") if isinstance(gap_payload, dict) else None
         if isinstance(axis_gap, dict):
             ordered = sorted(
-                (
-                    (axis_name, abs(float(axis_gap.get(axis_name.lower()) or 0.0)))
-                    for axis_name in self._AXIS_INDEX
-                ),
+                ((axis_name, abs(float(axis_gap.get(axis_name.lower()) or 0.0))) for axis_name in self._AXIS_INDEX),
                 key=lambda item: item[1],
                 reverse=True,
             )
             if ordered and ordered[0][1] > 1e-6:
-                return ordered[0][0]
+                return cast(AxisName, ordered[0][0])
 
-        best_axis: Optional[str] = None
+        best_axis: Optional[AxisName] = None
         best_delta: float | None = None
         for axis_name, axis_index in self._AXIS_INDEX.items():
             inferred_side = self._infer_side_from_centers(moving_bbox, reference_bbox, axis_name)
@@ -1716,7 +2110,7 @@ class MacroToolHandler(IMacroTool):
                 target = float(reference_bbox["min"][axis_index]) - gap_value - moving_half
             delta = abs(target - moving_center)
             if best_delta is None or delta < best_delta:
-                best_axis = axis_name
+                best_axis = cast(AxisName, axis_name)
                 best_delta = delta
         return best_axis
 

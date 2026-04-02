@@ -4,21 +4,21 @@
   "mode_required": "OBJECT",
   "selection_required": false,
   "keywords": [
-    "tail arc",
-    "tail curve",
-    "tail bend",
-    "segmented tail",
+    "segment chain arc",
+    "chain curve",
+    "chain bend",
+    "ordered chain",
     "arc shape",
-    "ogon",
-    "łuk ogona",
-    "wygnij ogon",
-    "segmenty ogona"
+    "łańcuch segmentów",
+    "łuk segmentów",
+    "wygnij łańcuch",
+    "krzywizna segmentów"
   ],
   "sample_prompts": [
-    "give this segmented tail a cleaner upward arc",
-    "bend the tail chain into a smoother curve",
-    "ułóż segmenty ogona w łuk",
-    "wygnij ten ogon bardziej do góry"
+    "give this segment chain a cleaner upward arc",
+    "bend this ordered chain into a smoother curve",
+    "ułóż ten łańcuch segmentów w łuk",
+    "wygnij ten łańcuch w bardziej płynną krzywiznę"
   ],
   "parameters": {
     "segment_objects": {"type": "array", "required": true},
@@ -32,9 +32,9 @@
     "macro_place_symmetry_pair",
     "macro_align_part_with_contact",
     "scene_get_bounding_box",
-    "inspect_scene",
+    "scene_inspect",
     "scene_get_viewport"
   ],
   "patterns": [],
-  "description": "Bounded macro that adjusts an ordered chain of existing tail segment objects into a planar arc by applying deterministic per-segment placement (and optional rotation) around one explicit rotation axis."
+  "description": "Bounded macro that adjusts an ordered chain of existing segment objects into a planar arc by applying deterministic per-segment placement (and optional rotation) around one explicit rotation axis."
 }

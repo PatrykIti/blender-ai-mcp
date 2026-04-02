@@ -352,12 +352,19 @@ def test_reference_compare_stage_checkpoint_captures_deterministic_stage_set(tmp
             return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
 
         def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
-            return {"from_object": from_object, "to_object": to_object, "is_aligned": True, "axes": axes or ["X", "Y", "Z"]}
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
 
         def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
             return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
 
-        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
             return {
                 "assertion": "scene_assert_contact",
                 "passed": True,
@@ -490,7 +497,9 @@ def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_o
         def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
             raise AssertionError("measure_overlap should not be called for scene-wide scope")
 
-        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
             raise AssertionError("assert_contact should not be called for scene-wide scope")
 
     class CollectionHandler:
@@ -592,12 +601,19 @@ def test_reference_compare_stage_checkpoint_can_expand_collection_scope(tmp_path
             return {"from_object": from_object, "to_object": to_object, "relation": "separated", "gap": 0.05}
 
         def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
-            return {"from_object": from_object, "to_object": to_object, "is_aligned": False, "axes": axes or ["X", "Y", "Z"]}
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": False,
+                "axes": axes or ["X", "Y", "Z"],
+            }
 
         def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
             return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
 
-        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
             return {
                 "assertion": "scene_assert_contact",
                 "passed": False,
@@ -693,12 +709,19 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
             return {"from_object": from_object, "to_object": to_object, "relation": "contact", "gap": 0.0}
 
         def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
-            return {"from_object": from_object, "to_object": to_object, "is_aligned": True, "axes": axes or ["X", "Y", "Z"]}
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": True,
+                "axes": axes or ["X", "Y", "Z"],
+            }
 
         def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
             return {"from_object": from_object, "to_object": to_object, "overlaps": False, "relation": "disjoint"}
 
-        def assert_contact(self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False):
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
             return {
                 "assertion": "scene_assert_contact",
                 "passed": True,

@@ -16,7 +16,11 @@ def test_macro_adjust_segment_chain_arc_mcp_tool_returns_structured_contract(mon
                 "macro_name": "macro_adjust_segment_chain_arc",
                 "intent": "Adjust segment chain arc",
                 "actions_taken": [
-                    {"status": "applied", "action": "adjust_segment_chain_arc", "tool_name": "modeling_transform_object"}
+                    {
+                        "status": "applied",
+                        "action": "adjust_segment_chain_arc",
+                        "tool_name": "modeling_transform_object",
+                    }
                 ],
                 "objects_modified": list(kwargs.get("segment_objects", [])[1:]),
                 "verification_recommended": [

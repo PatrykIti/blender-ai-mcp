@@ -416,7 +416,7 @@ def test_search_first_rollout_reduces_visible_tool_count_and_payload_size():
 
     legacy_count, guided_count, legacy_bytes, guided_bytes = asyncio.run(run())
 
-    assert legacy_count == 180
+    assert legacy_count == 182
     assert guided_count == 8
     assert guided_bytes < legacy_bytes
 

@@ -359,6 +359,7 @@ The structured-contract layer now covers the high-value state-heavy MCP surfaces
 - `macro_attach_part_to_surface`
 - `macro_align_part_with_contact`
 - `macro_place_symmetry_pair`
+- `macro_place_supported_pair`
 - `macro_adjust_relative_proportion`
 - `macro_adjust_segment_chain_arc`
 - `macro_relative_layout`
@@ -712,6 +713,7 @@ Bounded multi-step tools above the atomic layer and below full workflows.
 | `macro_attach_part_to_surface` | `part_object` (str), `surface_object` (str), `surface_axis` (`X`/`Y`/`Z`), `surface_side` (`positive`/`negative`), `align_mode` (`center`/`min`/`max`), `gap` (float), `offset` ([x,y,z]) | Seats one part onto another object's surface/body using one explicit surface axis, one side, shared tangential alignment, optional gap, and one deterministic transform. |
 | `macro_align_part_with_contact` | `part_object` (str), `reference_object` (str), `target_relation` (`contact`/`gap`), `gap` (float), `align_mode` (`none`/`center`/`min`/`max`), `normal_axis` (`X`/`Y`/`Z`, optional), `preserve_side` (bool), `max_nudge` (float), `offset` ([x,y,z]) | Repairs an already-related pair with a bounded minimal nudge. It reads the current truth state, infers a repair axis/side when possible, preserves the current side by default, and refuses broader moves once the required nudge exceeds `max_nudge`. |
 | `macro_place_symmetry_pair` | `left_object` (str), `right_object` (str), `axis` (`X`/`Y`/`Z`), `mirror_coordinate` (float), `anchor_object` (`auto`/`left`/`right`), `tolerance` (float) | Places or corrects one mirrored pair around an explicit mirror plane by preserving one anchor object and moving the follower object to the mirrored center position. |
+| `macro_place_supported_pair` | `left_object` (str), `right_object` (str), `support_object` (str), `axis` (`X`/`Y`/`Z`), `mirror_coordinate` (float), `support_axis` (`X`/`Y`/`Z`), `support_side` (`positive`/`negative`), `anchor_object` (`auto`/`left`/`right`), `gap` (float), `tolerance` (float) | Places or corrects one mirrored pair against a shared support surface by combining explicit mirror placement with explicit support contact. It blocks when those constraints would require materially different support coordinates and stays outside rigging or free-form posing. |
 | `macro_adjust_relative_proportion` | `primary_object` (str), `reference_object` (str), `expected_ratio` (float), `primary_axis` (`X`/`Y`/`Z`), `reference_axis` (`X`/`Y`/`Z`), `scale_target` (`primary`/`reference`), `tolerance` (float), `uniform_scale` (bool), `max_scale_delta` (float) | Repairs cross-object proportion drift with a bounded scale adjustment. It reads the current ratio, scales one target object within `max_scale_delta`, and re-checks the result with `scene_assert_proportion`. |
 | `macro_adjust_segment_chain_arc` | `segment_objects` (array), `rotation_axis` (`X`/`Y`/`Z`), `total_angle` (float), `direction` (`positive`/`negative`), `segment_spacing` (float, optional), `apply_rotation` (bool) | Adjusts an ordered chain of existing segment objects into a bounded planar arc by applying deterministic per-segment placement and optional progressive rotation around one explicit rotation axis. |
 | `macro_relative_layout` | `moving_object` (str), `reference_object` (str), `x_mode` (str), `y_mode` (str), `z_mode` (str), `contact_axis` (str), `contact_side` (str), `gap` (float), `offset` ([x,y,z]) | Places one object relative to another with bounded bbox alignment rules, optional outside-face contact/gap placement, and one deterministic transform. |
@@ -731,6 +733,7 @@ If `macro_finish_form` matches the user's intent, prefer it over manually chaini
 If the task is specifically "seat/attach this part onto that surface/body", prefer `macro_attach_part_to_surface` over the more general `macro_relative_layout`.
 If the pair is already almost correct and only needs a small repair nudge, prefer `macro_align_part_with_contact` over a full re-placement macro.
 If the task is specifically "place or correct this mirrored pair", prefer `macro_place_symmetry_pair` over manual mirrored transforms.
+If the task is specifically "keep this mirrored pair symmetric while seating both parts on the same support", prefer `macro_place_supported_pair` over manually combining symmetry and per-part contact moves.
 If the main issue is cross-object size/ratio drift, prefer `macro_adjust_relative_proportion` over ad hoc scale guessing or open-ended sculpting.
 If the task is to reshape an ordered segment chain into a cleaner arc, prefer `macro_adjust_segment_chain_arc` over manual per-segment transform chaining.
 If the task is bounded relative placement/alignment, prefer `macro_relative_layout` over manual transform-by-transform placement.

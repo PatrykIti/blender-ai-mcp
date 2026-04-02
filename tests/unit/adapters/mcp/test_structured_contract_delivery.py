@@ -384,6 +384,24 @@ class MacroHandler:
             "requires_followup": True,
         }
 
+    def place_supported_pair(self, **kwargs):
+        return {
+            "status": "success",
+            "macro_name": "macro_place_supported_pair",
+            "intent": "place Foot_L / Foot_R on Floor",
+            "actions_taken": [
+                {"status": "applied", "action": "place_supported_pair_anchor", "tool_name": "modeling_transform_object"}
+            ],
+            "objects_modified": [
+                kwargs.get("left_object", "Foot_L"),
+                kwargs.get("right_object", "Foot_R"),
+            ],
+            "verification_recommended": [
+                {"tool_name": "scene_assert_contact", "reason": "Confirm shared support contact", "priority": "high"}
+            ],
+            "requires_followup": True,
+        }
+
     def adjust_relative_proportion(self, **kwargs):
         return {
             "status": "success",
@@ -407,7 +425,7 @@ class MacroHandler:
         return {
             "status": "success",
             "macro_name": "macro_adjust_segment_chain_arc",
-            "intent": "adjust Tail_01/Tail_02/Tail_03 chain arc",
+            "intent": "adjust Segment_01/Segment_02/Segment_03 chain arc",
             "actions_taken": [
                 {
                     "status": "applied",
@@ -447,6 +465,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
             by_name["macro_attach_part_to_surface"],
             by_name["macro_align_part_with_contact"],
             by_name["macro_place_symmetry_pair"],
+            by_name["macro_place_supported_pair"],
             by_name["macro_adjust_relative_proportion"],
             by_name["macro_adjust_segment_chain_arc"],
             by_name["scene_context"],
@@ -465,6 +484,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
         attach_macro_tool,
         repair_macro_tool,
         symmetry_macro_tool,
+        supported_pair_macro_tool,
         proportion_macro_tool,
         tail_arc_macro_tool,
         scene_context_tool,
@@ -482,6 +502,7 @@ def test_contract_enabled_tools_expose_output_schema_on_listed_surface():
     assert attach_macro_tool.output_schema is not None
     assert repair_macro_tool.output_schema is not None
     assert symmetry_macro_tool.output_schema is not None
+    assert supported_pair_macro_tool.output_schema is not None
     assert proportion_macro_tool.output_schema is not None
     assert tail_arc_macro_tool.output_schema is not None
     assert scene_context_tool.output_schema is not None
@@ -777,6 +798,32 @@ def test_macro_place_symmetry_pair_delivers_structured_content(monkeypatch):
     payload = _unwrap_structured(result)
     assert payload["macro_name"] == "macro_place_symmetry_pair"
     assert payload["actions_taken"][0]["action"] == "place_symmetry_pair"
+    assert payload["requires_followup"] is True
+
+
+def test_macro_place_supported_pair_delivers_structured_content(monkeypatch):
+    """Supported-pair macro should expose machine-readable reports on the MCP surface."""
+
+    monkeypatch.setattr("server.adapters.mcp.areas.scene.get_macro_handler", lambda: MacroHandler())
+    monkeypatch.setattr("server.adapters.mcp.router_helper.is_router_enabled", lambda: False)
+
+    server = build_server("legacy-flat")
+
+    async def run():
+        return await server.call_tool(
+            "macro_place_supported_pair",
+            {
+                "left_object": "Foot_L",
+                "right_object": "Foot_R",
+                "support_object": "Floor",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    payload = _unwrap_structured(result)
+    assert payload["macro_name"] == "macro_place_supported_pair"
+    assert payload["actions_taken"][0]["action"] == "place_supported_pair_anchor"
     assert payload["requires_followup"] is True
 
 

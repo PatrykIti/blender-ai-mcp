@@ -67,6 +67,7 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "macro_attach_part_to_surface",
     "macro_align_part_with_contact",
     "macro_place_symmetry_pair",
+    "macro_place_supported_pair",
     "macro_adjust_relative_proportion",
     "macro_adjust_segment_chain_arc",
     "scene_set_mode",
@@ -92,6 +93,14 @@ SCENE_PUBLIC_TOOL_NAMES = (
     "scene_assert_symmetry",
     "scene_assert_proportion",
 )
+
+MacroErrorStatus = Literal["blocked", "failed"]
+
+
+def _coerce_macro_error_status(value: object) -> MacroErrorStatus:
+    """Narrow adapter-side fallback statuses to the contract's error states."""
+
+    return "blocked" if value == "blocked" else "failed"
 
 
 def _register_existing_tool(target: Any, tool_name: str) -> Any:
@@ -422,7 +431,7 @@ async def macro_align_part_with_contact(
     if isinstance(result, dict):
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
-                status=str(result.get("status") or "failed"),
+                status=_coerce_macro_error_status(result.get("status")),
                 macro_name="macro_align_part_with_contact",
                 intent=f"repair '{part_object}' relative to '{reference_object}'",
                 actions_taken=list(result.get("actions_taken") or []),
@@ -506,7 +515,7 @@ async def macro_place_symmetry_pair(
     if isinstance(result, dict):
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
-                status=str(result.get("status") or "failed"),
+                status=_coerce_macro_error_status(result.get("status")),
                 macro_name="macro_place_symmetry_pair",
                 intent=f"place symmetry pair '{left_object}' / '{right_object}'",
                 actions_taken=list(result.get("actions_taken") or []),
@@ -519,6 +528,100 @@ async def macro_place_symmetry_pair(
         status="failed",
         macro_name="macro_place_symmetry_pair",
         intent=f"place symmetry pair '{left_object}' / '{right_object}'",
+        actions_taken=[],
+        requires_followup=False,
+        error=str(result),
+    )
+
+
+async def macro_place_supported_pair(
+    ctx: Context,
+    left_object: str,
+    right_object: str,
+    support_object: str,
+    axis: Literal["X", "Y", "Z"] = "X",
+    mirror_coordinate: float = 0.0,
+    support_axis: Literal["X", "Y", "Z"] = "Z",
+    support_side: Literal["positive", "negative"] = "positive",
+    anchor_object: Literal["auto", "left", "right"] = "auto",
+    gap: float = 0.0,
+    tolerance: float = 0.0001,
+) -> MacroExecutionReportContract:
+    """
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for placing or correcting one mirrored pair against a shared support surface.
+
+    Use this when two existing objects should stay mirrored around one explicit
+    plane while both making bounded contact with the same support object. The
+    first slice:
+
+    - works on one existing pair plus one existing support object
+    - keeps mirror placement and support contact as separate explicit constraints
+    - blocks when those constraints would require materially different support coordinates
+    - does not enter rigging, pose mode, or multi-joint articulation
+    """
+
+    capture_profile = await _resolve_macro_capture_profile(ctx)
+
+    def execute() -> MacroExecutionReportContract:
+        try:
+            payload = get_macro_handler().place_supported_pair(
+                left_object=left_object,
+                right_object=right_object,
+                support_object=support_object,
+                axis=axis,
+                mirror_coordinate=mirror_coordinate,
+                support_axis=support_axis,
+                support_side=support_side,
+                anchor_object=anchor_object,
+                gap=gap,
+                tolerance=tolerance,
+                capture_profile=capture_profile,
+            )
+            return MacroExecutionReportContract.model_validate(payload)
+        except (RuntimeError, ValueError) as e:
+            return MacroExecutionReportContract(
+                status="failed",
+                macro_name="macro_place_supported_pair",
+                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+                actions_taken=[],
+                requires_followup=False,
+                error=str(e),
+            )
+
+    result = route_tool_call(
+        tool_name="macro_place_supported_pair",
+        params={
+            "left_object": left_object,
+            "right_object": right_object,
+            "support_object": support_object,
+            "axis": axis,
+            "mirror_coordinate": mirror_coordinate,
+            "support_axis": support_axis,
+            "support_side": support_side,
+            "anchor_object": anchor_object,
+            "gap": gap,
+            "tolerance": tolerance,
+        },
+        direct_executor=execute,
+    )
+    if isinstance(result, MacroExecutionReportContract):
+        return result if result.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, result)
+    if isinstance(result, dict):
+        if result.get("status") in {"failed", "blocked"} or result.get("error"):
+            return MacroExecutionReportContract(
+                status=_coerce_macro_error_status(result.get("status")),
+                macro_name="macro_place_supported_pair",
+                intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
+                actions_taken=list(result.get("actions_taken") or []),
+                requires_followup=bool(result.get("requires_followup")),
+                error=str(result.get("error") or result),
+            )
+        contract = MacroExecutionReportContract.model_validate(result)
+        return contract if contract.status in {"failed", "blocked"} else await maybe_attach_macro_vision(ctx, contract)
+    return MacroExecutionReportContract(
+        status="failed",
+        macro_name="macro_place_supported_pair",
+        intent=f"place supported pair '{left_object}' / '{right_object}' on '{support_object}'",
         actions_taken=[],
         requires_followup=False,
         error=str(result),
@@ -592,7 +695,7 @@ async def macro_adjust_relative_proportion(
     if isinstance(result, dict):
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
-                status=str(result.get("status") or "failed"),
+                status=_coerce_macro_error_status(result.get("status")),
                 macro_name="macro_adjust_relative_proportion",
                 intent=f"repair relative proportion for '{primary_object}' relative to '{reference_object}'",
                 actions_taken=list(result.get("actions_taken") or []),
@@ -621,11 +724,10 @@ async def macro_adjust_segment_chain_arc(
     apply_rotation: bool = True,
 ) -> MacroExecutionReportContract:
     """
-    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for adjusting a segmented tail arc.
+    [OBJECT MODE][SAFE][NON-DESTRUCTIVE] Bounded macro for adjusting an ordered segment chain into a cleaner planar arc.
 
-    Use this when a tail is represented by an ordered chain of existing segment
-    objects and needs a cleaner planar arc without resorting to free-form tool
-    chaining or rigging.
+    Use this when an ordered chain of existing segment objects needs a cleaner
+    planar arc without resorting to free-form tool chaining or rigging.
     """
 
     capture_profile = await _resolve_macro_capture_profile(ctx)
@@ -646,7 +748,7 @@ async def macro_adjust_segment_chain_arc(
             return MacroExecutionReportContract(
                 status="failed",
                 macro_name="macro_adjust_segment_chain_arc",
-                intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
+                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
                 actions_taken=[],
                 requires_followup=False,
                 error=str(e),
@@ -669,9 +771,9 @@ async def macro_adjust_segment_chain_arc(
     if isinstance(result, dict):
         if result.get("status") in {"failed", "blocked"} or result.get("error"):
             return MacroExecutionReportContract(
-                status=str(result.get("status") or "failed"),
+                status=_coerce_macro_error_status(result.get("status")),
                 macro_name="macro_adjust_segment_chain_arc",
-                intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
+                intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
                 actions_taken=list(result.get("actions_taken") or []),
                 requires_followup=bool(result.get("requires_followup")),
                 error=str(result.get("error") or result),
@@ -681,7 +783,7 @@ async def macro_adjust_segment_chain_arc(
     return MacroExecutionReportContract(
         status="failed",
         macro_name="macro_adjust_segment_chain_arc",
-        intent=f"adjust tail arc for {len(segment_objects)} segment(s)",
+        intent=f"adjust segment chain arc for {len(segment_objects)} segment(s)",
         actions_taken=[],
         requires_followup=False,
         error=str(result),

@@ -23,10 +23,7 @@ class FakeSceneTool:
                 "dimensions": [0.4, 0.4, 0.4],
             },
         }
-        self.inspect_payload = {
-            name: {"rotation": [0.0, 0.0, 0.0]}
-            for name in self.boxes
-        }
+        self.inspect_payload = {name: {"rotation": [0.0, 0.0, 0.0]} for name in self.boxes}
 
     def get_bounding_box(self, object_name, world_space=True):
         box = self.boxes[object_name]

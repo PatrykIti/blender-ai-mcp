@@ -26,11 +26,11 @@ from server.adapters.mcp.contracts.reference import (
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
-    SceneRepairMacroCandidateContract,
     SceneAssertionPayloadContract,
     SceneCorrectionTruthBundleContract,
     SceneCorrectionTruthPairContract,
     SceneCorrectionTruthSummaryContract,
+    SceneRepairMacroCandidateContract,
     SceneTruthFollowupContract,
     SceneTruthFollowupItemContract,
 )
@@ -335,7 +335,7 @@ def _assembled_target_scope(
     )
 
     if normalized_collection:
-        scope_kind = "collection"
+        scope_kind: Literal["single_object", "object_set", "collection", "scene"] = "collection"
     elif len(resolved_target_objects) > 1:
         scope_kind = "object_set"
     elif normalized_primary:
@@ -353,7 +353,9 @@ def _assembled_target_scope(
     )
 
 
-def _truth_bundle_pairs(scope: SceneAssembledTargetScopeContract) -> tuple[str, list[tuple[str, str]]]:
+def _truth_bundle_pairs(
+    scope: SceneAssembledTargetScopeContract,
+) -> tuple[Literal["none", "primary_to_others"], list[tuple[str, str]]]:
     object_names = list(scope.object_names or [])
     if len(object_names) < 2 or scope.primary_target is None:
         return "none", []

@@ -49,7 +49,9 @@ def test_macro_adjust_segment_chain_arc_repositions_chain_along_arc(
 
     try:
         for index, name in enumerate(names):
-            modeling_handler.create_primitive(primitive_type="CUBE", name=name, size=0.4, location=[float(index), 0.0, 0.0])
+            modeling_handler.create_primitive(
+                primitive_type="CUBE", name=name, size=0.4, location=[float(index), 0.0, 0.0]
+            )
 
         result = macro_handler.adjust_segment_chain_arc(
             segment_objects=names,
