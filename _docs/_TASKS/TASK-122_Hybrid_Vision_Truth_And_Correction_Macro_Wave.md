@@ -12,6 +12,10 @@
 tracks the remaining open hybrid-loop work on model-aware budget/scope control
 and graceful payload trimming.
 
+**Additional Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
+tracks deterministic cross-domain refinement-family routing and bounded sculpt
+exposure policy for guided surfaces.
+
 ## Objective
 
 Extend the current reference-guided vision loop into a practical correction

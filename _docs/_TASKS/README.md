@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 1 task
+- **To Do:** 2 tasks
 - **In Progress:** 0 tasks
 - **Done:** 191
 - **Superseded:** 10
@@ -57,6 +57,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
 | [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | **Hybrid Loop Model-Aware Budget and Scope Control** | 🔴 High | Standalone follow-on after closed `TASK-122-03`; adapts truth/candidate scope and payload size to active model/runtime limits |
+| [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | Standalone follow-on after closed `TASK-122-03`; adds deterministic family selection and bounded sculpt recommendation/exposure across hard-surface, soft-surface, and organic domains |
 
 ---
 
@@ -558,7 +559,7 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 |---|---|---|
 | `TASK-122-01` | [overview](./TASK-122-01_Spatial_Correction_Truth_Bundles_For_Assembled_Models.md), [assembled target scope and part group contract](./TASK-122-01-01_Assembled_Target_Scope_And_Part_Group_Contract.md), [contact/gap/alignment/overlap correction bundle](./TASK-122-01-02_Contact_Gap_Alignment_And_Overlap_Correction_Bundle.md), [truth follow-up delivery and loop handoff](./TASK-122-01-03_Truth_Followup_Delivery_And_Loop_Handoff.md) | Correction-oriented truth bundles for assembled multi-part models |
 | `TASK-122-02` | [overview](./TASK-122-02_Creature_Correction_Macro_Tool_Wave.md), [`macro_attach_part_to_surface`](./TASK-122-02-01_macro_attach_part_to_surface.md), [`macro_align_part_with_contact`](./TASK-122-02-02_macro_align_part_with_contact.md), [`macro_place_symmetry_pair`](./TASK-122-02-03_macro_place_symmetry_pair.md), [`macro_adjust_relative_proportion`](./TASK-122-02-04_macro_adjust_relative_proportion.md), [`macro_adjust_segment_chain_arc`](./TASK-122-02-05_macro_adjust_segment_chain_arc.md), [`macro_place_supported_pair`](./TASK-122-02-06_macro_place_supported_pair.md), [`macro_cleanup_part_intersections`](./TASK-122-02-07_macro_cleanup_part_intersections.md) | The next bounded macro wave for assembled-creature correction |
-| `TASK-122-03` | [overview](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md), [correction candidate contract and priority model](./TASK-122-03-01_Correction_Candidate_Contract_And_Priority_Model.md), [`reference_iterate_stage_checkpoint` truth bundle integration](./TASK-122-03-02_Reference_Iterate_Stage_Checkpoint_Truth_Bundle_Integration.md), [loop disposition from vision and truth signal](./TASK-122-03-03_Loop_Disposition_From_Vision_And_Truth_Signal.md), [real assembled creature eval and prompting](./TASK-122-03-04_Real_Assembled_Creature_Eval_And_Prompting.md), [pairing anchor and canonical check quality follow-on](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md), [model-aware budget and scope control follow-on](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | Hybrid loop that merges visual mismatch, geometric truth, and bounded correction actions |
+| `TASK-122-03` | [overview](./TASK-122-03_Hybrid_Vision_Truth_Correction_Loop.md), [correction candidate contract and priority model](./TASK-122-03-01_Correction_Candidate_Contract_And_Priority_Model.md), [`reference_iterate_stage_checkpoint` truth bundle integration](./TASK-122-03-02_Reference_Iterate_Stage_Checkpoint_Truth_Bundle_Integration.md), [loop disposition from vision and truth signal](./TASK-122-03-03_Loop_Disposition_From_Vision_And_Truth_Signal.md), [real assembled creature eval and prompting](./TASK-122-03-04_Real_Assembled_Creature_Eval_And_Prompting.md), [pairing anchor and canonical check quality follow-on](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md), [model-aware budget and scope control follow-on](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md), [cross-domain refinement routing and sculpt exposure follow-on](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | Hybrid loop that merges visual mismatch, geometric truth, and bounded correction actions |
 
 ### TASK-123 Detailed Docs
 
