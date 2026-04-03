@@ -5,14 +5,15 @@
 `TASK-122-03` and `TASK-122` were closed. `_docs/_TASKS/README.md` tracks it
 as its own open item while the historical numbering is preserved for
 continuity.  
-**Status:** 🚧 In Progress  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
 
-**Progress Update:** The first three leaves are now complete. The hybrid loop
-has an explicit refinement taxonomy, a deterministic `refinement_route`
-selector, and a recommendation-only `refinement_handoff` for bounded sculpt
-tools. The follow-on remains open only for broader cross-domain regression and
-prompting work.
+**Completion Summary:** The cross-domain refinement-routing follow-on is now
+complete. The hybrid loop has an explicit refinement taxonomy, a deterministic
+`refinement_route` selector, a recommendation-only `refinement_handoff` for
+bounded sculpt tools, and explicit cross-domain regression/prompting guidance
+for reviewing those outputs across hard-surface, architecture, garments,
+anatomy, character/animal, and low-poly assembled cases.
 
 ## Objective
 

@@ -75,7 +75,10 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "request-bound attachment of `vision_assistant`",
         "Multi-View Capture Plan",
         "HYBRID_LOOP_REAL_CREATURE_EVAL.md",
+        "CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md",
         "`correction_candidates`",
+        "`refinement_route`",
+        "`refinement_handoff`",
     ):
         assert expected in text
 
@@ -91,6 +94,22 @@ def test_hybrid_loop_eval_pack_doc_exists():
         "`correction_candidates`",
         "`truth_followup`",
         "`correction_focus`",
+    ):
+        assert expected in text
+
+
+def test_cross_domain_refinement_eval_doc_exists():
+    text = (REPO_ROOT / "_docs" / "_VISION" / "CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Cross-Domain Refinement Routing Eval",
+        "`refinement_route`",
+        "`refinement_handoff`",
+        "Hard-Surface / Electronics",
+        "Building / Architecture",
+        "Garment / Soft Accessory",
+        "Organ / Anatomy",
+        "Low-Poly Creature / Assembled Model",
     ):
         assert expected in text
 
@@ -184,6 +203,8 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "correction_focus" in prompt_readme
     assert "correction_candidates" in prompt_readme
     assert "truth_followup" in prompt_readme
+    assert "refinement_route" in prompt_readme
+    assert "refinement_handoff" in prompt_readme
 
     assert 'browse_workflows(action="search", search_query="<user prompt>")' in workflow_prompt
     assert 'browse_workflows(action="get", name="<workflow_name>")' in workflow_prompt

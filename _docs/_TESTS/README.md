@@ -248,12 +248,15 @@ Hybrid-loop assembled-creature regression pack:
 
 - `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
 - `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - combines:
   - `tests/e2e/vision/test_reference_stage_truth_handoff.py`
   - `tests/e2e/vision/test_reference_guided_creature_comparison.py`
 - review staged hybrid-loop output in this order:
   - `loop_disposition`
   - `correction_candidates`
+  - `refinement_route`
+  - `refinement_handoff`
   - `truth_followup`
   - `correction_focus`
 

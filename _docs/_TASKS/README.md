@@ -4,8 +4,8 @@ Curated task board for promoted active work, promoted follow-on work, and select
 
 ## 📊 Statistics
 - **To Do:** 0 tasks
-- **In Progress:** 1 task
-- **Done:** 194
+- **In Progress:** 0 tasks
+- **Done:** 195
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -63,7 +63,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | Taxonomy and deterministic selector are done; remaining leaves cover guided sculpt exposure policy and broader cross-domain regression/prompting |
 
 ---
 
@@ -71,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | **Hybrid Loop Model-Aware Budget and Scope Control** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-07-02](./TASK-122-03-07-02_Deterministic_Refinement_Family_Selector.md) | **Deterministic Refinement Family Selector** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-07-01](./TASK-122-03-07-01_Refinement_Taxonomy_And_Domain_Boundaries.md) | **Refinement Taxonomy and Domain Boundaries** | 🔴 High | 2026-04-03 |

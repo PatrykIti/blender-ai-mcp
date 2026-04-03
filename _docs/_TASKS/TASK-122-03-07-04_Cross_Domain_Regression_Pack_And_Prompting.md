@@ -1,8 +1,16 @@
 # TASK-122-03-07-04: Cross-Domain Regression Pack and Prompting
 
 **Parent:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Added an explicit cross-domain regression pack and
+updated prompt guidance so refinement-family routing is no longer documented
+only through the squirrel flow. The docs now spell out expected routing across
+hard-surface, architecture, garments, anatomy, local-form creature/character
+ cases, and low-poly assembled models, and prompt guidance now tells operators
+to read `refinement_route` / `refinement_handoff` before choosing the next tool
+family.
 
 ## Objective
 
@@ -68,3 +76,8 @@ Prompt docs should explain:
 ## Changelog Impact
 
 - include in the parent follow-on changelog entry when shipped
+
+## Status / Board Update
+
+- this leaf is closed
+- the parent follow-on is now complete

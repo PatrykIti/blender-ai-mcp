@@ -347,6 +347,7 @@ Hybrid-loop regression guidance:
 
 - `_docs/_VISION/HYBRID_LOOP_REAL_CREATURE_EVAL.md`
 - `_docs/_VISION/REFERENCE_GUIDED_CREATURE_TEST_PROMPT.md`
+- `_docs/_VISION/CROSS_DOMAIN_REFINEMENT_ROUTING_EVAL.md`
 - use it to review the current staged creature loop in this order:
   - `loop_disposition`
   - `correction_candidates`

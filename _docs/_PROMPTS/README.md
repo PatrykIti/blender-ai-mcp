@@ -91,7 +91,7 @@ Interpretation:
     `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
-    prioritize `loop_disposition`, then `correction_candidates`, then `truth_followup`, then `correction_focus`
+    prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `correction_focus`
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form building and verify before continuing
 - if a tool is already directly visible on the current phase/surface, call it directly
 - only use `search_tools(...)` / `call_tool(...)` when discovery is actually needed
@@ -110,6 +110,9 @@ Interpretation:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work
 - if `router_set_goal(...)` returns `guided_handoff`, treat it as the typed continuation contract for what to call next on the current guided surface
+- if hybrid loop responses expose `refinement_route` / `refinement_handoff`,
+  treat those as the bounded family-selection hints for whether to stay on
+  macro/modeling/mesh or move into a narrow sculpt-region path
 
 ## `llm-guided` Flow Summary
 
