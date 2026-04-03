@@ -247,6 +247,15 @@ hidden ordering assumptions.
 - for staged compare/iterate, `goal_override` is no longer a session
   substitute; use an active guided goal session instead
 
+## Session Diagnostics
+
+Guided/runtime payloads now expose explicit MCP session metadata:
+
+- `router_set_goal(...)` includes `session_id` and `transport`
+- `router_get_status(...)` includes `session_id` and `transport`
+- `reference_compare_stage_checkpoint(...)` includes `session_id` and `transport`
+- `reference_iterate_stage_checkpoint(...)` includes `session_id` and `transport`
+
 ## Server-Side Sampling Assistants Baseline
 
 The MCP server now has a bounded analytical assistant layer inside an active request.
@@ -331,6 +340,22 @@ docker run -i --rm \
   ghcr.io/patrykiti/blender-ai-mcp:latest
 ```
 
+```bash
+docker run --rm \
+  -p 8000:8000 \
+  -v /tmp:/tmp \
+  -e BLENDER_AI_TMP_INTERNAL_DIR=/tmp \
+  -e BLENDER_AI_TMP_EXTERNAL_DIR=/tmp \
+  -e ROUTER_ENABLED=true \
+  -e MCP_SURFACE_PROFILE=llm-guided \
+  -e MCP_TRANSPORT_MODE=streamable \
+  -e MCP_HTTP_HOST=0.0.0.0 \
+  -e MCP_HTTP_PORT=8000 \
+  -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e BLENDER_RPC_HOST=host.docker.internal \
+  ghcr.io/patrykiti/blender-ai-mcp:latest
+```
+
 Example generic MCP client config:
 
 ```json
@@ -359,6 +384,8 @@ Network notes:
 
 - **macOS / Windows:** use `host.docker.internal`
 - **Linux:** prefer `--network host` with `BLENDER_RPC_HOST=127.0.0.1`
+- `MCP_TRANSPORT_MODE=stdio` keeps the current subprocess/stdio MCP mode
+- `MCP_TRANSPORT_MODE=streamable` starts a stateful Streamable HTTP MCP server
 
 For broader profile/config examples, use:
 

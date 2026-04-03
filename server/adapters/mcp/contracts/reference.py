@@ -191,6 +191,8 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
     action: Literal["compare_stage_checkpoint"] = "compare_stage_checkpoint"
+    session_id: str | None = None
+    transport: str | None = None
     goal: str | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
@@ -222,6 +224,8 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     """Structured response for session-aware iterative stage checkpoint loops."""
 
     action: Literal["iterate_stage_checkpoint"] = "iterate_stage_checkpoint"
+    session_id: str | None = None
+    transport: str | None = None
     goal: str | None = None
     guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None

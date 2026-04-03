@@ -1,8 +1,12 @@
 # TASK-125-04: Transport Mode Regression Pack and Docs
 
 **Parent:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Added focused regression coverage for transport-mode
+bootstrap and session diagnostics, plus docs/config updates for the supported
+`stdio` and `streamable` modes.
 
 ## Objective
 

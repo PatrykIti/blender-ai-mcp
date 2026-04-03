@@ -16,7 +16,7 @@ from uuid import uuid4
 
 from fastmcp import Context
 
-from server.adapters.mcp.context_utils import ctx_info
+from server.adapters.mcp.context_utils import ctx_info, ctx_session_id, ctx_transport_type
 from server.adapters.mcp.contracts.reference import (
     GuidedReferenceReadinessContract,
     ReferenceCompareCheckpointResponseContract,
@@ -260,6 +260,8 @@ def _compare_response(
 
 def _stage_compare_response(
     *,
+    session_id: str | None = None,
+    transport: str | None = None,
     checkpoint_id: str,
     checkpoint_label: str | None,
     goal: str | None,
@@ -290,6 +292,8 @@ def _stage_compare_response(
     )
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
+        session_id=session_id,
+        transport=transport,
         goal=goal,
         guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
@@ -320,6 +324,8 @@ def _stage_compare_response(
 
 def _iterate_stage_response(
     *,
+    session_id: str | None = None,
+    transport: str | None = None,
     goal: str | None,
     target_object: str | None,
     target_objects: list[str],
@@ -347,6 +353,8 @@ def _iterate_stage_response(
 ) -> ReferenceIterateStageCheckpointResponseContract:
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
+        session_id=session_id,
+        transport=transport,
         goal=goal,
         guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
@@ -1400,6 +1408,8 @@ async def _run_stage_checkpoint_compare(
     """Capture one deterministic stage view-set, then compare it against references."""
 
     session = await get_session_capability_state_async(ctx)
+    session_id = ctx_session_id(ctx)
+    transport = ctx_transport_type(ctx)
     readiness = build_guided_reference_readiness(session)
     readiness_contract = GuidedReferenceReadinessContract.model_validate(
         build_guided_reference_readiness_payload(session)
@@ -1407,6 +1417,8 @@ async def _run_stage_checkpoint_compare(
     goal = session.goal
     if not readiness.compare_ready or goal is None:
         return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1435,6 +1447,8 @@ async def _run_stage_checkpoint_compare(
         )
     except RuntimeError as exc:
         return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1463,6 +1477,8 @@ async def _run_stage_checkpoint_compare(
     )
     if not selected_reference_records:
         return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1489,6 +1505,8 @@ async def _run_stage_checkpoint_compare(
         )
     except RuntimeError as exc:
         return _stage_compare_response(
+            session_id=session_id,
+            transport=transport,
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
             goal=goal,
@@ -1639,6 +1657,8 @@ async def _run_stage_checkpoint_compare(
         selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
     return _stage_compare_response(
+        session_id=session_id,
+        transport=transport,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
         goal=goal,
@@ -2016,6 +2036,8 @@ async def reference_iterate_stage_checkpoint(
 
     if compare_result.error or goal is None:
         return _iterate_stage_response(
+            session_id=compare_result.session_id,
+            transport=compare_result.transport,
             goal=goal,
             target_object=target_object,
             target_objects=list(target_objects or []),
@@ -2102,6 +2124,8 @@ async def reference_iterate_stage_checkpoint(
         message = "No further correction loop action is recommended for this checkpoint."
 
     return _iterate_stage_response(
+        session_id=compare_result.session_id,
+        transport=compare_result.transport,
         goal=goal,
         target_object=target_object,
         target_objects=list(compare_result.target_objects or []),

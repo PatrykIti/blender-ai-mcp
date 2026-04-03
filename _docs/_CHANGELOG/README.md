@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [204](./204-2026-04-03-mcp-transport-mode-switching-and-session-diagnostics.md) | 2026-04-03 | **MCP transport mode switching and session diagnostics** | - |
 | [203](./203-2026-04-03-mesh-aware-contact-semantics.md) | 2026-04-03 | **Mesh-aware contact semantics** | - |
 | [202](./202-2026-04-03-guided-reference-session-readiness.md) | 2026-04-03 | **Guided reference session readiness** | - |
 | [201](./201-2026-04-03-cross-domain-refinement-routing-regression-pack.md) | 2026-04-03 | **Cross-domain refinement routing regression pack** | - |

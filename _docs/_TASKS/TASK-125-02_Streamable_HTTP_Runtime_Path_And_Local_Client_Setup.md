@@ -1,8 +1,12 @@
 # TASK-125-02: Streamable HTTP Runtime Path and Local Client Setup
 
 **Parent:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added the first supported stateful `streamable HTTP`
+runtime path plus local Docker/client config examples so operators can switch
+between `stdio` and `streamable` intentionally during runtime debugging.
 
 ## Objective
 

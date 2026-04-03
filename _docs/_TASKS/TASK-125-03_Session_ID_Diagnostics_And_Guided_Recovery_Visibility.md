@@ -1,8 +1,12 @@
 # TASK-125-03: Session ID Diagnostics and Guided Recovery Visibility
 
 **Parent:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Guided/router/reference payloads now expose explicit
+`session_id` and `transport` diagnostics, making MCP session resets visible in
+normal product responses instead of only in server logs.
 
 ## Objective
 

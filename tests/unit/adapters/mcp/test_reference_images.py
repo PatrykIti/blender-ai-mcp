@@ -38,6 +38,8 @@ from server.adapters.mcp.session_capabilities import update_session_from_router_
 @dataclass
 class FakeContext:
     state: dict[str, object] = field(default_factory=dict)
+    session_id: str = "sess_test"
+    transport: str = "stdio"
 
     def get_state(self, key: str):
         return self.state.get(key)
@@ -909,6 +911,8 @@ def test_reference_compare_stage_checkpoint_requires_goal_or_override():
     result = asyncio.run(reference_compare_stage_checkpoint(FakeContext(), target_object="Squirrel"))
 
     assert result.error is not None
+    assert result.session_id == "sess_test"
+    assert result.transport == "stdio"
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "active_goal_required"
     assert result.guided_reference_readiness.next_action == "call_router_set_goal"
@@ -974,6 +978,8 @@ def test_reference_compare_stage_checkpoint_fail_fast_exposes_pending_goal_readi
     result = asyncio.run(reference_compare_stage_checkpoint(ctx, target_object="Squirrel"))
 
     assert result.error is not None
+    assert result.session_id == "sess_test"
+    assert result.transport == "stdio"
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "goal_input_pending"
     assert result.guided_reference_readiness.next_action == "answer_pending_goal_questions"
@@ -1549,6 +1555,8 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
     first_compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
         {
             "action": "compare_stage_checkpoint",
+            "session_id": "sess_test",
+            "transport": "stdio",
             "goal": "low poly squirrel",
             "target_object": "Squirrel",
             "checkpoint_id": "checkpoint_1",
@@ -1639,6 +1647,8 @@ def test_reference_iterate_stage_checkpoint_tracks_previous_focus_and_iteration(
         )
     )
 
+    assert first.session_id == "sess_test"
+    assert first.transport == "stdio"
     assert first.iteration_index == 1
     assert first.loop_disposition == "continue_build"
     assert first.prior_correction_focus == []

@@ -4,7 +4,13 @@
 **Category:** Product Reliability / Runtime Operations  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-083, TASK-093, TASK-124  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** The MCP server now supports an explicit
+`MCP_TRANSPORT_MODE` switch for `stdio` vs stateful `streamable` HTTP,
+operator docs/config examples exist for both modes, and guided/router/reference
+payloads now expose `session_id` plus `transport` so runtime session-loss
+incidents can be traced directly from product payloads.
 
 ## Objective
 

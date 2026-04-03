@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 from server.adapters.mcp.areas import router as router_area
 from server.adapters.mcp.session_capabilities import get_session_capability_state
@@ -16,6 +17,8 @@ class FakeContext:
     response: object
     calls: list[tuple[str, object]] = field(default_factory=list)
     state: dict[str, object] = field(default_factory=dict)
+    session_id: str = "sess_test"
+    transport: str = "stdio"
 
     async def elicit(self, message: str, response_type=None):
         self.calls.append((message, response_type))
@@ -112,6 +115,8 @@ def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
 
     session = get_session_capability_state(ctx)
     assert result.status == "needs_input"
+    assert result.session_id == "sess_test"
+    assert result.transport == "stdio"
     assert result.elicitation_action is None
     assert result.guided_reference_readiness is not None
     assert result.guided_reference_readiness.blocking_reason == "goal_input_pending"
@@ -312,6 +317,8 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
 
     session = get_session_capability_state(ctx)
     assert result.status == "no_match"
+    assert result.session_id == "sess_test"
+    assert result.transport == "stdio"
     assert result.continuation_mode == "guided_manual_build"
     assert result.guided_handoff is not None
     assert result.guided_handoff.kind == "guided_manual_build"
@@ -325,3 +332,36 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert session.phase.value == "build"
     assert session.guided_handoff is not None
     assert session.guided_handoff["kind"] == "guided_manual_build"
+
+
+def test_router_get_status_exposes_session_id_and_transport(monkeypatch):
+    """router_get_status should surface explicit MCP session diagnostics."""
+
+    monkeypatch.setattr(router_area, "get_config", lambda: type("Cfg", (), {"MCP_SURFACE_PROFILE": "llm-guided"})())
+    monkeypatch.setattr(router_area, "get_router_status", lambda: {"enabled": True})
+    monkeypatch.setattr(router_area, "_build_background_job_diagnostics", lambda: (0, {}, []))
+    monkeypatch.setattr(router_area, "_build_timeout_policy_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_task_runtime_diagnostics", lambda _ctx: None)
+    monkeypatch.setattr(router_area, "_build_telemetry_diagnostics", lambda: None)
+    monkeypatch.setattr(router_area, "_get_list_page_size", lambda _ctx: 50)
+    monkeypatch.setattr(router_area, "run_repair_suggestion_assistant", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "to_repair_assistant_contract", lambda *args, **kwargs: None)
+    monkeypatch.setattr(router_area, "_should_attach_repair_suggestion", lambda _payload: False)
+    monkeypatch.setattr(
+        router_area,
+        "build_visibility_diagnostics",
+        lambda surface_profile, phase: SimpleNamespace(
+            rules=(),
+            visible_capability_ids=("router",),
+            visible_entry_capability_ids=("router",),
+            hidden_capability_ids=(),
+            hidden_category_counts={},
+        ),
+    )
+
+    ctx = FakeContext(response=object())
+
+    result = asyncio.run(router_area.router_get_status(ctx))
+
+    assert result.session_id == "sess_test"
+    assert result.transport == "stdio"

@@ -50,6 +50,8 @@ class RouterGoalResponseContract(MCPContract):
     """Structured response contract for router_set_goal."""
 
     status: Literal["ready", "needs_input", "no_match", "disabled", "error"]
+    session_id: str | None = None
+    transport: str | None = None
     continuation_mode: Literal["workflow", "guided_manual_build", "guided_utility"] | None = None
     workflow: str | None = None
     resolved: dict[str, Any]
@@ -72,6 +74,8 @@ class RouterStatusContract(MCPContract):
     """Structured contract for router_get_status."""
 
     enabled: bool
+    session_id: str | None = None
+    transport: str | None = None
     initialized: bool | None = None
     ready: bool | None = None
     component_status: dict[str, bool] | None = None

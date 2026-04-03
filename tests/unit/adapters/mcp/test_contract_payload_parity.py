@@ -61,6 +61,8 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
             RouterGoalResponseContract,
             {
                 "status": "ready",
+                "session_id": "sess-1",
+                "transport": "stdio",
                 "continuation_mode": "workflow",
                 "workflow": "chair_workflow",
                 "resolved": {"height": 1.0},
@@ -89,6 +91,8 @@ from server.adapters.mcp.contracts.workflow_catalog import WorkflowCatalogRespon
             RouterStatusContract,
             {
                 "enabled": True,
+                "session_id": "sess-1",
+                "transport": "streamable-http",
                 "initialized": True,
                 "ready": True,
                 "surface_profile": "legacy-flat",

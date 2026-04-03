@@ -22,12 +22,16 @@ class Config(BaseSettings):
 
     # MCP Surface / Factory
     MCP_SURFACE_PROFILE: str = Field(default="legacy-flat", description="Bootstrap surface profile")
+    MCP_TRANSPORT_MODE: str = Field(default="stdio", description="MCP transport mode: stdio|streamable")
     MCP_DEFAULT_CONTRACT_LINE: str | None = Field(default=None, description="Optional default public contract line")
     MCP_LIST_PAGE_SIZE: int = Field(default=100, description="Default MCP list page size")
     MCP_TOOL_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="Foreground MCP tool timeout")
     MCP_TASK_TIMEOUT_SECONDS: float = Field(default=300.0, gt=0, description="Background MCP task timeout")
     RPC_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="RPC socket timeout")
     ADDON_EXECUTION_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0, description="Blender addon execution timeout")
+    MCP_HTTP_HOST: str = Field(default="127.0.0.1", description="Host for streamable HTTP MCP mode")
+    MCP_HTTP_PORT: int = Field(default=8000, gt=0, description="Port for streamable HTTP MCP mode")
+    MCP_STREAMABLE_HTTP_PATH: str = Field(default="/mcp", description="HTTP path for streamable MCP mode")
 
     # Vision runtime scaffold
     VISION_ENABLED: bool = Field(default=False, description="Enable bounded vision-assist runtime")
@@ -100,6 +104,16 @@ class Config(BaseSettings):
         return self
 
     @model_validator(mode="after")
+    def validate_mcp_transport_mode(self):
+        """Keep the MCP transport vocabulary explicit and bootstrap-safe."""
+
+        if self.MCP_TRANSPORT_MODE not in {"stdio", "streamable"}:
+            raise ValueError("MCP_TRANSPORT_MODE must be one of: stdio, streamable")
+        if not self.MCP_STREAMABLE_HTTP_PATH.startswith("/"):
+            raise ValueError("MCP_STREAMABLE_HTTP_PATH must start with '/'")
+        return self
+
+    @model_validator(mode="after")
     def validate_vision_provider(self):
         """Keep the vision provider vocabulary explicit."""
 
@@ -123,12 +137,16 @@ def get_config() -> Config:
         OTEL_EXPORTER=os.getenv("OTEL_EXPORTER", "none"),
         OTEL_SERVICE_NAME=os.getenv("OTEL_SERVICE_NAME", "blender-ai-mcp"),
         MCP_SURFACE_PROFILE=os.getenv("MCP_SURFACE_PROFILE", "legacy-flat"),
+        MCP_TRANSPORT_MODE=os.getenv("MCP_TRANSPORT_MODE", "stdio"),
         MCP_DEFAULT_CONTRACT_LINE=os.getenv("MCP_DEFAULT_CONTRACT_LINE") or None,
         MCP_LIST_PAGE_SIZE=int(os.getenv("MCP_LIST_PAGE_SIZE", 100)),
         MCP_TOOL_TIMEOUT_SECONDS=float(os.getenv("MCP_TOOL_TIMEOUT_SECONDS", 30.0)),
         MCP_TASK_TIMEOUT_SECONDS=float(os.getenv("MCP_TASK_TIMEOUT_SECONDS", 300.0)),
         RPC_TIMEOUT_SECONDS=float(os.getenv("RPC_TIMEOUT_SECONDS", 30.0)),
         ADDON_EXECUTION_TIMEOUT_SECONDS=float(os.getenv("ADDON_EXECUTION_TIMEOUT_SECONDS", 30.0)),
+        MCP_HTTP_HOST=os.getenv("MCP_HTTP_HOST", "127.0.0.1"),
+        MCP_HTTP_PORT=int(os.getenv("MCP_HTTP_PORT", 8000)),
+        MCP_STREAMABLE_HTTP_PATH=os.getenv("MCP_STREAMABLE_HTTP_PATH", "/mcp"),
         VISION_ENABLED=os.getenv("VISION_ENABLED", "false").lower() in ("true", "1", "yes"),
         VISION_PROVIDER=os.getenv("VISION_PROVIDER", "transformers_local"),
         VISION_ALLOW_ON_GUIDED=os.getenv("VISION_ALLOW_ON_GUIDED", "true").lower() in ("true", "1", "yes"),

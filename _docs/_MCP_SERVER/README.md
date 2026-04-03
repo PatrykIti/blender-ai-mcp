@@ -424,6 +424,26 @@ instead of hidden sequencing assumptions.
   use lower-level checkpoint/current-view compare only when you intentionally
   need request-local comparison outside the staged session flow
 
+## Session Diagnostics
+
+Guided/runtime payloads now expose explicit MCP session diagnostics:
+
+- `router_set_goal()`
+  - `session_id`
+  - `transport`
+- `router_get_status()`
+  - `session_id`
+  - `transport`
+- `reference_compare_stage_checkpoint()`
+  - `session_id`
+  - `transport`
+- `reference_iterate_stage_checkpoint()`
+  - `session_id`
+  - `transport`
+
+Use those fields first when diagnosing whether state loss came from a new MCP
+session/transport lifecycle instead of Blender-scene changes.
+
 ## Server-Side Sampling Assistants Baseline
 
 The MCP adapter layer now has a bounded sampling-assistant baseline for analytical/recovery helpers inside one active MCP request.
@@ -625,6 +645,30 @@ docker run -i --rm --network host -e BLENDER_RPC_HOST=127.0.0.1 blender-ai-mcp
 ```
 
 *(The `-i` flag is crucial for the interactive stdio communication used by MCP)*.
+
+Current transport selection is explicit:
+
+- `MCP_TRANSPORT_MODE=stdio`
+- `MCP_TRANSPORT_MODE=streamable`
+
+For `streamable`, the current supported knobs are:
+
+- `MCP_HTTP_HOST`
+- `MCP_HTTP_PORT`
+- `MCP_STREAMABLE_HTTP_PATH`
+
+Example Streamable HTTP Docker run:
+
+```bash
+docker run --rm \
+  -p 8000:8000 \
+  -e MCP_TRANSPORT_MODE=streamable \
+  -e MCP_HTTP_HOST=0.0.0.0 \
+  -e MCP_HTTP_PORT=8000 \
+  -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e BLENDER_RPC_HOST=host.docker.internal \
+  blender-ai-mcp
+```
 
 ## 🛠 Available Tools
 

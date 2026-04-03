@@ -40,6 +40,7 @@ def run(surface_profile: str | None = None):
     config = get_config()
     selected_surface = surface_profile or config.MCP_SURFACE_PROFILE
     server = build_server(surface_profile=selected_surface)
+    transport_mode = config.MCP_TRANSPORT_MODE
 
     # Log router status (lazy loading via DI on first tool use)
     if is_router_enabled():
@@ -48,9 +49,21 @@ def run(surface_profile: str | None = None):
         logger.info("Router Supervisor DISABLED - direct tool execution mode")
     logger.info("MCP surface profile: %s", selected_surface)
     logger.info("MCP contract line: %s", getattr(server, "_bam_contract_line", None))
+    logger.info("MCP transport mode: %s", transport_mode)
 
     try:
-        server.run()
+        if transport_mode == "stdio":
+            server.run(transport="stdio")
+        elif transport_mode == "streamable":
+            server.run(
+                transport="streamable-http",
+                host=config.MCP_HTTP_HOST,
+                port=config.MCP_HTTP_PORT,
+                path=config.MCP_STREAMABLE_HTTP_PATH,
+                stateless_http=False,
+            )
+        else:
+            raise ValueError(f"Unsupported MCP transport mode: {transport_mode!r}")
     except KeyboardInterrupt:
         # This is expected during client disconnect/reconnect cycles
         if not _shutdown_requested:

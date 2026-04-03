@@ -1,8 +1,12 @@
 # TASK-125-01: Configurable MCP Transport Mode and Bootstrap
 
 **Parent:** [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added explicit MCP transport bootstrap configuration
+for `stdio` and `streamable`, with deterministic runtime validation and
+bootstrap tests for both modes.
 
 ## Objective
 
