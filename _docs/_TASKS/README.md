@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 1 task
+- **To Do:** 2 tasks
 - **In Progress:** 0 tasks
 - **Done:** 196
 - **Superseded:** 10
@@ -49,6 +49,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Scene & Rig Introspection
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | Fix bbox-only contact truth so macros and hybrid loops stop declaring visual contact when curved meshes still show real gaps |
 
 ### Reconstruction (Mesh, Material, Scene)
 | ID | Title | Priority | Notes |
@@ -583,3 +584,9 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | Cluster | Files | Contains |
 |---|---|---|
 | `TASK-125` | [overview](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md), [configurable MCP transport mode and bootstrap](./TASK-125-01_Configurable_MCP_Transport_Mode_And_Bootstrap.md), [streamable HTTP runtime path and local client setup](./TASK-125-02_Streamable_HTTP_Runtime_Path_And_Local_Client_Setup.md), [session ID diagnostics and guided recovery visibility](./TASK-125-03_Session_ID_Diagnostics_And_Guided_Recovery_Visibility.md), [transport mode regression pack and docs](./TASK-125-04_Transport_Mode_Regression_Pack_And_Docs.md) | Selectable `stdio` / `streamable` runtime modes plus explicit session diagnostics for guided-state debugging |
+
+### TASK-126 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-126` | [overview](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md), [contact semantics audit and product contract](./TASK-126-01_Contact_Semantics_Audit_And_Product_Contract.md), [mesh-aware contact and gap measurement path](./TASK-126-02_Mesh_Aware_Contact_And_Gap_Measurement_Path.md), [macro and hybrid loop adoption of true contact semantics](./TASK-126-03_Macro_And_Hybrid_Loop_Adoption_Of_True_Contact_Semantics.md), [regression pack and docs for visual fit truth](./TASK-126-04_Regression_Pack_And_Docs_For_Visual_Fit_Truth.md) | Make truth-layer contact semantics match visible mesh/surface fit instead of relying on bbox-touching alone |
