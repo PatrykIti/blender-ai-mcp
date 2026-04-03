@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -277,3 +278,15 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "`truth_followup`" in creature_prompt
     assert "`truth_followup.focus_pairs`" in creature_prompt
     assert "`truth_followup.macro_candidates`" in creature_prompt
+
+
+def test_reference_guided_creature_prompt_stays_english():
+    """The public creature prompt guide should not drift back into Polish prose."""
+
+    creature_prompt = (REPO_ROOT / "_docs" / "_PROMPTS" / "REFERENCE_GUIDED_CREATURE_BUILD.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert re.search(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", creature_prompt) is None
+    for unexpected in ("Zasady:", "Na końcu", "wyczyść", "dołącz", "wiewiór"):
+        assert unexpected not in creature_prompt
