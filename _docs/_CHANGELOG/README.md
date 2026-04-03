@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [202](./202-2026-04-03-guided-reference-session-readiness.md) | 2026-04-03 | **Guided reference session readiness** | - |
 | [201](./201-2026-04-03-cross-domain-refinement-routing-regression-pack.md) | 2026-04-03 | **Cross-domain refinement routing regression pack** | - |
 | [200](./200-2026-04-03-guided-surface-sculpt-handoff.md) | 2026-04-03 | **Guided surface sculpt handoff** | - |
 | [199](./199-2026-04-03-refinement-taxonomy-and-family-selector.md) | 2026-04-03 | **Refinement taxonomy and family selector** | - |

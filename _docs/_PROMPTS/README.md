@@ -24,9 +24,16 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > call it directly instead of routing through `search_tools(...)` / `call_tool(...)`.
 > Use `reference_images(...)` to attach/list/remove/clear goal-scoped reference
 > images before asking the bounded vision layer to compare visible change.
-> If the goal is not active yet, `reference_images(action="attach", ...)` can
-> now stage pending references that will be adopted automatically by the next
-> `router_set_goal(...)`.
+> If the goal is not active yet, or if `router_set_goal(...)` is still blocked
+> on `needs_input`, `reference_images(action="attach", ...)` can now stage
+> pending references that will be adopted automatically when the guided goal
+> session becomes ready.
+> Use `guided_reference_readiness` from `router_set_goal(...)` or
+> `router_get_status(...)` before calling
+> `reference_compare_stage_checkpoint(...)` /
+> `reference_iterate_stage_checkpoint(...)`. If `compare_ready` /
+> `iterate_ready` is `false`, follow `next_action` instead of improvising
+> recovery steps.
 > Use `search_tools` / `call_tool` only when discovery is actually needed on the
 > shaped public surface, and use `manual_tools_no_router` when you explicitly
 > want a manual non-router operating mode.
@@ -91,6 +98,7 @@ Interpretation:
     `router_set_goal(...)` -> `reference_images(...)` -> macros / build tools -> `vision_assistant` on macro reports -> inspect/measure/assert confirmation
 - staged manual/reference-guided build:
     checkpoint capture -> `reference_compare_checkpoint(...)`, `reference_compare_current_view(...)`, `reference_compare_stage_checkpoint(...)`, or `reference_iterate_stage_checkpoint(...)` -> use bounded mismatch/correction hints for the next iteration
+    only call staged compare/iterate when `guided_reference_readiness.compare_ready == true`
     prioritize `loop_disposition`, then `refinement_route`, then `refinement_handoff`, then `correction_candidates`, then `truth_followup`, then `correction_focus`
     if `reference_iterate_stage_checkpoint(...)` returns `loop_disposition="inspect_validate"`, stop free-form building and verify before continuing
 - if a tool is already directly visible on the current phase/surface, call it directly
@@ -137,3 +145,7 @@ guided surface:
 6. If vision should support the build, attach `reference_images(...)`, prefer
    macro paths that emit `capture_bundle`, and treat inspection/measure/assert
    as the truth layer after visual interpretation.
+7. Before staged compare/iterate, check `guided_reference_readiness`:
+   - if `compare_ready` / `iterate_ready` is `true`, proceed
+   - otherwise follow `next_action` and do not use `goal_override` as a staged
+     session substitute

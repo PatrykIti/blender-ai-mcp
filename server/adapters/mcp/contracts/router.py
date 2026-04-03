@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from server.adapters.mcp.contracts.base import MCPContract
-from server.adapters.mcp.contracts.reference import ReferenceImageRecordContract
+from server.adapters.mcp.contracts.reference import GuidedReferenceReadinessContract, ReferenceImageRecordContract
 from server.adapters.mcp.elicitation_contracts import ClarificationFallbackPayload
 from server.adapters.mcp.sampling.result_types import RepairSuggestionAssistantContract
 
@@ -64,6 +64,7 @@ class RouterGoalResponseContract(MCPContract):
     elicitation_answers: dict[str, Any] | None = None
     policy_context: RouterPolicyContextContract | None = None
     guided_handoff: RouterGuidedHandoffContract | None = None
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     repair_suggestion: RepairSuggestionAssistantContract | None = None
 
 
@@ -105,5 +106,6 @@ class RouterStatusContract(MCPContract):
     background_job_count: int | None = None
     background_job_counts_by_status: dict[str, int] | None = None
     background_jobs: list[dict[str, Any]] | None = None
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     reference_image_count: int | None = None
     reference_images: list[ReferenceImageRecordContract] | None = None

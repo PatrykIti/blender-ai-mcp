@@ -19,6 +19,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "configure_scene",
         "browse_workflows",
         "reference_images",
+        "guided_reference_readiness",
         "macro_cutout_recess",
         "macro_relative_layout",
         "macro_finish_form",
@@ -48,6 +49,7 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "reference_compare_current_view",
         "reference_compare_stage_checkpoint",
         "reference_iterate_stage_checkpoint",
+        "guided_reference_readiness",
         "Vision Layer Docs",
         "Guided Handoff Contract",
         "guided_handoff",
@@ -72,6 +74,7 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "pluggable vision backend strategy",
         "deterministic capture-bundle inputs",
         "goal-scoped reference image context",
+        "guided_reference_readiness",
         "request-bound attachment of `vision_assistant`",
         "Multi-View Capture Plan",
         "HYBRID_LOOP_REAL_CREATURE_EVAL.md",
@@ -123,6 +126,7 @@ def test_reference_guided_creature_test_prompt_doc_exists():
         "blender-ai-mcp-guided-docker-openrouter",
         "`reference_iterate_stage_checkpoint(...)`",
         "`scene_get_viewport(...)`",
+        "`guided_reference_readiness`",
         "`correction_candidates`",
         "`truth_followup`",
         "`USER_PERSPECTIVE`",
@@ -203,6 +207,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "correction_focus" in prompt_readme
     assert "correction_candidates" in prompt_readme
     assert "truth_followup" in prompt_readme
+    assert "guided_reference_readiness" in prompt_readme
     assert "refinement_route" in prompt_readme
     assert "refinement_handoff" in prompt_readme
 
@@ -266,6 +271,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "scene_show_all_objects(include_render=true)" in manual_prompt
 
     assert "`reference_iterate_stage_checkpoint(...)`" in creature_prompt
+    assert "`guided_reference_readiness`" in creature_prompt
     assert "`loop_disposition`" in creature_prompt
     assert "`correction_candidates`" in creature_prompt
     assert "`truth_followup`" in creature_prompt

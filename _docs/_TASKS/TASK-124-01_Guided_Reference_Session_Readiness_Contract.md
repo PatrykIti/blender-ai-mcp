@@ -1,8 +1,14 @@
 # TASK-124-01: Guided Reference Session Readiness Contract
 
 **Parent:** [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Added one explicit `guided_reference_readiness`
+contract for guided goal/reference sessions and exposed it through
+`router_set_goal(...)`, `router_get_status()`,
+`reference_compare_stage_checkpoint(...)`, and
+`reference_iterate_stage_checkpoint(...)`.
 
 ## Objective
 

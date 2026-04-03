@@ -1,8 +1,12 @@
 # TASK-124-04: Guided Handoff and Status Readiness UX
 
 **Parent:** [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Guided router surfaces now expose reference-session
+readiness directly on `router_set_goal(...)` and `router_get_status()`, so the
+next required action is available from typed payloads instead of hidden state.
 
 ## Objective
 

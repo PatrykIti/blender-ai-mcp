@@ -1,8 +1,13 @@
 # TASK-124-02: Pending Reference Adoption and Goal Lifecycle
 
 **Parent:** [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Pending references now stay staged while the goal is
+missing or blocked on `needs_input`, adopt automatically when the session is
+ready, and remain explicit instead of silently retargeting across mismatched
+goal changes.
 
 ## Objective
 

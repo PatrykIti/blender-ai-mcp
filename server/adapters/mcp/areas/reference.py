@@ -18,6 +18,7 @@ from fastmcp import Context
 
 from server.adapters.mcp.context_utils import ctx_info
 from server.adapters.mcp.contracts.reference import (
+    GuidedReferenceReadinessContract,
     ReferenceCompareCheckpointResponseContract,
     ReferenceCompareStageCheckpointResponseContract,
     ReferenceCorrectionCandidateContract,
@@ -43,9 +44,13 @@ from server.adapters.mcp.contracts.scene import (
 )
 from server.adapters.mcp.sampling.result_types import to_vision_assistant_contract
 from server.adapters.mcp.session_capabilities import (
+    GuidedReferenceReadinessState,
+    build_guided_reference_readiness,
+    build_guided_reference_readiness_payload,
     get_session_capability_state_async,
     replace_session_pending_reference_images_async,
     replace_session_reference_images_async,
+    session_has_ready_guided_reference_goal,
 )
 from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
 from server.adapters.mcp.visibility.tags import get_capability_tags
@@ -267,6 +272,7 @@ def _stage_compare_response(
     captures: list | tuple = (),
     reference_ids: list[str],
     reference_labels: list[str],
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     vision_assistant=None,
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
@@ -285,6 +291,7 @@ def _stage_compare_response(
     return ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
+        guided_reference_readiness=guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -329,6 +336,7 @@ def _iterate_stage_response(
     repeated_correction_focus: list[str],
     stagnation_count: int,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
@@ -340,6 +348,7 @@ def _iterate_stage_response(
     return ReferenceIterateStageCheckpointResponseContract(
         action="iterate_stage_checkpoint",
         goal=goal,
+        guided_reference_readiness=guided_reference_readiness or compare_result.guided_reference_readiness,
         target_object=target_object,
         target_objects=target_objects,
         collection_name=collection_name,
@@ -370,6 +379,22 @@ def _iterate_stage_response(
 
 def _normalized_focus_key(value: str) -> str:
     return " ".join(value.strip().lower().split())
+
+
+def _guided_stage_reference_error(readiness: GuidedReferenceReadinessState) -> str:
+    """Return one deterministic fail-fast error for staged guided reference flows."""
+
+    if readiness.blocking_reason == "active_goal_required":
+        return "Set an active goal with router_set_goal(...) before calling staged compare/iterate tools."
+    if readiness.blocking_reason == "goal_input_pending":
+        return "Finish the pending router goal questions before calling staged compare/iterate tools."
+    if readiness.blocking_reason == "pending_references_detected":
+        return "Reference session is not ready yet because pending references still need adoption or review."
+    if readiness.blocking_reason == "reference_images_required":
+        return "Attach at least one reference image with reference_images(action='attach', ...) before staging compare/iterate."
+    return (
+        "Reference session is not ready for staged compare/iterate yet. Check router_get_status() for the next action."
+    )
 
 
 def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
@@ -1308,12 +1333,16 @@ async def _run_stage_checkpoint_compare(
     """Capture one deterministic stage view-set, then compare it against references."""
 
     session = await get_session_capability_state_async(ctx)
-    goal = goal_override or session.goal
-    if not goal:
+    readiness = build_guided_reference_readiness(session)
+    readiness_contract = GuidedReferenceReadinessContract.model_validate(
+        build_guided_reference_readiness_payload(session)
+    )
+    goal = session.goal
+    if not readiness.compare_ready or goal is None:
         return _stage_compare_response(
             checkpoint_id=checkpoint_id,
             checkpoint_label=checkpoint_label,
-            goal=None,
+            goal=goal,
             target_object=target_object,
             target_objects=list(target_objects or []),
             collection_name=collection_name,
@@ -1322,7 +1351,8 @@ async def _run_stage_checkpoint_compare(
             preset_names=[],
             reference_ids=[],
             reference_labels=[],
-            error="Set an active goal with router_set_goal(...) before comparing a stage checkpoint, or pass goal_override.",
+            guided_reference_readiness=readiness_contract,
+            error=_guided_stage_reference_error(readiness),
         )
 
     try:
@@ -1344,6 +1374,7 @@ async def _run_stage_checkpoint_compare(
             preset_names=[],
             reference_ids=[],
             reference_labels=[],
+            guided_reference_readiness=readiness_contract,
             error=str(exc),
         )
     assembled_target_scope = _assembled_target_scope(
@@ -1371,6 +1402,7 @@ async def _run_stage_checkpoint_compare(
             preset_names=[],
             reference_ids=[],
             reference_labels=[],
+            guided_reference_readiness=readiness_contract,
             error="No matching reference images are attached for the requested target_object/target_view.",
         )
 
@@ -1396,6 +1428,7 @@ async def _run_stage_checkpoint_compare(
             preset_names=[],
             reference_ids=[item.reference_id for item in selected_reference_records],
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+            guided_reference_readiness=readiness_contract,
             error=str(exc),
         )
 
@@ -1464,6 +1497,7 @@ async def _run_stage_checkpoint_compare(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",
             goal=goal,
+            guided_reference_readiness=readiness_contract,
             target_object=resolved_target_object,
             target_objects=resolved_target_objects,
             collection_name=resolved_collection_name,
@@ -1495,6 +1529,7 @@ async def _run_stage_checkpoint_compare(
     staged_compare_contract = ReferenceCompareStageCheckpointResponseContract(
         action="compare_stage_checkpoint",
         goal=goal,
+        guided_reference_readiness=readiness_contract,
         target_object=resolved_target_object,
         target_objects=resolved_target_objects,
         collection_name=resolved_collection_name,
@@ -1544,6 +1579,7 @@ async def _run_stage_checkpoint_compare(
         captures=captures,
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+        guided_reference_readiness=readiness_contract,
         vision_assistant=vision_assistant,
         truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
@@ -1579,9 +1615,14 @@ async def reference_images(
         )
 
     session = await get_session_capability_state_async(ctx)
+    stage_for_later_adoption = not session_has_ready_guided_reference_goal(session)
     active_references = list(session.reference_images or [])
     pending_references = list(session.pending_reference_images or [])
-    references = active_references if session.goal is not None else pending_references
+    references = (
+        pending_references
+        if stage_for_later_adoption and pending_references
+        else (active_references if session.goal is not None else pending_references)
+    )
 
     if normalized_action == "list":
         return _as_response(action="list", goal=session.goal, references=_sorted_references(references))
@@ -1594,7 +1635,7 @@ async def reference_images(
                     Path(stored_path).unlink(missing_ok=True)
                 except Exception:
                     pass
-        if session.goal is None:
+        if stage_for_later_adoption and pending_references:
             await replace_session_pending_reference_images_async(ctx, [])
             ctx_info(ctx, "[REFERENCE] Cleared pending reference images")
             return _as_response(action="clear", goal=None, references=[], message="Cleared pending reference images.")
@@ -1633,7 +1674,7 @@ async def reference_images(
                 Path(stored_path).unlink(missing_ok=True)
             except Exception:
                 pass
-        if session.goal is None:
+        if stage_for_later_adoption and pending_references:
             await replace_session_pending_reference_images_async(ctx, remaining)
         else:
             await replace_session_reference_images_async(ctx, remaining)
@@ -1680,16 +1721,16 @@ async def reference_images(
         "added_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
     updated = [*references, reference]
-    if session.goal is None:
+    if stage_for_later_adoption:
         await replace_session_pending_reference_images_async(ctx, updated)
         ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
         return _as_response(
             action="attach",
-            goal=None,
+            goal=session.goal,
             references=_sorted_references(updated),
             message=(
                 f"Attached pending reference image '{reference['reference_id']}'. "
-                "It will be adopted automatically when the next active goal is set."
+                "It will be adopted automatically when the guided goal session becomes ready."
             ),
         )
 
@@ -1889,6 +1930,7 @@ async def reference_iterate_stage_checkpoint(
         prompt_hint=prompt_hint,
         preset_profile=preset_profile,
     )
+    readiness = compare_result.guided_reference_readiness
     goal = compare_result.goal
     correction_focus = _resolve_actionable_focus(compare_result)
     continue_recommended = bool(correction_focus)
@@ -1918,6 +1960,7 @@ async def reference_iterate_stage_checkpoint(
             repeated_correction_focus=[],
             stagnation_count=0,
             compare_result=compare_result,
+            guided_reference_readiness=readiness,
             correction_candidates=compare_result.correction_candidates,
             budget_control=compare_result.budget_control,
             refinement_route=compare_result.refinement_route,
@@ -2003,6 +2046,7 @@ async def reference_iterate_stage_checkpoint(
         repeated_correction_focus=repeated_correction_focus,
         stagnation_count=stagnation_count,
         compare_result=compare_result,
+        guided_reference_readiness=readiness,
         correction_candidates=compare_result.correction_candidates,
         budget_control=compare_result.budget_control,
         refinement_route=compare_result.refinement_route,

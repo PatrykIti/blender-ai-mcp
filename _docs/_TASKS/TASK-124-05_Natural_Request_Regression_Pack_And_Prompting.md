@@ -1,8 +1,13 @@
 # TASK-124-05: Natural Request Regression Pack and Prompting
 
 **Parent:** [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Natural-flow regression coverage now includes
+attach-before-goal and pending-goal session cases, and prompt/docs guidance
+now reflects the real staged flow with `guided_reference_readiness` instead of
+an implicit operator-only ordering rule.
 
 ## Objective
 

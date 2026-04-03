@@ -323,8 +323,9 @@ For assembled multi-part targets, the stage/iterate surfaces can now also use:
 - or no target scope at all for a full-scene/full-silhouette compare
 
 Reference intake can now also stage pending attachments before the active goal
-exists. In that case, the next `router_set_goal(...)` adopts those references
-onto the new goal automatically.
+exists or while the goal is still blocked on `needs_input`. In those cases, the
+next ready/no-match `router_set_goal(...)` adopts those references onto the
+active guided goal automatically instead of forcing the model to reattach them.
 
 ## Session-Adaptive Visibility Baseline
 
@@ -401,6 +402,27 @@ On `llm-guided`, `router_set_goal()` now exposes explicit typed continuation met
 - it names `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools`
 - `workflow_import_recommended` remains `false` on these paths unless the user explicitly asks for workflow import/create behavior
 - `router_get_status()` re-exposes the active `guided_handoff` from session state for recovery/debugging
+
+## Guided Reference Readiness Contract
+
+On `llm-guided`, staged reference work now has one explicit readiness payload
+instead of hidden sequencing assumptions.
+
+- `router_set_goal()`, `router_get_status()`,
+  `reference_compare_stage_checkpoint()`, and
+  `reference_iterate_stage_checkpoint()` expose `guided_reference_readiness`
+- the payload reports:
+  - `attached_reference_count`
+  - `pending_reference_count`
+  - `compare_ready`
+  - `iterate_ready`
+  - machine-readable `blocking_reason`
+  - machine-readable `next_action`
+- staged compare/iterate now fail fast when the readiness payload is blocked
+- `goal_override` is not a substitute for an active staged guided session on
+  `reference_compare_stage_checkpoint()` / `reference_iterate_stage_checkpoint()`;
+  use lower-level checkpoint/current-view compare only when you intentionally
+  need request-local comparison outside the staged session flow
 
 ## Server-Side Sampling Assistants Baseline
 
@@ -641,9 +663,9 @@ Managing objects at the scene level.
 | `scene_compare_snapshot` | `baseline_snapshot` (str), `target_snapshot` (str), `ignore_minor_transforms` (float) | Compares two snapshots and returns diff summary (added/removed/modified objects). |
 | `reference_compare_checkpoint` | `checkpoint_path` (str), `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional) | Compares one current checkpoint image against the active goal plus attached reference images and returns bounded vision interpretation for the next correction step. |
 | `reference_compare_current_view` | `checkpoint_label` (str, optional), `target_object` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), viewport/camera args | Captures one current viewport/camera checkpoint using the bounded `scene_get_viewport` semantics, then compares it against the active goal plus attached reference images. |
-| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. |
-| `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. |
-Stage compare/iterate responses now also expose `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff`, so assembled-model correction flows can consume a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, and a bounded next-tool-family handoff instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, vision-side `recommended_checks` are normalized to canonical MCP tool ids or dropped, model-aware budget control trims pair/candidate detail when the active runtime profile is too small for the full payload, and `refinement_route` now distinguishes bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
+| `reference_compare_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Captures one deterministic multi-view stage checkpoint for a target object, object set, collection, or full assembled scene, then compares that view-set against the active goal plus attached reference images. Fails fast when `guided_reference_readiness.compare_ready` is false. |
+| `reference_iterate_stage_checkpoint` | `target_object` (str, optional), `target_objects` (array, optional), `collection_name` (str, optional), `checkpoint_label` (str, optional), `target_view` (str, optional), `goal_override` (str, optional), `prompt_hint` (str, optional), `preset_profile` (`compact`/`rich`) | Runs one session-aware checkpoint iteration: capture deterministic stage views, compare them to the references, remember the previous correction focus, and return whether to continue building, inspect/validate, or stop. Fails fast when `guided_reference_readiness.iterate_ready` is false. |
+Stage compare/iterate responses now also expose `guided_reference_readiness`, `assembled_target_scope`, `truth_bundle`, `truth_followup`, `correction_candidates`, `budget_control`, `refinement_route`, and `refinement_handoff`, so assembled-model correction flows can consume explicit session readiness, a structured target scope, correction-oriented truth findings, loop-ready follow-up items, an explicitly ranked merged correction list, explicit trimming metadata, a deterministic refinement-family decision, and a bounded next-tool-family handoff instead of inferring everything from loose `target_object` / `target_objects` / `collection_name` fields. On `reference_iterate_stage_checkpoint(...)`, the loop-facing `correction_focus` now prefers ranked `correction_candidates` summaries when they are present, and high-priority deterministic truth findings can also move `loop_disposition` to `inspect_validate` instead of waiting only for repeated vision focus. Collection/object-set targeting now also avoids obviously accessory-first primary anchors when a more structural target is present, vision-side `recommended_checks` are normalized to canonical MCP tool ids or dropped, model-aware budget control trims pair/candidate detail when the active runtime profile is too small for the full payload, and `refinement_route` now distinguishes bounded family choices such as `macro`, `modeling_mesh`, `sculpt_region`, or `inspect_only`. At this stage sculpt stays hidden on the normal guided surface; `refinement_handoff` is recommendation-only.
 | `scene_camera_orbit` | `angle_horizontal` (float), `angle_vertical` (float), `target_object` (str, optional), `target_point` ([x,y,z], optional) | Orbits the viewport around a target object or point. |
 | `scene_camera_focus` | `object_name` (str), `zoom_factor` (float) | Focuses the viewport on one object. Use `object_name` here, not `target`, `target_object`, or `focus_target`. |
 | `scene_get_viewport` | `width` (int), `height` (int), `shading` (str), `camera_name` (str), `focus_target` (str), `view_name` (str, optional), `orbit_horizontal` (float, optional), `orbit_vertical` (float, optional), `zoom_factor` (float, optional), `persist_view` (bool, optional), `output_mode` (str) | Returns a rendered image. `shading`: WIREFRAME/SOLID/MATERIAL. `camera_name`: specific cam or "USER_PERSPECTIVE". `USER_PERSPECTIVE` follows the live active 3D viewport; named cameras follow render visibility. `view_name`/`orbit_*`/`zoom_factor`/`persist_view` apply only to bounded `USER_PERSPECTIVE` capture adjustments. `focus_target`: object to frame. `output_mode`: IMAGE (default Image resource), BASE64 (raw string), FILE (host-visible path), MARKDOWN (inline preview + path). |
@@ -949,8 +971,8 @@ Tools for managing the Router Supervisor and executing matched workflows.
 
 | Tool Name | Arguments | Description |
 |-----------|-----------|-------------|
-| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, and explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution. |
-| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, and router/component stats. |
+| `router_set_goal` | `goal` (str), `resolved_params` (dict, optional) | Sets the active build goal for the router session. Returns status (ready/needs_input/no_match/disabled/error), matched workflow info, resolved params with sources, any unresolved inputs for follow-up calls, explicit `guided_handoff` metadata when the intended path is guided manual build/utility continuation instead of workflow execution, and `guided_reference_readiness` for staged reference work. |
+| `router_get_status` | *none* | Returns current router session state, visibility diagnostics, pending clarification info, active `guided_handoff` when present, `guided_reference_readiness`, and router/component stats. |
 | `router_clear_goal` | *none* | Clears the current modeling goal. |
 
 ## 🛠 Key Components

@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from server.adapters.mcp.session_capabilities import (
     SessionCapabilityState,
     apply_visibility_for_session_state,
+    build_guided_reference_readiness,
     clear_session_goal_state,
     get_session_capability_state,
     infer_phase_from_router_status,
@@ -182,6 +183,25 @@ def test_update_session_from_router_goal_persists_policy_context():
     assert state.policy_context["decision"] == "ask"
 
 
+def test_build_guided_reference_readiness_reports_pending_goal_inputs():
+    """Guided reference readiness should expose goal-input blockers explicitly."""
+
+    readiness = build_guided_reference_readiness(
+        SessionCapabilityState(
+            phase=SessionPhase.PLANNING,
+            goal="chair",
+            pending_clarification=[{"param": "height"}],
+            last_router_status="needs_input",
+        )
+    )
+
+    assert readiness.status == "blocked"
+    assert readiness.goal == "chair"
+    assert readiness.goal_input_pending is True
+    assert readiness.blocking_reason == "goal_input_pending"
+    assert readiness.next_action == "answer_pending_goal_questions"
+
+
 def test_apply_visibility_for_session_state_uses_stored_surface_profile():
     """Session visibility should be derived from the persisted surface profile and phase."""
 
@@ -227,6 +247,87 @@ def test_update_session_from_router_goal_persists_pending_elicitation_fields():
     assert state.pending_question_set_id == "qs_test"
     assert state.partial_answers == {"width": 1.0}
     assert state.last_elicitation_action == "cancel"
+
+
+def test_update_session_from_router_goal_adopts_pending_references_only_after_goal_is_ready():
+    """Pending references should stay staged across needs_input and adopt on ready for the same goal."""
+
+    ctx = FakeContext(
+        state={
+            "pending_reference_images": [
+                {
+                    "reference_id": "ref_1",
+                    "goal": "chair",
+                    "label": "front_ref",
+                    "stored_path": "/tmp/front.png",
+                }
+            ]
+        }
+    )
+
+    blocked_state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "needs_input",
+            "workflow": "chair_workflow",
+            "unresolved": [{"param": "height"}],
+        },
+    )
+    ready_state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "ready",
+            "workflow": "chair_workflow",
+            "resolved": {"height": 1.0},
+            "unresolved": [],
+            "resolution_sources": {"height": "user"},
+            "message": "ok",
+            "executed": 0,
+        },
+    )
+
+    assert blocked_state.reference_images is None
+    assert blocked_state.pending_reference_images is not None
+    assert ready_state.reference_images is not None
+    assert ready_state.reference_images[0]["goal"] == "chair"
+    assert ready_state.pending_reference_images is None
+
+
+def test_update_session_from_router_goal_keeps_goal_mismatched_pending_references_explicit():
+    """Pending references intended for another goal should not silently retarget."""
+
+    ctx = FakeContext(
+        state={
+            "pending_reference_images": [
+                {
+                    "reference_id": "ref_legacy",
+                    "goal": "chair",
+                    "label": "chair_ref",
+                    "stored_path": "/tmp/chair.png",
+                }
+            ]
+        }
+    )
+
+    state = update_session_from_router_goal(
+        ctx,
+        "table",
+        {
+            "status": "ready",
+            "workflow": "table_workflow",
+            "resolved": {},
+            "unresolved": [],
+            "resolution_sources": {},
+            "message": "ok",
+            "executed": 0,
+        },
+    )
+
+    assert state.reference_images is None
+    assert state.pending_reference_images is not None
+    assert state.pending_reference_images[0]["goal"] == "chair"
 
 
 def test_merge_resolved_params_with_session_answers_prefers_new_values():

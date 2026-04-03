@@ -1,8 +1,13 @@
 # TASK-124-03: Fail-Fast Compare and Iterate Preconditions
 
 **Parent:** [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `reference_compare_stage_checkpoint(...)` and
+`reference_iterate_stage_checkpoint(...)` now fail fast on blocked session
+state and return deterministic `blocking_reason` / `next_action` through
+`guided_reference_readiness` instead of relying on prose-only errors.
 
 ## Objective
 

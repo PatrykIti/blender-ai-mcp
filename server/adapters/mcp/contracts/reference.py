@@ -37,6 +37,38 @@ class ReferenceImageRecordContract(MCPContract):
     added_at: str
 
 
+class GuidedReferenceReadinessContract(MCPContract):
+    """Explicit readiness contract for guided goal/reference stage workflows."""
+
+    status: Literal["ready", "blocked"] = "blocked"
+    goal: str | None = None
+    has_active_goal: bool = False
+    goal_input_pending: bool = False
+    attached_reference_count: int = 0
+    pending_reference_count: int = 0
+    compare_ready: bool = False
+    iterate_ready: bool = False
+    blocking_reason: (
+        Literal[
+            "active_goal_required",
+            "goal_input_pending",
+            "pending_references_detected",
+            "reference_images_required",
+            "reference_session_not_ready",
+        ]
+        | None
+    ) = None
+    next_action: (
+        Literal[
+            "call_router_set_goal",
+            "answer_pending_goal_questions",
+            "attach_reference_images",
+            "call_router_get_status",
+        ]
+        | None
+    ) = None
+
+
 class ReferenceImagesResponseContract(MCPContract):
     """Structured response for the goal-scoped reference image surface."""
 
@@ -160,6 +192,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
 
     action: Literal["compare_stage_checkpoint"] = "compare_stage_checkpoint"
     goal: str | None = None
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None
@@ -190,6 +223,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
 
     action: Literal["iterate_stage_checkpoint"] = "iterate_stage_checkpoint"
     goal: str | None = None
+    guided_reference_readiness: GuidedReferenceReadinessContract | None = None
     target_object: str | None = None
     target_objects: list[str] = []
     collection_name: str | None = None

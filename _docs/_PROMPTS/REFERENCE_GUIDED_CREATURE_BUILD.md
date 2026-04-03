@@ -19,22 +19,25 @@ reference images and bounded vision feedback after each checkpoint.
 4. `router_set_goal("create a low-poly squirrel matching front and side reference images")`
 5. if the router returns `continuation_mode="guided_manual_build"`, continue on
    the shaped manual build surface
-6. build in short stages:
+6. if the router returns `needs_input`, answer that first and wait until
+   `guided_reference_readiness.compare_ready == true`
+7. build in short stages:
    - head + ears
    - face details
    - body + tail
    - paws + final cleanup
-7. after each stage run:
+8. after each stage run:
    - `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage>", preset_profile="compact")`
-8. use the response in this order:
+9. use the response in this order:
    - `loop_disposition`
+   - `guided_reference_readiness`
    - `correction_candidates`
    - `truth_followup`
    - `correction_focus`
    - `shape_mismatches`
    - `proportion_mismatches`
    - `next_corrections`
-9. repeat the next stage or correction step
+10. repeat the next stage or correction step
 
 ## Prompt Template
 
@@ -65,15 +68,18 @@ Workflow:
 4. ustaw cel:
    `create a low-poly squirrel matching front and side reference images`
 5. jeśli router zwróci `guided_manual_build`, kontynuuj ręcznie na shaped build surface
-6. buduj w 4 etapach:
+6. jeśli router zwróci `needs_input`, odpowiedz na to najpierw i poczekaj aż
+   `guided_reference_readiness.compare_ready == true`
+7. buduj w 4 etapach:
    - etap 1: head + ears
    - etap 2: snout + eyes + nose
    - etap 3: body + tail
    - etap 4: paws + final proportion cleanup
-7. po każdym etapie wywołaj:
+8. po każdym etapie wywołaj:
    `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage_name>", preset_profile="compact")`
-8. przy kolejnej iteracji priorytetyzuj:
+9. przy kolejnej iteracji priorytetyzuj:
    - `loop_disposition`
+   - `guided_reference_readiness`
    - `correction_candidates`
    - `truth_followup.focus_pairs`
    - `truth_followup.macro_candidates`
@@ -81,7 +87,10 @@ Workflow:
    - potem `shape_mismatches`
    - potem `proportion_mismatches`
    - dopiero potem `next_corrections`
-9. jeśli `loop_disposition == "inspect_validate"`, zatrzymaj free-form modelowanie i przejdź do inspect/measure/assert zanim zrobisz kolejną dużą zmianę
+10. jeśli `guided_reference_readiness.compare_ready == false`, wykonaj
+    `guided_reference_readiness.next_action` zamiast próbować ratować sesję
+    przez `goal_override`
+11. jeśli `loop_disposition == "inspect_validate"`, zatrzymaj free-form modelowanie i przejdź do inspect/measure/assert zanim zrobisz kolejną dużą zmianę
 
 Na końcu każdego etapu zwróć tylko:
 - co zostało zrobione

@@ -113,6 +113,9 @@ def test_router_set_goal_needs_input_is_model_facing_on_llm_guided(monkeypatch):
     session = get_session_capability_state(ctx)
     assert result.status == "needs_input"
     assert result.elicitation_action is None
+    assert result.guided_reference_readiness is not None
+    assert result.guided_reference_readiness.blocking_reason == "goal_input_pending"
+    assert result.guided_reference_readiness.next_action == "answer_pending_goal_questions"
     assert session.pending_question_set_id is not None
     assert session.pending_workflow_name == "chair_workflow"
     assert session.last_elicitation_action is None
@@ -316,6 +319,9 @@ def test_router_set_goal_no_match_with_guided_manual_continuation_moves_session_
     assert result.guided_handoff.workflow_import_recommended is False
     assert "macro_finish_form" in result.guided_handoff.direct_tools
     assert result.guided_handoff.discovery_tools == ["search_tools", "call_tool"]
+    assert result.guided_reference_readiness is not None
+    assert result.guided_reference_readiness.blocking_reason == "reference_images_required"
+    assert result.guided_reference_readiness.next_action == "attach_reference_images"
     assert session.phase.value == "build"
     assert session.guided_handoff is not None
     assert session.guided_handoff["kind"] == "guided_manual_build"

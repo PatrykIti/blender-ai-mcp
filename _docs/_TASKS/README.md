@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 1 task
+- **To Do:** 0 tasks
 - **In Progress:** 0 tasks
-- **Done:** 195
+- **Done:** 196
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -56,7 +56,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | Standalone guided-session reliability follow-on; makes natural goal/reference workflows session-safe and fail-fast on `llm-guided` |
 
 ---
 
@@ -71,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md) | **Deterministic Cross-Domain Refinement Routing and Sculpt Exposure** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | **Hybrid Loop Model-Aware Budget and Scope Control** | 🔴 High | 2026-04-03 |
 | [TASK-122-03-07-02](./TASK-122-03-07-02_Deterministic_Refinement_Family_Selector.md) | **Deterministic Refinement Family Selector** | 🔴 High | 2026-04-03 |

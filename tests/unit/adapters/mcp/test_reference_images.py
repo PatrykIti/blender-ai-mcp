@@ -457,6 +457,47 @@ def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp
     assert state.pending_reference_images is None
 
 
+def test_reference_images_attach_during_pending_goal_questions_stays_pending_until_ready(tmp_path, monkeypatch):
+    image = tmp_path / "ref.png"
+    image.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "needs_input",
+            "workflow": "squirrel_workflow",
+            "unresolved": [{"param": "style"}],
+        },
+    )
+
+    attached = asyncio.run(reference_images(ctx, action="attach", source_path=str(image), label="front_ref"))
+    assert ctx.state["pending_reference_images"] is not None
+    ready_state = update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "ready",
+            "workflow": "squirrel_workflow",
+            "resolved": {"style": "low_poly"},
+            "unresolved": [],
+            "resolution_sources": {"style": "user"},
+            "message": "ok",
+            "executed": 0,
+        },
+    )
+
+    assert attached.error is None
+    assert attached.goal == "low poly squirrel"
+    assert attached.references[0].goal == "low poly squirrel"
+    assert ready_state.reference_images is not None
+    assert ready_state.reference_images[0]["goal"] == "low poly squirrel"
+    assert ready_state.pending_reference_images is None
+
+
 def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")
@@ -868,7 +909,50 @@ def test_reference_compare_stage_checkpoint_requires_goal_or_override():
     result = asyncio.run(reference_compare_stage_checkpoint(FakeContext(), target_object="Squirrel"))
 
     assert result.error is not None
+    assert result.guided_reference_readiness is not None
+    assert result.guided_reference_readiness.blocking_reason == "active_goal_required"
+    assert result.guided_reference_readiness.next_action == "call_router_set_goal"
     assert "router_set_goal" in result.error
+
+
+def test_reference_compare_stage_checkpoint_does_not_use_goal_override_as_session_substitute():
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            FakeContext(),
+            target_object="Squirrel",
+            goal_override="low poly squirrel",
+        )
+    )
+
+    assert result.error is not None
+    assert result.guided_reference_readiness is not None
+    assert result.guided_reference_readiness.blocking_reason == "active_goal_required"
+
+
+def test_reference_compare_stage_checkpoint_fail_fast_exposes_pending_goal_readiness(tmp_path, monkeypatch):
+    image = tmp_path / "ref.png"
+    image.write_bytes(b"fake")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "needs_input",
+            "workflow": "squirrel_workflow",
+            "unresolved": [{"param": "style"}],
+        },
+    )
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image), label="front_ref"))
+
+    result = asyncio.run(reference_compare_stage_checkpoint(ctx, target_object="Squirrel"))
+
+    assert result.error is not None
+    assert result.guided_reference_readiness is not None
+    assert result.guided_reference_readiness.blocking_reason == "goal_input_pending"
+    assert result.guided_reference_readiness.next_action == "answer_pending_goal_questions"
 
 
 def test_reference_compare_stage_checkpoint_can_compare_full_scene_when_target_object_is_omitted(tmp_path, monkeypatch):

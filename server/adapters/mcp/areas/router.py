@@ -32,6 +32,7 @@ from server.adapters.mcp.sampling.assistant_runner import run_repair_suggestion_
 from server.adapters.mcp.sampling.result_types import to_repair_assistant_contract
 from server.adapters.mcp.session_capabilities import (
     apply_visibility_for_session_state,
+    build_guided_reference_readiness_payload,
     clear_session_goal_state_async,
     get_session_capability_state_async,
     merge_resolved_params_with_session_answers_async,
@@ -366,6 +367,7 @@ async def router_set_goal(
         surface_profile=surface_profile,
         contract_version=_get_runtime_contract_line(ctx),
     )
+    result["guided_reference_readiness"] = build_guided_reference_readiness_payload(state)
     await apply_visibility_for_session_state(ctx, state)
 
     # Log to context
@@ -434,6 +436,7 @@ async def router_get_status(ctx: Context) -> RouterStatusContract:
             "background_job_count": background_job_count,
             "background_job_counts_by_status": background_job_counts_by_status,
             "background_jobs": background_jobs,
+            "guided_reference_readiness": build_guided_reference_readiness_payload(session),
             "reference_image_count": len(session.reference_images or []),
             "reference_images": list(session.reference_images or []),
         }

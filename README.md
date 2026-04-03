@@ -71,6 +71,7 @@ When a bounded modeling intent matches, the default public working layer should 
 - `macro_adjust_segment_chain_arc` for bounded arc adjustment on ordered segment chains
 - `macro_finish_form` for preset-driven bevel/subdivision/solidify finishing
 - `reference_images` for goal-scoped reference intake before bounded visual comparison
+- `guided_reference_readiness` on `router_set_goal`, `router_get_status`, and staged reference compare/iterate payloads so clients can see whether reference-driven stage work is actually ready
 - `reference_compare_stage_checkpoint` for deterministic multi-view stage comparison against attached references during manual iterative work
 - `reference_iterate_stage_checkpoint` for a session-aware staged correction loop that remembers prior focus, can escalate into inspect/validate when the same correction repeats, and can now target one object, many objects, a collection, or the full assembled silhouette
 
@@ -228,6 +229,23 @@ The guided surface now treats workflow fallback as an explicit typed contract in
 - `guided_handoff` names the `target_phase`, `direct_tools`, `supporting_tools`, and `discovery_tools` for the next step on `llm-guided`.
 - `workflow_import_recommended` stays `False` on these fallback paths unless the user explicitly asks for workflow import/create behavior.
 - `router_get_status(...)` preserves the active `guided_handoff` in session diagnostics so clients can recover the intended continuation path.
+
+## Guided Reference Readiness
+
+Reference-driven staged work now has one explicit readiness contract instead of
+hidden ordering assumptions.
+
+- `router_set_goal(...)` and `router_get_status(...)` expose `guided_reference_readiness`.
+- the payload reports `attached_reference_count`, `pending_reference_count`,
+  `compare_ready`, `iterate_ready`, plus machine-readable `blocking_reason` and
+  `next_action`
+- `reference_images(action="attach", ...)` can stay pending until the guided
+  goal session is actually ready, then adopt automatically
+- `reference_compare_stage_checkpoint(...)` and
+  `reference_iterate_stage_checkpoint(...)` now fail fast when the session is
+  not ready, and echo the same `guided_reference_readiness` payload
+- for staged compare/iterate, `goal_override` is no longer a session
+  substitute; use an active guided goal session instead
 
 ## Server-Side Sampling Assistants Baseline
 

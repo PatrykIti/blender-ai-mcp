@@ -51,18 +51,21 @@ Workflow:
 4. set the goal:
    `create a low-poly squirrel matching front and side reference images`
 5. if the router returns `guided_manual_build`, continue manually on the shaped build surface
-6. build in 4 stages:
+6. if the router returns `needs_input`, answer that first and wait until
+   `guided_reference_readiness.compare_ready == true`
+7. build in 4 stages:
    - stage 1: head + ears
    - stage 2: snout + eyes + nose
    - stage 3: body + tail
    - stage 4: paws + final proportion cleanup
-7. after each stage call:
+8. after each stage call:
    `reference_iterate_stage_checkpoint(target_object="Squirrel", checkpoint_label="<stage_name>", preset_profile="compact")`
-8. optionally add a review capture after each stage:
+9. optionally add a review capture after each stage:
    - `scene_get_viewport(camera_name="USER_PERSPECTIVE", focus_target="Squirrel", output_mode="IMAGE")`
    - or `scene_get_viewport(camera_name="<named_camera>", output_mode="IMAGE")`
-9. on each next iteration prioritize:
+10. on each next iteration prioritize:
    - `loop_disposition`
+   - `guided_reference_readiness`
    - `correction_candidates`
    - `truth_followup`
    - `truth_followup.focus_pairs`
@@ -71,7 +74,10 @@ Workflow:
    - then `shape_mismatches`
    - then `proportion_mismatches`
    - then `next_corrections`
-10. if `loop_disposition == "inspect_validate"`, stop free-form modeling and switch to inspect/measure/assert before making another large change
+11. if `guided_reference_readiness.compare_ready == false`, follow
+    `guided_reference_readiness.next_action` instead of trying to recover with
+    `goal_override`
+12. if `loop_disposition == "inspect_validate"`, stop free-form modeling and switch to inspect/measure/assert before making another large change
 
 At the end of each stage, return only:
 - what was done
@@ -88,11 +94,14 @@ At the end of each stage, return only:
 - `reference_iterate_stage_checkpoint(...)` remains the primary hybrid-loop
   signal. `scene_get_viewport(...)` is supplemental operator review, not the
   main loop oracle.
+- `guided_reference_readiness` is the session contract for whether staged
+  compare/iterate may run at all.
 - For stable human review, named cameras are better than `USER_PERSPECTIVE`.
 - For quick manual validation during iterative building, `USER_PERSPECTIVE`
   is often faster and closer to the live modeling workflow.
 - Review outputs in this order:
   - `loop_disposition`
+  - `guided_reference_readiness`
   - `correction_candidates`
   - `truth_followup`
   - `correction_focus`

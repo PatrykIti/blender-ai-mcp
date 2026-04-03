@@ -4,7 +4,14 @@
 **Category:** Product Reliability / Guided Session UX  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-121, TASK-122  
-**Status:** ⏳ To Do
+**Status:** ✅ Done
+
+**Completion Summary:** Guided goal/reference orchestration is now session-safe.
+The MCP surface has one explicit `guided_reference_readiness` contract,
+pending references stay staged until the goal session is actually ready,
+staged compare/iterate fail fast with machine-readable next actions, and the
+docs/prompt assets now describe the natural attach-before-goal flow instead of
+requiring operator folklore.
 
 ## Objective
 

@@ -43,6 +43,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - focus-oriented presets now isolate the target object when the scene helper
   can do so, then restore prior visibility after capture
 - goal-scoped `reference_images` session surface
+- explicit `guided_reference_readiness` payload on `router_set_goal(...)`,
+  `router_get_status()`, `reference_compare_stage_checkpoint(...)`, and
+  `reference_iterate_stage_checkpoint(...)`
 - bounded `reference_compare_checkpoint(...)` surface for comparing one current
   stage/checkpoint image against the active goal plus attached references
 - bounded `reference_compare_current_view(...)` surface for capture-then-compare
@@ -51,7 +54,15 @@ The repo now has the first implementation scaffolding for the vision layer:
   multi-view stage capture + compare during staged manual/reference-guided work
 - bounded `reference_iterate_stage_checkpoint(...)` surface for session-aware
   staged correction loops with repeated-focus detection and continuation hints
+- pending references can now stay staged until the goal session is actually
+  ready, then adopt automatically on the active guided goal
+- staged compare/iterate now fail fast with machine-readable readiness data:
+  - `blocking_reason`
+  - `next_action`
+  - `compare_ready`
+  - `iterate_ready`
 - stage compare/iterate responses now also carry:
+  - `guided_reference_readiness` for explicit goal/reference readiness
   - `assembled_target_scope` for explicit assembled-model targeting semantics
   - `truth_bundle` for correction-oriented contact/gap/alignment/overlap findings
   - `truth_followup` for loop-ready truth handoff items and focus pairs
