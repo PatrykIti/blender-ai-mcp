@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [198](./198-2026-04-03-hybrid-loop-model-aware-budget-and-scope-control.md) | 2026-04-03 | **Hybrid loop model-aware budget and scope control** | - |
 | [197](./197-2026-04-02-hybrid-loop-pairing-anchor-and-canonical-check-quality.md) | 2026-04-02 | **Hybrid loop pairing anchor and canonical check quality** | - |
 | [196](./196-2026-04-02-reference-guided-creature-test-prompt-doc.md) | 2026-04-02 | **Reference-guided creature test prompt doc** | - |
 | [195](./195-2026-04-02-real-assembled-creature-eval-and-prompting.md) | 2026-04-02 | **Real assembled creature eval and prompting** | - |

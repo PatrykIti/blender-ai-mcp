@@ -5,8 +5,15 @@
 `TASK-122-03` and `TASK-122` were closed. `_docs/_TASKS/README.md` tracks it
 as its own open item while the historical numbering is preserved for
 continuity.  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Hybrid-loop stage compare now applies model-aware budget
+control before handing truth context to the vision runtime. The first MVP uses
+active runtime token/image limits plus a bounded model-name bias to trim
+pairwise truth scope and ranked correction candidates when needed, and records
+the result in `budget_control`. This prevents large assembled collections from
+always expanding with one static payload shape.
 
 ## Objective
 
@@ -79,7 +86,6 @@ its practical input/output limits.
 
 ## Status / Board Update
 
-- keep this task open as a standalone follow-on after the closed `TASK-122-03`
-  subtree
-- if it is completed, update `_docs/_TASKS/README.md` and refresh the closed
-  parent follow-on notes
+- this follow-on is closed
+- `_docs/_TASKS/README.md` and the closed parent follow-on notes now point to
+  the remaining open cross-domain refinement-routing follow-on

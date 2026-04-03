@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
+from types import SimpleNamespace
 
 from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
@@ -950,6 +951,156 @@ def test_reference_compare_stage_checkpoint_can_track_explicit_object_set_scope(
     assert result.correction_candidates == []
 
 
+def test_reference_compare_stage_checkpoint_trims_truth_bundle_for_low_budget(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class CollectionHandler:
+        def list_objects(self, collection_name: str, recursive: bool = True, include_hidden: bool = False):
+            assert collection_name == "Squirrel"
+            return {
+                "objects": [
+                    {"name": "Body"},
+                    {"name": "Head"},
+                    {"name": "Tail"},
+                    {"name": "BackPawLeft"},
+                    {"name": "BackPawRight"},
+                ]
+            }
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "Body": [1.2, 0.9, 1.0],
+                "Head": [0.7, 0.7, 0.8],
+                "Tail": [0.5, 0.3, 1.1],
+                "BackPawLeft": [0.2, 0.2, 0.25],
+                "BackPawRight": [0.2, 0.2, 0.25],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+        def measure_gap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            relation_map = {
+                ("Body", "Head"): ("contact", 0.0),
+                ("Body", "Tail"): ("overlapping", 0.0),
+                ("Body", "BackPawLeft"): ("separated", 0.18),
+                ("Body", "BackPawRight"): ("separated", 0.19),
+            }
+            relation, gap = relation_map[(from_object, to_object)]
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "relation": relation,
+                "gap": gap,
+                "axis_gap": {"x": gap, "y": 0.0, "z": 0.0},
+            }
+
+        def measure_alignment(self, from_object: str, to_object: str, axes=None, reference="CENTER", tolerance=0.0001):
+            misaligned = (from_object, to_object) in {
+                ("Body", "BackPawLeft"),
+                ("Body", "BackPawRight"),
+            }
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "is_aligned": not misaligned,
+                "axes": axes or ["X", "Y", "Z"],
+            }
+
+        def measure_overlap(self, from_object: str, to_object: str, tolerance: float = 0.0001):
+            overlaps = (from_object, to_object) == ("Body", "Tail")
+            return {
+                "from_object": from_object,
+                "to_object": to_object,
+                "overlaps": overlaps,
+                "relation": "overlap" if overlaps else "disjoint",
+            }
+
+        def assert_contact(
+            self, from_object: str, to_object: str, max_gap: float = 0.0001, allow_overlap: bool = False
+        ):
+            passed = (from_object, to_object) == ("Body", "Head")
+            return {
+                "assertion": "scene_assert_contact",
+                "passed": passed,
+                "subject": from_object,
+                "target": to_object,
+                "expected": {"max_gap": max_gap, "allow_overlap": allow_overlap},
+                "actual": {"gap": 0.0 if passed else 0.18, "relation": "contact" if passed else "separated"},
+            }
+
+    captured = {}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        captured["request"] = request
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="The body still needs contact fixes.",
+                visible_changes=["Rear paws are visible."],
+                correction_focus=["Connect rear paws to body"],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_collection_handler", lambda: CollectionHandler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=200,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            collection_name="Squirrel",
+            checkpoint_label="stage_budgeted",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.budget_control is not None
+    assert result.budget_control.trimming_applied is True
+    assert result.budget_control.scope_trimmed is True
+    assert result.budget_control.model_name == "mlx-community/Qwen3-VL-4B-Instruct-4bit"
+    assert result.budget_control.original_pair_count == 4
+    assert result.budget_control.emitted_pair_count == 2
+    assert result.truth_bundle is not None
+    assert result.truth_bundle.summary.pair_count == 2
+    assert captured["request"].truth_summary["summary"]["pair_count"] == 2
+
+
 def test_reference_compare_stage_checkpoint_sanitizes_checkpoint_id_target_token(tmp_path, monkeypatch):
     image_front = tmp_path / "front.png"
     image_front.write_bytes(b"front")
@@ -1299,6 +1450,20 @@ def test_reference_iterate_stage_checkpoint_uses_truth_integrated_candidates_for
                     },
                 }
             ],
+            "budget_control": {
+                "model_name": "mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                "max_input_chars": 12000,
+                "max_output_tokens": 400,
+                "max_images": 8,
+                "original_pair_count": 1,
+                "emitted_pair_count": 1,
+                "original_candidate_count": 1,
+                "emitted_candidate_count": 1,
+                "trimming_applied": False,
+                "scope_trimmed": False,
+                "detail_trimmed": False,
+                "selected_focus_pairs": ["TruthHead -> TruthBody"],
+            },
         }
     )
 
@@ -1323,6 +1488,8 @@ def test_reference_iterate_stage_checkpoint_uses_truth_integrated_candidates_for
     assert result.loop_disposition == "continue_build"
     assert result.correction_candidates
     assert result.correction_candidates[0].candidate_kind == "truth_only"
+    assert result.budget_control is not None
+    assert result.budget_control.selected_focus_pairs == ["TruthHead -> TruthBody"]
 
 
 def test_reference_iterate_stage_checkpoint_escalates_when_truth_signal_is_high_priority(monkeypatch):

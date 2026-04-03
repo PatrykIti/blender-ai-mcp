@@ -70,6 +70,12 @@ The repo now has the first implementation scaffolding for the vision layer:
   target is available later in the set
 - vision `recommended_checks` now keep only canonical MCP tool ids; invented
   labels are dropped and a small alias map is normalized onto canonical names
+- hybrid-loop stage compare now also applies model-aware budget control:
+  - trims pairwise truth scope when needed
+  - trims ranked correction candidates when needed
+  - records the decision in `budget_control`
+  - uses runtime token/image limits plus a bounded model-name bias instead of
+    one static expansion size
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

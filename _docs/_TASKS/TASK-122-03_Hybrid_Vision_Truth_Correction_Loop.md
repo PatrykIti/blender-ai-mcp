@@ -6,13 +6,9 @@
 
 **Completion Summary:** The hybrid-loop subtree is now complete. Stage compare / iterate responses expose ranked `correction_candidates`, the iterate loop derives loop-facing `correction_focus` from those ranked candidates when available, `loop_disposition` responds to both actionable focus and high-priority deterministic truth evidence, and the real assembled-creature regression pack plus prompt guidance are now explicit enough for repeatable validation.
 
-**Follow-on Note:** [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md)
-tracks the remaining open hybrid-loop work on model-aware budget/scope control
-and graceful payload trimming.
-
-**Additional Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
-tracks deterministic cross-domain refinement-family routing and bounded sculpt
-exposure policy for guided surfaces.
+**Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
+tracks the remaining open hybrid-loop work on deterministic cross-domain
+refinement-family routing and bounded sculpt exposure policy.
 
 ## Objective
 

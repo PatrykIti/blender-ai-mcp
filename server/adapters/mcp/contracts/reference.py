@@ -102,6 +102,24 @@ class ReferenceCorrectionCandidateContract(MCPContract):
     truth_evidence: ReferenceCorrectionTruthEvidenceContract | None = None
 
 
+class ReferenceHybridBudgetControlContract(MCPContract):
+    """Budget/scope control metadata for hybrid-loop compare and iterate responses."""
+
+    model_name: str | None = None
+    max_input_chars: int
+    max_output_tokens: int
+    max_images: int
+    original_pair_count: int = 0
+    emitted_pair_count: int = 0
+    original_candidate_count: int = 0
+    emitted_candidate_count: int = 0
+    trimming_applied: bool = False
+    scope_trimmed: bool = False
+    detail_trimmed: bool = False
+    trim_reason: str | None = None
+    selected_focus_pairs: list[str] = []
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -114,6 +132,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
+    budget_control: ReferenceHybridBudgetControlContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -141,6 +160,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     truth_bundle: SceneCorrectionTruthBundleContract | None = None
     truth_followup: SceneTruthFollowupContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
+    budget_control: ReferenceHybridBudgetControlContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None

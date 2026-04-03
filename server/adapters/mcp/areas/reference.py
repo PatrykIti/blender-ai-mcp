@@ -11,7 +11,7 @@ import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, cast
 from uuid import uuid4
 
 from fastmcp import Context
@@ -23,6 +23,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceCorrectionCandidateContract,
     ReferenceCorrectionTruthEvidenceContract,
     ReferenceCorrectionVisionEvidenceContract,
+    ReferenceHybridBudgetControlContract,
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
@@ -55,6 +56,7 @@ from server.adapters.mcp.vision import (
     run_vision_assist,
     select_reference_records_for_target,
 )
+from server.adapters.mcp.vision.runner import VISION_ASSIST_POLICY
 from server.infrastructure.di import get_collection_handler, get_scene_handler, get_vision_backend_resolver
 from server.infrastructure.tmp_paths import get_reference_image_storage_path, get_viewport_output_paths
 
@@ -198,6 +200,7 @@ def _stage_compare_response(
     truth_bundle: SceneCorrectionTruthBundleContract | None = None,
     truth_followup: SceneTruthFollowupContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
+    budget_control: ReferenceHybridBudgetControlContract | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -216,6 +219,7 @@ def _stage_compare_response(
         truth_bundle=truth_bundle,
         truth_followup=truth_followup,
         correction_candidates=list(correction_candidates or []),
+        budget_control=budget_control,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -251,6 +255,7 @@ def _iterate_stage_response(
     stagnation_count: int,
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
+    budget_control: ReferenceHybridBudgetControlContract | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -265,6 +270,7 @@ def _iterate_stage_response(
         truth_bundle=compare_result.truth_bundle,
         truth_followup=compare_result.truth_followup,
         correction_candidates=list(correction_candidates or compare_result.correction_candidates or []),
+        budget_control=budget_control or compare_result.budget_control,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -337,6 +343,136 @@ def _should_inspect_from_truth_signal(
         if any(kind in {"contact_failure", "overlap", "measurement_error"} for kind in truth_evidence.item_kinds):
             return True
     return False
+
+
+def _model_budget_bias(model_name: str | None) -> int:
+    normalized = str(model_name or "").lower()
+    if any(token in normalized for token in ("2b", "3b", "4b", "flash", "mini")):
+        return -1
+    if any(token in normalized for token in ("27b", "70b", "72b", "grok")):
+        return 1
+    return 0
+
+
+def _effective_pair_budget(*, max_tokens: int, model_name: str | None) -> int:
+    if max_tokens <= 256:
+        base = 2
+    elif max_tokens <= 400:
+        base = 3
+    elif max_tokens <= 600:
+        base = 4
+    elif max_tokens <= 1000:
+        base = 5
+    else:
+        base = 6
+    return max(2, min(8, base + _model_budget_bias(model_name)))
+
+
+def _effective_candidate_budget(*, pair_budget: int, max_tokens: int, model_name: str | None) -> int:
+    base = pair_budget + 1
+    if max_tokens <= 256:
+        base = min(base, 3)
+    elif max_tokens <= 400:
+        base = min(base, 4)
+    else:
+        base = min(base, 6 + _model_budget_bias(model_name))
+    return max(2, base)
+
+
+def _resolve_hybrid_budget_runtime(resolver: Any) -> tuple[int, int, str | None]:
+    runtime_config = getattr(resolver, "runtime_config", None)
+    if runtime_config is None:
+        return VISION_ASSIST_POLICY.max_tokens, 8, None
+    return (
+        int(getattr(runtime_config, "max_tokens", VISION_ASSIST_POLICY.max_tokens)),
+        int(getattr(runtime_config, "max_images", 8)),
+        cast(str | None, getattr(runtime_config, "active_model_name", None)),
+    )
+
+
+def _truth_summary_chars(bundle: SceneCorrectionTruthBundleContract) -> int:
+    return len(bundle.model_dump_json())
+
+
+def _check_priority_score(check: SceneCorrectionTruthPairContract) -> tuple[int, int, int, int, str]:
+    overlap_score = 3 if check.overlap is not None and bool(check.overlap.get("overlaps")) else 0
+    contact_score = 3 if check.contact_assertion is not None and not check.contact_assertion.passed else 0
+    gap_score = 2 if check.gap is not None and str(check.gap.get("relation") or "").lower() == "separated" else 0
+    alignment_score = 1 if check.alignment is not None and not bool(check.alignment.get("is_aligned")) else 0
+    error_score = 4 if check.error else 0
+    pair_label = _pair_label(check.from_object, check.to_object)
+    return (
+        error_score + overlap_score + contact_score + gap_score + alignment_score,
+        overlap_score,
+        contact_score,
+        gap_score + alignment_score,
+        pair_label,
+    )
+
+
+def _rebuild_truth_summary(
+    *,
+    pairing_strategy: Literal["none", "primary_to_others"],
+    checks: list[SceneCorrectionTruthPairContract],
+) -> SceneCorrectionTruthSummaryContract:
+    return SceneCorrectionTruthSummaryContract(
+        pairing_strategy=pairing_strategy,
+        pair_count=len(checks),
+        evaluated_pairs=sum(1 for item in checks if item.error is None),
+        contact_failures=sum(
+            1 for item in checks if item.contact_assertion is not None and not item.contact_assertion.passed
+        ),
+        overlap_pairs=sum(1 for item in checks if item.overlap is not None and bool(item.overlap.get("overlaps"))),
+        separated_pairs=sum(
+            1 for item in checks if item.gap is not None and str(item.gap.get("relation") or "").lower() == "separated"
+        ),
+        misaligned_pairs=sum(
+            1 for item in checks if item.alignment is not None and not bool(item.alignment.get("is_aligned"))
+        ),
+    )
+
+
+def _trim_truth_bundle_to_budget(
+    *,
+    truth_bundle: SceneCorrectionTruthBundleContract,
+    pair_budget: int,
+    max_truth_chars: int,
+) -> tuple[SceneCorrectionTruthBundleContract, bool]:
+    checks = list(truth_bundle.checks or [])
+    if len(checks) <= pair_budget and _truth_summary_chars(truth_bundle) <= max_truth_chars:
+        return truth_bundle, False
+
+    ordered_checks = sorted(checks, key=_check_priority_score, reverse=True)
+    trimmed = False
+    selected_count = min(len(ordered_checks), pair_budget)
+
+    while selected_count >= 1:
+        selected_checks = ordered_checks[:selected_count]
+        trimmed_bundle = SceneCorrectionTruthBundleContract(
+            scope=truth_bundle.scope,
+            summary=_rebuild_truth_summary(
+                pairing_strategy=truth_bundle.summary.pairing_strategy,
+                checks=selected_checks,
+            ),
+            checks=selected_checks,
+            error=truth_bundle.error,
+        )
+        if _truth_summary_chars(trimmed_bundle) <= max_truth_chars or selected_count == 1:
+            trimmed = selected_count < len(checks) or _truth_summary_chars(truth_bundle) > max_truth_chars
+            return trimmed_bundle, trimmed
+        selected_count -= 1
+
+    return truth_bundle, False
+
+
+def _trim_correction_candidates(
+    candidates: list[ReferenceCorrectionCandidateContract],
+    *,
+    candidate_budget: int,
+) -> tuple[list[ReferenceCorrectionCandidateContract], bool]:
+    if len(candidates) <= candidate_budget:
+        return candidates, False
+    return list(candidates[:candidate_budget]), True
 
 
 def _candidate_matches_pair_label(focus_item: str, pair_label: str) -> bool:
@@ -1050,16 +1186,31 @@ async def _run_stage_checkpoint_compare(
             error=str(exc),
         )
 
+    resolver = get_vision_backend_resolver()
+    runtime_max_tokens, runtime_max_images, runtime_model_name = _resolve_hybrid_budget_runtime(resolver)
     scene_handler = get_scene_handler()
     truth_bundle = _build_correction_truth_bundle(scene_handler, assembled_target_scope)
-    truth_followup = _build_truth_followup(truth_bundle)
+    pair_budget = _effective_pair_budget(
+        max_tokens=runtime_max_tokens,
+        model_name=runtime_model_name,
+    )
+    max_truth_chars = min(
+        int(VISION_ASSIST_POLICY.max_input_chars * 0.5),
+        max(1800, runtime_max_tokens * 12),
+    )
+    budgeted_truth_bundle, scope_trimmed = _trim_truth_bundle_to_budget(
+        truth_bundle=truth_bundle,
+        pair_budget=pair_budget,
+        max_truth_chars=max_truth_chars,
+    )
+    truth_followup = _build_truth_followup(budgeted_truth_bundle)
     reference_images = build_reference_capture_images(selected_reference_records)
     vision_request = build_vision_request_from_stage_captures(
         captures,
         goal=goal,
         target_object=resolved_target_object,
         reference_images=reference_images,
-        truth_summary=truth_bundle.model_dump(mode="json"),
+        truth_summary=budgeted_truth_bundle.model_dump(mode="json"),
         prompt_hint=" | ".join(
             part
             for part in (
@@ -1093,10 +1244,10 @@ async def _run_stage_checkpoint_compare(
     outcome = await run_vision_assist(
         ctx,
         request=vision_request,
-        resolver=get_vision_backend_resolver(),
+        resolver=resolver,
     )
     vision_assistant = to_vision_assistant_contract(outcome)
-    correction_candidates = _build_correction_candidates(
+    full_correction_candidates = _build_correction_candidates(
         ReferenceCompareStageCheckpointResponseContract(
             action="compare_stage_checkpoint",
             goal=goal,
@@ -1104,7 +1255,7 @@ async def _run_stage_checkpoint_compare(
             target_objects=resolved_target_objects,
             collection_name=resolved_collection_name,
             assembled_target_scope=assembled_target_scope,
-            truth_bundle=truth_bundle,
+            truth_bundle=budgeted_truth_bundle,
             truth_followup=truth_followup,
             target_view=target_view,
             checkpoint_id=checkpoint_id,
@@ -1118,6 +1269,30 @@ async def _run_stage_checkpoint_compare(
             reference_labels=[item.label or item.reference_id for item in selected_reference_records],
             vision_assistant=vision_assistant,
         )
+    )
+    candidate_budget = _effective_candidate_budget(
+        pair_budget=pair_budget,
+        max_tokens=runtime_max_tokens,
+        model_name=runtime_model_name,
+    )
+    correction_candidates, detail_trimmed = _trim_correction_candidates(
+        full_correction_candidates,
+        candidate_budget=candidate_budget,
+    )
+    budget_control = ReferenceHybridBudgetControlContract(
+        model_name=runtime_model_name,
+        max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
+        max_output_tokens=runtime_max_tokens,
+        max_images=runtime_max_images,
+        original_pair_count=truth_bundle.summary.pair_count,
+        emitted_pair_count=budgeted_truth_bundle.summary.pair_count,
+        original_candidate_count=len(full_correction_candidates),
+        emitted_candidate_count=len(correction_candidates),
+        trimming_applied=scope_trimmed or detail_trimmed,
+        scope_trimmed=scope_trimmed,
+        detail_trimmed=detail_trimmed,
+        trim_reason=("model_aware_budget_control" if scope_trimmed or detail_trimmed else None),
+        selected_focus_pairs=list(truth_followup.focus_pairs or []),
     )
     return _stage_compare_response(
         checkpoint_id=checkpoint_id,
@@ -1133,9 +1308,10 @@ async def _run_stage_checkpoint_compare(
         reference_ids=[item.reference_id for item in selected_reference_records],
         reference_labels=[item.label or item.reference_id for item in selected_reference_records],
         vision_assistant=vision_assistant,
-        truth_bundle=truth_bundle,
+        truth_bundle=budgeted_truth_bundle,
         truth_followup=truth_followup,
         correction_candidates=correction_candidates,
+        budget_control=budget_control,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -1504,6 +1680,7 @@ async def reference_iterate_stage_checkpoint(
             stagnation_count=0,
             compare_result=compare_result,
             correction_candidates=compare_result.correction_candidates,
+            budget_control=compare_result.budget_control,
             stop_reason=compare_result.error or stop_reason,
             message="Stage iteration did not complete successfully.",
             error=compare_result.error,
@@ -1586,6 +1763,7 @@ async def reference_iterate_stage_checkpoint(
         stagnation_count=stagnation_count,
         compare_result=compare_result,
         correction_candidates=compare_result.correction_candidates,
+        budget_control=compare_result.budget_control,
         stop_reason=stop_reason,
         message=message,
     )

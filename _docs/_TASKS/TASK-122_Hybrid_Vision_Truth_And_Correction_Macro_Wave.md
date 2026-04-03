@@ -8,13 +8,9 @@
 
 **Completion Summary:** The full `TASK-122` wave is now complete. The repo exposes assembled-target truth bundles, a full bounded creature-correction macro layer, ranked correction candidates for the hybrid loop, truth-integrated iterate focus, truth-aware loop disposition, and an explicit real assembled-creature regression pack plus prompt guidance for validating the end-to-end flow.
 
-**Follow-on Note:** [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md)
-tracks the remaining open hybrid-loop work on model-aware budget/scope control
-and graceful payload trimming.
-
-**Additional Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
-tracks deterministic cross-domain refinement-family routing and bounded sculpt
-exposure policy for guided surfaces.
+**Follow-on Note:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)
+tracks the remaining open hybrid-loop work on deterministic cross-domain
+refinement-family routing and bounded sculpt exposure policy.
 
 ## Objective
 
