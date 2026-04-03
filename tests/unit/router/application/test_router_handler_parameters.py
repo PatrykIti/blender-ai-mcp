@@ -325,6 +325,8 @@ class TestSetGoalUnified:
         assert result["workflow"] is None
         assert result["phase_hint"] == "build"
         assert "reference-guided manual build request" in result["message"]
+        assert "guided_reference_readiness" in result["message"]
+        assert "attach/use reference_images" not in result["message"]
         assert mock_router.get_pending_workflow() is None
 
     def test_set_goal_with_workflow_no_params(self, handler, mock_loader):
