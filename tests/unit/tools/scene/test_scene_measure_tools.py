@@ -92,7 +92,7 @@ def test_measure_gap_and_overlap_prefer_mesh_surface_semantics_over_bbox_touchin
 
     handler = SceneHandler()
 
-    def _fake_mesh_contact(source_obj, target_obj, tolerance):
+    def _fake_mesh_contact(source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
         assert source_obj.name == "Head"
         assert target_obj.name == "Eye"
         return {

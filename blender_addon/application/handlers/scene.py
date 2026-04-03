@@ -1766,7 +1766,12 @@ class SceneHandler:
         else:
             bbox_relation = "contact"
 
-        mesh_contact = self._measure_mesh_surface_relation(source_obj, target_obj, tolerance)
+        mesh_contact = self._measure_mesh_surface_relation(
+            source_obj,
+            target_obj,
+            tolerance,
+            bbox_overlap_volume=0.0,
+        )
         if mesh_contact is not None:
             return {
                 "from_object": from_object,
@@ -1868,7 +1873,12 @@ class SceneHandler:
         else:
             bbox_relation = "disjoint"
 
-        mesh_contact = self._measure_mesh_surface_relation(source_obj, target_obj, tolerance)
+        mesh_contact = self._measure_mesh_surface_relation(
+            source_obj,
+            target_obj,
+            tolerance,
+            bbox_overlap_volume=bbox_overlap_volume,
+        )
         if mesh_contact is not None:
             overlaps = bool(mesh_contact["overlaps"])
             touching = mesh_contact["relation"] == "contact"
@@ -2240,7 +2250,7 @@ class SceneHandler:
                     break
         return best_pair, best_distance
 
-    def _measure_mesh_surface_relation(self, source_obj, target_obj, tolerance):
+    def _measure_mesh_surface_relation(self, source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
         """Returns mesh-aware contact/gap semantics for mesh-object pairs when possible."""
 
         try:
@@ -2261,7 +2271,8 @@ class SceneHandler:
             if source_tree is None or target_tree is None:
                 return None
 
-            overlaps = bool(source_tree.overlap(target_tree))
+            overlap_pairs = source_tree.overlap(target_tree)
+            overlaps = bool(overlap_pairs) and float(bbox_overlap_volume) > max(float(tolerance) ** 3, 1e-12)
             if overlaps:
                 return {
                     "overlaps": True,

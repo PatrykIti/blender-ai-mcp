@@ -43,7 +43,7 @@ def test_assert_contact_can_fail_when_mesh_surface_gap_exists_despite_bbox_touch
 
     handler = SceneHandler()
 
-    def _fake_mesh_contact(source_obj, target_obj, tolerance):
+    def _fake_mesh_contact(source_obj, target_obj, tolerance, bbox_overlap_volume=0.0):
         return {
             "overlaps": False,
             "gap": 0.051,
