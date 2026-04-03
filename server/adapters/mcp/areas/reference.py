@@ -397,6 +397,73 @@ def _guided_stage_reference_error(readiness: GuidedReferenceReadinessState) -> s
     )
 
 
+def _scene_scope_looks_like_existing_build(
+    *,
+    target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
+) -> bool:
+    """Return True when the requested stage scope already appears to exist in Blender."""
+
+    requested_names = _dedupe_names([*(target_objects or []), *([target_object] if target_object else [])])
+    if requested_names:
+        try:
+            scene_objects = get_scene_handler().list_objects()
+        except Exception:
+            scene_objects = []
+        existing_names = {
+            str(item.get("name")).strip()
+            for item in scene_objects
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        }
+        if any(name in existing_names for name in requested_names):
+            return True
+
+    if collection_name:
+        try:
+            collection_payload = get_collection_handler().list_objects(
+                collection_name=collection_name,
+                recursive=True,
+                include_hidden=False,
+            )
+        except Exception:
+            return False
+        collection_objects = [
+            str(item.get("name")).strip()
+            for item in collection_payload.get("objects", [])
+            if isinstance(item, dict) and str(item.get("name") or "").strip()
+        ]
+        if collection_objects:
+            return True
+
+    return False
+
+
+def _guided_stage_reference_recovery_error(
+    readiness: GuidedReferenceReadinessState,
+    *,
+    target_object: str | None,
+    target_objects: list[str] | None,
+    collection_name: str | None,
+) -> str:
+    """Return a fail-fast error with a reconnect/reset hint when scene scope already exists."""
+
+    base_error = _guided_stage_reference_error(readiness)
+    if readiness.blocking_reason != "active_goal_required":
+        return base_error
+    if not _scene_scope_looks_like_existing_build(
+        target_object=target_object,
+        target_objects=target_objects,
+        collection_name=collection_name,
+    ):
+        return base_error
+    return (
+        f"{base_error} The requested Blender objects/collection already exist, so the scene may still be intact "
+        "while the guided MCP session state was reset or reconnected. Re-run router_set_goal(...), then restore "
+        "reference_images(...) only if guided_reference_readiness still reports them missing."
+    )
+
+
 def _resolve_actionable_focus(compare_result: ReferenceCompareStageCheckpointResponseContract) -> list[str]:
     candidate_summaries = list(compare_result.correction_candidates or [])
     if candidate_summaries:
@@ -1352,7 +1419,12 @@ async def _run_stage_checkpoint_compare(
             reference_ids=[],
             reference_labels=[],
             guided_reference_readiness=readiness_contract,
-            error=_guided_stage_reference_error(readiness),
+            error=_guided_stage_reference_recovery_error(
+                readiness,
+                target_object=target_object,
+                target_objects=target_objects,
+                collection_name=collection_name,
+            ),
         )
 
     try:

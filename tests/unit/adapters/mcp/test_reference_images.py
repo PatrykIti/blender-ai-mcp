@@ -929,6 +929,30 @@ def test_reference_compare_stage_checkpoint_does_not_use_goal_override_as_sessio
     assert result.guided_reference_readiness.blocking_reason == "active_goal_required"
 
 
+def test_reference_compare_stage_checkpoint_can_hint_mcp_session_reconnect_when_scene_scope_exists(monkeypatch):
+    class SceneHandler:
+        def list_objects(self):
+            return [
+                {"name": "Squirrel_Head"},
+                {"name": "Squirrel_Snout"},
+                {"name": "Squirrel_Eye_L"},
+            ]
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            FakeContext(),
+            target_objects=["Squirrel_Head", "Squirrel_Snout", "Squirrel_Eye_L"],
+            checkpoint_label="recovery_probe",
+        )
+    )
+
+    assert result.error is not None
+    assert "guided MCP session state was reset or reconnected" in result.error
+    assert "router_set_goal" in result.error
+
+
 def test_reference_compare_stage_checkpoint_fail_fast_exposes_pending_goal_readiness(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")
