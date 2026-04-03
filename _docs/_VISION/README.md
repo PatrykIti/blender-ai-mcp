@@ -76,6 +76,16 @@ The repo now has the first implementation scaffolding for the vision layer:
   - records the decision in `budget_control`
   - uses runtime token/image limits plus a bounded model-name bias instead of
     one static expansion size
+- hybrid-loop compare/iterate responses now also expose `refinement_route`,
+  which classifies:
+  - the current correction domain
+  - the selected bounded refinement family
+  - selector rationale and source signals
+- current first-pass refinement families are:
+  - `macro`
+  - `modeling_mesh`
+  - `sculpt_region`
+  - `inspect_only`
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

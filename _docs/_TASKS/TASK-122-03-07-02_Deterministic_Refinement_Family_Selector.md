@@ -1,8 +1,15 @@
 # TASK-122-03-07-02: Deterministic Refinement Family Selector
 
 **Parent:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Hybrid compare / iterate responses now expose a
+deterministic `refinement_route` selector result. The current MVP chooses one
+bounded family from `macro`, `modeling_mesh`, `sculpt_region`, or
+`inspect_only`. Assembly-dominant cases stay on `macro`, non-low-poly
+organic/anatomy cases can route to `sculpt_region`, and low-poly or
+hard-surface/generic cases stay on `modeling_mesh`.
 
 ## Objective
 

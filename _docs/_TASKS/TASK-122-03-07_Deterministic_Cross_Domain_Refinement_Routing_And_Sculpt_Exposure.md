@@ -5,8 +5,13 @@
 `TASK-122-03` and `TASK-122` were closed. `_docs/_TASKS/README.md` tracks it
 as its own open item while the historical numbering is preserved for
 continuity.  
-**Status:** ⏳ To Do  
+**Status:** 🚧 In Progress  
 **Priority:** 🔴 High
+
+**Progress Update:** The first two leaves are now complete. The hybrid loop has
+an explicit refinement taxonomy and a deterministic `refinement_route`
+selector, but guided-surface sculpt exposure policy and broader cross-domain
+regression/prompting work remain open.
 
 ## Objective
 

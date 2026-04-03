@@ -11,6 +11,7 @@ from server.adapters.mcp.areas.reference import (
     _assembled_target_scope,
     _build_correction_candidates,
     _build_truth_followup,
+    _select_refinement_route,
     reference_compare_checkpoint,
     reference_compare_current_view,
     reference_compare_stage_checkpoint,
@@ -194,6 +195,166 @@ def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focu
     assert candidates[0].vision_evidence.correction_focus == ["TruthHead -> TruthBody contact"]
     assert candidates[1].candidate_kind == "vision_only"
     assert candidates[1].summary == "Head silhouette"
+
+
+def test_select_refinement_route_prefers_macro_for_assembly_signals():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "assemble a low poly squirrel",
+            "target_object": None,
+            "target_objects": ["Head", "EarLeft", "EarRight"],
+            "collection_name": "Squirrel",
+            "checkpoint_id": "checkpoint_macro",
+            "checkpoint_label": "stage_macro",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "truth_followup": {
+                "scope": {
+                    "scope_kind": "collection",
+                    "primary_target": "Head",
+                    "object_names": ["Head", "EarLeft", "EarRight"],
+                    "object_count": 3,
+                    "collection_name": "Squirrel",
+                },
+                "continue_recommended": True,
+                "message": "truth",
+                "focus_pairs": ["Head -> EarLeft"],
+                "items": [],
+                "macro_candidates": [
+                    {
+                        "macro_name": "macro_align_part_with_contact",
+                        "reason": "Repair the pair with a bounded nudge.",
+                        "priority": "high",
+                        "arguments_hint": {"part_object": "Head", "reference_object": "EarLeft"},
+                    }
+                ],
+            },
+            "correction_candidates": [
+                {
+                    "candidate_id": "pair:head_earleft",
+                    "summary": "Head -> EarLeft failed the contact assertion.",
+                    "priority_rank": 1,
+                    "priority": "high",
+                    "candidate_kind": "truth_only",
+                    "target_objects": ["Head", "EarLeft"],
+                    "focus_pairs": ["Head -> EarLeft"],
+                    "source_signals": ["truth", "macro"],
+                    "truth_evidence": {
+                        "focus_pairs": ["Head -> EarLeft"],
+                        "item_kinds": ["contact_failure"],
+                        "items": [],
+                        "macro_candidates": [
+                            {
+                                "macro_name": "macro_align_part_with_contact",
+                                "reason": "Repair the pair with a bounded nudge.",
+                                "priority": "high",
+                                "arguments_hint": {"part_object": "Head", "reference_object": "EarLeft"},
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+
+    route = _select_refinement_route(compare)
+
+    assert route.domain_classification == "assembly"
+    assert route.selected_family == "macro"
+
+
+def test_select_refinement_route_prefers_sculpt_for_non_low_poly_organic_refinement():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "refine the organic heart surface to look softer and more anatomical",
+            "target_object": "Heart",
+            "target_objects": ["Heart"],
+            "checkpoint_id": "checkpoint_sculpt",
+            "checkpoint_label": "stage_sculpt",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "vision:heart_surface",
+                    "summary": "Heart surface still looks too lumpy.",
+                    "priority_rank": 1,
+                    "priority": "normal",
+                    "candidate_kind": "vision_only",
+                    "target_object": "Heart",
+                    "target_objects": ["Heart"],
+                    "focus_pairs": [],
+                    "source_signals": ["vision"],
+                    "vision_evidence": {
+                        "correction_focus": ["Heart surface smoothing"],
+                        "shape_mismatches": ["Heart surface still looks too lumpy."],
+                        "proportion_mismatches": [],
+                        "next_corrections": ["Smooth and slightly inflate the upper chamber area."],
+                    },
+                }
+            ],
+        }
+    )
+
+    route = _select_refinement_route(compare)
+
+    assert route.domain_classification == "anatomy"
+    assert route.selected_family == "sculpt_region"
+
+
+def test_select_refinement_route_keeps_low_poly_creature_on_modeling_mesh():
+    compare = ReferenceCompareStageCheckpointResponseContract.model_validate(
+        {
+            "action": "compare_stage_checkpoint",
+            "goal": "refine the low-poly squirrel silhouette to match references",
+            "target_object": "Squirrel",
+            "target_objects": ["Squirrel"],
+            "checkpoint_id": "checkpoint_lowpoly",
+            "checkpoint_label": "stage_lowpoly",
+            "preset_profile": "compact",
+            "preset_names": [],
+            "capture_count": 0,
+            "captures": [],
+            "reference_count": 0,
+            "reference_ids": [],
+            "reference_labels": [],
+            "correction_candidates": [
+                {
+                    "candidate_id": "vision:squirrel_silhouette",
+                    "summary": "Squirrel silhouette is still too round.",
+                    "priority_rank": 1,
+                    "priority": "normal",
+                    "candidate_kind": "vision_only",
+                    "target_object": "Squirrel",
+                    "target_objects": ["Squirrel"],
+                    "focus_pairs": [],
+                    "source_signals": ["vision"],
+                    "vision_evidence": {
+                        "correction_focus": ["Squirrel silhouette"],
+                        "shape_mismatches": ["Squirrel silhouette is still too round."],
+                        "proportion_mismatches": [],
+                        "next_corrections": ["Sharpen the main silhouette planes."],
+                    },
+                }
+            ],
+        }
+    )
+
+    route = _select_refinement_route(compare)
+
+    assert route.domain_classification == "organic_form"
+    assert route.selected_family == "modeling_mesh"
 
 
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):

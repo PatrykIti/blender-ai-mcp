@@ -27,6 +27,7 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
+    ReferenceRefinementRouteContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -91,6 +92,68 @@ _ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
     "horn",
     "antler",
     "whisker",
+)
+_LOW_POLY_HINTS: tuple[str, ...] = ("low poly", "low-poly", "blockout")
+_HARD_SURFACE_HINTS: tuple[str, ...] = (
+    "housing",
+    "panel",
+    "button",
+    "electronics",
+    "electronic",
+    "device",
+    "pcb",
+    "circuit",
+    "connector",
+    "wall",
+    "roof",
+    "window",
+    "door",
+    "building",
+    "architecture",
+    "tower",
+)
+_GARMENT_HINTS: tuple[str, ...] = (
+    "shirt",
+    "sleeve",
+    "hood",
+    "jacket",
+    "coat",
+    "dress",
+    "skirt",
+    "pants",
+    "trousers",
+    "fabric",
+    "cloth",
+    "cape",
+)
+_ANATOMY_HINTS: tuple[str, ...] = (
+    "organ",
+    "heart",
+    "lung",
+    "liver",
+    "kidney",
+    "artery",
+    "vein",
+    "tumor",
+    "anatomy",
+    "biological",
+)
+_ORGANIC_HINTS: tuple[str, ...] = (
+    "animal",
+    "creature",
+    "character",
+    "squirrel",
+    "rabbit",
+    "owl",
+    "fox",
+    "bird",
+    "face",
+    "snout",
+    "ear",
+    "tail",
+    "limb",
+    "muscle",
+    "organic",
 )
 
 
@@ -201,6 +264,7 @@ def _stage_compare_response(
     truth_followup: SceneTruthFollowupContract | None = None,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
+    refinement_route: ReferenceRefinementRouteContract | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -220,6 +284,7 @@ def _stage_compare_response(
         truth_followup=truth_followup,
         correction_candidates=list(correction_candidates or []),
         budget_control=budget_control,
+        refinement_route=refinement_route,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -256,6 +321,7 @@ def _iterate_stage_response(
     compare_result: ReferenceCompareStageCheckpointResponseContract,
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
+    refinement_route: ReferenceRefinementRouteContract | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -271,6 +337,7 @@ def _iterate_stage_response(
         truth_followup=compare_result.truth_followup,
         correction_candidates=list(correction_candidates or compare_result.correction_candidates or []),
         budget_control=budget_control or compare_result.budget_control,
+        refinement_route=refinement_route or compare_result.refinement_route,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -343,6 +410,106 @@ def _should_inspect_from_truth_signal(
         if any(kind in {"contact_failure", "overlap", "measurement_error"} for kind in truth_evidence.item_kinds):
             return True
     return False
+
+
+def _contains_any(text: str, hints: tuple[str, ...]) -> bool:
+    normalized = text.lower()
+    return any(hint in normalized for hint in hints)
+
+
+def _refinement_context_text(compare_result: ReferenceCompareStageCheckpointResponseContract) -> str:
+    parts = [
+        str(compare_result.goal or ""),
+        str(compare_result.target_object or ""),
+        str(compare_result.collection_name or ""),
+        *list(compare_result.target_objects or []),
+    ]
+    return " | ".join(part for part in parts if part)
+
+
+def _classify_refinement_domain(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> Literal["assembly", "hard_surface", "soft_surface", "organic_form", "garment", "anatomy", "generic_form"]:
+    context_text = _refinement_context_text(compare_result)
+    truth_followup = compare_result.truth_followup
+    if truth_followup is not None and (truth_followup.focus_pairs or truth_followup.macro_candidates):
+        return "assembly"
+    if _contains_any(context_text, _GARMENT_HINTS):
+        return "garment"
+    if _contains_any(context_text, _ANATOMY_HINTS):
+        return "anatomy"
+    if _contains_any(context_text, _HARD_SURFACE_HINTS):
+        return "hard_surface"
+    if _contains_any(context_text, _ORGANIC_HINTS):
+        return "organic_form"
+    return "generic_form"
+
+
+def _select_refinement_route(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+) -> ReferenceRefinementRouteContract:
+    candidates = list(compare_result.correction_candidates or [])
+    if not candidates:
+        return ReferenceRefinementRouteContract(
+            domain_classification=_classify_refinement_domain(compare_result),
+            selected_family="inspect_only",
+            reason="No ranked correction candidates are available for deterministic refinement routing.",
+            source_signals=[],
+            candidate_ids=[],
+        )
+
+    domain = _classify_refinement_domain(compare_result)
+    candidate_ids = [candidate.candidate_id for candidate in candidates]
+    has_macro = any(
+        candidate.truth_evidence is not None and bool(candidate.truth_evidence.macro_candidates)
+        for candidate in candidates
+    )
+    has_truth = any(candidate.truth_evidence is not None for candidate in candidates)
+    has_vision_only = any(candidate.candidate_kind == "vision_only" for candidate in candidates)
+    low_poly_intent = _contains_any(_refinement_context_text(compare_result), _LOW_POLY_HINTS)
+    source_signals: list[Literal["vision", "truth", "macro", "scope", "naming"]] = ["scope", "naming"]
+
+    if has_truth:
+        source_signals.append("truth")
+    if has_macro:
+        source_signals.append("macro")
+    if has_vision_only:
+        source_signals.append("vision")
+
+    if has_macro or domain == "assembly":
+        return ReferenceRefinementRouteContract(
+            domain_classification=domain,
+            selected_family="macro",
+            reason="Assembly-oriented truth/macro signals dominate, so bounded macro repair remains the primary refinement family.",
+            source_signals=source_signals,
+            candidate_ids=candidate_ids,
+        )
+
+    if domain in {"garment", "anatomy", "organic_form"} and has_vision_only and not low_poly_intent:
+        return ReferenceRefinementRouteContract(
+            domain_classification=domain,
+            selected_family="sculpt_region",
+            reason="Local soft/organic-form refinement dominates without strong assembly signals, so deterministic sculpt-region tools are the preferred family.",
+            source_signals=source_signals,
+            candidate_ids=candidate_ids,
+        )
+
+    if domain in {"hard_surface", "generic_form", "soft_surface"} or low_poly_intent:
+        return ReferenceRefinementRouteContract(
+            domain_classification=domain,
+            selected_family="modeling_mesh",
+            reason="Current signals do not justify sculpt; bounded modeling/mesh refinement remains the safer default family.",
+            source_signals=source_signals,
+            candidate_ids=candidate_ids,
+        )
+
+    return ReferenceRefinementRouteContract(
+        domain_classification=domain,
+        selected_family="modeling_mesh",
+        reason="Falling back to bounded modeling/mesh refinement because no stronger deterministic family gate was met.",
+        source_signals=source_signals,
+        candidate_ids=candidate_ids,
+    )
 
 
 def _model_budget_bias(model_name: str | None) -> int:
@@ -1279,6 +1446,30 @@ async def _run_stage_checkpoint_compare(
         full_correction_candidates,
         candidate_budget=candidate_budget,
     )
+    refinement_route = _select_refinement_route(
+        ReferenceCompareStageCheckpointResponseContract(
+            action="compare_stage_checkpoint",
+            goal=goal,
+            target_object=resolved_target_object,
+            target_objects=resolved_target_objects,
+            collection_name=resolved_collection_name,
+            assembled_target_scope=assembled_target_scope,
+            truth_bundle=budgeted_truth_bundle,
+            truth_followup=truth_followup,
+            correction_candidates=correction_candidates,
+            target_view=target_view,
+            checkpoint_id=checkpoint_id,
+            checkpoint_label=checkpoint_label,
+            preset_profile=preset_profile,
+            preset_names=[capture.preset_name or capture.label for capture in captures],
+            capture_count=len(captures),
+            captures=list(captures),
+            reference_count=len(selected_reference_records),
+            reference_ids=[item.reference_id for item in selected_reference_records],
+            reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+            vision_assistant=vision_assistant,
+        )
+    )
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
         max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
@@ -1312,6 +1503,7 @@ async def _run_stage_checkpoint_compare(
         truth_followup=truth_followup,
         correction_candidates=correction_candidates,
         budget_control=budget_control,
+        refinement_route=refinement_route,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -1681,6 +1873,7 @@ async def reference_iterate_stage_checkpoint(
             compare_result=compare_result,
             correction_candidates=compare_result.correction_candidates,
             budget_control=compare_result.budget_control,
+            refinement_route=compare_result.refinement_route,
             stop_reason=compare_result.error or stop_reason,
             message="Stage iteration did not complete successfully.",
             error=compare_result.error,
@@ -1764,6 +1957,7 @@ async def reference_iterate_stage_checkpoint(
         compare_result=compare_result,
         correction_candidates=compare_result.correction_candidates,
         budget_control=compare_result.budget_control,
+        refinement_route=compare_result.refinement_route,
         stop_reason=stop_reason,
         message=message,
     )

@@ -1,8 +1,14 @@
 # TASK-122-03-07-01: Refinement Taxonomy and Domain Boundaries
 
 **Parent:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** The hybrid loop now has an explicit first-pass
+refinement taxonomy. Current domain classes include `assembly`,
+`hard_surface`, `garment`, `anatomy`, `organic_form`, and `generic_form`, and
+the taxonomy explicitly keeps pairwise assembly/contact/placement classes out
+of the default sculpt path.
 
 ## Objective
 

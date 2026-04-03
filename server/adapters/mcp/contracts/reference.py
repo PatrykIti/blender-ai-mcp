@@ -120,6 +120,24 @@ class ReferenceHybridBudgetControlContract(MCPContract):
     selected_focus_pairs: list[str] = []
 
 
+class ReferenceRefinementRouteContract(MCPContract):
+    """Deterministic refinement-family routing result for hybrid loop responses."""
+
+    domain_classification: Literal[
+        "assembly",
+        "hard_surface",
+        "soft_surface",
+        "organic_form",
+        "garment",
+        "anatomy",
+        "generic_form",
+    ] = "generic_form"
+    selected_family: Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"] = "inspect_only"
+    reason: str
+    source_signals: list[Literal["vision", "truth", "macro", "scope", "naming"]] = []
+    candidate_ids: list[str] = []
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -133,6 +151,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     truth_followup: SceneTruthFollowupContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
+    refinement_route: ReferenceRefinementRouteContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -161,6 +180,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     truth_followup: SceneTruthFollowupContract | None = None
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
+    refinement_route: ReferenceRefinementRouteContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
