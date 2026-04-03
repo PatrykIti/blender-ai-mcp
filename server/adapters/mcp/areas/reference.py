@@ -27,7 +27,9 @@ from server.adapters.mcp.contracts.reference import (
     ReferenceImageRecordContract,
     ReferenceImagesResponseContract,
     ReferenceIterateStageCheckpointResponseContract,
+    ReferenceRefinementHandoffContract,
     ReferenceRefinementRouteContract,
+    ReferenceRefinementToolCandidateContract,
 )
 from server.adapters.mcp.contracts.scene import (
     SceneAssembledTargetScopeContract,
@@ -155,6 +157,12 @@ _ORGANIC_HINTS: tuple[str, ...] = (
     "muscle",
     "organic",
 )
+_SCULPT_RECOMMENDED_TOOLS: tuple[str, ...] = (
+    "sculpt_deform_region",
+    "sculpt_smooth_region",
+    "sculpt_inflate_region",
+    "sculpt_pinch_region",
+)
 
 
 def _register_existing_tool(target, tool_name: str):
@@ -265,6 +273,7 @@ def _stage_compare_response(
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
+    refinement_handoff: ReferenceRefinementHandoffContract | None = None,
     message: str | None = None,
     error: str | None = None,
 ) -> ReferenceCompareStageCheckpointResponseContract:
@@ -285,6 +294,7 @@ def _stage_compare_response(
         correction_candidates=list(correction_candidates or []),
         budget_control=budget_control,
         refinement_route=refinement_route,
+        refinement_handoff=refinement_handoff,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -322,6 +332,7 @@ def _iterate_stage_response(
     correction_candidates: list[ReferenceCorrectionCandidateContract] | None = None,
     budget_control: ReferenceHybridBudgetControlContract | None = None,
     refinement_route: ReferenceRefinementRouteContract | None = None,
+    refinement_handoff: ReferenceRefinementHandoffContract | None = None,
     stop_reason: str | None = None,
     message: str | None = None,
     error: str | None = None,
@@ -338,6 +349,7 @@ def _iterate_stage_response(
         correction_candidates=list(correction_candidates or compare_result.correction_candidates or []),
         budget_control=budget_control or compare_result.budget_control,
         refinement_route=refinement_route or compare_result.refinement_route,
+        refinement_handoff=refinement_handoff or compare_result.refinement_handoff,
         target_view=target_view,
         checkpoint_id=checkpoint_id,
         checkpoint_label=checkpoint_label,
@@ -509,6 +521,40 @@ def _select_refinement_route(
         reason="Falling back to bounded modeling/mesh refinement because no stronger deterministic family gate was met.",
         source_signals=source_signals,
         candidate_ids=candidate_ids,
+    )
+
+
+def _build_refinement_handoff(
+    compare_result: ReferenceCompareStageCheckpointResponseContract,
+    route: ReferenceRefinementRouteContract,
+) -> ReferenceRefinementHandoffContract:
+    if route.selected_family != "sculpt_region":
+        return ReferenceRefinementHandoffContract(
+            selected_family=route.selected_family,
+            message="Continue with the selected bounded refinement family; no sculpt handoff is recommended.",
+            recommended_tools=[],
+        )
+
+    assembled_scope = compare_result.assembled_target_scope
+    target_object = compare_result.target_object or (
+        assembled_scope.primary_target if assembled_scope is not None else None
+    )
+    arguments_hint = cast(dict[str, object] | None, {"object_name": target_object} if target_object else None)
+    return ReferenceRefinementHandoffContract(
+        selected_family="sculpt_region",
+        message=(
+            "A deterministic sculpt-region path is recommended for the next refinement step. "
+            "Keep the scope narrow and use only bounded sculpt-region tools."
+        ),
+        recommended_tools=[
+            ReferenceRefinementToolCandidateContract(
+                tool_name=tool_name,
+                reason="Deterministic local-form refinement is a better fit than more assembly-oriented mesh/modeling edits.",
+                priority="high" if tool_name in {"sculpt_deform_region", "sculpt_smooth_region"} else "normal",
+                arguments_hint=arguments_hint,
+            )
+            for tool_name in _SCULPT_RECOMMENDED_TOOLS
+        ],
     )
 
 
@@ -1446,30 +1492,30 @@ async def _run_stage_checkpoint_compare(
         full_correction_candidates,
         candidate_budget=candidate_budget,
     )
-    refinement_route = _select_refinement_route(
-        ReferenceCompareStageCheckpointResponseContract(
-            action="compare_stage_checkpoint",
-            goal=goal,
-            target_object=resolved_target_object,
-            target_objects=resolved_target_objects,
-            collection_name=resolved_collection_name,
-            assembled_target_scope=assembled_target_scope,
-            truth_bundle=budgeted_truth_bundle,
-            truth_followup=truth_followup,
-            correction_candidates=correction_candidates,
-            target_view=target_view,
-            checkpoint_id=checkpoint_id,
-            checkpoint_label=checkpoint_label,
-            preset_profile=preset_profile,
-            preset_names=[capture.preset_name or capture.label for capture in captures],
-            capture_count=len(captures),
-            captures=list(captures),
-            reference_count=len(selected_reference_records),
-            reference_ids=[item.reference_id for item in selected_reference_records],
-            reference_labels=[item.label or item.reference_id for item in selected_reference_records],
-            vision_assistant=vision_assistant,
-        )
+    staged_compare_contract = ReferenceCompareStageCheckpointResponseContract(
+        action="compare_stage_checkpoint",
+        goal=goal,
+        target_object=resolved_target_object,
+        target_objects=resolved_target_objects,
+        collection_name=resolved_collection_name,
+        assembled_target_scope=assembled_target_scope,
+        truth_bundle=budgeted_truth_bundle,
+        truth_followup=truth_followup,
+        correction_candidates=correction_candidates,
+        target_view=target_view,
+        checkpoint_id=checkpoint_id,
+        checkpoint_label=checkpoint_label,
+        preset_profile=preset_profile,
+        preset_names=[capture.preset_name or capture.label for capture in captures],
+        capture_count=len(captures),
+        captures=list(captures),
+        reference_count=len(selected_reference_records),
+        reference_ids=[item.reference_id for item in selected_reference_records],
+        reference_labels=[item.label or item.reference_id for item in selected_reference_records],
+        vision_assistant=vision_assistant,
     )
+    refinement_route = _select_refinement_route(staged_compare_contract)
+    refinement_handoff = _build_refinement_handoff(staged_compare_contract, refinement_route)
     budget_control = ReferenceHybridBudgetControlContract(
         model_name=runtime_model_name,
         max_input_chars=VISION_ASSIST_POLICY.max_input_chars,
@@ -1504,6 +1550,7 @@ async def _run_stage_checkpoint_compare(
         correction_candidates=correction_candidates,
         budget_control=budget_control,
         refinement_route=refinement_route,
+        refinement_handoff=refinement_handoff,
         message=(
             f"Captured and compared stage checkpoint '{checkpoint_label or checkpoint_id}' using {len(captures)} deterministic view(s)."
             if outcome.status == "success"
@@ -1874,6 +1921,7 @@ async def reference_iterate_stage_checkpoint(
             correction_candidates=compare_result.correction_candidates,
             budget_control=compare_result.budget_control,
             refinement_route=compare_result.refinement_route,
+            refinement_handoff=compare_result.refinement_handoff,
             stop_reason=compare_result.error or stop_reason,
             message="Stage iteration did not complete successfully.",
             error=compare_result.error,
@@ -1958,6 +2006,7 @@ async def reference_iterate_stage_checkpoint(
         correction_candidates=compare_result.correction_candidates,
         budget_control=compare_result.budget_control,
         refinement_route=compare_result.refinement_route,
+        refinement_handoff=compare_result.refinement_handoff,
         stop_reason=stop_reason,
         message=message,
     )

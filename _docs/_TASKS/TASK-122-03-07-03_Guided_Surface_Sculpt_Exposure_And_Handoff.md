@@ -1,8 +1,10 @@
 # TASK-122-03-07-03: Guided Surface Sculpt Exposure and Handoff
 
 **Parent:** [TASK-122-03-07](./TASK-122-03-07_Deterministic_Cross_Domain_Refinement_Routing_And_Sculpt_Exposure.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** Implemented the safer first product shape: recommendation-only sculpt handoff. Hybrid compare / iterate responses now expose `refinement_handoff`, which can recommend a bounded deterministic sculpt-region subset when `refinement_route` selects `sculpt_region`. The normal `llm-guided` build surface still does not auto-expose sculpt tools, so hard-surface and low-poly assembly flows are not flooded with sculpt by default.
 
 ## Objective
 
@@ -68,3 +70,9 @@ Do not reopen brush/event-style sculpt setup tools.
 ## Changelog Impact
 
 - include in the parent follow-on changelog entry when shipped
+
+## Status / Board Update
+
+- this leaf is closed
+- the parent follow-on remains in progress for broader cross-domain regression
+  and prompting work

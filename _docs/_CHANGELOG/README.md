@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [200](./200-2026-04-03-guided-surface-sculpt-handoff.md) | 2026-04-03 | **Guided surface sculpt handoff** | - |
 | [199](./199-2026-04-03-refinement-taxonomy-and-family-selector.md) | 2026-04-03 | **Refinement taxonomy and family selector** | - |
 | [198](./198-2026-04-03-hybrid-loop-model-aware-budget-and-scope-control.md) | 2026-04-03 | **Hybrid loop model-aware budget and scope control** | - |
 | [197](./197-2026-04-02-hybrid-loop-pairing-anchor-and-canonical-check-quality.md) | 2026-04-02 | **Hybrid loop pairing anchor and canonical check quality** | - |

@@ -138,6 +138,23 @@ class ReferenceRefinementRouteContract(MCPContract):
     candidate_ids: list[str] = []
 
 
+class ReferenceRefinementToolCandidateContract(MCPContract):
+    """One bounded tool-level handoff candidate for the selected refinement family."""
+
+    tool_name: str
+    reason: str
+    priority: Literal["high", "normal"] = "normal"
+    arguments_hint: dict[str, object] | None = None
+
+
+class ReferenceRefinementHandoffContract(MCPContract):
+    """Explicit next-tool-family handoff payload for hybrid refinement routing."""
+
+    selected_family: Literal["macro", "modeling_mesh", "sculpt_region", "inspect_only"]
+    message: str
+    recommended_tools: list[ReferenceRefinementToolCandidateContract] = []
+
+
 class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     """Structured response for deterministic stage checkpoint capture + compare."""
 
@@ -152,6 +169,7 @@ class ReferenceCompareStageCheckpointResponseContract(MCPContract):
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
+    refinement_handoff: ReferenceRefinementHandoffContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None
@@ -181,6 +199,7 @@ class ReferenceIterateStageCheckpointResponseContract(MCPContract):
     correction_candidates: list[ReferenceCorrectionCandidateContract] = []
     budget_control: ReferenceHybridBudgetControlContract | None = None
     refinement_route: ReferenceRefinementRouteContract | None = None
+    refinement_handoff: ReferenceRefinementHandoffContract | None = None
     target_view: str | None = None
     checkpoint_id: str
     checkpoint_label: str | None = None

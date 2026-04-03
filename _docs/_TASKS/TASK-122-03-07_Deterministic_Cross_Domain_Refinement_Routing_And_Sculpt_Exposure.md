@@ -8,10 +8,11 @@ continuity.
 **Status:** 🚧 In Progress  
 **Priority:** 🔴 High
 
-**Progress Update:** The first two leaves are now complete. The hybrid loop has
-an explicit refinement taxonomy and a deterministic `refinement_route`
-selector, but guided-surface sculpt exposure policy and broader cross-domain
-regression/prompting work remain open.
+**Progress Update:** The first three leaves are now complete. The hybrid loop
+has an explicit refinement taxonomy, a deterministic `refinement_route`
+selector, and a recommendation-only `refinement_handoff` for bounded sculpt
+tools. The follow-on remains open only for broader cross-domain regression and
+prompting work.
 
 ## Objective
 

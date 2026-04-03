@@ -357,6 +357,85 @@ def test_select_refinement_route_keeps_low_poly_creature_on_modeling_mesh():
     assert route.selected_family == "modeling_mesh"
 
 
+def test_reference_compare_stage_checkpoint_exposes_sculpt_handoff_without_visibility_unlock(tmp_path, monkeypatch):
+    image_front = tmp_path / "front.png"
+    image_front.write_bytes(b"front")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "refine the organic heart surface", {"status": "no_match"})
+    asyncio.run(reference_images(ctx, action="attach", source_path=str(image_front), label="front_ref"))
+
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            return {"object_name": object_name, "dimensions": [1.0, 1.0, 1.0]}
+
+    async def _fake_run_vision_assist(ctx, *, request, resolver):
+        return AssistantRunResult(
+            status="success",
+            assistant_name="vision_assist",
+            message="ok",
+            budget=AssistantBudgetContract(max_input_chars=1000, max_messages=1, max_tokens=100, tool_budget=0),
+            capability_source="local_runtime",
+            result=VisionAssistContract(
+                backend_kind="mlx_local",
+                model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+                goal_summary="Heart silhouette is still too lumpy.",
+                visible_changes=["The full organic form is visible."],
+                shape_mismatches=["Heart surface is still too lumpy."],
+                correction_focus=["Heart surface smoothing"],
+                next_corrections=["Smooth and slightly inflate the upper chamber area."],
+            ),
+        )
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.get_vision_backend_resolver",
+        lambda: SimpleNamespace(
+            runtime_config=SimpleNamespace(
+                max_tokens=400,
+                max_images=8,
+                active_model_name="mlx-community/Qwen3-VL-4B-Instruct-4bit",
+            )
+        ),
+    )
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.run_vision_assist", _fake_run_vision_assist)
+    monkeypatch.setattr(
+        "server.adapters.mcp.areas.reference.capture_stage_images",
+        lambda *args, **kwargs: [
+            VisionCaptureImageContract(
+                label="context_wide_after",
+                image_path=str(tmp_path / "context.jpg"),
+                host_visible_path=str(tmp_path / "context.jpg"),
+                preset_name="context_wide",
+                media_type="image/jpeg",
+                view_kind="wide",
+            ),
+        ],
+    )
+
+    result = asyncio.run(
+        reference_compare_stage_checkpoint(
+            ctx,
+            target_object="Heart",
+            checkpoint_label="stage_organic",
+            preset_profile="compact",
+        )
+    )
+
+    assert result.refinement_route is not None
+    assert result.refinement_route.selected_family == "sculpt_region"
+    assert result.refinement_handoff is not None
+    assert result.refinement_handoff.selected_family == "sculpt_region"
+    assert [tool.tool_name for tool in result.refinement_handoff.recommended_tools] == [
+        "sculpt_deform_region",
+        "sculpt_smooth_region",
+        "sculpt_inflate_region",
+        "sculpt_pinch_region",
+    ]
+
+
 def test_reference_images_attach_without_active_goal_is_staged_for_next_goal(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")

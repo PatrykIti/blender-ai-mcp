@@ -81,11 +81,16 @@ The repo now has the first implementation scaffolding for the vision layer:
   - the current correction domain
   - the selected bounded refinement family
   - selector rationale and source signals
+- hybrid-loop compare/iterate responses now also expose `refinement_handoff`
+  as an explicit recommendation-only next-tool-family handoff
 - current first-pass refinement families are:
   - `macro`
   - `modeling_mesh`
   - `sculpt_region`
   - `inspect_only`
+- current product rule: `sculpt_region` can be recommended through
+  `refinement_handoff`, but deterministic sculpt tools are still not part of
+  the normal `llm-guided` build visibility by default
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back
