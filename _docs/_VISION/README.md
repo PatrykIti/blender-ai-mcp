@@ -76,6 +76,9 @@ The repo now has the first implementation scaffolding for the vision layer:
 - `reference_iterate_stage_checkpoint(...)` now also lets high-priority
   deterministic truth findings move `loop_disposition` to
   `inspect_validate`, instead of waiting only for repeated vision focus
+- mesh-pair truth now distinguishes mesh-surface gap/contact from coarse bbox
+  touching when the bounded scene truth path can do so, which reduces false
+  "contact passed" claims on visibly gapped rounded primitives
 - assembled creature collection/object-set scopes now avoid obviously
   accessory-first anchors such as ears or eyes when a more structural primary
   target is available later in the set

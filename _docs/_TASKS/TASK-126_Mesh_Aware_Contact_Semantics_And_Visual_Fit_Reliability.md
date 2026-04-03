@@ -4,7 +4,15 @@
 **Category:** Truth Layer / Scene Verification  
 **Estimated Effort:** Large  
 **Dependencies:** TASK-116, TASK-117, TASK-122  
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
+
+**Progress Summary:** The first implementation slice is now in place:
+mesh-object pairs no longer rely only on bbox-touching for
+`scene_measure_gap(...)`, `scene_measure_overlap(...)`, and
+`scene_assert_contact(...)`. The truth layer now prefers a bounded mesh-surface
+gap/contact path for `MESH` pairs and falls back to bbox semantics only when a
+mesh-aware path is unavailable. Unit and E2E regression coverage were added
+for the canonical "bbox-touching but visibly gapped" case.
 
 ## Objective
 

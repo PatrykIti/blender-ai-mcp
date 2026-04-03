@@ -3,8 +3,8 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks
-- **In Progress:** 0 tasks
+- **To Do:** 1 task
+- **In Progress:** 1 task
 - **Done:** 196
 - **Superseded:** 10
 
@@ -65,6 +65,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | In progress after the first mesh-aware contact/gap slice; finish the product contract, macro/hybrid adoption, and broader regression/docs work |
 
 ---
 

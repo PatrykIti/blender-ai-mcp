@@ -1,8 +1,14 @@
 # TASK-126-02: Mesh-Aware Contact and Gap Measurement Path
 
 **Parent:** [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md)  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🔴 High
+
+**Completion Summary:** `scene_measure_gap(...)`,
+`scene_measure_overlap(...)`, and `scene_assert_contact(...)` now prefer a
+mesh-surface contact/gap path for mesh-object pairs, while preserving bbox
+fallback behavior for unsupported/non-mesh cases. This closes the core false
+"touching/contact" failure mode for visibly gapped curved primitives.
 
 ## Objective
 

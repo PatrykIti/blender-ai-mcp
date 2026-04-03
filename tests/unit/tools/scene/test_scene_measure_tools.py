@@ -69,10 +69,54 @@ def test_measure_gap_alignment_and_overlap_classify_bbox_relationships():
 
     assert gap["gap"] == 1.0
     assert gap["relation"] == "separated"
+    assert gap["measurement_basis"] == "bounding_box"
     assert gap["axis_gap"] == {"x": 1.0, "y": 0.0, "z": 0.0}
     assert alignment["is_aligned"] is True
     assert alignment["aligned_axes"] == ["Y", "Z"]
     assert overlap_result["overlaps"] is True
     assert overlap_result["relation"] == "overlap"
+    assert overlap_result["measurement_basis"] == "bounding_box"
     assert overlap_result["overlap_dimensions"] == [0.5, 0.5, 0.5]
     assert overlap_result["overlap_volume"] == 0.125
+
+
+def test_measure_gap_and_overlap_prefer_mesh_surface_semantics_over_bbox_touching(monkeypatch):
+    mock_bpy = sys.modules["bpy"]
+    head = _make_box("Head", (-1.0, -1.0, -1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 0.0))
+    eye = _make_box("Eye", (-0.2, 1.0, -0.2), (0.2, 1.4, 0.2), (0.0, 1.2, 0.0))
+    head.type = "MESH"
+    eye.type = "MESH"
+
+    mock_bpy.data.objects = MagicMock()
+    mock_bpy.data.objects.get.side_effect = {"Head": head, "Eye": eye}.get
+
+    handler = SceneHandler()
+
+    def _fake_mesh_contact(source_obj, target_obj, tolerance):
+        assert source_obj.name == "Head"
+        assert target_obj.name == "Eye"
+        return {
+            "overlaps": False,
+            "gap": 0.051,
+            "axis_gap": [0.0, 0.051, 0.0],
+            "relation": "separated",
+            "nearest_points": {
+                "from_object": [0.0, 0.318, 0.0],
+                "to_object": [0.0, 0.369, 0.0],
+            },
+        }
+
+    monkeypatch.setattr(handler, "_measure_mesh_surface_relation", _fake_mesh_contact)
+
+    gap = handler.measure_gap("Head", "Eye")
+    overlap_result = handler.measure_overlap("Head", "Eye")
+
+    assert gap["measurement_basis"] == "mesh_surface"
+    assert gap["relation"] == "separated"
+    assert gap["bbox_relation"] == "contact"
+    assert gap["nearest_points"]["from_object"] == [0.0, 0.318, 0.0]
+    assert overlap_result["measurement_basis"] == "mesh_surface"
+    assert overlap_result["relation"] == "disjoint"
+    assert overlap_result["touching"] is False
+    assert overlap_result["bbox_touching"] is True
+    assert overlap_result["surface_gap"] == 0.051

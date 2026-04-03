@@ -679,10 +679,19 @@ Stage compare/iterate responses now also expose `guided_reference_readiness`, `a
 | `scene_get_origin_info` | `object_name` (str) | Gets origin (pivot point) information relative to geometry and bounding box. |
 | `scene_measure_distance` | `from_object` (str), `to_object` (str), `reference` (str) | Measures origin-to-origin or bbox-center distance between two objects. |
 | `scene_measure_dimensions` | `object_name` (str), `world_space` (bool) | Measures object dimensions and volume from its bounding box. |
-| `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest world-space bbox gap/contact state between two objects. |
+| `scene_measure_gap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures nearest gap/contact state between two objects. For mesh pairs it now prefers a mesh-surface path and exposes `measurement_basis` plus bbox fallback diagnostics. |
 | `scene_measure_alignment` | `from_object` (str), `to_object` (str), `axes` (array), `reference` (str), `tolerance` (float) | Measures bbox alignment deltas on chosen axes using CENTER/MIN/MAX references. |
-| `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures bbox overlap/touching state plus intersection dimensions and volume. |
-| `scene_assert_contact` | `from_object` (str), `to_object` (str), `max_gap` (float), `allow_overlap` (bool) | Asserts pass/fail contact relation from measured gap and overlap state. |
+| `scene_measure_overlap` | `from_object` (str), `to_object` (str), `tolerance` (float) | Measures overlap/touching state between two objects. For mesh pairs it now prefers mesh-surface overlap/contact semantics and reports bbox fallback diagnostics separately. |
+| `scene_assert_contact` | `from_object` (str), `to_object` (str), `max_gap` (float), `allow_overlap` (bool) | Asserts pass/fail contact relation from the current truth path. For mesh pairs this now prefers mesh-surface contact semantics instead of bbox-touching alone. |
+
+For contact-sensitive truth on curved or rounded objects, the product now distinguishes:
+
+- mesh-surface contact/gap semantics when a bounded mesh-aware path is available
+- bbox fallback semantics when a mesh-aware path is not available
+
+This means a pair can still have `bbox_relation="contact"` while the main
+`relation` reports `separated` if the actual mesh surfaces remain visibly
+gapped.
 | `scene_assert_dimensions` | `object_name` (str), `expected_dimensions` (array), `tolerance` (float), `world_space` (bool) | Asserts pass/fail dimensions against an expected vector within tolerance. |
 | `scene_assert_containment` | `inner_object` (str), `outer_object` (str), `min_clearance` (float), `tolerance` (float) | Asserts pass/fail containment plus measured clearance/protrusion details. |
 | `scene_assert_symmetry` | `left_object` (str), `right_object` (str), `axis` (str), `mirror_coordinate` (float), `tolerance` (float) | Asserts mirrored symmetry between two objects across a chosen axis. |
