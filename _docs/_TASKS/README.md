@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 1 task
 - **In Progress:** 0 tasks
 - **Done:** 196
 - **Superseded:** 10
@@ -37,6 +37,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md) | **MCP Transport Mode Switching and Session Diagnostics** | 🔴 High | Add selectable `stdio` / `streamable` runtime modes and explicit session-ID diagnostics before evaluating stateless follow-on work |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -576,3 +577,9 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | Cluster | Files | Contains |
 |---|---|---|
 | `TASK-124` | [overview](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [guided reference session readiness contract](./TASK-124-01_Guided_Reference_Session_Readiness_Contract.md), [pending reference adoption and goal lifecycle](./TASK-124-02_Pending_Reference_Adoption_And_Goal_Lifecycle.md), [fail-fast compare and iterate preconditions](./TASK-124-03_Fail_Fast_Compare_And_Iterate_Preconditions.md), [guided handoff and status readiness UX](./TASK-124-04_Guided_Handoff_And_Status_Readiness_UX.md), [natural request regression pack and prompting](./TASK-124-05_Natural_Request_Regression_Pack_And_Prompting.md) | Session-safe goal/reference orchestration for natural guided requests |
+
+### TASK-125 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-125` | [overview](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md), [configurable MCP transport mode and bootstrap](./TASK-125-01_Configurable_MCP_Transport_Mode_And_Bootstrap.md), [streamable HTTP runtime path and local client setup](./TASK-125-02_Streamable_HTTP_Runtime_Path_And_Local_Client_Setup.md), [session ID diagnostics and guided recovery visibility](./TASK-125-03_Session_ID_Diagnostics_And_Guided_Recovery_Visibility.md), [transport mode regression pack and docs](./TASK-125-04_Transport_Mode_Regression_Pack_And_Docs.md) | Selectable `stdio` / `streamable` runtime modes plus explicit session diagnostics for guided-state debugging |
