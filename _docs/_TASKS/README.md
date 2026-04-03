@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 1 task
 - **In Progress:** 0 tasks
 - **Done:** 195
 - **Superseded:** 10
@@ -56,6 +56,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | Standalone guided-session reliability follow-on; makes natural goal/reference workflows session-safe and fail-fast on `llm-guided` |
 
 ---
 
@@ -569,3 +570,9 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 |---|---|---|
 | `TASK-123-01` | [overview](./TASK-123-01_Explicit_External_Vision_Provider_Fallback_And_Precedence.md) | Explicit selected-provider startup gating plus generic fallback precedence for OpenRouter and Google AI Studio / Gemini |
 | `TASK-123-02` | [overview](./TASK-123-02_Local_Background_Task_Terminality_After_Timeout.md) | Monotonic terminal state for server-local background tasks after timeout and late progress |
+
+### TASK-124 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-124` | [overview](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md), [guided reference session readiness contract](./TASK-124-01_Guided_Reference_Session_Readiness_Contract.md), [pending reference adoption and goal lifecycle](./TASK-124-02_Pending_Reference_Adoption_And_Goal_Lifecycle.md), [fail-fast compare and iterate preconditions](./TASK-124-03_Fail_Fast_Compare_And_Iterate_Preconditions.md), [guided handoff and status readiness UX](./TASK-124-04_Guided_Handoff_And_Status_Readiness_UX.md), [natural request regression pack and prompting](./TASK-124-05_Natural_Request_Regression_Pack_And_Prompting.md) | Session-safe goal/reference orchestration for natural guided requests |
