@@ -65,6 +65,11 @@ The repo now has the first implementation scaffolding for the vision layer:
 - `reference_iterate_stage_checkpoint(...)` now also lets high-priority
   deterministic truth findings move `loop_disposition` to
   `inspect_validate`, instead of waiting only for repeated vision focus
+- assembled creature collection/object-set scopes now avoid obviously
+  accessory-first anchors such as ears or eyes when a more structural primary
+  target is available later in the set
+- vision `recommended_checks` now keep only canonical MCP tool ids; invented
+  labels are dropped and a small alias map is normalized onto canonical names
 - request-bound attachment of `vision_assistant` to macro MCP reports when a
   `capture_bundle` exists
 - macro report integration now also folds bounded vision-driven follow-ups back

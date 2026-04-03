@@ -20,6 +20,34 @@ _CORRECTION_FOCUS_ALIASES = ("correction_focus", "priority_mismatches", "priorit
 _LIKELY_ISSUES_ALIASES = ("issues", "problems", "risks")
 _NEXT_CORRECTIONS_ALIASES = ("next_corrections", "suggested_corrections", "corrections")
 _RECOMMENDED_CHECKS_ALIASES = ("checks", "follow_up_checks", "deterministic_checks", "recommended_tools")
+_CANONICAL_CHECK_TOOL_MAP: dict[str, str] = {
+    "inspect_scene": "scene_inspect",
+    "check_alignment": "scene_measure_alignment",
+    "measure_alignment": "scene_measure_alignment",
+    "measure_gap": "scene_measure_gap",
+    "measure_overlap": "scene_measure_overlap",
+    "assert_contact": "scene_assert_contact",
+    "assert_symmetry": "scene_assert_symmetry",
+    "assert_proportion": "scene_assert_proportion",
+    "assert_dimensions": "scene_assert_dimensions",
+    "compare_ortho_views": "scene_get_viewport",
+    "viewport_check": "scene_get_viewport",
+    "check_viewport": "scene_get_viewport",
+}
+_CANONICAL_CHECK_TOOLS: set[str] = {
+    "scene_inspect",
+    "scene_get_viewport",
+    "scene_get_bounding_box",
+    "scene_measure_dimensions",
+    "scene_measure_gap",
+    "scene_measure_alignment",
+    "scene_measure_overlap",
+    "scene_assert_contact",
+    "scene_assert_dimensions",
+    "scene_assert_containment",
+    "scene_assert_symmetry",
+    "scene_assert_proportion",
+}
 _LABEL_MAP_KEYS = {"before", "after", "reference"}
 _VISIBLE_CHANGE_GOAL_SUMMARY_HINTS = (
     "the after image shows",
@@ -275,31 +303,36 @@ def _coerce_check_list(value: Any) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     for item in value:
         if isinstance(item, str) and item.strip():
-            checks.append(
-                {
-                    "tool_name": "follow_up_check",
-                    "reason": item.strip(),
-                    "priority": "normal",
-                }
-            )
             continue
         if not isinstance(item, dict):
             continue
-        tool_name = str(item.get("tool_name") or "follow_up_check")
+        tool_name = str(item.get("tool_name") or "").strip()
         reason = item.get("reason")
         if not isinstance(reason, str) or not reason.strip():
             continue
         priority = str(item.get("priority") or "normal").lower()
         if priority not in {"high", "normal"}:
             priority = "normal"
+        canonical_tool_name = _canonicalize_check_tool_name(tool_name)
+        if canonical_tool_name is None:
+            continue
         checks.append(
             {
-                "tool_name": tool_name,
+                "tool_name": canonical_tool_name,
                 "reason": reason.strip(),
                 "priority": priority,
             }
         )
     return checks
+
+
+def _canonicalize_check_tool_name(tool_name: str) -> str | None:
+    normalized = tool_name.strip()
+    if not normalized:
+        return None
+    lowered = normalized.lower()
+    canonical = _CANONICAL_CHECK_TOOL_MAP.get(lowered, normalized)
+    return canonical if canonical in _CANONICAL_CHECK_TOOLS else None
 
 
 def _dedupe_check_list(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:

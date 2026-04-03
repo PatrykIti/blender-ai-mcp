@@ -68,6 +68,28 @@ REFERENCE_PUBLIC_TOOL_NAMES = (
 _ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 _REFERENCE_CORRECTION_LOOP_STATE_KEY = "reference_correction_loop"
 _REFERENCE_CORRECTION_STAGNATION_THRESHOLD = 2
+_ANCHOR_ROLE_HINTS: tuple[tuple[str, int], ...] = (
+    ("body", 50),
+    ("torso", 45),
+    ("trunk", 45),
+    ("head", 40),
+    ("skull", 35),
+    ("core", 30),
+    ("root", 25),
+    ("base", 20),
+)
+_ACCESSORY_ROLE_HINTS: tuple[str, ...] = (
+    "ear",
+    "eye",
+    "nose",
+    "snout",
+    "paw",
+    "foot",
+    "tail",
+    "horn",
+    "antler",
+    "whisker",
+)
 
 
 def _register_existing_tool(target, tool_name: str):
@@ -500,6 +522,54 @@ def _resolve_capture_scope(
     return normalized_primary, resolved_target_objects, collection_name
 
 
+def _name_anchor_weight(object_name: str) -> int:
+    normalized = object_name.strip().lower()
+    score = 0
+    for token, weight in _ANCHOR_ROLE_HINTS:
+        if token in normalized:
+            score += weight
+    for token in _ACCESSORY_ROLE_HINTS:
+        if token in normalized:
+            score -= 30
+    return score
+
+
+def _bbox_volume_or_zero(object_name: str) -> float:
+    try:
+        bbox = get_scene_handler().get_bounding_box(object_name, world_space=True)
+    except Exception:
+        return 0.0
+    dimensions = bbox.get("dimensions") if isinstance(bbox, dict) else None
+    if not isinstance(dimensions, list) or len(dimensions) != 3:
+        return 0.0
+    try:
+        return float(dimensions[0]) * float(dimensions[1]) * float(dimensions[2])
+    except Exception:
+        return 0.0
+
+
+def _looks_like_accessory_anchor(object_name: str) -> bool:
+    normalized = object_name.strip().lower()
+    return any(token in normalized for token in _ACCESSORY_ROLE_HINTS)
+
+
+def _select_scope_primary_target(object_names: list[str]) -> str | None:
+    if not object_names:
+        return None
+    first_name = object_names[0]
+    if not _looks_like_accessory_anchor(first_name):
+        return first_name
+
+    candidates = [name for name in object_names if not _looks_like_accessory_anchor(name)]
+    if not candidates:
+        return first_name
+
+    return max(
+        candidates,
+        key=lambda name: (_name_anchor_weight(name), _bbox_volume_or_zero(name), -object_names.index(name)),
+    )
+
+
 def _assembled_target_scope(
     *,
     target_object: str | None,
@@ -523,7 +593,7 @@ def _assembled_target_scope(
 
     return SceneAssembledTargetScopeContract(
         scope_kind=scope_kind,
-        primary_target=normalized_primary or (resolved_target_objects[0] if resolved_target_objects else None),
+        primary_target=normalized_primary or _select_scope_primary_target(resolved_target_objects),
         object_names=resolved_target_objects,
         object_count=len(resolved_target_objects),
         collection_name=normalized_collection,

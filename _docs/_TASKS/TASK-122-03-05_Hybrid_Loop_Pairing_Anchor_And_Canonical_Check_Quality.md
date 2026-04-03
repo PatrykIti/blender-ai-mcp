@@ -5,8 +5,10 @@
 `TASK-122-03` and `TASK-122` were closed. `_docs/_TASKS/README.md` tracks it
 as its own open item while the historical numbering is preserved for
 continuity.  
-**Status:** ⏳ To Do  
+**Status:** ✅ Done  
 **Priority:** 🟡 Medium
+
+**Completion Summary:** Hybrid-loop collection/object-set scopes now avoid obviously accessory-first anchors when a more structural target is available, so outputs no longer default to awkward pair labels like `EarLeft -> Head` just because an ear happened to be first in the set. Vision-side `recommended_checks` also now keep only canonical MCP tool ids: common aliases such as `check_alignment` are normalized to canonical names, and invented labels are dropped instead of flowing into product output.
 
 ## Objective
 
@@ -78,7 +80,6 @@ result and make downstream automation or operator interpretation less clean.
 
 ## Status / Board Update
 
-- keep this task open as a standalone follow-on after the closed `TASK-122-03`
-  subtree
-- if it is completed, update `_docs/_TASKS/README.md` and refresh the closed
-  parent follow-on note
+- this follow-on is closed
+- `_docs/_TASKS/README.md` and the closed parent follow-on notes now point to
+  the remaining open follow-on work

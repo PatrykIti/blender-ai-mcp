@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 2 tasks
+- **To Do:** 1 task
 - **In Progress:** 0 tasks
-- **Done:** 190
+- **Done:** 191
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -56,7 +56,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 ### Vision & Hybrid Loop
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-122-03-05](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md) | **Hybrid Loop Pairing Anchor and Canonical Check Quality** | 🟡 Medium | Standalone follow-on after closed `TASK-122-03`; improves structural pairing anchors and canonical follow-up tool names in hybrid-loop output |
 | [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md) | **Hybrid Loop Model-Aware Budget and Scope Control** | 🔴 High | Standalone follow-on after closed `TASK-122-03`; adapts truth/candidate scope and payload size to active model/runtime limits |
 
 ---
@@ -72,6 +71,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-122-03-05](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md) | **Hybrid Loop Pairing Anchor and Canonical Check Quality** | 🟡 Medium | 2026-04-02 |
 | [TASK-122](./TASK-122_Hybrid_Vision_Truth_And_Correction_Macro_Wave.md) | **Hybrid Vision, Truth, and Correction Macro Wave** | 🔴 High | 2026-04-02 |
 | [TASK-121-04-01-05](./TASK-121-04-01-05_Google_AI_Studio_Gemini_Structured_Output_Contract_And_Prompting.md) | **Google AI Studio Gemini Structured Output Contract and Prompting** | 🔴 High | 2026-04-01 |
 | [TASK-123](./TASK-123_Runtime_Reliability_Fixes_For_Vision_Provider_Startup_And_Task_Terminality.md) | **Runtime Reliability Fixes for Vision Provider Startup and Task Terminality** | 🔴 High | 2026-04-01 |

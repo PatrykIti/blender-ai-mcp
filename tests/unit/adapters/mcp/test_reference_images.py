@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from server.adapters.mcp.areas.reference import (
+    _assembled_target_scope,
     _build_correction_candidates,
     _build_truth_followup,
     reference_compare_checkpoint,
@@ -85,6 +86,28 @@ def test_truth_followup_emits_cleanup_macro_candidate_for_overlap_pairs():
     assert followup.continue_recommended is True
     assert followup.macro_candidates
     assert followup.macro_candidates[0].macro_name == "macro_cleanup_part_intersections"
+
+
+def test_assembled_target_scope_prefers_structural_anchor_over_accessory_first_item(monkeypatch):
+    class SceneHandler:
+        def get_bounding_box(self, object_name: str, world_space: bool = True):
+            dimensions = {
+                "EarLeft": [0.2, 0.2, 0.6],
+                "EarRight": [0.2, 0.2, 0.6],
+                "Head": [1.0, 0.9, 1.2],
+            }[object_name]
+            return {"object_name": object_name, "dimensions": dimensions}
+
+    monkeypatch.setattr("server.adapters.mcp.areas.reference.get_scene_handler", lambda: SceneHandler())
+
+    scope = _assembled_target_scope(
+        target_object=None,
+        target_objects=["EarLeft", "EarRight", "Head"],
+        collection_name=None,
+    )
+
+    assert scope.scope_kind == "object_set"
+    assert scope.primary_target == "Head"
 
 
 def test_build_correction_candidates_merges_truth_macro_and_matching_vision_focus():

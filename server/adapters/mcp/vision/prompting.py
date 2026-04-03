@@ -140,6 +140,7 @@ def build_vision_system_prompt(
             + "Use next_corrections for 1-3 bounded next-step corrections only when they are visually justified. "
             + "Do not present next_corrections as proof that the fix is safe or correct; deterministic checks still decide correctness. "
             + "Leave likely_issues and recommended_checks empty unless there is a specific visible risk or a clearly valuable deterministic follow-up check. "
+            + "If you do return recommended_checks, use only canonical MCP tool ids such as scene_measure_gap, scene_measure_overlap, scene_measure_alignment, scene_assert_contact, or scene_get_viewport. "
             + "For easy smoke or obvious progression cases, avoid filler likely_issues and avoid generic follow-up checks. "
             + "If signal is weak, still return the required JSON shape with conservative values.\n"
         )
@@ -261,6 +262,7 @@ def build_local_vision_payload_text(request: VisionRequest) -> str:
                 "- prefer concrete silhouette/proportion mismatches over generic praise",
                 "- correction_focus should rank the most important fixes first",
                 "- next_corrections should stay tightly aligned with the mismatches you listed",
+                "- if you recommend deterministic checks, use only canonical MCP tool ids rather than invented labels",
             ]
         )
     return "\n".join(parts)

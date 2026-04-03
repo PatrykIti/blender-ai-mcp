@@ -8,11 +8,9 @@
 
 **Completion Summary:** The full `TASK-122` wave is now complete. The repo exposes assembled-target truth bundles, a full bounded creature-correction macro layer, ranked correction candidates for the hybrid loop, truth-integrated iterate focus, truth-aware loop disposition, and an explicit real assembled-creature regression pack plus prompt guidance for validating the end-to-end flow.
 
-**Follow-on Notes:**
-- [TASK-122-03-05](./TASK-122-03-05_Hybrid_Loop_Pairing_Anchor_And_Canonical_Check_Quality.md)
-  for pairing-anchor selection and canonical follow-up tool-id output
-- [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md)
-  for model-aware budget/scope control and graceful payload trimming
+**Follow-on Note:** [TASK-122-03-06](./TASK-122-03-06_Hybrid_Loop_Model_Aware_Budget_And_Scope_Control.md)
+tracks the remaining open hybrid-loop work on model-aware budget/scope control
+and graceful payload trimming.
 
 ## Objective
 

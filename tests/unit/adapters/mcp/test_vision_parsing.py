@@ -136,7 +136,7 @@ def test_parse_vision_output_coerces_alias_lists_and_strings():
     assert parsed["correction_focus"] == ["Head/body ratio first."]
     assert parsed["likely_issues"][0]["summary"] == "Top edge still looks flat."
     assert parsed["next_corrections"] == ["Reduce the head slightly and thicken the ears."]
-    assert parsed["recommended_checks"][0]["tool_name"] == "follow_up_check"
+    assert parsed["recommended_checks"] == []
 
 
 def test_parse_vision_output_deduplicates_repeated_lists():
@@ -162,7 +162,41 @@ def test_parse_vision_output_deduplicates_repeated_lists():
 
     assert parsed["visible_changes"] == ["Front is rounder."]
     assert len(parsed["likely_issues"]) == 1
-    assert len(parsed["recommended_checks"]) == 1
+    assert parsed["recommended_checks"] == []
+
+
+def test_parse_vision_output_canonicalizes_common_check_aliases():
+    text = json.dumps(
+        {
+            "goal_summary": "Closer overall.",
+            "visible_changes": [],
+            "recommended_checks": [
+                {"tool_name": "check_alignment", "reason": "Confirm symmetry after the move.", "priority": "high"},
+                {"tool_name": "compare_ortho_views", "reason": "Review front and side framing.", "priority": "normal"},
+                {"tool_name": "scene_measure_gap", "reason": "Confirm the remaining separation.", "priority": "high"},
+            ],
+        }
+    )
+
+    parsed = parse_vision_output_text(text, _request())
+
+    assert parsed["recommended_checks"] == [
+        {
+            "tool_name": "scene_measure_alignment",
+            "reason": "Confirm symmetry after the move.",
+            "priority": "high",
+        },
+        {
+            "tool_name": "scene_get_viewport",
+            "reason": "Review front and side framing.",
+            "priority": "normal",
+        },
+        {
+            "tool_name": "scene_measure_gap",
+            "reason": "Confirm the remaining separation.",
+            "priority": "high",
+        },
+    ]
 
 
 def test_parse_vision_output_backfills_correction_focus_for_reference_guided_checkpoint():
