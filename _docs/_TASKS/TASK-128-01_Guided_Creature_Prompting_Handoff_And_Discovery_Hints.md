@@ -53,6 +53,10 @@ Current audited drift is:
   package does not yet say exactly where creature narrowing must become real
 - search metadata does not yet bias the model toward creature blockout tools
   for natural creature-focused phrases
+- the search slice is still under-specified on the failure shape to beat:
+  current natural creature queries can rank `mesh_randomize`, `mesh_smooth`,
+  and similar broad helpers ahead of the actual blockout tools the model should
+  reach first
 
 ## Business Outcome
 
@@ -95,6 +99,8 @@ This slice does **not** cover:
   behavior and creature-handoff behavior must be separable in regression scope
 - tool discovery/search gains explicit creature-oriented metadata and prompt
   phrases
+- the search/discovery slice defines concrete positive and negative ranking
+  expectations instead of stopping at “add creature keywords”
 - docs and focused regression coverage describe the new guided creature path
 - the task package no longer treats docs-only prompt files, broad macro-first
   handoffs, or generic search coverage as if they already satisfy Slice A
