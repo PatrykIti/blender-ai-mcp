@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 2 tasks
 - **In Progress:** 2 tasks
-- **Done:** 199
+- **Done:** 200
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -74,6 +74,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-129](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | **Guided Reference Pending Storage Isolation Hardening** | 🔴 High | 2026-04-04 |
 | [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | 2026-04-04 |
 | [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | 2026-04-04 |
 | [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md) | **MCP Transport Mode Switching and Session Diagnostics** | 🔴 High | 2026-04-03 |
@@ -595,3 +596,9 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | Cluster | Files | Contains |
 |---|---|---|
 | `TASK-126` | [overview](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md), [contact semantics audit and product contract](./TASK-126-01_Contact_Semantics_Audit_And_Product_Contract.md), [mesh-aware contact and gap measurement path](./TASK-126-02_Mesh_Aware_Contact_And_Gap_Measurement_Path.md), [macro and hybrid loop adoption of true contact semantics](./TASK-126-03_Macro_And_Hybrid_Loop_Adoption_Of_True_Contact_Semantics.md), [regression pack and docs for visual fit truth](./TASK-126-04_Regression_Pack_And_Docs_For_Visual_Fit_Truth.md) | Make truth-layer contact semantics match visible mesh/surface fit instead of relying on bbox-touching alone |
+
+### TASK-129 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-129` | [overview](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | Follow-on hardening for active-vs-pending reference storage isolation during blocked guided sessions |

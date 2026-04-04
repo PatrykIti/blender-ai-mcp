@@ -56,6 +56,9 @@ The repo now has the first implementation scaffolding for the vision layer:
   staged correction loops with repeated-focus detection and continuation hints
 - pending references can now stay staged until the goal session is actually
   ready, then adopt automatically on the active guided goal
+- blocked same-goal sessions now keep newly staged refs separate from the
+  already-active goal refs, while `reference_images(...)` still shows one
+  combined visible set for operator-facing list/remove/clear behavior
 - staged compare/iterate now fail fast with machine-readable readiness data:
   - `blocking_reason`
   - `next_action`

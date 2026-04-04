@@ -330,6 +330,11 @@ Reference intake can now also stage pending attachments before the active goal
 exists or while the goal is still blocked on `needs_input`. In those cases, the
 next ready/no-match `router_set_goal(...)` adopts those references onto the
 active guided goal automatically instead of forcing the model to reattach them.
+If the same blocked goal already has active refs, staged refs stay in separate
+pending storage until adoption returns the session to ready/no-match. The
+public `list` / `remove` / `clear` path now exposes one combined visible set
+without copying active records into pending storage or orphaning active
+`stored_path` metadata during cleanup.
 
 ## Session-Adaptive Visibility Baseline
 

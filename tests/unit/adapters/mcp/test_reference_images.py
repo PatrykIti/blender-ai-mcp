@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 
 from server.adapters.mcp.areas.reference import (
@@ -548,6 +549,138 @@ def test_reference_images_attach_during_pending_goal_questions_stays_pending_unt
     assert ready_state.reference_images is not None
     assert ready_state.reference_images[0]["goal"] == "low poly squirrel"
     assert ready_state.pending_reference_images is None
+
+
+def test_reference_images_attach_during_pending_goal_questions_keeps_pending_store_isolated_from_active_refs(
+    tmp_path, monkeypatch
+):
+    image_active = tmp_path / "active.png"
+    image_pending = tmp_path / "pending.png"
+    image_active.write_bytes(b"active")
+    image_pending.write_bytes(b"pending")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "ready"})
+
+    active_attached = asyncio.run(
+        reference_images(ctx, action="attach", source_path=str(image_active), label="front_ref")
+    )
+    active_id = active_attached.references[0].reference_id
+
+    update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "needs_input",
+            "workflow": "squirrel_workflow",
+            "unresolved": [{"param": "style"}],
+        },
+    )
+
+    staged = asyncio.run(reference_images(ctx, action="attach", source_path=str(image_pending), label="side_ref"))
+    listed = asyncio.run(reference_images(ctx, action="list"))
+
+    pending_state = ctx.state["pending_reference_images"]
+    assert pending_state is not None
+    assert len(pending_state) == 1
+    assert pending_state[0]["reference_id"] != active_id
+    assert ctx.state["reference_images"] is not None
+    assert len(ctx.state["reference_images"]) == 1
+    assert ctx.state["reference_images"][0]["reference_id"] == active_id
+    assert staged.reference_count == 2
+    assert [item.reference_id for item in staged.references] == [active_id, pending_state[0]["reference_id"]]
+    assert listed.reference_count == 2
+    assert [item.reference_id for item in listed.references] == [active_id, pending_state[0]["reference_id"]]
+
+
+def test_reference_images_remove_during_pending_goal_questions_can_remove_active_ref_without_touching_staged_refs(
+    tmp_path, monkeypatch
+):
+    image_active = tmp_path / "active.png"
+    image_pending = tmp_path / "pending.png"
+    image_active.write_bytes(b"active")
+    image_pending.write_bytes(b"pending")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "ready"})
+
+    active_attached = asyncio.run(
+        reference_images(ctx, action="attach", source_path=str(image_active), label="front_ref")
+    )
+    active_ref = active_attached.references[0]
+    active_path = active_ref.stored_path
+
+    update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "needs_input",
+            "workflow": "squirrel_workflow",
+            "unresolved": [{"param": "style"}],
+        },
+    )
+
+    staged = asyncio.run(reference_images(ctx, action="attach", source_path=str(image_pending), label="side_ref"))
+    staged_ref = next(item for item in staged.references if item.reference_id != active_ref.reference_id)
+    staged_path = staged_ref.stored_path
+
+    removed = asyncio.run(reference_images(ctx, action="remove", reference_id=active_ref.reference_id))
+
+    assert removed.removed_reference_id == active_ref.reference_id
+    assert removed.reference_count == 1
+    assert removed.references[0].reference_id == staged_ref.reference_id
+    assert ctx.state["reference_images"] is None
+    assert ctx.state["pending_reference_images"] is not None
+    assert len(ctx.state["pending_reference_images"]) == 1
+    assert ctx.state["pending_reference_images"][0]["reference_id"] == staged_ref.reference_id
+    assert not Path(active_path).exists()
+    assert Path(staged_path).exists()
+
+
+def test_reference_images_clear_during_pending_goal_questions_clears_active_and_pending_reference_files(
+    tmp_path, monkeypatch
+):
+    image_active = tmp_path / "active.png"
+    image_pending = tmp_path / "pending.png"
+    image_active.write_bytes(b"active")
+    image_pending.write_bytes(b"pending")
+    monkeypatch.setenv("BLENDER_AI_TMP_INTERNAL_DIR", str(tmp_path / "internal"))
+    monkeypatch.setenv("BLENDER_AI_TMP_EXTERNAL_DIR", str(tmp_path / "external"))
+
+    ctx = FakeContext()
+    update_session_from_router_goal(ctx, "low poly squirrel", {"status": "ready"})
+
+    active_attached = asyncio.run(
+        reference_images(ctx, action="attach", source_path=str(image_active), label="front_ref")
+    )
+    active_path = active_attached.references[0].stored_path
+
+    update_session_from_router_goal(
+        ctx,
+        "low poly squirrel",
+        {
+            "status": "needs_input",
+            "workflow": "squirrel_workflow",
+            "unresolved": [{"param": "style"}],
+        },
+    )
+
+    staged = asyncio.run(reference_images(ctx, action="attach", source_path=str(image_pending), label="side_ref"))
+    staged_ref = next(item for item in staged.references if item.stored_path != active_path)
+    staged_path = staged_ref.stored_path
+
+    cleared = asyncio.run(reference_images(ctx, action="clear"))
+
+    assert cleared.reference_count == 0
+    assert cleared.message == "Cleared active and pending reference images."
+    assert ctx.state["reference_images"] is None
+    assert ctx.state["pending_reference_images"] is None
+    assert not Path(active_path).exists()
+    assert not Path(staged_path).exists()
 
 
 def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):

@@ -184,6 +184,39 @@ def _sorted_references(references: list[dict]) -> list[dict]:
     return sorted(references, key=lambda item: str(item.get("added_at") or ""))
 
 
+def _merge_visible_references(*reference_groups: list[dict]) -> list[dict]:
+    """Return one stable visible view across active and staged reference stores."""
+
+    merged: list[dict] = []
+    seen_reference_ids: set[str] = set()
+
+    for group in reference_groups:
+        for item in group:
+            reference_id = item.get("reference_id")
+            if isinstance(reference_id, str) and reference_id:
+                if reference_id in seen_reference_ids:
+                    continue
+                seen_reference_ids.add(reference_id)
+            merged.append(item)
+
+    return merged
+
+
+def _delete_reference_files(references: list[dict]) -> None:
+    """Best-effort cleanup for stored reference files without double-unlinking."""
+
+    deleted_paths: set[str] = set()
+    for item in references:
+        stored_path = item.get("stored_path")
+        if not isinstance(stored_path, str) or stored_path in deleted_paths:
+            continue
+        deleted_paths.add(stored_path)
+        try:
+            Path(stored_path).unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
 def _as_response(
     *,
     action: Literal["attach", "list", "remove", "clear"],
@@ -1742,27 +1775,32 @@ async def reference_images(
     stage_for_later_adoption = not session_has_ready_guided_reference_goal(session)
     active_references = list(session.reference_images or [])
     pending_references = list(session.pending_reference_images or [])
-    references = (
-        pending_references
-        if stage_for_later_adoption and pending_references
-        else (active_references if session.goal is not None else pending_references)
+    visible_references = (
+        _merge_visible_references(active_references, pending_references)
+        if session.goal is not None
+        else list(pending_references)
     )
 
     if normalized_action == "list":
-        return _as_response(action="list", goal=session.goal, references=_sorted_references(references))
+        return _as_response(action="list", goal=session.goal, references=_sorted_references(visible_references))
 
     if normalized_action == "clear":
-        for item in references:
-            stored_path = item.get("stored_path")
-            if isinstance(stored_path, str):
-                try:
-                    Path(stored_path).unlink(missing_ok=True)
-                except Exception:
-                    pass
-        if stage_for_later_adoption and pending_references:
-            await replace_session_pending_reference_images_async(ctx, [])
-            ctx_info(ctx, "[REFERENCE] Cleared pending reference images")
-            return _as_response(action="clear", goal=None, references=[], message="Cleared pending reference images.")
+        _delete_reference_files(visible_references)
+        if stage_for_later_adoption:
+            if active_references:
+                await replace_session_reference_images_async(ctx, [])
+            if pending_references:
+                await replace_session_pending_reference_images_async(ctx, [])
+
+            if active_references and pending_references:
+                message = "Cleared active and pending reference images."
+            elif pending_references or session.goal is None:
+                message = "Cleared pending reference images."
+            else:
+                message = "Cleared session reference images."
+
+            ctx_info(ctx, "[REFERENCE] Cleared blocked-session reference images")
+            return _as_response(action="clear", goal=session.goal, references=[], message=message)
 
         await replace_session_reference_images_async(ctx, [])
         ctx_info(ctx, "[REFERENCE] Cleared session reference images")
@@ -1775,12 +1813,56 @@ async def reference_images(
             return _as_response(
                 action="remove",
                 goal=session.goal,
-                references=_sorted_references(references),
+                references=_sorted_references(visible_references),
                 error="reference_id is required for remove",
             )
+        if stage_for_later_adoption:
+            remaining_active: list[dict] = []
+            remaining_pending: list[dict] = []
+            removed_records: list[dict] = []
+
+            for item in active_references:
+                if item.get("reference_id") == reference_id:
+                    removed_records.append(item)
+                    continue
+                remaining_active.append(item)
+            for item in pending_references:
+                if item.get("reference_id") == reference_id:
+                    removed_records.append(item)
+                    continue
+                remaining_pending.append(item)
+
+            if not removed_records:
+                return _as_response(
+                    action="remove",
+                    goal=session.goal,
+                    references=_sorted_references(visible_references),
+                    error=f"Reference image not found: {reference_id}",
+                )
+
+            _delete_reference_files(removed_records)
+            if len(remaining_active) != len(active_references):
+                await replace_session_reference_images_async(ctx, remaining_active)
+            if len(remaining_pending) != len(pending_references):
+                await replace_session_pending_reference_images_async(ctx, remaining_pending)
+
+            remaining_visible = (
+                _merge_visible_references(remaining_active, remaining_pending)
+                if session.goal is not None
+                else remaining_pending
+            )
+            ctx_info(ctx, f"[REFERENCE] Removed blocked-session reference image {reference_id}")
+            return _as_response(
+                action="remove",
+                goal=session.goal,
+                references=_sorted_references(remaining_visible),
+                removed_reference_id=reference_id,
+                message=f"Removed reference image '{reference_id}'.",
+            )
+
         remaining: list[dict] = []
         removed: dict | None = None
-        for item in references:
+        for item in active_references:
             if item.get("reference_id") == reference_id and removed is None:
                 removed = item
                 continue
@@ -1789,19 +1871,11 @@ async def reference_images(
             return _as_response(
                 action="remove",
                 goal=session.goal,
-                references=_sorted_references(references),
+                references=_sorted_references(visible_references),
                 error=f"Reference image not found: {reference_id}",
             )
-        stored_path = removed.get("stored_path")
-        if isinstance(stored_path, str):
-            try:
-                Path(stored_path).unlink(missing_ok=True)
-            except Exception:
-                pass
-        if stage_for_later_adoption and pending_references:
-            await replace_session_pending_reference_images_async(ctx, remaining)
-        else:
-            await replace_session_reference_images_async(ctx, remaining)
+        _delete_reference_files([removed])
+        await replace_session_reference_images_async(ctx, remaining)
         ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
         return _as_response(
             action="remove",
@@ -1815,7 +1889,7 @@ async def reference_images(
         return _as_response(
             action="attach",
             goal=session.goal,
-            references=_sorted_references(references),
+            references=_sorted_references(visible_references),
             error="source_path is required for attach",
         )
 
@@ -1826,7 +1900,7 @@ async def reference_images(
         return _as_response(
             action="attach",
             goal=session.goal,
-            references=_sorted_references(references),
+            references=_sorted_references(visible_references),
             error=str(exc),
         )
 
@@ -1844,26 +1918,32 @@ async def reference_images(
         "host_visible_path": host_visible_path,
         "added_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
-    updated = [*references, reference]
     if stage_for_later_adoption:
-        await replace_session_pending_reference_images_async(ctx, updated)
+        pending_updated = [*pending_references, reference]
+        await replace_session_pending_reference_images_async(ctx, pending_updated)
+        visible_updated = (
+            _merge_visible_references(active_references, pending_updated)
+            if session.goal is not None
+            else pending_updated
+        )
         ctx_info(ctx, f"[REFERENCE] Attached pending reference image {reference['reference_id']}")
         return _as_response(
             action="attach",
             goal=session.goal,
-            references=_sorted_references(updated),
+            references=_sorted_references(visible_updated),
             message=(
                 f"Attached pending reference image '{reference['reference_id']}'. "
                 "It will be adopted automatically when the guided goal session becomes ready."
             ),
         )
 
-    await replace_session_reference_images_async(ctx, updated)
+    updated_active = [*active_references, reference]
+    await replace_session_reference_images_async(ctx, updated_active)
     ctx_info(ctx, f"[REFERENCE] Attached reference image {reference['reference_id']} for goal '{session.goal}'")
     return _as_response(
         action="attach",
         goal=session.goal,
-        references=_sorted_references(updated),
+        references=_sorted_references(updated_active),
         message=f"Attached reference image '{reference['reference_id']}'.",
     )
 

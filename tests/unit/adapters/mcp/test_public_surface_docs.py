@@ -36,6 +36,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "Contact Truth Semantics",
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
+        "staged refs stay separate from the already-active goal",
     ):
         assert expected in text
 
@@ -72,6 +73,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "scene_isolate_object",
         "USER_PERSPECTIVE",
         "named cameras follow render visibility",
+        "combined visible set",
+        "copying active records into pending storage",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -97,6 +100,8 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "`correction_candidates`",
         "`refinement_route`",
         "`refinement_handoff`",
+        "separate from the",
+        "already-active goal refs",
     ):
         assert expected in text
 

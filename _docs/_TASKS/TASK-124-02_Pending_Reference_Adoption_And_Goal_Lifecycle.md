@@ -9,6 +9,10 @@ missing or blocked on `needs_input`, adopt automatically when the session is
 ready, and remain explicit instead of silently retargeting across mismatched
 goal changes.
 
+**Follow-on Tracking:** Later active-vs-pending storage-isolation hardening for
+blocked same-goal sessions is tracked and closed in
+[TASK-129](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md).
+
 ## Objective
 
 Make pending reference adoption and goal lifecycle semantics deterministic and

@@ -27,7 +27,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > If the goal is not active yet, or if `router_set_goal(...)` is still blocked
 > on `needs_input`, `reference_images(action="attach", ...)` can now stage
 > pending references that will be adopted automatically when the guided goal
-> session becomes ready.
+> session becomes ready. If the same blocked goal already has active refs, the
+> new staged refs stay separate until readiness returns; do not reattach old
+> refs just to keep them visible.
 > Use `guided_reference_readiness` from `router_set_goal(...)` or
 > `router_get_status(...)` before calling
 > `reference_compare_stage_checkpoint(...)` /

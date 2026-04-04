@@ -259,6 +259,9 @@ hidden ordering assumptions.
   `next_action`
 - `reference_images(action="attach", ...)` can stay pending until the guided
   goal session is actually ready, then adopt automatically
+- if the same goal already has active refs and new ones are staged during
+  `needs_input`, the staged refs stay separate from the already-active goal
+  references until readiness returns
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` now fail fast when the session is
   not ready, and echo the same `guided_reference_readiness` payload

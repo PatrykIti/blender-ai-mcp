@@ -6,6 +6,7 @@ Project Change Log.
 
 | No. | Date | Title | Version |
 |-----|------|-------|---------|
+| [208](./208-2026-04-04-guided-reference-pending-storage-isolation.md) | 2026-04-04 | **Guided reference pending storage isolation** | - |
 | [207](./207-2026-04-04-scene-clean-scene-guided-contract-hardening.md) | 2026-04-04 | **scene_clean_scene guided contract hardening** | - |
 | [206](./206-2026-04-04-visual-fit-truth-contract-and-adoption.md) | 2026-04-04 | **Visual-fit truth contract and adoption** | - |
 | [205](./205-2026-04-04-guided-session-bookkeeping-hardening.md) | 2026-04-04 | **Guided session bookkeeping hardening** | - |
