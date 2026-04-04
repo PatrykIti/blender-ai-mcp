@@ -9,6 +9,12 @@
 Implement the goal-aware recommendation path through prompt rendering/provider
 surfaces and lock it with focused regression tests.
 
+## Current Drift To Resolve
+
+The current provider reads phase/profile from session state but not the active
+goal/domain context. This leaf is the wiring step that turns the bounded input
+definition into actual rendered recommendations.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/rendering.py`
@@ -23,6 +29,8 @@ surfaces and lock it with focused regression tests.
   goal/session warrants it
 - the path stays deterministic and catalog-driven
 - regression tests cover both creature and non-creature recommendation cases
+- tool-compatible prompt bridge coverage stays aligned with the native prompt
+  provider so `recommended_prompts` does not diverge across client types
 
 ## Tests To Add/Update
 

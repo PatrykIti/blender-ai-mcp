@@ -9,6 +9,13 @@
 Define how the segmentation sidecar is packaged, enabled, and isolated so it
 never becomes a hidden default dependency of the core MCP server.
 
+## Current Runtime Baseline
+
+`server/infrastructure/config.py` currently exposes bounded vision runtime
+configuration only. This leaf should keep segmentation as a separate,
+explicitly opt-in concern rather than overloading the existing default vision
+path.
+
 ## Repository Touchpoints
 
 - `server/infrastructure/config.py`
@@ -21,6 +28,8 @@ never becomes a hidden default dependency of the core MCP server.
 - the sidecar is explicitly opt-in
 - runtime/dependency isolation is documented before provider-specific work
 - failure or absence of the sidecar does not break normal guided sessions
+- any future config/env surface defaults to "off" and preserves the current
+  lightweight guided baseline
 
 ## Docs To Update
 

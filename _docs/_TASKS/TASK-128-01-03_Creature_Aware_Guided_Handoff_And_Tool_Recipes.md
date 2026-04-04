@@ -10,6 +10,21 @@ Define an explicit creature-oriented `guided_manual_build` handoff so
 `llm-guided` stops relying on a broad macro-first surface for low-poly and
 early organic creature blockout.
 
+## Current Runtime Baseline
+
+The repo already emits typed `guided_manual_build` handoffs and preserves them
+in session diagnostics. The remaining problem is that the current payload and
+build-phase surface are still too broad for creature blockout.
+
+## Current Drift To Resolve
+
+Current audited drift is:
+
+- `guided_handoff.direct_tools` still centers a generic macro-heavy set
+- `BUILD` phase visibility expands into a large generic surface
+- current regression tests mostly protect that broad baseline instead of a
+  creature-oriented recipe
+
 ## Technical Direction
 
 Planned recipe sets:
@@ -69,6 +84,8 @@ creature starting surface.
 - low-poly creature work favors modeling/mesh tools before sculpt exposure
 - docs explain the intended creature recipe sets, why they are bounded, and how
   that bounded handoff is surfaced on `llm-guided`
+- regression coverage verifies the creature-oriented payload and does not treat
+  the current broad generic build surface as the desired end state
 
 ## Docs To Update
 

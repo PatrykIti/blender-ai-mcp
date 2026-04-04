@@ -47,6 +47,19 @@ If this slice is done correctly:
   requests
 - later segmentation work has a stable contract to plug into
 
+## Current Runtime Baseline
+
+This slice starts from the existing hybrid loop outputs, not from a blank
+surface. The current runtime already has:
+
+- `guided_reference_readiness`
+- `truth_followup`
+- ranked `correction_candidates`
+- `refinement_route` and `refinement_handoff`
+
+Slice B should add deterministic silhouette evidence on top of that baseline
+without weakening the existing truth-first loop behavior.
+
 ## Scope
 
 This slice covers:

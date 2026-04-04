@@ -30,6 +30,36 @@ quality ceiling in practice:
 The result is predictable: the model spends too much effort rediscovering tools
 and not enough effort making correct shape decisions.
 
+## Current Runtime Baseline
+
+The audit baseline for this umbrella is no longer "no guided creature path at
+all". The repo already has:
+
+- `llm-guided` search-first bootstrap plus prompt bridge tools
+- typed `guided_handoff` and `guided_reference_readiness`
+- staged reference compare / iterate tools with bounded loop semantics
+- truth-first hybrid loop outputs such as `truth_followup`,
+  `correction_candidates`, `refinement_route`, and `refinement_handoff`
+
+That baseline matters because Slice A/B/C should extend the current product
+surface, not redesign the platform work that already shipped under earlier
+tasks.
+
+## Current Drift To Resolve
+
+The remaining gap is now mostly one of shaped creature UX and task/runtime
+alignment:
+
+- the best creature prompt still exists as docs content instead of a real MCP
+  prompt asset
+- `recommended_prompts` is still phase/profile-aware only
+- `guided_manual_build` remains broader and more macro-first than the desired
+  creature blockout recipe
+- search metadata still under-ranks creature blockout queries
+- Slice B metrics / typed `action_hints` are still not shipped
+- Slice C sidecar work is still planning-only and must remain explicitly
+  optional
+
 ## Business Outcome
 
 If this umbrella is done correctly, the repo gains:
@@ -71,6 +101,9 @@ This umbrella does **not** cover:
 - the next perception layer is defined as deterministic silhouette analysis
   before heavyweight segmentation
 - any future segmentation module remains optional and boundary-safe
+- task files, docs, runtime behavior, and regression coverage describe the same
+  shipped public story; docs-only exposure does not count as delivered product
+  behavior
 
 ## Repository Touchpoints
 
@@ -114,6 +147,9 @@ This umbrella does **not** cover:
 
 - keep this umbrella promoted on `_docs/_TASKS/README.md` while Slice A/B/C are
   open
+- keep [TASK-128-01](./TASK-128-01_Guided_Creature_Prompting_Handoff_And_Discovery_Hints.md)
+  promoted as the active execution slice until the prompt, handoff, and search
+  drifts identified by the audit are closed
 - promote each execution slice on the board only when it is ready for actual
   implementation sequencing
 

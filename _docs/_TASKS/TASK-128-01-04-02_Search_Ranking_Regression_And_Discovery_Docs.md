@@ -9,6 +9,12 @@
 Add focused ranking regressions and public discovery docs so creature-oriented
 search phrases keep surfacing the intended blockout tools.
 
+## Current Drift To Resolve
+
+The current runtime can still rank tools like `mesh_randomize` and
+`mesh_smooth` above creature blockout actions for broad creature queries. This
+leaf should lock that failure mode out with explicit regressions.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/discovery/search_documents.py`
@@ -18,9 +24,12 @@ search phrases keep surfacing the intended blockout tools.
 
 ## Acceptance Criteria
 
-- regression coverage protects the intended search/discovery bias
+- regression coverage protects the intended search/discovery bias for both
+  creature blockout queries and staged reference-loop queries
 - public docs explain the improved discovery path for creature blockout work
 - the discovery layer remains metadata-driven
+- regressions verify that creature blockout queries prefer core blockout tools
+  over generic organic-noise tools
 
 ## Docs To Update
 

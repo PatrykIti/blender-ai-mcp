@@ -10,6 +10,13 @@ Define how silhouette outputs and typed `action_hints` are consumed in
 `reference_iterate_stage_checkpoint(...)` without displacing truth-driven or
 hybrid correction signals.
 
+## Current Runtime Baseline
+
+Current docs/runtime already prioritize `loop_disposition`,
+`correction_candidates`, `truth_followup`, and `correction_focus`. This leaf is
+about inserting silhouette outputs into that order without demoting existing
+truth-driven escalation.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/areas/reference.py`

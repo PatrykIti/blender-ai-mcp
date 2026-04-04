@@ -9,6 +9,13 @@
 Add one explicit prompt-catalog entry for `reference_guided_creature_build`
 with generic creature-facing naming, description, and tags.
 
+## Current Drift To Resolve
+
+The runtime currently exposes `getting_started`, `guided_session_start`,
+`workflow_router_first`, demo prompts, and `recommended_prompts`, but not the
+existing creature build guide. This leaf closes that exact catalog/provider
+gap.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -19,7 +26,8 @@ with generic creature-facing naming, description, and tags.
 
 ## Acceptance Criteria
 
-- the prompt catalog/provider exposes the new prompt asset
+- the prompt catalog/provider exposes the new prompt asset with the stable name
+  `reference_guided_creature_build`
 - the new asset is reachable through the shaped prompt bridge as the same
   stable catalog entry
 - catalog metadata clearly marks it as guided creature/reference work

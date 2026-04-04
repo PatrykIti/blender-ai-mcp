@@ -26,6 +26,17 @@ It does not know enough about:
 That keeps the best creature prompt discoverable only through external docs or
 manual operator knowledge.
 
+## Current Runtime Baseline
+
+`recommended_prompts` is already a real MCP/native prompt surface, but its
+logic is still deterministic only by:
+
+- session phase
+- surface profile
+
+This slice extends that deterministic path with bounded goal/session context
+instead of replacing it with fuzzy heuristics.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
@@ -44,6 +55,8 @@ manual operator knowledge.
 - the recommendation path stays deterministic and catalog-driven
 - docs explain why creature prompts can now be suggested during guided
   creature sessions
+- tests cover both creature and non-creature guided sessions so Slice A does
+  not regress back to phase/profile-only behavior
 
 ## Docs To Update
 

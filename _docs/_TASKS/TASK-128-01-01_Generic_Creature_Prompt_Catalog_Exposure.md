@@ -6,9 +6,15 @@
 
 ## Objective
 
-Promote `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` into the MCP prompt
-catalog as one generic creature-build asset instead of leaving it as
-docs-only/operator-only guidance.
+Promote the already-written
+`_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` file into the real MCP
+prompt surface instead of leaving it as docs-only/operator-only guidance.
+
+## Current Runtime Baseline
+
+The prompt bridge and native prompt provider already work on `llm-guided`.
+This subtask is specifically about catalog exposure of the existing creature
+prompt asset, not about building a second prompt-delivery path.
 
 ## Scope
 
@@ -25,6 +31,8 @@ This subtask covers:
 - the prompt description/tags position it as generic creature guidance, not a
   squirrel-only hardcoded path
 - prompt docs and public tool summary mention the new exposed asset
+- regression tests fail if the creature prompt silently falls back to
+  docs-only visibility again
 
 ## Repository Touchpoints
 

@@ -10,6 +10,18 @@ Strengthen discovery/search bias and public docs so creature-oriented phrases
 rank the right modeling tools without forcing the model into broad unguided
 search loops.
 
+## Current Runtime Baseline
+
+Search-first discovery already exists on `llm-guided`. This slice is about
+metadata quality and ranking regressions, not about rebuilding BM25/search
+plumbing.
+
+## Current Drift To Resolve
+
+Current audited runtime behavior still over-ranks generic organic/noise tools
+for creature blockout phrasing. The task delta is to make creature blockout
+search practical, not merely available.
+
 ## Technical Direction
 
 Enrich blockout-tool metadata for phrases such as:
@@ -61,6 +73,8 @@ Start with the core blockout tools most likely to matter during creature work:
   better than today
 - metadata stays generic and reusable beyond squirrels
 - docs/regressions lock the new discovery bias in place
+- focused regressions prove that creature blockout queries prefer blockout tools
+  over generic organic surface tools
 
 ## Docs To Update
 

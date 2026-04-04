@@ -9,6 +9,12 @@
 Translate the creature recipe decisions into explicit guided handoff payloads,
 visibility behavior, and regression coverage.
 
+## Current Drift To Resolve
+
+Today the task package says "creature-aware guided handoff", but runtime
+regressions still mostly protect a broad generic build payload. This leaf is
+where the recipe becomes enforceable behavior.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
@@ -23,7 +29,8 @@ visibility behavior, and regression coverage.
 ## Acceptance Criteria
 
 - guided handoff payloads expose the creature-oriented direct/supporting tools
-- visibility behavior remains deterministic by phase/profile
+- visibility behavior remains deterministic by phase/profile while protecting a
+  narrower creature build baseline than the current generic `BUILD` footprint
 - regressions protect the intended creature handoff from future surface drift
 
 ## Tests To Add/Update

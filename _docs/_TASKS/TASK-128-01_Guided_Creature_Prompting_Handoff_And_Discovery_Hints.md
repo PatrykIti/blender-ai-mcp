@@ -1,14 +1,14 @@
 # TASK-128-01: Guided Creature Prompting, Handoff, and Discovery Hints
 
 **Parent:** [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
-**Status:** ⏳ To Do
+**Status:** 🚧 In Progress
 **Priority:** 🔴 High
 
 ## Objective
 
-Ship the first high-ROI creature-reliability slice by improving the generic
-prompt path, the guided creature tool recipe, and the search/discovery hints
-used during low-poly and early organic blockout.
+Ship the first high-ROI creature-reliability slice by closing the audited gap
+between the existing `llm-guided` platform baseline and the intended generic
+creature operating surface.
 
 ## Business Problem
 
@@ -26,6 +26,30 @@ reference loop, but the operational surface is still fragmented:
 
 This slice is meant to fix the operating surface before adding another
 perception module.
+
+## Current Runtime Baseline
+
+The repo already has the platform pieces that this slice should build on:
+
+- prompt bridge tools and native prompt exposure
+- search-first discovery on `llm-guided`
+- typed `guided_manual_build` handoff on no-match
+- staged reference compare / iterate with truth-first loop escalation
+
+The problem is not missing platform scaffolding. The problem is that the
+creature-specific shaping on top of that scaffolding is still incomplete.
+
+## Current Drift To Resolve
+
+Current audited drift is:
+
+- `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` is indexed in docs but is
+  still not exposed by the prompt catalog/provider/bridge
+- `recommended_prompts` still ignores active goal/domain context
+- `guided_manual_build` still points to a broad macro-first recipe and build
+  phase visibility expands into a large generic surface
+- search metadata does not yet bias the model toward creature blockout tools
+  for natural creature-focused phrases
 
 ## Business Outcome
 
@@ -49,6 +73,8 @@ This slice covers:
 
 This slice does **not** cover:
 
+- rebuilding the existing prompt bridge or search-first FastMCP platform layer
+- redefining `guided_reference_readiness` or the staged reference loop baseline
 - deterministic silhouette-analysis implementation
 - new vision-model runtime integration
 - sculpt-first creature workflows as the default path
@@ -64,6 +90,8 @@ This slice does **not** cover:
 - tool discovery/search gains explicit creature-oriented metadata and prompt
   phrases
 - docs and focused regression coverage describe the new guided creature path
+- the task package no longer treats docs-only prompt files, broad macro-first
+  handoffs, or generic search coverage as if they already satisfy Slice A
 
 ## Repository Touchpoints
 
@@ -121,6 +149,7 @@ This slice does **not** cover:
 
 - keep this slice promoted on `_docs/_TASKS/README.md` until the prompt,
   handoff, and search surfaces are aligned
+- treat this as the active execution slice under [TASK-128](./TASK-128_Reference_Guided_Creature_Build_Surface_And_Perception_Reliability.md)
 
 ## Execution Structure
 

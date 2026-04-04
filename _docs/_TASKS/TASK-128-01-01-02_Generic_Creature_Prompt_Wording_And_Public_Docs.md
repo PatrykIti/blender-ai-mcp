@@ -10,6 +10,12 @@ Generalize the exposed creature prompt wording so it stays useful for squirrels,
 foxes, birds, stylized quadrupeds, and similar staged creature builds without
 requiring one prompt per species.
 
+## Current Drift To Resolve
+
+The current file still uses squirrel-heavy wording because it grew out of a
+real eval prompt. Once the prompt becomes a first-class MCP asset, the docs
+must present squirrel as an example, not as the product contract.
+
 ## Repository Touchpoints
 
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
@@ -21,7 +27,8 @@ requiring one prompt per species.
 
 - the public prompt wording clearly describes a generic creature flow
 - squirrel remains an example, not the defining product contract
-- public docs point users toward the generic prompt instead of hidden lore
+- public docs point users toward the generic prompt asset name instead of a
+  hidden markdown file or operator lore
 
 ## Docs To Update
 

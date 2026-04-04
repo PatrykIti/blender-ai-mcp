@@ -42,6 +42,13 @@ If this slice is done correctly:
 - operators can opt into the heavier path only when the added value justifies
   the runtime cost
 
+## Current Runtime Baseline
+
+The current runtime still stops at bounded vision providers and hybrid-loop
+contracts; there is no shipped segmentation sidecar surface yet. That is the
+correct baseline for this slice: optional follow-on planning, not hidden
+runtime adoption.
+
 ## Scope
 
 This slice covers:

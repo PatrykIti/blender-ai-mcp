@@ -9,6 +9,12 @@
 Define the exact creature/blockout metadata vocabulary and the first batch of
 tool metadata files to update.
 
+## Current Drift To Resolve
+
+The current target metadata files still mostly speak in generic modeling terms,
+so this leaf must define the creature/blockout vocabulary before ranking
+regressions can be meaningful.
+
 ## Repository Touchpoints
 
 - `server/router/infrastructure/tools_metadata/modeling/`
@@ -20,6 +26,9 @@ tool metadata files to update.
 - the task defines a reusable generic creature vocabulary
 - the first target tool list is explicit and bounded
 - the metadata plan stays reusable beyond squirrel-specific examples
+- the initial vocabulary covers creature-blockout phrases such as ears, snout,
+  muzzle, tail arc, paw placement, silhouette, front reference, side
+  reference, low-poly creature, and organic blockout
 
 ## Changelog Impact
 

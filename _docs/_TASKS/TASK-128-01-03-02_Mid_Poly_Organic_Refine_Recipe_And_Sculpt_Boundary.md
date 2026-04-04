@@ -13,14 +13,21 @@ starting path.
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/areas/reference.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Acceptance Criteria
 
 - the repo distinguishes low-poly blockout from mid-poly organic refinement
-- sculpt stays explicitly gated behind later refinement/handoff logic
+- sculpt stays explicitly gated behind later refinement/handoff logic and does
+  not become a directly visible default creature build tool
 - docs describe the sculpt boundary in product terms
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_reference_images.py`
 
 ## Docs To Update
 
