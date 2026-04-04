@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from types import SimpleNamespace
 
 from server.router.domain.interfaces.i_vector_store import VectorNamespace, VectorRecord
@@ -64,6 +65,38 @@ def test_lancedb_table_error_paths_fall_back(tmp_path, monkeypatch):
     assert store.clear(VectorNamespace.TOOLS) == 1
     assert store.get_all_ids(VectorNamespace.TOOLS) == []
     assert store.get_unique_workflow_count() == 0
+
+
+def test_ensure_table_reuses_existing_table_when_create_races(tmp_path, caplog):
+    store = LanceVectorStore(db_path=tmp_path)
+    store._use_fallback = False
+
+    opened = object()
+
+    class FakeDb:
+        def __init__(self):
+            self.created = False
+
+        def list_tables(self):
+            return []
+
+        def create_table(self, name, schema=None):
+            self.created = True
+            raise RuntimeError("Table 'embeddings' already exists")
+
+        def open_table(self, name):
+            assert name == store.TABLE_NAME
+            return opened
+
+    store._db = FakeDb()
+    store._table = None
+
+    with caplog.at_level(logging.INFO):
+        store._ensure_table()
+
+    assert store._table is opened
+    assert store._use_fallback is False
+    assert "already exists; reusing the existing table" in caplog.text
 
 
 def test_fallback_weighted_search_and_stats(tmp_path):

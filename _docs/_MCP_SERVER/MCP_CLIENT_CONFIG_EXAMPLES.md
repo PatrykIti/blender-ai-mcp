@@ -164,38 +164,47 @@ Smallest practical docker-backed guided profile:
 
 ## Docker Guided Profile Over Streamable HTTP
 
-Smallest practical stateful Streamable HTTP guided profile:
+For Streamable HTTP, treat the Docker container and the MCP client as two
+separate pieces:
+
+1. start the MCP server container yourself
+2. point the MCP client at the exposed HTTP endpoint
+
+### Server Side
+
+```bash
+docker run --rm \
+  -p 8000:8000 \
+  -v /tmp:/tmp \
+  -e BLENDER_AI_TMP_INTERNAL_DIR=/tmp \
+  -e BLENDER_AI_TMP_EXTERNAL_DIR=/tmp \
+  -e ROUTER_ENABLED=true \
+  -e MCP_SURFACE_PROFILE=llm-guided \
+  -e MCP_TRANSPORT_MODE=streamable \
+  -e MCP_HTTP_HOST=0.0.0.0 \
+  -e MCP_HTTP_PORT=8000 \
+  -e MCP_STREAMABLE_HTTP_PATH=/mcp \
+  -e BLENDER_RPC_HOST=host.docker.internal \
+  -e PYTHONUNBUFFERED=1 \
+  ghcr.io/patrykiti/blender-ai-mcp:latest
+```
+
+### Client Side
 
 ```json
 {
   "mcpServers": {
     "blender-ai-mcp-guided-streamable-docker": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-p", "8000:8000",
-        "-v", "/tmp:/tmp",
-        "-e", "BLENDER_AI_TMP_INTERNAL_DIR=/tmp",
-        "-e", "BLENDER_AI_TMP_EXTERNAL_DIR=/tmp",
-        "-e", "ROUTER_ENABLED=true",
-        "-e", "MCP_SURFACE_PROFILE=llm-guided",
-        "-e", "MCP_TRANSPORT_MODE=streamable",
-        "-e", "MCP_HTTP_HOST=0.0.0.0",
-        "-e", "MCP_HTTP_PORT=8000",
-        "-e", "MCP_STREAMABLE_HTTP_PATH=/mcp",
-        "-e", "BLENDER_RPC_HOST=host.docker.internal",
-        "-e", "PYTHONUNBUFFERED=1",
-        "ghcr.io/patrykiti/blender-ai-mcp:latest"
-      ],
-      "transport": {
-        "type": "streamable-http",
-        "url": "http://127.0.0.1:8000/mcp"
-      }
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
     }
   }
 }
 ```
+
+Do **not** combine `command: "docker"` and `type: "http"` in the same MCP
+entry. That mixes local stdio process startup with remote HTTP connection
+semantics and will not work reliably.
 
 ## Docker Guided + OpenRouter Vision
 

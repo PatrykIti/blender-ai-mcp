@@ -111,6 +111,17 @@ class LanceVectorStore(IVectorStore):
                 self._table = self._db.create_table(self.TABLE_NAME, schema=schema)
                 logger.info(f"Created LanceDB table: {self.TABLE_NAME}")
         except Exception as e:
+            message = str(e)
+            if "already exists" in message.lower():
+                try:
+                    self._table = self._db.open_table(self.TABLE_NAME)
+                    logger.info(
+                        "LanceDB table '%s' already exists; reusing the existing table.",
+                        self.TABLE_NAME,
+                    )
+                    return
+                except Exception as open_exc:
+                    logger.error(f"Failed to open existing LanceDB table after create race: {open_exc}")
             logger.error(f"Failed to ensure table: {e}")
             self._use_fallback = True
 

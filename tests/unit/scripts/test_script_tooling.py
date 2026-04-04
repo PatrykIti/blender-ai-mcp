@@ -23,6 +23,21 @@ def _load_script(script_name: str):
     return module
 
 
+def test_streamable_openrouter_shell_script_contains_required_runtime_env():
+    script = (REPO_ROOT / "scripts" / "run_streamable_openrouter.sh").read_text(encoding="utf-8")
+
+    for expected in (
+        "OPENROUTER_API_KEY must be set",
+        "MCP_TRANSPORT_MODE=streamable",
+        "MCP_HTTP_PORT",
+        "MCP_STREAMABLE_HTTP_PATH",
+        "BLENDER_RPC_HOST",
+        "VISION_EXTERNAL_PROVIDER=openrouter",
+        'VISION_OPENROUTER_MODEL="${VISION_OPENROUTER_MODEL}"',
+    ):
+        assert expected in script
+
+
 def test_build_addon_creates_zip_and_skips_ignored_files(tmp_path, monkeypatch, capsys):
     module = _load_script("build_addon")
     project_root = tmp_path / "project"

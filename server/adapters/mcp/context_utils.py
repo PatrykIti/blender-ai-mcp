@@ -22,9 +22,13 @@ def _fire_and_forget(result) -> None:
     if not inspect.isawaitable(result):
         return
 
+    async def _await_value(awaitable):
+        return await awaitable
+
     try:
         asyncio.get_running_loop()
     except RuntimeError:
+        asyncio.run(_await_value(result))
         return
 
     asyncio.ensure_future(result)
