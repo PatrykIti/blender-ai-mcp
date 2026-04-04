@@ -48,6 +48,9 @@ Current audited drift is:
 - `recommended_prompts` still ignores active goal/domain context
 - `guided_manual_build` still points to a broad macro-first recipe and build
   phase visibility expands into a large generic surface
+- the technical seam between `guided_handoff`, session state, session-applied
+  visibility, and search regressions is still under-specified, so the task
+  package does not yet say exactly where creature narrowing must become real
 - search metadata does not yet bias the model toward creature blockout tools
   for natural creature-focused phrases
 
@@ -87,6 +90,9 @@ This slice does **not** cover:
   session goal is creature-oriented
 - the guided creature handoff exposes a smaller, more relevant build recipe for
   low-poly creature blockout
+- creature handoff narrowing is defined as one explicit session-aware runtime
+  path rather than a vague “make BUILD smaller” instruction; generic BUILD
+  behavior and creature-handoff behavior must be separable in regression scope
 - tool discovery/search gains explicit creature-oriented metadata and prompt
   phrases
 - docs and focused regression coverage describe the new guided creature path
@@ -98,6 +104,9 @@ This slice does **not** cover:
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/adapters/mcp/contracts/router.py`
+- `server/adapters/mcp/guided_mode.py`
 - `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/discovery/search_documents.py`
@@ -108,6 +117,7 @@ This slice does **not** cover:
 - `tests/unit/adapters/mcp/test_prompts_bridge.py`
 - `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`

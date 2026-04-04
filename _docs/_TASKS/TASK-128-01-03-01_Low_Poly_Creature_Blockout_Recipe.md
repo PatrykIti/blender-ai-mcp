@@ -9,9 +9,14 @@
 Define the bounded low-poly creature starter recipe that should be favored for
 generic reference-guided creature blockout work on `llm-guided`.
 
+This leaf is about the recipe itself, not yet the full session-visibility
+plumbing. The output of this leaf should be concrete enough that the next leaf
+can encode it as runtime-visible handoff behavior instead of prose-only docs.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/contracts/router.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
@@ -24,6 +29,9 @@ generic reference-guided creature blockout work on `llm-guided`.
   primitive creation, transform, selection, extrude, loop cut, bevel,
   symmetrize, merge-by-distance, and dissolve before broader macro or sculpt
   paths
+- the recipe explicitly says which tools belong in `guided_handoff.direct_tools`
+  versus later supporting/discovery fallback, so the next leaf does not have to
+  infer that split ad hoc
 - the first creature starter recipe keeps finishing/sculpt tools out of the
   initial direct build recommendation set
 - the recipe is generic enough for common creature/animal blockouts

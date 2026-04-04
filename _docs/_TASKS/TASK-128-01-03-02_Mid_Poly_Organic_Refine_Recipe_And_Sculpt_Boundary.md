@@ -10,6 +10,10 @@ Define the next bounded recipe for mid-poly organic refinement and document
 when sculpt may be suggested later without becoming the default creature
 starting path.
 
+This leaf must stay explicitly downstream of the low-poly blockout handoff.
+It should not reopen the first creature starter surface just to make the later
+refine path convenient.
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
@@ -21,6 +25,8 @@ starting path.
 ## Acceptance Criteria
 
 - the repo distinguishes low-poly blockout from mid-poly organic refinement
+- the task wording makes it explicit that this later recipe is **not** the fix
+  for the current broad low-poly creature handoff drift
 - sculpt stays explicitly gated behind later refinement/handoff logic and does
   not become a directly visible default creature build tool
 - docs describe the sculpt boundary in product terms

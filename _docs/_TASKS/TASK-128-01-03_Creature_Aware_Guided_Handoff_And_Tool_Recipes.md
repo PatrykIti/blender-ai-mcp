@@ -22,6 +22,9 @@ Current audited drift is:
 
 - `guided_handoff.direct_tools` still centers a generic macro-heavy set
 - `BUILD` phase visibility expands into a large generic surface
+- the task wording currently blurs two different concerns:
+  - generic `BUILD` phase posture for non-creature sessions
+  - creature-specific narrowing after a `guided_manual_build` handoff
 - current regression tests mostly protect that broad baseline instead of a
   creature-oriented recipe
 
@@ -63,15 +66,36 @@ Planned recipe sets:
 The slice should keep sculpt as a later bounded handoff, not as the default
 creature starting surface.
 
+Technical clarification for implementation:
+
+- do **not** redefine every `BUILD` session as a creature session
+- instead, define one explicit creature-oriented `guided_manual_build`
+  handoff/recipe path that becomes visible only when the active guided session
+  is actually a creature blockout case
+- the enforceable runtime seam should be:
+  `router_set_goal(...)` result -> `guided_handoff` payload ->
+  session state persistence -> session-applied visibility/search behavior
+- regression scope should distinguish:
+  - generic `BUILD` phase baseline
+  - creature-handoff shaped baseline
+- the task is complete only when that seam is explicit in both runtime touch
+  points and regression coverage; docs-only recipe wording does not count
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
+- `server/adapters/mcp/areas/router.py`
+- `server/adapters/mcp/contracts/router.py`
+- `server/adapters/mcp/guided_mode.py`
+- `server/adapters/mcp/session_capabilities.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/README.md`
@@ -81,7 +105,13 @@ creature starting surface.
 ## Acceptance Criteria
 
 - `guided_manual_build` handoff can expose a bounded creature-oriented tool set
+- the first low-poly creature handoff is modeling/mesh-first and explicitly
+  includes the expected blockout path (`modeling_create_primitive`,
+  `modeling_transform_object`, `mesh_select`, `mesh_extrude_region`,
+  `mesh_loop_cut`, and adjacent blockout tools) before finishing/sculpt tools
 - low-poly creature work favors modeling/mesh tools before sculpt exposure
+- session-applied visibility/search on that creature handoff is bounded to the
+  shaped recipe instead of falling back to the broad generic `BUILD` surface
 - docs explain the intended creature recipe sets, why they are bounded, and how
   that bounded handoff is surfaced on `llm-guided`
 - regression coverage verifies the creature-oriented payload and does not treat
@@ -97,11 +127,13 @@ creature starting surface.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_mode.py`
 - `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
 - `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 
 ## Changelog Impact
