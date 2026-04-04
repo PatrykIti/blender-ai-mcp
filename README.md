@@ -262,6 +262,9 @@ hidden ordering assumptions.
 - if the same goal already has active refs and new ones are staged during
   `needs_input`, the staged refs stay separate from the already-active goal
   references until readiness returns
+- if a ready session still carries explicit pending refs for another goal,
+  `reference_images(action="list"| "remove"| "clear", ...)` now treats that
+  merged visible set consistently instead of leaving broken pending records
 - `reference_compare_stage_checkpoint(...)` and
   `reference_iterate_stage_checkpoint(...)` now fail fast when the session is
   not ready, and echo the same `guided_reference_readiness` payload

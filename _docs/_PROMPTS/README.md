@@ -30,6 +30,9 @@ Copy/paste-ready prompt templates for LLMs controlling Blender via this MCP serv
 > session becomes ready. If the same blocked goal already has active refs, the
 > new staged refs stay separate until readiness returns; do not reattach old
 > refs just to keep them visible.
+> If a ready session still lists explicit pending refs for another goal, you
+> may remove/clear them from the same `reference_images(...)` surface; that
+> cleanup now updates pending state as well instead of leaving broken records.
 > Use `guided_reference_readiness` from `router_set_goal(...)` or
 > `router_get_status(...)` before calling
 > `reference_compare_stage_checkpoint(...)` /

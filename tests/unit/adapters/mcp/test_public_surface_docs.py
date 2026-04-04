@@ -37,6 +37,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "mesh-surface contact/gap semantics",
         "bbox fallback semantics",
         "staged refs stay separate from the already-active goal",
+        "ready session still carries explicit pending refs for another goal",
     ):
         assert expected in text
 
@@ -75,6 +76,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "named cameras follow render visibility",
         "combined visible set",
         "copying active records into pending storage",
+        "ready sessions that",
+        "update pending state as well",
         "Current hidden/expert-only arguments on `llm-guided` include:",
         "`inspect_scene`",
         "`mesh_inspect`",
@@ -102,6 +105,7 @@ def test_vision_docs_exist_and_describe_runtime_scope():
         "`refinement_handoff`",
         "separate from the",
         "already-active goal refs",
+        "leaving broken pending file paths behind",
     ):
         assert expected in text
 
@@ -229,6 +233,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "correction_candidates" in prompt_readme
     assert "truth_followup" in prompt_readme
     assert "guided_reference_readiness" in prompt_readme
+    assert "ready session still lists explicit pending refs for another goal" in prompt_readme
     assert "refinement_route" in prompt_readme
     assert "refinement_handoff" in prompt_readme
 

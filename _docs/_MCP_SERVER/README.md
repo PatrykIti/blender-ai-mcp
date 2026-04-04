@@ -335,6 +335,10 @@ pending storage until adoption returns the session to ready/no-match. The
 public `list` / `remove` / `clear` path now exposes one combined visible set
 without copying active records into pending storage or orphaning active
 `stored_path` metadata during cleanup.
+The same visible-set contract now also stays consistent on ready sessions that
+still carry explicit pending refs for another goal: if those refs are visible,
+`remove` / `clear` update pending state as well instead of deleting only the
+files behind those pending records.
 
 ## Session-Adaptive Visibility Baseline
 

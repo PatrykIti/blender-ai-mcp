@@ -683,6 +683,124 @@ def test_reference_images_clear_during_pending_goal_questions_clears_active_and_
     assert not Path(staged_path).exists()
 
 
+def test_reference_images_remove_ready_session_can_remove_explicit_pending_ref_without_touching_active_ref(tmp_path):
+    active_path = tmp_path / "active.png"
+    pending_path = tmp_path / "pending.png"
+    active_path.write_bytes(b"active")
+    pending_path.write_bytes(b"pending")
+
+    ctx = FakeContext(
+        state={
+            "goal": "table",
+            "last_router_status": "ready",
+            "reference_images": [
+                {
+                    "reference_id": "ref_active",
+                    "goal": "table",
+                    "label": "table_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(active_path),
+                    "host_visible_path": str(active_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(active_path),
+                    "added_at": "2026-04-05T10:00:00Z",
+                }
+            ],
+            "pending_reference_images": [
+                {
+                    "reference_id": "ref_pending",
+                    "goal": "chair",
+                    "label": "chair_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(pending_path),
+                    "host_visible_path": str(pending_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(pending_path),
+                    "added_at": "2026-04-05T10:05:00Z",
+                }
+            ],
+        }
+    )
+
+    listed = asyncio.run(reference_images(ctx, action="list"))
+    removed = asyncio.run(reference_images(ctx, action="remove", reference_id="ref_pending"))
+
+    assert listed.reference_count == 2
+    assert [item.reference_id for item in listed.references] == ["ref_active", "ref_pending"]
+    assert removed.removed_reference_id == "ref_pending"
+    assert removed.reference_count == 1
+    assert removed.references[0].reference_id == "ref_active"
+    assert ctx.state["reference_images"] is not None
+    assert ctx.state["reference_images"][0]["reference_id"] == "ref_active"
+    assert ctx.state["pending_reference_images"] is None
+    assert Path(active_path).exists()
+    assert not Path(pending_path).exists()
+
+
+def test_reference_images_clear_ready_session_also_clears_explicit_pending_refs(tmp_path):
+    active_path = tmp_path / "active.png"
+    pending_path = tmp_path / "pending.png"
+    active_path.write_bytes(b"active")
+    pending_path.write_bytes(b"pending")
+
+    ctx = FakeContext(
+        state={
+            "goal": "table",
+            "last_router_status": "ready",
+            "reference_images": [
+                {
+                    "reference_id": "ref_active",
+                    "goal": "table",
+                    "label": "table_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(active_path),
+                    "host_visible_path": str(active_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(active_path),
+                    "added_at": "2026-04-05T10:00:00Z",
+                }
+            ],
+            "pending_reference_images": [
+                {
+                    "reference_id": "ref_pending",
+                    "goal": "chair",
+                    "label": "chair_ref",
+                    "notes": None,
+                    "target_object": None,
+                    "target_view": None,
+                    "stored_path": str(pending_path),
+                    "host_visible_path": str(pending_path),
+                    "media_type": "image/png",
+                    "source_kind": "local_path",
+                    "original_path": str(pending_path),
+                    "added_at": "2026-04-05T10:05:00Z",
+                }
+            ],
+        }
+    )
+
+    listed = asyncio.run(reference_images(ctx, action="list"))
+    cleared = asyncio.run(reference_images(ctx, action="clear"))
+
+    assert listed.reference_count == 2
+    assert [item.reference_id for item in listed.references] == ["ref_active", "ref_pending"]
+    assert cleared.reference_count == 0
+    assert cleared.message == "Cleared active and pending reference images."
+    assert ctx.state["reference_images"] is None
+    assert ctx.state["pending_reference_images"] is None
+    assert not Path(active_path).exists()
+    assert not Path(pending_path).exists()
+
+
 def test_reference_images_attach_list_remove_and_clear(tmp_path, monkeypatch):
     image = tmp_path / "ref.png"
     image.write_bytes(b"fake")

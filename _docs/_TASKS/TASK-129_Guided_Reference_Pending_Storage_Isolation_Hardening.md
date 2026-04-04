@@ -15,6 +15,10 @@ blocked sessions, but staged `attach` persists only the newly staged records in
 correct store(s) and clean files without leaving active records pointing at
 deleted `stored_path` values.
 
+**Follow-on Tracking:** Later ready-session visible-set consistency for explicit
+goal-mismatched pending refs is tracked and closed in
+[TASK-131](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md).
+
 ## Objective
 
 Harden the guided reference lifecycle so active goal-scoped references and

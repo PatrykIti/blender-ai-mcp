@@ -5,7 +5,7 @@ Curated task board for promoted active work, promoted follow-on work, and select
 ## 📊 Statistics
 - **To Do:** 3 tasks
 - **In Progress:** 2 tasks
-- **Done:** 200
+- **Done:** 201
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -75,6 +75,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-131](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md) | **Ready-Session Pending Reference Visibility Consistency** | 🔴 High | 2026-04-05 |
 | [TASK-129](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | **Guided Reference Pending Storage Isolation Hardening** | 🔴 High | 2026-04-04 |
 | [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | 2026-04-04 |
 | [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | 2026-04-04 |
@@ -603,3 +604,9 @@ The Kanban tables above track umbrella tasks and selected milestone entries. The
 | Cluster | Files | Contains |
 |---|---|---|
 | `TASK-129` | [overview](./TASK-129_Guided_Reference_Pending_Storage_Isolation_Hardening.md) | Follow-on hardening for active-vs-pending reference storage isolation during blocked guided sessions |
+
+### TASK-131 Detailed Docs
+
+| Cluster | Files | Contains |
+|---|---|---|
+| `TASK-131` | [overview](./TASK-131_Ready_Session_Pending_Reference_Visibility_Consistency.md) | Follow-on hardening for ready-session remove/clear consistency when merged visible refs still include explicit pending records |

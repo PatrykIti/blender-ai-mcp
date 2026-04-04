@@ -59,6 +59,10 @@ The repo now has the first implementation scaffolding for the vision layer:
 - blocked same-goal sessions now keep newly staged refs separate from the
   already-active goal refs, while `reference_images(...)` still shows one
   combined visible set for operator-facing list/remove/clear behavior
+- ready sessions that still carry explicit pending refs for another goal now
+  keep that same visible-set contract consistent: if those refs are visible,
+  `reference_images(action="remove"| "clear", ...)` also updates pending state
+  instead of leaving broken pending file paths behind
 - staged compare/iterate now fail fast with machine-readable readiness data:
   - `blocking_reason`
   - `next_action`

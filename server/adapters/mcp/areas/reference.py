@@ -1786,27 +1786,23 @@ async def reference_images(
 
     if normalized_action == "clear":
         _delete_reference_files(visible_references)
-        if stage_for_later_adoption:
-            if active_references:
-                await replace_session_reference_images_async(ctx, [])
-            if pending_references:
-                await replace_session_pending_reference_images_async(ctx, [])
+        if active_references:
+            await replace_session_reference_images_async(ctx, [])
+        if pending_references:
+            await replace_session_pending_reference_images_async(ctx, [])
 
-            if active_references and pending_references:
-                message = "Cleared active and pending reference images."
-            elif pending_references or session.goal is None:
-                message = "Cleared pending reference images."
-            else:
-                message = "Cleared session reference images."
+        if active_references and pending_references:
+            message = "Cleared active and pending reference images."
+        elif pending_references or session.goal is None:
+            message = "Cleared pending reference images."
+        else:
+            message = "Cleared session reference images."
 
-            ctx_info(ctx, "[REFERENCE] Cleared blocked-session reference images")
-            return _as_response(action="clear", goal=session.goal, references=[], message=message)
-
-        await replace_session_reference_images_async(ctx, [])
-        ctx_info(ctx, "[REFERENCE] Cleared session reference images")
-        return _as_response(
-            action="clear", goal=session.goal, references=[], message="Cleared session reference images."
-        )
+        if stage_for_later_adoption or pending_references:
+            ctx_info(ctx, "[REFERENCE] Cleared visible session reference images")
+        else:
+            ctx_info(ctx, "[REFERENCE] Cleared session reference images")
+        return _as_response(action="clear", goal=session.goal, references=[], message=message)
 
     if normalized_action == "remove":
         if not reference_id:
@@ -1816,71 +1812,42 @@ async def reference_images(
                 references=_sorted_references(visible_references),
                 error="reference_id is required for remove",
             )
-        if stage_for_later_adoption:
-            remaining_active: list[dict] = []
-            remaining_pending: list[dict] = []
-            removed_records: list[dict] = []
-
-            for item in active_references:
-                if item.get("reference_id") == reference_id:
-                    removed_records.append(item)
-                    continue
-                remaining_active.append(item)
-            for item in pending_references:
-                if item.get("reference_id") == reference_id:
-                    removed_records.append(item)
-                    continue
-                remaining_pending.append(item)
-
-            if not removed_records:
-                return _as_response(
-                    action="remove",
-                    goal=session.goal,
-                    references=_sorted_references(visible_references),
-                    error=f"Reference image not found: {reference_id}",
-                )
-
-            _delete_reference_files(removed_records)
-            if len(remaining_active) != len(active_references):
-                await replace_session_reference_images_async(ctx, remaining_active)
-            if len(remaining_pending) != len(pending_references):
-                await replace_session_pending_reference_images_async(ctx, remaining_pending)
-
-            remaining_visible = (
-                _merge_visible_references(remaining_active, remaining_pending)
-                if session.goal is not None
-                else remaining_pending
-            )
-            ctx_info(ctx, f"[REFERENCE] Removed blocked-session reference image {reference_id}")
-            return _as_response(
-                action="remove",
-                goal=session.goal,
-                references=_sorted_references(remaining_visible),
-                removed_reference_id=reference_id,
-                message=f"Removed reference image '{reference_id}'.",
-            )
-
         remaining: list[dict] = []
-        removed: dict | None = None
+        remaining_pending: list[dict] = []
+        removed_records: list[dict] = []
         for item in active_references:
-            if item.get("reference_id") == reference_id and removed is None:
-                removed = item
+            if item.get("reference_id") == reference_id:
+                removed_records.append(item)
                 continue
             remaining.append(item)
-        if removed is None:
+        for item in pending_references:
+            if item.get("reference_id") == reference_id:
+                removed_records.append(item)
+                continue
+            remaining_pending.append(item)
+        if not removed_records:
             return _as_response(
                 action="remove",
                 goal=session.goal,
                 references=_sorted_references(visible_references),
                 error=f"Reference image not found: {reference_id}",
             )
-        _delete_reference_files([removed])
-        await replace_session_reference_images_async(ctx, remaining)
-        ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
+        _delete_reference_files(removed_records)
+        if len(remaining) != len(active_references):
+            await replace_session_reference_images_async(ctx, remaining)
+        if len(remaining_pending) != len(pending_references):
+            await replace_session_pending_reference_images_async(ctx, remaining_pending)
+        remaining_visible = (
+            _merge_visible_references(remaining, remaining_pending) if session.goal is not None else remaining_pending
+        )
+        if stage_for_later_adoption or len(remaining_pending) != len(pending_references):
+            ctx_info(ctx, f"[REFERENCE] Removed visible session reference image {reference_id}")
+        else:
+            ctx_info(ctx, f"[REFERENCE] Removed reference image {reference_id}")
         return _as_response(
             action="remove",
             goal=session.goal,
-            references=_sorted_references(remaining),
+            references=_sorted_references(remaining_visible),
             removed_reference_id=reference_id,
             message=f"Removed reference image '{reference_id}'.",
         )
