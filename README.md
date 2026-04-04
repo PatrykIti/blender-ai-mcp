@@ -256,14 +256,18 @@ Guided/runtime payloads now expose explicit MCP session metadata:
 - `reference_compare_stage_checkpoint(...)` includes `session_id` and `transport`
 - `reference_iterate_stage_checkpoint(...)` includes `session_id` and `transport`
 
-Known runtime note:
+Current runtime guidance:
 
-- on the current `stdio` transport, some MCP clients may reconnect/reset the
-  MCP session during longer guided runs or after large tool payloads
-- when that happens, the Blender scene may still be intact while guided session
-  state such as the active goal, staged references, and guided phase is lost
-- if you hit this class of issue, compare `session_id` / `transport` first and
-  prefer the `streamable` transport mode for debugging or longer guided runs
+- stateful `streamable` HTTP is the recommended transport for longer guided
+  runs and for debugging session-aware reference / checkpoint flows
+- recent guided-session hardening removed the known router bookkeeping path
+  that could clobber active goal/reference session state during routed tool
+  execution
+- if you investigate a future state-loss incident, compare `session_id` and
+  `transport` first to distinguish:
+  - transport/session reconnects
+  - application-level goal resets
+  - normal guided readiness blockers such as missing goal or references
 
 ## Server-Side Sampling Assistants Baseline
 
