@@ -1,8 +1,13 @@
 # TASK-127-03: `scene_clean_scene` Prompts, Docs, and Regression Pack
 
 **Parent:** [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🟡 Medium
+
+**Completion Summary:** README, MCP server docs, prompt docs, and tool summary
+now all point to `keep_lights_and_cameras` as the canonical cleanup shape.
+Regression coverage protects both the legacy-split compatibility success path
+and the mixed-value rejection path.
 
 ## Objective
 

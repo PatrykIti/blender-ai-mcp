@@ -92,6 +92,9 @@ Current guided utility prep path:
   - `scene_get_viewport`
   - `scene_clean_scene`
 - these utility actions stay bounded and do not reopen the full legacy surface
+- the canonical cleanup argument shape on `llm-guided` is
+  `keep_lights_and_cameras`; older split flags are compatibility-only and
+  should not be used as the documented public form
 - build goals should still start from `router_set_goal(...)`, but screenshot /
   viewport / scene-reset requests should use the guided utility path instead
 

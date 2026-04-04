@@ -1,11 +1,18 @@
 # TASK-127: Guided Utility Public Contract Hardening for `scene_clean_scene`
 
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
 **Category:** FastMCP Platform / Guided Utility UX
 **Estimated Effort:** Medium
 **Dependencies:** TASK-086-02, TASK-121-05
 **Follow-on After:** [TASK-121-05](./TASK-121-05_Guided_Utility_Capture_Prep_And_Goal_Boundary.md)
+
+**Completion Summary:** Guided utility cleanup is now hardened end-to-end.
+`scene_clean_scene(...)` keeps one explicit canonical public flag
+`keep_lights_and_cameras`, while the guided `call_tool(...)` path tolerates the
+older split `keep_lights` / `keep_cameras` form only when both values collapse
+to the same boolean. Mixed split values now fail with one deterministic error,
+and prompts/docs/regressions are aligned to the canonical cleanup shape.
 
 ## Objective
 

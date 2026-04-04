@@ -1,8 +1,13 @@
 # TASK-127-01: `scene_clean_scene` Public Contract and Compatibility Policy
 
 **Parent:** [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** The canonical public cleanup contract now stays explicit:
+`scene_clean_scene(...)` uses `keep_lights_and_cameras` on `llm-guided`.
+Legacy split flags are documented as bounded compatibility only and are no
+longer treated as an equal public contract.
 
 ## Objective
 

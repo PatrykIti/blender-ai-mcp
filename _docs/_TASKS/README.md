@@ -3,9 +3,9 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 1 task
+- **To Do:** 0 tasks
 - **In Progress:** 0 tasks
-- **Done:** 198
+- **Done:** 199
 - **Superseded:** 10
 
 ## 📐 Board Scope
@@ -37,7 +37,6 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | Follow-on after TASK-121-05 to remove the `keep_lights` / `keep_cameras` vs `keep_lights_and_cameras` mismatch on the guided utility surface |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
@@ -71,6 +70,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Completion Date |
 |----|-------|----------|-----------------|
+| [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | 2026-04-04 |
 | [TASK-126](./TASK-126_Mesh_Aware_Contact_Semantics_And_Visual_Fit_Reliability.md) | **Mesh-Aware Contact Semantics and Visual Fit Reliability** | 🔴 High | 2026-04-04 |
 | [TASK-125](./TASK-125_MCP_Transport_Mode_Switching_And_Session_Diagnostics.md) | **MCP Transport Mode Switching and Session Diagnostics** | 🔴 High | 2026-04-03 |
 | [TASK-124](./TASK-124_Guided_Session_Goal_And_Reference_Orchestration.md) | **Guided Session Goal and Reference Orchestration** | 🔴 High | 2026-04-03 |

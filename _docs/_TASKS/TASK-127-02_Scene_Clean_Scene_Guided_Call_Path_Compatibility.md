@@ -1,8 +1,14 @@
 # TASK-127-02: `scene_clean_scene` Guided Call-Path Compatibility
 
 **Parent:** [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md)
-**Status:** ⏳ To Do
+**Status:** ✅ Done
 **Priority:** 🔴 High
+
+**Completion Summary:** The guided discovery `call_tool(...)` path now
+canonicalizes legacy `keep_lights` / `keep_cameras` cleanup flags for
+`scene_clean_scene(...)` when both values agree, and rejects mixed values with
+one deterministic contract error that points clients back to the canonical
+public flag.
 
 ## Objective
 

@@ -114,6 +114,8 @@ Interpretation:
   `search_tools(query="viewport screenshot save file")` -> `call_tool(name="scene_get_viewport", arguments={...})`
 - a typical guided utility scene-prep flow is:
   `search_tools(query="clean reset fresh scene")` -> `call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})`
+- use `keep_lights_and_cameras` as the canonical public cleanup flag; the older
+  split `keep_lights` / `keep_cameras` form is legacy compatibility only
 - other first-choice bounded macro paths include:
   `search_tools(...)` -> `macro_cutout_recess` for recess/cutout/opening work
   `search_tools(...)` -> `macro_relative_layout` for align/place/contact-gap work

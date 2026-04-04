@@ -30,6 +30,7 @@ def test_readme_documents_llm_guided_public_aliases():
         "target_object",
         "config",
         "search_query",
+        "keep_lights_and_cameras",
         "Guided Handoff Contract",
         "guided_handoff",
         "Contact Truth Semantics",
@@ -64,6 +65,8 @@ def test_mcp_docs_describe_aliases_and_hidden_arguments():
         "Guided Handoff Contract",
         "guided_handoff",
         "bbox-touching but still visibly gapped",
+        "keep_lights_and_cameras",
+        "keep_lights` / `keep_cameras`",
         "scene_hide_object",
         "scene_show_all_objects",
         "scene_isolate_object",
@@ -211,6 +214,7 @@ def test_prompt_templates_use_llm_guided_aliases_for_public_surface_examples():
     assert "manual_tools_no_router" in prompt_readme
     assert 'call_tool(name="scene_get_viewport", arguments={...})' in prompt_readme
     assert 'call_tool(name="scene_clean_scene", arguments={"keep_lights_and_cameras": true})' in prompt_readme
+    assert "split `keep_lights` / `keep_cameras` form is legacy compatibility only" in prompt_readme
     assert "do **not** force `router_set_goal(...)`" in prompt_readme
     assert "`call_tool(...)` is not a bypass for hidden or phase-locked tools" in prompt_readme
     assert "`Unknown tool`" in prompt_readme

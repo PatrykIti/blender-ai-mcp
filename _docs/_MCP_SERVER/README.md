@@ -300,6 +300,10 @@ Current guided utility prep path:
 - this utility path is intended for screenshot/capture/scene-prep requests
   and should be used instead of forcing those requests through
   `router_set_goal(...)`
+- the canonical public cleanup flag is `keep_lights_and_cameras`
+- guided `call_tool(...)` now also tolerates the older
+  `keep_lights` / `keep_cameras` split form only when both values are provided
+  and agree; mixed split values are rejected with a deterministic contract error
 
 Goal-scoped reference intake is now part of the guided entry layer:
 
