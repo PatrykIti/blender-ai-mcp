@@ -12,8 +12,11 @@ search phrases keep surfacing the intended blockout tools.
 ## Current Drift To Resolve
 
 The current runtime can still rank tools like `mesh_randomize` and
-`mesh_smooth` above creature blockout actions for broad creature queries. This
-leaf should lock that failure mode out with explicit regressions.
+`mesh_smooth` above creature blockout actions for broad creature queries, and
+live audits can still surface vertex-group false positives such as
+`mesh_create_vertex_group`, `mesh_assign_to_group`, and
+`mesh_remove_from_group`. This leaf should lock those failure modes out with
+explicit regressions.
 
 The canonical failure query from the audit is:
 
@@ -38,11 +41,13 @@ This leaf should also cover adjacent natural queries such as:
 - regression coverage protects the intended search/discovery bias for both
   creature blockout queries and staged reference-loop queries
 - regressions define explicit “must rank in / must not outrank” expectations for
-  the core blockout group versus generic noise/smoothing groups
+  the core blockout group versus generic noise/smoothing groups and current
+  vertex-group false-positive groups
 - public docs explain the improved discovery path for creature blockout work
 - the discovery layer remains metadata-driven
 - regressions verify that creature blockout queries prefer core blockout tools
-  over generic organic-noise tools
+  over generic organic-noise tools and over current vertex-group/grouping
+  helpers that are not first-line creature blockout actions
 - the regression pack is scoped to the shaped public story:
   build-phase guided discovery should help the model find blockout tools early,
   not just prove that every relevant tool is technically searchable somewhere

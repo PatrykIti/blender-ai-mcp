@@ -60,6 +60,14 @@ Current audited drift is:
 - the public creature prompt wording is still squirrel-heavy and still teaches
   at least one flow that does not match the real `llm-guided` bootstrap/utility
   path
+- the public creature prompt/docs still blur the current staged-loop response
+  shape:
+  - they refer to `shape_mismatches`, `proportion_mismatches`, and
+    `next_corrections` as though they were the main top-level iterate-stage
+    fields
+  - current runtime still leads the model through `correction_candidates`,
+    `truth_followup`, `correction_focus`, and only then the vision-side lists
+    under `vision_assistant.result` / candidate evidence
 - `guided_manual_build` still points to a broad macro-first recipe and build
   phase visibility expands into a large generic surface
 - the technical seam between `guided_handoff`, session state, session-applied
@@ -69,8 +77,9 @@ Current audited drift is:
   for natural creature-focused phrases
 - the search slice is still under-specified on the failure shape to beat:
   current natural creature queries can rank `mesh_randomize`, `mesh_smooth`,
-  and similar broad helpers ahead of the actual blockout tools the model should
-  reach first
+  vertex-group tools such as `mesh_create_vertex_group`,
+  `mesh_assign_to_group`, `mesh_remove_from_group`, and similar broad helpers
+  ahead of the actual blockout tools the model should reach first
 
 ## Business Outcome
 
@@ -99,6 +108,8 @@ This slice does **not** cover:
 - deterministic silhouette-analysis implementation
 - new vision-model runtime integration
 - sculpt-first creature workflows as the default path
+- repo-wide default bootstrap-surface/docs alignment; that broader drift is
+  tracked separately in [TASK-130](./TASK-130_Default_Guided_Surface_Bootstrap_Consistency.md)
 
 ## Acceptance Criteria
 
@@ -116,6 +127,14 @@ This slice does **not** cover:
 - the public creature prompt/docs describe a generic creature contract and
   teach the sanctioned guided utility/bootstrap path instead of encouraging
   direct calls to tools that are not directly visible on bootstrap
+- the public creature prompt/docs describe the *current* staged-loop contract
+  accurately:
+  - `correction_candidates`, `truth_followup`, and `correction_focus` remain
+    the main loop-facing fields today
+  - vision-side `shape_mismatches`, `proportion_mismatches`, and
+    `next_corrections` are described where they actually live in the current
+    runtime payload instead of being presented as stable top-level iterate
+    fields before Slice B lands
 - the guided creature handoff exposes a smaller, more relevant build recipe for
   low-poly creature blockout
 - creature handoff narrowing is defined as one explicit session-aware runtime
@@ -124,7 +143,9 @@ This slice does **not** cover:
 - tool discovery/search gains explicit creature-oriented metadata and prompt
   phrases
 - the search/discovery slice defines concrete positive and negative ranking
-  expectations instead of stopping at “add creature keywords”
+  expectations instead of stopping at “add creature keywords”; those negative
+  expectations explicitly cover generic organic-noise tools and current
+  vertex-group false positives
 - docs and focused regression coverage describe the new guided creature path
 - the task package no longer treats docs-only prompt files, broad macro-first
   handoffs, or generic search coverage as if they already satisfy Slice A

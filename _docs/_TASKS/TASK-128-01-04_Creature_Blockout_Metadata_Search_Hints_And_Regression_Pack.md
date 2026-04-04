@@ -29,8 +29,11 @@ Current concrete failure shape:
   still return rankings like:
   - `macro_adjust_segment_chain_arc`
   - `mesh_randomize`
+  - `mesh_create_vertex_group`
   - `macro_place_symmetry_pair`
   - `mesh_smooth`
+  - `mesh_assign_to_group`
+  - `mesh_remove_from_group`
   - `mesh_set_proportional_edit`
 - that means the current search-first surface is technically available but
   still operationally misleading for low-poly creature blockout
@@ -64,6 +67,16 @@ Start with the core blockout tools most likely to matter during creature work:
 - `macro_adjust_relative_proportion`
 - `macro_adjust_segment_chain_arc`
 
+Current negative group to beat in regressions includes:
+
+- `mesh_randomize`
+- `mesh_smooth`
+- `mesh_create_vertex_group`
+- `mesh_assign_to_group`
+- `mesh_remove_from_group`
+- similar broad-shape or grouping/administrative helpers that are not first
+  blockout actions
+
 Technical clarification:
 
 - this slice is not about replacing BM25/search plumbing or adding a special
@@ -88,6 +101,9 @@ Technical clarification:
 - `server/router/infrastructure/tools_metadata/mesh/mesh_symmetrize.json`
 - `server/router/infrastructure/tools_metadata/mesh/mesh_merge_by_distance.json`
 - `server/router/infrastructure/tools_metadata/mesh/mesh_dissolve.json`
+- `server/router/infrastructure/tools_metadata/mesh/mesh_create_vertex_group.json`
+- `server/router/infrastructure/tools_metadata/mesh/mesh_assign_to_group.json`
+- `server/router/infrastructure/tools_metadata/mesh/mesh_remove_from_group.json`
 - `server/router/infrastructure/tools_metadata/scene/macro_adjust_relative_proportion.json`
 - `server/router/infrastructure/tools_metadata/scene/macro_adjust_segment_chain_arc.json`
 - `server/adapters/mcp/discovery/search_documents.py`
@@ -104,7 +120,7 @@ Technical clarification:
 - metadata stays generic and reusable beyond squirrels
 - docs/regressions lock the new discovery bias in place
 - focused regressions prove that creature blockout queries prefer blockout tools
-  over generic organic surface tools
+  over generic organic surface tools and current vertex-group false positives
 - the technical seam is explicit: metadata/search-document enrichment drives
   the ranking change; the task must not be satisfiable by docs-only wording
 
