@@ -13,7 +13,9 @@ visibility behavior, and regression coverage.
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
@@ -27,7 +29,9 @@ visibility behavior, and regression coverage.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`

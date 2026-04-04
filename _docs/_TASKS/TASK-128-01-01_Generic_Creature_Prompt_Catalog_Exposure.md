@@ -20,7 +20,8 @@ This subtask covers:
 
 ## Acceptance Criteria
 
-- `reference_guided_creature_build` is visible through the prompt provider
+- `reference_guided_creature_build` is visible through the prompt provider and
+  the `llm-guided` prompt bridge (`list_prompts` / `get_prompt`)
 - the prompt description/tags position it as generic creature guidance, not a
   squirrel-only hardcoded path
 - prompt docs and public tool summary mention the new exposed asset
@@ -31,6 +32,8 @@ This subtask covers:
 - `server/adapters/mcp/prompts/provider.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
 
@@ -43,6 +46,8 @@ This subtask covers:
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Changelog Impact
 

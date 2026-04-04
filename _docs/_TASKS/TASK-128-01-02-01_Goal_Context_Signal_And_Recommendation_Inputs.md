@@ -13,7 +13,9 @@ styling hints.
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
+- `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/session_state.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `_docs/_MCP_SERVER/README.md`
 
 ## Acceptance Criteria
@@ -25,6 +27,10 @@ styling hints.
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_session_phase.py`
 
 ## Changelog Impact
 

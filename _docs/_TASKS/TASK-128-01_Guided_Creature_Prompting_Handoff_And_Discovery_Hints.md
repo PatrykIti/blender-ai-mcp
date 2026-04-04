@@ -56,7 +56,7 @@ This slice does **not** cover:
 ## Acceptance Criteria
 
 - a generic creature-build prompt is exposed through `list_prompts` /
-  `get_prompt`
+  `get_prompt`, with native prompt exposure staying aligned to the same asset
 - recommended prompt selection can favor the creature-build prompt when the
   session goal is creature-oriented
 - the guided creature handoff exposes a smaller, more relevant build recipe for
@@ -70,12 +70,23 @@ This slice does **not** cover:
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
+- `server/adapters/mcp/session_capabilities.py`
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/discovery/search_documents.py`
 - `server/router/infrastructure/tools_metadata/modeling/`
 - `server/router/infrastructure/tools_metadata/mesh/`
-- `tests/unit/adapters/mcp/`
-- `tests/e2e/router/`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
+- `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_search_surface.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
+- `tests/e2e/router/test_guided_manual_handoff.py`
 - `_docs/_PROMPTS/`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
@@ -90,7 +101,15 @@ This slice does **not** cover:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 

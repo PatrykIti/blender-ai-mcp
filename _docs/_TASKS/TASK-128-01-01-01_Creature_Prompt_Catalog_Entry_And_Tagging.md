@@ -15,10 +15,13 @@ with generic creature-facing naming, description, and tags.
 - `server/adapters/mcp/prompts/provider.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
 
 ## Acceptance Criteria
 
 - the prompt catalog/provider exposes the new prompt asset
+- the new asset is reachable through the shaped prompt bridge as the same
+  stable catalog entry
 - catalog metadata clearly marks it as guided creature/reference work
 - tests verify it appears alongside the existing curated prompt set
 
@@ -26,6 +29,7 @@ with generic creature-facing naming, description, and tags.
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
+- `tests/unit/adapters/mcp/test_prompts_bridge.py`
 
 ## Changelog Impact
 

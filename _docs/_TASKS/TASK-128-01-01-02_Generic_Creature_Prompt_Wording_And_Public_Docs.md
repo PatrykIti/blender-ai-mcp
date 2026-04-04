@@ -15,6 +15,7 @@ requiring one prompt per species.
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Acceptance Criteria
 
@@ -27,6 +28,10 @@ requiring one prompt per species.
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 - `_docs/_PROMPTS/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
+
+## Tests To Add/Update
+
+- `tests/unit/adapters/mcp/test_public_surface_docs.py`
 
 ## Changelog Impact
 

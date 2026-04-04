@@ -52,28 +52,37 @@ creature starting surface.
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Acceptance Criteria
 
 - `guided_manual_build` handoff can expose a bounded creature-oriented tool set
 - low-poly creature work favors modeling/mesh tools before sculpt exposure
-- docs explain the intended creature recipe sets and why they are bounded
+- docs explain the intended creature recipe sets, why they are bounded, and how
+  that bounded handoff is surfaced on `llm-guided`
 
 ## Docs To Update
 
 - `_docs/_MCP_SERVER/README.md`
+- `_docs/_PROMPTS/README.md`
+- `_docs/_PROMPTS/WORKFLOW_ROUTER_FIRST.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
 
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/adapters/mcp/test_guided_surface_benchmarks.py`
 - `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/router/application/test_router_handler_parameters.py`
 - `tests/unit/adapters/mcp/test_router_elicitation.py`
 - `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
