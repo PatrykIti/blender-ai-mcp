@@ -391,6 +391,7 @@ For broader profile/config examples, use:
 
 - [MCP Server Docs](./_docs/_MCP_SERVER/README.md)
 - [MCP Client Config Examples](./_docs/_MCP_SERVER/MCP_CLIENT_CONFIG_EXAMPLES.md)
+- [`.env.example`](./.env.example) for the full tracked runtime/config variable set
 
 ## Testing
 
