@@ -1,6 +1,6 @@
 # Blender Addon Documentation
 
-Documentation for the Blender Addon (Server Side).
+Documentation for the Blender addon runtime inside Blender.
 
 ## 📚 Topic Index
 
@@ -85,7 +85,7 @@ Technical details.
 | `scene.configure_color_management` | `configure_color_management` | Applies grouped color-management settings and returns the resulting snapshot. |
 | `scene.configure_world` | `configure_world` | Applies grouped world/background settings without taking ownership of arbitrary node-graph authoring, and rejects payloads that cross into full graph rebuild scope. |
 | `scene.get_constraints` | `get_constraints` | Returns object (and optional bone) constraints. |
-| `get_viewport` | `get_viewport` | Returns a base64 encoded OpenGL render. Supports `shading`, `camera_name`, and `focus_target`. |
+| `get_viewport` | `get_viewport` | Returns a base64 encoded viewport/image capture. `USER_PERSPECTIVE` follows the live 3D view and supports bounded `view_name` / orbit / zoom adjustments; named cameras use the scene-camera render path instead. |
 | `scene.get_custom_properties` | `get_custom_properties` | Gets custom properties (metadata) from an object. |
 | `scene.set_custom_property` | `set_custom_property` | Sets or deletes a custom property on an object. |
 | `scene.get_hierarchy` | `get_hierarchy` | Gets parent-child hierarchy for object or full scene. |
@@ -93,14 +93,26 @@ Technical details.
 | `scene.get_origin_info` | `get_origin_info` | Gets origin (pivot point) information for an object. |
 | `scene.measure_distance` | `measure_distance` | Measures origin/bbox-center distance between two objects. |
 | `scene.measure_dimensions` | `measure_dimensions` | Measures object dimensions and volume from its bounding box. |
-| `scene.measure_gap` | `measure_gap` | Measures nearest bbox gap/contact state between two objects. |
+| `scene.measure_gap` | `measure_gap` | Measures nearest gap/contact state between two objects. Mesh pairs now prefer a mesh-surface path and report `measurement_basis`, bbox fallback diagnostics, and nearest sampled points when available. |
 | `scene.measure_alignment` | `measure_alignment` | Measures bbox alignment across chosen axes. |
-| `scene.measure_overlap` | `measure_overlap` | Measures bbox overlap/touching state and intersection volume. |
-| `scene.assert_contact` | `assert_contact` | Asserts pass/fail contact relation between two objects. |
+| `scene.measure_overlap` | `measure_overlap` | Measures overlap/touching state between two objects. Mesh pairs now prefer mesh-surface semantics while still surfacing bbox-touching / bbox-overlap diagnostics separately. |
+| `scene.assert_contact` | `assert_contact` | Asserts pass/fail contact relation between two objects, carrying through the current truth basis plus bbox fallback diagnostics for operator-side interpretation. |
 | `scene.assert_dimensions` | `assert_dimensions` | Asserts pass/fail dimensions against an expected vector. |
 | `scene.assert_containment` | `assert_containment` | Asserts pass/fail containment plus measured clearance/protrusion details. |
 | `scene.assert_symmetry` | `assert_symmetry` | Asserts mirrored symmetry between two objects across a chosen axis. |
 | `scene.assert_proportion` | `assert_proportion` | Asserts pass/fail ratio/proportion against the expected value. |
+
+#### Scene Notes
+
+- `get_viewport` now has two distinct addon-side capture paths:
+  - named `camera_name` values render from the explicit scene camera and follow render visibility
+  - `camera_name="USER_PERSPECTIVE"` captures the live 3D viewport, can apply bounded view/orbit/zoom adjustments, and requires an active 3D view
+- if OpenGL capture is unavailable for `USER_PERSPECTIVE`, the addon mirrors the live view into a temporary camera and falls back through Workbench/Cycles so the result still tracks what the operator saw
+- `scene.measure_gap`, `scene.measure_overlap`, and `scene.assert_contact` now distinguish:
+  - `measurement_basis="mesh_surface"` when a bounded evaluated-mesh/BVH path is available for mesh pairs
+  - `measurement_basis="bounding_box"` when the addon must fall back to coarse bbox-only truth
+- mesh-aware truth responses can expose bbox diagnostics alongside the primary result, including fields such as `bbox_relation`, `bbox_gap`, `bbox_touching`, `bbox_overlap_volume`, and `nearest_points`
+- this means addon-side truth can now report bbox touching while still classifying the main surface relation as separated if the actual evaluated mesh surfaces remain visibly gapped
 
 ### Collection (`application/handlers/collection.py`)
 
