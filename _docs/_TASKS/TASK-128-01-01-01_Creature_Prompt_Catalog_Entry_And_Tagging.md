@@ -16,10 +16,19 @@ The runtime currently exposes `getting_started`, `guided_session_start`,
 existing creature build guide. This leaf closes that exact catalog/provider
 gap.
 
+The leaf also needs to pin down the real runtime failure cases:
+
+- the prompt is absent from `list_prompts()`
+- native `render_prompt("reference_guided_creature_build")` still fails as an
+  unknown prompt
+- the tool bridge therefore cannot recover it through `get_prompt(...)`
+
 ## Repository Touchpoints
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `server/adapters/mcp/prompts/rendering.py`
+- `server/adapters/mcp/transforms/visibility_policy.py`
 - `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `tests/unit/adapters/mcp/test_prompts_bridge.py`
@@ -30,6 +39,8 @@ gap.
   `reference_guided_creature_build`
 - the new asset is reachable through the shaped prompt bridge as the same
   stable catalog entry
+- the native prompt path and the tool-compatible bridge path are both covered by
+  regressions, so the prompt cannot silently exist in only one delivery mode
 - catalog metadata clearly marks it as guided creature/reference work
 - tests verify it appears alongside the existing curated prompt set
 

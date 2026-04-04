@@ -45,6 +45,13 @@ Current audited drift is:
 
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md` is indexed in docs but is
   still not exposed by the prompt catalog/provider/bridge
+- the prompt-exposure slice is still under-specified on the real shipped
+  failure shape:
+  - `list_prompts()` still returns the old 7-prompt set without
+    `reference_guided_creature_build`
+  - `render_prompt("reference_guided_creature_build")` and
+    `get_prompt(name="reference_guided_creature_build")` still fail as
+    unknown prompts
 - `recommended_prompts` still ignores active goal/domain context
 - `guided_manual_build` still points to a broad macro-first recipe and build
   phase visibility expands into a large generic surface
@@ -90,6 +97,10 @@ This slice does **not** cover:
 
 - a generic creature-build prompt is exposed through `list_prompts` /
   `get_prompt`, with native prompt exposure staying aligned to the same asset
+- the prompt-exposure slice defines one explicit runtime completion bar:
+  prompt catalog, native prompt provider, prompt bridge tools, and guided
+  prompt visibility all expose the same stable asset name instead of leaving a
+  docs-only markdown file outside the real MCP surface
 - recommended prompt selection can favor the creature-build prompt when the
   session goal is creature-oriented
 - the guided creature handoff exposes a smaller, more relevant build recipe for
@@ -110,6 +121,7 @@ This slice does **not** cover:
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/prompts/rendering.py`
+- `server/adapters/mcp/transforms/visibility_policy.py`
 - `server/adapters/mcp/areas/router.py`
 - `server/adapters/mcp/contracts/router.py`
 - `server/adapters/mcp/guided_mode.py`

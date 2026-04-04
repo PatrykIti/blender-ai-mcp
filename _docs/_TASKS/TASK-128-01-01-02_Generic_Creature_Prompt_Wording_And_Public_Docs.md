@@ -16,6 +16,11 @@ The current file still uses squirrel-heavy wording because it grew out of a
 real eval prompt. Once the prompt becomes a first-class MCP asset, the docs
 must present squirrel as an example, not as the product contract.
 
+This leaf should not be treated as a substitute for real prompt exposure.
+Its job is to align the wording/docs *after* the asset is genuinely visible on
+the MCP surface, not to let docs-only wording masquerade as shipped prompt
+support.
+
 ## Repository Touchpoints
 
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
@@ -29,6 +34,9 @@ must present squirrel as an example, not as the product contract.
 - squirrel remains an example, not the defining product contract
 - public docs point users toward the generic prompt asset name instead of a
   hidden markdown file or operator lore
+- the wording/docs explicitly assume one real MCP prompt asset exists, so the
+  parent subtask cannot be “completed” while runtime still returns
+  `Unknown prompt` for that asset name
 
 ## Docs To Update
 
