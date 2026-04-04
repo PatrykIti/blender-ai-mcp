@@ -236,7 +236,17 @@ def _merge_reference_images(
 ) -> list[dict[str, Any]] | None:
     """Merge active and newly adopted reference images without losing order."""
 
-    merged = [*list(current_reference_images or []), *list(adopted_reference_images or [])]
+    merged: list[dict[str, Any]] = []
+    seen_reference_ids: set[str] = set()
+
+    for item in [*list(current_reference_images or []), *list(adopted_reference_images or [])]:
+        reference_id = item.get("reference_id")
+        if isinstance(reference_id, str) and reference_id:
+            if reference_id in seen_reference_ids:
+                continue
+            seen_reference_ids.add(reference_id)
+        merged.append(item)
+
     return merged or None
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock
 
+import pytest
 from blender_addon.application.handlers.scene import SceneHandler
 
 
@@ -120,3 +121,38 @@ def test_measure_gap_and_overlap_prefer_mesh_surface_semantics_over_bbox_touchin
     assert overlap_result["touching"] is False
     assert overlap_result["bbox_touching"] is True
     assert overlap_result["surface_gap"] == 0.051
+
+
+@pytest.mark.parametrize(
+    ("vertices", "triangles"),
+    [
+        ([], [MagicMock(vertices=(0, 1, 2))]),
+        ([MagicMock(co=(0.0, 0.0, 0.0))], []),
+    ],
+    ids=["empty_vertices", "empty_triangles"],
+)
+def test_get_evaluated_mesh_data_clears_temp_mesh_on_empty_geometry(vertices, triangles):
+    mock_bpy = sys.modules["bpy"]
+    mock_bpy.context.evaluated_depsgraph_get.return_value = object()
+
+    obj = MagicMock()
+    obj.name = "SparseMesh"
+    obj.type = "MESH"
+
+    obj_eval = MagicMock()
+    obj_eval.matrix_world = IdentityMatrix()
+    obj_eval.to_mesh_clear = MagicMock()
+    obj.evaluated_get.return_value = obj_eval
+
+    mesh = MagicMock()
+    mesh.vertices = vertices
+    mesh.loop_triangles = triangles
+    mesh.polygons = []
+    obj_eval.to_mesh.return_value = mesh
+
+    handler = SceneHandler()
+
+    result = handler._get_evaluated_mesh_data(obj)
+
+    assert result is None
+    obj_eval.to_mesh_clear.assert_called_once_with()

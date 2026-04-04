@@ -310,6 +310,68 @@ def test_update_session_from_router_goal_adopts_pending_references_only_after_go
     assert ready_state.pending_reference_images is None
 
 
+def test_update_session_from_router_goal_deduplicates_adopted_references_by_reference_id():
+    """Ready transitions should not duplicate already-active reference records."""
+
+    ctx = FakeContext(
+        state={
+            "goal": "chair",
+            "reference_images": [
+                {
+                    "reference_id": "ref_1",
+                    "goal": "chair",
+                    "label": "front_ref",
+                    "stored_path": "/tmp/front.png",
+                }
+            ],
+            "pending_reference_images": [
+                {
+                    "reference_id": "ref_1",
+                    "goal": "chair",
+                    "label": "front_ref_pending",
+                    "stored_path": "/tmp/front.png",
+                },
+                {
+                    "reference_id": "ref_2",
+                    "goal": "chair",
+                    "label": "side_ref",
+                    "stored_path": "/tmp/side.png",
+                },
+            ],
+        }
+    )
+
+    state = update_session_from_router_goal(
+        ctx,
+        "chair",
+        {
+            "status": "ready",
+            "workflow": "chair_workflow",
+            "resolved": {},
+            "unresolved": [],
+            "resolution_sources": {},
+            "message": "ok",
+            "executed": 0,
+        },
+    )
+
+    assert state.reference_images == [
+        {
+            "reference_id": "ref_1",
+            "goal": "chair",
+            "label": "front_ref",
+            "stored_path": "/tmp/front.png",
+        },
+        {
+            "reference_id": "ref_2",
+            "goal": "chair",
+            "label": "side_ref",
+            "stored_path": "/tmp/side.png",
+        },
+    ]
+    assert state.pending_reference_images is None
+
+
 def test_update_session_from_router_goal_keeps_goal_mismatched_pending_references_explicit():
     """Pending references intended for another goal should not silently retarget."""
 

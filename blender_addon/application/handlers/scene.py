@@ -2184,10 +2184,13 @@ class SceneHandler:
         if getattr(obj, "type", None) != "MESH":
             return None
 
+        obj_eval = None
+        release_evaluated_mesh = False
         try:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             obj_eval = obj.evaluated_get(depsgraph)
             mesh = obj_eval.to_mesh()
+            release_evaluated_mesh = True
         except Exception:
             return None
 
@@ -2203,6 +2206,7 @@ class SceneHandler:
             if not triangles:
                 return None
             polygon_centers = [obj_eval.matrix_world @ poly.center for poly in getattr(mesh, "polygons", [])]
+            release_evaluated_mesh = False
             return {
                 "object_name": obj.name,
                 "vertices": world_vertices,
@@ -2211,12 +2215,13 @@ class SceneHandler:
                 "cleanup_owner": obj_eval,
             }
         except Exception:
-            if hasattr(obj_eval, "to_mesh_clear"):
+            return None
+        finally:
+            if release_evaluated_mesh and hasattr(obj_eval, "to_mesh_clear"):
                 try:
                     obj_eval.to_mesh_clear()
                 except Exception:
                     pass
-            return None
 
     def _release_evaluated_mesh_data(self, mesh_data):
         """Releases temporary evaluated mesh data created for mesh-aware checks."""
