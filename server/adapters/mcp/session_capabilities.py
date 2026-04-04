@@ -623,10 +623,22 @@ def record_router_execution_outcome(
     router_disposition: str,
     error: str | None = None,
 ) -> SessionCapabilityState:
-    """Persist the last router execution outcome for diagnostics surfaces."""
+    """Persist the last router execution outcome for diagnostics surfaces.
+
+    Keep this write path narrowly scoped. Routed sync tools run through
+    threadpool-backed FastMCP execution, so rewriting the full session snapshot
+    here would risk clobbering unrelated goal/reference state if a sync-state
+    read falls back or races. Diagnostics only need these two keys.
+    """
+
+    set_session_value(ctx, SESSION_LAST_ROUTER_DISPOSITION_KEY, router_disposition)
+    set_session_value(ctx, SESSION_LAST_ROUTER_ERROR_KEY, error)
 
     current = get_session_capability_state(ctx)
-    state = SessionCapabilityState(
+    if current.last_router_disposition == router_disposition and current.last_router_error == error:
+        return current
+
+    return SessionCapabilityState(
         phase=current.phase,
         goal=current.goal,
         pending_clarification=current.pending_clarification,
@@ -645,8 +657,6 @@ def record_router_execution_outcome(
         guided_handoff=current.guided_handoff,
         pending_reference_images=current.pending_reference_images,
     )
-    set_session_capability_state(ctx, state)
-    return state
 
 
 def replace_session_pending_reference_images(

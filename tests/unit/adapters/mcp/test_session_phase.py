@@ -16,6 +16,7 @@ from server.adapters.mcp.session_capabilities import (
     record_router_execution_outcome,
     update_session_from_router_goal,
 )
+from server.adapters.mcp.session_state import get_session_value_async, set_session_value_async
 from server.adapters.mcp.session_phase import (
     FIRST_PASS_ACTIVE_PHASES,
     SessionPhase,
@@ -52,6 +53,19 @@ class FakeContext:
         calls = self.state.setdefault("_visibility_calls", [])
         assert isinstance(calls, list)
         calls.append(("disable_components", kwargs))
+
+
+@dataclass
+class AsyncStateContext:
+    """Context-like object exposing async state methods."""
+
+    state: dict[str, object] = field(default_factory=dict)
+
+    async def get_state(self, key: str):
+        return self.state.get(key)
+
+    async def set_state(self, key: str, value, *, serializable: bool = True) -> None:
+        self.state[key] = value
 
 
 def test_session_phase_coercion_uses_canonical_subset_defaults():
@@ -358,6 +372,31 @@ def test_record_router_execution_outcome_persists_last_disposition_and_error():
     assert state.last_router_disposition == "failed_closed_error"
     assert state.last_router_error == "Router processing failed"
     assert get_session_capability_state(ctx).last_router_disposition == "failed_closed_error"
+
+
+def test_record_router_execution_outcome_does_not_clear_goal_scoped_state_in_async_context():
+    """Sync diagnostics bookkeeping must not rewrite unrelated goal/reference session state."""
+
+    async def run() -> None:
+        ctx = AsyncStateContext()
+        await set_session_value_async(ctx, "phase", SessionPhase.BUILD.value)
+        await set_session_value_async(ctx, "goal", "low poly squirrel")
+        await set_session_value_async(ctx, "reference_images", [{"reference_id": "ref_1"}])
+
+        record_router_execution_outcome(
+            ctx,
+            router_disposition="direct",
+            error=None,
+        )
+
+        await asyncio.sleep(0)
+
+        assert await get_session_value_async(ctx, "goal") == "low poly squirrel"
+        assert await get_session_value_async(ctx, "reference_images") == [{"reference_id": "ref_1"}]
+        assert await get_session_value_async(ctx, "last_router_disposition") == "direct"
+        assert await get_session_value_async(ctx, "last_router_error") is None
+
+    asyncio.run(run())
 
 
 def test_update_session_from_router_goal_clears_reference_images_when_goal_changes():
