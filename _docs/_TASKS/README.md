@@ -3,7 +3,7 @@
 Curated task board for promoted active work, promoted follow-on work, and selected completed milestones. Nested task files contain the detailed hierarchy, but this README is not meant to list every historical descendant.
 
 ## 📊 Statistics
-- **To Do:** 0 tasks
+- **To Do:** 1 task
 - **In Progress:** 0 tasks
 - **Done:** 198
 - **Superseded:** 10
@@ -37,6 +37,7 @@ Execution note: this track currently spans TASK-083 through TASK-099 inclusive, 
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| [TASK-127](./TASK-127_Guided_Utility_Public_Contract_Hardening_For_Scene_Clean_Scene.md) | **Guided Utility Public Contract Hardening for `scene_clean_scene`** | 🔴 High | Follow-on after TASK-121-05 to remove the `keep_lights` / `keep_cameras` vs `keep_lights_and_cameras` mismatch on the guided utility surface |
 ### Router & Workflow Extraction
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
