@@ -49,8 +49,8 @@ Start with the core blockout tools most likely to matter during creature work:
 - `server/router/infrastructure/tools_metadata/mesh/mesh_symmetrize.json`
 - `server/router/infrastructure/tools_metadata/mesh/mesh_merge_by_distance.json`
 - `server/router/infrastructure/tools_metadata/mesh/mesh_dissolve.json`
-- `server/router/infrastructure/tools_metadata/macro/macro_adjust_relative_proportion.json`
-- `server/router/infrastructure/tools_metadata/macro/macro_adjust_segment_chain_arc.json`
+- `server/router/infrastructure/tools_metadata/scene/macro_adjust_relative_proportion.json`
+- `server/router/infrastructure/tools_metadata/scene/macro_adjust_segment_chain_arc.json`
 - `server/adapters/mcp/discovery/search_documents.py`
 - `tests/unit/adapters/mcp/test_search_surface.py`
 - `_docs/_MCP_SERVER/README.md`

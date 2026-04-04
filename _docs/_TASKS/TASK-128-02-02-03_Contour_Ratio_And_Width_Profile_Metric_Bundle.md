@@ -22,8 +22,9 @@ Target initial metrics:
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/vision/evaluation.py`
 - `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/areas/reference.py`
+- `tests/unit/adapters/mcp/test_reference_images.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria

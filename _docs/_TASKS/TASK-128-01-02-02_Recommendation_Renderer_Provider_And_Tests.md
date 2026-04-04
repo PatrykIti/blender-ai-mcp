@@ -13,6 +13,7 @@ surfaces and lock it with focused regression tests.
 
 - `server/adapters/mcp/prompts/rendering.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 
 ## Acceptance Criteria
@@ -25,6 +26,7 @@ surfaces and lock it with focused regression tests.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 
 ## Changelog Impact
 

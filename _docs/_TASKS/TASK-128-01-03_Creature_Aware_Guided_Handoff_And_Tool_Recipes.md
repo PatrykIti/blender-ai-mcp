@@ -52,6 +52,9 @@ creature starting surface.
 
 - `server/adapters/mcp/transforms/visibility_policy.py`
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 - `_docs/_MCP_SERVER/README.md`
 - `_docs/_PROMPTS/REFERENCE_GUIDED_CREATURE_BUILD.md`
@@ -70,6 +73,9 @@ creature starting surface.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_visibility_policy.py`
+- `tests/unit/router/application/test_router_contracts.py`
+- `tests/unit/adapters/mcp/test_router_elicitation.py`
+- `tests/unit/adapters/mcp/test_session_phase.py`
 - `tests/e2e/router/test_guided_manual_handoff.py`
 
 ## Changelog Impact

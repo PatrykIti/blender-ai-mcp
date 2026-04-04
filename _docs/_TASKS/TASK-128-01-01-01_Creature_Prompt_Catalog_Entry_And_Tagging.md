@@ -13,6 +13,7 @@ with generic creature-facing naming, description, and tags.
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 
 ## Acceptance Criteria
@@ -24,6 +25,7 @@ with generic creature-facing naming, description, and tags.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 
 ## Changelog Impact
 

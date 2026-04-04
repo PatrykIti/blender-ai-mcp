@@ -13,7 +13,7 @@ tool metadata files to update.
 
 - `server/router/infrastructure/tools_metadata/modeling/`
 - `server/router/infrastructure/tools_metadata/mesh/`
-- `server/router/infrastructure/tools_metadata/macro/`
+- `server/router/infrastructure/tools_metadata/scene/`
 
 ## Acceptance Criteria
 

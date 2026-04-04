@@ -29,6 +29,7 @@ This subtask covers:
 
 - `server/adapters/mcp/prompts/prompt_catalog.py`
 - `server/adapters/mcp/prompts/provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `_docs/_PROMPTS/README.md`
 - `_docs/AVAILABLE_TOOLS_SUMMARY.md`
@@ -41,6 +42,7 @@ This subtask covers:
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 
 ## Changelog Impact
 

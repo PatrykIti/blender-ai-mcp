@@ -12,9 +12,11 @@ reference images and stage viewport captures.
 ## Repository Touchpoints
 
 - `server/adapters/mcp/vision/capture.py`
-- `server/adapters/mcp/vision/evaluation.py`
+- `server/adapters/mcp/vision/capture_runtime.py`
+- `server/adapters/mcp/contracts/reference.py`
 - `server/adapters/mcp/areas/reference.py`
 - `tests/unit/adapters/mcp/test_reference_images.py`
+- `tests/unit/adapters/mcp/test_vision_capture_runtime.py`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria

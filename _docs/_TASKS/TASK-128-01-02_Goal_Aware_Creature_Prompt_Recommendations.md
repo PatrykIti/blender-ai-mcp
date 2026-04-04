@@ -32,6 +32,7 @@ manual operator knowledge.
 - `server/adapters/mcp/prompts/rendering.py`
 - `server/adapters/mcp/prompts/provider.py`
 - `server/adapters/mcp/session_state.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
 - `_docs/_MCP_SERVER/README.md`
 
@@ -50,6 +51,7 @@ manual operator knowledge.
 ## Tests To Add/Update
 
 - `tests/unit/adapters/mcp/test_prompt_provider.py`
+- `tests/unit/adapters/mcp/test_prompt_catalog.py`
 
 ## Changelog Impact
 

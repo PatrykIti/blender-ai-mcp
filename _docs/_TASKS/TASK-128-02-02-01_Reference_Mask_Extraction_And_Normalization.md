@@ -11,7 +11,9 @@ normalized for front/side creature comparison.
 
 ## Repository Touchpoints
 
-- `server/adapters/mcp/vision/evaluation.py`
+- `server/adapters/mcp/contracts/reference.py`
+- `server/adapters/mcp/areas/reference.py`
+- `server/adapters/mcp/vision/`
 - `_docs/_VISION/README.md`
 
 ## Acceptance Criteria
